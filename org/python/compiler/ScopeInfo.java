@@ -22,7 +22,8 @@ public class ScopeInfo extends Object implements ScopeConstants {
             int flags = info.flags;
             System.err.print(name);
             if ((flags&BOUND) != 0) System.err.print('=');
-            if ((flags&GLOBAL) != 0) System.err.print('G');
+            if ((flags&NGLOBAL) != 0) System.err.print('G'); else // func scope global (affect nested scopes) 
+            if ((flags&CLASS_GLOBAL) != 0) System.err.print('g'); // vs. class scope global
             if ((flags&PARAM) != 0) System.err.print('P'); else
             if ((flags&FROM_PARAM) != 0) System.err.print('p');
             if ((flags&CELL) != 0) System.err.print('!');
@@ -55,13 +56,14 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public Vector names = new Vector();
     
     public int addGlobal(String name) {
+        int global = kind==CLASSSCOPE?CLASS_GLOBAL:NGLOBAL; // global kind = func vs. class
         SymInfo info = (SymInfo)tbl.get(name);
         if (info == null) {
-            tbl.put(name,new SymInfo(GLOBAL|BOUND));
+            tbl.put(name,new SymInfo(global|BOUND));
             return -1;
         }
         int prev = info.flags;
-        info.flags |= GLOBAL|BOUND;
+        info.flags |= global|BOUND;
         return prev;
     }
     
@@ -125,7 +127,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
             }
             int flags = info.flags;
             if (func) {
-                if ((flags&GLOBAL) == 0 && (flags&BOUND) != 0) {
+                if ((flags&NGLOBAL) == 0 && (flags&BOUND) != 0) { // not func global and bound ?
                     if (nested_scopes) {
                         info.flags |= CELL;
                         if ((info.flags&PARAM) != 0) xxx_paramcells.addElement(name);                        
@@ -208,8 +210,8 @@ public class ScopeInfo extends Object implements ScopeConstants {
                         freevars.addElement(name);
                         continue;
                     }
-                    if (nested && (up_flags&GLOBAL) != 0) {
-                        info.flags = GLOBAL|BOUND;
+                    if (nested && (up_flags&NGLOBAL) != 0) { // ! func global affect nested scopes
+                        info.flags = NGLOBAL|BOUND;
                         continue;
                     } 
                 }
