@@ -546,8 +546,10 @@ public class PyObject implements java.io.Serializable {
        @see org.python.core.PyObject#__findattr__(org.python.core.PyString)
     **/ 
     public PyObject __findattr__(String name) {
-        if (__class__ == null) return null;
-        if (name == "__class__") return __class__;
+        if (__class__ == null)
+            return null;
+        if (name == "__class__")
+            return __class__;
         PyObject ret = __class__.lookup(name, false);
         if (ret != null)
             return ret._doget(this);
@@ -617,7 +619,7 @@ public class PyObject implements java.io.Serializable {
        @see org.python.core.PyObject#__setattr__(org.python.core.PyString, 
        org.python.core.PyObject)
     **/ 
-    public void __setattr__(String name, PyObject value) throws PyException {
+    public void __setattr__(String name, PyObject value) {
         throw Py.TypeError("readonly class");
     }
         
