@@ -109,7 +109,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     
     public int cell;
     
-    public void cook(ScopeInfo up,CodeCompiler ctxt) throws Exception {
+    public void cook(ScopeInfo up,CompilationContext ctxt) throws Exception {
         if (up == null) return; // top level => nop
         
         boolean nested_scopes = this.nested_scopes;
@@ -175,7 +175,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
         
     }
 
-    private void dynastuff_trouble(boolean inner_free,CodeCompiler ctxt) throws Exception {
+    private void dynastuff_trouble(boolean inner_free,CompilationContext ctxt) throws Exception {
         String illegal;
         if (unqual_exec && from_import_star)
          illegal = "function '"+scope_name+"' uses import * and bare exec, which are illegal";

@@ -7,7 +7,7 @@ import java.util.*;
 
 public class ScopesCompiler extends Visitor implements ScopeConstants {
 
-    private CodeCompiler code_compiler;
+    private CompilationContext code_compiler;
     
     private boolean nested_scopes = false;
     
@@ -23,13 +23,13 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     private int level      = 0;
     private int func_level = 0;
 
-    public ScopesCompiler(CodeCompiler code_compiler) { // ?? polish
+    public ScopesCompiler(CompilationContext code_compiler) { // ?? polish
         this.code_compiler = code_compiler;
         scopes = new Stack();
         mode = GET;
         String nested_scopes_opt = org.python.core.PySystemState.registry.getProperty("python.xfutures.nested_scopes");
         if (nested_scopes_opt != null && nested_scopes_opt.equals("on")) nested_scopes = true; else
-        nested_scopes = code_compiler.futures.areNestedScopesOn();
+        nested_scopes = code_compiler.getFutures().areNestedScopesOn();
         // System.err.println("nested-scopes: "+nested_scopes);      
     }
 
@@ -71,7 +71,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     }
 
     public void parse(SimpleNode node) throws Exception {
+        try {
             node.visit(this);
+        } catch(Throwable t) {
+            throw org.python.core.parser.fixParseError(null,t,code_compiler.getFilename());
+        }
     }
 
     public Object single_input(SimpleNode node) throws Exception {

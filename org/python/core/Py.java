@@ -432,17 +432,17 @@ public final class Py
         return t ? Py.One : Py.Zero;
     }
 
-    // nested scopes:  String[] cellvars,String[] freevars,int xxx_npurecell
+    // nested scopes:  String[] cellvars,String[] freevars,int xxx_npurecell & int moreflags
 
     public static PyCode newCode(int argcount, String varnames[],
                                  String filename, String name,
                                  boolean args, boolean keywords,
                                  PyFunctionTable funcs, int func_id,
-                                 String[] cellvars,String[] freevars,int xxx_npurecell)
+                                 String[] cellvars,String[] freevars,int xxx_npurecell,int moreflags)
     {
         return new PyTableCode(argcount, varnames,
                                filename, name, 0, args, keywords, funcs,
-                               func_id, cellvars, freevars, xxx_npurecell);
+                               func_id, cellvars, freevars, xxx_npurecell,moreflags);
     }
 
     public static PyCode newCode(int argcount, String varnames[],
@@ -450,12 +450,12 @@ public final class Py
                                  int firstlineno,
                                  boolean args, boolean keywords,
                                  PyFunctionTable funcs, int func_id,
-                                 String[] cellvars,String[] freevars,int xxx_npurecell)
+                                 String[] cellvars,String[] freevars,int xxx_npurecell,int moreflags)
 
     {
         return new PyTableCode(argcount, varnames,
                                filename, name, firstlineno, args, keywords,
-                               funcs, func_id, cellvars, freevars, xxx_npurecell);
+                               funcs, func_id, cellvars, freevars, xxx_npurecell,moreflags);
     }
         
     // --

@@ -38,8 +38,10 @@ public class PyFrame extends PyObject
         f_globals = globals;
         f_builtins = builtins;
         // This needs work to be efficient with multiple interpreter states
-        if (locals == null && code != null && code.co_varnames.length > 0) {
-            f_fastlocals = new PyObject[code.co_varnames.length-code.xxx_npurecell]; // internal: may change
+        if (locals == null && code != null) {
+            if ((code.co_flags&PyTableCode.CO_OPTIMIZED)!=0) {
+                if (code.co_nlocals>0) f_fastlocals = new PyObject[code.co_nlocals-code.xxx_npurecell]; // internal: may change
+            } else f_locals = new PyStringMap();
         }
         if (code != null) { // reserve space for env
             int env_sz = 0;
@@ -111,15 +113,27 @@ public class PyFrame extends PyObject
     public PyObject getf_locals() {
         if (f_locals == null)
             f_locals = new PyStringMap();
-        if (f_fastlocals != null && f_code != null) {
-            for (int i=0; i<f_fastlocals.length; i++) {
-                PyObject o = f_fastlocals[i];
-                if (o != null)
-                    f_locals.__setitem__(f_code.co_varnames[i], o);
+        if (f_code!=null && f_code.co_nlocals>0) {
+            int i;
+            if (f_fastlocals != null) {
+                for (i=0; i<f_fastlocals.length; i++) {
+                    PyObject o = f_fastlocals[i];
+                    if (o != null) f_locals.__setitem__(f_code.co_varnames[i], o);
+                }
+                /* ?? xxx_
+                // This should turn off fast_locals optimization after somebody
+                // gets the locals dict
+                f_fastlocals = null; */
             }
-            // This should turn off fast_locals optimization after somebody
-            // gets the locals dict
-            f_fastlocals = null;
+            int j = 0;
+            for (i=0; i<f_ncells; i++,j++) {
+                PyObject v = f_env[j].ob_ref;
+                if (v != null) f_locals.__setitem__(f_code.co_cellvars[i],v);
+            }
+            for (i=0; i<f_nfreevars; i++,j++) {
+                PyObject v = f_env[j].ob_ref;
+                if (v != null) f_locals.__setitem__(f_code.co_freevars[i],v);
+            }            
         }
         return f_locals;
     }
@@ -198,16 +212,24 @@ public class PyFrame extends PyObject
     }
 
     public void dellocal(int index) {
-        if (f_fastlocals != null)
-            f_fastlocals[index] = null;
-        else
+        if (f_fastlocals != null) {
+            if (f_fastlocals[index] == null) {
+              throw Py.UnboundLocalError("local: '"+f_code.co_varnames[index]+"'");                        
+            }
+            f_fastlocals[index] = null;  
+        } else
             dellocal(f_code.co_varnames[index]);
     }
 
     public void dellocal(String index) {
         if (f_locals == null)
             getf_locals();
-        f_locals.__delitem__(index);
+        try {
+            f_locals.__delitem__(index);
+        } catch(PyException e) {
+          if (!Py.matchException(e,Py.KeyError)) throw e;
+          throw Py.UnboundLocalError("local: '"+index+"'");        
+        }
     }
 
     public void delglobal(String index) {

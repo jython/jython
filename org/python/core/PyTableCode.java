@@ -17,10 +17,17 @@ public class PyTableCode extends PyCode
     public String co_freevars[];
     public String co_filename;
     public int co_flags;
+    public int co_nlocals;
     public boolean args, keywords;
     PyFunctionTable funcs;
     int func_id;
-   
+
+    final public static int CO_OPTIMIZED    = 0x0001;
+    //final public static int CO_NEWLOCALS  = 0x0002
+    final public static int CO_VARARGS	    = 0x0004;
+    final public static int CO_VARKEYWORDS  = 0x0008;
+    final public static int CO_NESTED       = 0x0010;
+
     
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
@@ -28,7 +35,7 @@ public class PyTableCode extends PyCode
                        boolean args, boolean keywords,
                        PyFunctionTable funcs, int func_id)
     {
-        this(argcount,varnames,filename,name,firstlineno,args,keywords,funcs,func_id,null,null,0);
+        this(argcount,varnames,filename,name,firstlineno,args,keywords,funcs,func_id,null,null,0,0);
     }
     
     public PyTableCode(int argcount, String varnames[],
@@ -36,10 +43,11 @@ public class PyTableCode extends PyCode
                        int firstlineno,
                        boolean args, boolean keywords,
                        PyFunctionTable funcs, int func_id,
-                       String[] cellvars,String[] freevars,int xxx_npurecell) // may change
+                       String[] cellvars,String[] freevars,int xxx_npurecell,int moreflags) // may change
     {
         co_argcount = nargs = argcount;
         co_varnames = varnames;
+        co_nlocals = varnames.length;
         co_filename = filename;
         co_firstlineno = firstlineno;
         co_cellvars = cellvars;
@@ -49,13 +57,14 @@ public class PyTableCode extends PyCode
         co_name = name;
         if (args) {
             co_argcount -= 1;
-            co_flags |= 0x04;
+            co_flags |= CO_VARARGS;
         }
         this.keywords = keywords;
         if (keywords) {
             co_argcount -= 1;
-            co_flags |= 0x08;
+            co_flags |= CO_VARKEYWORDS;
         }
+        co_flags |= moreflags;
         this.funcs = funcs;
         this.func_id = func_id;
     }
@@ -63,8 +72,8 @@ public class PyTableCode extends PyCode
     private static final String[] __members__ = {
         "co_name", "co_argcount",
         "co_varnames", "co_filename", "co_firstlineno",
-        "co_flags","co_cellvars","co_freevars"
-        // not supported: co_nlocals, co_code, co_consts, co_names,
+        "co_flags","co_cellvars","co_freevars","co_nlocals"
+        // not supported: co_code, co_consts, co_names,
         // co_lnotab, co_stacksize
     };
 

@@ -11,7 +11,7 @@ import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Vector;
 
-public class CodeCompiler extends Visitor
+public class CodeCompiler extends Visitor implements CompilationContext
 {
     public static final Object Exit=new Integer(1);
     public static final Object NoExit=null;
@@ -37,6 +37,10 @@ public class CodeCompiler extends Visitor
     public Future futures;
     public Hashtable tbl;
     public ScopeInfo my_scope;
+    
+    public Future getFutures() { return futures; }
+    public String getFilename() { return module.sfilename; }
+
     
     boolean optimizeGlobals = true;
     public Vector names;
@@ -199,7 +203,7 @@ public class CodeCompiler extends Visitor
         names = scope.names;
 
         tbl = scope.tbl;
-        optimizeGlobals = !scope.exec&&!scope.from_import_star;
+        optimizeGlobals = fast_locals&&!scope.exec&&!scope.from_import_star;
 
         mode = GET;
         Object exit = node.visit(this);
@@ -2269,7 +2273,7 @@ public class CodeCompiler extends Visitor
                 int flags = syminf.flags;
                 if (!my_scope.nested_scopes) flags &= ~ScopeInfo.FREE;
                 if ((flags&ScopeInfo.GLOBAL) !=0 || 
-                     optimizeGlobals&&fast_locals&&(flags&(ScopeInfo.BOUND|ScopeInfo.CELL|ScopeInfo.FREE))==0) {
+                     optimizeGlobals&&(flags&(ScopeInfo.BOUND|ScopeInfo.CELL|ScopeInfo.FREE))==0) {
                     code.ldc(name);
                     if (mrefs.getglobal == 0) {
                         mrefs.getglobal = code.pool.Methodref(
@@ -2301,7 +2305,7 @@ public class CodeCompiler extends Visitor
                         return null;
                     }
                 }
-                if ((flags&ScopeInfo.FREE) != 0) {
+                if ((flags&ScopeInfo.FREE) != 0 && (flags&ScopeInfo.BOUND) == 0) {
                     code.iconst(syminf.env_index);
                     if (mrefs.getderef == 0) {
                         mrefs.getderef = code.pool.Methodref(
@@ -2418,4 +2422,5 @@ public class CodeCompiler extends Visitor
         module.PyString(s).get(code);
         return null;
     }
+
 }

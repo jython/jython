@@ -197,6 +197,8 @@ class PyCodeConstant extends Constant
     public String[] cellvars;
     public String[] freevars;
     public int xxx_npurecell;
+    
+    public int moreflags;
 
     public PyCodeConstant() { ;
     }
@@ -210,7 +212,11 @@ class PyCodeConstant extends Constant
         c.iconst(argcount);
 
         //Make all names
-        CodeCompiler.makeStrings(c, names, names.length);
+        if (names != null) {
+            CodeCompiler.makeStrings(c, names, names.length);
+        } else { // classdef
+             CodeCompiler.makeStrings(c, null, 0);
+        }
 
         c.ldc(((PyStringConstant)module.filename).value);
         c.ldc(co_name);
@@ -232,10 +238,12 @@ class PyCodeConstant extends Constant
 
         c.iconst(xxx_npurecell);
         
+        c.iconst(moreflags);
+        
         int mref_newCode = c.pool.Methodref(
             "org/python/core/Py",
             "newCode",
-            "(I[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZZLorg/python/core/PyFunctionTable;I[Ljava/lang/String;[Ljava/lang/String;I)Lorg/python/core/PyCode;");
+            "(I[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZZLorg/python/core/PyFunctionTable;I[Ljava/lang/String;[Ljava/lang/String;II)Lorg/python/core/PyCode;");
 
         c.invokestatic(mref_newCode);
         //c.aconst_null();
@@ -412,12 +420,16 @@ public class Module
 
         compiler.parse(tree, c, fast_locals, className, classBody, scope);
 
-        code.names = toNameAr(compiler.names,false);
+        // !classdef only
+        if (!classBody) code.names = toNameAr(compiler.names,false);
         
         if (scope != null) {
             code.cellvars = toNameAr(scope.cellvars,true);
             code.freevars = toNameAr(scope.freevars,true);
             code.xxx_npurecell = scope.xxx_npurecell;
+            if (compiler.optimizeGlobals) {
+                code.moreflags |= org.python.core.PyTableCode.CO_OPTIMIZED;
+            }
         }
         
         code.module = this;
