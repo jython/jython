@@ -1,0 +1,32 @@
+JPython NEWS
+
+04-Jun-1999 JPython 1.1beta1 released
+
+  Highlights of changes since JPython 1.0.3
+
+    - New and improved jpythonc tool by Jim Hugunin
+    - New modules contributed by Finn Bock: cStringIO, cPickle,
+      struct, binascii
+    - New module synchronize, equivalent to Java's synchronized
+      keyword
+    - Operator module now complete
+    - sys.add_package() no longer necessary, "import java.lang" just works
+    - Class-based standard exceptions (w/ support for -X option)
+    - super__ methods are deprecated, use regular Python style
+    - time.strftime() added
+    - Java 1.2 style collections support
+    - Multiple interpreter states
+    - Most CPython 1.5.2 features have been implemented
+    - String objects now have methods -- expected CPython 1.6 feature
+    - Improved performance
+    - Java inner class support
+    - keywords are allowed in some locations (e.g. as attribute names)
+    - New license
+    - bug fixes
+
+	
+
+Local Variables:
+mode: indented-text
+indent-tabs-mode: nil
+End:
