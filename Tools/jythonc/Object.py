@@ -183,6 +183,8 @@ class PyObject:
         return self.domethod(code, "__setitem__", index, value).getStatement()
 
     def getattr(self, code, name):
+        if not PyObject.attributes.has_key(name):
+            PyObject.attributes[name] = None
         name = Object(jast.StringConstant(name), StringType)
         return self.domethod(code, "__getattr__", name)
 
