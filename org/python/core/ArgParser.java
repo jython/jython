@@ -30,11 +30,13 @@ public class ArgParser {
 
     // A marker.
     private static Object required = new Object();
-
+    private static String[] emptyKws = new String[0];
 
     private ArgParser(String funcname, PyObject[] args, String[] kws) {
         this.funcname = funcname;
         this.args = args;
+        if (kws == null)
+            kws = emptyKws;
         this.kws = kws;
     }
 
@@ -99,6 +101,15 @@ public class ArgParser {
          return value;
     }
 
+    public PyObject getList(int pos) {
+        int kws_start = args.length - kws.length;
+        if (pos < kws_start) {
+            PyObject[] ret = new PyObject[kws_start - pos];
+            System.arraycopy(args, pos, ret, 0, kws_start - pos);
+            return new PyTuple(ret);
+        }
+        return Py.EmptyTuple;
+    }
 
 
     private void check() {
