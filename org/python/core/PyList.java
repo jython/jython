@@ -256,12 +256,12 @@ public class PyList extends PySequence implements InitModule
         length = n;
     }
 
-    void append(PyObject o) {
+    public void append(PyObject o) {
         resize(length+1);
         list[length-1] = o;
     }
 
-    int count(PyObject o) {
+    public int count(PyObject o) {
         int count = 0;
         int n = length;
         PyObject[] list = this.list;
@@ -272,7 +272,7 @@ public class PyList extends PySequence implements InitModule
         return count;
     }
 
-    int index(PyObject o) {
+    public int index(PyObject o) {
         int n = length;
         PyObject[] list = this.list;
         int i=0;
@@ -285,17 +285,17 @@ public class PyList extends PySequence implements InitModule
         return i;
     }
 
-    void insert(int index, PyObject o) {
+    public void insert(int index, PyObject o) {
         resize(length+1);
         System.arraycopy(list, index, list, index+1, length-index-1);
         list[index] = o;
     }
 
-    void remove(PyObject o) {
+    public void remove(PyObject o) {
         del(index(o));
     }
 
-    void reverse() {
+    public void reverse() {
         PyObject tmp;
         int n = length;
         PyObject[] list = this.list;
@@ -307,7 +307,7 @@ public class PyList extends PySequence implements InitModule
         }
     }
 
-    PyObject pop() {
+    public PyObject pop() {
         if (length==0) {
             throw Py.IndexError("pop from empty list");
         }
@@ -315,7 +315,7 @@ public class PyList extends PySequence implements InitModule
         return list[length];
     }
     
-    void extend(PyObject o) {
+    public void extend(PyObject o) {
         setslice(length, length, 1, o);
     }
 
@@ -513,11 +513,11 @@ public class PyList extends PySequence implements InitModule
 
     // Future PyLists will probably have their own PyObject[].  For now, we
     // must copy one out of and back into the vector
-    synchronized void sort(PyObject compare) {
+    public synchronized void sort(PyObject compare) {
         quicksort(list, 0, length, compare);
     }
 
-    void sort() {
+    public void sort() {
         sort(null);
     }
 
