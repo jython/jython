@@ -361,7 +361,10 @@ public class imp
         if (ret != null) return ret;
 
         ret = load(name, Py.getSystemState().path);
-        modules.__setitem__(name, ret);
+        if (modules.__finditem__(name) == null)
+            modules.__setitem__(name, ret);
+        else
+            ret = modules.__finditem__(name);
         return ret;
     }
 
@@ -409,7 +412,10 @@ public class imp
                     last_dot = dot;
                 }
             }
-            modules.__setitem__(name, mod);
+            if (modules.__finditem__(name) == null)
+                modules.__setitem__(name, mod);
+            else
+                mod = modules.__finditem__(name);
             if (top)
                 return pkg;
             else
