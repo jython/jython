@@ -13,61 +13,89 @@ public class jpython {
             ZipEntry runit = zip.getEntry("__run__.py");
             if (runit == null) throw Py.ValueError("jar file missing '__run__.py'");
 
-    		PyDictionary locals = new PyDictionary();
-    		locals.__setitem__(new PyString("__name__"), new PyString(filename));
-    		locals.__setitem__(new PyString("zipfile"), Py.java2py(zip));
+                PyDictionary locals = new PyDictionary();
+                locals.__setitem__(new PyString("__name__"), new PyString(filename));
+                locals.__setitem__(new PyString("zipfile"), Py.java2py(zip));
 
-		    InputStream file = zip.getInputStream(runit);
+                    InputStream file = zip.getInputStream(runit);
             PyCode code;
-		    try {
-		        code = Py.compile(file, "__run__", "exec");
-		    } finally {
-			    file.close();
-			}
-			Py.runCode(code, locals, locals);
-		} catch (java.io.IOException e) {
-			throw Py.IOError(e);
-		}*/
-	}
+                    try {
+                        code = Py.compile(file, "__run__", "exec");
+                    } finally {
+                            file.close();
+                        }
+                        Py.runCode(code, locals, locals);
+                } catch (java.io.IOException e) {
+                        throw Py.IOError(e);
+                }*/
+        }
 
     public static void main(String[] args) {
-	PythonInterpreter interp = new PythonInterpreter();
-	//System.err.println("new interp created");
-        PyModule mod = imp.addModule("__main__");
-        interp.setLocals(mod.__dict__);
-
+        // Parse the command line options
         CommandLineOptions opts = new CommandLineOptions();
-
         if (!opts.parse(args)) {
             System.err.println(usage);
             System.exit(-1);
         }
+        
+        // Setup the basic python system state from these options
+        PySystemState.initialize(System.getProperties(), opts.properties, opts.argv);
+        
+        if (opts.notice) {
+            System.err.println(InteractiveConsole.getDefaultBanner());
+        }
+        
+        // Now create an interpreter
+        InteractiveConsole interp = new InteractiveConsole();
+        //System.err.println("interp");
+        PyModule mod = imp.addModule("__main__");
+        interp.setLocals(mod.__dict__);
+        //System.err.println("imp");
 
-	if (opts.filename != null) {
-	    String path = new java.io.File(opts.filename).getParent();
-	    if (path == null) path = "";
+        if (Options.importSite) {
+            try {
+                imp.load("site");
+            } catch (PyException pye) {
+                if (!Py.matchException(pye, Py.ImportError)) {
+                    System.err.println("error importing site");
+                    Py.printException(pye);
+                    System.exit(-1);
+                }
+            }
+        }
+ 
+        if (opts.command != null) {
+            try {
+              interp.exec(opts.command);
+            } catch (Throwable t) {
+              Py.printException(t);
+            }
+        }
+ 
+        if (opts.filename != null) {
+            String path = new java.io.File(opts.filename).getParent();
+            if (path == null) path = "";
             Py.getSystemState().path.insert(0, new PyString(path));
             if (opts.jar) {
                 runJar(opts.filename);
-		/*} else if (opts.filename.equals("-")) {
-		  try {
-		  PyCode code = Py.compile(System.in, "<stdin>", "exec");
-		  Py.runCode(code, locals, locals);
-		  } catch (Throwable t) {
-		  Py.printException(t);
-		  }*/
+            } else if (opts.filename.equals("-")) {
+                try {
+                  interp.execfile(System.in, "<stdin>");
+                } catch (Throwable t) {
+                  Py.printException(t);
+                }
             } else {
-		try {
-		    interp.execfile(opts.filename);
-		} catch (Throwable t) {
-		    Py.printException(t);
-		}
-	    }
-	}
+                try {
+                    interp.execfile(opts.filename);
+                } catch (Throwable t) {
+                    Py.printException(t);
+                }
+            }
+        }
 
-	if (opts.interactive) {
-	    interp.interact(opts.notice ? null : "");
-	}
+        if (opts.interactive) {
+            interp.interact(null);
+        }
     }
 }
 
@@ -75,18 +103,19 @@ class CommandLineOptions {
     public String filename;
     public boolean jar, interactive, notice;
     private boolean fixInteractive;
-    public PyList argv;
-    private java.util.Properties registry;
+    public String[] argv;
+    public java.util.Properties properties;
+    public String command;
 
     public CommandLineOptions() {
         filename=null;
         jar = fixInteractive = false;
         interactive = notice = true;
-        registry = Py.getSystemState().registry;
+        properties = new java.util.Properties();
     }
 
     public void setProperty(String key, String value) {
-        registry.put(key, value);
+        properties.put(key, value);
     }
 
     public boolean parse(String[] args) {
@@ -102,6 +131,14 @@ class CommandLineOptions {
             } else if (arg.equals("-jar")) {
                 jar = true;
                 if (!fixInteractive) interactive = false;
+            } else if (arg.equals("-X")) {
+                Options.classBasedExceptions = false;
+            } else if (arg.equals("-S")) {
+                Options.importSite = false;
+            } else if (arg.equals("-c")) {
+                command = args[++index];
+                if (!fixInteractive) interactive = false;              
+                break;
             } else if (arg.startsWith("-D")) {
                 String key = null; 
                 String value = null;
@@ -109,9 +146,9 @@ class CommandLineOptions {
                 if (equals == -1) {
                     String arg2 = args[++index];
                     /*if (!arg2.startsWith("=")) {
-		      System.err.println("-D option with no '=': "+args[index-1]+"::"+arg2);
-		      return false;
-		      }*/
+                      System.err.println("-D option with no '=': "+args[index-1]+"::"+arg2);
+                      return false;
+                      }*/
                     key = arg.substring(2, arg.length());
                     value = arg2; //.substring(1, arg2.length());
                 } else {
@@ -126,23 +163,22 @@ class CommandLineOptions {
             index += 1;
         }
         notice = interactive;
-        if (filename == null && index < args.length) {
+        if (filename == null && index < args.length && command == null) {
             filename = args[index++];
             if (!fixInteractive) interactive = false;
             notice = false;
         }
+        if (command != null) notice = false;
 
-        argv = new PyList();
+        int n = args.length-index+1;
+        argv = new String[n];
         //new String[args.length-index+1];
-        if (filename != null) argv.append(new PyString(filename));
-        else argv.append(new PyString(""));
+        if (filename != null) argv[0] = filename;
+        else argv[0] = "";
 
-        for(int i=0; index<args.length; i++, index++) {
-            argv.append(new PyString(args[index]));
+        for(int i=1; i<n; i++, index++) {
+            argv[i] = args[index];
         }
-
-        Py.getSystemState().setOptionsFromRegistry();
-        Py.getSystemState().argv = argv;
 
         return true;
     }

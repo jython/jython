@@ -1,7 +1,7 @@
 # Python Registry
 
 # This is how I set my path on my Windows development machine
-python.path=.;c:\\Python-1.5.1\\Lib
+python.path=.;d:\\Python-1.5.2\\Lib
 #python.path=.
 
 # This is obviously a short term hack

@@ -1,0 +1,114 @@
+package org.python.util;
+import org.python.core.*;
+
+public class InteractiveConsole extends InteractiveInterpreter {
+    public String filename;
+    public InteractiveConsole() { this(null, "<console>"); }
+    public InteractiveConsole(PyObject locals) {
+        this(locals, "<console>");
+    }
+    public InteractiveConsole(PyObject locals, String filename) {
+        super(locals);
+        this.filename = filename;
+    }
+
+    /**Closely emulate the interactive Python console.
+
+        The optional banner argument specify the banner to print
+        before the first interaction; by default it prints a banner
+        similar to the one printed by the real Python interpreter,
+        followed by the current class name in parentheses (so as not
+        to confuse this with the real interpreter -- since it's so
+        close!).**/
+    public void interact() {
+        interact(getDefaultBanner());
+    }
+
+    public static String getDefaultBanner() {
+	return "JPython "+PySystemState.version+" on "+
+	    PySystemState.platform+"\n"+PySystemState.copyright;
+    }
+
+    public void interact(String banner) {
+        if (banner != null) {
+            write(banner);
+            write("\n");
+        }
+
+    	// Dummy exec in order to speed up response on first command
+    	exec("2");
+        //System.err.println("interp2");
+        boolean more = false;
+        while (true) {
+            PyObject prompt = more ? systemState.ps2 : systemState.ps1;
+            String line;
+            try {
+                line = raw_input(prompt);
+            } catch (PyException exc) {
+                if (!Py.matchException(exc, Py.EOFError)) throw exc;
+                write("\n");
+                break;
+            }
+            more = push(line);
+        }
+    }
+
+    /**Push a line to the interpreter.
+
+        The line should not have a trailing newline; it may have
+        internal newlines.  The line is appended to a buffer and the
+        interpreter's runsource() method is called with the
+        concatenated contents of the buffer as source.  If this
+        indicates that the command was executed or invalid, the buffer
+        is reset; otherwise, the command is incomplete, and the buffer
+        is left as it was after the line was appended.  The return
+        value is 1 if more input is required, 0 if the line was dealt
+        with in some way (this is the same as runsource()).
+    **/
+
+    public boolean push(String line) {
+        if (buffer.length() > 0) buffer.append("\n");
+        buffer.append(line);
+        boolean more = runsource(buffer.toString(), filename);
+        if (!more) resetbuffer();
+        return more;
+    }
+
+    /**Write a prompt and read a line.
+
+        The returned line does not include the trailing newline.
+        When the user enters the EOF key sequence, EOFError is raised.
+
+        The base implementation uses the built-in function
+        raw_input(); a subclass may replace this with a different
+        implementation.
+    **/
+    public String raw_input(PyObject prompt) {
+        return __builtin__.raw_input(prompt);
+    }
+
+    /** Pause the current code, sneak an exception raiser into sys.trace_func,
+    and then continue the code hoping that JPython will get control to do the break;
+    **/
+    public void interrupt(ThreadState ts) throws InterruptedException {
+        TraceFunction breaker = new BreakTraceFunction();
+        TraceFunction oldTrace = ts.systemState.tracefunc;
+        ts.systemState.tracefunc = breaker;
+        if (ts.frame != null)
+            ts.frame.tracefunc = breaker;
+        ts.systemState.tracefunc = oldTrace;
+        //ts.thread.join();
+    }
+}
+
+class BreakTraceFunction extends TraceFunction {
+    private void doBreak() {
+        throw new Error("Python interrupt");
+        //Thread.currentThread().interrupt();
+    }
+
+    public TraceFunction traceCall(PyFrame frame) { doBreak(); return null; }
+    public TraceFunction traceReturn(PyFrame frame, PyObject ret) { doBreak(); return null;}
+    public TraceFunction traceLine(PyFrame frame, int line) { doBreak(); return null;}
+    public TraceFunction traceException(PyFrame frame, PyException exc) { doBreak(); return null;}
+}

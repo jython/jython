@@ -1,0 +1,96 @@
+package org.python.util;
+import org.python.core.*;
+
+public class InteractiveInterpreter extends PythonInterpreter {
+    public InteractiveInterpreter() { super(); }
+    public InteractiveInterpreter(PyObject locals) {
+        super(locals);
+    }
+
+    /**Compile and run some source in the interpreter.
+
+        Arguments are as for compile_command().
+
+        One several things can happen:
+
+        1) The input is incorrect; compile_command() raised an
+        exception (SyntaxError or OverflowError).  A syntax traceback
+        will be printed by calling the showsyntaxerror() method.
+
+        2) The input is incomplete, and more input is required;
+        compile_command() returned None.  Nothing happens.
+
+        3) The input is complete; compile_command() returned a code
+        object.  The code is executed by calling self.runcode() (which
+        also handles run-time exceptions, except for SystemExit).
+
+        The return value is 1 in case 2, 0 in the other cases (unless
+        an exception is raised).  The return value can be used to
+        decide whether to use sys.ps1 or sys.ps2 to prompt the next
+        line.**/
+    public boolean runsource(String source) {
+        return runsource(source, "<input>", "single");
+    }
+
+    public boolean runsource(String source, String filename) {
+        return runsource(source, filename, "single");
+    }
+    public boolean runsource(String source, String filename, String symbol) {
+        PyObject code;
+        try {
+            code = org.python.modules.codeop.compile_command(source, filename, symbol);
+        } catch (PyException exc) {
+            if (Py.matchException(exc, Py.SyntaxError)) {
+                // Case 1
+                showexception(exc);
+                return false;
+            } else {
+                throw exc;
+            }
+        }
+
+        // Case 2
+        if (code == Py.None) return true;
+
+        // Case 3
+        runcode(code);
+        return false;
+    }
+
+    /**
+    execute a code object.
+
+        When an exception occurs, self.showtraceback() is called to
+        display a traceback.  All exceptions are caught except
+        SystemExit, which is reraised.
+
+        A note about KeyboardInterrupt: this exception may occur
+        elsewhere in this code, and may not always be caught.  The
+        caller should be prepared to deal with it.
+    **/
+    // Make this run in another thread somehow????
+    public void runcode(PyObject code) {
+        try {
+            exec(code);
+        } catch (PyException exc) {
+            if (Py.matchException(exc, Py.SystemExit)) throw exc;
+            showexception(exc);
+        }
+    }
+
+    public void showexception(PyException exc) {
+        // Should probably add code to handle skipping top stack frames somehow...
+        write(exc.toString());
+    }
+
+    public void write(String data) {
+        Py.stderr.write(data);
+    }
+
+    public StringBuffer buffer = new StringBuffer();
+    public String filename="<stdin>";
+
+    public void resetbuffer() {
+        buffer.setLength(0);
+    }
+}
