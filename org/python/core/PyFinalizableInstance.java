@@ -1,4 +1,4 @@
-// Copyright =A9 Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 // These are just like normal instances, except that their classes included
 // a definition for __del__(), i.e. Python's finalizer.  These two instance
 // types have to be separated due to Java performance issues.

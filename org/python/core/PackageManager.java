@@ -1,4 +1,4 @@
-// Copyright © Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 // Copyright 2000 Samuele Pedroni
 
 package org.python.core;

@@ -1,4 +1,4 @@
-// Copyright © Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 
 // Implementation of the standard Python list objects
 

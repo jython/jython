@@ -1,4 +1,4 @@
-// Copyright © Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
 

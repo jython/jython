@@ -2,7 +2,7 @@
  * Copyright 1998 Finn Bock.
  *
  * This program contains material copyrighted by:
- * Copyright © 1991-1995 by Stichting Mathematisch Centrum, Amsterdam,
+ * Copyright (c) 1991-1995 by Stichting Mathematisch Centrum, Amsterdam,
  * The Netherlands.
  */
 

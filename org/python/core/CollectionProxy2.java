@@ -1,4 +1,4 @@
-// Copyright © Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 
 /* Support for java-1.2 collections
 This will only compile with jdk-1.2 or later.

@@ -1,4 +1,4 @@
-// Copyright © Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 
 // An implementation of the Python standard time module.  Currently
 // unimplemented:

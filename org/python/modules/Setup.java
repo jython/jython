@@ -1,4 +1,4 @@
-// Copyright © Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 package org.python.modules;
 
 // This is sort of analogous to CPython's Modules/Setup file.  Use this to

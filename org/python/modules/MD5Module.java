@@ -1,4 +1,4 @@
-// Copyright © Corporation for National Research Initiatives
+// Copyright (c) Corporation for National Research Initiatives
 
 // This is a JPython module wrapper around Harry Mantakos' md.java class,
 // which provides the basic MD5 algorithm.  See also MD5Object.java which

@@ -10,7 +10,7 @@ public class sha {
 
     public static String __doc__ =
         "* Cryptix General License\n" +
-        "* Copyright © 1995, 1996, 1997, 1998, 1999, 2000 The Cryptix"+
+        "* Copyright (c) 1995, 1996, 1997, 1998, 1999, 2000 The Cryptix"+
         " Foundation\n" +
         "* Limited. All rights reserved.\n" +
         "* \n" +
