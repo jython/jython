@@ -605,21 +605,21 @@ public class PyObject implements java.io.Serializable {
 
 
     /**
-     * Return an iterator that is used to iterate the element of this 
+     * Return an iterator that is used to iterate the element of this
      * sequence.
      * From version 2.2, this method is the primary protocol for looping
      * over sequences.
      * <p>
      * If a PyObject subclass should support iteration based in the
      * __finditem__() method, it must supply an implementation of __iter__()
-     * like this: 
+     * like this:
      * <pre>
      *    public PyObject __iter__() {
      *        return new PySequenceIter(this);
      *    }
      * </pre>
-     * 
-     * When iterating over a python sequence from java code, it should be 
+     *
+     * When iterating over a python sequence from java code, it should be
      * done with code like this:
      * <pre>
      *    PyObject iter = seq.__iter__();
@@ -660,6 +660,7 @@ public class PyObject implements java.io.Serializable {
      * @return the value corresponding to name or null if name is not found
      **/
     public PyObject __findattr__(PyString name) {
+        if(name == null) { return null; }
         return __findattr__(name.internedString());
     }
 
