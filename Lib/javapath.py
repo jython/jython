@@ -216,3 +216,13 @@ def normpath(path):
 # Return an absolute path.
 def abspath(path):
     return File(path).getAbsolutePath()
+
+
+def getsize(path):
+    f = File(path)
+    size = f.length()
+    # Sadly, if the returned length is zero, we don't really know if the file
+    # is zero sized or does not exist.
+    if size == 0 and not f.exists():
+        raise OSError(0, 'No such file or directory', path)
+    return size
