@@ -75,6 +75,7 @@ public class CodeCompiler extends Visitor
     public void setline(int line) throws Exception {
         //System.out.println("line: "+line+", "+code.stack);
         if (module.linenumbers) {
+            code.setline(line);
             loadFrame();
             code.iconst(line);
             if (mrefs.setline == 0) {

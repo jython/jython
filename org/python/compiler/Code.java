@@ -31,6 +31,7 @@ public class Code extends Attribute
     int nlocals;
     int att_name;
     Vector labels, exceptions;
+    LineNumberTable linenumbers;
 
     public Label getLabel() {
         Label l = new Label(this);
@@ -128,6 +129,8 @@ public class Code extends Attribute
 
         int n = exceptions.size();
         int length = bytes.length+12+8*n;;
+        if (linenumbers != null)
+            length += linenumbers.length();
         stream.writeShort(att_name);
         stream.writeInt(length);
         stream.writeShort(max_stack);
@@ -144,7 +147,10 @@ public class Code extends Attribute
             stream.writeShort(e.handler.getPosition());
             stream.writeShort(e.exc);
         }
-        ClassFile.writeAttributes(stream, new Attribute[0]);
+        if (linenumbers != null)
+            ClassFile.writeAttributes(stream, new Attribute[] { linenumbers });
+        else
+            ClassFile.writeAttributes(stream, new Attribute[0]);
     }
 
     public void push(int i) {
@@ -506,5 +512,11 @@ public class Code extends Attribute
         for(int i=0; i<labels.length; i++) {
             labels[i].setBranch(position, 4);
         }
+    }
+
+    public void setline(int line) throws IOException {
+        if (linenumbers == null)
+            linenumbers = new LineNumberTable(pool);
+        linenumbers.addLine(size(), line);
     }
 }
