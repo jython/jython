@@ -36,7 +36,6 @@ public class StdoutWrapper extends OutputStream {
                     f = new PyFile(w, "<java Writer>");
                 }
             }
-            
             if (f != null) {
                 setObject(ss, f);
                 return f;
@@ -90,7 +89,6 @@ public class StdoutWrapper extends OutputStream {
                 obj.invoke("write", Py.Newline);
             }
             obj.invoke("flush");
-
             obj.__setattr__("softspace", Py.Zero);
         }
     }
@@ -102,11 +100,14 @@ public class StdoutWrapper extends OutputStream {
         if (obj instanceof PyFile) {
             PyFile file = (PyFile)obj;
             String s = string.toString();
-            if (newline) s = s+"\n";
-            if (file.softspace) s = " "+s;
+            if (newline)
+		s = s+"\n";
+            if (file.softspace)
+		s = " "+s;
             file.write(s);
             file.flush();
-            if (space && s.endsWith("\n")) space = false;
+            if (space && s.endsWith("\n"))
+		space = false;
             file.softspace = space;
         } else {
             PyObject ss = obj.__findattr__("softspace");
@@ -114,10 +115,12 @@ public class StdoutWrapper extends OutputStream {
                 obj.invoke("write", Py.Space);
             }
             obj.invoke("write", string);
-            if (newline) obj.invoke("write", Py.Newline);
-            obj.invoke("flush");
+            if (newline)
+		obj.invoke("write", Py.Newline);
+	    obj.invoke("flush");
 
-            if (space && string.toString().endsWith("\n")) space = false;
+            if (space && string.toString().endsWith("\n"))
+		space = false;
             obj.__setattr__("softspace", space ? Py.One : Py.Zero);
         }
     }
@@ -158,5 +161,4 @@ public class StdoutWrapper extends OutputStream {
             obj.__setattr__("softspace", Py.Zero);
         }
     }
-
 }
