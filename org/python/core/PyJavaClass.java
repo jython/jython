@@ -641,14 +641,14 @@ public class PyJavaClass extends PyClass {
         }
     }
     
-    PyObject lookup(String name, boolean stop_at_java) {
+    PyObject[] lookupGivingClass(String name, boolean stop_at_java) {
         if (stop_at_java)
             return null;
         if (!initialized)
             initialize();
         if (name == "__init__") {
             initConstructors();
-            return __init__;
+            return new PyObject[] {__init__, null};
         }
         
         // For backwards compatibilty, support keyword_ as a substitute for
@@ -658,7 +658,7 @@ public class PyJavaClass extends PyClass {
             if (newName != null)
                 name = newName;
         }
-        return super.lookup(name, stop_at_java);
+        return super.lookupGivingClass(name, stop_at_java);
     }
 
     public PyObject __dir__() {
