@@ -541,8 +541,8 @@ public class __builtin__ implements ClassDictInit
         PyObject[] iters = new PyObject[n];
 
         for (int j = 0; j < n; j++) {
-            iters[j] = Py.iter(argstar[j+1], "argument " + j + "to map() " +
-                                             "must support iteration");
+            iters[j] = Py.iter(argstar[j+1], "argument " + (j+1) +
+                               " to map() must support iteration");
         }
 
         while (true) {
