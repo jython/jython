@@ -36,7 +36,7 @@ class FindIssue(saxutils.DefaultHandler):
             match += 1
 
 parser = make_parser()
-#parser.setFeature(feature_namespaces,0)
+parser.setFeature(feature_namespaces,0)
 dh = FindIssue('Sandman', '62')
 parser.setContentHandler(dh)
 
