@@ -131,26 +131,6 @@ def getJavaClass(c):
 
 
 
-def makeJavaProxy(module, pyc):
-    frame = pyc.frame
-    methods = []
-    for name, func in frame.names.items():
-        v = func.value
-        args = None
-        if hasattr(v, 'frame'):
-            args = v.frame.scope.ac
-        sig = None
-        if hasattr(v, 'doc'):
-            if name == "__init__":
-                sig = getsig(v.doc, args, constructor=1)
-            else:
-                sig = getsig(v.doc, args, constructor=0)
-        methods.append( (name, args, sig) )
-    supername = None
-    if pyc.isSuperclassJava():
-        return proxies.JavaProxy(pyc.name, pyc.supername, 
-                                pyc.javaclasses, methods, module, pyc.issuperproxy)
-    return None
 
 
 
@@ -315,13 +295,37 @@ class Compiler:
 
             if prefixes.has_key(name):
                 del self.packages[name]
+                
+    def makeJavaProxy(self, module, pyc):
+        frame = pyc.frame
+        methods = []
+        for name, func in frame.names.items():
+            v = func.value
+            args = None
+            if hasattr(v, 'frame'):
+                args = v.frame.scope.ac
+            sig = None
+            if hasattr(v, 'doc'):
+                if name == "__init__":
+                    sig = getsig(v.doc, args, constructor=1)
+                else:
+                    sig = getsig(v.doc, args, constructor=0)
+            methods.append( (name, args, sig) )
+        if pyc.isSuperclassJava():
+            supername, pySupername = pyc.supername, pyc.pySupername
+            if supername and supername[0] == ':':
+                supername = supername[1:]
+                if self.javapackage: supername = self.javapackage + '.' + supername
+            return proxies.JavaProxy(pyc.name, (supername, pySupername), 
+                                    pyc.javaclasses, methods, module, pyc.issuperproxy)
+        return None
 
-    def processModule(self, mod, outdir):
+    def preprocessModule(self, mod):
         self.write('  %s module' % mod.name)
         proxyClasses = []
         mainProxy = None
         for name, pyc in mod.classes.items():
-            proxy = makeJavaProxy(mod, pyc.value)
+            proxy = self.makeJavaProxy(mod, pyc.value)
             if proxy is None:
                 continue
 
@@ -353,6 +357,7 @@ class Compiler:
 
         mod.specialClasses = specialClasses
 
+    def processModule(self,mod,outdir):
         self.javasources.append(mod.dump(outdir))
         if self.options.bean is not None:
             mod.javaclasses[0] = mod.javaclasses[0], {'Java-Bean':'True'}
@@ -384,8 +389,13 @@ class Compiler:
         self.write('\nCreating .java files:')
         for filename, mod in self.modules.items():
             mod.modules = Compiler.allmodules
-            self.processModule(mod, outdir)
+            self.preprocessModule(mod)
 
+        #self.write('\n...')
+
+        for filename, mod in self.modules.items():
+            self.processModule(mod,outdir)
+        
         self.java2class(outdir)
 
     def java2class(self, outdir):

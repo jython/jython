@@ -191,6 +191,24 @@ class PyClass(FixedObject):
 
         return jast.InvokeStatic("Py", "makeClass", args)
 
+    # proper logic for retrieving superproxy name
+    def _takeSupername(self,cls,mod,modname = None):
+        if modname is None:
+            modname = ""
+            if mod.package: modname = mod.package+'.'
+            modname += mod.name
+        self.javaclasses.extend(cls.javaclasses)
+        self.proxyname = self.name
+        self.supername = None
+        self.issuperproxy = 1
+        full_py = modname + '.' + cls.name
+        if cls.name != mod.name:
+            self.pySupername = self.supername = full_py
+        else:
+            self.pySupername = full_py
+            self.supername = modname
+        self.supername = ':'+self.supername # ':' => Compiler will in case prefix this with opts.javapackage
+
     def isSuperclassJava(self):
         if hasattr(self, 'javaclasses'):
             return len(self.javaclasses)
@@ -198,6 +216,7 @@ class PyClass(FixedObject):
         self.javaclasses = []
         self.proxyname = None
         self.supername = None
+        self.pySupername = None
         self.issuperproxy = 0
         import compile
         for base in self.bases:
@@ -217,10 +236,7 @@ class PyClass(FixedObject):
                     continue
             if isinstance(base, PyClass):
                 if base.isSuperclassJava():
-                    self.javaclasses.extend(base.javaclasses)
-                    self.proxyname = self.name
-                    self.supername = base.name
-                    self.issuperproxy = 1
+                    self._takeSupername(base,base.def_compiler.module)
                     continue
             if isinstance(base, PyNamespace):
                 names = base.name.split('.')
@@ -231,12 +247,7 @@ class PyClass(FixedObject):
                         cls = mod.classes.get(names[-1], None)
                         if cls:
                             if cls.value.isSuperclassJava():
-                                self.javaclasses.extend(cls.value.javaclasses)
-                                self.proxyname = self.name
-                                self.supername = cls.value.name
-                                self.issuperproxy = 1
-                                if cls.value.name != mod.name:
-                                    self.supername = mod.name + '.' + self.supername
+                                self._takeSupername(cls.value,mod,modname = modname)
                                 continue
 
         if len(self.javaclasses) and self.supername == None:

@@ -116,7 +116,7 @@ class JavaProxy:
                        issuperproxy = 1):
         self.bases = bases
         self.name = name
-        self.supername = supername
+        self.supername, self.pySupername = supername
         self.methods = methods
         self.issuperproxy = 0 #issuperproxy
 
@@ -143,6 +143,7 @@ class JavaProxy:
         self.interfaces = []
 
         self.jmethods = {}
+        self.jabstract = {}
         self.supermethods = {}
         for base in bases:
             self.addMethods(base)
@@ -160,6 +161,52 @@ class JavaProxy:
 
         self.innerClasses = []
 
+        # gather info about methods, and methods requiring a super__foo counterpart
+        self.superproxy = self
+        self.myCandSupermethods = []
+        self.candSupermethods = None
+        self.methodsMemo = []
+        self.prepMethods()
+
+    def __repr__(self): return "<JavaProxy %s.%s>" % (self.modname,self.name)
+
+    def getSuperproxy(self):
+        if self.superproxy is not self:
+            return self.superproxy
+        supername = self.pySupername
+        if supername is None: return None
+        modules = self.module.modules
+        parts = supername.split('.')
+        modname = '.'.join(parts[0:-1])
+        dmodname = parts[-2]
+        supername = parts[-1]
+        superproxy = None
+        if modules.has_key(modname):
+            mod = modules[modname]
+            if dmodname == supername:
+                superproxy = getattr(mod,'javaproxy',None)
+            else:
+                for px in getattr(mod,'innerClasses',[]):
+                    if isinstance(px,JavaProxy) and px.name == supername:
+                        superproxy = px
+                        break
+        self.superproxy = superproxy
+        return superproxy
+
+    def getCandSupermethods(self,incl):
+        if incl and self.candSupermethods is not None:
+            return self.candSupermethods
+        px = self.getSuperproxy()
+        if px is not None:
+            cands = px.getCandSupermethods(incl = 1)[:]
+        else:
+            cands = []
+        if incl:
+            cands.extend(self.myCandSupermethods)
+            self.candSupermethods = cands
+        return cands
+        
+
     def dumpAll(self):
         self.statements = []
         self.dumpInnerClasses()
@@ -173,10 +220,10 @@ class JavaProxy:
         for ic in self.innerClasses:
             self.statements.append(ic)
 
-    def dumpMethods(self):
+    def prepMethods(self):
         names = self.jmethods.keys()
         names.sort()
-        #print 'adding methods', self.name, names
+        #print 'preparing adding methods', self.name, names
         pymethods = {}
         for name, args, sigs in self.methods:
             pymethods[name] = 1
@@ -188,12 +235,18 @@ class JavaProxy:
 
                 #print sigs
                 for access, ret, sig, throws in sigs:
-                    self.callMethod(name, access, ret, sig, throws, 0)
+                    dosuper = 0
                     if self.jmethods.has_key(name):
                         x = filter(lambda c: isinstance(c, TupleType), sig)
                         x = tuple(map(lambda c: c[0], x))
                         if self.jmethods[name].has_key(x):
                             del self.jmethods[name][x]
+                            if not self.jabstract[name][x]:
+                                dosuper = 1
+                                self.myCandSupermethods.append(name)
+
+                    self.methodsMemo.append(('n',name, access, ret, sig, throws,
+                                             dosuper))
 
         for name in names:
             for sig, (access, ret, throws) in self.jmethods[name].items():
@@ -203,21 +256,30 @@ class JavaProxy:
                     if isFinal(access):
                      	access = access & ~FINAL
                         access = access & ~PROTECTED | PUBLIC
-                        self.callSuperMethod(name, "super__" + name, 
-                              access, ret, sig, throws)
+                        self.methodsMemo.append(('s',name, "super__" + name,
+                                                 access, ret, sig, throws))
 		    	continue
                 elif isFinal(access):
                     continue
 
-                if isAbstract(access):
+                if self.jabstract[name][sig]: #isAbstract(access):
                     access = access & ~PROTECTED | PUBLIC
-                    self.callMethod(name, access, ret, sig, throws, 0)
+                    self.methodsMemo.append(('n',name, access, ret, sig, throws,
+                                             0))                    
                 elif pymethods.has_key(name):
                     access = access & ~PROTECTED | PUBLIC
-                    self.callMethod(name, access, ret, sig, throws, 1)
+                    self.methodsMemo.append(('n',name, access, ret, sig, throws,
+                                             1))
+                    self.myCandSupermethods.append(name)
                 elif isProtected(access):
                     access = access & ~PROTECTED | PUBLIC
-                    self.callSuperMethod(name, name, access, ret, sig, throws)
+                    self.methodsMemo.append(('s',name, name,
+                                             access, ret, sig, throws))
+
+    def dumpMethods(self): # use info gathered by prepMethods
+        dispatch = { 's': self.callSuperMethod, 'n': self.callMethod }
+        for m in self.methodsMemo:
+            apply(dispatch[m[0]],m[1:])
 
     def dumpConstructors(self):
         if self.initsigs is not None:
@@ -233,9 +295,11 @@ class JavaProxy:
         for name, value in self.jmethods.items():
             if len(value) == 0:
                 del self.jmethods[name]
+                del self.jabstract[name]
 
     def addMethods(self, c):
         #print 'adding', c.__name__, c.getDeclaredMethods()
+
         for method in c.getDeclaredMethods():
             #Check that it's not already included
             name = method.name
@@ -243,11 +307,13 @@ class JavaProxy:
             ret = method.returnType
 
             mdict = aget(self.jmethods, name, {})
-
-            if mdict.has_key(sig):
-                continue
+            absdict = aget(self.jabstract, name, {})
 
             access = method.modifiers
+
+            if mdict.has_key(sig):
+                if not isAbstract(access): absdict[sig] = 0
+                continue
 
             if isPrivate(access) or isStatic(access):
                 continue
@@ -265,6 +331,7 @@ class JavaProxy:
 
             throws = method.exceptionTypes
             mdict[sig] = access, ret, throws
+            absdict[sig] = isAbstract(access)
 
         sc = c.getSuperclass()
         if sc is not None:
@@ -363,7 +430,7 @@ class JavaProxy:
                 supercall = jast.Return(supercall)
 
             supermethod = None
-            if not self.issuperproxy:
+            if not self.issuperproxy and name not in self.getCandSupermethods(incl=0):
                 supermethod = jast.Method("super__"+name,
                                       jast.Modifier.ModifierString(access), 
                                       args, jast.Block([supercall]), throws)
