@@ -557,6 +557,54 @@ public class PyString extends PySequence implements ClassDictInit
         return c < 0 ? -1 : c > 0 ? 1 : 0;
     }
 
+    public PyObject __eq__(PyObject other) {
+        String s = coerce(other);
+        if (s == null)
+            return null;
+        return string.equals(s) ? Py.One : Py.Zero;
+    }
+
+    public PyObject __ne__(PyObject other) {
+        String s = coerce(other);
+        if (s == null)
+            return null;
+        return string.equals(s) ? Py.Zero : Py.One;
+    }
+
+    public PyObject __lt__(PyObject other) {
+        String s = coerce(other);
+        if (s == null)
+            return null;
+        return string.compareTo(s) < 0 ? Py.One : Py.Zero;
+    }
+
+    public PyObject __le__(PyObject other) {
+        String s = coerce(other);
+        if (s == null)
+            return null;
+        return string.compareTo(s) <= 0 ? Py.One : Py.Zero;
+    }
+
+    public PyObject __gt__(PyObject other) {
+        String s = coerce(other);
+        if (s == null)
+            return null;
+        return string.compareTo(s) > 0 ? Py.One : Py.Zero;
+    }
+
+    public PyObject __ge__(PyObject other) {
+        String s = coerce(other);
+        if (s == null)
+            return null;
+        return string.compareTo(s) >= 0 ? Py.One : Py.Zero;
+    }
+
+    private static String coerce(PyObject o) {
+        if (o instanceof PyString)
+            return o.toString();
+        return null;
+    }
+
     public int hashCode() {
         if (cached_hashcode == 0)
             cached_hashcode = string.hashCode();

@@ -430,6 +430,30 @@ public class PyInstance extends PyObject
         throw Py.TypeError("__cmp__() must return int");
     }
 
+    public PyObject __lt__(PyObject o) {
+        return invoke_ex("__lt__", o);
+    }
+
+    public PyObject __le__(PyObject o) {
+        return invoke_ex("__le__", o);
+    }
+
+    public PyObject __gt__(PyObject o) {
+        return invoke_ex("__gt__", o);
+    }
+
+    public PyObject __ge__(PyObject o) {
+        return invoke_ex("__ge__", o);
+    }
+
+    public PyObject __eq__(PyObject o) {
+        return invoke_ex("__eq__", o);
+    }
+
+    public PyObject __ne__(PyObject o) {
+        return invoke_ex("__ne__", o);
+    }
+
     public boolean __nonzero__() {
         PyObject ret = invoke_ex("__nonzero__");
         if (ret != null) {

@@ -184,22 +184,83 @@ abstract public class PySequence extends PyObject
         return __len__() != 0;
     }
 
-    public synchronized int __cmp__(PyObject ob_other) {
-        if (ob_other.__class__ != __class__)
-            return -2;
-                
-        PySequence other = (PySequence)ob_other;
-        int s1 = __len__();
-        int s2 = other.__len__();
-        int len = (s1 > s2) ? s2 : s1;
-
-        for (int i=0; i<len; i++) {
-            int c = get(i)._cmp(other.get(i));
-            if (c != 0)
-                return c;
-        }
-        return s1 < s2 ? -1 : (s1 > s2 ? 1: 0);
+    public synchronized PyObject __eq__(PyObject o) {
+        if (o.__class__ != __class__)
+            return null;
+        int tl = __len__();
+        int ol = o.__len__();
+        if (tl != ol)
+            return Py.Zero;
+        int i = cmp(this, tl, o, ol);
+        return (i < 0) ? Py.One : Py.Zero;
     }
+
+    public synchronized PyObject __ne__(PyObject o) {
+        if (o.__class__ != __class__)
+            return null;
+        int tl = __len__();
+        int ol = o.__len__();
+        if (tl != ol)
+            return Py.One;
+        int i = cmp(this, tl, o, ol);
+        return (i < 0) ? Py.Zero : Py.One;
+    }
+
+    public synchronized PyObject __lt__(PyObject o) {
+        if (o.__class__ != __class__)
+            return null;
+        int i = cmp(this, -1, o, -1);
+        if (i < 0)
+            return (i == -1) ? Py.One : Py.Zero;
+        return __finditem__(i)._lt(o.__finditem__(i));
+    }
+
+    public synchronized PyObject __le__(PyObject o) {
+        if (o.__class__ != __class__)
+            return null;
+        int i = cmp(this, -1, o, -1);
+        if (i < 0)
+            return (i == -1 || i == -2) ? Py.One : Py.Zero;
+        return __finditem__(i)._le(o.__finditem__(i));
+    }
+
+    public synchronized PyObject __gt__(PyObject o) {
+        if (o.__class__ != __class__)
+            return null;
+        int i = cmp(this, -1, o, -1);
+        if (i < 0)
+            return (i == -3) ? Py.One : Py.Zero;
+        return __finditem__(i)._gt(o.__finditem__(i));
+    }
+
+    public synchronized PyObject __ge__(PyObject o) {
+        if (o.__class__ != __class__)
+            return null;
+        int i = cmp(this, -1, o, -1);
+        if (i < 0)
+            return (i == -3 || i == -2) ? Py.One : Py.Zero;
+        return __finditem__(i)._ge(o.__finditem__(i));
+    }
+
+    // Return value >= 0 is the index where the sequences differs.
+    // -1: reached the end of o1 without a difference
+    // -2: reached the end of both seqeunces without a difference
+    // -3: reached the end of o2 without a difference
+    private static int cmp(PyObject o1, int ol1, PyObject o2, int ol2) {
+        if (ol1 < 0)
+            ol1 = o1.__len__();
+        if (ol2 < 0)
+            ol2 = o2.__len__();
+        int i = 0;
+        for ( ; i < ol1 && i < ol2; i++) {
+            if (!o1.__getitem__(i)._eq(o2.__getitem__(i)).__nonzero__())
+                return i; 
+        }
+        if (ol1 == ol2) 
+            return -2;
+        return (ol1 < ol2) ? -1 : -3;
+    }
+
 
     // Return a copy of a sequence where the __len__() method is 
     // telling the thruth.

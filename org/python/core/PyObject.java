@@ -174,7 +174,7 @@ public class PyObject implements java.io.Serializable {
     **/
     public boolean equals(Object ob_other) {
         return (ob_other instanceof PyObject) &&
-            _cmp((PyObject)ob_other) == 0;
+            _eq((PyObject)ob_other).__nonzero__();
     }
 
     /**
@@ -824,6 +824,19 @@ public class PyObject implements java.io.Serializable {
     }
 
 
+    public PyObject __eq__(PyObject other) { return null; }
+
+    public PyObject __ne__(PyObject other) { return null; }
+
+    public PyObject __le__(PyObject other) { return null; }
+
+    public PyObject __lt__(PyObject other) { return null; }
+
+    public PyObject __ge__(PyObject other) { return null; }
+
+    public PyObject __gt__(PyObject other) { return null; }
+
+
     /**
        Implements cmp(this, other)
     
@@ -919,28 +932,166 @@ public class PyObject implements java.io.Serializable {
             Py.id(this.__class__) < Py.id(o2_in.__class__) ? -1 : 1;
     }
 
+
+    private final static PyObject check_recursion(ThreadState ts, PyObject o1, PyObject o2) {
+        PyDictionary stateDict = ts.getCompareStateDict();
+
+        PyObject pair = o1.make_pair(o2);
+        
+        if (stateDict.__finditem__(pair) != null)
+            return null;
+
+        stateDict.__setitem__(pair, pair);
+        return pair;
+    }
+
+    private final static void delete_token(ThreadState ts, PyObject token) {
+        if (token == null)
+            return;
+        PyDictionary stateDict = ts.getCompareStateDict();
+
+        stateDict.__delitem__(token);
+    }
+
+
     public final PyObject _eq(PyObject o) {
-        return _cmp(o) == 0 ? Py.One : Py.Zero;
+        PyObject token = null;
+
+        ThreadState ts = Py.getThreadState();
+        try {
+            if (++ts.compareStateNesting > 10) {
+                if ((token = check_recursion(ts, this, o)) == null)
+                    return Py.One;
+            }
+            PyObject res = __eq__(o);
+            if (res != null)
+                return res;
+            res = o.__eq__(this);
+            if (res != null)
+                return res;
+            return _cmp_unsafe(o) == 0 ? Py.One : Py.Zero;
+        } finally {
+            delete_token(ts, token);
+            ts.compareStateNesting--;
+        }
     }
+
+
     public final PyObject _ne(PyObject o) {
-        return _cmp(o) != 0 ? Py.One : Py.Zero;
+        PyObject token = null;
+
+        ThreadState ts = Py.getThreadState();
+        try {
+            if (++ts.compareStateNesting > 10) {
+                if ((token = check_recursion(ts, this, o)) == null)
+                    return Py.Zero;
+            }
+            PyObject res = __ne__(o);
+            if (res != null)
+                return res;
+            res = o.__ne__(this);
+            if (res != null)
+                return res;
+            return _cmp_unsafe(o) != 0 ? Py.One : Py.Zero;
+        } finally {
+            delete_token(ts, token);
+            ts.compareStateNesting--;
+        }
     }
+
     public final PyObject _le(PyObject o) {
-        return _cmp(o) <= 0 ? Py.One : Py.Zero;
+        PyObject token = null;
+
+        ThreadState ts = Py.getThreadState();
+        try {
+            if (++ts.compareStateNesting > 10) {
+                if ((token = check_recursion(ts, this, o)) == null)
+                    throw Py.ValueError("can't order recursive values");
+            }
+            PyObject res = __le__(o);
+            if (res != null)
+                return res;
+            res = o.__ge__(this);
+            if (res != null)
+                return res;
+            return _cmp_unsafe(o) <= 0 ? Py.One : Py.Zero;
+        } finally {
+            delete_token(ts, token);
+            ts.compareStateNesting--;
+        }
     }
+
     public final PyObject _lt(PyObject o) {
-        return _cmp(o) < 0 ? Py.One : Py.Zero;
+        PyObject token = null;
+
+        ThreadState ts = Py.getThreadState();
+        try {
+            if (++ts.compareStateNesting > 10) {
+                if ((token = check_recursion(ts, this, o)) == null)
+                    throw Py.ValueError("can't order recursive values");
+            }
+            PyObject res = __lt__(o);
+            if (res != null)
+                return res;
+            res = o.__gt__(this);
+            if (res != null)
+                return res;
+            return _cmp_unsafe(o) < 0 ? Py.One : Py.Zero;
+        } finally {
+            delete_token(ts, token);
+            ts.compareStateNesting--;
+        }
     }
+
     public final PyObject _ge(PyObject o) {
-        return _cmp(o) >= 0 ? Py.One : Py.Zero;
+        PyObject token = null;
+
+        ThreadState ts = Py.getThreadState();
+        try {
+            if (++ts.compareStateNesting > 10) {
+                if ((token = check_recursion(ts, this, o)) == null)
+                    throw Py.ValueError("can't order recursive values");
+            }
+            PyObject res = __ge__(o);
+            if (res != null)
+                return res;
+            res = o.__le__(this);
+            if (res != null)
+                return res;
+            return _cmp_unsafe(o) >= 0 ? Py.One : Py.Zero;
+        } finally {
+            delete_token(ts, token);
+            ts.compareStateNesting--;
+        }
     }
+
     public final PyObject _gt(PyObject o) {
-        return _cmp(o) > 0 ? Py.One : Py.Zero;
+        PyObject token = null;
+
+        ThreadState ts = Py.getThreadState();
+        try {
+            if (++ts.compareStateNesting > 10) {
+                if ((token = check_recursion(ts, this, o)) == null)
+                    throw Py.ValueError("can't order recursive values");
+            }
+            PyObject res = __gt__(o);
+            if (res != null)
+                return res;
+            res = o.__lt__(this);
+            if (res != null)
+                return res;
+            return _cmp_unsafe(o) > 0 ? Py.One : Py.Zero;
+        } finally {
+            delete_token(ts, token);
+            ts.compareStateNesting--;
+        }
+
     }
 
     public PyObject _is(PyObject o) {
         return this == o ? Py.One : Py.Zero;
     }
+
     public PyObject _isnot(PyObject o) {
         return this != o ? Py.One : Py.Zero;
     }
