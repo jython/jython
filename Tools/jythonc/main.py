@@ -31,7 +31,7 @@ where options include:
   --addpackages packages
   -A packages
       Include Java dependencies from this list of packages.  Default is
-      org.python.modules and com.oroinc.text.regex
+      org.python.modules and org.apache.oro.text.regex
       
   --workdir directory
   -w directory
@@ -62,26 +62,16 @@ where options include:
       Print this message and exit
 """
 
-from compile import Compiler
-import sys, string, os
+import sys
+import os
 import getopt
+from types import TupleType
+
+from compile import Compiler
                 
 
 
-def addCore(extraPackages):
-    skiplist = ['org.python.core.parser',
-                'org.python.core.BytecodeLoader',
-                'org.python.core.jpython',
-                ]
-    extraPackages.append(('org.python.core', skiplist))
-
-
-def addAll(extraPackages):
-    for name in ['core', 'compiler', 'parser']:
-        extraPackages.append(('org.python.'+name, []))
-                
-                      
-
+# Standard usage message printing
 def usage(errcode, msg=''):
     print __doc__ % globals()
     if msg:
@@ -163,34 +153,50 @@ def getOptions():
             options.falsenames = arg.split(',')
 
     # there should be at least one module to compile
-    if len(args) == 0:
+    if not args:
         usage(0, 'nothing to compile')
 
     # post processing
     options.args = args
 
     if not os.path.isabs(options.workdir):
-        options.workdir = os.path.join(".", options.workdir)  
+        options.workdir = os.path.join(os.curdir, options.workdir)  
 
     return options
 
 
 
+def addCore(extraPackages):
+    skiplist = ['org.python.core.parser',
+                'org.python.core.BytecodeLoader',
+                'org.python.core.jpython',
+                ]
+    extraPackages.append(('org.python.core', skiplist))
+
+
+def addAll(extraPackages):
+    for name in ('core', 'compiler', 'parser'):
+        extraPackages.append(('org.python.'+name, []))
+                
+                      
+
 mainclass = basepath = None
 
 def doCompile(opts):
-    skiplist = string.split(opts.skip, ",")
-    optpkgs = string.split(opts.addpackages, ',')
+    global mainclass
+    global basepath
+
+    skiplist = opts.skip.split(',')
+    optpkgs = opts.addpackages.split(',')
     addpackages = ['org.python.modules',
-                   'com.oroinc.text.regex'] + optpkgs
+                   'org.apache.oro.text.regex',
+                   ] + optpkgs
 
     comp = Compiler(javapackage=opts.package,
                     deep=opts.deep,
                     include=addpackages,
                     skip=skiplist,
                     options=opts)
-    global mainclass
-    global basepath
 
     for target in opts.args:
         if target.endswith('.py'):
@@ -250,7 +256,7 @@ def writeResults(comp, opts):
     if jarfile is None:
         if not opts.deep and opts.package is not None:
             for jc in javaclasses:
-                if isinstance(jc, type( () )):
+                if isinstance(jc, TupleType):
                     jc = jc[0]
                 if basepath is None:
                     basepath = '.'
@@ -268,9 +274,9 @@ def writeResults(comp, opts):
         addAll(extraPackages)
 
     ja = JavaArchive(extraPackages)
-    ja.addToManifest({'Main-Class':mainclass})
+    ja.addToManifest({'Main-Class': mainclass})
     for jc in javaclasses:
-        if isinstance(jc, type( () )):
+        if isinstance(jc, TupleType):
             ja.addClass(opts.workdir, jc[0], jc[1])
         else:
             ja.addClass(opts.workdir, jc)
