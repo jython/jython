@@ -115,6 +115,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("complex", PyType.fromClass(PyComplex.class));
         dict.__setitem__("dict", PyType.fromClass(PyDictionary.class));
         dict.__setitem__("list", PyType.fromClass(PyList.class));
+        dict.__setitem__("tuple", PyType.fromClass(PyTuple.class));
 
         dict.__setitem__("property", PyType.fromClass(PyProperty.class));
         dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
@@ -140,7 +141,6 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("globals", new BuiltinFunctions("globals", 4, 0));
         dict.__setitem__("hash", new BuiltinFunctions("hash", 5, 1));
         dict.__setitem__("cmp", new BuiltinFunctions("cmp", 6, 2));
-        dict.__setitem__("tuple", new BuiltinFunctions("tuple", 8, 1));
         dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
         dict.__setitem__("isinstance",
                                   new BuiltinFunctions("isinstance", 10, 2));
