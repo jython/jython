@@ -1,5 +1,6 @@
 package org.python.compiler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Hashtable;
 import org.python.core.PyObject;
 
@@ -70,10 +71,6 @@ public class JavaMaker extends ProxyMaker {
 
 	public void addConstructor(String name, Class[] parameters, Class ret,
 					String sig, int access) throws Exception {
-		// Think about this more, for now skip obvious supers
-		/*if (parameters.length > 0 && parameters[parameters.length-1] == org.python.core.PyInstance.class) {
-		    return;
-		}*/
 	    /* Need a fancy constructor for the Java side of things */
 		Code code = classfile.addMethod("<init>", sig, access);
 		callSuper(code, "<init>", name, parameters, null, sig);
@@ -91,13 +88,6 @@ public class JavaMaker extends ProxyMaker {
 			"(Lorg/python/core/PyProxy;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;[Ljava/lang/String;[Ljava/lang/String;Z)V");
 		code.invokestatic(initProxy);
 		code.return_();
-		
-		/* Now add the simple constructor for Python side */
-		/*Class[] newParameters = new Class[parameters.length+1];
-		System.arraycopy(parameters, 0, newParameters, 0, parameters.length);
-		newParameters[parameters.length] = org.python.core.PyInstance.class;		
-		code = classfile.addMethod("<init>", makeSignature(newParameters, Void.TYPE), access);
-		callSuper(code, "<init>", name, parameters, Void.TYPE, sig);*/
 	}
 
 	public void addProxy() throws Exception {
@@ -114,14 +104,14 @@ public class JavaMaker extends ProxyMaker {
 	public void addMethod(Method method, int access) throws Exception {
 	    //System.out.println("add: "+method.getName()+", "+methods.containsKey(method.getName()));
 	    // Check to see if it's an abstract method
-	    if (java.lang.reflect.Modifier.isAbstract(access)) {
+	    if (Modifier.isAbstract(access)) {
 	        // Maybe throw an exception here???
 	        super.addMethod(method, access);
-	        return;
-	    }
-	    if (methods.__finditem__(method.getName().intern()) != null) {
+	    } else if (methods.__finditem__(method.getName().intern()) != null) {
 	        super.addMethod(method, access);
-	    }
+	    } /*else if (Modifier.isProtected(access)) {
+	        super.addMethod(method, access | Modifier.ABSTRACT);
+	    }*/
 	}
 
 	public void build() throws Exception {

@@ -1,10 +1,5 @@
 package org.python.core;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.io.IOException;
-import java.util.Hashtable;
 import java.util.Vector;
-import org.python.compiler.JavaMaker;
 
 public class PyClass extends PyObject {
     /**
@@ -72,6 +67,17 @@ public class PyClass extends PyObject {
     		if (baseClass != null || interfaces.size() != 0) {
     		    proxyClass = MakeProxies.makeProxy(baseClass, interfaces, __name__, __dict__);
     		}
+    	}
+    	
+    	if (proxyClass != null) {
+            PyObject superDict = PyJavaClass.lookup(proxyClass).__findattr__("__dict__");
+            // This code will add in the needed super__ methods to the class
+            if (superDict instanceof PyStringMap && dict instanceof PyStringMap) {
+                PyStringMap superMap = ((PyStringMap)superDict).copy();
+                superMap.update((PyStringMap)dict);
+                dict = superMap;
+                __dict__ = dict;
+            }
     	}
     	//System.out.println("proxyClasses: "+proxyClasses+", "+proxyClasses[0]);
 
@@ -165,10 +171,4 @@ public class PyClass extends PyObject {
 	    else smod = ((PyString)mod).toString();
 		return "<class "+smod+'.'+__name__+" at "+Py.id(this)+">";
 	}
-	
-	/* Handle loading and caching of proxy classes
-	    Used when subclassing from java classes
-	*/
-	//private static Hashtable proxies = new Hashtable();
-
 }

@@ -213,71 +213,6 @@ public class PyJavaClass extends PyClass {
             }           
         }
     }
-    /*   
-         //System.err.println("initing jclass: "+c.getName());
-         if (
-            
-            
-         PyStringMap d = new PyStringMap();
-         d.__setitem__("__module__", Py.None);
-         proxyClasses = new Class[] {c};
-            
-         super.init(c.getName(), Py.EmptyTuple, d);
-                
-         Class interfaces[] = c.getInterfaces();
-         int nInterfaces = interfaces.length;           
-         int nBases = 0;
-        
-         InitModule initModule = null;
-         int i;
-         for (i=0; i<nInterfaces; i++) {
-         if (interfaces[i] == InitModule.class) {
-         try {
-         initModule = (InitModule)c.newInstance();
-         } catch (Exception exc) {
-         throw Py.JavaError(exc);
-         }
-         continue;
-         }
-         if (interfaces[i] == PyProxy.class) {
-         continue;
-         }
-         nBases++;
-         }
-                
-         Class sc = c.getSuperclass();
-         int index=0;
-         PyObject[] bases;
-         if (sc == null || sc == PyObject.class) {
-         bases = new PyObject[nBases];
-         } else {
-         bases = new PyObject[nBases+1];
-         bases[0] = superLookup(sc);
-         index++;
-         }
-
-         for (i=0; i<nInterfaces; i++) {
-         Class inter = interfaces[i];
-         if (inter == InitModule.class || inter == PyProxy.class) continue;
-         bases[index++] = superLookup(inter);
-         }
-
-         __bases__ = new PyTuple(bases);
-
-         setBeanInfo(c, sc);
-         setFields(c);
-         setMethods(c);
-         //System.err.println("setting constructors: "+c.getName());
-                
-         setConstructors(c);
-                
-         //System.err.println("set constructors: "+c.getName());
-                
-                
-         if (initModule != null) {
-         initModule.initModule(d);
-         }
-         }*/
 
     private void setFields(Class c) {
         Field[] fields = c.getFields();
@@ -311,6 +246,10 @@ public class PyJavaClass extends PyClass {
     
     private void addMethod(Method meth) {
         String name = getName(meth.getName());
+        if (name == "_getPyInstance" || name == "_setPyInstance" ||
+            name == "_getPySystemState" || name == "_setPySystemState") {
+                return;
+            }
             
         // See if any of my superclasses are using 'name' for something else
         // Or if I'm already using it myself
