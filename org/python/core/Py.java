@@ -7,6 +7,8 @@ public final class Py {
     static boolean frozen;
 	static boolean initialized;
 	
+	public static boolean compileClass = false;
+	
 	/* Holds the singleton None and Ellipsis objects */
 	/** The singleton None Python object **/
 	public static PyObject None;
