@@ -1,5 +1,18 @@
 JPython NEWS
 
+16-Jun-1999 JPython 1.1beta2 released
+
+    - Updates and bug fixes to jpythonc tool.  New registry entries
+      python.jpythonc.compiler, python.jpythonc.classpath, and
+      python.jpythonc.compileropts.  getopt style long/short option
+      names (old options are deprecated).  New -J/--compileropts
+      option.
+    - syncing string object methods with experimental CPython 1.6
+      string methods.  This includes new optional arguments on
+      startswith() and endswith() and the moving of join() to a method 
+      of the separator string.
+    - Many other bug fixes and CPython syncs
+
 04-Jun-1999 JPython 1.1beta1 released
 
   Highlights of changes since JPython 1.0.3
