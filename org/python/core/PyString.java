@@ -1,7 +1,9 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyString extends PySequence {
+
+public class PyString extends PySequence
+{
     private String string;
     private transient int cached_hashcode=0;
     private transient boolean interned=false;
@@ -30,9 +32,9 @@ public class PyString extends PySequence {
     }
 	
     public String internedString() {
-	if (interned) {
+	if (interned)
 	    return string;
-	} else {
+	else {
 	    string = string.intern();
 	    interned = true;
 	    return string;
@@ -56,12 +58,12 @@ public class PyString extends PySequence {
 		buf.append(Integer.toString(c, 16));
 		continue;
 	    }
-			
 	    didhex = false;
 	    if (c == quote || c == '\\') {
 		buf.append('\\');
 		buf.append(c);
-	    } else {
+	    }
+	    else {
 		if (c >= ' ' && c <= 0177) {
 		    buf.append(c);
 		} 
@@ -120,9 +122,8 @@ public class PyString extends PySequence {
 	    if (string.length() == 1)
 		return new Character(string.charAt(0));
 
-	if (c.isArray() && c.getComponentType() == Byte.TYPE) {
+	if (c.isArray() && c.getComponentType() == Byte.TYPE)
 	    return getBytes();
-	}
 
 	if (c.isInstance(this))
 	    return this;
@@ -135,9 +136,9 @@ public class PyString extends PySequence {
     }
 
     protected PyObject getslice(int start, int stop, int step) {
-	if (step == 1) {
+	if (step == 1)
 	    return new PyString(string.substring(start, stop));
-	} else {
+	else {
 	    int n = sliceLength(start, stop, step);
 	    char new_chars[] = new char[n];
 	    int j = 0;
@@ -483,7 +484,8 @@ public class PyString extends PySequence {
     public double atof() {
         try {
             return Double.valueOf(string.trim()).doubleValue();
-        } catch (NumberFormatException exc) {
+        }
+	catch (NumberFormatException exc) {
             throw Py.ValueError("non-float argument to string.atof");
         }
     }
@@ -522,7 +524,8 @@ public class PyString extends PySequence {
             }
             if (base == 0)
 		base = 10;
-        } catch (IndexOutOfBoundsException ex) {
+        }
+	catch (IndexOutOfBoundsException ex) {
             throw Py.ValueError("non-integer argument to string.atoi");
         }
         
@@ -532,7 +535,8 @@ public class PyString extends PySequence {
 		return -value;
             else
 		return value;
-        } catch (NumberFormatException exc) {
+        }
+	catch (NumberFormatException exc) {
             throw Py.ValueError("non-integer argument to string.atoi");
         }
     }
@@ -576,7 +580,8 @@ public class PyString extends PySequence {
             }
             if (base == 0)
 		base = 10;
-        } catch (IndexOutOfBoundsException ex) {
+        }
+	catch (IndexOutOfBoundsException ex) {
             throw Py.ValueError("non-integer argument to string.atol 1");
         }
         try {
@@ -585,7 +590,8 @@ public class PyString extends PySequence {
 		return new PyLong(value.negate());
             else
 		return new PyLong(value);
-        } catch (NumberFormatException exc) {
+        }
+	catch (NumberFormatException exc) {
             throw Py.ValueError("non-integer argument to string.atol");
         }
     }
@@ -720,6 +726,10 @@ public class PyString extends PySequence {
         return string.startsWith(prefix);
     }
     
+    public boolean startswith(String prefix, int offset) {
+	return string.startsWith(prefix, offset);
+    }
+
     public boolean endswith(String suffix) {
         return string.endsWith(suffix);
     }
@@ -727,9 +737,38 @@ public class PyString extends PySequence {
     //public static String zfill(PyObject o, int width) {
     //    return zfill(o.toString(), width);
     //}    
+
+    public String translate(String table) {
+	return translate(table, null);
+    }
+
+    public String translate(String table, String deletechars) {
+	System.err.println("deletechars: " + deletechars);
+	if (table.length() != 256)
+	    throw Py.ValueError(
+		"translation table must be 256 characters long");
+
+	StringBuffer buf = new StringBuffer(string.length());
+	for (int i=0; i < string.length(); i++) {
+	    char c = string.charAt(i);
+	    if (deletechars.indexOf(c) >= 0)
+		continue;
+	    try {
+		buf.append(table.charAt(c));
+	    }
+	    catch (IndexOutOfBoundsException e) {
+		throw Py.TypeError(
+		    "translate() only works for 8-bit character strings");
+	    }
+	}
+	return buf.toString();
+    }
 }
 
-final class StringFormatter{
+
+
+final class StringFormatter
+{
     int index;
     String format;
     StringBuffer buffer;
@@ -797,7 +836,8 @@ final class StringFormatter{
                 while (Character.isDigit(c = pop()))
 		    ;
                 index -= 1;
-                return Integer.valueOf(format.substring(numStart, index)).intValue();
+		Integer i = Integer.valueOf(format.substring(numStart, index));
+                return i.intValue();
             }
             index -= 1;
             return -1;
@@ -942,7 +982,8 @@ final class StringFormatter{
 		    else if (c == '(')
 			parens++;
 		}
-		this.args = dict.__getitem__(new PyString(format.substring(keyStart, index-1)));
+		String tmp = format.substring(keyStart, index-1);
+		this.args = dict.__getitem__(new PyString(tmp));
 		//System.out.println("args: "+args+", "+argIndex);
 	    } else {
 		push();
@@ -1051,7 +1092,8 @@ final class StringFormatter{
 			throw Py.TypeError("%c requires int or char");
 		    break;
 		}
-		string = new Character((char)arg.__int__().getValue()).toString();
+		char tmp = (char)arg.__int__().getValue();
+		string = new Character(tmp).toString();
 		break;
 
 	    default:
