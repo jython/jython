@@ -10,7 +10,7 @@ public class imp {
         "os", "types", "py_compile", "code", "re",
     };
     
-    public static final int APIVersion = 4;
+    public static final int APIVersion = 5;
     
     static PyModule addModule(String name) {
 		PyModule module = (PyModule)sys.modules.__finditem__(name);

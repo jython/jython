@@ -26,20 +26,27 @@ public class PyException extends RuntimeException {
             instantiated = true;
         }
     }
+    
+    
 
 	public PyException() {
 	    //System.out.println("PyException");
 	    //super.printStackTrace();
-		traceback = new PyTraceback(Py.getFrame());
+	    this(Py.None, Py.None);
 	}
 
 	public PyException(PyObject type) {
-		this();
-		this.type = type;
+	    this(type, Py.None);
 	}
 	public PyException(PyObject type, PyObject value) {
-		this(type);
+		this.type = type;
 		this.value = value;
+		
+	    PyFrame frame = Py.getFrame();
+		traceback = new PyTraceback(frame);
+		if (frame != null && frame.tracefunc != null) {
+		    frame.tracefunc = frame.tracefunc.traceException(frame, this);
+		}
 	}
 	public PyException(PyObject type, String value) {
 		this(type, new PyString(value));
