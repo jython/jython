@@ -9,5 +9,7 @@ import test296p
 try:
    print test296p.abc
 except java.lang.StackOverflowError:
-   raise support.TestWarning("Shouldn't raise a Stack overflow")
+   raise support.TestError("Shouldn't raise a Stack overflow")
+except Exception:
+   pass
 
