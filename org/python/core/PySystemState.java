@@ -20,7 +20,20 @@ public class PySystemState extends PyObject
      */
     // TBD: should we use \u00a9 Unicode c-inside-circle?
     public static String copyright =
-        "Type \"copyright\", \"credits\" or \"license\" for more information.";
+        "Copyright (c) 2000, Jython Developers\n" +
+        "All rights reserved.\n\n" + 
+
+        "Copyright (c) 2000 BeOpen.com.\n" + 
+        "All Rights Reserved.\n\n"+
+ 
+        "Copyright (c) 2000 The Apache Software Foundation.  All rights\n" + 
+        "reserved.\n\n" +
+
+        "Copyright (c) 1995-2000 Corporation for National Research Initiatives.\n" +
+        "All Rights Reserved.\n\n" + 
+
+        "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.\n" + 
+        "All Rights Reserved.\n\n";
 
     /**
      * The arguments passed to this program on the command line.
