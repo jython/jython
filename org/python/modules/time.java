@@ -34,6 +34,10 @@ import java.util.SimpleTimeZone;
 
 class TimeFunctions extends PyBuiltinFunctionSet
 {
+    public TimeFunctions(String name, int index, int argcount) {
+        super(name, index, argcount, argcount, false, null);
+    }
+
     public PyObject __call__() {
         switch (index) {
         case 0:
@@ -49,8 +53,8 @@ class TimeFunctions extends PyBuiltinFunctionSet
 public class time implements InitModule
 {
     public void initModule(PyObject dict) {
-        dict.__setitem__("time", new TimeFunctions().init("time", 0, 0));
-        dict.__setitem__("clock", new TimeFunctions().init("clock", 0, 0));
+        dict.__setitem__("time", new TimeFunctions("time", 0, 0));
+        dict.__setitem__("clock", new TimeFunctions("clock", 0, 0));
 
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
