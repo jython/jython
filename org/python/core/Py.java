@@ -1029,6 +1029,14 @@ public final class Py
     }
 
     public static PyException makeException(PyObject type, PyObject value) {
+        if (type instanceof PyInstance) {
+            if (value != Py.None) {
+                throw TypeError("instance exceptions may not have " +
+                                "a separate value");
+            } else {
+                return new PyException(type.__class__, type);
+            }
+        }
         PyException exc = new PyException(type, value);
         exc.instantiate();
         return exc;
@@ -1037,6 +1045,16 @@ public final class Py
     public static PyException makeException(PyObject type, PyObject value,
                                             PyObject traceback)
     {
+        if (type instanceof PyInstance) {
+            if (value != Py.None) {
+                throw TypeError("instance exceptions may not have " +
+                                "a separate value");
+            } else {
+                type = type.__class__;
+                //return new PyException(type.__class__, type);
+            }
+        }
+
         if (traceback == None)
             return new PyException(type, value);
         if (!(traceback instanceof PyTraceback))
