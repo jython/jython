@@ -209,14 +209,20 @@ public final class Py
     }
 
     public static PyObject MemoryError;
-    public static void MemoryError(OutOfMemoryError t) {
+    
+    public static void memory_error(OutOfMemoryError t) {
         if (Options.showJavaExceptions) {
             t.printStackTrace();
         }
-        System.err.println("Out of Memory");
-        System.err.println(
-            "You might want to try the -mx flag to increase heap size");
-        System.exit(-1);
+// this logic would allow to re-enable the old behavior when it makes sense, 
+// or better offer a hook?
+//        try {
+//            byte[] alloc = new byte[(512*1024)];
+//        } catch(OutOfMemoryError oome) {
+//            System.err.println("Out Of Memory");
+//            System.err.println("You might want to try the -mx flag to increase heap size.");
+//            System.exit(-1);
+//        }
     }
 
     public static PyException MemoryError(String message) {
@@ -325,18 +331,18 @@ public final class Py
             return JavaError(
                 ((InvocationTargetException)t).getTargetException());
         }
-        // Remove this automatic coercion, people want to see the real
-        // exceptions!
-//         else if (t instanceof java.io.IOException) {
-//             return IOError((java.io.IOException)t);
-//         }
+// Remove this automatic coercion, people want to see the real
+// exceptions!
+//      else if (t instanceof java.io.IOException) {
+//          return IOError((java.io.IOException)t);
+//      }
+// see corresponding logic in matchException
         else if (t instanceof OutOfMemoryError) {
-            MemoryError((OutOfMemoryError)t);
-            return null;
-        } else {
-            PyObject exc = Py.java2py(t);
-            return new PyException(exc.__class__, exc);
+            memory_error((OutOfMemoryError)t);
         }
+        PyObject exc = Py.java2py(t);
+        return new PyException(exc.__class__, exc);
+
     }
 
     // Don't allow any constructors.  Class only provides static methods.
@@ -1044,6 +1050,8 @@ public final class Py
 
     public static boolean matchException(PyException pye, PyObject e) {
         pye.instantiate();
+        // FIXME, see bug 737978
+        //
         // A special case for IOError's to allow them to also match
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
         // it right in 1.1
@@ -1055,6 +1063,25 @@ public final class Py
                 return true;
             }
         }
+        // FIXME too, same approach for OutOfMemoryError
+        if (e == Py.MemoryError) {
+            if (__builtin__.isinstance(
+                pye.value,
+                PyJavaClass.lookup(java.lang.OutOfMemoryError.class)))
+            {
+                return true;
+            }
+        }        
+        if (e == Py.IOError) {
+            if (__builtin__.isinstance(
+                pye.value,
+                PyJavaClass.lookup(java.io.IOException.class)))
+            {
+                return true;
+            }
+        }
+        // same approach for OutOfMemoryError
+                
         if (e instanceof PyClass) {
             return __builtin__.isinstance(pye.value, (PyClass)e);
         }
@@ -1524,12 +1551,19 @@ public final class Py
         return name;
     }
 
-
     public static CompilerFlags getCompilerFlags() {
+        return getCompilerFlags(0,false);
+    }
+
+    public static CompilerFlags getCompilerFlags(int flags,boolean dont_inherit) {
         CompilerFlags cflags = null;
-        PyFrame frame = Py.getFrame();
-        if (frame!=null && frame.f_code != null) {
-            cflags = new CompilerFlags(frame.f_code.co_flags);
+        if (dont_inherit) {
+            cflags = new CompilerFlags(flags);
+        } else {
+            PyFrame frame = Py.getFrame();
+            if (frame!=null && frame.f_code != null) {
+                cflags = new CompilerFlags(frame.f_code.co_flags|flags);
+            }
         }
         return cflags;
     }
@@ -1599,6 +1633,18 @@ public final class Py
         return Py.compile_flags(
             new java.io.StringBufferInputStream(data+"\n\n"),
                           filename, type,cflags);
+    }
+
+    public static PyObject compile_command_flags(String string,
+                    String filename, String kind, CompilerFlags cflags,boolean stdprompt)
+    {
+        org.python.parser.ast.modType node =
+            parser.partialParse(string+"\n", kind, filename, cflags, stdprompt);
+    
+        if (node == null)
+            return Py.None;
+        return Py.compile_flags(node, Py.getName(), filename, true, true,
+                                cflags);
     }
 
     public static PyObject[] unpackSequence(PyObject o, int length) {
@@ -1713,6 +1759,7 @@ public final class Py
         return makeFilename(name.substring(index+1, name.length()),
                             new File(dir, name.substring(0, index)));
     }
+    
 }
 
 /** @deprecated **/
