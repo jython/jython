@@ -80,6 +80,10 @@ class ObjectFactory:
         return Object(self.parent.module.getStringConstant(value),
                       PyConstant(value)) 
 
+    def makeEllipsis(self):
+        code = jast.GetStaticAttribute("Py", "Ellipsis")
+        return Object(code, Generic)
+
     def makeJavaInteger(self, code):
         return Object(code, IntValue)
 

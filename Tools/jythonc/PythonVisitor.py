@@ -307,6 +307,9 @@ class PythonVisitor(Visitor):
         #self.startnode(node)
         return self.walker.string_const(node.getInfo())
 
+    def Ellipses(self, node):
+        return self.walker.ellipsis_const()
+
     def getSlice(self, node):
         s = [None, None, None]
         n = node.numChildren
