@@ -140,7 +140,7 @@ def makeJavaProxy(module, pyc):
         methods.append( (name, args, sig) )
     supername = None
     if pyc.isSuperclassJava():
-       return proxies.JavaProxy(pyc.name, pyc.supername, 
+        return proxies.JavaProxy(pyc.name, pyc.supername, 
                                 pyc.javaclasses, methods, module)
     return None
 
