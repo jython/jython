@@ -492,7 +492,9 @@ public final class SHA1 {
     );
 
     public String digest() {
-        return new String(digestBits, 0, digestBits.length, 0);
+        if (digestBits == null)
+            digestBits = engineDigest();
+        return new String(digestBits, 0, 0, digestBits.length);
     }
 
     public String toString() {
