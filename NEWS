@@ -2,6 +2,10 @@ Jython NEWS
 
 XX-Dec-2000 Jython 2.0 alpha 2
 
+  New features.
+    - Added -v (verbose) option to jython command. It will trace
+      import statements. Use three -v's for maximum information.
+
   CPython-2.0 compatibility
     - Added support for formatting of long values in "%d %x %X %o".
       The support does not match CPython2.0 exactly, but matches
@@ -10,6 +14,10 @@ XX-Dec-2000 Jython 2.0 alpha 2
       always create a character with values < 256. Use the \u
       escape for high-byte values.
     - A ucnhash module to support the \n{name} escape.
+
+  Backward incompatibility:
+    - The python.path property is appended to sys.path instead of
+      being inserted at position 1 in sys.path.
 
   Bug fixes.
     - Package relative import work, at least when the dotted package name
