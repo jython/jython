@@ -159,10 +159,10 @@ public class PyString extends PySequence {
 
     public PyObject __add__(PyObject generic_other) {
 	if (generic_other instanceof PyString) {
-	    return new PyString(string.concat(((PyString)generic_other).string));
-	} else {
-	    return null;
+	    PyString other = (PyString)generic_other;
+	    return new PyString(string.concat(other.string));
 	}
+	else return null;
     }
 
 
@@ -173,16 +173,17 @@ public class PyString extends PySequence {
 
     private String stripPlus(String s) {
         s = s.trim();
-        if (s.charAt(0) == '+') {
+        if (s.charAt(0) == '+')
             return s.substring(1, s.length());
-        }
         return s;
     }   
 
     public PyInteger __int__() {
 	try {
-	    return new PyInteger(Integer.valueOf(stripPlus(string)).intValue());
-	} catch (NumberFormatException exc) {
+	    Integer i = Integer.valueOf(stripPlus(string));
+	    return new PyInteger(i.intValue());
+	}
+	catch (NumberFormatException exc) {
 	    throw Py.ValueError("invalid literal for __int__: "+string);
 	}
     }
@@ -190,7 +191,8 @@ public class PyString extends PySequence {
     public PyLong __long__() {
 	try {
 	    return new PyLong(new java.math.BigInteger(stripPlus(string)));
-	} catch (NumberFormatException exc) {
+	}
+	catch (NumberFormatException exc) {
 	    throw Py.ValueError("invalid literal for __long__: "+string);
 	}
     }
@@ -198,7 +200,8 @@ public class PyString extends PySequence {
     public PyFloat __float__() {
 	try {
 	    return new PyFloat(Double.valueOf(string).doubleValue());
-	} catch (NumberFormatException exc) {
+	}
+	catch (NumberFormatException exc) {
 	    throw Py.ValueError("invalid literal for __float__: "+string);
 	}
     }
