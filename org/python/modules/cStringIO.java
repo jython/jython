@@ -119,6 +119,12 @@ public class cStringIO {
             this.pos = Math.max(0, (int)pos);
         }
 
+        /**
+         * Reset the file position to the beginning of the file.
+         */
+        public void reset() {
+            pos = 0;
+        }
 
         /**
          * Return the file position.
