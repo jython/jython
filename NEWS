@@ -1,10 +1,15 @@
 Jython NEWS
 
-xx-Jan-2001 Jython 2.0 beta 2
+10-Jan-2001 Jython 2.0 beta 2
+
+  New features
+   - Added socket.getfqdn(). Thanks to Brian Zimmer for the patch.
 
   Bug fixes.
    - Fixed innerclass names with '$' #127200 
    - Fixed a bug where final methods were overriden in proxy #127201.
+   - Fixed a bug in exec which allow a fileobject to be passed in.
+     Thanks to Brian Zimmer for the patch.
 
 31-Dec-2000 Jython 2.0 beta 1
 
