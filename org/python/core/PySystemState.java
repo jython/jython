@@ -324,9 +324,17 @@ public class PySystemState extends PyObject {
         // Finish up standard Python initialization...
         Py.defaultSystemState = new PySystemState();
         Py.setSystemState(Py.defaultSystemState);
-        if (Options.classBasedExceptions)
-            Py.initClassExceptions();
-
+        try {
+            if (Options.classBasedExceptions)
+                Py.initClassExceptions();
+        }
+        catch (PyException e) {
+            System.err.println("'import exceptions' failed; " +
+                               "using string-based exceptions");
+            // TBD: see CPython's bltinmodule.c for compatibility.  We
+            // should print the traceback if the verbose flag is set, or
+            // indicate "use -v for traceback"
+        }
         // Make sure that Exception classes have been loaded
         PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");        
     }
