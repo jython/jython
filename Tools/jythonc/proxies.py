@@ -130,7 +130,7 @@ class JavaProxy:
         self.module = module
         if module is not None:
             self.packages = module.getPackages()
-            self.properties = module.getProperties()
+            self.properties = module.getProxyProperties()
             self.modname = module.name
             if module.package is not None:
                 self.modname = module.package+'.'+self.modname
