@@ -436,7 +436,7 @@ class SrcGenCompiler(Visitor, CompilationContext):
 
 
         n = ast.Expr(ast.Call(ast.Name(tmp_append, ast.Name.Load, node), 
-                                       [ node.target ], [], None, None, node),
+                                       [ node.elt ], [], None, None, node),
                                             node);
 
         for lc in node.generators[::-1]:
@@ -850,10 +850,10 @@ class SrcGenCompiler(Visitor, CompilationContext):
             dest = self.visit(node.dest)
 
         stmts = []
-        if node.value:
-            for i, v in zip(range(len(node.value)), node.value):
+        if node.values:
+            for i, v in zip(range(len(node.values)), node.values):
                 v = self.visit(v)
-                if node.nl and i == len(node.value) - 1:
+                if node.nl and i == len(node.values) - 1:
                     stmts.append(jast.InvokeStatic("Py", "println", [
                                     dest.asAny(), v.asAny()]))
                 else:
