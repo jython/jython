@@ -414,12 +414,8 @@ class JavaProxy:
 
         frozen = self.module.getFrozen()
 
-        initargs = [this, jast.StringConstant(self.modname),
-                    jast.StringConstant(self.name),
-                    objects, self.packages, self.properties,
-                    frozen, jast.StringArray(self.modules)]
-
-        initproxy = jast.InvokeStatic("Py", "initProxy", initargs)
+        initargs = [objects]
+        initproxy = jast.InvokeLocal("__initProxy__", initargs)
 
         code = jast.Block([supercall, initproxy])
         self.statements.append(jast.Constructor(
@@ -449,6 +445,21 @@ class JavaProxy:
         code = jast.Block([jast.Return(jast.Identifier("__sysstate"))])
         self.statements.append(jast.Method("_getPySystemState", "public",
                                            ["PySystemState"], code))
+
+
+        frozen = self.module.getFrozen()
+        this = jast.Identifier("this")
+        initargs = [this, jast.StringConstant(self.modname),
+                    jast.StringConstant(self.name),
+                    jast.Identifier("args"), self.packages, self.properties,
+                    frozen, jast.StringArray(self.modules)]
+
+        initproxy = jast.InvokeStatic("Py", "initProxy", initargs)
+
+
+        code = jast.Block([initproxy])
+        self.statements.append(jast.Method("__initProxy__", "public",
+                                           ["void", ("Object[]", "args")], code))
 
         self.interfaces.append(org.python.core.PyProxy)
 
