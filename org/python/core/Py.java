@@ -979,18 +979,52 @@ public final class Py {
         Py.runCode(code, locals, globals);
     }
 
-    /* The PyThreadState will be stored in a thread-local variable
-       when this feature becomes available in JDK1.2
-
-       There are hacks that could improve performance slightly in the
-       interim, but I'd rather wait for the right solution.
-    */
+    // TBD: The PyThreadState will be stored in a thread-local variable
+    // when this feature becomes available in JDK1.2.
+    //
+    // There are hacks that could improve performance slightly in the
+    // interim, but I'd rather wait for the right solution.
     private static java.util.Hashtable threads;
     private static ThreadState cachedThreadState;
+
+    // Mechanism provided by Drew Morrissey and approved by JimH which
+    // occasionally cleans up dead threads, preventing the hashtable from
+    // leaking memory when many threads are used (e.g. in an embedded
+    // application).
+    //
+    // counter of additions to the threads table
+    private static int additionCounter = 0;
+    // maximum number of thread additions before cleanup is triggered
+    private static final int MAX_ADDITIONS = 25;
+
     public static final ThreadState getThreadState() {
         return getThreadState(null);
     }
     
+    /**
+     * Enumerates through the thread table looking for dead thread
+     * references and removes them.  Called internally by
+     * getThreadState(PySystemState).
+     */
+    private static final void cleanupThreadTable() {
+        // loop through thread table removing dead thread references
+        for (java.util.Enumeration e = threads.keys(); e.hasMoreElements();) {
+            try {
+                Object key = e.nextElement();
+                ThreadState tempThreadState = (ThreadState)threads.get(key);
+                if ((tempThreadState != null) &&
+                    (tempThreadState.thread != null) &&
+                    !tempThreadState.thread.isAlive())
+                {
+                    threads.remove(key);
+                }
+            }
+            catch (ClassCastException exc) {
+                // TBD: we should throw some type of exception here
+            }
+        }
+    }
+
     public static final ThreadState
         getThreadState(PySystemState newSystemState)
     {
@@ -1013,6 +1047,13 @@ public final class Py {
             ts = new ThreadState(t, newSystemState);
             //System.err.println("new ts: "+ts+", "+ts.systemState);
             threads.put(t, ts);
+            // increase the counter each time a thread reference is added
+            // to the table
+            additionCounter++;
+            if (additionCounter > MAX_ADDITIONS) {
+                cleanupThreadTable();
+                additionCounter = 0;
+            }
         }
         cachedThreadState = ts;
         //System.err.println("returning ts: "+ts+", "+ts.systemState);
