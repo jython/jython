@@ -1148,12 +1148,61 @@ public class CodeCompiler extends Visitor {
 		c.freeLocal(strings);
 	}
 
+    public int invokea0, invokea1, invokea2;
+    public int invoke2;
+    public Object Invoke(SimpleNode inst, SimpleNode nname, SimpleNode[] values) throws Exception {
+		String name = (String)nname.getInfo();
+		inst.visit(this);
+        code.ldc(name);
+        
+        //System.out.println("invoke: "+name+": "+values.length);
+        
+	    switch (values.length) {
+	        case 0:
+	            if (mrefs.invokea0 == 0) {
+	                mrefs.invokea0 = code.pool.Methodref("org/python/core/PyObject", "invoke",
+				        "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+				}
+				code.invokevirtual(mrefs.invokea0);
+				break;
+		    case 1:
+	            if (mrefs.invokea1 == 0) {
+	                mrefs.invokea1 = code.pool.Methodref("org/python/core/PyObject", "invoke",
+				        "(Ljava/lang/String;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+				}
+				values[0].visit(this);
+				code.invokevirtual(mrefs.invokea1);
+				break;
+		    case 2:
+	            if (mrefs.invokea2 == 0) {
+	                mrefs.invokea2 = code.pool.Methodref("org/python/core/PyObject", "invoke",
+				        "(Ljava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+				}
+				values[0].visit(this);
+				values[1].visit(this);
+				code.invokevirtual(mrefs.invokea2);
+				break;			    
+			default:
+    		    makeArray(values);
+    			if (mrefs.invoke2 == 0) {
+    				mrefs.invoke2 = code.pool.Methodref("org/python/core/PyObject", "invoke",
+    					"(Ljava/lang/String;[Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+    			}
+    			code.invokevirtual(mrefs.invoke2);
+    			break;
+    	}
+
+		return null;
+        
+    }
+
+
 
 	public int call1, call2;
 	public int calla0, calla1, calla2, calla3, calla4;
 	public Object Call_Op(SimpleNode node) throws Exception {
 		//do name
-		node.getChild(0).visit(this);
+		SimpleNode callee = node.getChild(0);
 
 		//get arguments and keywords
 		SimpleNode args=null;
@@ -1180,8 +1229,13 @@ public class CodeCompiler extends Visitor {
 		} else {
 			values = new SimpleNode[0];
 		}
-
-
+		
+		// Detect a method invocation with no keywords
+        if (nKeywords == 0 && callee.id == PythonGrammarTreeConstants.JJTDOT_OP) {
+		    return Invoke(callee.getChild(0), callee.getChild(1), values);
+		}
+		
+		callee.visit(this);
 
 		if (nKeywords > 0) {
 		    makeArray(values);
@@ -1253,12 +1307,68 @@ public class CodeCompiler extends Visitor {
 		return null;
 	}
 
+
+    public int getslice, setslice, delslice;
+    public Object Slice_Op(SimpleNode seq, SimpleNode node) throws Exception {
+		int old_mode = mode;
+		mode = GET;		
+		seq.visit(this);
+		
+		SimpleNode[] slice = new SimpleNode[3];
+		int n = node.getNumChildren();
+		int i=0;
+		for(int j=0; j<n; j++) {
+			SimpleNode child = node.getChild(j);
+			if (child.id == PythonGrammarTreeConstants.JJTCOLON) i++;
+			else slice[i] = child;
+		}
+		for(i=0; i<3; i++) {
+			if (slice[i] == null) {
+				code.aconst_null();
+			} else {
+				slice[i].visit(this);
+			}
+		}
+		mode = old_mode;
+
+		switch(mode) {
+		case DEL:
+			if (mrefs.delslice == 0) {
+				mrefs.delslice = code.pool.Methodref("org/python/core/PyObject", "__delslice__",
+					"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+			}
+			code.invokevirtual(mrefs.delslice);
+			return null;
+		case GET:
+			if (mrefs.getslice == 0) {
+				mrefs.getslice = code.pool.Methodref("org/python/core/PyObject", "__getslice__",
+					"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+			}
+			code.invokevirtual(mrefs.getslice);
+			return null;
+		case SET:
+			code.aload(temporary);
+			if (mrefs.setslice == 0) {
+				mrefs.setslice = code.pool.Methodref("org/python/core/PyObject", "__setslice__",
+					"(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+			}
+			code.invokevirtual(mrefs.setslice);
+			return null;
+		}
+		return null;
+        
+    }
+
 	public int getitem, delitem, setitem;
 	public Object Index_Op(SimpleNode node) throws Exception {
+		SimpleNode seq = node.getChild(0);
+		SimpleNode index = node.getChild(1);
+        if (index.id == PythonGrammarTreeConstants.JJTSLICE) return Slice_Op(seq, index);
+		
 		int old_mode = mode;
-		mode = GET;
-		node.getChild(0).visit(this);
-		node.getChild(1).visit(this);
+		mode = GET;		
+		seq.visit(this);
+		index.visit(this);
 		mode = old_mode;
 
 		switch(mode) {

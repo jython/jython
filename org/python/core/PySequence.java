@@ -91,6 +91,7 @@ abstract public class PySequence extends PyObject {
 	}
 
     protected static final int sliceLength(int start, int stop, int step) {
+        //System.err.println("slice: "+start+", "+stop+", "+step);
         if (step > 0) {
             return (stop-start+step-1)/step;
         } else {
@@ -99,7 +100,7 @@ abstract public class PySequence extends PyObject {
 	}
 
     private static final int getIndex(PyObject index, int defaultValue) {
-        if (index == Py.None) return defaultValue;
+        if (index == Py.None || index == null) return defaultValue;
         if (!(index instanceof PyInteger)) throw Py.TypeError("slice index must be int");
         return ((PyInteger)index).getValue();
     }
@@ -175,6 +176,109 @@ abstract public class PySequence extends PyObject {
 	    }
 	    return ret;
 	}
+	
+	public PyObject __getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
+		int start, stop, step;
+        int length = __len__();
+        step = getIndex(s_step, 1);
+        if (step == 0) throw Py.TypeError("slice step of zero not allowed");
+        
+        if (step > 0) {
+            start = getIndex(s_start, 0);
+            stop = getIndex(s_stop, length);
+        } else {
+            start = getIndex(s_stop, 0);
+            stop = getIndex(s_start, length);
+        }
+		
+		if (start < 0) {
+		    start = length+start;
+		    if (start < 0) start = 0;
+		} else if (start > length) {
+		    start = length;
+		}
+		if (stop < 0) {
+		    stop = length+stop;
+		    if (stop < 0) stop = 0;
+		} else if (stop > length) {
+		    stop = length;
+		}
+		
+		if (stop < start) stop = start;
+		
+		if (step <= 0) {
+		    int tmp = start; start = stop; stop = tmp;
+		}
+		return getslice(start, stop, step);
+	}
+	public void __setslice__(PyObject s_start, PyObject s_stop, PyObject s_step, PyObject value) {
+		int start, stop, step;
+        int length = __len__();
+        step = getIndex(s_step, 1);
+        if (step == 0) throw Py.TypeError("slice step of zero not allowed");
+        
+        if (step > 0) {
+            start = getIndex(s_start, 0);
+            stop = getIndex(s_stop, length);
+        } else {
+            start = getIndex(s_stop, 0);
+            stop = getIndex(s_start, length);
+        }
+		
+		if (start < 0) {
+		    start = length+start;
+		    if (start < 0) start = 0;
+		} else if (start > length) {
+		    start = length;
+		}
+		if (stop < 0) {
+		    stop = length+stop;
+		    if (stop < 0) stop = 0;
+		} else if (stop > length) {
+		    stop = length;
+		}
+		
+		if (stop < start) stop = start;
+		
+		if (step <= 0) {
+		    int tmp = start; start = stop; stop = tmp;
+		}
+        setslice(start, stop, step, value);
+	}
+	public void __delslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
+		int start, stop, step;
+        int length = __len__();
+        step = getIndex(s_step, 1);
+        if (step == 0) throw Py.TypeError("slice step of zero not allowed");
+        
+        if (step > 0) {
+            start = getIndex(s_start, 0);
+            stop = getIndex(s_stop, length);
+        } else {
+            start = getIndex(s_stop, 0);
+            stop = getIndex(s_start, length);
+        }
+		
+		if (start < 0) {
+		    start = length+start;
+		    if (start < 0) start = 0;
+		} else if (start > length) {
+		    start = length;
+		}
+		if (stop < 0) {
+		    stop = length+stop;
+		    if (stop < 0) stop = 0;
+		} else if (stop > length) {
+		    stop = length;
+		}
+		
+		if (stop < start) stop = start;
+		
+		if (step <= 0) {
+		    int tmp = start; start = stop; stop = tmp;
+		}
+        delRange(start, stop, step);
+	}		
 
 	public void __setitem__(int index, PyObject value) {
 		int i = fixindex(index);
