@@ -112,7 +112,9 @@ class ReflectedArgs {
 		if (arg == String.class) return 40;
 		
 		if (arg.isArray()) {
-			return 100+precedence(arg.getComponentType());
+		    Class componentType = arg.getComponentType();
+		    if (componentType == Object.class) return 2500;
+			return 100+precedence(componentType);
 		}
 		return 2000;
 	}
