@@ -2,17 +2,6 @@ package org.python.core;
 import java.lang.reflect.*;
 import java.beans.*;
 
-class NameObjectPair {
-    PyObject obj;
-    PyString name;
-
-    public NameObjectPair(PyString name, PyObject obj) {
-        this.name = name;
-        this.obj = obj;
-    }
-}
-
-
 public class PyJavaClass extends PyClass {
 	public PyReflectedConstructor __init__;
 
@@ -135,7 +124,7 @@ public class PyJavaClass extends PyClass {
 	    return ret;
 	}
 
-    public static PyJavaClass superLookup(Class c) {
+    private static PyJavaClass superLookup(Class c) {
         PyJavaClass jc = lookup(c);
         if (jc.proxyClasses == null) {
             //System.err.println("superLookup: "+c.getName());
@@ -222,7 +211,7 @@ public class PyJavaClass extends PyClass {
 		}
 	}
 
-	protected void setFields(Class c) {
+	private void setFields(Class c) {
 		Field[] fields = c.getFields();
 		for(int i=0; i<fields.length; i++) {
 			Field field = fields[i];
@@ -274,7 +263,7 @@ public class PyJavaClass extends PyClass {
 		}
 	}
 	
-	void addMethod(Method meth) {
+	private void addMethod(Method meth) {
 	    String name = getName(meth.getName());
 	    
 	    // See if any of my superclasses are using 'name' for something else
@@ -316,7 +305,7 @@ public class PyJavaClass extends PyClass {
 	}
 
     /* Add all methods declared by this class */
-	protected void setMethods(Class c) {
+	private void setMethods(Class c) {
 		Method[] methods = c.getMethods();
 		for(int i=0; i<methods.length; i++) {
 			Method method = methods[i];
@@ -402,7 +391,7 @@ public class PyJavaClass extends PyClass {
     }
 
 	//This method is a workaround for Netscape's stupid security bug!
-	protected void setBeanInfoCustom(Class c) {
+	private void setBeanInfoCustom(Class c) {
 	    try {
 	        Method[] meths = c.getMethods();
 
@@ -522,7 +511,7 @@ public class PyJavaClass extends PyClass {
 	    }
 	}
 
-	protected void setConstructors(Class c) {
+	private void setConstructors(Class c) {
 	    //System.out.println("c: "+c.getName()+" "+Modifier.isAbstract(c.getModifiers()));
 	    if (Modifier.isInterface(c.getModifiers())) {
 	        __init__ = null;
