@@ -83,18 +83,19 @@ public interface PythonGrammarConstants {
   int GLOBAL = 83;
   int EXEC = 84;
   int ASSERT = 85;
-  int NAME = 86;
-  int LETTER = 87;
-  int DECNUMBER = 88;
-  int HEXNUMBER = 89;
-  int OCTNUMBER = 90;
-  int FLOAT = 91;
-  int EXPONENT = 92;
-  int DIGIT = 93;
-  int SINGLE_STRING = 98;
-  int SINGLE_STRING2 = 99;
-  int TRIPLE_STRING = 100;
-  int TRIPLE_STRING2 = 101;
+  int AS = 86;
+  int NAME = 87;
+  int LETTER = 88;
+  int DECNUMBER = 89;
+  int HEXNUMBER = 90;
+  int OCTNUMBER = 91;
+  int FLOAT = 92;
+  int EXPONENT = 93;
+  int DIGIT = 94;
+  int SINGLE_STRING = 99;
+  int SINGLE_STRING2 = 100;
+  int TRIPLE_STRING = 101;
+  int TRIPLE_STRING2 = 102;
 
   int DEFAULT = 0;
   int FORCE_NEWLINE1 = 1;
@@ -195,6 +196,7 @@ public interface PythonGrammarConstants {
     "\"global\"",
     "\"exec\"",
     "\"assert\"",
+    "\"as\"",
     "<NAME>",
     "<LETTER>",
     "<DECNUMBER>",
@@ -203,20 +205,20 @@ public interface PythonGrammarConstants {
     "<FLOAT>",
     "<EXPONENT>",
     "<DIGIT>",
-    "<token of kind 94>",
     "<token of kind 95>",
     "<token of kind 96>",
     "<token of kind 97>",
+    "<token of kind 98>",
     "\"\\\'\"",
     "\"\\\"\"",
     "\"\\\'\\\'\\\'\"",
     "\"\\\"\\\"\\\"\"",
-    "<token of kind 102>",
     "<token of kind 103>",
+    "<token of kind 104>",
     "\"\\\\\\\'\\\'\\\'\"",
     "\"\\\\\\\"\\\"\\\"\"",
-    "<token of kind 106>",
     "<token of kind 107>",
+    "<token of kind 108>",
     "\"`\"",
   };
 
