@@ -260,7 +260,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
   static public void classDictInit(PyObject dict) {
 
     dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
-    dict.__setitem__("fetchmany", new CursorFunc("fetchmany", 0, 1, 2, "fetch specified number of rows"));
+    dict.__setitem__("fetchmany", new CursorFunc("fetchmany", 0, 0, 1, "fetch specified number of rows"));
     dict.__setitem__("close", new CursorFunc("close", 1, 0, "close the cursor"));
     dict.__setitem__("fetchall", new CursorFunc("fetchall", 2, 0, "fetch all results"));
     dict.__setitem__("fetchone", new CursorFunc("fetchone", 3, 0, "fetch the next result"));
@@ -334,13 +334,10 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
    * @since Jython 2.2, DB API 2.0+
    */
   public PyObject next() {
-
     PyObject row = __iternext__();
-
     if (row == null) {
       throw Py.StopIteration("");
     }
-
     return row;
   }
 
@@ -353,9 +350,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
    * @return PyObject
    */
   public PyObject __iternext__() {
-
     PyObject row = fetchone();
-
     return row.__nonzero__() ? row : null;
   }
 
@@ -496,7 +491,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       }
     } catch (PyException e) {
       throw e;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       throw zxJDBC.makeException(e);
     } finally {
       if (this.statement != null) {
@@ -844,18 +839,15 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
    *
    */
   public static boolean hasParams(PyObject params) {
-
-    if (Py.None == params) {
+    if(Py.None == params) {
       return false;
     }
 
     boolean isSeq = isSeq(params);
-
     // the optional argument better be a sequence
     if (!isSeq) {
       throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("optionalSecond"));
     }
-
     return params.__len__() > 0;
   }
 
@@ -875,10 +867,8 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
           return false;
         }
       }
-
       return true;
     }
-
     return false;
   }
 }
