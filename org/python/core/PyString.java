@@ -13,6 +13,8 @@ class StringFuncs extends PyBuiltinFunctionSet
     }
 
     private String tostring(PyObject o) {
+        if (o == Py.None)
+            return null;
         if (o instanceof PyString)
             return ((PyString)o).toString();
         throw Py.TypeError("1st arg can't be coerced to string");
@@ -541,12 +543,12 @@ public class PyString extends PySequence implements InitModule
     }
 
 
-    public PyList split(String sep) {
-        return split(sep, 0);
-    }
-
     public PyList split() {
         return split(null, 0);
+    }
+
+    public PyList split(String sep) {
+        return split(sep, 0);
     }
 
     public PyList split(String sep, int maxsplit) {
