@@ -24,6 +24,12 @@ public class PyJavaInstance
         javaProxy = proxy;
     }
 
+    /**
+     * Implementation of the Externalizable interface.
+     * @param in the input stream.
+     * @exception java.io.IOException 
+     * @exception ClassNotFoundException
+     */
     public void readExternal(java.io.ObjectInput in)
         throws java.io.IOException, ClassNotFoundException
     {
@@ -32,7 +38,11 @@ public class PyJavaInstance
         __class__ = PyJavaClass.lookup(o.getClass());
     }
 
-
+    /**
+     * Implementation of the Externalizable interface.
+     * @param out the output stream.
+     * @exception java.io.IOException 
+     */
     public void writeExternal(java.io.ObjectOutput out)
         throws java.io.IOException
     {

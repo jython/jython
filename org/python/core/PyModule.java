@@ -69,11 +69,11 @@ public class PyModule extends PyObject
         return impHook(pyname.__str__().toString()+'.'+attr);
     }
 
-    public void __setattr__(String attr, PyObject value) throws PyException {
+    public void __setattr__(String attr, PyObject value) {
         __dict__.__setitem__(attr, value);
     }
 
-    public void __delattr__(String attr) throws PyException {
+    public void __delattr__(String attr) {
         __dict__.__delitem__(attr);
     }
 

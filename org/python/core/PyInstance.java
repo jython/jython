@@ -321,7 +321,7 @@ public class PyInstance extends PyObject
         __dict__.__setitem__(name, value);
     }
 
-    public void __delattr__(String name) throws PyException {
+    public void __delattr__(String name) {
         // Need code to handle _dodel
         PyObject deller = __class__.__delattr__;
         if (deller != null) {

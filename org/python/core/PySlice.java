@@ -22,12 +22,12 @@ public class PySlice extends PyObject {
         this.step = step;
     }
 
-    public PyString __str__() throws PyException {
+    public PyString __str__() {
         return new PyString(start.__repr__()+":"+stop.__repr__()+":"+
                             step.__repr__());
     }
 
-    public PyString __repr__() throws PyException {
+    public PyString __repr__() {
         return new PyString("slice("+start.__repr__()+", "+
                             stop.__repr__()+", "+
                             step.__repr__()+")");

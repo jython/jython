@@ -114,7 +114,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
      * sys.trace_func, and then continue the code hoping that JPython will
      * get control to do the break;
      **/
-    public void interrupt(ThreadState ts) throws InterruptedException {
+    public void interrupt(ThreadState ts) {
         TraceFunction breaker = new BreakTraceFunction();
         TraceFunction oldTrace = ts.systemState.tracefunc;
         ts.systemState.tracefunc = breaker;

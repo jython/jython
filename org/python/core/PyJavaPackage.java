@@ -158,7 +158,7 @@ public class PyJavaPackage extends PyObject {
         return null;
     }
 
-    public void __setattr__(String attr, PyObject value) throws PyException {
+    public void __setattr__(String attr, PyObject value) {
         if (attr == "__mgr__") {
             PackageManager newMgr = (PackageManager)Py.tojava(value,
                                                        PackageManager.class);

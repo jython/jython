@@ -821,7 +821,7 @@ public class PyObject implements java.io.Serializable {
      * a single PyObject to use to replace o if this is unchanged;
      * or a PyObject[2] consisting of replacements for this and o.
      **/
-    public Object __coerce_ex__(PyObject o) throws PyException {
+    public Object __coerce_ex__(PyObject o) {
         return null;
     }
 
@@ -1948,6 +1948,11 @@ public class PyObject implements java.io.Serializable {
 
     /* A convenience function for PyProxy's */
     // Possibly add _jcall(), _jcall(Object, ...) as future optimization
+    /**
+     * A convenience function for PyProxy's.
+     * @param args call arguments.
+     * @exception Throwable
+     */
     public PyObject _jcallexc(Object[] args) throws Throwable {
         PyObject[] pargs = new PyObject[args.length];
         try {

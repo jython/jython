@@ -98,6 +98,13 @@ public class PyServlet extends HttpServlet {
                           File.separator + "lib");
     }
 
+    /**
+     * Implementation of the HttpServlet main method.
+     * @param req the request parameter.
+     * @param res the response parameter.
+     * @exception ServletException
+     * @exception IOException
+     */
     public void service(ServletRequest req, ServletResponse res)
         throws ServletException, IOException
     {

@@ -577,16 +577,34 @@ public class __builtin__ implements ClassDictInit
         return o.__oct__();
     }
 
+    /**
+     * Open a file read-only.
+     * @param name the file to open.
+     * @exception java.io.IOException 
+     */
     public static PyFile open(String name) throws java.io.IOException {
         return new PyFile(name, "r", -1);
     }
 
+    /**
+     * Open a file with the specified mode.
+     * @param name name of the file to open.
+     * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
+     * @exception java.io.IOException 
+     */
     public static PyFile open(String name, String mode)
         throws java.io.IOException
     {
         return new PyFile(name, mode, -1);
     }
 
+    /**
+     * Open a file with the specified mode and buffer size.
+     * @param name name of the file to open.
+     * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
+     * @param bufsize size of the internal buffer. Not currently used.
+     * @exception java.io.IOException 
+     */
     public static PyFile open(String name, String mode, int bufsize)
         throws java.io.IOException
     {
@@ -765,16 +783,16 @@ public class __builtin__ implements ClassDictInit
     public static PyObject reload(PyModule o) {
         return imp.reload(o);
     }
-    public static PyObject reload(PyJavaClass o) throws PyException {
+    public static PyObject reload(PyJavaClass o) {
         return imp.reload(o);
     }
 
-    public static PyString repr(PyObject o) throws PyException {
+    public static PyString repr(PyObject o) {
         return o.__repr__();
     }
 
     //This seems awfully special purpose...
-    public static PyFloat round(double f, int digits) throws PyException {
+    public static PyFloat round(double f, int digits) {
         boolean neg = f < 0;
         double multiple = Math.pow(10., digits);
         if (neg)
@@ -785,7 +803,7 @@ public class __builtin__ implements ClassDictInit
         return new PyFloat(tmp/multiple);
     }
 
-    public static PyFloat round(double f) throws PyException {
+    public static PyFloat round(double f) {
         return round(f, 0);
     }
 
