@@ -51,4 +51,8 @@ public class PackageManager extends org.python.core.PathPackageManager {
     public void addJarDir(String jdir) {
         throw new RuntimeException("addJarDir not supported for reloadable packages");
     }  
+
+    public void addJar(String jdir) {
+        throw new RuntimeException("addDir not supported for reloadable packages");
+    }  
 }
