@@ -81,6 +81,8 @@ class BaseEvaluator:
             raise TypeError, 'help, fancy lhs: %s' % node
 
     def set_list(self, seq, value):
+        if len(seq) > 0 and seq[-1].id == JJTCOMMA:
+            del seq[-1]
         n = len(seq)
         tmp, code = self.makeTemp(value)
         stmts = [code]
