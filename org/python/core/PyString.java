@@ -1,4 +1,4 @@
-// Copyright (c) Corporation for National Research Initiatives
+/// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
 import java.io.Serializable;
@@ -93,6 +93,12 @@ class StringFuncs extends PyBuiltinFunctionSet
             return s.__add__(arg);
         case 13:
             return s.__mod__(arg);
+        case 104:
+            return new PyString(s.strip(tostring(arg)));
+        case 105:
+            return new PyString(s.lstrip(tostring(arg)));
+        case 106:
+            return new PyString(s.rstrip(tostring(arg)));
         case 107:
             return s.split(tostring(arg));
         case 108:
@@ -270,9 +276,9 @@ public class PyString extends PySequence implements ClassDictInit
         dict.__setitem__("lower", new StringFuncs("lower", 101, 0));
         dict.__setitem__("upper", new StringFuncs("upper", 102, 0));
         dict.__setitem__("swapcase", new StringFuncs("swapcase", 103, 0));
-        dict.__setitem__("strip", new StringFuncs("strip", 104, 0));
-        dict.__setitem__("lstrip", new StringFuncs("lstrip", 105, 0));
-        dict.__setitem__("rstrip", new StringFuncs("rstrip", 106, 0));
+        dict.__setitem__("strip", new StringFuncs("strip", 104, 0, 1));
+        dict.__setitem__("lstrip", new StringFuncs("lstrip", 105, 0, 1));
+        dict.__setitem__("rstrip", new StringFuncs("rstrip", 106, 0, 1));
         dict.__setitem__("split", new StringFuncs("split", 107, 0, 2));
         dict.__setitem__("index", new StringFuncs("index", 108, 1, 3));
         dict.__setitem__("rindex", new StringFuncs("rindex", 109, 1, 3));
@@ -909,15 +915,27 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String strip() {
+        return strip(null);
+    }
+
+    public String strip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int start=0;
-        while (start < n && Character.isWhitespace(chars[start]))
-            start++;
+        if (sep == null)
+            while (start < n && Character.isWhitespace(chars[start]))
+                start++;
+        else
+            while (start < n && sep.indexOf(chars[start]) >= 0)
+                start++;
 
         int end=n-1;
-        while (end >= 0 && Character.isWhitespace(chars[end]))
-            end--;
+        if (sep == null)
+            while (end >= 0 && Character.isWhitespace(chars[end]))
+                end--;
+        else
+            while (end >= 0 && sep.indexOf(chars[end]) >= 0)
+                end--;
 
         if (end >= start) {
             return (end < n-1 || start > 0)
@@ -928,21 +946,37 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String lstrip() {
+        return lstrip(null);
+    }
+
+    public String lstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int start=0;
-        while (start < n && Character.isWhitespace(chars[start]))
-            start++;
+        if (sep == null)
+            while (start < n && Character.isWhitespace(chars[start]))
+                start++;
+        else
+            while (start < n && sep.indexOf(chars[start]) >= 0)
+                start++;
 
         return (start > 0) ? string.substring(start, n) : string;
     }
 
     public String rstrip() {
+        return rstrip(null);
+    }
+
+    public String rstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int end=n-1;
-        while (end >= 0 && Character.isWhitespace(chars[end]))
-            end--;
+        if (sep == null)
+            while (end >= 0 && Character.isWhitespace(chars[end]))
+                end--;
+        else
+            while (end >= 0 && sep.indexOf(chars[end]) >= 0)
+                end--;
 
         return (end < n-1) ? string.substring(0, end+1) : string;
     }
@@ -1385,16 +1419,18 @@ public class PyString extends PySequence implements ClassDictInit
         int n = s.length();
         if (n >= width)
             return s;
-        char start = s.charAt(0);
         char[] chars = new char[width];
         int nzeros = width-n;
         int i=0;
         int sStart=0;
-        if (start == '+' || start == '-') {
-            chars[0] = start;
-            i += 1;
-            nzeros++;
-            sStart=1;
+        if (n > 0) {
+            char start = s.charAt(0);
+            if (start == '+' || start == '-') {
+                chars[0] = start;
+                i += 1;
+                nzeros++;
+                sStart=1;
+            }
         }
         for(;i<nzeros; i++) {
             chars[i] = '0';
