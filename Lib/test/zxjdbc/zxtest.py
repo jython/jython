@@ -363,6 +363,8 @@ class zxAPITestCase(zxJDBCTestCase):
 		try:
 			c.execute("insert into zxtesting values (?, ?, ?)", [(500, 'bz', 'or')])
 			assert c.updatecount == 1, "expected [1], got [%d]" % (c.updatecount)
+			c.execute("select * from zxtesting")
+			assert c.updatecount == -1, "expected updatecount to be -1 after query"
 			# there's a *feature* in the mysql engine where it returns 0 for delete if there is no
 			#  where clause, regardless of the actual value.  using a where clause forces it to calculate
 			#  the appropriate value
@@ -560,7 +562,7 @@ class zxAPITestCase(zxJDBCTestCase):
 		assert self.has_table("autoincrementtable"), "no autoincrement table"
 
 		c = self.cursor()
-		assert "expected initial rowid to be None", c.rowid == None
+		assert c.lastrowid == None, "expected initial lastrowid to be None"
 
 		try:
 
@@ -568,13 +570,13 @@ class zxAPITestCase(zxJDBCTestCase):
 			c.execute(sql)
 
 			c.execute("insert into %s (b) values (?)" % (tabname), [(0,)])
-			assert c.rowid is not None, "rowid is None"
+			assert c.lastrowid is not None, "lastrowid is None"
 
 			try:
-				for idx in range(c.rowid + 1, c.rowid + 25):
+				for idx in range(c.lastrowid + 1, c.lastrowid + 25):
 					c.execute("insert into %s (b) values (?)" % (tabname), [(idx,)])
-					assert c.rowid is not None, "rowid is None"
-					assert c.rowid == idx, "expected rowid [%d], got [%d]" % (idx, c.rowid)
+					assert c.lastrowid is not None, "lastrowid is None"
+					self.assertEquals(idx, c.lastrowid)
 			except:
 				self.db.rollback()
 

@@ -26,24 +26,23 @@ count
 The configuration file follows the following format in a file name dbexts.ini:
 
 [default]
-name=development
+name=mysql
 
 [jdbc]
-name=development
-url=jdbc:db:devurl
-username=root
-password=12345
+name=mysql
+url=jdbc:mysql://localhost/ziclix
+user=
+pwd=
+driver=org.gjt.mm.mysql.Driver
+datahandler=com.ziclix.python.sql.handler.MySQLDataHandler
 
 [jdbc]
-name=production
-url=jdbc:db:produrl
-username=root
-password=12345
-
-[odbc]
-name=development
-username=root
-password=12345
+name=pg
+url=jdbc:postgresql://localhost:5432/ziclix
+user=bzimmer
+pwd=
+driver=org.postgresql.Driver
+datahandler=com.ziclix.python.sql.handler.PostgresqlDataHandler
 """
 
 import os, string, re
@@ -179,12 +178,16 @@ class dbexts:
 		self.autocommit = autocommit
 		self.formatter = formatter
 		self.out = out
-		self.rowid = None
+		self.lastrowid = None
 		self.updatecount = None
 
 		if not jndiname:
-			if cfg == None: cfg = os.path.join(os.path.split(__file__)[0], "dbexts.ini")
-			if isinstance(cfg, IniParser):
+			if cfg == None:
+				fn = os.path.join(os.path.split(__file__)[0], "dbexts.ini")
+				if not os.path.exists(fn):
+					fn = os.path.join(os.environ['HOME'], ".dbexts")
+				self.dbs = IniParser(fn)
+			elif isinstance(cfg, IniParser):
 				self.dbs = cfg
 			else:
 				self.dbs = IniParser(cfg)
@@ -221,7 +224,7 @@ class dbexts:
 				except:
 					continue
 			else:
-				raise ImportError("unable to find appropriate mx ODBC module")
+				raise ImportError("unable to find appropriate mxODBC module")
 
 			t = self.dbs[("odbc", dbname)]
 			self.dburl, dbuser, dbpwd = t['url'], t['user'], t['pwd']
@@ -266,7 +269,7 @@ class dbexts:
 					f = cursor.fetchall()
 					if f: self.results = choose(self.results is None, [], self.results) + f
 					s = cursor.nextset()
-		if hasattr(cursor, "rowid"): self.rowid = cursor.rowid
+		if hasattr(cursor, "lastrowid"): self.lastrowid = cursor.lastrowid
 		if hasattr(cursor, "updatecount"): self.updatecount = cursor.updatecount
 		if self.autocommit or cursor is None: self.db.commit()
 		if cursor: cursor.close()

@@ -136,6 +136,62 @@ Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt;
 </pre>
 
+<p>
+	To call a stored procedure or function provide the name and any params to <code>callproc</code>.
+	The database engine must support stored procedures.  The examples below have been tested with
+	Oracle, SQLServer and Informix.  Refer to the Python DP API spec for how OUT and INOUT parameters
+	work.
+</p>
+<p>
+	NOTE: The name of the stored procedure can either be a string or tuple.  This is NOT portable to
+	other DB API implementations.
+<pre>
+<b><i>SQL Server</b></i>
+&gt;&gt;&gt; c = db.cursor() # open the database as in the examples above
+&gt;&gt;&gt; c.execute("use northwind")
+&gt;&gt;&gt; c.callproc(("northwind", "dbo", "SalesByCategory"), ["Seafood", "1998"], maxrows=2)
+&gt;&gt;&gt; for a in c.description:
+...  print a
+...
+('ProductName', -9, 40, None, None, None, 0)
+('TotalPurchase', 3, 17, None, 38, 2, 1)
+&gt;&gt;&gt; for a in c.fetchall():
+...  print a
+...
+('Boston Crab Meat', 5318.0)
+('Carnarvon Tigers', 8497.0)
+&gt;&gt;&gt; c.nextset()
+1
+&gt;&gt;&gt; print c.fetchall()
+[(0,)]
+&gt;&gt;&gt; print c.description
+[('@RETURN_VALUE', 4, -1, 4, 10, 0, 0)]
+&gt;&gt;&gt;
+</pre>
+
+<pre>
+<b><i>Oracle</b></i>
+&gt;&gt;&gt; c = db.cursor() # open the database as in the examples above
+&gt;&gt;&gt; c.execute("create or replace function funcout (y out varchar2) return varchar2 is begin y := 'tested'; return 'returned'; end;")
+&gt;&gt;&gt; params = [None]
+&gt;&gt;&gt; c.callproc("funcout", params)
+&gt;&gt;&gt; print params
+['tested']
+&gt;&gt;&gt; print c.description
+[(None, 12.0, -1, None, None, None, 1)]
+&gt;&gt;&gt; print c.fetchall()
+[('returned',)]
+&gt;&gt;&gt;
+</pre>
+
+<p>When finished, close the connections.</p>
+
+<pre>
+&gt;&gt;&gt; c.close()
+&gt;&gt;&gt; db.close()
+&gt;&gt;&gt;
+</pre>
+
 <h3>Standard extensions to the Python DB API</h3>
 
 <dl>
@@ -158,7 +214,7 @@ DatabaseMetaData.getDatabaseProductVersion</a></dd>
 href="http://java.sun.com/j2se/1.3/docs/api/java/sql/Statement.html#getUpdateCount()">
 Statement.getUpdateCount</a></dd>
 
-<dt><p><code class="methodname">cursor.rowid</code></p></dt>
+<dt><p><code class="methodname">cursor.lastrowid</code></p></dt>
 
 <dd>The value obtained from calling <a
 href="javadoc/com/ziclix/python/sql/DataHandler.html#getRowId(java.sql.Statement)">
@@ -272,10 +328,13 @@ int type) throws SQLException;</code></p></dt>
 <dd>This method is called upon fetching data from the database after calling a
 stored procedure or function.  Given the JDBC type, return the appropriate PyObject
 subclass from the Java object at column col in the CallableStatement.</dd>
-<dt><p><code class="methodname">public void registerOut(CallableStatement statement,
-int index, int colType, int dataType) throws SQLException;</code></p></dt>
-<dd>This method is called when a stored procedure or function is executed and OUT parameters
-need to be registered with the statement.</dd>
+<dt><p><code class="methodname">public void registerOut(CallableStatement statement, int
+index, int colType, int dataType, String dataTypeName) throws SQLException;</code></p></dt>
+<dd>This method is called to register an OUT or INOUT parameter on the stored procedure.
+The dataType comes from java.sql.Types while the dataTypeName is a vendor specific string.</dd>
+<dt><p><code class="methodname">public String getProcedureName(PyObject catalog, PyObject
+schema, PyObject name);</code></p></dt>
+<dd>This method is called to build a stored procedure's name.</dd>
 </dl>
 
 <p>It is simple to use these callbacks to achieve the desired
@@ -353,10 +412,10 @@ dbexts is a wrapper around DB API 2.0 compliant database modules.  It currently 
 dbexts needs a configuration file in order to create a connection.  The configuration file has the following format:
 <pre>
 [default]
-name=mysql_ziclix
+name=mysql
 
 [jdbc]
-name=mysql_ziclix
+name=mysql
 url=jdbc:mysql://localhost/ziclix
 user=
 pwd=
@@ -364,7 +423,7 @@ driver=org.gjt.mm.mysql.Driver
 datahandler=com.ziclix.python.sql.handler.MySQLDataHandler
 
 [jdbc]
-name=ora_ziclix
+name=ora
 url=jdbc:oracle:thin:@localhost:1521:ziclix
 user=ziclix
 pwd=ziclix

@@ -36,7 +36,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected PyObject warnings;
 
 	/** Field warnings */
-	protected PyObject rowid;
+	protected PyObject lastrowid;
 
 	/** Field updatecount */
 	protected PyObject updatecount;
@@ -123,7 +123,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		m[2] = new PyString("description");
 		m[3] = new PyString("datahandler");
 		m[4] = new PyString("warnings");
-		m[5] = new PyString("rowid");
+		m[5] = new PyString("lastrowid");
 		m[6] = new PyString("updatecount");
 		__members__ = new PyList(m);
 	}
@@ -174,8 +174,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			return Py.newInteger(this.fetch.getRowCount());
 		} else if ("warnings".equals(name)) {
 			return warnings;
-		} else if ("rowid".equals(name)) {
-			return rowid;
+		} else if ("lastrowid".equals(name)) {
+			return lastrowid;
 		} else if ("updatecount".equals(name)) {
 			return updatecount;
 		} else if ("datahandler".equals(name)) {
@@ -472,7 +472,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 	/**
 	 * Execute the current sql statement.  Some generic functionality such
-	 * as updating the rowid and updatecount occur as well.
+	 * as updating the lastrowid and updatecount occur as well.
 	 *
 	 * @param ExecuteSQL execute
 	 *
@@ -486,7 +486,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		// this performs the SQL execution and fetch per the Statement type
 		execute.executeSQL();
 
-		this.rowid = this.datahandler.getRowId(this.sqlStatement);
+		this.lastrowid = this.datahandler.getRowId(this.sqlStatement);
 		this.updatecount = Py.newInteger(this.sqlStatement.getUpdateCount());
 
 		addWarning(this.sqlStatement.getWarnings());
@@ -656,7 +656,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected void clear() {
 
 		this.warnings = Py.None;
-		this.rowid = Py.None;
+		this.lastrowid = Py.None;
 		this.updatecount = Py.newInteger(-1);
 
 		try {
