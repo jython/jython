@@ -4,6 +4,10 @@ package org.python.modules;
 import org.python.core.*;
 
 public class codeop {
+    public static PyString __doc__ = new PyString(
+        "Utility to compile possibly incomplete Python source code.\n"
+    );
+
     public static PyList __all__ = new PyList(new PyString[] {
         new PyString("compile_command") 
     });
