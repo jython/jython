@@ -565,17 +565,37 @@ public class PySystemState extends PyObject
 
     /**
      * Add a .jar & .zip directory to the list of places that are searched
-     * for java .jar and .zip files. The .jar and .zip files found will be
-     * cached
+     * for java .jar and .zip files. The .jar and .zip files found will not
+     * be cached.
      * <p>
      * <b>Note</b>. Classes in .jar and .zip files found in the directory
      * are not made available to jython by this call. See the note for
      * add_classdir(dir) for more details.
      *
+     * @param directoryPath The name of a directory.
+     *
      * @see #add_classdir
      */
     public static void add_extdir(String directoryPath) {
-        packageManager.addJarDir(directoryPath);
+        packageManager.addJarDir(directoryPath, false);
+    }
+
+    /**
+     * Add a .jar & .zip directory to the list of places that are searched
+     * for java .jar and .zip files. 
+     * <p>
+     * <b>Note</b>. Classes in .jar and .zip files found in the directory
+     * are not made available to jython by this call. See the note for
+     * add_classdir(dir) for more details.
+     *
+     * @param directoryPath The name of a directory.
+     * @param cache         Controls if the packages in the zip and jar 
+     *                      file should be cached.
+     *
+     * @see #add_classdir
+     */
+    public static void add_extdir(String directoryPath, boolean cache) {
+        packageManager.addJarDir(directoryPath, cache);
     }
 
     public TraceFunction tracefunc = null;

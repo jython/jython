@@ -56,7 +56,7 @@ public abstract class PackageManager extends Object {
      *
      * @param dir   A directory name.
      */
-    public abstract void addJarDir(String dir);
+    public abstract void addJarDir(String dir, boolean cache);
 
     /**
      * Append a jar file to the list of locations searched for
@@ -64,7 +64,7 @@ public abstract class PackageManager extends Object {
      *
      * @param jarfile   A directory name.
      */
-    public abstract void addJar(String jarfile);
+    public abstract void addJar(String jarfile, boolean cache);
 
     /** Basic helper implementation of {@link #doDir}.
      * It merges information from jpkg {@link PyJavaPackage#clsSet}

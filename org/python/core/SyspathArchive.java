@@ -10,7 +10,7 @@ public class SyspathArchive extends PyString {
         super(archiveName);
         archiveName = getArchiveName(archiveName);
         zipFile = new ZipFile(new File(archiveName));
-        Py.getSystemState().packageManager.addJar(archiveName);
+        Py.getSystemState().packageManager.addJar(archiveName, false);
     }
 
     SyspathArchive(ZipFile zipFile, String archiveName) {

@@ -36,25 +36,27 @@ public class SysPackageManager extends PathPackageManager {
         }
     }
 
-    public void addJar(String jarfile) {
-        addJarToPackages(new File(jarfile), false);
+    public void addJar(String jarfile, boolean cache) {
+        addJarToPackages(new File(jarfile), cache);
+        if (cache)
+            saveCache();
     }
 
-    public void addJarDir(String jdir) {
-        addJarDir(jdir, true);
+    public void addJarDir(String jdir, boolean cache) {
+        addJarDir(jdir, cache, cache);
     }
 
-    public void addJarDir(String jdir, boolean save) {
+    private void addJarDir(String jdir, boolean cache, boolean saveCache) {
         File file = new File(jdir);
         if (!file.isDirectory()) return;
         String[] files = file.list();
         for(int i=0; i<files.length; i++) {
             String entry = files[i];
             if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
-                addJarToPackages(new File(jdir,entry),true);
+                addJarToPackages(new File(jdir,entry), cache);
             }
         }
-        if (save)
+        if (saveCache)
             saveCache();
     }
 
@@ -64,7 +66,7 @@ public class SysPackageManager extends PathPackageManager {
         while  (tok.hasMoreTokens())  {
             // ??pending: do jvms trim? how is interpreted entry=""?
             String entry = tok.nextToken();
-            addJarDir(entry, false);
+            addJarDir(entry, true, false);
         }
     }
 
