@@ -79,26 +79,28 @@ public interface PythonGrammarConstants {
   int BREAK = 79;
   int CONTINUE = 80;
   int RETURN = 81;
-  int IMPORT = 82;
-  int FROM = 83;
-  int DEL = 84;
-  int RAISE = 85;
-  int GLOBAL = 86;
-  int EXEC = 87;
-  int ASSERT = 88;
-  int AS = 89;
-  int NAME = 90;
-  int LETTER = 91;
-  int DECNUMBER = 92;
-  int HEXNUMBER = 93;
-  int OCTNUMBER = 94;
-  int FLOAT = 95;
-  int EXPONENT = 96;
-  int DIGIT = 97;
-  int SINGLE_STRING = 102;
-  int SINGLE_STRING2 = 103;
-  int TRIPLE_STRING = 104;
-  int TRIPLE_STRING2 = 105;
+  int YIELD = 82;
+  int IMPORT = 83;
+  int FROM = 84;
+  int DEL = 85;
+  int RAISE = 86;
+  int GLOBAL = 87;
+  int EXEC = 88;
+  int ASSERT = 89;
+  int AS = 90;
+  int NAME = 91;
+  int LETTER = 92;
+  int DECNUMBER = 93;
+  int HEXNUMBER = 94;
+  int OCTNUMBER = 95;
+  int FLOAT = 96;
+  int COMPLEX = 97;
+  int EXPONENT = 98;
+  int DIGIT = 99;
+  int SINGLE_STRING = 104;
+  int SINGLE_STRING2 = 105;
+  int TRIPLE_STRING = 106;
+  int TRIPLE_STRING2 = 107;
 
   int DEFAULT = 0;
   int FORCE_NEWLINE1 = 1;
@@ -195,6 +197,7 @@ public interface PythonGrammarConstants {
     "\"break\"",
     "\"continue\"",
     "\"return\"",
+    "\"yield\"",
     "\"import\"",
     "\"from\"",
     "\"del\"",
@@ -209,25 +212,26 @@ public interface PythonGrammarConstants {
     "<HEXNUMBER>",
     "<OCTNUMBER>",
     "<FLOAT>",
+    "<COMPLEX>",
     "<EXPONENT>",
     "<DIGIT>",
-    "<token of kind 98>",
-    "<token of kind 99>",
     "<token of kind 100>",
     "<token of kind 101>",
+    "<token of kind 102>",
+    "<token of kind 103>",
     "\"\\\'\"",
     "\"\\\"\"",
     "\"\\\'\\\'\\\'\"",
     "\"\\\"\\\"\\\"\"",
     "\"\\\\\\r\\n\"",
-    "<token of kind 107>",
-    "<token of kind 108>",
     "<token of kind 109>",
+    "<token of kind 110>",
+    "<token of kind 111>",
     "\"\\r\\n\"",
     "\"\\n\"",
     "\"\\r\"",
-    "<token of kind 113>",
-    "<token of kind 114>",
+    "<token of kind 115>",
+    "<token of kind 116>",
     "\"`\"",
   };
 
