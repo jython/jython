@@ -294,6 +294,7 @@ public class imp {
         PyObject ret = loadBuiltin(name, path);
         if (ret != null) return ret;
 
+        /* I don't think this is needed any more
         ClassLoader classLoader=null;
         if (!Py.frozen) classLoader = Py.getSystemState().getClassLoader();
         //System.out.println("load1: "+classLoader);
@@ -306,17 +307,23 @@ public class imp {
                 t.printStackTrace(System.err);
             }
         }
+        */
         //System.out.println("load2: ");
+
+        ret = PySystemState.packageManager.jarFindName(name);
+        if (ret != null) return ret;
 
         ret = loadFromPath(name, path);
         if (ret != null) return ret;
         //System.out.println("load3: ");
 
-        ret = PySystemState.packageManager.findName(name);
-        if (ret != null) return ret;
+        if (Py.frozen) {
+            Class c = Py.findClass(name);
+            if (c != null) return createFromClass(name, c);
+        }
 
-        //Class c = Py.findClass(name);
-        //if (c != null) return createFromClass(name, c);
+        ret = PySystemState.packageManager.dirFindName(name);
+        if (ret != null) return ret;
 
         throw Py.ImportError("no module named "+name);
     }

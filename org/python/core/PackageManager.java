@@ -98,6 +98,14 @@ public class PackageManager {
     }
         
 
+    public PyObject jarFindName(String name) {
+        return topLevelPackages.__finditem__(name);
+    }
+    
+    public PyObject dirFindName(String name) {
+        return topDirectoryPackage.__findattr__(name);
+    }
+
     /**
         Find a top-level package by name (a top-level package is one without
         any '.' in its name).
@@ -108,11 +116,11 @@ public class PackageManager {
     **/
     public PyObject findName(String name) {
         // First look for this as a top-level .jar package
-        PyObject pkg = topLevelPackages.__finditem__(name);
+        PyObject pkg = jarFindName(name);
         if (pkg != null) return pkg;
 
         // Then check for it in the directory packages (this is slower)
-        return topDirectoryPackage.__findattr__(name);
+        return dirFindName(name);
     }
 
     // Check that a given stream is a valid Java .class file
