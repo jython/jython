@@ -16,7 +16,7 @@ import string
 
 __all__ = ['AF_INET', 'SOCK_DGRAM', 'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET',
            'SOCK_STREAM', 'SocketType', 'error', 'getfqdn', 'gethostbyaddr',
-           'gethostbyname', 'gethostname', 'socket']
+           'gethostbyname', 'gethostname', 'socket', 'getaddrinfo']
 
 error = IOError
 
@@ -76,6 +76,10 @@ def socket(family, type, flags=0):
 	return _tcpsocket()
     else:
 	return _udpsocket()
+
+def getaddrinfo(host, port, family=0, socktype=SOCK_STREAM, proto=0, flags=0):
+    return ( (AF_INET, socktype, 0, "", (gethostbyname(host), port)), )
+    
 
 
 class _tcpsocket:
@@ -156,6 +160,8 @@ class _tcpsocket:
 	n = len(s)
 	self.ostream.write(s)
 	return n
+
+    sendall = send
 
     def getsockname(self):
 	if not self.sock:
