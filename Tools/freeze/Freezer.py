@@ -77,7 +77,7 @@ class Freezer:
 
 	def makeJavaClass(self, javaclass, myname, main=0, frozen=1):
 		jm = JavaMaker(javaclass, myname, myname, myname, self.requiredPackages, 
-					None, frozen, main)
+					[], frozen, main)
 		jm.build()
 		
 		os = java.io.ByteArrayOutputStream()
@@ -104,10 +104,12 @@ class Freezer:
 					names[package.__name__] = package
 				
 			for prop in self.props.keys():
+				#print 'prop', prop
 				if self.events.has_key(prop):
 					print 'adding event', prop, self.events[prop]
 					self.proxies[self.events[prop]] = 1	
-	
+			#print self.events
+			
 			# Make proxies
 			for proxy in self.proxies.keys():
 				self.makeProxy(proxy.__name__)

@@ -148,23 +148,28 @@ class FreezeVisitor(Visitor):
 			node.getChild(i).visit(self)
 
 	def addEvents(self, c):
-		#print c
 		for base in c.__bases__:
 			self.addClass(None, base)
+		#print 'events', c, dir(c)
 		for key, value in c.__dict__.items():
+			#print key, value
 			if isinstance(value, org.python.core.PyBeanEventProperty):
+				#print 'event', key, value
 				self.events[key] = value.myClass
 				#self.addEvent(value.myClass)
 
 	def addClass(self, name, c):
 		#print 'add class', name, c, c.__class__
+		if name is None: name = c.__name__
 		if (isinstance(c, org.python.core.PyJavaPackage) or 
 			isinstance(c, org.python.core.PyModule)):
 			self.packages[name] = c
 		elif isinstance(c, org.python.core.PyClass):
+			#print 'instance', name, c, self.classes.has_key(name)
+			doEvents = not self.classes.has_key(name)
 			self.classes[name] = c
 			name = c.__name__
-			if not self.classes.has_key(name):
+			if doEvents:
 				self.classes[name] = c
 				self.addEvents(c)
 
