@@ -1,0 +1,50 @@
+// Copyright 2000 Samuele Pedroni
+
+package jxxload_help;
+
+public class PackageManager extends org.python.core.PathPackageManager {
+    
+    private ClassLoader parent;
+    private ClassLoader loader;
+    public PathVFS vfs;
+    
+    public synchronized ClassLoader getLoader() {
+        if (loader == null) loader = new PathVFSJavaLoader(vfs,parent);
+        return loader;
+    }
+    
+    public synchronized void resetLoader() {
+        loader = null;
+    }
+    
+    // ??pending add cache support?
+    public PackageManager(org.python.core.PyList path,ClassLoader parent) { 
+        vfs = new PathVFS();
+        this.parent = parent;
+        
+        for (int i = 0; i < path.__len__(); i++) {
+            String entry = path.__finditem__(i).toString();
+            if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
+                addJarToPackages(new java.io.File(entry),false);
+            } else {
+                java.io.File dir = new java.io.File(entry);
+                if (entry.length() == 0 || dir.isDirectory()) addDirectory(dir);
+            }
+            vfs.addVFS(entry);
+        }
+    }
+
+    public Class findClass(String pkg,String name,String reason) {
+        if (pkg != null && pkg.length()>0) name = pkg + '.' + name;
+        try {
+            return getLoader().loadClass(name);
+        } 
+        catch(ClassNotFoundException e) {
+            return null;
+        }
+        catch (LinkageError e) {
+            throw org.python.core.Py.JavaError(e);
+        }
+    }
+  
+}
