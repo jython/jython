@@ -16,7 +16,7 @@ import jarray
 import re
 import string
 import sys
-import threading
+#import threading
 import types
 
 __all__ = [ "shellexecute", "environ", "putenv", "getenv" ]
