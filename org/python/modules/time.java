@@ -119,15 +119,6 @@ public class time implements InitModule
 				     item(tup, 5));
     }
 
-    private static Date _tupletodate(PyTuple tup) {
-	return new Date(item(tup, 0),
-			item(tup, 1),
-			item(tup, 2),
-			item(tup, 3),
-			item(tup, 4),
-			item(tup, 5));
-    }
-
     public static double mktime(PyTuple tup) {
         GregorianCalendar cal = _tupletocal(tup);
         return (double)cal.getTime().getTime()/1000.0;
@@ -398,7 +389,10 @@ public class time implements InitModule
 		break;
 	    case 'x':
 		// locale's date repr
-  		s = s + DateFormat.getDateInstance().format(_tupletodate(tup));
+		{
+		    Date d = _tupletocal(tup).getTime();
+		    s = s + DateFormat.getDateInstance().format(d);
+		}
 		break;
 	    case 'X':
 		// locale's time repr
@@ -414,7 +408,6 @@ public class time implements InitModule
 		// above, but we'll wait for someone to complain before we
 		// fix that.
 		//
-// 		s = s + DateFormat.getTimeInstance().format(_tupletodate(tup));
 		s = s + _twodigit(item(tup, 3)) + ":" +
 		    _twodigit(item(tup, 4)) + ":" +
 		    _twodigit(item(tup, 5));
