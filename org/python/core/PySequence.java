@@ -240,17 +240,14 @@ abstract public class PySequence extends PyObject
     }
 
     public PyObject __finditem__(PyObject index) {
-        if (index instanceof PyInteger) {
+        if (index instanceof PyInteger)
             return __finditem__(((PyInteger)index).getValue());
-        } else {
-            if (index instanceof PySlice) {
-                PySlice s = (PySlice)index;
-                return __getslice__(s.start, s.stop, s.step);
-            } else {
-                throw Py.TypeError(
-                    "sequence subscript must be integer or slice");
-            }
+        else if (index instanceof PySlice) {
+            PySlice s = (PySlice)index;
+            return __getslice__(s.start, s.stop, s.step);
         }
+        else
+            throw Py.TypeError("sequence subscript must be integer or slice");
     }
 
     public PyObject __getitem__(PyObject index) {
