@@ -28,7 +28,8 @@ public class PyComplex extends PyObject {
       }*/
 
     public static String toString(double value) {
-        if (value == Math.floor(value)) {
+        if (value == Math.floor(value) &&
+               value <= Long.MAX_VALUE && value >= Long.MIN_VALUE) {
             return Long.toString((long)value);
         } else {
             return Double.toString(value);
