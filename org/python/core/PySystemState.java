@@ -380,28 +380,30 @@ public class PySystemState extends PyObject
         packageManager = new PackageManager(pkgdir, props);
     }
 
-    public static String[] builtin_module_names = null;
     private static Hashtable builtinNames;
+    public static String[] builtin_module_names = null;
 
     private static void addBuiltin(String name) {
-        String classname = null;
+        String classname;
+        String modname;
+
         int colon = name.indexOf(':');
         if (colon != -1) {
-            String modname = name.substring(colon+1, name.length()).trim();
-            name = name.substring(0, colon).trim();
-            if (modname.equals("null"))
+            // name:fqclassname
+            modname = name.substring(0, colon).trim();
+            classname = name.substring(colon+1, name.length()).trim();
+            if (classname.equals("null"))
+                // name:null, i.e. remove it
                 classname = null;
-            else
-                classname = modname + "." + name;
         }
         else {
-            name = name.trim();
-            classname = "org.python.modules."+name;
+            modname = name.trim();
+            classname = "org.python.modules." + modname;
         }
         if (classname != null)
-            builtinNames.put(name, classname);
+            builtinNames.put(modname, classname);
         else
-            builtinNames.remove(name);
+            builtinNames.remove(modname);
     }
         
     private static void initBuiltins(Properties props) {
