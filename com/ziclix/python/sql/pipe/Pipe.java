@@ -93,7 +93,7 @@ public class Pipe {
 													 new Integer(sinkRunner.getCount()) };
 			String msg = zxJDBC.getString("inconsistentRowCount", counts);
 
-			Py.assert(Py.Zero, Py.newString(msg));
+			Py.assert_(Py.Zero, Py.newString(msg));
 		}
 
 		return Py.newInteger(sinkRunner.getCount());

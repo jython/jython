@@ -5,8 +5,10 @@ xx-xxx-2002 Jython 2.2 alpha1
   New features
    - Iterators (pep-234).
    - Changing the Division Operator (pep-238)
+   - Implemented a new compiler AST.
 
   Bug fixes.
+   - Renamed the use of the java1.4 reserved words 'assert'.
  
 31-dec-2001 Jython 2.1 final
 

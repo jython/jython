@@ -1007,14 +1007,14 @@ public final class Py
 
 
     /* Equivalent to Python's assert statement */
-    public static void assert(PyObject test, PyObject message) {
+    public static void assert_(PyObject test, PyObject message) {
         if (!test.__nonzero__()) {
             throw new PyException(Py.AssertionError, message);
         }
     }
 
-    public static void assert(PyObject test) {
-        assert(test, Py.None);
+    public static void assert_(PyObject test) {
+        assert_(test, Py.None);
     }
 
     /* Helpers to implement finally clauses */

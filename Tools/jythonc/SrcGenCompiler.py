@@ -895,7 +895,7 @@ class SrcGenCompiler(Visitor, CompilationContext):
             args.append(self.visit(node.msg).asAny())
 
         return jast.If(self.frame.getglobal("__debug__").nonzero(),
-                       jast.InvokeStatic("Py", "assert", args))
+                       jast.InvokeStatic("Py", "assert_", args))
 
     def visitReturn(self, node):
         if node.value is None:

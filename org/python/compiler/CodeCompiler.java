@@ -721,14 +721,14 @@ public class CodeCompiler extends Visitor
             visit(node.msg);
             if (mrefs.assert2 == 0) {
                 mrefs.assert2 = code.pool.Methodref(
-                    "org/python/core/Py", "assert",
+                    "org/python/core/Py", "assert_",
                     "(" + $pyObj + $pyObj + ")V");
             }
             code.invokestatic(mrefs.assert2);
         } else {
             if (mrefs.assert1 == 0) {
                 mrefs.assert1 = code.pool.Methodref(
-                    "org/python/core/Py", "assert",
+                    "org/python/core/Py", "assert_",
                     "(" + $pyObj + ")V");
             }
             code.invokestatic(mrefs.assert1);
