@@ -25,6 +25,11 @@ def typeName(cls):
     if Class.isArray(cls):
         return typeName(Class.getComponentType(cls))+"[]"
     else:
+        if '$' in cls.__name__:
+            outer = cls.getDeclaringClass()
+            if outer:
+                l = len(outer.__name__)
+                return "%s.%s" % (typeName(outer), cls.__name__[l+1:])
         return cls.__name__
 
 
