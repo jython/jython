@@ -9,11 +9,10 @@ JAVACC = /usr/local/javacc2.0/bin/javacc
 GENSOURCES=Node.java Token.java ASCII_CharStream.java \
 	PythonGrammar.java PythonGrammarConstants.java \
 	PythonGrammarTokenManager.java PythonGrammarTreeConstants.java \
-	JJTPythonGrammarState.java \
-	ParseException.java
+	JJTPythonGrammarState.java
 
 # Generated files which we've modified.
-HACKEDSOURCES = TokenMgrError.java
+HACKEDSOURCES = TokenMgrError.java ParseException.java
 
 SOURCES= $(wildcard *.java) $(GENSOURCES) $(HACKEDSOURCES)
 
