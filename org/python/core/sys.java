@@ -48,7 +48,7 @@ public class sys {
 	public static PyObject modules = new PyStringMap();
 	public static PyList path;
 
-	public static String platform = "jdk1.1";
+	public static String platform = "java1.1";
 
 	public static PyObject ps1 = new PyString(">>> ");
 	public static PyObject ps2 = new PyString("... ");
@@ -79,7 +79,8 @@ public class sys {
             root = System.getProperty("install.root");
             String version = System.getProperty("java.version");
             if (version.equals("11")) version = "1.1";
-            if (version != null) platform = "jdk"+version;
+            if (version.equals("12")) version = "1.2";
+            if (version != null) platform = "java"+version;
         } catch (Exception exc) {
             return null;
         }
