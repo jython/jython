@@ -150,6 +150,4 @@ public class MatchObject extends PyObject
         }
         return dict;
     }
-
-    // findall()
 }
