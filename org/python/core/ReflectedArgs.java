@@ -156,7 +156,7 @@ class ReflectedArgs {
         int p2 = precedence(arg2);
         // Special code if they are both nonprimitives
         // Superclasses/superinterfaces are considered greater than sub's
-        if (p1 == 2000 && p2 == 2000) {
+        if (p1 >= 2000 && p2 >= 2000) {
             if (arg1.isAssignableFrom(arg2)) {
                 if (arg2.isAssignableFrom(arg1)) return 0;
                 else return +2;
