@@ -1016,9 +1016,9 @@ public class PyString extends PySequence implements ClassDictInit
             list.append(new PyString(string.substring(start, index)));
             splits++;
         }
+        while (index < n && Character.isWhitespace(chars[index]))
+            index++;
         if (index < n) {
-            while (index < n && Character.isWhitespace(chars[index]))
-                index++;
             list.append(new PyString(string.substring(index, n)));
         }
         return list;
