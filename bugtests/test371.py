@@ -253,16 +253,6 @@ except Exception:
 else:
     testFail('fortryfinallycontinueraise1 did not trow Exception')
 
-""" 30 Sep 2002.
-Patched jython cvs (2.1 + new parser) fails, python 2.1.1 also fails,
-both give [0,1,2,3] as side effect, where [0,1,2,3,4,5] is expected.
-It seems that the two levels of try/finally fool the raised exception,
-where a single level in fortryfinallycontinueraise1() works fine.
-In case the new jython parser is derived from the python 2.1.1 parser,
-and both python 2.1.1 and patched jython cvs fail in the same way,
-this might be a problem in the new parser.
-(Jython 2.1, and jython cvs won't even compile this module)
-"""
 x = []
 def fortryfinallycontinueraise2():
     for i in range(3):
