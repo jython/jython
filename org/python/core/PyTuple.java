@@ -34,8 +34,9 @@ class TupleFunctions extends PyBuiltinFunctionSet
 
 public class PyTuple extends PySequence implements InitModule
 {
-    // TBD: this should not be public, but it is required to be by the
-    // thread.java module.  This should be fixed.
+    // TBD: this should not be public, but it is required to be public by
+    // many classes, including the thread.java and PyClass.java classes.
+    // URG!  This should be fixed.
     public PyObject[] list;
 
     public void initModule(PyObject dict) {
