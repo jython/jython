@@ -22,6 +22,28 @@ public class LocalsCompiler extends Visitor
         names = new Vector();
     }
 
+    public void parse(SimpleNode node) throws Exception {
+        node.visit(this);
+        checkForStmt(node);
+    }
+
+    private void checkForStmt(SimpleNode node) throws Exception {
+        if (node.id == PythonGrammarTreeConstants.JJTFOR_STMT) {
+            set(node.getChild(0));
+
+            node.getChild(2).visit(this);
+
+            if (node.getNumChildren() > 3) {
+                //Do else clause if provided
+                node.getChild(3).visit(this);
+            }
+        }
+        int n = node.getNumChildren();
+        for (int i = 0; i < n; i++) {
+            checkForStmt(node.getChild(i));
+        }
+    }
+
     public Object set(SimpleNode node) throws Exception {
         return set(node, SET);
     }
@@ -183,14 +205,7 @@ public class LocalsCompiler extends Visitor
     }
 
     public Object for_stmt(SimpleNode node) throws Exception {
-        set(node.getChild(0));
-
-        node.getChild(2).visit(this);
-
-        if (node.getNumChildren() > 3) {
-            //Do else clause if provided
-            node.getChild(3).visit(this);
-        }
+        // The for_stmt node is handled in checkForStmt
         return null;
     }
 
@@ -259,6 +274,10 @@ public class LocalsCompiler extends Visitor
 
     public Object classdef(SimpleNode node) throws Exception {
         return funcdef(node);
+    }
+
+    public Object list_iter(SimpleNode node) throws Exception {
+        return null;
     }
 
     public void addLocal(String name) {

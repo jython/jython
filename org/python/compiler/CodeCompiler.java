@@ -174,7 +174,7 @@ public class CodeCompiler extends Visitor
         for (int i=0; i<n; i++) {
             lc.addLocal((String)ac.names.elementAt(i));
         }
-        node.visit(lc);
+        lc.parse(node);
 
         names = lc.names;
         locals = lc.locals;
