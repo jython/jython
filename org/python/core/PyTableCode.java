@@ -34,6 +34,10 @@ public class PyTableCode extends PyCode {
     public PyObject call(PyFrame frame) {
 	//System.out.println("tablecode call: "+co_name);
 	ThreadState ts = Py.getThreadState();
+	if (ts.systemState == null) {
+	    ts.systemState = Py.defaultSystemState;
+	}
+	        //System.err.println("got ts: "+ts+", "+ts.systemState);
 
 	// Cache previously defined exception
 	PyException previous_exception = ts.exception;
@@ -46,6 +50,8 @@ public class PyTableCode extends PyCode {
         if (frame.f_back != null) {
             frame.f_builtins = frame.f_back.f_builtins;
         } else {
+            //System.err.println("ts: "+ts);
+            //System.err.println("ss: "+ts.systemState);
             frame.f_builtins = ts.systemState.builtins;
         }
     }
