@@ -1,36 +1,43 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
+
 import java.util.Vector;
 
-class ListFunctions extends PyBuiltinFunctionSet {
-    /*public PyObject __call__() {
-      switch(index) {
-      case 4:
-      return __builtin__.globals();
-      default:
-      throw argCountError(0);
-      }
-      }    
-      public PyObject __call__(PyObject arg1) {
-      switch(index) {
-      case 0:
-      return Py.newString(__builtin__.chr(Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
-      case 1:
-      return Py.newInteger(__builtin__.len(arg1));
-      case 2:
-      return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
-      case 3:
-      return Py.newInteger(__builtin__.ord(Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
-      case 5:
-      return __builtin__.hash(arg1);
-      case 7:
-      return __builtin__.list(arg1);
-      case 8:
-      return __builtin__.tuple(arg1);
-      default:
-      throw argCountError(1);
-      }
-      }*/
+
+class ListFunctions extends PyBuiltinFunctionSet
+{
+//     public PyObject __call__() {
+//         switch(index) {
+//         case 4:
+//             return __builtin__.globals();
+//         default:
+//             throw argCountError(0);
+//         }
+//     }
+//     public PyObject __call__(PyObject arg1) {
+//         switch(index) {
+//         case 0:
+//             return Py.newString(__builtin__.chr(
+//                 Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
+//         case 1:
+//             return Py.newInteger(__builtin__.len(arg1));
+//         case 2:
+//             return __builtin__.range(
+//                 Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
+//         case 3:
+//             return Py.newInteger(__builtin__.ord(
+//                 Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
+//         case 5:
+//             return __builtin__.hash(arg1);
+//         case 7:
+//             return __builtin__.list(arg1);
+//         case 8:
+//             return __builtin__.tuple(arg1);
+//         default:
+//             throw argCountError(1);
+//         }
+//     }
+
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         switch(index) {
         case 0:
@@ -40,27 +47,31 @@ class ListFunctions extends PyBuiltinFunctionSet {
             throw argCountError(2);
         }
     }
-    /*public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-      switch(index) {
-      case 2:
-      return __builtin__.range(
-      Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
-      Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
-      Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
-      default:
-      throw argCountError(3);
-      }
-      }*/
+
+//     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
+//         switch(index) {
+//         case 2:
+//             return __builtin__.range(
+//                 Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
+//                 Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
+//                 Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
+//         default:
+//             throw argCountError(3);
+//         }
+//     }
 }
 
 
-public class PyList extends PySequence implements InitModule {
+
+public class PyList extends PySequence implements InitModule
+{
     public void initModule(PyObject dict) {
-        //dict.__setitem__("append", new ListFunctions().init("append", 0, 2, true) );
+//         dict.__setitem__("append",
+//                          new ListFunctions().init("append", 0, 2, true) );
     }
     
-    public PyObject[] list;
-    public int length;
+    protected PyObject[] list;
+    protected int length;
     
     public PyList() {
         this(Py.EmptyObjects);
@@ -145,12 +156,15 @@ public class PyList extends PySequence implements InitModule {
             resize(newLength);
             System.arraycopy(list, stop, list, stop+(newLength-length),
                              length-stop);
-        } /*else if (newLength < length) {
-            System.arraycopy(list, stop, list, stop+(newLength-length), length-stop);
-            this.length = newLength;
-            }*/
+        }
+//         else if (newLength < length) {
+//             System.arraycopy(list, stop, list, stop+(newLength-length),
+//                              length-stop);
+//             this.length = newLength;
+//         }
 
         PyObject[] otherList = null;
+
         if (value instanceof PyTuple)
             otherList = ((PyTuple)value).list;
         if (value instanceof PyList) {
@@ -158,7 +172,6 @@ public class PyList extends PySequence implements InitModule {
             if (otherList == list)
                 otherList = (PyObject[])otherList.clone();;
         }
-
         if (otherList != null) {
             System.arraycopy(otherList, 0, list, start, n);
         }
@@ -289,10 +302,8 @@ public class PyList extends PySequence implements InitModule {
        This function will almost certainly go away with the builtin sorting
        provided by JDK 1.2 */
 
-
     /* New quicksort implementation for arrays of object pointers.
        Thanks to discussions with Tim Peters. */
-
 
     /* Comparison function.  Takes care of calling a user-supplied
        comparison function (any callable Python object).  Calls the
@@ -503,5 +514,9 @@ public class PyList extends PySequence implements InitModule {
 
     protected PyClass getPyClass() {
         return __class__;
+    }
+
+    public int hashCode() {
+        throw Py.TypeError("unhashable type");
     }
 }
