@@ -1243,19 +1243,19 @@ public final class Py
     public static byte py2byte(PyObject o) {
         if (o instanceof PyInteger) return (byte)((PyInteger)o).getValue();
 
-        Byte i = (Byte)o.__tojava__(Byte.TYPE);
-        if (i == null)
+        Object i = o.__tojava__(Byte.TYPE);
+        if (i == null || i == Py.NoConversion)
             throw Py.TypeError("integer required");
-        return i.byteValue();
+        return ((Byte) i).byteValue();
     }
     public static short py2short(PyObject o) {
         if (o instanceof PyInteger)
             return (short)((PyInteger)o).getValue();
 
-        Short i = (Short)o.__tojava__(Short.TYPE);
-        if (i == null)
+        Object i = o.__tojava__(Short.TYPE);
+        if (i == null || i == Py.NoConversion)
             throw Py.TypeError("integer required");
-        return i.shortValue();
+        return ((Short) i).shortValue();
     }
 
     public static int py2int(PyObject o) {
@@ -1275,10 +1275,10 @@ public final class Py
         if (o instanceof PyInteger)
             return (long)((PyInteger)o).getValue();
 
-        Long i = (Long)o.__tojava__(Long.TYPE);
-        if (i == null)
+        Object i = o.__tojava__(Long.TYPE);
+        if (i == null || i == Py.NoConversion)
             throw Py.TypeError("integer required");
-        return i.longValue();
+        return ((Long) i).longValue();
     }
 
     public static float py2float(PyObject o) {
@@ -1287,10 +1287,10 @@ public final class Py
         if (o instanceof PyInteger)
             return (float)((PyInteger)o).getValue();
 
-        Float i = (Float)o.__tojava__(Float.TYPE);
-        if (i == null)
+        Object i = o.__tojava__(Float.TYPE);
+        if (i == null || i == Py.NoConversion)
             throw Py.TypeError("float required");
-        return i.floatValue();
+        return ((Float) i).floatValue();
     }
     public static double py2double(PyObject o) {
         if (o instanceof PyFloat)
@@ -1298,10 +1298,10 @@ public final class Py
         if (o instanceof PyInteger)
             return (double)((PyInteger)o).getValue();
 
-        Double i = (Double)o.__tojava__(Double.TYPE);
-        if (i == null)
+        Object i = o.__tojava__(Double.TYPE);
+        if (i == null || i == Py.NoConversion)
             throw Py.TypeError("float required");
-        return i.doubleValue();
+        return ((Double) i).doubleValue();
     }
 
     public static char py2char(PyObject o) {
@@ -1319,10 +1319,10 @@ public final class Py
             return (char)((PyInteger)o).getValue();
         }
 
-        Character i = (Character)o.__tojava__(Character.TYPE);
-        if (i == null)
+        Object i = o.__tojava__(Character.TYPE);
+        if (i == null || i == Py.NoConversion)
             throw Py.TypeError(msg);
-        return i.charValue();
+        return ((Character) i).charValue();
     }
 
     public static void py2void(PyObject o) {
