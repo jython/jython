@@ -1,0 +1,1 @@
+def Spam(): return 'bar'
