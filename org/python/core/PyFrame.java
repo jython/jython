@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 public class PyFrame extends PyObject {
@@ -12,7 +13,10 @@ public class PyFrame extends PyObject {
     public TraceFunction tracefunc;
 
     public static PyClass __class__;
-    public PyFrame(PyTableCode code, PyObject locals, PyObject globals, PyObject builtins) {
+
+    public PyFrame(PyTableCode code, PyObject locals, PyObject globals,
+		   PyObject builtins)
+    {
 	super(__class__);
 	f_code = code;
 	f_locals = locals;
@@ -38,14 +42,16 @@ public class PyFrame extends PyObject {
     }
 
     public PyObject __findattr__(String name) {
-        if (name == "f_locals") return getf_locals();
+        if (name == "f_locals")
+	    return getf_locals();
 	return super.__findattr__(name);
     }
 
     public PyObject getf_locals() {
-	if (f_locals == null) f_locals = new PyStringMap();
+	if (f_locals == null)
+	    f_locals = new PyStringMap();
 	if (f_fastlocals != null && f_code != null) {
-	    for(int i=0; i<f_fastlocals.length; i++) {
+	    for (int i=0; i<f_fastlocals.length; i++) {
 		PyObject o = f_fastlocals[i];
 		if (o != null)
 		    f_locals.__setitem__(f_code.co_varnames[i], o);
@@ -72,7 +78,8 @@ public class PyFrame extends PyObject {
 	//System.err.println("getlocal: "+index);
 	if (f_fastlocals != null) {
 	    PyObject ret = f_fastlocals[index];
-	    if (ret != null) return ret;
+	    if (ret != null)
+		return ret;
 	    //System.err.println("no local: "+index+", "+f_code.co_varnames[index]);
 	}
 	return getlocal(f_code.co_varnames[index]);
@@ -80,9 +87,11 @@ public class PyFrame extends PyObject {
 
     public PyObject getlocal(String index) {
 	//System.err.println("getlocal: "+index);
-	if (f_locals == null) getf_locals();
+	if (f_locals == null)
+	    getf_locals();
 	PyObject ret = f_locals.__finditem__(index);
-	if (ret != null) return ret;
+	if (ret != null)
+	    return ret;
 
 	throw Py.NameError("local: '"+index+"'");
 	//return getglobal(index);
