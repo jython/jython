@@ -139,9 +139,9 @@ public class PyClass extends PyObject {
 	result = __dict__.__finditem__(name);
 	if (result == null && __bases__ != null) {
 	    int n = __bases__.__len__();
-	    for(int i=0; i<n; i++) {
-		result = ((PyClass)__bases__.__getitem__(i)).lookup(
-		    name, stop_at_java);
+	    for (int i=0; i<n; i++) {
+		PyClass base = (PyClass)(__bases__.__getitem__(i));
+		result = base.lookup(name, stop_at_java);
 		if (result != null)
 		    break;
 	    }
@@ -186,6 +186,17 @@ public class PyClass extends PyObject {
 	return c < 0 ? -1 : c > 0 ? 1 : 0;
     }
 
+    public PyString __str__() {
+	// Current CPython standard is that str(class) prints as
+	// module.class.  If the class has no module, then just the class
+	// name is printed.
+	PyObject mod = __dict__.__finditem__("__module__");
+	if (mod == null || !(mod instanceof PyString))
+	    return new PyString(__name__);
+	String smod = ((PyString)mod).toString();
+	return new PyString(smod + "." + __name__);
+    }
+
     public String toString()  {
 	PyObject mod = __dict__.__finditem__("__module__");
 	String smod;
@@ -193,6 +204,6 @@ public class PyClass extends PyObject {
 	    smod = "<unknown>";
 	else
 	    smod = ((PyString)mod).toString();
-	return "<class "+smod+'.'+__name__+" at "+Py.id(this)+">";
+	return "<class "+smod+"."+__name__+" at "+Py.id(this)+">";
     }
 }
