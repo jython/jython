@@ -46,6 +46,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
             return __builtin__.tuple(arg1);
         case 11:
             return Py.newInteger(__builtin__.id(arg1));
+        case 12:
+            return __builtin__.sum(arg1);
         default:
             throw argCountError(1);
         }
@@ -63,6 +65,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
             return __builtin__.apply(arg1, arg2);
         case 10:
             return Py.newBoolean(__builtin__.isinstance(arg1, arg2));
+        case 12:
+            return __builtin__.sum(arg1, arg2);
         default:
             throw argCountError(2);
         }
@@ -131,6 +135,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("isinstance",
                                   new BuiltinFunctions("isinstance", 10, 2));
         dict.__setitem__("id", new BuiltinFunctions("id", 11, 1));
+        dict.__setitem__("sum", new BuiltinFunctions("sum", 12, 1, 2));
         dict.__setitem__("__import__", new ImportFunction());
 
         dict.__delitem__("execfile_flags"); // -execfile_flags
@@ -169,6 +174,10 @@ public class __builtin__ implements ClassDictInit
         } else {
             return apply(o, args);
         }
+    }
+
+    public static PyObject bool(PyObject o) {
+        return (o == null ? Py.Zero : o.__nonzero__() ? Py.One : Py.Zero);
     }
 
     public static boolean callable(PyObject o) {
@@ -227,7 +236,7 @@ public class __builtin__ implements ClassDictInit
 
     public static PyComplex complex(PyObject real, PyObject imag) {
         if (real instanceof PyString)
-            throw Py.TypeError("complex() can't take second arg" + 
+            throw Py.TypeError("complex() can't take second arg" +
                                " if first is a string");
         if (imag instanceof PyString)
             throw Py.TypeError("complex() second arg can't be a string");
@@ -266,6 +275,10 @@ public class __builtin__ implements ClassDictInit
 
     public static PyObject divmod(PyObject x, PyObject y) {
         return x._divmod(y);
+    }
+
+    public static PyEnumerate enumerate(PyObject seq) {
+        return new PyEnumerate(seq);
     }
 
     public static PyObject eval(PyObject o, PyObject globals, PyObject locals)
@@ -838,7 +851,7 @@ public class __builtin__ implements ClassDictInit
     public static PyObject reduce(PyObject f, PyObject l, PyObject z) {
         PyObject result = z;
         PyObject iter = Py.iter(l, "reduce() arg 2 must support iteration");
-        
+
         for (PyObject item; (item = iter.__iternext__()) != null; ) {
             if (result == null)
                 result = item;
@@ -911,6 +924,24 @@ public class __builtin__ implements ClassDictInit
 
     public static PyString str(PyObject o) {
         return o.__str__();
+    }
+
+    public static PyObject sum(PyObject seq, PyObject result) {
+
+        if(result instanceof PyString) {
+            throw Py.TypeError("sum() can't sum strings [use ''.join(seq) instead]");
+        }
+
+        PyObject item;
+        PyObject iter = seq.__iter__();
+        while((item = iter.__iternext__()) != null) {
+            result = result._add(item);
+        }
+        return result;
+    }
+
+    public static PyObject sum(PyObject seq) {
+        return sum(seq, Py.Zero);
     }
 
     public static PyString unicode(PyObject v) {
