@@ -14,4 +14,4 @@ if [%1] == [] goto end
 :end
 
 rem -Xmx90mb 
-java.exe -Dpython.home=%JYTHON_HOME% org.python.util.jython %ARGS%
+java.exe %JYTHON_JAVA_ARGS% -Dpython.home=%JYTHON_HOME% org.python.util.jython %ARGS%
