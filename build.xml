@@ -66,10 +66,15 @@
             destdir="${outputDir}/" 
             excludes="org/python/parser/python.java,${exludejava2files}"
         />
+
+       <copy file="org/python/modules/ucnhash.dat" 
+             todir="${outputDir}/org/python/modules" />
     </target>
 
     <target name="jar" depends="compile">
-        <jar jarfile="jython.jar" basedir="${outputDir}" includes="**/*.class" />
+        <jar jarfile="jython.jar" 
+             basedir="${outputDir}" 
+             includes="**/*.class,**/ucnhash.dat" />
     </target>
 
     <target name="all" depends="init,clean,prepare,parser,compile,jar">
