@@ -217,10 +217,11 @@ CPython 1.5.2</i>
 	    <p><LI>Also missing executable, getrefcount,
 	    setcheckinterval which don't make much sense for JPython.
 	    
-	    <p><LI>JPython adds the function add_package to deal with
-	    Java packages. CPython will probably never have this
-	    function. <b>sys.add_package() is unnecessary if you are
-	    running JPython on JDK 1.2.</b>
+	    <p><LI>JPython has sys.add_package() to deal with Java
+	    packages. CPython will probably never have this
+	    function. <b>With JPython 1.1, sys.add_package() is
+	    usually unnecessary, but is retained for backwards
+	    compatibility, and as a fallback.</b>
 
 	</UL>
 
