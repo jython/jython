@@ -48,86 +48,32 @@ public class PyJavaClass extends PyClass {
     
 
 	private static java.util.Hashtable classes;
-	private static boolean initDone;
-	//private static java.util.Vector classList;
 	public synchronized static final PyJavaClass lookup(Class c) {
 	    //System.err.println("jclass: "+c.getName());
 	    if (classes == null) {
-	        //System.out.println("lookup in null");
-	        initDone = false;
             classes = new java.util.Hashtable();
-            //classList = new java.util.Vector();
+            PyJavaClass jc = new PyJavaClass(true);
+            classes.put(PyJavaClass.class, jc);
+            jc.init(PyJavaClass.class);
             Py.initPython();
-            
-            //System.out.println("lookuping up PyClass");
-            
-            lookup(PyClass.class).init(PyClass.class);
-            
-            //System.out.println("looking up PyJavaClass");      
-            
-            PyJavaClass.__class__ = new PyJavaClass(PyJavaClass.class);
-            
-            initDone = true;
-            
-            // Finalize all intermediate classes
-    		int n = classes.size();
-            
-            java.util.Enumeration ek = classes.keys();
-            Class[] keys = new Class[n];
-            
-            for (int i=0; i<n; i++) {
-                keys[i] = (Class)ek.nextElement();
-            }
-            
-            //ek = classes.keys();
-    		//java.util.Enumeration ev = classes.elements();
-
-    		for(int i=0; i<n; i++) {
-    			Class key = keys[i]; //(Class)ek.nextElement();
-    			PyJavaClass value = (PyJavaClass)classes.get(key); //ev.nextElement();
-    			//System.out.println("key: "+key.getName()+" : "+value.proxyClasses);
-            
-                if (value.proxyClasses == null) {
-                    value.init(key);
-                }
-            }
-            
-            initDone = true;
         }
-        //System.out.println("JavaClass 1");
 
 		PyJavaClass ret = (PyJavaClass)classes.get(c);
 		if (ret != null) return ret;
-		
-	    if (initDone) {
-	        ret = new PyJavaClass();
-	        classes.put(c, ret);
-	        ret.init(c);
-	        return ret;
-	    }
-	    
-        if (c == PyJavaClass.class) {
-            ret = new PyJavaClass(true);
-        } else {
-            //classList.addElement(c);
-            ret = new PyJavaClass();
-        }
-	    if (ret != null) classes.put(c, ret);
-	    return ret;
+		ret = new PyJavaClass();
+		classes.put(c, ret);
+		ret.init(c);
+		return ret;
 	}
 
-    private static PyJavaClass superLookup(Class c) {
-        PyJavaClass jc = lookup(c);
-        if (jc.proxyClasses == null) {
-            //System.err.println("superLookup: "+c.getName());
-            jc.init(c);
-        }
-        return jc;
-    }
-
     public static PyClass __class__;
+    
+    public PyJavaClass(PyClass c) {
+        super(c);
+    }
+    
     public PyJavaClass() {
-        super(__class__);
+        this(__class__);
     }
 
     private PyJavaClass(boolean fakeArg) {
@@ -140,9 +86,51 @@ public class PyJavaClass extends PyClass {
 	}
 	
 	protected void findModule(PyObject dict) {}	
+    
+    private void init__dict__() {
+        if (__dict__ != null) return;
+        PyStringMap d = new PyStringMap();
+	    d.__setitem__("__module__", Py.None);
+	    __dict__ = d;
+	}
 
-	private void init(Class c)  {
+
+    private void init__class__(Class c) {
+        if (!PyObject.class.isAssignableFrom(c)) return;
+        
+        try {
+            Field field = c.getField("__class__");
+            if (Modifier.isStatic(field.getModifiers()) && 
+                    field.getType().isAssignableFrom(PyJavaClass.class)) {
+                field.set(null, this);
+            }
+        } catch (NoSuchFieldException exc) {
+            ;
+        } catch (IllegalAccessException exc1) {
+            ;
+        }
+    }
+        
+
+	void init(Class c)  {
+	    init__class__(c);
+	    proxyClasses = new Class[] {c};
+	    __name__ = c.getName();
+	    
+	    if (InitModule.class.isAssignableFrom(c)) {
+	        init__dict__();
+		    try {
+			    InitModule initModule = (InitModule)c.newInstance();
+			    initModule.initModule(__dict__);
+			} catch (Exception exc) {
+			    throw Py.JavaError(exc);
+			}	        
+	    }
+	}
+	 /*   
 	    //System.err.println("initing jclass: "+c.getName());
+	    if (
+	    
 	    
 	    PyStringMap d = new PyStringMap();
 	    d.__setitem__("__module__", Py.None);
@@ -203,7 +191,7 @@ public class PyJavaClass extends PyClass {
 		if (initModule != null) {
 		    initModule.initModule(d);
 		}
-	}
+	}*/
 
 	private void setFields(Class c) {
 		Field[] fields = c.getFields();
@@ -314,6 +302,7 @@ public class PyJavaClass extends PyClass {
 	    __dict__.__setitem__(name, func);
 	}
 
+
     /* Add all methods declared by this class */
 	private void setMethods(Class c) {
 		Method[] methods = c.getMethods();
@@ -325,6 +314,52 @@ public class PyJavaClass extends PyClass {
 			addMethod(method);
 		}
 	}
+	
+	private boolean methodsInitialized=false;
+	private void initMethods() {
+	    if (methodsInitialized) return;
+	    methodsInitialized = true;
+	    
+	    init__dict__();
+	    
+	    Class myClass = proxyClasses[0];
+	    Method[] methods = myClass.getMethods();
+		for(int i=0; i<methods.length; i++) {
+			Method method = methods[i];
+    	    String name = getName(method.getName());
+    	    
+    	    PyObject existingAttribute = __dict__.__finditem__(name);
+    	    if (existingAttribute != null) {
+    	        if (existingAttribute instanceof PyReflectedFunction) {
+    	            ((PyReflectedFunction)existingAttribute).addMethod(method);
+    	        }
+    	        continue;
+    	    }
+    	    __dict__.__setitem__(name, new PyReflectedFunction(method));
+			//Class declaringClass = method.getDeclaringClass();
+			//if (declaringClass != myClass) {
+		}
+	}
+	
+	private boolean fieldsInitialized=false;
+	private void initFields() {
+	    if (fieldsInitialized) return;
+	    fieldsInitialized = true;
+
+	    Class myClass = proxyClasses[0];		
+		Field[] fields = myClass.getFields();
+		for(int i=0; i<fields.length; i++) {
+			Field field = fields[i];
+			//if (field.getDeclaringClass() != c) continue;
+
+            String name = getName(field.getName());
+            if (__dict__.__finditem__(name) != null) return;
+            
+            __dict__.__setitem__(name, new PyReflectedField(field));
+		}
+	}
+	
+	    
 	
 	/* Adds a bean property to this class */
     void addProperty(String name, Class propClass, Method getMethod, Method setMethod) {
@@ -540,70 +575,88 @@ public class PyJavaClass extends PyClass {
     		}
     	}
 	}
-
-	PyObject lookup(String name, boolean stop_at_java) {
-		if (stop_at_java) return null;
-		return super.lookup(name, false);
+	private boolean constructorsInitialized=false;
+	private void initConstructors() {
+	    if (constructorsInitialized) return;
+	    constructorsInitialized = true;
+	    init__dict__();
+	    setConstructors(proxyClasses[0]);
 	}
 
-    private PyJavaInstance classInstance;
-    static boolean withinner = false;
+	private boolean beanInfoInitialized=false;
+	private void initBeanInfo() {
+	    if (beanInfoInitialized) return;
+	    beanInfoInitialized = true;
+	    setBeanInfo(proxyClasses[0], null);
+	}	
+	
+	
+	PyObject lookup(String name, boolean stop_at_java) {
+	    if (stop_at_java) return null;
+	    
+	    if (!methodsInitialized) initMethods();
+	 
+		PyObject result = __dict__.__finditem__(name);
+		if (result != null) return result;		
+		
+		if (!fieldsInitialized) initFields();
+		result = __dict__.__finditem__(name);
+		if (result != null) return result;
+		
+		// Still need support for various bean properties here...
+		if (!beanInfoInitialized) initBeanInfo();
+		result = __dict__.__finditem__(name);
+		if (result != null) return result;
+
+		return null;
+	}
+	
 	public PyObject __findattr__(String name) {
-        PyObject ret = super.__findattr__(name);
-        if (ret != null) {
-            return ret._doget(null);
+        if (name == "__dict__") {
+            if (__dict__ == null) init__dict__();
+            return __dict__;
         }
+        if (name == "__name__") return new PyString(__name__);
+        //if (name == "__bases__") return __bases__;
+    
+	    PyObject result = lookup(name, false);
+	    if (result != null) return result._doget(null);
+	    
+	    result = findClassAttr(name);
+	    if (result != null) return result;
+	    
+	    result = findInnerClass(name);
+	    if (result != null) return result;
+        
+		return null;
+	}
+	
+    private PyJavaInstance classInstance;
+	private PyObject findClassAttr(String name) {
 	    if (classInstance == null) {
 	        classInstance = new PyJavaInstance(proxyClasses[0]);
 	    }
-	    ret = classInstance.__findattr__(name);
-	    
-	    // Rudimentary inner class support
-	    if (ret != null || !withinner) return ret;
-	    
+	    PyObject result = classInstance.__findattr__(name);
+	    if (result == null) return null;
+	    __dict__.__setitem__(name, result);
+	    return result;
+	}
+	
+	private PyObject findInnerClass(String name) {
 	    try {
-	        //System.err.println("looking up inner: "+__name__+"$"+name);
 	        Class innerClass = Class.forName(__name__+"$"+name);
-	        PyJavaClass jinner = PyJavaClass.lookup(innerClass);
-	        PyObject[] bases = jinner.__bases__.list;
-	        int n = bases.length;
-	        PyObject[] newBases = new PyObject[n+1];
-	        
-	        int i;
-	        for(i=0; i<n; i++) {
-	            if (bases[i] == this) break;
-	            newBases[i] = bases[i];
-	        }
-	        if (i == n) newBases[i] = this;
-	        
-	        jinner.__bases__ = new PyTuple(newBases);
-	        String innername = jinner.__name__;
-	        int dollar = innername.indexOf('$');
-	        if (dollar != -1) {
-	            jinner.__name__ = innername.substring(0, dollar)+
-	                "." + innername.substring(dollar+1, innername.length());
-	        }
-	        
-	        /*if (jinner.__bases__
-	        PyJavaClass jinner = new PyJavaClass();
-	        jinner.__dict__ = new PyStringMap();
-	        jinner.__name__ = __name__+"."+name;
-	        jinner.__bases__ = new PyTuple(new PyObject[] {jc, this});
-	        jinner.proxyClasses = new Class[] {innerClass};*/
-	        
+	        PyJavaClass jinner = new PyJavaInnerClass(innerClass, this);
 	        __dict__.__setitem__(name, jinner);
 	        return jinner;
         } catch (ClassNotFoundException exc) {
             return null;
         } catch (Throwable t) {
-            System.err.println("internal error looking for inner class");
-            t.printStackTrace();
-            return null;
+            throw Py.JavaError(t);
         }
-    }
+	}
 
 	public void __setattr__(String name, PyObject value) {
-		PyObject field = super.lookup(name, false);
+		PyObject field = lookup(name, false);
 		if (field != null) {
 		    if (field._doset(null, value)) return;
 		}
@@ -612,7 +665,7 @@ public class PyJavaClass extends PyClass {
 	}
 
 	public void __delattr__(String name) {
-	    PyObject field = super.lookup(name, false);
+	    PyObject field = lookup(name, false);
 	    if (field == null) {
 	        throw Py.NameError("attribute not found: "+name);
 	    }
@@ -624,19 +677,10 @@ public class PyJavaClass extends PyClass {
 	}
 
 	public PyObject __call__(PyObject[] args, String[] keywords) {
+	    if (!constructorsInitialized) initConstructors();
+	    
 		PyInstance inst = new PyJavaInstance(this);
-		/*int n = keywords.length;
-		PyObject[] newArgs = args;
-        if (n > 0) {
-            newArgs = new PyObject[args.length-n];
-            System.arraycopy(args, 0, newArgs, 0, newArgs.length);
-        }*/
 		inst.__init__(args, keywords);
-
-		/*int offset = newArgs.length;
-		for(int i=0; i<n; i++) {
-		    inst.__setattr__(keywords[i], args[i+offset]);
-		}*/
 		return inst;
 	}
 
