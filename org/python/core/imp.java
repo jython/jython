@@ -451,8 +451,8 @@ public class imp
         if (dot != -1) {
             PyObject modules = Py.getSystemState().modules;
             PyObject mod = modules.__finditem__(name);
-            if (mod != null && !top)
-                return mod;
+            if (mod == Py.None) mod = null;
+            else if (mod != null && !top) return mod;
 
             int last_dot = dot;
             String firstName = name.substring(0,dot).intern();
@@ -504,7 +504,7 @@ public class imp
                 }
                 String newName = (pkgName+'.'+name).intern();
                 mod = modules.__finditem__(newName);
-                if (mod != null) {
+                if (mod != null && mod != Py.None) {
                     //System.err.println("refound: "+name); // ?? dbg
                     if (!top) return mod;
                     else return topMod;

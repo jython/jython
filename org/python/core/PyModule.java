@@ -26,7 +26,8 @@ public class PyModule extends PyObject
         PyObject modules = Py.getSystemState().modules;
 
         PyObject ret = modules.__finditem__(fullName);
-        if (ret != null) return ret;
+        if (ret == Py.None) ret = null;
+        else if (ret != null) return ret;
 
         if (path == Py.None) {
             /* disabled:
