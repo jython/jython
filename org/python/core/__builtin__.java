@@ -3,6 +3,7 @@ package org.python.core;
 
 import org.python.parser.SimpleNode;
 import java.util.Hashtable;
+import java.math.BigInteger;
 
 
 class BuiltinFunctions extends PyBuiltinFunctionSet
@@ -515,6 +516,10 @@ public class __builtin__ implements ClassDictInit
 
     public static PyObject locals() {
         return Py.getFrame().getf_locals();
+    }
+
+    public static PyLong long$(BigInteger o) {
+        return Py.newLong(o);
     }
 
     public static PyLong long$(PyObject o) {
