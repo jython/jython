@@ -891,6 +891,8 @@ public final class Py {
 	// Needs rewriting for efficiency and extensibility
 	public static PyObject java2py(Object o) {
 		if (o instanceof PyObject) return (PyObject)o;
+		if (o instanceof PyProxy) return ((PyProxy)o)._getPyInstance();
+		
 		if (o instanceof Number) {
 			if (o instanceof Double || o instanceof Float) {
 				return new PyFloat(((Number)o).doubleValue());
@@ -909,6 +911,7 @@ public final class Py {
 		if (o instanceof String) return new PyString((String)o);
 		if (o instanceof Character) return new PyString(o.toString());
 		if (o instanceof Class) return PyJavaClass.lookup((Class)o);
+
 		Class c = o.getClass();
 		if (c.isArray()) {
 			return new PyArray(c.getComponentType(), o);
