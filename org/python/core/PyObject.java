@@ -20,24 +20,25 @@ public class PyObject implements java.io.Serializable {
      **/
     //public transient PyClass __class__;
 
-    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
+    public static void typeSetup(PyObject dict, PyType.Newstyle marker) {
         dict.__setitem__(
             "__class__",
             new PyGetSetDescr("__class__", PyObject.class, "getType", null));
         class exposed___str__ extends PyBuiltinFunctionNarrow {
+
             private PyObject self;
 
             public PyObject getSelf() {
                 return self;
             }
-            
-            exposed___str__(PyObject self, PyBuiltinFunction.Info info) {
+
+            exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
                 super(info);
-                this.self = self;
+                this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___str__(self, info);
+                return new exposed___str__((PyObject)self,info);
             }
 
             public PyObject __call__() {
@@ -48,21 +49,244 @@ public class PyObject implements java.io.Serializable {
                 return self.__repr__();
             }
 
-        };
+        }
+        dict.__setitem__("__str__",new PyMethodDescr("__str__",PyObject.class,0,0,new exposed___str__(null,null)));
+        class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
 
-        dict.__setitem__(
-            "__str__",
-            new PyMethodDescr(
-                "__str__",PyObject.class,
-                0,
-                0,
-                new exposed___str__(null, null)));
-                
-        dict.__setitem__(
-            "__new__", new PyNewWrapper(PyObject.class,"__new__",-1,-1) {
-                public PyObject new_impl(boolean init,PyType subtype,PyObject[] args,String[] keywords) 
-                { return new PyObject(); } // xxx
-            });
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getattribute__(PyObject self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getattribute__((PyObject)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    String name=(arg0.asName(0));
+                    PyObject ret=self.object___findattr__(name);
+                    if (ret==null)
+                        self.noAttributeError(name);
+                    return ret;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="attribute name must be string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject self,PyObject arg0) {
+                try {
+                    String name=(arg0.asName(0));
+                    PyObject ret=self.object___findattr__(name);
+                    if (ret==null)
+                        self.noAttributeError(name);
+                    return ret;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="attribute name must be string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("__getattribute__",new PyMethodDescr("__getattribute__",PyObject.class,1,1,new exposed___getattribute__(null,null)));
+        class exposed___setattr__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___setattr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___setattr__((PyObject)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    String name=(arg0.asName(0));
+                    self.object___setattr__(name,arg1);
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="attribute name must be string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject self,PyObject arg0,PyObject arg1) {
+                try {
+                    String name=(arg0.asName(0));
+                    self.object___setattr__(name,arg1);
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="attribute name must be string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("__setattr__",new PyMethodDescr("__setattr__",PyObject.class,2,2,new exposed___setattr__(null,null)));
+        class exposed___delattr__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___delattr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___delattr__((PyObject)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    String name=(arg0.asName(0));
+                    self.object___delattr__(name);
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="attribute name must be string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject self,PyObject arg0,PyObject arg1) {
+                try {
+                    String name=(arg0.asName(0));
+                    self.object___delattr__(name);
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="attribute name must be string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("__delattr__",new PyMethodDescr("__delattr__",PyObject.class,2,2,new exposed___delattr__(null,null)));
+        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___hash__((PyObject)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyInteger(self.object_hashCode());
+            }
+
+            public PyObject inst_call(PyObject self) {
+                return new PyInteger(self.object_hashCode());
+            }
+
+        }
+        dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyObject.class,0,0,new exposed___hash__(null,null)));
+        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___repr__((PyObject)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.object_toString());
+            }
+
+            public PyObject inst_call(PyObject self) {
+                return new PyString(self.object_toString());
+            }
+
+        }
+        dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyObject.class,0,0,new exposed___repr__(null,null)));
+
+        dict
+            .__setitem__(
+                "__new__",
+                new PyNewWrapper(PyObject.class, "__new__", -1, -1) {
+            public PyObject new_impl(
+                boolean init,
+                PyType subtype,
+                PyObject[] args,
+                String[] keywords) {
+                return new PyObject();
+            } // xxx
+        });
     }
 
     // xxx this is likely not the final name/approach,
@@ -133,6 +357,22 @@ public class PyObject implements java.io.Serializable {
     public PyString __repr__() {
         return new PyString(toString());
     }
+    
+    public String toString() {
+        return object_toString();
+    }
+    
+    final String object_toString() {
+        if (getType() == null) {
+            return "unknown object";
+        }
+
+        String name = getType().fastGetName();
+        if (name == null)
+            return "unknown object";
+
+        return "<"+name+" object "+Py.idstr(this)+">";        
+    }
 
     public String safeRepr() throws PyIgnoreMethodTag {
         if (getType() == null) {
@@ -167,6 +407,10 @@ public class PyObject implements java.io.Serializable {
     }
 
     public int hashCode() {
+        return object_hashCode();
+    }
+
+    final int object_hashCode() {
         return System.identityHashCode(this);
     }
 
@@ -724,7 +968,7 @@ public class PyObject implements java.io.Serializable {
             return ret._doget(this);
         return null;*/
 
-        return object__findattr__(name);
+        return object___findattr__(name);
     }
 
     /**
@@ -741,7 +985,7 @@ public class PyObject implements java.io.Serializable {
     public final PyObject __getattr__(PyString name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
-            no_attribute(name.toString());
+            noAttributeError(name.toString());
         return ret;
     }
 
@@ -763,16 +1007,16 @@ public class PyObject implements java.io.Serializable {
     public final PyObject __getattr__(String name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
-            no_attribute(name);
+            noAttributeError(name);
         return ret;
     }
 
-    private void no_attribute(String name) {
+    public void noAttributeError(String name) {
         throw Py.AttributeError(
             safeRepr() + " has no attribute '" + name + "'");
     }
 
-    private void readonly_attribute(String name) {
+    public void readonlyAttributeError(String name) {
         throw Py.AttributeError(
             safeRepr() + " attribute '" + name + "' is read-only");
     }
@@ -802,7 +1046,7 @@ public class PyObject implements java.io.Serializable {
      * @see #__setattr__(PyString, PyObject)
     **/
     public void __setattr__(String name, PyObject value) {
-        object__setattr__(name, value);
+        object___setattr__(name, value);
     }
 
     /**
@@ -833,7 +1077,7 @@ public class PyObject implements java.io.Serializable {
      * @see #__delattr__(PyString)
      **/
     public void __delattr__(String name) {
-        object__delattr__(name);
+        object___delattr__(name);
     }
 
     // Used by import logic.
@@ -2389,7 +2633,7 @@ public class PyObject implements java.io.Serializable {
     }
 
     // name must be interned
-    final PyObject object__findattr__(String name) {
+    final PyObject object___findattr__(String name) {
 
         PyObject descr = objtype.lookup(name);
         PyObject res;
@@ -2416,7 +2660,7 @@ public class PyObject implements java.io.Serializable {
         return null;
     }
 
-    final void object__setattr__(String name, PyObject value) {
+    final void object___setattr__(String name, PyObject value) {
         PyObject descr = objtype.lookup(name);
 
         boolean set = false;
@@ -2440,12 +2684,12 @@ public class PyObject implements java.io.Serializable {
         }
 
         if (descr != null)
-            readonly_attribute(name);
+            readonlyAttributeError(name);
 
-        no_attribute(name);
+        noAttributeError(name);
     }
 
-    final void object__delattr__(String name) {
+    final void object___delattr__(String name) {
         PyObject descr = objtype.lookup(name);
 
         boolean delete = false;
@@ -2460,8 +2704,14 @@ public class PyObject implements java.io.Serializable {
 
         PyObject obj_dict = getDict();
         if (obj_dict != null) {
-            obj_dict.__delitem__(name);
-            // xxx convert KeyError into Attribute error
+            try {
+                obj_dict.__delitem__(name);
+            } catch (PyException exc) {
+                if (Py.matchException(exc, Py.KeyError))
+                    noAttributeError(name);
+                else
+                    throw exc;
+            }
             return;
         }
 
@@ -2470,10 +2720,31 @@ public class PyObject implements java.io.Serializable {
         }
 
         if (descr != null)
-            readonly_attribute(name);
+            readonlyAttributeError(name);
 
-        no_attribute(name);
+        noAttributeError(name);
     }
+
+    /* arguments' conversion helpers */
+
+    public static class ConversionException extends Exception {
+        
+        public int index;
+        
+        public ConversionException(int index) {
+            this.index = index;
+        }
+
+    }
+
+    public String asString(int index) throws ConversionException {
+        throw new ConversionException(index);
+    }
+
+    public String asName(int index) throws ConversionException {
+        throw new ConversionException(index);
+    }
+
 
 }
 

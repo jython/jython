@@ -1836,7 +1836,7 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public PyString decode() {
-        return encode(null, null);
+        return encode(null, null); // xxx
     }
 
     public PyString decode(String encoding) {
@@ -1846,6 +1846,17 @@ public class PyString extends PySequence implements ClassDictInit
     public PyString decode(String encoding, String errors) {
         return codecs.decode(this, encoding, errors);
     }
+    
+    /* arguments' conversion helper */
+
+    public String asString(int index) throws PyObject.ConversionException {
+        return string;
+    }
+    
+    public String asName(int index) throws PyObject.ConversionException {
+        return internedString();
+    }    
+      
 }
 
 
@@ -2346,4 +2357,5 @@ final class StringFormatter
         }
         return buffer.toString();
     }
+  
 }
