@@ -725,14 +725,12 @@ public class __builtin__ implements InitModule {
         if (o instanceof PyTuple)
             return (PyTuple)o;
         if (o instanceof PyList) {
+            // always make a copy, otherwise the tuple will share the
+            // underlying data structure with the list object, which
+            // renders the tuple mutable!
             PyList l = (PyList)o;
-            PyObject[] a;
-            if (l.list.length != l.length) {
-                a = new PyObject[l.length];
-                System.arraycopy(l.list, 0, a, 0, a.length);
-            } else {
-                a = l.list;
-            }
+            PyObject[] a = new PyObject[l.length];
+            System.arraycopy(l.list, 0, a, 0, a.length);
             return new PyTuple(a);
         }
         return new PyTuple(make_array(o));
