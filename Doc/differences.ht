@@ -2,7 +2,6 @@ Title: Differences between CPython and JPython
 
 <h3>Differences between CPython and JPython</h3>
 
-
 <P>CPython and JPython are two different implementations of the Python
 language. While a <A HREF="http://www.python.org/doc/ref">Language
 Reference</A> exists for the Python language, there are a number of
