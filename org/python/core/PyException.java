@@ -29,6 +29,10 @@ public class PyException extends RuntimeException
 
     public void instantiate() {
         if (!instantiated) {
+            // repeatedly, replace a tuple exception with its first item
+            while (type instanceof PyTuple && type.__len__() > 0) {
+                type = type.__getitem__(0);
+            }
             if (type instanceof PyClass &&
                 (!(value instanceof PyInstance &&
                    __builtin__.isinstance(value, (PyClass)type))))
