@@ -219,11 +219,11 @@ class _ShellEnv:
         # _readLines( ... println )
         def println( arg, write=sys.stdout.write ):
             write( arg + "\n" )
-        # read stdin in main thread
-        self._readLines( p.getInputStream(), println )
         # read stderr in secondary thread
         thread.start_new_thread( self._readLines,
                                 ( p.getErrorStream(), println ))
+        # read stdin in main thread
+        self._readLines( p.getInputStream(), println )
         return p.waitFor()
 
 
