@@ -86,7 +86,7 @@ class CommandLineOptions {
                     System.err.println("-D option with no '=': "+args[index]);
                     return false;
                 }
-                String key = arg.substring(0, equals);
+                String key = arg.substring(2, equals);
                 String value = arg.substring(equals+1, arg.length());
                 setProperty(key, value);
             } else {
