@@ -176,11 +176,16 @@ abstract public class PySequence extends PyObject {
 	    return ret;
 	}
 
+	public void __setitem__(int index, PyObject value) {
+		int i = fixindex(index);
+		if (i == -1) throw Py.IndexError("index out of range: "+i);
+	    set(i, value);
+	}
+
 	public void __setitem__(PyObject index, PyObject value) {
 		if (index instanceof PyInteger) {
-		    int i = fixindex(((PyInteger)index).getValue());
-		    if (i == -1) throw Py.IndexError("index out of range: "+i);
-			set(i, value);
+		    __setitem__(((PyInteger)index).getValue(), value);
+
 		} else {
 			if (index instanceof PySlice) {
 				int[] s = slice_indices((PySlice)index, __len__());

@@ -384,6 +384,10 @@ public class PyObject implements java.io.Serializable {
 	    __setitem__(new PyString(key), value);
 	}
 	
+	public void __setitem__(int key, PyObject value) {
+	    __setitem__(new PyInteger(key), value);
+	}
+	
     /**
     Equivalent to the standard Python __delitem__ method.
     
