@@ -22,6 +22,8 @@ Copyright © Corporation for National Research Initiatives
 
     Harry Mantakos contributed the underlying md5 implementation.
 
+    The SHA1 implementation is taken from cryptix.
+
     A huge thanks goes to all the members of the jpython-interest
     mailing list.  Other folks who have contributed to JPython in ways
     large and small, in no particular order:
