@@ -2,9 +2,11 @@
 
 from BaseEvaluator import BaseEvaluator
 from PythonVisitor import Arguments
-import string
 import jast
 import ImportName
+
+COMMASPACE = ', '
+
 
 
 class Reference:
@@ -133,8 +135,9 @@ class LocalFrame:
         return temp
 
     def freetemp(self, temp):
-        index = int(string.split(temp.name, '$')[1])
-        type = string.split(temp.name, '$')[2]
+        parts = temp.name.split('$')
+        index = int(parts[1])
+        type = parts[2]
         temps = self.gettemps(type)
 
         #print 'free temp', index, type, temps
@@ -187,7 +190,7 @@ class LocalFrame:
             names = []
             for index in range(len(temps)):
                 names.append("t$%d$%s" % (index, type))
-            ident = "%s %s" % (type, string.join(names, ', '))
+            ident = "%s %s" % (type, COMMASPACE.join(names))
             decs.append(jast.Identifier(ident))
         decs.append(jast.Blank)
         return decs 
@@ -312,7 +315,7 @@ class SimpleCompiler(BaseEvaluator):
     def global_stmt(self, names):
         for name in names:
             self.frame.addglobal(name)
-        return jast.SimpleComment('global '+string.join(names, ','))
+        return jast.SimpleComment('global ' + COMMASPACE.join(names))
 
     def get_module(self, names, topmost=0):
         ret = self.factory.importName(names[0])
@@ -442,9 +445,21 @@ class SimpleCompiler(BaseEvaluator):
         if value is None:
             return jast.InvokeStatic("Py", "println", [])
         else: 
-            v = self.visit(value)
-            #print v, v.print_line
-            return v.print_line()
+            return self.visit(value).print_line()
+
+    def print_line_to(self, file, value=None):
+        f = self.visit(file)
+        if value is None:
+            return f.print_line_to()
+        else:
+            return f.print_line_to(self.visit(value).asAny())
+
+    def print_continued_to(self, file, value):
+        f = self.visit(file)
+        if value is None:
+            return f.print_continued_to()
+        else:
+            return f.print_continued_to(self.visit(value).asAny())
 
     def pass_stmt(self):
         return jast.SimpleComment("pass")
