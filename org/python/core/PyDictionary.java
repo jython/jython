@@ -28,6 +28,11 @@ public class PyDictionary extends PyObject {
 		return table.size() != 0;
 	}
 
+	public PyObject __finditem__(int index) {
+	    throw Py.TypeError("using dictionary as a sequence");
+	}
+
+
 	public PyObject __finditem__(PyObject key) {
 		return (PyObject)table.get(key);
 	}
