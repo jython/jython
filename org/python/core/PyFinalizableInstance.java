@@ -21,6 +21,19 @@ public class PyFinalizableInstance extends PyInstance
 
     // __del__ method is invoked upon object finalization.
     protected void finalize() {
-        __class__.__del__.__call__(this);
+        try {
+            __class__.__del__.__call__(this);
+        } catch (PyException exc) {
+            // Try to get the right method description.
+            PyObject method = __class__.__del__;
+            try {
+                method = __findattr__("__del__");
+            } catch (PyException e) { ; }
+
+            Py.stderr.println("Exception " +
+                Py.formatException(exc.type, exc.value, exc.traceback) +
+                " in " + method +
+                " ignored");
+        }
     }
 }
