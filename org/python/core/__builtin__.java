@@ -291,29 +291,16 @@ public class __builtin__ implements InitModule {
 		return Py.id(o);
 	}
 
-	/*
-	public static PyObject input(PyString prompt) throws PyException, java.io.IOException {
-		String line = raw_input(prompt);
 
-		org.python.parser.Node node = parser.parse(line, "single", true);
-		if (node == null) {
-			while (true) {
-				String input = raw_input(sys.ps2);
-				if (node != null && input.equals("")) break;
-				line = line+"\n"+input;
-				node = parser.parse(line, "single", true);
-			}
-		}
-		//System.out.println("line: "+line);
-		PyCode code = compile(node, "<stdin>", null);
-		return code;
-		//return Py.runCode(code, locals, globals);
+	public static PyObject input(PyObject prompt) {
+		String line = raw_input(prompt);
+		
+		return eval(new PyString(line));
 	}
 
-	public static PyObject input() throws PyException, java.io.IOException {
+	public static PyObject input() {
 		return input(sys.ps1);
 	}
-	*/
 
 	public static PyInteger int$(PyObject o) {
 		return o.__int__();
@@ -546,22 +533,33 @@ public class __builtin__ implements InitModule {
 		return range(start,stop,1);
 	}
 
-	public static String raw_input(PyObject prompt) throws java.io.IOException {
-		Py.print(prompt);
-		StringBuffer buf = new StringBuffer();
+    private static PyString readline(PyObject file) {
+        if (file instanceof PyFile) {
+            return ((PyFile)file).readline();
+        } else {
+            PyObject ret = file.invoke("readline");
+            if (!(ret instanceof PyString)) {
+                throw Py.TypeError("object.readline() returned non-string");
+            }
+            return (PyString)ret;
+        }
+    }
 
-		while (true) {
-			int i = System.in.read();
-			if (i == -1) throw Py.EOFError("raw_input()");
-			char c = (char)i;
-			if (c == '\r') continue;
-			if (c == '\n') break;
-			buf.append(c);
-		}
-		return buf.toString();
+	public static String raw_input(PyObject prompt) {
+		Py.print(prompt);
+		PyObject stdin = Py.getSystemState().stdin;
+		String data = readline(stdin).toString();
+        if (data.endsWith("\n")) {
+            return data.substring(0, data.length()-1);
+        } else {
+            if (data.length() == 0) {
+                throw Py.EOFError("raw_input()");
+            }
+        }
+		return data;
 	}
 
-	public static String raw_input() throws java.io.IOException {
+	public static String raw_input() {
 		return raw_input(new PyString(""));
 	}
 
