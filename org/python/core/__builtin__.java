@@ -136,7 +136,9 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject abs(PyObject o) {
-        return o.__abs__();
+        if (o.isNumberType())
+            return o.__abs__();
+        throw Py.TypeError("bad operand type for abs()");
     }
 
     public static PyObject apply(PyObject o, PyObject args) {
