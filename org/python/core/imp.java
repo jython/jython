@@ -44,17 +44,28 @@ public class imp {
 	    }
 	}
 
-    private static PyObject createFromPyClass(String name, InputStream fp) {
+    private static PyObject createFromPyClass(String name, InputStream fp, boolean testing) {
         byte[] data = readBytes(fp);
         int n = data.length;
         //System.err.println("data: "+data[n-1]+", "+data[n-2]+", "+data[n-3]+", "+data[n-4]);
         int api = (data[n-4]<<24)+(data[n-3]<<16)+(data[n-2]<<8)+data[n-1];
         if (api != APIVersion) {
-            //System.err.println("invalid api version("+api+" != "+APIVersion+") in: "+name); 
-            throw Py.ImportError("invalid api version("+api+" != "+APIVersion+") in: "+name);
+            if (testing) {
+                return null;
+            } else { 
+                throw Py.ImportError("invalid api version("+api+" != "+APIVersion+") in: "+name);
+            }
         }
         //System.err.println("APIVersion: "+api);
-        return createFromCode(name, BytecodeLoader.makeCode(name+"$py", data));
+        PyCode code;
+        try {
+            code = BytecodeLoader.makeCode(name+"$py", data);
+        } catch (Throwable t) {
+            BytecodeLoader.clearLoader();
+            if (testing) return null;
+            else throw Py.JavaError(t);
+        }
+        return createFromCode(name, code);
     }
 
     public static byte[] compileSource(String name, File file) {
@@ -210,13 +221,8 @@ public class imp {
 					long pyTime = pyFile.lastModified();
 					long classTime = classFile.lastModified();
 					if (classTime >= pyTime) {
-					    try {
-						    return createFromPyClass(modName, makeStream(classFile));
-						} catch (Throwable t) {
-						    // If bad class format, trash class loader
-						    //System.err.println("bad class: "+classFile+", "+t);
-						    BytecodeLoader.clearLoader();
-						}
+					    PyObject ret = createFromPyClass(modName, makeStream(classFile), true);
+					    if (ret != null) return ret;
 					}
 				}
 				return createFromSource(modName, makeStream(pyFile), pyFile.getAbsolutePath());
@@ -224,11 +230,7 @@ public class imp {
 
 			// If no source, try loading precompiled
 			if (classFile.isFile()) {
-			    try {
-				    return createFromPyClass(modName, makeStream(classFile));
-				} catch (ClassFormatError exc) {
-				    throw Py.ImportError("bad class file in: "+classFile.toString());
-				}
+				return createFromPyClass(modName, makeStream(classFile), false);
 			}
 			
 			File javaFile = new File(dirName, javaName);
