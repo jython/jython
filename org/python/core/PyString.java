@@ -49,6 +49,20 @@ class StringFuncs extends PyBuiltinFunctionSet
             return new PyInteger(s.__len__());
         case 3:
             return s.__repr__();
+        case 4:
+            return Py.newBoolean(s.islower());
+        case 5:
+            return Py.newBoolean(s.isalpha());
+        case 6:
+            return Py.newBoolean(s.isdigit());
+        case 7:
+            return Py.newBoolean(s.isupper());
+        case 8:
+            return Py.newBoolean(s.isspace());
+        case 9:
+            return Py.newBoolean(s.istitle());
+        case 10:
+            return Py.newBoolean(s.isnumeric());
         case 101:
             return new PyString(s.lower());
         case 102:
@@ -234,6 +248,13 @@ public class PyString extends PySequence implements ClassDictInit
         dict.__setitem__("__str__", new StringFuncs("__str__", 1, 0));
         dict.__setitem__("__len__", new StringFuncs("__len__", 2, 0));
         dict.__setitem__("__repr__", new StringFuncs("__repr__", 3, 0));
+        dict.__setitem__("islower", new StringFuncs("islower", 4, 0));
+        dict.__setitem__("isalpha", new StringFuncs("isalpha", 5, 0));
+        dict.__setitem__("isdigit", new StringFuncs("isdigit", 6, 0));
+        dict.__setitem__("isupper", new StringFuncs("isupper", 7, 0));
+        dict.__setitem__("isspace", new StringFuncs("isspace", 8, 0));
+        dict.__setitem__("istitle", new StringFuncs("istitle", 9, 0));
+        dict.__setitem__("isnumeric", new StringFuncs("isnumeric", 10, 0));
         dict.__setitem__("__cmp__", new StringFuncs("__cmp__", 11, 1));
         dict.__setitem__("__add__", new StringFuncs("__add__", 12, 1));
         dict.__setitem__("__mod__", new StringFuncs("__mod__", 13, 1));
