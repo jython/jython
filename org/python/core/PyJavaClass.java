@@ -51,7 +51,11 @@ public class PyJavaClass extends PyClass
             if (lazy.proxyClass == c) return lazy;
         }
 
-        ret = new PyJavaClass(c);
+        Class parent = c.getDeclaringClass();
+        if (parent == null)
+            ret = new PyJavaClass(c);
+        else
+            ret = new PyJavaInnerClass(c, lookup(parent));
         tbl.putCanonical(c,ret);
 
         return ret;
@@ -808,7 +812,7 @@ public class PyJavaClass extends PyClass
         Class innerClass = Py.relFindClass(getProxyClass(),__name__+"$"+name);
         if (innerClass == null) return null;
 
-        PyJavaClass jinner = new PyJavaInnerClass(innerClass, this);
+        PyJavaClass jinner = lookup(innerClass);
         __dict__.__setitem__(name, jinner);
         return jinner;
     }
