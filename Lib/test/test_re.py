@@ -88,14 +88,14 @@ else:
 
 try:
     re.sub('(?P<a>x)', '\g<a a>', 'xx')
-except IndexError, reason:
+except re.error, reason:
     pass
 else:
     raise TestFailed, "symbolic reference"
 
 try:
     re.sub('(?P<a>x)', '\g<1a1>', 'xx')
-except IndexError, reason:
+except re.error, reason:
     pass
 else:
     raise TestFailed, "symbolic reference"
