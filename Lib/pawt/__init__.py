@@ -32,3 +32,14 @@ class GridBag:
 			setattr(constraints, key, value)
 		self.gridbag.setConstraints(widget, constraints)
 		self.frame.add(widget)
+		
+try:
+	import java.awt.swing.Icon
+	swing = java.awt.swing
+except ImportError:
+	try:
+		import com.sun.java.awt.swing.Icon
+		swing = com.sun.java.awt.swing
+	except ImportError:
+		pass
+		
