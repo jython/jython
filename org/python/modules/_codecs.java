@@ -25,210 +25,6 @@ public class _codecs {
 
 
 
-
-    /* --- UTF-8 Codec -------------------------------------------------------- */
-    private static byte utf8_code_length[] = {
-       /* Map UTF-8 encoded prefix byte to sequence length.  zero means
-           illegal prefix.  see RFC 2279 for details */
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 0, 0
-    };
-
-
-
-
-
-
-    public static PyTuple utf_8_decode(String str) {
-        return utf_8_decode(str, null);
-    }
-
-    public static PyTuple utf_8_decode(String str, String errors) {
-        int size = str.length();
-        StringBuffer unicode = new StringBuffer(size);
-
-
-        /* Unpack UTF-8 encoded data */
-        for (int i = 0; i < size; ) {
-            int ch = str.charAt(i);
-            if (ch > 0xFF) {
-                codecs.decoding_error("utf-8", unicode, errors, 
-                                      "ordinal not in range(255)");
-                i++;
-                continue;
-            }
-
-            if (ch < 0x80) {
-                unicode.append((char) ch);
-                i++;
-                continue;
-            }
-
-            int n = utf8_code_length[ch];
-
-            if (i + n > size) {
-                codecs.decoding_error("utf-8", unicode, errors, 
-                                      "unexpected end of data");
-                i++;
-                continue;
-            }
-
-	
-            switch (n) {
-            case 0:
-                codecs.decoding_error("utf-8", unicode, errors, 
-                                      "unexpected code byte");
-                i++;
-                continue;
-            case 1:
-                codecs.decoding_error("utf-8", unicode, errors, 
-                                      "internal error");
-                i++;
-                continue;
-            case 2:
-                char ch1 = str.charAt(i+1);
-                if ((ch1 & 0xc0) != 0x80) {
-                    codecs.decoding_error("utf-8", unicode, errors, 
-                                          "invalid data");
-                    i++;
-                    continue;
-                }
-                ch = ((ch & 0x1f) << 6) + (ch1 & 0x3f);
-                if (ch < 0x80) {
-                    codecs.decoding_error("utf-8", unicode, errors,
-                                          "illegal encoding");
-                    i++;
-                    continue;
-                } else
-                    unicode.append((char) ch);
-                break;
-
-            case 3:
-                ch1 = str.charAt(i+1);
-                char ch2 = str.charAt(i+2); 
-                if ((ch1 & 0xc0) != 0x80 || (ch2 & 0xc0) != 0x80) {
-                    codecs.decoding_error("utf-8", unicode, errors, 
-                                          "invalid data");
-                    i++;
-                    continue;
-                }
-                ch = ((ch & 0x0f) << 12) + ((ch1 & 0x3f) << 6) + (ch2 & 0x3f);
-                if (ch < 0x800 || (ch >= 0xd800 && ch < 0xe000)) {
-                    codecs.decoding_error("utf-8", unicode, errors, 
-                                          "illegal encoding");
-                    i++;
-                    continue;
-                } else
-                   unicode.append((char) ch);
-                break;
-
-            case 4:
-                ch1 = str.charAt(i+1);
-                ch2 = str.charAt(i+2); 
-                char ch3 = str.charAt(i+3); 
-                if ((ch1 & 0xc0) != 0x80 ||
-                    (ch2 & 0xc0) != 0x80 ||
-                    (ch3 & 0xc0) != 0x80) {
-                    codecs.decoding_error("utf-8", unicode, errors, 
-                                          "invalid data");
-                    i++;
-                    continue;
-                }
-                ch = ((ch & 0x7) << 18) + ((ch1 & 0x3f) << 12) +
-                     ((ch2 & 0x3f) << 6) + (ch3 & 0x3f);
-                /* validate and convert to UTF-16 */
-                if ((ch < 0x10000) ||   /* minimum value allowed for 4
-                                           byte encoding */
-                    (ch > 0x10ffff)) {  /* maximum value allowed for
-                                           UTF-16 */
-                    codecs.decoding_error("utf-8", unicode, errors, 
-                                          "illegal encoding");
-                    i++;
-                    continue;
-                }
-                /*  compute and append the two surrogates: */
-
-                /*  translate from 10000..10FFFF to 0..FFFF */
-                ch -= 0x10000;
-
-                /*  high surrogate = top 10 bits added to D800 */
-                unicode.append((char) (0xD800 + (ch >> 10)));
-
-                /*  low surrogate = bottom 10 bits added to DC00 */
-                unicode.append((char) (0xDC00 + (ch & ~0xFC00)));
-                break;
-
-            default:
-                /* Other sizes are only needed for UCS-4 */
-                codecs.decoding_error("utf-8", unicode, errors, 
-                                      "unsupported Unicode code range");
-                i++;
-            }
-            i += n;
-        }
-
-        return codec_tuple(unicode.toString(), size);
-    }
-
-
-
-
-    public static PyTuple utf_8_encode(String str) {
-        return utf_8_encode(str, null);
-    }
-
-    public static PyTuple utf_8_encode(String str, String errors) {
-        int size = str.length();
-        StringBuffer v = new StringBuffer(size * 3);
- 
-        for (int i = 0; i < size; ) {
-            int ch = str.charAt(i++);
-            if (ch < 0x80)
-                v.append((char) ch);
-            else if (ch < 0x0800) {
-                v.append((char) (0xc0 | (ch >> 6)));
-                v.append((char) (0x80 | (ch & 0x3f)));
-            } else {
-                if (0xD800 <= ch && ch <= 0xDFFF) {
-                    if (i != size) {
-                        int ch2 = str.charAt(i);
-                        if (0xDC00 <= ch2 && ch2 <= 0xDFFF) {
-                            /* combine the two values */
-                            ch = ((ch - 0xD800)<<10 | (ch2-0xDC00))+0x10000;
-
-                            v.append((char)((ch >> 18) | 0xf0));
-                            v.append((char)(0x80 | ((ch >> 12) & 0x3f)));
-                            i++;
-                        }
-                    }
-                } else {
-                    v.append((char)(0xe0 | (ch >> 12)));
-                }
-                v.append((char) (0x80 | ((ch >> 6) & 0x3f)));
-                v.append((char) (0x80 | (ch & 0x3f)));
-            }
-        }
-        return codec_tuple(v.toString(), size);
-    }
-  
-
-
-
-
     private static PyTuple codec_tuple(String s, int len) {
         return new PyTuple(new PyObject[] {
             Py.java2py(s),
@@ -237,12 +33,26 @@ public class _codecs {
     }
 
 
+    /* --- UTF-8 Codec -------------------------------------------------------- */
+
+    public static PyTuple utf_8_decode(String str, String errors) {
+        int size = str.length();
+        return codec_tuple(codecs.PyUnicode_DecodeUTF8(str, errors), size);
+    }
 
 
+    public static PyTuple utf_8_encode(String str) {
+        return utf_8_encode(str, null);
+    }
+
+    public static PyTuple utf_8_encode(String str, String errors) {
+        int size = str.length();
+        return codec_tuple(codecs.PyUnicode_EncodeUTF8(str, errors), size);
+    }
+  
 
 
     /* --- Character Mapping Codec -------------------------------------------- */
-
 
     public static PyTuple charmap_decode(String str, String errors,
                                          PyObject mapping) {
@@ -350,8 +160,6 @@ public class _codecs {
         return codec_tuple(codecs.PyUnicode_DecodeASCII(str, size, errors),
                                                                         size);
     }
-
-
 
 
     public static PyTuple ascii_encode(String str, String errors) {
