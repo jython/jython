@@ -31,7 +31,7 @@ public class PyTableCode extends PyCode {
 		this.func_id = func_id;
 	}
 
-	public PyObject call(PyFrame frame) throws PyException {
+	public PyObject call(PyFrame frame) {
 	    //System.out.println("tablecode call: "+co_name);
 	    ThreadState ts = Py.getThreadState();
 
@@ -60,7 +60,7 @@ public class PyTableCode extends PyCode {
 		try {
 			ret = funcs.call_function(func_id, frame);
 		} catch (Throwable t) {
-
+            //t.printStackTrace();
 			//Convert exceptions that occured in Java code to PyExceptions
 			PyException e = Py.JavaError(t);
 
@@ -98,13 +98,34 @@ public class PyTableCode extends PyCode {
 	    ts.frame = ts.frame.f_back;
 		return ret;
    	}
-   	
-   	/*public PyObject call(PyObject arg, PyObject globals, PyObject[] defaults) {
-		if (co_argcount != 1) return call(new PyObject[] {arg}, Py.NoKeywords, globals, defaults);
+   	public PyObject call(PyObject globals, PyObject[] defaults) {
+		if (co_argcount != 0 || args || keywords) return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults);
 		PyFrame frame = new PyFrame(this, globals);
-		frame.f_fastlocals[0] = arg;
+		return call(frame);
+	}   	
+   	public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults) {
+		if (co_argcount != 1 || args || keywords) return call(new PyObject[] {arg1}, Py.NoKeywords, globals, defaults);
+		PyFrame frame = new PyFrame(this, globals);
+		frame.f_fastlocals[0] = arg1;
 		return call(frame);
 	}
+   	public PyObject call(PyObject arg1, PyObject arg2, PyObject globals, PyObject[] defaults) {
+		if (co_argcount != 2 || args || keywords) return call(new PyObject[] {arg1, arg2}, Py.NoKeywords, globals, defaults);
+		PyFrame frame = new PyFrame(this, globals);
+		frame.f_fastlocals[0] = arg1;
+		frame.f_fastlocals[1] = arg2;
+		return call(frame);
+	}	
+   	public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3, PyObject globals, PyObject[] defaults) {
+		if (co_argcount != 2 || args || keywords) return call(new PyObject[] {arg1, arg2, arg3}, Py.NoKeywords, globals, defaults);
+		PyFrame frame = new PyFrame(this, globals);
+		frame.f_fastlocals[0] = arg1;
+		frame.f_fastlocals[1] = arg2;
+		frame.f_fastlocals[2] = arg3;
+		return call(frame);
+	}	
+	
+	/*
    	public PyObject call(PyObject arg1, PyObject arg2, PyObject globals, PyObject[] defaults) {
 		if (co_argcount != 2) return call(new PyObject[] {arg1, arg2}, Py.NoKeywords, globals, defaults);
 		PyFrame frame = new PyFrame(this, globals);
