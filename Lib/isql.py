@@ -64,7 +64,8 @@ class IsqlCmd(cmd.Cmd):
 
 	def do_use(self, arg):
 		"""\nUse a new database connection.\n"""
-		self.db = dbexts.dbexts(arg.strip())
+		# this allows custom dbexts
+		self.db = self.db.__class__(arg.strip())
 		return None
 
 	def do_table(self, arg):
@@ -142,7 +143,9 @@ class IsqlCmd(cmd.Cmd):
 				self.sqlbuffer.append(token)
 		except:
 			self.sqlbuffer = []
+			print
 			print sys.exc_info()[1]
+			print
 		return None
 
 	def emptyline(self):
@@ -150,6 +153,18 @@ class IsqlCmd(cmd.Cmd):
 
 	def postloop(self):
 		raise IsqlExit()
+
+	def cmdloop(self, intro=None):
+		while 1:
+			try:
+				cmd.Cmd.cmdloop(self, intro)
+			except IsqlExit, e:
+				break
+			except Exception, e:
+				print
+				print e
+				print
+			intro = None
 
 if __name__ == '__main__':
 	import getopt
@@ -170,13 +185,4 @@ if __name__ == '__main__':
 	intro = "\nisql - interactive sql (%s)\n" % (__version__)
 
 	isql = IsqlCmd(dbname)
-	while 1:
-		try:
-			isql.cmdloop(intro)
-		except IsqlExit, e:
-			break
-		except Exception, e:
-			print
-			print e
-			print
-		intro = ""
+	isql.cmdloop()
