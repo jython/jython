@@ -8,48 +8,6 @@ public class PyJavaClass extends PyClass
 {
     public PyReflectedConstructor __init__;
 
-    //Deal with a few "magic" java methods
-    /*
-      private static java.util.Hashtable magicMethods;
-      private static PyJavaClass ObjectType;
-      public static boolean getMagic(PyObject dict, PyString name) {
-      if (magicMethods == null) {
-      if (ObjectType == null) {
-      return false;
-      //System.err.println("no PyObject yet");
-      //return false;
-      }
-      magicMethods = new java.util.Hashtable();
-      PyString newName = PyString.__new("__getitem__");
-      magicMethods.put(PyString.__new("__safe_getitem__"),
-      new NameObjectPair(newName,
-      ObjectType.__dict__.__safe_getitem__(newName)));
-      newName = PyString.__new("__getattr__");
-      magicMethods.put(PyString.__new("__safe_getattr__"),
-      new NameObjectPair(newName,
-      ObjectType.__dict__.__safe_getitem__(newName)));
-      newName = PyString.__new("__coerce__");
-      magicMethods.put(PyString.__new("__internal_coerce__"),
-      new NameObjectPair(newName,
-      ObjectType.__dict__.__safe_getitem__(newName)));
-      newName = PyString.__new("__repr__");
-      magicMethods.put(PyString.__new("toString"),
-      new NameObjectPair(newName,
-      ObjectType.__dict__.__safe_getitem__(newName)));
-      newName = PyString.__new("__hash__");
-      magicMethods.put(PyString.__new("hashCode"),
-      new NameObjectPair(newName,
-      ObjectType.__dict__.__safe_getitem__(newName)));
-
-      }
-      Object no = magicMethods.get(name);
-      if (no == null) return false;
-      dict.__setitem__(((NameObjectPair)no).name, ((NameObjectPair)no).obj);
-      return true;
-
-      }*/
-    
-
     private static java.util.Hashtable classes;
 
     public static final PyJavaClass lookup(Class c) {
@@ -57,7 +15,6 @@ public class PyJavaClass extends PyClass
     }
     
     public synchronized static final PyJavaClass lookup(String name, Class c) {
-//         System.err.println("jclass: "+c.getName());
         if (classes == null) {
             classes = new java.util.Hashtable();
             PyJavaClass jc = new PyJavaClass(true);
@@ -67,12 +24,8 @@ public class PyJavaClass extends PyClass
         }
 
         PyJavaClass ret = (PyJavaClass)classes.get(name);
-        if (ret != null) return ret;
-//         if (name.equals("java.lang.IllegalThreadStateException")) {
-//             System.err.println("creating new jclass: "+
-//                                System.identityHashCode(c)+": "+name);
-//             Thread.currentThread().dumpStack();
-//         }
+        if (ret != null)
+            return ret;
         ret = new PyJavaClass(name);
         classes.put(name, ret);
         if (c != null) {
@@ -113,10 +66,6 @@ public class PyJavaClass extends PyClass
         PyStringMap d = new PyStringMap();
 //         d.__setitem__("__module__", Py.None);
         __dict__ = d;
-           
-//         System.err.println("initdict: "+proxyClass.getName()+", "+
-//                            proxyClass.getModifiers());
-//         if (!Modifier.isPublic(proxyClass.getModifiers())) return;
         try {
             setBeanInfoCustom(proxyClass);
             setFields(proxyClass);
@@ -164,11 +113,9 @@ public class PyJavaClass extends PyClass
                 field.getType().isAssignableFrom(PyJavaClass.class)) {
                 field.set(null, this);
             }
-        } catch (NoSuchFieldException exc) {
-            ;
-        } catch (IllegalAccessException exc1) {
-            ;
         }
+        catch (NoSuchFieldException exc) {}
+        catch (IllegalAccessException exc1) {}
     }
     
     private void init__bases__(Class c) {
@@ -378,57 +325,6 @@ public class PyJavaClass extends PyClass
         }
     }
         
-    /*private boolean methodsInitialized=false;
-      protected void initMethods() {
-      if (methodsInitialized) return;
-      methodsInitialized = true;
-           
-      Class myClass = proxyClass;           
-            
-      init__dict__();
-      init__bases__(myClass);
-            
-            
-      Method[] methods = myClass.getMethods();
-      for(int i=0; i<methods.length; i++) {
-      Method method = methods[i];
-      String name = getName(method.getName());
-      Class declaringClass = method.getDeclaringClass();
-            
-      if (declaringClass != myClass) continue;
-            
-            
-      PyObject existingAttribute = __dict__.__finditem__(name);
-      if (existingAttribute != null) {
-      if (existingAttribute instanceof PyReflectedFunction) {
-      ((PyReflectedFunction)existingAttribute).addMethod(method);
-      }
-      continue;
-      }
-      __dict__.__setitem__(name, new PyReflectedFunction(method));
-      //Class declaringClass = method.getDeclaringClass();
-      //if (declaringClass != myClass) {
-      }
-      }*/
-        
-    /*private boolean fieldsInitialized=false;
-      private void initFields() {
-      if (fieldsInitialized) return;
-      fieldsInitialized = true;
-
-      Class myClass = proxyClass;               
-      Field[] fields = myClass.getFields();
-      for(int i=0; i<fields.length; i++) {
-      Field field = fields[i];
-      //if (field.getDeclaringClass() != c) continue;
-
-      String name = getName(field.getName());
-      if (__dict__.__finditem__(name) != null) return;
-            
-      __dict__.__setitem__(name, new PyReflectedField(field));
-      }
-      }*/
-        
     /* Adds a bean property to this class */
     void addProperty(String name, Class propClass,
                      Method getMethod, Method setMethod)
@@ -525,7 +421,7 @@ public class PyJavaClass extends PyClass
         }
     }
 
-    //This method is a workaround for Netscape's stupid security bug!
+    // This method is a workaround for Netscape's stupid security bug!
     private void setBeanInfoCustom(Class c) {
         //try {
         Method[] meths = c.getMethods();
@@ -636,27 +532,6 @@ public class PyJavaClass extends PyClass
           t.printStackTrace();
           }*/
     }
-
-    /*private static boolean workingBeans=true;
-      protected void setBeanInfo(Class c, Class sc) {
-      if (!c.getName().startsWith("org.python.core.")) {
-      if (workingBeans) {
-      try {
-      BeanInfoFinder.setBeanInfo(this, c, sc);
-      } catch (OutOfMemoryError e) {
-      throw Py.MemoryError("out of memory");
-      } catch (Throwable t) {
-      System.err.println("Your JVM has a broken java.beans package in: "+c.getName());
-      //t.printStackTrace();
-      System.err.println("Using JPython's partial reimplementation as work-around");
-      workingBeans = false;
-      setBeanInfoCustom(c);
-      }
-      } else {
-      setBeanInfoCustom(c);
-      }
-      }
-      }*/
 
      /**
       * Return the list of all accessible constructors for a class.  This
@@ -860,33 +735,3 @@ public class PyJavaClass extends PyClass
         return "<jclass "+__name__+" at "+Py.id(this)+">";
     }
 }
-
-
-
-/* This method is pulled out into a seperate class to work around Netscape
-   bugs */
-// class BeanInfoFinder {
-//     public static void setBeanInfo(PyJavaClass jclass, Class c, Class sc)
-//         throws Exception
-//     {
-//         int i, n;
-//         // Set no bean search path, this probably needs work in the future
-//         Introspector.setBeanInfoSearchPath(new String[0] );
-//         BeanInfo info = Introspector.getBeanInfo(c, sc);
-
-//         PropertyDescriptor[] descrs = info.getPropertyDescriptors();
-//         for(i=0, n=descrs.length; i<n; i++) {
-//             PropertyDescriptor d = descrs[i];
-//             jclass.addProperty(d.getName(), d.getPropertyType(),
-//                                d.getReadMethod(), d.getWriteMethod());
-//         }
-
-//         EventSetDescriptor[] events = info.getEventSetDescriptors();
-//         for(i=0, n=events.length; i<n; i++) {
-//             EventSetDescriptor e = events[i];
-
-//             jclass.addEvent(e.getName()+"Listener", e.getListenerType(),
-//                             e.getAddListenerMethod(), e.getListenerMethods());
-//         }
-//     }
-// }
