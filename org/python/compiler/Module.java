@@ -250,7 +250,7 @@ public class Module {
 		return findConstant(new PyLongConstant(value));
 	}
 
-    public PyCodeConstant PyCode(SimpleNode tree, String name,
+    /*public PyCodeConstant PyCode(SimpleNode tree, String name,
 								ArgListCompiler ac,
 								boolean fast_locals, boolean class_body)
 								throws Exception {
@@ -269,7 +269,7 @@ public class Module {
 								boolean printResults)
 								throws Exception {
 		return PyCode(tree, name, ac, fast_locals, class_body, printResults, 0);
-		                        }
+		                        }*/
 		                        
 	Vector codes;
 	private boolean isJavaIdentifier(String s) {
@@ -285,8 +285,9 @@ public class Module {
 	
 	public PyCodeConstant PyCode(SimpleNode tree, String name,
 								ArgListCompiler ac,
-								boolean fast_locals, boolean class_body,
-								boolean printResults, int firstlineno)
+								boolean fast_locals, String className,
+								boolean classBody, boolean printResults, 
+								int firstlineno)
 								throws Exception {
 		PyCodeConstant code = new PyCodeConstant();
 		int i;
@@ -318,7 +319,7 @@ public class Module {
 
 		//System.out.println("l: "+c.getLocal()+", "+c.getLocal()+", "+c.getLocal());
 		//c.print("in code: "+name);
-		compiler.parse(tree, c, fast_locals, class_body, ac);
+		compiler.parse(tree, c, fast_locals, className, classBody, ac);
 
 		code.names = new String[compiler.names.size()];
 		for(i=0; i<compiler.names.size(); i++) {
@@ -435,7 +436,7 @@ public class Module {
 		//Add __doc__ if it exists
 		//Add __file__ for filename (if it exists?)
 
-		Constant main = module.PyCode(node, "?", new ArgListCompiler(), false, false, printResults);
+		Constant main = module.PyCode(node, "?", new ArgListCompiler(), false, null, false, printResults, 0);
 		module.mainCode = main;
 		module.write(ostream);
 	}
