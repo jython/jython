@@ -66,7 +66,7 @@ CLASSPATHSWITCH = $(CLASSPATH):$(BOOTSTRAPCLASSES)
 	$(JAVAC) $(OPT) -classpath "$(CLASSPATHSWITCH)" $?
 
 SOURCES = $(wildcard *.java)
-CLASSES= $(SOURCES:%.java=%.class)
+CLASSES = $(filter-out $(SKIP),$(SOURCES:%.java=%.class))
 
 .PHONY: all clean realclean
 
