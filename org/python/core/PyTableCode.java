@@ -39,11 +39,17 @@ public class PyTableCode extends PyCode {
 	PyException previous_exception = ts.exception;
 	    
         // Push frame
-	frame.f_back = ts.frame;
-	if (frame.f_builtins == null && frame.f_back != null) {
-	    frame.f_builtins = frame.f_back.f_builtins;
-	}
-	ts.frame = frame;
+        
+
+    frame.f_back = ts.frame;
+    if (frame.f_builtins == null) {
+        if (frame.f_back != null) {
+            frame.f_builtins = frame.f_back.f_builtins;
+        } else {
+            frame.f_builtins = ts.systemState.builtins;
+        }
+    }
+    ts.frame = frame;
 
 	// Handle trace function for debugging
         PySystemState ss = ts.systemState;
