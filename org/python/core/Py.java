@@ -1055,11 +1055,18 @@ public final class Py
         if (o instanceof PyCode)
             code = (PyCode)o;
         else {
+            String contents = null;
             if (o instanceof PyString)
-                code = __builtin__.compile(o.toString(), "<string>", "exec");
-            else
+                contents = o.toString();
+            else if (o instanceof PyFile) {
+                PyFile fp = (PyFile)o;
+                if (fp.closed)
+                    return;
+                contents = fp.read().toString();
+            } else
                 throw Py.TypeError(
-                    "exec: argument 1 must be string or code object");
+                    "exec: argument 1 must be string, code or file object");
+            code = __builtin__.compile(contents, "<string>", "exec");
         }
         Py.runCode(code, locals, globals);
     }
