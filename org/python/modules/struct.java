@@ -337,7 +337,7 @@ public class struct {
 	}
 
 	double get_float(PyObject value) {
-	    if (!__builtin__.isinstance(value, PyFloat.__class__))
+	    if (!__builtin__.isinstance(value, PyJavaClass.lookup(PyFloat.class)))
 		throw StructError("required argument is not an float");
 	    return value.__float__().getValue();
 	}
@@ -472,7 +472,7 @@ public class struct {
 	int doPack(ByteStream buf, int count, int pos, PyObject[] args) {
 	    PyObject value = args[pos];
 
-	    if (!__builtin__.isinstance(value, PyString.__class__))
+	    if (!__builtin__.isinstance(value, PyJavaClass.lookup(PyString.class)))
 		throw StructError("argument for 's' must be a string");
 
 	    String s = value.toString();
@@ -496,7 +496,7 @@ public class struct {
 	int doPack(ByteStream buf, int count, int pos, PyObject[] args) {
 	    PyObject value = args[pos];
 
-	    if (!__builtin__.isinstance(value, PyString.__class__))
+	    if (!__builtin__.isinstance(value, PyJavaClass.lookup(PyString.class)))
 		throw StructError("argument for 'p' must be a string");
 
 	    buf.writeByte(Math.min(value.toString().length(), count-1));
@@ -515,7 +515,7 @@ public class struct {
 
     static class CharFormatDef extends FormatDef {
 	void pack(ByteStream buf, PyObject value) {
-	    if (!__builtin__.isinstance(value, PyString.__class__) || value.__len__() != 1)
+	    if (!__builtin__.isinstance(value, PyJavaClass.lookup(PyString.class)) || value.__len__() != 1)
 		throw StructError("char format require string of length 1");
 	    buf.writeByte(value.toString().charAt(0));
 	}
