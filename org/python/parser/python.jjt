@@ -357,8 +357,6 @@ MORE : /* Strings */
 
 <IN_STRING11> MORE: { <("\\" ("\\"|"'")) | ~["\n","\r"]> }
 <IN_STRING21> MORE: { <("\\" ("\\"|"\"")) | ~["\n","\r"]> }
-<IN_STRING13> MORE: { "\\'''" }
-<IN_STRING23> MORE: { "\\\"\"\"" }
 
 <IN_STRING13, IN_STRING23> MORE:
 {
@@ -370,6 +368,7 @@ MORE : /* Strings */
 |   <"\n">
 |   <"\r"> { image.setCharAt(image.length()-1, '\n'); }
 |   <~["\n","\r"]> 
+|   <"\\" ~["\n","\r"]>
 }
 
 
