@@ -273,21 +273,21 @@ public class PyLong extends PyObject
 
         if (modulo != null && !canCoerce(right))
             return null;
-        return _pow(value, coerce(right), modulo);
+        return _pow(value, coerce(right), modulo, this, right);
     }
 
     public PyObject __rpow__(PyObject left) {
         if (!canCoerce(left))
             return null;
-        return _pow(coerce(left), value, null);
+        return _pow(coerce(left), value, null, left, this);
     }
 
-    public static PyLong _pow(BigInteger value, BigInteger y,
-                              PyObject modulo)
+    public static PyObject _pow(BigInteger value, BigInteger y,
+                                PyObject modulo, PyObject left, PyObject right)
     {
         if (y.compareTo(BigInteger.valueOf(0)) < 0) {
             if (value.compareTo(BigInteger.valueOf(0)) != 0)
-                throw Py.ValueError("long integer to a negative power");
+                return left.__float__().__pow__(right, modulo);
             else
                 throw Py.ZeroDivisionError("zero to a negative power");
         }

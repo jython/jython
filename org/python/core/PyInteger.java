@@ -241,7 +241,7 @@ public class PyInteger extends PyObject
         if (modulo != null && !canCoerce(modulo))
             return null;
 
-        return _pow(value, coerce(right), modulo);
+        return _pow(value, coerce(right), modulo, this, right);
     }
 
     public PyObject __rpow__(PyObject left, PyObject modulo) {
@@ -251,10 +251,11 @@ public class PyInteger extends PyObject
         if (modulo != null && !canCoerce(modulo))
             return null;
 
-        return _pow(coerce(left), value, modulo);
+        return _pow(coerce(left), value, modulo, left, this);
     }
 
-    private static PyInteger _pow(int value, int pow, PyObject modulo) {
+    private static PyObject _pow(int value, int pow, PyObject modulo,
+                                 PyObject left, PyObject right) {
         int mod = 0;
         long tmp = value;
         boolean neg = false;
@@ -266,8 +267,7 @@ public class PyInteger extends PyObject
 
         if (pow < 0) {
             if (value != 0)
-                throw Py.ValueError("cannot raise integer to a " +
-                                    "negative power");
+                return left.__float__().__pow__(right, modulo);
             else
                 throw Py.ZeroDivisionError("cannot raise 0 to a " +
                                            "negative power");
@@ -289,7 +289,8 @@ public class PyInteger extends PyObject
                 }
 
                 if (result > Integer.MAX_VALUE) {
-                    throw Py.OverflowError("integer pow()");
+                    Py.OverflowWarning("integer exponentiation");
+                    return left.__long__().__pow__(right, modulo);
                 }
             }
             pow >>= 1;
@@ -302,7 +303,8 @@ public class PyInteger extends PyObject
             }
 
             if (tmp > Integer.MAX_VALUE) {
-                throw Py.OverflowError("integer pow()");
+                Py.OverflowWarning("integer exponentiation");
+                return left.__long__().__pow__(right, modulo);
             }
         }
 
