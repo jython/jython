@@ -82,11 +82,20 @@ public class PyArray extends PySequence {
     }
 
     protected PyObject getslice(int start, int stop, int step) {
-        if (step != 1)
-            throw Py.TypeError("step != 1 not implemented yet");
-        int n = stop-start;
+        if (step > 0 && stop < start)
+            stop = start;
+        int n = sliceLength(start, stop, step);
+
         PyArray ret = new PyArray(type, n);
-        System.arraycopy(data, start, ret.data, 0, n);
+        if (step == 1) {
+            System.arraycopy(data, start, ret.data, 0, n);
+            return ret;
+        }
+        int j = 0;
+        for (int i = start; j < n; i += step) {
+            Array.set(ret.data, j, Array.get(data, i));
+            j++;
+        }
         return ret;
     }
 
