@@ -60,21 +60,21 @@ public class PyExtendedCursor extends PyCursor {
 	/**
 	 * Constructor PyExtendedCursor
 	 *
-	 * @param Connection connection
+	 * @param PyConnection connection
 	 *
 	 */
-	PyExtendedCursor(Connection connection) {
+	PyExtendedCursor(PyConnection connection) {
 		super(connection);
 	}
 
 	/**
 	 * Constructor PyExtendedCursor
 	 *
-	 * @param Connection connection
+	 * @param PyConnection connection
 	 * @param boolean dynamicFetch
 	 *
 	 */
-	PyExtendedCursor(Connection connection, boolean dynamicFetch) {
+	PyExtendedCursor(PyConnection connection, boolean dynamicFetch) {
 		super(connection, dynamicFetch);
 	}
 
@@ -146,7 +146,7 @@ public class PyExtendedCursor extends PyCursor {
 		}
 
 		try {
-			create(this.connection.getMetaData().getTables(q, o, t, y));
+			create(getMetaData().getTables(q, o, t, y));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -170,7 +170,7 @@ public class PyExtendedCursor extends PyCursor {
 		String c = datahandler.getMetaDataName(column);
 
 		try {
-			create(this.connection.getMetaData().getColumns(q, o, t, c));
+			create(getMetaData().getColumns(q, o, t, c));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -192,7 +192,7 @@ public class PyExtendedCursor extends PyCursor {
 		String p = datahandler.getMetaDataName(procedure);
 
 		try {
-			create(this.connection.getMetaData().getProcedures(q, o, p));
+			create(getMetaData().getProcedures(q, o, p));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -216,7 +216,7 @@ public class PyExtendedCursor extends PyCursor {
 		String c = datahandler.getMetaDataName(column);
 
 		try {
-			create(this.connection.getMetaData().getProcedureColumns(q, o, p, c));
+			create(getMetaData().getProcedureColumns(q, o, p, c));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -239,7 +239,7 @@ public class PyExtendedCursor extends PyCursor {
 		String t = datahandler.getMetaDataName(table);
 
 		try {
-			create(this.connection.getMetaData().getPrimaryKeys(q, o, t));
+			create(getMetaData().getPrimaryKeys(q, o, t));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -272,7 +272,7 @@ public class PyExtendedCursor extends PyCursor {
 		String ft = datahandler.getMetaDataName(foreignTable);
 
 		try {
-			create(this.connection.getMetaData().getCrossReference(pq, po, pt, fq, fo, ft));
+			create(getMetaData().getCrossReference(pq, po, pt, fq, fo, ft));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -303,7 +303,7 @@ public class PyExtendedCursor extends PyCursor {
 		boolean a = accuracy.__nonzero__();
 
 		try {
-			create(this.connection.getMetaData().getIndexInfo(q, o, t, u, a), skipCols);
+			create(getMetaData().getIndexInfo(q, o, t, u, a), skipCols);
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -324,7 +324,7 @@ public class PyExtendedCursor extends PyCursor {
 		skipCols.add(new Integer(17));
 
 		try {
-			create(this.connection.getMetaData().getTypeInfo(), skipCols);
+			create(getMetaData().getTypeInfo(), skipCols);
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -352,7 +352,7 @@ public class PyExtendedCursor extends PyCursor {
 		clear();
 
 		try {
-			create(this.connection.getMetaData().getTableTypes());
+			create(getMetaData().getTableTypes());
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}

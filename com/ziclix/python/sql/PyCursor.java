@@ -42,7 +42,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected boolean dynamicFetch;
 
 	/** Field connection */
-	protected Connection connection;
+	protected PyConnection connection;
 
 	/** Field datahandler */
 	protected DataHandler datahandler;
@@ -65,7 +65,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/**
 	 * Create the cursor with a static fetch.
 	 */
-	PyCursor(Connection connection) {
+	PyCursor(PyConnection connection) {
 		this(connection, false);
 	}
 
@@ -73,7 +73,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * Create the cursor, optionally choosing the type of fetch (static or dynamic).
 	 * If dynamicFetch is true, then use a dynamic fetch.
 	 */
-	PyCursor(Connection connection, boolean dynamicFetch) {
+	PyCursor(PyConnection connection, boolean dynamicFetch) {
 
 		this.arraysize = 1;
 		this.connection = connection;
@@ -176,6 +176,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			return Py.java2py(this.datahandler);
 		} else if ("dynamic".equals(name)) {
 			return this.dynamicFetch ? Py.One : Py.Zero;
+		} else if ("connection".equals(name)) {
+			return this.connection;
 		}
 
 		return super.__findattr__(name);
@@ -203,7 +205,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		// hide from python
 		dict.__setitem__("classDictInit", null);
 		dict.__setitem__("toString", null);
-		dict.__setitem__("connection", null);
 		dict.__setitem__("getDataHandler", null);
 		dict.__setitem__("addWarning", null);
 		dict.__setitem__("fetch", null);
@@ -233,6 +234,16 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
+	 * Return ths DatabaseMetaData for the current connection.
+	 *
+	 * @return DatabaseMetaData
+	 *
+	 */
+	protected DatabaseMetaData getMetaData() throws SQLException {
+		return this.connection.connection.getMetaData();
+	}
+
+	/**
 	 * Return the currently bound DataHandler.
 	 */
 	public DataHandler getDataHandler() {
@@ -253,22 +264,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Prepare a callable statement (stored procedure).
-	 *
-	 * @param sqlString
-	 * @param maxRows max number of rows to be returned
-	 * @throws SQLException
-	 */
-	protected void callableStatement(String sqlString, PyObject maxRows) throws SQLException {
-
-		this.sqlStatement = this.connection.prepareCall(sqlString);
-
-		if (maxRows != Py.None) {
-			this.sqlStatement.setMaxRows(maxRows.__int__().getValue());
-		}
-	}
-
-	/**
 	 * Prepare a statement ready for executing.
 	 *
 	 * @param sqlString
@@ -279,9 +274,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected void prepareStatement(String sqlString, PyObject maxRows, boolean prepared) throws SQLException {
 
 		if (prepared) {
-			this.sqlStatement = this.connection.prepareStatement(sqlString);
+			this.sqlStatement = this.connection.connection.prepareStatement(sqlString);
 		} else {
-			this.sqlStatement = this.connection.createStatement();
+			this.sqlStatement = this.connection.connection.createStatement();
 		}
 
 		if (maxRows != Py.None) {
@@ -305,8 +300,13 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		clear();
 
 		try {
-			if (this.connection.getMetaData().supportsStoredProcedures()) {
-				callableStatement(sqlString, maxRows);
+			if (getMetaData().supportsStoredProcedures()) {
+				this.sqlStatement = this.connection.connection.prepareCall(sqlString);
+
+				if (maxRows != Py.None) {
+					this.sqlStatement.setMaxRows(maxRows.__int__().getValue());
+				}
+
 				execute(params, bindings);
 			} else {
 				throw zxJDBC.makeException(zxJDBC.NotSupportedError, zxJDBC.getString("noStoredProc"));

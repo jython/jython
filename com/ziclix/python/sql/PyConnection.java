@@ -210,7 +210,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 * performed.
 	 *
 	 */
-	void rollback() {
+	public void rollback() {
 
 		if (!this.supportsTransactions) {
 			return;
@@ -231,7 +231,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 * @return a new cursor using this connection
 	 */
 	public PyCursor cursor() {
-		return new PyExtendedCursor(this.connection);
+		return new PyExtendedCursor(this);
 	}
 
 	/**
@@ -243,7 +243,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 * @return a new cursor using this connection
 	 */
 	public PyCursor cursor(boolean dynamicFetch) {
-		return new PyExtendedCursor(this.connection, dynamicFetch);
+		return new PyExtendedCursor(this, dynamicFetch);
 	}
 }
 
