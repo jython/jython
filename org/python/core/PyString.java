@@ -705,6 +705,9 @@ final class StringFormatter{
     PyObject getarg() {
         PyObject ret = null;
         switch(argIndex) {
+            // special index indicating a mapping
+            case -3:
+                return args;
             // special index indicating a single item that has already been used
             case -2:
                 break;
@@ -826,8 +829,10 @@ final class StringFormatter{
             argIndex = -1;
             if (args instanceof PyDictionary ||
                     args instanceof PyStringMap ||
-                    args.__findattr__("__getitem__") != null) {
+                    (!(args instanceof PySequence) && 
+                      args.__findattr__("__getitem__") != null)) {
                 dict = args;
+                argIndex = -3;
             }
         }
 
@@ -859,7 +864,6 @@ final class StringFormatter{
 		            else if (c == '(') parens++;
 		        }
 		        this.args = dict.__getitem__(new PyString(format.substring(keyStart, index-1)));
-		        this.argIndex = -1;
 		        //System.out.println("args: "+args+", "+argIndex);
 			} else {
 			    push();
