@@ -69,26 +69,45 @@ public class imp {
     }
 
     public static byte[] compileSource(String name, File file) {
-        return compileSource(name, makeStream(file), file.toString());
+        return compileSource(name, file, null, null);
+    }
+    
+    public static byte[] compileSource(String name, File file, String filename, String outFilename) {
+        if (filename == null) {
+            filename = file.toString();
+        }
+        
+        if (outFilename == null) {
+            outFilename = filename.substring(0,filename.length()-3)+"$py.class";
+        }
+        
+        return compileSource(name, makeStream(file), filename, outFilename);
     }
 
-    static byte[] compileSource(String name, InputStream fp, String fileName) {
+    static byte[] compileSource(String name, InputStream fp, String filename) {
+        String outFilename = null;
+        if (filename != null) {
+            outFilename = filename.substring(0,filename.length()-3)+"$py.class";
+        }
+        return compileSource(name, fp, filename, outFilename);
+    }
+    
+    static byte[] compileSource(String name, InputStream fp, String filename, String outFilename) {
 		try {
 			ByteArrayOutputStream ofp = new ByteArrayOutputStream();
     
-            String fname = fileName;
-            if (fname == null) fname = "<unknown>";
+            if (filename == null) filename = "<unknown>";
 			org.python.parser.SimpleNode node;
 			try {
-			    node = parser.parse(fp, "exec", fname);
+			    node = parser.parse(fp, "exec", filename);
 			} finally {
 			    fp.close();
 			}
 			org.python.compiler.Module.compile(node, ofp, name+"$py",
-				fname, true, false, true);
+				filename, true, false, true);
 
-            if (fileName != null) {
-    			File classFile = new File(fileName.substring(0,fileName.length()-3)+"$py.class");
+            if (outFilename != null) {
+    			File classFile = new File(outFilename);
     			try {
         			FileOutputStream fop = new FileOutputStream(classFile);
         			ofp.writeTo(fop);
@@ -104,8 +123,8 @@ public class imp {
 		}
 	}
 
-	private static PyObject createFromSource(String name, InputStream fp, String fileName) {
-		byte[] bytes = compileSource(name, fp, fileName);
+	private static PyObject createFromSource(String name, InputStream fp, String filename) {
+		byte[] bytes = compileSource(name, fp, filename);
 	    PyCode code = BytecodeLoader.makeCode(name+"$py", bytes);
 		return createFromCode(name, code);
 	}
