@@ -1647,98 +1647,32 @@ public class cPickle implements ClassDictInit {
 
 	    String value;
 	    char quote = line.charAt(0);
-	    if (quote != '"' && quote != '\'') { // Evil string!?
-		value = line;
-	    } else {
-		value = setString(line, 1);
-	    }
+	    if (quote != '"' && quote != '\'')
+                throw Py.ValueError("insecure string pickle");
+
+            int nslash = 0;
+            int i;
+            char ch = '\0';
+            for (i = 1; i < line.length(); i++) {
+                ch = line.charAt(i);
+                if (ch == quote && nslash % 2 == 0)
+                    break;
+                if (ch == '\\')
+                    nslash++;
+                else
+                    nslash = 0;
+            }
+            if (ch != quote)
+                throw Py.ValueError("insecure string pickle ");
+
+            for (i++ ; i < line.length(); i++) {
+                if (line.charAt(i) > ' ') 
+                    throw Py.ValueError("insecure string pickle " + i);
+            }
+            value = org.python.parser.SimpleNode.parseString(line, 1, 0, 0);
 	    push(new PyString(value));
 	}
 
-
-    // Brutally stolen from org.python.parser.SimpleNode.java
-    private String setString(String s, int quotes) {
-        //System.out.println("string: "+s);
-        char quoteChar = s.charAt(0);
-        if (quoteChar == 'r' || quoteChar == 'R') {
-            return s.substring(quotes+1, s.length()-quotes);
-        } else {
-            StringBuffer sb = new StringBuffer(s.length());
-            char[] ca = s.toCharArray();
-            int n = ca.length-quotes;
-            int i=quotes;
-            int last_i=i;
-
-            while (i<n) {
-                if (ca[i] == '\r') {
-                    sb.append(ca, last_i, i-last_i);
-                    sb.append('\n');
-                    i++;
-                    if (ca[i] == '\n') i++;
-                    last_i = i;
-                    continue;
-                }
-                if (ca[i++] != '\\' || i >= n) continue;
-                sb.append(ca, last_i, i-last_i-1);
-                switch(ca[i++]) {
-                case '\r':
-                    if (ca[i] == '\n') i++;
-                case '\n': break;
-                case 'b': sb.append('\b'); break;
-                case 't': sb.append('\t'); break;
-                case 'n': sb.append('\n'); break;
-                case 'f': sb.append('\f'); break;
-                case 'r': sb.append('\r'); break;
-                case '\"':
-                case '\'':
-                    sb.append(ca[i-1]);
-                    break;
-                case '\\': sb.append('\\'); break;
-                //Special Python escapes
-                case 'a': sb.append('\007'); break;
-                case 'v': sb.append('\013'); break;
-
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                    int c = ca[i-1]-'0';
-                    if (i<n && '0' <= ca[i] && ca[i] <= '7') {
-                        c = (c<<3) + (ca[i++] -'0');
-                        if (i<n && '0' <= ca[i] && ca[i] <= '7') {
-                            c = (c<<3) + (ca[i++] -'0');
-                        }
-                    }
-                    sb.append((char)c);
-                    break;
-                case 'x':
-                    if (Character.digit(ca[i], 16) != -1) {
-                        int digit;
-                        char x=0;
-                        while (i<n && (digit = Character.digit(ca[i++], 16)) != -1) {
-                            x = (char)(x*16 + digit);
-                        }
-                        if (i<n) i-=1;
-                        sb.append(x);
-                        break;
-                    }
-                    // If illegal hex digit, just fall through
-                default:
-                    sb.append('\\');
-                    sb.append(ca[i-1]);
-                }
-                last_i = i;
-            }
-            sb.append(ca, last_i, i-last_i);
-            return sb.toString();
-        }
-    }
-
- 
 
 	final private void load_binstring() {
 	    String d = file.read(4);
