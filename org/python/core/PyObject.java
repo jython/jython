@@ -338,6 +338,16 @@ public class PyObject implements java.io.Serializable {
 		if (ret == null) throw Py.KeyError(""+key);
 		return ret;
 	}
+	
+	public PyObject __getslice__(PyObject start, PyObject stop, PyObject step) {
+	    throw Py.AttributeError("__getslice__");
+	}
+	public void __setslice__(PyObject start, PyObject stop, PyObject step, PyObject value) {
+	    throw Py.AttributeError("__setslice__");
+	}
+	public void __delslice__(PyObject start, PyObject stop, PyObject step) {
+	    throw Py.AttributeError("__delslice__");
+	}
 
     /**
     Equivalent to the standard Python __getitem__ method.
@@ -1412,6 +1422,11 @@ public class PyObject implements java.io.Serializable {
 	public PyObject invoke(String name, PyObject[] args, String[] keywords) {
 	    PyObject f = __getattr__(name);
 	    return f.__call__(args, keywords);
+	}
+	
+	public PyObject invoke(String name, PyObject[] args) {
+	    PyObject f = __getattr__(name);
+	    return f.__call__(args);
 	}
 	
 	/**
