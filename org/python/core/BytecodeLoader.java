@@ -3,6 +3,7 @@
 package org.python.core;
 import java.io.*;
 import java.util.StringTokenizer;
+import java.util.Hashtable;
 
 public class BytecodeLoader extends ClassLoader
 {
@@ -18,7 +19,13 @@ public class BytecodeLoader extends ClassLoader
             return classLoader.loadClass(name);
         // Search the sys.path for a .class file matching the named class.
         // TBD: This registry option is temporary.
-        if (Options.extendedClassLoader) {
+        if (Options.extendedClassLoader &&
+            // KLUDGE ALERT: without this test, running jpython
+            // interactively from the build directory will fail with
+            // ClassCircularityError or LinkageError.  There's gotta be a
+            // better way.
+            !name.startsWith("org.python"))
+        {
             PyList path = Py.getSystemState().path;
             for (int i=0; i < path.__len__(); i++) {
                 String dir = path.get(i).__str__().toString();
@@ -29,6 +36,7 @@ public class BytecodeLoader extends ClassLoader
                     int size = fis.available();
                     byte[] buffer = new byte[size];
                     fis.read(buffer);
+                    fis.close();
                     return loadClassFromBytes(name, buffer);
                 }
                 catch (IOException e) {
