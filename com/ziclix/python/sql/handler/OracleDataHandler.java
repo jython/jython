@@ -11,10 +11,15 @@ package com.ziclix.python.sql.handler;
 
 import java.io.*;
 import java.sql.*;
+import java.math.BigDecimal;
 import org.python.core.*;
-import oracle.sql.*;
-import oracle.jdbc.driver.*;
-import com.ziclix.python.sql.*;
+import oracle.sql.BLOB;
+import oracle.sql.ROWID;
+import oracle.jdbc.driver.OracleTypes;
+import oracle.jdbc.driver.OracleResultSet;
+import com.ziclix.python.sql.DataHandler;
+import com.ziclix.python.sql.FilterDataHandler;
+import com.ziclix.python.sql.zxJDBC;
 
 /**
  * Oracle specific data handling.
@@ -60,6 +65,20 @@ public class OracleDataHandler extends FilterDataHandler {
 
 			case OracleTypes.ROWID :
 				stmt.setString(index, (String)object.__tojava__(String.class));
+				break;
+
+			case Types.DECIMAL :
+
+				// Oracle is annoying
+				Object input = object.__tojava__(Double.class);
+
+				if (input != Py.NoConversion) {
+					stmt.setDouble(index, ((Double)input).doubleValue());
+
+					break;
+				}
+
+				super.setJDBCObject(stmt, index, object, type);
 				break;
 
 			case Types.NUMERIC :
