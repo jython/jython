@@ -78,6 +78,10 @@ public class PyBeanProperty extends PyReflectedField {
         return true;
     }
 
+    public PyBeanProperty copy() {
+        return new PyBeanProperty(__name__, myType, getMethod, setMethod);
+    }
+
     public String toString() {
         String typeName = "unknown";
         if (myType != null) {
