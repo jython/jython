@@ -918,7 +918,7 @@ public class cPickle implements ClassDictInit {
                 tup = reduce.__call__(object);
             }
 
-                if (tup instanceof PyString) {
+            if (tup instanceof PyString) {
                 save_global(object, tup);
                 return;
             }
