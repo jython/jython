@@ -60,12 +60,12 @@ public class PatternObject extends PyObject {
 
 
 
-    public MatchObject search(String string) {
-        return search(string, 0, string.length());
-    }
+    public MatchObject search(PyObject[] args, String[] kws) {
+        ArgParser ap = new ArgParser("search", args, kws, "pattern", "pos", "endpos");
+        String string = ap.getString(0);
+        int start = ap.getInt(1, 0);
+        int end = ap.getInt(2, string.length());
 
-
-    public MatchObject search(String string, int start, int end) {
         SRE_STATE state = new SRE_STATE(string, start, end, flags);
 
         int status = state.SRE_SEARCH(code, 0);
@@ -74,23 +74,26 @@ public class PatternObject extends PyObject {
     }
 
 
-    public PyObject sub(PyObject template, String string) {
-        return sub(template, string, 0);
-    }
+    public PyObject sub(PyObject[] args, String[] kws) {
+        ArgParser ap = new ArgParser("sub", args, kws, "repl", "string", "count");
+        PyObject template = ap.getPyObject(0);
+        String string = ap.getString(1);
+        int count = ap.getInt(2, 0);
 
-    public PyObject sub(PyObject template, String string, int count) {
         return call("_sub", new PyObject[] { 
              Py.java2py(this), 
-             template, Py.newString(string), 
+             template,
+             Py.newString(string), 
              Py.newInteger(count) });
     }
 
 
-    public PyObject subn(PyObject template, String string) {
-        return subn(template, string, 0);
-    }
+    public PyObject subn(PyObject[] args, String[] kws) {
+        ArgParser ap = new ArgParser("subn", args, kws, "repl", "string", "count");
+        PyObject template = ap.getPyObject(0);
+        String string = ap.getString(1);
+        int count = ap.getInt(2, 0);
 
-    public PyObject subn(PyObject template, String string, int count) {
         return call("_subn", new PyObject[] { 
              Py.java2py(this), 
              template, 
@@ -99,11 +102,11 @@ public class PatternObject extends PyObject {
     }
 
 
-    public PyObject split(String string) {
-        return split(string, 0);
-    }
+    public PyObject split(PyObject[] args, String[] kws) {
+        ArgParser ap = new ArgParser("split", args, kws, "source", "maxsplit");
+        String string = ap.getString(0);
+        int count = ap.getInt(1, 0);
 
-    public PyObject split(String string, int count) {
         return call("_split", new PyObject[] { 
              Py.java2py(this), 
              Py.newString(string), 
@@ -116,15 +119,13 @@ public class PatternObject extends PyObject {
     }
 
 
-    public PyList findall(String string) {
-        return findall(string, 0, Integer.MAX_VALUE);
-    }
 
-    public PyList findall(String string, int start) {
-        return findall(string, start, Integer.MAX_VALUE);
-    }
+    public PyObject findall(PyObject[] args, String[] kws) {
+        ArgParser ap = new ArgParser("findall", args, kws, "source", "pos", "endpos");
+        String string = ap.getString(0);
+        int start = ap.getInt(1, 0);
+        int end = ap.getInt(2, Integer.MAX_VALUE);
 
-    public PyList findall(String string, int start, int end) {
         SRE_STATE state = new SRE_STATE(string, start, end, flags);
 
         Vector list = new Vector();

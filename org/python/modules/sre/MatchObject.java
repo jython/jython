@@ -42,14 +42,11 @@ public class MatchObject extends PyObject {
         }
     }
 
+    public PyObject groups(PyObject[] args, String[] kws) {
+        ArgParser ap = new ArgParser("groups", args, kws, "default");
+        PyObject def = ap.getPyObject(0, Py.None);
 
-    public PyObject groups() {
-        return groups(Py.None);
-    }
-
-    public PyObject groups(PyObject def) {
         PyObject[] result = new PyObject[groups-1];
- 
         for (int i = 1; i < groups; i++) {
             result[i-1] = getslice_by_index(i, def);
         }
@@ -57,11 +54,10 @@ public class MatchObject extends PyObject {
     }
 
 
-    public PyObject groupdict() {
-        return groupdict(Py.None);
-    }
+    public PyObject groupdict(PyObject[] args, String[] kws) {
+        ArgParser ap = new ArgParser("groupdict", args, kws, "default");
+        PyObject def = ap.getPyObject(0, Py.None);
 
-    public PyObject groupdict(PyObject def) {
         PyObject result = new PyDictionary();
 
         if (pattern.groupindex == null)
