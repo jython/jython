@@ -20,6 +20,7 @@ package org.python.modules;
 import java.util.*;
 
 import org.python.core.*;
+import org.python.core.imp;
 
 /**
  * 

@@ -2,6 +2,7 @@
 package org.python.modules;
 
 import org.python.core.*;
+import org.python.core.imp;
 
 public class _codecs {
 

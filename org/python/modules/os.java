@@ -9,6 +9,6 @@ public class os implements ClassDictInit {
     public static void classDictInit(PyObject dict) {
         // Fake from javaos import *
         PyFrame frame = new PyFrame(null, dict, dict, null);
-        imp.importAll("javaos", frame);
+        org.python.core.imp.importAll("javaos", frame);
     }
 }

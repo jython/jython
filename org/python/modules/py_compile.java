@@ -20,6 +20,6 @@ public class py_compile {
         if (dot != -1) {
             name = name.substring(0, dot);
         }
-        imp.compileSource(name, file, dfile, cfile);
+        org.python.core.imp.compileSource(name, file, dfile, cfile);
     }
 }

@@ -46,5 +46,6 @@ public class Setup
         "md5:org.python.modules.MD5Module",
         "exceptions:org.python.core.exceptions",
         "_codecs",
+        "imp",
     };
 }
