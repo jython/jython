@@ -1,6 +1,9 @@
 import java
 from java.io import File
 
+def dirname(path):
+	return File(path).getParent()
+
 def exists(path):
 	return File(path).exists()
 	
@@ -23,6 +26,5 @@ def join(*args):
 def normcase(path):
 	#Java guarantees case-sensitive files?
 	return path
-	
-del File
+
 	

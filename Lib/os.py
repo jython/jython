@@ -1,17 +1,29 @@
 import java
 import path
 
-error = "os.error"
+error = 'os.error'
+
+name = 'jdk1.1'
+curdir = '.'
+#curdir, pardir??
+sep = java.io.File.separator
+pathsep = java.io.File.pathSeparator
+#defpath?
+
+#I can do better than this...
+environ = {}
+
 
 def _exit(n=0):
 	java.lang.System.exit(n)
 	
 def listdir(path):
 	dir = java.io.File(path)
-	print dir.list()
-	return list(dir.list())
+	l = dir.list()
+	if l is None:
+		raise error, 'No such directory'
+	return list(l)
 
-print listdir("\\")
 
 def mkdir(path):
 	dir = java.io.File(path)
