@@ -22,8 +22,9 @@ public class PySystemState extends PyObject {
     /**
        The copyright notice for this release.
     **/
+    // TBD: should we use \u00a9 Unicode c-inside-circle?
     public static String copyright =
-    "Copyright \u00a9 1997-1999 Corporation for National Research Initiatives";
+    "Copyright (C) 1997-1999 Corporation for National Research Initiatives";
 
     /**
        The arguments passed to this program on the command line.
