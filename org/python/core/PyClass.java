@@ -212,7 +212,6 @@ public class PyClass extends PyObject
         if (proxyClass != null && PyObject.class.isAssignableFrom(proxyClass)) {
             // It would be better if we didn't have to create a PyInstance
             // in the first place.
-System.out.println("is PyObject:" + inst.javaProxy + " " + proxyClass);
             ((PyObject)inst.javaProxy).__class__ = this;
             return (PyObject)inst.javaProxy;
         }
