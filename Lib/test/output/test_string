@@ -1,0 +1,18 @@
+test_string
+string (test_string.py)
+atoi
+atol
+atof
+capitalize
+find
+rfind
+lower
+upper
+split
+join
+strip
+lstrip
+rstrip
+swapcase
+replace
+count

@@ -1,0 +1,26 @@
+test_math
+math (test_math.py)
+constants: e, pi
+acos
+asin
+atan
+atan2
+ceil
+cos
+cosh
+exp
+fabs
+floor
+fmod
+frexp
+hypot
+ldexp
+log
+log10
+modf
+pow
+sin
+sinh
+sqrt
+tan
+tanh

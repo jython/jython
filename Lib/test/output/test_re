@@ -1,0 +1,15 @@
+test_re
+re (test_re.py)
+basic functions
+search
+match
+sub
+symbolic references
+subn
+split
+match.groups
+match.group
+escape
+flags
+symbolic groups in regex's
+perl5-compatible regex's
