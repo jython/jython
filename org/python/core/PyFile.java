@@ -1,6 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.*;
+
 // To do:
 // - readinto(array)
 // - modes w, a should disallow reading
@@ -45,6 +47,10 @@ public class PyFile extends PyObject
         public void flush() throws java.io.IOException {
         }
         public void close() throws java.io.IOException {
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            return null;
         }
         protected byte[] getBytes(String s) {
             // Yes, I known the method is depricated, but it is the fastest 
@@ -113,6 +119,12 @@ public class PyFile extends PyObject
         public void close() throws java.io.IOException {
             istream.close();
         }
+
+        public Object __tojava__(Class cls) throws IOException {
+            if (InputStream.class.isAssignableFrom(cls))
+                return istream;
+            return null;
+        }
     }
 
     private static class OutputStreamWrapper extends FileWrapper {
@@ -143,6 +155,12 @@ public class PyFile extends PyObject
         public void close() throws java.io.IOException {
             ostream.close();
         }
+
+        public Object __tojava__(Class cls) throws IOException {
+            if (OutputStream.class.isAssignableFrom(cls))
+                return ostream;
+            return null;
+        }
     }
 
     private static class IOStreamWrapper extends InputStreamWrapper {
@@ -165,6 +183,12 @@ public class PyFile extends PyObject
         public void close() throws java.io.IOException {
             ostream.close();
             istream.close();
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            if (OutputStream.class.isAssignableFrom(cls))
+                return ostream;
+            return super.__tojava__(cls);
         }
     }
     
@@ -247,6 +271,15 @@ public class PyFile extends PyObject
         public void close() throws java.io.IOException {
             file.close();
         }
+
+        public Object __tojava__(Class cls) throws IOException {
+            if (OutputStream.class.isAssignableFrom(cls) && writing)
+                return new FileOutputStream(file.getFD());
+            else if (InputStream.class.isAssignableFrom(cls) && reading)
+                return new FileInputStream(file.getFD());
+            return super.__tojava__(cls);
+        }
+
     }
 
     private static class TextWrapper extends FileWrapper {
@@ -330,6 +363,10 @@ public class PyFile extends PyObject
 
         public void close() throws java.io.IOException {
             file.close();
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            return file.__tojava__(cls); 
         }
     }
 
@@ -441,6 +478,17 @@ public class PyFile extends PyObject
         else
             throw Py.AttributeError(name);
     }
+
+    public Object __tojava__(Class cls) {
+        Object o = null;
+        try {
+            o = file.__tojava__(cls);
+        } catch (java.io.IOException exc) { }
+        if (o == null)
+            o = super.__tojava__(cls);
+        return o;
+    }
+
 
     private static FileWrapper _setup(String name, String mode, int bufsize) {
         char c1 = ' ';
