@@ -649,6 +649,42 @@ public class __builtin__ implements ClassDictInit
         return new PyFile(name, mode, bufsize);
     }
 
+
+    /**
+     * Open a file read-only.
+     * @param name the file to open.
+     * @exception java.io.IOException
+     */
+    public static PyFile file(String name) throws java.io.IOException {
+        return open(name);
+    }
+
+    /**
+     * Open a file with the specified mode.
+     * @param name name of the file to open.
+     * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
+     * @exception java.io.IOException
+     */
+    public static PyFile file(String name, String mode)
+        throws java.io.IOException
+    {
+        return open(name, mode);
+    }
+
+    /**
+     * Open a file with the specified mode and buffer size.
+     * @param name name of the file to open.
+     * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
+     * @param bufsize size of the internal buffer. Not currently used.
+     * @exception java.io.IOException
+     */
+    public static PyFile file(String name, String mode, int bufsize)
+        throws java.io.IOException
+    {
+        return open(name, mode, bufsize);
+    }
+
+
     public static final int ord(char c) {
         return (int)(c);
     }
