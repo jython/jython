@@ -64,8 +64,6 @@ skipped = [
 failures = [
     'test_array',
     'test_binop',
-    'test_builtin',
-    'test_coercion',
     'test_codeop',
     'test_compare',
     'test_commands',
