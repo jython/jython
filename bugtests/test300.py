@@ -11,7 +11,7 @@ f.write(s1)
 f.close()
 
 def verify(pos, res):
-    print pos, res
+    #print pos, res
     if pos != res:
         raise support.TestError, "Wrong filepos #1 (%d, %d)" % (pos, res)
     
