@@ -60,6 +60,23 @@ public class PyMethod extends PyObject
         throwReadonly(name);
     }
 
+    public PyObject _doget(PyObject container) {
+        return _doget(container, null);
+    }
+
+    public PyObject _doget(PyObject container, PyObject wherefound) {
+        /* Only if classes are compatible */
+        if (__builtin__.issubclass(container.__class__, (PyClass)im_class))
+             if (im_func instanceof PyFunction)
+                 return new PyMethod(container, (PyFunction)im_func, im_class);
+             else if (im_func instanceof PyReflectedFunction)
+                 return new PyMethod(container, (PyReflectedFunction)im_func, im_class);
+             else
+                 return new PyMethod(container, im_func, im_class);
+        return this;
+    }
+
+
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if (im_self != null)
             // bound method
