@@ -14,7 +14,9 @@ def reportError():
 
 
 opts, argv = getopt.getopt(sys.argv[1:], 'w')
-warnings = "-w" in opts
+warnings = ('-w',"") in opts
+
+if warnings: print "LOUD warnings"
 
 for i in range(382):
     m = None
