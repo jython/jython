@@ -26,6 +26,9 @@ import com.ziclix.python.sql.util.*;
  */
 public class PyCursor extends PyObject implements ClassDictInit {
 
+	/** Field closed */
+	private boolean closed;
+
 	/** Field fetch */
 	protected Fetch fetch;
 
@@ -79,6 +82,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	PyCursor(PyConnection connection, boolean dynamicFetch) {
 
 		this.arraysize = 1;
+		this.closed = false;
 		this.connection = connection;
 		this.datahandler = DATAHANDLER;
 		this.dynamicFetch = dynamicFetch;
@@ -107,7 +111,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected static PyList __members__;
 
 	static {
-		PyObject[] m = new PyObject[7];
+		PyObject[] m = new PyObject[8];
 
 		m[0] = new PyString("close");
 		m[1] = new PyString("execute");
@@ -116,6 +120,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		m[4] = new PyString("fetchall");
 		m[5] = new PyString("fetchmany");
 		m[6] = new PyString("callproc");
+		m[7] = new PyString("next");
 		__methods__ = new PyList(m);
 		m = new PyObject[7];
 		m[0] = new PyString("arraysize");
@@ -214,7 +219,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("getDataHandler", null);
 		dict.__setitem__("addWarning", null);
 		dict.__setitem__("fetch", null);
-		dict.__setitem__("newFetch", null);
+		dict.__setitem__("closed", null);
 		dict.__setitem__("sqlStatement", null);
 		dict.__setitem__("dynamicFetch", null);
 		dict.__setitem__("getPyClass", null);
@@ -252,7 +257,10 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 */
 	public void close() {
+
 		this.clear();
+
+		this.closed = true;
 	}
 
 	/**
@@ -281,7 +289,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		PyObject row = __iternext__();
 
 		if (row == null) {
-			throw Py.StopIteration(null);
+			throw Py.StopIteration("");
 		}
 
 		return row;
@@ -297,11 +305,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 		PyObject row = fetchone();
 
-		if (row == Py.None) {
-			row = null;
-		}
-
-		return row;
+		return (row == Py.None) ? null : row;
 	}
 
 	/**
@@ -319,19 +323,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 */
 	public DataHandler getDataHandler() {
 		return this.datahandler;
-	}
-
-	/**
-	 * Method newFetch
-	 *
-	 */
-	protected void newFetch() {
-
-		if (this.dynamicFetch) {
-			this.fetch = Fetch.newDynamicFetch(this);
-		} else {
-			this.fetch = Fetch.newStaticFetch(this);
-		}
 	}
 
 	/**
@@ -703,9 +694,15 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Reset the cursor state.
+	 * Resets the cursor state. This includes flushing the warnings
+	 * and any previous results.
+	 *
 	 */
 	protected void clear() {
+
+		if (closed) {
+			throw zxJDBC.makeException(zxJDBC.InternalError, "cursor is closed");
+		}
 
 		this.warnings = Py.None;
 		this.lastrowid = Py.None;
@@ -715,7 +712,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			this.fetch.close();
 		} catch (Exception e) {}
 		finally {
-			this.newFetch();
+			this.fetch = Fetch.newFetch(this);
 		}
 
 		try {

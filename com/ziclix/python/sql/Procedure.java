@@ -14,7 +14,9 @@ import java.util.BitSet;
 import org.python.core.*;
 
 /**
- * Class Procedure
+ * This class provides the necessary functionality to call stored
+ * procedures.  It handles managing the database metadata and binding
+ * the appropriate parameters.
  *
  * @author brian zimmer
  * @author last modified by $Author$
@@ -45,9 +47,6 @@ public class Procedure extends Object {
 
 	/** Field NULLABLE */
 	protected static final int NULLABLE = 11;
-
-	/** Field PLACEHOLDER */
-	public static final PyObject PLACEHOLDER = new PyObject();
 
 	/** Field cursor */
 	protected PyCursor cursor;

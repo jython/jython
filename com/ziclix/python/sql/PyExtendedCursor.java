@@ -112,8 +112,8 @@ public class PyExtendedCursor extends PyCursor {
 		dict.__setitem__("statistics", new ExtendedCursorFunc("statistics", 106, 5, 5, "description of a table's indices and statistics"));
 		dict.__setitem__("gettypeinfo", new ExtendedCursorFunc("gettypeinfo", 107, 0, 1, "query for sql type info"));
 		dict.__setitem__("gettabletypeinfo", new ExtendedCursorFunc("gettabletypeinfo", 108, 0, 1, "query for table types"));
-		dict.__setitem__("bestrow", new ExtendedCursorFunc("bestrow", 109, 4, 4, "query for table types"));
-		dict.__setitem__("versioncolumns", new ExtendedCursorFunc("versioncolumns", 110, 3, 3, "query for table types"));
+		dict.__setitem__("bestrow", new ExtendedCursorFunc("bestrow", 109, 3, 3, "optimal set of columns that uniquely identifies a row"));
+		dict.__setitem__("versioncolumns", new ExtendedCursorFunc("versioncolumns", 110, 3, 3, "columns that are automatically updated when any value in a row is updated"));
 
 		// hide from python
 		dict.__setitem__("classDictInit", null);
@@ -156,18 +156,23 @@ public class PyExtendedCursor extends PyCursor {
 		String t = getMetaDataName(table);
 		String[] y = null;
 
+		// postgresql interprets the types to be uppercase exclusively
+		// so we'll force this on everyone else as well
 		if (type != Py.None) {
+			String typeName = null;
+
 			if (isSeq(type)) {
 				int len = type.__len__();
 
 				y = new String[len];
 
 				for (int i = 0; i < len; i++) {
-					y[i] = getMetaDataName(type.__getitem__(i));
+					typeName = getMetaDataName(type.__getitem__(i));
+					y[i] = (typeName == null) ? null : typeName.toUpperCase();
 				}
 			} else {
-				y = new String[1];
-				y[0] = getMetaDataName(type);
+				typeName = getMetaDataName(type.__getitem__(type));
+				y = new String[]{ (typeName == null) ? null : typeName.toUpperCase() };
 			}
 		}
 
@@ -399,7 +404,7 @@ public class PyExtendedCursor extends PyCursor {
 		String c = getMetaDataName(qualifier);
 		String s = getMetaDataName(owner);
 		String t = getMetaDataName(table);
-		int p = DatabaseMetaData.bestRowUnknown;	// scope
+		int p = DatabaseMetaData.bestRowSession;	// scope
 		boolean n = true;													// nullable
 
 		try {
@@ -450,9 +455,9 @@ public class PyExtendedCursor extends PyCursor {
 
 		// see if the driver can help us
 		try {
-			if (connection.connection.getMetaData().storesLowerCaseIdentifiers()) {
+			if (getMetaData().storesLowerCaseIdentifiers()) {
 				return string.toLowerCase();
-			} else if (connection.connection.getMetaData().storesUpperCaseIdentifiers()) {
+			} else if (getMetaData().storesUpperCaseIdentifiers()) {
 				return string.toUpperCase();
 			}
 		} catch (SQLException e) {}

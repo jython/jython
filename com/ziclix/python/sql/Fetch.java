@@ -53,35 +53,28 @@ abstract public class Fetch {
 	 * @param PyCursor cursor
 	 *
 	 */
-	public Fetch(PyCursor cursor) {
+	protected Fetch(PyCursor cursor) {
 
+		this.rowcount = -1;
 		this.cursor = cursor;
 		this.description = Py.None;
-		this.rowcount = -1;
 	}
 
 	/**
-	 * Method newDynamicFetch
+	 * Method newFetch
 	 *
 	 * @param PyCursor cursor
 	 *
 	 * @return Fetch
 	 *
 	 */
-	static Fetch newDynamicFetch(PyCursor cursor) {
-		return new DynamicFetch(cursor);
-	}
+	public static Fetch newFetch(PyCursor cursor) {
 
-	/**
-	 * Method newStaticFetch
-	 *
-	 * @param PyCursor cursor
-	 *
-	 * @return Fetch
-	 *
-	 */
-	static Fetch newStaticFetch(PyCursor cursor) {
-		return new StaticFetch(cursor);
+		if (cursor.dynamicFetch) {
+			return new DynamicFetch(cursor);
+		} else {
+			return new StaticFetch(cursor);
+		}
 	}
 
 	/**
@@ -99,7 +92,7 @@ abstract public class Fetch {
 	 * doesn't use the value so a driver is free to put anything it wants there.
 	 *
 	 * @param ResultSet resultSet
-	 * @param Set skipCols
+	 * @param Set skipCols JDBC-indexed set of columns to be skipped
 	 *
 	 */
 	abstract public void add(ResultSet resultSet, Set skipCols);
