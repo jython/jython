@@ -262,7 +262,7 @@ public class PyLong extends PyObject
     }
 
     public PyString __hex__() {
-        String s = value.toString(16);
+        String s = value.toString(16).toUpperCase();
         if (s.startsWith("-"))
             return new PyString("-0x"+s.substring(1, s.length())+"L");
         else
