@@ -97,12 +97,10 @@ public class PySystemState extends PyObject
             return exc.traceback;
         }
 
-        if (__dict__ != null) {
-            PyObject ret = __dict__.__finditem__(name);
-            if (ret != null) return ret;
-        }
-
-        return super.__findattr__(name);
+        PyObject ret = super.__findattr__(name);
+        if (ret != null) return ret;
+   
+        return __dict__.__finditem__(name);
     }
 
     public PyObject __dict__;
@@ -129,14 +127,6 @@ public class PySystemState extends PyObject
         throw Py.AttributeError("del '"+name+"'");
     }
         
-    public PyObject __dir__() {
-        PyObject ret = __class__.__dir__();
-        if (__dict__ != null) {
-            ret = ret._add(((PyStringMap)__dict__).keys());
-            ((PyList)ret).sort();
-        }
-        return ret;
-    }
 
     protected String safeRepr() {
         return "module 'sys'";
@@ -162,6 +152,11 @@ public class PySystemState extends PyObject
         builtins = PyJavaClass.lookup(__builtin__.class).__dict__;
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
+
+        if (__class__ != null) {
+            __dict__ = new PyStringMap();
+            __dict__.invoke("update", __class__.__getattr__("__dict__"));
+        }
     }
 
     private static PyList defaultPath;
