@@ -12,6 +12,7 @@
 <li><a href="jarray.html">Java arrays</a>
 <li><a href="subclassing.html">Subclassing</a>
 <li><a href="jythonc.html">Building applets, servlets, beans...</a>
+<li><a href="jreload.html">Reloading java classes</a>
 <h3>Python Docs (exits)</h3>
 <li><a href="http://www.python.org/doc/tut/tut.html">Python Tutorial</a>
 <li><a href="http://www.python.org/doc/lib/lib.html">Library Reference</a>
