@@ -42,20 +42,33 @@ public class PyString extends PySequence {
 		if (string.indexOf('\'') == -1 || string.indexOf('"') != -1) quote = '\'';
 		StringBuffer buf = new StringBuffer(string.length()+5);
 		buf.append(quote);
+		boolean didhex = false;
 		for(int i=0; i<string.length(); i++) {
 			char c = string.charAt(i);
+			if (didhex && Character.digit(c, 16) != -1) {
+		        buf.append("\\x");
+		        buf.append(Integer.toString(c, 16));
+		        continue;
+			}
+			
+			didhex = false;
 			if (c == quote || c == '\\') {
 				buf.append('\\');
 				buf.append(c);
 			} else {
-				if (c < ' ' || c > 0177) {
-					buf.append('\\');
-					String s = Integer.toString(c, 8);
-					while (s.length() < 3) s = "0"+s;
-					buf.append(s);
-				} else {
-					buf.append(c);
-				}
+			    if (c >= ' ' && c <= 0177) {
+			        buf.append(c);
+			    } 
+			    else if (c == '\n') buf.append("\\n");
+			    else if (c == '\t') buf.append("\\t");
+			    else if (c == '\b') buf.append("\\b");
+			    else if (c == '\f') buf.append("\\f");
+			    else if (c == '\r') buf.append("\\r");
+			    else {
+			        buf.append("\\x");
+			        buf.append(Integer.toString(c, 16));
+			        didhex = true;
+			    }
 			}
 		}
 		buf.append(quote);
