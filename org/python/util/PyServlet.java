@@ -60,11 +60,12 @@ import org.python.core.*;
 
 public class PyServlet extends HttpServlet {
     private PythonInterpreter interp;
-
     private Hashtable cache = new Hashtable();
+    private String rootPath;
+
 
     public void init() {
-        String rootPath = getServletContext().getRealPath("/");
+        rootPath = getServletContext().getRealPath("/");
 
         Properties props = new Properties();
         Enumeration e = getInitParameterNames();
@@ -79,21 +80,23 @@ public class PyServlet extends HttpServlet {
                                              "lib");
         }
         PythonInterpreter.initialize(System.getProperties(), props, new String[0]);
-        interp = new PythonInterpreter();
+        reset();
 
         PySystemState sys = Py.getSystemState();
         sys.add_package("javax.servlet");
         sys.add_package("javax.servlet.http");
         sys.add_package("javax.servlet.jsp");
         sys.add_package("javax.servlet.jsp.tagext");
-
-        sys.path.append(new PyString(rootPath));
     }
 
     public void service(ServletRequest req, ServletResponse res)
         throws ServletException, IOException
     {
-        String spath = ((HttpServletRequest) req).getServletPath();
+        req.setAttribute("pyservlet", this);
+
+        String spath = (String)req.getAttribute("javax.servlet.include.servlet_path");
+        if (spath == null)
+            spath = ((HttpServletRequest) req).getServletPath();
         String rpath = getServletContext().getRealPath(spath);
 
         interp.set("__file__", rpath);
@@ -105,7 +108,19 @@ public class PyServlet extends HttpServlet {
             throw new ServletException("No python servlet found at:" + spath);
     }
 
-    private HttpServlet getServlet(String path)
+    public void reset() {
+        interp = new PythonInterpreter(null, new PySystemState());
+        cache.clear();
+        PySystemState sys = Py.getSystemState();
+        sys.path.append(new PyString(rootPath));
+
+        String modulesDir = rootPath + File.separator +
+                            "WEB-INF" + File.separator +
+                            "jython";
+        sys.path.append(new PyString(modulesDir));
+    }
+
+    private synchronized HttpServlet getServlet(String path)
         throws ServletException, IOException
     {
         CacheEntry entry = (CacheEntry) cache.get(path);
