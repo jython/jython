@@ -63,7 +63,7 @@ public class PyJavaDirPackage extends PyObject {
             return ret;
         }
 
-        Class c = Py.findClass(attrName);
+        Class c = Py.findClassEx(attrName);
         if (c != null) {
             ret = PyJavaClass.lookup(c);
             __dict__.__setitem__(name, ret);

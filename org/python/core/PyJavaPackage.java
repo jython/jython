@@ -190,9 +190,9 @@ public class PyJavaPackage extends PyObject {
             return ret;
         Class c;
         if (__name__.length()>0)
-            c = Py.findClass(__name__+'.'+name);
+            c = Py.findClassEx(__name__+'.'+name);
         else
-            c = Py.findClass(name);
+            c = Py.findClassEx(name);
 
         if (c != null) {
             ret = PyJavaClass.lookup(c);

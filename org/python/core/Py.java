@@ -556,6 +556,26 @@ public final class Py
         }
     }
 
+
+    public static Class findClassEx(String name) {
+        try {
+            ClassLoader classLoader = Py.getSystemState().getClassLoader();
+            if (classLoader == null)
+                return Class.forName(name);
+            else
+                return classLoader.loadClass(name);
+        }
+        catch (ClassNotFoundException e) {
+            return null;
+        }
+        catch (IllegalArgumentException e) {
+            throw JavaError(e);
+        }
+        catch (LinkageError e) {
+            throw JavaError(e);
+        }
+    }
+
     private static void setArgv(String arg0, String[] args) {
         PyObject argv[] = new PyObject[args.length+1];
         argv[0] = new PyString(arg0);

@@ -191,7 +191,7 @@ public class imp
             return Py.java2py(Py.getSystemState());
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
-            Class c = Py.findClass(mod);
+            Class c = Py.findClassEx(mod);
             if (c != null) {
                 try {
                     return createFromClass(name, c);
@@ -210,7 +210,7 @@ public class imp
         if (Py.frozenPackage != null) {
             modName = Py.frozenPackage+"."+modName;
         }
-        return Py.findClass(modName+"$_PyInner");
+        return Py.findClassEx(modName+"$_PyInner");
     }
 
     private static PyObject loadPrecompiled(String name, String modName,
@@ -352,7 +352,7 @@ public class imp
         if (ret != null) return ret;
 
         if (Py.frozen) {
-            Class c = Py.findClass(name);
+            Class c = Py.findClassEx(name);
             if (c != null) return createFromClass(name, c);
         }
 
