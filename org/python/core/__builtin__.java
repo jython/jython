@@ -524,7 +524,7 @@ public class __builtin__ implements ClassDictInit
     private static PyObject max(PyObject o) {
         PyObject max = o.__finditem__(0);
         if (max == null)
-            throw Py.TypeError("max of empty sequence");
+            throw Py.ValueError("max of empty sequence");
         PyObject element;
         int i=1;
         while ((element = o.__finditem__(i++)) != null) {
@@ -543,7 +543,7 @@ public class __builtin__ implements ClassDictInit
     private static PyObject min(PyObject o) {
         PyObject min = o.__finditem__(0);
         if (min == null)
-            throw Py.TypeError("min of empty sequence");
+            throw Py.ValueError("min of empty sequence");
         PyObject element;
         int i=1;
         while ((element = o.__finditem__(i++)) != null) {
