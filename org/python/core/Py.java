@@ -5,7 +5,8 @@ import org.python.parser.SimpleNode;
 import java.lang.reflect.InvocationTargetException;
 import java.io.*;
 
-public final class Py {
+public final class Py
+{
     static boolean frozen;
     static String frozenPackage=null;
     static boolean initialized;
@@ -1108,22 +1109,44 @@ public final class Py {
     static StdoutWrapper stdout;
     //public static StdinWrapper stdin;
 
+    public static void print(PyObject file, PyObject o) {
+        if (file == None)
+            print(o);
+        else
+            new FixedFileWrapper(file).print(o);
+    }
+    public static void printComma(PyObject file, PyObject o) {
+        if (file == None)
+            printComma(o);
+        else
+            new FixedFileWrapper(file).printComma(o);
+    }
+    public static void println(PyObject file, PyObject o) {
+        if (file == None)
+            println(o);
+        else
+            new FixedFileWrapper(file).println(o);
+    }
+    public static void printlnv(PyObject file) {
+        if (file == None)
+            println();
+        else
+            new FixedFileWrapper(file).println();
+    }
+
     public static void print(PyObject o) {
         stdout.print(o);
     }
-
     public static void printComma(PyObject o) {
         stdout.printComma(o);
     }
-
     public static void println(PyObject o) {
         stdout.println(o);
     }
-
     public static void println() {
         stdout.println();
     }
-
+    
     /* A collection of convenience functions for converting PyObjects
        to Java primitives */
 
