@@ -544,7 +544,7 @@ public class PyJavaClass extends PyClass {
 	}
 
     private PyJavaInstance classInstance;
-    public static boolean withinner = false;
+    static boolean withinner = false;
 	public PyObject __findattr__(String name) {
         PyObject ret = super.__findattr__(name);
         if (ret != null) {
