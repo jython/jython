@@ -1,4 +1,5 @@
 //copyright 2001 Finn Bock
+//copyright 2003 Samuele Pedroni
 
 package org.python.modules;
 
@@ -28,19 +29,30 @@ public class newmodule {
 
 
     public static PyFunction function(PyCode code, PyObject globals) {
-        return function(code, globals, null, Py.EmptyObjects);
+        return function(code, globals, null, Py.EmptyObjects, null);
     }
 
     public static PyFunction function(PyCode code, PyObject globals,
                                       String name)
     {
-        return function(code, globals, name, Py.EmptyObjects);
+        return function(code, globals, name, Py.EmptyObjects, null);
     }
 
     public static PyFunction function(PyCode code, PyObject globals,
                                       String name, PyObject[] argdefs)
     {
-        PyFunction f = new PyFunction(globals, argdefs, code, null, null);
+        PyFunction f = new PyFunction(globals, argdefs, code, null,null);
+        if (name != null)
+            f.__name__ = name;
+        return f;
+    }
+
+
+    public static PyFunction function(PyCode code, PyObject globals,
+                                      String name, PyObject[] argdefs, 
+                                      PyObject[] closure)
+    {
+        PyFunction f = new PyFunction(globals, argdefs, code, null, closure);
         if (name != null)
             f.__name__ = name;
         return f;
