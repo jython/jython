@@ -40,7 +40,7 @@ public class newmodule {
     public static PyFunction function(PyCode code, PyObject globals,
                                       String name, PyObject[] argdefs)
     {
-        PyFunction f = new PyFunction(globals, argdefs, code, null);
+        PyFunction f = new PyFunction(globals, argdefs, code, null, null);
         if (name != null)
             f.__name__ = name;
         return f;
