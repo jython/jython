@@ -9,10 +9,9 @@
  */
 package com.ziclix.python.sql;
 
-import java.io.*;
 import java.sql.*;
-import java.math.*;
 import java.util.*;
+
 import org.python.core.*;
 import com.ziclix.python.sql.util.*;
 
@@ -66,16 +65,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
   protected PyStatement statement;
 
   // they are stateless instances, so we only need to instantiate it once
-  private static DataHandler DATAHANDLER = null;
-
-  // discern the correct datahandler
-  static {
-    DATAHANDLER = new DataHandler();
-
-    try {
-      DATAHANDLER = new JDBC20DataHandler(DATAHANDLER);
-    } catch (Throwable t) {}
-  }
+  private static final DataHandler DATAHANDLER = DataHandler.getSystemDataHandler();
 
   /**
    * Create the cursor with a static fetch.

@@ -12,6 +12,8 @@ package com.ziclix.python.sql;
 import java.io.*;
 import java.sql.*;
 import java.math.*;
+import java.lang.reflect.Constructor;
+
 import org.python.core.*;
 
 /**
@@ -33,6 +35,10 @@ public class DataHandler {
 
 	// default size for buffers
 	private static final int INITIAL_SIZE = 1024 * 4;
+
+  private static final String[] SYSTEM_DATAHANDLERS = {
+    "com.ziclix.python.sql.JDBC20DataHandler"
+  };
 
 	/**
 	 * Handle most generic Java data types.
@@ -495,4 +501,24 @@ public class DataHandler {
 
 		return buffer.toString();
 	}
+
+  /**
+   * Build the DataHandler chain depending on the VM.  This guarentees a DataHandler
+   * but might additional chain a JDBC2.0 or JDBC3.0 implementation.
+   * @return a DataHandler configured for the VM version
+   */
+  public static final DataHandler getSystemDataHandler() {
+    DataHandler dh = new DataHandler();
+
+    for(int i=0; i<SYSTEM_DATAHANDLERS.length; i++) {
+      try {
+        Class c = Class.forName(SYSTEM_DATAHANDLERS[i]);
+        Constructor cons = c.getConstructor(new Class[] { DataHandler.class });
+        dh = (DataHandler)cons.newInstance(new Object[] { dh });
+      } catch (Throwable t) {}
+    }
+
+    return dh;
+  }
+
 }

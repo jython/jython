@@ -1,3 +1,11 @@
+/*
+ * Jython Database Specification API 2.0
+ *
+ * $Id$
+ *
+ * Copyright (c) 2003 brian zimmer <bzimmer@ziclix.com>
+ *
+ */
 package com.ziclix.python.sql;
 
 import org.python.core.PyObject;
