@@ -148,9 +148,6 @@ class _tcpsocket:
 	else:
 	    raise IOError, "both istream and ostream have been shut down"
 
-    def __del__(self):
-	self.close()
-
     def shutdown(self, how):
 	assert how in (0, 1, 2)
 	assert self.sock
