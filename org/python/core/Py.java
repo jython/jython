@@ -961,25 +961,29 @@ public final class Py
                 stderr.println(getStackTrace((Throwable)javaError));
             }
         }
+        stderr.println(formatException(type, value, tb));
+    }
+
+    static String formatException(PyObject type, PyObject value, PyObject tb) {
+        StringBuffer buf = new StringBuffer();
 
         PyObject typeName;
         if (type instanceof PyClass) {
-            typeName = new PyString(((PyClass)type).__name__);
+            buf.append(((PyClass) type).__name__);
         } else {
-            typeName = type;
+            buf.append(type.__str__());
         }
         if (value != Py.None) {
-            stderr.print(typeName);
-            stderr.print(": ");
+            buf.append(": ");
             if (__builtin__.isinstance(value, (PyClass) Py.SyntaxError)) {
-                stderr.println(value.__getitem__(0));
+                buf.append(value.__getitem__(0).__str__());
             } else {
-                stderr.println(value);
+                buf.append(value.__str__());
             }
-        } else {
-            stderr.println(typeName);
         }
+        return buf.toString();
     }
+
 
     /* Equivalent to Python's assert statement */
     public static void assert(PyObject test, PyObject message) {
