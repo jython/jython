@@ -614,24 +614,29 @@ public class imp
                                                  frame.f_locals,
                                                  getStarArg());
         PyObject names;
+        boolean filter = false;
         if (module instanceof PyJavaPackage)
             names = ((PyJavaPackage)module).fillDir();
         else {
             PyObject __all__ = module.__findattr__("__all__");
-            names = (__all__ != null)  ? __all__ : module.__dir__();
+            if (__all__ != null) names = __all__;
+            else {
+                names =  module.__dir__();
+                filter = true;
+            }
         }
 
-        loadNames(names, module, frame.getf_locals());
+        loadNames(names, module, frame.getf_locals(), filter);
     }
 
     private static void loadNames(PyObject names, PyObject module,
-                                  PyObject locals)
+                                  PyObject locals, boolean filter)
     {
         int i=0;
         PyObject name;
         while ((name=names.__finditem__(i++)) != null) {
             String sname = ((PyString)name).internedString();
-            if (sname.startsWith("__")) {
+            if (filter && sname.startsWith("_")) {
                 continue;
             } else {
                 try {
