@@ -66,7 +66,6 @@ public class PyList extends PySequence implements InitModule {
 		this(Py.EmptyObjects);
 	}
 
-    public static PyClass __class__;
 	public PyList(Vector ilist) {
 	    this(new PyObject[ilist.size()]);
 	    for(int i=0; i<ilist.size(); i++) {
@@ -75,7 +74,6 @@ public class PyList extends PySequence implements InitModule {
 	}
 
 	public PyList(PyObject elements[]) {
-	    super(__class__);
 	    list = elements;
 	    length = elements.length;
 	}
@@ -260,6 +258,18 @@ public class PyList extends PySequence implements InitModule {
 			list[j] = tmp;
 		}
 	}
+
+    public PyObject pop() {
+        if (length==0) {
+            throw Py.IndexError("pop from empty list");
+        }
+        length -= 1;
+        return list[length];
+    }
+    
+    public void extend(PyObject o) {
+        setslice(length, length, 1, o);
+    }
 
 
 /* Implementation is taken from Python 1.5 as written by Guido van Rossum
@@ -468,4 +478,8 @@ public class PyList extends PySequence implements InitModule {
 	public void sort() {
 	    sort(null);
 	}
+	
+    // __class__ boilerplate -- see PyObject for details
+    public static PyClass __class__;
+    protected PyClass getPyClass() { return __class__; }
 }
