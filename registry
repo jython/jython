@@ -2,9 +2,11 @@
 # This default registry sets many common options to their default values
 # All of these settings could be erased with no change in behavior
 
-# This is how I set my path on my Windows development machine
+# This is how Jim sets his path on his Windows development machine
 #python.path=.;c:\\jpython\\Lib;d:\\Python-1.5.2\\Lib
-python.path=.
+# This is how Barry sets his path on his Unix development machine
+#python.path = /home/bwarsaw/projects/python/pristine/Lib
+python.path = .
 
 # Set the directory to use for caches (currently just package information)
 # This directory should be writable by the user
@@ -33,6 +35,10 @@ python.deprecated.keywordMangling = false
 # Setting this to true will cause the console to poll standard in
 # This might be helpful on systems without system-level threads
 python.console.poll = false
+
+# Setting this to false will allow JPython to provide access to
+# non-public fields, methods, and constructors of Java objects.
+python.security.respectJavaAccessibility = true
 
 # Setting this can either add new modules to builtins or override package names
 # A good example would be to use a jni version of os for more functionality
