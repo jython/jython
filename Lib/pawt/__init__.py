@@ -1,16 +1,16 @@
-import java
+import sys
 from java import awt
 
 def test(panel, size=None, name='AWT Tester'):
-	f = awt.Frame(name, windowClosing=lambda event: java.lang.System.exit(0))
+	f = awt.Frame(name, windowClosing=lambda event: sys.exit(0))
 	if hasattr(panel, 'init'):
 		panel.init()
 
 	f.add('Center', panel)
 	f.pack()
 	if size is not None:
-		f.size = size
-	f.visible = 1
+		f.setSize(apply(awt.Dimension, size))	
+	f.setVisible(1)
 	return f
 
 class GridBag:
