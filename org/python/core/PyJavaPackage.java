@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 import java.util.*;
@@ -23,7 +24,8 @@ public class PyJavaPackage extends PyObject {
     public PyJavaPackage(String name, PyJavaPackage parent, String jarfile) {
         super(__class__);
         __parent__ = parent;
-        if (jarfile == null && parent != null) jarfile = __parent__.__file__;
+        if (jarfile == null && parent != null)
+	    jarfile = __parent__.__file__;
         __file__ = jarfile;
         __name__ = name;
         __dict__ = new PyStringMap();
@@ -53,13 +55,16 @@ public class PyJavaPackage extends PyObject {
             p = new PyJavaPackage(__name__+'.'+firstName, this, jarfile);
         }
         __dict__.__setitem__(firstName, p);
-        if (lastName != null) return p.addPackage(lastName, jarfile);
-        else return p;
+        if (lastName != null)
+	    return p.addPackage(lastName, jarfile);
+        else
+	    return p;
     }
 
     private PyObject __path__ = null;
     protected PyObject getPath() {
-        if (__path__ != null) return __path__;
+        if (__path__ != null)
+	    return __path__;
         //System.err.println("finding path for: "+__name__);
         
         if (__name__.length() == 0) {
@@ -87,12 +92,14 @@ public class PyJavaPackage extends PyObject {
             return __path__;
         }
         
-        // Search through directories in rootPath looking for appropriate subdir
+        // Search through directories in rootPath looking for appropriate
+        // subdir
         int n = rootPath.__len__();
 
         String name = __name__;
         int dot = name.lastIndexOf('.');
-        if (dot != -1) name = name.substring(dot+1, name.length());
+        if (dot != -1)
+	    name = name.substring(dot+1, name.length());
 
         for (int i=0; i<n; i++) {
             String dirName = rootPath.get(i).toString();
@@ -114,8 +121,10 @@ public class PyJavaPackage extends PyObject {
     
     private PyObject __jdir__;
     private boolean jdirinit = false;
+
     public PyObject getDirPackage() {
-        if (jdirinit) return __jdir__;
+        if (jdirinit)
+	    return __jdir__;
         jdirinit = true;
         
         if (__name__.length() == 0) {
@@ -138,13 +147,15 @@ public class PyJavaPackage extends PyObject {
 
         String name = __name__;
         int dot = name.lastIndexOf('.');
-        if (dot != -1) name = name.substring(dot+1, name.length()).intern();
+        if (dot != -1)
+	    name = name.substring(dot+1, name.length()).intern();
         __jdir__ = ppkg.__findattr__(name);
         return __jdir__;
     }
  
     private void initialize() {
-        if (__dict__ == null) __dict__ = new PyStringMap();
+        if (__dict__ == null)
+	    __dict__ = new PyStringMap();
         
         if (_unparsedAll != null) {
             //__all__ = new PyList();
@@ -152,7 +163,8 @@ public class PyJavaPackage extends PyObject {
             while  (tok.hasMoreTokens())  {
                 String p = tok.nextToken();
                 String cname = p.trim().intern();
-                __dict__.__setitem__(cname, PyJavaClass.lookup(__name__+'.'+cname, null));
+                __dict__.__setitem__(cname, PyJavaClass.lookup(__name__+'.'+
+							       cname, null));
                 //__all__.append(new PyString(p.trim()));
             }
             _unparsedAll = null;
@@ -170,13 +182,18 @@ public class PyJavaPackage extends PyObject {
 
 
     public PyObject __findattr__(String name) {
-        if (__dict__ == null) __dict__ = new PyStringMap();
+        if (__dict__ == null)
+	    __dict__ = new PyStringMap();
                     
         PyObject ret = __dict__.__finditem__(name);
-        if (ret != null) return ret;
+        if (ret != null)
+	    return ret;
         Class c;
-        if (__name__.length()>0) c = Py.findClass(__name__+'.'+name);
-        else c = Py.findClass(name);
+        if (__name__.length()>0)
+	    c = Py.findClass(__name__+'.'+name);
+        else
+	    c = Py.findClass(name);
+
         if (c != null) {
             ret = PyJavaClass.lookup(c);
             __dict__.__setitem__(name, ret);
@@ -184,20 +201,25 @@ public class PyJavaPackage extends PyObject {
         }
         if (name == "__name__") return new PyString(__name__);
         if (name == "__dict__") return __dict__;
-        if (name == "__file__" && __file__ != null) return new PyString(__file__);
+        if (name == "__file__" && __file__ != null)
+	    return new PyString(__file__);
                 
         // Name not found - check for Java dir package
         PyObject pyjd = getDirPackage();
-        if (pyjd != null) ret = pyjd.__findattr__(name);
+        if (pyjd != null)
+	    ret = pyjd.__findattr__(name);
         
         if (ret == null) {
             // Name not found - check for a Python package/module
             PyObject path = getPath();
-            if (path == Py.None) return null;
-            ret = imp.loadFromPath(name, (__name__+'.'+name).intern(), (PyList)path);
+            if (path == Py.None)
+		return null;
+            ret = imp.loadFromPath(name, (__name__+'.'+name).intern(),
+				   (PyList)path);
         }
         
-        if (ret != null) __dict__.__setitem__(name, ret);
+        if (ret != null)
+	    __dict__.__setitem__(name, ret);
         return ret;
         //return super.__findattr__(name);
     }
