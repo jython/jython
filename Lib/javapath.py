@@ -186,6 +186,8 @@ def gethome():
 def normpath(path):
     """Normalize path, eliminating double slashes, etc."""
     sep = os.sep
+    if sep == '\\':
+        path = path.replace("/", sep)
     curdir = os.curdir
     pardir = os.pardir
     import string
