@@ -1,4 +1,7 @@
+// Copyright © Corporation for National Research Initiatives
+
 package org.python.core;
+
 import java.lang.reflect.*;
 import java.util.Vector;
 import java.io.*;
