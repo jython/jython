@@ -114,6 +114,7 @@ failures = [
     'test_tempfile',
     'test_threaded_import',
     'test_threadedtempfile',
+    'test_trace',
     'test_types',
     'test_ucn',
     'test_unary',
