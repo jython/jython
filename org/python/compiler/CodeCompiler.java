@@ -340,6 +340,10 @@ public class CodeCompiler extends Visitor {
 
     public Object break_stmt(SimpleNode node) throws Exception {
         //setline(node); Not needed here...
+        if (breakLabels.empty()) {
+            throw new ParseException("'break' outside loop", node);
+        }
+            
         Object obj = breakLabels.peek();
         if (obj == DoFinally) {
             code.jsr((Label)finallyLabels.peek());
@@ -354,6 +358,10 @@ public class CodeCompiler extends Visitor {
 
     public Object continue_stmt(SimpleNode node) throws Exception {
         //setline(node); Not needed here...
+        if (continueLabels.empty()) {
+            throw new ParseException("'continue' outside loop", node);
+        }
+        
         Object obj = continueLabels.peek();
         if (obj == DoFinally) {
             code.jsr((Label)finallyLabels.peek());
@@ -368,6 +376,10 @@ public class CodeCompiler extends Visitor {
 
     public Object return_stmt(SimpleNode node) throws Exception {
         setline(node);
+        if (!fast_locals) {
+            throw new ParseException("'return' outside function", node);
+        }
+        
         if (node.getNumChildren() == 1) {
             node.getChild(0).visit(this);
         } else {
