@@ -600,8 +600,6 @@ public class SRE_STATE {
                 i = SRE_MATCH(pattern, pidx + 2, level + 1);
                 if (i <= 0)
                     return i;
-                if (pattern[pidx+1] > 0 && this.ptr != ptr)
-                    return SRE_ERROR_STATE;
                 pidx += pattern[pidx];
                 break;
 
@@ -617,8 +615,6 @@ public class SRE_STATE {
                     return i;
                 if (i != 0)
                     return 0;
-                if (pattern[pidx+1] > 0 && this.ptr != ptr)
-                    return SRE_ERROR_STATE;
                 pidx += pattern[pidx];
                 break;
 
