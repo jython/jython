@@ -387,11 +387,10 @@ public class PyString extends PySequence implements ClassDictInit
             else if (use_quotes && ch == '\b') v.append("\\b");
             else if (use_quotes && ch == '\f') v.append("\\f");
             else if (use_quotes && ch == '\r') v.append("\\r");
-            else if (ch < ' ' || ch >= 128) {
-                v.append('\\');
-                v.append(hexdigit[(ch >> 6) & 7]);
-                v.append(hexdigit[(ch >> 3) & 7]);
-                v.append(hexdigit[ch & 7]);
+            else if (ch < ' ' || ch >= 127) {
+                v.append("\\x");
+                v.append(hexdigit[(ch >> 4) & 0xF]);
+                v.append(hexdigit[ch & 0xF]);
             }
             /* Copy everything else as-is */
             else
