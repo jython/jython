@@ -1,5 +1,24 @@
 Jython NEWS
 
+xx-xxx-2001 Jython 2.1 alpha 1
+
+  New features.
+   - Improve speed when indexing a string and iterating over a string
+     in a for loop.
+   - Reworked coercing model (pep-0208)
+   - Added {}.popitem().
+   - Improved speed for python files by buffering the RandomAccessFile.
+   - Added function attributes (pep-0232)
+   - Rich comparison (pep-0207)
+   - Updated cPickle to handle CPython compatible unicode strings.
+   - Updated sre to CPython-2.1a1
+   - Added the "new" module
+
+  Bug fixes.
+   - Allow self referencing adapters to be collected when using weak
+     tables.
+   - Added workaround for a reader bug in MRJ22Jitc.01.
+
 17-Jan-2001 Jython 2.0 final release
 
   Bug fixes.
