@@ -16,7 +16,7 @@ def reportError():
 opts, argv = getopt.getopt(sys.argv[1:], 'w')
 warnings = "-w" in opts
 
-for i in range(310):
+for i in range(320):
     m = None
     n = "test%3.3d" % i
     try:
