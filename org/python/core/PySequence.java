@@ -174,6 +174,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public boolean __nonzero__() {
+        return seq___nonzero__();
+    }
+
+    final boolean seq___nonzero__() {
         return __len__() != 0;
     }
 
@@ -182,6 +186,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized PyObject __eq__(PyObject o) {
+        return seq___eq__(o);
+    }
+
+    final synchronized PyObject seq___eq__(PyObject o) {
         if (o.getType() != getType())
             return null;
         int tl = __len__();
@@ -193,6 +201,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized PyObject __ne__(PyObject o) {
+        return seq___ne__(o);
+    }
+
+    final synchronized PyObject seq___ne__(PyObject o) {
         if (o.getType() != getType())
             return null;
         int tl = __len__();
@@ -324,6 +336,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public PyObject __finditem__(PyObject index) {
+        return seq___finditem__(index);
+    }
+
+    final PyObject seq___finditem__(PyObject index) {
         if (index instanceof PyInteger)
             return __finditem__(((PyInteger)index).getValue());
         else if (index instanceof PySlice) {
@@ -393,6 +409,12 @@ abstract public class PySequence extends PyObject {
 
     public synchronized PyObject __getslice__(PyObject s_start,
                                               PyObject s_stop,
+                                              PyObject s_step) {
+        return seq___getslice__(s_start,s_stop,s_step);
+    }
+
+    final synchronized PyObject seq___getslice__(PyObject s_start,
+                                              PyObject s_stop,
                                               PyObject s_step)
     {
         int length = __len__();
@@ -403,6 +425,11 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized void __setslice__(PyObject s_start, PyObject s_stop,
+                                          PyObject s_step, PyObject value) {
+        seq___setslice__(s_start,s_stop,s_step,value);
+    }
+
+    final synchronized void seq___setslice__(PyObject s_start, PyObject s_stop,
                                           PyObject s_step, PyObject value)
     {
         int length = __len__();
@@ -413,6 +440,11 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized void __delslice__(PyObject s_start, PyObject s_stop,
+                                          PyObject s_step) {
+        seq___delslice__(s_start,s_stop,s_step);
+    }
+
+    final synchronized void seq___delslice__(PyObject s_start, PyObject s_stop,
                                           PyObject s_step)
     {
         int length = __len__();
@@ -430,6 +462,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public void __setitem__(PyObject index, PyObject value) {
+        seq___setitem__(index,value);
+    }
+
+    final void seq___setitem__(PyObject index, PyObject value) {
         if (index instanceof PyInteger)
             __setitem__(((PyInteger)index).getValue(), value);
         else {
@@ -446,6 +482,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized void __delitem__(PyObject index) {
+        seq___delitem__(index);
+    }
+
+    final synchronized void seq___delitem__(PyObject index) {
         if (index instanceof PyInteger) {
             int i = fixindex(((PyInteger)index).getValue());
             if (i == -1)

@@ -1709,6 +1709,10 @@ public class PyObject implements java.io.Serializable {
      * @return the result of the search.
      **/
     public boolean __contains__(PyObject o) {
+        return object___contains__(o);
+    }
+
+    final boolean object___contains__(PyObject o) {
         PyObject iter = __iter__();
         for (PyObject item = null;(item = iter.__iternext__()) != null;) {
             if (o._eq(item).__nonzero__())

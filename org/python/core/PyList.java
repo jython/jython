@@ -19,6 +19,8 @@ public class PyList extends PySequence {
 
     public static final String exposed_name="list";
 
+    public static final Class exposed_base=PyObject.class;
+
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
         class exposed___ne__ extends PyBuiltinFunctionNarrow {
 
@@ -38,7 +40,7 @@ public class PyList extends PySequence {
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.list___ne__(arg0);
+                PyObject ret=self.seq___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -46,7 +48,7 @@ public class PyList extends PySequence {
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyList self=(PyList)gself;
-                PyObject ret=self.list___ne__(arg0);
+                PyObject ret=self.seq___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -72,7 +74,7 @@ public class PyList extends PySequence {
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.list___eq__(arg0);
+                PyObject ret=self.seq___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -80,7 +82,7 @@ public class PyList extends PySequence {
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyList self=(PyList)gself;
-                PyObject ret=self.list___eq__(arg0);
+                PyObject ret=self.seq___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -88,6 +90,246 @@ public class PyList extends PySequence {
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyList.class,1,1,new exposed___eq__(null,null)));
+        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getitem__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getitem__((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=self.seq___finditem__(arg0);
+                if (ret==null) {
+                    throw Py.IndexError("index out of range: "+arg0);
+                }
+                return ret;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                PyObject ret=self.seq___finditem__(arg0);
+                if (ret==null) {
+                    throw Py.IndexError("index out of range: "+arg0);
+                }
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyList.class,1,1,new exposed___getitem__(null,null)));
+        class exposed___contains__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___contains__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___contains__((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return Py.newBoolean(self.object___contains__(arg0));
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                return Py.newBoolean(self.object___contains__(arg0));
+            }
+
+        }
+        dict.__setitem__("__contains__",new PyMethodDescr("__contains__",PyList.class,1,1,new exposed___contains__(null,null)));
+        class exposed___delitem__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___delitem__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___delitem__((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                self.seq___delitem__(arg0);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                self.seq___delitem__(arg0);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("__delitem__",new PyMethodDescr("__delitem__",PyList.class,1,1,new exposed___delitem__(null,null)));
+        class exposed___setitem__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___setitem__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___setitem__((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                self.seq___setitem__(arg0,arg1);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyList self=(PyList)gself;
+                self.seq___setitem__(arg0,arg1);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("__setitem__",new PyMethodDescr("__setitem__",PyList.class,2,2,new exposed___setitem__(null,null)));
+        class exposed___nonzero__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___nonzero__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___nonzero__((PyList)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.seq___nonzero__());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyList self=(PyList)gself;
+                return Py.newBoolean(self.seq___nonzero__());
+            }
+
+        }
+        dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyList.class,0,0,new exposed___nonzero__(null,null)));
+        class exposed___getslice__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getslice__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getslice__((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                return self.seq___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyList self=(PyList)gself;
+                return self.seq___getslice__(arg0,arg1,arg2);
+            }
+
+        }
+        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyList.class,3,3,new exposed___getslice__(null,null)));
+        class exposed___delslice__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___delslice__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___delslice__((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                self.seq___delslice__(arg0,arg1,arg2);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyList self=(PyList)gself;
+                self.seq___delslice__(arg0,arg1,arg2);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("__delslice__",new PyMethodDescr("__delslice__",PyList.class,3,3,new exposed___delslice__(null,null)));
+        class exposed___setslice__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___setslice__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___setslice__((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2,PyObject arg3) {
+                self.seq___setslice__(arg0,arg1,arg2,arg3);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2,PyObject arg3) {
+                PyList self=(PyList)gself;
+                self.seq___setslice__(arg0,arg1,arg2,arg3);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("__setslice__",new PyMethodDescr("__setslice__",PyList.class,4,4,new exposed___setslice__(null,null)));
         class exposed_append extends PyBuiltinFunctionNarrow {
 
             private PyList self;
@@ -420,34 +662,6 @@ public class PyList extends PySequence {
 
         }
         dict.__setitem__("sort",new PyMethodDescr("sort",PyList.class,0,1,new exposed_sort(null,null)));
-        class exposed___contains__ extends PyBuiltinFunctionNarrow {
-
-            private PyList self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___contains__(PyList self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___contains__((PyList)self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return Py.newBoolean(self.list___contains__(arg0));
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyList self=(PyList)gself;
-                return Py.newBoolean(self.list___contains__(arg0));
-            }
-
-        }
-        dict.__setitem__("__contains__",new PyMethodDescr("__contains__",PyList.class,1,1,new exposed___contains__(null,null)));
         class exposed___len__ extends PyBuiltinFunctionNarrow {
 
             private PyList self;
@@ -711,18 +925,20 @@ public class PyList extends PySequence {
         }
         dict.__setitem__("__init__",new PyMethodDescr("__init__",PyList.class,-1,-1,new exposed___init__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyList.class,"__new__",-1,-1) {
-            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                PyList newobj;
-                if (for_type==subtype) {
-                    newobj=new PyList();
-                    if (init)
-                        newobj.list_init(args,keywords);
-                } else {
-                    newobj=new PyListDerived(subtype);
-                }
-                return newobj;
-            }
-        });
+
+                                                                                      public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                          PyList newobj;
+                                                                                          if (for_type==subtype) {
+                                                                                              newobj=new PyList();
+                                                                                              if (init)
+                                                                                                  newobj.list_init(args,keywords);
+                                                                                          } else {
+                                                                                              newobj=new PyListDerived(subtype);
+                                                                                          }
+                                                                                          return newobj;
+                                                                                      }
+
+                                                                                  });
     }
 
     public PyList() {
@@ -793,18 +1009,6 @@ public class PyList extends PySequence {
 
     final int list___len__() {
         return length;
-    }
-
-    final PyObject list___eq__(PyObject o) {
-        return super.__eq__(o);
-    }
-
-    final PyObject list___ne__(PyObject o) {
-        return super.__ne__(o);
-    }
-
-    final boolean list___contains__(PyObject o) {
-        return super.__contains__(o);
     }
 
     protected PyObject get(int i) {
