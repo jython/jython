@@ -1,10 +1,34 @@
 <!-- Copyright 2000 Dj Walker-Morgan -->
 
 <project name="jython" default="jar" basedir=".">
+
+    <!--
+      This propery should be specified in the ant.property file
+      property name="javaccHome2" value="/opt/javacc2.0/bin/lib"
+    -->
+
+    <!-- Give users a change to override editing this file. -->
+    <property file="ant.properties" />
+
+    <!-- =================================================================== -->
+    <!-- Classpaths                                                          -->
+    <!-- =================================================================== -->
+    <path id="main.classpath">
+        <pathelement path="${informix.jar}"/>
+        <pathelement path="${oracle.jar}"/>
+        <pathelement path="${mysql.jar}"/>
+        <pathelement path="${postgresql.jar}"/>
+        <pathelement path="${jndi.jar}"/>
+        <pathelement path="${jdbc.jar}"/>
+        <pathelement path="${java.class.path}"/>
+        <pathelement location="${build.classes}"/>
+    </path>
+
     <target name="init">
-        <property name="sourceDir" value="." />
-        <property name="outputDir" value="build" />
-        <property name="apidocDir" value="Doc/api" />
+
+        <property name="sourceDir" value="${basedir}" />
+        <property name="outputDir" value="${basedir}/build" />
+        <property name="apidocDir" value="${basedir}/Doc/api" />
         <property name="debug" value="off" />
         <property name="optimize" value="on" />
 
@@ -13,11 +37,42 @@
         <available classname="java.lang.ref.WeakReference" property="weakref" />
         <available classname="org.gnu.readline.Readline" property="readline" />
 
-        <!-- This propery should be specified in the ant.property file
-           property name="javaccHome2" value="/opt/javacc2.0/bin/lib" /-->
+        <available property="informix.present"
+            classname="com.informix.jdbc.IfxDriver"
+            classpath="${informix.jar}"
+        />
+        <available property="mysql.present"
+            classname="org.gjt.mm.mysql.Driver"
+            classpath="${mysql.jar}"
+        />
+        <available property="postgresql.present"
+            classname="org.postgresql.Driver"
+            classpath="${postgresql.jar}"
+        />
+        <available property="oracle.present"
+            classname="oracle.jdbc.driver.OracleDriver"
+            classpath="${oracle.jar}"
+        />
+        <available property="jndi.present"
+            classname="javax.naming.Context"
+            classpath="${jndi.jar}"
+        />
+        <available property="javax.sql.present"
+            classname="javax.sql.DataSource"
+            classpath="${jdbc.jar}"
+        />
 
-        <!-- Give users a change to override editing this file-->
-        <property file="ant.properties" />
+        <echo>--- Build environment for ${ant.project.name} ---</echo>
+        <echo>--- Flags (Note: If the {property name} is displayed, then the component is not present)</echo>
+        <echo/>
+        <echo>--- Optional Libraries ---</echo>
+        <echo>oracle      = ${oracle.present}</echo>
+        <echo>informix    = ${informix.present}</echo>
+        <echo>mysql       = ${mysql.present}</echo>
+        <echo>postgresql  = ${postgresql.present}</echo>
+        <echo>jndi        = ${jndi.present}</echo>
+        <echo>jdbc        = ${javax.sql.present}</echo>
+
     </target>
 
     <target name="clean" depends="init">
@@ -39,16 +94,16 @@
     </target>
 
     <target name="tree" depends="prepare">
-        <jjtree 
-            javacchome="${javaccHome2}" 
+        <jjtree
+            javacchome="${javaccHome2}"
             target="org/python/parser/python.jjt"
             outputdirectory="org/python/parser/"
         />
     </target>
 
     <target name="parser" depends="tree">
-        <javacc 
-            javacchome="${javaccHome2}" 
+        <javacc
+            javacchome="${javaccHome2}"
             target="org/python/parser/python.jj"
             outputdirectory="org/python/parser/"
         />
@@ -57,11 +112,11 @@
         <touch file="org/python/parser/python.java" />
     </target>
 
-    <!-- 
+    <!--
       Only do this task if our environment is java2.
     -->
     <target name="check.javaversion" unless="java2">
-        <property name="exclude.java2.files" 
+        <property name="exclude.java2.files"
             value="**/CollectionProxy2.java,
                    **/Java2Accessibility.java,
                    **/InternalTables2.java,
@@ -74,17 +129,17 @@
     </target>
 
     <target name="check.servlet" unless="servlet">
-        <property name="exclude.servlet.files" 
+        <property name="exclude.servlet.files"
             value="**/PyServlet.java"/>
     </target>
 
     <target name="check.weakref" unless="weakref">
-        <property name="exclude.weakref.files" 
+        <property name="exclude.weakref.files"
             value="**/_weakref.java"/>
     </target>
 
     <target name="check.readline" unless="readline">
-        <property name="exclude.readline.files" 
+        <property name="exclude.readline.files"
             value="**/ReadlineConsole.java"/>
     </target>
 
@@ -94,45 +149,62 @@
                                    check.readline" />
 
     <target name="compile" depends="prepare,parser,checks">
-        <javac 
-            srcdir="${sourceDir}/" 
-            includes="org/**"
-            destdir="${outputDir}/" 
-            excludes="org/python/parser/python.java,
-                      ${exclude.java2.files},
-                      ${exclude.servlet.files},
-                      ${exclude.weakref.files},
-                      ${exclude.readline.files}"
+        <javac
+            srcdir="${sourceDir}/"
+            destdir="${outputDir}/"
             debug="${debug}"
-            optimize="${optimize}"
-        />
+            optimize="${optimize}">
+            <include name="org/**"/>
+            <include name="com/**"/>
+            <exclude name="org/python/parser/python.java"/>
+            <exclude name="${exclude.java2.files}"/>
+            <exclude name="${exclude.servlet.files}"/>
+            <exclude name="${exclude.weakref.files}"/>
+            <exclude name="${exclude.readline.files}"/>
+            <exclude name="**/handler/InformixDataHandler.java" unless="informix.present"/>
+            <exclude name="**/handler/MySQLDataHandler.java" unless="mysql.present"/>
+            <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present"/>
+            <exclude name="**/handler/PostgresqlDataHandler.java" unless="postgresql.present"/>
+            <exclude name="**/connect/Lookup.java" unless="jndi.present"/>
+            <exclude name="**/connect/Lookup.java" unless="javax.sql.present"/>
+            <exclude name="**/connect/Connectx.java" unless="javax.sql.present"/>
+            <classpath refid="main.classpath"/>
+        </javac>
 
-        <javac 
-            srcdir="${sourceDir}/Lib" 
+        <javac
+            srcdir="${sourceDir}/Lib"
             includes="jxxload_help/**"
-            destdir="${outputDir}/" 
+            destdir="${outputDir}/"
             debug="${debug}"
             optimize="${optimize}"
         />
 
-       <copy file="org/python/modules/ucnhash.dat" 
+       <copy file="org/python/modules/ucnhash.dat"
              todir="${outputDir}/org/python/modules" />
+
+       <copy todir="${outputDir}/com">
+           <fileset dir="${sourceDir}/com">
+              <include name="**/*.properties"/>
+           </fileset>
+       </copy>
+
     </target>
 
     <target name="jar" depends="compile">
-        <jar jarfile="jython.jar" 
-             basedir="${outputDir}" 
-             includes="**/*.class,**/ucnhash.dat" />
+        <jar jarfile="jython.jar"
+             basedir="${outputDir}"
+             includes="**/*.class,**/ucnhash.dat,**/*.properties" />
     </target>
 
     <target name="javadoc" depends="compile">
         <mkdir dir="${apidocDir}" />
         <javadoc sourcepath="${sourceDir}"
                  destdir="${apidocDir}"
-                 Public="Yes"
+                 public="true"
                  packagenames="org.python.core,
-                               org.python.util"
-                 Windowtitle="Jython API documentation"
+                               org.python.util,
+                               com.ziclix.python.sql"
+                 windowtitle="Jython API documentation"
                  bottom="&lt;a href='http://www.jython.org'>Jython homepage&lt;/a>"
         />
     </target>
@@ -159,7 +231,6 @@
         </copy>
     </target>
 
-    <target name="all" depends="init,clean,prepare,parser,compile,jar">
-    </target>
+    <target name="all" depends="init,clean,prepare,parser,compile,jar"/>
 </project>
 
