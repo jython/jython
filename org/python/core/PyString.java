@@ -415,7 +415,7 @@ final class StringFormatter{
                     string = formatInteger(arg, 10, true);
                     break;
                 case 'o':
-                    string = formatInteger(arg, 16, true);
+                    string = formatInteger(arg, 8, true);
                     if (altFlag) { string = "0" + string; ; }
                     break;
                 case 'x':
