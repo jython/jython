@@ -109,18 +109,7 @@ based on or incorporate the Software, but only in the form
 "JPython-based_____________,"
 or equivalent.
 
-8. The Software contains OROMatcher regular expression
-software from ORO, Inc. Copyright 1997 by ORO, Inc.
-("ORO software"). OROMatcher (TM) is a trademark of
-Original Reusable Objects, Inc. Except as permitted by
-applicable law and this Agreement, Licensee may not
-decompile, reverse engineer, disassemble, or modify the ORO
-software provided herein. Licensee acknowledges that
-redistribution of the ORO software separate from JPython or
-direct use of the ORO software interfaces requires a separate
-license from ORO, Inc. http://www.oroinc.com/
-
-9. CNRI is making the Software available to Licensee on an
+8. CNRI is making the Software available to Licensee on an
 "AS IS" basis. CNRI MAKES NO REPRESENTATIONS OR
 WARRANTIES, EXPRESS OR IMPLIED. BY WAY OF
 EXAMPLE, BUT NOT LIMITATION, CNRI MAKES NO
@@ -130,7 +119,7 @@ ANY PARTICULAR PURPOSE OR THAT THE USE OF
 THE SOFTWARE WILL NOT INFRINGE ANY THIRD
 PARTY RIGHTS.
 
-10. TO THE EXTENT PERMITTED BY LAW, CNRI
+9. TO THE EXTENT PERMITTED BY LAW, CNRI
 SHALL NOT BE LIABLE TO LICENSEE OR OTHER
 USERS OF THE SOFTWARE FOR ANY INCIDENTAL,
 SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS
@@ -142,7 +131,7 @@ ALLOW THE LIMITATION OR EXCLUSION OF
 LIABILITY SO THE ABOVE DISCLAIMER MAY NOT
 APPLY TO LICENSEE.
 
-11. This Agreement may be terminated by CNRI: (i)
+10. This Agreement may be terminated by CNRI: (i)
 immediately upon written notice from CNRI of any material
 breach by the Licensee, if the nature of the breach is such that
 it cannot be promptly remedied; or (ii) sixty (60) days
@@ -150,7 +139,7 @@ following notice from CNRI to Licensee of a material
 remediable breach, if Licensee has not remedied such breach
 within that sixty-day period.
 
-12. Licensee hereby agrees that any dispute arising out of or in
+11. Licensee hereby agrees that any dispute arising out of or in
 connection with the construction, validity, interpretation,
 performance, enforcement, operation, breach or termination of
 this Agreement shall be settled promptly by negotiation
@@ -160,7 +149,7 @@ the rules then in effect of the American Arbitration
 Association. This Agreement constitutes the entire agreement
 between the Parties with respect to the subject matter hereof.
 
-13. Nothing in this Agreement shall be deemed to create any
+12. Nothing in this Agreement shall be deemed to create any
 relationship of agency, partnership, or joint venture between
 the Parties. This Agreement shall be governed by and
 interpreted in accordance with the laws of the Commonwealth
