@@ -1555,6 +1555,20 @@ class FixedFileWrapper extends StdoutWrapper {
     public FixedFileWrapper(PyObject file) {
         name = "fixed file";
         this.file = file;
+
+        if (file instanceof PyJavaInstance) {
+            Object tmp = file.__tojava__(OutputStream.class);
+            if ((tmp != Py.NoConversion) && (tmp != null)) {
+                OutputStream os = (OutputStream)tmp;
+                this.file = new PyFile(os, "<java OutputStream>");
+            } else {
+                tmp = file.__tojava__(Writer.class);
+                if ((tmp != Py.NoConversion) && (tmp != null)) {
+                    Writer w = (Writer)tmp;
+                    this.file = new PyFile(w, "<java Writer>");
+                }
+            }
+        }
     }
 
     protected PyObject myFile() {
