@@ -348,6 +348,10 @@ abstract public class Fetch {
 
 			switch (colType) {
 
+				case DatabaseMetaData.procedureColumnIn :
+					j++;
+					break;
+
 				case DatabaseMetaData.procedureColumnOut :
 				case DatabaseMetaData.procedureColumnInOut :
 					obj = datahandler.getPyObject(callableStatement, i + 1, dataType);
