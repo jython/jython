@@ -153,8 +153,8 @@ public class imp
 
 
     private static PyObject createFromClass(String name, InputStream fp) {
-        return createFromClass(name,
-                               BytecodeLoader.makeClass(name, readBytes(fp)));
+        BytecodeLoader bcl = new BytecodeLoader();
+        return createFromClass(name, bcl.makeClass(name, readBytes(fp)));
     }
 
     private static PyObject createFromClass(String name, Class c) {
@@ -236,15 +236,12 @@ public class imp
 
         int n = path.__len__();
 
-//         System.out.println("loading module: " + modName + " (" + n + ")");
-
         for (int i=0; i<n; i++) {
             String dirName = path.get(i).toString();
             // TBD: probably should tie this into -v option a la CPython
-//             System.out.println("loadFromPath: " + dirName);
             if (dirName.endsWith(".jar") || dirName.endsWith(".zip")) {
-                // Handle .jar and .zip files on the path
-                // Sometime in the future
+                // Handle .jar and .zip files on the path sometime in the
+                // future
                 continue;
             }
 
@@ -262,14 +259,15 @@ public class imp
             File dir = new File(dirName, name);
             if (dir.isDirectory() && 
                 (new File(dir, "__init__.py").isFile() || 
-                 new File(dir, "__init__$py.class").isFile())) {
+                 new File(dir, "__init__$py.class").isFile()))
+            {
                 PyList pkgPath = new PyList();
                 PyModule m = addModule(modName);
                 pkgPath.append(new PyString(dir.toString()));
                 m.__dict__.__setitem__("__path__", pkgPath);
                 PyObject o = loadFromPath("__init__", modName, pkgPath);
-                if (o == null) continue;
-
+                if (o == null)
+                    continue;
                 return m;
             }
 
