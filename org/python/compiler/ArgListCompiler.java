@@ -65,14 +65,10 @@ public class ArgListCompiler extends org.python.parser.Visitor
                 throw new ParseException("duplicate argument name found: " +
                                          name, node);
         }
+        names.addElement(name);
         
         //Handle tuple arguments properly
         if (node.getChild(0).id == PythonGrammarTreeConstants.JJTFPLIST) {
-            int idx = ((SimpleNode) node.jjtGetParent()).getChildIndex(node);
-            if (idx >= 0) {
-                name = "." + (idx * 2);
-            }
-
             SimpleNode expr = new SimpleNode(
                 PythonGrammarTreeConstants.JJTEXPR_STMT);
             // Set the right line number for this expr
@@ -83,7 +79,6 @@ public class ArgListCompiler extends org.python.parser.Visitor
             expr.jjtAddChild(nm, 1);
             init_code.jjtAddChild(expr, init_code.getNumChildren());
         }
-        names.addElement(name);
 
         // Handle default args if specified
         if (node.getNumChildren() > 1) {
