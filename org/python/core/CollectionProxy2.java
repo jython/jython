@@ -94,6 +94,10 @@ class MapProxy extends CollectionProxy
         return proxy.size();
     }
 
+    public PyObject __finditem__(int key) {
+        throw Py.TypeError("loop over non-sequence");
+    }
+
     public PyObject __finditem__(PyObject key) {
         return Py.java2py(proxy.get(Py.tojava(key, Object.class)));
     }
