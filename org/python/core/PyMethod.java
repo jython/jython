@@ -65,12 +65,6 @@ public class PyMethod extends PyObject
         return im_func.__findattr__(name);
     }
 
-    public void __setattr__(String name, PyObject value) {
-        if (im_self != null)
-            throw Py.TypeError("cannot set attributes through bound methods");
-        im_func.__setattr__(name, value);
-    }
-
     public void __delattr__(String name) {
         im_func.__delattr__(name);
     }
