@@ -680,15 +680,23 @@ public final class Py {
 	static PyObject runCode(PyCode code, PyObject locals, PyObject globals) {
 	    //System.out.println("run code");
 		PyFrame f;
-		if (globals == null && locals == null) {
+		/*if (globals == null && locals == null) {
 			f = Py.getFrame();
-		} else {
+		} else {*/
+			if (locals == null) {
+			    if (globals != null) {
+			        locals = globals;
+			    } else {
+			        locals = Py.getFrame().getf_locals();
+			    }
+			}
+			
 			if (globals == null) globals = Py.getFrame().f_globals;
-			if (locals == null) locals = globals;
+
 			PyTableCode tc=null;
 			if (code instanceof PyTableCode) tc = (PyTableCode)code;
 			f = new PyFrame(tc, locals, globals, Py.getThreadState().interp.builtins);
-		}
+		//}
 		return code.call(f);
 	}
 
