@@ -372,14 +372,14 @@ public class imp {
     }
 
     public static PyObject importName(String name, boolean top) {
-        // Is this really needed any more?
-        /*if (sys.registry == null) sys.registry = sys.initRegistry();*/
-
         int dot = name.indexOf('.');
-        if (dot != -1) {
+	if (name.length() == 0)
+	    throw Py.ValueError("Empty module name");
+	else if (dot != -1) {
             PyObject modules = Py.getSystemState().modules;             
             PyObject mod = modules.__finditem__(name);
-            if (mod != null && !top) return mod;
+            if (mod != null && !top)
+		return mod;
 
             int last_dot = dot;
             String firstName = name.substring(0,dot).intern();
@@ -395,17 +395,18 @@ public class imp {
 						 name.length()).intern();
                     } else {
                         tmpName = name.substring(last_dot+1, dot).intern();
-                    }
+		    }
                     mod = mod.__getattr__(tmpName);
                     last_dot = dot;
                 }
             }
             modules.__setitem__(name, mod);
-            if (top) return pkg;
-            else return mod;
-        } else {
-            return load(name);
+            if (top)
+		return pkg;
+            else
+		return mod;
         }
+	else return load(name);
     }
 
     private static String getParent(PyObject dict) {
