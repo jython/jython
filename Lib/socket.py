@@ -245,6 +245,8 @@ class _tcpsocket:
 	    self.ostream = None
 
     def close(self):
+        if not self.sock:
+            return
 	sock = self.sock
 	istream = self.istream
 	ostream = self.ostream
@@ -301,7 +303,7 @@ class _udpsocket:
 
     def send(self, data):
 	assert self.addr
-	return self.sendto(self.addr)
+	return self.sendto(data, self.addr)
 
     def recvfrom(self, n):
 	assert self.sock
@@ -341,6 +343,8 @@ class _udpsocket:
 	self.close()
 
     def close(self):
+        if not self.sock:
+            return
 	sock = self.sock
 	self.sock = 0
 	sock.close()
