@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.modules;
+
 import org.python.core.*;
 
 public class code {
@@ -10,7 +12,9 @@ public class code {
         return codeop.compile_command(string, filename, "single");
     }
     
-    public static PyObject compile_command(String string, String filename, String kind) {
+    public static PyObject compile_command(String string, String filename,
+					   String kind)
+    {
         return codeop.compile_command(string, filename, kind);
     }
 }
