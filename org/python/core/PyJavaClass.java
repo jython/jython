@@ -78,6 +78,19 @@ public class PyJavaClass extends PyClass
         }
         init__bases__(proxyClass);
         init__dict__();
+
+        if (ClassDictInit.class.isAssignableFrom(proxyClass) 
+                            && proxyClass != ClassDictInit.class) {
+            try {
+                Method m = proxyClass.getMethod("classDictInit", 
+                     new Class[] { PyObject.class });
+                m.invoke(null, new Object[] { __dict__ });
+            }
+            catch (Exception exc) {
+                // System.err.println("Got exception: " + exc + " " + proxyClass);
+                throw Py.JavaError(exc);
+            }
+        }
         initialized = true;
         initializing = false;
     }
@@ -171,19 +184,7 @@ public class PyJavaClass extends PyClass
         proxyClass = c;
         __name__ = c.getName();
             
-        if (ClassDictInit.class.isAssignableFrom(c) 
-                            && c != ClassDictInit.class) {
-            initialize();
-            try {
-                Method m = c.getMethod("classDictInit", 
-                     new Class[] { PyObject.class });
-                m.invoke(null, new Object[] { __dict__ });
-            }
-            catch (Exception exc) {
-                // System.err.println("Got exception: " + exc + " " + c);
-                throw Py.JavaError(exc);
-            }
-        } else if (InitModule.class.isAssignableFrom(c)) {
+        if (InitModule.class.isAssignableFrom(c)) {
             initialize();
             try {
                 InitModule m = (InitModule)c.newInstance();
@@ -680,7 +681,7 @@ public class PyJavaClass extends PyClass
     public PyObject __findattr__(String name) {
         if (name == "__dict__") {
             if (__dict__ == null)
-                init__dict__();
+                initialize();
             return __dict__;
         }
         if (name == "__name__")
