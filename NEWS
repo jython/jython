@@ -1,5 +1,37 @@
 JPython NEWS
 
+21-Jan-2000 JPython 1.1 release candidate 1 released
+
+  New JPython features and bug fixes
+    - Race conditions when creating multiple PythonInterpreter objects
+      in an embedded multithreaded Java application have been fixed.
+    - Recursive print of a module's namespace no longer overflows the
+      JVM stack.
+    - Fixed backslashing of quotes inside triple quoted strings (Finn
+      Bock).
+    - Fixes to read(int) method on file objects, which used to return
+      the empty string before EOF was seen.
+    - Class-based exceptions are used in frozen (jpythonc) modules.
+    - Duplicate argument names in a function definition raise the
+      appropriate SyntaxError.
+    - os.path.getsize() has been added.
+    - mutability of tuples under some situations has been fixed.
+    - dictionary insertion order affecting dictionary equality has
+      been fixed (Finn Bock).
+    - Using the --package option with jpythonc has been fixed.
+
+  Improved CPython 1.5.2 compatibility
+    - optional sizehint argument implemented for readlines() method on
+      file objects.
+    - Better compatibility in %g formatting of floats.
+    - sys.stdout.softspace is now writeable.
+    - re.VERBOSE/re.X flags are implemented.
+    - traceback object's reprs are CPython conformant.
+    - In module os, os.error is equivalent to the builtin OSError.
+      Also, listdir(), mkdir(), makedirs(), remove(), rename(), and
+      rmdir() raise OSError directly.
+    - os.stat() raises an OSError if the file is missing.
+
 28-Oct-1999 JPython 1.1beta4 released
 
   New JPython features and bug fixes
