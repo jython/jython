@@ -405,7 +405,7 @@ public class struct {
 
         private void ensureCapacity(int l) {
             if (pos + l >= data.length) {
-                char[] b = new char[data.length * 2];
+                char[] b = new char[(pos + l) * 2];
                 System.arraycopy(data, 0, b, 0, pos);
                 data = b;
             }
