@@ -328,14 +328,23 @@ class PythonModule:
         return self.pyinner.addMain(code, cc)
 
     #Properties and packages for registry
-    def getMainProperties(self):
-        return jast.Identifier("jpy$mainProperties")
+    def getMainProperties(self,qual=0):
+        if qual:
+            return jast.GetStaticAttribute(self.name,"jpy$mainProperties")
+        else:
+            return jast.Identifier("jpy$mainProperties")
 
-    def getProxyProperties(self):
-        return jast.Identifier("jpy$proxyProperties")
+    def getProxyProperties(self,qual=0):
+        if qual:
+            return jast.GetStaticAttribute(self.name,"jpy$proxyProperties")
+        else:
+            return jast.Identifier("jpy$proxyProperties")
 
-    def getPackages(self):
-        return jast.Identifier("jpy$packages")
+    def getPackages(self,qual=0):
+        if qual:
+            return jast.GetStaticAttribute(self.name,"jpy$packages")
+        else:
+            return jast.Identifier("jpy$packages")
 
     def dumpDictionary(self, dict, field):
         props = []
@@ -394,7 +403,7 @@ class PythonModule:
             args = [jast.GetStaticAttribute(self.getclassname(
                            self.name+'.'+self.pyinner.name), "class"),
                     jast.Identifier('newargs'), 
-                    self.getPackages(), self.getMainProperties(), 
+                    self.getPackages(qual=1), self.getMainProperties(qual=1), 
                     self.getFrozen(), jast.StringArray(self.modules.keys())]
 
             code.append([jast.InvokeStatic("Py", "runMain", args)])
