@@ -3,16 +3,22 @@ package pygraph;
 import java.awt.*;
 import java.awt.event.*;
 
-public class PythonGraph {
-    TextField expression;
+import javax.swing.JTextField;
+
+public class PythonGraph implements ActionListener {
+    JTextField expression;
     Graph graph;
 
     public PythonGraph() {
         Frame frame = new Frame("Python Graph");
+        String expr = "sin(x)";
 
-        graph = new Graph();
+        graph = new Graph(expr);
         frame.add(graph, "Center");
-        graph.setExpression("sin(x)");
+
+        expression = new JTextField(expr);
+        frame.add(expression,"South");
+        expression.addActionListener(this);
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent event) {
@@ -25,7 +31,12 @@ public class PythonGraph {
         frame.setVisible(true);
     }
 
+    public void actionPerformed(ActionEvent evt) {
+        graph.setExpression(expression.getText());
+    }
+
     public static void main(String[] args) {
         PythonGraph pg = new PythonGraph();
     }
 }
+
