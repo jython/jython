@@ -182,6 +182,11 @@ class StringFuncs extends PyBuiltinFunctionSet
             argi2 = toint(arg2);
             argi3 = toint(arg3, "3rd");
             return new PyInteger(s.rfind(args, argi2, argi3));
+        case 114:
+            args = tostring(arg1);
+            argi2 = toint(arg2);
+            argi3 = toint(arg3, "3rd");
+            return new PyInteger(s.endswith(args, argi2, argi3) ? 1 : 0);
         case 116:
             args1 = tostring(arg1);
             args2 = tostring(arg2, "2nd");
@@ -241,7 +246,7 @@ public class PyString extends PySequence implements InitModule
         dict.__setitem__("find", new StringFuncs("find", 111, 1, 3));
         dict.__setitem__("rfind", new StringFuncs("rfind", 112, 1, 3));
         dict.__setitem__("capitalize", new StringFuncs("capitalize", 113, 0));
-        dict.__setitem__("endswith", new StringFuncs("endswith", 114, 1, 2));
+        dict.__setitem__("endswith", new StringFuncs("endswith", 114, 1, 3));
         dict.__setitem__("join", new StringFuncs("join", 115, 1));
         dict.__setitem__("replace", new StringFuncs("replace", 116, 2, 3));
         dict.__setitem__("startswith",
