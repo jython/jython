@@ -977,6 +977,8 @@ class ImportFunction extends PyObject {
     public PyObject __call__(PyObject args[], String keywords[]) {
         if (!(args.length < 1 || args[0] instanceof PyString))
             throw Py.TypeError("first argument must be a string");
+        if (keywords.length > 0)
+            throw Py.TypeError("__import__() takes no keyword arguments");
 
         int argc = args.length;
         String module = args[0].__str__().toString();
