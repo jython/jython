@@ -407,8 +407,8 @@ public class PyString extends PySequence implements ClassDictInit
             case '4': case '5': case '6': case '7':
 
                 int x = Character.digit(ch, 8);
-                for (int j = 0; j < 2 && s < end; j++) {
-                    ch = str.charAt(s++);
+                for (int j = 0; j < 2 && s < end; j++, s++) {
+                    ch = str.charAt(s);
                     if (ch < '0' || ch > '7')
                         break;
                     x = (x<<3) + Character.digit(ch, 8);
