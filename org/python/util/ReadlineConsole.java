@@ -34,8 +34,8 @@ public class ReadlineConsole extends InteractiveConsole {
            return Readline.readline(prompt==null ? "" : prompt.toString());
         } catch (java.io.EOFException eofe) {
            throw new PyException(Py.EOFError);
-        } catch (java.io.UnsupportedEncodingException e) {
-           throw new PyException();
+        } catch (java.io.IOException e) {
+           throw new PyException(Py.IOError);
         }
     }
 }
