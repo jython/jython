@@ -14,7 +14,7 @@ If no vendors are given, then all vendors will be tested.  If a
 vendor is given, then only that vendor will be tested.
 """
 
-import unittest, sys, os
+import unittest, os
 import xmllib, __builtin__, re
 
 def __imp__(module, attr=None):
@@ -156,13 +156,15 @@ class SQLTestCase(unittest.TestCase):
 	def has_table(self, name):
 		return self.vendor.tables.has_key(name)
 
-def make_suite(vendor, testcase, factory):
+def make_suite(vendor, testcase, factory, mask=None):
 	clz = __imp__(testcase.frm, testcase.impt)
 	caseNames = filter(lambda x, i=testcase.ignore: x not in i, unittest.getTestCaseNames(clz, "test"))
+	if mask is not None:
+		caseNames = filter(lambda x, mask=mask: x == mask, caseNames)
 	tests = [clz(caseName, vendor, factory) for caseName in caseNames]
 	return unittest.TestSuite(tests)
 
-def test(vendors, include=None):
+def test(vendors, include=None, mask=None):
 	for vendor in vendors:
 		if not include or vendor.name in include:
 			print
@@ -170,15 +172,29 @@ def test(vendors, include=None):
 			for test in vendor.tests:
 				if not test.os or test.os == os.name:
 					for testcase in test.tests:
-						suite = make_suite(vendor, testcase, test.factory)
+						suite = make_suite(vendor, testcase, test.factory, mask)
 						unittest.TextTestRunner().run(suite)
 		else:
 			print
 			print "skipping [%s]" % (vendor.name)
 
 if __name__ == '__main__':
+	import sys, getopt
+
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "t:", [])
+	except getopt.error, msg:
+		print "%s -s [search] -r [replace] <pattern>"
+		sys.exit(0)
+
+	mask = None
+	for a in opts:
+		opt, arg = a
+		if opt == '-t':
+			mask = arg
+
 	configParser = ConfigParser()
-	fp = open(sys.argv[1], "r")
+	fp = open(args[0], "r")
 	configParser.feed(fp.read())
 	fp.close()
-	test(configParser.vendors, sys.argv[2:])
+	test(configParser.vendors, args[1:], mask=mask)
