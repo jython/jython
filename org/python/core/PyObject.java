@@ -634,6 +634,9 @@ public class PyObject implements java.io.Serializable {
     @return -1 if this < 0; 0 if this == o; +1 if this > o
     **/
 	public final int _cmp(PyObject o2_in) {
+	    // Shortcut for equal objects
+	    if (this == o2_in) return 0;
+	    
 		PyObject o2 = o2_in;
 		PyObject o1 = this;
 		int itmp;
