@@ -117,7 +117,7 @@ public class StdoutWrapper extends OutputStream {
             obj.invoke("write", string);
             if (newline)
 		obj.invoke("write", Py.Newline);
-	    obj.invoke("flush");
+// 	    obj.invoke("flush");
 
             if (space && string.toString().endsWith("\n"))
 		space = false;
