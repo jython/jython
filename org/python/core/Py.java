@@ -542,7 +542,7 @@ public final class Py {
 		printException(t, f, null);
 	}
 
-    static boolean showjavaexc=true; //false;
+    public static boolean showjavaexc=false;
 	public static synchronized void printException(Throwable t, PyFrame f, PyObject file) {
 	    //System.err.println("printingException: "+t+", "+file);
 	    StdoutWrapper stderr = Py.stderr;
@@ -685,6 +685,9 @@ public final class Py {
     // reraise the current exception
     public static PyException makeException() {
         ThreadState ts = getThreadState();
+        if (ts.exc_traceback == Py.None) {
+            throw Py.ValueError("no exception to reraise");
+        }
 		return new PyException(ts.exc_type, ts.exc_value, (PyTraceback)ts.exc_traceback);
     }
     

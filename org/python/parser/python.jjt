@@ -420,9 +420,9 @@ void flow_stmt() #void: {}
 void return_stmt(): {}
 {<RETURN> [SmartTestList()]}
 
-//raise_stmt: 'raise' test [',' test [',' test]]
+//raise_stmt: 'raise' [test [',' test [',' test]]]
 void raise_stmt(): {}
-{<RAISE> test() [<COMMA> test() [<COMMA> test()]]}
+{<RAISE> [test() [<COMMA> test() [<COMMA> test()]]]}
 
 //import_stmt: 'import' dotted_name (',' dotted_name)* | 'from' dotted_name 'import' ('*' | NAME (',' NAME)*)
 void import_stmt() #void: {}
