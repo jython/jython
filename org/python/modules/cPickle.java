@@ -450,6 +450,8 @@ public class cPickle implements ClassDictInit {
     final static char STRING          = 'S';
     final static char BINSTRING       = 'T';
     final static char SHORT_BINSTRING = 'U';
+    final static char UNICODE         = 'V';
+    final static char BINUNICODE      = 'X';
     final static char APPEND          = 'a';
     final static char BUILD           = 'b';
     final static char GLOBAL          = 'c';
@@ -1061,22 +1063,35 @@ public class cPickle implements ClassDictInit {
 
 
 	final private void save_string(PyObject object) {
+            boolean unicode = ((PyString) object).isunicode();
+            String str = object.toString();
+
 	    if (bin) {
-		int l = object.__len__();
-		if (l < 256) {
-		    file.write(SHORT_BINSTRING);
-		    file.write((char)l);
-		} else {
-		    file.write(BINSTRING);
-		    file.write((char)( l         & 0xFF));
-		    file.write((char)((l >>> 8 ) & 0xFF));
-		    file.write((char)((l >>> 16) & 0xFF));
-		    file.write((char)((l >>> 24) & 0xFF));
-		}
-		file.write(object.toString());
+                if (unicode)
+                    str = codecs.PyUnicode_EncodeUTF8(str, "struct");
+                int l = str.length();
+                if (l < 256 && !unicode) {
+                    file.write(SHORT_BINSTRING);
+                    file.write((char)l);
+                } else {
+                    if (unicode)
+                        file.write(BINUNICODE);
+                    else
+                        file.write(BINSTRING);
+                    file.write((char)( l         & 0xFF));
+                    file.write((char)((l >>> 8 ) & 0xFF));
+                    file.write((char)((l >>> 16) & 0xFF));
+                    file.write((char)((l >>> 24) & 0xFF));
+                }
+                file.write(str);
 	    } else {
-		file.write(STRING);
-		file.write(object.__repr__().toString());
+                if (unicode) {
+                    file.write(UNICODE);
+                    file.write(codecs.PyUnicode_EncodeRawUnicodeEscape(str, "strict", true));
+                } else {
+		    file.write(STRING);
+                    file.write(object.__repr__().toString());
+                }
 		file.write("\n");
 	    }
 	    put(putMemo(Py.id(object), object));
@@ -1532,6 +1547,8 @@ public class cPickle implements ClassDictInit {
 		case STRING:          load_string(); break;
 		case BINSTRING:       load_binstring(); break;
 		case SHORT_BINSTRING: load_short_binstring(); break;
+		case UNICODE:         load_unicode(); break;
+		case BINUNICODE:      load_binunicode(); break;
 		case TUPLE:           load_tuple(); break;
 		case EMPTY_TUPLE:     load_empty_tuple(); break;
 		case EMPTY_LIST:      load_empty_list(); break;
@@ -1658,7 +1675,8 @@ public class cPickle implements ClassDictInit {
             int nslash = 0;
             int i;
             char ch = '\0';
-            for (i = 1; i < line.length(); i++) {
+            int n = line.length();
+            for (i = 1; i < n; i++) {
                 ch = line.charAt(i);
                 if (ch == quote && nslash % 2 == 0)
                     break;
@@ -1668,13 +1686,14 @@ public class cPickle implements ClassDictInit {
                     nslash = 0;
             }
             if (ch != quote)
-                throw Py.ValueError("insecure string pickle ");
+                throw Py.ValueError("insecure string pickle");
 
             for (i++ ; i < line.length(); i++) {
                 if (line.charAt(i) > ' ') 
                     throw Py.ValueError("insecure string pickle " + i);
             }
-            value = org.python.parser.SimpleNode.parseString(line, 1, 0, 0);
+            value = PyString.decode_UnicodeEscape(line, 1, n-1, "strict", false);
+
 	    push(new PyString(value));
 	}
 
@@ -1694,6 +1713,23 @@ public class cPickle implements ClassDictInit {
 	    push(new PyString(file.read(len)));
 	}
 
+
+	final private void load_unicode() {
+	    String line = file.readlineNoNl();
+            int n = line.length();
+            String value = codecs.PyUnicode_DecodeRawUnicodeEscape(line, "strict");
+	    push(new PyString(value));
+        }
+
+	final private void load_binunicode() {
+	    String d = file.read(4);
+	    int len = d.charAt(0) |
+		     (d.charAt(1)<<8) | 
+		     (d.charAt(2)<<16) |
+		     (d.charAt(3)<<24);
+            String line = file.read(len);
+            push(new PyString(codecs.PyUnicode_DecodeUTF8(line, "strict")));
+        }
 
 	final private void load_tuple() {
 	    PyObject[] arr = new PyObject[marker()];
