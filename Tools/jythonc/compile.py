@@ -138,17 +138,11 @@ def makeJavaProxy(module, pyc):
             else:
                 sig = getsig(v.doc, args, constructor=0)
         methods.append( (name, args, sig) )
-    bases = []
-    for base in pyc.bases:
-        base = base.value
-        if hasattr(base, 'name'):
-            jc = getJavaClass(base.name)
-            if jc is not None:
-                bases.append(jc)
-    if len(bases) == 0:
-        return None
-    jp = proxies.JavaProxy(pyc.name, bases, methods, module)
-    return jp # jp.makeClass()
+    supername = None
+    if pyc.isSuperclassJava():
+       return proxies.JavaProxy(pyc.name, pyc.supername, 
+                                pyc.javaclasses, methods, module)
+    return None
 
 
 

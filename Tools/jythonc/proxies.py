@@ -102,9 +102,10 @@ def wrapThrows(stmt, throws, retType):
 
 
 class JavaProxy:
-    def __init__(self, name, bases, methods, module=None):
+    def __init__(self, name, supername, bases, methods, module=None):
         self.bases = bases
         self.name = name
+        self.supername = supername
         self.methods = methods
 
         self.packages = self.properties = jast.Null
@@ -137,6 +138,9 @@ class JavaProxy:
                 self.superclass = base
         self.cleanMethods()
 
+        if self.supername is None:
+            self.supername = self.superclass.__name__
+
         self.jconstructors = []
         self.addConstructors(self.superclass)
 
@@ -158,7 +162,9 @@ class JavaProxy:
         names = self.jmethods.keys()
         names.sort()
         #print 'adding methods', self.name, names
+        pymethods = {}
         for name, args, sigs in self.methods:
+            pymethods[name] = 1
             #print name, args, sig
             if sigs is not None:
                 if name == "__init__":
@@ -168,16 +174,35 @@ class JavaProxy:
                 #print sigs
                 for access, ret, sig, throws in sigs:
                     self.callMethod(name, access, ret, sig, throws, 0)
-                continue
+                    if self.jmethods.has_key(name):
+                        x = filter(lambda c: isinstance(c, TupleType), sig)
+                        x = tuple(map(lambda c: c[0], x))
+                        if self.jmethods[name].has_key(x):
+                            del self.jmethods[name][x]
 
-            if not self.jmethods.has_key(name):
-                continue
-
+        for name in names:
             for sig, (access, ret, throws) in self.jmethods[name].items():
-                #print sig, access, ret
-                self.callMethod(name, access, ret, sig, throws, 1)
+                #print name, access, isProtected(access), isFinal(access)
+                if isProtected(access):
+                    supername = name
+                    if isFinal(access):
+                     	access = access & ~FINAL
+                        access = access & ~PROTECTED | PUBLIC
+                        self.callSuperMethod(name, "super__" + name, 
+                              access, ret, sig, throws)
+		    	continue
+                elif isFinal(access):
+                    continue
 
-            sigs = self.jmethods[name]
+                if isAbstract(access):
+                    access = access & ~PROTECTED | PUBLIC
+                    self.callMethod(name, access, ret, sig, throws, 0)
+                elif pymethods.has_key(name):
+                    access = access & ~PROTECTED | PUBLIC
+                    self.callMethod(name, access, ret, sig, throws, 1)
+                elif isProtected(access):
+                    access = access & ~PROTECTED | PUBLIC
+                    self.callSuperMethod(name, name, access, ret, sig, throws)
 
     def dumpConstructors(self):
         if self.initsigs is not None:
@@ -216,7 +241,7 @@ class JavaProxy:
                 access = access & ~NATIVE
 
             if isProtected(access):
-                access = access & ~PROTECTED | PUBLIC
+                #access = access & ~PROTECTED | PUBLIC
                 if isFinal(access):
                     pass
                     #addSuperMethod(method, access)     
@@ -246,6 +271,32 @@ class JavaProxy:
             parameters = tuple(constructor.parameterTypes)
             throws = constructor.exceptionTypes
             self.jconstructors.append( (access, parameters, throws) )
+
+
+    def callSuperMethod(self, name, supername, access, ret, sig, throws=[]):
+        args = [typeName(ret)]
+        argids = []
+        throws = filterThrows(throws)
+        for c in sig:
+            if isinstance(c, TupleType):
+                argname = c[1]
+                c = c[0]
+            else:
+                argname = "arg"+str(len(argids))
+            args.append( (typeName(c), argname) )
+            argid = jast.Identifier(argname)
+            argids.append(argid)
+
+        supercall = jast.Invoke(jast.Identifier("super"), name, argids)
+        if ret != Void.TYPE:
+            supercall = jast.Return(supercall)
+
+        supermethod = jast.Method(supername,
+                                  jast.Modifier.ModifierString(access), 
+                                  args, jast.Block([supercall]), throws)
+        self.statements.append(supermethod)
+        return
+
 
     def callMethod(self, name, access, ret, sig, throws=[], dosuper=1):
         args = [typeName(ret)]
@@ -394,11 +445,11 @@ class JavaProxy:
     def makeClass(self):
         mycode = self.dumpAll()                 
         body = jast.Block(mycode)
-        return jast.Class(self.name, self.modifier, self.superclass.__name__,
+        return jast.Class(self.name, self.modifier, self.supername,
                           map(lambda i: i.__name__, self.interfaces), body)
 
     def getDescription(self):
-        ret = self.name+' extends '+self.superclass.__name__
+        ret = self.name+' extends '+self.supername
         if len(self.interfaces) > 0:
             ret = ret+' implements '+string.join(map(lambda i: i.__name__, self.interfaces), ', ')
         return ret
