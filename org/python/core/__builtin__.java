@@ -834,6 +834,14 @@ public class __builtin__ implements InitModule
         return xrange(start,stop,1);
     }
 
+    public static PyString __doc__zip = new PyString(
+      "zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n"+
+      "\n"+
+      "Return a list of tuples, where each tuple contains the i-th element\n"+
+      "from each of the argument sequences.  The returned list is truncated\n"+
+      "in length to the length of the shortest argument sequence."
+    );
+
     public static PyObject zip(PyObject[] argstar) {
         int itemsize = argstar.length;
         if (itemsize < 1)
