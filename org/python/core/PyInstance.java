@@ -2,7 +2,8 @@
 package org.python.core;
 import java.util.Hashtable;
 
-public class PyInstance extends PyObject {
+public class PyInstance extends PyObject
+{
     //This field is only used by Python subclasses of Java classes
     Object javaProxy;
 
