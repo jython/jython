@@ -1,7 +1,21 @@
 """ A much simpler string module than that included in the standard
 Python 1.5 distribution.  Relies on the presence of strop."""
 
-from strop import *
+
+# Some strings for ctype-style character classification
+whitespace = ' \t\n\r\v\f'
+lowercase = 'abcdefghijklmnopqrstuvwxyz'
+uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+letters = lowercase + uppercase
+digits = '0123456789'
+hexdigits = digits + 'abcdef' + 'ABCDEF'
+octdigits = '01234567'
+
+#from strop import *
+import sys
+sys.add_package("org.python.core")
+from org.python.core.PyString import *
+
 
 def capwords(s, sep=None):
 	if sep is None:

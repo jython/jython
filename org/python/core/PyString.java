@@ -658,6 +658,14 @@ public class PyString extends PySequence {
         return join(seq, sep);
     }
     
+    public boolean startswith(String prefix) {
+        return string.startsWith(prefix);
+    }
+    
+    public boolean endswith(String suffix) {
+        return string.endsWith(suffix);
+    }
+    
     //public static String zfill(PyObject o, int width) {
     //    return zfill(o.toString(), width);
     //}    
