@@ -14,15 +14,15 @@ mind.</P>
 <ul>
 <li>The source directories from CVS or the nightly buils contain both
 makefiles and a build.xml file. Only the build.xml is updated at this time.
-We are using ant-1.2 to compile the sources and create the .jar file.
+We are using ant to compile the sources and create the .jar file.
 <p>
 The build.xml file will search for a properties file called
 <code>ant.properties</code> which can contain values to control paths
 and local options. My <code>ant.properties</code> file look like this:
 
 <blockquote><pre>
-# javaccHome2 is needed when making modification to the grammar.
-javaccHome2 = d:\\java\\Javacc2.0\\bin\\lib
+# javaccHome is needed when making modification to the grammar.
+javaccHome = d:\\box\\javacc-3.0
 
 # PyXmlHome is needed when running the installXML ant task to
 # copy PyXML files to jython.
@@ -119,7 +119,7 @@ the list.
 Suggested tools and support software:
 
 <ul>
-<li> <A HREF="http://www.webgain.com/products/java_cc/">JavaCC 2.0</A>
+<li> <A HREF="http://javacc.dev.java.net/">JavaCC</A>
 <li> <A HREF="http://jakarta.apache.org/ant/">Ant</A>
 <li> <A HREF="http://java.sun.com/products/servlet/index.html">Servlet classes</A>
 <li> <A HREF="http://mmmysql.sourceforge.net/">MySQL JDBC Driver</A>
