@@ -58,6 +58,10 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
             return Py.newInteger(__builtin__.cmp(arg1, arg2));
         case 9:
             return __builtin__.apply(arg1, arg2);
+        case 10:
+            if (!(arg2 instanceof PyClass))
+              throw Py.TypeError("isinstance(): 2nd arg is not a class");
+            return Py.newBoolean(__builtin__.isinstance(arg1,(PyClass) arg2));
         default:
             throw argCountError(2);
         }
@@ -116,6 +120,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("list", new BuiltinFunctions("list", 7, 1));
         dict.__setitem__("tuple", new BuiltinFunctions("tuple", 8, 1));
         dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
+        dict.__setitem__("isinstance", new BuiltinFunctions("isinstance", 10, 2)); // ?? for jreload
         dict.__setitem__("__import__", new ImportFunction());
     } 
 
