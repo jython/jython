@@ -2,23 +2,23 @@
 package org.python.core;
 
 /**
-All objects known to the JPython runtime system are represented
-by an instance of the class <code>PyObject</code> or one of
-its subclasses.
-
-@author Jim Hugunin - hugunin@python.org
-@version 1.1, 1/5/98
-@since JPython 0.0
-**/
+ * All objects known to the Jython runtime system are represented
+ * by an instance of the class <code>PyObject</code> or one of
+ * its subclasses.
+ *
+ * @author Jim Hugunin - hugunin@python.org
+ * @version 1.1, 1/5/98
+ * @since JPython 0.0
+ **/
 
 
 
 public class PyObject implements java.io.Serializable {
     /**
-       The Python class of this object.
-       Unlike in CPython, all types have this attribute, even builtins.
-       This should only be set in the constructor, never modified otherwise.
-    **/
+     * The Python class of this object.
+     * Unlike in CPython, all types have this attribute, even builtins.
+     * This should only be set in the constructor, never modified otherwise.
+     **/
     public transient PyClass __class__;
 
     /* must instantiate __class__ when de-serializing */
@@ -36,10 +36,10 @@ public class PyObject implements java.io.Serializable {
 
 
     /**
-       The standard constructor for a <code>PyObject</code>.  It will set
-       the <code>__class__</code> field to correspond to the specific
-       subclass of <code>PyObject</code> being instantiated.
-    **/
+     * The standard constructor for a <code>PyObject</code>.  It will set
+     * the <code>__class__</code> field to correspond to the specific
+     * subclass of <code>PyObject</code> being instantiated.
+     **/
     public PyObject() {
         PyClass c = getPyClass();
         if (c == null)
@@ -47,46 +47,47 @@ public class PyObject implements java.io.Serializable {
         __class__ = c;
     }
 
-    /** This method is provided to efficiently initialize the __class__
-        attribute.  If the following boilerplate is added to a subclass of
-        PyObject, the instantiation time for the object will be greatly
-        reduced.
-
-        <blockquote><pre>
-        // __class__ boilerplate -- see PyObject for details
-        public static PyClass __class__;
-        protected PyClass getPyClass() { return __class__; }
-        </pre></blockquote>
-
-        With PyIntegers this leads to a 50% faster instantiation time.
-        This replaces the PyObject(PyClass c) constructor which is now
-        deprecated.
-    **/
-
+    /**
+     * This method is provided to efficiently initialize the __class__
+     * attribute.  If the following boilerplate is added to a subclass of
+     * PyObject, the instantiation time for the object will be greatly
+     * reduced.
+     *
+     * <blockquote><pre>
+     * // __class__ boilerplate -- see PyObject for details
+     * public static PyClass __class__;
+     * protected PyClass getPyClass() { return __class__; }
+     * </pre></blockquote>
+     *
+     * With PyIntegers this leads to a 50% faster instantiation time.
+     * This replaces the PyObject(PyClass c) constructor which is now
+     * deprecated.
+     **/
     protected PyClass getPyClass() {
         return null;
     }
 
     /**
-       #### This method is now deprecated and will go away in the future ####
-       A more sophisticated constructor for a <code>PyObject</code>.
-       Can be more efficient as it allows the subclass of PyObject to
-       cache its known <code>__class__</code>.
-
-       The common idiom for using this constructor is shown as used for the
-       PyInteger class:
-       <blockquote><pre>
-       public static PyClass __class__;
-       public PyInteger(int v) {
-       super(__class__);
-       ...
-       </pre></blockquote>
-
-       @param c a <code>PyClass</code> instance giving the
-       <code>__class__</code> of the new <code>PyObject</code> @deprecated
-       see get PyClass for details
-    **/
-    public PyObject(PyClass c) {
+     * #### This method is now deprecated and will go away in the future ####.
+     * <p>
+     * A more sophisticated constructor for a <code>PyObject</code>.
+     * Can be more efficient as it allows the subclass of PyObject to
+     * cache its known <code>__class__</code>.
+     * <p>
+     * The common idiom for using this constructor is shown as used for the
+     * PyInteger class:
+     * <blockquote><pre>
+     * public static PyClass __class__;
+     * public PyInteger(int v) {
+     * super(__class__);
+     * ...
+     * </pre></blockquote>
+     *
+     * @param c a <code>PyClass</code> instance giving the
+     *          <code>__class__</code> of the new <code>PyObject</code>
+     * @deprecated see get PyClass for details
+     **/
+    protected PyObject(PyClass c) {
         if (c == null) {
             c = PyJavaClass.lookup(getClass());
         }
@@ -94,11 +95,11 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       Equivalent to the standard Python __repr__ method.  This method
-       should not typically need to be overrriden.  The easiest way to
-       configure the string representation of a <code>PyObject</code> is to
-       override the standard Java <code>toString</code> method.
-    **/
+     * Equivalent to the standard Python __repr__ method.  This method
+     * should not typically need to be overrriden.  The easiest way to
+     * configure the string representation of a <code>PyObject</code> is to
+     * override the standard Java <code>toString</code> method.
+     **/
     public PyString __repr__() {
         return new PyString(toString());
     }
@@ -144,21 +145,21 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       Equivalent to the standard Python __str__ method.  This method
-       should not typically need to be overridden.  The easiest way to
-       configure the string representation of a <code>PyObject</code> is to
-       override the standard Java <code>toString</code> method.
-    **/
+     * Equivalent to the standard Python __str__ method.  This method
+     * should not typically need to be overridden.  The easiest way to
+     * configure the string representation of a <code>PyObject</code> is to
+     * override the standard Java <code>toString</code> method.
+     **/
     public PyString __str__() {
         return __repr__();
     }
 
     /**
-       Equivalent to the standard Python __hash__ method.  This method can
-       not be overridden.  Instead, you should override the standard Java
-       <code>hashCode</code> method to return an appropriate hash code for
-       the <code>PyObject</code>.
-    **/
+     * Equivalent to the standard Python __hash__ method.  This method can
+     * not be overridden.  Instead, you should override the standard Java
+     * <code>hashCode</code> method to return an appropriate hash code for
+     * the <code>PyObject</code>.
+     **/
     public final PyInteger __hash__() {
         return new PyInteger(hashCode());
     }
@@ -168,33 +169,33 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       Should almost never be overridden.
-       If overridden, it is the subclasses responsibility to ensure that
-       <code>a.equals(b) == true</code> iff <code>cmp(a,b) == 0</code>
-    **/
+     * Should almost never be overridden.
+     * If overridden, it is the subclasses responsibility to ensure that
+     * <code>a.equals(b) == true</code> iff <code>cmp(a,b) == 0</code>
+     **/
     public boolean equals(Object ob_other) {
         return (ob_other instanceof PyObject) &&
             _eq((PyObject)ob_other).__nonzero__();
     }
 
     /**
-       Equivalent to the standard Python __nonzero__ method.
-       Returns whether of not a given <code>PyObject</code> is
-       considered true.
-    **/
+     * Equivalent to the standard Python __nonzero__ method.
+     * Returns whether of not a given <code>PyObject</code> is
+     * considered true.
+     **/
     public boolean __nonzero__() {
         return true;
     }
 
     /**
-       Equivalent to the JPython __tojava__ method.
-       Tries to coerce this object to an instance of the requested Java class.
-       Returns the special object <code>Py.NoConversion</code>
-       if this <code>PyObject</code> can not be converted to the
-       desired Java class.
-
-       @param c the Class to convert this <code>PyObject</code> to.
-    **/
+     * Equivalent to the Jython __tojava__ method.
+     * Tries to coerce this object to an instance of the requested Java class.
+     * Returns the special object <code>Py.NoConversion</code>
+     * if this <code>PyObject</code> can not be converted to the
+     * desired Java class.
+     *
+     * @param c the Class to convert this <code>PyObject</code> to.
+     **/
     public Object __tojava__(Class c) {
         if (c.isInstance(this))
             return this;
@@ -202,34 +203,34 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       The basic method to override when implementing a callable object.
-
-       The first len(args)-len(keywords) members of args[] are plain
-       arguments.  The last len(keywords) arguments are the values of the
-       keyword arguments.
-
-       @param args     all arguments to the function (including
-                       keyword arguments).
-       @param keywords the keywords used for all keyword arguments.
-    **/
+     * The basic method to override when implementing a callable object.
+     *
+     * The first len(args)-len(keywords) members of args[] are plain
+     * arguments.  The last len(keywords) arguments are the values of the
+     * keyword arguments.
+     *
+     * @param args     all arguments to the function (including
+     *                 keyword arguments).
+     * @param keywords the keywords used for all keyword arguments.
+     **/
     public PyObject __call__(PyObject args[], String keywords[]) {
         throw Py.TypeError("call of non-function (" + safeRepr() + ")");
     }
 
     /**
-       A variant of the __call__ method with one extra initial argument.
-       This variant is used to allow method invocations to be performed
-       efficiently.
-
-       The default behavior is to invoke <code>__call__(args,
-       keywords)</code> with the appropriate arguments.  The only reason to
-       override this function would be for improved performance.
-
-       @param arg1     the first argument to the function.
-       @param args     the last arguments to the function (including
-                       keyword arguments).
-       @param keywords the keywords used for all keyword arguments.
-    **/
+     * A variant of the __call__ method with one extra initial argument.
+     * This variant is used to allow method invocations to be performed
+     * efficiently.
+     *
+     * The default behavior is to invoke <code>__call__(args,
+     * keywords)</code> with the appropriate arguments.  The only reason to
+     * override this function would be for improved performance.
+     *
+     * @param arg1     the first argument to the function.
+     * @param args     the last arguments to the function (including
+     *                 keyword arguments).
+     * @param keywords the keywords used for all keyword arguments.
+     **/
     public PyObject __call__(PyObject arg1, PyObject args[],
                              String keywords[])
     {
@@ -240,77 +241,77 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       A variant of the __call__ method when no keywords are passed.  The
-       default behavior is to invoke <code>__call__(args, keywords)</code>
-       with the appropriate arguments.  The only reason to override this
-       function would be for improved performance.
-
-       @param args     all arguments to the function.
-    **/
+     * A variant of the __call__ method when no keywords are passed.  The
+     * default behavior is to invoke <code>__call__(args, keywords)</code>
+     * with the appropriate arguments.  The only reason to override this
+     * function would be for improved performance.
+     *
+     * @param args     all arguments to the function.
+     **/
     public PyObject __call__(PyObject args[]) {
         return __call__(args, Py.NoKeywords);
     }
 
     /**
-       A variant of the __call__ method with no arguments.  The default
-       behavior is to invoke <code>__call__(args, keywords)</code> with the
-       appropriate arguments.  The only reason to override this function
-       would be for improved performance.
-    **/
+     * A variant of the __call__ method with no arguments.  The default
+     * behavior is to invoke <code>__call__(args, keywords)</code> with the
+     * appropriate arguments.  The only reason to override this function
+     * would be for improved performance.
+     **/
     public PyObject __call__() {
         return __call__(Py.EmptyObjects, Py.NoKeywords);
     }
 
     /**
-       A variant of the __call__ method with one argument.  The default
-       behavior is to invoke <code>__call__(args, keywords)</code> with the
-       appropriate arguments.  The only reason to override this function
-       would be for improved performance.
-
-       @param arg0     the single argument to the function.
-    **/
+     * A variant of the __call__ method with one argument.  The default
+     * behavior is to invoke <code>__call__(args, keywords)</code> with the
+     * appropriate arguments.  The only reason to override this function
+     * would be for improved performance.
+     *
+     * @param arg0     the single argument to the function.
+     **/
     public PyObject __call__(PyObject arg0) {
         return __call__(new PyObject[] {arg0}, Py.NoKeywords);
     }
 
     /**
-       A variant of the __call__ method with two arguments.  The default
-       behavior is to invoke <code>__call__(args, keywords)</code> with the
-       appropriate arguments.  The only reason to override this function
-       would be for improved performance.
-
-       @param arg0     the first argument to the function.
-       @param arg1     the second argument to the function.
-    **/
+     * A variant of the __call__ method with two arguments.  The default
+     * behavior is to invoke <code>__call__(args, keywords)</code> with the
+     * appropriate arguments.  The only reason to override this function
+     * would be for improved performance.
+     *
+     * @param arg0     the first argument to the function.
+     * @param arg1     the second argument to the function.
+     **/
     public PyObject __call__(PyObject arg0, PyObject arg1) {
         return __call__(new PyObject[] {arg0, arg1}, Py.NoKeywords);
     }
 
     /**
-       A variant of the __call__ method with three arguments.  The default
-       behavior is to invoke <code>__call__(args, keywords)</code> with the
-       appropriate arguments.  The only reason to override this function
-       would be for improved performance.
-
-       @param arg0     the first argument to the function.
-       @param arg1     the second argument to the function.
-       @param arg2     the third argument to the function.
-    **/
+     * A variant of the __call__ method with three arguments.  The default
+     * behavior is to invoke <code>__call__(args, keywords)</code> with the
+     * appropriate arguments.  The only reason to override this function
+     * would be for improved performance.
+     *
+     * @param arg0     the first argument to the function.
+     * @param arg1     the second argument to the function.
+     * @param arg2     the third argument to the function.
+     **/
     public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2) {
         return __call__(new PyObject[] {arg0, arg1, arg2}, Py.NoKeywords);
     }
 
     /**
-       A variant of the __call__ method with four arguments.  The default
-       behavior is to invoke <code>__call__(args, keywords)</code> with the
-       appropriate arguments.  The only reason to override this function
-       would be for improved performance.
-
-       @param arg0     the first argument to the function.
-       @param arg1     the second argument to the function.
-       @param arg2     the third argument to the function.
-       @param arg3     the fourth argument to the function.
-    **/
+     * A variant of the __call__ method with four arguments.  The default
+     * behavior is to invoke <code>__call__(args, keywords)</code> with the
+     * appropriate arguments.  The only reason to override this function
+     * would be for improved performance.
+     *
+     * @param arg0     the first argument to the function.
+     * @param arg1     the second argument to the function.
+     * @param arg2     the third argument to the function.
+     * @param arg3     the fourth argument to the function.
+     **/
     public PyObject __call__(PyObject arg0, PyObject arg1,
                              PyObject arg2, PyObject arg3)
     {
@@ -401,73 +402,175 @@ public class PyObject implements java.io.Serializable {
     /* The basic functions to implement a mapping */
 
     /**
-       Equivalent to the standard Python __len__ method.
-       Part of the mapping discipline.
-
-       @return the length of the object
-    **/
+     * Equivalent to the standard Python __len__ method.
+     * Part of the mapping discipline.
+     *
+     * @return the length of the object
+     **/
     public int __len__() {
         throw Py.AttributeError("__len__");
     }
 
     /**
-       Very similar to the standard Python __getitem__ method.
-       Instead of throwing a KeyError if the item isn't found,
-       this just returns null.
-
-       Classes that wish to implement __getitem__ should
-       override this method instead (with the appropriate
-       semantics.
-
-       @param key the key to lookup in this container
-
-       @return the value corresponding to key or null if key is not found
-    **/
+     * Very similar to the standard Python __getitem__ method.
+     * Instead of throwing a KeyError if the item isn't found,
+     * this just returns null.
+     *
+     * Classes that wish to implement __getitem__ should
+     * override this method instead (with the appropriate
+     * semantics.
+     *
+     * @param key the key to lookup in this container
+     *
+     * @return the value corresponding to key or null if key is not found
+     **/
     public PyObject __finditem__(PyObject key) {
         throw Py.AttributeError("__getitem__");
     }
 
     /**
-       A variant of the __finditem__ method which accepts a primitive
-       <code>int</code> as the key.  By default, this method will call
-       <code>__finditem__(PyObject key)</code> with the appropriate args.
-       The only reason to override this method is for performance.
-
-       @param key the key to lookup in this sequence.
-       @return the value corresponding to key or null if key is not found.
-
-       @see org.python.core.PyObject#__finditem__(org.python.core.PyObject)
-    **/
+     * A variant of the __finditem__ method which accepts a primitive
+     * <code>int</code> as the key.  By default, this method will call
+     * <code>__finditem__(PyObject key)</code> with the appropriate args.
+     * The only reason to override this method is for performance.
+     *
+     * @param key the key to lookup in this sequence.
+     * @return the value corresponding to key or null if key is not found.
+     *
+     * @see #__finditem__(PyObject)
+     **/
     public PyObject __finditem__(int key) {
         return __finditem__(new PyInteger(key));
     }
 
     /**
-       A variant of the __finditem__ method which accepts a Java
-       <code>String</code> as the key.  By default, this method will call
-       <code>__finditem__(PyObject key)</code> with the appropriate args.
-       The only reason to override this method is for performance.
-
-       <b>Warning: key must be an interned string!!!!!!!!</b>
-
-       @param key the key to lookup in this sequence -
-       <b> must be an interned string </b>.
-       @return the value corresponding to key or null if key is not found.
-
-       @see org.python.core.PyObject#__finditem__(org.python.core.PyObject)
-    **/
-
+     * A variant of the __finditem__ method which accepts a Java
+     * <code>String</code> as the key.  By default, this method will call
+     * <code>__finditem__(PyObject key)</code> with the appropriate args.
+     * The only reason to override this method is for performance.
+     *
+     * <b>Warning: key must be an interned string!!!!!!!!</b>
+     *
+     * @param key the key to lookup in this sequence -
+     *            <b> must be an interned string </b>.
+     * @return the value corresponding to key or null if key is not found.
+     *
+     * @see #__finditem__(PyObject)
+     **/
     public PyObject __finditem__(String key) {
         return __finditem__(new PyString(key));
     }
 
-
+    /**
+     * Equivalent to the standard Python __getitem__ method.
+     * This variant takes a primitive <code>int</code> as the key.  
+     * This method should not be overridden.
+     * Override the <code>__finditem__</code> method instead.
+     *
+     * @param key the key to lookup in this container.
+     * @return the value corresponding to that key.
+     * @exception PyKeyError if the key is not found.
+     *
+     * @see #__finditem__(int)
+     **/
     public PyObject __getitem__(int key) {
         PyObject ret = __finditem__(key);
         if (ret == null)
             throw Py.KeyError(""+key);
         return ret;
     }
+
+    /**
+     * Equivalent to the standard Python __getitem__ method.
+     * This method should not be overridden.
+     * Override the <code>__finditem__</code> method instead.
+     *
+     * @param key the key to lookup in this container.
+     * @return the value corresponding to that key.
+     * @exception PyKeyError if the key is not found.
+     *
+     * @see #__finditem__(PyObject)
+     **/
+    public PyObject __getitem__(PyObject key) {
+        PyObject ret = __finditem__(key);
+        if (ret == null)
+            throw Py.KeyError(key.toString());
+        return ret;
+    }
+
+    /**
+     * Equivalent to the standard Python __setitem__ method.
+     *
+     * @param key the key whose value will be set
+     * @param value the value to set this key to
+     **/
+    public void __setitem__(PyObject key, PyObject value) {
+        throw Py.AttributeError("__setitem__");
+    }
+
+    /**
+     * A variant of the __setitem__ method which accepts a String
+     * as the key.  <b>This String must be interned</b>.
+     * By default, this will call
+     * <code>__setitem__(PyObject key, PyObject value)</code>
+     * with the appropriate args.
+     * The only reason to override this method is for performance.
+     *
+     * @param key the key whose value will be set -
+     *            <b> must be an interned string </b>.
+     * @param value the value to set this key to
+     *
+     * @see #__setitem__(PyObject, PyObject)
+     **/
+    public void __setitem__(String key, PyObject value) {
+        __setitem__(new PyString(key), value);
+    }
+
+    /**
+     * A variant of the __setitem__ method which accepts a primitive
+     * <code>int</code> as the key. 
+     * By default, this will call
+     * <code>__setitem__(PyObject key, PyObject value)</code>
+     * with the appropriate args.
+     * The only reason to override this method is for performance.
+     *
+     * @param key the key whose value will be set
+     * @param value the value to set this key to
+     *
+     * @see #__setitem__(PyObject, PyObject)
+     **/
+    public void __setitem__(int key, PyObject value) {
+        __setitem__(new PyInteger(key), value);
+    }
+
+    /**
+     * Equivalent to the standard Python __delitem__ method.
+     *
+     * @param key the key to be removed from the container
+     * @exception PyKeyError if the key is not found in the container
+     **/
+    public void __delitem__(PyObject key) {
+        throw Py.AttributeError("__delitem__");
+    }
+
+    /**
+     * A variant of the __delitem__ method which accepts a String
+     * as the key.  <b>This String must be interned</b>.
+     * By default, this will call
+     * <code>__delitem__(PyObject key)</code>
+     * with the appropriate args.
+     * The only reason to override this method is for performance.
+     *
+     * @param key the key who will be removed -
+     *            <b> must be an interned string </b>.
+     * @exception PyKeyError if the key is not found in the container
+     *
+     * @see #__delitem__(PyObject)
+     **/
+    public void __delitem__(String key) {
+        __delitem__(new PyString(key));
+    }
+
 
     public PyObject __getslice__(PyObject s_start, PyObject s_stop,
                                  PyObject s_step)
@@ -502,129 +605,42 @@ public class PyObject implements java.io.Serializable {
         __delslice__(start, stop, Py.One);
     }
 
-    /**
-       Equivalent to the standard Python __getitem__ method.
-       This method should not be overridden.
-       Override the <code>__finditem__</code> method instead.
-
-       @param key the key to lookup in this container.
-       @return the value corresponding to that key.
-       @exception PyKeyError if the key is not found.
-
-       @see org.python.core.PyObject#__finditem__(org.python.core.PyObject)
-    **/
-    public PyObject __getitem__(PyObject key) {
-        PyObject ret = __finditem__(key);
-        if (ret == null)
-            throw Py.KeyError(key.toString());
-        return ret;
-    }
-
-    /**
-       Equivalent to the standard Python __setitem__ method.
-
-       @param key the key whose value will be set
-       @param value the value to set this key to
-    **/
-    public void __setitem__(PyObject key, PyObject value) {
-        throw Py.AttributeError("__setitem__");
-    }
-
-    /**
-       A variant of the __setitem__ method which accepts a String
-       as the key.  <b>This String must be interned</b>.
-       By default, this will call
-       <code>__setitem__(PyObject key, PyObject value)</code>
-       with the appropriate args.
-       The only reason to override this method is for performance.
-
-       @param key the key whose value will be set -
-       <b> must be an interned string </b>.
-       @param value the value to set this key to
-       @see org.python.core.PyObject#__setitem__(org.python.core.PyObject,
-       org.python.core.PyObject)
-    **/
-    public void __setitem__(String key, PyObject value) {
-        __setitem__(new PyString(key), value);
-    }
-
-    public void __setitem__(int key, PyObject value) {
-        __setitem__(new PyInteger(key), value);
-    }
-
-    /**
-       Equivalent to the standard Python __delitem__ method.
-
-       @param key the key to be removed from the container
-       @exception PyKeyError if the key is not found in the container
-    **/
-    public void __delitem__(PyObject key) {
-        throw Py.AttributeError("__delitem__");
-    }
-
-    /**
-       A variant of the __delitem__ method which accepts a String
-       as the key.  <b>This String must be interned</b>.
-       By default, this will call
-       <code>__delitem__(PyObject key)</code>
-       with the appropriate args.
-       The only reason to override this method is for performance.
-
-       @param key the key who will be removed -
-       <b> must be an interned string </b>.
-       @exception PyKeyError if the key is not found in the container
-       @see org.python.core.PyObject#__delitem__(org.python.core.PyObject)
-    **/
-    public void __delitem__(String key) {
-        __delitem__(new PyString(key));
-    }
-
 
     /*The basic functions to implement a namespace*/
 
+    /**
+     * Very similar to the standard Python __getattr__ method.
+     * Instead of throwing a AttributeError if the item isn't found,
+     * this just returns null.
+     *
+     * Classes that wish to implement __getattr__ should
+     * override this method instead (with the appropriate
+     * semantics.
+     *
+     * @param name the name to lookup in this namespace
+     *
+     * @return the value corresponding to name or null if name is not found
+     **/
     public PyObject __findattr__(PyString name) {
         return __findattr__(name.internedString());
     }
 
-    public final void __setattr__(PyString name, PyObject value) {
-        __setattr__(name.internedString(), value);
-    }
-
-    public final void __delattr__(PyString name) {
-        __delattr__(name.internedString());
-    }
-
     /**
-       Very similar to the standard Python __getattr__ method.
-       Instead of throwing a AttributeError if the item isn't found,
-       this just returns null.
-
-       Classes that wish to implement __getitem__ should
-       override this method instead (with the appropriate
-       semantics.
-
-       @param name the name to lookup in this namespace
-
-       @return the value corresponding to name or null if name is not found
-    **/
-
-    /**
-       A variant of the __findattr__ method which accepts a Java
-       <code>String</code> as the name.
-
-       By default, this method will call <code>__findattr__(PyString
-       name)</code> with the appropriate args.  The only reason to override
-       this method is for performance.
-
-       <b>Warning: name must be an interned string!!!!!!!!</b>
-
-       @param name the name to lookup in this namespace
-       <b> must be an interned string </b>.
-       @return the value corresponding to name or null if name is not found
-
-
-       @see org.python.core.PyObject#__findattr__(org.python.core.PyString)
-    **/
+     * A variant of the __findattr__ method which accepts a Java
+     * <code>String</code> as the name.
+     *
+     * By default, this method will call <code>__findattr__(PyString
+     * name)</code> with the appropriate args.  The only reason to override
+     * this method is for performance.
+     *
+     * <b>Warning: name must be an interned string!!!!!!!!</b>
+     *
+     * @param name the name to lookup in this namespace
+     * <b> must be an interned string </b>.
+     * @return the value corresponding to name or null if name is not found
+     *
+     * @see #__findattr__(PyString)
+     **/
     public PyObject __findattr__(String name) {
         if (__class__ == null)
             return null;
@@ -636,22 +652,17 @@ public class PyObject implements java.io.Serializable {
         return null;
     }
 
-    // Used by import logic.
-    protected PyObject impAttr(String name) {
-        return __findattr__(name);
-    }
-
     /**
-       Equivalent to the standard Python __getattr__ method.
-       This method can not be overridden.
-       Override the <code>__findattr__</code> method instead.
-
-       @param name the name to lookup in this namespace
-       @return the value corresponding to name
-       @exception PyAttributeError if the name is not found.
-
-       @see org.python.core.PyObject#__findattr__(org.python.core.PyString)
-    **/
+     * Equivalent to the standard Python __getattr__ method.
+     * This method can not be overridden.
+     * Override the <code>__findattr__</code> method instead.
+     *
+     * @param name the name to lookup in this namespace
+     * @return the value corresponding to name
+     * @exception PyAttributeError if the name is not found.
+     *
+     * @see #__findattr__(PyString)
+     **/
     public final PyObject __getattr__(PyString name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
@@ -661,20 +672,20 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       A variant of the __getattr__ method which accepts a Java
-       <code>String</code> as the name.
-       This method can not be overridden.
-       Override the <code>__findattr__</code> method instead.
-
-       <b>Warning: name must be an interned string!!!!!!!!</b>
-
-       @param name the name to lookup in this namespace
-       <b> must be an interned string </b>.
-       @return the value corresponding to name
-       @exception PyAttributeError if the name is not found.
-
-       @see org.python.core.PyObject#__findattr__(java.lang.String)
-    **/
+     * A variant of the __getattr__ method which accepts a Java
+     * <code>String</code> as the name.
+     * This method can not be overridden.
+     * Override the <code>__findattr__</code> method instead.
+     *
+     * <b>Warning: name must be an interned string!!!!!!!!</b>
+     *
+     * @param name the name to lookup in this namespace
+     *             <b> must be an interned string </b>.
+     * @return the value corresponding to name
+     * @exception PyAttributeError if the name is not found.
+     *
+     * @see #__findattr__(java.lang.String)
+     **/
     public final PyObject __getattr__(String name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
@@ -684,57 +695,71 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       Equivalent to the standard Python __setattr__ method.
-
-       @param name the name whose value will be set
-       @param value the value to set this name to
-    **/
-    /*public void __setattr__(PyString name, PyObject value) {
-      }*/
+     * Equivalent to the standard Python __setattr__ method.
+     * This method can not be overridden.
+     *
+     * @param name the name to lookup in this namespace
+     * @return the value corresponding to name
+     * @exception PyAttributeError if the name is not found.
+     *
+     * @see #__setattr__(java.lang.String, PyObject)
+     **/
+    public final void __setattr__(PyString name, PyObject value) {
+        __setattr__(name.internedString(), value);
+    }
 
     /**
-       A variant of the __setattr__ method which accepts a String
-       as the key.  <b>This String must be interned</b>.
-       By default, this will call
-       <code>__setattr__(PyString name, PyObject value)</code>
-       with the appropriate args.
-       The only reason to override this method is for performance.
-
-       @param name the name whose value will be set -
-       <b> must be an interned string </b>.
-       @param value the value to set this name to
-       @see org.python.core.PyObject#__setattr__(org.python.core.PyString,
-       org.python.core.PyObject)
+     * A variant of the __setattr__ method which accepts a String
+     * as the key.  <b>This String must be interned</b>.
+     *
+     * @param name  the name whose value will be set -
+     *              <b> must be an interned string </b>.
+     * @param value the value to set this name to
+     *
+     * @see #__setattr__(PyString, PyObject)
     **/
     public void __setattr__(String name, PyObject value) {
         throw Py.TypeError("readonly class or attribute: " + name);
     }
 
-    /**
-       Equivalent to the standard Python __delattr__ method.
-
-       @param name the name to be removed from this namespace
-       @exception PyAttributeError if the name doesn't exist
-    **/
-    /*public void __delattr__(PyString name) throws PyAttributeError {
-      }*/
 
     /**
-       A variant of the __delattr__ method which accepts a String
-       as the key.  <b>This String must be interned</b>.
-       By default, this will call
-       <code>__delattr__(PyString name)</code>
-       with the appropriate args.
-       The only reason to override this method is for performance.
+     * Equivalent to the standard Python __delattr__ method.
+     * This method can not be overridden.
+     *
+     * @param name the name to which will be removed
+     * @exception PyAttributeError if the name doesn't exist
+     *
+     * @see #__delattr__(java.lang.String)
+     **/
+    public final void __delattr__(PyString name) {
+        __delattr__(name.internedString());
+    }
 
-       @param name the name which will be removed -
-       <b> must be an interned string </b>.
-       @exception PyAttributeError if the name doesn't exist
-       @see org.python.core.PyObject#__delattr__(org.python.core.PyString)
-    **/
+    /**
+     * A variant of the __delattr__ method which accepts a String
+     * as the key.  <b>This String must be interned</b>.
+     * By default, this will call
+     * <code>__delattr__(PyString name)</code>
+     * with the appropriate args.
+     * The only reason to override this method is for performance.
+     *
+     * @param name the name which will be removed -
+     *             <b> must be an interned string </b>.
+     * @exception PyAttributeError if the name doesn't exist
+     *
+     * @see #__delattr__(PyString)
+     **/
     public void __delattr__(String name) {
         throw Py.TypeError("readonly class");
     }
+
+
+    // Used by import logic.
+    protected PyObject impAttr(String name) {
+        return __findattr__(name);
+    }
+
 
     protected void addKeys(PyList ret, String attr) {
         PyObject obj = __findattr__(attr);
@@ -753,6 +778,11 @@ public class PyObject implements java.io.Serializable {
         }
     }
 
+    /**
+     * Equivalent to the standard Python __dir__ method.
+     *
+     * @return a list of names defined by this object.
+     **/
     public PyObject __dir__() {
         PyList ret = new PyList();
 
@@ -782,29 +812,30 @@ public class PyObject implements java.io.Serializable {
     }
 
     /* Numeric coercion */
-    /**
-       Implements numeric coercion
 
-       @param o the other object involved in the coercion
-       @return null if no coercion is possible;
-       a single PyObject to use to replace o if this is unchanged;
-       or a PyObject[2] consisting of replacements for this and o.
-    **/
+    /**
+     * Implements numeric coercion
+     *
+     * @param o the other object involved in the coercion
+     * @return null if no coercion is possible;
+     * a single PyObject to use to replace o if this is unchanged;
+     * or a PyObject[2] consisting of replacements for this and o.
+     **/
     public Object __coerce_ex__(PyObject o) throws PyException {
         return null;
     }
 
     /**
-       Equivalent to the standard Python __coerce__ method.
-
-       This method can not be overridden.
-       To implement __coerce__ functionality, override __coerce_ex__ instead.
-
-       @param pyo the other object involved in the coercion.
-       @return a tuple of this object and pyo coerced to the same type
-       or Py.None if no coercion is possible.
-       @see org.python.core.PyObject#__coerce_ex__(org.python.core.PyObject)
-    **/
+     * Equivalent to the standard Python __coerce__ method.
+     *
+     * This method can not be overridden.
+     * To implement __coerce__ functionality, override __coerce_ex__ instead.
+     *
+     * @param pyo the other object involved in the coercion.
+     * @return a tuple of this object and pyo coerced to the same type
+     *         or Py.None if no coercion is possible.
+     * @see org.python.core.PyObject#__coerce_ex__(org.python.core.PyObject)
+     **/
     public final PyObject __coerce__(PyObject pyo) {
         Object o = __coerce_ex__(pyo);
         if (o == null)
@@ -818,37 +849,74 @@ public class PyObject implements java.io.Serializable {
     }
 
     /* The basic comparision operations */
-    /**
-       Equivalent to the standard Python __cmp__ method.
 
-       @param other the object to compare this with.
-       @return -1 if this < 0; 0 if this == o; +1 if this > o; -2 if no
-       comparison is implemented
-    **/
+    /**
+     * Equivalent to the standard Python __cmp__ method.
+     *
+     * @param other the object to compare this with.
+     * @return -1 if this < 0; 0 if this == o; +1 if this > o; -2 if no
+     * comparison is implemented
+     **/
     public int __cmp__(PyObject other) {
         return -2;
     }
 
 
+    /**
+     * Equivalent to the standard Python __eq__ method.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison.
+     **/
     public PyObject __eq__(PyObject other) { return null; }
 
+    /**
+     * Equivalent to the standard Python __ne__ method.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison.
+     **/
     public PyObject __ne__(PyObject other) { return null; }
 
+    /**
+     * Equivalent to the standard Python __le__ method.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison.
+     **/
     public PyObject __le__(PyObject other) { return null; }
 
+    /**
+     * Equivalent to the standard Python __lt__ method.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison.
+     **/
     public PyObject __lt__(PyObject other) { return null; }
 
+    /**
+     * Equivalent to the standard Python __ge__ method.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison.
+     **/
     public PyObject __ge__(PyObject other) { return null; }
 
+    /**
+     * Equivalent to the standard Python __gt__ method.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison.
+     **/
     public PyObject __gt__(PyObject other) { return null; }
 
 
     /**
-       Implements cmp(this, other)
-
-       @param other the object to compare this with.
-       @return -1 if this < 0; 0 if this == o; +1 if this > o
-    **/
+     * Implements cmp(this, other)
+     *
+     * @param other the object to compare this with.
+     * @return -1 if this < 0; 0 if this == o; +1 if this > o
+     **/
     public final int _cmp(PyObject o2_in) {
         ThreadState ts = Py.getThreadState();
         try {
@@ -962,6 +1030,12 @@ public class PyObject implements java.io.Serializable {
     }
 
 
+    /**
+     * Implements the Python expression <code>this == other</code>.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison
+     **/
     public final PyObject _eq(PyObject o) {
         PyObject token = null;
 
@@ -984,7 +1058,12 @@ public class PyObject implements java.io.Serializable {
         }
     }
 
-
+    /**
+     * Implements the Python expression <code>this != other</code>.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison
+     **/
     public final PyObject _ne(PyObject o) {
         PyObject token = null;
 
@@ -1007,6 +1086,12 @@ public class PyObject implements java.io.Serializable {
         }
     }
 
+    /**
+     * Implements the Python expression <code>this &lt;= other</code>.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison
+     **/
     public final PyObject _le(PyObject o) {
         PyObject token = null;
 
@@ -1029,6 +1114,12 @@ public class PyObject implements java.io.Serializable {
         }
     }
 
+    /**
+     * Implements the Python expression <code>this &lt; other</code>.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison
+     **/
     public final PyObject _lt(PyObject o) {
         PyObject token = null;
 
@@ -1051,6 +1142,12 @@ public class PyObject implements java.io.Serializable {
         }
     }
 
+    /**
+     * Implements the Python expression <code>this &gt;= other</code>.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison
+     **/
     public final PyObject _ge(PyObject o) {
         PyObject token = null;
 
@@ -1073,6 +1170,12 @@ public class PyObject implements java.io.Serializable {
         }
     }
 
+    /**
+     * Implements the Python expression <code>this &gt; other</code>.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison
+     **/
     public final PyObject _gt(PyObject o) {
         PyObject token = null;
 
@@ -1096,18 +1199,52 @@ public class PyObject implements java.io.Serializable {
 
     }
 
+    /**
+     * Implements <code>is</code> operator.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison
+     **/
     public PyObject _is(PyObject o) {
         return this == o ? Py.One : Py.Zero;
     }
 
+    /**
+     * Implements <code>is not</code> operator.
+     *
+     * @param other the object to compare this with.
+     * @return the result of the comparison
+     **/
     public PyObject _isnot(PyObject o) {
         return this != o ? Py.One : Py.Zero;
     }
 
+    /**
+     * Implements <code>in</code> operator.
+     *
+     * @param other the container to search for this element.
+     * @return the result of the search.
+     **/
     public final PyObject _in(PyObject o) {
         return Py.newBoolean(o.__contains__(this));
     }
 
+    /**
+     * Implements <code>not in</code> operator.
+     *
+     * @param other the container to search for this element.
+     * @return the result of the search.
+     **/
+    public final PyObject _notin(PyObject o) {
+        return Py.newBoolean(!o.__contains__(this));
+    }
+
+    /**
+     * Equivalent to the standard Python __contains__ method.
+     *
+     * @param o the element to search for in this container.
+     * @return the result of the search.
+     **/
     public boolean __contains__(PyObject o) {
         PyObject tmp;
         int i = 0;
@@ -1119,15 +1256,11 @@ public class PyObject implements java.io.Serializable {
         return false;
     }
 
-    public final PyObject _notin(PyObject o) {
-        return Py.newBoolean(!o.__contains__(this));
-    }
-
     /**
-       Implements boolean not
-
-       @return not this.
-    **/
+     * Implements boolean not
+     *
+     * @return not this.
+     **/
     public PyObject __not__() {
         return __nonzero__() ? Py.Zero : Py.One;
     }
@@ -1135,115 +1268,115 @@ public class PyObject implements java.io.Serializable {
     /* The basic numeric operations */
 
     /**
-       Equivalent to the standard Python __hex__ method
-       Should only be overridden by numeric objects that can be
-       reasonably represented as a hexadecimal string.
-
-       @return a string representing this object as a hexadecimal number.
-    **/
+     * Equivalent to the standard Python __hex__ method
+     * Should only be overridden by numeric objects that can be
+     * reasonably represented as a hexadecimal string.
+     *
+     * @return a string representing this object as a hexadecimal number.
+     **/
     public PyString __hex__() {
         throw Py.AttributeError("__hex__");
     }
 
     /**
-       Equivalent to the standard Python __oct__ method
-       Should only be overridden by numeric objects that can be
-       reasonably represented as an octal string.
-
-       @return a string representing this object as an octal number.
-    **/
+     * Equivalent to the standard Python __oct__ method.
+     * Should only be overridden by numeric objects that can be
+     * reasonably represented as an octal string.
+     *
+     * @return a string representing this object as an octal number.
+     **/
     public PyString __oct__() {
         throw Py.AttributeError("__oct__");
     }
 
     /**
-       Equivalent to the standard Python __int__ method
-       Should only be overridden by numeric objects that can be
-       reasonably coerced into an integer.
-
-       @return an integer corresponding to the value of this object.
-    **/
+     * Equivalent to the standard Python __int__ method.
+     * Should only be overridden by numeric objects that can be
+     * reasonably coerced into an integer.
+     *
+     * @return an integer corresponding to the value of this object.
+     **/
     public PyInteger __int__() {
         throw Py.AttributeError("__int__");
     }
 
     /**
-       Equivalent to the standard Python __long__ method
-       Should only be overridden by numeric objects that can be
-       reasonably coerced into a python long.
-
-       @return a PyLong corresponding to the value of this object.
-    **/
+     * Equivalent to the standard Python __long__ method.
+     * Should only be overridden by numeric objects that can be
+     * reasonably coerced into a python long.
+     *
+     * @return a PyLong corresponding to the value of this object.
+     **/
     public PyLong __long__() {
         throw Py.AttributeError("__long__");
     }
 
     /**
-       Equivalent to the standard Python __float__ method
-       Should only be overridden by numeric objects that can be
-       reasonably coerced into a python float.
-
-       @return a float corresponding to the value of this object.
-    **/
+     * Equivalent to the standard Python __float__ method.
+     * Should only be overridden by numeric objects that can be
+     * reasonably coerced into a python float.
+     *
+     * @return a float corresponding to the value of this object.
+     **/
     public PyFloat __float__() {
         throw Py.AttributeError("__float__");
     }
 
     /**
-       Equivalent to the standard Python __complex__ method
-       Should only be overridden by numeric objects that can be
-       reasonably coerced into a python complex number.
-
-       @return a complex number corresponding to the value of this object.
-    **/
+     * Equivalent to the standard Python __complex__ method.
+     * Should only be overridden by numeric objects that can be
+     * reasonably coerced into a python complex number.
+     *
+     * @return a complex number corresponding to the value of this object.
+     **/
     public PyComplex __complex__() {
         throw Py.AttributeError("__complex__");
     }
 
     /**
-       Equivalent to the standard Python __pos__ method
-
-       @return +this.
-    **/
+     * Equivalent to the standard Python __pos__ method.
+     *
+     * @return +this.
+     **/
     public PyObject __pos__() {
         throw Py.AttributeError("__pos__");
     }
 
     /**
-       Equivalent to the standard Python __neg__ method
-
-       @return -this.
-    **/
+     * Equivalent to the standard Python __neg__ method.
+     *
+     * @return -this.
+     **/
     public PyObject __neg__() {
         throw Py.AttributeError("__neg__");
     }
 
     /**
-       Equivalent to the standard Python __abs__ method
-
-       @return abs(this).
-    **/
+     * Equivalent to the standard Python __abs__ method.
+     *
+     * @return abs(this).
+     **/
     public PyObject __abs__() {
         throw Py.AttributeError("__abs__");
     }
 
     /**
-       Equivalent to the standard Python __invert__ method
-
-       @return ~this.
-    **/
+     * Equivalent to the standard Python __invert__ method.
+     *
+     * @return ~this.
+     **/
     public PyObject __invert__() {
         throw Py.AttributeError("__invert__");
     }
 
     /**
-       Implements the three argument power function
-
-       @param o2 the power to raise this number to.
-       @param o3 the modulus to perform this operation in or null if no
-       modulo is to be used
-       @return this object raised to the given power in the given modulus
-    **/
+     * Implements the three argument power function.
+     *
+     * @param o2 the power to raise this number to.
+     * @param o3 the modulus to perform this operation in or null if no
+     *           modulo is to be used
+     * @return this object raised to the given power in the given modulus
+     **/
     public PyObject __pow__(PyObject o2, PyObject o3) { return null; }
 
 
@@ -1864,39 +1997,39 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       Shortcut for calling a method on a PyObject with no args.
-
-       @param name the name of the method to call.  This must be an
-       interned string!
-       @return the result of calling the method name with no args
-    **/
+     * Shortcut for calling a method on a PyObject with no args.
+     *
+     * @param name the name of the method to call.  This must be an
+     * interned string!
+     * @return the result of calling the method name with no args
+     **/
     public PyObject invoke(String name) {
         PyObject f = __getattr__(name);
         return f.__call__();
     }
 
     /**
-       Shortcut for calling a method on a PyObject with one arg.
-
-       @param name the name of the method to call.  This must be an
-       interned string!
-       @param arg1 the one argument of the method.
-       @return the result of calling the method name with arg1
-    **/
+     * Shortcut for calling a method on a PyObject with one arg.
+     *
+     * @param name the name of the method to call.  This must be an
+     * interned string!
+     * @param arg1 the one argument of the method.
+     * @return the result of calling the method name with arg1
+     **/
     public PyObject invoke(String name, PyObject arg1) {
         PyObject f = __getattr__(name);
         return f.__call__(arg1);
     }
 
     /**
-       Shortcut for calling a method on a PyObject with two args.
-
-       @param name the name of the method to call.  This must be an
-       interned string!
-       @param arg1 the first argument of the method.
-       @param arg2 the second argument of the method.
-       @return the result of calling the method name with arg1 and arg2
-    **/
+     * Shortcut for calling a method on a PyObject with two args.
+     *
+     * @param name the name of the method to call.  This must be an
+     *        interned string!
+     * @param arg1 the first argument of the method.
+     * @param arg2 the second argument of the method.
+     * @return the result of calling the method name with arg1 and arg2
+     **/
     public PyObject invoke(String name, PyObject arg1, PyObject arg2) {
         PyObject f = __getattr__(name);
         return f.__call__(arg1, arg2);
