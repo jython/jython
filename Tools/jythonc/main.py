@@ -136,12 +136,15 @@ def getOptions():
             options.package = arg
         elif opt in ('-j', '--jar'):
             options.jar = arg
+            options.deep = 1
         elif opt in ('-d', '--deep'):
             options.deep = 1
         elif opt in ('-c', '--core'):
             options.core = 1
+            options.deep = 1
         elif opt in ('-a', '--all'):
             options.all = 1
+            options.deep = 1
         elif opt in ('-b', '--bean'):
             options.bean = arg
         elif opt in ('-A', '--addpackages'):
@@ -163,11 +166,6 @@ def getOptions():
 
     # post processing
     options.args = args
-
-    if options.jar is not None:
-        options.deep = 1
-    elif options.core or options.all:
-        options.deep = 1
 
     if not os.path.isabs(options.workdir):
         options.workdir = os.path.join(".", options.workdir)  
@@ -203,6 +201,9 @@ def doCompile(opts):
             classname = target
             import ImportName
             m = ImportName.lookupName(classname)
+            if not m:
+                print 'Could not find class:', classname
+                sys.exit(1)
             filename = m.file
         if mainclass is None:
             mainclass = classname
