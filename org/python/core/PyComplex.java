@@ -177,15 +177,42 @@ public class PyComplex extends PyObject {
     public PyObject __div__(PyObject right) {
         if (!canCoerce(right))
             return null;
+        if (Options.divisionWarning >= 2)
+            Py.warning(Py.DeprecationWarning, "classic complex division");
         return _div(this, coerce(right));
     }
 
     public PyObject __rdiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
+        if (Options.divisionWarning >= 2)
+            Py.warning(Py.DeprecationWarning, "classic complex division");
         return _div(coerce(left), this);
     }
 
+    public PyObject __floordiv__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return _divmod(this, coerce(right)).__finditem__(0);
+    }
+
+    public PyObject __rfloordiv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _divmod(coerce(left), this).__finditem__(0);
+    }
+
+    public PyObject __truediv__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return _div(this, coerce(right));
+    }
+
+    public PyObject __rtruediv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _div(coerce(left), this);
+    }
 
     public PyObject __mod__(PyObject right) {
         if (!canCoerce(right))
@@ -200,7 +227,7 @@ public class PyComplex extends PyObject {
     }
 
     private static PyObject _mod(PyComplex value, PyComplex right) {
-        PyComplex z = (PyComplex)value.__div__(right);
+        PyComplex z = (PyComplex) _div(value, right);
 
         z.real = Math.floor(z.real);
         z.imag = 0.0;
@@ -221,7 +248,7 @@ public class PyComplex extends PyObject {
     }
 
     private static PyObject _divmod(PyComplex value, PyComplex right) {
-        PyComplex z = (PyComplex)value.__div__(right);
+        PyComplex z = (PyComplex) _div(value, right);
 
         z.real = Math.floor(z.real);
         z.imag = 0.0;

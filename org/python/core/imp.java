@@ -12,7 +12,7 @@ import java.util.zip.*;
  */
 public class imp
 {
-    public static final int APIVersion = 10;
+    public static final int APIVersion = 11;
 
     private imp() { ; }
 

@@ -1608,6 +1608,8 @@ public class PyObject implements java.io.Serializable {
      *            with these operands.
      **/
     public final PyObject _div(PyObject o2) {
+        if (Options.Qnew)
+            return _truediv(o2);
         PyObject x = __div__(o2);
         if (x != null)
             return x;
@@ -1616,6 +1618,96 @@ public class PyObject implements java.io.Serializable {
             return x;
         throw Py.TypeError(
                  "__div__ nor __rdiv__ defined for these operands");
+    }
+
+    /**
+     * Equivalent to the standard Python __floordiv__ method
+     * @param     other the object to perform this binary operation with
+     *            (the right-hand operand).
+     * @return    the result of the floordiv, or null if this operation
+     *            is not defined
+     **/
+    public PyObject __floordiv__(PyObject other) { return null; }
+
+    /**
+     * Equivalent to the standard Python __rfloordiv__ method
+     * @param     other the object to perform this binary operation with
+     *            (the left-hand operand).
+     * @return    the result of the floordiv, or null if this operation
+     *            is not defined.
+     **/
+    public PyObject __rfloordiv__(PyObject other) { return null; }
+
+    /**
+     * Equivalent to the standard Python __ifloordiv__ method
+     * @param     other the object to perform this binary operation with
+     *            (the right-hand operand).
+     * @return    the result of the floordiv, or null if this operation
+     *            is not defined
+     **/
+    public PyObject __ifloordiv__(PyObject other) { return _floordiv(other); }
+
+    /**
+     * Implements the Python expression <code>this // other</code>
+     * @param     other the object to perform this binary operation with.
+     * @return    the result of the floordiv.
+     * @exception PyTypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    public final PyObject _floordiv(PyObject o2) {
+        PyObject x = __floordiv__(o2);
+        if (x != null)
+            return x;
+        x = o2.__rfloordiv__(this);
+        if (x != null)
+            return x;
+        throw Py.TypeError(
+                 "__floordiv__ nor __rfloordiv__ defined for these operands");
+    }
+
+    /**
+     * Equivalent to the standard Python __truediv__ method
+     * @param     other the object to perform this binary operation with
+     *            (the right-hand operand).
+     * @return    the result of the truediv, or null if this operation
+     *            is not defined
+     **/
+    public PyObject __truediv__(PyObject other) { return null; }
+
+    /**
+     * Equivalent to the standard Python __rtruediv__ method
+     * @param     other the object to perform this binary operation with
+     *            (the left-hand operand).
+     * @return    the result of the truediv, or null if this operation
+     *            is not defined.
+     **/
+    public PyObject __rtruediv__(PyObject other) { return null; }
+
+    /**
+     * Equivalent to the standard Python __itruediv__ method
+     * @param     other the object to perform this binary operation with
+     *            (the right-hand operand).
+     * @return    the result of the truediv, or null if this operation
+     *            is not defined
+     **/
+    public PyObject __itruediv__(PyObject other) { return _truediv(other); }
+
+    /**
+     * Implements the Python expression <code>this / other</code>
+     * @param     other the object to perform this binary operation with.
+     * @return    the result of the truediv.
+     * @exception PyTypeError if this operation can't be performed
+     *            with these operands.
+     **/
+    public final PyObject _truediv(PyObject o2) {
+        PyObject x = __truediv__(o2);
+        if (x != null)
+            return x;
+        x = o2.__rtruediv__(this);
+        if (x != null)
+            return x;
+        throw Py.TypeError(
+                 "__truediv__ nor __rtruediv__ defined for these operands");
     }
 
     /**

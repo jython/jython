@@ -188,13 +188,41 @@ public class PyLong extends PyObject
     public PyObject __div__(PyObject right) {
         if (!canCoerce(right))
             return null;
+        if (Options.divisionWarning > 0)
+            Py.warning(Py.DeprecationWarning, "classic long division");
         return new PyLong(divide(value, coerce(right)));
     }
 
     public PyObject __rdiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
+        if (Options.divisionWarning > 0)
+            Py.warning(Py.DeprecationWarning, "classic long division");
         return new PyLong(divide(coerce(left), value));
+    }
+
+    public PyObject __floordiv__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return new PyLong(divide(value, coerce(right)));
+    }
+
+    public PyObject __rfloordiv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return new PyLong(divide(coerce(left), value));
+    }
+
+    public PyObject __truediv__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return new PyFloat(doubleValue() / coerce(right).doubleValue());
+    }
+
+    public PyObject __rtruediv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return new PyFloat(coerce(left).doubleValue() / doubleValue());
     }
 
     private BigInteger modulo(BigInteger x, BigInteger y, BigInteger xdivy) {

@@ -151,6 +151,8 @@ public class PyFloat extends PyObject
     public PyObject __div__(PyObject right) {
         if (!canCoerce(right))
             return null;
+        if (Options.divisionWarning >= 2)
+            Py.warning(Py.DeprecationWarning, "classic float division");
         double rightv = coerce(right);
         if (rightv == 0)
             throw Py.ZeroDivisionError("float division");
@@ -158,6 +160,44 @@ public class PyFloat extends PyObject
     }
 
     public PyObject __rdiv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        if (Options.divisionWarning >= 2)
+            Py.warning(Py.DeprecationWarning, "classic float division");
+        double leftv = coerce(left);
+        if (value == 0)
+            throw Py.ZeroDivisionError("float division");
+        return new PyFloat(leftv / value);
+    }
+
+    public PyObject __floordiv__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        double rightv = coerce(right);
+        if (rightv == 0)
+            throw Py.ZeroDivisionError("float division");
+        return new PyFloat(Math.floor(value / rightv));
+    }
+
+    public PyObject __rfloordiv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        double leftv = coerce(left);
+        if (value == 0)
+            throw Py.ZeroDivisionError("float division");
+        return new PyFloat(Math.floor(leftv / value));
+    }
+
+    public PyObject __truediv__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        double rightv = coerce(right);
+        if (rightv == 0)
+            throw Py.ZeroDivisionError("float division");
+        return new PyFloat(value / rightv);
+    }
+
+    public PyObject __rtruediv__(PyObject left) {
         if (!canCoerce(left))
             return null;
         double leftv = coerce(left);

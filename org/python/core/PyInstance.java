@@ -975,6 +975,100 @@ public class PyInstance extends PyObject
     }
 
     /**
+     * Implements the __floordiv__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __floordiv__(PyObject o) {
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__floordiv__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__floordiv__", o2);
+            else
+                return o1._floordiv(o2);
+        }
+    }
+
+    /**
+     * Implements the __rfloordiv__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __rfloordiv__(PyObject o) {
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rfloordiv__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rfloordiv__", o2);
+            else
+                return o2._floordiv(o1);
+        }
+    }
+
+    /**
+     * Implements the __ifloordiv__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __ifloordiv__(PyObject o) {
+        PyObject ret = invoke_ex("__ifloordiv__", o);
+        if (ret != null)
+            return ret;
+        return super.__ifloordiv__(o);
+    }
+
+    /**
+     * Implements the __truediv__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __truediv__(PyObject o) {
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__truediv__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__truediv__", o2);
+            else
+                return o1._truediv(o2);
+        }
+    }
+
+    /**
+     * Implements the __rtruediv__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __rtruediv__(PyObject o) {
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rtruediv__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rtruediv__", o2);
+            else
+                return o2._truediv(o1);
+        }
+    }
+
+    /**
+     * Implements the __itruediv__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __itruediv__(PyObject o) {
+        PyObject ret = invoke_ex("__itruediv__", o);
+        if (ret != null)
+            return ret;
+        return super.__itruediv__(o);
+    }
+
+    /**
      * Implements the __mod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/

@@ -167,13 +167,41 @@ public class PyInteger extends PyObject
     public PyObject __div__(PyObject right) {
         if (!canCoerce(right))
             return null;
+        if (Options.divisionWarning > 0)
+            Py.warning(Py.DeprecationWarning, "classic int division");
         return Py.newInteger(divide(value, coerce(right)));
     }
 
     public PyObject __rdiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
+        if (Options.divisionWarning > 0)
+            Py.warning(Py.DeprecationWarning, "classic int division");
         return Py.newInteger(divide(coerce(left), value));
+    }
+
+    public PyObject __floordiv__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return Py.newInteger(divide(value, coerce(right)));
+    }
+
+    public PyObject __rfloordiv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return Py.newInteger(divide(coerce(left), value));
+    }
+
+    public PyObject __truediv__(PyObject right) {
+        if (right instanceof PyInteger)
+            return __float__().__truediv__(right);
+        return null;
+    }
+
+    public PyObject __rtruediv__(PyObject left) {
+        if (left instanceof PyInteger)
+            return left.__float__().__truediv__(this);
+        return null;
     }
 
     private static int modulo(int x, int y, int xdivy) {
