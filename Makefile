@@ -1,11 +1,11 @@
 # GNU make compatible
 
 SUBDIRS= \
-	src/org/python/parser \
-	src/org/python/compiler \
-	src/org/python/core \
-	src/org/python/modules \
-	src/org/python/util
+	org/python/parser \
+	org/python/compiler \
+	org/python/core \
+	org/python/modules \
+	org/python/util
 
 all: subdirs
 
