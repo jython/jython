@@ -5,6 +5,7 @@ XX-Dec-2000 Jython 2.0 alpha 3
   Bug fixes.
     - Fixed a bug that caused Infinite recursion in subpackage 
       import
+    - Fixed conversion error when a long is converted to a java double.
 
 17-Dec-2000 Jython 2.0 alpha 2
 
