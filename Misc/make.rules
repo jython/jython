@@ -21,6 +21,6 @@ CLASSES= $(SOURCES:%.java=%.class)
 all: $(CLASSES)
 
 clean:
-	rm *.class
+	-rm *.class
 
 realclean: clean
