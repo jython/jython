@@ -75,11 +75,15 @@ public class imp {
     static byte[] compileSource(String name, InputStream fp, String fileName) {
 		try {
 			ByteArrayOutputStream ofp = new ByteArrayOutputStream();
-
+    
             String fname = fileName;
             if (fname == null) fname = "<unknown>";
-			org.python.parser.SimpleNode node = parser.parse(fp, "exec", fname);
-			fp.close();
+			org.python.parser.SimpleNode node;
+			try {
+			    node = parser.parse(fp, "exec", fname);
+			} finally {
+			    fp.close();
+			}
 			org.python.compiler.Module.compile(node, ofp, name+"$py",
 				fname, true, false, true);
 

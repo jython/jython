@@ -214,16 +214,18 @@ public class __builtin__ implements InitModule {
 			throw Py.IOError(e);
 		}
 
-		PyCode code = Py.compile(file, name, "exec");
+		PyCode code;
+		
 		try {
-			file.close();
-		} catch (java.io.IOException e) {
-			throw Py.IOError(e);
-		}
+		    code = Py.compile(file, name, "exec");
+		} finally {
+    		try {
+    			file.close();
+    		} catch (java.io.IOException e) {
+    			throw Py.IOError(e);
+    		}
+    	}
 
-
-		//Performance hack?
-		//System.gc();
 		Py.runCode(code, locals, globals);
 	}
 
