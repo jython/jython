@@ -137,7 +137,7 @@ public class PyJavaPackage extends PyObject {
             while  (tok.hasMoreTokens())  {
                 String p = tok.nextToken();
                 String cname = p.trim().intern();
-                __dict__.__setitem__(cname, new PyJavaClass(__name__+'.'+cname));
+                __dict__.__setitem__(cname, PyJavaClass.lookup(__name__+'.'+cname, null));
                 //__all__.append(new PyString(p.trim()));
             }
             _unparsedAll = null;
