@@ -376,8 +376,10 @@ class Compiler:
             self.write('\nLeaving .java files, no compiler specified')
             return
         self.write('\nCompiling .java to .class...')
-        code, outtext, errtext = javac.compile(self.javasources,
-                                               javac=self.options.compiler)
+        code, outtext, errtext = javac.compile(
+            self.javasources,
+            javac=self.options.compiler,
+            options=self.options.jopts)
         print code, outtext, errtext
 	if code <> 0:
 	    print 'ERROR DURING JAVA COMPILATION... EXITING'
