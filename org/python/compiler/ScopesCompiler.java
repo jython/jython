@@ -236,7 +236,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
                 if ((prev&FROM_PARAM) != 0) code_compiler.error("name '"+name+"' is local and global",true,node);
                 if ((prev&GLOBAL) != 0) continue;
                 String what;
-                if ((prev&BOUND) != 0) what = "assignement"; else what = "use";
+                if ((prev&BOUND) != 0) what = "assignment"; else what = "use";
                 code_compiler.error("name '"+name+"' declared global after "+what,false,node);
             }
         }

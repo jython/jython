@@ -2266,18 +2266,21 @@ public class CodeCompiler extends Visitor
         case GET:
             loadFrame();
             if (syminf != null) {
-                if (fast_locals) {
-                    if ((syminf.flags&ScopeInfo.GLOBAL) !=0 && optimizeGlobals) {
-                        code.ldc(name);
-                        if (mrefs.getglobal == 0) {
-                            mrefs.getglobal = code.pool.Methodref(
-                            "org/python/core/PyFrame", "getglobal",
-                            "(Ljava/lang/String;)Lorg/python/core/PyObject;");
-                        }
-                        code.invokevirtual(mrefs.getglobal);
-                        return null;
+                int flags = syminf.flags;
+                if (!my_scope.nested_scopes) flags &= ~ScopeInfo.FREE;
+                if ((flags&ScopeInfo.GLOBAL) !=0 || 
+                     optimizeGlobals&&fast_locals&&(flags&(ScopeInfo.BOUND|ScopeInfo.CELL|ScopeInfo.FREE))==0) {
+                    code.ldc(name);
+                    if (mrefs.getglobal == 0) {
+                        mrefs.getglobal = code.pool.Methodref(
+                        "org/python/core/PyFrame", "getglobal",
+                        "(Ljava/lang/String;)Lorg/python/core/PyObject;");
                     }
-                    if ((syminf.flags&ScopeInfo.GLOBAL)==0 && (syminf.flags&ScopeInfo.CELL)!=0) {
+                    code.invokevirtual(mrefs.getglobal);
+                    return null;
+                }
+                if (fast_locals) {
+                    if ((flags&ScopeInfo.CELL) != 0) {
                         code.iconst(syminf.env_index);
                         if (mrefs.getderef == 0) {
                             mrefs.getderef = code.pool.Methodref(
@@ -2287,7 +2290,7 @@ public class CodeCompiler extends Visitor
                         code.invokevirtual(mrefs.getderef);
                         return null;
                     }
-                    if ((syminf.flags&ScopeInfo.GLOBAL)==0 && (syminf.flags&ScopeInfo.BOUND)!=0) {
+                    if ((flags&ScopeInfo.BOUND) != 0) {
                         code.iconst(syminf.locals_index);
                         if (mrefs.getlocal2 == 0) {
                             mrefs.getlocal2 = code.pool.Methodref(
@@ -2298,7 +2301,7 @@ public class CodeCompiler extends Visitor
                         return null;
                     }
                 }
-                if (my_scope.nested_scopes && (syminf.flags&ScopeInfo.FREE) != 0) {
+                if ((flags&ScopeInfo.FREE) != 0) {
                     code.iconst(syminf.env_index);
                     if (mrefs.getderef == 0) {
                         mrefs.getderef = code.pool.Methodref(

@@ -35,7 +35,7 @@ public class Future extends Object {
                 nested_scopes = true;
                 continue;
             }
-            throw new ParseException("future feature "+feature+" is not defined");
+            throw new ParseException("future feature "+feature+" is not defined",cand);
         }        
         return true;
     }
@@ -44,6 +44,7 @@ public class Future extends Object {
         if (cflags != null) {
             nested_scopes = cflags.nested_scopes;
         }
+        
         if ( node.id != PythonGrammarTreeConstants.JJTFILE_INPUT && 
             node.id != PythonGrammarTreeConstants.JJTSINGLE_INPUT) return;
         int n = node.getNumChildren();
