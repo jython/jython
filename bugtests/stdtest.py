@@ -31,6 +31,7 @@ skipped = [
     'test_future3', # called as part of test_future
     'test_gc',
     'test_gettext',
+    'test_getargs', # Test a python bug, this throws a different exc in jy.
     'test_gdbm',
     'test_gl',
     'test_grp',
