@@ -11,7 +11,7 @@ import java.util.zip.ZipEntry;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLDecoder;
+//import java.net.URLDecoder;
 import java.lang.reflect.Modifier;
 
 /** Abstract package manager that gathers info about statically known classes
@@ -190,7 +190,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 if(jarconn.getURL().getProtocol().equals("file")) {
                     // ??pending: need to use java2 URLDecoder.decode?
                     // but under 1.1 this is absent and should be simulated.                    
-                    jarfile = new File(jarurl.getPath().replace('/',File.separatorChar)); 
+                    jarfile = new File(jarurl.getFile().replace('/',File.separatorChar)); 
                 }
                 else localfile = false;
             }
@@ -224,7 +224,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                     if(localfile) {
                         jarname = jarfile.getName();
                     } else {
-                        jarname = jarurl.getPath();
+                        jarname = jarurl.getFile();
                         int slash = jarname.lastIndexOf('/');
                         if (slash != -1)
                         jarname=jarname.substring(slash+1);
