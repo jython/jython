@@ -38,21 +38,23 @@ public class PyJavaInstance
 
 
     public void __init__(PyObject[] args, String[] keywords) {
-        PyReflectedConstructor init = ((PyJavaClass)__class__).__init__;
         //javaProxies = new Object[1];
-        if (init == null) {
-            Class pc = __class__.proxyClass;
-            if (pc != null) {
-                int mods = pc.getModifiers();
-                if (Modifier.isInterface(mods)) {
-                    throw Py.TypeError("can't instantiate interface ("+
-                                       __class__.__name__+")");
-                }
-                else if (Modifier.isAbstract(mods)) {
-                    throw Py.TypeError("can't instantiate abstract class ("+
-                                       __class__.__name__+")");
-                } 
+
+        Class pc = __class__.proxyClass;
+        if (pc != null) {
+            int mods = pc.getModifiers();
+            if (Modifier.isInterface(mods)) {
+                throw Py.TypeError("can't instantiate interface ("+
+                                   __class__.__name__+")");
             }
+            else if (Modifier.isAbstract(mods)) {
+                throw Py.TypeError("can't instantiate abstract class ("+
+                                   __class__.__name__+")");
+            } 
+        }
+
+        PyReflectedConstructor init = ((PyJavaClass)__class__).__init__;
+        if (init == null) {
             throw Py.TypeError("no public constructors for "+
                                __class__.__name__);
         }
