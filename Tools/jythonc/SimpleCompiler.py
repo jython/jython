@@ -4,6 +4,7 @@ from BaseEvaluator import BaseEvaluator
 from PythonVisitor import Arguments
 import string
 import jast
+import ImportName
 
 
 class Reference:
