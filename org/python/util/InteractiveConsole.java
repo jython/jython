@@ -32,9 +32,11 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     public static String getDefaultBanner() {
+        String compiler = System.getProperty("java.compiler");
+        
         return "JPython " + PySystemState.version + " on " +
             PySystemState.platform + " (JIT: " +
-            System.getProperty("java.compiler") + ")" +
+            ((compiler == null) ? "unknown" : compiler) +  ")" + 
             "\n" + PySystemState.copyright;
     }
 
