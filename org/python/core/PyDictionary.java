@@ -219,26 +219,22 @@ public class PyDictionary extends PyObject {
             }
 
             public PyObject __call__(PyObject arg0, PyObject arg1) {
-                self.dict_setdefault(arg0, arg1);
-                return Py.None;
+                return self.dict_setdefault(arg0, arg1);
             }
 
             public PyObject inst_call(PyObject gself, PyObject arg0,
                     PyObject arg1) {
                 PyDictionary self = (PyDictionary) gself;
-                self.dict_setdefault(arg0, arg1);
-                return Py.None;
+                return self.dict_setdefault(arg0, arg1);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.dict_setdefault(arg0);
-                return Py.None;
+                return self.dict_setdefault(arg0);
             }
 
             public PyObject inst_call(PyObject gself, PyObject arg0) {
                 PyDictionary self = (PyDictionary) gself;
-                self.dict_setdefault(arg0);
-                return Py.None;
+                return self.dict_setdefault(arg0);
             }
 
         }
