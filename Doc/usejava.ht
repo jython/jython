@@ -34,6 +34,7 @@ when working under JPython.  There are a few things to keep in mind.
 
 <H4>Importing</H4>
 
+
 <P>You can import from any Java package, just like you would from a
 Python package.  However, you are not allowed to do &quot;from package
 import *&quot; with Java packages.  i.e. &quot;from java.lang import
