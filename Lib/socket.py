@@ -27,6 +27,8 @@ SOCK_STREAM = 2
 SOCK_RAW = 3 # not supported
 SOCK_RDM = 4 # not supported
 SOCK_SEQPACKET = 5 # not supported
+SOL_SOCKET = 0xFFFF
+SO_REUSEADDR = 4
 
 def _gethostbyaddr(name):
     # This is as close as I can get; at least the types are correct...
@@ -84,6 +86,7 @@ class _tcpsocket:
     addr = None
     server = 0
     file_count = 0
+    reuse_addr = 0
 
     def bind(self, addr, port=None):
 	if port is not None:
@@ -106,6 +109,8 @@ class _tcpsocket:
 	    self.sock = java.net.ServerSocket(port, backlog, a)
 	else:
 	    self.sock = java.net.ServerSocket(port, backlog)
+        if hasattr(self.sock, "setReuseAddress"):
+            self.sock.setReuseAddress(self.reuse_addr)
 
     def accept(self):
 	"This signifies a server socket"
@@ -131,6 +136,8 @@ class _tcpsocket:
 
     def _setup(self, sock):
 	self.sock = sock
+        if hasattr(self.sock, "setReuseAddress"):
+            self.sock.setReuseAddress(self.reuse_addr)
 	self.istream = sock.getInputStream()
 	self.ostream = sock.getOutputStream()
 
@@ -168,6 +175,14 @@ class _tcpsocket:
 	host = self.sock.getInetAddress().getHostAddress()
 	port = self.sock.getPort()
 	return (host, port)
+        
+    def setsockopt(self, level, optname, value):
+        if optname == SO_REUSEADDR:
+            self.reuse_addr = value
+
+    def getsockopt(self, level, optname):
+        if optname == SO_REUSEADDR:
+            return self.reuse_addr
 
     def makefile(self, mode="r", bufsize=-1):
         file = None
