@@ -23,6 +23,10 @@ class JavaArchive:
         self.entries = []
         self.packages = packages
         self.manifest = []
+        self.singleclasses = []
+
+    def addSingleClass(self, class_):
+        self.singleclasses.append(class_)
 
     def addFile(self, rootdir, filename):
         self.files.append( (rootdir, filename) )
@@ -72,12 +76,27 @@ class JavaArchive:
         for package, skiplist in self.packages:
             self.addPackage(package, skiplist)
 
+        for class_ in self.singleclasses:
+            self.addOneClass(class_)
+
         self.dumpManifest()
 
     def dump(self, filename):
         self.zipfile = ZipOutputStream(FileOutputStream(filename))
         self.dumpFiles()
         self.zipfile.close()
+
+    # add just one class from a package
+    def addOneClass(self, pkgclass):
+        parts = pkgclass.split('.')
+        package = string.join(parts[:-1], '.')
+        pkg = lookup(package)
+        filename = os.path.join(pkg.__path__[0], parts[-1]) + '.class'
+        entryname = string.join(parts, '/') + '.class'
+        self.zipfile.putNextEntry(ZipEntry(entryname))
+        instream = FileInputStream(filename)
+        copy(instream, self.zipfile)
+        instream.close()
 
     # The next three methods handle packages (typically org.python.core, ...)
     def addPackage(self, package, skiplist=[]):
