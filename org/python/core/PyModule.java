@@ -11,6 +11,7 @@ public class PyModule extends PyObject
         else
             __dict__ = dict;
         __dict__.__setitem__("__name__", new PyString(name));
+        __dict__.__setitem__("__doc__", Py.None);
     }
 
     public PyObject __findattr__(String attr) {
