@@ -643,7 +643,7 @@ public class PyJavaClass extends PyClass {
     
     PyObject[] lookupGivingClass(String name, boolean stop_at_java) {
         if (stop_at_java)
-            return null;
+            return new PyObject[] {null, null};
         if (!initialized)
             initialize();
         if (name == "__init__") {
