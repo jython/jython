@@ -40,16 +40,17 @@ public class PyMethod extends PyObject {
             return im_func.__call__(im_self, args, keywords);
         // unbound method.
         boolean badcall = false;
-        if (args.length < 1)
-            badcall = true;
-        else if (im_class == null)
-            // An example of this is running any function defined in the os
-            // module.  If import os, you'll find it's a jclass object
-            // instead of a module object.  That's wrong, but not easily
-            // fixed right now.  Running os.makedirs('somedir') creates an
-            // unbound method with im_class == null.  For backwards
-            // compatibility, let this pass the call test
+        if (im_class == null)
+            // TBD: An example of this is running any function defined in
+            // the os module.  If you "import os", you'll find it's a
+            // jclass object instead of a module object.  Still unclear
+            // whether that's wrong, but it's definitely not easily fixed
+            // right now.  Running, e.g. os.getcwd() creates an unbound
+            // method with im_class == null.  For backwards compatibility,
+            // let this pass the call test
             ;
+        else if (args.length < 1)
+            badcall = true;
         else
             // first argument must be an instance who's class is im_class
             // or a subclass of im_class
