@@ -1506,7 +1506,7 @@ public final class Py
         byte[] bytes = bytestream.toByteArray();
         File dir = new File(dirname);
         File file = makeFilename(name, dir);
-        file.getParentFile().mkdirs();
+        new File(file.getParent()).mkdirs();
         try {
             FileOutputStream o = new FileOutputStream(file);
             o.write(bytes);
