@@ -340,18 +340,37 @@ MORE : /* Strings */
 |   < (["u", "U"])? (["r", "R"])? "\"\"\"" > :  IN_STRING23
 }
 
-<IN_STRING11> TOKEN : { <SINGLE_STRING: "'"> : DEFAULT}
-<IN_STRING21> TOKEN : { <SINGLE_STRING2: "\""> : DEFAULT}
-<IN_STRING13> TOKEN : { <TRIPLE_STRING: "'''"> : DEFAULT}
-<IN_STRING23> TOKEN : { <TRIPLE_STRING2: "\"\"\""> :DEFAULT }
+<IN_STRING11> TOKEN : { <SINGLE_STRING: "'"> {
+    matchedToken.image = image.toString(); } : DEFAULT}
+<IN_STRING21> TOKEN : { <SINGLE_STRING2: "\""> {
+    matchedToken.image = image.toString(); } : DEFAULT}
+<IN_STRING13> TOKEN : { <TRIPLE_STRING: "'''"> {
+    matchedToken.image = image.toString(); } : DEFAULT}
+<IN_STRING23> TOKEN : { <TRIPLE_STRING2: "\"\"\""> { 
+    matchedToken.image = image.toString(); } : DEFAULT}
 
-<IN_STRING11> MORE: { <("\\" ("\\"|"'"|"\r\n"|"\n"|"\r")) | ~["\n","\r"]> }
-<IN_STRING21> MORE: { <("\\" ("\\"|"\""|"\r\n"|"\n"|"\r")) | ~["\n","\r"]> }
+<IN_STRING11,IN_STRING21> MORE: 
+{
+    <"\\\r\n">           { image.setLength(image.length()-3); }
+|   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); }
+}
+
+<IN_STRING11> MORE: { <("\\" ("\\"|"'")) | ~["\n","\r"]> }
+<IN_STRING21> MORE: { <("\\" ("\\"|"\"")) | ~["\n","\r"]> }
 <IN_STRING13> MORE: { "\\'''" }
 <IN_STRING23> MORE: { "\\\"\"\"" }
 
 <IN_STRING13, IN_STRING23> MORE:
-{ <"\r\n"|"\n"|"\r">  | <~["\n","\r"]> }
+{
+    <"\r\n"> {
+        int l = image.length(); 
+        image.setLength(l-1);
+        image.setCharAt(l-2, '\n');
+    } 
+|   <"\n">
+|   <"\r"> { image.setCharAt(image.length()-1, '\n'); }
+|   <~["\n","\r"]> 
+}
 
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
