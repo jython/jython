@@ -29,6 +29,8 @@ from javashell import shellexecute
 
 __all__ = ["popen", "popen2", "popen3", "popen4", "Popen3", "Popen4"]
 
+_active = []
+
 class _ProcessFile:
     """Python file object that returns the process exit status from
     the close method.
@@ -72,7 +74,7 @@ class Popen3:
         else:
             self._childerr = None
         import threading
-        childWaiterLock = threading.Lock()
+        self.childWaiterLock = threading.Lock()
 
         if bufsize > 0:
             self._tochild = BufferedOutputStream( self._tochild, bufsize )
@@ -286,36 +288,14 @@ def _test():
 #        raise ValueError("_active not empty")
     print "All OK"
 
-    msg = "hello"
-    f = popen( ["d:\\winnt\\system32\\cmd.exe", "/c", "echo", msg] )
-    got = f.read().strip()
-    print "popen:", got
-    assert got == msg
-
-    for func in popen2, popen3, popen4:
-        f = func( ["d:\\winnt\\system32\\cmd.exe", "/c", "echo", msg] )
-        got = f[0].read().strip()
-        print func, got
-        assert got == msg
-        
-    p = Popen3( ["d:\\winnt\\system32\\cmd.exe"], 1 )
-    p.tochild.write( "echo hello\n" )
-    p.tochild.write( "zip -h\n" )
-    p.tochild.write( "notacomand\n" )
-    p.tochild.write( "exit\n" )
+    p = Popen3( cmd )
+    q = "This is\na test of\nwriting\n"
+    p.tochild.write( q )
     p.tochild.close()
-
-    print "fromchild:", p.fromchild.read()
-    print "childerr (error message from the notacommand above):", \
-          p.childerr.read()
-    print p.poll()
-
-    p = Popen3( "more" )
-    p.tochild.write( "This is\na test of\nwriting\n" )
-    p.tochild.close()
-    print p.fromchild.read()
-    print p.poll()
-
+    r = p.fromchild.read()
+    x = p.poll()
+    assert x == 0
+    assert r == q 
 
 if __name__ == '__main__':
     _test()
