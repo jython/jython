@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.compiler;
+
 import java.util.*;
 import java.io.*;
 
@@ -12,9 +14,11 @@ class Bytes {
 	if (o instanceof Bytes) {
 	    byte[] odata = ((Bytes)o).data;
 	    int n = data.length;
-	    if (odata.length != n) return false;
-	    for(int i=0; i<n; i++) {
-		if (data[i] != odata[i]) return false;
+	    if (odata.length != n)
+		return false;
+	    for (int i=0; i<n; i++) {
+		if (data[i] != odata[i])
+		    return false;
 	    }
 	    return true;
 	}
@@ -100,7 +104,8 @@ public class ConstantPool {
 	tdata.writeShort(ic);
 	tdata.writeShort(nt);
 	int size = 1;
-	if (type.equals("D") || type.equals("J")) size = 2;
+	if (type.equals("D") || type.equals("J"))
+	    size = 2;
 	int index = addConstant(1);
 	sizes[index] = size;
 	//System.out.println("field: "+c+", "+name+", "+type+": "+index);
@@ -118,7 +123,8 @@ public class ConstantPool {
 	while (++i<n) {
 	    switch (c[i]) {
 	    case ')':
-		if (!includeReturn) return stack;
+		if (!includeReturn)
+		    return stack;
 		ret=true;
 		continue;
 	    case '[':
