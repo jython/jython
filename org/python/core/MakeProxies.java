@@ -54,7 +54,8 @@ class MakeProxies
 
     public static synchronized Class makeProxy(Class superclass,
                                                Vector vinterfaces,
-                                               String name,
+                                               String className,
+                                               String proxyName,
                                                PyObject dict)
     {
         Class[] interfaces = new Class[vinterfaces.size()];
@@ -62,21 +63,20 @@ class MakeProxies
         for (int i=0; i<vinterfaces.size(); i++) {
             interfaces[i] = (Class)vinterfaces.elementAt(i);
         }
-        String proxyName = proxyPrefix + name + "$" + proxyNumber++;
+        String fullProxyName = proxyPrefix + proxyName + "$" + proxyNumber++;
         String pythonModuleName;
         PyObject mn=dict.__finditem__("__module__");
         if (mn==null)
             pythonModuleName = "foo";
         else
             pythonModuleName = (String)mn.__tojava__(String.class);
-
-        JavaMaker jm = new JavaMaker(superclass, interfaces, name,
-                                     pythonModuleName, proxyName, dict);
+        JavaMaker jm = new JavaMaker(superclass, interfaces, className,
+                                     pythonModuleName, fullProxyName, dict);
         try {
             jm.build();
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             jm.classfile.write(bytes);
-            Py.saveClassFile(proxyName, bytes);
+            Py.saveClassFile(fullProxyName, bytes);
 
             return makeClass(superclass, vinterfaces, jm.myClass, bytes);
         }
