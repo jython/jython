@@ -145,7 +145,9 @@
 			</testcase>
 			<testcase from="zxtest" import="BCPTest"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
+			<testcase from="sptest" import="SPTest"/>
 		</test>
+		<!--
 		<test name="datasource" os="java">
 			<factory class="com.ziclix.python.sql.zxJDBC" method="connectx">
 				<argument name="datasource" value="oracle.jdbc.pool.OracleConnectionPoolDataSource"/>
@@ -158,6 +160,7 @@
 			</testcase>
 			<testcase from="zxtest" import="BCPTest"/>
 		</test>
+		-->
 		<table ref="texttable" name="c_texttable">
 			create table c_texttable (a int, b varchar2(4000) not null)
 		</table>

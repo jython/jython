@@ -338,31 +338,18 @@ class zxCoreTest(zxJDBCTest):
 		finally:
 			c.close()
 
-	def __updatecount(self, insert_only=0):
-		from com.ziclix.python.sql.handler import UpdateCountDataHandler
+	def testUpdateCount(self, insert_only=0):
 		c = self.cursor()
 		try:
-			c.datahandler = UpdateCountDataHandler(c.datahandler)
-			msg = "wrong instance, expected [UpdateCountDataHandler], got [%s]" % (str(c.datahandler))
-			assert isinstance(c.datahandler, UpdateCountDataHandler), msg
 			c.execute("insert into zxtesting values (?, ?, ?)", [(500, 'bz', 'or')])
-			assert c.datahandler.updateCount == 1, "expected [1], got [%d]" % (c.datahandler.updateCount)
+			assert c.updatecount == 1, "expected [1], got [%d]" % (c.updatecount)
 			# there's a *feature* in the mysql engine where it returns 0 for delete if there is no
 			#  where clause, regardless of the actual value.  using a where clause forces it to calculate
 			#  the appropriate value
 			c.execute("delete from zxtesting where 1>0")
-			if not insert_only:
-				assert c.datahandler.updateCount == 8, "expected [8], got [%d]" % (c.datahandler.updateCount)
+			assert c.updatecount == 8, "expected [8], got [%d]" % (c.updatecount)
 		finally:
 			c.close()
-
-	def testUpdateCountDataHandler(self):
-		"""testing custom data handler for getting the update count"""
-		self.__updatecount()
-
-	def testUpdateCountDataHandlerInsertOnly(self):
-		"""testing custom data handler for getting the update count on inserts only"""
-		self.__updatecount(1)
 
 	def _test_time(self, (tabname, sql), factory, values, _type, _cmp=cmp):
 		c = self.cursor()
