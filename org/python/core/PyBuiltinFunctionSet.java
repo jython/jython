@@ -16,6 +16,7 @@ public class PyBuiltinFunctionSet extends PyObject
     // used as an index into a big switch statement in the various derived
     // class's __call__() methods.
     protected int index;
+    protected String doc;
 
     static {
         PyString[] members = new PyString[3];
@@ -34,6 +35,7 @@ public class PyBuiltinFunctionSet extends PyObject
         this.minargs = minargs;
         this.maxargs = maxargs;
         this.isMethod = isMethod;
+        this.doc = doc;
 
         __name__ = new PyString(name);
         if (doc == null)
@@ -48,8 +50,13 @@ public class PyBuiltinFunctionSet extends PyObject
     }
 
     public PyObject _doget(PyObject container, PyObject wherefound) {
-        if (isMethod)
-            __self__ = container;
+        if (isMethod) {
+            // TBD: is there a better way?
+            PyBuiltinFunctionSet unique = new PyBuiltinFunctionSet(
+                name, index, minargs, maxargs, isMethod, doc);
+            unique.__self__ = container;
+            return unique;
+        }
         return this;
     }
         
