@@ -43,7 +43,8 @@ public class ClassFile {
     public final static int ABSTRACT = 0x400;
 
     public static String fixName(String n) {
-	if (n.indexOf('.') == -1) return n;
+	if (n.indexOf('.') == -1)
+	    return n;
 	char[] c = n.toCharArray();
 	for(int i=0; i<c.length; i++) {
 	    if (c[i] == '.') c[i] = '/';
@@ -74,7 +75,9 @@ public class ClassFile {
 	interfaces = new_interfaces;
     }
 
-    public Code addMethod(String name, String type, int access) throws IOException {
+    public Code addMethod(String name, String type, int access)
+	throws IOException
+    {
 	Code code = new Code(type, pool, (access & STATIC) == STATIC);
 	Method m = new Method(pool.UTF8(name), pool.UTF8(type), access,
 			      new Attribute[] {code});
@@ -82,19 +85,27 @@ public class ClassFile {
 	return code;
     }
 
-    public void addField(String name, String type, int access) throws IOException {
-	Method m = new Method(pool.UTF8(name), pool.UTF8(type), access, new Attribute[0]);
+    public void addField(String name, String type, int access)
+	throws IOException
+    {
+	Method m = new Method(pool.UTF8(name), pool.UTF8(type), access,
+			      new Attribute[0]);
 	fields.addElement(m);
     }
 
-    public static void writeAttributes(DataOutputStream stream, Attribute[] atts) throws IOException {
+    public static void writeAttributes(DataOutputStream stream,
+				       Attribute[] atts)
+	throws IOException
+    {
 	stream.writeShort(atts.length);
 	for(int i=0; i<atts.length; i++) {
 	    atts[i].write(stream);
 	}
     }
 
-    public void writeMethods(DataOutputStream stream, Vector methods) throws IOException {
+    public void writeMethods(DataOutputStream stream, Vector methods)
+	throws IOException
+    {
 	stream.writeShort(methods.size());
 	for(int i=0; i<methods.size(); i++) {
 	    Method m = (Method)methods.elementAt(i);
@@ -136,7 +147,6 @@ public class ClassFile {
 		
 	for(int i=0; i<n; i++) {
 	    ((Attribute)attributes.elementAt(i)).write(stream);
-		    
 	}
     }
 
