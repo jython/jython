@@ -227,8 +227,12 @@ public class imp {
 
         int n = path.__len__();
 
+//         System.out.println("loading module: " + modName + " (" + n + ")");
+
         for (int i=0; i<n; i++) {
             String dirName = path.get(i).toString();
+            // TBD: probably should tie this into -v option a la CPython
+//             System.out.println("loadFromPath: " + dirName);
             if (dirName.endsWith(".jar") || dirName.endsWith(".zip")) {
                 // Handle .jar and .zip files on the path
                 // Sometime in the future
