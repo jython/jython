@@ -446,6 +446,8 @@
                 warnings.py,
                 encodings/*.py,
                 email/*.py,
+                email/test/*.py,
+                email/test/data/*,
                 test/**,
             "/>
         </copy>
