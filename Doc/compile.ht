@@ -11,15 +11,42 @@ jython.jar.</P>
 for whatever reason, the following offers a few tips to keep in
 mind.</P>
 
-<P>Some of the sources in the org.python.parser package are generated 
+<ul>
+<li>The source directories from CVS or the nightly buils contain both 
+makefiles and a build.xml file. Only the build.xml is updated at this time.
+We are using ant-1.2 to compile the sources and create the .jar file.
+<p>
+
+<li>Some of the sources in the org.python.parser package are generated 
 from python.jtt file by the JavaCC parser generator. If you need to 
 make changes to the grammar file you will need to download this 
-<A HREF="http://www.metamata.com/javacc/">JavaCC</A> too. The generated
-files are also in the distribution, so usually this is not necessary.
+JavaCC. The generated files are also in the distribution, so usually
+this is not necessary.
 
 <P>To regenerate the parser from the grammar, run jjtree on python.jjt, 
 and then run javacc on the resulting python.jj. This should produce all
 of the required source files to build the org.python.parser package.
+The build.xml file already contain the needed entries to run the JavaCC
+program when the python.jjt is modified.
+<p>
+
+<li>The source directories contain several files that require Java2. These
+files are normally easily recoqnizable because they have the number "2"
+in their name.
+
+<P>When compiling jython with Java1 compiler (like the JDK1.1), these
+java2 files can be safely ignored. Jython will work even when these classes
+files are missing.
+The build.xml file have a conditional check and will not try to compile
+the Java2 sources when using a Java1 compiler.
+<p>
+
+<li>One of the sources depends on the servlet classes and can only compile
+when servlet.jar is included on the classpath. Again, the build.xml have
+a conditional check and will not compile the PyServlet class if the 
+servlet classes isn't available during compilation.
+
+</ul>
 
 <P>If you have further interest in the Jython source and Jython's 
 continued development, you can read the archives for the 
@@ -31,5 +58,11 @@ the list.
 <P>
 
 <hr>
-<sup>1</sup>JavaCC version 2.0 is used to create the generated sources
-included with the distribution.
+
+Suggested tools and support software:
+
+<ul>
+<li> <A HREF="http://www.metamata.com/javacc/">JavaCC 2.0</A>
+<li> <A HREF="http://jakarta.apache.org/ant/">Ant 1.2</A>
+<li> <A HREF="http://java.sun.com/products/servlet/index.html">Servlet classes</A>
+</ul>
