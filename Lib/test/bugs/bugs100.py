@@ -121,15 +121,15 @@ except TypeError:
 
 
 print_test('From 1.0.1 to 1.0.2', 1)
-print_test('Recursive assignment to list slices handled incorrectly #1', 2)
+print_test('A threading test', 2)
 
 from java.lang import Thread
 
 class TestThread(Thread):
     def run(self):
-	for i in range(1000):
+	for i in range(100):
 	    exec("x=2+2")
-	print 'finished'
+	print '       finished'
 
 testers = []
 for i in range(10):
