@@ -270,7 +270,7 @@ public class ProxyMaker
 
                     int newInteger1 = code.pool.Methodref(
                         "org/python/core/Py",
-                        "newInteger", "(J)Lorg/python/core/PyInteger;");
+                        "newInteger", "(J)Lorg/python/core/PyObject;");
                     code.invokestatic(newInteger1);
                     break;
                 case tFloat:

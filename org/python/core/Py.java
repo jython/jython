@@ -314,9 +314,12 @@ public final class Py {
             return new PyInteger(i);
         }
     }
-    // Very bad behavior...
-    public static PyInteger newInteger(long i) {
-        return new PyInteger((int)i);
+
+    public static PyObject newInteger(long i) {
+        if (i < Integer.MIN_VALUE || i > Integer.MAX_VALUE)
+            return new PyLong(i);
+        else
+            return newInteger((int)i);
     }
     
     public static PyLong newLong(String s) {
