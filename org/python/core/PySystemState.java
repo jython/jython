@@ -161,10 +161,14 @@ public class PySystemState extends PyObject {
             if (exc == null) return null;
             return exc.traceback;
         }
+        if (__dict__ != null) {
+            PyObject ret = __dict__.__finditem__(name);
+            if (ret != null) return ret;
+        }
 
         return super.__findattr__(name);
     }
-    
+    public PyObject __dict__;
 	public void __setattr__(String name, PyObject value) {
 		if (__class__ == null) return;
 		PyObject ret = __class__.lookup(name, false);
@@ -172,8 +176,29 @@ public class PySystemState extends PyObject {
 		    ret._doset(this, value);
 		    return;
 		}
-		throw Py.AttributeError(name);
-	}    
+		if (__dict__ == null) {
+		    __dict__ = new PyStringMap();
+		}
+		__dict__.__setitem__(name, value);
+		//throw Py.AttributeError(name);
+	}
+	
+	public void __delattr__(String name) {
+		if (__dict__ != null) {
+		    __dict__.__delitem__(name);
+		    return;
+		}
+		throw Py.AttributeError("del '"+name+"'");
+	}
+	
+	public PyObject __dir__() {
+	    PyObject ret = __class__.__dir__();
+	    if (__dict__ != null) {
+	        ret = ret._add(((PyStringMap)__dict__).keys());
+	        ((PyList)ret).sort();
+	    }
+	    return ret;
+	}
 
     String safeRepr() {
         return "module 'sys'";
