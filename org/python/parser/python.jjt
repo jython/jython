@@ -217,8 +217,13 @@ SKIP :
 
 <INDENTING, INDENTATION_UNCHANGED> SPECIAL_TOKEN: /* COMMENTS */
 {
-    <SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* ("\r\n" | "\n" | "\r")>
-        { indent = 0; }
+    <SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* ("\r\n" | "\n" | "\r")> {
+        indent = 0;
+        if (indent == indentation[level])
+            SwitchTo(INDENTATION_UNCHANGED);
+        else
+            SwitchTo(INDENTING);
+    }
 }
 
 
