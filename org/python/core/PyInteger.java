@@ -270,6 +270,9 @@ public class PyInteger extends PyObject
         }
     }
 
+    public boolean isMappingType() { return false; }
+    public boolean isSequenceType() { return false; }
+
     // __class__ boilerplate -- see PyObject for details
     public static PyClass __class__;
 

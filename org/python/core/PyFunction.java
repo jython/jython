@@ -63,6 +63,10 @@ public class PyFunction extends PyObject
         throwReadonly(name);
     }
 
+    public boolean isMappingType() { return false; }
+    public boolean isNumberType() { return false; }
+    public boolean isSequenceType() { return false; }
+
     public PyObject __findattr__(String name) {
         // these are special, everything else is findable by reflection
         if (name == "func_doc")

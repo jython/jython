@@ -258,6 +258,9 @@ abstract public class PySequence extends PyObject
         return ret;
     }
 
+    public boolean isMappingType() { return false; }
+    public boolean isNumberType() { return false; }
+
     protected static final int getStep(PyObject s_step) {
         int step = getIndex(s_step, 1);
         if (step == 0) {

@@ -69,6 +69,10 @@ public class PyBuiltinFunctionSet extends PyObject implements Cloneable
             return "<builtin function '"+name+"'>";
     }
 
+    public boolean isMappingType() { return false; }
+    public boolean isNumberType() { return false; }
+    public boolean isSequenceType() { return false; }
+
     public PyException argCountError(int nargs) {
         if (minargs == maxargs) {
             return Py.TypeError(name+"(): expected "+minargs+" args; got "+
