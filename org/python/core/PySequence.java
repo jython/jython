@@ -201,6 +201,25 @@ abstract public class PySequence extends PyObject
         return s1 < s2 ? -1 : (s1 > s2 ? 1: 0);
     }
 
+    // Return a copy of a sequence where the __len__() method is 
+    // telling the thruth.
+    protected static PyObject fastSequence(PyObject seq, String msg) {
+        if (seq instanceof PyList || seq instanceof PyTuple)
+            return seq;
+
+        if (!seq.isSequenceType())
+             throw Py.TypeError(msg);
+
+        int n = seq.__len__();
+
+        PyList list = new PyList();
+        PyObject item;
+        for (int i = 0; (item = list.__finditem__(i)) != null; i++) {
+            list.append(item);
+        }
+        return list;
+    }
+
     protected static final int sliceLength(int start, int stop, int step) {
         //System.err.println("slice: "+start+", "+stop+", "+step);
         int ret;
@@ -394,15 +413,6 @@ abstract public class PySequence extends PyObject
                     "sequence subscript must be integer or slice");
             }
         }
-    }
-
-    public PyObject __mul__(PyObject count) {
-        int repeats = Py.py2int(count, "can't multiply sequence with non-int");
-        return repeat(repeats >= 0 ? repeats : 0);
-    }
-
-    public PyObject __rmul__(PyObject count) {
-        return __mul__(count);
     }
 
     public synchronized Object __tojava__(Class c) {

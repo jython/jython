@@ -89,26 +89,79 @@ public class PyFloat extends PyObject
         }
     }
 
+    private static final boolean canCoerce(PyObject other) {
+        return other instanceof PyFloat || other instanceof PyInteger ||
+            other instanceof PyLong;
+    }
+
+    private static final double coerce(PyObject other) {
+        if (other instanceof PyFloat)
+            return ((PyFloat) other).value;
+        else if (other instanceof PyInteger)
+            return ((PyInteger) other).getValue();
+        else if (other instanceof PyLong)
+            return ((PyLong) other).doubleValue();
+        else
+            throw Py.TypeError("xxx");
+    }
+        
+
+        
     public PyObject __add__(PyObject right) {
-        return new PyFloat(value+((PyFloat)right).value);
+        if (!canCoerce(right))
+            return null;
+        double rightv = coerce(right);
+        return new PyFloat(value + rightv);
+    }
+
+    public PyObject __radd__(PyObject left) {
+        return __add__(left);
     }
 
     public PyObject __sub__(PyObject right) {
-        return new PyFloat(value-((PyFloat)right).value);
+        if (!canCoerce(right))
+            return null;
+        double rightv = coerce(right);
+        return new PyFloat(value - rightv);
+    }
+
+    public PyObject __rsub__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        double leftv = coerce(left);
+        return new PyFloat(leftv - value);
     }
 
     public PyObject __mul__(PyObject right) {
-        return new PyFloat(value*((PyFloat)right).value);
+        if (!canCoerce(right))
+            return null;
+        double rightv = coerce(right);
+        return new PyFloat(value * rightv);
+    }
+
+    public PyObject __rmul__(PyObject left) {
+        return __mul__(left);
     }
 
     public PyObject __div__(PyObject right) {
-        double y = ((PyFloat)right).value;
-        if (y == 0)
+        if (!canCoerce(right))
+            return null;
+        double rightv = coerce(right);
+        if (rightv == 0)
             throw Py.ZeroDivisionError("float division");
-        return new PyFloat(value/y);
+        return new PyFloat(value / rightv);
     }
 
-    private double modulo(double x, double y) {
+    public PyObject __rdiv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        double leftv = coerce(left);
+        if (value == 0)
+            throw Py.ZeroDivisionError("float division");
+        return new PyFloat(leftv / value);
+    }
+
+    private static double modulo(double x, double y) {
         if (y == 0)
             throw Py.ZeroDivisionError("float modulo");
         double z = Math.IEEEremainder(x, y);
@@ -118,27 +171,70 @@ public class PyFloat extends PyObject
     }
 
     public PyObject __mod__(PyObject right) {
-        return new PyFloat(modulo(value, ((PyFloat)right).value));
+        if (!canCoerce(right))
+            return null;
+        double rightv = coerce(right);
+        return new PyFloat(modulo(value, rightv));
+    }
+
+    public PyObject __rmod__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        double leftv = coerce(left);
+        return new PyFloat(modulo(leftv, value));
     }
 
     public PyObject __divmod__(PyObject right) {
-        double y = ((PyFloat)right).value;
-        if (y == 0)
+        if (!canCoerce(right))
+            return null;
+        double rightv = coerce(right);
+
+        if (rightv == 0)
             throw Py.ZeroDivisionError("float division");
-        double z = Math.floor(value/y);
+        double z = Math.floor(value / rightv);
 
         return new PyTuple(
-            new PyObject[] {new PyFloat(z), new PyFloat(value-z*y)}
+            new PyObject[] {new PyFloat(z), new PyFloat(value-z*rightv)}
             );
     }
 
-    public PyObject __pow__(PyObject right, PyObject modulo) {
-        // Rely completely on Java's pow function
+    public PyObject __rdivmod__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        double leftv = coerce(left);
 
-        double iw = ((PyFloat)right).value;
+        if (value == 0)
+            throw Py.ZeroDivisionError("float division");
+        double z = Math.floor(leftv / value);
+
+        return new PyTuple(
+            new PyObject[] {new PyFloat(z), new PyFloat(leftv-z*value)}
+            );
+    }
+
+
+    public PyObject __pow__(PyObject right, PyObject modulo) {
+        if (!canCoerce(right))
+            return null;
+
+        if (modulo != null && !canCoerce(modulo))
+            return null;
+
+        return _pow(value, coerce(right), modulo);
+    }
+
+    public PyObject __rpow__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+
+        return _pow(coerce(left), value, null);
+    }
+
+    private static PyFloat _pow(double value, double iw, PyObject modulo) {
+        // Rely completely on Java's pow function
         if (iw == 0) {
             if (modulo != null)
-                return new PyFloat(modulo(1.0, ((PyFloat)modulo).value));
+                return new PyFloat(modulo(1.0, coerce(modulo)));
             return new PyFloat(1.0);
         }
         if (value == 0.0) {
@@ -151,7 +247,7 @@ public class PyFloat extends PyObject
         if (modulo == null) {
             return new PyFloat(ret);
         } else {
-            return new PyFloat(modulo(ret, ((PyFloat)modulo).value));
+            return new PyFloat(modulo(ret, coerce(modulo)));
         }
     }
 
@@ -187,5 +283,15 @@ public class PyFloat extends PyObject
 
     public PyComplex __complex__() {
         return new PyComplex(value, 0.);
+    }
+
+    public boolean isMappingType() { return false; }
+    public boolean isSequenceType() { return false; }
+
+    // __class__ boilerplate -- see PyObject for details
+    public static PyClass __class__;
+
+    protected PyClass getPyClass() {
+        return __class__;
     }
 }

@@ -256,6 +256,8 @@ public class PyList extends PySequence implements ClassDictInit
     }
 
     public PyObject __imul__(PyObject o) {
+        if (!(o instanceof PyInteger || o instanceof PyLong))
+            throw Py.TypeError("can't multiply sequence to non-int");
         int l = length;
         int count = o.__int__().getValue();
 
@@ -387,7 +389,7 @@ public class PyList extends PySequence implements ClassDictInit
     }
 
     public PyObject __iadd__(PyObject o) {
-        extend(o);
+        extend(fastSequence(o, "argument to += must be a sequence"));
         return this;
     }
 

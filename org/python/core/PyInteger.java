@@ -64,27 +64,62 @@ public class PyInteger extends PyObject
             return Py.None;
     }
 
+    private static final boolean canCoerce(PyObject other) {
+        return other instanceof PyInteger;
+    }
+
+    private static final int coerce(PyObject other) {
+        if (other instanceof PyInteger)
+            return ((PyInteger) other).value;
+        else
+            throw Py.TypeError("xxx");
+    }
+
+
     public PyObject __add__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        int rightv = coerce(right);
         int a = value;
-        int b = ((PyInteger)right).value;
+        int b = rightv;
         int x = a + b;
         if ((x^a) < 0 && (x^b) < 0)
             throw Py.OverflowError("integer addition: "+this+" + "+right);
-        return Py.newInteger(x); //new PyInteger(x);
+        return Py.newInteger(x);
+    }
+    public PyObject __radd__(PyObject left) {
+        return __add__(left);
     }
 
-    public PyObject __sub__(PyObject right) {
-        int a = value;
-        int b = ((PyInteger)right).value;
+    private static PyInteger _sub(int a, int b) {
         int x = a - b;
         if ((x^a) < 0 && (x^~b) < 0)
-            throw Py.OverflowError("integer subtraction: "+this+" - "+right);
+            throw Py.OverflowError("integer subtraction: "+a+" - "+b);
         return Py.newInteger(x);
     }
 
+    public PyObject __sub__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return _sub(value, coerce(right));
+    }
+
+    public PyObject __rsub__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _sub(coerce(left), value);
+    }
+
     public PyObject __mul__(PyObject right) {
+        if (right instanceof PySequence)
+            return ((PySequence) right).repeat(value);
+
+        if (!canCoerce(right))
+            return null;
+        int rightv = coerce(right);
+
         double x = (double)value;
-        x *= ((PyInteger)right).value;
+        x *= rightv;
         //long x = ((long)value)*((PyInteger)right).value;
         //System.out.println("mul: "+this+" * "+right+" = "+x);
                 
@@ -94,9 +129,13 @@ public class PyInteger extends PyObject
         return Py.newInteger((int)x);
     }
 
+    public PyObject __rmul__(PyObject left) {
+        return __mul__(left);
+    }
+
     // Getting signs correct for integer division
     // This convention makes sense when you consider it in tandem with modulo
-    private int divide(int x, int y) {
+    private static int divide(int x, int y) {
         if (y == 0)
             throw Py.ZeroDivisionError("integer division or modulo");
 
@@ -111,30 +150,69 @@ public class PyInteger extends PyObject
     }
 
     public PyObject __div__(PyObject right) {
-        return Py.newInteger(divide(value, ((PyInteger)right).value));
+        if (!canCoerce(right))
+            return null;
+        return Py.newInteger(divide(value, coerce(right)));
     }
 
-    private int modulo(int x, int y, int xdivy) {
+    public PyObject __rdiv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return Py.newInteger(divide(coerce(left), value));
+    }
+
+    private static int modulo(int x, int y, int xdivy) {
         return x - xdivy*y;
     }
 
     public PyObject __mod__(PyObject right) {
-        int x = ((PyInteger)right).value;
-        return Py.newInteger(modulo(value, x, divide(value, x)));
+        if (!canCoerce(right))
+            return null;
+        int rightv = coerce(right);
+        return Py.newInteger(modulo(value, rightv, divide(value, rightv)));
+    }
+
+    public PyObject __rmod__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        int leftv = coerce(left);
+        return Py.newInteger(modulo(leftv, value, divide(leftv, value)));
     }
 
     public PyObject __divmod__(PyObject right) {
-        int x = ((PyInteger)right).value;
-        int xdivy = divide(value, x);
+        if (!canCoerce(right))
+            return null;
+        int rightv = coerce(right);
+
+        int xdivy = divide(value, rightv);
         return new PyTuple(new PyObject[] {
             new PyInteger(xdivy),
-            new PyInteger(modulo(value, x, xdivy))
+            new PyInteger(modulo(value, rightv, xdivy))
         });
     }
 
     public PyObject __pow__(PyObject right, PyObject modulo) {
+        if (!canCoerce(right))
+            return null;
+
+        if (modulo != null && !canCoerce(modulo))
+            return null;
+
+        return _pow(value, coerce(right), modulo);
+    }
+
+    public PyObject __rpow__(PyObject left, PyObject modulo) {
+        if (!canCoerce(left))
+            return null;
+
+        if (modulo != null && !canCoerce(modulo))
+            return null;
+
+        return _pow(coerce(left), value, modulo);
+    }
+
+    private static PyInteger _pow(int value, int pow, PyObject modulo) {
         int mod = 0;
-        int pow = ((PyInteger)right).value;
         long tmp = value;
         boolean neg = false;
         if (tmp < 0) {
@@ -151,7 +229,7 @@ public class PyInteger extends PyObject
         }
 
         if (modulo != null) {
-            mod = ((PyInteger)modulo).value;
+            mod = coerce(modulo);
             if (mod == 0) {
                 throw Py.ValueError("pow(x, y, z) with z==0");
             }
@@ -195,26 +273,55 @@ public class PyInteger extends PyObject
     }
 
     public PyObject __lshift__(PyObject right) {
-        int shift = ((PyInteger)right).value;
-        if (shift > 31)
+        int rightv;
+        if (right instanceof PyInteger)
+             rightv = ((PyInteger)right).value;
+        else
+             return null;
+
+        if (rightv > 31)
             return new PyInteger(0);
-        return Py.newInteger(value << shift);
+        return Py.newInteger(value << rightv);
     }
 
     public PyObject __rshift__(PyObject right) {
-        return Py.newInteger(value >>> ((PyInteger)right).value);
+        int rightv;
+        if (right instanceof PyInteger)
+             rightv = ((PyInteger)right).value;
+        else
+             return null;
+
+        return Py.newInteger(value >>> rightv);
     }
 
     public PyObject __and__(PyObject right) {
-        return Py.newInteger(value & ((PyInteger)right).value);
+        int rightv;
+        if (right instanceof PyInteger)
+             rightv = ((PyInteger)right).value;
+        else
+             return null;
+
+        return Py.newInteger(value & rightv);
     }
 
     public PyObject __xor__(PyObject right) {
-        return Py.newInteger(value ^ ((PyInteger)right).value);
+        int rightv;
+        if (right instanceof PyInteger)
+             rightv = ((PyInteger)right).value;
+        else
+             return null;
+
+        return Py.newInteger(value ^ rightv);
     }
 
     public PyObject __or__(PyObject right) {
-        return Py.newInteger(value | ((PyInteger)right).value);
+        int rightv;
+        if (right instanceof PyInteger)
+             rightv = ((PyInteger)right).value;
+        else
+             return null;
+
+        return Py.newInteger(value | rightv);
     }
 
     public PyObject __neg__() {

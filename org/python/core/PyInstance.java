@@ -678,7 +678,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __add__(PyObject o) {
-        return invoke_ex("__add__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__add__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__add__", o2);
+            else
+                return o1._add(o2);
+        }
     }
 	
     /**
@@ -686,7 +696,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __radd__(PyObject o) {
-        return invoke_ex("__radd__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__radd__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__radd__", o2);
+            else
+                return o2._add(o1);
+        }
     }
 	
     /**
@@ -705,7 +725,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __sub__(PyObject o) {
-        return invoke_ex("__sub__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__sub__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__sub__", o2);
+            else
+                return o1._sub(o2);
+        }
     }
 	
     /**
@@ -713,7 +743,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rsub__(PyObject o) {
-        return invoke_ex("__rsub__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rsub__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rsub__", o2);
+            else
+                return o2._sub(o1);
+        }
     }
 	
     /**
@@ -732,7 +772,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __mul__(PyObject o) {
-        return invoke_ex("__mul__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__mul__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__mul__", o2);
+            else
+                return o1._mul(o2);
+        }
     }
 	
     /**
@@ -740,7 +790,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rmul__(PyObject o) {
-        return invoke_ex("__rmul__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rmul__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rmul__", o2);
+            else
+                return o2._mul(o1);
+        }
     }
 	
     /**
@@ -759,7 +819,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __div__(PyObject o) {
-        return invoke_ex("__div__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__div__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__div__", o2);
+            else
+                return o1._div(o2);
+        }
     }
 	
     /**
@@ -767,7 +837,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rdiv__(PyObject o) {
-        return invoke_ex("__rdiv__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rdiv__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rdiv__", o2);
+            else
+                return o2._div(o1);
+        }
     }
 	
     /**
@@ -786,7 +866,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __mod__(PyObject o) {
-        return invoke_ex("__mod__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__mod__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__mod__", o2);
+            else
+                return o1._mod(o2);
+        }
     }
 	
     /**
@@ -794,7 +884,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rmod__(PyObject o) {
-        return invoke_ex("__rmod__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rmod__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rmod__", o2);
+            else
+                return o2._mod(o1);
+        }
     }
 	
     /**
@@ -813,7 +913,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __divmod__(PyObject o) {
-        return invoke_ex("__divmod__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__divmod__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__divmod__", o2);
+            else
+                return o1._divmod(o2);
+        }
     }
 	
     /**
@@ -821,7 +931,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rdivmod__(PyObject o) {
-        return invoke_ex("__rdivmod__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rdivmod__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rdivmod__", o2);
+            else
+                return o2._divmod(o1);
+        }
     }
 	
     /**
@@ -829,7 +949,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __pow__(PyObject o) {
-        return invoke_ex("__pow__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__pow__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__pow__", o2);
+            else
+                return o1._pow(o2);
+        }
     }
 	
     /**
@@ -837,7 +967,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rpow__(PyObject o) {
-        return invoke_ex("__rpow__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rpow__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rpow__", o2);
+            else
+                return o2._pow(o1);
+        }
     }
 	
     /**
@@ -856,7 +996,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __lshift__(PyObject o) {
-        return invoke_ex("__lshift__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__lshift__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__lshift__", o2);
+            else
+                return o1._lshift(o2);
+        }
     }
 	
     /**
@@ -864,7 +1014,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rlshift__(PyObject o) {
-        return invoke_ex("__rlshift__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rlshift__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rlshift__", o2);
+            else
+                return o2._lshift(o1);
+        }
     }
 	
     /**
@@ -883,7 +1043,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rshift__(PyObject o) {
-        return invoke_ex("__rshift__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rshift__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rshift__", o2);
+            else
+                return o1._rshift(o2);
+        }
     }
 	
     /**
@@ -891,7 +1061,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rrshift__(PyObject o) {
-        return invoke_ex("__rrshift__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rrshift__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rrshift__", o2);
+            else
+                return o2._rshift(o1);
+        }
     }
 	
     /**
@@ -910,7 +1090,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __and__(PyObject o) {
-        return invoke_ex("__and__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__and__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__and__", o2);
+            else
+                return o1._and(o2);
+        }
     }
 	
     /**
@@ -918,7 +1108,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rand__(PyObject o) {
-        return invoke_ex("__rand__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rand__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rand__", o2);
+            else
+                return o2._and(o1);
+        }
     }
 	
     /**
@@ -937,7 +1137,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __or__(PyObject o) {
-        return invoke_ex("__or__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__or__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__or__", o2);
+            else
+                return o1._or(o2);
+        }
     }
 	
     /**
@@ -945,7 +1155,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __ror__(PyObject o) {
-        return invoke_ex("__ror__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__ror__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__ror__", o2);
+            else
+                return o2._or(o1);
+        }
     }
 	
     /**
@@ -964,7 +1184,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __xor__(PyObject o) {
-        return invoke_ex("__xor__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__xor__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__xor__", o2);
+            else
+                return o1._xor(o2);
+        }
     }
 	
     /**
@@ -972,7 +1202,17 @@ public class PyInstance extends PyObject
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyObject __rxor__(PyObject o) {
-        return invoke_ex("__rxor__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__rxor__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__rxor__", o2);
+            else
+                return o2._xor(o1);
+        }
     }
 	
     /**
@@ -985,4 +1225,5 @@ public class PyInstance extends PyObject
             return ret;
         return super.__ixor__(o);
     }
+	
 }

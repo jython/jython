@@ -6,10 +6,7 @@ public class PyComplex extends PyObject {
 
     static PyComplex J = new PyComplex(0, 1.);
 
-    public static PyClass __class__;
-
     public PyComplex(double r, double i) {
-        super(__class__);
         real = r;
         imag = i;
     }
@@ -88,57 +85,139 @@ public class PyComplex extends PyObject {
         return Py.None;
     }
 
+    private final boolean canCoerce(PyObject other) {
+        return other instanceof PyComplex ||
+               other instanceof PyFloat ||
+               other instanceof PyInteger ||
+               other instanceof PyLong;
+    }
 
-    public PyObject __add__(PyObject o) {
-        PyComplex c = (PyComplex)o;
+    private final PyComplex coerce(PyObject other) {
+        if (other instanceof PyComplex)
+            return (PyComplex) other;
+        if (other instanceof PyFloat)
+            return new PyComplex(((PyFloat)other).getValue(), 0);
+        if (other instanceof PyInteger)
+            return new PyComplex((double)((PyInteger)other).getValue(), 0);
+        if (other instanceof PyLong)
+            return new PyComplex(((PyLong)other).doubleValue(), 0);
+        throw Py.TypeError("xxx");
+    }
+
+    public PyObject __add__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        PyComplex c = coerce(right);
         return new PyComplex(real+c.real, imag+c.imag);
     }
 
-    public PyObject __sub__(PyObject o) {
-        PyComplex c = (PyComplex)o;
-        return new PyComplex(real-c.real, imag-c.imag);
+    public PyObject __radd__(PyObject left) {
+        return __add__(left);
     }
 
-    public PyObject __mul__(PyObject o) {
-        PyComplex c = (PyComplex)o;
-        return new PyComplex(real*c.real-imag*c.imag, real*c.imag+imag*c.real);
+    private final static PyObject _sub(PyComplex o1, PyComplex o2) {
+        return new PyComplex(o1.real-o2.real, o1.imag-o2.imag);
     }
 
-    public PyObject __div__(PyObject o) {
-        PyComplex c = (PyComplex)o;
-        double denom = c.real*c.real+c.imag*c.imag;
+    public PyObject __sub__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return _sub(this, coerce(right));
+    }
+
+    public PyObject __rsub__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _sub(coerce(left), this);
+    }
+
+    private final static PyObject _mul(PyComplex o1, PyComplex o2) {
+        return new PyComplex(o1.real*o2.real-o1.imag*o2.imag,
+                             o1.real*o2.imag+o1.imag*o2.real);
+    }
+
+    public PyObject __mul__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return _mul(this, coerce(right));
+    }
+
+    public PyObject __rmul__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _mul(coerce(left), this);
+    }
+
+    private final static PyObject _div(PyComplex o1, PyComplex o2) {
+        double denom = o2.real*o2.real+o2.imag*o2.imag;
         if (denom == 0)
             throw Py.ZeroDivisionError("complex division");
-        return new PyComplex((real*c.real + imag*c.imag)/denom,
-                             (imag*c.real - real*c.imag)/denom);
+        return new PyComplex((o1.real*o2.real + o1.imag*o2.imag)/denom,
+                             (o1.imag*o2.real - o1.real*o2.imag)/denom);
+    }
+
+    public PyObject __div__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return _div(this, coerce(right));
+    }
+
+    public PyObject __rdiv__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _div(coerce(left), this);
     }
 
 
-    public PyObject __mod__(PyObject o) {
-        PyComplex z = (PyComplex)__div__(o);
+    public PyObject __mod__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return _mod(this, coerce(right));
+    }
+
+    public PyObject __rmod__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _mod(coerce(left), this);
+    }
+
+    private static PyObject _mod(PyComplex value, PyComplex right) {
+        PyComplex z = (PyComplex)value.__div__(right);
 
         z.real = Math.floor(z.real);
         z.imag = 0.0;
 
-        return __sub__(z.__mul__(o));
+        return value.__sub__(z.__mul__(right));
     }
 
-    public PyObject __divmod__(PyObject o) {
-        PyComplex z = (PyComplex)__div__(o);
+    public PyObject __divmod__(PyObject right) {
+        if (!canCoerce(right))
+            return null;
+        return _divmod(this, coerce(right));
+    }
+
+    public PyObject __rdivmod__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _divmod(coerce(left), this);
+    }
+
+    private static PyObject _divmod(PyComplex value, PyComplex right) {
+        PyComplex z = (PyComplex)value.__div__(right);
 
         z.real = Math.floor(z.real);
         z.imag = 0.0;
 
-        return new PyTuple(new PyObject[] {z, __sub__(z.__mul__(o))});
+        return new PyTuple(new PyObject[] {z, value.__sub__(z.__mul__(right))});
     }
 
 
-    private PyObject ipow(int iexp) {
+    private static PyObject ipow(PyComplex value, int iexp) {
         int pow = iexp;
         if (pow < 0) pow = -pow;
 
-        double xr = real;
-        double xi = imag;
+        double xr = value.real;
+        double xi = value.imag;
 
         double zr = 1;
         double zi = 0;
@@ -170,11 +249,22 @@ public class PyComplex extends PyObject {
         if (modulo != null) {
             throw Py.ValueError("complex modulo");
         }
+        if (!canCoerce(right))
+            return null;
+        return _pow(this, coerce(right));
+    }
 
-        double xr = real;
-        double xi = imag;
-        double yr = ((PyComplex)right).real;
-        double yi = ((PyComplex)right).imag;
+    public PyObject __rpow__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return _pow(coerce(left), this);
+    }
+
+    public static PyObject _pow(PyComplex value, PyComplex right) {
+        double xr = value.real;
+        double xi = value.imag;
+        double yr = right.real;
+        double yi = right.imag;
 
         if (yr == 0 && yi == 0) {
             return new PyComplex(1, 0);
@@ -189,7 +279,7 @@ public class PyComplex extends PyObject {
         // Check for integral powers
         int iexp = (int)yr;
         if (yi == 0 && yr == (double)iexp && iexp >= -128 && iexp <= 128) {
-            return ipow(iexp);
+            return ipow(value, iexp);
         }
 
         double abs = ExtraMath.hypot(xr, xi);
@@ -235,5 +325,15 @@ public class PyComplex extends PyObject {
 
     public PyComplex conjugate() {
         return new PyComplex(real, -imag);
+    }
+
+    public boolean isMappingType() { return false; }
+    public boolean isSequenceType() { return false; }
+
+    // __class__ boilerplate -- see PyObject for details
+    public static PyClass __class__;
+
+    protected PyClass getPyClass() {
+        return __class__;
     }
 }
