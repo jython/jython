@@ -323,7 +323,13 @@ public class PyInstance extends PyObject
         if (deller != null) {
             deller.__call__(this, new PyString(name));
         } else {
-            __dict__.__delitem__(name);
+            try {
+                __dict__.__delitem__(name);
+            } catch (PyException exc) {
+                if (Py.matchException(exc, Py.KeyError))
+                    throw Py.AttributeError("class " + __class__.__name__ +
+                                        " has no attribute '" + name + "'");
+            };
         }
     }
 
