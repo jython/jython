@@ -183,8 +183,16 @@ public class imp
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
             Class c = Py.findClass(mod);
-            if (c != null)
-                return createFromClass(name, c);
+            if (c != null) {
+                try {
+                    return createFromClass(name, c);
+                }
+                catch (NoClassDefFoundError e) {
+                    throw Py.ImportError("Cannot import " + name +
+                                         ", missing class " +
+                                         c.getName());
+                }
+            }
         }
         return null;
     }
