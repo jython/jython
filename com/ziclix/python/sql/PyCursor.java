@@ -160,7 +160,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
     m[7] = new PyString("next");
     m[8] = new PyString("write");
     __methods__ = new PyList(m);
-    m = new PyObject[10];
+    m = new PyObject[11];
     m[0] = new PyString("arraysize");
     m[1] = new PyString("rowcount");
     m[2] = new PyString("rownumber");
@@ -171,6 +171,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
     m[7] = new PyString("updatecount");
     m[8] = new PyString("softspace");
     m[9] = new PyString("closed");
+    m[10] = new PyString("connection");
     __members__ = new PyList(m);
   }
 
@@ -224,7 +225,6 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       return Py.newInteger(this.fetch.rowcount);
     } else if ("rownumber".equals(name)) {
       int rn = this.fetch.rownumber;
-
       return (rn < 0) ? Py.None : Py.newInteger(rn);
     } else if ("warnings".equals(name)) {
       return warnings;
@@ -240,6 +240,13 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       return this.connection;
     } else if ("closed".equals(name)) {
       return Py.newBoolean(closed);
+    } else if ("callproc".equals(name)) {
+      try {
+        // dynamically decide on the the attribute based on the driver
+        if (!getMetaData().supportsStoredProcedures()) {
+            return null;
+        }
+      } catch (Throwable t) {}
     }
 
     return super.__findattr__(name);

@@ -77,8 +77,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/** The ResourceBundle with error messages and doc strings */
 	private static ResourceBundle resourceBundle = null;
 
-    /** Instance used to create date-like objects as per the API */
-    public static DateFactory datefactory = new JavaDateFactory();
+  /** Instance used to create date-like objects as per the API */
+  public static DateFactory datefactory = new JavaDateFactory();
 
 	static {
 		try {
@@ -105,6 +105,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		dict.__setitem__("DateFromTicks", new zxJDBCFunc("DateFromTicks", 4, 1, 1, false, "construct a Date from seconds since the epoch"));
 		dict.__setitem__("TimeFromTicks", new zxJDBCFunc("TimeFromTicks", 5, 1, 1, false, "construct a Time from seconds since the epoch"));
 		dict.__setitem__("TimestampFromTicks", new zxJDBCFunc("TimestampFromTicks", 6, 1, 1, false, "construct a Timestamp from seconds since the epoch"));
+		dict.__setitem__("Binary", new zxJDBCFunc("Binary", 7, 1, 1, false, "construct an object capable of holding binary data"));
 		zxJDBC._addSqlTypes(dict);
 		zxJDBC._addConnectors(dict);
 		zxJDBC._buildExceptions(dict);
@@ -179,6 +180,11 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		} catch (Throwable t) {
 			throw makeException(t);
 		}
+
+		dict.__setitem__("ROWID", dict.__getitem__(Py.newString("OTHER")));
+		dict.__setitem__("NUMBER", dict.__getitem__(Py.newString("NUMERIC")));
+		dict.__setitem__("STRING", dict.__getitem__(Py.newString("VARCHAR")));
+		dict.__setitem__("DATETIME", dict.__getitem__(Py.newString("TIMESTAMP")));
 
 		return;
 	}
@@ -472,18 +478,24 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 	 */
 	public PyObject __call__(PyObject arg) {
 
-		long ticks = ((Number)arg.__tojava__(Number.class)).longValue();
+		long ticks;
 
 		switch (index) {
 
 			case 4 :
+				ticks = ((Number)arg.__tojava__(Number.class)).longValue();
 				return zxJDBC.datefactory.DateFromTicks(ticks);
 
 			case 5 :
+				ticks = ((Number)arg.__tojava__(Number.class)).longValue();
 				return zxJDBC.datefactory.TimeFromTicks(ticks);
 
 			case 6 :
+				ticks = ((Number)arg.__tojava__(Number.class)).longValue();
 				return zxJDBC.datefactory.TimestampFromTicks(ticks);
+
+			case 7 :
+				return arg;
 
 			default :
 				throw argCountError(1);

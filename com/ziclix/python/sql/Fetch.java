@@ -535,19 +535,17 @@ class StaticFetch extends Fetch {
 				PyObject metadata = this.createDescription(resultSet.getMetaData());
 				PyObject result = this.createResults(resultSet, skipCols, metadata);
 
-				if (result.__len__() > 0) {
-					this.results.add(result);
-					this.descriptions.add(metadata);
+				this.results.add(result);
+				this.descriptions.add(metadata);
 
-					// we want the rowcount of the first result set
-					this.rowcount = ((PyObject) this.results.get(0)).__len__();
+				// we want the rowcount of the first result set
+				this.rowcount = ((PyObject) this.results.get(0)).__len__();
 
-					// we want the description of the first result set
-					this.description = ((PyObject) this.descriptions.get(0));
+				// we want the description of the first result set
+				this.description = ((PyObject) this.descriptions.get(0));
 
-					// set the current rownumber
-					this.rownumber = 0;
-				}
+				// set the current rownumber
+				this.rownumber = 0;
 			}
 		} catch (PyException e) {
 			throw e;
@@ -636,7 +634,7 @@ class StaticFetch extends Fetch {
 		PyObject res = new PyList();
 
 		if ((results == null) || (results.size() == 0)) {
-			return res;
+			throw zxJDBC.makeException(zxJDBC.DatabaseError, "no results");
 		}
 
 		PyObject current = (PyObject) results.get(0);
@@ -819,7 +817,7 @@ class DynamicFetch extends Fetch {
 		PyList res = new PyList();
 
 		if (this.resultSet == null) {
-			return res;
+            throw zxJDBC.makeException(zxJDBC.DatabaseError, "no results");
 		}
 
 		try {

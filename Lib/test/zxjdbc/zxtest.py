@@ -352,7 +352,7 @@ class zxAPITestCase(zxJDBCTestCase):
 				# a dynamic cursor doesn't know if any rows really exist
 				# maybe the 'possibility' of rows should change .rownumber to 0?
 				c.execute("select * from zxtesting where 1=0")
-				self.assertEquals(None, c.rownumber)
+				self.assertEquals(0, c.rownumber)
 			c.execute("select * from zxtesting")
 			self.assertEquals(0, c.rownumber)
 			c.next()
@@ -846,8 +846,12 @@ class zxAPITestCase(zxJDBCTestCase):
 		"""testing fetch methods before execution"""
 		c = self.cursor()
 		try:
-			f = c.fetchall()
-			assert not f, "expecting no results since no execute*() has been called"
+			try:
+				c.fetchall()
+			except zxJDBC.Error, e:
+				pass
+			else:
+				self.fail("excepted exception calling fetchall() prior to execute()")
 		finally:
 			c.close()
 
