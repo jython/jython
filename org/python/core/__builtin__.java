@@ -317,8 +317,20 @@ public class __builtin__ implements InitModule {
     public static PyInteger int$(PyObject o) {
         return o.__int__();
     }
+    
+    private static PyStringMap internedStrings;
+    public static PyString intern(PyString s) {
+        if (internedStrings == null) {
+            internedStrings = new PyStringMap();
+        }
+        
+        String istring = s.internedString();
+        PyObject ret = internedStrings.__finditem__(istring);
+        if (ret != null) return (PyString)ret;
 
-    //Need to implement string interning
+        internedStrings.__setitem__(istring, s);
+        return s;
+    }
 
     public static boolean isinstance(PyObject obj, PyClass myClass) {
         return issubclass(obj.__class__, myClass);
