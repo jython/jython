@@ -255,7 +255,10 @@ public class PyLong extends PyObject
         if (s.startsWith("-"))
             return new PyString("-0"+s.substring(1, s.length())+"L");
         else
-            return new PyString("0"+s+"L");
+            if (s.startsWith("0"))
+                return new PyString(s+"L");
+            else
+                return new PyString("0"+s+"L");
     }
 
     public PyString __hex__() {
