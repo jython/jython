@@ -340,8 +340,8 @@ public final class Py
         else if (t instanceof OutOfMemoryError) {
             memory_error((OutOfMemoryError)t);
         }
-        PyObject exc = Py.java2py(t);
-        return new PyException(exc.__class__, exc);
+        PyJavaInstance exc = (PyJavaInstance)Py.java2py(t);
+        return new PyException(exc.instclass, exc);
 
     }
 
@@ -1112,7 +1112,7 @@ public final class Py
 
     public static PyException makeException(PyObject type) {
         if (type instanceof PyInstance) {
-            return new PyException(type.__class__, type);
+            return new PyException(type.fastGetClass(), type);
         } else {
             return makeException(type, Py.None);
         }
@@ -1124,7 +1124,7 @@ public final class Py
                 throw TypeError("instance exceptions may not have " +
                                 "a separate value");
             } else {
-                return new PyException(type.__class__, type);
+                return new PyException(type.fastGetClass(), type);
             }
         }
         PyException exc = new PyException(type, value);
@@ -1140,7 +1140,7 @@ public final class Py
                 throw TypeError("instance exceptions may not have " +
                                 "a separate value");
             } else {
-                type = type.__class__;
+                type = type.fastGetClass();
                 //return new PyException(type.__class__, type);
             }
         }
@@ -1512,34 +1512,35 @@ public final class Py
         if (doc != null)
             dict.__setitem__("__doc__", doc);
 
-        for (int i=0; i<bases.length; i++) {
+        // xxx do properly
+        for (int i=0; i<bases.length; i++)
             if (!(bases[i] instanceof PyClass)) {
-                PyObject c = bases[i].__class__;
-                // Only try the meta-class trick on __class__'s that are
-                // PyInstance's.  This will improve error messages for
-                // casual mistakes while not really reducing the power of
-                // this approach (I think)
-                if (c instanceof PyJavaClass) {
-                    throw Py.TypeError("base is not a class object: "+
-                                       bases[i].safeRepr());
+                if (bases[i] instanceof PyInstance) {
+                    PyObject c = ((PyInstance)bases[i]).instclass;
+                    // Only try the meta-class trick on __class__'s that are
+                    // PyInstance's.  This will improve error messages for
+                    // casual mistakes while not really reducing the power of
+                    // this approach (I think)
+                    if (!(c instanceof PyJavaClass))
+                        return c.__call__(new PyString(name),
+                                          new PyTuple(bases),
+                                          dict);
+                } else if (bases[i] instanceof PyMetaClass) {
+                    // experimental PyMetaClass hook
+                    try {
+                        java.lang.reflect.Constructor ctor = bases[i].getClass().
+                                        getConstructor(pyClassCtrSignature);
+                        return (PyObject) ctor.newInstance(new Object[] {
+                                name, new PyTuple(bases), dict, proxyClass });
+                    } catch(Exception e) {
+                        throw Py.TypeError("meta-class fails to supply proper " +
+                                           "ctr: " + bases[i].safeRepr());
+                    }
                 }
-                return c.__call__(new PyString(name),
-                                  new PyTuple(bases),
-                                  dict);
-            } else if (bases[i] instanceof PyMetaClass) {
-                // experimental PyMetaClass hook
-                try {
-                    java.lang.reflect.Constructor ctor = bases[i].getClass().
-                                    getConstructor(pyClassCtrSignature);
-                    return (PyObject) ctor.newInstance(new Object[] {
-                            name, new PyTuple(bases), dict, proxyClass });
-                } catch(Exception e) {
-                    throw Py.TypeError("meta-class fails to supply proper " +
-                                       "ctr: " + bases[i].safeRepr());
-                }
+                throw Py.TypeError("base is not a class object: "+
+                                       bases[i].safeRepr());                
+                
             }
-
-        }
 
         return new PyClass(name, new PyTuple(bases), dict, proxyClass);
     }

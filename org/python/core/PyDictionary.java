@@ -221,7 +221,7 @@ public class PyDictionary extends PyObject implements ClassDictInit
     }
 
     public int __cmp__(PyObject ob_other) {
-        if (ob_other.__class__ != __class__)
+        if (ob_other.getType() != getType())
             return -2;
 
         PyDictionary other = (PyDictionary)ob_other;

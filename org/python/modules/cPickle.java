@@ -1219,7 +1219,7 @@ public class cPickle implements ClassDictInit {
                 throw new PyException(PicklingError,
                             "Unable to pickle java objects.");
 
-            PyClass cls = object.__class__;
+            PyClass cls = object.instclass;
 
             PySequence args = null;
             PyObject getinitargs = object.__findattr__("__getinitargs__");

@@ -61,19 +61,15 @@ public class PyJavaClass extends PyClass
         return ret;
     }
 
-    public static PyClass __class__;
-
     private PyJavaClass(boolean fakeArg) {
         super(true);
     }
 
     protected PyJavaClass(Class c) {
-        super(__class__);
         init(c);
     }
 
     protected PyJavaClass(String name,PackageManager mgr) {
-        super(__class__);
         __name__ = name;
         this.__mgr__ = mgr;
     }
@@ -152,6 +148,7 @@ public class PyJavaClass extends PyClass
     }
 
     private synchronized void init__class__(Class c) {
+        /* xxx disable opt, will need similar opt for types
         if (!PyObject.class.isAssignableFrom(c))
             return;
         try {
@@ -164,7 +161,7 @@ public class PyJavaClass extends PyClass
             }
         }
         catch (NoSuchFieldException exc) {}
-        catch (IllegalAccessException exc1) {}
+        catch (IllegalAccessException exc1) {} */
     }
 
     private synchronized void init__bases__(Class c) {
@@ -839,16 +836,33 @@ public class PyJavaClass extends PyClass
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if (!constructorsInitialized)
             initConstructors();
+        
+        // xxx instantiation of PyObject subclass
+        if (PyObject.class.isAssignableFrom(proxyClass)) {
+            if (keywords.length != 0) { // xxx enable keywords using catchall sig
+                throw Py.TypeError("keywords not supported"); // xxx better msg
+            }
+            if (Modifier.isAbstract(proxyClass.getModifiers())) {
+                            throw Py.TypeError("can't instantiate abstract class ("+
+                                               __name__+")");
+            }
+            if (__init__ == null) {
+                throw Py.TypeError("no public constructors for "+
+                                   __name__);
+            }
+            return __init__.make(args);
+        }
+            
         PyInstance inst = new PyJavaInstance(this);
         inst.__init__(args, keywords);
 
-        if (proxyClass != null &&
+        /*if (proxyClass != null &&
                     PyObject.class.isAssignableFrom(proxyClass)) {
             // It would be better if we didn't have to create a PyInstance
             // in the first place.
             ((PyObject)inst.javaProxy).__class__ = this;
             return (PyObject)inst.javaProxy;
-        }
+        }*/
 
         return inst;
     }

@@ -696,13 +696,6 @@ public class PyList extends PySequence implements ClassDictInit
         sort(null);
     }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-
-    protected PyClass getPyClass() {
-        return __class__;
-    }
-
     public int hashCode() {
         throw Py.TypeError("unhashable type");
     }

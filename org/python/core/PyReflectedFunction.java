@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Enumeration;
 
@@ -14,17 +15,10 @@ public class PyReflectedFunction extends PyObject
     public ReflectedArgs[] argslist;
     public int nargs;
 
-    public static PyClass __class__;
-
-    public PyReflectedFunction(String name, PyClass c) {
-        super(c);
+    public PyReflectedFunction(String name) {
         __name__ = name;
         argslist = new ReflectedArgs[1];
         nargs = 0;
-    }
-
-    public PyReflectedFunction(String name) {
-        this(name, __class__);
     }
 
     public PyReflectedFunction(Method method) {
@@ -139,24 +133,44 @@ public class PyReflectedFunction extends PyObject
         }
 
         Object cself = callData.self;
+        Method m = (Method)method;        
         // Check to see if we should be using a super__ method instead
         // This is probably a bit inefficient...
         if (self == null && cself != null && cself instanceof PyProxy &&
-                   !__name__.startsWith("super__")) {
+                   !__name__.startsWith("super__")) {                       
             PyInstance iself = ((PyProxy)cself)._getPyInstance();
-            if (argslist[0].declaringClass != iself.__class__.proxyClass) {
-                PyJavaClass jc =
-                    PyJavaClass.lookup(iself.__class__.proxyClass);
-                String mname = ("super__"+__name__).intern();
-                PyObject super__ = jc.__findattr__(mname);
+            if (argslist[0].declaringClass != iself.instclass.proxyClass) {
+                String mname = ("super__"+__name__);
+                // xxx experimental
+                Method[] super__methods = (Method[])iself.instclass.super__methods.get(mname);
+                if (super__methods != null) {
+                    Class[] msig = m.getParameterTypes();
+                    for (int i=0; i<super__methods.length;i++) {
+                        if (java.util.Arrays.equals(msig,super__methods[i].getParameterTypes())) {
+                            m = super__methods[i];
+                            break;
+                        }
+                    }
+                }
+                /* xxx this way it is slow!
+                Method super_method = null;
+                try {
+                    super_method = cself.getClass().getMethod(mname,m.getParameterTypes());
+                } catch(NoSuchMethodException e) { // ??? more stuff to ignore?
+                }
+                if (super_method != null) {
+                    m = super_method;
+                }*/
+                /* xxx original              
+                PyJavaClass jc = PyJavaClass.lookup(iself.__class__.proxyClass);
+                PyObject super__ = jc.__findattr__(mname.intern());
                 if (super__ != null) {
                     return super__.__call__(self, args, keywords);
-                }
+                }*/
             }
         }
-
         try {
-            Method m = (Method)method;
+
             Object o = m.invoke(cself, callData.getArgsArray());
             return Py.java2py(o);
         } catch (Throwable t) {

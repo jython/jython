@@ -27,7 +27,6 @@ public class PyJavaPackage extends PyObject {
      */
     public PackageManager __mgr__;
 
-    public static PyClass __class__;
     public PyJavaPackage(String name) {
         this(name, null, null);
     }
@@ -42,8 +41,6 @@ public class PyJavaPackage extends PyObject {
 
 
     public PyJavaPackage(String name,PackageManager mgr,String jarfile) {
-        super(__class__);
-
         __file__ = jarfile;
         __name__ = name;
 

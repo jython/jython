@@ -2,6 +2,7 @@
 package org.python.core;
 import java.util.Vector;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 
 /**
  * A python class.
@@ -32,6 +33,9 @@ public class PyClass extends PyObject
     // Holds the classes for which this is a proxy
     // Only used when subclassing from a Java class
     protected Class proxyClass;
+    
+    // xxx map  'super__*' names -> array of methods
+    protected java.util.HashMap super__methods;
 
     public static PyClass __class__;
 
@@ -40,8 +44,7 @@ public class PyClass extends PyObject
         proxyClass = null;
     }
 
-    protected PyClass(PyClass c) {
-        super(c);
+    protected PyClass() {
         proxyClass = null;
     }
 
@@ -77,7 +80,6 @@ public class PyClass extends PyObject
     public PyClass(String name, PyTuple bases, PyObject dict,
                    Class proxyClass)
     {
-        super(__class__);
         this.proxyClass = proxyClass;
         init(name, bases, dict);
     }
@@ -111,6 +113,10 @@ public class PyClass extends PyObject
                                                " and "+
                                                baseClass.getName());
                         }
+                        // xxx explicitly disable this for now, types will allow this
+                        if (PyObject.class.isAssignableFrom(proxy)) 
+                            throw Py.TypeError("subclassing PyObject subclasses" +
+                                " not supported");
                         baseClass = proxy;
                     }
                 }
@@ -127,6 +133,7 @@ public class PyClass extends PyObject
         }
 
         if (proxyClass != null) {
+            // xxx more efficient way without going through a PyJavaClass?
             PyObject superDict =
                 PyJavaClass.lookup(proxyClass).__findattr__("__dict__");
             // This code will add in the needed super__ methods to the class
@@ -141,6 +148,34 @@ public class PyClass extends PyObject
                     }
                 }
             }
+            
+            // xxx populate super__methods, experiment.
+            
+            java.lang.reflect.Method proxy_methods[] = proxyClass.getMethods();
+            
+            super__methods = new java.util.HashMap();
+            
+            for(int i = 0; i<proxy_methods.length; i++) {
+                java.lang.reflect.Method meth = proxy_methods[i];
+                String meth_name = meth.getName(); 
+                if (meth_name.startsWith("super__")) {
+                    java.util.ArrayList samename = (java.util.ArrayList)super__methods.get(meth_name);
+                    if (samename == null) {
+                        samename = new java.util.ArrayList();
+                        super__methods.put(meth_name,samename);
+                    } 
+                    samename.add(meth);                  
+                }
+            }
+            
+            java.lang.reflect.Method[] empty_methods = new java.lang.reflect.Method[0];
+            for (java.util.Iterator iter = super__methods.entrySet().iterator();
+                 iter.hasNext();) {
+                java.util.Map.Entry entry = (java.util.Map.Entry)iter.next();
+                //System.out.println(entry.getKey()); // debug
+                entry.setValue(((java.util.ArrayList)entry.getValue()).toArray(empty_methods));
+            }
+            
         }
 
         //System.out.println("proxyClasses: "+proxyClasses+", "+
@@ -253,13 +288,14 @@ public class PyClass extends PyObject
 
         inst.__init__(args, keywords);
 
-        if (proxyClass != null &&
+        // xxx this cannot happen anymore
+        /*if (proxyClass != null &&
                    PyObject.class.isAssignableFrom(proxyClass)) {
             // It would be better if we didn't have to create a PyInstance
             // in the first place.
             ((PyObject)inst.javaProxy).__class__ = this;
             return (PyObject)inst.javaProxy;
-        }
+        }*/
 
         return inst;
     }

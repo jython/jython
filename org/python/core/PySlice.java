@@ -9,10 +9,7 @@ package org.python.core;
 public class PySlice extends PyObject {
     public PyObject start, stop, step;
 
-    public static PyClass __class__;
-
     public PySlice(PyObject start, PyObject stop, PyObject step) {
-        super(__class__);
         if (start == null) start = Py.None;
         if (stop == null) stop = Py.None;
         if (step == null) step = Py.One;

@@ -13,10 +13,7 @@ public class PyMethod extends PyObject
     public String __name__;
     public PyObject __doc__;
 
-    public static PyClass __class__;
-
     public PyMethod(PyObject self, PyObject f, PyObject wherefound) {
-        super(__class__);
         im_func = f;
         im_self = self;
         im_class = wherefound;
@@ -77,7 +74,7 @@ public class PyMethod extends PyObject
         /* Only if classes are compatible */
         if (container == null)
             return this;
-        if (__builtin__.issubclass(container.__class__, (PyClass)im_class))
+        if (__builtin__.issubclass(container.fastGetClass(), (PyClass)im_class))
              if (im_func instanceof PyFunction)
                  return new PyMethod(container, (PyFunction)im_func,
                                      im_class);
@@ -107,11 +104,10 @@ public class PyMethod extends PyObject
             ;
         else if (args.length < 1)
             badcall = true;
-        else
+        else // xxx can be faster?
             // first argument must be an instance who's class is im_class
             // or a subclass of im_class
-            badcall = ! __builtin__.issubclass(args[0].__class__,
-                                               (PyClass)im_class);
+            badcall = ! __builtin__.issubclass(args[0].fastGetClass(),(PyClass)im_class);
         if (badcall) {
             throw Py.TypeError("unbound method " + __name__ + "() must be " +
                                "called with instance as first argument");
@@ -147,7 +143,7 @@ public class PyMethod extends PyObject
             return "<unbound method " + classname + "." + __name__ + ">";
         else
             return "<method " + classname + "." +
-                __name__ + " of " + im_self.__class__.__name__ +
+                __name__ + " of " + im_self.fastGetClass().__name__ +
                 " instance " + Py.idstr(im_self) + ">";
     }
 }

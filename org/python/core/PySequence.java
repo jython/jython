@@ -105,13 +105,6 @@ abstract public class PySequence extends PyObject
      */
     public PySequence() {}
 
-    /**
-     * This constructor is used to pass on an __class__ attribute.
-     */
-    public PySequence(PyClass c) {
-        super(c);
-    }
-
     /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__nonzero__", new SeqFuncs("__nonzero__", 1, 0));
@@ -190,7 +183,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __eq__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int tl = __len__();
         int ol = o.__len__();
@@ -201,7 +194,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __ne__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int tl = __len__();
         int ol = o.__len__();
@@ -212,7 +205,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __lt__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int i = cmp(this, -1, o, -1);
         if (i < 0)
@@ -221,7 +214,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __le__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int i = cmp(this, -1, o, -1);
         if (i < 0)
@@ -230,7 +223,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __gt__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int i = cmp(this, -1, o, -1);
         if (i < 0)
@@ -239,7 +232,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __ge__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int i = cmp(this, -1, o, -1);
         if (i < 0)

@@ -7,14 +7,10 @@ import java.lang.reflect.Modifier;
 
 public class PyReflectedField extends PyObject {
     public Field field;
-    public static PyClass __class__;
 
-    public PyReflectedField(PyClass c) {
-        super(c);
-    }
+    public PyReflectedField() {}
 
     public PyReflectedField(Field field) {
-        super(__class__);
         this.field = field;
     }
 

@@ -17,7 +17,7 @@ public class PySystemState extends PyObject
     /**
      * The current version of JPython.
      */
-    public static String version = "2.2a0";
+    public static String version = "2.2aNewstyle";
 
     private static int PY_MAJOR_VERSION = 2;
     private static int PY_MINOR_VERSION = 2;
@@ -170,9 +170,10 @@ public class PySystemState extends PyObject
 
     public PyObject __dict__;
     public void __setattr__(String name, PyObject value) {
-        if (__class__ == null)
+        PyClass selftype = getType();
+        if (selftype == null)
             return;
-        PyObject ret = __class__.lookup(name, false);
+        PyObject ret = selftype.lookup(name, false);
         if (ret != null) {
             ret._doset(this, value);
             return;
@@ -230,9 +231,9 @@ public class PySystemState extends PyObject
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
 
-        if (__class__ != null) {
+        if (getType() != null) {
             __dict__ = new PyStringMap();
-            __dict__.invoke("update", __class__.__getattr__("__dict__"));
+            __dict__.invoke("update", getType().__getattr__("__dict__"));
             __dict__.__setitem__("displayhook", __displayhook__);
             __dict__.__setitem__("excepthook", __excepthook__);
         }

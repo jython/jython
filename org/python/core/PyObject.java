@@ -14,24 +14,39 @@ package org.python.core;
 
 
 public class PyObject implements java.io.Serializable {
-    /**
+    /* xxx needed to change, we need types separated from classic behavior
+     * 
      * The Python class of this object.
      * Unlike in CPython, all types have this attribute, even builtins.
      * This should only be set in the constructor, never modified otherwise.
      **/
-    public transient PyClass __class__;
+    //public transient PyClass __class__;
+    
+    // xxx this is likely not the final name/approach,
+    // getType may become not necessary
+    private transient PyClass objtype; 
+    
+    public PyClass getType() {
+        return objtype;
+    }
+    
+    // xxx
+    public PyClass fastGetClass() {
+        return objtype;
+    }
 
     /* must instantiate __class__ when de-serializing */
     private void readObject(java.io.ObjectInputStream in)
         throws java.io.IOException, ClassNotFoundException
     {
         in.defaultReadObject();
-        __class__ = PyJavaClass.lookup(getClass());
+        objtype = PyJavaClass.lookup(getClass());
     }
 
     // A package private constructor used by PyJavaClass
+    // xxx will need variants for PyType of PyType and still PyJavaClass of PyJavaClass
     PyObject(boolean fakeArgument) {
-        __class__ = (PyClass)this;
+        objtype = (PyClass)this;
     }
 
 
@@ -41,13 +56,15 @@ public class PyObject implements java.io.Serializable {
      * subclass of <code>PyObject</code> being instantiated.
      **/
     public PyObject() {
-        PyClass c = getPyClass();
-        if (c == null)
-            c = PyJavaClass.lookup(getClass());
-        __class__ = c;
+        // xxx for now no such caching 
+        // PyClass c = getPyClass();
+        // if (c == null)
+        //    c = PyJavaClass.lookup(getClass());
+        objtype = PyJavaClass.lookup(getClass());
     }
 
-    /**
+    
+    /* xxx will be replaced.
      * This method is provided to efficiently initialize the __class__
      * attribute.  If the following boilerplate is added to a subclass of
      * PyObject, the instantiation time for the object will be greatly
@@ -62,37 +79,11 @@ public class PyObject implements java.io.Serializable {
      * With PyIntegers this leads to a 50% faster instantiation time.
      * This replaces the PyObject(PyClass c) constructor which is now
      * deprecated.
-     **/
+     *
     protected PyClass getPyClass() {
         return null;
-    }
+    } */
 
-    /**
-     * #### This method is now deprecated and will go away in the future ####.
-     * <p>
-     * A more sophisticated constructor for a <code>PyObject</code>.
-     * Can be more efficient as it allows the subclass of PyObject to
-     * cache its known <code>__class__</code>.
-     * <p>
-     * The common idiom for using this constructor is shown as used for the
-     * PyInteger class:
-     * <blockquote><pre>
-     * public static PyClass __class__;
-     * public PyInteger(int v) {
-     * super(__class__);
-     * ...
-     * </pre></blockquote>
-     *
-     * @param c a <code>PyClass</code> instance giving the
-     *          <code>__class__</code> of the new <code>PyObject</code>
-     * @deprecated see get PyClass for details
-     **/
-    protected PyObject(PyClass c) {
-        if (c == null) {
-            c = PyJavaClass.lookup(getClass());
-        }
-        __class__ = c;
-    }
 
     /**
      * Equivalent to the standard Python __repr__ method.  This method
@@ -105,10 +96,10 @@ public class PyObject implements java.io.Serializable {
     }
 
     public String safeRepr() throws PyIgnoreMethodTag {
-        if (__class__ == null) {
+        if (getType() == null) {
             return "unknown object";
         }
-        String name = __class__.__name__;
+        String name = getType().__name__;
         PyObject tmp;
         if (name == null)
             return "unknown object";
@@ -681,11 +672,11 @@ public class PyObject implements java.io.Serializable {
      * @see #__findattr__(PyString)
      **/
     public PyObject __findattr__(String name) {
-        if (__class__ == null)
+        if (getType() == null)
             return null;
         if (name == "__class__")
-            return __class__;
-        PyObject ret = __class__.lookup(name, false);
+            return getType();
+        PyObject ret = getType().lookup(name, false);
         if (ret != null)
             return ret._doget(this);
         return null;
@@ -1011,7 +1002,7 @@ public class PyObject implements java.io.Serializable {
         PyObject o1 = this;
         int itmp;
         Object ctmp;
-        if (o1.__class__ != o2.__class__) {
+        if (o1.getType() != o2.getType()) {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
@@ -1029,7 +1020,7 @@ public class PyObject implements java.io.Serializable {
 
         o1 = this;
         o2 = o2_in;
-        if (o1.__class__ != o2.__class__) {
+        if (o1.getType() != o2.getType()) {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
@@ -1054,15 +1045,15 @@ public class PyObject implements java.io.Serializable {
             return 1;
 
         // No rational way to compare these, so ask their classes to compare
-        itmp = this.__class__.__cmp__(o2_in.__class__);
+        itmp = this.getType().__cmp__(o2_in.getType());
 
         if (itmp == 0)
             return System.identityHashCode(this) < 
                    System.identityHashCode(o2_in) ? -1 : 1;
         if (itmp != -2)
             return itmp;
-        return System.identityHashCode(this.__class__) < 
-               System.identityHashCode(o2_in.__class__) ? -1 : 1;
+        return System.identityHashCode(this.getType()) < 
+               System.identityHashCode(o2_in.getType()) ? -1 : 1;
     }
 
 
@@ -2232,7 +2223,4 @@ class PyIdentityTuple extends PyObject {
         return true;
     }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-    protected PyClass getPyClass() { return __class__; }
 }

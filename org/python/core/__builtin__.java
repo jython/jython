@@ -192,7 +192,7 @@ public class __builtin__ implements ClassDictInit
     public static PyTuple coerce(PyObject o1, PyObject o2) {
         Object ctmp;
         PyTuple ret;
-        if (o1.__class__ == o2.__class__) {
+        if (o1.getType() == o2.getType()) {
             return new PyTuple(new PyObject[] {o1, o2});
         }
         ctmp = o1.__coerce_ex__(o2);
@@ -445,10 +445,11 @@ public class __builtin__ implements ClassDictInit
         return s;
     }
 
+    // xxx do properly
     public static boolean isinstance(PyObject obj, PyObject cls) {
         if (cls instanceof PyClass) {
-            return issubclass(obj.__class__, (PyClass) cls);
-        } if (cls.getClass() == PyTuple.class) {
+            return issubclass(obj.fastGetClass(), (PyClass) cls);            
+        } else if (cls.getClass() == PyTuple.class) {
             for (int i = 0; i < cls.__len__(); i++) {
                 if (isinstance(obj, cls.__getitem__(i)))
                     return true;
@@ -459,7 +460,7 @@ public class __builtin__ implements ClassDictInit
         }
     }
 
-
+    //  xxx do properly
     public static boolean issubclass(PyClass subClass, PyClass superClass) {
         if (subClass == null || superClass == null)
             throw Py.TypeError("arguments must be classes");
@@ -698,7 +699,7 @@ public class __builtin__ implements ClassDictInit
     private static boolean coerce(PyObject[] objs) {
         PyObject x = objs[0];
         PyObject y = objs[1];
-        if (x.__class__ == y.__class__)
+        if (x.getType() == y.getType())
             return true;
         Object ctmp = x.__coerce_ex__(y);
         if (ctmp != null && ctmp != Py.None) {
@@ -710,7 +711,7 @@ public class __builtin__ implements ClassDictInit
             }
         }
         objs[0] = x; objs[1] = y;
-        if (x.__class__ == y.__class__)
+        if (x.getType() == y.getType())
             return true;
         ctmp = y.__coerce_ex__(x);
         if (ctmp != null && ctmp != Py.None) {
@@ -723,7 +724,7 @@ public class __builtin__ implements ClassDictInit
         }
         objs[0] = x; objs[1] = y;
         //System.out.println(""+x.__class__+" : "+y.__class__);
-        return x.__class__ == y.__class__;
+        return x.getType() == y.getType();
     }
 
     public static PyObject pow(PyObject xi, PyObject yi, PyObject zi) {
@@ -769,7 +770,7 @@ public class __builtin__ implements ClassDictInit
             }
         }
 
-        if (x.__class__ == y.__class__ && x.__class__ == z.__class__) {
+        if (x.getType() == y.getType() && x.getType() == z.getType()) {
             x = x.__pow__(y, z);
             if (x != null)
                 return x;
@@ -943,13 +944,7 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyClass type(PyObject o) {
-        if (o instanceof PyInstance) {
-            // was just PyInstance.class, goes with experimental
-            // PyMetaClass hook
-            return PyJavaClass.lookup(o.getClass());
-        } else {
-            return o.__class__;
-        }
+        return o.getType();
     }
 
     public static PyObject vars(PyObject o) {

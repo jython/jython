@@ -7,11 +7,9 @@ public class PyBeanProperty extends PyReflectedField {
     public Class myType;
     String __name__;
 
-    public static PyClass __class__;
     public PyBeanProperty(String name, Class myType,
                           Method getMethod, Method setMethod)
     {
-        super(__class__);
         __name__ = name;
         this.getMethod = getMethod;
         this.setMethod = setMethod;

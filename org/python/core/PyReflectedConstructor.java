@@ -9,10 +9,9 @@ import java.lang.InstantiationException;
 
 public class PyReflectedConstructor extends PyReflectedFunction
 {
-    public static PyClass __class__;
-
+    
     public PyReflectedConstructor(String name) {
-        super(name, __class__);
+        super(name);
         __name__ = name;
         argslist = new ReflectedArgs[1];
         nargs = 0;
@@ -36,6 +35,41 @@ public class PyReflectedConstructor extends PyReflectedFunction
         addArgs(makeArgs(m));
     }
 
+    // xxx temporary solution, type ctr will go through __new__ ...
+    PyObject make(PyObject[] args) {
+        ReflectedArgs[] argsl = argslist;
+                
+        ReflectedCallData callData = new ReflectedCallData();
+        Object method=null;
+
+         // Check for a matching constructor to call
+        int n = nargs;
+        for (int i=0; i<n; i++) {
+            ReflectedArgs rargs = argsl[i];
+            if (rargs.matches(null, args, Py.NoKeywords, callData)) {
+                method = rargs.data;
+                break;
+            }
+        }
+
+        // Throw an error if no valid set of arguments
+        if (method == null) {
+            throwError(callData.errArg, args.length, true /*xxx?*/, false);
+        }
+
+        // Do the actual constructor call
+        Object obj = null;
+        Constructor ctor = (Constructor)method;
+        try {
+            obj = ctor.newInstance(callData.getArgsArray());
+        }
+        catch (Throwable t) {
+            throw Py.JavaError(t);
+        }
+    
+        return (PyObject)obj;
+    }
+
     public PyObject __call__(PyObject self, PyObject[] args,
                              String[] keywords)
     {
@@ -46,7 +80,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
         }
 
         PyInstance iself = (PyInstance)self;
-        Class javaClass = iself.__class__.proxyClass;
+        Class javaClass = iself.instclass.proxyClass;
         //Class[] javaClasses = iself.__class__.proxyClasses;
         //int myIndex = -1;
         boolean proxyConstructor=false;
@@ -83,7 +117,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
         }
 
         if (iself.javaProxy != null) {
-            Class sup = iself.__class__.proxyClass;
+            Class sup = iself.instclass.proxyClass;
             if (PyProxy.class.isAssignableFrom(sup))
                 sup = sup.getSuperclass();
             throw Py.TypeError("instance already instantiated for "+
@@ -127,7 +161,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
             }
             catch (InvocationTargetException e) {
                 if (e.getTargetException() instanceof InstantiationException){
-                    Class sup = iself.__class__.proxyClass.getSuperclass();
+                    Class sup = iself.instclass.proxyClass.getSuperclass();
                     String msg = "Constructor failed for Java superclass";
                     if (sup != null)
                         msg += " " + sup.getName();

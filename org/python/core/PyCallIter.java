@@ -24,8 +24,5 @@ public class PyCallIter extends PyIterator {
         return val;
     }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-    protected PyClass getPyClass() { return __class__; }
 }
 
