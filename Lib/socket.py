@@ -184,6 +184,7 @@ class _udpsocket:
 	if port is not None:
 	    addr = (addr, port)
 	assert not self.sock
+	host, port = addr
 	if host == "":
 	    self.sock = java.net.DatagramSocket(port)
 	else:
