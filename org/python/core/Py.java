@@ -375,6 +375,8 @@ public final class Py {
             else return classLoader.loadClass(name);
         } catch (ClassNotFoundException exc) {
             return null;
+        } catch (IllegalArgumentException exc1) {
+            return null;
         }
     }
 
