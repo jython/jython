@@ -52,7 +52,6 @@ TOKEN_MGR_DECLS:
    int indent;
    boolean seen_eof=false;
    boolean single_input=false;
-   public Runnable showSecondaryPrompt = null;
    boolean compound=false;
    public boolean forcedNewline = false;
 
@@ -68,18 +67,6 @@ TOKEN_MGR_DECLS:
 		t.next = null;
 		previous.next = t;
 		return t;
-	}
-
-	void doPrompt(boolean test) {
-		if (test && showSecondaryPrompt != null) {
-		    showSecondaryPrompt.run();
-			//System.err.print(interactive_prompt);
-			//System.err.flush();
-		}
-	}
-
-	void doPrompt() {
-		doPrompt(compound || parens != 0);
 	}
 
 	void CommonTokenAction(Token t) {
@@ -111,7 +98,7 @@ SKIP :
 	{
 		//System.out.println("newline, "+parens+", "+indent+", "+single_input);
 		//System.out.println("token: "+matchedToken);
-		doPrompt();
+		//doPrompt();
 		if (parens == 0) {
 			indent = 0;
 			input_stream.backup(1);
@@ -167,7 +154,7 @@ SKIP :
 			input_stream.backup(1);
 			SwitchTo(FORCE_NEWLINE);
 		} else {
-			doPrompt();
+			//doPrompt();
 			indent = 0;
 			if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
 			else SwitchTo(INDENTING);
@@ -334,8 +321,7 @@ MORE : /* Strings */
 <IN_STRING21> MORE: { <("\\" ("\\"|"\""|"\r\n"|"\n"|"\r")) | ~["\n","\r"]> }
 
 <IN_STRING13, IN_STRING23> MORE:
-{	<"\r\n"|"\n"|"\r"> { doPrompt(true); }
-	|<~["\n","\r"]> }
+{	<"\r\n"|"\n"|"\r">  | <~["\n","\r"]> }
 
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
