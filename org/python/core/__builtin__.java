@@ -72,6 +72,12 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
                 Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
         case 9:
             try {
+                if (arg3 instanceof PyStringMap) {
+                    PyDictionary d = new PyDictionary();
+                    d.update((PyStringMap) arg3);
+                    arg3 = d;
+                }
+
                 // this catches both casts of arg3 to a PyDictionary, and
                 // all casts of keys in the dictionary to PyStrings inside
                 // apply(PyObject, PyObject, PyDictionary)
