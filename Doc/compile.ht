@@ -19,12 +19,12 @@ We are using ant-1.2 to compile the sources and create the .jar file.
 The build.xml file will search for a properties file called 
 <code>ant.properties</code> which can contain values to control paths
 and local options. My <code>ant.properties</code> file look like this:
-<pre>
+<blockquote><pre>
 javaccHome = i:\\java\\Javacc2.0\\bin\\lib
 #build.compiler = classic
 build.compiler = jikes
 debug=on
-</pre>
+</pre></blockquote>
 
 <p>
 
@@ -62,9 +62,9 @@ servlet classes isn't available during compilation.
 most come from a CPython installation. Setting this up can be performed by
 creating a file ".jython" in your home directory and including a line like
 this:
-<pre>
-    python.path=d:\\python\\Python-2.1\\Lib
-</pre>
+<blockquote><pre>
+python.path=d:\\python\\Python-2.1\\Lib
+</pre><blockquote>
 
 </ul>
 
