@@ -24,6 +24,7 @@ package org.python.modules;
 import org.python.core.*;
 import java.text.DateFormatSymbols;
 import java.text.DateFormat;
+import java.lang.reflect.*;
 import java.util.*;
 
 
@@ -102,42 +103,15 @@ public class time implements ClassDictInit
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
 
-        /* XXXAPI 1.2 START
-        try {
-            tzname = new PyTuple(
-                new PyObject[] {
-                    new PyString(tz.getDisplayName(false, TimeZone.SHORT)),
-                    new PyString(tz.getDisplayName(true, TimeZone.SHORT))
-                });
-        }
-        catch (NoSuchMethodError e) {}
-        XXXAPI 1.2 END */
+        tzname = new PyTuple(
+            new PyObject[] {
+                new PyString(getDisplayName(tz, false, 0)),
+                new PyString(getDisplayName(tz, true, 0))
+            });
 
-        // getDisplayName() is only available in Java 1.2.  This is the
-        // next best thing, but it isn't really correct, or what the Python
-        // time module spec wants, but it does work for Java 1.1
-        if (tzname == null) {
-            tzname = new PyTuple(
-                new PyObject[] {
-                    new PyString(tz.getID()),
-                    new PyString(tz.getID())
-                });
-        }
         daylight = tz.useDaylightTime() ? 1 : 0;
-
         timezone = -tz.getRawOffset() / 1000;
-        if (tz instanceof SimpleTimeZone) {
-            /* XXXAPI 1.2 START
-            try {
-                SimpleTimeZone stz = (SimpleTimeZone)tz;
-                altzone = timezone - stz.getDSTSavings() / 1000;
-            }
-            catch (NoSuchMethodError e) {}
-            XXXAPI 1.2 END */
-        }
-        if (altzone == -1)
-                // best we can do for Java 1.1.  This is wrong though.
-                altzone = timezone;
+        altzone = timezone - getDSTSavings(tz) / 1000;
     }
 
     public static double time$() {
@@ -236,7 +210,7 @@ public class time implements ClassDictInit
         int dst = item(tup, 8);
         if (dst == 0 || dst == 1) {
             cal.set(Calendar.DST_OFFSET,
-                    dst * cal.getTimeZone().getDSTSavings());
+                    dst * getDSTSavings(cal.getTimeZone()));
         }
         return (double)cal.getTime().getTime()/1000.0;
     }
@@ -571,24 +545,11 @@ public class time implements ClassDictInit
                 // timezone name
                 if (cal == null)
                     cal = _tupletocal(tup);
-                {
-                    boolean use_getid = true;
-                    /* XXXAPI 1.2 START
-                    try {
-                        s = s + cal.getTimeZone().getDisplayName(
-                            // in daylight savings time?  true if == 1 -1
-                            // means the information was not available;
-                            // treat this as if not in dst
-                            item(tup, 8) > 0,
-                            TimeZone.SHORT);
-                        use_getid = false;
-                    }
-                    catch (NoSuchMethodError e) {}
-                    XXXAPI 1.2 END */
-                    if (use_getid)
-                        // See note in classDictInit() above
-                        s = s + cal.getTimeZone().getID();
-                }
+                s = s + getDisplayName(cal.getTimeZone(),
+                        // in daylight savings time?  true if == 1 -1
+                        // means the information was not available;
+                        // treat this as if not in dst
+                        item(tup, 8) > 0, 0);
                 break;
             case '%':
                 // %
@@ -616,4 +577,27 @@ public class time implements ClassDictInit
         }
     }
 
+    private static String getDisplayName(TimeZone tz, boolean dst, int style) {
+        String version = System.getProperty("java.version");
+        if (version.compareTo("1.2") >= 0) {
+            try {
+                Method m = tz.getClass().getMethod("getDisplayName",
+                            new Class[] { Boolean.TYPE, Integer.TYPE });
+                return (String) m.invoke(tz, new Object[] {
+                            new Boolean(dst), new Integer(style) });
+            } catch (Exception exc) { }
+        }
+        return tz.getID();
+    }
+            
+    private static int getDSTSavings(TimeZone tz) {
+        String version = System.getProperty("java.version");
+        if (version.compareTo("1.2") >= 0) {
+            try {
+                Method m = tz.getClass().getMethod("getDSTSavings", null);
+                return ((Integer) m.invoke(tz, null)).intValue();
+             } catch (Exception exc) { }
+        }
+        return 0;
+    }
 }
