@@ -49,7 +49,7 @@
         <available property="weakref.present"
             classname="java.lang.ref.WeakReference"
         />
-        <available property="servlet.present" 
+        <available property="servlet.present"
             classname="javax.servlet.Servlet"
             classpath="${servlet.jar}"
         />
@@ -209,9 +209,17 @@
     </target>
 
     <target name="jar" depends="compile">
+        <!--
+            Some windows systems need the ${line.separator} or will report a
+            "Failed to load Main-Class manifest attribute" error
+        -->
+        <echo file="${outputDir}/mainClass.mf"
+              message="Main-Class: org.python.util.jython${line.separator}"/>
         <jar jarfile="jython.jar"
              basedir="${outputDir}"
+             manifest="${outputDir}/mainClass.mf"
              includes="**/*.class,**/ucnhash.dat,**/*.properties" />
+        <delete file="${outputDir}/mainClass.mf"/>
     </target>
 
     <target name="doc" depends="init">
