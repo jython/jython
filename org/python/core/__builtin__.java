@@ -155,6 +155,9 @@ public class __builtin__ implements InitModule
         return o.__findattr__("__call__") != null;
     }
 
+    public static char unichr(int i) {
+        return chr(i);
+    }
 
     public static char chr(int i) {
         if (i < 0 || i > 65535)
