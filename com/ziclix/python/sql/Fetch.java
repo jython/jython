@@ -82,7 +82,7 @@ abstract public class Fetch {
 	}
 
 	/**
-	 * Method add
+	 * Create the results after a successful execution and manages the result set.
 	 *
 	 * @param ResultSet resultSet
 	 *
@@ -90,13 +90,27 @@ abstract public class Fetch {
 	abstract public void add(ResultSet resultSet);
 
 	/**
-	 * Method add
+	 * Create the results after a successful execution and manages the result set.
+	 * Optionally takes a set of JDBC-indexed columns to automatically set to None
+	 * primarily to support getTypeInfo() which sets a column type of a number but
+	 * doesn't use the value so a driver is free to put anything it wants there.
 	 *
 	 * @param ResultSet resultSet
 	 * @param Set skipCols
 	 *
 	 */
 	abstract public void add(ResultSet resultSet, Set skipCols);
+
+	/**
+	 * Method add
+	 *
+	 * @param CallableStatement callableStatement
+	 * @param Procedure procedure
+	 *
+	 */
+	public void add(CallableStatement callableStatement, Procedure procedure) {
+		return;
+	}
 
 	/**
 	 * Fetch the next row of a query result set, returning a single sequence,
@@ -128,7 +142,17 @@ abstract public class Fetch {
 	 *
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
-	abstract public PyObject fetchall();
+	public final PyObject fetchall() {
+		return doFetchall();
+	}
+
+	/**
+	 * Method doFetchall
+	 *
+	 * @return PyObject
+	 *
+	 */
+	abstract protected PyObject doFetchall();
 
 	/**
 	 * Fetch the next set of rows of a query result, returning a sequence of
@@ -151,14 +175,41 @@ abstract public class Fetch {
 	 *
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
-	abstract public PyObject fetchmany(int size);
+	public final PyObject fetchmany(int size) {
+		return doFetchmany(size);
+	}
+
+	/**
+	 * Method doFetchmany
+	 *
+	 * @param int size
+	 *
+	 * @return PyObject
+	 *
+	 */
+	abstract protected PyObject doFetchmany(int size);
 
 	/**
 	 * Move the result pointer to the next set if available.
 	 *
 	 * @return true if more sets exist, else None
 	 */
-	abstract public PyObject nextset();
+	public final PyObject nextset() {
+		return doNextset();
+	}
+
+	/**
+	 * Method doNextset
+	 *
+	 * @return PyObject
+	 *
+	 */
+	abstract protected PyObject doNextset();
+
+	/**
+	 * Cleanup any resources.
+	 */
+	abstract public void close() throws SQLException;
 
 	/**
 	 * Builds a tuple containing the meta-information about each column.
@@ -269,13 +320,6 @@ abstract public class Fetch {
 	public PyObject getDescription() {
 		return this.description;
 	}
-
-	/**
-	 * Cleanup any resources.
-	 */
-	public void close() throws SQLException {
-		return;
-	}
 }
 
 /**
@@ -301,7 +345,7 @@ class StaticFetch extends Fetch {
 
 		super(cursor);
 
-		this.results = new ArrayList();
+		this.results = new LinkedList();
 		this.counter = -1;
 	}
 
@@ -359,7 +403,7 @@ class StaticFetch extends Fetch {
 	 *
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
-	public PyObject fetchall() {
+	public PyObject doFetchall() {
 		return fetchmany(this.rowcount);
 	}
 
@@ -384,7 +428,7 @@ class StaticFetch extends Fetch {
 	 *
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
-	public PyObject fetchmany(int size) {
+	public PyObject doFetchmany(int size) {
 
 		PyObject res = Py.None, current = Py.None;
 
@@ -413,7 +457,7 @@ class StaticFetch extends Fetch {
 	 *
 	 * @return true if more sets exist, else None
 	 */
-	public PyObject nextset() {
+	public PyObject doNextset() {
 
 		PyObject next = Py.None;
 
@@ -500,12 +544,26 @@ class DynamicFetch extends Fetch {
 	}
 
 	/**
+	 * Iterate the remaining contents of the ResultSet and return.
+	 */
+	public PyObject doFetchall() {
+		return fetch(0, true);
+	}
+
+	/**
+	 * Iterate up to size rows remaining in the ResultSet and return.
+	 */
+	public PyObject doFetchmany(int size) {
+		return fetch(size, false);
+	}
+
+	/**
 	 * Internal use only.  If <i>all</i> is true, return everything
 	 * that's left in the result set, otherwise return up to size.  Fewer
 	 * than size may be returned if fewer than size results are left in
 	 * the set.
 	 */
-	private PyObject fetchmany(int size, boolean all) {
+	private PyObject fetch(int size, boolean all) {
 
 		if (this.resultSet == null) {
 			return Py.None;
@@ -534,7 +592,7 @@ class DynamicFetch extends Fetch {
 	/**
 	 * Always returns None.
 	 */
-	public PyObject nextset() {
+	public PyObject doNextset() {
 		return Py.None;
 	}
 
@@ -550,19 +608,5 @@ class DynamicFetch extends Fetch {
 		this.resultSet.close();
 
 		this.resultSet = null;
-	}
-
-	/**
-	 * Iterate the remaining contents of the ResultSet and return.
-	 */
-	public PyObject fetchall() {
-		return fetchmany(0, true);
-	}
-
-	/**
-	 * Iterate up to size rows remaining in the ResultSet and return.
-	 */
-	public PyObject fetchmany(int size) {
-		return fetchmany(size, false);
 	}
 }

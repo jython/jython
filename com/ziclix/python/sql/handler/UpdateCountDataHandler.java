@@ -30,6 +30,8 @@ import com.ziclix.python.sql.*;
  */
 public class UpdateCountDataHandler extends FilterDataHandler {
 
+	private static boolean once = false;
+
 	/**
 	 * The update count for the last executed statement.
 	 */
@@ -43,6 +45,11 @@ public class UpdateCountDataHandler extends FilterDataHandler {
 	public UpdateCountDataHandler(DataHandler datahandler) {
 
 		super(datahandler);
+
+		if (!once) {
+			Py.writeError("UpdateCountDataHandler", zxJDBC.getString("updateCountDeprecation"));
+			once = true;
+		}
 
 		this.updateCount = -1;
 	}

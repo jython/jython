@@ -43,7 +43,7 @@ public class PyExtendedCursor extends PyCursor {
 	protected static PyList __methods__;
 
 	static {
-		PyObject[] m = new PyObject[7];
+		PyObject[] m = new PyObject[9];
 
 		m[0] = new PyString("tables");
 		m[1] = new PyString("columns");
@@ -52,6 +52,8 @@ public class PyExtendedCursor extends PyCursor {
 		m[4] = new PyString("procedures");
 		m[5] = new PyString("procedurecolumns");
 		m[6] = new PyString("statistics");
+		m[7] = new PyString("bestrow");
+		m[8] = new PyString("versioncolumns");
 		__methods__ = new PyList(m);
 
 		__methods__.extend(PyCursor.__methods__);
@@ -110,6 +112,8 @@ public class PyExtendedCursor extends PyCursor {
 		dict.__setitem__("statistics", new ExtendedCursorFunc("statistics", 106, 5, 5, "description of a table's indices and statistics"));
 		dict.__setitem__("gettypeinfo", new ExtendedCursorFunc("gettypeinfo", 107, 0, 1, "query for sql type info"));
 		dict.__setitem__("gettabletypeinfo", new ExtendedCursorFunc("gettabletypeinfo", 108, 0, 1, "query for table types"));
+		dict.__setitem__("bestrow", new ExtendedCursorFunc("bestrow", 109, 4, 4, "query for table types"));
+		dict.__setitem__("versioncolumns", new ExtendedCursorFunc("versioncolumns", 110, 3, 3, "query for table types"));
 
 		// hide from python
 		dict.__setitem__("classDictInit", null);
@@ -168,7 +172,7 @@ public class PyExtendedCursor extends PyCursor {
 		}
 
 		try {
-			create(getMetaData().getTables(q, o, t, y));
+			this.fetch.add(getMetaData().getTables(q, o, t, y));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -192,7 +196,7 @@ public class PyExtendedCursor extends PyCursor {
 		String c = datahandler.getMetaDataName(column);
 
 		try {
-			create(getMetaData().getColumns(q, o, t, c));
+			this.fetch.add(getMetaData().getColumns(q, o, t, c));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -214,7 +218,7 @@ public class PyExtendedCursor extends PyCursor {
 		String p = datahandler.getMetaDataName(procedure);
 
 		try {
-			create(getMetaData().getProcedures(q, o, p));
+			this.fetch.add(getMetaData().getProcedures(q, o, p));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -238,7 +242,7 @@ public class PyExtendedCursor extends PyCursor {
 		String c = datahandler.getMetaDataName(column);
 
 		try {
-			create(getMetaData().getProcedureColumns(q, o, p, c));
+			this.fetch.add(getMetaData().getProcedureColumns(q, o, p, c));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -261,7 +265,7 @@ public class PyExtendedCursor extends PyCursor {
 		String t = datahandler.getMetaDataName(table);
 
 		try {
-			create(getMetaData().getPrimaryKeys(q, o, t));
+			this.fetch.add(getMetaData().getPrimaryKeys(q, o, t));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -294,7 +298,7 @@ public class PyExtendedCursor extends PyCursor {
 		String ft = datahandler.getMetaDataName(foreignTable);
 
 		try {
-			create(getMetaData().getCrossReference(pq, po, pt, fq, fo, ft));
+			this.fetch.add(getMetaData().getCrossReference(pq, po, pt, fq, fo, ft));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -325,7 +329,7 @@ public class PyExtendedCursor extends PyCursor {
 		boolean a = accuracy.__nonzero__();
 
 		try {
-			create(getMetaData().getIndexInfo(q, o, t, u, a), skipCols);
+			this.fetch.add(getMetaData().getIndexInfo(q, o, t, u, a), skipCols);
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -346,7 +350,7 @@ public class PyExtendedCursor extends PyCursor {
 		skipCols.add(new Integer(17));
 
 		try {
-			create(getMetaData().getTypeInfo(), skipCols);
+			this.fetch.add(getMetaData().getTypeInfo(), skipCols);
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -374,7 +378,55 @@ public class PyExtendedCursor extends PyCursor {
 		clear();
 
 		try {
-			create(getMetaData().getTableTypes());
+			this.fetch.add(getMetaData().getTableTypes());
+		} catch (SQLException e) {
+			throw zxJDBC.newError(e);
+		}
+	}
+
+	/**
+	 * Gets a description of a table's optimal set of columns that uniquely
+	 * identifies a row. They are ordered by SCOPE.
+	 *
+	 * @param qualifier
+	 * @param owner
+	 * @param table
+	 */
+	protected void bestrow(PyObject qualifier, PyObject owner, PyObject table) {
+
+		clear();
+
+		String c = datahandler.getMetaDataName(qualifier);
+		String s = datahandler.getMetaDataName(owner);
+		String t = datahandler.getMetaDataName(table);
+		int p = DatabaseMetaData.bestRowUnknown;	// scope
+		boolean n = true;													// nullable
+
+		try {
+			this.fetch.add(getMetaData().getBestRowIdentifier(c, s, t, p, n));
+		} catch (SQLException e) {
+			throw zxJDBC.newError(e);
+		}
+	}
+
+	/**
+	 * Gets a description of a table's columns that are automatically
+	 * updated when any value in a row is updated. They are unordered.
+	 *
+	 * @param qualifier a schema name
+	 * @param owner an owner name
+	 * @param table a table name
+	 */
+	protected void versioncolumns(PyObject qualifier, PyObject owner, PyObject table) {
+
+		clear();
+
+		String q = datahandler.getMetaDataName(qualifier);
+		String o = datahandler.getMetaDataName(owner);
+		String t = datahandler.getMetaDataName(table);
+
+		try {
+			this.fetch.add(getMetaData().getVersionColumns(q, o, t));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -493,6 +545,16 @@ class ExtendedCursorFunc extends PyBuiltinFunctionSet {
 
 			case 104 :
 				cursor.procedures(arga, argb, argc);
+
+				return Py.None;
+
+			case 109 :
+				cursor.bestrow(arga, argb, argc);
+
+				return Py.None;
+
+			case 110 :
+				cursor.versioncolumns(arga, argb, argc);
 
 				return Py.None;
 
