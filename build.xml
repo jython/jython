@@ -438,7 +438,9 @@
                 encodings/*.py,
                 test/**,
             "/>
+        </copy>
 
+        <copy todir="${distDir}/Lib">
             <!-- The jython .py modules -->
             <fileset dir="${sourceDir}/Lib" includes="*.py, pawt/*.py"/>
         </copy>
