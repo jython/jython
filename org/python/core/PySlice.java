@@ -32,4 +32,6 @@ public class PySlice extends PyObject {
                             stop.__repr__()+", "+
                             step.__repr__()+")");
     }
+
+    public boolean isSequenceType() { return false; }
 }
