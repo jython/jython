@@ -322,6 +322,8 @@ MORE : /* Strings */
 
 <IN_STRING11> MORE: { <("\\" ("\\"|"'"|"\r\n"|"\n"|"\r")) | ~["\n","\r"]> }
 <IN_STRING21> MORE: { <("\\" ("\\"|"\""|"\r\n"|"\n"|"\r")) | ~["\n","\r"]> }
+<IN_STRING13> MORE: { "\\'''" }
+<IN_STRING23> MORE: { "\\\"\"\"" }
 
 <IN_STRING13, IN_STRING23> MORE:
 {       <"\r\n"|"\n"|"\r">  | <~["\n","\r"]> }
