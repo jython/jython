@@ -23,14 +23,14 @@ public class RegexObject extends PyObject {
 
     public String pattern;
     public int flags;
-    public PyObject groupindex;
+    public PyDictionary groupindex;
     private Pattern code;
 
     public RegexObject(String pattern, int flags) {
         this.pattern = pattern;
         this.flags = flags;
         groupindex = new PyDictionary();
-        code = compile(fixPattern(pattern, groupindex), flags);
+        code = compile(fixPattern(pattern), flags);
     }
 
     public MatchObject match(String string) {
@@ -238,7 +238,7 @@ public class RegexObject extends PyObject {
         return v.getValue();
     }    
 
-    private String fixPattern(String pattern, PyObject groupindex) {
+    private String fixPattern(String pattern) {
         char[] chars = pattern.toCharArray();
 
         int index=0;
