@@ -369,18 +369,17 @@ abstract public class PySequence extends PyObject
                                         int length)
     {
         int start;
-        if (step < 0)
-            start = getIndex(s_start, length-1);
-        else
+        if (step < 0) {
+            start = getIndex(s_start, length - 1);
+            if (start < 0) start += length;
+            if (start < 0) start = -1;
+            if (start >= length) start = length - 1;
+        } else {
             start = getIndex(s_start, 0);
-
-        if (start < 0) {
-            start += length;
-            if (start < 0)
-                start = 0;
+            if (start < 0) start += length;
+            if (start < 0) start = 0;
+            if (start >= length) start = length;
         }
-        if (start > length)
-            start = length;
 
         return start;
     }
