@@ -1,4 +1,5 @@
-r"""OS routines for Mac, DOS, NT, or Posix depending on what system we're on.
+r"""OS routines for Java, with some attempts to support DOS, NT, and
+Posix functionality.
 
 This exports:
   - all functions from posix, nt, dos, os2, mac, or ce, e.g. unlink, stat, etc.
@@ -23,7 +24,7 @@ __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
            "defpath", "name"]
 
 import java
-from java.io import File, BufferedReader, InputStreamReader
+from java.io import File, BufferedReader, InputStreamReader, IOException
 import javapath as path
 from UserDict import UserDict
 import string
@@ -35,10 +36,9 @@ import thread
 
 error = OSError
 
-name = 'java' # descriminate based on JDK version?
-curdir = '.'
-pardir = '..' #This might not be right...
-#curdir, pardir??
+name = 'java' # discriminate based on JDK version?
+curdir = '.'  # default to Posix for directory behavior, override below
+pardir = '..' 
 sep = java.io.File.separator
 altsep = None
 pathsep = java.io.File.pathSeparator
@@ -104,23 +104,23 @@ class LazyDict( UserDict ):
     """A lazy-populating User Dictionary.
     Lazy initialization is not thread-safe.
     """
-        
-    def __init__( self, dict=None, populate=lambda: {}, keyTransform=None ):
-        """dict is the starting dictionary of values
-        populate is a function that returns the populated dictionary
-        keyTransform is a function to transform the environment keys
-        (e.g., upper or identity)
+    def __init__( self,
+                  dict=None,
+                  populate=None,
+                  keyTransform=None ):
+        """dict: starting dictionary of values
+        populate: function that returns the populated dictionary
+        keyTransform: function to normalize the keys (e.g., toupper/None)
         """
         UserDict.__init__( self, dict )
         self._populated = 0
-        self.__populateFunc = populate
+        self.__populateFunc = populate or (lambda: {})
         self._keyTransform = keyTransform or (lambda key: key)
 
     def __populate( self ):
         if not self._populated:
-            # store as self.data so any 'set' sets in original as well
             self.data = self.__populateFunc()
-            self._populated = 1 # not thread-safe! 
+            self._populated = 1 # race condition
 
     ########## extend methods from UserDict by pre-populating
     def __repr__(self):
@@ -173,34 +173,16 @@ class LazyDict( UserDict ):
         return UserDict.popitem( self )
 
 
-class _NullEnv:
-    """Placeholder Environment for platforms w/o shell or environment
-    functionality, like Mac"""
-    def __init__( self ):
-        self.environment = LazyDict()
-        
-    # note that this won't pass __test()
-    def execute( self, cmd ):
-        return None
-
-    def system( self, cmd ):
-        raise OSError( 0, "os.system not implemented. "
-                          "Try setting python.environment=shell.", cmd ) 
-        return -1
-
-    def readLines( self, cmd ):
-        return []
-    
 class _ShellEnv:
-    """Environment derived by spawning a subshell and parsing its environment.
-    Also supports current directory and system functions.
+    """Provide environment derived by spawning a subshell and parsing its
+    environment.  Also supports system functions and provides empty
+    environment support for platforms with unknown shell
+    functionality.
     """
-    def __init__( self, cmd, getEnv, keyTransform=None ):
-        """cmd is a list of arguments to come before the command in the
-        Runtime.exec() call.
-        getEnv is the string system command to list the environment variables
-        envKeyTransform is a function to transform the environment keys
-        (usually toupper or identity)
+    def __init__( self, cmd=None, getEnv=None, keyTransform=None ):
+        """cmd: list of exec() arguments to run command in subshell, or None
+        getEnv: shell command to list environment variables, or None
+        keyTransform: normalization function for environment keys, or None
         """
         self.cmd = cmd
         self.getEnv = getEnv
@@ -210,32 +192,39 @@ class _ShellEnv:
 
     ########## system
     def system( self, cmd ):
-        """Act like the standard library 'system' call.
-        Execute a command in a shell, and send output to stdout.
+        """Imitate the standard library 'system' call.
+        Execute 'cmd' in a shell, and send output to stdout & stderr.
         """
         p = self.execute( cmd )
 
-        # we want intermediate output while process runs, so call
-        # _readLines( ... println )
         def println( arg, write=sys.stdout.write ):
             write( arg + "\n" )
-        # read stderr in secondary thread
+        def printlnStdErr( arg, write=sys.stderr.write ):
+            write( arg + "\n" )
+            
+        # read stderr in new thread
         thread.start_new_thread( self._readLines,
-                                ( p.getErrorStream(), println ))
+                                ( p.getErrorStream(), printlnStdErr ))
         # read stdin in main thread
         self._readLines( p.getInputStream(), println )
+        
         return p.waitFor()
 
-
     def execute( self, cmd ):
-        """Execute cmd in a shell, and then return the process instance"""
+        """Execute cmd in a shell, and return the process instance"""
         shellCmd = self._formatCmd( cmd )
         if self.environment._populated:
             env = self._formatEnvironment( self.environment )
         else:
             env = None
-        p = java.lang.Runtime.getRuntime().exec( shellCmd, env )
-        return p
+        try:
+            p = java.lang.Runtime.getRuntime().exec( shellCmd, env )
+            return p
+        except IOException, ex:
+            raise OSError(
+                0,
+                "Failed to execute command (%s): %s" % ( shellCmd, ex )
+                )
 
     ########## utility methods
     def _readLines( self, stream, func=None ):
@@ -253,8 +242,13 @@ class _ShellEnv:
         return lines or None
 
     def _formatCmd( self, cmd ):
-        """Format a command for execution in a shell.
-        """
+        """Format a command for execution in a shell."""
+        if self.cmd is None:
+            msgFmt = "Unable to execute commands in subshell because shell" \
+                     " functionality not implemented for OS %s with shell"  \
+                     " setting %s. Failed command=%s""" 
+            raise OSError( 0, msgFmt % ( _osType, _envType, cmd ))
+            
         return self.cmd + [cmd]
 
     def _formatEnvironment( self, env ):
@@ -269,60 +263,92 @@ class _ShellEnv:
         This allows multi-line variables as long as subsequent lines do
         not have '=' signs.
         """
-        p = self.execute( self.getEnv )
         env = {}
-        key = 'firstLine' # in case first line had no '='
-        for line in self._readLines( p.getInputStream() ):
+        if self.getEnv:
             try:
-                i = line.index( '=' )
-                key = self._keyTransform(line[:i])
-                value = line[i+1:]
-            except ValueError:
-                # found no '=', so this line is part of previous value
-                value = '%s\n%s' % ( value, line )
-            env[ key ] = value
+                p = self.execute( self.getEnv )
+                lines = self._readLines( p.getInputStream() )
+                if '=' not in lines[0]:
+                    print "getEnv command (%s) did not print environment.\n" \
+                        "Output=%s" % (
+                        self.getEnv, '\n'.join( lines )
+                        )
+                    return env
+
+                for line in lines:
+                    try:
+                        i = line.index( '=' )
+                        key = self._keyTransform(line[:i])
+                        value = line[i+1:]
+                    except ValueError:
+                        # found no '=', so line is part of previous value
+                        value = '%s\n%s' % ( value, line )
+                    env[ key ] = value
+            except OSError, ex:
+                print "Failed to get environment, environ will be empty:", ex
         return env
 
 def _getOsType( os=None ):
+    """Select the OS behavior based on os argument, 'python.os' registry
+    setting and 'os.name' Java property.
+    os: explicitly select desired OS. os=None to autodetect, os='None' to
+    disable 
+    """
     os = os or sys.registry.getProperty( "python.os" ) or \
                java.lang.System.getProperty( "os.name" )
         
     _osTypeMap = (
-        ( "nt", r"(nt|Windows NT)|(Windows NT 4.0)|(WindowsNT)|"
+        ( "nt", r"(nt)|(Windows NT)|(Windows NT 4.0)|(WindowsNT)|"
                 r"(Windows 2000)|(Windows XP)|(Windows CE)" ),
-        ( "dos", r"(dos|Windows 95)|(Windows 98)|(Windows ME)" ),
-        ( "mac", r"(mac|MacOS.*)|(Darwin)" ),
-        ( "None", r"None" ),
-        ( "unix", r".*" ), # last is default, even if doesn't match
+        ( "dos", r"(dos)|(Windows 95)|(Windows 98)|(Windows ME)" ),
+        ( "mac", r"(mac)|(MacOS.*)|(Darwin)" ),
+        ( "None", r"(None)" ),
+        ( "posix", r"(.*)" ), # default - posix seems to vary mast widely
         )
     for osType, pattern in _osTypeMap:
         if re.match( pattern, os ):
             break
-    
     return osType
 
-def _getShellEnv( os = None ):
-    """Select the type of environment handling we want to provide.
-    os is None to auto-detect, or something recognized by _getOsType()
-    could add 'java'
+def _getShellEnv( envType, shellCmd, envCmd, envTransform ):
+    """Create the desired environment type.
+    envType: 'shell' or None
     """
-    if os == "shell":
-        os = None
-    osType = _getOsType( os )
-    if osType == "nt":
-        return _ShellEnv( ["cmd", "/c"], "set", string.upper )
-    elif osType == "dos":
-        return _ShellEnv( ["command", "/c"], "set", string.upper )
-    elif osType == "mac":
-        return _NullEnv()
-    else: # osType == "unix":
-        return _ShellEnv( ["sh", "-c"], "env" )
-
+    if envType == "shell":
+        return _ShellEnv( shellCmd, envCmd, envTransform )
+    else:
+        return _ShellEnv()
+    
+_osType = _getOsType()
 _envType = sys.registry.getProperty("python.environment", "shell")
-if _envType == "shell":
-    _shellEnv = _getShellEnv()
-else:
-    _shellEnv = _NullEnv()
+
+# default to None/empty for shell and environment behavior
+_shellCmd = None
+_envCmd = None
+_envTransform = None
+
+# override defaults based on _osType
+if _osType == "nt":
+    _shellCmd = ["cmd", "/c"]
+    _envCmd = "set"
+    _envTransform = string.upper
+elif _osType == "dos":
+    _shellCmd = ["command.com", "/c"]
+    _envCmd = "set"
+    _envTransform = string.upper
+elif _osType == "posix":
+    _shellCmd = ["sh", "-c"]
+    _envCmd = "env"
+elif _osType == "mac":
+    curdir = ':'  # override Posix directories
+    pardir = '::' 
+elif _osType == "None":
+    pass
+# else:
+#    # may want a warning, but only at high verbosity:
+#    warn( "Unknown os type '%s', using default behavior." % _osType )
+
+_shellEnv = _getShellEnv( _envType, _shellCmd, _envCmd, _envTransform )
 
 # provide environ, putenv, getenv
 environ = _shellEnv.environment
@@ -332,8 +358,38 @@ getenv = environ.__getitem__
 system = _shellEnv.system
 
 ########## test code
-def __test( shellEnv=_shellEnv ):
-    # tests system and environment functionality
+def _testGetOsType():
+    testVals = {
+        "Windows NT": "nt",
+        "Windows 95": "dos",
+        "MacOS": "mac",
+        "Solaris": "posix",
+        "Linux": "posix",
+        "None": "None"
+        }
+
+    msgFmt = "_getOsType( '%s' ) should return '%s', not '%s'"
+    # test basic mappings
+    for key, val in testVals.items():
+        got = _getOsType( key )
+        assert got == val, msgFmt % ( key, val, got )
+
+def _testCmds( _shellEnv, testCmds, whichEnv ):
+    # test commands (key) and compare output to expected output (value).
+    # this actually executes all the commands twice, testing the return
+    # code by calling system(), and testing some of the output by calling
+    # execute()
+    for cmd, pattern in testCmds:
+        print "\nExecuting '%s' with %s environment" % (cmd, whichEnv)
+        assert not _shellEnv.system( cmd ), \
+                "%s failed with %s environment" % (cmd, whichEnv)
+        line = _shellEnv._readLines(
+            _shellEnv.execute(cmd).getInputStream())[0]
+        assert re.match( pattern, line ), \
+                "expected match for %s, got %s" % ( pattern, line )
+    
+def _testSystem( shellEnv=_shellEnv ):
+    # test system and environment functionality
     key, value = "testKey", "testValue"
     org = environ
     testCmds = [
@@ -348,9 +404,10 @@ def __test( shellEnv=_shellEnv ):
         # should print PATH (on NT)
         ("echo PATH=%PATH%", "(PATH=.*;.*)|(PATH=%PATH%)"),
         # should print 'testKey=%testKey%' on NT before initialization,
+        # should print 'testKey=' on 95 before initialization,
         # and 'testKey=testValue' after
         ("echo %s=%%%s%%" % (key,key),
-                "(%s=%%%s%%)|(%s=%s)" % (key, key, key, value)),     
+                "(%s=)" % (key,)),     
         # should print PATH (on Unix)
         ( "echo PATH=$PATH", "PATH=.*" ),
         # should print 'testKey=testValue' on Unix after initialization
@@ -359,25 +416,18 @@ def __test( shellEnv=_shellEnv ):
         # should output quotes on NT but not on Unix
         ( 'echo "hello there"', '"?hello there"?' ),
         # should print 'why' to stdout. 
-        ( r'''python -c "import sys;sys.stdout.write( 'why\n' )"''', "why" ),
+        ( r'''jython -c "import sys;sys.stdout.write( 'why\n' )"''', "why" ),
         # should print 'why' to stderr, but it won't right now.  Have
         # to add the print to give some output...empty string matches every
         # thing...
-        ( r'''python -c "import sys;sys.stderr.write('why\n');print " ''', "" )
+        ( r'''jython -c "import sys;sys.stderr.write('why\n');print " ''',
+          "" )
         ]
     
     assert not environ._populated, \
             "before population, environ._populated should be false"
 
-    # test system - we should really grab the output of the system
-    # command, but we aren't
-    for cmd, pattern in testCmds:
-        print "\nExecuting %s with default environment" % cmd
-        assert not _shellEnv.system( cmd ), \
-                "%s failed with default environment" % cmd
-        line = _shellEnv._readLines(_shellEnv.execute(cmd).getInputStream())[0]
-        assert re.match( pattern, line ), \
-                "expected match for %s, got %s" % ( pattern, line )
+    _testCmds( _shellEnv, testCmds, "default" )
     
     # trigger initialization of environment
     environ[ key ] = value
@@ -389,17 +439,29 @@ def __test( shellEnv=_shellEnv ):
     assert environ.get( key, None ) == value, \
             "expected real environment to have %s set" % key
 
-    # test system using the non-default environment - should really grab
-    # output, but oh, well.
-    for cmd, pattern in testCmds:
-        print "\nExecuting %s with initialized environment" % cmd
-        assert not _shellEnv.system( cmd ), \
-                "%s failed with default environment" % cmd
-        line = _shellEnv._readLines(_shellEnv.execute(cmd).getInputStream())[0]
-        assert re.match( pattern, line ), \
-                "expected match for %s, got %s" % ( pattern, line )
+    # test system using the non-default environment
+    _testCmds( _shellEnv, testCmds, "initialized" )
     
     assert environ.has_key( "PATH" ), \
             "expected environment to have PATH attribute " \
             "(this may not apply to all platforms!)"
 
+def _testBadShell():
+    # attempt to get an environment with a shell that is not startable
+    se2 = _ShellEnv( ["badshell", "-c"], "set" )
+    str(se2.environment) # trigger initialization
+    assert not se2.environment.items(), "environment should be empty"
+
+def _testBadGetEnv():
+    # attempt to get an environment with a command that does not print an environment
+    se2 = _getShellEnv( "shell", _shellCmd, _envCmd, _envTransform )
+    se2.getEnv="echo This command does not print environment"
+    str(se2.environment) # trigger initialization
+    assert not se2.environment.items(), "environment should be empty"
+    
+def _test():
+    _testGetOsType()
+    _testBadShell()
+    _testBadGetEnv()
+    _testSystem()
+        
