@@ -22,7 +22,7 @@ public class PySystemState extends PyObject {
        The copyright notice for this release.
     **/
     public static String copyright =
-        "Copyright 1997-1999 Corporation for National Research Initiatives";
+        "Copyright © 1997-1999 Corporation for National Research Initiatives";
 
     /**
        The arguments passed to this program on the command line.

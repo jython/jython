@@ -1,4 +1,4 @@
-// Copyright © 1999 Corporation for National Research Initiatives
+// Copyright © Corporation for National Research Initiatives
 package org.python.util;
 
 import org.python.core.*;
