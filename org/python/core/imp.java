@@ -5,7 +5,8 @@ import java.io.*;
 import java.util.Hashtable;
 import java.util.Properties;
 
-public class imp {    
+public class imp
+{
     public static final int APIVersion = 8;
     
     public static PyModule addModule(String name) {
@@ -527,12 +528,12 @@ public class imp {
         // This should be better "protected"
         ((PyStringMap)nm.__dict__).clear();
         
-        nm.__setattr__("__name__", new PyString(name));
+        nm.__setattr__("__name__", new PyString(modName));
         BytecodeLoader.clearLoader();
 
         PyObject ret = loadFromPath(name, modName, path);
 
-        modules.__setitem__(name, ret);
+        modules.__setitem__(modName, ret);
         return ret;
     }
 }
