@@ -1,0 +1,25 @@
+ACKNOWLEDGMENTS
+Copyright © Corporation for National Research Initiatives
+
+    Jim Hugunin invented JPython and was the primary developer while
+    he was at CNRI.  In February 1999, Jim left CNRI for sunny
+    California and Barry Warsaw became the primary maintainer.  Jim
+    continues to provide valuable assistance, as does Python's
+    inventor Guido van Rossum.
+
+    You can contact the JPython maintainers directly via
+    jpython@python.org
+
+    Finn Bock has been a frequent and valuable contributor to the
+    JPython-interest@python.org mailing list, and has provided bug
+    fixes and these important modules:
+
+        cPickle.java
+        struct.java
+        binascii.java
+
+
+Local Variables:
+mode: indented-text
+indent-tabs-mode: nil
+End:
