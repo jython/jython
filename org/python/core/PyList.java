@@ -239,7 +239,7 @@ public class PyList extends PySequence implements InitModule {
 
 	public void insert(int index, PyObject o) {
 	    resize(length+1);
-	    System.arraycopy(list, index, list, index+1, length-index);
+	    System.arraycopy(list, index, list, index+1, length-index-1);
 	    list[index] = o;
 	}
 
