@@ -684,7 +684,8 @@ public class PyList extends PySequence implements ClassDictInit
      * @param compare the comparison function.
      */
     public synchronized void sort(PyObject compare) {
-        quicksort(list, 0, length, compare);
+        MergeState ms = new MergeState(list, length, compare);
+        ms.sort();
     }
 
     /**
