@@ -1114,7 +1114,7 @@ public class CodeCompiler extends Visitor {
         return binaryop(node, "_add");
     }
 
-    public Object __add___2op(SimpleNode node) throws Exception {
+    public Object strjoin(SimpleNode node) throws Exception {
         return binaryop(node, "__add__");
     }
 

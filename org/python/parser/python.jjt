@@ -560,7 +560,7 @@ void atom() #void: {}
 	| "`" SmartTestList() "`" #str_1op(1)
 	| Name()
 	| Number()
-	| String() (String() #__add___2op(2))* }
+	| String() (String() #strjoin(2))* }
 
 
 //lambdef: 'lambda' [varargslist] ':' test

@@ -345,7 +345,7 @@ public class SimpleNode implements Node {
 		case 64:
 			return visitor.str_1op(this);
 		case 65:
-			return visitor.__add___2op(this);
+			return visitor.strjoin(this);
 		case 66:
 			return visitor.lambdef(this);
 		case 67:
