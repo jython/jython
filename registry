@@ -26,8 +26,9 @@ python.packages.directories = java.ext.dirs
 python.options.compileClass = false
 
 # Set verbosity to error, warning, message, comment, or debug
-# for varying levels of informative messages from Jython
-python.verbose = message
+# for varying levels of informative messages from Jython. Normally
+# this option is set from the command line.
+#python.verbose = message
 
 # Setting this to true will support old 1.0 style keyword+"_" names
 # This isn't needed any more due to improvements in the parser
