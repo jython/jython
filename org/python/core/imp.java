@@ -62,9 +62,10 @@ public class imp
         try {
             code = BytecodeLoader.makeCode(name+"$py", data);
         } catch (Throwable t) {
-            BytecodeLoader.clearLoader();
-            if (testing) return null;
-            else throw Py.JavaError(t);
+            if (testing)
+                return null;
+            else
+                throw Py.JavaError(t);
         }
         return createFromCode(name, code);
     }
@@ -504,7 +505,6 @@ public class imp
             name = name.substring(dot+1, name.length()).intern();
             pkg.__delattr__(name);
         }        
-        BytecodeLoader.clearLoader();
         PyObject nc = importName(name, false);
         return nc;
     }
@@ -537,10 +537,7 @@ public class imp
         ((PyStringMap)nm.__dict__).clear();
         
         nm.__setattr__("__name__", new PyString(modName));
-        BytecodeLoader.clearLoader();
-
         PyObject ret = loadFromPath(name, modName, path);
-
         modules.__setitem__(modName, ret);
         return ret;
     }
