@@ -14,7 +14,7 @@ public class PySystemState extends PyObject {
     /**
     The current version of JPython.
     **/
-    public static String version = "1.1alpha2";
+    public static String version = "1.1alpha3";
 
     /**
     The copyright notice for this release.
@@ -79,8 +79,9 @@ public class PySystemState extends PyObject {
             if (root == null) root = preProperties.getProperty("install.root");
             
             String version = preProperties.getProperty("java.version");
-            if (version.startsWith("java")) version = version.substring(4, version.length());
-            if (version.startsWith("jdk") || version.startsWith("jre")) {
+            String lversion = version.toLowerCase();
+            if (lversion.startsWith("java")) version = version.substring(4, version.length());
+            if (lversion.startsWith("jdk") || lversion.startsWith("jre")) {
                 version = version.substring(3, version.length());
             }
             if (version.equals("11")) version = "1.1";
@@ -90,6 +91,7 @@ public class PySystemState extends PyObject {
         } catch (Exception exc) {
             return null;
         }
+        //System.err.println("root: "+root);
         if (root != null) return root;
 
         // If install.root is undefined find jpython.jar in class.path
@@ -272,6 +274,9 @@ public class PySystemState extends PyObject {
     
 	public static synchronized void initialize(Properties preProperties, 
 	Properties postProperties, String[] argv) {
+	    //System.err.println("initializing system state");
+	    //Thread.currentThread().dumpStack();
+	    
 	    if (initialized) {
 	        if (postProperties != null) {
 	            Py.writeError("systemState", "trying to reinitialize with new properties");
@@ -284,6 +289,7 @@ public class PySystemState extends PyObject {
         initRegistry(preProperties, postProperties);
 	    //System.err.println("ss2");
         defaultArgv = new PyList();
+        //defaultArgv.append(new PyString(""));
         for(int i=0; i<argv.length; i++) {
             defaultArgv.append(new PyString(argv[i]));
         }
@@ -333,6 +339,9 @@ public class PySystemState extends PyObject {
 	        getBooleanOption("deprecated.keywordMangling", Options.deprecatedKeywordMangling);
 	    Options.pollStandardIn =
 	        getBooleanOption("console.poll", Options.pollStandardIn);
+	        
+	    Options.classBasedExceptions =
+	        getBooleanOption("options.classExceptions", Options.classBasedExceptions);
 	      
 	    // verbosity is more complicated:
 	    String prop = registry.getProperty("python.verbose");
@@ -367,6 +376,10 @@ public class PySystemState extends PyObject {
     public static File cachedir;
 
     private static void initCacheDirectory(Properties props) {
+        if (Py.frozen) {
+            cachedir = null;
+            return;
+        }
         cachedir = new File(props.getProperty("python.cachedir", "cachedir"));
         if (!cachedir.isAbsolute()) {
             cachedir = new File(PySystemState.prefix, cachedir.getPath());
@@ -375,7 +388,12 @@ public class PySystemState extends PyObject {
 
 	private static void initPackages(Properties props) {
 	    initCacheDirectory(props);
-	    File pkgdir = new File(cachedir, "packages");
+	    File pkgdir;
+	    if (cachedir != null) {
+	        pkgdir = new File(cachedir, "packages");
+	    } else {
+	        pkgdir = null;
+	    }
 	    packageManager = new PackageManager(pkgdir, props);
 	}
 
@@ -390,8 +408,12 @@ public class PySystemState extends PyObject {
 		return path;
 	}
 
-	public PyJavaPackage add_package(String n) {
-		return packageManager.makeJavaPackage(n, null);
+	public static PyJavaPackage add_package(String n) {
+	    return add_package(n, null);
+	}
+	
+	public static PyJavaPackage add_package(String n, String contents) {
+		return packageManager.makeJavaPackage(n, contents);
 	}
 
     public TraceFunction tracefunc = null;

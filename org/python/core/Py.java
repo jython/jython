@@ -499,39 +499,58 @@ public final class Py {
 		Py.getSystemState().argv = new PyList(argv);
 	}
 
-	private static void initProperties(String[] packages, String[] props) {
-	    // This function is completely broken in new PySystemState world
-	    // Needs reworking bad...
-	    if (props != null) {
-	        java.util.Properties sprops;
-	        try {
-	            sprops = System.getProperties();
-	        } catch (Throwable t) {
-	            sprops = new java.util.Properties();
-	        }
-
-	        for(int i=0; i<props.length; i+=2) {
-	            sprops.put(props[i], props[i+1]);
-	        }
-	        //.initRegistry(sprops);
+	private static void initProperties(String[] args, String[] packages, String[] props, String[] specs, boolean frozen) {
+	    if (frozen) Py.frozen = true;
+	    
+	    java.util.Properties sprops;
+        try {
+            sprops = new java.util.Properties(System.getProperties());
+        } catch (Throwable t) {
+            sprops = new java.util.Properties();
         }
 
-	    //if (sys.registry == null) sys.registry = sys.initRegistry();
-
-	    if (packages != null) {
-	        for(int i=0; i<packages.length; i++) {
-	            //sys.add_package(packages[i]);
-	        }
-	    }
-	}
+        if (props != null) {
+            for(int i=0; i<props.length; i+=2) {
+                sprops.put(props[i], props[i+1]);
+            }
+        }
+        //System.err.println("sprops: "+sprops);
+        
+        if (args == null) args = new String[0];
+        PySystemState.initialize(sprops, null, args);
+        
+        if (packages != null) {
+            for(int i=0; i<packages.length; i+=2) {
+                PySystemState.add_package(packages[i], packages[i+1]);
+            }
+        }
+        
+        if (specs != null) {
+            if (specialClasses == null) {
+                specialClasses = new java.util.Hashtable();
+            }
+            for(int i=0; i<specs.length; i+=2) {
+                specialClasses.put(specs[i], Py.findClass(specs[i+1]));
+            }
+        }
+    }
 
     private static java.util.Hashtable specialClasses = null;
 
 	public static void initProxy(PyProxy proxy, String module, String pyclass,
 									Object[] args, String[] packages, String[] props,
 									boolean frozen) {
+		initProxy(proxy, module, pyclass, args, packages, props, null, frozen);
+	}
+									    
+    public static void initProxy(PyProxy proxy, String module, String pyclass,
+									Object[] args, String[] packages, String[] props,
+									String[] specs, boolean frozen) {
 		//System.out.println("initProxy");
-		//frozen = false;
+		//frozen = false;		
+		initProperties(null, packages, props, specs, frozen);
+		
+		
 		ThreadState ts = getThreadState();
 		if (ts.getInitializingProxy() != null) {
 		    proxy._setPyInstance(ts.getInitializingProxy());
@@ -539,33 +558,14 @@ public final class Py {
 		    return;
 		}
 		
-        if (frozen) Py.frozen = true;
         ClassLoader classLoader = proxy.getClass().getClassLoader();
         if (classLoader != null) {
             Py.getSystemState().setClassLoader(classLoader);
         }
 
-	    /*ThreadState ts = getThreadState();
-	    if (ts.interp == null) ts.interp = interp;*/
-
-        //props = new String[0];
-        initProperties(packages, props);
-
         //System.out.println("path: "+sys.path.__str__());
-        if (specialClasses == null) {
-            specialClasses = new java.util.Hashtable();
-        }
 
-        specialClasses.put(module+"."+pyclass, proxy.getClass());
-
-        //System.out.println("mod: "+module+", "+pyclass);
 		PyObject mod = imp.importName(module.intern(), false);
-
-		// Unset special classes somehow?
-		/*int index = pyclass.lastIndexOf('.');
-		if (index != -1) {
-		    pyclass = pyclass.substring(index+1, pyclass.length());
-		}*/
 		PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
 
 		PyInstance instance = new PyInstance(pyc);
@@ -579,19 +579,37 @@ public final class Py {
             pargs = new PyObject[args.length];
 		    for(int i=0; i<args.length; i++) pargs[i] = Py.java2py(args[i]);
 		}
-		//pargs[0] = instance;
 		instance.__init__(pargs, Py.NoKeywords);
 	}
 
-	public static void runMain(String module, String[] args, String[] packages,
-	String[] props, boolean frozen) {
-        if (frozen) Py.frozen = true;
-        setArgv(module, args);
+    public static void initRunnable(String module, PyObject dict) {
         Class mainClass=null;
         try {
-            mainClass = Class.forName(module+"$py");
+            mainClass = Class.forName(module);
         } catch (ClassNotFoundException exc) {
-            System.err.println("Error running main.  Can't find: "+module+"$py");
+            System.err.println("Error running main.  Can't find: "+module);
+            System.exit(-1);
+        }
+        PyCode code=null;
+        try {
+            code = ((PyRunnable)mainClass.newInstance()).getMain();
+        } catch (Throwable t) {
+            System.err.println("Invalid class (runnable): "+module+"$py");
+            System.exit(-1);
+        }
+        Py.runCode(code, dict, dict);
+    }
+
+	public static void runMain(String module, String[] args, String[] packages,
+	String[] props, boolean frozen) {
+	    System.err.println("main: "+module);
+        initProperties(args, packages, props, null, frozen);
+        
+        Class mainClass=null;
+        try {
+            mainClass = Class.forName(module);
+        } catch (ClassNotFoundException exc) {
+            System.err.println("Error running main.  Can't find: "+module);
             System.exit(-1);
         }
 
@@ -601,11 +619,6 @@ public final class Py {
         }
 
 		try {
-		    /*ThreadState ts = getThreadState();
-		    if (ts.interp == null) ts.interp = interp;*/
-
-            initProperties(packages, props);
-
             PyCode code=null;
             try {
                 code = ((PyRunnable)mainClass.newInstance()).getMain();
@@ -873,13 +886,15 @@ public final class Py {
         if (ts == null) {
             if (newSystemState == null) {
                 System.err.println("Ooops, no current thread state: "+defaultSystemState);
-                t.dumpStack();
+                //t.dumpStack();
                 newSystemState = defaultSystemState;
             }
             ts = new ThreadState(t, newSystemState);
+            //System.err.println("new ts: "+ts+", "+ts.systemState);
             threads.put(t, ts);
         }
         cachedThreadState = ts;
+        //System.err.println("returning ts: "+ts+", "+ts.systemState);
         return ts;
     }
     
