@@ -420,7 +420,9 @@ public class PyJavaClass extends PyClass {
         // Check to see if this name is already being used...
         PyObject o = lookup(name, false);
         
-        if (o != null && o instanceof PyReflectedField) {
+        if (o != null) {
+            if (!(o instanceof PyReflectedField)) return;
+            
             if (o instanceof PyBeanProperty) {
                 PyBeanProperty oldProp = (PyBeanProperty)o;
                 if (prop.myType == oldProp.myType) {
