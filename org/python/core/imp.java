@@ -182,7 +182,6 @@ public class imp {
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
             Class c = Py.findClass(mod);
-            //System.err.println("find class: "+mod+", "+c);
             if (c != null)
                 return createFromClass(name, c);
         }
@@ -326,32 +325,14 @@ public class imp {
     }
 
     private static PyObject load(String name, PyList path) {
-        //System.out.println("load: "+name);
         PyObject ret = loadBuiltin(name, path);
         if (ret != null) return ret;
-
-        /* I don't think this is needed any more
-           ClassLoader classLoader=null;
-           if (!Py.frozen) classLoader = Py.getSystemState().getClassLoader();
-           //System.out.println("load1: "+classLoader);
-
-           if (classLoader != null) {
-           try {
-           ret = loadFromClassLoader(name, classLoader);
-           if (ret != null) return ret;
-           } catch (Throwable t) {
-           t.printStackTrace(System.err);
-           }
-           }
-        */
-        //System.out.println("load2: ");
 
         ret = PySystemState.packageManager.jarFindName(name);
         if (ret != null) return ret;
 
         ret = loadFromPath(name, path);
         if (ret != null) return ret;
-        //System.out.println("load3: ");
 
         if (Py.frozen) {
             Class c = Py.findClass(name);

@@ -4,7 +4,8 @@ package org.python.core;
 import java.lang.reflect.*;
 import java.beans.*;
 
-public class PyJavaClass extends PyClass {
+public class PyJavaClass extends PyClass
+{
     public PyReflectedConstructor __init__;
 
     //Deal with a few "magic" java methods
@@ -50,12 +51,13 @@ public class PyJavaClass extends PyClass {
     
 
     private static java.util.Hashtable classes;
+
     public static final PyJavaClass lookup(Class c) {
         return lookup(c.getName(), c);
     }
     
     public synchronized static final PyJavaClass lookup(String name, Class c) {
-        //System.err.println("jclass: "+c.getName());
+//         System.err.println("jclass: "+c.getName());
         if (classes == null) {
             classes = new java.util.Hashtable();
             PyJavaClass jc = new PyJavaClass(true);
@@ -66,10 +68,11 @@ public class PyJavaClass extends PyClass {
 
         PyJavaClass ret = (PyJavaClass)classes.get(name);
         if (ret != null) return ret;
-        /*if (name.equals("java.lang.IllegalThreadStateException")) {
-          System.err.println("creating new jclass: "+System.identityHashCode(c)+": "+name);
-          Thread.currentThread().dumpStack();
-          }*/
+//         if (name.equals("java.lang.IllegalThreadStateException")) {
+//             System.err.println("creating new jclass: "+
+//                                System.identityHashCode(c)+": "+name);
+//             Thread.currentThread().dumpStack();
+//         }
         ret = new PyJavaClass(name);
         classes.put(name, ret);
         if (c != null) {
@@ -111,8 +114,9 @@ public class PyJavaClass extends PyClass {
         d.__setitem__("__module__", Py.None);
         __dict__ = d;
            
-        //System.err.println("initdict: "+proxyClass.getName()+", "+proxyClass.getModifiers());
-        //if (!Modifier.isPublic(proxyClass.getModifiers())) return;
+//         System.err.println("initdict: "+proxyClass.getName()+", "+
+//                            proxyClass.getModifiers());
+//         if (!Modifier.isPublic(proxyClass.getModifiers())) return;
         try {
             setBeanInfoCustom(proxyClass);
             setFields(proxyClass);
@@ -142,17 +146,18 @@ public class PyJavaClass extends PyClass {
     private void init__class__(Class c) {
         if (!PyObject.class.isAssignableFrom(c)) return;
 
-        /* Handle the special static __class__ fields on PyObject instances
-           if (name == "__class__" &&  isstatic && 
-           PyObject.class.isAssignableFrom(field.getDeclaringClass()) &&
-           field.getType().isAssignableFrom(PyJavaClass.class)) {
-           try {
-           field.set(null, this);
-           continue;
-           } catch (Throwable t) {
-           System.err.println("invalid __class__ field on: "+c.getName());
-           }
-           }*/
+//         // Handle the special static __class__ fields on PyObject instances
+//         if (name == "__class__" &&  isstatic && 
+//             PyObject.class.isAssignableFrom(field.getDeclaringClass()) &&
+//             field.getType().isAssignableFrom(PyJavaClass.class)) {
+//             try {
+//                 field.set(null, this);
+//                 continue;
+//             } catch (Throwable t) {
+//                 System.err.println("invalid __class__ field on: "+c.getName());
+//             }
+//         }
+
         try {
             Field field = c.getField("__class__");
             if (Modifier.isStatic(field.getModifiers()) && 
@@ -242,9 +247,9 @@ public class PyJavaClass extends PyClass {
         }
     }
         
-    /* Produce a good Python name for a Java method
-       If the Java method ends in '$', strip it (this handles resvered Java keywords)
-       Don't make any changes to keywords since this is now handled by parser
+    /* Produce a good Python name for a Java method.  If the Java method
+       ends in '$', strip it (this handles reserved Java keywords) Don't
+       make any changes to keywords since this is now handled by parser
     */
 
     private String getName(String name) {
@@ -260,10 +265,10 @@ public class PyJavaClass extends PyClass {
             return;
         }
            
-        // Special case to handle a few troublesome methods in java.awt.*
-        // These methods are all deprecated and interfere too badly with bean properties
-        // to be tolerated
-        // This is totally a hack, but a lot of code that uses java.awt will break without it
+        // Special case to handle a few troublesome methods in java.awt.*.
+        // These methods are all deprecated and interfere too badly with
+        // bean properties to be tolerated.  This is totally a hack, but a
+        // lot of code that uses java.awt will break without it.
         String classname = proxyClass.getName();
         if (classname.startsWith("java.awt.") &&
             classname.indexOf('.', 9) == -1)
@@ -277,11 +282,12 @@ public class PyJavaClass extends PyClass {
             }
         }
         
-        // See if any of my superclasses are using 'name' for something else
-        // Or if I'm already using it myself
+        // See if any of my superclasses are using 'name' for something
+        // else.  Or if I'm already using it myself
         PyObject o = lookup(name, false);
             
-        // If it's being used as a function, then things get more interesting...
+        // If it's being used as a function, then things get more
+        // interesting...
         PyReflectedFunction func;
         if (o != null && o instanceof PyReflectedFunction) {
             func = (PyReflectedFunction)o;
@@ -410,17 +416,20 @@ public class PyJavaClass extends PyClass {
                         prop.setMethod = oldProp.setMethod;
                     }
                 }
-            } /* This is now handled in setFields which gets called after setBeanProperties
-                 else {
-                 // Keep static fields around...
-                 PyReflectedField field = (PyReflectedField)o;
-                 if (Modifier.isStatic(field.field.getModifiers())) {
-                 prop.field = field.field;
-                 } else {
-                 // If the field is not static (and thus subsumable) don't overwrite
-                 return;
-                 }
-                 }*/
+            }
+            // This is now handled in setFields which gets called after
+            // setBeanProperties
+//             else {
+//                 // Keep static fields around...
+//                 PyReflectedField field = (PyReflectedField)o;
+//                 if (Modifier.isStatic(field.field.getModifiers())) {
+//                     prop.field = field.field;
+//                 } else {
+//                     // If the field is not static (and thus subsumable)
+//                     // don't overwrite
+//                     return;
+//                 }
+//             }
         }
         if (set)
             __dict__.__setitem__(name, prop);
@@ -784,27 +793,32 @@ public class PyJavaClass extends PyClass {
     }
 }
 
-/* This method is pulled out into a seperate class to work around Netscape bugs */
-/*class BeanInfoFinder {
-  public static void setBeanInfo(PyJavaClass jclass, Class c, Class sc) throws Exception {
-  int i, n;
-  // Set no bean search path, this probably needs work in the future
-  Introspector.setBeanInfoSearchPath(new String[0] );
-  BeanInfo info = Introspector.getBeanInfo(c, sc);
 
-  PropertyDescriptor[] descrs = info.getPropertyDescriptors();
-  for(i=0, n=descrs.length; i<n; i++) {
-  PropertyDescriptor d = descrs[i];
-  jclass.addProperty(d.getName(), d.getPropertyType(), d.getReadMethod(), d.getWriteMethod());
-  }
+
+/* This method is pulled out into a seperate class to work around Netscape
+   bugs */
+// class BeanInfoFinder {
+//     public static void setBeanInfo(PyJavaClass jclass, Class c, Class sc)
+//         throws Exception
+//     {
+//         int i, n;
+//         // Set no bean search path, this probably needs work in the future
+//         Introspector.setBeanInfoSearchPath(new String[0] );
+//         BeanInfo info = Introspector.getBeanInfo(c, sc);
 
-  EventSetDescriptor[] events = info.getEventSetDescriptors();
-  for(i=0, n=events.length; i<n; i++) {
-  EventSetDescriptor e = events[i];
+//         PropertyDescriptor[] descrs = info.getPropertyDescriptors();
+//         for(i=0, n=descrs.length; i<n; i++) {
+//             PropertyDescriptor d = descrs[i];
+//             jclass.addProperty(d.getName(), d.getPropertyType(),
+//                                d.getReadMethod(), d.getWriteMethod());
+//         }
 
-  jclass.addEvent(e.getName()+"Listener", e.getListenerType(),
-  e.getAddListenerMethod(), e.getListenerMethods());
-  }
-  }
-  }
-*/
+//         EventSetDescriptor[] events = info.getEventSetDescriptors();
+//         for(i=0, n=events.length; i<n; i++) {
+//             EventSetDescriptor e = events[i];
+
+//             jclass.addEvent(e.getName()+"Listener", e.getListenerType(),
+//                             e.getAddListenerMethod(), e.getListenerMethods());
+//         }
+//     }
+// }

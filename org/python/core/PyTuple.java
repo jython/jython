@@ -41,7 +41,6 @@ public class PyTuple extends PySequence {
         return new PyTuple(newList);
     }
 
-
     protected PyObject repeat(int count) {
         int l = list.length;
         PyObject[] newList = new PyObject[l*count];
@@ -80,16 +79,18 @@ public class PyTuple extends PySequence {
 
 
     // Should go away when compare works properly
-    /*public boolean equals(Object other) {
-      if (other instanceof PyTuple && ((PyTuple)other).size() == list.length) {
-      Object[] ol = ((PyTuple)other).list;
-      for(int i=0; i<list.length; i++) {
-      if (!ol[i].equals(list[i])) return false;
-      }
-      return true;
-      }
-      return true;
-      }*/
+//     public boolean equals(Object other) {
+//         if (other instanceof PyTuple &&
+//             ((PyTuple)other).size() == list.length)
+//         {
+//             Object[] ol = ((PyTuple)other).list;
+//             for(int i=0; i<list.length; i++) {
+//                 if (!ol[i].equals(list[i])) return false;
+//             }
+//             return true;
+//         }
+//         return true;
+//     }
         
     public String toString() {
         StringBuffer buf = new StringBuffer("(");

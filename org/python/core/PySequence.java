@@ -14,13 +14,15 @@ Subclasses that are mutable should also implement:
 set, setslice, del, and delRange.
 **/
 
-abstract public class PySequence extends PyObject {
+abstract public class PySequence extends PyObject
+{
     /**
        This constructor is used to pass on an __class__ attribute.
     **/
     public PySequence(PyClass c) {
         super(c);
     }
+
     public PySequence() {}
 
     /*These methods must be defined for any sequence*/
@@ -201,9 +203,6 @@ abstract public class PySequence extends PyObject {
         return stop;
     }
 
-
-
-
     public synchronized PyObject __getslice__(PyObject s_start,
                                               PyObject s_stop,
                                               PyObject s_step)
@@ -243,10 +242,9 @@ abstract public class PySequence extends PyObject {
     }
 
     public void __setitem__(PyObject index, PyObject value) {
-        if (index instanceof PyInteger) {
+        if (index instanceof PyInteger)
             __setitem__(((PyInteger)index).getValue(), value);
-
-        } else {
+        else {
             if (index instanceof PySlice) {
                 PySlice s = (PySlice)index;
                 __setslice__(s.start, s.stop, s.step, value);
@@ -263,7 +261,8 @@ abstract public class PySequence extends PyObject {
             if (i == -1)
                 throw Py.IndexError("index out of range: "+i);
             del(i);
-        } else {
+        }
+        else {
             if (index instanceof PySlice) {
                 PySlice s = (PySlice)index;
                 __delslice__(s.start, s.stop, s.step);
