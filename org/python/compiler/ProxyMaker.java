@@ -352,8 +352,7 @@ public class ProxyMaker {
     }
 
         
-    public void addMethod(Method method, int access) throws Exception
-    {
+    public void addMethod(Method method, int access) throws Exception {
         boolean isAbstract = false;
 
         if (Modifier.isAbstract(access)) { 
@@ -402,7 +401,8 @@ public class ProxyMaker {
             code.aload(tmp);
             callMethod(code, name, parameters, ret);
 
-            addSuperMethod("super__"+name, superclass, parameters, ret, sig, access);
+            addSuperMethod("super__"+name, name, superclass, parameters,
+                           ret, sig, access);
         } else {
             if (!isAdapter) {
                 int jgetattr = code.pool.Methodref(
@@ -458,8 +458,10 @@ public class ProxyMaker {
                         
             if (Modifier.isProtected(access)) {
                 access = (access & ~Modifier.PROTECTED) | Modifier.PUBLIC;
-                addSuperMethod(methods[i], access);
-                continue;
+                if (Modifier.isFinal(access)) {
+                    addSuperMethod(methods[i], access);
+ 		    continue;
+                }
             } else if (Modifier.isFinal(access)) {
                 continue;
             }
@@ -505,30 +507,37 @@ public class ProxyMaker {
         }
     }
 
-    // #1
+    /* Super methods are added for the following three reasons
+        1) for a protected non-final method add a public method with
+           no super__ prefix.  This gives needed access to this method for
+           subclasses
+        2) for protected final methods, add a public method with the super__
+           prefix.  This avoids the danger of trying to override a final method
+        3) For any other method that is overriden, add a method with the
+           super__ prefix.  This gives access to super. version or the method.
+    */    
     public void addSuperMethod(Method method, int access) throws Exception {
         Class[] parameters = method.getParameterTypes();
         Class ret = method.getReturnType();
         String sig = makeSignature(parameters, ret);
         String superclass = mapClass(method.getDeclaringClass().getName());
-        String name = method.getName();
+ 	String superName = method.getName();
+        String methodName = superName;
         if (Modifier.isFinal(access)) {
-            name = "super__"+name;
-        }
-        //System.err.println("sup: "+name+", "+access+", "+sig);
-        addSuperMethod(name, superclass, parameters, ret, sig, access);   
+ 	    methodName = "super__"+superName;
+            access &= ~Modifier.FINAL;
+ 	}
+ 	addSuperMethod(methodName, superName, superclass, parameters,
+                       ret, sig, access);
     }
 
-    // #2
-    public void addSuperMethod(String name, String superclass,
-                               Class[] parameters, Class ret,
-                               String sig, int access)
+    public void addSuperMethod(String methodName, String superName,
+                               String superclass, Class[] parameters,
+                               Class ret, String sig, int access)
         throws Exception
     {
-        Code code = classfile.addMethod(name, sig, access);
-        if (name.startsWith("super__"))
-            name = name.substring(7);
-        callSuper(code, name, superclass, parameters, ret, sig);
+ 	Code code = classfile.addMethod(methodName, sig, access);
+ 	callSuper(code, superName, superclass, parameters, ret, sig);
     }
 
     public void addProxy() throws Exception {

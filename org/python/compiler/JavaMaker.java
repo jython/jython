@@ -115,9 +115,9 @@ public class JavaMaker extends ProxyMaker {
             super.addMethod(method, access);
         } else if (methods.__finditem__(method.getName().intern()) != null) {
             super.addMethod(method, access);
-        } /*else if (Modifier.isProtected(access)) {
-            super.addMethod(method, access | Modifier.ABSTRACT);
-            }*/
+ 	} else if (Modifier.isProtected(method.getModifiers())) {
+ 	    addSuperMethod(method, access);
+        }
     }
 
     public void build() throws Exception {
