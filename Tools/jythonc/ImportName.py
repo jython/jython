@@ -33,6 +33,8 @@ def topImport(name):
         return None
 
 def importName(name):
+    if name[0] == "/":
+        return Resource(name)
     try:
         names = name.split('.')
         top = topImport(names[0])
@@ -60,6 +62,12 @@ def findOnPath(name, path=sys.path):
 def lookupName(name):
     return importName(name)
 
+class Resource:
+    def __init__(self, name):
+        self.name = name
+    def getDepends(self):
+        return []
+ 
 
 class Namespace:
     def __init__(self, mod):

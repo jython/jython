@@ -49,7 +49,7 @@ class JavaArchive:
             self.addToManifest(properties)
 
     def addEntry(self, entry):
-        outfile = SLASH.join(entry.classname.split('.')) + '.class'
+        outfile = entry.getZipName()
         if self.jar_entries.has_key(outfile):
             return
         self.jar_entries[outfile] = 1
@@ -82,7 +82,7 @@ class JavaArchive:
             instream.close()
 
         for entry in self.entries:
-            outfile = SLASH.join(entry.classname.split('.')) + '.class'
+            outfile = entry.getZipName()
             instream = entry.getInputStream()
             self.zipfile.putNextEntry(ZipEntry(outfile))
             copy(instream, self.zipfile)

@@ -263,6 +263,8 @@ class Compiler:
         elif isinstance(m, ImportName.JavaClass):
             m.addEvents(attrs, self.events, mod.name)
             self.addJavaClass(m.name, mod.name)
+        elif isinstance(m, ImportName.Resource):
+            self.javadepends[m.name] = mod.name
 
         if self.dependencies.has_key(m):
             return

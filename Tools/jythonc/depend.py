@@ -133,6 +133,23 @@ class PkgEntry:
         res = unfix(self.classname) + '.class'
         return openResource(res)
 
+    def getZipName(self):
+        return '/'.join(self.classname.split('.')) + '.class'
+
+class ResourceEntry:
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return "ResourceEntry(%s)" % (self.name)
+
+    def getInputStream(self):
+        import java
+        return java.lang.Class.getResourceAsStream("".__class__, self.name)
+
+    def getZipName(self):
+        return self.name
+
 
 ##class ZipEntry:
 ##    def __init__(self, filename, classname):
@@ -164,6 +181,8 @@ class PkgEntry:
 
 
 def depends(name):
+    if name[0] == '/':
+        return ResourceEntry(name), []
     ze = getFile(name)
     ip = ze.getInputStream()
     ret = dependencies(ip)
