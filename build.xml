@@ -390,7 +390,6 @@
                 pdb.py,
                 pickle.py,
                 pipes.py,
-                popen2.py,
                 poplib.py,
                 posixfile.py,
                 posixpath.py,
