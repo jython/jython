@@ -570,7 +570,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public Object continue_stmt(SimpleNode node) throws Exception {
         //setline(node); Not needed here...
         if (continueLabels.empty()) {
-            throw new ParseException("'continue' outside loop", node);
+            throw new ParseException("'continue' not properly in loop", node);
         }
         
         Object obj = continueLabels.peek();
