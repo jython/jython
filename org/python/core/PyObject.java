@@ -16,6 +16,8 @@ public class PyObject implements java.io.Serializable {
     public static void typeSetup(PyObject dict, PyType.Newstyle marker) {
         dict.__setitem__("__class__", new PyGetSetDescr("__class__",
                 PyObject.class, "getType", null));
+        dict.__setitem__("__doc__", new PyGetSetDescr("__doc__",
+                PyObject.class, "getDoc", null));
         class exposed___str__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -350,6 +352,14 @@ public class PyObject implements java.io.Serializable {
     // xxx
     public PyObject fastGetClass() {
         return objtype;
+    }
+
+    public PyObject getDoc() {
+        PyObject doc = fastGetDict().__finditem__("__doc__");
+        if(doc == null) {
+            return Py.None;
+        }
+        return doc;
     }
 
     /* must instantiate __class__ when de-serializing */
