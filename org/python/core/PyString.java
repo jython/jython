@@ -2040,7 +2040,7 @@ final class StringFormatter
         }
         double power = 0.0;
         if (v > 0)
-            power = Math.floor(Math.log(v)/Math.log(10));
+            power = ExtraMath.closeFloor(ExtraMath.log10(v));
         //System.err.println("formatExp: "+v+", "+power);
         int savePrecision = precision;
 
