@@ -205,7 +205,7 @@ public class __builtin__ implements ClassDictInit
                 return new PyTuple(new PyObject[] {(PyObject)ctmp, o2});
             }
         }
-        return new PyTuple(new PyObject[] {o1, o2});
+        throw Py.TypeError("number coercion failed");
     }
 
     public static PyCode compile(String data, String filename, String type) {
