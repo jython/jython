@@ -1,4 +1,4 @@
-# Copyright © Corporation for National Research Initiatives
+# Copyright (c) Corporation for National Research Initiatives
 
 from org.python.parser import Visitor, SimpleNode
 from org.python.parser.PythonGrammarTreeConstants import *

@@ -1,4 +1,4 @@
-# Copyright © Corporation for National Research Initiatives
+# Copyright (c) Corporation for National Research Initiatives
 import jast
 import org, java
 from Object import Object, PyObject, Generic

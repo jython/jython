@@ -1,4 +1,4 @@
-# Copyright © Corporation for National Research Initiatives
+# Copyright (c) Corporation for National Research Initiatives
 
 from PythonVisitor import PythonVisitor, nodeToList
 from org.python.parser.PythonGrammarTreeConstants import *

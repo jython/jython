@@ -1,4 +1,4 @@
-# Copyright © Corporation for National Research Initiatives
+# Copyright (c) Corporation for National Research Initiatives
 import java, jarray, os, time, sys, thread
 from java.lang import System
 
