@@ -476,7 +476,22 @@ public class PyFile extends PyObject
 
         public void truncate(long position) throws java.io.IOException {
             flush();
-            file.setLength(position);
+            try {
+                // file.setLength(position);
+                java.lang.reflect.Method m = file.getClass().getMethod(
+                        "setLength", new Class[] { Long.TYPE });
+                m.invoke(file, new Object[] { new Long(position) });
+            } catch (NoSuchMethodException exc) {
+                super.truncate(position);
+            } catch (SecurityException exc) {
+                super.truncate(position);
+            } catch (IllegalAccessException exc) {
+                super.truncate(position);
+            } catch (java.lang.reflect.InvocationTargetException exc) {
+                if (exc.getTargetException() instanceof IOException)
+                    throw (IOException) exc.getTargetException();
+                super.truncate(position);
+            }
         }
 
         public Object __tojava__(Class cls) throws IOException {
