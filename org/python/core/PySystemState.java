@@ -504,6 +504,39 @@ public class PySystemState extends PyObject
         return packageManager.makeJavaPackage(n, contents, null);
     }
 
+    /**
+     * Add a classpath directory to the list of places that are searched
+     * for java packages. 
+     * <p>
+     * <b>Note</b>. Classes found in directory and subdirectory are not 
+     * made available to jython by this call. It only make the java 
+     * package found ion the directory available. This call is mostly
+     * usefull if jython is embedded in an application that deals with
+     * its own classloaders. A servlet container is a very good example.
+     * Calling add_classpath("<context>/WEB-INF/classes") makes the java 
+     * packages in WEB-INF classes available to jython import. However the
+     * actual classloading is completely handled by the servlet container's
+     * context classloader.
+     */
+    public static void add_classdir(String directoryPath) {
+        packageManager.addDirectory(new File(directoryPath));
+    }
+
+    /**
+     * Add a .jar & .zip directory to the list of places that are searched
+     * for java .jar and .zip files. The .jar and .zip files found will be
+     * cached 
+     * <p>
+     * <b>Note</b>. Classes in .jar and .zip files found in the directory
+     * are not made available to jython by this call. See the note for
+     * add_classpath(dir) for more details.
+     *
+     * @see add_classpath
+     */
+    public static void add_extdir(String directoryPath) {
+        packageManager.addJarDir(directoryPath);
+    }
+
     public TraceFunction tracefunc = null;
     public TraceFunction profilefunc = null;
 
