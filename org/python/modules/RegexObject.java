@@ -32,7 +32,8 @@ public class RegexObject extends PyObject {
 
     public MatchObject match(String string) {
         MatchResult result = doMatch(string);
-        if (result == null) return null;
+        if (result == null)
+	    return null;
         return new MatchObject(this, string, 0, string.length(), result);
     }
 
@@ -41,28 +42,34 @@ public class RegexObject extends PyObject {
     }
 
     public MatchObject match(String string, int pos, int endpos) {
-        if (endpos > string.length()) endpos = string.length();
-        if (endpos < pos) endpos = pos;
+        if (endpos > string.length())
+	    endpos = string.length();
+        if (endpos < pos)
+	    endpos = pos;
 
-        MatchResult result = doMatch(new PatternMatcherInput(string, pos, endpos-pos));
-        if (result == null) return null;
+        MatchResult result =
+	    doMatch(new PatternMatcherInput(string, pos, endpos-pos));
+        if (result == null)
+	    return null;
         return new MatchObject(this, string, pos, endpos, result);
     }
 
     private MatchResult doMatch(Object input) {
         Perl5Matcher matcher = getMatcher();
         if (input instanceof String) {
-            if (!matcher.matchesPrefix((String)input, code)) return null;
+            if (!matcher.matchesPrefix((String)input, code))
+		return null;
         } else {
-            if (!matcher.matchesPrefix((PatternMatcherInput)input, code)) return null;
+            if (!matcher.matchesPrefix((PatternMatcherInput)input, code))
+		return null;
         }
-
         return matcher.getMatch();
     }
 
     public MatchObject search(String string) {
         MatchResult result = doSearch(string);
-        if (result == null) return null;
+        if (result == null)
+	    return null;
         return new MatchObject(this, string, 0, string.length(), result);
     }
 
@@ -71,11 +78,15 @@ public class RegexObject extends PyObject {
     }
 
     public MatchObject search(String string, int pos, int endpos) {
-        if (endpos > string.length()) endpos = string.length();
-        if (endpos < pos) endpos = pos;
+        if (endpos > string.length())
+	    endpos = string.length();
+        if (endpos < pos)
+	    endpos = pos;
 
-        MatchResult result = doSearch(new PatternMatcherInput(string, pos, endpos-pos));
-        if (result == null) return null;
+        MatchResult result =
+	    doSearch(new PatternMatcherInput(string, pos, endpos-pos));
+        if (result == null)
+	    return null;
         return new MatchObject(this, string, pos, endpos, result);
     }
 
@@ -83,11 +94,12 @@ public class RegexObject extends PyObject {
         Perl5Matcher matcher = getMatcher();
         
         if (input instanceof String) {
-            if (!matcher.contains((String)input, code)) return null;
+            if (!matcher.contains((String)input, code))
+		return null;
         } else {
-            if (!matcher.contains((PatternMatcherInput)input, code)) return null;
+            if (!matcher.contains((PatternMatcherInput)input, code))
+		return null;
         }
-
         return matcher.getMatch();
     }
     
@@ -126,7 +138,8 @@ public class RegexObject extends PyObject {
         int lastmatch = 0;
         
         while (n < count && !match.endOfInput()) {
-            if (!matcher.contains(match, code)) break;
+            if (!matcher.contains(match, code))
+		break;
             n++;
             int offset = match.getMatchBeginOffset();
             //System.err.println("off: "+offset+", "+lastmatch);
@@ -134,20 +147,27 @@ public class RegexObject extends PyObject {
                 buf.append(match.substring(lastmatch, offset));
             }
             if (srepl == null) {
-                MatchObject m = new MatchObject(this, string, lastmatch, string.length(), 
-                                        matcher.getMatch());
+                MatchObject m = new MatchObject(this, string, lastmatch,
+						string.length(), 
+						matcher.getMatch());
                 PyObject ret = repl.__call__(m);
                 buf.append(ret.toString());
             } else {
-                if (expand) buf.append(expandMatch(matcher.getMatch(), srepl));
-                else buf.append(srepl);
+                if (expand)
+		    buf.append(expandMatch(matcher.getMatch(), srepl));
+                else
+		    buf.append(srepl);
             }
             lastmatch = match.getMatchEndOffset();
         }
         if (lastmatch < match.getEndOffset()) {
             buf.append(match.substring(lastmatch, match.getEndOffset()));
         }
-        return new PyTuple(new PyObject[] {new PyString(buf.toString()), new PyInteger(n)});
+        return new PyTuple(
+	    new PyObject[] {
+		new PyString(buf.toString()),
+		new PyInteger(n)
+	    });
     }
     
     public PyList split(String string) {
@@ -169,7 +189,8 @@ public class RegexObject extends PyObject {
         PyList results = new PyList();
         
         while (n < maxsplit && !match.endOfInput()) {
-            if (!matcher.contains(match, code)) break;
+            if (!matcher.contains(match, code))
+		break;
             n++;
             
             int begin = match.getMatchBeginOffset();
@@ -197,7 +218,8 @@ public class RegexObject extends PyObject {
             lastmatch = end;
         }
         
-        results.append(new PyString(match.substring(lastmatch, match.getEndOffset())));
+        results.append(
+	    new PyString(match.substring(lastmatch, match.getEndOffset())));
         return results;
     }
     
@@ -226,40 +248,55 @@ public class RegexObject extends PyObject {
         while (index < n) {
             if (chars[index++] == '(') {
                 // Ignore \( because these are literal parens
-                if (index > 2 && chars[index-2] == '\\') continue;
+                if (index > 2 && chars[index-2] == '\\')
+		    continue;
                 
                 if (index < n && chars[index] == '?') {
                     index++;
                     if (index < n && chars[index] == 'P') {
                         index++;
-                        if (index == n) break;
+                        if (index == n)
+			    break;
                         char c = chars[index++];
                         int start = index;
                         if (c == '<') {
-                            while (index < n && chars[index] != '>') index++;
-                            if (index == n) throw re.ReError("unmatched <");
-                            String name = new String(chars, start, index-start);
-                            groupindex.__setitem__(new PyString(name), new PyInteger(group));
+                            while (index < n && chars[index] != '>')
+				index++;
+                            if (index == n)
+				throw re.ReError("unmatched <");
+                            String name =
+				new String(chars, start, index-start);
+                            groupindex.__setitem__(new PyString(name),
+						   new PyInteger(group));
                             buf.append(chars, lasti, start-3-lasti);
                             index++;
                             lasti = index;
                             group++;
                             continue;
-                        } else {
+                        }
+			else {
                             if (c == '=') {
                                 while (index < n && chars[index] != ')') {
                                     c = chars[index];
-                                    if (Character.isJavaIdentifierPart(c) && c != '$') {
+                                    if (Character.isJavaIdentifierPart(c) &&
+					c != '$')
+				    {
                                         index++;
                                     } else {
-                                        throw re.ReError("illegal character in symbol");
+                                        throw re.ReError(
+					    "illegal character in symbol");
                                     }
                                 }
-                                if (index == n) throw re.ReError("?P= not closed");
-                                if (!(Character.isJavaIdentifierStart(chars[start]))) {
-                                    throw re.ReError("illegal character starting symbol");
+                                if (index == n)
+				    throw re.ReError("?P= not closed");
+                                if (!(Character.isJavaIdentifierStart(
+				    chars[start])))
+				{
+                                    throw re.ReError(
+					"illegal character starting symbol");
                                 }
-                                String name = new String(chars, start, index-start);
+                                String name = new String(chars, start,
+							 index-start);
                                 PyString pname = new PyString(name);
                                 buf.append(chars, lasti, start-4-lasti);
                                 buf.append('\\');
@@ -271,23 +308,22 @@ public class RegexObject extends PyObject {
                             }
                         }
                     } else {
-                        if (chars[index] == ':') continue;
-                        while (index < n && chars[index] != ')') index++;
+                        if (chars[index] == ':')
+			    continue;
+                        while (index < n && chars[index] != ')')
+			    index++;
                     }
                 } else {
                     group++;
                 }
             }
         }
-
-
         if (lasti > 0) {
             buf.append(chars, lasti, n-lasti);
             //System.err.println("pat: "+buf.toString());
             return buf.toString();
         } else {
             //System.err.println("untouched: "+pattern);
-            
             return pattern;
         }
     }
@@ -307,92 +343,96 @@ public class RegexObject extends PyObject {
                 if (chars[index++] == '\\') {
                     char ch = 0;
                     switch (chars[index++]) {
-                        case '\\':
-                            ch = '\\'; break;
-                        case 'E':
-                        case 'G':
-                        case 'L':
-                        case 'Q':
-                        case 'U':
-                        case 'l':
-                        case 'u':
-                            throw re.ReError("\\"+chars[index-1]+" is not allowed");
-                        case 'n':
-                            ch = '\n'; break;
-                        case 't':
-                            ch = '\t'; break;
-                        case 'r':
-                            ch = '\r'; break;
-                        case 'v':
-                            ch = '\013'; break;
-                        case 'f':
-                            ch = '\f'; break;
-                        case 'a':
-                            ch = '\007'; break;
-                        case 'b':
-                            ch = '\b'; break;
+		    case '\\':
+			ch = '\\'; break;
+		    case 'E':
+		    case 'G':
+		    case 'L':
+		    case 'Q':
+		    case 'U':
+		    case 'l':
+		    case 'u':
+			throw re.ReError("\\"+chars[index-1]+
+					 " is not allowed");
+		    case 'n':
+			ch = '\n'; break;
+		    case 't':
+			ch = '\t'; break;
+		    case 'r':
+			ch = '\r'; break;
+		    case 'v':
+			ch = '\013'; break;
+		    case 'f':
+			ch = '\f'; break;
+		    case 'a':
+			ch = '\007'; break;
+		    case 'b':
+			ch = '\b'; break;
 
-                        case 'g':
-                            if (chars[index++] != '<') {
-                                throw re.ReError("missing < in symbolic reference");
-                            }
-                            int start = index;
-                            while (index < n && chars[index] != '>') index++;
-                            if (index == n) {
-                                throw re.ReError("unfinished symbolic reference");
-                            }
-                            index++;
-                            buf.append(chars, lasti, start-3-lasti);
-                            PyString str = new PyString(new String(chars, start, index-1-start));
-                            String tmp = match.group(getindex(str));
-                            if (tmp == null) {
-                                throw re.ReError("group not in match: "+str);
-                            }
-                            buf.append(tmp);
-                            lasti=index;
-                            continue;
+		    case 'g':
+			if (chars[index++] != '<') {
+			    throw re.ReError(
+				"missing < in symbolic reference");
+			}
+			int start = index;
+			while (index < n && chars[index] != '>') index++;
+			if (index == n) {
+			    throw re.ReError("unfinished symbolic reference");
+			}
+			index++;
+			buf.append(chars, lasti, start-3-lasti);
+			PyString str = new PyString(new String(chars, start,
+							       index-1-start));
+			String tmp = match.group(getindex(str));
+			if (tmp == null) {
+			    throw re.ReError("group not in match: "+str);
+			}
+			buf.append(tmp);
+			lasti=index;
+			continue;
 
-                        case '1':
-                        case '2':
-                        case '3':
-                        case '4':
-                        case '5':
-                        case '6':
-                        case '7':
-                        case '8':
-                        case '9':
-                            start = index-2;
-                            int v = chars[index-1]-'0';
-                            char ch1;
-                            if (index<n) {
-                                ch = chars[index];
-                                if (ch >= '0' && ch <= '9') {
-                                    index++;
-                                    if (index < n && ch <= '7') {
-                                        ch1 = chars[index];
-                                        if (ch1 >= '0' && ch1 <= '7') {
-                                            v = v*64 +
-                                                (ch - '0')*8 +
-                                                (ch1 - '0');
-                                            buf.append(chars, lasti, index-2-lasti);
-                                            buf.append((char)v);
-                                            index++;
-                                            lasti=index;
-                                        }
-                                    }
-                                    v = v*10 + (ch - '0');
-                                }
-                            }
-                            buf.append(chars, lasti, start-lasti);
-                            tmp = match.group(v);
-                            if (tmp == null) {
-                                throw re.ReError("group not in match: "+v);
-                            }
-                            buf.append(tmp);
-                            lasti=index;
-                            continue;
-                        default:
-                            continue;
+		    case '1':
+		    case '2':
+		    case '3':
+		    case '4':
+		    case '5':
+		    case '6':
+		    case '7':
+		    case '8':
+		    case '9':
+			start = index-2;
+			int v = chars[index-1]-'0';
+			char ch1;
+			if (index<n) {
+			    ch = chars[index];
+			    if (ch >= '0' && ch <= '9') {
+				index++;
+				if (index < n && ch <= '7') {
+				    ch1 = chars[index];
+				    if (ch1 >= '0' && ch1 <= '7') {
+					v = v*64 +
+					    (ch - '0')*8 +
+					    (ch1 - '0');
+					buf.append(chars, lasti,
+						   index-2-lasti);
+					buf.append((char)v);
+					index++;
+					lasti=index;
+				    }
+				}
+				v = v*10 + (ch - '0');
+			    }
+			}
+			buf.append(chars, lasti, start-lasti);
+			tmp = match.group(v);
+			if (tmp == null) {
+			    throw re.ReError("group not in match: "+v);
+			}
+			buf.append(tmp);
+			lasti=index;
+			continue;
+		    default:
+			continue;
                     }
                     buf.append(chars, lasti, index-2-lasti);
                     buf.append(ch);
@@ -409,6 +449,4 @@ public class RegexObject extends PyObject {
             return repl;
         }
     }    
-    
 }
-
