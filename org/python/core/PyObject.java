@@ -1351,7 +1351,13 @@ public class PyObject implements java.io.Serializable {
 		        Throwable t = (Throwable)e.value.__tojava__(Throwable.class);
 		        if (t != null) throw t;
 		    } else {
-                PyObject obj = Py.getThreadState().interp.sysdict.__finditem__("printJCallExceptions");
+		        ThreadState ts = Py.getThreadState();
+		        if (ts.frame == null) {
+		            Py.maybeSystemExit(e);
+		        }
+		            
+		        //System.err.println("frame: "+ts.frame); //+", "+ts.frame.f_back);
+                PyObject obj = ts.interp.sysdict.__finditem__("printJCallExceptions");
                 if (obj != null && obj.__nonzero__()) {
                     Py.stderr.println("Caught python exception in jcall:");
                     Py.printException(e);

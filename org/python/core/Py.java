@@ -130,6 +130,21 @@ public final class Py {
 	/*public static PyException SystemExit(String message) {
 	    return new PyException(Py.SystemExit, message);
 	}*/
+	static void maybeSystemExit(PyException exc) {
+	    if (Py.matchException(exc, Py.SystemExit)) {
+		    PyObject value = exc.value;
+		    if (value instanceof PyInteger) {
+		        System.exit(((PyInteger)value).getValue());
+		    } else {
+		        if (value != Py.None) {
+    		        try { Py.println(value); }
+    		        catch (Throwable t0) { }
+    		    }
+		        System.exit(0);
+		    }
+		}
+	}
+	
 
 	public static PyObject ImportError;
 	public static PyException ImportError(String message) {
@@ -533,19 +548,8 @@ public final class Py {
 	    }
 	    
 		PyException exc = Py.JavaError(t);
-
-		if (exc.type == Py.SystemExit) {
-		    PyObject value = exc.value;
-		    if (value instanceof PyInteger) {
-		        System.exit(((PyInteger)value).getValue());
-		    } else {
-		        if (value != Py.None) {
-    		        try { Py.println(value); }
-    		        catch (Throwable t0) { }
-    		    }
-		        System.exit(0);
-		    }
-		}
+		
+		maybeSystemExit(exc);
 
 		if (f != null && exc.traceback.tb_frame != f) {
 			exc.traceback = new PyTraceback(exc.traceback);
