@@ -5,6 +5,7 @@ error = 'os.error'
 
 name = 'jdk1.1'
 curdir = '.'
+pardir = '..' #This might not be right...
 #curdir, pardir??
 sep = java.io.File.separator
 pathsep = java.io.File.pathSeparator
