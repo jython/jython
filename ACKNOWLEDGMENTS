@@ -8,7 +8,8 @@ Copyright © Corporation for National Research Initiatives
     inventor Guido van Rossum.
 
     You can contact the JPython maintainers directly via
-    jpython@python.org
+    jpython@python.org, or the JPython community at
+    jpython-interest@python.org.
 
     Finn Bock has been a frequent and valuable contributor to the
     JPython-interest@python.org mailing list, and has provided bug
@@ -18,6 +19,13 @@ Copyright © Corporation for National Research Initiatives
         cStringIO.java
         struct.java
         binascii.java
+
+    A huge thanks goes to all the members of the jpython-interest
+    mailing list.  Other folks who have contributed to JPython in ways
+    large and small, in no particular order:
+
+    Greg Ward
+    Tony Plate
 
 
 Local Variables:
