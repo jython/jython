@@ -15,7 +15,7 @@
  * The Netherlands. 
  */
 
-//package org.python.modules;
+package org.python.modules;
 
 import java.util.*;
 
