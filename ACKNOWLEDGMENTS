@@ -24,6 +24,9 @@ Copyright © Corporation for National Research Initiatives
 
     The SHA1 implementation is taken from cryptix.
 
+    Samuele Pedroni have designed and implemented the improved 
+    PackageManagers and fixed a lot of bugs.
+
     A huge thanks goes to all the members of the jpython-interest
     mailing list.  Other folks who have contributed to JPython in ways
     large and small, in no particular order:
@@ -34,7 +37,6 @@ Copyright © Corporation for National Research Initiatives
     Drew Morrissey
     John Mudd
     Bryn Keller
-    Samuele Pedroni
     dsyer
     Tim Hochberg
     Bernhard Bablok
