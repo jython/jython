@@ -1,3 +1,5 @@
+// Copyright © Corporation for National Research Initiatives
+
 package org.python.compiler;
 import java.io.*;
 
@@ -10,9 +12,9 @@ public class APIVersion extends Attribute {
         this.version = version;
     }
 
-	public void write(DataOutputStream stream) throws IOException {
-		stream.writeShort(attName);
-		stream.writeInt(4);
-		stream.writeInt(version);
-	}
+    public void write(DataOutputStream stream) throws IOException {
+	stream.writeShort(attName);
+	stream.writeInt(4);
+	stream.writeInt(version);
+    }
 }
