@@ -9,26 +9,25 @@ public class PyMethod extends PyObject {
     public PyObject __doc__;
 
     public static PyClass __class__;
-    public PyMethod(PyObject self, PyObject f) {
+
+    public PyMethod(PyObject self, PyObject f, PyObject wherefound) {
         super(__class__);
         im_func = f;
         im_self = self;
+        im_class = wherefound;
     }
         
-    public PyMethod(PyObject self, PyFunction f) {
-        this(self, (PyObject)f);
+    public PyMethod(PyObject self, PyFunction f, PyObject wherefound) {
+        this(self, (PyObject)f, wherefound);
         __name__ = f.__name__;
         __doc__ = f.__doc__;
     }
         
-    public PyMethod(PyObject self, PyReflectedFunction f) {
-        this(self, (PyObject)f);
+    public PyMethod(PyObject self, PyReflectedFunction f, PyObject wherefound)
+    {
+        this(self, (PyObject)f, wherefound);
         __name__ = f.__name__;
         __doc__ = f.__doc__;
-    }
-        
-    public void _setClass(PyObject myclass) {
-        im_class = myclass;
     }
 
     /*private final boolean isBound() {
@@ -39,10 +38,21 @@ public class PyMethod extends PyObject {
         if (im_self != null)
             // bound method
             return im_func.__call__(im_self, args, keywords);
-        // unbound method.  TBD: Verify that the first argument is a class
-        // instance.
-        System.err.println("unbound check");
-        return im_func.__call__(args, keywords);
+        // unbound method.
+        boolean badcall = false;
+        if (args.length < 1 || im_class == null /* hmm... */)
+            badcall = true;
+        else
+            // first argument must be an instance who's class is im_class
+            // or a subclass of im_class
+            badcall = ! __builtin__.issubclass(args[0].__class__,
+                                               (PyClass)im_class);
+        if (badcall) {
+            throw Py.TypeError(
+             "unbound method must be called with class instance 1st argument");
+        }
+        else
+            return im_func.__call__(args, keywords);
     }
 
     public int __cmp__(PyObject other) {
@@ -66,7 +76,7 @@ public class PyMethod extends PyObject {
             return "<unbound method " + classname + "." + __name__ + ">";
         else
             return "<method " + classname + "." +
-                __name__ + " of " + classname + " instance at " +
-                Py.id(im_func) + ">";
+                __name__ + " of " + im_self.__class__.__name__ +
+                " instance at " + Py.id(im_self) + ">";
     }
 }
