@@ -14,6 +14,7 @@ xx-xxx-2001 Jython 2.1 alpha 1
    - Updated sre to CPython-2.1a1
    - Added the "new" module
    - Added a PyServlet class to the util package.
+   - Warning framework (pep-0230).
 
   Bug fixes.
    - Allow self referencing adapters to be collected when using weak
