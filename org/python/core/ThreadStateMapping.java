@@ -1,7 +1,7 @@
 
 package org.python.core;
 
-public class ThreadStateMapping {
+class ThreadStateMapping {
     private static boolean checkedJava2 = false;
 
     public static ThreadStateMapping makeMapping() {
