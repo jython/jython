@@ -214,7 +214,7 @@ public class imp
         return PyJavaClass.lookup(c); // xxx?
     }
 
-    static PyObject getPathImporter(PyDictionary cache, PyList hooks, PyObject p) {
+    static PyObject getPathImporter(PyObject cache, PyList hooks, PyObject p) {
 
         // attempt to get an importer for the path
         //  use null as default value since Py.None is
@@ -239,7 +239,6 @@ public class imp
         }
 
         importer = (importer == null ? Py.None : importer);
-
         cache.__setitem__(p, importer);
 
         return importer;
@@ -251,15 +250,11 @@ public class imp
             return null;
         }
 
-        String name = path.toString();
-        if(SyspathArchive.getArchiveName(name) == null) {
-            return null;
-        }
         try {
             // this has the side affect of adding the jar to the PackageManager
             //  during the initialization of the SyspathArchive
-            return new SyspathArchive(name);
-        } catch (IOException e) {
+            return new SyspathArchive(path.toString());
+        } catch (Exception e) {
             return null;
         }
     }
@@ -291,7 +286,7 @@ public class imp
             if(q == null) {
                 continue;
             }
-            sys.path.__setitem__(i, q);
+            path.__setitem__(i, q);
         }
 
         for(int i=0;i<path.__len__();i++) {

@@ -87,7 +87,7 @@ public class PySystemState extends PyObject
 
     public PyList meta_path;
     public PyList path_hooks;
-    public PyDictionary path_importer_cache;
+    public PyObject path_importer_cache;
 
     public static String platform = "java";
     public static String byteorder = "big";
@@ -751,20 +751,18 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet
     }
 
     public PyObject __call__(PyObject arg) {
-        PySystemState sys = Py.getThreadState().systemState;
         switch (index) {
         case 10:
-            sys.displayhook(arg);
+            PySystemState.displayhook(arg);
             return Py.None;
         default:
             throw argCountError(1);
         }
     }
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-        PySystemState sys = Py.getThreadState().systemState;
         switch (index) {
         case 30:
-            sys.excepthook(arg1, arg2, arg3);
+            PySystemState.excepthook(arg1, arg2, arg3);
             return Py.None;
         default:
             throw argCountError(3);
