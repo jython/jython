@@ -797,7 +797,7 @@ public final class Py {
         if (exc instanceof PySyntaxError) {
             PySyntaxError se = (PySyntaxError)exc;
             stderr.println("  File \""+se.filename+"\", line "+se.lineno);
-            if (se.text.length() != 0) {
+            if (se.text != null && se.text.length() != 0) {
                 stderr.println("\t"+se.text);
                 String space = "\t";
                 for(int j=1; j<se.column; j++)
