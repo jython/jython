@@ -370,7 +370,7 @@ public class TreeBuilder implements PythonGrammarTreeConstants {
         case JJTTUPLE:
             return new Tuple(makeExprs(), Tuple.Load);
         case JJTLIST:
-            if (peekNode() instanceof listcompType) {
+            if (stack.nodeArity() > 0 && peekNode() instanceof listcompType) {
                 listcompType[] generators = new listcompType[arity-1];
                 for (int i = arity-2; i >= 0; i--) {
                     generators[i] = (listcompType) popNode();
