@@ -557,6 +557,14 @@ public class PyInstance extends PyObject
         invoke("__delitem__", key);
     }
 
+    public boolean __contains__(PyObject o) {
+        PyObject func = __findattr__("__contains__");
+        if (func == null)
+           return super.__contains__(o);
+        PyObject ret = func.__call__(o);
+        return ret.__nonzero__();
+    }
+
     //Begin the numeric methods here
     public Object __coerce_ex__(PyObject o) {
         PyObject ret = invoke_ex("__coerce__", o);
