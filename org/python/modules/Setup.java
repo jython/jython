@@ -51,5 +51,6 @@ public class Setup
         "new:org.python.modules.newmodule",
         "_weakref",
         "xreadlines",
+        "errno",
     };
 }
