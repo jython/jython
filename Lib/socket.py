@@ -14,6 +14,10 @@ import org.python.core
 import jarray
 import string
 
+__all__ = ['AF_INET', 'SOCK_DGRAM', 'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET',
+           'SOCK_STREAM', 'SocketType', 'error', 'getfqdn', 'gethostbyaddr',
+           'gethostbyname', 'gethostname', 'socket']
+
 error = IOError
 
 AF_INET = 2

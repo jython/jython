@@ -19,6 +19,9 @@ and opendir), and leave all pathname manipulation to os.path
 (e.g., split and join).
 """
 
+__all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
+           "defpath", "name"]
+
 import java
 from java.io import File
 import javapath
@@ -31,6 +34,7 @@ curdir = '.'
 pardir = '..' #This might not be right...
 #curdir, pardir??
 sep = java.io.File.separator
+altsep = None
 pathsep = java.io.File.pathSeparator
 defpath = '.'
 linesep = java.lang.System.getProperty('line.separator')
