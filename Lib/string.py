@@ -13,9 +13,17 @@ whitespace -- a string containing all characters considered whitespace
 lowercase -- a string containing all characters considered lowercase letters
 uppercase -- a string containing all characters considered uppercase letters
 letters -- a string containing all characters considered letters
+ascii_lowercase -- a string containing all characters considered lowercase
+  letters that is not locale-dependent and will not change.
+ascii_uppercase -- a string containing all characters considered uppercase
+  letters that is not locale-dependent and will not change.
+ascii_letters -- The concatenation of the ascii_lowercase and ascii_uppercase
+  constants described below. This value is not locale-dependent.
 digits -- a string containing all characters considered decimal digits
 hexdigits -- a string containing all characters considered hexadecimal digits
 octdigits -- a string containing all characters considered octal digits
+punctuation -- a string containing all characters considered punctuation
+printable -- a string containing all characters considered printable
 
 """
 
@@ -27,6 +35,14 @@ letters = lowercase + uppercase
 digits = '0123456789'
 hexdigits = digits + 'abcdef' + 'ABCDEF'
 octdigits = '01234567'
+punctuation = """!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
+printable = digits + letters + punctuation + whitespace
+
+# not set to 'lowercase' or 'uppercase' because they can change
+ascii_lowercase = 'abcdefghijklmnopqrstuvwxyz'
+ascii_uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+ascii_letters = ascii_lowercase + ascii_uppercase
+
 
 # Case conversion helpers
 _idmap = ''
