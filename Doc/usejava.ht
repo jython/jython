@@ -98,7 +98,7 @@ it is shown to cause problems.
 	<TD>Float</TD>
     </TR>
     <TR>
-	<TD>java.lang.String, byte[]</TD>
+	<TD>java.lang.String,<br>byte[], char[]</TD>
 	<TD>String </TD>
     </TR>
     <TR>
