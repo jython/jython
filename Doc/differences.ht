@@ -31,6 +31,11 @@ CPython 2.0</i>
 
     <p><LI>Jython supports continue in a try clause. <I>CPython
     should be fixed - but don't hold your breath.</I>
+
+    <p><LI>Jython allows keywords to be used as identifier name
+    in some situations where there are no conflict. This allows
+    jython to call and override java methods with names like 'print'
+    and 'exec'. <I>Both behaviors are acceptable.</I>
 </UL>
 
 <h3>Standard types, functions and behavior</h3>
