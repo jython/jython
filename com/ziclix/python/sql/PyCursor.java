@@ -215,6 +215,22 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
+	 * An interface to allow the abstraction of SQL execution for
+	 * different statements.
+	 */
+	private static interface ExecuteSQL {
+
+		/**
+		 * Execute a SQL statement and add the results to Fetch as
+		 * appropriate.
+		 *
+		 * @throws SQLException
+		 *
+		 */
+		public void executeSQL() throws SQLException;
+	}
+
+	/**
 	 * Delete the cursor.
 	 *
 	 */
@@ -363,7 +379,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * @param bindings dictionary of (param index : SQLType binding)
 	 * @param maxRows integer value of max rows
 	 */
-	public void execute(String sqlString, PyObject params, PyObject bindings, PyObject maxRows) {
+	public void execute(final String sqlString, PyObject params, PyObject bindings, PyObject maxRows) {
 
 		clear();
 
@@ -373,18 +389,31 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			prepareStatement(sqlString, maxRows, hasParams);
 
 			if (hasParams) {
-				execute(params, bindings);
-			} else {
-				this.datahandler.preExecute(this.sqlStatement);
 
-				if (this.sqlStatement.execute(sqlString)) {
-					create(this.sqlStatement.getResultSet());
+				// if we have a sequence of sequences, let's run through them and finish
+				if (isSeqSeq(params)) {
+
+					// [(3, 4)] or [(3, 4), (5, 6)]
+					for (int i = 0, len = params.__len__(); i < len; i++) {
+						PyObject param = params.__getitem__(i);
+
+						execute(param, bindings);
+					}
+				} else {
+					execute(params, bindings);
 				}
+			} else {
 
-				this.rowid = this.datahandler.getRowId(this.sqlStatement);
+				// execute the sql string straight up
+				execute(new ExecuteSQL() {
 
-				addWarning(this.sqlStatement.getWarnings());
-				this.datahandler.postExecute(this.sqlStatement);
+					public void executeSQL() throws SQLException {
+
+						if (sqlStatement.execute(sqlString)) {
+							create(sqlStatement.getResultSet());
+						}
+					}
+				});
 			}
 		} catch (PyException e) {
 			throw e;
@@ -394,7 +423,29 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * The workhorse for properly executing a prepared statement.
+	 * Performs the execution
+	 *
+	 * @param ExecuteSQL execute
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	protected void execute(ExecuteSQL execute) throws SQLException {
+
+		this.datahandler.preExecute(this.sqlStatement);
+
+		// this performs the SQL execution and fetch per the Statement type
+		execute.executeSQL();
+
+		this.rowid = this.datahandler.getRowId(this.sqlStatement);
+
+		addWarning(this.sqlStatement.getWarnings());
+		this.datahandler.postExecute(this.sqlStatement);
+	}
+
+	/**
+	 * The workhorse for properly preparing the parameters and executing a
+	 * prepared statement.
 	 *
 	 * @param PyObject params a non-None seq of sequences or entities
 	 * @param PyObject bindings an optional dictionary of index:DBApiType mappings
@@ -404,22 +455,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 */
 	protected void execute(PyObject params, PyObject bindings) throws SQLException {
 
-		// if we have a sequence of sequences, let's run through them and finish
-		if (isSeqSeq(params)) {
-
-			// [(3, 4)] or [(3, 4), (5, 6)]
-			for (int i = 0, len = params.__len__(); i < len; i++) {
-				PyObject param = params.__getitem__(i);
-
-				execute(param, bindings);
-			}
-
-			// we've recursed through everything, so we're done
-			return;
-		}
-
 		// [3, 4] or (3, 4)
-		PreparedStatement preparedStatement = (PreparedStatement)this.sqlStatement;
+		final PreparedStatement preparedStatement = (PreparedStatement)this.sqlStatement;
 
 		// clear the statement so all new bindings take affect
 		preparedStatement.clearParameters();
@@ -448,14 +485,15 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			this.datahandler.setJDBCObject(preparedStatement, i + 1, param);
 		}
 
-		this.datahandler.preExecute(preparedStatement);
-		preparedStatement.execute();
-		create(preparedStatement.getResultSet());
+		execute(new ExecuteSQL() {
 
-		this.rowid = this.datahandler.getRowId(preparedStatement);
+			public void executeSQL() throws SQLException {
 
-		addWarning(preparedStatement.getWarnings());
-		this.datahandler.postExecute(preparedStatement);
+				if (preparedStatement.execute()) {
+					create(preparedStatement.getResultSet());
+				}
+			}
+		});
 
 		return;
 	}
@@ -522,7 +560,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Create the results after a successful execution and closes the result set.
+	 * Create the results after a successful execution and manages the result set.
 	 *
 	 * @param rs A ResultSet.
 	 */
@@ -531,7 +569,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Create the results after a successful execution and closes the result set.
+	 * Create the results after a successful execution and manages the result set.
 	 * Optionally takes a set of JDBC-indexed columns to automatically set to None
 	 * primarily to support getTypeInfo() which sets a column type of a number but
 	 * doesn't use the value so a driver is free to put anything it wants there.
@@ -546,7 +584,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/**
 	 * Adds a warning to the tuple and will follow the chain as necessary.
 	 */
-	void addWarning(SQLWarning warning) {
+	protected void addWarning(SQLWarning warning) {
 
 		if (warning == null) {
 			return;
