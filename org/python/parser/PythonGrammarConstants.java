@@ -13,89 +13,90 @@ public interface PythonGrammarConstants {
   int CRLF1 = 12;
   int DEDENT = 14;
   int INDENT = 15;
-  int SINGLE_LINE_COMMENT = 16;
-  int LPAREN = 17;
-  int RPAREN = 18;
-  int LBRACE = 19;
-  int RBRACE = 20;
-  int LBRACKET = 21;
-  int RBRACKET = 22;
-  int SEMICOLON = 23;
-  int COMMA = 24;
-  int DOT = 25;
-  int COLON = 26;
-  int PLUS = 27;
-  int MINUS = 28;
-  int MULTIPLY = 29;
-  int DIVIDE = 30;
-  int POWER = 31;
-  int LSHIFT = 32;
-  int RSHIFT = 33;
-  int MODULO = 34;
-  int NOT = 35;
-  int XOR = 36;
-  int OR = 37;
-  int AND = 38;
-  int EQUAL = 39;
-  int GREATER = 40;
-  int LESS = 41;
-  int EQEQUAL = 42;
-  int EQLESS = 43;
-  int EQGREATER = 44;
-  int LESSGREATER = 45;
-  int NOTEQUAL = 46;
-  int PLUSEQ = 47;
-  int MINUSEQ = 48;
-  int MULTIPLYEQ = 49;
-  int DIVIDEEQ = 50;
-  int MODULOEQ = 51;
-  int ANDEQ = 52;
-  int OREQ = 53;
-  int XOREQ = 54;
-  int LSHIFTEQ = 55;
-  int RSHIFTEQ = 56;
-  int POWEREQ = 57;
-  int OR_BOOL = 58;
-  int AND_BOOL = 59;
-  int NOT_BOOL = 60;
-  int IS = 61;
-  int IN = 62;
-  int LAMBDA = 63;
-  int IF = 64;
-  int ELSE = 65;
-  int ELIF = 66;
-  int WHILE = 67;
-  int FOR = 68;
-  int TRY = 69;
-  int EXCEPT = 70;
-  int DEF = 71;
-  int CLASS = 72;
-  int FINALLY = 73;
-  int PRINT = 74;
-  int PASS = 75;
-  int BREAK = 76;
-  int CONTINUE = 77;
-  int RETURN = 78;
-  int IMPORT = 79;
-  int FROM = 80;
-  int DEL = 81;
-  int RAISE = 82;
-  int GLOBAL = 83;
-  int EXEC = 84;
-  int ASSERT = 85;
-  int AS = 86;
-  int NAME = 87;
-  int LETTER = 88;
-  int DECNUMBER = 89;
-  int HEXNUMBER = 90;
-  int OCTNUMBER = 91;
-  int FLOAT = 92;
-  int EXPONENT = 93;
-  int DIGIT = 94;
-  int SINGLE_STRING = 99;
-  int SINGLE_STRING2 = 100;
-  int TRIPLE_STRING = 101;
-  int TRIPLE_STRING2 = 102;
+  int TRAILING_COMMENT = 16;
+  int SINGLE_LINE_COMMENT = 17;
+  int LPAREN = 18;
+  int RPAREN = 19;
+  int LBRACE = 20;
+  int RBRACE = 21;
+  int LBRACKET = 22;
+  int RBRACKET = 23;
+  int SEMICOLON = 24;
+  int COMMA = 25;
+  int DOT = 26;
+  int COLON = 27;
+  int PLUS = 28;
+  int MINUS = 29;
+  int MULTIPLY = 30;
+  int DIVIDE = 31;
+  int POWER = 32;
+  int LSHIFT = 33;
+  int RSHIFT = 34;
+  int MODULO = 35;
+  int NOT = 36;
+  int XOR = 37;
+  int OR = 38;
+  int AND = 39;
+  int EQUAL = 40;
+  int GREATER = 41;
+  int LESS = 42;
+  int EQEQUAL = 43;
+  int EQLESS = 44;
+  int EQGREATER = 45;
+  int LESSGREATER = 46;
+  int NOTEQUAL = 47;
+  int PLUSEQ = 48;
+  int MINUSEQ = 49;
+  int MULTIPLYEQ = 50;
+  int DIVIDEEQ = 51;
+  int MODULOEQ = 52;
+  int ANDEQ = 53;
+  int OREQ = 54;
+  int XOREQ = 55;
+  int LSHIFTEQ = 56;
+  int RSHIFTEQ = 57;
+  int POWEREQ = 58;
+  int OR_BOOL = 59;
+  int AND_BOOL = 60;
+  int NOT_BOOL = 61;
+  int IS = 62;
+  int IN = 63;
+  int LAMBDA = 64;
+  int IF = 65;
+  int ELSE = 66;
+  int ELIF = 67;
+  int WHILE = 68;
+  int FOR = 69;
+  int TRY = 70;
+  int EXCEPT = 71;
+  int DEF = 72;
+  int CLASS = 73;
+  int FINALLY = 74;
+  int PRINT = 75;
+  int PASS = 76;
+  int BREAK = 77;
+  int CONTINUE = 78;
+  int RETURN = 79;
+  int IMPORT = 80;
+  int FROM = 81;
+  int DEL = 82;
+  int RAISE = 83;
+  int GLOBAL = 84;
+  int EXEC = 85;
+  int ASSERT = 86;
+  int AS = 87;
+  int NAME = 88;
+  int LETTER = 89;
+  int DECNUMBER = 90;
+  int HEXNUMBER = 91;
+  int OCTNUMBER = 92;
+  int FLOAT = 93;
+  int EXPONENT = 94;
+  int DIGIT = 95;
+  int SINGLE_STRING = 100;
+  int SINGLE_STRING2 = 101;
+  int TRIPLE_STRING = 102;
+  int TRIPLE_STRING2 = 103;
 
   int DEFAULT = 0;
   int FORCE_NEWLINE1 = 1;
@@ -126,6 +127,7 @@ public interface PythonGrammarConstants {
     "\"\"",
     "\"\"",
     "\"<INDENT>\"",
+    "<TRAILING_COMMENT>",
     "<SINGLE_LINE_COMMENT>",
     "\"(\"",
     "\")\"",
@@ -205,23 +207,23 @@ public interface PythonGrammarConstants {
     "<FLOAT>",
     "<EXPONENT>",
     "<DIGIT>",
-    "<token of kind 95>",
     "<token of kind 96>",
     "<token of kind 97>",
     "<token of kind 98>",
+    "<token of kind 99>",
     "\"\\\'\"",
     "\"\\\"\"",
     "\"\\\'\\\'\\\'\"",
     "\"\\\"\\\"\\\"\"",
     "\"\\\\\\r\\n\"",
-    "<token of kind 104>",
     "<token of kind 105>",
     "<token of kind 106>",
+    "<token of kind 107>",
     "\"\\r\\n\"",
     "\"\\n\"",
     "\"\\r\"",
-    "<token of kind 110>",
     "<token of kind 111>",
+    "<token of kind 112>",
     "\"`\"",
   };
 
