@@ -10,6 +10,7 @@ public class ThreadState {
     public Thread thread;
     public boolean tracing;
     public PyList reprStack = null;
+    public PyInstance initializingProxy = null;
 
     public ThreadState(Thread t, PySystemState systemState) {
         thread = t;

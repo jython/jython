@@ -3,7 +3,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Hashtable;
-import org.python.compiler.ProxyMaker;
+import java.util.Vector;
+import org.python.compiler.JavaMaker;
 
 public class PyClass extends PyObject {
     /**
@@ -27,14 +28,14 @@ public class PyClass extends PyObject {
 
     // Holds the classes for which this is a proxy
     // Only used when subclassing from a Java class
-	protected Class[] proxyClasses;
+	protected Class proxyClass;
 
     public static PyClass __class__;
     
-    PyClass(boolean fakeArg) { super(fakeArg); proxyClasses = null; }
+    PyClass(boolean fakeArg) { super(fakeArg); proxyClass = null; }
     
-    public PyClass() { super(__class__); proxyClasses = null; }
-    public PyClass(PyClass c) { super(c); proxyClasses = null; }
+    public PyClass() { super(__class__); proxyClass = null; }
+    public PyClass(PyClass c) { super(c); proxyClass = null; }
 	public PyClass(String name, PyTuple bases, PyObject dict) {
 	    this();
 	    init(name, bases, dict);
@@ -45,32 +46,30 @@ public class PyClass extends PyObject {
 	    //System.out.println("init class: "+name);
 		__name__ = name;
 		__bases__ = bases;
-		if (proxyClasses == null) {
+		__dict__ = dict;
+		
+		if (proxyClass == null) {
+		    Vector interfaces = new Vector();
+		    Class baseClass = null;
     		for (int i=0; i<bases.list.length; i++) {
-    			Class[] pc = ((PyClass)bases.list[i]).proxyClasses;
-    			if (pc != null) {
-    				if (bases.list[i] instanceof PyJavaClass) {
-    					Class[] new_pc = new Class[pc.length];
-    					for(int j=0; j<pc.length; j++) {
-    						new_pc[j] = lookupProxy(pc[j]);
-    					}
-    					pc = new_pc;
-    					//System.out.println("proxy: "+PyJavaClass.lookup(pc[0]));
-    					PyJavaClass pclass = PyJavaClass.lookup(pc[0]);
-    					bases.list[i] = pclass;
-    				}
-    				if (proxyClasses == null) {
-    					proxyClasses = pc;
-    				} else {
-    					Class[] new_proxy_classes = new Class[proxyClasses.length+pc.length];
-    					System.arraycopy(proxyClasses, 0, new_proxy_classes, 0, proxyClasses.length);
-    					System.arraycopy(pc, 0, new_proxy_classes, proxyClasses.length, pc.length);
-    					proxyClasses = new_proxy_classes;
-    				}
+    			Class previousProxy = ((PyClass)bases.list[i]).proxyClass;
+    			if (previousProxy != null) {
+    			    if (previousProxy.isInterface()) {
+    			        interfaces.addElement(previousProxy);
+    			    } else {
+    			        if (baseClass != null) {
+    			            throw Py.TypeError("no multiple inheritance for Java classes: "+
+    			                        previousProxy.getName()+" and "+baseClass.getName());
+    			        }
+    			        baseClass = previousProxy;
+    			    }
     			}
     		}
+    		if (baseClass != null || interfaces.size() != 0) {
+    		    proxyClass = lookupProxy(baseClass, interfaces);
+    		}
     	}
-		__dict__ = dict;
+    	//System.out.println("proxyClasses: "+proxyClasses+", "+proxyClasses[0]);
 
         if (dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", Py.None);
@@ -99,10 +98,8 @@ public class PyClass extends PyObject {
 	    
 
 	public Object __tojava__(Class c) {
-		if (c == Class.class && proxyClasses != null) {
-			if (proxyClasses.length == 1) {
-				return proxyClasses[0];
-			}
+		if (c == Class.class && proxyClass != null) {
+		    return proxyClass;
 		}
 		return super.__tojava__(c);
 	}	
@@ -168,37 +165,26 @@ public class PyClass extends PyObject {
 	/* Handle loading and caching of proxy classes
 	    Used when subclassing from java classes
 	*/
-	private static Hashtable proxies = new Hashtable();
+	//private static Hashtable proxies = new Hashtable();
 	private static final String proxyPrefix = "org.python.proxies.";
-	private static final String proxyDirectoryKey = "python.proxy.savedir";
-	
-	protected static Class lookupProxy(Class c) {
-		Object o = proxies.get(c);
-		if (o != null) return (Class)o;
-		Class pc = Py.findClass(proxyPrefix+c.getName());
-		if (pc == null) {
-			//No proxy found, will try to create one
-			ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-			String name;
-			try {
-				name = ProxyMaker.makeProxy(c.getName(), bytes);
-			} catch (Exception exc) {
-			    throw Py.JavaError(exc);
-			}
-			pc = BytecodeLoader.makeClass(name, bytes.toByteArray());
-			String dir = Options.proxyCacheDirectory;
-			if (dir != null) {
-				try {
-					OutputStream file = ProxyMaker.getFile(dir, name);
-					bytes.writeTo(file);
-				} catch (IOException ioe) {
-					throw Py.IOError(ioe);
-				}
-			}
-			//throw Py.Error(new PyTypeError("no proxy available for "+c.getName()));
-		}
-		proxies.put(c, pc);
-		return pc;
-
+	private static int proxyNumber=0;
+	protected synchronized Class lookupProxy(Class c, Vector vinterfaces) {
+	    String[] interfaces = new String[vinterfaces.size()];
+	    for(int i=0; i<vinterfaces.size(); i++) {
+	        interfaces[i] = ((Class)vinterfaces.elementAt(i)).getName();
+	    }
+	    String proxyName = proxyPrefix+__name__+"$"+proxyNumber++;
+	    
+	    JavaMaker jm = new JavaMaker(c, interfaces, __name__, "foo", proxyName, __dict__);
+	    try {    
+	        jm.build();
+	        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    		jm.classfile.write(bytes);
+    	    //bytes.writeTo(new java.io.FileOutputStream("c:\\jpython\\test\\proxy$"+__name__+".class"));
+    		Class pc = BytecodeLoader.makeClass(jm.myClass, bytes.toByteArray());
+	        return pc;
+    	} catch (Exception exc) {
+    	    throw Py.JavaError(exc);
+    	} 
 	}
 }

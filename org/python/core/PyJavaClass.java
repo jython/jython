@@ -92,8 +92,19 @@ public class PyJavaClass extends PyClass {
         PyStringMap d = new PyStringMap();
 	    d.__setitem__("__module__", Py.None);
 	    __dict__ = d;
+	    
+		setBeanInfoCustom(proxyClass);
+		setFields(proxyClass);
+		setMethods(proxyClass);
 	}
 
+    private boolean initialized=false;
+    private void initialize() {
+        if (initialized) return;
+        initialized = true;
+        init__bases__(proxyClass);
+        init__dict__();
+    }
 
     private void init__class__(Class c) {
         if (!PyObject.class.isAssignableFrom(c)) return;
@@ -110,15 +121,52 @@ public class PyJavaClass extends PyClass {
             ;
         }
     }
+    
+    private void init__bases__(Class c) {
+        if (__bases__ != null) return;
         
+		Class interfaces[] = c.getInterfaces();
+		int nInterfaces = interfaces.length;		
+        int nBases = 0;
+        int i;
+		for (i=0; i<nInterfaces; i++) {
+		    Class inter = interfaces[i];
+			if (inter == InitModule.class || inter == PyProxy.class) continue;
+			nBases++;
+		}
+	    
+	    Class superclass = c.getSuperclass();
+		int index=0;
+		PyObject[] bases;
+		PyJavaClass tmp;
+		if (superclass == null || superclass == PyObject.class) {
+		    bases = new PyObject[nBases];
+		} else {
+		    bases = new PyObject[nBases+1];
+		    tmp = PyJavaClass.lookup(superclass);
+		    bases[0] = tmp;
+		    tmp.initialize();
+		    index++;
+		}
+
+		for (i=0; i<nInterfaces; i++) {
+		    Class inter = interfaces[i];
+			if (inter == InitModule.class || inter == PyProxy.class) continue;
+			tmp = PyJavaClass.lookup(inter);
+			tmp.initialize();
+			bases[index++] = tmp;
+		}
+
+		__bases__ = new PyTuple(bases);
+    }        
 
 	void init(Class c)  {
 	    init__class__(c);
-	    proxyClasses = new Class[] {c};
+	    proxyClass = c;
 	    __name__ = c.getName();
 	    
 	    if (InitModule.class.isAssignableFrom(c)) {
-	        init__dict__();
+	        initialize();
 		    try {
 			    InitModule initModule = (InitModule)c.newInstance();
 			    initModule.initModule(__dict__);
@@ -265,7 +313,7 @@ public class PyJavaClass extends PyClass {
 	    // Then add a "_" after name (we can fix anything if we add enough _'s
 	    // Only do this tricky handling for java.awt classes - 
 	    // which have seriously messed up api's
-	    String classname = proxyClasses[0].getName();
+	    String classname = proxyClass.getName();
 	    
 	    if (classname.startsWith("java.awt.") || 
 	        classname.startsWith("org.python.proxies.java.awt.")) {
@@ -315,18 +363,25 @@ public class PyJavaClass extends PyClass {
 		}
 	}
 	
-	private boolean methodsInitialized=false;
-	private void initMethods() {
+	/*private boolean methodsInitialized=false;
+	protected void initMethods() {
 	    if (methodsInitialized) return;
 	    methodsInitialized = true;
+	   
+	    Class myClass = proxyClass;	    
 	    
 	    init__dict__();
+	    init__bases__(myClass);
 	    
-	    Class myClass = proxyClasses[0];
+	    
 	    Method[] methods = myClass.getMethods();
 		for(int i=0; i<methods.length; i++) {
 			Method method = methods[i];
     	    String name = getName(method.getName());
+    	    Class declaringClass = method.getDeclaringClass();
+    	    
+    	    if (declaringClass != myClass) continue;
+    	    
     	    
     	    PyObject existingAttribute = __dict__.__finditem__(name);
     	    if (existingAttribute != null) {
@@ -339,14 +394,14 @@ public class PyJavaClass extends PyClass {
 			//Class declaringClass = method.getDeclaringClass();
 			//if (declaringClass != myClass) {
 		}
-	}
+	}*/
 	
-	private boolean fieldsInitialized=false;
+	/*private boolean fieldsInitialized=false;
 	private void initFields() {
 	    if (fieldsInitialized) return;
 	    fieldsInitialized = true;
 
-	    Class myClass = proxyClasses[0];		
+	    Class myClass = proxyClass;		
 		Field[] fields = myClass.getFields();
 		for(int i=0; i<fields.length; i++) {
 			Field field = fields[i];
@@ -357,7 +412,7 @@ public class PyJavaClass extends PyClass {
             
             __dict__.__setitem__(name, new PyReflectedField(field));
 		}
-	}
+	}*/
 	
 	    
 	
@@ -539,7 +594,7 @@ public class PyJavaClass extends PyClass {
 	}
 
 
-    private static boolean workingBeans=true;
+    /*private static boolean workingBeans=true;
 	protected void setBeanInfo(Class c, Class sc) {
 	    if (!c.getName().startsWith("org.python.core.")) {
 	        if (workingBeans) {
@@ -558,7 +613,7 @@ public class PyJavaClass extends PyClass {
 	            setBeanInfoCustom(c);
 	        }
 	    }
-	}
+	}*/
 
 	private void setConstructors(Class c) {
 	    //System.out.println("c: "+c.getName()+" "+Modifier.isAbstract(c.getModifiers()));
@@ -576,39 +631,40 @@ public class PyJavaClass extends PyClass {
     	}
 	}
 	private boolean constructorsInitialized=false;
-	private void initConstructors() {
+	void initConstructors() {
 	    if (constructorsInitialized) return;
 	    constructorsInitialized = true;
 	    init__dict__();
-	    setConstructors(proxyClasses[0]);
+	    setConstructors(proxyClass);
 	}
 
-	private boolean beanInfoInitialized=false;
+	/*private boolean beanInfoInitialized=false;
 	private void initBeanInfo() {
 	    if (beanInfoInitialized) return;
 	    beanInfoInitialized = true;
-	    setBeanInfo(proxyClasses[0], null);
-	}	
-	
+	    setBeanInfo(proxyClass, null);
+	}*/
 	
 	PyObject lookup(String name, boolean stop_at_java) {
 	    if (stop_at_java) return null;
+	    if (!initialized) initialize();
+	    return super.lookup(name, stop_at_java);
 	    
-	    if (!methodsInitialized) initMethods();
-	 
+	    //if (!methodsInitialized) initMethods();
+	    /*initialize();
 		PyObject result = __dict__.__finditem__(name);
-		if (result != null) return result;		
+		if (result != null) return result;		*/
 		
-		if (!fieldsInitialized) initFields();
+		/*if (!fieldsInitialized) initFields();
 		result = __dict__.__finditem__(name);
 		if (result != null) return result;
 		
 		// Still need support for various bean properties here...
 		if (!beanInfoInitialized) initBeanInfo();
 		result = __dict__.__finditem__(name);
-		if (result != null) return result;
+		if (result != null) return result;*/
 
-		return null;
+		//return null;
 	}
 	
 	public PyObject __findattr__(String name) {
@@ -618,6 +674,10 @@ public class PyJavaClass extends PyClass {
         }
         if (name == "__name__") return new PyString(__name__);
         //if (name == "__bases__") return __bases__;
+        if (name == "__init__") {
+            initConstructors();
+            return __init__;
+        }
     
 	    PyObject result = lookup(name, false);
 	    if (result != null) return result._doget(null);
@@ -634,7 +694,7 @@ public class PyJavaClass extends PyClass {
     private PyJavaInstance classInstance;
 	private PyObject findClassAttr(String name) {
 	    if (classInstance == null) {
-	        classInstance = new PyJavaInstance(proxyClasses[0]);
+	        classInstance = new PyJavaInstance(proxyClass);
 	    }
 	    PyObject result = classInstance.__findattr__(name);
 	    if (result == null) return null;
@@ -691,7 +751,7 @@ public class PyJavaClass extends PyClass {
 }
 
 /* This method is pulled out into a seperate class to work around Netscape bugs */
-class BeanInfoFinder {
+/*class BeanInfoFinder {
 	public static void setBeanInfo(PyJavaClass jclass, Class c, Class sc) throws Exception {
         int i, n;
         // Set no bean search path, this probably needs work in the future
@@ -713,3 +773,4 @@ class BeanInfoFinder {
 	    }
 	}
 }
+*/

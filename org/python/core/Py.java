@@ -454,6 +454,13 @@ public final class Py {
 									boolean frozen) {
 		//System.out.println("initProxy");
 		//frozen = false;
+		ThreadState ts = getThreadState();
+		if (ts.initializingProxy != null) {
+		    proxy._setPyInstance(ts.initializingProxy);
+		    proxy._setPySystemState(ts.systemState);
+		    return;
+		}
+		
         if (frozen) Py.frozen = true;
         ClassLoader classLoader = proxy.getClass().getClassLoader();
         if (classLoader != null) {
@@ -484,7 +491,7 @@ public final class Py {
 		PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
 
 		PyInstance instance = new PyInstance(pyc);
-		instance.javaProxies[0] = proxy;
+		instance.javaProxy = proxy;
 		proxy._setPyInstance((PyInstance)instance);
 
 		PyObject[] pargs; 
@@ -1028,7 +1035,7 @@ public final class Py {
 		    Class jc = (Class)specialClasses.get(nm);
 		    //System.out.println("got: "+jc);
             if (jc != null) {
-                pyclass.proxyClasses = new Class[] {jc};
+                pyclass.proxyClass = jc; //new Class[] {jc};
                 
                 PyObject oldDict = PyJavaClass.lookup(jc).__dict__;
                 // This code will add in the needed super__ methods to the class
@@ -1121,7 +1128,7 @@ public final class Py {
 
 	public static int id(PyObject o) {
 	    if (o instanceof PyJavaInstance) {
-	        return System.identityHashCode(((PyJavaInstance)o).javaProxies[0]);
+	        return System.identityHashCode(((PyJavaInstance)o).javaProxy);
 	    } else {
 		    return System.identityHashCode(o);
 		}

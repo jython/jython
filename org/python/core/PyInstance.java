@@ -3,7 +3,7 @@ import java.util.Hashtable;
 
 public class PyInstance extends PyObject {
 	//This field is only used by Python subclasses of Java classes
-	Object[] javaProxies;
+	Object javaProxy;
 
     /**
     The namespace of this instance.  Contains all instance attributes.
@@ -50,10 +50,10 @@ public class PyInstance extends PyObject {
 		//__class__ = iclass;
 		__dict__ = dict;
 		//Prepare array of proxy classes to be possibly filled in in __init__
-		if (__class__.proxyClasses != null) {
+		/*if (__class__.proxyClass != null) {
 		    //System.err.println("proxies: "+__class__.__name__);
-			javaProxies = new Object[__class__.proxyClasses.length];
-		}
+			//javaProxies = new Object[__class__.proxyClasses.length];
+		}*/
 	}
 
 	public PyInstance(PyClass iclass) {
@@ -65,16 +65,36 @@ public class PyInstance extends PyObject {
     private static Hashtable primitiveMap;
 
 
-    protected void setProxy(PyProxy proxy, int index) {
+    protected void makeProxy() {
+        Class c = __class__.proxyClass;
+        PyProxy proxy;
+        ThreadState ts = Py.getThreadState();
+        try {
+            ts.initializingProxy = this;
+    	    try {
+    	        proxy = (PyProxy)c.newInstance(); //(PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
+            } catch (NoSuchMethodError nsme) {
+                throw Py.TypeError("constructor requires arguments");
+            } catch (Exception exc) {
+                throw Py.JavaError(exc);
+            }
+        } finally {
+            ts.initializingProxy = null;
+        }
+        //proxy._setPyInstance(this);
+        //proxy._setPySystemState(Py.getSystemState());
+        javaProxy = proxy;
+    }
+
+    /*protected void setProxy(PyProxy proxy, int index) {
         proxy._setPyInstance(this);
         proxy._setPySystemState(Py.getSystemState());
         javaProxies[index] = proxy;
-    }
+    }*/
 
 	public Object __tojava__(Class c) {
-	    if (c == Object.class && javaProxies != null && 
-	            javaProxies.length > 0 && javaProxies[0] != null) {
-	        return javaProxies[0];
+	    if (c == Object.class && javaProxy != null) {
+	        return javaProxy;
 	    }
 		if (c.isInstance(this)) return this;
 		
@@ -94,26 +114,11 @@ public class PyInstance extends PyObject {
 		    if (tmp != null) c = tmp;
 		}
 		
-		if (javaProxies != null) {
-		    //System.err.println("class: "+c);
-		    Class[] jClasses = __class__.proxyClasses;
-			for(int i=0; i<jClasses.length; i++) {
-			    //System.err.println("isa: "+jClasses[i]);
-			    if (c.isAssignableFrom(jClasses[i])) {
-			        if (javaProxies[i] != null) return javaProxies[i];
-                    PyProxy proxy;
-    	            try {
-                        proxy = (PyProxy)jClasses[i].newInstance();
-                    } catch (NoSuchMethodError nsme) {
-                        throw Py.TypeError("constructor requires arguments");
-                    } catch (Exception exc) {
-                        throw Py.JavaError(exc);
-    	            }
-    	            setProxy(proxy, i);
-                    return proxy;
-                }
-			}
+		if (javaProxy == null && __class__.proxyClass != null) {
+		    makeProxy();
 		}
+		if (c.isInstance(javaProxy)) return javaProxy;
+		
 		if (__class__.__tojava__ != null) {
 		    //try {
     		    PyObject ret = __class__.__tojava__.__call__(this, PyJavaClass.lookup(c));
@@ -128,8 +133,10 @@ public class PyInstance extends PyObject {
 	}
 
 	public void __init__(PyObject[] args, String[] keywords) {
-	    // Init all interfaces from the start
-	    if (javaProxies != null) {
+	    /*// Init all interfaces from the start
+	    Class proxyClass = __class__.proxyClass;
+	    if (proxyClass != null) {
+	        if (c.
 	        for(int i=0; i<javaProxies.length; i++) {
 	            if (javaProxies[i] != null) continue;
 	            Class c = __class__.proxyClasses[i];
@@ -139,7 +146,7 @@ public class PyInstance extends PyObject {
 	            if (c.getInterfaces().length > 1) {
 	                PyProxy proxy;
 	                try {
-	                    proxy = (PyProxy)c.newInstance();
+	                    proxy = createProxy(c); //(PyProxy)c.newInstance();
 	                } catch (Exception exc) {
 	                    throw Py.ValueError("Can't instantiate interface: "+c.getName());
 	                }
@@ -147,7 +154,7 @@ public class PyInstance extends PyObject {
 	                //System.out.println("inited interface: "+c.getName());
 	            }
 	        }
-	    }
+	    }*/
 
 		//Then invoke our own init function
 		PyObject init = __class__.lookup("__init__", true);
@@ -172,23 +179,18 @@ public class PyInstance extends PyObject {
 		}
 
 		// Now init all superclasses that haven't already been initialized
-	    if (javaProxies != null) {
-	        for(int i=0; i<javaProxies.length; i++) {
-	            if (javaProxies[i] != null) continue;
-	            Class c = __class__.proxyClasses[i];
-	            PyProxy proxy;
-	            try {
-                    proxy = (PyProxy)c.newInstance();
-                } catch (NoSuchMethodError nsme) {
-                    //System.err.println(nsme);
-                    throw Py.TypeError("constructor requires arguments");
-                } catch (Exception exc) {
-                    throw Py.JavaError(exc);
-	            }
-                setProxy(proxy, i);
-	        }
-	    }
+		if (javaProxy == null && __class__.proxyClass != null) {
+		    makeProxy();
+		}
 	}
+	
+	/*private PyProxy createProxy(Class c) {
+	    try {
+	        return (PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
+	    } catch (Exception exc) {
+	        throw Py.JavaError(exc);
+	    }
+	}*/
 	
 	/*public PyObject __jgetattr__(String name) {
 	    System.err.println("jgetting: "+name);
@@ -277,8 +279,8 @@ public class PyInstance extends PyObject {
 		if (f == null) {
 		    f = ifindclass(name, false);
 		    if (f != null) {
-		        if (f instanceof PyMethod) {
-		            return ((PyMethod)f).im_func.__call__(this, arg1, arg2);
+		        if (f instanceof PyFunction || f instanceof PyBuiltinFunctionSet) {
+		            return f.__call__(this, arg1, arg2);
 		        } else {
 		            f = f._doget(this);
 		        }
@@ -303,7 +305,7 @@ public class PyInstance extends PyObject {
 	            }
 	        } else if (name == "__dict__") {
 		        __dict__ = value;
-		    } else if (javaProxies != null) {
+		    } else if (javaProxy != null) {
 	            PyObject field = __class__.lookup(name, false);
 	            if (field == null) {
 	                noField(name, value);
@@ -433,7 +435,7 @@ public class PyInstance extends PyObject {
     private CollectionProxy collectionProxy=null;
     private CollectionProxy getCollection() {
         if (collectionProxy == null) collectionProxy = 
-            CollectionProxy.findCollection(javaProxies);
+            CollectionProxy.findCollection(new Object[] {javaProxy});
         return collectionProxy;
     }
 

@@ -4,7 +4,7 @@ import java.lang.reflect.Modifier;
 public class PyJavaInstance extends PyInstance implements java.io.Externalizable {
     public PyJavaInstance() {
         super();
-        javaProxies = new Object[1];
+        //javaProxies = new Object[1];
     }
 
 	public PyJavaInstance(PyJavaClass iclass) {
@@ -13,29 +13,29 @@ public class PyJavaInstance extends PyInstance implements java.io.Externalizable
 	
 	public PyJavaInstance(Object proxy) {
 	    super(PyJavaClass.lookup(proxy.getClass()), null);
-	    javaProxies[0] = proxy;
+	    javaProxy = proxy;
 	}
 
     public void readExternal(java.io.ObjectInput in) throws java.io.IOException, ClassNotFoundException {
         Object o = in.readObject();
-        javaProxies[0] = o;
+        javaProxy = o;
         __class__ = PyJavaClass.lookup(o.getClass());
     }
 
 
     public void writeExternal(java.io.ObjectOutput out) throws java.io.IOException {
         //System.out.println("writing java instance");
-        out.writeObject(javaProxies[0]);
+        out.writeObject(javaProxy);
     }
 
 
 	public void __init__(PyObject[] args, String[] keywords) {
 	    PyReflectedConstructor init = ((PyJavaClass)__class__).__init__;
-	    javaProxies = new Object[1];
+	    //javaProxies = new Object[1];
 	    if (init == null) {
-	        Class[] pc = __class__.proxyClasses;
-	        if (pc != null && pc.length == 1) {
-	            int mods = pc[0].getModifiers();
+	        Class pc = __class__.proxyClass;
+	        if (pc != null) {
+	            int mods = pc.getModifiers();
 	            if (Modifier.isInterface(mods)) {
 	                throw Py.TypeError("can't instantiate interface ("+__class__.__name__+")");
 	            } else if (Modifier.isAbstract(mods)) {
@@ -56,8 +56,8 @@ public class PyJavaInstance extends PyInstance implements java.io.Externalizable
     }
 
     public int hashCode() {
-        if (javaProxies[0] != null) {
-            return javaProxies[0].hashCode();
+        if (javaProxy != null) {
+            return javaProxy.hashCode();
         } else {
             return super.hashCode();
         }
@@ -65,7 +65,7 @@ public class PyJavaInstance extends PyInstance implements java.io.Externalizable
     
 	public PyObject _is(PyObject o) {
 	    if (o instanceof PyJavaInstance) {
-	        return javaProxies[0] == ((PyJavaInstance)o).javaProxies[0] ? Py.One : Py.Zero;
+	        return javaProxy == ((PyJavaInstance)o).javaProxy ? Py.One : Py.Zero;
 	    }
 		return Py.Zero;
 	}
@@ -77,13 +77,13 @@ public class PyJavaInstance extends PyInstance implements java.io.Externalizable
     public int __cmp__(PyObject o) {
         if (!(o instanceof PyJavaInstance)) return -2;
         PyJavaInstance i = (PyJavaInstance)o;
-        if (javaProxies[0].equals(i.javaProxies[0])) return 0;
+        if (javaProxy.equals(i.javaProxy)) return 0;
         return -2;
     }
 
 
 	public PyString __str__() {
-        return new PyString(javaProxies[0].toString());
+        return new PyString(javaProxy.toString());
     }
 
     public PyString __repr__() {
