@@ -1,4 +1,4 @@
-// Copyright 
+// Copyright 2000 Finn Bock
 
 package org.python.core;
 

@@ -1,14 +1,5 @@
 /*
  * Copyright 1998 Finn Bock.
- * Permission to use, copy and distribute this software is hereby granted, 
- * provided that the above copyright notice appear in all copies and that 
- * both that copyright notice and this permission notice appear.
- * 
- * No Warranty
- * The software is provided "as is" without warranty of any kind.
- * 
- * If you have questions regarding this software, contact:
- *    Finn Bock, bckfnn@pipmail.dknet.dk
  * 
  * This program contains material copyrighted by:
  * Copyright © 1991, 1992, 1993, 1994 by Stichting Mathematisch Centrum,

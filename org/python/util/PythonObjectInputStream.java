@@ -1,6 +1,6 @@
+// Copyright 2000 Finn Bock
 
 package org.python.util;
-
 
 import java.io.*;
 import org.python.core.*;
