@@ -1,5 +1,5 @@
 """
-Basic test, just raises an TestError
+[ 562943 ] os.path.getmtime misbehaves on nonfile
 """
 
 import support
