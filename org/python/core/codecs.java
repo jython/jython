@@ -111,7 +111,12 @@ public class codecs {
 
         /* Decode via the codec registry */
         PyObject decoder = getDecoder(encoding);
-        PyObject result = decoder.__call__(v, new PyString(errors));
+        PyObject result = null;
+        if (errors != null) {
+            result = decoder.__call__(v, new PyString(errors));
+        } else {
+            result = decoder.__call__(v);
+        }
 
         if (!(result instanceof PyTuple) || result.__len__() != 2)
             throw Py.TypeError("decoder must return a tuple " +
@@ -150,7 +155,12 @@ public class codecs {
 
         /* Decode via the codec registry */
         PyObject encoder = getEncoder(encoding);
-        PyObject result = encoder.__call__(v, new PyString(errors));
+        PyObject result = null;
+        if (errors != null) {
+            result = encoder.__call__(v, new PyString(errors));
+        } else {
+            result = encoder.__call__(v);
+        }
 
         if (!(result instanceof PyTuple) || result.__len__() != 2)
             throw Py.TypeError("encoder must return a tuple " +
