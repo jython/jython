@@ -583,10 +583,12 @@ public final class Py {
 		if (exc instanceof PySyntaxError) {
 			PySyntaxError se = (PySyntaxError)exc;
 			stderr.println("  File \""+se.filename+"\", line "+se.lineno);
-			stderr.println("\t"+se.text);
-			String space = "\t";
-			for(int j=1; j<se.column; j++) space = space+" ";
-			stderr.println(space+"^");
+			if (se.text.length() != 0) {
+			    stderr.println("\t"+se.text);
+			    String space = "\t";
+			    for(int j=1; j<se.column; j++) space = space+" ";
+			    stderr.println(space+"^");
+			}
 		}
 
         if (exc.value instanceof PyJavaInstance) {
@@ -978,7 +980,7 @@ public final class Py {
 			//BytecodeLoader.byteloader=null;
 			return BytecodeLoader.makeCode(name, ostream.toByteArray());
 		} catch (Throwable t) {
-			throw Py.JavaError(t); //parser.fixParseError(null, t, filename);
+			throw parser.fixParseError(null, t, filename);
 		}
 	}
 

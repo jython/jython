@@ -739,7 +739,7 @@ public class CodeCompiler extends Visitor {
 			code.ifeq(end_of_self);
 		} else {
 			if (node.getNumChildren() > index+3) {
-				throw new ParseException("bare except must be last except clause");
+				throw new ParseException("bare except must be last except clause", name);
 			}
 		}
 
@@ -867,7 +867,7 @@ public class CodeCompiler extends Visitor {
 	}
 
 	public Object except_clause(SimpleNode node) throws Exception {
-		throw new ParseException("Unhandled Node: "+node);
+		throw new ParseException("Unhandled Node: "+node, node);
 	}
 
 	public Object suite(SimpleNode node) throws Exception {
@@ -1132,7 +1132,7 @@ public class CodeCompiler extends Visitor {
 				SimpleNode arg = args.getChild(i);
 				if (arg.id != PythonGrammarTreeConstants.JJTKEYWORD) {
 					values[i] = arg;
-					if (nKeywords > 0) throw new ParseException("non-keyword argument following keyword");
+					if (nKeywords > 0) throw new ParseException("non-keyword argument following keyword", node);
 				} else {
 					values[i] = arg.getChild(1);
 					keys[nKeywords++] = (String)arg.getChild(0).getInfo();
@@ -1358,7 +1358,7 @@ public class CodeCompiler extends Visitor {
 
     public Object fplist(SimpleNode node) throws Exception {
 		if (mode == SET) return seqSet(node);
-		throw new ParseException("in fplist node");
+		throw new ParseException("in fplist node", node);
 	}
 
 	public Object list(SimpleNode node) throws Exception {

@@ -24,7 +24,7 @@ public class parser {
 			int col = tok.next.beginColumn;
 			int line = tok.next.beginLine;
 			String text=getLine(istream, line);
-			return new PySyntaxError("invalid syntax", line, col, text, filename);
+			return new PySyntaxError(e.getMessage(), line, col, text, filename);
 		}
 		if (t instanceof TokenMgrError) {
 			TokenMgrError e = (TokenMgrError)t;
