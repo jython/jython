@@ -53,7 +53,12 @@ Java packages.
     <li>The <a href="jythonc.html">jythonc</a> utility compiles
 	Python source code to real Java classes, and is used for
 	building applets, servlets, beans, etc.
-</ul>
+
+    <li><a href="jreload.html#unload">Unloading of java classes and internalTablesImpl option.</a>
+    
+    <li><a href="jreload.html">Reloading java classes.</a>
+
+ </ul>
 
 <h3>General Python Documentation</h3>
 
