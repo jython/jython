@@ -658,7 +658,7 @@ public class PyString extends PySequence implements ClassDictInit
         //This is a hack to make almost all Java calls happy
         if (c == String.class || c == Object.class || c == Serializable.class)
             return string;
-        if (c == Character.TYPE)
+        if (c == Character.TYPE || c == Character.class)
             if (string.length() == 1)
                 return new Character(string.charAt(0));
 
