@@ -14,7 +14,7 @@ public class PySystemState extends PyObject {
     /**
     The current version of JPython.
     **/
-    public static String version = "1.1beta1";
+    public static String version = "1.1alpha1";
 
     /**
     The copyright notice for this release.
@@ -82,6 +82,10 @@ public class PySystemState extends PyObject {
             String version = System.getProperty("java.version");
             if (version.equals("11")) version = "1.1";
             if (version.equals("12")) version = "1.2";
+            if (version.startsWith("java")) version = version.substring(4, version.length());
+            if (version.startsWith("jdk") || version.startsWith("jre")) {
+                version = version.substring(3, version.length());
+            }
             if (version != null) platform = "java"+version;
         } catch (Exception exc) {
             return null;
