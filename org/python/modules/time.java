@@ -1,33 +1,34 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.modules;
 import org.python.core.*;
 
-class TimeFunctions extends PyBuiltinFunctionSet {
+class TimeFunctions extends PyBuiltinFunctionSet
+{
     public PyObject __call__() {
         switch(index) {
-            case 0:
-                return Py.newFloat(time.time$());
-            default:
-                throw argCountError(0);
+	case 0:
+	    return Py.newFloat(time.time$());
+	default:
+	    throw argCountError(0);
         }
     }
 }
 
 
-
-
-public class time implements InitModule {
+public class time implements InitModule
+{
     public void initModule(PyObject dict) {
-		dict.__setitem__("time", new TimeFunctions().init("time", 0, 0) );
-		dict.__setitem__("clock", new TimeFunctions().init("clock", 0, 0) );
-	}
+	dict.__setitem__("time", new TimeFunctions().init("time", 0, 0) );
+	dict.__setitem__("clock", new TimeFunctions().init("clock", 0, 0) );
+    }
 		
     public static double time$() {
         return System.currentTimeMillis()/1000.0;
     }
 
     /*public static double clock() {
-        return System.currentTimeMillis()/1000.0;
-    }*/
+      return System.currentTimeMillis()/1000.0;
+      }*/
 
     public static double mktime(PyTuple tup) {
         java.util.GregorianCalendar cal = new java.util.GregorianCalendar(
@@ -49,20 +50,21 @@ public class time implements InitModule {
         // It appears to break jdk1.2, so it's not removed.
         // cal.clear();
         int dow = cal.get(java.util.Calendar.DAY_OF_WEEK)-2;
-        if (dow<0) dow = dow+7;
+        if (dow<0)
+	    dow = dow+7;
         int isdst = 0; // is this date dst?
         return new PyTuple(new PyObject[] {
             new PyInteger(cal.get(java.util.Calendar.YEAR)),
-                new PyInteger(cal.get(java.util.Calendar.MONTH)+1),
-                new PyInteger(cal.get(java.util.Calendar.DAY_OF_MONTH)),
-                new PyInteger(cal.get(java.util.Calendar.HOUR)
-                         + 12*cal.get(java.util.Calendar.AM_PM)),
-                new PyInteger(cal.get(java.util.Calendar.MINUTE)),
-                new PyInteger(cal.get(java.util.Calendar.SECOND)),
-                new PyInteger(dow),
-                new PyInteger(cal.get(java.util.Calendar.DAY_OF_YEAR)),
-                new PyInteger(0)
-                });
+	    new PyInteger(cal.get(java.util.Calendar.MONTH)+1),
+	    new PyInteger(cal.get(java.util.Calendar.DAY_OF_MONTH)),
+	    new PyInteger(cal.get(java.util.Calendar.HOUR)
+			  + 12*cal.get(java.util.Calendar.AM_PM)),
+	    new PyInteger(cal.get(java.util.Calendar.MINUTE)),
+	    new PyInteger(cal.get(java.util.Calendar.SECOND)),
+	    new PyInteger(dow),
+	    new PyInteger(cal.get(java.util.Calendar.DAY_OF_YEAR)),
+	    new PyInteger(0)
+	});
     }
 
     public static PyTuple localtime(double secs) {
@@ -82,6 +84,7 @@ public class time implements InitModule {
     protected static String[] _monthnames = {
         null, "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep",
         "Oct", "Nov", "Dec"};
+
     public static String asctime(PyTuple tup) {
         String s = _daynames[tup.__getitem__(6).__int__().getValue()];
         s = s + " " + _monthnames[tup.__getitem__(1).__int__().getValue()];
@@ -92,9 +95,11 @@ public class time implements InitModule {
         s = s + " " + tup.__getitem__(0).__str__().toString();
         return s;
     }
+
     private static String _twodigit(PyInteger i) {
         String s = i.toString();
-        if (s.length() == 1) s = "0" + s;
+        if (s.length() == 1)
+	    s = "0" + s;
         return s;
     }
 
@@ -117,5 +122,4 @@ public class time implements InitModule {
     });
 
     // strftime()
-
 }
