@@ -105,7 +105,6 @@ public class PyList extends PySequence implements InitModule
         dict.__setitem__("initModule", null);
         dict.__setitem__("toString", null);
         dict.__setitem__("hashCode", null);
-        // set __methods__ for dir()
     }
     
     public PyList() {
