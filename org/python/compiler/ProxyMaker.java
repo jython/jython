@@ -215,11 +215,12 @@ public class ProxyMaker
         doReturn(code, ret);
     }
 
-    public void doJavaCall(Code code, String name, String type)
+    public void doJavaCall(Code code, String name, String type, 
+                          String jcallName)
         throws Exception
     {
         int jcall = code.pool.Methodref(
-            "org/python/core/PyObject", "_jcall",
+            "org/python/core/PyObject", jcallName,
             "([Ljava/lang/Object;)Lorg/python/core/PyObject;");
                         
         int py2j = code.pool.Methodref(
@@ -310,38 +311,54 @@ public class ProxyMaker
     }
 
     public void callMethod(Code code, String name, Class[] parameters,
-                           Class ret)
+                           Class ret, Class[] exceptions)
         throws Exception
     {
+        Label start = null;
+        Label end = null;
+
+        String jcallName = "_jcall";
+        int instLocal = 0;
+
+        if (exceptions.length > 0) {
+            start = code.getLabel();
+            end = code.getLabel();
+            jcallName = "_jcallexc";
+            instLocal = code.getLocal();
+            code.astore(instLocal);
+            start.setPosition();
+            code.aload(instLocal);
+        }
+
         getArgs(code, parameters);
 
         switch (getType(ret)) {
         case tCharacter:
-            doJavaCall(code, "char", "C");
+            doJavaCall(code, "char", "C", jcallName);
             break;
         case tBoolean:
-            doJavaCall(code, "boolean", "Z");
+            doJavaCall(code, "boolean", "Z", jcallName);
             break;
         case tByte:
         case tShort:
         case tInteger:
-            doJavaCall(code, "int", "I");
+            doJavaCall(code, "int", "I", jcallName);
             break;
         case tLong:
-            doJavaCall(code, "long", "J");
+            doJavaCall(code, "long", "J", jcallName);
             break;
         case tFloat:
-            doJavaCall(code, "float", "F");
+            doJavaCall(code, "float", "F", jcallName);
             break;
         case tDouble:
-            doJavaCall(code, "double", "D");
+            doJavaCall(code, "double", "D", jcallName);
             break;
         case tVoid:
-            doJavaCall(code, "void", "V");
+            doJavaCall(code, "void", "V", jcallName);
             break;
         default:
             int jcall = code.pool.Methodref(
-                "org/python/core/PyObject", "_jcall",
+                "org/python/core/PyObject", jcallName,
                 "([Ljava/lang/Object;)Lorg/python/core/PyObject;");
             code.invokevirtual(jcall);
                         
@@ -354,7 +371,56 @@ public class ProxyMaker
             code.checkcast(code.pool.Class(mapClass(ret)));
             break;
         }
+        if (exceptions.length > 0)
+            end.setPosition();
+
         doReturn(code, ret);
+
+        if (exceptions.length > 0) {
+            boolean throwableFound = false;
+
+            Label handlerStart = null;
+            for (int i = 0; i < exceptions.length; i++) {
+                handlerStart = code.getLabel();
+                handlerStart.setPosition();
+                code.stack = 1;
+                int excLocal = code.getLocal();
+                code.astore(excLocal);
+
+                code.aload(excLocal);
+                code.athrow();
+
+                code.addExceptionHandler(start, end, handlerStart,
+                                 code.pool.Class(mapClass(exceptions[i])));
+                doNullReturn(code, ret);
+
+                code.freeLocal(excLocal);
+                if (exceptions[i] == Throwable.class)
+                    throwableFound = true;
+            }
+
+            if (!throwableFound) {
+                // The final catch (Throwable)
+                handlerStart = code.getLabel();
+                handlerStart.setPosition();
+                code.stack = 1;
+                int excLocal = code.getLocal();
+                code.astore(excLocal);
+                code.aload(instLocal);
+                code.aload(excLocal);
+ 
+                int jthrow = code.pool.Methodref(
+                    "org/python/core/PyObject", "_jthrow",
+                    "(Ljava/lang/Throwable;)V");
+                code.invokevirtual(jthrow);
+ 
+                code.addExceptionHandler(start, end, handlerStart,
+                                     code.pool.Class("java/lang/Throwable"));
+                code.freeLocal(excLocal);
+                doNullReturn(code, ret);
+            }
+            code.freeLocal(instLocal);
+        }
     }
 
         
@@ -405,7 +471,8 @@ public class ProxyMaker
             callSuper(code, name, superclass, parameters, ret, sig);
             callPython.setPosition();
             code.aload(tmp);
-            callMethod(code, name, parameters, ret);
+            callMethod(code, name, parameters, ret, 
+                       method.getExceptionTypes());
 
             addSuperMethod("super__"+name, name, superclass, parameters,
                            ret, sig, access);
@@ -417,7 +484,8 @@ public class ProxyMaker
                     "jgetattr",
                     "(Lorg/python/core/PyProxy;Ljava/lang/String;)Lorg/python/core/PyObject;");
                 code.invokestatic(jgetattr);
-                callMethod(code, name, parameters, ret);
+                callMethod(code, name, parameters, ret,
+                           method.getExceptionTypes());
             }
             else {
                 int jfindattr = code.pool.Methodref(
@@ -428,7 +496,8 @@ public class ProxyMaker
                 code.dup();
                 Label returnNull = code.getLabel();
                 code.ifnull(returnNull);
-                callMethod(code, name, parameters, ret);
+                callMethod(code, name, parameters, ret,
+                           method.getExceptionTypes());
                 returnNull.setPosition();
                 code.pop();
                 doNullReturn(code, ret);
