@@ -339,13 +339,19 @@ public class PyLong extends PyObject
     public PyObject __lshift__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyLong(value.shiftLeft(coerceInt(right)));
+        int rightv = coerceInt(right);
+        if(rightv < 0)
+            throw Py.ValueError("negative shift count");
+        return new PyLong(value.shiftLeft(rightv));
     }
 
     public PyObject __rshift__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyLong(value.shiftRight(coerceInt(right)));
+        int rightv = coerceInt(right);
+        if(rightv < 0)
+            throw Py.ValueError("negative shift count");
+        return new PyLong(value.shiftRight(rightv));
     }
 
     public PyObject __and__(PyObject right) {

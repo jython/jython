@@ -26,6 +26,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 17: return Py.newBoolean(arg1.isMappingType());
         case 18: return Py.newBoolean(arg1.isNumberType());
         case 19: return Py.newBoolean(arg1.isSequenceType());
+        case 32: return arg1.__invert__();
         default:
             throw argCountError(1);
         }
@@ -48,6 +49,14 @@ class OperatorFunctions extends PyBuiltinFunctionSet
             arg1.__delitem__(arg2);
             return Py.None;
         case 23: return arg1.__getitem__(arg2);
+        case 27: return arg1._ge(arg2);
+        case 28: return arg1._le(arg2);
+        case 29: return arg1._eq(arg2);
+        case 30: return arg1._floordiv(arg2);
+        case 31: return arg1._gt(arg2);
+        case 33: return arg1._lt(arg2);
+        case 34: return arg1._ne(arg2);
+        case 35: return arg1._truediv(arg2);
         default:
             throw argCountError(2);
         }
@@ -94,7 +103,7 @@ public class operator implements ClassDictInit
         "'__' are also provided for convenience.\n"
     );
 
-    public static void classDictInit(PyObject dict) {
+    public static void classDictInit(PyObject dict) throws PyIgnoreMethodTag {
         dict.__setitem__("__add__", new OperatorFunctions("__add__", 0, 2));
         dict.__setitem__("add", new OperatorFunctions("add", 0, 2));
         dict.__setitem__("__concat__",
@@ -144,6 +153,8 @@ public class operator implements ClassDictInit
                          new OperatorFunctions("isSequenceType", 19, 1));
         dict.__setitem__("contains",
                          new OperatorFunctions("contains", 20, 2));
+        dict.__setitem__("__contains__",
+                         new OperatorFunctions("__contains__", 20, 2));
         dict.__setitem__("sequenceIncludes",
                          new OperatorFunctions("sequenceIncludes", 20, 2));
         dict.__setitem__("__delitem__",
@@ -167,6 +178,28 @@ public class operator implements ClassDictInit
                          new OperatorFunctions("__setslice__", 26, 4));
         dict.__setitem__("setslice",
                          new OperatorFunctions("setslice", 26, 4));
+        dict.__setitem__("ge", new OperatorFunctions("ge", 27, 2));
+        dict.__setitem__("__ge__", new OperatorFunctions("__ge__", 27, 2));
+        dict.__setitem__("le", new OperatorFunctions("le", 28, 2));
+        dict.__setitem__("__le__", new OperatorFunctions("__le__", 28, 2));
+        dict.__setitem__("eq", new OperatorFunctions("eq", 29, 2));
+        dict.__setitem__("__eq__", new OperatorFunctions("__eq__", 29, 2));
+        dict.__setitem__("floordiv",
+                        new OperatorFunctions("floordiv", 30, 2));
+        dict.__setitem__("__floordiv__",
+                        new OperatorFunctions("__floordiv__", 30, 2));
+        dict.__setitem__("gt", new OperatorFunctions("gt", 31, 2));
+        dict.__setitem__("__gt__", new OperatorFunctions("__gt__", 31, 2));
+        dict.__setitem__("invert", new OperatorFunctions("invert", 32, 1));
+        dict.__setitem__("__invert__",
+                        new OperatorFunctions("__invert__", 32, 1));
+        dict.__setitem__("lt", new OperatorFunctions("lt", 33, 2));
+        dict.__setitem__("__lt__", new OperatorFunctions("__lt__", 33, 2));
+        dict.__setitem__("ne", new OperatorFunctions("ne", 34, 2));
+        dict.__setitem__("__ne__", new OperatorFunctions("__ne__", 34, 2));
+        dict.__setitem__("truediv", new OperatorFunctions("truediv", 35, 2));
+        dict.__setitem__("__truediv__",
+                        new OperatorFunctions("__truediv__", 35, 2));
     }
 
     public static int countOf(PyObject seq, PyObject item) {

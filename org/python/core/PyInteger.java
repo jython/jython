@@ -339,6 +339,8 @@ public class PyInteger extends PyObject
 
         if (rightv > 31)
             return new PyInteger(0);
+        else if(rightv < 0)
+            throw Py.ValueError("negative shift count");
         return Py.newInteger(value << rightv);
     }
 
@@ -348,6 +350,9 @@ public class PyInteger extends PyObject
              rightv = ((PyInteger)right).value;
         else
              return null;
+
+        if(rightv < 0)
+            throw Py.ValueError("negative shift count");
 
         return Py.newInteger(value >> rightv);
     }
