@@ -20,6 +20,7 @@ XX-Dec-2000 Jython 2.0 alpha 2
     - Delay closing a socket until all sock.makefile() files are closed.
     - Avoided a duplicate call to Class.getMethods(). This will improve 
       performance.
+    - Allow from import * to modify the locals in a function (bug 122834).
 
 
 26-Nov-2000 Jython 2.0 alpha 1
