@@ -5,6 +5,7 @@ xx-nov-2001 Jython 2.1 beta 1
   New features.
    - The weakref module is now available.
    - The sys.exitfunc hook is called on exit.
+   - A CPython compatible xreadlines module.
 
 29-jul-2001 Jython 2.1 alpha 3
 
