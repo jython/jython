@@ -81,6 +81,21 @@ public class Options
      */
     public static boolean caseok = false;
 
+    /**
+     * If true, enable truedivision for the '/' operator.
+     */ 
+    public static boolean Qnew = false;
+
+    /**
+     * Enable division warning. The value maps to the registry values of
+     * <ul>
+     * <li>old: 0</li>
+     * <li>warn: 1</li>
+     * <li>warnall: 2</li>
+     * </ul>
+     */
+    public static int divisionWarning = 0;
+
     //
     // ####### END OF OPTIONS
     //
@@ -155,6 +170,21 @@ public class Options
         Options.caseok =
             getBooleanOption("options.caseok", Options.caseok);
 
+        Options.Qnew =
+            getBooleanOption("options.Qnew", Options.Qnew);
+
+        prop = PySystemState.registry.getProperty("python.divisionWarning");
+        if (prop != null) {
+            if (prop.equalsIgnoreCase("old"))
+                Options.divisionWarning = 0;
+            else if (prop.equalsIgnoreCase("warn"))
+                Options.divisionWarning = 1;
+            else if (prop.equalsIgnoreCase("warnall"))
+                Options.divisionWarning = 2;
+            else
+                throw Py.ValueError("Illegal divisionWarning option " +
+                                    "setting: '"+ prop+"'");
+        }
         // additional initializations which must happen after the registry
         // is guaranteed to be initialized.
         JavaAccessibility.initialize();
