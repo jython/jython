@@ -269,7 +269,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         } catch (IOException ioe) {
             // silently skip any bad directories
             warning("skipping bad jar, '" +
-            jarurl.toString() + "'");
+            (jarfile!=null?jarfile.toString():jarurl.toString()) + "'"); // ?? solve bug
         }
 
     }
