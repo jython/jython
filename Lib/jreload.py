@@ -1,12 +1,11 @@
 # java classes reload support (experimental)
 # Copyright 2000 Samuele Pedroni
-# ?? doc + examples pending
 
 # ?? could have problem with import pkg.jclass.inner (this should not be used in any case)
 # ?? using import * with a load-set together with reloading can be confusing
 #    cannot be fixed => anyway import * is not for production code
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 import sys
 from org.python.core import imp,PyJavaPackage,PyJavaClass
