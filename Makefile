@@ -3,7 +3,7 @@
 # Makefile for building JPython.  See the instructions in
 # rules/make.rules for details.
 
-include rules/make.rules
+include Misc/make.rules
 
 .PHONY: installer
 
@@ -14,20 +14,25 @@ SUBDIRS= \
 	org/python/core \
 	org/python/modules \
 	org/python/util \
-	org/python/rmi \
-	tests/scripts/javatests
+	org/python/rmi
 
 CLEANDIRS = $(SUBDIRS) \
-	tests/bugs \
-	tests/bugs/pr133 \
-	tests/scripts \
 	Lib \
 	Lib/pawt \
-	Tools/jpythonc2 \
-	Tools/peekaboo \
-	demo/javaclasses/pygraph
+	Lib/test \
+	Lib/test/bugs \
+	Lib/test/bugs/pr133 \
+	Lib/test/javatests \
+	Tools/jythonc \
+	Tools/freeze \
+	Demo/applet \
+	Demo/awt \
+	Demo/bean \
+	Demo/embed \
+	Demo/javaclasses \
+	Demo/swing
 
-all: subdirs installer
+all: subdirs
 
 subdirs:
 	@for d in $(SUBDIRS); \
@@ -35,15 +40,11 @@ subdirs:
 		(cd $$d; $(MAKE)); \
 	done
 
-installer:
-	-(cd installer; $(MAKE))
-
 clean::
 	@for d in $(CLEANDIRS); \
 	do \
 	    (cd $$d; $(MAKE) clean); \
 	done
-	-(cd installer; $(MAKE) clean)
 
 realclean::
 	@for d in $(CLEANDIRS); \
