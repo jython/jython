@@ -44,6 +44,12 @@ file for details.
     messages.  Valid values in order of increasing verbosity are
     "error", "warning", "message", "comment", "debug"
 
+    <dt><b>python.security.respectJavaAccessibility</b>
+    <dd>Normally, JPython can only provide access to public members of 
+    classes.  However if this property is set to <tt>false</tt> and
+    <em>you are using Java 1.2</em> then JPython can access non-public 
+    fields, methods, and constructors.
+
     <dt><b>python.jpythonc.compiler</b>
     <dd>The Java compiler to use with the <tt>jpythonc</tt> tool,
     which now generates Java source code.  This should be the absolute 
