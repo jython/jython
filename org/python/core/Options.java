@@ -153,7 +153,7 @@ public class Options
         }
 
         Options.caseok =
-            getBooleanOption("options.caseok", Options.pollStandardIn);
+            getBooleanOption("options.caseok", Options.caseok);
 
         // additional initializations which must happen after the registry
         // is guaranteed to be initialized.
