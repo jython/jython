@@ -15,8 +15,11 @@ package org.python.modules;
 import org.python.core.*;
 import java.text.DateFormatSymbols;
 import java.text.DateFormat;
+import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Date;
+import java.util.TimeZone;
+import java.util.SimpleTimeZone;
 
 
 
@@ -37,8 +40,22 @@ class TimeFunctions extends PyBuiltinFunctionSet
 public class time implements InitModule
 {
     public void initModule(PyObject dict) {
-	dict.__setitem__("time", new TimeFunctions().init("time", 0, 0) );
-	dict.__setitem__("clock", new TimeFunctions().init("clock", 0, 0) );
+	dict.__setitem__("time", new TimeFunctions().init("time", 0, 0));
+	dict.__setitem__("clock", new TimeFunctions().init("clock", 0, 0));
+
+	// calculate the static variables tzname, timezone, altzone, daylight
+	TimeZone tz = TimeZone.getDefault();
+	tzname = new PyTuple(
+	    new PyObject[] {
+		new PyString(tz.getDisplayName(false, TimeZone.SHORT)),
+		new PyString(tz.getDisplayName(true, TimeZone.SHORT))
+	    });
+
+	daylight = tz.useDaylightTime() ? 1 : 0;
+
+	timezone = -tz.getRawOffset() / 1000;
+	if (tz instanceof SimpleTimeZone)
+	    altzone = timezone - ((SimpleTimeZone)tz).getDSTSavings() / 1000;
     }
 		
     public static double time$() {
@@ -124,39 +141,37 @@ public class time implements InitModule
         return (double)cal.getTime().getTime()/1000.0;
     }
 
-    protected static PyTuple _timefields(double secs, java.util.TimeZone tz) {
-        java.util.GregorianCalendar cal =
-            new java.util.GregorianCalendar(tz);
+    protected static PyTuple _timefields(double secs, TimeZone tz) {
+        GregorianCalendar cal = new GregorianCalendar(tz);
         cal.clear();
-        cal.setTime(new java.util.Date((long)(secs*1000)));
+        cal.setTime(new Date((long)(secs*1000)));
         // This call used to be needed to work around JVM bugs.
         // It appears to break jdk1.2, so it's not removed.
         // cal.clear();
-        int dow = cal.get(java.util.Calendar.DAY_OF_WEEK)-2;
+        int dow = cal.get(Calendar.DAY_OF_WEEK)-2;
         if (dow<0)
 	    dow = dow+7;
 	// TBD: is this date dst?
-        int isdst = 0;
+	boolean isdst = tz.inDaylightTime(cal.getTime());
         return new PyTuple(new PyObject[] {
-            new PyInteger(cal.get(java.util.Calendar.YEAR)),
-	    new PyInteger(cal.get(java.util.Calendar.MONTH)+1),
-	    new PyInteger(cal.get(java.util.Calendar.DAY_OF_MONTH)),
-	    new PyInteger(cal.get(java.util.Calendar.HOUR)
-			  + 12*cal.get(java.util.Calendar.AM_PM)),
-	    new PyInteger(cal.get(java.util.Calendar.MINUTE)),
-	    new PyInteger(cal.get(java.util.Calendar.SECOND)),
+            new PyInteger(cal.get(Calendar.YEAR)),
+	    new PyInteger(cal.get(Calendar.MONTH)+1),
+	    new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
+	    new PyInteger(cal.get(Calendar.HOUR) + 12*cal.get(Calendar.AM_PM)),
+	    new PyInteger(cal.get(Calendar.MINUTE)),
+	    new PyInteger(cal.get(Calendar.SECOND)),
 	    new PyInteger(dow),
-	    new PyInteger(cal.get(java.util.Calendar.DAY_OF_YEAR)),
-	    new PyInteger(isdst)
+	    new PyInteger(cal.get(Calendar.DAY_OF_YEAR)),
+	    new PyInteger(isdst ? 1 : 0)
 	});
     }
 
     public static PyTuple localtime(double secs) {
-        return _timefields(secs, java.util.TimeZone.getDefault());
+        return _timefields(secs, TimeZone.getDefault());
     }
 
     public static PyTuple gmtime(double secs) {
-        return _timefields(secs, java.util.TimeZone.getTimeZone("GMT"));
+        return _timefields(secs, TimeZone.getTimeZone("GMT"));
     }
 
     public static String ctime(double secs) {
@@ -228,6 +243,11 @@ public class time implements InitModule
 	return _padint(i, 2);
     }
 
+    private static String _truncyear(int year) {
+	String yearstr = _padint(year, 4);
+	return yearstr.substring(yearstr.length()-2, yearstr.length());
+    }
+
     public static String asctime(PyTuple tup) {
 	int day = item(tup, 6);
 	int mon = item(tup, 1);
@@ -248,19 +268,14 @@ public class time implements InitModule
         }
     }
 
-    // This doesn't do the right thing when DST is in effect yet
-    public static int timezone =
-        -java.util.TimeZone.getDefault().getRawOffset() / 1000;
-
-    public static int altzone = timezone;
-
-    public static int daylight = 0;
-
-    public static PyTuple tzname = new PyTuple(
-	new PyObject[] {
-	    new PyString(java.util.TimeZone.getDefault().getID()),
-	    new PyString(java.util.TimeZone.getDefault().getID())
-	});
+    // set by initModule()
+    public static int timezone;
+    public static int altzone = 0;
+    public static int daylight;
+    public static PyTuple tzname;
+    // TBD: should we accept 2 digit years?  should we make this attribute
+    // writable but ignore its value?
+    public static final int accept2dyear = 0;
 
     public static String strftime(String format, PyTuple tup) {
 	String s = "";
@@ -388,47 +403,50 @@ public class time implements InitModule
 		s = s + _twodigit(j);
 		break;
 	    case 'x':
-		// locale's date repr
-		{
-		    Date d = _tupletocal(tup).getTime();
-		    s = s + DateFormat.getDateInstance().format(d);
-		}
+		// TBD: A note about %x and %X.  Python's time.strftime()
+		// by default uses the "C" locale, which is changed by
+		// using the setlocale() function.  In Java, the default
+		// locale is set by user.language and user.region
+		// properties and is "en_US" by default, at least around
+		// here!  Locale "en_US" differs from locale "C" in the way
+		// it represents dates and times.  Eventually we might want
+		// to craft a "C" locale for Java and set JPython to use
+		// this by default, but that's too much work right now.
+		//
+		// For now, we hard code %x and %X to return values
+		// formatted in the "C" locale, i.e. the default way
+		// CPython does it.  E.g.:
+		//     %x == mm/dd/yy
+		//     %X == HH:mm:SS
+		//
+		s = s + _twodigit(item(tup, 1) + 1) + "/" +
+		    _twodigit(item(tup, 2)) + "/" +
+		    _truncyear(item(tup, 0));
 		break;
 	    case 'X':
-		// locale's time repr
-		//
-		// TBD: I think this is the best definition for "locale's
-		// time representation", however Java's interpretation of
-		// this for locales en_US and C don't seem to coincide with
-		// strftime()'s interpretation in the C local.  This breaks
-		// test_strftime.py and probably most people's
-		// expectations.  We thus hard-code this to the
-		// representation HH:mm:SS.  Note that the same can
-		// probably be said of the "locale's date representation"
-		// above, but we'll wait for someone to complain before we
-		// fix that.
-		//
+		// See comment for %x above
 		s = s + _twodigit(item(tup, 3)) + ":" +
 		    _twodigit(item(tup, 4)) + ":" +
 		    _twodigit(item(tup, 5));
 		break;
 	    case 'Y':
 		// year w/ century
+		s = s + _padint(item(tup, 0), 4);
+		break;
 	    case 'y':
 		// year w/o century (00-99)
-		{
-		    String year = _padint(item(tup, 0), 4);
-		    if (format.charAt(i) == 'y')
-			year = year.substring(year.length()-2, year.length());
-		    s = s + year;
-		}
+		s = s + _truncyear(item(tup, 0));
 		break;
 	    case 'Z':
 		// timezone name
 		if (cal == null)
 		    cal = _tupletocal(tup);
-		// TBD: this isn't quite right
-		s = s + cal.getTimeZone().getDisplayName();
+		s = s + cal.getTimeZone().getDisplayName(
+		    // in daylight savings time?  true if == 1
+		    // -1 means the information was not available; treat
+		    // this as if not in dst
+		    item(tup, 8) > 0,
+		    TimeZone.SHORT);
 		break;
 	    case '%':
 		// %
