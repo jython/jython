@@ -1,3 +1,9 @@
+/* Support for java-1.2 collections
+This will only compile with jdk-1.2 or later.
+The rest of JPython works just fine with out it, so feel free to
+just leave this uncompiled if you're using jdk-1.1.
+*/
+
 package org.python.core;
 import java.util.*;
 
@@ -16,7 +22,7 @@ public class CollectionProxy2 extends CollectionProxy {
             return new IteratorProxy(((Iterator)object));
         }
 
-        return CollectionProxy.NoProxy;
+        return null;
     }
 }
 
