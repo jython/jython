@@ -4,10 +4,12 @@ package org.python.modules;
 import org.python.core.*;
 import java.lang.Math;
 
-public class math {
+public class math implements InitModule {
     public static PyFloat pi = new PyFloat(Math.PI);
     public static PyFloat e = new PyFloat(Math.E);
 
+    public void initModule(PyObject dict) {
+    }
 
     private static double check(double v) {
         if (Double.isNaN(v))
