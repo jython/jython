@@ -1,0 +1,666 @@
+ options {
+  NODE_SCOPE_HOOK = true;
+  MULTI = false;
+  LOOKAHEAD = 1;
+  CHOICE_AMBIGUITY_CHECK = 2;
+  OTHER_AMBIGUITY_CHECK = 1;
+  STATIC = false;
+  DEBUG_PARSER = false;
+  DEBUG_LOOKAHEAD = false;
+  OPTIMIZE_TOKEN_MANAGER = false;
+  DEBUG_TOKEN_MANAGER = false;
+  ERROR_REPORTING = true;
+  JAVA_UNICODE_ESCAPE = false;
+  UNICODE_INPUT = false;
+  IGNORE_CASE = false;
+  USER_TOKEN_MANAGER = false;
+  USER_CHAR_STREAM = false;
+  BUILD_PARSER = true;
+  BUILD_TOKEN_MANAGER = true;
+  SANITY_CHECK = true;
+  FORCE_LA_CHECK = false;
+  COMMON_TOKEN_ACTION = true;
+}
+
+
+PARSER_BEGIN(PythonGrammar)
+package org.python.parser;
+
+public class PythonGrammar {
+ void jjtreeOpenNodeScope(Node n)
+  {
+        ((SimpleNode)n).beginLine = getToken(1).beginLine;
+       ((SimpleNode)n).beginColumn = getToken(1).beginColumn;
+  }
+
+  void jjtreeCloseNodeScope(Node n)
+  {
+        ((SimpleNode)n).endLine = getToken(0).endLine;
+       ((SimpleNode)n).endColumn = getToken(0).endColumn;
+  }
+
+}
+
+PARSER_END(PythonGrammar)
+
+TOKEN_MGR_DECLS:
+{
+   int indentation[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+   int level = 0;
+   int dedents = 0;
+   int parens=0;
+   int indent;
+   boolean seen_eof=false;
+   boolean single_input=false;
+   public Runnable showSecondaryPrompt = null;
+   boolean compound=false;
+
+	static Token addDedent(Token previous) {
+		Token t = new Token();
+		t.kind = DEDENT;
+		t.beginLine = previous.beginLine;
+		t.endLine = previous.endLine;
+		t.beginColumn = previous.beginColumn;
+		t.endColumn = previous.endColumn;
+		t.image = "<DEDENT>";
+		t.specialToken = null;
+		t.next = null;
+		previous.next = t;
+		return t;
+	}
+
+	void doPrompt(boolean test) {
+		if (test && showSecondaryPrompt != null) {
+		    showSecondaryPrompt.run();
+			//System.err.print(interactive_prompt);
+			//System.err.flush();
+		}
+	}
+
+	void doPrompt() {
+		doPrompt(compound || parens != 0);
+	}
+
+	void CommonTokenAction(Token t) {
+		if (t.kind == EOF) {
+			//System.out.println("EOF: "+single_input+", "+curLexState);
+			if (!single_input) {
+				if (curLexState == DEFAULT) {
+					t.kind = NEWLINE;
+				} else {
+					t.kind = DEDENT;
+					level -= 1;
+				}
+				while (level-- >= 0) t = addDedent(t);
+				//t = addDedent(t);
+				t.kind = EOF;
+				t.image = "<EOF>";
+			}
+		}
+	}
+}
+
+SKIP :
+{
+ 	<SPACE:" ">
+|	"\t"
+|   "\014"
+|	 <CONTINUATION: ("\\") ("\r\n"|"\n"|"\r")>
+|	<NEWLINE1:("\r\n"|"\n"|"\r")>
+	{
+		//System.out.println("newline, "+parens+", "+indent+", "+single_input);
+		//System.out.println("token: "+matchedToken);
+		doPrompt();
+		if (parens == 0) {
+			indent = 0;
+			input_stream.backup(1);
+			if (level == 0) SwitchTo(FORCE_NEWLINE1);
+			else SwitchTo(FORCE_NEWLINE2);
+		}
+	}
+}
+
+<FORCE_NEWLINE1> TOKEN :
+{ <NEWLINE: ("\n" | "\r")> : INDENTATION_UNCHANGED }
+
+<FORCE_NEWLINE2> TOKEN :
+{ <NEWLINE2: ("\n" | "\r")> { matchedToken.kind = NEWLINE; }: INDENTING }
+
+<FORCE_NEWLINE> TOKEN :
+{
+	<NEWLINE3: ("\n" | "\r")>
+	{
+		Token t1 = matchedToken;
+		//System.out.println("final_newline: "+level);
+		t1.kind = DEDENT;
+		while (level-- > 0) t1 = addDedent(t1);
+		t1.kind = NEWLINE;
+	} : DEFAULT
+}
+
+<INDENTING, INDENTATION_UNCHANGED> SKIP :
+{
+	"\t"
+	{ indent = (indent/8+1)*8;
+		if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
+		else SwitchTo(INDENTING);
+	}
+|	" "
+	{ indent += 1;
+		if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
+		else SwitchTo(INDENTING);
+	}
+|   "\014"
+    { indent = 0;
+		if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
+		else SwitchTo(INDENTING);
+	}
+|	<CRLF1: ("\r\n" | "\n" | "\r")>
+	{
+
+		//System.out.println("indenting newline: "+parens+", "+indent+", "+single_input);
+		if (parens == 0 && single_input && indent==0) {
+			//System.out.println("force newline");
+			//backup a character!
+			input_stream.backup(1);
+			SwitchTo(FORCE_NEWLINE);
+		} else {
+			doPrompt();
+			indent = 0;
+			if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
+			else SwitchTo(INDENTING);
+		}
+	}
+}
+
+<INDENTATION_UNCHANGED> SKIP :
+{
+	<""> : DEFAULT
+}
+
+<INDENTING> TOKEN :
+{
+	<DEDENT: "">
+	{
+		if (indent > indentation[level]) {
+			level++;
+			indentation[level] = indent;
+			matchedToken.kind=INDENT;
+			matchedToken.image = "<INDENT>";
+		} else {
+			Token t = matchedToken;
+			level -= 1;
+			while (level > 0 && indent < indentation[level]) {
+		   		level--;
+				t = addDedent(t);
+			}
+			t.next = null;
+		}
+	} : DEFAULT
+}
+
+<UNREACHABLE> TOKEN :
+{
+	< INDENT:"<INDENT>">
+//|	< DEDENT:"<DEDENT>">
+}
+
+<DEFAULT, INDENTING, INDENTATION_UNCHANGED> SPECIAL_TOKEN: /* COMMENTS */
+{
+  <SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* >  { indent = 0; }
+}
+
+TOKEN : /* SEPARATORS */
+{
+  < LPAREN: "(" > {parens++;}
+| < RPAREN: ")" > {parens--;}
+| < LBRACE: "{" > {parens++;}
+| < RBRACE: "}" > {parens--;}
+| < LBRACKET: "[" > {parens++;}
+| < RBRACKET: "]" > {parens--;}
+| < SEMICOLON: ";" >
+| < COMMA: "," >
+| < DOT: "." >
+|	< COLON: ":" >
+}
+
+TOKEN : /* OPERATORS */
+{
+	< PLUS: "+" >
+|	< MINUS: "-" >
+|	< MULTIPLY: "*" >
+|	< DIVIDE: "/" >
+|	< POWER: "**" >
+|	< LSHIFT: "<<" >
+|	< RSHIFT: ">>" >
+|	< MODULO: "%" >
+|	< NOT: "~" >
+|	< XOR: "^" >
+|	< OR: "|" >
+|	< AND: "&" >
+|	< EQUAL: "=" >
+|	< GREATER: ">" >
+|	< LESS: "<" >
+|	< EQEQUAL: "==" >
+|	< EQLESS: "<=" >
+|	< EQGREATER: ">=" >
+|	< LESSGREATER: "<>" >
+|	< NOTEQUAL: "!=" >
+}
+
+TOKEN : /* KEYWORDS */
+{
+	< OR_BOOL: "or" >
+|	< AND_BOOL: "and" >
+|	< NOT_BOOL: "not" >
+|	< IS: "is" >
+|	< IN: "in" >
+|	< LAMBDA: "lambda" >
+|	< IF: "if" >
+|	< ELSE: "else" >
+|	< ELIF: "elif" >
+|	< WHILE: "while" >
+|	< FOR: "for" >
+|	< TRY: "try" >
+|	< EXCEPT: "except" >
+|	< DEF: "def" >
+|	< CLASS: "class" >
+|	< FINALLY: "finally" >
+|	< PRINT: "print" >
+|	< PASS: "pass" >
+|	< BREAK: "break" >
+|	< CONTINUE: "continue" >
+|	< RETURN: "return" >
+|	< IMPORT: "import" >
+|	< FROM: "from" >
+|	< DEL: "del" >
+|	< RAISE: "raise" >
+|	< GLOBAL: "global" >
+|	< EXEC: "exec" >
+|	< ASSERT: "assert" >
+}
+
+TOKEN : /* Python identifiers */
+{
+  < NAME:	  <LETTER> ( <LETTER> | <DIGIT>)* >
+|  < #LETTER: ["_","a"-"z","A"-"Z"] >
+}
+
+TOKEN : /* Numeric literals */
+{
+ < DECNUMBER: ["1"-"9"] (["0"-"9"])* (["j", "J", "l","L"])? | "0" ["j", "J"] >
+| < HEXNUMBER: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ (["l","L"])?>
+| < OCTNUMBER: "0" (["0"-"7"])* (["l","L"])?>
+|
+  < FLOAT:
+        (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["j", "J"])?
+      | "." (["0"-"9"])+ (<EXPONENT>)? (["j", "J"])?
+      | (["0"-"9"])+ <EXPONENT> (["j", "J"])?
+  >
+|   < #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+|   < #DIGIT: ["0" - "9"] >
+}
+
+/*TOKEN : { <STRING: (["r", "R"])? ["'", "\"", "'''", "\"\"\""] >
+    {
+        int nquotes = matchedToken.image.length() > 2 ? 3 : 1;
+        char quote = matchedToken.image.charAt(matchedToken.image.length()-1);
+
+    }
+}*/
+
+
+
+
+MORE : /* Strings */
+{
+	<(["r", "R"])? "'" > :  IN_STRING11
+|	<(["r", "R"])? "\"" > :  IN_STRING21
+|	<(["r", "R"])? "'''" > :  IN_STRING13
+|	<(["r", "R"])? "\"\"\"" > :  IN_STRING23
+}
+
+<IN_STRING11> TOKEN : { <SINGLE_STRING: "'"> : DEFAULT}
+<IN_STRING21> TOKEN : { <SINGLE_STRING2: "\""> : DEFAULT}
+<IN_STRING13> TOKEN : { <TRIPLE_STRING: "'''"> : DEFAULT}
+<IN_STRING23> TOKEN : { <TRIPLE_STRING2: "\"\"\""> :DEFAULT }
+
+<IN_STRING11> MORE: { <("\\" ("\\"|"'"|"\r\n"|"\n"|"\r")) | ~["\n","\r"]> }
+<IN_STRING21> MORE: { <("\\" ("\\"|"\""|"\r\n"|"\n"|"\r")) | ~["\n","\r"]> }
+
+<IN_STRING13, IN_STRING23> MORE:
+{	<"\r\n"|"\n"|"\r"> { doPrompt(true); }
+	|<~["\n","\r"]> }
+
+
+//single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
+SimpleNode single_input(): {token_source.single_input=true;}
+{
+	(<NEWLINE> |  simple_stmt() |  compound_stmt() <NEWLINE>)
+	{ return jjtThis; }
+}
+
+//file_input: (NEWLINE | stmt)* ENDMARKER
+SimpleNode file_input(): {token_source.single_input=false;}
+{
+	(<NEWLINE> | stmt())* <EOF>
+	{ return jjtThis; }
+}
+
+//eval_input: testlist NEWLINE* ENDMARKER
+SimpleNode eval_input(): {token_source.single_input=false;}
+{	SmartTestList() (<NEWLINE>)* <EOF>
+	{ return jjtThis; }
+}
+
+//funcdef: 'def' NAME parameters ':' suite
+void funcdef(): {}
+{<DEF> Name() parameters() <COLON> suite()}
+
+//parameters: '(' [varargslist] ')'
+void parameters() #void: {}
+{<LPAREN> [varargslist()] <RPAREN>}
+
+//varargslist: (fpdef ['=' test] ',')* ('*' NAME [',' ('**'|'*' '*') NAME] | ('**'|'*' '*') NAME) | fpdef ['=' test] (',' fpdef ['=' test])* [',']
+void varargslist(): {}
+{  defaultarg() (LOOKAHEAD(2) <COMMA> defaultarg())* [LOOKAHEAD(3) <COMMA> ExtraArgList()] [LOOKAHEAD(2) <COMMA> ExtraKeywordList()] [<COMMA>]
+ | (LOOKAHEAD(2) ExtraArgList() [<COMMA> ExtraKeywordList()] | ExtraKeywordList()) }
+
+void ExtraArgList(): {}
+{<MULTIPLY> Name()}
+
+void ExtraKeywordList(): {}
+{(<POWER>|<MULTIPLY> <MULTIPLY>) Name()}
+
+void defaultarg(): {}
+{fpdef() [<EQUAL> test()]}
+
+//fpdef: NAME | '(' fplist ')'
+void fpdef() #void: {}
+{Name() | <LPAREN> fplist() <RPAREN>}
+
+//fplist: fpdef (',' fpdef)* [',']
+void fplist(): {}
+{fpdef() (LOOKAHEAD(2) <COMMA> fpdef())* [<COMMA>]}
+
+
+//stmt: simple_stmt | compound_stmt
+void stmt() #void: {}
+{ simple_stmt() | compound_stmt() }
+
+//simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
+void simple_stmt() #void: {}
+{ small_stmt() (LOOKAHEAD(2) <SEMICOLON> small_stmt())* [<SEMICOLON>] <NEWLINE> }
+
+//small_stmt: expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt | import_stmt | global_stmt | exec_stmt | assert_stmt
+void small_stmt() #void: {}
+{expr_stmt() | print_stmt()  | del_stmt() | pass_stmt() | flow_stmt() | import_stmt() | global_stmt() | exec_stmt() | assert_stmt() }
+
+//expr_stmt: testlist ('=' testlist)*
+void expr_stmt(): {}
+{SmartTestList() (<EQUAL> SmartTestList())*}
+
+//print_stmt: 'print' (test ',')* [test]
+void print_stmt(): {}
+{ LOOKAHEAD(2) <PRINT> test() (LOOKAHEAD(2) <COMMA> test())* [Comma()] | <PRINT> }
+
+//del_stmt: 'del' exprlist
+void del_stmt(): {}
+{<DEL> exprlist()}
+
+//pass_stmt: 'pass'
+void pass_stmt(): {}
+{<PASS>}
+
+//flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt
+void flow_stmt() #void: {}
+{<BREAK> #break_stmt(0) | <CONTINUE> #continue_stmt(0) | return_stmt() | raise_stmt()}
+
+//return_stmt: 'return' [testlist]
+void return_stmt(): {}
+{<RETURN> [SmartTestList()]}
+
+//raise_stmt: 'raise' test [',' test [',' test]]
+void raise_stmt(): {}
+{<RAISE> test() [<COMMA> test() [<COMMA> test()]]}
+
+//import_stmt: 'import' dotted_name (',' dotted_name)* | 'from' dotted_name 'import' ('*' | NAME (',' NAME)*)
+void import_stmt() #void: {}
+{<IMPORT> Import() | <FROM> ImportFrom() }
+
+void Import(): {}
+{ dotted_name() (<COMMA> dotted_name())* }
+
+void ImportFrom(): {}
+{ dotted_name() <IMPORT> (<MULTIPLY> | Name() (<COMMA> Name())*) }
+
+//dotted_name: NAME ('.' NAME)*
+void dotted_name(): {}
+{Name() (<DOT> Name())* }
+
+//global_stmt: 'global' NAME (',' NAME)*
+void global_stmt(): {}
+{<GLOBAL> Name() (<COMMA> Name())*}
+
+//exec_stmt: 'exec' expr ['in' test [',' test]]
+void exec_stmt(): {}
+{<EXEC> expr() [<IN> test() [<COMMA> test()]]}
+
+//assert_stmt: 'assert' test [',' test]
+void assert_stmt(): {}
+{<ASSERT> test() [<COMMA> test()]}
+
+
+//compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
+void compound_stmt() #void : { token_source.compound = true; }
+{if_stmt() | while_stmt() | for_stmt() | try_stmt()  | funcdef() | classdef()}
+
+//if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
+void if_stmt(): {}
+{<IF> test() <COLON> suite() (<ELIF> test() <COLON> suite())* [ <ELSE> <COLON> suite()]}
+
+//while_stmt: 'while' test ':' suite ['else' ':' suite]
+void while_stmt(): {}
+{<WHILE> test() <COLON> suite() [<ELSE> <COLON> suite()]}
+
+//for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
+void for_stmt(): {}
+{<FOR> exprlist() <IN> SmartTestList() <COLON> suite() [<ELSE> <COLON> suite()]}
+
+//try_stmt: ('try' ':' suite (except_clause ':' suite)+ #diagram:break
+//           ['else' ':' suite] | 'try' ':' suite 'finally' ':' suite)
+void try_stmt(): {}
+{<TRY> <COLON> suite() ((<EXCEPT> except_clause() <COLON> suite())+ [<ELSE> <COLON> suite()] | <FINALLY> <COLON> suite())}
+
+//except_clause: 'except' [test [',' test]]
+void except_clause(): {}
+{ [test() [<COMMA> test()]] }
+
+//suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
+void suite(): {}
+{ simple_stmt() |  <NEWLINE> <INDENT> (stmt())+ <DEDENT>}
+
+
+//test: and_test ('or' and_test)* | lambdef
+void test() #void: {}
+{lambdef() | and_test() (<OR_BOOL> and_test() #or_boolean(2))* }
+
+//and_test: not_test ('and' not_test)*
+void and_test() #void: {}
+{not_test() (<AND_BOOL> not_test() #and_boolean(2))*}
+
+//not_test: 'not' not_test | comparison
+void not_test() #void: {}
+{<NOT_BOOL> not_test() #not_1op(1) | comparison()}
+
+//comparison: expr (comp_op expr)*
+void comparison() #void: {}
+{(expr() (comp_op() expr())*) #comparision(>1)}
+
+
+//comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
+void comp_op() #void: {}
+{ 	<LESS> #less_cmp(0)
+	| <GREATER> #greater_cmp(0)
+	| <EQEQUAL> #equal_cmp(0)
+	| <EQGREATER> #greater_equal_cmp(0)
+	| <EQLESS> #less_equal_cmp(0)
+	| <LESSGREATER> #notequal_cmp(0)
+	| <NOTEQUAL> #notequal_cmp(0)
+	| <IN> #in_cmp(0)
+	| <NOT_BOOL> <IN> #not_in_cmp(0)
+	| LOOKAHEAD(2) <IS> <NOT_BOOL> #is_not_cmp(0)
+	| <IS> #is_cmp(0)
+
+}
+
+//expr: xor_expr ('|' xor_expr)*
+void expr() #void : {}
+{xor_expr() (<OR> xor_expr() #or_2op(2))*}
+
+//xor_expr: and_expr ('^' and_expr)*
+void xor_expr() #void : {}
+{and_expr() (<XOR> and_expr() #xor_2op(2))*}
+
+//and_expr: shift_expr ('&' shift_expr)*
+void and_expr() #void : {}
+{shift_expr() (<AND> shift_expr() #and_2op(2))*}
+
+//shift_expr: arith_expr (('<<'|'>>') arith_expr)*
+void shift_expr() #void : {}
+{arith_expr() (<LSHIFT> arith_expr() #lshift_2op(2)
+				| <RSHIFT> arith_expr() #rshift_2op(2) )*}
+
+//arith_expr: term (('+'|'-') term)*
+void arith_expr() #void : {}
+{term() (<PLUS> term() #add_2op(2)
+		| <MINUS> term() #sub_2op(2) )*}
+
+//term: factor (('*'|'/'|'%') factor)*
+void term() #void : {}
+{factor()  ( <MULTIPLY> factor() #mul_2op(2)
+			| <DIVIDE> factor() #div_2op(2)
+			| <MODULO> factor() #mod_2op(2) )*}
+
+//factor: ('+'|'-'|'~') factor | power
+void factor() #void: {}
+{ <PLUS> factor() #pos_1op(1)
+	| <MINUS> factor() # neg_1op(1)
+	| <NOT> factor() #invert_1op(1)
+	| power() } /*Modified, no recursion*/
+
+//power: atom trailer* ('**' factor)*
+void power() #void: {}
+{atomtrailer() (<POWER> factor() #pow_2op(2))*}
+
+//trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
+void atomtrailer() #void: {}
+{atom() ( (LOOKAHEAD(2) <LPAREN> <RPAREN> #Call_Op(1) | <LPAREN> arglist() <RPAREN> #Call_Op(2))
+			| <LBRACKET> subscriptlist() <RBRACKET> #Index_Op(2)
+			| <DOT> Name() #Dot_Op(2) )*}
+
+
+//atom: '(' [testlist] ')' | '[' [testlist] ']' | '{' [dictmaker] '}' | '`' testlist '`' | NAME | NUMBER | STRING+
+void atom() #void: {}
+{	LOOKAHEAD(2) (  <LPAREN> <RPAREN> ) #tuple
+	|  ( <LPAREN> [SmartTestList()] <RPAREN> )
+	| ( <LBRACKET> [testlist()] <RBRACKET> ) #list
+	| ( <LBRACE> [dictmaker()] <RBRACE> ) #dictionary
+	| "`" SmartTestList() "`" #str_1op(1)
+	| Name()
+	| Number()
+	| String() (String() #__add___2op(2))* }
+
+
+//lambdef: 'lambda' [varargslist] ':' test
+void lambdef():{}
+{<LAMBDA> [varargslist()] <COLON> test()}
+
+//subscriptlist: subscript (',' subscript)* [',']
+void subscriptlist() #void: {}
+{ (subscript() (LOOKAHEAD(2) <COMMA> subscript())* [Comma()]) #tuple(>1) }
+
+//subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
+void subscript() #void: {}
+{<DOT> <DOT> <DOT> #Ellipses
+	| (test() (slice())?) #Slice(>1)
+	| slice() #Slice(>0) }
+
+//sliceop: ':' [test]
+void slice() #void: {}
+{ Colon() [test()] (Colon() [test()])? }
+
+void Colon(): {} {<COLON>}
+void Comma(): {} {<COMMA>}
+
+//exprlist: expr (',' expr)* [',']
+void exprlist() #void: {}
+{ (expr() (LOOKAHEAD(2) <COMMA> expr())* [Comma()]) #tuple(>1) }
+
+//testlist: test (',' test)* [',']
+void SmartTestList() #void: {}
+{ (test() (LOOKAHEAD(2) <COMMA> test())* [Comma()]) #tuple(>1) }
+
+//testlist: test (',' test)* [',']
+void testlist() #void: {}
+{ test() (LOOKAHEAD(2) <COMMA> test())* [<COMMA>]}
+
+//dictmaker: test ':' test (',' test ':' test)* [',']
+void dictmaker() #void: {}
+{test() <COLON> test() (LOOKAHEAD(2) <COMMA> test() <COLON> test())* [<COMMA>]}
+
+//classdef: 'class' NAME ['(' testlist ')'] ':' suite
+void classdef(): {}
+{<CLASS> Name() [<LPAREN> testlist() <RPAREN>] <COLON> suite()}
+
+//arglist:  argument (',' argument)* [',']
+void arglist(): {}
+{ argument() (LOOKAHEAD(2) <COMMA> argument())* [<COMMA>] }
+
+//argument: [test '='] test	# Really [keyword '='] test
+void argument() #void: {}
+{ ([LOOKAHEAD(2) Name() <EQUAL>] test()) #Keyword(>1)}
+
+
+void Number() #void :
+{
+   Token t;
+}
+{
+ (
+  t=<HEXNUMBER> { jjtThis.setInteger(t.image.substring(2,t.image.length()), 16); }
+ )#Int
+|  (
+  t=<OCTNUMBER> { jjtThis.setInteger(t.image, 8); }
+ )#Int
+| (
+  t=<DECNUMBER> { jjtThis.setInteger(t.image, 10); }
+ )#Int
+| (
+  t=<FLOAT> { jjtThis.setFloat(t.image); }
+ )#Float
+}
+
+void Complex(): {}
+{ <FLOAT>   }
+
+void Name() #Name:
+{
+   Token t;
+}
+{
+   t = <NAME> { jjtThis.setInfo(t.image); }
+}
+
+void String() #void :
+{
+   Token t;
+}
+{
+	( t=<SINGLE_STRING> { jjtThis.setString(t.image, 1); } )#String
+|	( t=<SINGLE_STRING2> { jjtThis.setString(t.image, 1); } )#String
+|	( t=<TRIPLE_STRING> { jjtThis.setString(t.image, 3); } )#String
+|	( t=<TRIPLE_STRING2> { jjtThis.setString(t.image, 3); } )#String
+
+}
+
