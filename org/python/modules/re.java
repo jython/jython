@@ -2,7 +2,7 @@
 package org.python.modules;
 
 import org.python.core.*;
-import com.oroinc.text.regex.*;
+import org.apache.oro.text.regex.*;
 
 public class re implements ClassDictInit
 {
@@ -26,8 +26,11 @@ public class re implements ClassDictInit
         dict.__setitem__("VERBOSE",
                          new PyInteger(Perl5Compiler.EXTENDED_MASK));
         dict.__setitem__("X", new PyInteger(Perl5Compiler.EXTENDED_MASK));
+        // These are not implemented
         dict.__setitem__("LOCALE", new PyInteger(0));
         dict.__setitem__("L", new PyInteger(0));
+        dict.__setitem__("UNICODE", new PyInteger(0));
+        dict.__setitem__("U", new PyInteger(0));
     }
 
     // Skip caching for now...
@@ -95,6 +98,10 @@ public class re implements ClassDictInit
         return getPattern(pattern).split(string, maxsplit);
     }
     
+    public static PyList findall(PyObject pattern, String string) {
+        return getPattern(pattern).findall(string);
+    }
+
     public static String escape(String s) {
         return Perl5Compiler.quotemeta(s);
     }
