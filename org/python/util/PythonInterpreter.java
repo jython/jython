@@ -39,8 +39,11 @@ public class PythonInterpreter {
     public PythonInterpreter(PyObject dict, PySystemState systemState) {
         if (dict == null)
             dict = new PyStringMap();
-        if (systemState == null)
-            systemState = new PySystemState();
+        if (systemState == null) {
+            systemState = Py.getSystemState();
+            if (systemState == null)
+                systemState = new PySystemState();
+        }
         PySystemState.initialize();
         module = new PyModule("main", dict);
         this.systemState = systemState;
