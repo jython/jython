@@ -41,7 +41,6 @@ class BaseEvaluator:
         ret = []
         for var in vars:
             tmp, code = self.makeTemp(var)
-	    print stmts.__class__
             stmts.append(code)
             ret.append(tmp)
         self.augtemps[node] = ret
