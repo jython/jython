@@ -99,7 +99,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
     public void showexception(PyException exc) {
         // Should probably add code to handle skipping top stack frames
         // somehow...
-        write(exc.toString());
+        Py.printException(exc); 
     }
 
     public void write(String data) {
