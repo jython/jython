@@ -4,31 +4,45 @@ package org.python.core;
 
 import java.lang.reflect.*;
 import java.util.Vector;
+import java.util.Hashtable;
 import java.io.*;
+import org.python.compiler.*;
 
 
 class MakeProxies 
 {
+    private static Class makeClass(Class referent, String name,
+                                   ByteArrayOutputStream bytes)
+    {
+        BytecodeLoader bcl;
+        ClassLoader cl = referent.getClassLoader();
+        if (cl != null && cl instanceof BytecodeLoader)
+            bcl = (BytecodeLoader)cl;
+        else
+            bcl = new BytecodeLoader();
+        return bcl.makeClass(name, bytes.toByteArray());
+    }
+
     public static Class makeAdapter(Class c) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         String name;
         try {
-            name = org.python.compiler.AdapterMaker.makeAdapter(
-                c.getName(), bytes);
-        } catch (Exception exc) {
+            name = AdapterMaker.makeAdapter(c.getName(), bytes);
+        }
+        catch (Exception exc) {
             throw Py.JavaError(exc);
         }
 
-        Class pc = BytecodeLoader.makeClass(name, bytes.toByteArray());
+        Class pc = makeClass(c, name, bytes);
         String dir = Options.proxyCacheDirectory;
+
         if (dir != null) {
             try {
-                OutputStream file = org.python.compiler.ProxyMaker.getFile(
-                    dir, name);
+                OutputStream file = ProxyMaker.getFile(dir, name);
                 bytes.writeTo(file);
-            } catch (Throwable t) {
-                // Allow caching to fail silently
             }
+            // Allow caching to fail silently
+            catch (Throwable t) {}
         }
         return pc;
     }
@@ -36,19 +50,20 @@ class MakeProxies
     private static final String proxyPrefix = "org.python.proxies.";
     private static int proxyNumber = 0;
 
-    public static synchronized Class makeProxy(Class c, Vector vinterfaces,
-                                               String name, PyObject dict)
+    public static synchronized Class makeProxy(Class superclass,
+                                               Vector vinterfaces,
+                                               String name,
+                                               PyObject dict)
     {
         String[] interfaces = new String[vinterfaces.size()];
+
         for (int i=0; i<vinterfaces.size(); i++) {
             interfaces[i] = ((Class)vinterfaces.elementAt(i)).getName();
 //             System.err.println("interface: " + interfaces[i]);
         }
         String proxyName = proxyPrefix + name + "$" + proxyNumber++;
-
-        org.python.compiler.JavaMaker jm =
-            new org.python.compiler.JavaMaker(c, interfaces, name,
-                                              "foo", proxyName, dict);
+        JavaMaker jm = new JavaMaker(superclass, interfaces, name,
+                                     "foo", proxyName, dict);
         try {
             jm.build();
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -58,10 +73,9 @@ class MakeProxies
 //             System.err.println("filename: "+filename);
 //             bytes.writeTo(new java.io.FileOutputStream(filename));
             // end debugging
-            Class pc = BytecodeLoader.makeClass(jm.myClass,
-                                                bytes.toByteArray());
-            return pc;
-        } catch (Exception exc) {
+            return makeClass(superclass, jm.myClass, bytes);
+        }
+        catch (Exception exc) {
             throw Py.JavaError(exc);
         }
     }
