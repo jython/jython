@@ -1,9 +1,12 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.modules;
+
 import org.python.core.*;
 import com.oroinc.text.regex.*;
 
 public class RegexObject extends PyObject {
     private static Perl5Compiler compiler = new Perl5Compiler();
+
     private static synchronized Pattern compile(String pattern, int flags) {
         try {
             return compiler.compile(pattern, flags);

@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 class ReflectedArgs {
@@ -36,7 +37,8 @@ class ReflectedArgs {
 			   ReflectedCallData callData)
     {
 	if (flags != PyArgsKeywordsCall) {
-	    if (keywords != null && keywords.length != 0) return false;
+	    if (keywords != null && keywords.length != 0)
+		return false;
 	}
 
 	//if (isStatic ? self != null : self == null) return Py.NoConversion;
@@ -54,7 +56,8 @@ class ReflectedArgs {
 	    }
 	} else {
 	    if (self == null) {
-		if (pyArgs.length == 0) return false;
+		if (pyArgs.length == 0)
+		    return false;
 		self = pyArgs[0];
 		PyObject[] newArgs = new PyObject[pyArgs.length-1];
 		System.arraycopy(pyArgs, 1, newArgs, 0, newArgs.length);
@@ -76,14 +79,16 @@ class ReflectedArgs {
         }
 
 	int n = args.length;
-	if (pyArgs.length != n) return false;
+	if (pyArgs.length != n)
+	    return false;
 
         // Make error messages clearer
         callData.errArg = -1;
 
 	if (self != null) {
 	    Object tmp = self.__tojava__(declaringClass);
-	    if (tmp == Py.NoConversion) return false;
+	    if (tmp == Py.NoConversion)
+		return false;
 	    callData.self = tmp;
 	} else {
 	    callData.self = null;
@@ -97,7 +102,8 @@ class ReflectedArgs {
 		Py.NoConversion)
 	    {
 		// Make error messages clearer
-		if (i > callData.errArg) callData.errArg = i;
+		if (i > callData.errArg)
+		    callData.errArg = i;
 		return false;
 	    }
 	}
@@ -105,7 +111,8 @@ class ReflectedArgs {
     }
 
     public static int precedence(Class arg) {
-	if (arg == Object.class) return 3000;
+	if (arg == Object.class)
+	    return 3000;
 	if (arg.isPrimitive()) {
 	    if (arg == Long.TYPE) return 10;
 	    if (arg == Integer.TYPE) return 11;
@@ -118,11 +125,13 @@ class ReflectedArgs {
 	}
 	// Consider Strings a primitive type
 	// This makes them higher priority than byte[]
-	if (arg == String.class) return 40;
+	if (arg == String.class)
+	    return 40;
 		
 	if (arg.isArray()) {
 	    Class componentType = arg.getComponentType();
-	    if (componentType == Object.class) return 2500;
+	    if (componentType == Object.class)
+		return 2500;
 	    return 100+precedence(componentType);
 	}
 	return 2000;
@@ -174,7 +183,7 @@ class ReflectedArgs {
 
 	// Compare the arg lists
 	int cmp = 0;
-	for(int i=0; i<n; i++) {
+	for (int i=0; i<n; i++) {
 	    int tmp = compare(args[i], oargs[i]);
 	    if (tmp == +2 || tmp == -2) cmp = tmp;
 	    if (cmp == 0) cmp = tmp;

@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
+
 import org.python.parser.SimpleNode;
 import java.util.Hashtable;
 

@@ -1,10 +1,13 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
+
 import org.python.parser.*;
 import java.io.*;
 
 public class parser {
     public static String getLine(InputStream istream, int line) {
-	if (istream == null) return "";
+	if (istream == null)
+	    return "";
 	try {
 	    String text=null;
 	    DataInputStream s = new DataInputStream(istream);

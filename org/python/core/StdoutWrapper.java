@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
+
 import java.io.OutputStream;
 import java.io.Writer;
 
