@@ -29,14 +29,6 @@ public class PyMethod extends PyObject {
 	    return im_self != null && !(im_self instanceof PyClass);
 	}*/
 	
-	public PyObject __call__(PyObject arg1) {
-	    if (im_self != null) {
-	        return im_func.__call__(im_self, arg1);
-	    } else {
-	        return im_func.__call__(arg1);
-	    }
-	}
-	
 	public PyObject __call__(PyObject[] args, String[] keywords) {
 		if (im_self != null) {
 		    return im_func.__call__(im_self, args, keywords);
