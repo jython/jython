@@ -262,8 +262,10 @@ public class PyFloat extends PyObject
         if (!canCoerce(right))
             return null;
 
-        if (modulo != null && !canCoerce(modulo))
-            return null;
+        if (modulo != null) {
+            throw Py.TypeError("pow() 3rd argument not allowed " +
+                               "unless all arguments are integers");
+        }
 
         return _pow(value, coerce(right), modulo);
     }
