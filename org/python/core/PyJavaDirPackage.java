@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 import java.util.*;
@@ -35,20 +36,23 @@ public class PyJavaDirPackage extends PyObject {
         if (name == "__path__") return __path__;
 
         PyObject ret = __dict__.__finditem__(name);
-        if (ret != null) return ret;
+        if (ret != null)
+	    return ret;
 
         String attrName = name;
-        if (__name__.length()>0) attrName = __name__+'.'+name;
+        if (__name__.length() > 0)
+	    attrName = __name__+'.'+name;
 
         // Search the searchPath for this name
         PyObject item;
         int i = 0;
         PyList subPath = null;
-        while ( (item = __path__.__finditem__(i++)) != null) {
+        while ((item=__path__.__finditem__(i++)) != null) {
             File testdir = new File(item.toString(), name);
             //System.err.println("test: "+testdir+", "+testdir.is);
             if (testdir.isDirectory()) {
-                if (subPath == null) subPath = new PyList();
+                if (subPath == null)
+		    subPath = new PyList();
                 subPath.append(new PyString(testdir.getPath()));
             }
             // Maybe check for name.class here?            
