@@ -885,7 +885,7 @@ public final class Py {
         ts = (ThreadState)threads.get(t);
         if (ts == null) {
             if (newSystemState == null) {
-                System.err.println("Ooops, no current thread state: "+defaultSystemState);
+                writeDebug("threadstate", "no current system state");
                 //t.dumpStack();
                 newSystemState = defaultSystemState;
             }
