@@ -62,8 +62,8 @@ public class ArgListCompiler extends org.python.parser.Visitor
         for (Enumeration e=names.elements(); e.hasMoreElements();) {
             String objname = (String)e.nextElement();
             if (objname.equals(name))
-                throw new ParseException("duplicate keyword found: " + name,
-                                         node);
+                throw new ParseException("duplicate argument name found: " +
+                                         name, node);
         }
         names.addElement(name);
         
