@@ -83,11 +83,11 @@ public class __builtin__ implements InitModule {
 	return o.__abs__();
     }
 
-    public static PyObject apply(PyObject o, PyTuple args) {
-	return o.__call__(args.list);
+    public static PyObject apply(PyObject o, PyObject args) {
+	return o.__call__(make_array(args));
     }
 
-    public static PyObject apply(PyObject o, PyTuple args, PyDictionary kws) {
+    public static PyObject apply(PyObject o, PyObject args, PyDictionary kws) {
 	PyObject[] a;
 	String[] kw;
 	Hashtable table = kws.table;
@@ -96,9 +96,10 @@ public class __builtin__ implements InitModule {
 	    java.util.Enumeration ev = table.elements();
 	    int n = table.size();
 	    kw = new String[n];
-	    a = new PyObject[n+args.list.length];
-	    System.arraycopy(args.list, 0, a, 0, args.list.length);
-	    int offset = args.list.length;
+	    PyObject[] aargs = make_array(args);
+	    a = new PyObject[n+aargs.length];
+	    System.arraycopy(aargs, 0, a, 0, aargs.length);
+	    int offset = aargs.length;
 
 	    for(int i=0; i<n; i++) {
 		kw[i] = ((PyString)ek.nextElement()).internedString();
