@@ -11,7 +11,8 @@ public class UnicastRemoteObject extends java.rmi.server.RemoteServer {
     }
 
     private void readObject(java.io.ObjectInputStream in)
-        throws java.io.IOException, java.lang.ClassNotFoundException {
+        throws java.io.IOException, java.lang.ClassNotFoundException
+    {
         java.rmi.server.UnicastRemoteObject.exportObject(remote);
     }
 }
