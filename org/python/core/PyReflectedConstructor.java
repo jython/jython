@@ -7,8 +7,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.InstantiationException;
 
 
-public class PyReflectedConstructor extends PyReflectedFunction {
+public class PyReflectedConstructor extends PyReflectedFunction
+{
     public static PyClass __class__;
+
     public PyReflectedConstructor(String name) {
         super(name, __class__);
         __name__ = name;
@@ -28,8 +30,8 @@ public class PyReflectedConstructor extends PyReflectedFunction {
 
     public void addConstructor(Constructor m) {
         int mods = m.getModifiers();
-        // Only add public methods
-        if (!Modifier.isPublic(mods))
+        // Only add public methods unless we're overriding
+        if (!Modifier.isPublic(mods) && !JavaAccessibility.accessIsMutable())
             return;
         addArgs(makeArgs(m));
     }
