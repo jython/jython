@@ -46,7 +46,7 @@ public class PyXRange extends PySequence {
        if (copies != 1) {
             throw Py.TypeError("cannot slice a replicated range");
        }
-       int len = (stop-start)/step;
+	   int len = sliceLength(start, stop, step);
        int xslice_start = getInt(start);
        int xslice_step = this.step * step;
        int xslice_stop = xslice_start + xslice_step * len;

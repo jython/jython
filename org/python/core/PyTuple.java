@@ -18,7 +18,7 @@ public class PyTuple extends PySequence {
 	}
 
 	protected PyObject getslice(int start, int stop, int step) {
-		int n = (stop-start)/step;
+		int n = sliceLength(start, stop, step);
 		PyObject new_list[] = new PyObject[n];
 		int j = 0;
 		for(int i=start; j<n; i+=step) new_list[j++] = list[i];

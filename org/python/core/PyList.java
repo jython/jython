@@ -30,7 +30,7 @@ public class PyList extends PySequence {
 	}
 
 	protected PyObject getslice(int start, int stop, int step) {
-		int n = (stop-start)/step;
+		int n = sliceLength(start, stop, step);
 		Vector new_list = new java.util.Vector(n);
 		int j = 0;
 		for(int i=start; j<n; i+=step) {
@@ -45,7 +45,7 @@ public class PyList extends PySequence {
 	}
 
 	protected void delRange(int start, int stop, int step) {
-		int n = (stop-start)/step;
+		int n = sliceLength(start, stop, step);
 		int j = 0;
 		for(int i=start; j<n; i+=step-1) {
 			list.removeElementAt(i);

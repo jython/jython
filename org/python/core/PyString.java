@@ -118,7 +118,7 @@ public class PyString extends PySequence {
 		if (step == 1) {
 			return new PyString(string.substring(start, stop));
 		} else {
-			int n = (stop-start)/step;
+		    int n = sliceLength(start, stop, step);
 			char new_chars[] = new char[n];
 			int j = 0;
 			for(int i=start; j<n; i+=step) new_chars[j++] = string.charAt(i);

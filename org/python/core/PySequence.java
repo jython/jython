@@ -90,43 +90,54 @@ abstract public class PySequence extends PyObject {
 		return s1 < s2 ? -1 : (s1 > s2 ? 1: 0);
 	}
 
-	private int[] slice_indices(PySlice s, int length) {
+    protected static final int sliceLength(int start, int stop, int step) {
+        if (step > 0) {
+            return (stop-start+step-1)/step;
+        } else {
+		    return (stop-start+step+1)/step;
+		}
+	}
+
+    private static final int getIndex(PyObject index, int defaultValue) {
+        if (index == Py.None) return defaultValue;
+        if (!(index instanceof PyInteger)) throw Py.TypeError("slice index must be int");
+        return ((PyInteger)index).getValue();
+    }
+
+	private static final int[] slice_indices(PySlice s, int length) {
 		int start, stop, step;
-		Object o;
-		if (s.step == Py.None) step = 1;
-		else {
-			if (s.step instanceof PyInteger) step = ((PyInteger)s.step).getValue();
-			else throw Py.TypeError("slice index must be int");
+
+        step = getIndex(s.step, 1);
+        if (step == 0) throw Py.TypeError("slice step of zero not allowed");
+        
+        if (step > 0) {
+            start = getIndex(s.start, 0);
+            stop = getIndex(s.stop, length);
+        } else {
+            start = getIndex(s.stop, 0);
+            stop = getIndex(s.start, length);
+        }
+		
+		if (start < 0) {
+		    start = length+start;
+		    if (start < 0) start = 0;
+		} else if (start > length) {
+		    start = length;
 		}
-		if (s.start == Py.None) start = (step > 0) ? 0 : length-1;
-		else {
-			if (s.start instanceof PyInteger) {
-				start = ((PyInteger)s.start).getValue();
-				if (start < 0) start = length+start;
-				if (start < 0) start = 0;
-				if (step < 0) {
-				    if (start > length-1) start = length-1;
-				} else {
-				    if (start > length) start = length;
-				}
-			}
-			else throw Py.TypeError("slice index must be int");
+		if (stop < 0) {
+		    stop = length+stop;
+		    if (stop < 0) stop = 0;
+		} else if (stop > length) {
+		    stop = length;
 		}
-		if (s.stop == Py.None) stop = (step > 0) ? length : -1;
-		else {
-			if (s.stop instanceof PyInteger) {
-				stop = ((PyInteger)s.stop).getValue();
-				if (stop < 0) stop = length+stop;
-				if (stop < 0) stop = 0;
-				if (stop > length) stop = length;
-			}
-			else throw Py.TypeError("slice index must be int");
+		
+		if (stop < start) stop = start;
+		
+		if (step > 0) {
+		    return new int[] {start, stop, step};
+		} else {
+		    return new int[] {stop, start, step};
 		}
-		if (step == 0) throw Py.TypeError("slice step of zero not allowed");
-        if (step > 1) stop = stop+step-1;
-        else if (step < -1) stop = stop+step+1;
-		if ((stop-start)/step <= 0) stop = start;
-		return new int[] {start, stop, step};
 	}
 
 	protected int fixindex(int index) {
