@@ -82,7 +82,7 @@ def dependencies(file):
     for t in types:
         getClass(strings[t-1], names)
 
-    return names.keys()
+    return filter(defaultFilter, names.keys())
 
 
 
