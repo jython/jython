@@ -1,6 +1,6 @@
 Jython NEWS
 
-xx-xxx-2002 Jython 2.2 alpha1
+31-jul-2003 Jython 2.2 alpha0
 
   New features
    - Iterators (pep-234).
@@ -10,9 +10,51 @@ xx-xxx-2002 Jython 2.2 alpha1
      to exit, even if there are non-daemon threads (e.g. AWT), this is likely 
      the expected behavior.  The behavior for (non-interactive) scripts is 
      unchanged and still matches that of Java programs.
-     
+   - OutOfMemoryError can be caught, also matching MemoryError, that means
+     that a caught PyException.value.__tojava__(Throwable.class)
+     can potentially be a OutOfMemoryError instance. This is different from
+     the old aborting behavior (System.exit was called) [change needed to pass
+     a test in CPython test_b1].
+          
   Bug fixes.
    - Renamed the use of the java1.4 reserved words 'assert'.
+   - [ #222805 ] multi-line statements in the JPython interpreter
+   - [ #495866 ] need dynamic scale for BigDecimal
+   - [ #499973 ] isql.Prompt can't be written to stdout.
+   - [ #508111 ] jythonc generates invalid statements
+   - [ #511493 ] jreload truncates large class files
+   - [ #515894 ] Behaviour of "+=" stm. is different from
+   - [ #517237 ] Binary ops with int and long fail
+   - [ #521704 ] no errno module
+   - [ #522423 ] cStringIO has no reset() method
+   - [ #522558 ] list() is broken 
+   - [ #522828 ] struct.pack('>NNs', v) fails for NN > 20
+   - [ #529242 ] Python singletons deserialization bug
+   - [ #532747 ] for i in iter(d)
+   - [ #533354 ] bug in xml.dom.minidom.parseString
+   - [ #533541 ] send() on _udpsocket fails
+   - [ #544891 ] problems with socket.py
+   - [ #545235 ] unexpected match with re
+   - [ #549107 ] .__doc__ doesn't work in jython
+   - [ #562943 ] os.path.getmtime misbehaves on nonfile
+   - [ #567844 ] list() does not make a shallow copy
+   - [ #572769 ] Blank input lines break readline console
+   - [ #573784 ] popen does not work
+   - [ #573791 ] os.system partly  broken
+   - [ #575110 ] Multiple for's on Collection broken
+   - [ #577395 ] Outer finally not executed at return
+   - [ #581785 ] bug in 4DOM
+   - [ #582618 ] Case insensitive re.match fails
+   - [ #608628 ] long(java.math.BigInteger) does not work
+   - [ #609505 ] SQLWarning tuples not populated
+   - [ #620978 ] Variable default for Options.caseok
+   - [ #625364 ] sys.last_traceback not set?   
+   - [ #631017 ] Private fields mismangled
+   - [ #631035 ] Negative repeat cause java exception.
+   - [ #631430 ] read(-1) uses wrong fileposition.
+   - [ #636381 ] Match Error for +? pattern element
+   - [ #654863 ] string.split behaves differently
+   - [ #668194 ] broken non greedy regular expressions
  
 31-dec-2001 Jython 2.1 final
 
