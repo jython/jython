@@ -138,13 +138,19 @@ class PyObject:
 
 	def getslice(self, code, start, stop, step):
 		#print start, stop, step
-		return self.domethod(code, "__getslice__", start, stop, step)
+		return self.domethod(code, "__getslice__", start, stop, step)	
+		
+	def delslice(self, code, start, stop, step):
+		return self.domethod(code, "__delslice__", start, stop, step).getStatement()
 		
 	def setslice(self, code, start, stop, step, value):
-		return self.domethod(code, "__setslice__", start, stop, step, value)
+		return self.domethod(code, "__setslice__", start, stop, step, value).getStatement()
 
 	def getitem(self, code, index):
 		return self.domethod(code, "__getitem__", index)
+	
+	def delitem(self, code, index):
+		return self.domethod(code, "__delitem__", index).getStatement()
 		
 	def setitem(self, code, index, value):
 		return self.domethod(code, "__setitem__", index, value).getStatement()
@@ -152,6 +158,10 @@ class PyObject:
 	def getattr(self, code, name):
 		name = Object(jast.StringConstant(name), StringType)
 		return self.domethod(code, "__getattr__", name)
+	
+	def delattr(self, code, name):
+		name = Object(jast.StringConstant(name), StringType)
+		return self.domethod(code, "__delattr__", name).getStatement()
 		
 	def setattr(self, code, name, value):
 		PyObject.attributes[name] = value
@@ -226,6 +236,8 @@ def findType(type):
 	elif type == java.lang.String:
 		ret = JavaString()
 	elif type == org.python.core.PyObject:
+		ret = PyObject()
+	elif type == org.python.core.PyString:
 		ret = PyObject()
 	else:
 		ret = JavaObject(type)

@@ -213,7 +213,7 @@ class BasicGlobals:
 		return ret
 
 class SimpleCompiler(BaseEvaluator):
-	def __init__(self, module, factory, frame=None):
+	def __init__(self, module, factory, frame=None, options=None):
 		BaseEvaluator.__init__(self)
 		self.globalNamespace = BasicGlobals(self)
 		if frame is None:
@@ -222,7 +222,13 @@ class SimpleCompiler(BaseEvaluator):
 		self.module = module
 		self.nthrowables = 0
 		self.factory = factory
+		self.options = options
 		
+	def isAlwaysFalse(self, name):
+		if self.options is None: return 0
+		
+		return name in self.options.falsenames
+
 	def parse(self, node):
 		ret = BaseEvaluator.parse(self, node)
 		#print 'parse', ret
@@ -243,6 +249,12 @@ class SimpleCompiler(BaseEvaluator):
 	#primitive values
 	def int_const(self, value):
 		return self.factory.makeInteger(value)
+		
+	def long_const(self, value):
+		return self.factory.makeLong(value)
+		
+	def complex_const(self, value):
+		return self.factory.makeImaginary(value)
 		
 	def float_const(self, value):
 		return self.factory.makeFloat(value)
@@ -293,6 +305,12 @@ class SimpleCompiler(BaseEvaluator):
 		if top: return top
 		else: return ret
 
+	def importall_stmt(self, module):
+		modname = jast.StringConstant(module.value.name)
+		self.addModule(module.value.name, '*')
+		#print 'import *', module.value.name
+		return jast.InvokeStatic("imp", "importAll", [modname, self.frame.frame])
+
 	def getSlice(self, index):
 		indices = self.visitor.getSlice(index)
 		ret = []
@@ -316,39 +334,47 @@ class SimpleCompiler(BaseEvaluator):
 		
 
 	def and_op(self, x, y):
-		return self.bool_op(x, y, 0)
+		return self.bool_op(x, y, 1)
 		
 	def or_op(self, x, y):
-		return self.bool_op(x, y, 1)
+		return self.bool_op(x, y, 0)
 
 	#flow control
+	def do_comp(self, x, compares, tmps):
+		False = jast.GetStaticAttribute("Py", "Zero")
+	
+		op, other = compares[0]
+		y = self.visit(other)
+		if len(compares) > 1:
+			ytmp = self.frame.gettemp("PyObject")
+			tmps.append(ytmp)
+			gety = self.factory.makePyObject(jast.Set(ytmp, y.asAny()))
+		else:
+			gety = y
+
+		test = x.compop(op, gety)
+		
+		if len(compares) == 1:
+			return test.asAny()
+
+		rest = self.do_comp(self.factory.makePyObject(ytmp), compares[1:], tmps)
+		return jast.TriTest(test.nonzero(), rest, False)
+		
 	def compare_op(self, start, compares):
 		x = self.visit(start)
-		firsttime = 1
-		tmp = len(compares) > 1
-		test = None
-		for op, other in compares:
-			y = self.visit(other)
 			
-			if tmp:
-				tmp = self.frame.gettemp("PyObject")
-				gety = self.factory.makePyObject(jast.Set(tmp, y.asAny()))
-			else:
-				gety = y
-			
-			thistest = x.compop(op, gety)
-			if test is None:
-				test = thistest
-			else:
-				test = self.factory.makePyObject(jast.TriTest(test.nonzero(), thistest.asAny(), x.asAny()))
-			if tmp:
-				if not firsttime:
-					self.frame.freetemp(x.asAny())
-				x = self.factory.makePyObject(tmp)
-			firsttime = 0
-		if tmp:
+		tmps = []
+		ret = self.do_comp(x, compares, tmps)
+		for tmp in tmps:
 			self.frame.freetemp(tmp)
-		return test
+		return self.factory.makePyObject(ret)
+
+	def print_line(self, value=None):
+		if value is None: return jast.InvokeStatic("Py", "println", [])
+		else: 
+			v = self.visit(value)
+			#print v, v.print_line
+			return v.print_line()
 
 	def pass_stmt(self):
 		return jast.SimpleComment("pass")
@@ -376,9 +402,9 @@ class SimpleCompiler(BaseEvaluator):
 		if self.isAlwaysFalse("__debug__"):
 			return jast.SimpleComment("assert")
 
-		args = [test]
+		args = [test.asAny()]
 		if message is not None:
-			args.append(message)
+			args.append(message.asAny())
 			
 		return jast.If(self.name_const("__debug__").nonzero(),
 				jast.InvokeStatic("Py", "assert", args))
@@ -411,6 +437,9 @@ class SimpleCompiler(BaseEvaluator):
 	def if_stmt(self, tests, else_body=None):
 		jtests = []
 		for test, body in tests:
+			tname = self.getName(test)
+			if tname is not None and self.isAlwaysFalse(tname):
+				continue
 			test = self.visit(test).nonzero()
 			body = jast.Block(self.visit(body))
 			jtests.append( (test, body) )
@@ -418,6 +447,10 @@ class SimpleCompiler(BaseEvaluator):
 		if else_body is not None:
 			else_body = jast.Block(self.visit(else_body))
 			
+		if len(jtests) == 0:
+			if else_body is None: return jast.SimpleComment("if "+tname)
+			else: return else_body
+
 		if len(jtests) == 1:
 			return jast.If(jtests[0][0], jtests[0][1], else_body)
 		else:
@@ -428,8 +461,8 @@ class SimpleCompiler(BaseEvaluator):
 
 	def tryexcept(self, body, exceptions, elseClause=None):
 		if elseClause is not None:
-			raise ValueError, "else not supported for try/except"
-		
+			elseBool = self.frame.gettemp("boolean")
+			
 		jbody = jast.Block(self.visit(body))
 		tests = []
 		ifelse = None
@@ -447,11 +480,19 @@ class SimpleCompiler(BaseEvaluator):
 
 			t = jast.InvokeStatic("Py", "matchException", [exctmp, exc[0].asAny()])
 			newbody = []
+			if elseClause is not None:
+				newbody.append(jast.Set(elseBool, jast.False))
+
 			if len(exc) == 2:
+				exceptionValue = self.factory.makePyObject(jast.GetInstanceAttribute(exctmp, "value"))
+				#print exc[1], exceptionValue
 				newbody.append(self.set(exc[1], exceptionValue))
+				#print newbody
 				
+			#print self.visit(ebody)
 			newbody.append(self.visit(ebody))
-			
+			#print newbody
+			#print jast.Block(newbody)
 			tests.append( (t, jast.Block(newbody)) )
 
 
@@ -466,9 +507,15 @@ class SimpleCompiler(BaseEvaluator):
 		catchBody = jast.Block([setexc, catchBody])
 		
 		self.frame.freetemp(exctmp)
-
-		return jast.TryCatch(jbody, "Throwable", tname, catchBody)
-
+			
+		ret = jast.TryCatch(jbody, "Throwable", tname, catchBody)
+		
+		if elseClause is not None:
+			ret = jast.Block([jast.Set(elseBool, jast.True), ret, 
+					jast.If(elseBool, jast.Block(self.visit(elseClause)))])
+			self.frame.freetemp(elseBool)
+			
+		return ret
 
 	def for_stmt(self, index, sequence, body, else_body=None):			
 		counter = self.frame.gettemp('int')
@@ -511,9 +558,9 @@ class SimpleCompiler(BaseEvaluator):
 		self.module.classes[name] = c
 		return self.set_name(name, c)
 		
-	def addModule(self, mod):
+	def addModule(self, mod, value=1):
 		#print 'add module', mod.name, mod
-		self.module.imports[mod] = 1
+		self.module.imports[mod] = value
 	
 	def addSetAttribute(self, obj, name, value):
 		#print ' add set attribute', name, value

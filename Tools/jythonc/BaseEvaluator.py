@@ -20,6 +20,10 @@ class BaseEvaluator:
 	def setline(self, lineno):
 		self.lineno = lineno
 		
+	def getName(self, name):
+		return self.visitor.getName(name)
+
+
 	def visit(self, node):
 		return node.visit(self.visitor)
 
@@ -174,12 +178,16 @@ class BaseEvaluator:
 		for name in names:
 			ret.append(self.set_name(name[0], self.get_module(name)))
 		return ret
-		
-	def importfrom_stmt(self, top, names):
+	
+	def importall_stmt(self, top):
+		pass
+	
+	def importfrom_stmt(self, top, names):			
 		module = self.get_module(top, 1)
 		if names == '*':
-			print 'import * from', module
-			names = module.dir()
+			return self.importall_stmt(module)
+			#print 'import * from', module
+			#names = module.dir()
 		ret = []
 		for name in names:
 			ret.append(self.set_name(name, module.getattr(name)))

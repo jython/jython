@@ -9,7 +9,7 @@ def dumpStream(stream):
 	count = stream.read( array )
 	return array.tostring()
 
-def findJavac():
+def findDefaultJavac():
 	jhome = System.getProperty("java.home")
 	if jhome is None: return None
 	root, dir = os.path.split(jhome)
@@ -22,10 +22,10 @@ def getClasspath():
 	cpath = System.getProperty("java.class.path")
 	return cpath
 
-def compile(files, options=[]):
-	javac = findJavac()
-	cpath = getClasspath()
-	args = [javac, "-classpath", cpath]+options+files
+def compile(files, javac=None, cpathopt="-classpath", cpath=None, options=[]):
+	if javac is None: javac = findJavac()
+	if cpath is None: cpath = getClasspath()
+	args = [javac, cpathopt, cpath]+options+files
 	print args
 	
 	proc = runtime.exec(args)

@@ -115,10 +115,11 @@ def printNames(heading, dict):
 	for key, value in items1:
 		print '  %s used in %s' % (key, string.join(value, ', '))
 
-
+	
 class Compiler:
 	def __init__(self, javapackage=None, deep = 1, skip=(), 
-			include=('org.python.modules', 'com.oroinc.text.regex')):
+			include=('org.python.modules', 'com.oroinc.text.regex'),
+			options=None):
 		self.javapackage = javapackage
 		self.deep = deep
 		self.packages = {}
@@ -134,6 +135,7 @@ class Compiler:
 		self.skip = skip
 		self.dependencies = {}
 		self.include = include
+		self.options = options
 		
 	def write(self, msg):
 		print msg
@@ -156,7 +158,7 @@ class Compiler:
 
 		mod = PythonModule(name, filename)
 		fact = ObjectFactory()
-		pi = SimpleCompiler(mod, fact)
+		pi = SimpleCompiler(mod, fact, options=self.options)
 		fact.parent = pi
 		code = jast.Block(pi.execstring(data))
 		mod.addMain(code, pi)
@@ -175,11 +177,14 @@ class Compiler:
 				if len(ps) == 1:
 					self.javadepends[name] = ps
 				
-	def addDependency(self, m, attrs, mod):
+	def addDependency(self, m, attrs, mod, value=1):
 		if m is None: return
 		
 		if isinstance(m, ImportName.Package):
-			self.packages[m.name] = 1
+			if value == '*':
+				self.packages[m.name] = m.getClasses()
+			else:
+				self.packages[m.name] = None
 		elif isinstance(m, ImportName.Module):
 			if m.file is None:
 				file = os.path.join(m.path[0], '__init__.py')
@@ -202,11 +207,11 @@ class Compiler:
 		attrs = PyObject.attributes
 		PyObject.attributes = {}
 		#print '  attrs', attrs.keys()
-		for name in mod.imports.keys():
+		for name, value in mod.imports.items():
 			#print '  depends', name
 			m = ImportName.lookupName(name)
-			self.addDependency(m, attrs, mod)				
-				
+			self.addDependency(m, attrs, mod, value)		
+
 		if self.deep:
 			for filename, name in self.depends.items():
 				#self.write('%s requires %s' % (mod.name, name))
@@ -221,7 +226,9 @@ class Compiler:
 			for i in range(1, len(parts)):
 				prefixes[string.join(parts[:i], '.')] = 1
 		#print prefixes
-		for name in self.packages.keys():
+		for name, value in self.packages.items():
+			if value is not None: continue
+			
 			if prefixes.has_key(name):
 				del self.packages[name]
 	
@@ -241,7 +248,8 @@ class Compiler:
 			else:
 				proxyClasses.append(proxy)
 
-		mod.packages = self.packages.keys()	
+		mod.packages = self.packages
+		#print self.packages
 		specialClasses = {}
 		pkg = mod.package
 		if pkg is None: pkg = ""
@@ -264,8 +272,11 @@ class Compiler:
 	def displayPackages(self):
 		print
 		print 'Required packages:'
-		for package in self.packages.keys():
-			print '  '+package
+		for package, classes in self.packages.items():
+			if classes is None:
+				print '  '+package
+			else:
+				print '  '+package+'*'
 
 	def dump(self, outdir):
 		self.filterpackages()
@@ -287,9 +298,12 @@ class Compiler:
 		self.java2class()
 	
 	def java2class(self):
+		if self.options.compiler == "NONE":
+			self.write('\nLeaving .java files, no compiler specified')
+			return
 		self.write('\nCompiling .java to .class...')
-		code, outtext, errtext = javac.compile(self.javasources)
-		print code, outtext
+		code, outtext, errtext = javac.compile(self.javasources, javac=self.options.compiler)
+		print code, outtext, errtext
 
 	def makeAdapter(self, outdir, proxy):
 		os = java.io.ByteArrayOutputStream()

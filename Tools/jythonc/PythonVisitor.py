@@ -49,8 +49,9 @@ class Arguments(Visitor):
 		if node.numChildren > 1:
 			self.defaults.append(node.getChild(1).visit(self.parent))
 
-	#def fplist(self, node):
-	#	???
+	def fplist(self, node):
+		return 'ugh'
+		pass#	???
 
 	def Name(self, node):
 		return node.getInfo()
@@ -68,6 +69,10 @@ class PythonVisitor(Visitor):
 	def __init__(self, walker):
 		self.walker = walker
 		
+	def getName(self, node):
+		if not node.id == JJTNAME: return None
+		return node.getInfo()
+
 	def walk(self, node):
 		self.suite(node)
 
@@ -223,12 +228,20 @@ class PythonVisitor(Visitor):
 
 	def Int(self, node):
 		#self.startnode(node)
-		return self.walker.int_const(int(node.getInfo()))
+		i = node.getInfo()
+		if isinstance(i, type(0)):
+			return self.walker.int_const(int(i))
+		else:
+			return self.walker.long_const(long(i))
 		
 	def Float(self, node):
 		#self.startnode(node)
 		return self.walker.float_const(float(node.getInfo()))
 		
+	def Complex(self, node):
+		#self.startnode(node)
+		return self.walker.complex_const(float(node.getInfo()))	
+	
 	def String(self, node):
 		#self.startnode(node)
 		return self.walker.string_const(node.getInfo())
@@ -336,7 +349,19 @@ class PythonVisitor(Visitor):
 	def abs_1op(self, node): return self.unop(node, 'abs')
 	def pos_1op(self, node): return self.unop(node, 'pos')
 	def not_1op(self, node): return self.unop(node, 'not')
+	def str_1op(self, node): return self.unop(node, 'str')
 	
+	def getString(self, node):
+		if node.id == JJTSTRING:
+			return node.getInfo()
+		elif node.id == JJTSTRJOIN:
+			return self.getString(node.getChild(0))+self.getString(node.getChild(1))
+		else:
+			raise ValueError, 'non string!'
+			
+	def strjoin(self, node):
+		return self.walker.string_const(self.getString(node))
+
 	def comparision(self, node):
 		#self.startnode(node)
 		start = node.getChild(0)

@@ -57,6 +57,14 @@ class PythonInner:
 	def getIntegerConstant(self, value):
 		code = jast.InvokeStatic("Py", "newInteger", [jast.IntegerConstant(value)])
 		return self.getConstant(value, code, "i")
+		
+	def getLongConstant(self, value):
+		code = jast.InvokeStatic("Py", "newLong", [jast.StringConstant(str(value)[:-1])])
+		return self.getConstant(value, code, "l")
+			
+	def getImaginaryConstant(self, value):
+		code = jast.InvokeStatic("Py", "newImaginary", [jast.FloatConstant(value)])
+		return self.getConstant(value, code, "j")
 	
 	def getFloatConstant(self, value):
 		code = jast.InvokeStatic("Py", "newFloat", [jast.FloatConstant(value)])
@@ -240,6 +248,12 @@ class PythonModule:
 	def getIntegerConstant(self, value):
 		return self.pyinner.getIntegerConstant(value)
 	
+	def getLongConstant(self, value):
+		return self.pyinner.getLongConstant(value)
+			
+	def getImaginaryConstant(self, value):
+		return self.pyinner.getImaginaryConstant(value)
+		
 	def getFloatConstant(self, value):
 		return self.pyinner.getFloatConstant(value)
 	
@@ -262,29 +276,23 @@ class PythonModule:
 	def getSpecialClasses(self):
 		return jast.Identifier("jpy$specialClasses")	
 
-	def dumpProperties(self):
+	def dumpDictionary(self, dict, field):
 		props = []
-		for name, value in self.properties.items():
+		for name, value in dict.items():
 			props.append(name)
 			props.append(value)
 		
-		return jast.Declare("static String[]", self.getProperties(), jast.StringArray(props))
+		return jast.Declare("static String[]", field, jast.StringArray(props))
+
+
+	def dumpProperties(self):
+		return self.dumpDictionary(self.properties, self.getProperties())
 		
 	def dumpSpecialClasses(self):
-		props = []
-		for name, value in self.specialClasses.items():
-			props.append(name)
-			props.append(value)
-		
-		return jast.Declare("static String[]", self.getSpecialClasses(), jast.StringArray(props))
+		return self.dumpDictionary(self.specialClasses, self.getSpecialClasses())
 
 	def dumpPackages(self):
-		packs = []
-		for p in self.packages:
-			packs.append(p)
-			packs.append(None)
-		return jast.Declare("static String[]", self.getPackages(), jast.StringArray(packs))
-
+		return self.dumpDictionary(self.packages, self.getPackages())
 
 	def dumpFields(self):
 		return [self.dumpProperties(), self.dumpPackages(), self.dumpSpecialClasses()]

@@ -77,7 +77,11 @@ class Namespace:
 		if not hasattr(self.mod, '__depends__'): return []
 		return map(lookupName, self.mod.__depends__)
 
-class Package(Namespace): pass
+class Package(Namespace):
+	def getClasses(self):
+		return PyJavaPackage._unparsedAll._doget(self.mod)
+
+
 class Class(Namespace): pass
 
 class Module(Namespace):

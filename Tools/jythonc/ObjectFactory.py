@@ -51,6 +51,12 @@ class ObjectFactory:
 	def makeInteger(self, value):
 		return Object(self.parent.module.getIntegerConstant(value), PyConstant(value)) 
 		
+	def makeLong(self, value):
+		return Object(self.parent.module.getLongConstant(value), PyConstant(value)) 
+		
+	def makeImaginary(self, value):
+		return Object(self.parent.module.getImaginaryConstant(value), PyConstant(value)) 
+		
 	def makeFloat(self, value):
 		return Object(self.parent.module.getFloatConstant(value), PyConstant(value)) 
 
@@ -80,7 +86,7 @@ class ObjectFactory:
 								SimpleCompiler.DynamicStringReference)
 	
 	def getCompiler(self, frame):
-		return SimpleCompiler.SimpleCompiler(self.parent.module, self, frame)
+		return SimpleCompiler.SimpleCompiler(self.parent.module, self, frame, self.parent.options)
 
 class FixedObject(PyObject): pass
 
