@@ -1,6 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.parser;
 
+import org.python.core.Py;
+
 public class SimpleNode implements Node
 {
     protected Node parent;
@@ -188,15 +190,13 @@ public class SimpleNode implements Node
                 int i=0;
                 while (i < ndigits && s.charAt(i) == '0') i++;
                 if ((ndigits - i) > 11) {
-                    throw new TokenMgrError("integer literal too large",
-                                            beginLine, beginColumn);
+                    throw Py.OverflowError("integer literal too large");
                 }
 
                 long l = Long.valueOf(s, radix).longValue();
                 if (l > 0xffffffffl || (radix == 10 && l > Integer.MAX_VALUE))
                 {
-                    throw new TokenMgrError("integer literal too large",
-                                            beginLine, beginColumn);
+                    throw Py.OverflowError("integer literal too large");
                 }
                 setInfo(new Integer((int)l));
             }
