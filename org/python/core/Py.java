@@ -377,6 +377,20 @@ public final class Py
                                funcs, func_id);
     }
 
+    public static PyCode newJavaCode(Class cls, String name) {
+        return new JavaCode(newJavaFunc(cls, name));
+    }
+
+    public static PyObject newJavaFunc(Class cls, String name) {
+        try {
+            java.lang.reflect.Method m = cls.getMethod(name, new Class[] { 
+                       PyObject[].class, String[].class });
+            return new JavaFunc(m);
+        } catch (NoSuchMethodException e) {
+            throw Py.JavaError(e);
+        }
+    }
+
     private static PyObject initExc(String name, PyObject exceptions,
                                     PyObject dict) {
         PyObject tmp = exceptions.__getattr__(name);
@@ -1461,5 +1475,94 @@ class FixedFileWrapper extends StdoutWrapper {
 
     protected PyObject myFile() {
         return file;
+    }
+}
+
+/**
+ * A code object wrapper for a python function.
+ */
+class JavaCode extends PyCode {
+    private PyObject func;
+
+    public JavaCode(PyObject func) {
+        this.func = func;
+        if (func instanceof PyReflectedFunction)
+            this.co_name = ((PyReflectedFunction) func).__name__;
+    }
+
+    public PyObject call(PyFrame frame) {
+        System.out.println("call #1");
+        return Py.None;
+    }
+
+    public PyObject call(PyObject args[], String keywords[],
+                                  PyObject globals, PyObject[] defaults)
+    {
+        return func.__call__(args, keywords);
+    }
+
+    public PyObject call(PyObject self, PyObject args[],
+                                  String keywords[],
+                                  PyObject globals, PyObject[] defaults)
+    {
+        return func.__call__(self, args, keywords);
+    }
+
+    public PyObject call(PyObject globals, PyObject[] defaults)
+    {
+        return func.__call__();
+    }
+
+    public PyObject call(PyObject arg1, PyObject globals,
+                                  PyObject[] defaults)
+    {
+        return func.__call__(arg1);
+    }
+
+    public PyObject call(PyObject arg1, PyObject arg2,
+                                  PyObject globals, PyObject[] defaults)
+    {
+        return func.__call__(arg1, arg2);
+    }
+
+    public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
+                                  PyObject globals, PyObject[] defaults)
+    {
+        return func.__call__(arg1, arg2, arg3);
+    }
+}
+
+/**
+ * A function object wrapper for a java method which comply with the 
+ * PyArgsKeywordsCall standard.
+ */
+class JavaFunc extends PyObject {
+     java.lang.reflect.Method method;
+
+     public JavaFunc(java.lang.reflect.Method method) {
+         this.method = method;
+     }
+
+     public PyObject __call__(PyObject[] args, String[] kws) {
+          Object[] margs = new Object[] { args, kws };
+          try {
+              return Py.java2py(method.invoke(null, margs));
+          } catch (Throwable t) {
+              throw Py.JavaError(t);
+          }
+     }
+
+    public PyObject _doget(PyObject container) {
+        return _doget(container, null);
+    }
+
+    public PyObject _doget(PyObject container, PyObject wherefound) {
+        if (container == null)
+            return this;
+        return new PyMethod(container, this, wherefound);
+    }
+
+    public boolean _doset(PyObject container) {
+        throw Py.TypeError("java function not settable: "+method.getName());
     }
 }
