@@ -1,18 +1,17 @@
 Jython NEWS
 
-XX-Dec-2000 Jython 2.0 alpha 2
+17-Dec-2000 Jython 2.0 alpha 2
 
   New features.
     - Added -v (verbose) option to jython command. It will trace
       import statements. Use three -v's for maximum information.
-    - (new internal tables design: PyJavaClass canonical map, adapters/adapterClasses caches)
-      Added new registry option python.options.internalTablesImpl:
-       List of choices for internal tables impl (PyJavaClasses canonical map etc.),
-       these are separated through ':' and tryed from left to right.
-       For long running applications under java2, needing classes unloading,
-       in order to have jython runtime automatically discarding 
-       no longer needed info and avoding memory leakage, this can be set 
-       to weak or soft (=> an impl. using weak-refs or soft-refs will be used).
+    - Added new registry option python.options.internalTablesImpl
+      which is a list of choices (':' separated) for internal 
+      tables implementations. These tables contain the mapping of 
+      classes to PyJavaClasses.
+      Long running applications under java2 can avoid memory leaks 
+      by setting the property to "weak" or "soft". That will use
+      a table implementation which use weak or soft refrences.
 
   CPython-2.0 compatibility
     - Added support for formatting of long values in "%d %x %X %o".
@@ -38,7 +37,8 @@ XX-Dec-2000 Jython 2.0 alpha 2
       performance.
     - Allow from import * to modify the locals in a function (bug 122834).
     - Classes with the same name do no longer clash (bug 122820).
-
+    - Avoid a memory leak where many threads get started and stopped. The 
+      fix only works on java2.
 
 26-Nov-2000 Jython 2.0 alpha 1
 
