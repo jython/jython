@@ -45,6 +45,13 @@ public class MD5Object extends PyObject
         return new PyString(new String(x));
     }
 
+    public PyObject hexdigest() {
+        md5 md5obj = new md5(data);
+        md5obj.calc();
+        // this is for compatibility with CPython's output
+        return new PyString(md5obj.toString());
+    }
+
     public PyObject copy() {
         return new MD5Object(data);
     }
