@@ -16,6 +16,18 @@ class JarEntry implements Serializable {
     }
 }
 
+class JarPackage {
+    public String name;
+    public String classes;
+    public String filename;
+    public JarPackage(String name, String classes, String filename) {
+        this.name = name;
+        this.classes = classes;
+        this.filename = filename;
+    }
+}
+
+
 public class PackageManager {
     public File cachedir;
     private boolean indexModified;
@@ -51,10 +63,9 @@ public class PackageManager {
 
         Hashtable packs = packages;
 
-        for (Enumeration e = packs.keys(); e.hasMoreElements(); ) {
-            String key = (String)e.nextElement();
-            String value = (String)packs.get(key);
-            makeJavaPackage(key, value);
+        for (Enumeration e = packs.elements(); e.hasMoreElements(); ) {
+            JarPackage jp = (JarPackage)e.nextElement();
+            makeJavaPackage(jp.name, jp.classes, jp.filename);
         }
     }
     
@@ -259,7 +270,7 @@ public class PackageManager {
                 writeCacheFile(jarEntry.cachefile, mtime, canonicalJarfile, zipPackages);
             }
 
-            addPackages(zipPackages);
+            addPackages(zipPackages, canonicalJarfile);
         } catch (IOException ioe) {
             // silently skip any bad directories
             Py.writeWarning("packageManager",
@@ -267,10 +278,11 @@ public class PackageManager {
         }
     }
 
-    void addPackages(Hashtable zipPackages) {
+    void addPackages(Hashtable zipPackages, String jarfile) {
         for (Enumeration e = zipPackages.keys() ; e.hasMoreElements() ;) {
             Object key = e.nextElement();
-            Object value = zipPackages.get(key);
+            JarPackage value = new JarPackage((String)key, (String)zipPackages.get(key), jarfile);
+            //Object value = zipPackages.get(key);
             packages.put(key, value);
         }
     }
@@ -378,7 +390,7 @@ public class PackageManager {
     }
 
 
-    public PyJavaPackage makeJavaPackage(String name, String classes) {
+    public PyJavaPackage makeJavaPackage(String name, String classes, String jarfile) {
         int dot = name.indexOf('.');
         String firstName=name;
         String lastName=null;
@@ -390,11 +402,11 @@ public class PackageManager {
         firstName = firstName.intern();
         PyJavaPackage p = (PyJavaPackage)topLevelPackages.__finditem__(firstName);
         if (p == null) {
-            p = new PyJavaPackage(firstName);
+            p = new PyJavaPackage(firstName, jarfile);
             topLevelPackages.__setitem__(firstName, p);
         }
         PyJavaPackage ret = p;
-        if (lastName != null) ret = p.addPackage(lastName);
+        if (lastName != null) ret = p.addPackage(lastName, jarfile);
         ret._unparsedAll = classes;
         return ret;
     }

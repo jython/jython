@@ -7,23 +7,34 @@ public class PyJavaPackage extends PyObject {
     public String __name__;
     public PyObject __dict__;
     public String _unparsedAll;
+    public String __file__;
     //public PyList __all__;
 
     public static PyClass __class__;
     public PyJavaPackage(String name) {
-        this(name, null);
+        this(name, null, null);
     }
     
     protected PyJavaPackage __parent__ = null;    
-    public PyJavaPackage(String name, PyJavaPackage parent) {
+    public PyJavaPackage(String name, String jarfile) {
+        this(name, null, jarfile);
+    }
+    
+    public PyJavaPackage(String name, PyJavaPackage parent, String jarfile) {
         super(__class__);
         __parent__ = parent;
+        if (jarfile == null && parent != null) jarfile = __parent__.__file__;
+        __file__ = jarfile;
         __name__ = name;
         __dict__ = new PyStringMap();
         __dict__.__setitem__("__name__", new PyString(__name__));
     }
 
     public PyJavaPackage addPackage(String name) {
+        return addPackage(name, null);
+    }
+    
+    public PyJavaPackage addPackage(String name, String jarfile) {
         int dot = name.indexOf('.');
         String firstName=name;
         String lastName=null;
@@ -31,14 +42,18 @@ public class PyJavaPackage extends PyObject {
             firstName = name.substring(0,dot);
             lastName = name.substring(dot+1, name.length());
         }
-                
+        if (jarfile != null) {
+            if (!jarfile.equals(__file__)) {
+                __file__ = null;
+            }
+        }
         firstName = firstName.intern();
         PyJavaPackage p = (PyJavaPackage)__dict__.__finditem__(firstName);
         if (p == null) {
-            p = new PyJavaPackage(__name__+'.'+firstName, this);
+            p = new PyJavaPackage(__name__+'.'+firstName, this, jarfile);
         }
         __dict__.__setitem__(firstName, p);
-        if (lastName != null) return p.addPackage(lastName);
+        if (lastName != null) return p.addPackage(lastName, jarfile);
         else return p;
     }
 
@@ -169,6 +184,7 @@ public class PyJavaPackage extends PyObject {
         }
         if (name == "__name__") return new PyString(__name__);
         if (name == "__dict__") return __dict__;
+        if (name == "__file__" && __file__ != null) return new PyString(__file__);
                 
         // Name not found - check for Java dir package
         PyObject pyjd = getDirPackage();
