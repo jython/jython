@@ -16,7 +16,8 @@ public class PyTableCode extends PyCode {
 		       String filename, String name,
 		       int firstlineno,
 		       boolean args, boolean keywords,
-		       PyFunctionTable funcs, int func_id) {
+		       PyFunctionTable funcs, int func_id)
+    {
         super(__class__);
 	co_argcount = nargs = argcount;
 	co_varnames = varnames;
@@ -37,7 +38,7 @@ public class PyTableCode extends PyCode {
 	if (ts.systemState == null) {
 	    ts.systemState = Py.defaultSystemState;
 	}
-	        //System.err.println("got ts: "+ts+", "+ts.systemState);
+	//System.err.println("got ts: "+ts+", "+ts.systemState);
 
 	// Cache previously defined exception
 	PyException previous_exception = ts.exception;
@@ -45,17 +46,17 @@ public class PyTableCode extends PyCode {
         // Push frame
         
 
-    frame.f_back = ts.frame;
-    if (frame.f_builtins == null) {
-        if (frame.f_back != null) {
-            frame.f_builtins = frame.f_back.f_builtins;
-        } else {
-            //System.err.println("ts: "+ts);
-            //System.err.println("ss: "+ts.systemState);
-            frame.f_builtins = ts.systemState.builtins;
-        }
-    }
-    ts.frame = frame;
+	frame.f_back = ts.frame;
+	if (frame.f_builtins == null) {
+	    if (frame.f_back != null) {
+		frame.f_builtins = frame.f_back.f_builtins;
+	    } else {
+		//System.err.println("ts: "+ts);
+		//System.err.println("ss: "+ts.systemState);
+		frame.f_builtins = ts.systemState.builtins;
+	    }
+	}
+	ts.frame = frame;
 
 	// Handle trace function for debugging
         PySystemState ss = ts.systemState;
@@ -111,25 +112,40 @@ public class PyTableCode extends PyCode {
 	return ret;
     }
     public PyObject call(PyObject globals, PyObject[] defaults) {
-	if (co_argcount != 0 || args || keywords) return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults);
+	if (co_argcount != 0 || args || keywords)
+	    return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults);
 	PyFrame frame = new PyFrame(this, globals);
 	return call(frame);
-    }   	
-    public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults) {
-	if (co_argcount != 1 || args || keywords) return call(new PyObject[] {arg1}, Py.NoKeywords, globals, defaults);
+    }
+    
+    public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults)
+    {
+	if (co_argcount != 1 || args || keywords)
+	    return call(new PyObject[] {arg1},
+			Py.NoKeywords, globals, defaults);
 	PyFrame frame = new PyFrame(this, globals);
 	frame.f_fastlocals[0] = arg1;
 	return call(frame);
     }
-    public PyObject call(PyObject arg1, PyObject arg2, PyObject globals, PyObject[] defaults) {
-	if (co_argcount != 2 || args || keywords) return call(new PyObject[] {arg1, arg2}, Py.NoKeywords, globals, defaults);
+    
+    public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
+			 PyObject[] defaults)
+    {
+	if (co_argcount != 2 || args || keywords)
+	    return call(new PyObject[] {arg1, arg2},
+			Py.NoKeywords, globals, defaults);
 	PyFrame frame = new PyFrame(this, globals);
 	frame.f_fastlocals[0] = arg1;
 	frame.f_fastlocals[1] = arg2;
 	return call(frame);
-    }	
-    public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3, PyObject globals, PyObject[] defaults) {
-	if (co_argcount != 2 || args || keywords) return call(new PyObject[] {arg1, arg2, arg3}, Py.NoKeywords, globals, defaults);
+    }
+    
+    public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
+			 PyObject globals, PyObject[] defaults)
+    {
+	if (co_argcount != 2 || args || keywords)
+	    return call(new PyObject[] {arg1, arg2, arg3},
+			Py.NoKeywords, globals, defaults);
 	PyFrame frame = new PyFrame(this, globals);
 	frame.f_fastlocals[0] = arg1;
 	frame.f_fastlocals[1] = arg2;
@@ -146,7 +162,10 @@ public class PyTableCode extends PyCode {
       return call(frame);
       }*/
 
-    public PyObject call(PyObject self, PyObject call_args[], String call_keywords[], PyObject globals, PyObject[] defaults) {
+    public PyObject call(PyObject self, PyObject call_args[],
+			 String call_keywords[], PyObject globals,
+			 PyObject[] defaults)
+    {
 	PyObject[] os = new PyObject[call_args.length+1];
 	os[0] = (PyObject)self;
 	System.arraycopy(call_args, 0, os, 1, call_args.length);
@@ -157,7 +176,9 @@ public class PyTableCode extends PyCode {
 	return co_name.toString()+"() ";
     }
 
-    public PyObject call(PyObject call_args[], String call_keywords[], PyObject globals, PyObject[] defaults) {
+    public PyObject call(PyObject call_args[], String call_keywords[],
+			 PyObject globals, PyObject[] defaults)
+    {
 	//System.out.println("call: "+nargs+", "+call_args.length+", "+func.func_defaults.length+", "+call_keywords.length);
 	//Needs try except finally blocks
 
@@ -168,35 +189,55 @@ public class PyTableCode extends PyCode {
 	int plain_args = call_args.length - call_keywords.length;
 	int i;
 
-	if (plain_args > co_argcount) plain_args = co_argcount;
+	if (plain_args > co_argcount)
+	    plain_args = co_argcount;
 
 	actual_args = my_frame.f_fastlocals;
-	if (plain_args > 0) System.arraycopy(call_args, 0, actual_args, 0, plain_args);
+	if (plain_args > 0)
+	    System.arraycopy(call_args, 0, actual_args, 0, plain_args);
 
-	if (!((call_keywords == null || call_keywords.length == 0) && call_args.length == co_argcount && !keywords && !args)) {
-	    if (keywords) extra_keywords = new PyDictionary();
+	if (!((call_keywords == null || call_keywords.length == 0) &&
+	      call_args.length == co_argcount && !keywords && !args))
+	{
+	    if (keywords)
+		extra_keywords = new PyDictionary();
+
 	    for(i=0; i<call_keywords.length; i++) {
 		int index=0;
 		while (index<co_argcount) {
-		    if (co_varnames[index].equals(call_keywords[i])) break;
+		    if (co_varnames[index].equals(call_keywords[i]))
+			break;
 		    index++;
 		}
 		if (index < co_argcount) {
 		    if (actual_args[index] != null) {
-			throw Py.TypeError(prefix()+"duplicate keyword argument: "+call_keywords[i]);
+			throw Py.TypeError(prefix()+
+					   "duplicate keyword argument: "+
+					   call_keywords[i]);
 		    }
-		    actual_args[index] = call_args[i+(call_args.length-call_keywords.length)];
+		    actual_args[index] =
+			call_args[i+(call_args.length-call_keywords.length)];
 		} else {
 		    if (extra_keywords == null) {
-			throw Py.TypeError(prefix()+"unexpected keyword argument: "+call_keywords[i]);
+			throw Py.TypeError(prefix()+
+					   "unexpected keyword argument: "+
+					   call_keywords[i]);
 		    }
-		    extra_keywords.__setitem__(call_keywords[i], call_args[i+(call_args.length-call_keywords.length)]);
+		    extra_keywords.__setitem__(
+			call_keywords[i],
+			call_args[i+(call_args.length-call_keywords.length)]);
 		}
 	    }
 	    if (call_args.length-call_keywords.length > co_argcount) {
-		if (!args) throw Py.TypeError(prefix()+"too many arguments; expected "+
-					      co_argcount+" got "+(call_args.length-call_keywords.length));
-		extra_args = new PyObject[call_args.length-call_keywords.length-co_argcount];
+		if (!args)
+		    throw Py.TypeError(
+			prefix()+
+			"too many arguments; expected "+
+			co_argcount+" got "+
+			(call_args.length-call_keywords.length));
+		extra_args = new PyObject[call_args.length-
+					 call_keywords.length-
+					 co_argcount];
 
 		for (i=0; i<extra_args.length; i++) {
 		    extra_args[i] = call_args[i+co_argcount];
@@ -206,15 +247,20 @@ public class PyTableCode extends PyCode {
 		if (actual_args[i] == null) {
 		    if (co_argcount-i > defaults.length) {
 			//System.out.println("nea: "+nargs+", "+i+", "+defaults.length+", "+plain_args);
-			throw Py.TypeError(prefix()+"not enough arguments; expected "+
-					   (co_argcount-defaults.length)+" got "+(call_args.length-call_keywords.length));
+			throw Py.TypeError(
+			    prefix()+
+			    "not enough arguments; expected "+
+			    (co_argcount-defaults.length)+" got "+
+			    (call_args.length-call_keywords.length));
 		    }
 		    actual_args[i] = defaults[defaults.length-(co_argcount-i)];
 		}
 	    }
 	    if (args) {
-		if (extra_args == null) actual_args[co_argcount] = Py.EmptyTuple;
-		else actual_args[co_argcount] = new PyTuple(extra_args);
+		if (extra_args == null)
+		    actual_args[co_argcount] = Py.EmptyTuple;
+		else
+		    actual_args[co_argcount] = new PyTuple(extra_args);
 	    }
 	    if (extra_keywords != null) {
 		actual_args[nargs-1] = extra_keywords;
