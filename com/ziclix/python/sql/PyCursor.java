@@ -65,6 +65,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/** Field statement */
 	protected PyStatement statement;
 
+	/** A set of statements which this cursor prepared and distributed. */
+	protected Set preparedStatements;
+
 	// they are stateless instances, so we only need to instantiate it once
 	private static DataHandler DATAHANDLER = null;
 
@@ -103,6 +106,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		this.connection = connection;
 		this.datahandler = DATAHANDLER;
 		this.dynamicFetch = dynamicFetch;
+		this.preparedStatements = new HashSet(3);
 
 		// constructs the appropriate Fetch among other things
 		this.clear();
@@ -276,6 +280,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("getPyClass", null);
 		dict.__setitem__("rsConcur", null);
 		dict.__setitem__("rsType", null);
+		dict.__setitem__("preparedStatements", null);
 	}
 
 	/**
@@ -295,10 +300,20 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 */
 	public void close() {
 
-		this.clear();
-		this.connection.unregister(this);
+		try {
+			this.clear();
 
-		this.closed = true;
+			for (Iterator i = this.preparedStatements.iterator(); i.hasNext(); ) {
+				try {
+					((PyStatement)i.next()).close();
+				} catch (Throwable t) {}
+			}
+
+			this.preparedStatements.clear();
+			this.connection.unregister(this);
+		} finally {
+			this.closed = true;
+		}
 	}
 
 	/**
@@ -377,7 +392,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * @return PyStatement
 	 */
-	protected PyStatement prepareStatement(PyObject sql, PyObject maxRows, boolean prepared) {
+	private PyStatement prepareStatement(PyObject sql, PyObject maxRows, boolean prepared) {
 
 		PyStatement stmt = null;
 
@@ -753,6 +768,23 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
+	 * Prepare a sql statement for later execution.
+	 *
+	 * @param sql The sql string to be prepared.
+	 *
+	 * @return A prepared statement usable with .executeXXX()
+	 */
+	public PyStatement prepare(PyObject sql) {
+
+		PyStatement s = this.prepareStatement(sql, Py.None, true);
+
+		// add to the set of statements which are leaving our control
+		this.preparedStatements.add(s);
+
+		return s;
+	}
+
+	/**
 	 * Scroll the cursor in the result set to a new position according
 	 * to mode.
 	 *
@@ -824,7 +856,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "cursor is closed");
 		}
 
-		this.statement = null;
 		this.warnings = Py.None;
 		this.lastrowid = Py.None;
 		this.updatecount = Py.newInteger(-1);
@@ -834,6 +865,21 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		} catch (Exception e) {}
 		finally {
 			this.fetch = Fetch.newFetch(this);
+		}
+
+		if (this.statement != null) {
+
+			// we can't close a dynamic fetch statement until everything has been
+			// consumed so the only time we can clean up is now
+			// but if this is a previously prepared statement we don't want to close
+			// it underneath someone; we can check this by looking in the set
+			try {
+				if (this.dynamicFetch && (!this.preparedStatements.contains(this.statement))) {
+					this.statement.close();
+				}
+			} finally {
+				this.statement = null;
+			}
 		}
 	}
 
@@ -1033,7 +1079,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return Py.None;
 
 			case 12 :
-				return cursor.prepareStatement(arg, Py.None, true);
+				return cursor.prepare(arg);
 
 			default :
 				throw argCountError(1);

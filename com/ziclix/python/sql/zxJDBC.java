@@ -124,7 +124,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/**
 	 * Add the types from java.sql.Types
 	 *
-	 * @param PyObject dict
+	 *
+	 * @param dict
 	 *
 	 * @throws PyException
 	 *
@@ -168,7 +169,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/**
 	 * Add all the possible connectors
 	 *
-	 * @param PyObject dict
+	 *
+	 * @param dict
 	 *
 	 * @throws PyException
 	 *
@@ -203,6 +205,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 	/**
 	 * Create the exception classes and get their descriptions from the resource bundle.
+	 *
+	 * @param dict
 	 */
 	protected static void _buildExceptions(PyObject dict) {
 
@@ -221,8 +225,9 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/**
 	 * Method _empty__init__
 	 *
-	 * @param PyObject[] arg
-	 * @param String[] kws
+	 *
+	 * @param arg
+	 * @param kws
 	 *
 	 * @return PyObject
 	 *
@@ -242,6 +247,10 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	 * key is found, the results of all the indexed values are concatenated with the line
 	 * separator.  If no indexed key is found, it defaults to checking the bundle by the
 	 * key value alone.
+	 *
+	 * @param key
+	 *
+	 * @return String
 	 */
 	public static String getString(String key) {
 
@@ -264,7 +273,11 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		}
 
 		if ((lines == null) || (lines.size() == 0)) {
-			resource = resourceBundle.getString(key);
+			try {
+				resource = resourceBundle.getString(key);
+			} catch (MissingResourceException e) {
+				return key;
+			}
 		} else {
 			String sep = System.getProperty("line.separator");
 			StringBuffer sb = new StringBuffer();
@@ -284,6 +297,11 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/**
 	 * Return a formatted string.  The key is used to get the format and the values
 	 * are passed, along with the format, to a MessageFormat who formats it appropriately.
+	 *
+	 * @param key
+	 * @param values
+	 *
+	 * @return String
 	 */
 	public static String getString(String key, Object[] values) {
 
@@ -294,6 +312,10 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 	/**
 	 * Return a newly instantiated PyException of the type Error.
+	 *
+	 * @param msg
+	 *
+	 * @return PyException
 	 */
 	public static PyException makeException(String msg) {
 		return makeException(Error, msg);
@@ -301,6 +323,11 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 	/**
 	 * Return a newly instantiated PyException of the given type.
+	 *
+	 * @param type
+	 * @param msg
+	 *
+	 * @return PyException
 	 */
 	public static PyException makeException(PyObject type, String msg) {
 		return Py.makeException(type, Py.newString((msg == null) ? "" : msg));
@@ -308,6 +335,10 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 	/**
 	 * Return a newly instantiated PyException of the type Error.
+	 *
+	 * @param throwable
+	 *
+	 * @return PyException
 	 */
 	public static PyException makeException(Throwable throwable) {
 		return makeException(Error, throwable);
@@ -315,6 +346,11 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 	/**
 	 * Return a newly instantiated PyException of the given type.
+	 *
+	 * @param type
+	 * @param t
+	 *
+	 * @return PyException
 	 */
 	public static PyException makeException(PyObject type, Throwable t) {
 
@@ -362,6 +398,12 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 	/**
 	 * This function constructs an object holding a date value.
+	 *
+	 * @param year
+	 * @param month
+	 * @param day
+	 *
+	 * @return PyObject
 	 */
 	protected static PyObject Date(int year, int month, int day) {
 
@@ -376,6 +418,12 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 	/**
 	 * This function constructs an object holding a time value.
+	 *
+	 * @param hour
+	 * @param minute
+	 * @param second
+	 *
+	 * @return PyObject
 	 */
 	protected static PyObject Time(int hour, int minute, int second) {
 
@@ -390,6 +438,15 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 	/**
 	 * This function constructs an object holding a time stamp value.
+	 *
+	 * @param year
+	 * @param month
+	 * @param day
+	 * @param hour
+	 * @param minute
+	 * @param second
+	 *
+	 * @return PyObject
 	 */
 	protected static PyObject Timestamp(int year, int month, int day, int hour, int minute, int second) {
 
@@ -417,6 +474,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	 * seconds rather than milliseconds, so adjust any Java code accordingly.
 	 *
 	 * @param ticks number of seconds since the epoch
+	 *
+	 * @return PyObject
 	 */
 	protected static PyObject DateFromTicks(long ticks) {
 
@@ -442,6 +501,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	 * seconds rather than milliseconds, so adjust any Java code accordingly.
 	 *
 	 * @param ticks number of seconds since the epoch
+	 *
+	 * @return PyObject
 	 */
 	protected static PyObject TimeFromTicks(long ticks) {
 		return Py.java2py(new Time(ticks * 1000));
@@ -458,6 +519,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	 * seconds rather than milliseconds, so adjust any Java code accordingly.
 	 *
 	 * @param ticks number of seconds since the epoch
+	 *
+	 * @return PyObject
 	 */
 	protected static PyObject TimestampFromTicks(long ticks) {
 		return Py.java2py(new Timestamp(ticks * 1000));
@@ -466,9 +529,10 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/**
 	 * Method buildClass
 	 *
-	 * @param String classname
-	 * @param PyObject superclass
-	 * @param String classCodeName
+	 *
+	 * @param classname
+	 * @param superclass
+	 * @param classCodeName
 	 *
 	 * @return PyObject
 	 *
@@ -497,12 +561,13 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Constructor zxJDBCFunc
 	 *
-	 * @param String name
-	 * @param int index
-	 * @param int minargs
-	 * @param int maxargs
-	 * @param boolean func
-	 * @param String doc
+	 *
+	 * @param name
+	 * @param index
+	 * @param minargs
+	 * @param maxargs
+	 * @param func
+	 * @param doc
 	 *
 	 */
 	zxJDBCFunc(String name, int index, int minargs, int maxargs, boolean func, String doc) {
@@ -512,7 +577,8 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject arg
+	 *
+	 * @param arg
 	 *
 	 * @return PyObject
 	 *
@@ -540,9 +606,10 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject arga
-	 * @param PyObject argb
-	 * @param PyObject argc
+	 *
+	 * @param arga
+	 * @param argb
+	 * @param argc
 	 *
 	 * @return PyObject
 	 *
@@ -573,7 +640,8 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method fancyCall
 	 *
-	 * @param PyObject[] args
+	 *
+	 * @param args
 	 *
 	 * @return PyObject
 	 *

@@ -114,11 +114,7 @@ class zxAPITestCase(zxJDBCTestCase):
 		try:
 			p = c.prepare("select * from zxtesting where id = ?")
 			for i in range(1, 8):
-				try:
-					c.execute(p, (i,))
-				except:
-					print i
-					raise
+				c.execute(p, (i,))
 				data = c.fetchall()
 				self.assertEquals(1, len(data))
 			assert not p.closed
@@ -496,7 +492,6 @@ class zxAPITestCase(zxJDBCTestCase):
 				assert len(f[0][0]) == len(data), "expected [%d], got [%d]" % (len(data), len(f[0][0]))
 				assert data == f[0][0], "failed to retrieve the same text as inserted"
 			except Exception, e:
-				print e
 				raise e
 		finally:
 			c.execute("drop table %s" % (self.table("texttable")[0]))

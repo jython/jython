@@ -252,4 +252,5 @@ class dbextsTestCase(runner.SQLTestCase):
 				try:
 					self.db.isql("select * from one")
 				except Exception, e:
-					fail("failed autocommit query with u=[%d], v=[%d]" % (u, v))
+					self.fail("failed autocommit query with u=[%d], v=[%d]" % (u, v))
+
