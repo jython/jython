@@ -23,11 +23,13 @@ public class imp {
 
 
     public static PyObject find_module(String name) {
-        return find_module(name, Py.getSystemState().__getattr__("path"));
+        return find_module(name, null);
     }
 
 
     public static PyObject find_module(String name, PyObject path) {
+        if (path == null || path == Py.None)
+            path = Py.getSystemState().__getattr__("path");
         PyObject p = null;
         for (int i = 0; (p = path.__finditem__(i)) != null; i++) {
             File fullpath = new File(p.__str__().toString(), name + ".py");
