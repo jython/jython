@@ -10,7 +10,16 @@ from java.util import Calendar, Date as JDate
 
 import tempfile, os, time, runner
 
-class zxJDBCTest(runner.SQLTestCase):
+class zxCoreTestCase(runner.SQLTestCase):
+
+	def setUp(self):
+		runner.SQLTestCase.setUp(self)
+		self.db = self.connect()
+		self.db.autocommit = 0
+
+	def tearDown(self):
+		self.db.close()
+		runner.SQLTestCase.tearDown(self)
 
 	def connect(self):
 		factory = runner.__imp__(self.factory.classname)
@@ -24,8 +33,10 @@ class zxJDBCTest(runner.SQLTestCase):
 			c.datahandler = self.datahandler(c.datahandler)
 		return c
 
+class zxJDBCTestCase(zxCoreTestCase):
+
 	def setUp(self):
-		runner.SQLTestCase.setUp(self)
+		zxCoreTestCase.setUp(self)
 		self.db = self.connect()
 		self.db.autocommit = 0
 
@@ -60,16 +71,21 @@ class zxJDBCTest(runner.SQLTestCase):
 		finally:
 			c.close()
 
-		try:
-			self.db.close()
-		finally:
-			self.db = None
+		zxCoreTestCase.tearDown(self)
 
-class zxCoreTest(zxJDBCTest):
+class zxAPITestCase(zxJDBCTestCase):
 
 	def testConnection(self):
 		"""testing connection"""
 		assert self.db, "invalid connection"
+
+	def testAutocommit(self):
+		"""testing autocommit functionality"""
+		if self.db.__connection__.getMetaData().supportsTransactions():
+			self.db.autocommit = 1
+			self.assertEquals(1, self.db.__connection__.getAutoCommit())
+			self.db.autocommit = 0
+			self.assertEquals(0, self.db.__connection__.getAutoCommit())
 
 	def testSimpleQuery(self):
 		"""testing simple queries with cursor.execute(), no parameters"""
@@ -171,22 +187,26 @@ class zxCoreTest(zxJDBCTest):
 		"""testing insert with file"""
 		assert self.has_table("texttable"), "missing attribute texttable"
 		fp = open(tempfile.mktemp(), "w")
+		c = self.cursor()
 		try:
-			c = self.cursor()
-			c.execute(self.table("texttable")[1])
-			data = fp.name * 300
-			data = data[:3500]
-			fp.write(data)
-			fp.flush()
-			fp.close()
-			fp = open(fp.name, "r")
-			c.execute("insert into %s (a, b) values (?, ?)" % (self.table("texttable")[0]), [(0, fp)], {1:zxJDBC.LONGVARCHAR})
-			self.db.commit()
-			c.execute("select b from %s" % (self.table("texttable")[0]))
-			f = c.fetchall()
-			assert len(f) == 1, "expected [1] row, got [%d]" % (len(f))
-			assert len(f[0][0]) == len(data), "expected [%d], got [%d]" % (len(data), len(f[0][0]))
-			assert data == f[0][0], "failed to retrieve the same text as inserted"
+			try:
+				c.execute(self.table("texttable")[1])
+				data = fp.name * 300
+				data = data[:3500]
+				fp.write(data)
+				fp.flush()
+				fp.close()
+				fp = open(fp.name, "r")
+				c.execute("insert into %s (a, b) values (?, ?)" % (self.table("texttable")[0]), [(0, fp)], {1:zxJDBC.LONGVARCHAR})
+				self.db.commit()
+				c.execute("select b from %s" % (self.table("texttable")[0]))
+				f = c.fetchall()
+				assert len(f) == 1, "expected [1] row, got [%d]" % (len(f))
+				assert len(f[0][0]) == len(data), "expected [%d], got [%d]" % (len(data), len(f[0][0]))
+				assert data == f[0][0], "failed to retrieve the same text as inserted"
+			except Exception, e:
+				print e
+				raise e
 		finally:
 			c.execute("drop table %s" % (self.table("texttable")[0]))
 			c.close()
@@ -576,15 +596,15 @@ class zxCoreTest(zxJDBCTest):
 			self.db.commit()
 			c.close()
 
-class LOBTest(zxJDBCTest):
+class LOBTest(zxJDBCTestCase):
 
 	def __blob(self, obj=0):
 		assert self.has_table("blobtable"), "no blob table"
-		c = self.cursor()
 		tabname, sql = self.table("blobtable")
 		fn = tempfile.mktemp()
 		fp = None
 
+		c = self.cursor()
 		try:
 
 			hello = ("hello",) * 1024
@@ -639,9 +659,9 @@ class LOBTest(zxJDBCTest):
 
 	def __clob(self, asfile=0):
 		assert self.has_table("clobtable"), "no clob table"
-		c = self.cursor()
 		tabname, sql = self.table("clobtable")
 
+		c = self.cursor()
 		try:
 			hello = "hello" * 1024 * 10
 
@@ -679,7 +699,7 @@ class LOBTest(zxJDBCTest):
 		"""testing CLOB as PyFile"""
 		self.__clob(1)
 
-class BCPTest(zxJDBCTest):
+class BCPTestCase(zxJDBCTestCase):
 
 	def testCSVPipe(self):
 		"""testing the CSV pipe"""

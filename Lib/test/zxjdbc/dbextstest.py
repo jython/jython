@@ -100,6 +100,13 @@ class dbextsTestCase(runner.SQLTestCase):
 		h, r = self.db.raw("select * from two where a = ?", [(0,), (3,)])
 		assert len(r) == 2, "expected [2], got [%d]" % (len(r))
 
+	def testUpdateCount(self):
+		"""testing update count"""
+
+		self._insertInto("one", 45)
+		self.db.raw("delete from one where a > ?", [(12,)])
+		self.assertEquals(32, self.db.updatecount)
+
 	def testQueryWithMaxRows(self):
 		"""testing query with max rows"""
 
@@ -224,3 +231,18 @@ class dbextsTestCase(runner.SQLTestCase):
 		bcp = self.db.bulkcopy("dbexts_test", "two")
 		done = bcp.transfer(self.db)
 		assert done == 32, "expecting thirty two rows to be inserted, found [%d]" % (done)
+
+	def testAutocommit(self):
+		"""testing the autocommit functionality"""
+		for u in (0, 1):
+			self.db.autocommit = u
+			try:
+				self.db.isql("select * from one")
+			except Exception, e:
+				fail("failed autocommit query with u=[%d], v=[%d]" % (u, v))
+			for v in (0, 1):
+				self.db.db.autocommit = v
+				try:
+					self.db.isql("select * from one")
+				except Exception, e:
+					fail("failed autocommit query with u=[%d], v=[%d]" % (u, v))

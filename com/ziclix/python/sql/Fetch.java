@@ -47,12 +47,6 @@ abstract public class Fetch {
 	/** Field description */
 	protected PyObject description;
 
-	/** True if a CallableStatement was added, false otherwise. */
-	protected boolean callable;
-
-	/** Field callableResults */
-	protected PyObject callableResults;
-
 	/**
 	 * Constructor Fetch
 	 *
@@ -64,8 +58,6 @@ abstract public class Fetch {
 		this.cursor = cursor;
 		this.description = Py.None;
 		this.rowcount = -1;
-		this.callable = false;
-		this.callableResults = Py.None;
 	}
 
 	/**
@@ -117,50 +109,10 @@ abstract public class Fetch {
 	 *
 	 * @param CallableStatement callableStatement
 	 * @param Procedure procedure
+	 * @param PyObject params
 	 *
 	 */
-	public void add(CallableStatement callableStatement, Procedure procedure) {
-
-		// set this regardless of whether the statement has results
-		this.callable = true;
-
-		try {
-			createDescription(procedure);
-
-			if (description.__len__() == 0) {
-				return;
-			}
-
-			PyObject[] row = new PyObject[description.__len__()];
-
-			for (int i = 0, j = 0, len = procedure.columns.__len__(); i < len; i++) {
-				PyObject column = procedure.columns.__getitem__(i);
-				int colType = column.__getitem__(Procedure.COLUMN_TYPE).__int__().getValue();
-				int dataType = column.__getitem__(Procedure.DATA_TYPE).__int__().getValue();
-
-				switch (colType) {
-
-					case DatabaseMetaData.procedureColumnOut :
-					case DatabaseMetaData.procedureColumnInOut :
-					case DatabaseMetaData.procedureColumnReturn :
-						row[j++] = cursor.getDataHandler().getPyObject(callableStatement, i + 1, dataType);
-						break;
-				}
-			}
-
-			this.callableResults = new PyList();
-
-			((PyList)this.callableResults).append(new PyTuple(row));
-
-			this.rowcount = this.callableResults.__len__();
-		} catch (PyException e) {
-			throw e;
-		} catch (Exception e) {
-			throw zxJDBC.newError(e);
-		}
-
-		return;
-	}
+	abstract public void add(CallableStatement callableStatement, Procedure procedure, PyObject params);
 
 	/**
 	 * Fetch the next row of a query result set, returning a single sequence,
@@ -192,26 +144,7 @@ abstract public class Fetch {
 	 *
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
-	public final PyObject fetchall() {
-
-		if (callable) {
-			PyObject tmp = this.callableResults;
-
-			this.callableResults = Py.None;
-
-			return tmp;
-		} else {
-			return doFetchall();
-		}
-	}
-
-	/**
-	 * Method doFetchall
-	 *
-	 * @return PyObject
-	 *
-	 */
-	abstract protected PyObject doFetchall();
+	public abstract PyObject fetchall();
 
 	/**
 	 * Fetch the next set of rows of a query result, returning a sequence of
@@ -234,65 +167,19 @@ abstract public class Fetch {
 	 *
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
-	public final PyObject fetchmany(int size) {
-
-		if (callable) {
-			PyObject tmp = this.callableResults;
-
-			this.callableResults = Py.None;
-
-			return tmp;
-		} else {
-			return doFetchmany(size);
-		}
-	}
-
-	/**
-	 * Method doFetchmany
-	 *
-	 * @param int size
-	 *
-	 * @return PyObject
-	 *
-	 */
-	abstract protected PyObject doFetchmany(int size);
+	public abstract PyObject fetchmany(int size);
 
 	/**
 	 * Move the result pointer to the next set if available.
 	 *
 	 * @return true if more sets exist, else None
 	 */
-	public final PyObject nextset() {
-
-		// no support for result sets within callable statements
-		return callable ? Py.None : doNextset();
-	}
-
-	/**
-	 * Method doNextset
-	 *
-	 * @return PyObject
-	 *
-	 */
-	abstract protected PyObject doNextset();
+	public abstract PyObject nextset();
 
 	/**
 	 * Cleanup any resources.
 	 */
-	public final void close() throws SQLException {
-
-		doClose();
-
-		this.callableResults = Py.None;
-	}
-
-	/**
-	 * Method doClose
-	 *
-	 * @throws SQLException
-	 *
-	 */
-	abstract public void doClose() throws SQLException;
+	public abstract void close() throws SQLException;
 
 	/**
 	 * Builds a tuple containing the meta-information about each column.
@@ -301,9 +188,9 @@ abstract public class Fetch {
 	 *
 	 * precision and scale are only available for numeric types
 	 */
-	protected void createDescription(ResultSetMetaData meta) throws SQLException {
+	protected PyObject createDescription(ResultSetMetaData meta) throws SQLException {
 
-		this.description = new PyList();
+		PyObject metadata = new PyList();
 
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			PyObject[] a = new PyObject[7];
@@ -334,8 +221,10 @@ abstract public class Fetch {
 
 			a[6] = Py.newInteger(meta.isNullable(i));
 
-			((PyList)this.description).append(new PyTuple(a));
+			((PyList)metadata).append(new PyTuple(a));
 		}
+
+		return metadata;
 	}
 
 	/**
@@ -345,9 +234,9 @@ abstract public class Fetch {
 	 *
 	 * precision and scale are only available for numeric types
 	 */
-	protected void createDescription(Procedure procedure) throws SQLException {
+	protected PyObject createDescription(Procedure procedure) throws SQLException {
 
-		this.description = new PyList();
+		PyObject metadata = new PyList();
 
 		for (int i = 0, len = procedure.columns.__len__(); i < len; i++) {
 			PyObject column = procedure.columns.__getitem__(i);
@@ -355,8 +244,6 @@ abstract public class Fetch {
 
 			switch (colType) {
 
-				case DatabaseMetaData.procedureColumnOut :
-				case DatabaseMetaData.procedureColumnInOut :
 				case DatabaseMetaData.procedureColumnReturn :
 					PyObject[] a = new PyObject[7];
 
@@ -388,10 +275,69 @@ abstract public class Fetch {
 
 					a[6] = (nullable == DatabaseMetaData.procedureNullable) ? Py.One : Py.Zero;
 
-					((PyList)this.description).append(new PyTuple(a));
+					((PyList)metadata).append(new PyTuple(a));
 					break;
 			}
 		}
+
+		return metadata;
+	}
+
+	/**
+	 * Method createResults
+	 *
+	 * @param CallableStatement callableStatement
+	 * @param Procedure procedure
+	 * @param PyObject params
+	 *
+	 * @return PyObject
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	protected PyObject createResults(CallableStatement callableStatement, Procedure procedure, PyObject params) throws SQLException {
+
+		PyList results = new PyList();
+
+		for (int i = 0, j = 0, len = procedure.columns.__len__(); i < len; i++) {
+			PyObject obj = Py.None;
+			PyObject column = procedure.columns.__getitem__(i);
+			int colType = column.__getitem__(Procedure.COLUMN_TYPE).__int__().getValue();
+			int dataType = column.__getitem__(Procedure.DATA_TYPE).__int__().getValue();
+
+			switch (colType) {
+
+				case DatabaseMetaData.procedureColumnOut :
+				case DatabaseMetaData.procedureColumnInOut :
+					obj = cursor.getDataHandler().getPyObject(callableStatement, i + 1, dataType);
+
+					params.__setitem__(j++, obj);
+					break;
+
+				case DatabaseMetaData.procedureColumnReturn :
+					obj = cursor.getDataHandler().getPyObject(callableStatement, i + 1, dataType);
+
+					// Oracle sends ResultSets as a return value
+					Object rs = obj.__tojava__(ResultSet.class);
+
+					if (rs == Py.NoConversion) {
+						results.append(obj);
+					} else {
+						add((ResultSet)rs);
+					}
+					break;
+			}
+		}
+
+		if (results.__len__() == 0) {
+			return Py.None;
+		}
+
+		PyList ret = new PyList();
+
+		ret.append(__builtin__.tuple(results));
+
+		return ret;
 	}
 
 	/**
@@ -402,13 +348,13 @@ abstract public class Fetch {
 	 * @return a list of tuples of the results
 	 * @throws SQLException
 	 */
-	protected PyList createResults(ResultSet set, Set skipCols) throws SQLException {
+	protected PyList createResults(ResultSet set, Set skipCols, PyObject metaData) throws SQLException {
 
 		PyObject tuple = Py.None;
 		PyList res = new PyList();
 
 		while (set.next()) {
-			tuple = createResult(set, skipCols);
+			tuple = createResult(set, skipCols, metaData);
 
 			res.append(tuple);
 		}
@@ -424,16 +370,16 @@ abstract public class Fetch {
 	 * @return a tuple of the results
 	 * @throws SQLException
 	 */
-	protected PyTuple createResult(ResultSet set, Set skipCols) throws SQLException {
+	protected PyTuple createResult(ResultSet set, Set skipCols, PyObject metaData) throws SQLException {
 
-		int descriptionLength = description.__len__();
+		int descriptionLength = metaData.__len__();
 		PyObject[] row = new PyObject[descriptionLength];
 
 		for (int i = 0; i < descriptionLength; i++) {
 			if ((skipCols != null) && skipCols.contains(new Integer(i + 1))) {
 				row[i] = Py.None;
 			} else {
-				int type = ((PyInteger)description.__getitem__(i).__getitem__(1)).getValue();
+				int type = ((PyInteger)metaData.__getitem__(i).__getitem__(1)).getValue();
 
 				row[i] = this.cursor.getDataHandler().getPyObject(set, i + 1, type);
 			}
@@ -441,7 +387,9 @@ abstract public class Fetch {
 
 		this.cursor.addWarning(set.getWarnings());
 
-		return new PyTuple(row);
+		PyTuple tuple = new PyTuple(row);
+
+		return tuple;
 	}
 
 	/**
@@ -476,6 +424,9 @@ class StaticFetch extends Fetch {
 	/** Field results */
 	protected List results;
 
+	/** Field descriptions */
+	protected List descriptions;
+
 	/**
 	 * Construct a static fetch.  The entire result set is iterated as it
 	 * is added and the result set is immediately closed.
@@ -485,6 +436,7 @@ class StaticFetch extends Fetch {
 		super(cursor);
 
 		this.results = new LinkedList();
+		this.descriptions = new LinkedList();
 		this.counter = -1;
 	}
 
@@ -507,19 +459,19 @@ class StaticFetch extends Fetch {
 	 */
 	public void add(ResultSet resultSet, Set skipCols) {
 
-		PyObject result = Py.None;
-
 		try {
 			if ((resultSet != null) && (resultSet.getMetaData() != null)) {
-				if (this.description == Py.None) {
-					this.createDescription(resultSet.getMetaData());
-				}
-
-				result = this.createResults(resultSet, skipCols);
+				PyObject metadata = this.createDescription(resultSet.getMetaData());
+				PyObject result = this.createResults(resultSet, skipCols, metadata);
 
 				this.results.add(result);
+				this.descriptions.add(metadata);
 
+				// we want the rowcount of the first result set
 				this.rowcount = ((PyObject)this.results.get(0)).__len__();
+
+				// we want the description of the first result set
+				this.description = ((PyObject)this.descriptions.get(0));
 			}
 		} catch (PyException e) {
 			throw e;
@@ -533,6 +485,36 @@ class StaticFetch extends Fetch {
 	}
 
 	/**
+	 * Method add
+	 *
+	 * @param CallableStatement callableStatement
+	 * @param Procedure procedure
+	 * @param PyObject params
+	 *
+	 */
+	public void add(CallableStatement callableStatement, Procedure procedure, PyObject params) {
+
+		try {
+			PyObject result = this.createResults(callableStatement, procedure, params);
+
+			if (result != Py.None) {
+				this.results.add(result);
+				this.descriptions.add(this.createDescription(procedure));
+
+				// we want the description of the first result set
+				this.description = ((PyObject)this.descriptions.get(0));
+
+				// we want the rowcount of the first result set
+				this.rowcount = ((PyObject)this.results.get(0)).__len__();
+			}
+		} catch (PyException e) {
+			throw e;
+		} catch (Exception e) {
+			throw zxJDBC.newError(e);
+		}
+	}
+
+	/**
 	 * Fetch all (remaining) rows of a query result, returning them as a sequence
 	 * of sequences (e.g. a list of tuples). Note that the cursor's arraysize attribute
 	 * can affect the performance of this operation.
@@ -542,7 +524,7 @@ class StaticFetch extends Fetch {
 	 *
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
-	public PyObject doFetchall() {
+	public PyObject fetchall() {
 		return fetchmany(this.rowcount);
 	}
 
@@ -567,7 +549,7 @@ class StaticFetch extends Fetch {
 	 *
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
-	public PyObject doFetchmany(int size) {
+	public PyObject fetchmany(int size) {
 
 		PyObject res = Py.None, current = Py.None;
 
@@ -596,14 +578,16 @@ class StaticFetch extends Fetch {
 	 *
 	 * @return true if more sets exist, else None
 	 */
-	public PyObject doNextset() {
+	public PyObject nextset() {
 
 		PyObject next = Py.None;
 
 		if ((results != null) && (results.size() > 1)) {
 			this.results.remove(0);
+			this.descriptions.remove(0);
 
 			next = (PyObject)this.results.get(0);
+			this.description = (PyObject)this.descriptions.get(0);
 			this.rowcount = next.__len__();
 			this.counter = -1;
 		}
@@ -614,7 +598,7 @@ class StaticFetch extends Fetch {
 	/**
 	 * Remove the results.
 	 */
-	public void doClose() throws SQLException {
+	public void close() throws SQLException {
 
 		this.counter = -1;
 
@@ -671,7 +655,7 @@ class DynamicFetch extends Fetch {
 		try {
 			if ((resultSet != null) && (resultSet.getMetaData() != null)) {
 				if (this.description == Py.None) {
-					this.createDescription(resultSet.getMetaData());
+					this.description = this.createDescription(resultSet.getMetaData());
 				}
 
 				this.resultSet = resultSet;
@@ -685,16 +669,28 @@ class DynamicFetch extends Fetch {
 	}
 
 	/**
+	 * Method add
+	 *
+	 * @param CallableStatement callableStatement
+	 * @param Procedure procedure
+	 * @param PyObject params
+	 *
+	 */
+	public void add(CallableStatement callableStatement, Procedure procedure, PyObject params) {
+		return;
+	}
+
+	/**
 	 * Iterate the remaining contents of the ResultSet and return.
 	 */
-	public PyObject doFetchall() {
+	public PyObject fetchall() {
 		return fetch(0, true);
 	}
 
 	/**
 	 * Iterate up to size rows remaining in the ResultSet and return.
 	 */
-	public PyObject doFetchmany(int size) {
+	public PyObject fetchmany(int size) {
 		return fetch(size, false);
 	}
 
@@ -716,7 +712,7 @@ class DynamicFetch extends Fetch {
 			all = (size < 0) ? true : all;
 
 			while (((size-- > 0) || all) && this.resultSet.next()) {
-				PyTuple tuple = createResult(this.resultSet, this.skipCols);
+				PyTuple tuple = createResult(this.resultSet, this.skipCols, this.description);
 
 				res.append(tuple);
 
@@ -735,14 +731,14 @@ class DynamicFetch extends Fetch {
 	/**
 	 * Always returns None.
 	 */
-	public PyObject doNextset() {
+	public PyObject nextset() {
 		return Py.None;
 	}
 
 	/**
 	 * Close the underlying ResultSet.
 	 */
-	public void doClose() throws SQLException {
+	public void close() throws SQLException {
 
 		if (this.resultSet == null) {
 			return;

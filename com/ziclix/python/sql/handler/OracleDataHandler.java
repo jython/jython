@@ -131,4 +131,34 @@ public class OracleDataHandler extends FilterDataHandler {
 
 		return (set.wasNull() ? Py.None : obj);
 	}
+
+	/**
+	 * Called when a stored procedure or function is executed and OUT parameters
+	 * need to be registered with the statement.
+	 *
+	 * @param CallableStatement statement
+	 * @param int index the JDBC offset column number
+	 * @param int colType the column as from DatabaseMetaData (eg, procedureColumnOut)
+	 * @param int dataType the JDBC datatype from Types
+	 * @param String dataTypeName the JDBC datatype name
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	public void registerOut(CallableStatement statement, int index, int colType, int dataType, String dataTypeName) throws SQLException {
+
+		if (dataType == Types.OTHER) {
+			if ("REF CURSOR".equals(dataTypeName)) {
+				statement.registerOutParameter(index, OracleTypes.CURSOR);
+
+				return;
+			} else if ("PL/SQL RECORD".equals(dataTypeName)) {
+				statement.registerOutParameter(index, OracleTypes.CURSOR);
+
+				return;
+			}
+		}
+
+		super.registerOut(statement, index, colType, dataType, dataTypeName);
+	}
 }

@@ -5,55 +5,47 @@
 #
 # Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
 
-import sys
-from zxtest import zxJDBCTest
-from com.ziclix.python.sql import Procedure
+from zxtest import zxCoreTestCase
 
-class SPTest(zxJDBCTest):
-	"""
-	These tests are very specific to Oracle.  Eventually support for other engines will
-	be available.
-	"""
+class OracleSPTest(zxCoreTestCase):
 
 	def setUp(self):
-		zxJDBCTest.setUp(self)
+		zxCoreTestCase.setUp(self)
 
 		c = self.cursor()
 
 		try:
 			try:
-				c.execute("drop table plsqltest")
+				c.execute("drop table sptest")
 			except:
 				self.db.rollback()
 			try:
-				c.execute("create table plsqltest (x char(20))")
-				c.execute("create or replace procedure procnone is begin insert into plsqltest values ('testing'); end;")
-				c.execute("create or replace procedure procin (y in char) is begin insert into plsqltest values (y); end;")
-				c.execute("create or replace procedure procout (y out char) is begin y := 'tested'; end;")
-				c.execute("create or replace procedure procinout (y out varchar, z in varchar) is begin insert into plsqltest values (z); y := 'tested'; end;")
-				c.execute("create or replace function funcnone return char is begin return 'tested'; end;")
-				c.execute("create or replace function funcin (y char) return char is begin return y || y; end;")
-				c.execute("create or replace function funcout (y out char) return char is begin y := 'tested'; return 'returned'; end;")
-				c.execute("create or replace function raisesal (name char, raise number) return number is begin return raise + 100000; end;")
+				c.execute("create table sptest (x varchar2(20))")
+				c.execute("create or replace procedure procnone is begin insert into sptest values ('testing'); end;")
+				c.execute("create or replace procedure procin (y in varchar2) is begin insert into sptest values (y); end;")
+				c.execute("create or replace procedure procout (y out varchar2) is begin y := 'tested'; end;")
+				c.execute("create or replace procedure procinout (y out varchar2, z in varchar2) is begin insert into sptest values (z); y := 'tested'; end;")
+				c.execute("create or replace function funcnone return varchar2 is begin return 'tested'; end;")
+				c.execute("create or replace function funcin (y varchar2) return varchar2 is begin return y || y; end;")
+				c.execute("create or replace function funcout (y out varchar2) return varchar2 is begin y := 'tested'; return 'returned'; end;")
 				self.db.commit()
 			except:
 				self.db.rollback()
-				fail("procedure creation failed")
+				self.fail("procedure creation failed")
 
 			self.proc_errors("PROC")
 			self.proc_errors("FUNC")
-			self.proc_errors("RAISESAL")
 
 		finally:
 			c.close()
 
 	def tearDown(self):
-		zxJDBCTest.tearDown(self)
+		zxCoreTestCase.tearDown(self)
 
 	def proc_errors(self, name):
 		c = self.cursor()
 		try:
-			c.execute("select * from user_errors where name like '%s%%'" % (name))
+			c.execute("select * from user_errors where name like '%s%%'" % (name.upper()))
 			errors = c.fetchall()
 			try:
 				assert errors is None, "found errors"
@@ -64,12 +56,54 @@ class SPTest(zxJDBCTest):
 		finally:
 			c.close()
 
+	def testCursor(self):
+		c = self.cursor()
+		try:
+
+			c.execute("insert into sptest values ('a')")
+			c.execute("insert into sptest values ('b')")
+			c.execute("insert into sptest values ('c')")
+			c.execute("insert into sptest values ('d')")
+			c.execute("insert into sptest values ('e')")
+
+			c.execute("""
+				CREATE OR REPLACE PACKAGE types
+				AS
+					TYPE ref_cursor IS REF CURSOR;
+				END;
+			""")
+
+			c.execute("""
+				CREATE OR REPLACE FUNCTION funccur(v_x IN VARCHAR)
+					RETURN types.ref_cursor
+				AS
+					funccur_cursor types.ref_cursor;
+				BEGIN
+					OPEN funccur_cursor FOR
+						SELECT x FROM sptest WHERE x < v_x;
+					RETURN funccur_cursor;
+				END;
+			""")
+
+			self.proc_errors("funccur")
+
+			c.callproc("funccur", ("z",))
+			data = c.fetchall()
+			self.assertEquals(5, len(data))
+			c.callproc("funccur", ("c",))
+			data = c.fetchall()
+			self.assertEquals(2, len(data))
+
+		finally:
+			c.close()
+
 	def testProcin(self):
 		c = self.cursor()
 		try:
-			c.callproc("procin", ("testProcin",))
+			params = ["testProcin"]
+			c.callproc("procin", params)
 			self.assertEquals(None, c.fetchall())
-			c.execute("select * from plsqltest")
+			c.execute("select * from sptest")
 			self.assertEquals(1, len(c.fetchall()))
 		finally:
 			c.close()
@@ -77,10 +111,14 @@ class SPTest(zxJDBCTest):
 	def testProcinout(self):
 		c = self.cursor()
 		try:
-			c.callproc("procinout", ("testing",))
+			params = [None, "testing"]
+			c.callproc("procinout", params)
 			data = c.fetchone()
-			assert data is not None, "data was None"
-			self.assertEquals("tested", data[0])
+			assert data is None, "data was not None"
+			c.execute("select * from sptest")
+			data = c.fetchone()
+			self.assertEquals("testing", data[0])
+			self.assertEquals("tested", params[0])
 		finally:
 			c.close()
 
@@ -98,7 +136,21 @@ class SPTest(zxJDBCTest):
 	def testFuncin(self):
 		c = self.cursor()
 		try:
-			c.callproc("funcin", ("testing",))
+			params = ["testing"]
+			c.callproc("funcin", params)
+			self.assertEquals(1, c.rowcount)
+			data = c.fetchone()
+			assert data is not None, "data was None"
+			self.assertEquals(1, len(data))
+			self.assertEquals("testingtesting", data[0])
+		finally:
+			c.close()
+
+	def testCallingWithKws(self):
+		c = self.cursor()
+		try:
+			params = ["testing"]
+			c.callproc("funcin", params=params)
 			self.assertEquals(1, c.rowcount)
 			data = c.fetchone()
 			assert data is not None, "data was None"
@@ -110,24 +162,77 @@ class SPTest(zxJDBCTest):
 	def testFuncout(self):
 		c = self.cursor()
 		try:
-			c.callproc("funcout")
-			data = c.fetchone()
-			assert data is not None, "data was None"
-			self.assertEquals(2, len(data))
-			self.assertEquals("returned", data[0])
-			self.assertEquals("tested", data[1].strip())
-		finally:
-			c.close()
-
-	def testRaisesalary(self):
-		c = self.cursor()
-		try:
-			c.callproc("raisesal", ("jython developer", 18000))
+			params = [None]
+			c.callproc("funcout", params)
 			data = c.fetchone()
 			assert data is not None, "data was None"
 			self.assertEquals(1, len(data))
-			self.assertEquals(18000 + 100000, data[0])
+			self.assertEquals("returned", data[0])
+			self.assertEquals("tested", params[0].strip())
 		finally:
 			c.close()
 
+	def testMultipleFetch(self):
+		"""testing the second fetch call to a callproc() is None"""
+		c = self.cursor()
+		try:
+			c.callproc("funcnone")
+			data = c.fetchone()
+			assert data is not None, "data was None"
+			data = c.fetchone()
+			assert data is None, "data was not None"
+		finally:
+			c.close()
+
+class SQLServerSPTest(zxCoreTestCase):
+
+	def testProcWithResultSet(self):
+		c = self.cursor()
+		try:
+			c.execute("use ziclix")
+
+			self.assertEquals("ziclix", c.connection.__connection__.getCatalog())
+
+			try:
+				c.execute("drop table sptest")
+			except:
+				pass
+
+			c.execute("create table sptest (a int, b varchar(32))")
+			c.execute("insert into sptest values (1, 'hello')")
+			c.execute("insert into sptest values (2, 'there')")
+			c.execute("insert into sptest values (3, 'goodbye')")
+
+			try:
+				c.execute("drop procedure sp_proctest")
+			except:
+				pass
+
+			c.execute("""
+				create procedure sp_proctest (@A int)
+				as
+				select a, b from sptest where a <= @A
+			""")
+
+			c.callproc(("ziclix", "jython", "sp_proctest"), (2,))
+			data = c.fetchall()
+			self.assertEquals(2, len(data))
+			self.assertEquals(2, len(c.description))
+			assert c.nextset() is not None, "expected an additional result set"
+			data = c.fetchall()
+			self.assertEquals(1, len(data))
+			self.assertEquals(1, len(c.description))
+		finally:
+			c.close()
+
+	def testSalesByCategory(self):
+		c = self.cursor()
+		try:
+			c.execute("use northwind")
+			c.callproc(("northwind", "dbo", "SalesByCategory"), ["Seafood", "1998"])
+			data = c.fetchall()
+			assert data is not None, "no results from SalesByCategory"
+			assert len(data) > 0, "expected numerous results"
+		finally:
+			c.close()
 

@@ -10,6 +10,7 @@
 package com.ziclix.python.sql;
 
 import java.sql.*;
+import java.util.BitSet;
 import org.python.core.*;
 
 /**
@@ -30,6 +31,9 @@ public class Procedure extends Object {
 	/** Field DATA_TYPE */
 	protected static final int DATA_TYPE = 5;
 
+	/** Field DATA_TYPE_NAME */
+	protected static final int DATA_TYPE_NAME = 6;
+
 	/** Field PRECISION */
 	protected static final int PRECISION = 7;
 
@@ -48,11 +52,20 @@ public class Procedure extends Object {
 	/** Field cursor */
 	protected PyCursor cursor;
 
-	/** Field name */
-	protected PyObject name;
-
 	/** Field columns */
 	protected PyObject columns;
+
+	/** Field procedureCatalog */
+	protected PyObject procedureCatalog;
+
+	/** Field procedureSchema */
+	protected PyObject procedureSchema;
+
+	/** Field procedureName */
+	protected PyObject procedureName;
+
+	/** Field inputSet */
+	protected BitSet inputSet;
 
 	/**
 	 * Constructor Procedure
@@ -60,14 +73,37 @@ public class Procedure extends Object {
 	 * @param PyCursor cursor an open cursor
 	 * @param PyObject name a string or tuple representing the name
 	 *
+	 * @throws SQLException
+	 *
 	 */
-	public Procedure(PyCursor cursor, PyObject name) {
+	public Procedure(PyCursor cursor, PyObject name) throws SQLException {
+
 		this.cursor = cursor;
-		this.name = name;
+		this.inputSet = new BitSet();
+
+		if (name instanceof PyString) {
+			this.procedureCatalog = Py.EmptyString;
+			this.procedureSchema = Py.EmptyString;
+			this.procedureName = name;
+		} else if (this.cursor.isSeq(name)) {
+			if (name.__len__() == 3) {
+				this.procedureCatalog = name.__getitem__(0);
+				this.procedureSchema = name.__getitem__(1);
+				this.procedureName = name.__getitem__(2);
+			} else {
+
+				// throw an exception
+			}
+		} else {
+
+			// throw an exception
+		}
+
+		fetchColumns();
 	}
 
 	/**
-	 * Method prepareCall
+	 * Prepares the statement and registers the OUT/INOUT parameters (if any).
 	 *
 	 * @return CallableStatement
 	 *
@@ -81,15 +117,12 @@ public class Procedure extends Object {
 
 		try {
 
-			// fetch the column information
-			fetchColumns();
-
 			// build the full call syntax
-			String sqlString = buildSql();
+			String sqlString = toSql();
 
 			statement = cursor.connection.connection.prepareCall(sqlString);
 
-			// register the OUT parameters
+			// prepare the OUT parameters
 			registerOutParameters(statement);
 		} catch (SQLException e) {
 			if (statement == null) {
@@ -105,55 +138,59 @@ public class Procedure extends Object {
 	}
 
 	/**
-	 * Construct a list of the params in the proper order for the .setXXX methods of
-	 * a PreparedStatement.  In the special case for a CallableStatement, insert
-	 * Procedure.PLACEHOLDER to notify the cursor to skip the slot.
+	 * Prepare the binding dictionary with the correct datatypes.
 	 *
 	 * @param params a non-None list of params
-	 *
-	 * @return PyObject a list of params with Procedure.PLACEHOLDER in index for all
-	 * non IN and INOUT parameters
+	 * @param bindings a dictionary of bindings
 	 *
 	 */
-	public PyObject normalizeParams(PyObject params) {
+	public void normalizeInput(PyObject params, PyObject bindings) throws SQLException {
 
-		if (params == Py.None) {
-			return Py.None;
+		if (this.columns == Py.None) {
+			return;
 		}
 
-		if (columns == Py.None) {
-			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "too many params for input");
-		}
-
-		int j = 0, plen = params.__len__();
-		PyList population = new PyList();
-
-		for (int i = 0, len = columns.__len__(); i < len; i++) {
-			PyObject column = columns.__getitem__(i);
+		// do nothing with params at the moment
+		for (int i = 0, len = this.columns.__len__(), binding = 0; i < len; i++) {
+			PyObject column = this.columns.__getitem__(i);
 			int colType = column.__getitem__(COLUMN_TYPE).__int__().getValue();
 
 			switch (colType) {
 
 				case DatabaseMetaData.procedureColumnIn :
 				case DatabaseMetaData.procedureColumnInOut :
-					if (j + 1 > plen) {
-						throw zxJDBC.makeException(zxJDBC.ProgrammingError, "too few params for input, attempting [" + (j + 1) + "] found [" + plen + "]");
+
+					// bindings are Python-indexed
+					PyInteger key = Py.newInteger(binding++);
+
+					if (bindings.__finditem__(key) == null) {
+						int dataType = column.__getitem__(DATA_TYPE).__int__().getValue();
+						String name = column.__getitem__(NAME).toString();
+
+						bindings.__setitem__(key, Py.newInteger(dataType));
 					}
 
-					population.append(params.__getitem__(j++));
-					break;
-
-				default :
-					population.append(PLACEHOLDER);
+					// inputs are JDBC-indexed
+					this.inputSet.set(i + 1);
 					break;
 			}
 		}
+	}
 
-		if (j != plen) {
-			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "too many params for input");
-		}
-
-		return population;
+	/**
+	 * This method determines whether the param at the specified index is an
+	 * IN or INOUT param for a stored procedure.  This is only configured properly
+	 * AFTER a call to normalizeInput().
+	 *
+	 * @param index JDBC indexed column index (1, 2, ...)
+	 *
+	 * @return true if the column is an input, false otherwise
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	public boolean isInput(int index) throws SQLException {
+		return this.inputSet.get(index);
 	}
 
 	/**
@@ -164,17 +201,18 @@ public class Procedure extends Object {
 	 *
 	 * As of now, all parameters variables are created and no support for named variable
 	 * calling is supported.
+	 *
 	 * @return String
 	 *
 	 */
-	protected String buildSql() throws SQLException {
+	public String toSql() throws SQLException {
 
 		int colParam = 0;
 		int colReturn = 0;
 
-		if (columns != Py.None) {
-			for (int i = 0, len = columns.__len__(); i < len; i++) {
-				PyObject column = columns.__getitem__(i);
+		if (this.columns != Py.None) {
+			for (int i = 0, len = this.columns.__len__(); i < len; i++) {
+				PyObject column = this.columns.__getitem__(i);
 				int colType = column.__getitem__(COLUMN_TYPE).__int__().getValue();
 
 				switch (colType) {
@@ -214,6 +252,8 @@ public class Procedure extends Object {
 			sql.append(Py.newString(",").join(list)).append(" = ");
 		}
 
+		String name = cursor.datahandler.getProcedureName(procedureCatalog, procedureSchema, procedureName);
+
 		sql.append("call ").append(name).append("(");
 
 		if (colParam > 0) {
@@ -230,7 +270,7 @@ public class Procedure extends Object {
 	}
 
 	/**
-	 * Method registerOutParameters
+	 * Registers the OUT/INOUT parameters of the statement.
 	 *
 	 * @param CallableStatement statement
 	 *
@@ -239,21 +279,22 @@ public class Procedure extends Object {
 	 */
 	protected void registerOutParameters(CallableStatement statement) throws SQLException {
 
-		if (columns == Py.None) {
+		if (this.columns == Py.None) {
 			return;
 		}
 
-		for (int i = 0, len = columns.__len__(); i < len; i++) {
-			PyObject column = columns.__getitem__(i);
+		for (int i = 0, len = this.columns.__len__(); i < len; i++) {
+			PyObject column = this.columns.__getitem__(i);
 			int colType = column.__getitem__(COLUMN_TYPE).__int__().getValue();
 			int dataType = column.__getitem__(DATA_TYPE).__int__().getValue();
+			String dataTypeName = column.__getitem__(DATA_TYPE_NAME).toString();
 
 			switch (colType) {
 
 				case DatabaseMetaData.procedureColumnInOut :
 				case DatabaseMetaData.procedureColumnOut :
 				case DatabaseMetaData.procedureColumnReturn :
-					cursor.datahandler.registerOut(statement, i + 1, colType, dataType);
+					cursor.datahandler.registerOut(statement, i + 1, colType, dataType, dataTypeName);
 					break;
 			}
 		}
@@ -272,7 +313,7 @@ public class Procedure extends Object {
 		try {
 			pec.datahandler = this.cursor.datahandler;
 
-			pec.procedurecolumns(Py.newString(""), Py.newString(""), name, Py.None);
+			pec.procedurecolumns(procedureCatalog, procedureSchema, procedureName, Py.None);
 
 			this.columns = pec.fetchall();
 		} finally {

@@ -54,6 +54,27 @@ public class DataHandler {
 	}
 
 	/**
+	 * Method getProcedureName
+	 *
+	 * @param PyObject catalog
+	 * @param PyObject schema
+	 * @param PyObject name
+	 *
+	 * @return String
+	 *
+	 */
+	public String getProcedureName(PyObject catalog, PyObject schema, PyObject name) {
+
+		StringBuffer procName = new StringBuffer();
+
+		if ((catalog != Py.EmptyString) && (catalog != Py.None)) {
+			procName.append(catalog.toString()).append(".");
+		}
+
+		return procName.append(name.toString()).toString();
+	}
+
+	/**
 	 * Returns the row id of the last executed statement.
 	 *
 	 * @param Statement stmt
@@ -92,7 +113,22 @@ public class DataHandler {
 	 * @throws SQLException
 	 */
 	public void setJDBCObject(PreparedStatement stmt, int index, PyObject object) throws SQLException {
-		stmt.setObject(index, object.__tojava__(Object.class));
+
+		try {
+			stmt.setObject(index, object.__tojava__(Object.class));
+		} catch (Exception e) {
+			SQLException cause = null, ex = new SQLException("error setting index [" + index + "]");
+
+			if (e instanceof SQLException) {
+				cause = (SQLException)e;
+			} else {
+				cause = new SQLException(e.getMessage());
+			}
+
+			ex.setNextException(cause);
+
+			throw ex;
+		}
 	}
 
 	/**
@@ -219,7 +255,13 @@ public class DataHandler {
 
 			case Types.NUMERIC :
 			case Types.DECIMAL :
-				BigDecimal bd = set.getBigDecimal(col, 10);
+				BigDecimal bd = null;
+
+				try {
+					bd = set.getBigDecimal(col, set.getMetaData().getPrecision(col));
+				} catch (Exception e) {
+					bd = set.getBigDecimal(col, 10);
+				}
 
 				obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
 				break;
@@ -374,12 +416,28 @@ public class DataHandler {
 	 * @param int index the JDBC offset column number
 	 * @param int colType the column as from DatabaseMetaData (eg, procedureColumnOut)
 	 * @param int dataType the JDBC datatype from Types
+	 * @param String dataTypeName the JDBC datatype name
 	 *
 	 * @throws SQLException
 	 *
 	 */
-	public void registerOut(CallableStatement statement, int index, int colType, int dataType) throws SQLException {
-		statement.registerOutParameter(index, dataType);
+	public void registerOut(CallableStatement statement, int index, int colType, int dataType, String dataTypeName) throws SQLException {
+
+		try {
+			statement.registerOutParameter(index, dataType);
+		} catch (Exception e) {
+			SQLException cause = null, ex = new SQLException("error setting index [" + index + "], coltype [" + colType + "], datatype [" + dataType + "], datatypename [" + dataTypeName + "]");
+
+			if (e instanceof SQLException) {
+				cause = (SQLException)e;
+			} else {
+				cause = new SQLException(e.getMessage());
+			}
+
+			ex.setNextException(cause);
+
+			throw ex;
+		}
 	}
 
 	/**

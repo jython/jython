@@ -18,11 +18,11 @@
 				<argument name="pwd" value=""/>
 				<argument name="driver" value="org.postgresql.Driver"/>
 			</factory>
-			<testcase from="zxtest" import="zxCoreTest">
+			<testcase from="zxtest" import="zxAPITestCase">
 				<!-- Returns any empty ResultSet every time. -->
 				<ignore name="testIndexInfo"/>
 			</testcase>
-			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="zxtest" import="BCPTestCase"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 		</test>
 		<!--
@@ -35,10 +35,10 @@
 				<keyword name="password" value=""/>
 				<keyword name="portNumber" value="5432" type="int"/>
 			</factory>
-			<testcase from="zxtest" import="zxCoreTest">
+			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testIndexInfo"/>
 			</testcase>
-			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="zxtest" import="BCPTestCase"/>
 		</test>
 		-->
 		<table ref="texttable" name="c_texttable">
@@ -78,8 +78,8 @@
 				<argument name="pwd" value=""/>
 				<argument name="driver" value="org.gjt.mm.mysql.Driver"/>
 			</factory>
-			<testcase from="zxtest" import="zxCoreTest"/>
-			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="zxtest" import="zxAPITestCase"/>
+			<testcase from="zxtest" import="BCPTestCase"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 		</test>
 		<test name="datasource" os="java">
@@ -91,8 +91,8 @@
 				<keyword name="password" value=""/>
 				<keyword name="port" value="3306" type="int"/>
 			</factory>
-			<testcase from="zxtest" import="zxCoreTest"/>
-			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="zxtest" import="zxAPITestCase"/>
+			<testcase from="zxtest" import="BCPTestCase"/>
 		</test>
 		<!--
 		<test name="lookup" os="java">
@@ -100,8 +100,8 @@
 				<argument name="jndiName" value="/jdbc/mysqldb"/>
 				<keyword name="INITIAL_CONTEXT_FACTORY" value="com.sun.jndi.fscontext.RefFSContextFactory"/>
 			</factory>
-			<testcase from="zxtest" import="zxCoreTest"/>
-			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="zxtest" import="zxAPITestCase"/>
+			<testcase from="zxtest" import="BCPTestCase"/>
 		</test>
 		-->
 		<table ref="texttable" name="c_texttable">
@@ -138,12 +138,12 @@
 				<argument name="pwd" value="jython"/>
 				<argument name="driver" value="oracle.jdbc.driver.OracleDriver"/>
 			</factory>
-			<testcase from="zxtest" import="zxCoreTest">
+			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testRowid"/>
 			</testcase>
-			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="zxtest" import="BCPTestCase"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
-			<testcase from="sptest" import="SPTest"/>
+			<testcase from="sptest" import="OracleSPTest"/>
 		</test>
 		<!--
 		<test name="datasource" os="java">
@@ -153,10 +153,11 @@
 				<keyword name="user" value="jython"/>
 				<keyword name="password" value="jython"/>
 			</factory>
-			<testcase from="zxtest" import="zxCoreTest">
+			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testRowid"/>
 			</testcase>
-			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="zxtest" import="BCPTestCase"/>
+			<testcase from="sptest" import="OracleSPTest"/>
 		</test>
 		-->
 		<table ref="texttable" name="c_texttable">
@@ -184,6 +185,65 @@
 			create table b_clobtable (a int, b clob)
 		</table>
 	</vendor>
+	<vendor name="microsoft"
+		datahandler="com.ziclix.python.sql.handler.SQLServerDataHandler">
+		<test name="opta driver" os="java">
+			<factory class="com.ziclix.python.sql.zxJDBC" method="connect">
+				<argument name="url" value="jdbc:inetdae7:localhost:1433?database=ziclix"/>
+				<argument name="usr" value="jython"/>
+				<argument name="pwd" value="jython"/>
+				<argument name="driver" value="com.inet.tds.TdsDriver"/>
+			</factory>
+			<!--
+			<testcase from="zxtest" import="zxAPITestCase">
+				<ignore name="testRowid"/>
+			</testcase>
+			<testcase from="dbextstest" import="dbextsTestCase">
+				<ignore name="testBulkcopy"/>
+				<ignore name="testBulkcopyWithDynamicColumns"/>
+			</testcase>
+			-->
+			<testcase from="sptest" import="SQLServerSPTest"/>
+		</test>
+		<test name="microsoft driver" os="java">
+			<factory class="com.ziclix.python.sql.zxJDBC" method="connect">
+				<argument name="url" value="jdbc:microsoft:sqlserver://localhost:1433"/>
+				<argument name="usr" value="jython"/>
+				<argument name="pwd" value="jython"/>
+				<argument name="driver" value="com.microsoft.jdbc.sqlserver.SQLServerDriver"/>
+			</factory>
+			<!--
+			<testcase from="zxtest" import="zxAPITestCase">
+				<ignore name="testRowid"/>
+			</testcase>
+			<testcase from="zxtest" import="BCPTestCase"/>
+			<testcase from="dbextstest" import="dbextsTestCase"/>
+			<testcase from="sptest" import="SQLServerSPTest"/>
+			-->
+		</test>
+		<table ref="texttable" name="c_texttable">
+			create table c_texttable (a int not null, primary key(a), b text not null)
+		</table>
+		<table ref="floattable" name="c_floattable">
+			create table c_floattable (a int, b numeric(5,2))
+		</table>
+		<table ref="datetable" name="c_datetable">
+			create table c_datetable (a int, b datetime)
+		</table>
+		<table ref="timetable" name="c_timetable">
+			create table c_timetable (a int, b datetime)
+		</table>
+		<table ref="timestamptable" name="c_timestamptable">
+			create table c_timestamptable (a int, b datetime)
+		</table>
+		<table ref="blobtable" name="b_blobtable">
+			create table b_blobtable (a int, b blob)
+		</table>
+		<table ref="pktable" name="b_pktable">
+			create table b_pktable (a int not null, b int, primary key(a))
+		</table>
+	</vendor>
+	<!--
 	<vendor name="cloudscape"
 		datahandler="com.ziclix.python.sql.JDBC20DataHandler">
 		<test name="driver" os="java">
@@ -193,10 +253,10 @@
 				<argument name="pwd" value=""/>
 				<argument name="driver" value="COM.cloudscape.core.JDBCDriver"/>
 			</factory>
-			<testcase from="zxtest" import="zxCoreTest">
+			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testRowid"/>
 			</testcase>
-			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="zxtest" import="BCPTestCase"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 		</test>
 		<table ref="texttable" name="c_texttable">
@@ -220,8 +280,6 @@
 		<table ref="pktable" name="b_pktable">
 			create table b_pktable (a int not null, b int, primary key(a))
 		</table>
-		<table ref="autoincrementtable" name="aitable">
-			create table aitable (a int with default autoincrement not null, b int, primary key(a))
-		</table>
 	</vendor>
+	-->
 </tests>

@@ -205,7 +205,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("execute", new CursorFunc("execute", 5, 1, 4, "execute the sql expression"));
 		dict.__setitem__("setinputsizes", new CursorFunc("setinputsizes", 6, 1, "not implemented"));
 		dict.__setitem__("setoutputsize", new CursorFunc("setoutputsize", 7, 1, 2, "not implemented"));
-		dict.__setitem__("callproc", new CursorFunc("callproc", 8, 1, 2, "executes a stored procedure"));
+		dict.__setitem__("callproc", new CursorFunc("callproc", 8, 1, 4, "executes a stored procedure"));
 		dict.__setitem__("executemany", new CursorFunc("executemany", 9, 1, 3, "execute sql with the parameter list"));
 
 		// hide from python
@@ -317,7 +317,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * The procedure may also provide a result set as output. This must then be made available
 	 * through the standard fetchXXX() methods.
 	 */
-	public void callproc(PyObject name, PyObject params, PyObject bindings, PyObject maxRows) {
+	public void callproc(PyObject name, final PyObject params, PyObject bindings, PyObject maxRows) {
 
 		clear();
 
@@ -328,6 +328,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 				}
 
 				final Procedure procedure = new Procedure(this, name);
+				PyDictionary callableBindings = new PyDictionary();
 
 				this.sqlStatement = procedure.prepareCall();
 
@@ -335,17 +336,29 @@ public class PyCursor extends PyObject implements ClassDictInit {
 					this.sqlStatement.setMaxRows(maxRows.__int__().getValue());
 				}
 
-				params = procedure.normalizeParams(params);
+				// get the bindings per the stored proc spec
+				procedure.normalizeInput(params, callableBindings);
 
-				prepare(params, bindings);
+				// overwrite with any user specific bindings
+				if (bindings instanceof PyDictionary) {
+					callableBindings.update((PyDictionary)bindings);
+				}
+
+				// prepare the statement
+				prepare(params, callableBindings, procedure);
+
+				// call the procedure
 				execute(new ExecuteSQL() {
 
 					public void executeSQL() throws SQLException {
 
 						final CallableStatement callableStatement = (CallableStatement)sqlStatement;
 
-						callableStatement.execute();
-						fetch.add(callableStatement, procedure);
+						if (callableStatement.execute()) {
+							fetch.add(callableStatement.getResultSet());
+						}
+
+						fetch.add(callableStatement, procedure, params);
 					}
 				});
 			} else {
@@ -430,11 +443,11 @@ public class PyCursor extends PyObject implements ClassDictInit {
 					for (int i = 0, len = params.__len__(); i < len; i++) {
 						PyObject param = params.__getitem__(i);
 
-						prepare(param, bindings);
+						prepare(param, bindings, null);
 						execute(esql);
 					}
 				} else {
-					prepare(params, bindings);
+					prepare(params, bindings, null);
 					execute(esql);
 				}
 			} else {
@@ -458,7 +471,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Performs the execution
+	 * Execute the current sql statement.  Some generic functionality such
+	 * as updating the rowid and updatecount occur as well.
 	 *
 	 * @param ExecuteSQL execute
 	 *
@@ -484,11 +498,12 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * @param PyObject params a non-None seq of sequences or entities
 	 * @param PyObject bindings an optional dictionary of index:DBApiType mappings
+	 * @param Procedure procedure
 	 *
 	 * @throws SQLException
 	 *
 	 */
-	protected void prepare(PyObject params, PyObject bindings) throws SQLException {
+	protected void prepare(PyObject params, final PyObject bindings, final Procedure procedure) throws SQLException {
 
 		if (params == Py.None) {
 			return;
@@ -496,36 +511,47 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 		// [3, 4] or (3, 4)
 		final PreparedStatement preparedStatement = (PreparedStatement)this.sqlStatement;
+		int columns = 0, column = 0, index = params.__len__();
 
-		// clear the statement so all new bindings take affect
-		preparedStatement.clearParameters();
+		if (procedure == null) {
+			columns = params.__len__();
 
-		for (int i = 0, len = params.__len__(); i < len; i++) {
-			PyObject param = params.__getitem__(i);
+			// clear the statement so all new bindings take affect only if not a callproc
+			// this is because Procedure already registered the OUT parameters and we
+			// don't want to lose those
+			preparedStatement.clearParameters();
+		} else {
+			columns = (procedure.columns == Py.None) ? 0 : procedure.columns.__len__();
+		}
 
-			if (param == Procedure.PLACEHOLDER) {
+		// count backwards through all the columns
+		while (columns-- > 0) {
+			column = columns + 1;
+
+			if ((procedure != null) && (!procedure.isInput(column))) {
 				continue;
 			}
 
+			// working from right to left
+			PyObject param = params.__getitem__(--index);
+
 			if (bindings != Py.None) {
-				PyObject binding = bindings.__finditem__(Py.newInteger(i));
+				PyObject binding = bindings.__finditem__(Py.newInteger(index));
 
 				if (binding != null) {
-					int bindingValue = 0;
-
 					try {
-						bindingValue = binding.__int__().getValue();
+						int bindingValue = binding.__int__().getValue();
+
+						this.datahandler.setJDBCObject(preparedStatement, column, param, bindingValue);
 					} catch (PyException e) {
 						throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("bindingValue"));
 					}
-
-					this.datahandler.setJDBCObject(preparedStatement, i + 1, param, bindingValue);
 
 					continue;
 				}
 			}
 
-			this.datahandler.setJDBCObject(preparedStatement, i + 1, param);
+			this.datahandler.setJDBCObject(preparedStatement, column, param);
 		}
 
 		return;
