@@ -1,5 +1,8 @@
 import sys
-sys.path.append('c:\\jpython\\cpd\\jpython\\scripts')
+import os
+dir = os.path.dirname(sys.argv[0])
+scriptsdir = os.path.normpath(os.path.join(dir, os.pardir, 'scripts'))
+sys.path.append(scriptsdir)
 from test_support import *
 
 print_test('Bug Fixes', 0)
@@ -19,17 +22,17 @@ print_test('java.io.IOExceptions are mangled into IOErrors #5')
 
 from java import io, lang
 try:
-	io.FileInputStream("doesnotexist")
-	raise TestFailed
+    io.FileInputStream("doesnotexist")
+    raise TestFailed
 except io.FileNotFoundException:
-	pass
-	
+    pass
+
 try:
-	io.FileInputStream("doesnotexist")
-	raise TestFailed
+    io.FileInputStream("doesnotexist")
+    raise TestFailed
 except IOError:
-	pass
-	
+    pass
+
 
 print_test('java.util.Vector\'s can\'t be used in for loops #7')
 
@@ -42,7 +45,7 @@ vec.addElement(100)
 
 sum = 0
 for x in vec:
-	sum = sum+x
+    sum = sum+x
 assert sum == 111
 
 print_test('Exception tuple contains nulls #8')
@@ -62,10 +65,11 @@ print_test('sys.exit can only be called with an integer argument #13')
 
 import sys
 try:
-	sys.exit("goodbye")
+    sys.exit("goodbye")
 except SystemExit, exc:
-	assert exc == "goodbye"
-	
+    # exc is an instance now
+    assert str(exc) == "goodbye"
+
 print_test('"%012d" % -4 displays "0000000000-4" #15')
 
 assert "%012d" % -4 == "-00000000004"
@@ -80,23 +84,27 @@ print_test('Java exception thrown for non-keyword argument following keyword #20
 def foo(x,y=10): pass
 
 try:
-	exec("foo(y=20, 30)")
-	raise TestFailed
+    exec("foo(y=20, 30)")
+    raise TestFailed
 except SyntaxError:
-	pass
-	
+    pass
+
 print_test('Java field names which conflict with Python reserved words are not renamed #23')
 
-assert hasattr(lang.System, 'in_')
+# In JPython 1.1, the registry entry python.deprecated.keywordMangling sets
+# whether trailing underscore is still used to `escape' Python keywords when
+# used as attributes.  This is current set to true, but will eventually be
+# turned to false.
+assert hasattr(lang.System, 'in_') or hasattr(lang.System, 'in')
 
 print_test('Bad input to __import__ raises a Java exception #27')
 
 try:
-	__import__("")
-	raise TestFailed
-except ImportError:
-	pass
-	
+    __import__("")
+    raise TestFailed
+except ValueError:
+    pass
+
 print_test('xrange implementation is broken for almost any complex case #29')
 
 assert list(xrange(10)[9:1:-1]) == [9, 8, 7, 6, 5, 4, 3, 2]
@@ -106,26 +114,26 @@ print_test('Trying to assign to a method of a Java instance throws a NullPointer
 from java.awt import Button
 b = Button()
 try:
-	b.setLabel = 4
-	raise TestFailed
+    b.setLabel = 4
+    raise TestFailed
 except TypeError:
-	pass
-	
+    pass
+
 
 print_test('From 1.0.1 to 1.0.2', 1)
 print_test('Recursive assignment to list slices handled incorrectly #1', 2)
 
 from java.lang import Thread
 
- class TestThread(Thread):
-         def run(self):
-                 for i in range(1000):
-                         exec("x=2+2")
-                 print 'finished'
+class TestThread(Thread):
+    def run(self):
+	for i in range(1000):
+	    exec("x=2+2")
+	print 'finished'
 
- testers = []
- for i in range(10):
-         testers.append(TestThread())
+testers = []
+for i in range(10):
+    testers.append(TestThread())
 
- for tester in testers:
-         tester.start()
+for tester in testers:
+    tester.start()
