@@ -654,8 +654,8 @@ class FilledArray(Expression):
 
 
 class NewArray(Expression):
-    def __init__(self, type, dimensions):
-        self.type = type
+    def __init__(self, mytype, dimensions):
+        self.type = mytype
         if type(dimensions) == type(0):
             dimensions = [dimensions]
         self.dimensions = dimensions
