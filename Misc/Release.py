@@ -249,16 +249,18 @@ def do_build(tagname):
     trans = string.maketrans('', '')
     tagname = string.translate(tagname, trans, '.')
     print 'tagname:', tagname
-    # make non-ORO distro
-    os.rename('export/LICENSE-ORO.txt', 'LICENSE.txt')
+    # make full distribution
+    os.system('cp jpython.jar export')
+    os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
+    os.rename('JPython'+tagname+'.class', 'JPythonORO'+tagname+'.class')
+    # make non-ORO distribution
+    os.unlink('export/LICENSE.txt')
+    os.unlink('export/jpython.jar')
     os.system('cp jpython-only.jar export/jpython.jar')
+    os.system('cp nondist/LICENSE-ORO.txt export/LICENSE.txt')
     os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
     os.rename('JPython'+tagname+'.class', 'JPythonONLY'+tagname+'.class')
-    # make full distribution
-    os.rename('LICENSE.txt', 'export/LICENSE.txt')
-    os.unlink('export/jpython.jar')
-    os.system('cp -f jpython.jar export')
-    os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
+    os.rename('JPythonORO'+tagname+'.class', 'JPython'+tagname+'.class')
     
 
 def do_clean():
