@@ -12,11 +12,11 @@
 
 # Uncomment these 3 lines to use the Jikes compiler.  Jikes is a Java
 # compiler available from IBM's alphaWorks.  It is much faster than
-# Sun's javac.  I have tested JPython with Jikes 0.47 on Solaris.  You 
-# may need to change BOOTSTRAPCLASSES to point to your standard Java
-# classes.  Jikes requires you to supply your own standard classes;
-# the one described below comes from Sun's production JDK 1.2 for
-# Solaris.
+# Sun's javac.  You'll need at least Jikes 0.50, whidh I have tested
+# on Solaris.  You may need to change BOOTSTRAPCLASSES to point to
+# your standard Java classes.  Jikes requires you to supply your own
+# standard classes; the one described below comes from Sun's
+# production JDK 1.2 for Solaris.
 #
 # Get Jikes from http://www.alphaWorks.ibm.com/formula/Jikes
 
@@ -71,6 +71,8 @@ CLASSES= $(SOURCES:%.java=%.class)
 .PHONY: all clean realclean
 
 all: $(CLASSES)
+
+install: all
 
 clean::
 	-rm *.class
