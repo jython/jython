@@ -236,9 +236,10 @@ def prep_distro(tagname):
         unlink_ex(os.path.join(freezedir, file))
     rmdir_ex(freezedir)
     unlink_ex('export/Tools/mkjava.py')
-    # get rid of the experiments subtree
+    # get rid of the experimental stuff
     rmdirhier('export/experiments')
     rmdirhier('export/tests')
+    rmdirhier('export/Tools/peekaboo')
     unlink_ex('export/jpython.bat')
     unlink_ex('export/jpython.isj')
     unlink_ex('export/mkisj.bat')
