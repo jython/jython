@@ -44,6 +44,10 @@ altsep = None
 pathsep = java.io.File.pathSeparator
 defpath = '.'
 linesep = java.lang.System.getProperty('line.separator')
+if sep=='.':
+    extsep = '/'
+else:
+    extsep = '.'
 
 def _exit(n=0):
     java.lang.System.exit(n)
