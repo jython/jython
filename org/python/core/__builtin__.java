@@ -7,6 +7,14 @@ import java.util.Hashtable;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet
 {
+    public BuiltinFunctions(String name, int index, int argcount) {
+        super(name, index, argcount, argcount, false, null);
+    }
+
+    public BuiltinFunctions(String name, int index, int minargs, int maxargs) {
+        super(name, index, minargs, maxargs, false, null);
+    }
+
     public PyObject __call__() {
         switch (index) {
         case 4:
@@ -79,17 +87,15 @@ public class __builtin__ implements InitModule
         // Hopefully add -O option in the future to change this
         dict.__setitem__("__debug__", Py.One);
 
-        dict.__setitem__("chr", new BuiltinFunctions().init("chr", 0, 1));
-        dict.__setitem__("range",
-                         new BuiltinFunctions().init("range", 2, 1, 3));
-        dict.__setitem__("len", new BuiltinFunctions().init("len", 1, 1));
-        dict.__setitem__("ord", new BuiltinFunctions().init("ord", 3, 1));
-        dict.__setitem__("globals",
-                         new BuiltinFunctions().init("globals", 4, 0) );
-        dict.__setitem__("hash", new BuiltinFunctions().init("hash", 5, 1));
-        dict.__setitem__("cmp", new BuiltinFunctions().init("cmp", 6, 2));
-        dict.__setitem__("list", new BuiltinFunctions().init("list", 7, 1));
-        dict.__setitem__("tuple", new BuiltinFunctions().init("tuple", 8, 1));
+        dict.__setitem__("chr", new BuiltinFunctions("chr", 0, 1));
+        dict.__setitem__("len", new BuiltinFunctions("len", 1, 1));
+        dict.__setitem__("range", new BuiltinFunctions("range", 2, 1, 3));
+        dict.__setitem__("ord", new BuiltinFunctions("ord", 3, 1));
+        dict.__setitem__("globals", new BuiltinFunctions("globals", 4, 0));
+        dict.__setitem__("hash", new BuiltinFunctions("hash", 5, 1));
+        dict.__setitem__("cmp", new BuiltinFunctions("cmp", 6, 2));
+        dict.__setitem__("list", new BuiltinFunctions("list", 7, 1));
+        dict.__setitem__("tuple", new BuiltinFunctions("tuple", 8, 1));
     } 
 
     public static PyObject abs(PyObject o) {
