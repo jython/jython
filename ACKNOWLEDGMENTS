@@ -15,6 +15,7 @@ Copyright © Corporation for National Research Initiatives
     fixes and these important modules:
 
         cPickle.java
+        cStringIO.java
         struct.java
         binascii.java
 
