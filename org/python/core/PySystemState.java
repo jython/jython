@@ -358,10 +358,11 @@ public class PySystemState extends PyObject
         //Thread.currentThread().dumpStack();
 
         if (initialized) {
-            if (postProperties != null) {
-                Py.writeError("systemState",
-                              "trying to reinitialize with new properties");
-            }
+            //if (postProperties != null) {
+            //    Py.writeError("systemState",
+            //                  "trying to reinitialize with new " +
+            //                  "properties");
+            //}
             return;
         }
         initialized = true;
