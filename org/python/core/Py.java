@@ -576,7 +576,9 @@ public final class Py
                 catch(SecurityException e) {
                     secEnv=true;
                 }
-                return classLoader.loadClass(name);
+                if (classLoader != null) {
+                    return classLoader.loadClass(name);
+                }
             }
 
             return Class.forName(name);
@@ -613,9 +615,11 @@ public final class Py
                 catch(SecurityException e) {
                     secEnv=true;
                 }
-                writeDebug("import", "trying " + name + " as " + reason +
+                if (classLoader != null) {
+                    writeDebug("import", "trying " + name + " as " + reason +
                            " in syspath loader");
-                return classLoader.loadClass(name);
+                    return classLoader.loadClass(name);
+                }
             }
 
             writeDebug("import", "trying " + name + " as " + reason +
