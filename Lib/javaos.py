@@ -3,7 +3,7 @@ from java.io import File
 import javapath
 path = javapath
 
-error = 'os.error'
+error = OSError
 
 name = 'java' # descriminate based on JDK version?
 curdir = '.'
@@ -27,37 +27,39 @@ def getcwd():
 def listdir(path):
     l = File(path).list()
     if l is None:
-	raise error, 'No such directory'
+	raise OSError(0, 'No such directory', path)
     return list(l)
 
 def mkdir(path):
     if not File(path).mkdir():
-	raise error, "couldn't make directory"
+	raise OSError(0, "couldn't make directory", path)
 
 def makedirs(path):
     if not File(path).mkdirs():
-	raise error, "couldn't make directories"
+	raise OSError(0, "couldn't make directories", path)
 
 def remove(path):
     if not File(path).delete():
-	raise error, "couldn't delete file"
+	raise OSError(0, "couldn't delete file", path)
 
 def rename(path, newpath):
     if not File(path).renameTo(File(newpath)):
-	raise error, "couldn't rename file"
+	raise OSError(0, "couldn't rename file", path)
 
 def rmdir(path):
     if not File(path).delete():
-	raise error, "couldn't delete directory"
+	raise OSError(0, "couldn't delete directory", path)
 
 unlink = remove
 
 def stat(path):
     """The Java stat implementation only returns a small subset of
     the standard fields"""
-
-    file = java.io.File(path)
-    mtime = file.lastModified()
-    size = file.length()
-
-    return (0,0,0,0,0,0, size, mtime, mtime, 0)
+    f = File(path)
+    size = f.length()
+    # Sadly, if the returned length is zero, we don't really know if the file
+    # is zero sized or does not exist.
+    if size == 0 and not f.exists():
+        raise OSError(0, 'No such file or directory', path)
+    mtime = f.lastModified()
+    return (0, 0, 0, 0, 0, 0, size, mtime, mtime, 0)
