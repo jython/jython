@@ -389,18 +389,25 @@ public class PyObject implements java.io.Serializable {
         return ret;
     }
         
-    public PyObject __getslice__(PyObject start, PyObject stop, PyObject step)
+    public PyObject __getslice__(PyObject s_start, PyObject s_stop,
+                                 PyObject s_step)
     {
-        throw Py.AttributeError("__getslice__");
+        PySlice s = new PySlice(s_start, s_stop, s_step);
+        return __getitem__(s);
     }
     
-    public void __setslice__(PyObject start, PyObject stop, PyObject step,
-                             PyObject value)
+    public void __setslice__(PyObject s_start, PyObject s_stop,
+                             PyObject s_step, PyObject value)
     {
-        throw Py.AttributeError("__setslice__");
+        PySlice s = new PySlice(s_start, s_stop, s_step);
+        __setitem__(s, value);
     }
-    public void __delslice__(PyObject start, PyObject stop, PyObject step) {
-        throw Py.AttributeError("__delslice__");
+    
+    public void __delslice__(PyObject s_start, PyObject s_stop,
+                             PyObject s_step)
+    {
+        PySlice s = new PySlice(s_start, s_stop, s_step);
+        __delitem__(s);
     }
 
     public PyObject __getslice__(PyObject start, PyObject stop) {
@@ -680,6 +687,8 @@ public class PyObject implements java.io.Serializable {
     public boolean _dodel(PyObject container) {
         return false;
     }
+
+    public void _setClass(PyObject myclass) {}
 
     /* Numeric coercion */
     /**
