@@ -440,6 +440,11 @@ public class PySystemState extends PyObject
             cachedir = null;
             return;
         }
+        String skip = props.getProperty("python.cachedir.skip", "false");
+        if (skip.equalsIgnoreCase("true")) {
+            cachedir = null;
+            return;
+        }
         cachedir = new File(props.getProperty("python.cachedir", "cachedir"));
         if (!cachedir.isAbsolute()) {
             cachedir = new File(PySystemState.prefix, cachedir.getPath());
