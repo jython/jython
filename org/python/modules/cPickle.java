@@ -1,17 +1,28 @@
 /*
-  This module is contributed by Finn Bock, bckfnn@pipmail.dknet.dk
-  
-  It has been slightly modified to fit more cleanly into the distribution
-*/
+ * Copyright 1998 Finn Bock.
+ * Permission to use, copy and distribute this software is hereby granted, 
+ * provided that the above copyright notice appear in all copies and that 
+ * both that copyright notice and this permission notice appear.
+ * 
+ * No Warranty
+ * The software is provided "as is" without warranty of any kind.
+ * 
+ * If you have questions regarding this software, contact:
+ *    Finn Bock, bckfnn@pipmail.dknet.dk
+ * 
+ * This program contains material copyrighted by:
+ * Copyright © 1991-1995 by Stichting Mathematisch Centrum, Amsterdam, 
+ * The Netherlands. 
+ */
 
-package org.python.modules;
+//package org.python.modules;
 
 import java.util.*;
 
 import org.python.core.*;
 
 /**
- *
+ * 
  * From the python documentation:
  * <p>
  * The <tt>cPickle.java</tt> module implements a basic but powerful algorithm for
@@ -30,38 +41,38 @@ import org.python.core.*;
  * <tt>shelve</tt> provides a simple interface to pickle and unpickle
  * objects on ``dbm''-style database files.
  * <P>
- * <b>Note:</b> The <tt>cPickle.java</tt> have the same interface as the
+ * <b>Note:</b> The <tt>cPickle.java</tt> have the same interface as the 
  * standard module <tt>pickle</tt>except that <tt>Pickler</tt> and
  * <tt>Unpickler</tt> are factory functions, not classes (so they cannot be
  * used as base classes for inheritance).
  * This limitation is similar for the original cPickle.c version.
- *
+ * 
  * <P>
  * Unlike the built-in module <tt>marshal</tt>, <tt>cPickle.java</tt> handles
  * the following correctly:
  * <P>
- *
+ * 
  * <UL><LI>recursive objects (objects containing references to themselves)
- *
+ * 
  * <P>
- *
+ * 
  * <LI>object sharing (references to the same object in different places)
- *
+ * 
  * <P>
- *
+ * 
  * <LI>user-defined classes and their instances
- *
+ * 
  * <P>
- *
+ * 
  * </UL>
- *
+ * 
  * <P>
  * The data format used by <tt>cPickle.java</tt> is Python-specific.  This has
  * the advantage that there are no restrictions imposed by external
  * standards such as XDR (which can't represent pointer sharing); however
  * it means that non-Python programs may not be able to reconstruct
  * pickled Python objects.
- *
+ * 
  * <P>
  * By default, the <tt>cPickle.java</tt> data format uses a printable ASCII
  * representation.  This is slightly more voluminous than a binary
@@ -69,7 +80,7 @@ import org.python.core.*;
  * some other characteristics of <tt>cPickle.java</tt>'s representation) is that
  * for debugging or recovery purposes it is possible for a human to read
  * the pickled file with a standard text editor.
- *
+ * 
  * <P>
  * A binary format, which is slightly more efficient, can be chosen by
  * specifying a nonzero (true) value for the <i>bin</i> argument to the
@@ -77,7 +88,7 @@ import org.python.core.*;
  * functions.  The binary format is not the default because of backwards
  * compatibility with the Python 1.4 pickle module.  In a future version,
  * the default may change to binary.
- *
+ * 
  * <P>
  * The <tt>cPickle.java</tt> module doesn't handle code objects.
  * <P>
@@ -90,16 +101,16 @@ import org.python.core.*;
  * <tt>persistent_load()</tt>.  To write references to persistent objects,
  * the persistent module must define a method <tt>persistent_id()</tt> which
  * returns either <tt>None</tt> or the persistent ID of the object.
- *
+ * 
  * <P>
  * There are some restrictions on the pickling of class instances.
- *
+ * 
  * <P>
  * First of all, the class must be defined at the top level in a module.
  * Furthermore, all its instance variables must be picklable.
- *
+ * 
  * <P>
- *
+ * 
  * <P>
  * When a pickled class instance is unpickled, its <tt>__init__()</tt> method
  * is normally <i>not</i> invoked.  <b>Note:</b> This is a deviation
@@ -107,7 +118,7 @@ import org.python.core.*;
  * Python 1.5b2.  The reason for the change is that in many cases it is
  * desirable to have a constructor that requires arguments; it is a
  * (minor) nuisance to have to provide a <tt>__getinitargs__()</tt> method.
- *
+ * 
  * <P>
  * If it is desirable that the <tt>__init__()</tt> method be called on
  * unpickling, a class can define a method <tt>__getinitargs__()</tt>,
@@ -139,59 +150,59 @@ import org.python.core.*;
  * will see many versions of a class, it may be worthwhile to put a version
  * number in the objects so that suitable conversions can be made by the
  * class's <tt>__setstate__()</tt> method.
- *
+ * 
  * <P>
  * When a class itself is pickled, only its name is pickled -- the class
  * definition is not pickled, but re-imported by the unpickling process.
  * Therefore, the restriction that the class must be defined at the top
  * level in a module applies to pickled classes as well.
- *
+ * 
  * <P>
- *
+ * 
  * <P>
  * The interface can be summarized as follows.
- *
+ * 
  * <P>
  * To pickle an object <tt>x</tt> onto a file <tt>f</tt>, open for writing:
- *
+ * 
  * <P>
  * <dl><dd><pre>
  * p = pickle.Pickler(f)
  * p.dump(x)
  * </pre></dl>
- *
+ * 
  * <P>
  * A shorthand for this is:
- *
+ * 
  * <P>
  * <dl><dd><pre>
  * pickle.dump(x, f)
  * </pre></dl>
- *
+ * 
  * <P>
  * To unpickle an object <tt>x</tt> from a file <tt>f</tt>, open for reading:
- *
+ * 
  * <P>
  * <dl><dd><pre>
  * u = pickle.Unpickler(f)
  * x = u.load()
  * </pre></dl>
- *
+ * 
  * <P>
  * A shorthand is:
- *
+ * 
  * <P>
  * <dl><dd><pre>
  * x = pickle.load(f)
  * </pre></dl>
- *
+ * 
  * <P>
  * The <tt>Pickler</tt> class only calls the method <tt>f.write()</tt> with a
  * string argument.  The <tt>Unpickler</tt> calls the methods <tt>f.read()</tt>
  * (with an integer argument) and <tt>f.readline()</tt> (without argument),
  * both returning a string.  It is explicitly allowed to pass non-file
  * objects here, as long as they have the right methods.
- *
+ * 
  * <P>
  * The constructor for the <tt>Pickler</tt> class has an optional second
  * argument, <i>bin</i>.  If this is present and nonzero, the binary
@@ -199,42 +210,42 @@ import org.python.core.*;
  * but backwards compatible) text pickle format is used.  The
  * <tt>Unpickler</tt> class does not have an argument to distinguish
  * between binary and text pickle formats; it accepts either format.
- *
+ * 
  * <P>
  * The following types can be pickled:
- *
+ * 
  * <UL><LI><tt>None</tt>
- *
+ * 
  * <P>
- *
+ * 
  * <LI>integers, long integers, floating point numbers
- *
+ * 
  * <P>
- *
+ * 
  * <LI>strings
- *
+ * 
  * <P>
- *
+ * 
  * <LI>tuples, lists and dictionaries containing only picklable objects
- *
+ * 
  * <P>
- *
+ * 
  * <LI>classes that are defined at the top level in a module
- *
+ * 
  * <P>
- *
+ * 
  * <LI>instances of such classes whose <tt>__dict__</tt> or
  * <tt>__setstate__()</tt> is picklable
- *
+ * 
  * <P>
- *
+ * 
  * </UL>
- *
+ * 
  * <P>
  * Attempts to pickle unpicklable objects will raise the
  * <tt>PicklingError</tt> exception; when this happens, an unspecified
  * number of bytes may have been written to the file.
- *
+ * 
  * <P>
  * It is possible to make multiple calls to the <tt>dump()</tt> method of
  * the same <tt>Pickler</tt> instance.  These must then be matched to the
@@ -250,11 +261,11 @@ import org.python.core.*;
  * (There are two problems here: (a) detecting changes, and (b)
  * marshalling a minimal set of changes.  I have no answers.  Garbage
  * Collection may also become a problem here.)
- *
+ * 
  * <P>
  * Apart from the <tt>Pickler</tt> and <tt>Unpickler</tt> classes, the
  * module defines the following functions, and an exception:
- *
+ * 
  * <P>
  * <dl><dt><b><tt>dump</tt></a></b> (<var>object, file</var><big>[</big><var>, bin</var><big>]</big>)
  * <dd>
@@ -265,14 +276,14 @@ import org.python.core.*;
  * pickle format is used; if it is zero or absent, the (less efficient)
  * text pickle format is used.
  * </dl>
- *
+ * 
  * <P>
  * <dl><dt><b><tt>load</tt></a></b> (<var>file</var>)
  * <dd>
  * Read a pickled object from the open file object <i>file</i>.  This is
  * equivalent to "<tt>Unpickler(<i>file</i>).load()</tt>".
  * </dl>
- *
+ * 
  * <P>
  * <dl><dt><b><tt>dumps</tt></a></b> (<var>object</var><big>[</big><var>, bin</var><big>]</big>)
  * <dd>
@@ -281,27 +292,27 @@ import org.python.core.*;
  * present and nonzero, the binary pickle format is used; if it is zero
  * or absent, the (less efficient) text pickle format is used.
  * </dl>
- *
+ * 
  * <P>
  * <dl><dt><b><tt>loads</tt></a></b> (<var>string</var>)
  * <dd>
  * Read a pickled object from a string instead of a file.  Characters in
  * the string past the pickled object's representation are ignored.
  * </dl>
- *
+ * 
  * <P>
  * <dl><dt><b><a name="l2h-3763"><tt>PicklingError</tt></a></b>
  * <dd>
  * This exception is raised when an unpicklable object is passed to
  * <tt>Pickler.dump()</tt>.
  * </dl>
- *
- *
+ * 
+ * 
  * <p>
- * For the complete documentation on the pickle module, please see the
+ * For the complete documentation on the pickle module, please see the 
  * "Python Library Reference"
  * <p><hr><p>
- *
+ * 
  * The module is based on both original pickle.py and the cPickle.c
  * version, except that all mistakes and errors are my own.
  * <p>
@@ -320,19 +331,19 @@ public class cPickle implements InitModule {
     /**
      * File format version we write.
      */
-    public static final String format_version = "1.3";
+    public static final String format_version = "1.3";  
 
     /**
      * Old format versions we can read.
      */
-    public static final String[] compatible_formats =
+    public static final String[] compatible_formats = 
 		new String[] { "1.0", "1.1", "1.2" };
 
     /**
-     * This exception is raised when an unpicklable object is
-     * passed to Pickler.dump().
+     * This exception is raised when an unpicklable object is 
+     * passed to Pickler.dump(). 
      */
-    public static final PyString PicklingError =
+    public static final PyString PicklingError = 
 		new PyString("pickle.PicklingError");
 
 
@@ -403,7 +414,7 @@ public class cPickle implements InitModule {
     private static PyClass StringType = PyJavaClass.lookup(PyString.class);
     private static PyClass TupleType = PyJavaClass.lookup(PyTuple.class);
     private static PyClass FileType = PyJavaClass.lookup(PyFile.class);
-
+ 
 
     /**
      * Initialization when module is imported.
@@ -429,7 +440,7 @@ public class cPickle implements InitModule {
 
     /**
      * Returns a pickler instance.
-     * @param file	a file-like object, can be a cStringIO.StringIO,
+     * @param file	a file-like object, can be a cStringIO.StringIO, 
      *			a PyFile or any python object which implements a
      * 			<i>write</i> method. The data will be written as text.
      * @returns a new Pickler instance.
@@ -441,8 +452,8 @@ public class cPickle implements InitModule {
 
     /**
      * Returns a pickler instance.
-     * @param file	a file-like object, can be a cStringIO.StringIO,
-     *			a PyFile or any python object which implements a
+     * @param file	a file-like object, can be a cStringIO.StringIO, 
+     *			a PyFile or any python object which implements a 
      *			<i>write</i> method.
      * @param bin	when true, the output will be written as binary data.
      * @returns		a new Pickler instance.
@@ -454,9 +465,9 @@ public class cPickle implements InitModule {
 
     /**
      * Returns a unpickler instance.
-     * @param file	a file-like object, can be a cStringIO.StringIO,
-     *			a PyFile or any python object which implements a
-     *			<i>read</i> and <i>readline</i> method.
+     * @param file	a file-like object, can be a cStringIO.StringIO, 
+     *			a PyFile or any python object which implements a 
+     *			<i>read</i> and <i>readline</i> method. 
      * @returns		a new Unpickler instance.
      */
     public static Unpickler Unpickler(PyObject file) {
@@ -467,7 +478,7 @@ public class cPickle implements InitModule {
     /**
      * Shorthand function which pickles the object on the file.
      * @param object	a data object which should be pickled.
-     * @param file	a file-like object, can be a cStringIO.StringIO,
+     * @param file	a file-like object, can be a cStringIO.StringIO, 
      *			a PyFile or any python object which implements a <i>write</i>
      *			method. The data will be written as text.
      * @returns		a new Unpickler instance.
@@ -479,7 +490,7 @@ public class cPickle implements InitModule {
     /**
      * Shorthand function which pickles the object on the file.
      * @param object	a data object which should be pickled.
-     * @param file	a file-like object, can be a cStringIO.StringIO,
+     * @param file	a file-like object, can be a cStringIO.StringIO, 
      *			a PyFile or any python object which implements a <i>write</i>
      *			method. The data will be written as text.
      * @param bin 	when true, the output will be written as binary data.
@@ -514,11 +525,11 @@ public class cPickle implements InitModule {
 
 
     /**
-     * Shorthand function which unpickles a object from the file and returns
+     * Shorthand function which unpickles a object from the file and returns 
      * the new object.
-     * @param file	a file-like object, can be a cStringIO.StringIO,
-     *			a PyFile or any python object which implements a
-     *			<i>read</i> and <i>readline</i> method.
+     * @param file	a file-like object, can be a cStringIO.StringIO, 
+     *			a PyFile or any python object which implements a 
+     *			<i>read</i> and <i>readline</i> method. 
      * @returns		a new object.
      */
     public static Object load(PyObject file) {
@@ -527,7 +538,7 @@ public class cPickle implements InitModule {
 
 
     /**
-     * Shorthand function which unpickles a object from the string and returns
+     * Shorthand function which unpickles a object from the string and returns 
      * the new object.
      * @param str	a strings which must contain a pciked object representation.
      * @returns		a new object.
@@ -536,16 +547,17 @@ public class cPickle implements InitModule {
 	cStringIO.StringIO file = cStringIO.StringIO(str.toString());
 	return m.new Unpickler(file).load();
     }
-
+    
 
 
     // Factory for creating IOFile representation.
     private static IOFile createIOFile(PyObject file) {
-	if (file.__class__.__name__.equals("cStringIO$StringIO"))
-	    return m.new cStringIOFile(file);
+	Object f = file.__tojava__(cStringIO.StringIO.class);
+	if (f != Py.NoConversion)
+	    return m.new cStringIOFile((cStringIO.StringIO)file);
 	else if (__builtin__.isinstance(file, FileType))
 	    return m.new FileIOFile(file);
-	else
+	else 
 	    return m.new ObjectIOFile(file);
     }
 
@@ -680,14 +692,14 @@ public class cPickle implements InitModule {
 	private PickleMemo memo = new PickleMemo();
 
 	/**
-	 * To write references to persistent objects, the persistent module
-	 * must assign a method to persistent_id which returns either None
+	 * To write references to persistent objects, the persistent module 
+	 * must assign a method to persistent_id which returns either None 
 	 * or the persistent ID of the object.
 	 * For the benefit of persistency modules written using pickle,
-	 * it supports the notion of a reference to an object outside
+	 * it supports the notion of a reference to an object outside 
 	 * the pickled data stream.
-	 * Such objects are referenced by a name, which is an arbitrary
-	 * string of printable ASCII characters.
+	 * Such objects are referenced by a name, which is an arbitrary 
+	 * string of printable ASCII characters. 
 	 */
 	public PyObject persistent_id = null;
 
@@ -735,7 +747,7 @@ public class cPickle implements InitModule {
 	}
 
 
-	// Save name as in pickle.py but semantics are slightly changed.
+	// Same name as in pickle.py but semantics are slightly changed.
 	private void get(int i) {
 	    if (bin) {
 		if (i < 256) {
@@ -777,7 +789,7 @@ public class cPickle implements InitModule {
 	    PyClass t = __builtin__.type(object);
 
 	    if (t == TupleType && object.__len__() == 0) {
-		if (bin)
+		if (bin) 
 		    save_empty_tuple(object);
 		else
                     save_tuple(object);
@@ -806,7 +818,7 @@ public class cPickle implements InitModule {
 	    if (reduce == null) {
 		reduce = object.__findattr__("__reduce__");
 		if (reduce == null)
-		    throw new PyException(PicklingError,
+		    throw new PyException(PicklingError, 
 			    "can't pickle " + t.__name__ + " objects");
 		tup = reduce.__call__();
 	    } else {
@@ -820,14 +832,14 @@ public class cPickle implements InitModule {
 
 	    if (!(tup instanceof PyTuple)) {
 		throw new PyException(PicklingError,
-			    "Value returned by " + reduce.__repr__() +
+			    "Value returned by " + reduce.__repr__() + 
 			    " must be a tuple");
 	    }
 
 	    int l = tup.__len__();
 	    if (l != 2 && l != 3) {
 		throw new PyException(PicklingError,
-			    "tuple returned by " + reduce.__repr__() +
+			    "tuple returned by " + reduce.__repr__() + 
 			    " must contain only two or three elements");
 	    }
 
@@ -837,7 +849,7 @@ public class cPickle implements InitModule {
 
 	    if (!(arg_tup instanceof PyTuple) && arg_tup != Py.None) {
 		throw new PyException(PicklingError,
-			    "Second element of tupe returned by " + reduce.__repr__() +
+			    "Second element of tupe returned by " + reduce.__repr__() + 
 			    " must be a tuple");
 	    }
 
@@ -1075,14 +1087,14 @@ public class cPickle implements InitModule {
 		PyObject value = object.__finditem__(key);
 		save(key);
 		save(value);
-
+	
 	        if (!using_setitems)
 		     file.write(SETITEM);
 	    }
 	    if (using_setitems)
 		file.write(SETITEMS);
 	}
-
+	
 
 	final private void save_inst(PyInstance object) {
 	    PyClass cls = object.__class__;
@@ -1141,7 +1153,7 @@ public class cPickle implements InitModule {
 		name = object.__findattr__("__name__");
 
 	    PyObject module = object.__findattr__("__module__");
-	    if (module == null || module == Py.None)
+	    if (module == null || module == Py.None) 
 		module = whichmodule(object, name);
 
 	    file.write(GLOBAL);
@@ -1166,7 +1178,7 @@ public class cPickle implements InitModule {
 
 	/**
 	 * Keeps a reference to the object x in the memo.
-	 *
+	 * 
 	 * Because we remember objects by their id, we have
 	 * to assure that possibly temporary objects are kept
 	 * alive by referencing them.
@@ -1212,7 +1224,7 @@ public class cPickle implements InitModule {
 	    PyObject key = keylist.__finditem__(i);
 	    PyObject value = modules.__finditem__(key);
 
-	    if (!key.equals("__main__") &&
+	    if (!key.equals("__main__") && 
 			value.__findattr__(clsname.toString()) == cls) {
 		name = key;
 		break;
@@ -1260,7 +1272,7 @@ public class cPickle implements InitModule {
 	public PickleMemo() {
 	    this(4);
 	}
-
+   
 	public synchronized int size() {
 	    return size;
 	}
@@ -1288,7 +1300,6 @@ public class cPickle implements InitModule {
 	public int findPosition(int key) {
 	    int idx = findIndex(key);
 	    if (idx < 0) return -1;
-	    //System.out.println("findPos: " + idx + " " + key + " " + position[idx]);
 	    return position[idx];
 	}
 
@@ -1390,12 +1401,12 @@ public class cPickle implements InitModule {
 
 	/**
 	 * For the benefit of persistency modules written using pickle,
-	 * it supports the notion of a reference to an object outside
+	 * it supports the notion of a reference to an object outside 
 	 * the pickled data stream.
-	 * Such objects are referenced by a name, which is an arbitrary
-	 * string of printable ASCII characters.
-	 * The resolution of such names is not defined by the pickle module
-	 * -- the persistent object module will have to add a method
+	 * Such objects are referenced by a name, which is an arbitrary 
+	 * string of printable ASCII characters. 
+	 * The resolution of such names is not defined by the pickle module 
+	 * -- the persistent object module will have to add a method 
 	 * persistent_load().
 	 */
 	public PyObject persistent_load = null;
@@ -1421,7 +1432,7 @@ public class cPickle implements InitModule {
 	    while (true) {
 		String s = file.read(1);
 //		System.out.println("load:" + s);
-//		for (int i = 0; i < stackTop; i++)
+//		for (int i = 0; i < stackTop; i++) 
 //		    System.out.println("   " + stack[i]);
 		if (s.length() < 1)
 		    load_eof();
@@ -1465,8 +1476,8 @@ public class cPickle implements InitModule {
 		case SETITEMS:        load_setitems(); break;
 		case BUILD:           load_build(); break;
 		case MARK:            load_mark(); break;
-		case STOP:
-		    return load_stop();
+		case STOP:            
+		    return load_stop(); 
 		}
 	    }
 	}
@@ -1476,7 +1487,7 @@ public class cPickle implements InitModule {
 	    for (int k = stackTop-1; k >= 0; k--)
 		if (stack[k] == mark)
 		    return stackTop-k-1;
-	    throw new PyException(UnpicklingError,
+	    throw new PyException(UnpicklingError, 
 			"Inputstream corrupt, marker not found");
 	}
 
@@ -1513,7 +1524,7 @@ public class cPickle implements InitModule {
 	final private void load_binint() {
 	    String s = file.read(4);
 	    int x = s.charAt(0) |
-		   (s.charAt(1)<<8) |
+		   (s.charAt(1)<<8) | 
 		   (s.charAt(2)<<16) |
 		   (s.charAt(3)<<24);
 	    push(new PyInteger(x));
@@ -1536,7 +1547,7 @@ public class cPickle implements InitModule {
 	    String line = file.readlineNoNl();
 	    push(new PyLong(line.substring(0, line.length()-1)));
 	}
-
+ 
 	final private void load_float() {
 	    String line = file.readlineNoNl();
 	    push(new PyFloat(Double.valueOf(line).doubleValue()));
@@ -1545,7 +1556,7 @@ public class cPickle implements InitModule {
 	final private void load_binfloat() {
 	    String s = file.read(8);
 	    long bits = (long)s.charAt(7) |
-			((long)s.charAt(6) << 8) |
+			((long)s.charAt(6) << 8) | 
 			((long)s.charAt(5) << 16) |
 			((long)s.charAt(4) << 24) |
 			((long)s.charAt(3) << 32) |
@@ -1563,36 +1574,100 @@ public class cPickle implements InitModule {
 	    if (quote != '"' && quote != '\'') { // Evil string!?
 		value = line;
 	    } else {
-		int len = line.length();
-		StringBuffer buf = new StringBuffer(len);
-		for (int i = 1; i < len-1; i++) {
-		    char ch = line.charAt(i);
-		    if (ch == '\\') {
-			i++;
-			ch = line.charAt(i);
-			if (ch == '\\' || ch == quote) buf.append(ch);
-			else {
-			    int val = 0;
-			    for (int j = i; i < j+3 && i < len-1; i++) {
-				val = val * 8 + Character.digit(line.charAt(i), 8);
-			    }
-			    i--;
-			    buf.append((char)val);
-			}
-		    } else {
-			buf.append(ch);
-		    }
-		}
-		value = buf.toString();
+		value = setString(line, 1);
 	    }
 	    push(new PyString(value));
 	}
 
 
+    // Brutally stolen from org.python.parser.SimpleNode.java
+    private String setString(String s, int quotes) {
+        //System.out.println("string: "+s);
+        char quoteChar = s.charAt(0);
+        if (quoteChar == 'r' || quoteChar == 'R') {
+            return s.substring(quotes+1, s.length()-quotes);
+        } else {
+            StringBuffer sb = new StringBuffer(s.length());
+            char[] ca = s.toCharArray();
+            int n = ca.length-quotes;
+            int i=quotes;
+            int last_i=i;
+
+            while (i<n) {
+                if (ca[i] == '\r') {
+                    sb.append(ca, last_i, i-last_i);
+                    sb.append('\n');
+                    i++;
+                    if (ca[i] == '\n') i++;
+                    last_i = i;
+                    continue;
+                }
+                if (ca[i++] != '\\' || i >= n) continue;
+                sb.append(ca, last_i, i-last_i-1);
+                switch(ca[i++]) {
+                case '\r':
+                    if (ca[i] == '\n') i++;
+                case '\n': break;
+                case 'b': sb.append('\b'); break;
+                case 't': sb.append('\t'); break;
+                case 'n': sb.append('\n'); break;
+                case 'f': sb.append('\f'); break;
+                case 'r': sb.append('\r'); break;
+                case '\"':
+                case '\'':
+                    sb.append(ca[i-1]);
+                    break;
+                case '\\': sb.append('\\'); break;
+                //Special Python escapes
+                case 'a': sb.append('\007'); break;
+                case 'v': sb.append('\013'); break;
+
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                    int c = ca[i-1]-'0';
+                    if (i<n && '0' <= ca[i] && ca[i] <= '7') {
+                        c = (c<<3) + (ca[i++] -'0');
+                        if (i<n && '0' <= ca[i] && ca[i] <= '7') {
+                            c = (c<<3) + (ca[i++] -'0');
+                        }
+                    }
+                    sb.append((char)c);
+                    break;
+                case 'x':
+                    if (Character.digit(ca[i], 16) != -1) {
+                        int digit;
+                        char x=0;
+                        while (i<n && (digit = Character.digit(ca[i++], 16)) != -1) {
+                            x = (char)(x*16 + digit);
+                        }
+                        if (i<n) i-=1;
+                        sb.append(x);
+                        break;
+                    }
+                    // If illegal hex digit, just fall through
+                default:
+                    sb.append('\\');
+                    sb.append(ca[i-1]);
+                }
+                last_i = i;
+            }
+            sb.append(ca, last_i, i-last_i);
+            return sb.toString();
+        }
+    }
+
+ 
+
 	final private void load_binstring() {
 	    String d = file.read(4);
 	    int len = d.charAt(0) |
-		     (d.charAt(1)<<8) |
+		     (d.charAt(1)<<8) | 
 		     (d.charAt(2)<<16) |
 		     (d.charAt(3)<<24);
 	    push(new PyString(file.read(len)));
@@ -1645,11 +1720,12 @@ public class cPickle implements InitModule {
 	    push(d);
 	}
 
-
+	    
 	final private void load_inst() {
 	    PyObject[] args = new PyObject[marker()];
 	    pop(args);
 	    pop();
+
 	    String module = file.readlineNoNl();
 	    String name = file.readlineNoNl();
 	    PyObject klass = find_class(module, name);
@@ -1672,7 +1748,7 @@ public class cPickle implements InitModule {
 	    pop();
 
 	    PyObject value = null;
-	    if (args.length == 0 && klass instanceof PyClass &&
+	    if (args.length == 0 && klass instanceof PyClass && 
 			klass.__findattr__("__getinitargs__") == null) {
 		value = new PyInstance((PyClass)klass);
 	    } else {
@@ -1718,9 +1794,18 @@ public class cPickle implements InitModule {
 		// XXX __basicnew__ ?
 		value = callable.__findattr__("__basicnew__").__call__();
 	    } else {
-		value = callable.__call__(arg_tup);
+		value = callable.__call__(make_array(arg_tup));
 	    }
 	    push(value);
+	}
+
+	final private PyObject[] make_array(PyObject seq) {
+	    int n = seq.__len__();
+	    PyObject[] objs= new PyObject[n];
+
+	    for(int i=0; i<n; i++)
+		objs[i] = seq.__finditem__(i);
+	    return objs;
 	}
 
 	final private void load_pop() {
@@ -1748,7 +1833,7 @@ public class cPickle implements InitModule {
 	final private void load_long_binget() {
 	    String d = file.read(4);
 	    int i = d.charAt(0) |
-		   (d.charAt(1)<<8) |
+		   (d.charAt(1)<<8) | 
 		   (d.charAt(2)<<16) |
 		   (d.charAt(3)<<24);
 	    push((PyObject)memo.get(String.valueOf(i)));
@@ -1769,7 +1854,7 @@ public class cPickle implements InitModule {
 	final private void load_long_binput() {
 	    String d = file.read(4);
 	    int i = d.charAt(0) |
-		   (d.charAt(1)<<8) |
+		   (d.charAt(1)<<8) | 
 		   (d.charAt(2)<<16) |
 		   (d.charAt(3)<<24);
 	    memo.put(String.valueOf(i), peek());
@@ -1801,9 +1886,9 @@ public class cPickle implements InitModule {
 	final private void load_setitems() {
 	    int mark = marker();
 	    PyDictionary dict = (PyDictionary)peek(mark+1);
-	    for (int i = mark-1; i >=0; i -= 2) {
-		PyObject key   = peek(i);
-		PyObject value = peek(i+1);
+	    for (int i = 0; i < mark; i += 2) {
+		PyObject key   = peek(i+1);
+		PyObject value = peek(i);
 		dict.__setitem__(key, value);
 	    }
 	    pop(mark+1);
@@ -1846,7 +1931,7 @@ public class cPickle implements InitModule {
 	}
 
 	final private void pop(int count) {
-	    for (int i = 0; i < count; i++)
+	    for (int i = 0; i < count; i++) 
 		stack[--stackTop] = null;
 	}
 

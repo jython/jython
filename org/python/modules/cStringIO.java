@@ -1,9 +1,21 @@
 /*
-  This module is contributed by Finn Bock, bckfnn@pipmail.dknet.dk
-  
-  It has been slightly modified to fit more cleanly into the distribution
-*/
-package org.python.modules;
+ * Copyright 1998 Finn Bock.
+ * Permission to use, copy and distribute this software is hereby granted, 
+ * provided that the above copyright notice appear in all copies and that 
+ * both that copyright notice and this permission notice appear.
+ * 
+ * No Warranty
+ * The software is provided "as is" without warranty of any kind.
+ * 
+ * If you have questions regarding this software, contact:
+ *    Finn Bock, bckfnn@pipmail.dknet.dk
+ * 
+ * This program contains material copyrighted by:
+ * Copyright © 1991-1995 by Stichting Mathematisch Centrum, Amsterdam, 
+ * The Netherlands. 
+ */
+
+//package cPickle14;
 
 import java.io.*;
 import java.util.*;
@@ -11,9 +23,9 @@ import java.util.*;
 import org.python.core.*;
 
 /**
- * This module implements a file-like class, StringIO, that reads and
- * writes a string buffer (also known as memory files).
- * See the description on file objects for operations.
+ * This module implements a file-like class, StringIO, that reads and 
+ * writes a string buffer (also known as memory files). 
+ * See the description on file objects for operations. 
  * @author Finn Bock, bckfnn@pipmail.dknet.dk
  * @version $Id$
  */
@@ -40,7 +52,7 @@ public class cStringIO {
 
     /**
      * The StringIO object
-     * @see cStringIO#StringIO()
+     * @see cStringIO#StringIO()	
      * @see cStringIO#StringIO(String)
      */
     public class StringIO extends PyObject {
@@ -66,7 +78,7 @@ public class cStringIO {
 	}
 
 
-	/**
+	/** 
 	 * Free the memory buffer.
 	 */
 	public void close() {
@@ -78,13 +90,13 @@ public class cStringIO {
 	/**
 	 * Return false.
 	 * @return	false.
-	 */
+	 */ 
 	public boolean isatty() {
 	    return false;
 	}
 
 
-	/**
+	/** 
 	 * Position the file pointer to the absolute position.
 	 * @param	pos the position in the file.
 	 */
@@ -93,7 +105,7 @@ public class cStringIO {
 	}
 
 
-	/**
+	/** 
 	 * Position the file pointer to the position in the .
 	 * @param	pos the position in the file.
 	 * @param	mode; 0=from the start, 1=relative, 2=from the end.
@@ -107,7 +119,7 @@ public class cStringIO {
 	}
 
 
-	/**
+	/** 
 	 * Return the file position.
 	 * @returns	the position in the file.
 	 */
@@ -118,7 +130,7 @@ public class cStringIO {
 
 
 	/**
-	 * Read all data until EOF is reached.
+	 * Read all data until EOF is reached. 
 	 * An empty string is returned when EOF is encountered immediately.
 	 * @returns	A string containing the data.
 	 */
@@ -130,7 +142,7 @@ public class cStringIO {
 	/**
 	 * Read at most size bytes from the file (less if the read hits EOF).
 	 * If the size argument is negative, read all data until EOF is reached.
-	 * An empty string is returned when EOF is encountered immediately.
+	 * An empty string is returned when EOF is encountered immediately. 
 	 * @param size	the number of characters to read.
 	 * @returns	A string containing the data read.
 	 */
@@ -157,10 +169,10 @@ public class cStringIO {
 
 
 	/**
-	 * Read one entire line from the file. A trailing newline character
-         * is kept in the string (but may be absent when a file ends with
-	 * an incomplete line).
-	 * An empty string is returned when EOF is hit immediately.
+	 * Read one entire line from the file. A trailing newline character 
+         * is kept in the string (but may be absent when a file ends with 
+	 * an incomplete line). 
+	 * An empty string is returned when EOF is hit immediately. 
 	 * @returns data from the file up to and including the newline.
 	 */
 	public String readline() {
@@ -169,10 +181,10 @@ public class cStringIO {
 
 
 	/**
-	 * Read one entire line from the file. A trailing newline character
+	 * Read one entire line from the file. A trailing newline character 
 	 * is kept in the string (but may be absent when a file ends with an
-	 * incomplete line).
-	 * If the size argument is non-negative, it is a maximum byte count
+	 * incomplete line). 
+	 * If the size argument is non-negative, it is a maximum byte count 
 	 * (including the trailing newline) and an incomplete line may be returned.
 	 * @returns data from the file up to and including the newline.
 	 */
@@ -203,7 +215,7 @@ public class cStringIO {
 
 
 	/**
-	 * Read until EOF using readline() and return a list containing
+	 * Read until EOF using readline() and return a list containing 
 	 * the lines thus read.
 	 * @return 	a list of the lines.
 	 */
@@ -278,7 +290,7 @@ public class cStringIO {
 
 
 	/**
-	 * Retrieve the entire contents of the ``file'' at any time
+	 * Retrieve the entire contents of the ``file'' at any time 
 	 * before the StringIO object's close() method is called.
 	 * @return	the contents of the StringIO.
 	 */
@@ -287,18 +299,19 @@ public class cStringIO {
 	}
     }
 
+
     private static String[]   strings = new String[256];
     static String getString(char ch) {
         if ((int)ch > 255) {
             return new String(new char[] { ch });
         }
 
-	String s = strings[(int)ch];
+      String s = strings[(int)ch];
 
-	if (s == null) {
-	    s = new String(new char[] { ch });
-	    strings[(int)ch] = s;
-	}
-	return s;
-    }
+      if (s == null) {
+          s = new String(new char[] { ch });
+          strings[(int)ch] = s;
+      }
+      return s;
+   }
 }
