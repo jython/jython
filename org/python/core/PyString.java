@@ -172,6 +172,482 @@ public class PyString extends PySequence {
 		    throw Py.ValueError("invalid literal for __float__: "+string);
 		}
 	}
+	
+	// Add in methods from string module
+    public String lower() {
+        return string.toLowerCase();
+    }
+
+    public String upper() {
+        return string.toUpperCase();
+    }
+
+    public String swapcase() {
+        char[] chars = string.toCharArray();
+        int n=chars.length;
+        for(int i=0; i<n; i++) {
+            char c = chars[i];
+            if (Character.isUpperCase(c)) {
+                chars[i] = Character.toLowerCase(c);
+            } else if (Character.isLowerCase(c)) {
+                chars[i] = Character.toUpperCase(c);
+            }
+        }
+        return new String(chars);
+    }
+
+    public String strip() {
+        char[] chars = string.toCharArray();
+        int n=chars.length;
+        int start=0;
+        while (start < n && Character.isWhitespace(chars[start])) start++;
+
+        int end=n-1;
+        while (end >= 0 && Character.isWhitespace(chars[end])) end--;
+
+        if (end >= start) {
+            return (end < n-1 || start > 0) ? string.substring(start, end+1) : string;
+        } else {
+            return "";
+        }
+    }
+
+    public String lstrip() {
+        char[] chars = string.toCharArray();
+        int n=chars.length;
+        int start=0;
+        while (start < n && Character.isWhitespace(chars[start])) start++;
+
+        return (start > 0) ? string.substring(start, n) : string;
+    }
+
+    public String rstrip() {
+        char[] chars = string.toCharArray();
+        int n=chars.length;
+        int end=n-1;
+        while (end >= 0 && Character.isWhitespace(chars[end])) end--;
+
+        return (end < n-1) ? string.substring(0, end+1) : string;
+    }
+
+
+    public PyList split(String sep) {
+        return split(sep, 0);
+    }
+
+    public PyList split() {
+        return split(null, 0);
+    }
+
+    public PyList split(String sep, int maxsplit) {
+        if (sep != null) return splitfields(sep, maxsplit);
+
+        PyList list = new PyList();
+
+        char[] chars = string.toCharArray();
+        int n=chars.length;
+
+        if (maxsplit <= 0) maxsplit = n;
+
+        int splits=0;
+        int index=0;
+        while (index < n && splits < maxsplit) {
+            while (index < n && Character.isWhitespace(chars[index])) index++;
+            if (index == n) break;
+            int start = index;
+
+            while (index < n && !Character.isWhitespace(chars[index])) index++;
+            list.append(new PyString(string.substring(start, index)));
+            splits++;
+        }
+        if (index < n) {
+            while (index < n && Character.isWhitespace(chars[index])) index++;
+            list.append(new PyString(string.substring(index, n)));
+        }
+        return list;
+    }
+
+    private PyList splitfields(String sep, int maxsplit) {        
+        if (sep.length() == 0) {
+            throw Py.ValueError("empty separator");
+        }
+
+        PyList list = new PyList();
+
+        char[] chars = string.toCharArray();
+        int n=chars.length;
+
+        if (maxsplit <= 0) maxsplit = n;
+
+        int splits=0;
+        int index=0;
+        char firstChar = sep.charAt(0);
+        int nsep = sep.length();
+        int lastbreak;
+        while (index < n && splits < maxsplit) {
+            lastbreak = index;
+            while (index < n) {
+                if (chars[index] == firstChar) {
+                    if (nsep == 1) break;
+                    int j;
+                    for(j=1; j<nsep; j++) {
+                        if (chars[index+j] != sep.charAt(j)) break;
+                    }
+                    if (j == nsep) break;
+                }
+                index++;
+            }
+            list.append(new PyString(string.substring(lastbreak, index)));
+            index += nsep;
+            splits++;
+        }
+        if (index <= n) {
+            list.append(new PyString(string.substring(index, n)));
+        }
+        return list;
+    }
+
+    public int index(String sub) {
+        return index(sub, 0, string.length());
+    }
+
+    public int index(String sub, int start) {
+        return index(sub, start, string.length());
+    }
+
+    public int index(String sub, int start, int end) {
+        int n = string.length();
+
+        if (start < 0) start = n+start;
+        if (end < 0) end = n+end;
+
+        int index;
+        if (end < n) {
+            index = string.substring(start, end).indexOf(sub);
+        } else {
+            index = string.indexOf(sub, start);
+        }
+        if (index == -1) throw Py.ValueError("substring not found in string.index");
+        return index;
+    }
+
+    public int rindex(String sub) {
+        return rindex(sub, 0, string.length());
+    }
+
+    public int rindex(String sub, int start) {
+        return rindex(sub, start, string.length());
+    }
+
+    public int rindex(String sub, int start, int end) {
+        int n = string.length();
+
+        if (start < 0) start = n+start;
+        if (end < 0) end = n+end;
+
+        int index;
+        if (start > 0) {
+            index = string.substring(start, end).lastIndexOf(sub);
+        } else {
+            index = string.lastIndexOf(sub, end);
+        }
+        if (index == -1) throw Py.ValueError("substring not found in string.rindex");
+        return index;
+    }
+
+    public int count(String sub) {
+        return count(sub, 0, string.length());
+    }
+    public int count(String sub, int start) {
+        return count(sub, start, string.length());
+    }
+
+    public int count(String sub, int start, int end) {
+        int n = string.length();
+        if (start < 0) start = n+start;
+        if (end < 0) end = n+end;
+        if (end > n) end = n;
+        if (start > end) start = end;
+
+        int slen = sub.length();
+        //end = end-slen;
+
+        int count=0;
+        while (start < end) {
+            int index = string.indexOf(sub, start);
+            if (index >= end || index == -1) break;
+            count++;
+            start = index+slen;
+        }
+        return count;
+    }
+ 
+    public int find(String sub) {
+        return find(sub, 0, string.length());
+    }
+    
+    public int find(String sub, int start) {
+        return find(sub, start, string.length());
+    }
+    
+    public int find(String sub, int start, int end) {
+        int n = string.length();
+        if (start < 0) start = n+start;
+        if (end < 0) end = n+end;
+        if (end > n) end = n;
+        if (start > end) start = end;
+        int slen = sub.length();
+        end = end-slen;
+
+        int index = string.indexOf(sub, start);
+        if (index > end) return -1;
+        return index;
+    }
+    
+    public int rfind(String sub) {
+        return rfind(sub, 0, string.length());
+    }
+    
+    public int rfind(String sub, int start) {
+        return rfind(sub, start, string.length());
+    }
+    
+    public int rfind(String sub, int start, int end) {
+        int n = string.length();
+        if (start < 0) start = n+start;
+        if (end < 0) end = n+end;
+        if (end > n) end = n;
+        if (start > end) start = end;
+        int slen = sub.length();
+        end = end-slen;
+
+        int index = string.lastIndexOf(sub, end);
+        if (index < start) return -1;
+        return index;
+    }
+
+
+    public double atof() {
+        try {
+            return Double.valueOf(string.trim()).doubleValue();
+        } catch (NumberFormatException exc) {
+            throw Py.ValueError("non-float argument to string.atof");
+        }
+    }
+
+    public int atoi() {
+        return atoi(10);
+    }
+
+    public int atoi(int base) {
+        if ((base != 0 && base < 2) || (base > 36)) {
+            throw Py.ValueError("invalid base for atoi()");
+        }
+        
+        String s = string.trim();
+        boolean neg = false;
+        try {
+            char sign = s.charAt(0);
+            if (sign == '+') {
+                s = s.substring(1,s.length()).trim();
+            }
+            if (base == 0 || base == 16) {
+                if (sign == '-') {
+                    neg = true;
+                    s = s.substring(1, s.length()).trim();
+                }
+                if (s.charAt(0) == '0') {
+                    if (s.charAt(1) == 'x') {
+                        if (base == 0) base = 16;
+                        s = s.substring(2,s.length());
+                    } else {
+                        if (base == 0) base = 8;
+                    }
+                }  
+            }
+            if (base == 0) base = 10;
+        } catch (IndexOutOfBoundsException ex) {
+            throw Py.ValueError("non-integer argument to string.atoi");
+        }
+        
+        try {
+            int value = Integer.valueOf(s, base).intValue();
+            if (neg) return -value;
+            else return value;
+        } catch (NumberFormatException exc) {
+            throw Py.ValueError("non-integer argument to string.atoi");
+        }
+    }
+
+    public PyLong atol() {
+        return atol(10);
+    }
+
+    public PyLong atol(int base) {
+        if ((base != 0 && base < 2) || (base > 36)) {
+            throw Py.ValueError("invalid base for atol()");
+        }
+        
+        String s = string.trim();
+        boolean neg = false;
+        try {
+            char sign = s.charAt(0);
+            if (sign == '+') {
+                s = s.substring(1,s.length()).trim();
+            }
+            if (base == 0 || base == 16) {
+                if (sign == '-') {
+                    neg = true;
+                    s = s.substring(1, s.length()).trim();
+                }
+                if (base == 0) {
+                    char lastChar = s.charAt(s.length()-1);                    
+                    if (lastChar == 'l' || lastChar == 'L') 
+                        s = s.substring(0, s.length()-1);                    
+                }
+                if (s.charAt(0) == '0') {
+                    if (s.charAt(1) == 'x') {
+                        if (base == 0) base = 16;
+                        s = s.substring(2,s.length());
+                    } else {
+                        if (base == 0) base = 8;
+                    }
+                }
+            }
+            if (base == 0) base = 10;
+        } catch (IndexOutOfBoundsException ex) {
+            throw Py.ValueError("non-integer argument to string.atol 1");
+        }
+        try {
+            java.math.BigInteger value = new java.math.BigInteger(s, base);
+            if (neg) return new PyLong(value.negate());
+            else return new PyLong(value);
+        } catch (NumberFormatException exc) {
+            throw Py.ValueError("non-integer argument to string.atol");
+        }
+    }
+
+    private static String spaces(int n) {
+        char[] chars = new char[n];
+        for(int i=0; i<n; i++) chars[i] = ' ';
+        return new String(chars);
+    }
+
+    public String ljust(int width) {
+        int n = width-string.length();
+        if (n <= 0) return string;
+        return string+spaces(n);
+    }
+
+    public String rjust(int width) {
+        int n = width-string.length();
+        if (n <= 0) return string;
+        return spaces(n)+string;
+    }
+
+    public String center(int width) {
+        int n = width-string.length();
+        if (n <= 0) return string;
+        int half = n/2;
+        if (n%2 > 0 &&  width%2 > 0) half += 1;
+        return spaces(half)+string+spaces(n-half);
+    }
+
+    public String zfill(int width) {
+        String s = string;
+        int n = s.length();
+        if (n >= width) return s;
+        char start = s.charAt(0);
+        char[] chars = new char[width];
+        int nzeros = width-n;
+        int i=0;
+        int sStart=0;
+        if (start == '+' || start == '-') {
+            chars[0] = start;
+            i += 1;
+            nzeros++;
+            sStart=1;
+        }
+        for(;i<nzeros; i++) {
+            chars[i] = '0';
+        }
+        s.getChars(sStart, s.length(), chars, i);
+        return new String(chars);
+    }
+
+    public String expandtabs() {
+        return expandtabs(8);
+    }
+    
+    public String expandtabs(int tabsize) {
+        String s = string;
+        StringBuffer buf = new StringBuffer((int)(s.length()*1.5));
+        char[] chars = s.toCharArray();
+        int n = chars.length;
+        int position = 0;
+        
+        for(int i=0; i<n; i++) {
+            char c = chars[i];
+            if (c == '\t') {
+                int spaces = tabsize-position%tabsize;
+                position += spaces;
+                while (spaces-- > 0) {
+                    buf.append(' ');
+                }
+                continue;
+            } 
+            if (c == '\n') {
+                position = -1;
+            }
+            buf.append(c);
+            position++;
+        }
+        return buf.toString();
+    }
+    
+    public String capitalize() {
+        if (string.length() == 0) return string;
+        String first = string.substring(0,1).toUpperCase();
+        return first.concat(string.substring(1,string.length()).toLowerCase());
+    }   
+    
+    public String replace(String oldPiece, String newPiece) {
+        return replace(oldPiece, newPiece, string.length());
+    }
+    
+    public String replace(String oldPiece, String newPiece, int maxsplit) {
+        return joinfields(split(oldPiece, maxsplit), newPiece);
+    }
+    
+    public static String join(PyObject seq) {
+        return join(seq, " ");
+    }
+
+    public static String join(PyObject seq, String sep) {
+        int i=0;
+        StringBuffer buf = new StringBuffer();
+        PyObject obj;
+        boolean addSep=false;
+
+        while ((obj = seq.__finditem__(i++)) != null) {
+            if (addSep) buf.append(sep);
+            buf.append(obj.toString());
+            addSep = true;
+        }
+        return buf.toString();
+    }
+
+    public static String joinfields(PyObject seq) {
+        return join(seq, " ");
+    }
+
+    public static String joinfields(PyObject seq, String sep) {
+        return join(seq, sep);
+    }
+    
+    //public static String zfill(PyObject o, int width) {
+    //    return zfill(o.toString(), width);
+    //}    
 }
 
 final class StringFormatter{
