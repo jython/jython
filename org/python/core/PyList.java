@@ -169,6 +169,7 @@ public class PyList extends PySequence implements InitModule
     protected void del(int i) {
         length = length-1;
         System.arraycopy(list, i+1, list, i, length-i);
+        list[length] = null;
     }
 
     protected void delRange(int start, int stop, int step) {
@@ -176,7 +177,12 @@ public class PyList extends PySequence implements InitModule
             throw Py.ValueError("step size must be 1 for deleting list slice");
                     
         System.arraycopy(list, stop, list, start, length-stop);
-        length = length-(stop-start);
+        int newLength = length-(stop-start);
+        int oldLength = length;
+
+        for(int i = newLength; i < oldLength; i++)
+            list[i] = null;
+        length = newLength;
     }
 
     protected void set(int i, PyObject value) {
@@ -205,6 +211,10 @@ public class PyList extends PySequence implements InitModule
             resize(newLength);
             System.arraycopy(list, stop, list, stop+(newLength-length),
                              length-stop);
+            if (newLength < length) {
+                for (i = newLength; i < length; i++)
+                    list[i] = null;
+            }
         }
 //         else if (newLength < length) {
 //             System.arraycopy(list, stop, list, stop+(newLength-length),
