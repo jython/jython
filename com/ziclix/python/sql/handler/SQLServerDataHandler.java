@@ -14,6 +14,7 @@ import java.sql.*;
 import java.math.*;
 import org.python.core.*;
 import com.ziclix.python.sql.*;
+import com.ziclix.python.sql.procedure.*;
 
 /**
  * SQLServer specific data handling.
@@ -34,6 +35,10 @@ public class SQLServerDataHandler extends FilterDataHandler {
 	 */
 	public SQLServerDataHandler(DataHandler datahandler) {
 		super(datahandler);
+	}
+
+	public Procedure getProcedure(PyCursor cursor, PyObject name) throws SQLException {
+		return new SQLServerProcedure(cursor, name);
 	}
 
 	/**
@@ -62,26 +67,5 @@ public class SQLServerDataHandler extends FilterDataHandler {
 		}
 
 		return (set.wasNull() || (obj == null)) ? Py.None : obj;
-	}
-
-	/**
-	 * Method getProcedureName
-	 *
-	 * @param PyObject catalog
-	 * @param PyObject schema
-	 * @param PyObject name
-	 *
-	 * @return String
-	 *
-	 */
-	public String getProcedureName(PyObject catalog, PyObject schema, PyObject name) {
-
-		StringBuffer procName = new StringBuffer();
-
-		if ((schema != Py.EmptyString) && (schema != Py.None)) {
-			procName.append(schema.toString()).append(".");
-		}
-
-		return procName.append(name.toString()).toString();
 	}
 }

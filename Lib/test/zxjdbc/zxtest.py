@@ -763,16 +763,17 @@ class zxAPITestCase(zxJDBCTestCase):
 		try:
 
 			c.execute("select * from zxtesting", maxrows=3)
-			f = c.fetchall()
-			assert len(f) == 3, "expected length [3], got [%d]" % (len(f))
+			self.assertEquals(3, len(c.fetchall()))
+
+			c.execute("select * from zxtesting where id > ?", (1,), maxrows=3)
+			self.assertEquals(3, len(c.fetchall()))
 
 			c.execute("select count(*) from zxtesting")
 			f = c.fetchall()
 			num = f[0][0]
 
 			c.execute("select * from zxtesting", maxrows=0)
-			f = c.fetchall()
-			assert len(f) == num, "expected length [%d], got [%d]" % (num, len(f))
+			self.assertEquals(num, len(c.fetchall()))
 
 		finally:
 			c.close()

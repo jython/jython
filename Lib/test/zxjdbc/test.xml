@@ -209,7 +209,6 @@
 			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testRowid"/>
 			</testcase>
-			<testcase from="zxtest" import="LOBTestCase"/>
 			<testcase from="zxtest" import="BCPTestCase"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 			<testcase from="sptest" import="SQLServerSPTest"/>

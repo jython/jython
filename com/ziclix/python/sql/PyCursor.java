@@ -460,7 +460,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 					throw zxJDBC.makeException(zxJDBC.NotSupportedError, "sequence of sequences is not supported");
 				}
 
-				final Procedure procedure = new Procedure(this, name);
+				final Procedure procedure = datahandler.getProcedure(this, name);
 				Statement stmt = procedure.prepareCall(this.rsType, this.rsConcur);
 
 				if (maxRows != Py.None) {
@@ -812,13 +812,12 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 	/**
 	 * Method isSeq
 	 *
-	 *
 	 * @param object
 	 *
 	 * @return true for any PyList, PyTuple or java.util.List
 	 *
 	 */
-	protected boolean isSeq(PyObject object) {
+	public static boolean isSeq(PyObject object) {
 
 		if ((object == null) || (object == Py.None)) {
 			return false;
@@ -836,13 +835,12 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 	/**
 	 * Method hasParams
 	 *
-	 *
 	 * @param params
 	 *
 	 * @return boolean
 	 *
 	 */
-	protected boolean hasParams(PyObject params) {
+	public static boolean hasParams(PyObject params) {
 
 		if (Py.None == params) {
 			return false;
@@ -861,13 +859,12 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 	/**
 	 * Method isSeqSeq
 	 *
-	 *
 	 * @param object
 	 *
 	 * @return true is a sequence of sequences
 	 *
 	 */
-	protected boolean isSeqSeq(PyObject object) {
+	public static boolean isSeqSeq(PyObject object) {
 
 		if (isSeq(object) && (object.__len__() > 0)) {
 			for (int i = 0; i < object.__len__(); i++) {

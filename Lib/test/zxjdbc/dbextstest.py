@@ -113,8 +113,10 @@ class dbextsTestCase(runner.SQLTestCase):
 		"""testing query with max rows"""
 
 		self._insertInto("one", 45)
+		self.db.raw("select * from one", maxrows=3)
+		self.assertEquals(3, len(self.db.results))
 		self.db.raw("select * from one where a > ?", [(12,)], maxrows=3)
-		assert len(self.db.results) == 3, "failed to query set number of max rows, got [%d], expected [%d]" % (len(self.db.results), 3)
+		self.assertEquals(3, len(self.db.results))
 
 	def testBulkcopy(self):
 		"""testing bcp"""

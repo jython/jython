@@ -117,7 +117,6 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	/**
 	 * Method classDictInit
 	 *
-	 *
 	 * @param dict
 	 *
 	 */

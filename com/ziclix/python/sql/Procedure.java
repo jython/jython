@@ -81,8 +81,8 @@ public class Procedure extends Object {
 		this.inputSet = new BitSet();
 
 		if (name instanceof PyString) {
-			this.procedureCatalog = Py.EmptyString;
-			this.procedureSchema = Py.EmptyString;
+			this.procedureCatalog = getDefault();
+			this.procedureSchema = getDefault();
 			this.procedureName = name;
 		} else if (this.cursor.isSeq(name)) {
 			if (name.__len__() == 3) {
@@ -274,7 +274,7 @@ public class Procedure extends Object {
 			sql.append(Py.newString(",").join(list)).append(" = ");
 		}
 
-		String name = cursor.datahandler.getProcedureName(procedureCatalog, procedureSchema, procedureName);
+		String name = this.getProcedureName();
 
 		sql.append("call ").append(name).append("(");
 
@@ -323,7 +323,7 @@ public class Procedure extends Object {
 	}
 
 	/**
-	 * Method fetchColumns
+	 * Get the columns for the stored procedure.
 	 *
 	 * @throws SQLException
 	 *
@@ -341,5 +341,32 @@ public class Procedure extends Object {
 		} finally {
 			pec.close();
 		}
+	}
+
+	/**
+	 * The value for a missing schema or catalog.  This value is used to find
+	 * the column names for the procedure.  Not all DBMS use the same default
+	 * value; for instance Oracle uses an empty string and SQLServer a null.
+	 * This implementation returns the empty string.
+	 *
+	 * @return the default value (the empty string)
+	 * @see java.sql.DatabaseMetaData#getProcedureColumns
+	 */
+	protected PyObject getDefault() {
+		return Py.EmptyString;
+	}
+
+	/**
+	 * Construct a procedure name for the relevant schema and catalog information.
+	 */
+	protected String getProcedureName() {
+
+		StringBuffer proc = new StringBuffer();
+
+		if (this.procedureCatalog.__nonzero__()) {
+			proc.append(this.procedureCatalog.toString()).append(".");
+		}
+
+		return proc.append(this.procedureName.toString()).toString();
 	}
 }

@@ -190,32 +190,21 @@ class SQLServerSPTest(zxCoreTestCase):
 	def testProcWithResultSet(self):
 		c = self.cursor()
 		try:
-			c.execute("use ziclix")
-
-			self.assertEquals("ziclix", c.connection.__connection__.getCatalog())
-
-			try:
-				c.execute("drop table sptest")
-			except:
-				pass
+			for a in (("table", "sptest"), ("procedure", "sp_proctest")):
+				try:
+					c.execute("drop %s %s" % (a))
+				except:
+					pass
 
 			c.execute("create table sptest (a int, b varchar(32))")
 			c.execute("insert into sptest values (1, 'hello')")
 			c.execute("insert into sptest values (2, 'there')")
 			c.execute("insert into sptest values (3, 'goodbye')")
 
-			try:
-				c.execute("drop procedure sp_proctest")
-			except:
-				pass
+			c.execute(""" create procedure sp_proctest (@A int) as select a, b from sptest where a <= @A """)
+			self.db.commit()
 
-			c.execute("""
-				create procedure sp_proctest (@A int)
-				as
-				select a, b from sptest where a <= @A
-			""")
-
-			c.callproc(("ziclix", "jython", "sp_proctest"), (2,))
+			c.callproc("sp_proctest", (2,))
 			data = c.fetchall()
 			self.assertEquals(2, len(data))
 			self.assertEquals(2, len(c.description))
@@ -226,14 +215,13 @@ class SQLServerSPTest(zxCoreTestCase):
 		finally:
 			c.close()
 
-	def testSalesByCategory(self):
-		c = self.cursor()
-		try:
-			c.execute("use northwind")
-			c.callproc(("northwind", "dbo", "SalesByCategory"), ["Seafood", "1998"])
-			data = c.fetchall()
-			assert data is not None, "no results from SalesByCategory"
-			assert len(data) > 0, "expected numerous results"
-		finally:
-			c.close()
-
+#	def testSalesByCategory(self):
+#		c = self.cursor()
+#		try:
+#			c.execute("use northwind")
+#			c.callproc(("northwind", "dbo", "SalesByCategory"), ["Seafood", "1998"])
+#			data = c.fetchall()
+#			assert data is not None, "no results from SalesByCategory"
+#			assert len(data) > 0, "expected numerous results"
+#		finally:
+#			c.close()

@@ -53,25 +53,8 @@ public class DataHandler {
 		return ((name == Py.None) ? null : name.__str__().toString());
 	}
 
-	/**
-	 * Method getProcedureName
-	 *
-	 * @param PyObject catalog
-	 * @param PyObject schema
-	 * @param PyObject name
-	 *
-	 * @return String
-	 *
-	 */
-	public String getProcedureName(PyObject catalog, PyObject schema, PyObject name) {
-
-		StringBuffer procName = new StringBuffer();
-
-		if ((catalog != Py.EmptyString) && (catalog != Py.None)) {
-			procName.append(catalog.toString()).append(".");
-		}
-
-		return procName.append(name.toString()).toString();
+	public Procedure getProcedure(PyCursor cursor, PyObject name) throws SQLException {
+		return new Procedure(cursor, name);
 	}
 
 	/**
