@@ -39,7 +39,7 @@ public class PyFrame extends PyObject
         f_builtins = builtins;
         // This needs work to be efficient with multiple interpreter states
         if (locals == null && code != null) {
-            if ((code.co_flags&PyTableCode.CO_OPTIMIZED)!=0) {
+            if ((code.co_flags&PyTableCode.CO_OPTIMIZED)!=0 || code.nargs > 0) { // ! f_fastlocals needed for arg passing too
                 if (code.co_nlocals>0) f_fastlocals = new PyObject[code.co_nlocals-code.xxx_npurecell]; // internal: may change
             } else f_locals = new PyStringMap();
         }
@@ -120,10 +120,7 @@ public class PyFrame extends PyObject
                     PyObject o = f_fastlocals[i];
                     if (o != null) f_locals.__setitem__(f_code.co_varnames[i], o);
                 }
-                /* ?? xxx_
-                // This should turn off fast_locals optimization after somebody
-                // gets the locals dict
-                f_fastlocals = null; */
+                if ((f_code.co_flags&PyTableCode.CO_OPTIMIZED) == 0) f_fastlocals = null;
             }
             int j = 0;
             for (i=0; i<f_ncells; i++,j++) {
