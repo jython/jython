@@ -9,7 +9,7 @@ Java code.  The simplest approach to embedding Jython is to use the
 PythonInterpreter object.</P>
 
 <P>JavaDoc documentation for 
-<A HREF="api/org/python/util/PythonInterpreter.html">
+<A HREF="javadoc/org/python/util/PythonInterpreter.html">
 org.python.util.PythonInterpreter</A>
 <BR>
 The following example is distributed under Demo/embed/SimpleEmbedded.java

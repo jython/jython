@@ -29,8 +29,8 @@ The following documentation is specific to Jython:
 	how to call Jython from a Java application.
 
     <li>The generated JavaDoc documentation of the API is available 
-	as <a href="api/index.html">frame</a>
-        and as <a href="api/overview-summary.html">
+	as <a href="javadoc/index.html">frame</a>
+        and as <a href="javadoc/overview-summary.html">
         non-frame</a> versions.
 
     <li>You might also be interested in <a
