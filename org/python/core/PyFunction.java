@@ -8,6 +8,7 @@ public class PyFunction extends PyObject
     public PyObject func_globals;
     public PyObject[] func_defaults;
     public PyCode func_code;
+    public PyObject __dict__;
 
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code,
                       PyObject doc)
@@ -28,7 +29,7 @@ public class PyFunction extends PyObject
         
     private static final String[] __members__ = {
         "__doc__", "func_doc",
-        "__name__", "func_name",
+        "__name__", "func_name", "__dict__",
         "func_globals", "func_defaults", "func_code"
     };
 
@@ -36,7 +37,10 @@ public class PyFunction extends PyObject
         PyString members[] = new PyString[__members__.length];
         for (int i = 0; i < __members__.length; i++)
             members[i] = new PyString(__members__[i]);
-        return new PyList(members);
+        PyList ret = new PyList(members); 
+        addKeys(ret, "__dict__");
+        ret.sort();
+        return ret;
     }
 
     private void throwReadonly(String name) {
@@ -55,12 +59,39 @@ public class PyFunction extends PyObject
         // not yet implemented:
         // func_code
         // func_defaults
-        else throwReadonly(name);
+        else if (name == "func_defaults")
+            throwReadonly(name);
+        else if (name == "func_code") {
+            if (value instanceof PyCode)
+                func_code = (PyCode) value;
+            else
+                throw Py.TypeError("func_code must be set to a code object");
+        } else if (name == "__dict__" || name == "func_dict") {
+            if (value instanceof PyDictionary || value instanceof PyStringMap)
+                __dict__ = value;
+            else if (value == Py.None) 
+                __dict__ = null;
+            else
+                throw Py.TypeError("func_dict must be set to a dict object");
+        } else {
+            if (__dict__ == null)
+                __dict__ = new PyStringMap();
+            __dict__.__setitem__(name, value);
+        }
     }
 
     public void __delattr__(String name) {
         // TBD: should __doc__ be del'able?
-        throwReadonly(name);
+        if (name == "__dict__" || name == "func_dict") {
+            __dict__ = null;
+            return;
+        } else if (name == "func_defaults") {
+            func_defaults = Py.EmptyObjects;
+            return;
+        }
+        if (__dict__ == null)
+            throw Py.AttributeError(name);
+        __dict__.__delitem__(name);
     }
 
     public boolean isMappingType() { return false; }
@@ -77,6 +108,16 @@ public class PyFunction extends PyObject
             if (func_defaults.length == 0)
                 return Py.None;
             return new PyTuple(func_defaults);
+        }
+        if (name == "__dict__") {
+            if (__dict__ == null)
+                __dict__ = new PyStringMap();
+            return __dict__;
+        }
+        if (__dict__ != null) {
+            PyObject ret = __dict__.__finditem__(name);
+            if (ret != null)
+                return ret;
         }
         return super.__findattr__(name);
     }

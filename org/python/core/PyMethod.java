@@ -33,7 +33,7 @@ public class PyMethod extends PyObject
 
     private static final String[] __members__ = {
         "im_self", "im_func", "im_class",
-        "__doc__", "__name__"
+        "__doc__", "__name__", "__dict__",
     };
 
     // TBD: this should be unnecessary
@@ -41,7 +41,10 @@ public class PyMethod extends PyObject
         PyString members[] = new PyString[__members__.length];
         for (int i = 0; i < __members__.length; i++)
             members[i] = new PyString(__members__[i]);
-        return new PyList(members);
+        PyList ret = new PyList(members);
+        PyObject k = im_func.__getattr__("__dict__").invoke("keys");
+        ret.extend(k);
+        return ret;
     }
 
     private void throwReadonly(String name) {
@@ -51,13 +54,21 @@ public class PyMethod extends PyObject
         throw Py.AttributeError(name);
     }
 
+    public PyObject __findattr__(String name) {
+        PyObject ret = super.__findattr__(name);
+        if (ret != null)
+            return ret;
+        return im_func.__findattr__(name);
+    }
+
     public void __setattr__(String name, PyObject value) {
-        // no writable attributes
-        throwReadonly(name);
+        if (im_self != null)
+            throw Py.TypeError("cannot set attributes through bound methods");
+        im_func.__setattr__(name, value);
     }
 
     public void __delattr__(String name) {
-        throwReadonly(name);
+        im_func.__delattr__(name);
     }
 
     public PyObject _doget(PyObject container) {
@@ -66,6 +77,8 @@ public class PyMethod extends PyObject
 
     public PyObject _doget(PyObject container, PyObject wherefound) {
         /* Only if classes are compatible */
+        if (container == null)
+            return this;
         if (__builtin__.issubclass(container.__class__, (PyClass)im_class))
              if (im_func instanceof PyFunction)
                  return new PyMethod(container, (PyFunction)im_func, im_class);
