@@ -127,7 +127,7 @@ def getOptions():
             sysargs, 'p:j:dcab:A:w:s:C:f:J:h',
             ['package=', 'jar=', 'deep', 'core', 'all', 'bean=',
              'addpackages=', 'workdir=', 'skip=', 'compiler=',
-             'falsenames=', 'compileropts', 'help'])
+             'falsenames=', 'compileropts=', 'help'])
     except getopt.error, msg:
         usage(1, msg)
 
