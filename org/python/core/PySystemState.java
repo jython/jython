@@ -13,14 +13,14 @@ public class PySystemState extends PyObject
     /**
      * The current version of JPython.
      */
-    public static String version = "1.1";
+    public static String version = "2.0 pre-alpha";
 
     /**
      * The copyright notice for this release.
      */
     // TBD: should we use \u00a9 Unicode c-inside-circle?
     public static String copyright =
-    "Copyright (C) 1997-1999 Corporation for National Research Initiatives";
+        "Type \"copyright\", \"credits\" or \"license\" for more information.";
 
     /**
      * The arguments passed to this program on the command line.
