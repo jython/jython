@@ -375,7 +375,24 @@ public class __builtin__ implements InitModule {
 
 
     public static int len(PyObject o) {
-        return o.__len__();
+        try {
+            return o.__len__();
+        }
+        catch (PyException e) {
+            // Make this work like CPython where
+            //
+            // a = 7; len(a) raises a TypeError,
+            // a.__len__() raises an AttributeError
+            // and
+            // class F: pass
+            // f = F(); len(f) also raises an AttributeError
+            //
+            // Testing the type of o feels unclean though
+            if (e.type == Py.AttributeError && !(o instanceof PyInstance))
+                throw Py.TypeError("len() of unsized object");
+            else
+                throw e;
+        }
     }
 
     public static PyList list(PyObject o) {
