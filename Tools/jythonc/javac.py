@@ -33,19 +33,15 @@ def compile(files, javac=None, cpathopt="-classpath", cpath=None, options=[]):
     print args
 
     proc = runtime.exec(args)
-    ev = None
-    errs = ""
-    while ev is None:
-        try:
-            newErrs = dumpStream(proc.errorStream)
-            sys.stderr.write(newErrs)
-            errs = errs+newErrs
-            time.sleep(0.1)
-            ev = proc.exitValue()
-        except java.lang.IllegalThreadStateException:
-            pass
-
-    return proc.exitValue(), dumpStream(proc.inputStream), errs
+    done = None
+    while not done:
+	try:
+	    proc.exitValue()
+	    done = 1
+	except java.lang.IllegalThreadStateException:
+	    pass
+    return (proc.exitValue(), dumpStream(proc.inputStream),
+	    dumpStream(proc.errorStream))
 
 
 if __name__ == '__main__':
