@@ -27,3 +27,6 @@ been broken.
     - The precedence of java loading have changed. Now the sys.path
       is searched for python modules before the CLASSPATH and sys.path
       is searched for java class and java packages.
+
+    - The \x escape have changed, now it will eat two hex characters
+      but never more. The behaviour matches CPython2.0
