@@ -377,6 +377,8 @@ public class PyStringMap extends PyObject {
 	    PyObject[] valueTable = map.values;
 	    int n = keyTable.length;
 	    
+	    if (2*filled+n > keys.length) resize(2*filled+n);
+	    
 	    for(int i=0; i<n; i++) {
 	        String key = keyTable[i];
 	        if (key == null || key == "<deleted key>") continue;
