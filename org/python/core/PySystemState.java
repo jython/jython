@@ -231,6 +231,7 @@ public class PySystemState extends PyObject
         path = (PyList)defaultPath.repeat(1);
 
         meta_path = new PyList();
+        meta_path.append(new PrecompiledImporter());
         meta_path.append(new JavaImporter());
         path_hooks = new PyList();
         path_hooks.append(PyJavaClass.lookup(ZipFileImporter.class));

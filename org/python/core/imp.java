@@ -281,10 +281,7 @@ public class imp
             }
         }
 
-        PyObject ret = loadPrecompiled(moduleName);
-        if (ret != null) return ret;
-
-        ret = loadBuiltin(moduleName);
+        PyObject ret = loadBuiltin(moduleName);
         if (ret != null) return ret;
 
         path = path == null ? sys.path : path;
@@ -311,12 +308,6 @@ public class imp
             ret = loadFromSource(name, moduleName, p);
             if (ret != null) return ret;
         }
-
-//        JavaImporter java = new JavaImporter();
-//        loader = java.find_module(moduleName);
-//        if(loader != Py.None) {
-//            ret = loadFromLoader(loader, moduleName);
-//        }
 
         return ret;
     }
@@ -345,43 +336,6 @@ public class imp
                                          c.getName());
                 }
             }
-        }
-        return null;
-    }
-
-    private static Class findPyClass(String modName) {
-        if (Py.frozenPackage != null) {
-            modName = Py.frozenPackage+"."+modName;
-        }
-        return Py.findClassEx(modName+"$_PyInner", "precompiled");
-    }
-
-    private static PyObject loadPrecompiled(String modName) {
-        if (Py.frozenModules != null) {
-            //System.out.println("precomp: "+name+", "+modName);
-            Class c;
-
-            if (Py.frozenModules.get(modName+".__init__") != null) {
-                //System.err.println("trying: "+modName+".__init__$_PyInner");
-                c = findPyClass(modName+".__init__");
-                if (c == null) return null;
-                Py.writeComment("import", "'" + modName + "' as " +
-                                "precompiled package");
-
-                //System.err.println("found: "+modName+".__init__$_PyInner");
-                PyModule m = addModule(modName);
-                m.__dict__.__setitem__("__path__", new PyList());
-            }
-            else if (Py.frozenModules.get(modName) != null) {
-                c = findPyClass(modName);
-                if (c == null) return null;
-                Py.writeComment("import", "'" + modName + "' as " +
-                                "precompiled module");
-            }
-            else return null;
-
-            //System.err.println("creating: "+modName+", "+c);
-            return createFromClass(modName, c);
         }
         return null;
     }
