@@ -531,6 +531,8 @@ public class PyFile extends PyObject
     }
 
     public PyString read(int n) {
+        if (closed)
+            err_closed();
         StringBuffer data = new StringBuffer();
         try {
             while (n != 0) {
@@ -556,6 +558,8 @@ public class PyFile extends PyObject
     }
 
     public PyString readline(int max) {
+        if (closed)
+            err_closed();
         StringBuffer s = new StringBuffer();
         while (max < 0 || s.length() < max) {
             int c;
@@ -578,6 +582,8 @@ public class PyFile extends PyObject
     }
 
     public PyObject readlines(int sizehint) {
+        if (closed)
+            err_closed();
         PyList list = new PyList();
         int bytesread = 0;
         for (;;) {
@@ -599,6 +605,8 @@ public class PyFile extends PyObject
     }
 
     public void write(String s) {
+        if (closed)
+            err_closed();
         try {                
             file.write(s);
             softspace = false;
@@ -614,6 +622,8 @@ public class PyFile extends PyObject
     }
 
     public long tell() {
+        if (closed)
+            err_closed();
         try {
             return file.tell();
         } catch (java.io.IOException e) {
@@ -622,6 +632,8 @@ public class PyFile extends PyObject
     }
 
     public void seek(long pos, int how) {
+        if (closed)
+            err_closed();
         try {
             file.seek(pos, how);
         } catch (java.io.IOException e) {
@@ -634,6 +646,8 @@ public class PyFile extends PyObject
     }
 
     public void flush() {
+        if (closed)
+            err_closed();
         try {
             file.flush();
         } catch (java.io.IOException e) {
@@ -659,5 +673,9 @@ public class PyFile extends PyObject
 
     public String toString() {
         return "<file " + name + ", mode " + mode + " at " + Py.id(this) + ">";
+    }
+
+    private void err_closed() {
+        throw Py.ValueError("I/O operation on closed file");
     }
 }
