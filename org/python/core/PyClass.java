@@ -112,7 +112,8 @@ public class PyClass extends PyObject {
     }
 	
     protected void findModule(PyObject dict) {
-        if (dict.__finditem__("__module__") == null) {
+	PyObject module = dict.__finditem__("__module__");
+        if (module == null || module == Py.None) {
             //System.out.println("in PyClass getFrame: "+__name__.string);
             PyFrame f = Py.getFrame();
             if (f != null) {
