@@ -119,6 +119,8 @@ public class PackageManager {
         String name = entry.getName();
         //System.err.println("entry: "+name);
         if (!name.endsWith(".class")) return;
+        // Ignore inner classes (at least for now)
+        if (name.indexOf("$") != -1) return;
         char sep = '/';
         int breakPoint = name.lastIndexOf(sep);
         if (breakPoint == -1) {
@@ -203,7 +205,7 @@ public class PackageManager {
             JarEntry jarEntry = (JarEntry)jarfiles.get(canonicalJarfile);
 
             if (jarEntry == null) {
-                Py.writeMessage("packageManager", "new jar found in \""+canonicalJarfile+"\"");
+                Py.writeMessage("packageManager", "processing new jar, \""+canonicalJarfile+"\"");
 
                 jarEntry = new JarEntry(findJarCacheFile(jarfile), 0);
                 jarfiles.put(canonicalJarfile, jarEntry);
@@ -217,7 +219,7 @@ public class PackageManager {
             if (zipPackages == null) {
                 indexModified = true;
                 if (jarEntry.mtime != 0) {
-                    Py.writeMessage("packageManager", "modified jar found in \""+canonicalJarfile+"\"");
+                    Py.writeMessage("packageManager", "processing modified jar, \""+canonicalJarfile+"\"");
                 }
                 jarEntry.mtime = mtime;
 
@@ -252,7 +254,7 @@ public class PackageManager {
         String suffix = "";
         File cachefile = null;
         while (true) {
-            cachefile = new File(cachedir, jname+suffix+".pmc");
+            cachefile = new File(cachedir, jname+suffix+".pkc");
             //System.err.println("try cachefile: "+cachefile);
             if (!cachefile.exists()) break;
             suffix = "$"+index;
@@ -286,6 +288,7 @@ public class PackageManager {
     // Read in cache file storing package info for a single .jar
     // Return null and delete this cachefile if it is invalid
     public static Hashtable readCacheFile(File cachefile, long mtime, String canonicalJarfile) {
+        Py.writeDebug("packageManager", "reading cache, '"+canonicalJarfile+"'");
         try {
             DataInputStream istream = new DataInputStream(
                     new BufferedInputStream(new FileInputStream(cachefile)));
