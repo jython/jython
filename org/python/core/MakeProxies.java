@@ -30,7 +30,7 @@ class MakeProxies
             }
         }
         
-        return new BytecodeLoader(referents).makeClass(name, bytes.toByteArray());
+        return BytecodeLoader.makeClass(name, referents, bytes.toByteArray());
     }
 
     public static Class makeAdapter(Class c) {
