@@ -298,7 +298,7 @@ public class imp
                             " in jar/zip file " + zipArchive);
                 PyModule m = addModule(modName);
 
-                SyspathArchive subArchive = zipArchive.makeSubfolder(modName);
+                SyspathArchive subArchive = zipArchive.makeSubfolder(name);
                 PyList zipPath = new PyList(new PyObject[] { subArchive });
                 m.__dict__.__setitem__("__path__", zipPath);
                 o = loadFromZipFile("__init__", modName, subArchive);
