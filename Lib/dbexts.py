@@ -257,10 +257,13 @@ class dbexts:
 		""" close the connection to the database """
 		self.db.close()
 
-	def begin(self):
+	def begin(self, style=None):
 		""" reset ivars and return a new cursor, possibly binding an auxiliary datahandler """
 		self.headers, self.results = [], []
-		c = self.db.cursor()
+		if style:
+			c = self.db.cursor(style)
+		else:
+			c = self.db.cursor()
 		if __OS__ == 'java':
 			if hasattr(self, 'datahandler'):
 				for dh in self.datahandler:
