@@ -177,3 +177,39 @@ def getuser():
 
 def gethome():
     return System.getProperty("user.home")
+
+
+# normpath() from Python 1.5.2, with Java appropriate generalizations
+
+# Normalize a path, e.g. A//B, A/./B and A/foo/../B all become A/B.
+# It should be understood that this may change the meaning of the path
+# if it contains symbolic links!
+def normpath(path):
+    """Normalize path, eliminating double slashes, etc."""
+    sep = os.sep
+    curdir = os.curdir
+    pardir = os.pardir
+    import string
+    # Treat initial slashes specially
+    slashes = ''
+    while path[:1] == sep:
+        slashes = slashes + sep
+        path = path[1:]
+    comps = string.splitfields(path, sep)
+    i = 0
+    while i < len(comps):
+        if comps[i] == curdir:
+            del comps[i]
+            while i < len(comps) and comps[i] == '':
+                del comps[i]
+        elif comps[i] == pardir and i > 0 and comps[i-1] not in ('', pardir):
+            del comps[i-1:i+1]
+            i = i-1
+        elif comps[i] == '' and i > 0 and comps[i-1] <> '':
+            del comps[i]
+        else:
+            i = i+1
+    # If the path is now empty, substitute '.'
+    if not comps and not slashes:
+        comps.append(curdir)
+    return slashes + string.joinfields(comps, sep)
