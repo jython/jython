@@ -64,7 +64,7 @@ def runJava(cls, **kw):
   else:
     defs = ''
   if UNIX:
-    cmd = "%s/bin/java -classpath %s %s %s" % (cfg.java_home, classpath, defs, cls)
+    cmd = ['/bin/sh', '-c', "%s/bin/java -classpath %s %s %s" % (cfg.java_home, classpath, defs, cls)]
   elif WIN:
     cmd = 'cmd /C "%s/bin/java.exe -classpath %s %s %s"' % (cfg.java_home, classpath, defs, cls)
   p = execCmd(cmd)
@@ -81,9 +81,11 @@ def runJava(cls, **kw):
 
   thread.start_new_thread(StreamReader, (p.inputStream, outstream))
   thread.start_new_thread(StreamReader, (p.errorStream, errstream))
+
   ret = p.waitFor()
   if ret != 0 and not kw.has_key("expectError"):
     raise TestError, "%s failed with %d" % (cmd, ret)
+
   return ret
 
 def runJython(cls, **kw):
