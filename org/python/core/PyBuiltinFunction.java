@@ -77,7 +77,7 @@ public abstract class PyBuiltinFunction extends PyObject implements PyType.Newst
                         minargs + " (" + nargs + " given)");
             } else {
                 if (minargs <= 0)
-                    argsblurb = "at most "+ maxargs + " argumens";
+                    argsblurb = "at most "+ maxargs + " arguments";
                 else
                     argsblurb = minargs + "-" + maxargs + " arguments";
             }
