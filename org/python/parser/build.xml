@@ -3,7 +3,7 @@
     <property name="javaccHome"  value="/usr/local/javacc" />
     
     <target name="pre">
-        <uptodate property="parser.regen.notreq" targetfile="${basedir}/PythonGrammarConstants.java">
+        <uptodate property="parser.regen.notreq" targetfile="${basedir}/PythonGrammar.java">
             <srcfiles dir="${basedir}" includes="python.jjt" />
         </uptodate>
     </target>
