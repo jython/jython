@@ -7,6 +7,11 @@ xx-jun-2001 Jython 2.1 alpha 2
      to integrate Bablok's readline support.
    - Display Hook for Interactive Use (pep-0217)
 
+  Bug fixes.
+   - Fixed obscure __import__ error message #437800
+   - Prevent a NPE during import when running with a security manager
+   - Fix a lost syntax error when auto importing submodules.
+
 14-mar-2001 Jython 2.1 alpha 1
 
   New features.
