@@ -360,7 +360,10 @@ class SrcGenCompiler(Visitor, CompilationContext):
         if fast_locals:
             return s
         if s[:2] == '__' and s[-2:] != '__' and self.className:
-            s = "_%s%s" % (self.className, s)
+            cls = self.className
+            while cls.startswith('_'):
+                cls = cls[1:]
+            s = "_%s%s" % (cls, s)
         return s
         
     def set(self, node, value):

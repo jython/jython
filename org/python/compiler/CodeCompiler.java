@@ -2131,7 +2131,11 @@ public class CodeCompiler extends Visitor
         if (className != null && name.startsWith("__") &&
             !name.endsWith("__"))
         {
-            return "_"+className+name;
+            //remove leading '_' from classname
+            int i = 0;
+            while (className.charAt(i) == '_')
+                i++;
+            return "_"+className.substring(i)+name;
         }
         return name;
     }
