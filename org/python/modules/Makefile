@@ -6,7 +6,7 @@
 # SKIP = MatchObject.class RegexObject.class re.class
 
 include ../../../rules/make.rules
-CLASSPATH = ../../..:$(OROMATCHERROOT)
+CLASSPATH = ../../..$(SEP)$(OROMATCHERROOT)
 
 MD5Module.java: md.class
 
