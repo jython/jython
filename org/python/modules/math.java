@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.modules;
+
 import org.python.core.*;
 import java.lang.Math;
 
@@ -8,8 +10,10 @@ public class math {
 
 
     private static double check(double v) {
-        if (Double.isNaN(v)) throw Py.ValueError("math domain error");
-        if (Double.isInfinite(v)) throw Py.OverflowError("math range error");
+        if (Double.isNaN(v))
+	    throw Py.ValueError("math domain error");
+        if (Double.isInfinite(v))
+	    throw Py.OverflowError("math range error");
         return v;
     }
 
