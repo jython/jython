@@ -67,6 +67,14 @@ public class cStringIO {
         }
 
 
+        public void __setattr__(String name, PyObject value) {
+            if (name == "softspace") {
+                softspace = value.__nonzero__();
+                return;
+            }
+            super.__setattr__(name, value);
+        }
+            
         /**
          * Free the memory buffer.
          */
