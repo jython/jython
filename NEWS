@@ -1,5 +1,10 @@
 Jython NEWS
 
+17-Jan-2001 Jython 2.0 final release
+
+  Bug fixes.
+   - Install the correct image for the local documention.
+  
 15-Jan-2001 Jython 2.0 release candidate 1
 
   New features
