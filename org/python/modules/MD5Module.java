@@ -60,16 +60,8 @@ class MD5Functions extends PyBuiltinFunctionSet
 public class MD5Module implements InitModule 
 {
     public void initModule(PyObject dict) {
-        boolean gotmodule = false;
-        try {
-            Class.forName("org.python.modules.md5");
-            gotmodule = true;
-        }
-	catch (ClassNotFoundException e) {}
-        if (!gotmodule) {
-            throw Py.ImportError("could not import org.python.modules.md5");
-        }
         dict.__setitem__("new", new MD5Functions("new", 0, 0, 1));
         dict.__setitem__("md5", new MD5Functions("md5", 0, 0, 1));
+        dict.__setitem__("initModule", null);
     }
 }
