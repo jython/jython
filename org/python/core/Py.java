@@ -810,7 +810,7 @@ public final class Py {
         ThreadState ts = getThreadState(newSystemState);
         PySystemState oldSystemState = ts.systemState;
         if (oldSystemState != newSystemState) {
-            System.err.println("Warning: changing systemState for same thread!");
+            //System.err.println("Warning: changing systemState for same thread!");
             ts.systemState = newSystemState;
         }
         return oldSystemState;

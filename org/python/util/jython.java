@@ -7,8 +7,9 @@ public class jpython {
     public static void runJar(String jarfile) {
     }
 
-	public static void main(String[] args) {
-	    PythonInterpreter interp = new PythonInterpreter();
+    public static void main(String[] args) {
+	PythonInterpreter interp = new PythonInterpreter();
+	//System.err.println("new interp created");
         PyModule mod = imp.addModule("__main__");
         interp.setLocals(mod.__dict__);
 
@@ -19,34 +20,32 @@ public class jpython {
             System.exit(-1);
         }
 
-		if (opts.filename != null) {
-			String path = new java.io.File(opts.filename).getParent();
-			if (path == null) path = "";
+	if (opts.filename != null) {
+	    String path = new java.io.File(opts.filename).getParent();
+	    if (path == null) path = "";
             Py.getSystemState().path.insert(0, new PyString(path));
             if (opts.jar) {
                 runJar(opts.filename);
-            /*} else if (opts.filename.equals("-")) {
-                try {
-            		PyCode code = Py.compile(System.in, "<stdin>", "exec");
-            		Py.runCode(code, locals, locals);
-            	} catch (Throwable t) {
-            	    Py.printException(t);
-            	}*/
+		/*} else if (opts.filename.equals("-")) {
+		  try {
+		  PyCode code = Py.compile(System.in, "<stdin>", "exec");
+		  Py.runCode(code, locals, locals);
+		  } catch (Throwable t) {
+		  Py.printException(t);
+		  }*/
             } else {
-    			try {
-    				interp.execfile(opts.filename);
-    			} catch (Throwable t) {
-    				Py.printException(t);
-    			}
-    		}
+		try {
+		    interp.execfile(opts.filename);
+		} catch (Throwable t) {
+		    Py.printException(t);
 		}
-
-		if (opts.interactive) {
-		    // Dummy exec in order to speed up response on first command
-		    interp.exec("2");
-		    interp.interact(opts.notice ? null : "");
-		}
+	    }
 	}
+
+	if (opts.interactive) {
+	    interp.interact(opts.notice ? null : "");
+	}
+    }
 }
 
 class CommandLineOptions {
@@ -87,9 +86,9 @@ class CommandLineOptions {
                 if (equals == -1) {
                     String arg2 = args[++index];
                     /*if (!arg2.startsWith("=")) {
-                        System.err.println("-D option with no '=': "+args[index-1]+"::"+arg2);
-                        return false;
-                    }*/
+		      System.err.println("-D option with no '=': "+args[index-1]+"::"+arg2);
+		      return false;
+		      }*/
                     key = arg.substring(2, arg.length());
                     value = arg2; //.substring(1, arg2.length());
                 } else {
@@ -125,3 +124,4 @@ class CommandLineOptions {
         return true;
     }
 }
+

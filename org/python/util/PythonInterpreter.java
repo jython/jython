@@ -184,13 +184,21 @@ public class PythonInterpreter {
     public void interact() {
         interact(null);
     }
+
+    public static String getDefaultBanner() {
+	return "JPython "+PySystemState.version+" on "+
+	    PySystemState.platform+"\n"+PySystemState.copyright;
+    }
     
     public void interact(String banner) {
         if (banner == null) {
-            banner = "Python "+systemState.version+" on "+systemState.platform+"\n"+systemState.copyright;
+            banner = getDefaultBanner();
         }
         write(banner);
         write("\n");
+	
+	// Dummy exec in order to speed up response on first command
+	exec("2");
                 
         boolean more = false;
         while (true) {
