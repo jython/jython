@@ -31,6 +31,15 @@ public class PyInteger extends PyObject
         return value;
     }
 
+    private static void err_ovf(String msg) {
+        try {
+            Py.OverflowWarning(msg);
+        } catch (PyException exc) {
+            if (Py.matchException(exc, Py.OverflowWarning))
+                throw Py.OverflowError(msg);
+        }
+    }
+
     public boolean __nonzero__() {
         return value != 0;
     }
@@ -92,7 +101,7 @@ public class PyInteger extends PyObject
         int x = a + b;
         if ((x^a) >= 0 || (x^b) >= 0)
             return Py.newInteger(x);
-        Py.OverflowWarning("integer addition");
+        err_ovf("integer addition");
         return new PyLong((long) a + (long)b);
     }
     public PyObject __radd__(PyObject left) {
@@ -103,7 +112,7 @@ public class PyInteger extends PyObject
         int x = a - b;
         if ((x^a) >= 0 || (x^~b) >= 0)
             return Py.newInteger(x);
-        Py.OverflowWarning("integer subtraction");
+        err_ovf("integer subtraction");
         return new PyLong((long) a - (long)b);
     }
 
@@ -134,7 +143,7 @@ public class PyInteger extends PyObject
 
         if (x <= Integer.MAX_VALUE && x >= Integer.MIN_VALUE)
             return Py.newInteger((int)x);
-        Py.OverflowWarning("integer multiplication");
+        err_ovf("integer multiplication");
         return __long__().__mul__(right);
     }
 
@@ -149,7 +158,7 @@ public class PyInteger extends PyObject
             throw Py.ZeroDivisionError("integer division or modulo by zero");
 
         if (y == -1 && x < 0 && x == -x) {
-            throw Py.OverflowError("integer division: "+x+" + "+y);
+            err_ovf("integer division: "+x+" + "+y);
         }
         int xdivy = x / y;
         int xmody = x - xdivy * y;
@@ -291,7 +300,7 @@ public class PyInteger extends PyObject
                 }
 
                 if (result > Integer.MAX_VALUE) {
-                    Py.OverflowWarning("integer exponentiation");
+                    err_ovf("integer exponentiation");
                     return left.__long__().__pow__(right, modulo);
                 }
             }
@@ -305,7 +314,7 @@ public class PyInteger extends PyObject
             }
 
             if (tmp > Integer.MAX_VALUE) {
-                Py.OverflowWarning("integer exponentiation");
+                err_ovf("integer exponentiation");
                 return left.__long__().__pow__(right, modulo);
             }
         }
@@ -376,7 +385,7 @@ public class PyInteger extends PyObject
     public PyObject __neg__() {
         int x = -value;
         if (value < 0 && x < 0)
-            throw Py.OverflowError("integer negation");
+            err_ovf("integer negation");
         return Py.newInteger(x);
     }
 
