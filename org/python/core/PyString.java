@@ -577,8 +577,12 @@ public class PyString extends PySequence implements ClassDictInit
             if (string.length() == 1)
                 return new Character(string.charAt(0));
 
-        if (c.isArray() && c.getComponentType() == Byte.TYPE)
-            return getBytes();
+        if (c.isArray()) {
+            if (c.getComponentType() == Byte.TYPE)
+                return getBytes();
+            if (c.getComponentType() == Character.TYPE)
+                return string.toCharArray();
+        }
 
         if (c.isInstance(this))
             return this;
