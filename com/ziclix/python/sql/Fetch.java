@@ -51,13 +51,13 @@ abstract public class Fetch {
 	protected int rownumber;
 
 	/** Field cursor */
-	protected DataHandler datahandler;
+	private DataHandler datahandler;
 
 	/** Field description */
 	protected PyObject description;
 
 	/** A list of warning listeners. */
-	protected List listeners;
+	private List listeners;
 
 	/**
 	 * Constructor Fetch
@@ -97,6 +97,14 @@ abstract public class Fetch {
 	 */
 	public int getRowCount() {
 		return this.rowcount;
+	}
+
+	/**
+	 * The description of each column, in order, for the data in the result
+	 * set.
+	 */
+	public PyObject getDescription() {
+		return this.description;
 	}
 
 	/**
@@ -621,7 +629,7 @@ class StaticFetch extends Fetch {
 		}
 
 		if (this.rownumber < this.rowcount) {
-			res = current.__getslice__(Py.newInteger(this.rownumber), Py.newInteger(this.rownumber + size), Py.newInteger(1));
+			res = current.__getslice__(Py.newInteger(this.rownumber), Py.newInteger(this.rownumber + size), Py.One);
 			this.rownumber += size;
 		}
 
