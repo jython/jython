@@ -20,7 +20,7 @@ public class PySystemState extends PyObject {
     The copyright notice for this release.
     **/
     public static String copyright =
-        "Copyright 1997-1998 Corporation for National Research Initiatives";
+        "Copyright 1997-1999 Corporation for National Research Initiatives";
 
     /**
     The arguments passed to this program on the command line.
@@ -187,11 +187,12 @@ public class PySystemState extends PyObject {
     private static PyList defaultPath;
 	public static Properties registry; // = init_registry();
     public static String prefix;
+    public static String exec_prefix="";
     
     private void initRegistry(Properties defaults) {
         if (registry != null) return;
         registry = defaults;
-        prefix = findRoot();
+        prefix = exec_prefix = findRoot();
         
 	    // Load the default registry
 	    if (prefix != null) {
