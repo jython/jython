@@ -1,6 +1,6 @@
 """This test validates the fix for 511493 (jreload truncates large class files).
 
-We do this by loading a large class file from tools.jar.  If the load failes with ClassFormatError,
+We do this by loading a large class file Blob.class from blob.jar (source inside the jar).  If the load failes with ClassFormatError,
 the bug is present, if the load succeeds, the bug is fixed, if something else occurs, we don't know.
 """
 
@@ -13,21 +13,14 @@ from java.lang import System, ClassFormatError
 import os
 
 class JreloadTestCase(unittest.TestCase):
-    # attempt to find tools.jar
-    toolsjar = System.getProperty( "toolsjar" )
-    if not toolsjar:
-        extdirs = System.getProperty( "java.ext.dirs" ) #JDK_DIR/jre/lib/ext
-        jdkdir = os.path.dirname( os.path.dirname( os.path.dirname( extdirs )))
-        toolsjar = os.path.join( os.path.join( jdkdir, "lib" ), "tools.jar" )
 
-    if not os.path.exists( toolsjar ):
-        raise test_support.TestSkipped( "Unable to find tools.jar" )
+    blobjar = test_support.findfile('blob.jar')
 
     def test( self ):
-        myls = makeLoadSet('myls', [self.toolsjar])
+        myls = makeLoadSet('myls', [self.blobjar])
 
         try:
-            from myls.com.sun.tools.corba.se.idl import Parser
+            from myls import Blob
         except ClassFormatError:
             print "Reload Error is present"
             raise
