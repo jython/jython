@@ -122,7 +122,7 @@ public class PyArray extends PySequence {
 	        return new String((char[])data);
 	    }
 	    if (type == Byte.TYPE) {
-	        return new String((byte[])data);
+	        return new String((byte[])data, 0);
 	    }
 	    throw Py.TypeError("can only convert arrays of byte and char to string");
 	}
