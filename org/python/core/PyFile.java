@@ -802,10 +802,13 @@ public class PyFile extends PyObject
         }
     }
 
-    public void writelines(PyList a) {
-        int n = a.__len__();
-        for (int i = 0; i < n; i++)
-            write(a.__getitem__(i).toString());
+    public void writelines(PyObject a) {
+        PyObject item = null;
+        for (int i = 0; (item = a.__finditem__(i)) != null; i++) {
+            if (!(item instanceof PyString))
+                throw Py.TypeError("writelines() argument must be a sequence of strings");
+            write(item.toString());
+        }
     }
 
     public long tell() {
