@@ -58,7 +58,7 @@ public abstract class RowIdHandler extends FilterDataHandler {
     if (o == null) {
       synchronized (ROWIDS) {
         try {
-          o = c.getMethod(getRowIdMethodName(), null);
+          o = c.getMethod(getRowIdMethodName(), (Class[])null);
           ROWIDS.put(c, o);
         } catch (Throwable t) {
           ROWIDS.put(c, CHECKED);
@@ -68,7 +68,7 @@ public abstract class RowIdHandler extends FilterDataHandler {
 
     if (!(o == null || o == CHECKED)) {
       try {
-        return Py.java2py(((Method) o).invoke(stmt, null));
+        return Py.java2py(((Method) o).invoke(stmt, (Object[])null));
       } catch (Throwable t) {}
     }
 

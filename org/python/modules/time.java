@@ -600,8 +600,8 @@ public class time implements ClassDictInit
         String version = System.getProperty("java.version");
         if (version.compareTo("1.2") >= 0) {
             try {
-                Method m = tz.getClass().getMethod("getDSTSavings", null);
-                return ((Integer) m.invoke(tz, null)).intValue();
+                Method m = tz.getClass().getMethod("getDSTSavings", (Class[])null);
+                return ((Integer) m.invoke(tz, (Object[])null)).intValue();
              } catch (Exception exc) { }
         }
         return 0;
