@@ -38,6 +38,8 @@ public class PackageManager {
     }
 
     public void initPackages(Properties registry) {
+        if (cachedir == null) return;
+        
         if (!cachedir.isDirectory() && cachedir.mkdirs() == false) {
             Py.writeWarning("packageManager", "can't create package cache dir, '"+cachedir+"'");
             return;
