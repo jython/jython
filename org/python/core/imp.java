@@ -5,6 +5,7 @@ import java.lang.reflect.*;
 import java.io.*;
 import java.util.Hashtable;
 import java.util.Properties;
+import java.util.zip.*;
 
 /**
  * Utility functions for "import" support.
@@ -155,6 +156,19 @@ public class imp
         return createFromCode(name, code);
     }
 
+    private static PyObject createFromSource(String name, InputStream fp,
+                                             String filename,
+                                             String outFilename)
+    {
+        byte[] bytes = compileSource(name, fp, filename, outFilename);
+
+        Py.writeComment("import", "'" + name + "' as " + filename);
+
+        PyCode code = BytecodeLoader.makeCode(name+"$py", bytes);
+        return createFromCode(name, code);
+    }
+
+
     static PyObject createFromCode(String name, PyCode c) {
         PyModule module = addModule(name);
 
@@ -264,6 +278,80 @@ public class imp
         return null;
     }
 
+    static PyObject loadFromZipFile(String name, String modName,
+                                    SyspathArchive zipArchive) {
+        PyObject o = null;
+        ZipEntry pkgEntry = null;
+        String entryName = name;
+
+        String pyName = entryName +".py";
+        String className = entryName +"$py.class";
+    
+        try {
+            String sourceName = entryName + "/__init__.py";
+            String compledName = entryName + "/__init__$py.class";
+            ZipEntry sourceEntry = zipArchive.getEntry(sourceName);
+            ZipEntry compiledEntry = zipArchive.getEntry(compledName);
+            if (sourceEntry != null || compiledEntry != null) {
+                Py.writeDebug("import", "trying package: " + modName +
+                            " in jar/zip file " + zipArchive);
+                PyModule m = addModule(modName);
+
+                SyspathArchive subArchive = zipArchive.makeSubfolder(modName);
+                PyList zipPath = new PyList(new PyObject[] { subArchive });
+                m.__dict__.__setitem__("__path__", zipPath);
+                o = loadFromZipFile("__init__", modName, subArchive);
+                if (o != null) {
+                    return m;
+                }
+            }
+        
+            ZipEntry pyEntry = zipArchive.getEntry(pyName);
+            ZipEntry classEntry = zipArchive.getEntry(className);
+            if (pyEntry != null) {
+                Py.writeDebug("import", "trying source entry: " + pyName +
+                              " from jar/zip file " + zipArchive);
+                if (classEntry != null) {
+                    Py.writeDebug("import", "trying precompiled entry " +
+                                  className + " from jar/zip file " +
+                                  zipArchive);
+                    long pyTime = pyEntry.getTime();
+                    long classTime = classEntry.getTime();
+                    if (classTime >= pyTime) {
+                        InputStream is = zipArchive.getInputStream(classEntry);
+                        o = createFromPyClass(modName, is, true,
+                                              classEntry.getName());
+                        if (o != null) {
+                            return o;
+                        }
+                    }
+                }
+                InputStream is = zipArchive.getInputStream(pyEntry);
+                return createFromSource(modName, is, pyEntry.getName(), null);
+            }
+        } catch (Exception e) {
+            Py.writeDebug("import", "loadFromZipFile exception: " +
+                          e.toString());
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    private static boolean isSyspathArchive(PyObject entry) {
+        if (entry instanceof SyspathArchive)
+            return true;
+        String dir = entry.toString();
+        int idx = dir.indexOf('!');
+        if (idx > 0) {
+            dir = dir.substring(0, idx);
+        }
+        if (dir.length() < 5) {
+            return false;
+        }
+        String ext = dir.substring(dir.length() - 4);
+        return ext.equalsIgnoreCase(".zip") || ext.equalsIgnoreCase(".jar");
+    }
+
     static PyObject loadFromPath(String name, PyList path) {
         return loadFromPath(name, name, path);
     }
@@ -280,13 +368,28 @@ public class imp
         int n = path.__len__();
 
         for (int i=0; i<n; i++) {
-            String dirName = path.get(i).toString();
+            PyObject entry = path.__getitem__(i);
+            String dirName = entry.toString();
 
-            // TBD: probably should tie this into -v option a la CPython
-            if (dirName.endsWith(".jar") || dirName.endsWith(".zip")) {
-                // Handle .jar and .zip files on the path sometime in the
-                // future
-                continue;
+            if (isSyspathArchive(entry)) {
+                Py.writeDebug("import", "trying " + modName +
+                              " in jar/zip file " + dirName);
+                if (!(entry instanceof SyspathArchive)) {
+                    try {
+                        entry = new SyspathArchive(dirName);
+                        path.__setitem__(i, entry);
+                    } catch (IOException exc) {
+                        // Silently ignore corrupt and missing .zip files.
+                        continue;
+                    }
+                }
+                    
+                PyObject ret = loadFromZipFile(name, modName,
+                                              (SyspathArchive)entry);
+                // Not found in zip/jar file check next item in path
+                if (ret != null) {
+                    return ret;
+                }
             }
 
             // The empty string translates into the current working

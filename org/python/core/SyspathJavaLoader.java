@@ -5,6 +5,7 @@ package org.python.core;
 import java.io.*;
 import java.util.StringTokenizer;
 import java.util.Hashtable;
+import java.util.zip.*;
 
 public class SyspathJavaLoader extends ClassLoader
 {
@@ -28,7 +29,18 @@ public class SyspathJavaLoader extends ClassLoader
 
         PyList path = Py.getSystemState().path;
         for (int i=0; i < path.__len__(); i++) {
-            String dir = path.get(i).__str__().toString();
+            PyObject entry = path.__getitem__(i);
+            if (entry instanceof SyspathArchive) {
+                SyspathArchive archive = (SyspathArchive) entry;
+                ZipEntry ze = archive.getEntry(res);
+                if (ze != null) {
+                    try {
+                        return archive.getInputStream(ze);
+                    } catch (IOException e) { ; }
+                }
+                continue;
+            }
+            String dir = entry.__str__().toString();
             if (dir.length() == 0) dir = null;
             try {
                 return new BufferedInputStream(
@@ -75,10 +87,25 @@ public class SyspathJavaLoader extends ClassLoader
         {
             PyList path = Py.getSystemState().path;
             for (int i=0; i < path.__len__(); i++) {
-                String dir = path.get(i).__str__().toString();
-                FileInputStream fis = open(dir, name);
-                if (fis == null)
+                InputStream fis = null;
+                PyObject entry = path.__getitem__(i);
+                if (entry instanceof SyspathArchive) {
+                    SyspathArchive archive = (SyspathArchive) entry;
+                    String entryname = name.replace('.', File.separatorChar) +
+                                            ".class";
+                    ZipEntry ze = archive.getEntry(entryname);
+                    if (ze != null) {
+                        try {
+                            fis = archive.getInputStream(ze);
+                        } catch (IOException exc) { ; }
+                    }
+                } else {
+                    String dir = entry.__str__().toString();
+                    fis = open(dir, name);
+                }
+                if (fis == null) {
                     continue;
+                }
                 try {
                     int size = fis.available();
                     byte[] buffer = new byte[size];

@@ -58,6 +58,14 @@ public abstract class PackageManager extends Object {
      */
     public abstract void addJarDir(String dir);
 
+    /**
+     * Append a jar file to the list of locations searched for
+     * java packages and java classes.
+     * 
+     * @param jarfile   A directory name.
+     */
+    public abstract void addJar(String jarfile);
+
     /** Basic helper implementation of {@link #doDir}.
      * It merges information from jpkg {@link PyJavaPackage#clsSet}
      * and {@link PyJavaPackage#__dict__}.
