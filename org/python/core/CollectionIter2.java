@@ -10,7 +10,7 @@ class CollectionIter2 extends CollectionIter {
 
     PyObject findCollection(Object object) {
         if (object instanceof Map) {
-            return new IteratorIter(((Map)object).entrySet().iterator());
+            return new IteratorIter(((Map)object).keySet().iterator());
         }
         if (object instanceof Collection) {
             return new IteratorIter(((Collection)object).iterator());
