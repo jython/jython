@@ -3,6 +3,7 @@
 package org.python.core;
 
 import java.util.*;
+import java.lang.ref.*;
 
 public class InternalTables2 extends InternalTables1 {
     
@@ -19,7 +20,9 @@ public class InternalTables2 extends InternalTables1 {
     protected Object getAdapter(Object o,String evc) {
         HashMap ads = (HashMap)adapters.get(o);
         if (ads == null) return null;
-        return ads.get(evc);
+        WeakReference adw = (WeakReference) ads.get(evc);
+        if (adw == null) return null;
+        return adw.get();
     }
     
     protected void putAdapter(Object o,String evc,Object ad) {
@@ -28,7 +31,7 @@ public class InternalTables2 extends InternalTables1 {
             ads = new HashMap();
             adapters.put(o,ads);
         }
-        ads.put(evc,ad);
+        ads.put(evc,new WeakReference(ad));
     }
 
     protected Iterator iter;    
@@ -62,16 +65,22 @@ public class InternalTables2 extends InternalTables1 {
 
     public Object _next() {
         if (iterType == ADAPTER) {
-           if (iter==null || !iter.hasNext() ) {
-            if (grand.hasNext()) {
-                cur = grand.next();
-                iter = ((HashMap)cur).values().iterator();
-            } else iter = null;
-           }
-           if (iter != null) {
-            return iter.next().getClass().getInterfaces()[0];
-           }
-           grand = null;
+            for(;;) {
+                if (iter==null || !iter.hasNext() ) {
+                    if (grand.hasNext()) {
+                        cur = grand.next();
+                        iter = ((HashMap)cur).values().iterator();
+                    } else iter = null;
+                }
+                if (iter != null) {
+                    WeakReference adw = (WeakReference)iter.next();
+                    Object ad = adw.get();
+                    if (ad != null) return ad.getClass().getInterfaces()[0];
+                    else continue;
+                }
+                grand = null;
+                break;
+            }
         }
         else if (iter.hasNext()) {
             cur = iter.next();
