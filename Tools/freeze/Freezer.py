@@ -5,12 +5,13 @@ import org, java
 import string, os
 
 from FreezeVisitor import FreezeVisitor
+from depend import depend
 
 suffix = '$py'
 prefix = 'pycode.'
 
 class Freezer:
-	def __init__(self, out, shallow=0):
+	def __init__(self, out, shallow=0, useProxy=0, dependFilter=None):
 		self.proxies = {}
 		self.modules = {}
 		self.packages = {}
@@ -22,6 +23,8 @@ class Freezer:
 		
 		self.out = out
 		self.shallow = shallow
+		self.dependFilter = dependFilter
+		self.useProxy = useProxy
 
 	def getPackage(self, package):
 		fp = open(package.__file__, 'r')
@@ -41,12 +44,12 @@ class Freezer:
 		f = FreezeVisitor(self.events, self.props, classes=self.classes, classname=myname)
 		node = parser.parse(data, 'exec')
 		f.suite(node)
-		
+				
 		if not self.shallow:
 			for proxy in f.proxies.values():
 				#if proxy.__name__ != 'java.applet.Applet':
-				self.proxies[proxy] = 1		
-				
+				self.proxies[proxy] = 1
+						
 			for package in f.packages.values():
 				name = package.__name__
 				if self.modules.has_key(package):
@@ -66,8 +69,10 @@ class Freezer:
 			self.out.write(nm, ofp)
 		
 		if f.realclass != None:
-			self.javaclasses.append( (f.realclass.__name__, myname) )
-		
+			self.javaclasses.append( (f.realclass.__name__, myname, f.methods) )
+			if self.useProxy:
+				self.proxies[f.realclass] = 1
+				
 	def makeProxy(self, proxy):
 		os = java.io.ByteArrayOutputStream()
 		org.python.compiler.ProxyMaker.makeProxy(proxy, os)
@@ -75,9 +80,11 @@ class Freezer:
 		self.out.write('org.python.proxies.'+proxy, os)		
 
 
-	def makeJavaClass(self, javaclass, myname, main=0, frozen=1):
-		jm = JavaMaker(javaclass, myname, myname, myname, self.requiredPackages, 
-					[], frozen, main)
+	def makeJavaClass(self, javaclass, myname, methods, main=0, frozen=1):
+		#print methods
+		jm = JavaMaker(javaclass, myname, myname, myname, 
+					self.requiredPackages, 
+					[], methods, frozen, main)
 		jm.build()
 		
 		os = java.io.ByteArrayOutputStream()
@@ -127,22 +134,28 @@ class Freezer:
 	
 			cs = {}
 			for c in self.classes.values():
+				if not isinstance(c, org.python.core.PyJavaClass):
+					continue
 				name = c.__name__
 				if name[:5] == 'java.': continue
 				if name[:16] == 'org.python.core.': continue
 				cs[c] = c
 				
+			depends = {}
 			for c in cs.keys():
-				print 'class', c
+				print 'class', c, c.__name__
+			
+				depend(c.__name__, depends, self.dependFilter)
+			
+			for name, file in depends.items():
+				print 'adding', name
+				self.out.write(name, file)
 		else:
 			self.requiredPackages = None
 
-		for javaclass, name in self.javaclasses:
-			self.makeJavaClass(javaclass, name, main, not self.shallow)
-
-		#print 'Required packages:'
-		#for name in self.requiredPackages:
-		#	print '\t'+name
+		for javaclass, name, methods in self.javaclasses:
+			if self.useProxy: methods = None
+			self.makeJavaClass(javaclass, name, methods, main, not self.shallow)
 
 	def addPackage(self, directory, skiplist=[]):
 		for file in os.listdir(directory):

@@ -1,9 +1,8 @@
-import Output, sys, os
+import Output, sys, os, string
 from Freezer import Freezer
 
 class YesNo: pass
 class Required: pass
-
 
 class Options:
 	def __init__(self, opts, args=None):
@@ -40,7 +39,8 @@ class Options:
 				
 		self.args = args[index:]
 
-opts = Options({'jar':None, 'cab':None, 'dir':None, 'core':YesNo, 'main':YesNo, 'shallow':YesNo})
+opts = Options({'jar':None, 'cab':None, 'dir':None, 'core':YesNo, 'main':YesNo, 'deep':YesNo, 
+			'lib':"", 'useproxy':YesNo})
 
 outs = []
 if opts.jar is not None:
@@ -66,6 +66,30 @@ if len(opts.args) > 0:
 if len(outs) == 0:
 	outs.append(Output.DirectoryOutput(directory))
 
+
+from java.util.zip import ZipFile
+
+libs = string.split(opts.lib, os.pathsep)
+classNames = {}
+for lib in libs:
+	if lib == '': continue
+	#print 'lib: ', lib
+	zf = ZipFile(lib)
+	entries = zf.entries()
+	while entries.hasMoreElements():
+		entry = entries.nextElement()
+		if entry.directory: continue
+		name = string.join(string.split(entry.name, '/'), '.')[:-6]
+		#print name
+		classNames[name] = 1
+		
+def myFilter(name):
+	if name[:5] == 'java.': return 0
+	if name[:16] == 'org.python.core.': return 0
+	if classNames.has_key(name): return 0
+	return 1
+
+
 #Prepend the current directory to the path
 sys.path[0:0] = [directory]
 
@@ -73,9 +97,7 @@ sys.path[0:0] = [directory]
 #sys.exit()
 names = opts.args
 
-#names = ['HelloWorld', 'ButtonDemo', 'CheckboxDemo', 'ChoiceDemo', 'Converter', 'CoordinatesDemo', 'LabelDemo', 'ListDemo']
-
-f = Freezer(outs[0], opts.shallow)
+f = Freezer(outs[0], not opts.deep, opts.useproxy, myFilter)
 for name in names:
 	name = os.path.split(name)[1]
 	n, ext = os.path.splitext(name)

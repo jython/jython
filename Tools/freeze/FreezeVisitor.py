@@ -25,6 +25,8 @@ class FreezeVisitor(Visitor):
 		
 		self.classname = classname
 		self.realclass = None
+		self.methods = []
+		self.addMethods = 0
 			
 	def suite(self, node):
 		for i in range(node.numChildren):
@@ -40,12 +42,20 @@ class FreezeVisitor(Visitor):
 	Int = Float = Complex = String = pass_stmt
 	Slice = Ellipsis = list = dictionary = tuple = pass_stmt
 	
+	str_1op = __add__2op = pass_stmt
+
 	add_2op = sub_2op = mul_2op = div_2op = mod_2op = pow_2op = pass_stmt
 	and_2op = or_2op = xor_2op = lshift_2op = rshift_2op = pass_stmt
 	
 	pos_1op = neg_1op = invert_1op = pass_stmt
 
+	comparision = pass_stmt
+	
+	Index_Op = pass_stmt
+
 	def funcdef(self, node):
+		if self.addMethods:
+			self.methods.append(node.getChild(0).visit(self))
 		self.suite(node.getChild(node.numChildren-1))
 		
 	def lhs_dot(self, node):
@@ -71,6 +81,7 @@ class FreezeVisitor(Visitor):
 		n = node.numChildren
 		suite = node.getChild(n-1)
 		bases = []
+		
 		for i in range(1,n-1):
 			child = node.getChild(i)
 			base = child.visit(self)
@@ -78,14 +89,17 @@ class FreezeVisitor(Visitor):
 			#if self.classname == name:
 			#	print self.classes
 			if self.classes.has_key(base):
-				self.proxies[base] = self.classes[base]
 				self.classes[name] = self.classes[base]
 				#print self.classname, name, self.realclass, base
 				if self.classname == name and self.realclass is None:
 					self.realclass = self.classes[base]
-			
+					self.addMethods = 1
+				else:
+					self.proxies[base] = self.classes[base]
+								
 		#print name, bases
 		suite.visit(self)
+		self.addMethods = 0
 
 	def addEvent(self, c):
 		self.proxies[c.__name__] = c

@@ -20,13 +20,16 @@ class DirectoryOutput:
 			if isinstance(file, type('')):
 				file = FileInputStream(file)
 			data = jarray.zeros(1024*4, 'b')
+			#print 'writing', file,
 			while 1:
 				n = file.read(data)
+				#print n,
 				if n == -1: break
 				fp.write(data, 0, n)
+			#print
 
 	def close(self):
-		pass			
+		pass		
 
 class ZipOutput(DirectoryOutput):
 	def __init__(self, filename):
