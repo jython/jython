@@ -277,7 +277,7 @@ public class PyTableCode extends PyCode
     public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
                          PyObject globals, PyObject[] defaults, PyObject closure)
     {
-        if (co_argcount != 2 || args || keywords)
+        if (co_argcount != 3 || args || keywords)
             return call(new PyObject[] {arg1, arg2, arg3},
                         Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
