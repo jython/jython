@@ -448,19 +448,24 @@ public class PySystemState extends PyObject
     private static PyList initPath(Properties props) {
         PyList path = new PyList();
         if (!Py.frozen) {
-            String pypath = props.getProperty("python.path", "");
-            StringTokenizer tok =
-            new StringTokenizer(pypath, java.io.File.pathSeparator);
-            while  (tok.hasMoreTokens())  {
-                String p = tok.nextToken();
-                path.append(new PyString(p.trim()));
-            }
+            addPaths(path, props.getProperty("python.prepath", "."));
+
             if (prefix != null) {
                 String libpath = new File(prefix, "Lib").toString();
                 path.append(new PyString(libpath));
             }
+
+            addPaths(path, props.getProperty("python.path", ""));
         }
         return path;
+    }
+
+
+    private static void addPaths(PyList path, String pypath) {
+        StringTokenizer tok = new StringTokenizer(pypath, 
+                                                  java.io.File.pathSeparator);
+        while  (tok.hasMoreTokens())
+            path.append(new PyString(tok.nextToken().trim()));
     }
 
     public static PyJavaPackage add_package(String n) {
