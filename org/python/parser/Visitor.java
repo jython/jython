@@ -214,6 +214,10 @@ public class Visitor {
         throw new ParseException("Unhandled Node: "+n);
     }
 
+    public Object floordiv_2op(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
     public Object mod_2op(SimpleNode n) throws Exception {
         throw new ParseException("Unhandled Node: "+n);
     }
@@ -339,6 +343,10 @@ public class Visitor {
     }
 
     public Object aug_divide(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_floordivide(SimpleNode n) throws Exception {
         throw new ParseException("Unhandled Node: "+n);
     }
 

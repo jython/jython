@@ -277,6 +277,8 @@ public class SimpleNode implements Node
             return visitor.mul_2op(this);
         case PythonGrammarTreeConstants.JJTDIV_2OP:
             return visitor.div_2op(this);
+        case PythonGrammarTreeConstants.JJTFLOORDIV_2OP:
+            return visitor.floordiv_2op(this);
         case PythonGrammarTreeConstants.JJTMOD_2OP:
             return visitor.mod_2op(this);
         case PythonGrammarTreeConstants.JJTPOS_1OP:
@@ -337,6 +339,8 @@ public class SimpleNode implements Node
             return visitor.aug_multiply(this);
         case PythonGrammarTreeConstants.JJTAUG_DIVIDE:
             return visitor.aug_divide(this);
+        case PythonGrammarTreeConstants.JJTAUG_FLOORDIVIDE:
+            return visitor.aug_floordivide(this);
         case PythonGrammarTreeConstants.JJTAUG_MODULO:
             return visitor.aug_modulo(this);
         case PythonGrammarTreeConstants.JJTAUG_AND:
