@@ -5,8 +5,8 @@
 # This is how Jim sets his path on his Windows development machine
 #python.path=.;c:\\jpython\\Lib;d:\\Python-1.5.2\\Lib
 # This is how Barry sets his path on his Unix development machine
-#python.path = /home/bwarsaw/projects/python/pristine/Lib
-python.path = .
+python.path = /home/bwarsaw/projects/python/Lib
+#python.path = .
 
 # Set the directory to use for caches (currently just package information)
 # This directory should be writable by the user
@@ -58,7 +58,7 @@ python.security.respectJavaAccessibility = true
 #
 # A good example would be to use a jni version of os for more
 # functionality by having an entry such as os:com.foo.jni.os
-python.modules.builtin = md5:org.python.modules.MD5Module
+#python.modules.builtin = whatever
 
 # This specifies the command used by jpythonc to compile Java source
 # code, along with the complete classpath to use.
