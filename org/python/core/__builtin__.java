@@ -955,7 +955,7 @@ public class __builtin__ implements ClassDictInit
                     throw e;
                 }
                 if (item == null)
-                    return null;
+                    return ret;
                 next[j] = item;
             }
             ret.append(new PyTuple(next));
