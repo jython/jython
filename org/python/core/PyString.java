@@ -471,7 +471,9 @@ final class StringFormatter{
             } else {
                 if (signFlag) {
                     signString = "+";
-                }
+                } else if (blankFlag) {
+		    signString = " ";
+		}
             }
 
             int length = string.length() + signString.length();
