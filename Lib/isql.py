@@ -1,6 +1,6 @@
 # $Id$
 
-import dbexts, cmd, sys
+import dbexts, cmd, sys, os
 
 """
 Isql works in conjunction with dbexts to provide an interactive environment
@@ -26,6 +26,12 @@ class Prompt:
 		if len(self.isql.sqlbuffer) > 0:
 			prompt = "... "
 		return prompt
+	if os.name == 'java':
+		def __tojava__(self, cls):
+			import java
+			if cls == java.lang.String:
+				return self.__str__()
+			return None
 
 class IsqlCmd(cmd.Cmd):
 
