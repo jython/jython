@@ -404,7 +404,7 @@ public class PyStringMap extends PyObject
         PyList l = new PyList();
         for (int i=0; i<n; i++) {
             String key = keyTable[i];
-            if (key == null || key == "<deleted key>")
+            if (key == null || key == "<deleted key>" || values[i] == null)
                 continue;
             l.append(new PyString(key));
         }
