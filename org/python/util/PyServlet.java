@@ -78,7 +78,7 @@ public class PyServlet extends HttpServlet {
         }
         if (props.getProperty("python.home") == null && 
                                    System.getProperty("python.home") == null) {
-            props.setProperty("python.home", rootPath + "WEB-INF" +
+            props.put("python.home", rootPath + "WEB-INF" +
                                              File.separator + "lib");
         }
 
@@ -104,8 +104,14 @@ public class PyServlet extends HttpServlet {
         req.setAttribute("pyservlet", this);
 
         String spath = (String)req.getAttribute("javax.servlet.include.servlet_path");
-        if (spath == null)
+        if (spath == null) {
             spath = ((HttpServletRequest) req).getServletPath();
+            if (spath == null || spath.length() == 0) {
+                // Servlet 2.1 puts the path of an extension-matched
+                // servlet in PathInfo.
+                spath = ((HttpServletRequest) req).getPathInfo();
+            }
+        }
         String rpath = getServletContext().getRealPath(spath);
 
         interp.set("__file__", rpath);
