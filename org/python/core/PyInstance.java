@@ -46,10 +46,12 @@ public class PyInstance extends PyObject {
     **/
 
 	public PyInstance(PyClass iclass, PyObject dict) {
-		__class__ = iclass;
+	    super(iclass);
+		//__class__ = iclass;
 		__dict__ = dict;
 		//Prepare array of proxy classes to be possibly filled in in __init__
 		if (__class__.proxyClasses != null) {
+		    //System.err.println("proxies: "+__class__.__name__);
 			javaProxies = new Object[__class__.proxyClasses.length];
 		}
 	}
@@ -60,7 +62,7 @@ public class PyInstance extends PyObject {
 
 	public PyInstance() { ; }
 
-    private Hashtable primitiveMap;
+    private static Hashtable primitiveMap;
 
 
     protected void setProxy(PyProxy proxy, int index) {
@@ -203,34 +205,91 @@ public class PyInstance extends PyObject {
 	public PyObject __findattr__(String name) {
 	    return __findattr__(name, false);
 	}
-
+	
 	public PyObject __findattr__(String name, boolean stopAtJava) {
-		PyObject result;
-		if (__dict__ != null) {
-		    if ((result = __dict__.__finditem__(name)) != null) return result;
-		}
-		result = __class__.lookup(name, stopAtJava);
-
-		if (result == null) {
-		    if (name == "__dict__") return __dict__;
-		    if (name == "__class__") return __class__;
-
-			PyObject getter = __class__.__getattr__;
-			if (getter != null) {
-			    try {
-				    return getter.__call__(this, new PyString(name));
-				} catch (PyException exc) {
-				    if (Py.matchException(exc, Py.AttributeError)) return null;
-				    throw exc;
-				}
-			}
-
-			return null;
-		}
+	    PyObject result = ifindlocal(name);
+	    if (result != null) return result;
+	    result = ifindclass(name, stopAtJava);
+	    if (result != null) return result._doget(this);
+	    return ifindfunction(name);
+    }
+    
+    protected PyObject ifindlocal(String name) {
+		if (__dict__ == null) return null;
+		if (name == "__dict__") return __dict__;
+		if (name == "__class__") return __class__;
 		
-		return result._doget(this);
+		return __dict__.__finditem__(name);
 	}
-
+	
+	protected PyObject ifindclass(String name, boolean stopAtJava) {
+	    return __class__.lookup(name, stopAtJava);
+	}
+	
+	protected PyObject ifindfunction(String name) {
+		PyObject getter = __class__.__getattr__;
+		if (getter == null) return null;
+		
+	    try {
+		    return getter.__call__(this, new PyString(name));
+		} catch (PyException exc) {
+		    if (Py.matchException(exc, Py.AttributeError)) return null;
+		    throw exc;
+		}
+	}
+	
+	public PyObject invoke(String name) {
+		PyObject f = ifindlocal(name);
+		if (f == null) {
+		    f = ifindclass(name, false);
+		    if (f != null) {
+		        if (f instanceof PyFunction) {
+		            return f.__call__(this);
+		        } else {
+		            f = f._doget(this);
+		        }
+		    }
+		}
+		if (f == null) f = ifindfunction(name);
+	    if (f == null) throw Py.AttributeError(name);
+	    return f.__call__();
+    }
+    
+	public PyObject invoke(String name, PyObject arg1) {
+		PyObject f = ifindlocal(name);
+		if (f == null) {
+		    f = ifindclass(name, false);
+		    if (f != null) {
+		        if (f instanceof PyFunction || f instanceof PyBuiltinFunctionSet) {
+		            return f.__call__(this, arg1);
+		        } else {
+		            f = f._doget(this);
+		        }
+		    }
+		}
+		if (f == null) f = ifindfunction(name);
+	    if (f == null) throw Py.AttributeError(name);
+	    return f.__call__(arg1);
+    }
+    
+	public PyObject invoke(String name, PyObject arg1, PyObject arg2) {
+		PyObject f = ifindlocal(name);
+		if (f == null) {
+		    f = ifindclass(name, false);
+		    if (f != null) {
+		        if (f instanceof PyMethod) {
+		            return ((PyMethod)f).im_func.__call__(this, arg1, arg2);
+		        } else {
+		            f = f._doget(this);
+		        }
+		    }
+		}
+		if (f == null) f = ifindfunction(name);
+	    if (f == null) throw Py.AttributeError(name);
+	    return f.__call__(arg1, arg2);
+    }
+	
+	
 	public void __setattr__(String name, PyObject value) {
 		PyObject setter = __class__.__setattr__;
 		if (setter != null) {
@@ -298,9 +357,13 @@ public class PyInstance extends PyObject {
 	}
 
 	/* __del__ method is invoked upon object finalization. */
-	protected void finalize() throws PyException {
-		invoke_ex("__del__");
-	}
+	/*protected void finalize() {
+	    PyObject delfunc = __class__.__getattr__;
+	    if (delfunc != null) {
+	        delfunc.__call__(this);
+	    }
+		//invoke_ex("__del__");
+	}*/
 
 	public PyObject __call__(PyObject args[], String keywords[]) {
 		return invoke("__call__", args, keywords);
