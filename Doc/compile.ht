@@ -13,7 +13,7 @@ mind.</P>
 
 <P>The source to many of the classes in the org.python.parser package
 are not distributed with JPython. These classes are produced from the
-file &quot;python.jjt&quot; using the excellent
+file &quot;python.jjt&quot; using the
 <A HREF="http://www.metamata.com/javacc/">JavaCC</A> parser generator
 tool. When rebuilding JPython from source you have two options for
 generating these classes:
@@ -25,7 +25,8 @@ generating these classes:
 	explicitly want to experiment with the JPython
 	grammar/parser.
 	
-    <LI>Get <A HREF="http://www.metamata.com/javacc/">JavaCC</A>v0.7.1. 
+    <LI>Get <A HREF="http://www.metamata.com/javacc/">JavaCC</A>
+	<sup>1</sup>.
 	Run jjtree on python.jjt, and then run javacc on the resulting
 	python.jj. This should produce all of the required source
 	files to build the org.python.parser package.
@@ -40,3 +41,8 @@ depends on packages from
 <A HREF="http://www.installshield.com/java">InstallShield Java
 Edition</A>, and you must have this software installed and in your
 CLASSPATH before you can rebuild this file.
+
+<hr>
+<sup>1</sup>JavaCC version 0.7.1 is required.  Specifically, newer
+versions of JavaCC are known to be incompatible with JPython's grammar 
+file.  This will be fixed in a later release.
