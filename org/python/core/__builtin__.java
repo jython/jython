@@ -474,7 +474,7 @@ public class __builtin__ implements ClassDictInit
 
     public static PyList list(PyObject o) {
         if (o instanceof PyList)
-            return (PyList)o;
+            return (PyList) o.__getslice__(Py.None, Py.None, Py.One);
         if (o instanceof PyTuple) {
             // always make a copy, otherwise the list will share the
             // underlying data structure with the tuple object, which
