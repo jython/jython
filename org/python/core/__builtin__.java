@@ -379,6 +379,10 @@ public class __builtin__ implements InitModule {
 
 	public static boolean issubclass(PyClass subClass, PyClass superClass) {
 	    if (subClass == superClass) return true;
+	    if (subClass.proxyClass != null && superClass.proxyClass != null) {
+	        if (superClass.proxyClass.isAssignableFrom(subClass.proxyClass)) return true;
+	    }
+	    if (subClass.__bases__ == null || superClass.__bases__ == null) return false;
 	    PyObject[] bases = subClass.__bases__.list;
 	    int n = bases.length;
 	    for(int i=0; i<n; i++) {
