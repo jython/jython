@@ -228,3 +228,14 @@ def getsize(path):
     if size == 0 and not f.exists():
         raise OSError(0, 'No such file or directory', path)
     return size
+
+def getmtime(path):
+    f = File(path)
+    return f.lastModified() / 1000.0
+
+def getatime(path):
+    # We can't detect access time so we return modification time. This
+    # matches the behaviour in os.stat().
+    f = File(path)
+    return f.lastModified() / 1000.0
+
