@@ -74,6 +74,11 @@ public class SimpleNode implements Node
     }
 
     public void setString(String s, int quotes) {
+        info = parseString(s, quotes, beginLine, beginColumn);
+    }
+
+    public static String parseString(String s, int quotes, 
+                                     int beginLine, int beginColumn) {
         //System.out.println("string: "+s);
         char quoteChar = s.charAt(0);
         int start=0;
@@ -81,7 +86,7 @@ public class SimpleNode implements Node
             start++;         
         quoteChar = s.charAt(start);
         if (quoteChar == 'r' || quoteChar == 'R') {
-            info = s.substring(quotes+start+1, s.length()-quotes);
+            return s.substring(quotes+start+1, s.length()-quotes);
         } else {
             StringBuffer sb = new StringBuffer(s.length());
             char[] ca = s.toCharArray();
@@ -172,9 +177,10 @@ public class SimpleNode implements Node
                 last_i = i;
             }
             sb.append(ca, last_i, i-last_i);
-            info = sb.toString();
+            return sb.toString();
         }
     }
+
 
 
     public void setInteger(String s, int radix) {
