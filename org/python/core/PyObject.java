@@ -74,15 +74,20 @@ public class PyObject implements java.io.Serializable {
 	}
 	
 	String safeRepr() {
-	    try {
-	        return __repr__().toString();
-	    } catch (Throwable t) {
-	        if (__class__ == null) {
-	            return "<unknown>";
-	        } else {
-	            return "<instance of "+__class__.__name__+">";
-	        }
+	    if (__class__ == null) {
+	        return "unknown object";
 	    }
+	    String name = __class__.__name__;
+	    if (name == null) return "unknown object";
+	    
+	    if ((name.equals("org.python.core.PyClass") || name.equals("org.python.core.PyJavaClass"))
+	      && (this instanceof PyClass)) {
+	        name = ((PyClass)this).__name__;
+	        if (name == null) return "unknown class";
+	        return "class '"+name+"'";
+	    }
+	    
+	    return "instance of '"+name+"'";
 	}
 	
 	/**
@@ -463,7 +468,7 @@ public class PyObject implements java.io.Serializable {
     **/	
 	public final PyObject __getattr__(PyString name) {
 		PyObject ret = __findattr__(name);
-		if (ret == null) throw Py.AttributeError(name.toString()+" not in "+safeRepr());
+		if (ret == null) throw Py.AttributeError(safeRepr()+" has no attribute '"+name+"'");
 		return ret;
 	}
 	
@@ -484,7 +489,7 @@ public class PyObject implements java.io.Serializable {
     **/	
 	public final PyObject __getattr__(String name) {
 	    PyObject ret = __findattr__(name);
-		if (ret == null) throw Py.AttributeError(name+" not in "+safeRepr());
+		if (ret == null) throw Py.AttributeError(safeRepr()+" has no attribute '"+name+"'");
 		return ret;
 	}
 	
