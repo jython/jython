@@ -234,8 +234,8 @@ class dbexts:
 		for a in database.sqltype.keys():
 			setattr(self, database.sqltype[a], a)
 		for a in dir(database):
-			p = getattr(database, a)
 			try:
+				p = getattr(database, a)
 				if issubclass(p, Exception):
 					setattr(self, a, p)
 			except:
@@ -599,25 +599,29 @@ class Schema:
 			self.primarykeys = map(lambda x: (x[3], x[4], x[5]), self.db.results)
 			if self.sort: self.primarykeys.sort(lambda x, y: cmp(x[1], y[1]))
 
-		self.db.stat(self.table)
-		# (non-unique, name, type, pos, column name, asc)
-		self.indices = []
-		if self.db.results:
-			idxdict = {}
-			# mxODBC returns a row of None's, so filter it out
-			idx = map(lambda x: (x[3], x[5].strip(), x[6], x[7], x[8]), filter(lambda x: x[5], self.db.results))
-			def cckmp(x, y):
-				c = cmp(x[1], y[1])
-				if c == 0: c = cmp(x[3], y[3])
-				return c
-			# sort this regardless, this gets the indicies lined up
-			idx.sort(cckmp)
-			for a in idx:
-				if not idxdict.has_key(a[1]):
-					idxdict[a[1]] = []
-				idxdict[a[1]].append(a)
-			self.indices = idxdict.values()
-			if self.sort: self.indices.sort(lambda x, y: cmp(x[0][1], y[0][1]))
+		try:
+			self.indices = None
+			self.db.stat(self.table)
+			self.indices = []
+			# (non-unique, name, type, pos, column name, asc)
+			if self.db.results:
+				idxdict = {}
+				# mxODBC returns a row of None's, so filter it out
+				idx = map(lambda x: (x[3], x[5].strip(), x[6], x[7], x[8]), filter(lambda x: x[5], self.db.results))
+				def cckmp(x, y):
+					c = cmp(x[1], y[1])
+					if c == 0: c = cmp(x[3], y[3])
+					return c
+				# sort this regardless, this gets the indicies lined up
+				idx.sort(cckmp)
+				for a in idx:
+					if not idxdict.has_key(a[1]):
+						idxdict[a[1]] = []
+					idxdict[a[1]].append(a)
+				self.indices = idxdict.values()
+				if self.sort: self.indices.sort(lambda x, y: cmp(x[0][1], y[0][1]))
+		except:
+			pass
 
 	def __str__(self):
 		d = []
@@ -638,10 +642,13 @@ class Schema:
 			nullable = choose(a[3], "nullable", "non-nullable")
 			d.append("  %-20s %s(%s), %s" % (a[0], a[1], a[2], nullable))
 		d.append("\nIndices")
-		for a in self.indices:
-			unique = choose(a[0][0], "non-unique", "unique")
-			cname = ", ".join(map(lambda x: x[4], a))
-			d.append("  %s index {%s} on (%s)" % (unique, a[0][1], cname))
+		if self.indices is None:
+			d.append(" (failed)")
+		else:
+			for a in self.indices:
+				unique = choose(a[0][0], "non-unique", "unique")
+				cname = ", ".join(map(lambda x: x[4], a))
+				d.append("  %s index {%s} on (%s)" % (unique, a[0][1], cname))
 		return "\n".join(d)
 
 class IniParser:
