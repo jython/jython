@@ -791,15 +791,16 @@ public final class Py {
 	    if (e instanceof PyClass) {
 	        return __builtin__.isinstance(pye.value, (PyClass)e);
 	    } else {
+	        if (e == pye.type) return true;
+	        
 	        if (e instanceof PyTuple) {
 	            PyObject[] l = ((PyTuple)e).list;
 	            for(int i=0; i<l.length; i++) {
 	                if (matchException(pye, l[i])) return true;
 	            }
-	            return false;
-	        } else {
-	            return e == pye.type;
 	        }
+	        
+	        return false;
 	    }
 	}
 
