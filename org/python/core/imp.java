@@ -453,7 +453,9 @@ public class imp {
         }
     }   
 
-    private static void loadNames(PyObject names, PyObject module, PyObject locals) {
+    private static void loadNames(PyObject names, PyObject module,
+				  PyObject locals)
+    {
         int i=0;
         PyObject name;
         while ((name=names.__finditem__(i++)) != null) {
