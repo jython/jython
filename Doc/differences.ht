@@ -159,6 +159,16 @@ CPython 2.0</i>
     adopt Jython's approach in the future for the performance
     gains it can provide.</I>
 
+    <p><LI>The 'b' (binary) flag parameter to the open(file, flag) 
+    call have a different meaning for Jython. In addition to the 
+    expected platform depending newline translation, the 'b' flag
+    also controls the unicode/binary translation of characters with
+    value > 255. When the 'b' flag is specified, only the low-order half
+    of each unicode character will written to the file and the high-order
+    byte will be set to zero when reading from a file. 
+    Without the 'b' option, the unicode charecters will the passed 
+    through the default codec before going to/from the file.
+
 </UL>
 
 <h3>Extension modules</h3>
