@@ -101,7 +101,7 @@ public class PyMethod extends PyObject
                                                (PyClass)im_class);
         if (badcall) {
             throw Py.TypeError(
-             "unbound method must be called with class instance 1st argument");
+             "unbound method " + __name__ + "() must be called with instance as first argument");
         }
         else
             return im_func.__call__(args, keywords);
