@@ -116,9 +116,9 @@ if there are still references to them. But what happens if they are no longer us
 unique (e.g. to guarantee == and 'is' semantic). So jython keeps this mapping
 in an internal table.  This is also good because building the wrappers is expensive. </p>
 
-<p>Note: Unless one cannot predict the amount of reloading
-that will be performed by an application or for the case of long-running
-highly dynamic apps, the unloading issue can simply be ignored. </p>
+<p>Note: Typically one should care about java classes unloading only for very dynamic applications, like
+IDEs or long-running apps, that would go out memory if old versions of reloaded classes would not be
+collected. </p>
 
 <p>Clearly the entries somehow block unloading. On the other hand
 java classes unloading is just a memory consumption optimization (and as such
