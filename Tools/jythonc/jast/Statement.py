@@ -278,8 +278,10 @@ class TryCatches(Statement):
             catchbody.writeSource(out)
 
     def exits(self):
-        return self.body.exits() and self.catchbody.exits()
-
+        r = self.body.exits()
+        for exctype, excname, catchbody in self.catches:
+            r = r and catchbody.exits()
+        return r
 
 
 class TryFinally(Statement):
