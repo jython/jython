@@ -106,7 +106,7 @@ public class imp
     
             if (filename == null)
                 filename = "<unknown>";
-            org.python.parser.SimpleNode node;
+            org.python.parser.SimpleNode node = null; //*Forte*
             try {
                 node = parser.parse(fp, "exec", filename);
             } finally {
@@ -154,7 +154,7 @@ public class imp
 
     private static BytecodeLoader syspathJavaLoader = null;
 
-    public static BytecodeLoader getSyspathJavaLoader() {
+    public static synchronized BytecodeLoader getSyspathJavaLoader() {
         if (syspathJavaLoader == null)
             syspathJavaLoader = new BytecodeLoader();
         return syspathJavaLoader;
@@ -216,18 +216,28 @@ public class imp
     private static PyObject loadPrecompiled(String name, String modName,
                                             PyList path)
     {
-        //System.out.println("precomp: "+name+", "+modName);
-        Class c = findPyClass(modName);
-        if (c == null) {
-            //System.err.println("trying: "+modName+".__init__$_PyInner");
-            c = findPyClass(modName+".__init__");
-            if (c == null) return null;
-            //System.err.println("found: "+modName+".__init__$_PyInner");
-            PyModule m = addModule(modName);
-            m.__dict__.__setitem__("__path__", new PyList());
-        } 
-        //System.err.println("creating: "+modName+", "+c);
-        return createFromClass(modName, c);
+        if (Py.frozenModules != null) {
+            //System.out.println("precomp: "+name+", "+modName);
+            Class c;
+
+            if (Py.frozenModules.get(modName+".__init__") != null) {
+                //System.err.println("trying: "+modName+".__init__$_PyInner");
+                c = findPyClass(modName+".__init__");
+                if (c == null) return null;
+                //System.err.println("found: "+modName+".__init__$_PyInner");
+                PyModule m = addModule(modName);
+                m.__dict__.__setitem__("__path__", new PyList());
+            }
+            else if (Py.frozenModules.get(modName) != null) {
+                c = findPyClass(modName);
+                if (c == null) return null;
+            }
+            else return null;
+
+            //System.err.println("creating: "+modName+", "+c);
+            return createFromClass(modName, c);
+        }
+        return null;
     }
 
     static PyObject loadFromPath(String name, PyList path) {
@@ -235,12 +245,12 @@ public class imp
     }
 
     static PyObject loadFromPath(String name, String modName, PyList path) {
-        if (Py.frozen)
-            return loadPrecompiled(name, modName, path);
+        //System.err.println("load-from-path:"+name+" "+modName+" "+path); // ?? dbg
+        PyObject o = loadPrecompiled(name, modName, path);
+        if (o != null) return o;
 
         String pyName = name+".py";
         String className = name+"$py.class";
-        String javaName = name+".class";
 
         int n = path.__len__();
 
@@ -259,9 +269,7 @@ public class imp
             // "user.dir".  Don't rely on File's constructor to provide
             // this correctly.
             if (dirName.length() == 0) {
-                String userdir = System.getProperty("user.dir");
-                if (userdir != null)
-                    dirName = userdir;
+                dirName = null;
             }
 
             // First check for packages
@@ -274,7 +282,7 @@ public class imp
                 PyModule m = addModule(modName);
                 pkgPath.append(new PyString(dir.toString()));
                 m.__dict__.__setitem__("__path__", pkgPath);
-                PyObject o = loadFromPath("__init__", modName, pkgPath);
+                o = loadFromPath("__init__", modName, pkgPath);
                 if (o == null)
                     continue;
                 return m;
@@ -303,16 +311,6 @@ public class imp
                 return createFromPyClass(modName, makeStream(classFile),
                                          false);
             }
-                        
-            File javaFile = new File(dirName, javaName);
-            if (javaFile.isFile()) {
-                try {
-                    return createFromClass(modName, makeStream(javaFile));
-                } catch (ClassFormatError exc) {
-                    throw Py.ImportError("bad java class file in: "+
-                                         javaFile.toString());
-                }
-            }                       
 
         }
         return null;
@@ -344,19 +342,11 @@ public class imp
     private static PyObject load(String name, PyList path) {
         PyObject ret = loadBuiltin(name, path);
         if (ret != null) return ret;
-
-        ret = PySystemState.packageManager.jarFindName(name);
-        if (ret != null) return ret;
-
+        
         ret = loadFromPath(name, path);
         if (ret != null) return ret;
 
-        if (Py.frozen) {
-            Class c = Py.findClassEx(name);
-            if (c != null) return createFromClass(name, c);
-        }
-
-        ret = PySystemState.packageManager.dirFindName(name);
+        ret = PySystemState.packageManager.lookupName(name);
         if (ret != null) return ret;
 
         throw Py.ImportError("no module named "+name);
@@ -390,6 +380,26 @@ public class imp
         }
     }
 
+    // Hierarchy-recursivly search for dotted name in mod.
+    private static PyObject dottedFind(PyObject mod, String name) {
+      int dot = 0;
+      int last_dot= 0;
+      do {
+        String tmpName;
+        dot = name.indexOf('.', last_dot);
+        if (dot == -1) {
+          tmpName = name.substring(last_dot).intern();
+        } else {
+          tmpName = name.substring(last_dot, dot).intern();
+        }
+        mod = mod.__findattr__(tmpName);
+        if (mod == null)
+          throw Py.ImportError("No module named " + tmpName);
+        last_dot = dot + 1;
+      } while (dot != -1);
+      return mod;
+    }
+    
     public static PyObject importName(String name, boolean top) {
         if (name.length() == 0)
             throw Py.ValueError("Empty module name");
@@ -406,20 +416,7 @@ public class imp
 
             if (mod == null) {
                 mod = pkg;
-                while (dot != -1) {
-                    String tmpName;
-                    dot = name.indexOf('.', last_dot+1);
-                    if (dot == -1) {
-                        tmpName = name.substring(last_dot+1,
-                                                 name.length()).intern();
-                    } else {
-                        tmpName = name.substring(last_dot+1, dot).intern();
-                    }
-                    mod = mod.__findattr__(tmpName);
-                    if (mod == null)
-                        throw Py.ImportError("No module named " + tmpName);
-                    last_dot = dot;
-                }
+                if (dot != -1) mod = dottedFind(mod, name.substring(dot+1));
             }
             if (modules.__finditem__(name) == null)
                 modules.__setitem__(name, mod);
@@ -433,33 +430,68 @@ public class imp
         else return load(name);
     }
 
+    // This version should deal properly with package relative imports.
+    // Assumption (runtime enforced):
+    // x.y.z key in sys.modules => any subseq (e.g x, x.y) is a present key too.
+    // ??pending: check if result is really a module/jpkg/jclass?
     public synchronized static PyObject importName(String name, boolean top,
-                                                   PyObject modDict)
+    PyObject modDict)
     {
         //System.err.println("importName: "+name);
         String pkgName = getParent(modDict);
-        PyObject ret;
+        PyObject mod;
 
         if (pkgName != null) {
-            PyObject modules = Py.getSystemState().modules;             
-            String newName = (pkgName+'.'+name).intern();
-            ret = modules.__finditem__(newName);
-            if (ret != null) return ret;
+            PyObject modules = Py.getSystemState().modules;
+            int dot = name.indexOf('.');
+            String firstName;
+            if (dot == -1) firstName = name;
+            else firstName = name.substring(0,dot);
 
-            PyObject pkg = modules.__finditem__(pkgName);
-            if (pkg != null) {
-                ret = pkg.__findattr__(name);
-                if (ret != null) return ret;
+            String topNewName = (pkgName+'.'+firstName).intern();
+
+            PyObject topMod = modules.__finditem__(topNewName);
+
+            if (topMod != Py.None) {
+                if (dot == -1 && topMod != null) {
+                    //System.err.println("refound-1-top: "+topMod); // ?? dbg
+                    return topMod;
+                }
+                String newName = (pkgName+'.'+name).intern();
+                mod = modules.__finditem__(newName);
+                if (mod != null) {
+                    //System.err.println("refound: "+name); // ?? dbg
+                    if (!top) return mod;
+                    else return topMod;
+                }
+
+                PyObject pkg = modules.__finditem__(pkgName);
+                if (pkg != null) {
+                    topMod = pkg.__findattr__(firstName.intern());
+                    if (topMod != null ) {
+                        if (dot == -1 ) {
+                            //System.err.println("found-1-top: "+topMod); // ?? dbg
+                            return topMod;
+                        }
+
+                        //System.err.println(".-find: "+topMod+","+name.substring(dot+1)); // ?? dbg
+                        mod = dottedFind(topMod,name.substring(dot+1));
+
+                        if(top) return topMod;
+                        else return mod;
+
+                    }
+
+                }
+
+                //System.err.println("mark: "+topNewName); // ?? dbg
+                modules.__setitem__(topNewName,Py.None);
             }
-
-            ret = importName(name, top);
-            modules.__setitem__(newName, ret);
-            return ret;
         }
-        //System.err.println("done importName: "+name);
-        return importName(name, top);
-    }
 
+        return importName(name, top);
+}
+            
     /**
      * Called from jpython generated code when a statement like "import spam"
      * is executed.
@@ -553,10 +585,14 @@ public class imp
                 frame.f_globals,
                 frame.f_locals,
                 all } );
-
-        loadNames(module.__dir__(), module, frame.getf_locals());
+        PyObject names;
+        if (module instanceof PyJavaPackage) names = ((PyJavaPackage)module).fillDir();
+        else names = module.__dir__();
+                          
+        loadNames(names, module, frame.getf_locals());
     }
 
+    // if __all__ is present, things work properly under the assumption that names is sorted (__*__ names come first)
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals)
     {
@@ -591,7 +627,7 @@ public class imp
         PyObject modules = Py.getSystemState().modules;         
         PyModule nm = (PyModule)modules.__finditem__(name);
 
-        if (!nm.__getattr__("__name__").toString().equals(name)) {
+        if (nm == null || !nm.__getattr__("__name__").toString().equals(name)) {
             throw Py.ImportError("reload(): module "+name+
                                  " not in sys.modules");
         }

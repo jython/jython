@@ -9,6 +9,9 @@ public final class Py
 {
     static boolean frozen;
     static String frozenPackage=null;
+    private final static Object PRESENT=new Object();
+    static java.util.Hashtable frozenModules;
+        
     static boolean initialized;
         
     /* Holds the singleton None and Ellipsis objects */
@@ -259,13 +262,11 @@ public final class Py
         return obj;
     }
 
-    /** @deprecated **/
+    // ??pending: was @deprecated but is actually used by proxie code. Can get rid of it?
     public static Object tojava(PyObject o, String s) {
-        try {
-            return tojava(o, Class.forName(s));
-        } catch (ClassNotFoundException exc) {
-            throw Py.TypeError("can't convert to: "+s);
-        }
+        Class c = findClass(s);
+        if (c == null) throw Py.TypeError("can't convert to: "+s);
+        return tojava(o, c); // prev:Class.forName
     }
         
     /* Helper functions for PyProxy's */
@@ -534,24 +535,49 @@ public final class Py
         return true;
     }
 
+    
+    public static Class relFindClass(Class home,String name) {
+        try {
+            ClassLoader loader = home.getClassLoader();
+            if (loader != null) return loader.loadClass(name);
+            else return Class.forName(name);
+        } catch (ClassNotFoundException exc) {
+            return null;
+        } catch (Throwable t) {
+            throw Py.JavaError(t);
+        }
+    }
+    
+    private static boolean secEnv=false;
+    
     public static Class findClass(String name) {
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
-            if (classLoader == null)
-                return Class.forName(name);
-            else
+            if (classLoader != null) return classLoader.loadClass(name);
+
+            if(!secEnv) {
+                try {
+                    classLoader = imp.getSyspathJavaLoader();
+                }
+                catch(SecurityException e) {
+                    secEnv=true;
+                }
                 return classLoader.loadClass(name);
+            }
+
+            return Class.forName(name);
+
         }
         catch (ClassNotFoundException e) {
-//             e.printStackTrace();
+            //             e.printStackTrace();
             return null;
         }
         catch (IllegalArgumentException e) {
-//             e.printStackTrace();
+            //             e.printStackTrace();
             return null;
         }
         catch (NoClassDefFoundError e) {
-//             e.printStackTrace();
+            //             e.printStackTrace();
             return null;
         }
     }
@@ -560,10 +586,19 @@ public final class Py
     public static Class findClassEx(String name) {
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
-            if (classLoader == null)
-                return Class.forName(name);
-            else
-                return classLoader.loadClass(name);
+            if (classLoader != null) return classLoader.loadClass(name);
+
+            if(!secEnv) {
+                try {
+                    classLoader = imp.getSyspathJavaLoader();
+                }
+                catch(SecurityException e) {
+                    secEnv=true;
+                }
+                return classLoader.loadClass(name);                
+            }
+
+            return Class.forName(name);
         }
         catch (ClassNotFoundException e) {
             return null;
@@ -620,14 +655,24 @@ public final class Py
             PySystemState.initialize(sprops, null, args, classLoader);
         }
 
-/*
         if (modules != null) {
-            System.out.println("modules: ");
-            for (int i = 0; i < modules.length; i++)
-                System.out.print(modules[i] + ", ");
-            System.out.println();
+            if(frozenModules == null)
+              frozenModules = new java.util.Hashtable();
+            
+            // System.err.println("modules: "); // ?? dbg
+            for (int i = 0; i < modules.length; i++) {
+                String modname = modules[i];
+                // System.err.print(modname + " "); // ?? dbg
+                frozenModules.put(modname,PRESENT);
+                // py pkgs are potentially java pkgs too.
+                if (modname.endsWith(".__init__")) {
+                    String jpkg = modname.substring(0,modname.length()-9);
+                    PySystemState.add_package(jpkg);
+                    // System.err.print(":j "); // ?? dbg
+                }
+            }
+            // System.out.println(); // ?? dbg
         }
-*/
 
         if (packages != null) {
             for (int i=0; i<packages.length; i+=2) {
@@ -664,7 +709,7 @@ public final class Py
         //System.out.println("path: "+sys.path.__str__());
 
         PyObject mod;
-        Class modClass = Py.findClass(module+"$_PyInner");
+        Class modClass = Py.findClass(module+"$_PyInner"); // ??pending: findClass or should avoid sys.path loading?
         if (modClass != null) {
             //System.err.println("found as class: "+modClass);
             PyCode code=null;
@@ -699,7 +744,7 @@ public final class Py
     public static void initRunnable(String module, PyObject dict) {
         Class mainClass=null;
         try {
-            mainClass = Class.forName(module);
+            mainClass = Class.forName(module); // ??pending: should use Py.findClass?
         } catch (ClassNotFoundException exc) {
             System.err.println("Error running main.  Can't find: "+module);
             System.exit(-1);
@@ -723,7 +768,7 @@ public final class Py
        
         Class mainClass=null;
         try {
-            mainClass = Class.forName(module);
+            mainClass = Class.forName(module); // ??pending: should use Py.findClass?
         } catch (ClassNotFoundException exc) {
             System.err.println("Error running main.  Can't find: "+module);
             System.exit(-1);
@@ -1369,8 +1414,8 @@ public final class Py
         PyClass pyclass = new PyClass();
         if (proxyClass != null)
             pyclass.proxyClass = proxyClass;
-
-        pyclass.init(name, new PyTuple(bases), dict);
+     
+        pyclass.init(name, new PyTuple(bases), dict);       
         return pyclass;
     }
 

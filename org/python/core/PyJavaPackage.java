@@ -6,28 +6,48 @@ import java.io.File;
 
 public class PyJavaPackage extends PyObject {
     public String __name__;
-    public PyObject __dict__;
-    public String _unparsedAll;
+        
+    
+    public PyStringMap __dict__;
+    //public String _unparsedAll;
+    /** Its keys are the names of statically known classes.
+     * E.g. from jars pre-scan.
+     */
+    public PyStringMap clsSet;    
     public String __file__;
     //public PyList __all__;
 
+    /** (Control) package manager whose hierarchy contains this java pkg.
+     */
+    public PackageManager __mgr__;
+    
     public static PyClass __class__;
     public PyJavaPackage(String name) {
         this(name, null, null);
     }
     
-    protected PyJavaPackage __parent__ = null;    
-    public PyJavaPackage(String name, String jarfile) {
+    public PyJavaPackage(String name,String jarfile) {
         this(name, null, jarfile);
     }
     
-    public PyJavaPackage(String name, PyJavaPackage parent, String jarfile) {
+    public PyJavaPackage(String name,PackageManager mgr) {
+        this(name, mgr, null);
+    }
+
+   
+    public PyJavaPackage(String name,PackageManager mgr,String jarfile) {
         super(__class__);
-        __parent__ = parent;
-        if (jarfile == null && parent != null)
-            jarfile = __parent__.__file__;
+
         __file__ = jarfile;
         __name__ = name;
+        
+        if( mgr == null )
+           __mgr__ = PySystemState.packageManager; // default
+        else
+           __mgr__ = mgr;
+        
+        clsSet= new PyStringMap();
+        
         __dict__ = new PyStringMap();
         __dict__.__setitem__("__name__", new PyString(__name__));
     }
@@ -44,184 +64,80 @@ public class PyJavaPackage extends PyObject {
             firstName = name.substring(0,dot);
             lastName = name.substring(dot+1, name.length());
         }
-        if (jarfile != null) {
-            if (!jarfile.equals(__file__)) {
-                __file__ = null;
-            }
-        }
         firstName = firstName.intern();
         PyJavaPackage p = (PyJavaPackage)__dict__.__finditem__(firstName);
         if (p == null) {
-            p = new PyJavaPackage(__name__+'.'+firstName, this, jarfile);
+            p = new PyJavaPackage(__name__.length()==0?firstName:__name__+'.'+firstName, __mgr__, jarfile);
+            __dict__.__setitem__(firstName, p);
+        } else { // this code is ok here, because this is not needed for a top level package
+            if (jarfile == null || !jarfile.equals(p.__file__)) p.__file__ = null;
         }
-        __dict__.__setitem__(firstName, p);
-        if (lastName != null)
-            return p.addPackage(lastName, jarfile);
-        else
-            return p;
-    }
-
-    private PyObject __path__ = null;
-    protected PyObject getPath() {
-        if (__path__ != null)
-            return __path__;
-        //System.err.println("finding path for: "+__name__);
-        
-        if (__name__.length() == 0) {
-            __path__ = Py.getSystemState().path;
-            return __path__;
-        }
-        
-        PyJavaPackage parent = __parent__;
-        PyList rootPath;
-        if (parent == null) {
-            rootPath = Py.getSystemState().path;
-        } else {
-            PyObject tmp = __parent__.getPath();
-            if (tmp == Py.None) {
-                __path__ = Py.None;
-                return __path__;
-            }
-            rootPath = (PyList)tmp;
-        }
-        
-        PyList path = new PyList();
-        
-        if (Py.frozen) {
-            __path__ = path;
-            return __path__;
-        }
-        
-        // Search through directories in rootPath looking for appropriate
-        // subdir
-        int n = rootPath.__len__();
-
-        String name = __name__;
-        int dot = name.lastIndexOf('.');
-        if (dot != -1)
-            name = name.substring(dot+1, name.length());
-
-        for (int i=0; i<n; i++) {
-            String dirName = rootPath.get(i).toString();
-            File dir = new File(dirName, name);
-            //System.err.println("pkg: "+__name__+", looking for: "+dir);
-            if (dir.isDirectory()) {
-                //System.err.println("found: "+dir.getPath());
-                path.append(new PyString(dir.getPath()));
-            }
-        }
-        //Py.println(path);
-        if (path.__len__() == 0) {
-            __path__ = Py.None;
-        } else {
-            __path__ = path;
-        }
-        return __path__;
+        if (lastName != null) return p.addPackage(lastName, jarfile);
+        else return p;
     }
     
-    private PyObject __jdir__;
-    private boolean jdirinit = false;
-
-    public PyObject getDirPackage() {
-        if (jdirinit)
-            return __jdir__;
-        jdirinit = true;
-        
-        if (__name__.length() == 0) {
-            __jdir__ = PySystemState.packageManager.topDirectoryPackage;
-            return __jdir__;
-        }
-        
-        PyJavaPackage parent = __parent__;
-        PyObject ppkg;
-        if (parent == null) {
-            ppkg = PySystemState.packageManager.topDirectoryPackage;
-        } else {
-            ppkg = parent.getDirPackage();
-        }
-        
-        if (ppkg == null) {
-            __jdir__ = null;
-            return null;
-        }
-
-        String name = __name__;
-        int dot = name.lastIndexOf('.');
-        if (dot != -1)
-            name = name.substring(dot+1, name.length()).intern();
-        __jdir__ = ppkg.__findattr__(name);
-        return __jdir__;
+    public PyObject addClass(String name,Class c) {
+        PyObject ret = PyJavaClass.lookup(c);
+        __dict__.__setitem__(name.intern(), ret);
+        return ret;
     }
- 
-    private void initialize() {
-        if (__dict__ == null)
-            __dict__ = new PyStringMap();
-        
-        if (_unparsedAll != null) {
-            //__all__ = new PyList();
-            StringTokenizer tok = new StringTokenizer(_unparsedAll, ",");
-            while  (tok.hasMoreTokens())  {
-                String p = tok.nextToken();
-                String cname = p.trim().intern();
-                __dict__.__setitem__(cname, PyJavaClass.lookup(__name__+'.'+
-                                                               cname, null));
-                //__all__.append(new PyString(p.trim()));
-            }
-            _unparsedAll = null;
+
+    public PyObject addLazyClass(String name) {
+        PyObject ret = PyJavaClass.lookup(__name__+'.'+name,null);
+        __dict__.__setitem__(name.intern(), ret);
+        return ret;
+    }
+
+    /** Add statically known classes.
+     * @param classes their names as comma-separated string
+     */
+    public void addPlaceholders(String classes) {
+        StringTokenizer tok = new StringTokenizer(classes, ",");
+        while  (tok.hasMoreTokens())  {
+            String p = tok.nextToken();
+            String name = p.trim().intern();
+            if ( clsSet.__finditem__(name) == null) clsSet.__setitem__(name, Py.One);
         }
     }
 
     public PyObject __dir__() {
-        initialize();
-        if (__dict__ instanceof PyStringMap) {
-            return ((PyStringMap)__dict__).keys();
-        } else {
-            return __dict__.invoke("keys");
-        }
+        return __mgr__.doDir(this,false,false);
+    }
+
+    /** Used for 'from xyz import *', dynamically dir pkg filling up __dict__.
+     * It uses {@link PackageManager#doDir} implementation furnished by the control
+     * package manager with instatiate true. The package manager should lazily load
+     * classes with {@link #addLazyClass} in the package.
+     *
+     * @return list of member names
+     */
+    public PyObject fillDir() {
+        return __mgr__.doDir(this,true,false);
     }
 
 
     public PyObject __findattr__(String name) {
-        if (__dict__ == null)
-            __dict__ = new PyStringMap();
-                    
-        PyObject ret = __dict__.__finditem__(name);
-        if (ret != null)
-            return ret;
-        Class c;
-        if (__name__.length()>0)
-            c = Py.findClassEx(__name__+'.'+name);
-        else
-            c = Py.findClassEx(name);
 
-        if (c != null) {
-            ret = PyJavaClass.lookup(c);
-            __dict__.__setitem__(name, ret);
-            return ret;
-        }
+        PyObject ret = __dict__.__finditem__(name);
+        if (ret != null) return ret;
+
+        Class c;
+
+        c = __mgr__.findClass(__name__,name);
+
+        if (c != null) return addClass(name,c);
+
         if (name == "__name__") return new PyString(__name__);
         if (name == "__dict__") return __dict__;
-        if (name == "__file__" && __file__ != null)
-            return new PyString(__file__);
-                
-        // Name not found - check for Java dir package
-        PyObject pyjd = getDirPackage();
-        if (pyjd != null)
-            ret = pyjd.__findattr__(name);
-        
-        if (ret == null) {
-            // Name not found - check for a Python package/module
-            PyObject path = getPath();
-            if (path == Py.None)
-                return null;
-            ret = imp.loadFromPath(name, (__name__+'.'+name).intern(),
-                                   (PyList)path);
+        if (name == "__file__") {
+            if (__file__ != null) return new PyString(__file__);
+
+            return Py.None;
         }
-        
-        if (ret != null)
-            __dict__.__setitem__(name, ret);
-        return ret;
-        //return super.__findattr__(name);
+
+        if(__mgr__.packageExists(__name__,name)) return addPackage(name);
+
+        return null;
     }
 
     public String toString()  {

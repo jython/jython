@@ -73,8 +73,9 @@ public class PyJavaClass extends PyClass
         if (initialized || initializing)
             return;
         initializing = true;
-        if (proxyClass == null)
+        if (proxyClass == null) {
             init(Py.findClassEx(__name__));
+        }
         init__bases__(proxyClass);
         init__dict__();
         initialized = true;
@@ -737,16 +738,12 @@ public class PyJavaClass extends PyClass
     }
         
     private PyObject findInnerClass(String name) {
-        try {
-            Class innerClass = Class.forName(__name__+"$"+name);
-            PyJavaClass jinner = new PyJavaInnerClass(innerClass, this);
-            __dict__.__setitem__(name, jinner);
-            return jinner;
-        } catch (ClassNotFoundException exc) {
-            return null;
-        } catch (Throwable t) {
-            throw Py.JavaError(t);
-        }
+        Class innerClass = Py.relFindClass(getProxyClass(),__name__+"$"+name);
+        if (innerClass == null) return null;
+
+        PyJavaClass jinner = new PyJavaInnerClass(innerClass, this);
+        __dict__.__setitem__(name, jinner);
+        return jinner;
     }
 
     public void __setattr__(String name, PyObject value) {

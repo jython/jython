@@ -7,6 +7,39 @@ import java.util.Hashtable;
 
 public class BytecodeLoader extends ClassLoader
 {
+
+    public InputStream getResourceAsStream(String res) {
+        ClassLoader classLoader = Py.getSystemState().getClassLoader();
+        if (classLoader != null) return classLoader.getResourceAsStream(res);
+
+        classLoader = this.getClass().getClassLoader();
+
+        InputStream ret;
+
+        if (classLoader != null) ret = classLoader.getResourceAsStream(res);
+        else ret = ClassLoader.getSystemResourceAsStream(res);
+
+        if (ret != null) return ret;
+
+        if(res.charAt(0) == '/') res = res.substring(1);
+
+        res.replace('/',File.separatorChar);
+
+        PyList path = Py.getSystemState().path;
+        for (int i=0; i < path.__len__(); i++) {
+            String dir = path.get(i).__str__().toString();
+            if (dir.length() == 0) dir = null;
+            try {
+                return new BufferedInputStream(new FileInputStream(new File(dir,res)));
+            }
+            catch (IOException e) {
+                continue;
+            }
+        }
+
+        return null;
+    }
+  
     // override from abstract base class
     protected Class loadClass(String name, boolean resolve)
         throws ClassNotFoundException
@@ -19,12 +52,20 @@ public class BytecodeLoader extends ClassLoader
             return classLoader.loadClass(name);
         // Search the sys.path for a .class file matching the named class.
         // TBD: This registry option is temporary.
-        if (Options.extendedClassLoader &&
+        try {
+          return Class.forName(name);
+        } 
+        catch(ClassNotFoundException e) {
+        }
+        
+        /* previously: if
+            Options.extendedClassLoader &&
             // KLUDGE ALERT: without this test, running jpython
             // interactively from the build directory will fail with
             // ClassCircularityError or LinkageError.  There's gotta be a
             // better way.
-            !name.startsWith("org.python"))
+            !name.startsWith("org.python")
+        */
         {
             PyList path = Py.getSystemState().path;
             for (int i=0; i < path.__len__(); i++) {
@@ -44,9 +85,9 @@ public class BytecodeLoader extends ClassLoader
                 }
             }
         }
-        // couldn't find the .class file on sys.path, so give the system
-        // class loader the final shot at it
-        return findSystemClass(name);
+        
+        // couldn't find the .class file on sys.path        
+        throw new ClassNotFoundException(name);
     }
 
     private FileInputStream open(String dir, String name) {
@@ -62,8 +103,8 @@ public class BytecodeLoader extends ClassLoader
             first = false;
         }
         try {
-            if (dir == "")
-                dir = ".";
+            if (dir.length() == 0)
+                dir = null;
             return new FileInputStream(new File(dir, accum+".class"));
         }
         catch (FileNotFoundException e) {

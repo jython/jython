@@ -379,7 +379,7 @@ public class PySystemState extends PyObject
         } else {
             pkgdir = null;
         }
-        packageManager = new PackageManager(pkgdir, props);
+        packageManager = new SysPackageManager(pkgdir, props);
     }
 
     private static Hashtable builtinNames;
