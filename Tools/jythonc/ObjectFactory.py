@@ -226,6 +226,8 @@ class PyClass(FixedObject):
                                 self.javaclasses.extend(cls.value.javaclasses)
                                 self.proxyname = self.name
                                 self.supername = cls.value.name
+                                if cls.value.name != mod.name:
+                                    self.supername = mod.name + '.' + self.supername
                                 continue
 
         if len(self.javaclasses) and self.supername == None:
