@@ -48,21 +48,31 @@ public class PyJavaClass extends PyClass {
     
 
     private static java.util.Hashtable classes;
-    public synchronized static final PyJavaClass lookup(Class c) {
+    public static final PyJavaClass lookup(Class c) {
+        return lookup(c.getName(), c);
+    }
+    
+    public synchronized static final PyJavaClass lookup(String name, Class c) {
         //System.err.println("jclass: "+c.getName());
         if (classes == null) {
             classes = new java.util.Hashtable();
             PyJavaClass jc = new PyJavaClass(true);
-            classes.put(PyJavaClass.class, jc);
+            classes.put("org.python.core.PyJavaClass", jc);
             jc.init(PyJavaClass.class);
             Py.initPython();
         }
 
-        PyJavaClass ret = (PyJavaClass)classes.get(c);
+        PyJavaClass ret = (PyJavaClass)classes.get(name);
         if (ret != null) return ret;
-        ret = new PyJavaClass();
-        classes.put(c, ret);
-        ret.init(c);
+        /*if (name.equals("java.lang.IllegalThreadStateException")) {
+            System.err.println("creating new jclass: "+System.identityHashCode(c)+": "+name);
+            Thread.currentThread().dumpStack();
+        }*/
+        ret = new PyJavaClass(name);
+        classes.put(name, ret);
+        if (c != null) {
+            ret.init(c);
+        }
         return ret;
     }
 
@@ -97,10 +107,16 @@ public class PyJavaClass extends PyClass {
         PyStringMap d = new PyStringMap();
         d.__setitem__("__module__", Py.None);
         __dict__ = d;
-            
-        setBeanInfoCustom(proxyClass);
-        setFields(proxyClass);
-        setMethods(proxyClass);
+           
+        //System.err.println("initdict: "+proxyClass.getName()+", "+proxyClass.getModifiers());
+        //if (!Modifier.isPublic(proxyClass.getModifiers())) return;
+        try {
+            setBeanInfoCustom(proxyClass);
+            setFields(proxyClass);
+            setMethods(proxyClass);
+        } catch (SecurityException se) {
+            ;
+        }
     }
 
     protected Class getProxyClass() {
@@ -489,7 +505,7 @@ public class PyJavaClass extends PyClass {
 
     //This method is a workaround for Netscape's stupid security bug!
     private void setBeanInfoCustom(Class c) {
-        try {
+        //try {
             Method[] meths = c.getMethods();
 
             int i;
@@ -580,10 +596,10 @@ public class PyJavaClass extends PyClass {
 
                 addEvent(name, eClass, method, eClass.getMethods());
             }
-        } catch (Throwable t) {
+        /*} catch (Throwable t) {
             System.err.println("Custom Bean error: "+t);
             t.printStackTrace();
-        }
+        }*/
     }
 
 
@@ -728,9 +744,10 @@ public class PyJavaClass extends PyClass {
             classInstance = new PyJavaInstance(proxyClass);
         }
         PyObject result = classInstance.__findattr__(name);
-        if (result == null) return null;
-        __dict__.__setitem__(name, result);
         return result;
+        //if (result == null) return null;
+        //__dict__.__setitem__(name, result);
+        //return result;
     }
         
     private PyObject findInnerClass(String name) {
