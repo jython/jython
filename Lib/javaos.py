@@ -1,4 +1,5 @@
 import java
+from java.io import File
 import javapath
 path = javapath
 
@@ -18,48 +19,41 @@ environ = {}
 
 def _exit(n=0):
 	java.lang.System.exit(n)
-	
+
 def getcwd():
-	dir = java.io.File("foo")
-	file = java.io.File(dir.getAbsolutePath())
-	return file.getParent()
+	foo = File(File("foo").getAbsolutePath())
+	return foo.getParent()
 
 def listdir(path):
-	dir = java.io.File(path)
-	l = dir.list()
+	l = File(path).list()
 	if l is None:
 		raise error, 'No such directory'
 	return list(l)
 
 def mkdir(path):
-	dir = java.io.File(path)
-	if not dir.mkdir():
+	if not File(path).mkdir():
 		raise error, "couldn't make directory"
 
 def remove(path):
-	file = java.io.File(path)
-	if not file.delete():
+	if not File(path).delete():
 		raise error, "couldn't delete file"
 
 def rename(path, newpath):
-	file = java.io.File(path)
-	if not file.renameTo(newpath):
+	if not File(path).renameTo(File(newpath)):
 	    raise error, "couldn't rename file"
 
 def rmdir(path):
-	dir = java.io.File(path)
-	if not dir.delete():
+	if not File(path).delete():
 		raise error, "couldn't delete directory"
-				
+
 unlink = remove
 
-
 def stat(path):
-	"""The Java stat implementation only returns a small subset of 
+	"""The Java stat implementation only returns a small subset of
 	the standard fields"""
-	
+
 	file = java.io.File(path)
 	mtime = file.lastModified()
 	size = file.length()
-	
+
 	return (0,0,0,0,0,0, size, mtime, mtime, 0)
