@@ -1,5 +1,6 @@
 package org.python.util;
 import org.python.core.*;
+// Based on CPython-1.5.2's code module
 
 public class InteractiveConsole extends InteractiveInterpreter {
     public String filename;
@@ -86,29 +87,5 @@ public class InteractiveConsole extends InteractiveInterpreter {
     public String raw_input(PyObject prompt) {
         return __builtin__.raw_input(prompt);
     }
-
-    /** Pause the current code, sneak an exception raiser into sys.trace_func,
-    and then continue the code hoping that JPython will get control to do the break;
-    **/
-    public void interrupt(ThreadState ts) throws InterruptedException {
-        TraceFunction breaker = new BreakTraceFunction();
-        TraceFunction oldTrace = ts.systemState.tracefunc;
-        ts.systemState.tracefunc = breaker;
-        if (ts.frame != null)
-            ts.frame.tracefunc = breaker;
-        ts.systemState.tracefunc = oldTrace;
-        //ts.thread.join();
-    }
 }
 
-class BreakTraceFunction extends TraceFunction {
-    private void doBreak() {
-        throw new Error("Python interrupt");
-        //Thread.currentThread().interrupt();
-    }
-
-    public TraceFunction traceCall(PyFrame frame) { doBreak(); return null; }
-    public TraceFunction traceReturn(PyFrame frame, PyObject ret) { doBreak(); return null;}
-    public TraceFunction traceLine(PyFrame frame, int line) { doBreak(); return null;}
-    public TraceFunction traceException(PyFrame frame, PyException exc) { doBreak(); return null;}
-}
