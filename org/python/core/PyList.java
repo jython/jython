@@ -91,6 +91,7 @@ public class PyList extends PySequence implements InitModule
     }
     
     public void initModule(PyObject dict) {
+        super.initModule(dict);
         dict.__setitem__("reverse", new ListFunctions("reverse", 1, 0));
         dict.__setitem__("sort", new ListFunctions("sort", 2, 0, 1));
         dict.__setitem__("__len__", new ListFunctions("__len__", 3, 0));
@@ -215,7 +216,7 @@ public class PyList extends PySequence implements InitModule
         if (value instanceof PyList) {
             otherList = ((PyList)value).list;
             if (otherList == list)
-                otherList = (PyObject[])otherList.clone();;
+                otherList = (PyObject[])otherList.clone();
         }
         if (otherList != null) {
             System.arraycopy(otherList, 0, list, start, n);
