@@ -40,45 +40,13 @@ template = """\
      * @exception PyTypeError if this operation can't be performed 
      *            with these operands.
      **/
-    public final PyObject _%(name)s(PyObject o2_in) {
-        PyObject o2 = o2_in;
-        PyObject o1 = this;
-        Object ctmp;
-        if (o1.__class__ != o2.__class__) {
-            ctmp = o1.__coerce_ex__(o2);
-            if (ctmp != null) {
-                if (ctmp instanceof PyObject[]) {
-                    o1 = ((PyObject[])ctmp)[0];
-                    o2 = ((PyObject[])ctmp)[1];
-                } else {
-                    o2 = (PyObject)ctmp;
-                }
-            }
-        } else ctmp = null;
-
-        if (ctmp != Py.None && (o1 = o1.__%(name)s__(o2)) != null)
-            return o1;
-        o1 = this;
-        o2 = o2_in;
-        if (o1.__class__ != o2.__class__) {
-            ctmp=o2.__coerce_ex__(o1);
-            if (ctmp != null) {
-                if (ctmp instanceof PyObject[]) {
-                    o2 = ((PyObject[])ctmp)[0];
-                    o1 = ((PyObject[])ctmp)[1];
-                } else {
-                    o1 = (PyObject)ctmp;
-                }
-            }
-        }
-        if (ctmp != Py.None) {
-            if (o1.__class__ == o2.__class__)
-                o1 = o1.__%(name)s__(o2);
-            else
-                o1 = o2.__r%(name)s__(o1);
-            if (o1 != null)
-                return o1;
-        }
+    public final PyObject _%(name)s(PyObject o2) {
+        PyObject x = __%(name)s__(o2);
+        if (x != null)
+            return x;
+        x = o2.__r%(name)s__(this);
+        if (x != null)
+            return x;
         throw Py.TypeError(
                  "__%(name)s__ nor __r%(name)s__ defined for these operands");
     }
@@ -148,10 +116,21 @@ for name, ret in ops:
 
 template = comment + """\
     public PyObject __%(name)s__(PyObject o) {
-        return invoke_ex("__%(name)s__", o);
+        Object ctmp = __coerce_ex__(o);
+        if (ctmp == null || ctmp == Py.None)
+            return invoke_ex("__%(name)s__", o);
+        else {
+            PyObject o1 = ((PyObject[])ctmp)[0];
+            PyObject o2 = ((PyObject[])ctmp)[1];
+            if (this == o1) // Prevent recusion if __coerce__ return self
+                return invoke_ex("__%(name)s__", o2);
+            else
+                return %(function)s;
+        }
     }
 	
 """
+
 
 template2 = comment + """\
     public PyObject __%(name)s__(PyObject o) {
@@ -165,8 +144,8 @@ template2 = comment + """\
 
 fp.write('    // Binary ops\n\n')
 for name, op in binops:	
-	fp.write(template % {'name':name})
-	fp.write(template % {'name':'r'+name})
+	fp.write(template % {'name':name, 'function':'o1._%s(o2)' % name })
+	fp.write(template % {'name':'r'+name, 'function':'o2._%s(o1)' % name })
         if name != 'divmod':
 		fp.write(template2 % {'name':'i'+name
 })
