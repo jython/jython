@@ -4,9 +4,8 @@ Verify a bug in pickle reported by mailling list.
 
 import support
 
-# This program fails with pickle due to the id() problem.
-#import pickle
-import cPickle as pickle
+# This program failed with pickle due to the id() problem.
+import pickle
 
 pfile=open("test325.out","wb")
 p=pickle.Pickler(pfile)

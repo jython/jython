@@ -34,8 +34,8 @@ foo = fin.readObject()
 fin.close()
 
 
-support.compare(foo, "<(__main__|test101).Test instance at")
-support.compare(foo.text, "<(__main__|test101).Data instance at")
+support.compare(foo, "<(__main__|test101).Test instance")
+support.compare(foo.text, "<(__main__|test101).Data instance")
 support.compare(foo.text.data, "Hello World")
 
 

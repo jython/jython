@@ -9,7 +9,7 @@ from types import *
 
 v = util.Vector
 
-support.compare(str(v.size), "<java function size at")
+support.compare(str(v.size), "<java function size")
 
 if type(v.size) != BuiltinFunctionType:
    raise support.TestError('Wrong type for v.size' + `type(v.size)`)

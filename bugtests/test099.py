@@ -15,4 +15,4 @@ for i in xrange(100000):
     d[j] = s
 
 if cnt != 0:
-   raise support.TestWarning("%d id() value conflicts" % cnt)
+   raise support.TestError("%d id() value conflicts" % cnt)
