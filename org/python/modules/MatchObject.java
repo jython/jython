@@ -123,4 +123,26 @@ public class MatchObject extends PyObject {
         }
         return new PyTuple(res);
     }
+
+    public PyObject groupdict() {
+        return groupdict(Py.None);
+    }
+
+    public PyObject groupdict(PyObject defalt) {
+        PyDictionary dict = new PyDictionary();
+        PyList items = re.groupindex.items();
+
+        for (int i=0; i < items.__len__(); i++) {
+            PyTuple t = (PyTuple)items.__getitem__(i);
+            PyString name = (PyString)t.__getitem__(0);
+            PyInteger index = (PyInteger)t.__getitem__(1);
+
+            String s = group(index.getValue());
+            if (s == null)
+                dict.__setitem__(name, defalt);
+            else
+                dict.__setitem__(name, new PyString(s));
+        }
+        return dict;
+    }
 }
