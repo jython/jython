@@ -216,6 +216,9 @@ public class PyReflectedFunction extends PyObject {
 	    if (arg == String.class || arg == PyString.class) {
 	        return "String";
 	    }
+	    if (arg.isArray()) {
+	        return niceName(arg.getComponentType())+"[]";
+	    }
 	    return arg.getName();
 	}
 	
