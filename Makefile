@@ -14,7 +14,8 @@ SUBDIRS= \
 	org/python/core \
 	org/python/modules \
 	org/python/util \
-	org/python/rmi
+	org/python/rmi \
+	Lib/jxxload_help
 
 CLEANDIRS = $(SUBDIRS) \
 	Lib \
