@@ -4,13 +4,7 @@ import java.io.*;
 import java.util.Hashtable;
 import java.util.Properties;
 
-public class imp {
-    private static String[] builtinNames = new String[] {
-        "jarray", "math", "thread", "operator", "time",
-        "os", "types", "py_compile", "codeop", "re", "code",
-        "synchronize", "cPickle", "cStringIO",
-    };
-    
+public class imp {    
     public static final int APIVersion = 8;
     
     public static PyModule addModule(String name) {
@@ -171,27 +165,12 @@ public class imp {
         }
         return PyJavaClass.lookup(c);
     }
-        
-    private static Hashtable builtins;
-    private static String getBuiltin(String name) {
-        if (builtins == null) {
-            Hashtable t = new Hashtable();
-            t.put("__builtin__", "org.python.core.__builtin__");
-            t.put("sys", "org.python.core.sys");
-            for(int i=0; i<builtinNames.length; i++) {
-                t.put(builtinNames[i], "org.python.modules."+builtinNames[i]);
-            }
-            builtins = t;
-        }
-
-        return (String)builtins.get(name);
-    }
 
     private static PyObject loadBuiltin(String name, PyList path) {
         if (name == "sys") {
             return Py.java2py(Py.getSystemState());
         }
-        String mod = getBuiltin(name);
+        String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
             Class c = Py.findClass(mod);
             if (c != null)

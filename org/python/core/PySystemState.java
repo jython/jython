@@ -361,6 +361,7 @@ public class PySystemState extends PyObject {
             }
         }
 
+        initBuiltins(registry);
 	    initStaticFields();
 	    
 		// Initialize the path (and add system defaults)
@@ -397,6 +398,39 @@ public class PySystemState extends PyObject {
 	    packageManager = new PackageManager(pkgdir, props);
 	}
 
+    private static final String builtinDefaults = "jarray, math, thread, operator, time, os, types, py_compile, codeop, re, code, synchronize, cPickle, cStringIO, __builtin__:org.python.core";
+    private static Hashtable builtinNames;
+    private static void initBuiltins(Properties props) {
+        builtinNames = new Hashtable();
+		String builtinprop = props.getProperty("python.modules.builtin", "");
+		addBuiltins(builtinDefaults);
+		addBuiltins(builtinprop);
+	}
+	
+	private static void addBuiltins(String names) {
+		StringTokenizer tok = new StringTokenizer(names, ",");
+		while  (tok.hasMoreTokens())  {
+			String name = tok.nextToken();
+			String classname = null;
+			int colon = name.indexOf(':');
+			if (colon != -1) {
+			    classname = name.substring(colon+1, name.length()).trim();
+			    name = name.substring(0, colon).trim();
+			    if (classname.equals("null")) classname = null;
+			    else classname = classname+"."+name;
+			} else {
+			    name = name.trim();
+			    classname = "org.python.modules."+name;
+			}
+			if (classname != null) builtinNames.put(name, classname);
+			else builtinNames.remove(name);
+		}
+	}
+	
+	static String getBuiltin(String name) {
+	    return (String)builtinNames.get(name);
+	}
+	
 	private static PyList initPath(Properties props) {
 		PyList path = new PyList();
 		String pypath = props.getProperty("python.path", "");

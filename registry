@@ -33,3 +33,8 @@ python.deprecated.keywordMangling = false
 # Setting this to true will cause the console to poll standard in
 # This might be helpful on systems without system-level threads
 python.console.poll = false
+
+# Setting this can either add new modules to builtins or override package names
+# A good example would be to use a jni version of os for more functionality
+# Form is name:package -- if package is ommitted, org.python.modules is assumed
+# python.modules.builtin = os:com.foo.jni, binascii
