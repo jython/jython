@@ -216,6 +216,18 @@ abstract public class PySequence extends PyObject
     private static final int getIndex(PyObject index, int defaultValue) {
         if (index == Py.None || index == null)
             return defaultValue;
+        if (index instanceof PyLong) {
+            try {
+                index = index.__int__();
+            } catch (PyException exc) {
+                if (Py.matchException(exc, Py.OverflowError)) {
+                    if (new PyLong(0L).__cmp__(index) < 0)
+                        return Integer.MAX_VALUE;
+                    else
+                        return 0;
+                }
+            }
+        }
         if (!(index instanceof PyInteger))
             throw Py.TypeError("slice index must be int");
         return ((PyInteger)index).getValue();
@@ -245,7 +257,8 @@ abstract public class PySequence extends PyObject
         else if (index instanceof PySlice) {
             PySlice s = (PySlice)index;
             return __getslice__(s.start, s.stop, s.step);
-        }
+        } else if (index instanceof PyLong)
+            return __finditem__(index.__int__().getValue());
         else
             throw Py.TypeError("sequence subscript must be integer or slice");
     }
@@ -351,6 +364,8 @@ abstract public class PySequence extends PyObject
             if (index instanceof PySlice) {
                 PySlice s = (PySlice)index;
                 __setslice__(s.start, s.stop, s.step, value);
+            } else if (index instanceof PyLong) {
+                __setitem__(index.__int__().getValue(), value);
             } else {
                 throw Py.TypeError(
                     "sequence subscript must be integer or slice");
@@ -369,6 +384,11 @@ abstract public class PySequence extends PyObject
             if (index instanceof PySlice) {
                 PySlice s = (PySlice)index;
                 __delslice__(s.start, s.stop, s.step);
+            } else if (index instanceof PyLong) {
+                int i = fixindex(index.__int__().getValue());
+                if (i == -1)
+                    throw Py.IndexError("index out of range: "+i);
+                del(i);
             } else {
                 throw Py.TypeError(
                     "sequence subscript must be integer or slice");
