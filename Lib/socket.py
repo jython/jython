@@ -56,6 +56,7 @@ class _tcpsocket:
     ostream = None
     addr = None
     server = 0
+    file_count = 0
 
     def bind(self, addr, port=None):
 	if port is not None:
@@ -142,16 +143,56 @@ class _tcpsocket:
 	return (host, port)
 
     def makefile(self, mode="r", bufsize=-1):
+        file = None
 	if self.istream:
 	    if self.ostream:
-		return org.python.core.PyFile(self.istream, self.ostream,
+		file = org.python.core.PyFile(self.istream, self.ostream,
 					      "<socket>", mode)
 	    else:
-		return org.python.core.PyFile(self.istream, "<socket>", mode)
+		file = org.python.core.PyFile(self.istream, "<socket>", mode)
 	elif self.ostream:
-	    return org.python.core.PyFile(self.ostream, "<socket>", mode)
+	    file = org.python.core.PyFile(self.ostream, "<socket>", mode)
 	else:
 	    raise IOError, "both istream and ostream have been shut down"
+        if file:
+            return _tcpsocket.FileWrapper(self, file)
+
+    class FileWrapper:
+        def __init__(self, socket, file):
+            self.socket = socket
+            self.sock = socket.sock
+            self.istream = socket.istream
+            self.ostream = socket.ostream
+
+            self.file = file
+            self.read       = file.read
+            self.readline   = file.readline
+            self.readlines  = file.readlines
+            self.write      = file.write
+            self.writelines = file.writelines
+            self.flush      = file.flush
+            self.seek       = file.seek
+            self.tell       = file.tell
+
+            self.socket.file_count += 1
+
+        def close(self):
+            if self.file.closed:
+                # Already closed
+                return
+
+            self.socket.file_count -= 1
+            self.file.close()
+
+            if self.socket.file_count == 0 and self.socket.sock == 0:
+                # This is the last file Only close the socket and streams 
+                # if there are no outstanding files left.
+                if self.sock:
+                     self.sock.close()
+                if self.istream:
+                     self.istream.close()
+                if self.ostream:
+                     self.ostream.close()
 
     def shutdown(self, how):
 	assert how in (0, 1, 2)
@@ -168,12 +209,15 @@ class _tcpsocket:
 	self.sock = 0
 	self.istream = 0
 	self.ostream = 0
-	if istream:
-	    istream.close()
-	if ostream:
-	    ostream.close()
-	if sock:
-	    sock.close()
+        # Only close the socket and streams if there are no 
+        # outstanding files left.
+        if self.file_count == 0:
+	    if istream:
+	        istream.close()
+	    if ostream:
+	        ostream.close()
+	    if sock:
+	        sock.close()
 
 
 class _udpsocket:
