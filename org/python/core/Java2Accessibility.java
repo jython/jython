@@ -3,7 +3,7 @@ import java.lang.reflect.*;
 
 /**
  * Provides the Java 2 {Field|Method|Constructor}.setAccessibility()
- * methods when compiled with Java 2.
+ * methods when compiled with, and running under Java 2.
  *
  * This class should not be compilied (and it won't compile) under Java 1.
  */

@@ -36,7 +36,7 @@ public class JavaAccessibility
     }
 
     /**
-     * These methods get overridden in Java2Accessibility
+     * These methods get overridden in the Java2Accessibility subclass
      */
     void setAccess(Field field, boolean flag) throws SecurityException {
     }
