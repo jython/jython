@@ -13,10 +13,8 @@ from java.io import IOException
 from org.python.core import PyFile
 from UserDict import UserDict
 import jarray
-import re
 import string
 import sys
-#import threading
 import types
 
 __all__ = [ "shellexecute", "environ", "putenv", "getenv" ]
@@ -201,16 +199,18 @@ def _getOsType( os=None ):
                System.getProperty( "os.name" )
         
     _osTypeMap = (
-        ( "nt", r"(nt)|(Windows NT)|(Windows NT 4.0)|(WindowsNT)|"
-                r"(Windows 2000)|(Windows XP)|(Windows CE)" ),
-        ( "dos", r"(dos)|(Windows 95)|(Windows 98)|(Windows ME)" ),
-        ( "mac", r"(mac)|(MacOS.*)|(Darwin)" ),
-        ( "None", r"(None)" ),
-        ( "posix", r"(.*)" ), # default - posix seems to vary most widely
+        ( "nt", ( 'nt', 'Windows NT', 'Windows NT 4.0', 'WindowsNT',
+                  'Windows 2000', 'Windows XP', 'Windows CE' ),
+        ( "dos", ( 'dos', 'Windows 95', 'Windows 98', 'Windows ME' ),
+        ( "mac", ( 'mac', 'MacOS', 'Darwin' ),
+        ( "None", ( 'None', ),
         )
     for osType, pattern in _osTypeMap:
-        if re.match( pattern, os ):
+        if os.startswith( pattern )
             break
+    else: # found no match
+        osType = "posix" # default - posix seems to vary most widely
+
     return osType
 
 def _getShellEnv():
@@ -254,118 +254,3 @@ putenv = environ.__setitem__
 getenv = environ.__getitem__
 
 shellexecute = _shellEnv.execute
-
-########## test code
-def _testGetOsType():
-    testVals = {
-        "Windows NT": "nt",
-        "Windows 95": "dos",
-        "MacOS": "mac",
-        "Solaris": "posix",
-        "Linux": "posix",
-        "None": "None"
-        }
-
-    msgFmt = "_getOsType( '%s' ) should return '%s', not '%s'"
-    # test basic mappings
-    for key, val in testVals.items():
-        got = _getOsType( key )
-        assert got == val, msgFmt % ( key, val, got )
-
-def _testCmds( _shellEnv, testCmds, whichEnv ):
-    # test commands (key) and compare output to expected output (value).
-    # this actually executes all the commands twice, testing the return
-    # code by calling system(), and testing some of the output by calling
-    # execute()
-    for cmd, pattern in testCmds:
-        print "\nExecuting '%s' with %s environment" % (cmd, whichEnv)
-        p = shellexecute(cmd)
-        line = PyFile( p.getInputStream() ).readlines()[0]
-        assert re.match( pattern, line ), \
-                "expected match for %s, got %s" % ( pattern, line )
-        print "waiting for", cmd, "to complete"
-        assert not p.waitFor(), \
-                "%s failed with %s environment" % (cmd, whichEnv)
-    
-def _testSystem():
-    # test system and environment functionality
-    key, value = "testKey", "testValue"
-    org = environ
-    testCmds = [
-        # test commands and regexes to match first line of expected
-        # output on first and second runs
-        # Note that the validation is incomplete for several of these
-        # - they should validate depending on platform and pre-post, but
-        # they don't.
-
-        # no quotes, should output both words
-        ("echo hello there", "hello there"),
-        # should print PATH (on NT)
-        ("echo PATH=%PATH%", "(PATH=.*;.*)|(PATH=%PATH%)"),
-        # should print 'testKey=%testKey%' on NT before initialization,
-        # should print 'testKey=' on 95 before initialization,
-        # and 'testKey=testValue' after
-        ("echo %s=%%%s%%" % (key,key),
-                "(%s=)" % (key,)),     
-        # should print PATH (on Unix)
-        ( "echo PATH=$PATH", "PATH=.*" ),
-        # should print 'testKey=testValue' on Unix after initialization
-        ( "echo %s=$%s" % (key,key),
-                "(%s=$%s)|(%s=)|(%s=%s)" % (key, key, key, key, value ) ), 
-        # should output quotes on NT but not on Unix
-        ( 'echo "hello there"', '"?hello there"?' ),
-        # should print 'why' to stdout.
-        ( r'''jython -c "import sys;sys.stdout.write( 'why\n' )"''', "why" ),
-        # should print 'why' to stderr, but it won't right now.  Have
-        # to add the print to give some output...empty string matches every
-        # thing...
-        ( r'''jython -c "import sys;sys.stderr.write('why\n');print " ''',
-          "" )
-        ]
-    
-    assert not environ._populated, \
-            "before population, environ._populated should be false"
-
-    _testCmds( _shellEnv, testCmds, "default" )
-    
-    # trigger initialization of environment
-    environ[ key ] = value
-    
-    assert environ._populated, \
-            "after population, environ._populated should be true"
-    assert org.get( key, None ) == value, \
-            "expected stub to have %s set" % key
-    assert environ.get( key, None ) == value, \
-            "expected real environment to have %s set" % key
-
-    # if environment is initialized and jython gets ARGS=-i, it thinks
-    # it is running in interactive mode, and fails to exit until
-    # process.getOutputStream().close()
-    del environ[ "ARGS" ] 
-
-
-    # test system using the non-default environment
-    _testCmds( _shellEnv, testCmds, "initialized" )
-    
-    assert environ.has_key( "PATH" ), \
-            "expected environment to have PATH attribute " \
-            "(this may not apply to all platforms!)"
-
-def _testBadShell():
-    # attempt to get an environment with a shell that is not startable
-    se2 = _ShellEnv( ["badshell", "-c"], "set" )
-    str(se2.environment) # trigger initialization
-    assert not se2.environment.items(), "environment should be empty"
-
-def _testBadGetEnv():
-    # attempt to get an environment with a command that does not print an environment
-    envCmd="echo This command does not print environment"    
-    se2 = _ShellEnv( _shellEnv.cmd, envCmd, None )
-    str(se2.environment) # trigger initialization
-    assert not se2.environment.items(), "environment should be empty"
-    
-def _test():
-    _testGetOsType()
-    _testBadShell()
-    _testBadGetEnv()
-    _testSystem()
