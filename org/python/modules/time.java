@@ -49,24 +49,83 @@ public class time implements InitModule
       return System.currentTimeMillis()/1000.0;
       }*/
 
+    private static void throwValueError(String msg) {
+	throw new PyException(Py.ValueError, new PyString(msg));
+    }
+
+    private static int item(PyTuple tup, int i) {
+	// knows about and asserts format on tuple items.  See
+	// documentation for Python's time module for details.
+	int val = tup.__getitem__(i).__int__().getValue();
+	boolean valid = true;
+	switch (i) {
+	case 0: break;			                // year
+	case 1: valid = (1 <= val && val <= 12); break; // month 1-12
+	case 2: valid = (1 <= val && val <= 31); break; // day 1 - 31
+	case 3: valid = (0 <= val && val <= 23); break; // hour 0 - 23
+	case 4: valid = (0 <= val && val <= 59); break; // minute 0 - 59
+	case 5: valid = (0 <= val && val <= 59); break; // second 0 - 59
+	case 6: valid = (0 <= val && val <= 6);  break; // weekday 0 - 6
+	case 7: valid = (1 <= val && val < 367); break; // julian day 1 - 366
+	case 8: valid = (-1 <= val && val <= 1); break; // d.s. flag, -1,0,1
+	}
+	// raise a ValueError if not within range
+	if (!valid) {
+	    String msg;
+	    switch (i) {
+	    case 1:
+		msg = "month out of range (1-12)";
+		break;
+	    case 2:
+		msg = "day out of range (1-31)";
+		break;
+	    case 3:
+		msg = "hour out of range (0-23)";
+		break;
+	    case 4:
+		msg = "minute out of range (0-59)";
+		break;
+	    case 5:
+		msg = "second out of range (0-59)";
+		break;
+	    case 6:
+		msg = "day of week out of range (0-6)";
+		break;
+	    case 7:
+		msg = "day of year out of range (1-366)";
+		break;
+	    case 8:
+		msg = "daylight savings flag out of range (-1,0,1)";
+		break;
+	    default:
+		// make compiler happy
+		msg = "ignore";
+		break;
+	    }
+	    throwValueError(msg);
+	}
+	// Java's months are usually 0-11
+	if (i == 1)
+	    val--;
+	return val;
+    }
+
     private static GregorianCalendar _tupletocal(PyTuple tup) {
-	return new GregorianCalendar(
-            tup.__getitem__(0).__int__().getValue(),
-            tup.__getitem__(1).__int__().getValue()-1,
-            tup.__getitem__(2).__int__().getValue(),
-            tup.__getitem__(3).__int__().getValue(),
-            tup.__getitem__(4).__int__().getValue(),
-            tup.__getitem__(5).__int__().getValue());
+	return new GregorianCalendar(item(tup, 0),
+				     item(tup, 1),
+				     item(tup, 2),
+				     item(tup, 3),
+				     item(tup, 4),
+				     item(tup, 5));
     }
 
     private static Date _tupletodate(PyTuple tup) {
-	return new Date(
-            tup.__getitem__(0).__int__().getValue(),
-            tup.__getitem__(1).__int__().getValue()-1,
-            tup.__getitem__(2).__int__().getValue(),
-            tup.__getitem__(3).__int__().getValue(),
-            tup.__getitem__(4).__int__().getValue(),
-            tup.__getitem__(5).__int__().getValue());
+	return new Date(item(tup, 0),
+			item(tup, 1),
+			item(tup, 2),
+			item(tup, 3),
+			item(tup, 4),
+			item(tup, 5));
     }
 
     public static double mktime(PyTuple tup) {
@@ -85,7 +144,8 @@ public class time implements InitModule
         int dow = cal.get(java.util.Calendar.DAY_OF_WEEK)-2;
         if (dow<0)
 	    dow = dow+7;
-        int isdst = 0; // is this date dst?
+	// TBD: is this date dst?
+        int isdst = 0;
         return new PyTuple(new PyObject[] {
             new PyInteger(cal.get(java.util.Calendar.YEAR)),
 	    new PyInteger(cal.get(java.util.Calendar.MONTH)+1),
@@ -96,7 +156,7 @@ public class time implements InitModule
 	    new PyInteger(cal.get(java.util.Calendar.SECOND)),
 	    new PyInteger(dow),
 	    new PyInteger(cal.get(java.util.Calendar.DAY_OF_YEAR)),
-	    new PyInteger(0)
+	    new PyInteger(isdst)
 	});
     }
 
@@ -116,10 +176,6 @@ public class time implements InitModule
     protected static DateFormatSymbols datesyms = new DateFormatSymbols();
     protected static String[] shortdays = null;
     protected static String[] shortmonths = null;
-
-    private static void throwValueError(String msg) {
-	throw new PyException(Py.ValueError, new PyString(msg));
-    }
 
     private static String _shortday(int dow) {
 	// we need to hand craft shortdays[] because Java and Python have
@@ -157,30 +213,46 @@ public class time implements InitModule
 	return shortmonths[month0to11];
     }
 
-    private static String _twodigit(PyInteger i) {
-        String s = i.toString();
-        if (s.length() == 1)
-	    s = "0" + s;
-        return s;
+    private static String _padint(int i, int target) {
+	String s = Integer.toString(i);
+	int sz = s.length();
+	if (target <= sz)
+	    // no truncation
+	    return s;
+	if (target == sz+1)
+	    return "0"+s;
+	if (target == sz+2)
+	    return "00"+s;
+	else {
+	    char[] c = new char[target-sz];
+	    while (target > sz) {
+		c[target-sz] = '0';
+		target--;
+	    }
+	    return new String(c) + s;
+	}
+    }
+
+    private static String _twodigit(int i) {
+	return _padint(i, 2);
     }
 
     public static String asctime(PyTuple tup) {
-	int dayindex = tup.__getitem__(6).__int__().getValue();
-	int monthindex = tup.__getitem__(1).__int__().getValue() - 1;
-	String s = _shortday(dayindex);
-	s = s + " " + _shortmonth(monthindex);
-        s = s + " " + _twodigit(tup.__getitem__(2).__int__());
-        s = s + " " + _twodigit(tup.__getitem__(3).__int__());
-        s = s + ":" + _twodigit(tup.__getitem__(4).__int__());
-        s = s + ":" + _twodigit(tup.__getitem__(5).__int__());
-        s = s + " " + tup.__getitem__(0).__str__().toString();
-        return s;
+	int day = item(tup, 6);
+	int mon = item(tup, 1);
+	return _shortday(day) + " " + _shortmonth(mon) + " " +
+	    _twodigit(item(tup, 2)) + " " +
+	    _twodigit(item(tup, 3)) + ":" +
+	    _twodigit(item(tup, 4)) + ":" +
+	    _twodigit(item(tup, 5)) + " " +
+	    item(tup, 0);
     }
 
     public static void sleep(double secs) {
         try {
             java.lang.Thread.sleep((long)(secs * 1000));
-        } catch (java.lang.InterruptedException e) {
+        }
+	catch (java.lang.InterruptedException e) {
             throw new PyException(Py.KeyboardInterrupt, "interrupted sleep");
         }
     }
@@ -193,10 +265,11 @@ public class time implements InitModule
 
     public static int daylight = 0;
 
-    public static PyTuple tzname = new PyTuple(new PyObject[] {
-        new PyString(java.util.TimeZone.getDefault().getID()),
-        new PyString(java.util.TimeZone.getDefault().getID())
-    });
+    public static PyTuple tzname = new PyTuple(
+	new PyObject[] {
+	    new PyString(java.util.TimeZone.getDefault().getID()),
+	    new PyString(java.util.TimeZone.getDefault().getID())
+	});
 
     public static String strftime(String format, PyTuple tup) {
 	String s = "";
@@ -204,7 +277,6 @@ public class time implements InitModule
 	int j;
 	String[] syms;
 	GregorianCalendar cal = null;
-	String tmp;
 	while (lastc < format.length()) {
 	    int i = format.indexOf("%", lastc);
 	    if (i < 0) {
@@ -224,14 +296,14 @@ public class time implements InitModule
 	    switch (format.charAt(i)) {
 	    case 'a':
 		// abbrev weekday
-		j = tup.__getitem__(6).__int__().getValue();
+		j = item(tup, 6);
 		s = s + _shortday(j);
 		break;
 	    case 'A':
 		// full weekday
 		// see _shortday()
 		syms = datesyms.getWeekdays();
-		j = tup.__getitem__(6).__int__().getValue();
+		j = item(tup, 6);
 		if (0 <= j && j < 6)
 		    s = s + syms[j+2];
 		else if (j== 6)
@@ -241,17 +313,14 @@ public class time implements InitModule
 		break;
 	    case 'b':
 		// abbrev month
-		j = tup.__getitem__(1).__int__().getValue() - 1;
+		j = item(tup, 1);
 		s = s + _shortmonth(j);
 		break;
 	    case 'B':
 		// full month
 		syms = datesyms.getMonths();
-		j = tup.__getitem__(1).__int__().getValue() - 1;
-		if (0 <= j && j < 12)
-		    s = s + syms[j];
-		else
-		    throwValueError("month out of range (1-12)");
+		j = item(tup, 1);
+		s = s + syms[j];
 		break;
 	    case 'c':
 		// locale's date and time repr (essentially asctime()?)
@@ -259,40 +328,34 @@ public class time implements InitModule
 		break;
 	    case 'd':
 		// day of month (01-31)
-		s = s + _twodigit(tup.__getitem__(2).__int__());
+		s = s + _twodigit(item(tup, 2));
 		break;
 	    case 'H':
 		// hour (00-23)
-		s = s + _twodigit(tup.__getitem__(3).__int__());
+		s = s + _twodigit(item(tup, 3));
 		break;
 	    case 'I':
 		// hour (01-12)
-		j = tup.__getitem__(3).__int__().getValue() % 12;
+		j = item(tup, 3) % 12;
 		if (j == 0)
 		    j = 12;		     // midnight or noon
-		s = s + _twodigit(new PyInteger(j));
+		s = s + _twodigit(j);
 		break;
 	    case 'j':
 		// day of year (001-366)
-		tmp = tup.__getitem__(7).__int__().toString();
-		if (tmp.length() == 1)
-		    s = s + "00" + tmp;
-		else if (tmp.length() == 2)
-		    s = s + "0" + tmp;
-		else
-		    s = s + tmp;
+		s = _padint(item(tup, 7), 3);
 		break;
 	    case 'm':
 		// month (01-12)
-		s = s + _twodigit(tup.__getitem__(1).__int__());
+		s = s + _twodigit(item(tup, 1) + 1);
 		break;
 	    case 'M':
 		// minute (00-59)
-		s = s + _twodigit(tup.__getitem__(4).__int__());
+		s = s + _twodigit(item(tup, 4));
 		break;
 	    case 'p':
 		// AM/PM
-		j = tup.__getitem__(3).__int__().getValue();
+		j = item(tup, 3);
 		syms = datesyms.getAmPmStrings();
 		if (0 <= j && j < 12)
 		    s = s + syms[0];
@@ -303,7 +366,7 @@ public class time implements InitModule
 		break;
 	    case 'S':
 		// seconds (00-61)
-		s = s + _twodigit(tup.__getitem__(5).__int__());
+		s = s + _twodigit(item(tup, 5));
 		break;
 	    case 'U':
 		// week of year (sunday is first day) (00-53).  all days in
@@ -314,13 +377,13 @@ public class time implements InitModule
 		cal.setFirstDayOfWeek(cal.SUNDAY);
 		cal.setMinimalDaysInFirstWeek(7);
 		j = cal.get(cal.WEEK_OF_YEAR);
-		s = s + _twodigit(new PyInteger(j));
+		s = s + _twodigit(j);
 		break;
 	    case 'w':
 		// weekday as decimal (0=Sunday-6)
 		// tuple format has monday=0
-		j = (tup.__getitem__(6).__int__().getValue() + 1) % 7;
-		s = s + _twodigit(new PyInteger(j));
+		j = (item(tup, 6) + 1) % 7;
+		s = s + _twodigit(j);
 		break;
 	    case 'W':
 		// week of year (monday is first day) (00-53).  all days in
@@ -331,36 +394,41 @@ public class time implements InitModule
 		cal.setFirstDayOfWeek(cal.MONDAY);
 		cal.setMinimalDaysInFirstWeek(7);
 		j = cal.get(cal.WEEK_OF_YEAR);
-		s = s + _twodigit(new PyInteger(j));
+		s = s + _twodigit(j);
 		break;
 	    case 'x':
 		// locale's date repr
-		s = s + DateFormat.getDateInstance().format(_tupletodate(tup));
+  		s = s + DateFormat.getDateInstance().format(_tupletodate(tup));
 		break;
 	    case 'X':
 		// locale's time repr
 		//
-		// TBD: This breaks test_strftime.py's test of %X, but I
-		// think it is a valid interpretation of the spec.
-		s = s + DateFormat.getTimeInstance().format(_tupletodate(tup));
-		break;
-	    case 'y':
-		// year w/o century (00-99)
-		tmp = _twodigit(tup.__getitem__(0).__int__());
-		if (tmp.length() > 2)
-		    s = s + tmp.substring(tmp.length()-2, tmp.length());
-		else
-		    s = s + tmp;
+		// TBD: I think this is the best definition for "locale's
+		// time representation", however Java's interpretation of
+		// this for locales en_US and C don't seem to coincide with
+		// strftime()'s interpretation in the C local.  This breaks
+		// test_strftime.py and probably most people's
+		// expectations.  We thus hard-code this to the
+		// representation HH:mm:SS.  Note that the same can
+		// probably be said of the "locale's date representation"
+		// above, but we'll wait for someone to complain before we
+		// fix that.
+		//
+// 		s = s + DateFormat.getTimeInstance().format(_tupletodate(tup));
+		s = s + _twodigit(item(tup, 3)) + ":" +
+		    _twodigit(item(tup, 4)) + ":" +
+		    _twodigit(item(tup, 5));
 		break;
 	    case 'Y':
 		// year w/ century
-		tmp = _twodigit(tup.__getitem__(0).__int__());
-		if (tmp.length() == 2)
-		    s = s + "00" + tmp;
-		else if (tmp.length() == 3)
-		    s = s + "0" + tmp;
-		else
-		    s = s + tmp;
+	    case 'y':
+		// year w/o century (00-99)
+		{
+		    String year = _padint(item(tup, 0), 4);
+		    if (format.charAt(i) == 'y')
+			year = year.substring(year.length()-2, year.length());
+		    s = s + year;
+		}
 		break;
 	    case 'Z':
 		// timezone name
