@@ -40,7 +40,7 @@ def compress(string, level=6):
     if level < Z_BEST_SPEED or level > Z_BEST_COMPRESSION:
         raise error, "Bad compression level"
     deflater = util.zip.Deflater(level, 0)
-    deflater.setInput(string)
+    deflater.setInput(string, 0, len(string))
     deflater.finish()
     return _get_deflate_data(deflater)
 
@@ -61,7 +61,7 @@ class compressobj:
             _get_deflate_data(self.deflater)
 
     def compress(self, string):
-        self.deflater.setInput(string)
+        self.deflater.setInput(string, 0, len(string))
         return _get_deflate_data(self.deflater)
         
     def flush(self, mode=Z_FINISH):
