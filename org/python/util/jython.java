@@ -86,7 +86,6 @@ class CommandLineOptions {
                 int equals = arg.indexOf("=");
                 if (equals == -1) {
                     String arg2 = args[++index];
-                    
                     /*if (!arg2.startsWith("=")) {
                         System.err.println("-D option with no '=': "+args[index-1]+"::"+arg2);
                         return false;
