@@ -103,14 +103,60 @@ class zxAPITestCase(zxJDBCTestCase):
 		"""testing the iteration protocol"""
 		c = self.cursor()
 		try:
-			c.execute("select * from zxtesting")
+			# first with a for loop
 			cnt = 0
+			c.execute("select * from zxtesting")
 			for a in c:
-				assert a is not None, "row is None"
 				self.assertEquals(3, len(a))
 				cnt += 1
 			self.assertEquals(7, cnt)
+			# then with a while loop
+			cnt = 0
 			c.execute("select * from zxtesting")
+			while 1:
+				try:
+					self.assertEquals(3, len(c.next()))
+				except StopIteration:
+					break
+				cnt += 1
+			self.assertEquals(7, cnt)
+		finally:
+			c.close()
+
+	def testClosingCursor(self):
+		"""testing that a closed cursor throws an exception"""
+		c = self.cursor()
+		try:
+			c.execute("select * from zxtesting")
+		finally:
+			c.close()
+		self.assertRaises(zxJDBC.InternalError, c.execute, ("select * from zxtesting",))
+
+	def testNativeSQL(self):
+		"""testing the connection's ability to convert sql"""
+		sql = self.db.nativesql("select * from zxtesting where id = ?")
+		assert sql is not None
+		assert len(sql) > 0
+
+	def testTables(self):
+		"""testing cursor.tables()"""
+		c = self.cursor()
+		try:
+			c.tables(None, None, None, None)
+			# let's look for zxtesting
+			found = 0
+			while not found:
+				try:
+					found = "zxtesting" == c.next()[2].lower()
+				except StopIteration:
+					break
+			assert found, "expected to find 'zxtesting'"
+			c.tables(None, None, "zxtesting", None)
+			self.assertEquals(1, len(c.fetchall()))
+			c.tables(None, None, "zxtesting", ("TABLE",))
+			self.assertEquals(1, len(c.fetchall()))
+			c.tables(None, None, "zxtesting", ("table",))
+			self.assertEquals(1, len(c.fetchall()))
 		finally:
 			c.close()
 
@@ -118,11 +164,34 @@ class zxAPITestCase(zxJDBCTestCase):
 		"""testing cursor.columns()"""
 		c = self.cursor()
 		try:
+			# deliberately copied so as to produce useful line numbers
+
 			c.columns(None, None, "zxtesting", None)
 			f = c.fetchall()
-			assert c.rowcount == 3, "columns() failed to report correct number of columns, expected [3], got [%d]" % (c.rowcount)
+			self.assertEquals(3, c.rowcount)
 			f.sort(lambda x, y: cmp(x[3], y[3]))
-			assert "name" == f[1][3].lower(), "expected [name], got [%s]" % (f[1][3].lower())
+			self.assertEquals("name", f[1][3].lower())
+
+			# if the db engine handles mixed case, then don't ask about a different
+			#  case because it will fail
+			if not self.db.__connection__.getMetaData().storesMixedCaseIdentifiers():
+				c.columns(None, None, "ZXTESTING", None)
+				f = c.fetchall()
+				self.assertEquals(3, c.rowcount)
+				f.sort(lambda x, y: cmp(x[3], y[3]))
+				self.assertEquals("name", f[1][3].lower())
+		finally:
+			c.close()
+
+	def testBestRow(self):
+		"""testing bestrow which finds the optimal set of columns that uniquely identify a row"""
+		c = self.cursor()
+		try:
+			# we're really just testing that this doesn't blow up
+			c.bestrow(None, None, "zxtesting")
+			f = c.fetchall()
+			if f is not None: # we might as well see that it worked
+				self.assertEquals(1, len(f))
 		finally:
 			c.close()
 
@@ -227,7 +296,7 @@ class zxAPITestCase(zxJDBCTestCase):
 			fp.close()
 			os.remove(fp.name)
 
-	def __calendar(self):
+	def calendar(self):
 		c = Calendar.getInstance()
 		c.setTime(JDate())
 		return c
@@ -237,7 +306,7 @@ class zxAPITestCase(zxJDBCTestCase):
 
 		# Java uses milliseconds and Python uses seconds, so adjust the time accordingly
 		# seeded with Java
-		c = self.__calendar()
+		c = self.calendar()
 		o = zxJDBC.DateFromTicks(c.getTime().getTime() / 1000L)
 		v = zxJDBC.Date(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DATE))
 		assert o.equals(v), "incorrect date conversion using java, got [%ld], expected [%ld]" % (v.getTime(), o.getTime())
@@ -255,7 +324,7 @@ class zxAPITestCase(zxJDBCTestCase):
 		# Java uses milliseconds and Python uses seconds, so adjust the time accordingly
 
 		# seeded with Java
-		c = self.__calendar()
+		c = self.calendar()
 		o = zxJDBC.TimeFromTicks(c.getTime().getTime() / 1000L)
 		v = zxJDBC.Time(c.get(Calendar.HOUR), c.get(Calendar.MINUTE), c.get(Calendar.SECOND))
 		assert o.equals(v), "incorrect date conversion using java, got [%ld], expected [%ld]" % (v.getTime(), o.getTime())
@@ -273,7 +342,7 @@ class zxAPITestCase(zxJDBCTestCase):
 		# Java uses milliseconds and Python uses seconds, so adjust the time accordingly
 
 		# seeded with Java
-		c = self.__calendar()
+		c = self.calendar()
 		o = zxJDBC.TimestampFromTicks(c.getTime().getTime() / 1000L)
 		v = zxJDBC.Timestamp(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DATE),
 			c.get(Calendar.HOUR), c.get(Calendar.MINUTE), c.get(Calendar.SECOND))
@@ -616,7 +685,7 @@ class zxAPITestCase(zxJDBCTestCase):
 
 class LOBTest(zxJDBCTestCase):
 
-	def __blob(self, obj=0):
+	def _test_blob(self, obj=0):
 		assert self.has_table("blobtable"), "no blob table"
 		tabname, sql = self.table("blobtable")
 		fn = tempfile.mktemp()
@@ -669,13 +738,13 @@ class LOBTest(zxJDBCTestCase):
 
 	def testBLOBAsString(self):
 		"""testing BLOB as string"""
-		self.__blob()
+		self._test_blob()
 
 	def testBLOBAsPyFile(self):
 		"""testing BLOB as PyFile"""
-		self.__blob(1)
+		self._test_blob(1)
 
-	def __clob(self, asfile=0):
+	def _test_clob(self, asfile=0):
 		assert self.has_table("clobtable"), "no clob table"
 		tabname, sql = self.table("clobtable")
 
@@ -711,11 +780,11 @@ class LOBTest(zxJDBCTestCase):
 
 	def testCLOBAsString(self):
 		"""testing CLOB as string"""
-		self.__clob(0)
+		self._test_clob(0)
 
 	def testCLOBAsPyFile(self):
 		"""testing CLOB as PyFile"""
-		self.__clob(1)
+		self._test_clob(1)
 
 class BCPTestCase(zxJDBCTestCase):
 
@@ -746,28 +815,6 @@ class BCPTestCase(zxJDBCTestCase):
 			dbSource = DBSource(src, c.datahandler.__class__, "zxtesting", None, None, None)
 
 			cnt = Pipe().pipe(dbSource, csvSink) - 1 # ignore the header row
-
-		finally:
-			writer.close()
-			src.close()
-			os.remove(fn)
-
-	def _testXMLPipe(self):
-		"""testing the XML pipe"""
-		from java.io import PrintWriter, FileWriter
-		from com.ziclix.python.sql.pipe import Pipe
-		from com.ziclix.python.sql.pipe.db import DBSource
-		from com.ziclix.python.sql.pipe.xml import XMLSink
-
-		try:
-			src = self.connect()
-			fn = tempfile.mktemp(suffix="csv")
-			writer = PrintWriter(FileWriter(fn))
-			xmlSink = XMLSink(writer)
-
-			dbSource = DBSource(src, c.datahandler.__class__, "zxtesting", None, None, None)
-
-			cnt = Pipe().pipe(dbSource, xmlSink) - 1 # ignore the header row
 
 		finally:
 			writer.close()

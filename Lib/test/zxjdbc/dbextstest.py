@@ -38,6 +38,9 @@ class dbextsTestCase(runner.SQLTestCase):
 			fp.close()
 			self.db = dbexts.dbexts(cfg=fp.name)
 			self.db.verbose = 0
+			for table in ("one", "two"):
+				try: self.db.raw("drop table %s" % (table))
+				except: pass
 			self.db.raw("create table one (a int, b int, c varchar(32))")
 			self.db.raw("create table two (a int, b int, c varchar(32))")
 		finally:
@@ -79,7 +82,6 @@ class dbextsTestCase(runner.SQLTestCase):
 				failed = 1
 		finally:
 			self.db.commit(c)
-			c.close()
 
 		if not failed:
 			self.fail("expected SQL exception")
@@ -175,8 +177,13 @@ class dbextsTestCase(runner.SQLTestCase):
 	def testTable(self):
 		"""testing dbexts.table(tabname)"""
 		self.db.table("one")
-		assert not self.db.results == None, "results were None"
+		assert self.db.results is not None, "results were None"
 		self.assertEquals(3, len(self.db.results))
+		self.db.table()
+		found = 0
+		for a in self.db.results:
+			if a[2].lower() in ("one", "two"): found += 1
+		self.assertEquals(2, found)
 
 	def testOut(self):
 		"""testing dbexts.out"""
