@@ -122,6 +122,8 @@ class IsqlCmd(cmd.Cmd):
 	def default(self, arg):
 		try:
 			token = arg.strip()
+			if token[0] == '\\':
+				token = token[1:]
 			# is it possible the line contains the delimiter
 			if len(token) >= len(self.delimiter):
 				# does the line end with the delimiter
