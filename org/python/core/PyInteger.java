@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 public class PyInteger extends PyObject {
@@ -24,17 +25,24 @@ public class PyInteger extends PyObject {
 
     public Object __tojava__(Class c) {
         if (c == Integer.TYPE || c == Number.class || 
-	    c == Object.class || c == Integer.class) {
+	    c == Object.class || c == Integer.class)
+	{
             return new Integer(value);
         }
         
-	if (c == Boolean.TYPE || c == Boolean.class) return new Boolean(value != 0);
-	if (c == Byte.TYPE || c == Byte.class) return new Byte((byte)value);
-	if (c == Short.TYPE || c == Short.class) return new Short((short)value);
+	if (c == Boolean.TYPE || c == Boolean.class)
+	    return new Boolean(value != 0);
+	if (c == Byte.TYPE || c == Byte.class)
+	    return new Byte((byte)value);
+	if (c == Short.TYPE || c == Short.class)
+	    return new Short((short)value);
 		
-	if (c == Long.TYPE || c == Long.class) return new Long(value);
-	if (c == Float.TYPE || c == Float.class) return new Float(value);
-	if (c == Double.TYPE || c == Double.class) return new Double(value);
+	if (c == Long.TYPE || c == Long.class)
+	    return new Long(value);
+	if (c == Float.TYPE || c == Float.class)
+	    return new Float(value);
+	if (c == Double.TYPE || c == Double.class)
+	    return new Double(value);
 	return super.__tojava__(c);
     }
 
@@ -44,8 +52,10 @@ public class PyInteger extends PyObject {
     }
 
     public Object __coerce_ex__(PyObject other) {
-	if (other instanceof PyInteger) return other;
-	else return Py.None;
+	if (other instanceof PyInteger)
+	    return other;
+	else
+	    return Py.None;
     }
 
     public PyObject __add__(PyObject right) {
@@ -73,14 +83,16 @@ public class PyInteger extends PyObject {
 	//System.out.println("mul: "+this+" * "+right+" = "+x);
 		
 	if (x > Integer.MAX_VALUE || x < Integer.MIN_VALUE)
-	    throw Py.OverflowError("integer multiplication: "+this+" * "+right);
+	    throw Py.OverflowError("integer multiplication: "+this+
+				   " * "+right);
 	return Py.newInteger((int)x);
     }
 
     // Getting signs correct for integer division
     // This convention makes sense when you consider it in tandem with modulo
     private int divide(int x, int y) {
-	if (y == 0) throw Py.ZeroDivisionError("integer division or modulo");
+	if (y == 0)
+	    throw Py.ZeroDivisionError("integer division or modulo");
 
         if (y < 0) {
 	    if (x > 0)
@@ -108,8 +120,10 @@ public class PyInteger extends PyObject {
     public PyObject __divmod__(PyObject right) {
 	int x = ((PyInteger)right).value;
 	int xdivy = divide(value, x);
-	return new PyTuple(new PyObject[] {new PyInteger(xdivy),
-					       new PyInteger(modulo(value, x, xdivy)) } );
+	return new PyTuple(new PyObject[] {
+	    new PyInteger(xdivy),
+	    new PyInteger(modulo(value, x, xdivy))
+	});
     }
 
     public PyObject __pow__(PyObject right, PyObject modulo) {
@@ -134,7 +148,6 @@ public class PyInteger extends PyObject {
 	    }
 	}
 
-
 	// Standard O(ln(N)) exponentiation code
 	while (pow > 0) {
 	    if ((pow & 0x1) != 0) {
@@ -148,12 +161,12 @@ public class PyInteger extends PyObject {
 		}
 	    }
 	    pow >>= 1;
-	    if (pow == 0) break;
+	    if (pow == 0)
+		break;
 	    tmp *= tmp;
 
 	    if (mod != 0) {
 		tmp %= (long)mod;
-
 	    }
 
 	    if (tmp > Integer.MAX_VALUE) {
@@ -162,7 +175,8 @@ public class PyInteger extends PyObject {
 	}
 
 	int ret = (int)result;
-	if (neg) ret = -ret;
+	if (neg)
+	    ret = -ret;
 
 	// Cleanup result of modulo
 	if (mod != 0) {
@@ -173,7 +187,8 @@ public class PyInteger extends PyObject {
 
     public PyObject __lshift__(PyObject right) {
         int shift = ((PyInteger)right).value;
-        if (shift > 31) return new PyInteger(0);
+        if (shift > 31)
+	    return new PyInteger(0);
 	return Py.newInteger(value << shift);
     }
 
@@ -233,7 +248,8 @@ public class PyInteger extends PyObject {
 
     public PyString __oct__() {
 	if (value < 0) {
-	    return new PyString("0"+Long.toString(0x100000000l+(long)value, 8));
+	    return new PyString(
+		"0"+Long.toString(0x100000000l+(long)value, 8));
 	} else {
 	    return new PyString("0"+Integer.toString(value, 8));
 	}
@@ -241,7 +257,8 @@ public class PyInteger extends PyObject {
 
     public PyString __hex__() {
 	if (value < 0) {
-	    return new PyString("0x"+Long.toString(0x100000000l+(long)value, 16));
+	    return new PyString(
+		"0x"+Long.toString(0x100000000l+(long)value, 16));
 	} else {
 	    return new PyString("0x"+Integer.toString(value, 16));
         }
@@ -249,5 +266,8 @@ public class PyInteger extends PyObject {
 
     // __class__ boilerplate -- see PyObject for details
     public static PyClass __class__;
-    protected PyClass getPyClass() { return __class__; }
+
+    protected PyClass getPyClass() {
+	return __class__;
+    }
 }
