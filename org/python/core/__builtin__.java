@@ -885,8 +885,40 @@ public class __builtin__ implements ClassDictInit
         }
     }
 
-    public static synchronized PyObject __import__(PyString name) {
-        return imp.importName(name.internedString(), true);
+    public static PyObject __import__(String name) {
+        return __import__(name, null, null, null);
+    }
+
+    public static PyObject __import__(String name, PyObject globals) {
+        return __import__(name, globals, null, null);
+    }
+
+    public static PyObject __import__(String name, PyObject globals, 
+                                      PyObject locals) {
+        return __import__(name, globals, locals, null);
+    }
+
+    public static PyObject __import__(String name, PyObject globals,
+                                      PyObject locals,PyObject fromlist)
+    {
+        PyFrame frame = Py.getFrame();
+        if (frame == null)
+            return null;
+
+        PyObject builtins = frame.f_builtins;
+        if (builtins == null)
+            builtins = Py.getSystemState().builtins;
+
+        PyObject __import__ = builtins.__finditem__("__import__");
+        if (__import__ == null)
+            return null;
+
+        PyObject module = __import__.__call__(new PyObject[] {
+                Py.newString(name),
+                globals,
+                locals,
+                fromlist } );
+        return module;
     }
 
     private static PyObject[] make_array(PyObject o) {
@@ -919,7 +951,7 @@ class ImportFunction extends PyObject {
         PyObject locals = (argc > 2 && args[2] != null)
             ? args[2] : __builtin__.locals();
         PyObject fromlist = (argc > 3 && args[3] != null)
-            ? args[3] : new PyList();
+            ? args[3] : Py.EmptyTuple;
 
         return load(module, globals, locals, fromlist);
     }
