@@ -96,7 +96,10 @@ public class PyModule extends PyObject
         try {
             return __builtin__.__import__(name, null, null, silly_list);
         } catch(PyException e) {
-            return null;
+            if (Py.matchException(e, Py.ImportError)) {
+                return null;
+            }
+            throw e;
         }
     }
 
