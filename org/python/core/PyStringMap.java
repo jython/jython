@@ -138,27 +138,30 @@ public class PyStringMap extends PyObject
 
         // Fairly aribtrary choice for stepsize...
         int stepsize = maxindex / 5;
+ 
+        int free_index = -1;
 
         // Cycle through possible positions for the key;
         while (true) {
             String tkey = table[index];
             if (tkey == null) {
-                table[index] = key;
-                values[index] = value;
-                filled++;
-                size++;
+                if (free_index == -1 ) {
+                    filled++;
+                    free_index = index;
+                }
                 break;
             } else if (tkey == key) {
                 values[index] = value;
-                break;
-            } else if (tkey == "<deleted key>") {
-                table[index] = key;
-                values[index] = value;
-                size++;
-                break;
+                return;
+            } else if (tkey == "<deleted key>" && free_index == -1) {
+                free_index = index;
             }
             index = (index+stepsize) % maxindex;
         }
+        table[free_index] = key;
+        values[free_index] = value;
+        size++;
+        return;        
     }
 
     private synchronized final void resize(int capacity) {
