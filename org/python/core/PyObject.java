@@ -208,7 +208,7 @@ public class PyObject implements java.io.Serializable {
        @param keywords the keywords used for all keyword arguments.
     **/
     public PyObject __call__(PyObject args[], String keywords[]) {
-        throw Py.AttributeError("__call__ not implemented by "+safeRepr());
+        throw Py.TypeError("call of non-function (" + safeRepr() + ")");
     }
 
     /**
