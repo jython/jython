@@ -33,7 +33,7 @@ public class _codecs {
     }
 
 
-    /* --- UTF-8 Codec -------------------------------------------------------- */
+    /* --- UTF-8 Codec --------------------------------------------------- */
 
     public static PyTuple utf_8_decode(String str, String errors) {
         int size = str.length();
@@ -49,10 +49,10 @@ public class _codecs {
         int size = str.length();
         return codec_tuple(codecs.PyUnicode_EncodeUTF8(str, errors), size);
     }
-  
 
 
-    /* --- Character Mapping Codec -------------------------------------------- */
+
+    /* --- Character Mapping Codec --------------------------------------- */
 
     public static PyTuple charmap_decode(String str, String errors,
                                          PyObject mapping) {
@@ -62,7 +62,7 @@ public class _codecs {
         for (int i = 0; i < size; i++) {
             char ch = str.charAt(i);
             if (ch > 0xFF) {
-                codecs.decoding_error("charmap", v, errors, 
+                codecs.decoding_error("charmap", v, errors,
                                       "ordinal not in range(255)");
                 i++;
                 continue;
@@ -84,7 +84,7 @@ public class _codecs {
                              "character mapping must be in range(65535)");
                 v.append((char) value);
             } else if (x == Py.None) {
-                codecs.decoding_error("charmap", v,  errors, 
+                codecs.decoding_error("charmap", v,  errors,
                                       "character maps to <undefined>");
             } else if (x instanceof PyString) {
                 if (x.__len__() != 1) {
@@ -96,8 +96,8 @@ public class _codecs {
             }
             else {
                 /* wrong return value */
-                throw Py.TypeError(
-                     "character mapping must return integer, None or unicode");
+                throw Py.TypeError("character mapping must return integer, " +
+                                   "None or unicode");
             }
         }
         return codec_tuple(v.toString(), size);
@@ -107,11 +107,11 @@ public class _codecs {
 
 
 
-    public static PyTuple charmap_encode(String str, String errors, 
+    public static PyTuple charmap_encode(String str, String errors,
                                          PyObject mapping) {
         int size = str.length();
         StringBuffer v = new StringBuffer(size);
- 
+
         for (int i = 0; i < size; i++) {
             char ch = str.charAt(i);
             PyObject w = Py.newInteger(ch);
@@ -121,7 +121,7 @@ public class _codecs {
                 if (ch < 256)
                     v.append(ch);
                 else
-                    codecs.encoding_error("charmap", v, errors, 
+                    codecs.encoding_error("charmap", v, errors,
                                           "missing character mapping");
                 continue;
             }
@@ -132,7 +132,7 @@ public class _codecs {
                             "character mapping must be in range(256)");
                 v.append((char) value);
             } else if (x == Py.None) {
-                codecs.encoding_error("charmap", v,  errors, 
+                codecs.encoding_error("charmap", v,  errors,
                                       "character maps to <undefined>");
             } else if (x instanceof PyString) {
                 if (x.__len__() != 1) {
@@ -144,13 +144,13 @@ public class _codecs {
             }
             else {
                 /* wrong return value */
-                throw Py.TypeError(
-                     "character mapping must return integer, None or unicode");
+                throw Py.TypeError("character mapping must return " +
+                                   "integer, None or unicode");
             }
         }
         return codec_tuple(v.toString(), size);
     }
-            
+
 
 
     /* --- 7-bit ASCII Codec -------------------------------------------- */
@@ -164,10 +164,10 @@ public class _codecs {
 
     public static PyTuple ascii_encode(String str, String errors) {
         int size = str.length();
-        return codec_tuple(codecs.PyUnicode_EncodeASCII(str, size, errors), 
+        return codec_tuple(codecs.PyUnicode_EncodeASCII(str, size, errors),
                                                                         size);
     }
-           
+
 
     /* --- Latin-1 Codec -------------------------------------------- */
 
@@ -180,7 +180,7 @@ public class _codecs {
             if (ch < 256) {
                 v.append(ch);
             } else {
-                codecs.decoding_error("latin-1", v, errors, 
+                codecs.decoding_error("latin-1", v, errors,
                                       "ordinal not in range(256)");
                 i++;
                 continue;
@@ -196,11 +196,11 @@ public class _codecs {
     public static PyTuple latin_1_encode(String str, String errors) {
         int size = str.length();
         StringBuffer v = new StringBuffer(size);
- 
+
         for (int i = 0; i < size; i++) {
             char ch = str.charAt(i);
             if (ch >= 256) {
-                codecs.encoding_error("latin-1", v, errors, 
+                codecs.encoding_error("latin-1", v, errors,
                                       "ordinal not in range(256)");
             } else
                 v.append(ch);
@@ -218,7 +218,8 @@ public class _codecs {
 
     public static PyTuple utf_16_encode(String str, String errors,
                                        int byteorder) {
-        return codec_tuple(encode_UTF16(str, errors, byteorder), str.length());
+        return codec_tuple(encode_UTF16(str, errors, byteorder),
+                           str.length());
     }
 
     public static PyTuple utf_16_le_encode(String str, String errors) {
@@ -230,10 +231,10 @@ public class _codecs {
     }
 
 
-    private static String encode_UTF16(String str, String errors, 
+    private static String encode_UTF16(String str, String errors,
                                       int byteorder) {
         int size = str.length();
-        StringBuffer v = new StringBuffer((size + 
+        StringBuffer v = new StringBuffer((size +
                                        (byteorder == 0 ? 1 : 0)) * 2);
 
         if (byteorder == 0) {
@@ -258,7 +259,7 @@ public class _codecs {
         return v.toString();
     }
 
-    
+
 
 
     public static PyTuple utf_16_decode(String str, String errors) {
@@ -266,7 +267,7 @@ public class _codecs {
         return codec_tuple(decode_UTF16(str, errors, bo), str.length());
     }
 
-    public static PyTuple utf_16_decode(String str, String errors, 
+    public static PyTuple utf_16_decode(String str, String errors,
                                         int byteorder) {
         int[] bo = new int[] { byteorder };
         return codec_tuple(decode_UTF16(str, errors, bo), str.length());
@@ -290,14 +291,14 @@ public class _codecs {
                                            int byteorder) {
         int[] bo = new int[] { 0 };
         String s = decode_UTF16(str, errors, bo);
-        return new PyTuple(new PyObject[] { 
-             Py.newString(s),  
-             Py.newInteger(str.length()), 
+        return new PyTuple(new PyObject[] {
+             Py.newString(s),
+             Py.newInteger(str.length()),
              Py.newInteger(bo[0])
         });
     }
 
-    private static String decode_UTF16(String str, String errors, 
+    private static String decode_UTF16(String str, String errors,
                                        int[] byteorder) {
         int bo = 0;
         if (byteorder != null)
@@ -320,7 +321,7 @@ public class _codecs {
                 bo = -1;
                 continue;
             }
-            
+
             char ch;
             if (bo == -1)
                 ch = (char) (ch2 << 8 | ch1);
@@ -331,7 +332,7 @@ public class _codecs {
                 v.append(ch);
                 continue;
             }
-            
+
 
             /* UTF-16 code pair: */
             if (i == size-1) {
@@ -348,7 +349,7 @@ public class _codecs {
                        we are not able to store this information since our
                        Py_UNICODE type only has 16 bits... this might
                        change someday, even though it's unlikely. */
-                    codecs.decoding_error("UTF-16", v, errors, 
+                    codecs.decoding_error("UTF-16", v, errors,
                                           "code pairs are not supported");
                 continue;
             }
@@ -366,16 +367,18 @@ public class _codecs {
     /* --- RawUnicodeEscape Codec ----------------------------------------- */
 
 
-    public static PyTuple raw_unicode_escape_encode(String str, 
+    public static PyTuple raw_unicode_escape_encode(String str,
                                                    String errors) {
-        return codec_tuple(codecs.PyUnicode_EncodeRawUnicodeEscape(str, errors, false),
+        return codec_tuple(codecs.PyUnicode_EncodeRawUnicodeEscape(str,
+                                                             errors, false),
                            str.length());
     }
 
 
-    public static PyTuple raw_unicode_escape_decode(String str, 
+    public static PyTuple raw_unicode_escape_decode(String str,
                                                     String errors) {
-        return codec_tuple(codecs.PyUnicode_DecodeRawUnicodeEscape(str, errors), 
+        return codec_tuple(codecs.PyUnicode_DecodeRawUnicodeEscape(str,
+                                                             errors),
                            str.length());
     }
 
@@ -385,17 +388,19 @@ public class _codecs {
 
 
     public static PyTuple unicode_escape_encode(String str, String errors) {
-        return codec_tuple(PyString.encode_UnicodeEscape(str, false), str.length());
+        return codec_tuple(PyString.encode_UnicodeEscape(str, false),
+                           str.length());
     }
 
     public static PyTuple unicode_escape_decode(String str, String errors) {
         int n = str.length();
-        return codec_tuple(PyString.decode_UnicodeEscape(str, 0, n, errors, true), n);
+        return codec_tuple(PyString.decode_UnicodeEscape(str,
+                                                     0, n, errors, true), n);
     }
 
 
 
-    /* --- UnicodeInternal Codec -------------------------------------------- */
+    /* --- UnicodeInternal Codec ------------------------------------------ */
 
 
     public static PyTuple unicode_internal_encode(String str, String errors) {

@@ -11,7 +11,7 @@ public class re implements ClassDictInit
     public static PyException ReError(String message) {
         return new PyException(error, message);
     }
-    
+
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("IGNORECASE",
                          new PyInteger(Perl5Compiler.CASE_INSENSITIVE_MASK));
@@ -46,7 +46,9 @@ public class re implements ClassDictInit
         return match(pattern, string, 0);
     }
 
-    public static MatchObject match(String pattern, String string, int flags) {
+    public static MatchObject match(String pattern, String string,
+                                    int flags)
+    {
         return cachecompile(pattern, flags).match(string);
     }
 
@@ -72,7 +74,7 @@ public class re implements ClassDictInit
     {
         return sub(pattern, repl, string, 0);
     }
-    
+
     public static PyString sub(PyObject pattern, PyObject repl,
                                String string, int count)
     {
@@ -83,7 +85,7 @@ public class re implements ClassDictInit
     {
         return subn(pattern, repl, string, 0);
     }
-    
+
     public static PyTuple subn(PyObject pattern, PyObject repl,
                                String string, int count)
     {
@@ -92,12 +94,14 @@ public class re implements ClassDictInit
 
     public static PyList split(PyObject pattern, String string) {
         return split(pattern, string, 0);
-    }    
-    
-    public static PyList split(PyObject pattern, String string, int maxsplit) {
+    }
+
+    public static PyList split(PyObject pattern, String string,
+                               int maxsplit)
+    {
         return getPattern(pattern).split(string, maxsplit);
     }
-    
+
     public static PyList findall(PyObject pattern, String string) {
         return getPattern(pattern).findall(string);
     }

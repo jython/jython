@@ -96,7 +96,7 @@ public class time implements ClassDictInit
                 // best we can do for Java 1.1.  This is wrong though.
                 altzone = timezone;
     }
-                
+
     public static double time$() {
         return System.currentTimeMillis()/1000.0;
     }
@@ -204,7 +204,8 @@ public class time implements ClassDictInit
             new PyInteger(cal.get(Calendar.YEAR)),
             new PyInteger(cal.get(Calendar.MONTH)+1),
             new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
-            new PyInteger(cal.get(Calendar.HOUR) + 12*cal.get(Calendar.AM_PM)),
+            new PyInteger(cal.get(Calendar.HOUR) +
+                          12*cal.get(Calendar.AM_PM)),
             new PyInteger(cal.get(Calendar.MINUTE)),
             new PyInteger(cal.get(Calendar.SECOND)),
             new PyInteger(dow),

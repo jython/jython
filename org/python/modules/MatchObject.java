@@ -68,7 +68,7 @@ public class MatchObject extends PyObject
             String tmp = match.group(i+1);
             if (tmp == null) {
                 ret[i] = defalt;
-            } else {   
+            } else {
                 ret[i] = new PyString(tmp);
             }
         }

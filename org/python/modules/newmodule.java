@@ -19,7 +19,7 @@ public class newmodule {
             return new PyInstance(cls, dict);
     }
 
-    
+
     public static PyMethod instancemethod(PyObject func, PyObject instance,
                                           PyClass clss)
     {
@@ -31,14 +31,14 @@ public class newmodule {
         return function(code, globals, null, Py.EmptyObjects);
     }
 
-    public static PyFunction function(PyCode code, PyObject globals, 
+    public static PyFunction function(PyCode code, PyObject globals,
                                       String name)
     {
         return function(code, globals, name, Py.EmptyObjects);
     }
 
-    public static PyFunction function(PyCode code, PyObject globals, 
-                                      String name, PyObject[] argdefs) 
+    public static PyFunction function(PyCode code, PyObject globals,
+                                      String name, PyObject[] argdefs)
     {
         PyFunction f = new PyFunction(globals, argdefs, code, null);
         if (name != null)
@@ -53,7 +53,9 @@ public class newmodule {
     }
 
 
-    public static PyClass classobj(String name, PyTuple bases, PyObject dict) {
+    public static PyClass classobj(String name, PyTuple bases,
+                                   PyObject dict)
+    {
         return new PyClass(name, bases, dict);
     }
 }

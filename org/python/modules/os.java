@@ -8,9 +8,9 @@ public class os implements ClassDictInit {
 
     // An ugly hack, but it keeps the site.py from CPython2.0 happy
 
-    public static String __file__ = 
+    public static String __file__ =
           Py.getSystemState().prefix.toString() + "/Lib/javaos.py";
-    
+
     public static void classDictInit(PyObject dict) {
         // Fake from javaos import *
         PyFrame frame = new PyFrame(null, dict, dict, null);

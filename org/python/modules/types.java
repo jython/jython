@@ -15,12 +15,15 @@ public class types implements ClassDictInit {
         dict.__setitem__("DictType", PyJavaClass.lookup(PyDictionary.class));
         dict.__setitem__("DictionaryType",
                          PyJavaClass.lookup(PyDictionary.class));
-        dict.__setitem__("EllipsisType", PyJavaClass.lookup(PyEllipsis.class));
+        dict.__setitem__("EllipsisType",
+                         PyJavaClass.lookup(PyEllipsis.class));
         dict.__setitem__("FileType", PyJavaClass.lookup(PyFile.class));
         dict.__setitem__("FloatType", PyJavaClass.lookup(PyFloat.class));
         dict.__setitem__("FrameType", PyJavaClass.lookup(PyFrame.class));
-        dict.__setitem__("FunctionType", PyJavaClass.lookup(PyFunction.class));
-        dict.__setitem__("InstanceType", PyJavaClass.lookup(PyInstance.class));
+        dict.__setitem__("FunctionType",
+                         PyJavaClass.lookup(PyFunction.class));
+        dict.__setitem__("InstanceType",
+                         PyJavaClass.lookup(PyInstance.class));
         dict.__setitem__("IntType", PyJavaClass.lookup(PyInteger.class));
         dict.__setitem__("LambdaType", PyJavaClass.lookup(PyFunction.class));
         dict.__setitem__("ListType", PyJavaClass.lookup(PyList.class));

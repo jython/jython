@@ -42,15 +42,17 @@ public class ucnhash implements ucnhashAPI {
 
 
 
-    public static String[] __depends__ = new String[] { 
+    public static String[] __depends__ = new String[] {
         "/org/python/modules/ucnhash.dat",
     };
 
 
     public static void loadTables() throws Exception {
-        InputStream instream = ucnhash.class.getResourceAsStream("ucnhash.dat");
+        InputStream instream = ucnhash.class.
+                                    getResourceAsStream("ucnhash.dat");
         if (instream == null)
-            throw new IOException("Unicode name database not found: ucnhash.dat");
+            throw new IOException("Unicode name database not found: " +
+                                  "ucnhash.dat");
 
         DataInputStream in = new DataInputStream(
                                  new BufferedInputStream(instream));
@@ -65,7 +67,8 @@ public class ucnhash implements ucnhashAPI {
 
         G = readShortTable(in);
         if (in.readShort() != 3)
-            throw new IOException("UnicodeNameMap file corrupt, unknown dimension");
+            throw new IOException("UnicodeNameMap file corrupt, " +
+                                  "unknown dimension");
 
         T0 = readShortTable(in);
         T1 = readShortTable(in);
@@ -84,7 +87,9 @@ public class ucnhash implements ucnhashAPI {
     }
 
 
-    private static short[] readShortTable(DataInputStream in) throws IOException {
+    private static short[] readShortTable(DataInputStream in)
+        throws IOException
+    {
         if (in.read() != 't')
             throw new IOException("UnicodeNameMap file corrupt, shorttable");
 
@@ -96,7 +101,9 @@ public class ucnhash implements ucnhashAPI {
         return table;
     }
 
-    private static char[] readCharTable(DataInputStream in) throws IOException {
+    private static char[] readCharTable(DataInputStream in)
+        throws IOException
+    {
         if (in.read() != 't')
             throw new IOException("UnicodeNameMap file corrupt, chartable");
 
@@ -108,7 +115,9 @@ public class ucnhash implements ucnhashAPI {
         return table;
     }
 
-    private static byte[] readByteTable(DataInputStream in) throws IOException {
+    private static byte[] readByteTable(DataInputStream in)
+        throws IOException
+    {
         if (in.read() != 't')
             throw new IOException("UnicodeNameMap file corrupt, byte table");
         int n = in.readUnsignedShort();
@@ -121,7 +130,7 @@ public class ucnhash implements ucnhashAPI {
     public static int hash(String key) {
         return hash(key, 0, key.length());
     }
-        
+
     public static int hash(String key, int start, int end) {
         int i, j;
         int f0, f1, f2;
@@ -146,7 +155,7 @@ public class ucnhash implements ucnhashAPI {
     }
 
 
-    private static final char[] charmap = 
+    private static final char[] charmap =
            " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-".toCharArray();
 
     private static String getWord(int idx) {
@@ -179,14 +188,16 @@ public class ucnhash implements ucnhashAPI {
 
 
 
-    private static int compare(byte[] a1, int off1, int len1, byte a2[], int off2, int len2) {
+    private static int compare(byte[] a1, int off1, int len1,
+                               byte[] a2, int off2, int len2)
+    {
         for (int i = 0; i < len1 && i < len2; i++) {
             int d = (a1[off1 + i] & 0xFF) - (a2[off2 + i] & 0xFF);
             if (d != 0)
                 return d;
         }
         return len1 - len2;
-    }          
+    }
 
 
     private static int binarysearch(byte[] rawlist, int start, int end) {
@@ -196,12 +207,12 @@ public class ucnhash implements ucnhashAPI {
         while (floor < ceiling - 1) {
            int middle = (floor + ceiling) / 2;
            if (debug)
-               System.out.println("floor:" + floor + " ceiling:" + ceiling +" => " + middle);
+               System.out.println("floor:" + floor + " ceiling:" +
+                                  ceiling +" => " + middle);
 
            int off = rawindex[middle*5];
            int len = rawindex[middle*5+4] & 0x1F;
            int d = compare(rawlist, start, end - start, rawdata, off, len);
-           //System.out.println("middle:" + middle + " off:" + off + " " + len + " " + d);
            if (d < 0)
                ceiling = middle;
            else if (d > 0)
@@ -209,7 +220,7 @@ public class ucnhash implements ucnhashAPI {
            else
                return middle * 12;
         }
- 
+
         int tmp = floor*5;
 
         int off = rawindex[tmp++];
@@ -218,11 +229,9 @@ public class ucnhash implements ucnhashAPI {
                        ((long) rawindex[tmp++] << 16) |
                        ((long) rawindex[tmp++]);
 
-        //System.out.println("start seq:" + floor + " " + off + " " + Long.toHexString(lengths));
         floor *= 12;
         for (int i = 0; i < 12; i++) {
             int len = (int) (lengths >> (i * 5)) & 0x1F;
-//System.out.println("seqcompare:" + off + " " + len);
             if (compare(rawlist, start, end, rawdata, off, len) == 0)
                 return floor;
             off += len;
@@ -263,8 +272,8 @@ public class ucnhash implements ucnhashAPI {
                 else if (ch == '-')
                     v = 37;
                 else
-                    return -1; 
-                    
+                    return -1;
+
                 rawlist[ridx++] = (byte) v;
                 if (ch == '-' && start != i) {
                     start = ++i;
@@ -277,8 +286,8 @@ public class ucnhash implements ucnhashAPI {
             if (debug)
                 System.out.println(name.substring(begin, i) + " " + hash);
 
-            boolean isWord = hash >= 0 && 
-                             ridx - rbegin > 1 && 
+            boolean isWord = hash >= 0 &&
+                             ridx - rbegin > 1 &&
                              match(hash, rawlist, rbegin, ridx);
 
             if (isWord) {
@@ -305,7 +314,7 @@ public class ucnhash implements ucnhashAPI {
 
         if (debug) {
             System.out.print("rawdata: ");
-            for (int k = 0; k < ridx; k++) 
+            for (int k = 0; k < ridx; k++)
                 System.out.print((rawlist[k] & 0xFF) + " ");
             System.out.println();
         }
@@ -315,7 +324,8 @@ public class ucnhash implements ucnhashAPI {
             return idx;
         if (debug) {
             System.out.println("idx:" + idx);
-            System.out.println("codepoint:" + codepoint[idx] + " " + Integer.toHexString((int)codepoint[idx]));
+            System.out.println("codepoint:" + codepoint[idx] + " " +
+                               Integer.toHexString((int)codepoint[idx]));
         }
         return codepoint[idx];
     }
@@ -354,7 +364,7 @@ public class ucnhash implements ucnhashAPI {
 
     private static boolean initialized = false;
     private static boolean loaded = false;
-    
+
 
     private synchronized boolean initialized() {
         if (initialized && loaded)
@@ -390,7 +400,8 @@ public class ucnhash implements ucnhashAPI {
        System.out.println(lookup("NULL"));
        System.out.println(lookup("LATIN CAPITAL LETTER AFRICAN D"));
        System.out.println(lookup("GURMUKHI TIPPI"));
-       System.out.println(lookup("TIBETAN MARK GTER YIG MGO -UM RNAM BCAD MA"));
+       System.out.println(lookup("TIBETAN MARK GTER YIG MGO -UM " +
+                                 "RNAM BCAD MA"));
        System.out.println(lookup("HANGUL CHOSEONG PIEUP"));
        System.out.println(lookup("SINGLE LOW-9 QUOTATION MARK"));
 */

@@ -30,7 +30,7 @@ public class thread implements ClassDictInit
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("LockType", PyJavaClass.lookup(PyLock.class));
     }
-        
+
     public static PyObject error = new PyString("thread.error");
 
     public static void start_new_thread(PyObject func, PyTuple args) {

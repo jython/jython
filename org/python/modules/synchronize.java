@@ -6,7 +6,7 @@ import org.python.core.*;
 class SynchronizedCallable extends PyObject
 {
     PyObject callable;
-    
+
     public SynchronizedCallable(PyObject callable) {
         this.callable = callable;
     }
@@ -18,7 +18,7 @@ class SynchronizedCallable extends PyObject
 
     public PyObject __call__() {
         throw Py.TypeError("synchronized callable called with 0 args");
-    }   
+    }
 
     public PyObject __call__(PyObject arg) {
         synchronized(synchronize._getSync(arg)) {
@@ -37,7 +37,7 @@ class SynchronizedCallable extends PyObject
             return callable.__call__(arg1, arg2, arg3);
         }
     }
-        
+
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if (args.length == 0) {
             throw Py.TypeError("synchronized callable called with 0 args");
@@ -47,13 +47,14 @@ class SynchronizedCallable extends PyObject
         }
     }
 
-    public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords)
+    public PyObject __call__(PyObject arg1, PyObject[] args,
+                             String[] keywords)
     {
         synchronized(synchronize._getSync(arg1)) {
             return callable.__call__(arg1, args, keywords);
         }
     }
-    
+
 
 }
 
@@ -81,7 +82,7 @@ public class synchronize
             return __builtin__.apply(callable, args, kws);
         }
     }
-    
+
     public static PyObject make_synchronized(PyObject callable) {
         return new SynchronizedCallable(callable);
     }

@@ -4,7 +4,7 @@ package org.python.modules;
 // This is sort of analogous to CPython's Modules/Setup file.  Use this to
 // specify additional builtin modules.
 
-public class Setup 
+public class Setup
 {
     // Each element of this array is a string naming a builtin module to
     // add to the system.  The string has the following allowable forms:

@@ -18,12 +18,12 @@ public class imp {
     public static final int PKG_DIRECTORY = 5;
 
 
-    public static PyObject find_module(String name) { 
+    public static PyObject find_module(String name) {
         return find_module(name, Py.getSystemState().__getattr__("path"));
     }
 
 
-    public static PyObject find_module(String name, PyObject path) { 
+    public static PyObject find_module(String name, PyObject path) {
         PyObject p = null;
         for (int i = 0; (p = path.__finditem__(i)) != null; i++) {
             File fullpath = new File(p.__str__().toString(), name + ".py");
@@ -53,7 +53,7 @@ public class imp {
             }),
         });
     }
-       
+
 
 
     public static PyModule new_module(String name) {

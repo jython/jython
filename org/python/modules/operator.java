@@ -25,7 +25,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 16: return Py.newBoolean(arg1.isCallable());
         case 17: return Py.newBoolean(arg1.isMappingType());
         case 18: return Py.newBoolean(arg1.isNumberType());
-        case 19: return Py.newBoolean(arg1.isSequenceType());        
+        case 19: return Py.newBoolean(arg1.isSequenceType());
         default:
             throw argCountError(1);
         }
@@ -47,7 +47,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 21:
             arg1.__delitem__(arg2);
             return Py.None;
-        case 23: return arg1.__getitem__(arg2);        
+        case 23: return arg1.__getitem__(arg2);
         default:
             throw argCountError(2);
         }
@@ -57,7 +57,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         switch (index) {
         case 22: arg1.__delslice__(arg2, arg3); return Py.None;
         case 24: return arg1.__getslice__(arg2, arg3);
-        case 25: arg1.__setitem__(arg2, arg3); return Py.None;        
+        case 25: arg1.__setitem__(arg2, arg3); return Py.None;
         default:
             throw argCountError(3);
         }
@@ -73,7 +73,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         default:
             throw argCountError(4);
         }
-    }  
+    }
 }
 
 
@@ -128,7 +128,8 @@ public class operator implements ClassDictInit
                          new OperatorFunctions("isNumberType", 18, 1));
         dict.__setitem__("isSequenceType",
                          new OperatorFunctions("isSequenceType", 19, 1));
-        dict.__setitem__("contains", new OperatorFunctions("contains", 20, 2));
+        dict.__setitem__("contains",
+                         new OperatorFunctions("contains", 20, 2));
         dict.__setitem__("sequenceIncludes",
                          new OperatorFunctions("sequenceIncludes", 20, 2));
         dict.__setitem__("__delitem__",
@@ -136,37 +137,40 @@ public class operator implements ClassDictInit
         dict.__setitem__("delitem", new OperatorFunctions("delitem", 21, 2));
         dict.__setitem__("__delslice__",
                          new OperatorFunctions("__delslice__", 22, 3));
-        dict.__setitem__("delslice", new OperatorFunctions("delslice", 22, 3));
+        dict.__setitem__("delslice",
+                         new OperatorFunctions("delslice", 22, 3));
         dict.__setitem__("__getitem__",
                          new OperatorFunctions("__getitem__", 23, 2));
         dict.__setitem__("getitem", new OperatorFunctions("getitem", 23, 2));
         dict.__setitem__("__getslice__",
                          new OperatorFunctions("__getslice__", 24, 3));
-        dict.__setitem__("getslice", new OperatorFunctions("getslice", 24, 3));
+        dict.__setitem__("getslice",
+                         new OperatorFunctions("getslice", 24, 3));
         dict.__setitem__("__setitem__",
                          new OperatorFunctions("__setitem__", 25, 3));
         dict.__setitem__("setitem", new OperatorFunctions("setitem", 25, 3));
         dict.__setitem__("__setslice__",
                          new OperatorFunctions("__setslice__", 26, 4));
-        dict.__setitem__("setslice", new OperatorFunctions("setslice", 26, 4));
+        dict.__setitem__("setslice",
+                         new OperatorFunctions("setslice", 26, 4));
     }
-    
+
     public static int countOf(PyObject seq, PyObject item) {
         PyObject tmp;
         int i = 0;
         int count = 0;
-        
+
         while ((tmp = seq.__finditem__(i++)) != null) {
             if (item._eq(tmp).__nonzero__())
                 count++;
         }
         return count;
     }
-    
+
     public static int indexOf(PyObject seq, PyObject item) {
         PyObject tmp;
         int i = 0;
-        
+
         while ((tmp = seq.__finditem__(i++)) != null) {
             if (item._eq(tmp).__nonzero__())
                 return i - 1;

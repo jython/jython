@@ -5,7 +5,7 @@ import org.python.core.*;
 import org.apache.oro.text.regex.*;
 
 
-public class RegexObject extends PyObject 
+public class RegexObject extends PyObject
 {
     private static Perl5Compiler compiler = new Perl5Compiler();
 
@@ -99,7 +99,7 @@ public class RegexObject extends PyObject
 
     private MatchResult doSearch(Object input) {
         Perl5Matcher matcher = getMatcher();
-        
+
         if (input instanceof String) {
             if (!matcher.contains((String)input, code))
                 return null;
@@ -110,11 +110,11 @@ public class RegexObject extends PyObject
         }
         return matcher.getMatch();
     }
-    
+
     public PyString sub(PyObject repl, String string) {
         return sub(repl, string, 0);
     }
-    
+
     public PyString sub(PyObject repl, String string, int count) {
         return (PyString)subn(repl, string, count).__getitem__(0);
     }
@@ -122,7 +122,7 @@ public class RegexObject extends PyObject
     public PyTuple subn(PyObject repl, String string) {
         return subn(repl, string, 0);
     }
-    
+
     public PyTuple subn(PyObject repl, String string, int count) {
         // Real work is done here
         String srepl = null;
@@ -137,14 +137,14 @@ public class RegexObject extends PyObject
         if (count == 0) {
             count = Integer.MAX_VALUE;
         }
-        
+
         // How to handle repl as String vs. callable?
         int n=0;
         StringBuffer buf = new StringBuffer();
         Perl5Matcher matcher = getMatcher();
         PatternMatcherInput match = new PatternMatcherInput(string);
         int lastmatch = 0;
-        
+
         while (n < count && !match.endOfInput()) {
             if (!matcher.contains(match, code))
                 break;
@@ -156,7 +156,7 @@ public class RegexObject extends PyObject
             }
             if (srepl == null) {
                 MatchObject m = new MatchObject(this, string, lastmatch,
-                                                string.length(), 
+                                                string.length(),
                                                 matcher.getMatch());
                 PyObject ret = repl.__call__(m);
                 buf.append(ret.toString());
@@ -178,11 +178,11 @@ public class RegexObject extends PyObject
                 new PyInteger(n)
             });
     }
-    
+
     public PyList split(String string) {
         return split(string, 0);
-    }    
-    
+    }
+
     public PyList split(String string, int maxsplit) {
         if (maxsplit < 0) {
             throw re.ReError("maxsplit < 0");
@@ -190,28 +190,28 @@ public class RegexObject extends PyObject
         if (maxsplit == 0) {
             maxsplit = Integer.MAX_VALUE;
         }
-        
+
         int n=0;
         Perl5Matcher matcher = getMatcher();
         PatternMatcherInput match = new PatternMatcherInput(string);
         int lastmatch = 0;
         PyList results = new PyList();
-        
+
         while (n < maxsplit && !match.endOfInput()) {
             if (!matcher.contains(match, code))
                 break;
             n++;
-            
+
             int begin = match.getMatchBeginOffset();
             int end = match.getMatchEndOffset();
-            
+
             if (begin == end) {
                 // More needed?
                 continue;
             }
-            
+
             results.append(new PyString(match.substring(lastmatch, begin)));
-            
+
             MatchResult m = matcher.getMatch();
             int ngroups = m.groups();
             if (ngroups > 1) {
@@ -231,7 +231,7 @@ public class RegexObject extends PyObject
             new PyString(match.substring(lastmatch, match.getEndOffset())));
         return results;
     }
-    
+
     private int getindex(PyString s) {
         PyInteger v = (PyInteger)groupindex.__finditem__(s);
         if (v == null) {
@@ -242,11 +242,12 @@ public class RegexObject extends PyObject
                 if (!isname(s.toString()))
                     throw re.ReError("illegal character in group name");
                 else
-                    throw Py.IndexError("group "+s.__repr__()+" is undefined");
+                    throw Py.IndexError("group "+s.__repr__() +
+                                        " is undefined");
             }
         }
         return v.getValue();
-    }    
+    }
 
     private boolean isdigit(char c) {
         return '0' <= c && c <= '9';
@@ -283,7 +284,7 @@ public class RegexObject extends PyObject
                 // Ignore \( because these are literal parens
                 if (index > 2 && chars[index-2] == '\\')
                     continue;
-                
+
                 if (index < n && chars[index] == '?') {
                     index++;
                     if (index < n && chars[index] == 'P') {
@@ -369,7 +370,7 @@ public class RegexObject extends PyObject
             return pattern;
         }
     }
-    
+
     public String expandMatch(MatchResult match, String repl) {
         char[] chars = repl.toCharArray();
 
@@ -425,7 +426,7 @@ public class RegexObject extends PyObject
                         index++;
                         buf.append(chars, lasti, start-3-lasti);
                         PyString str = new PyString(new String(chars, start,
-                                                               index-1-start));
+                                                              index-1-start));
                         String tmp = match.group(getindex(str));
                         if (tmp == null) {
                             throw re.ReError("group not in match: "+str);

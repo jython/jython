@@ -10,17 +10,18 @@ public class sha {
 
     public static String __doc__ =
         "* Cryptix General License\n" +
-        "* Copyright © 1995, 1996, 1997, 1998, 1999, 2000 The Cryptix Foundation\n"+
-        "* Limited. 	All rights reserved.\n" +
+        "* Copyright © 1995, 1996, 1997, 1998, 1999, 2000 The Cryptix"+
+        " Foundation\n" +
+        "* Limited. All rights reserved.\n" +
         "* \n" +
         "* Redistribution and use in source and binary forms, with or\n" +
-        "* without modification, are permitted provided that the\n" + 
+        "* without modification, are permitted provided that the\n" +
         "* following conditions are met:\n" +
         "*\n" +
         "* - Redistributions of source code must retain the copyright\n" +
-        "*   notice, this list of conditions and the following disclaimer.\n" +
+        "*   notice, this list of conditions and the following disclaimer.\n"+
         "* - Redistributions in binary form must reproduce the above\n" +
-        "*   copyright notice, this list of conditions and the following\n" + 
+        "*   copyright notice, this list of conditions and the following\n" +
         "*   disclaimer in the documentation and/or other materials\n" +
         "*   provided with the distribution.\n" +
         "*\n" +

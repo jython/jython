@@ -26,7 +26,7 @@ public class MD5Object extends PyObject
             // arbitrary Java code should be able to get safeRepr but we
             // still want to hide it from Python.  There should be another
             // way to hide Java methods from Python.
-            throw Py.TypeError("argument 1 expected string"); 
+            throw Py.TypeError("argument 1 expected string");
         data += arg.toString();
         return Py.None;
     }
