@@ -11,23 +11,24 @@ public class jpython {
             ZipFile zip = new ZipFile(filename);
 
             ZipEntry runit = zip.getEntry("__run__.py");
-            if (runit == null) throw Py.ValueError("jar file missing '__run__.py'");
+            if (runit == null)
+		throw Py.ValueError("jar file missing '__run__.py'");
 
-                PyStringMap locals = new PyStringMap();
-                locals.__setitem__("__name__", new PyString(filename));
-                locals.__setitem__("zipfile", Py.java2py(zip));
+	    PyStringMap locals = new PyStringMap();
+	    locals.__setitem__("__name__", new PyString(filename));
+	    locals.__setitem__("zipfile", Py.java2py(zip));
 
-                    InputStream file = zip.getInputStream(runit);
+	    InputStream file = zip.getInputStream(runit);
             PyCode code;
-                    try {
-                        code = Py.compile(file, "__run__", "exec");
-                    } finally {
-                            file.close();
-                        }
-                        Py.runCode(code, locals, locals);
-         } catch (java.io.IOException e) {
-               throw Py.IOError(e);
-         }
+	    try {
+		code = Py.compile(file, "__run__", "exec");
+	    } finally {
+		file.close();
+	    }
+	    Py.runCode(code, locals, locals);
+	} catch (java.io.IOException e) {
+	    throw Py.IOError(e);
+	}
     }
 
     public static void main(String[] args) {
@@ -39,7 +40,8 @@ public class jpython {
         }
         
         // Setup the basic python system state from these options
-        PySystemState.initialize(System.getProperties(), opts.properties, opts.argv);
+        PySystemState.initialize(System.getProperties(),
+				 opts.properties, opts.argv);
         
         if (opts.notice) {
             System.err.println(InteractiveConsole.getDefaultBanner());
@@ -66,9 +68,9 @@ public class jpython {
  
         if (opts.command != null) {
             try {
-              interp.exec(opts.command);
+		interp.exec(opts.command);
             } catch (Throwable t) {
-              Py.printException(t);
+		Py.printException(t);
             }
         }
  
@@ -80,9 +82,9 @@ public class jpython {
                 runJar(opts.filename);
             } else if (opts.filename.equals("-")) {
                 try {
-                  interp.execfile(System.in, "<stdin>");
+		    interp.execfile(System.in, "<stdin>");
                 } catch (Throwable t) {
-                  Py.printException(t);
+		    Py.printException(t);
                 }
             } else {
                 try {
@@ -97,7 +99,7 @@ public class jpython {
             try {
                 interp.interact(null);
             } catch (Throwable t) {
-              Py.printException(t);
+		Py.printException(t);
             }
         }
     }
@@ -187,4 +189,3 @@ class CommandLineOptions {
         return true;
     }
 }
-

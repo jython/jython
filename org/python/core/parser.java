@@ -34,8 +34,8 @@ public class parser {
 			String text=getLine(istream, line);
 			return new PySyntaxError(e.getMessage(), line, col, text, filename, forceNewline);
 		}
-		if (t instanceof TokenMgrError) {
-			TokenMgrError e = (TokenMgrError)t;
+		if (t instanceof PythonTokenError) {
+			PythonTokenError e = (PythonTokenError)t;
 			boolean eofSeen = e.EOFSeen;
 
 			int col = e.errorColumn;

@@ -15,16 +15,14 @@ class ReflectedCallData {
     
     public void setLength(int newLength) {
         length = newLength;
-        if (newLength <= args.length) return;
-        
+        if (newLength <= args.length)
+	    return;
         args = new Object[newLength];
     }
     
     public Object[] getArgsArray() {
-        if (length == args.length) {
+        if (length == args.length)
             return args;
-        }
-        
         Object[] newArgs = new Object[length];
         System.arraycopy(args, 0, newArgs, 0, length);
         args = newArgs;

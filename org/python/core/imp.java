@@ -40,7 +40,9 @@ public class imp {
         }
     }
 
-    private static PyObject createFromPyClass(String name, InputStream fp, boolean testing) {
+    private static PyObject createFromPyClass(String name, InputStream fp,
+					      boolean testing)
+    {
         byte[] data = readBytes(fp);
         int n = data.length;
         //System.err.println("data: "+data[n-1]+", "+data[n-2]+", "+data[n-3]+", "+data[n-4]);
@@ -49,7 +51,8 @@ public class imp {
             if (testing) {
                 return null;
             } else { 
-                throw Py.ImportError("invalid api version("+api+" != "+APIVersion+") in: "+name);
+                throw Py.ImportError("invalid api version("+api+" != "+
+				     APIVersion+") in: "+name);
             }
         }
         //System.err.println("APIVersion: "+api);
@@ -68,13 +71,16 @@ public class imp {
         return compileSource(name, file, null, null);
     }
     
-    public static byte[] compileSource(String name, File file, String filename, String outFilename) {
+    public static byte[] compileSource(String name, File file, String filename,
+				       String outFilename)
+    {
         if (filename == null) {
             filename = file.toString();
         }
         
         if (outFilename == null) {
-            outFilename = filename.substring(0,filename.length()-3)+"$py.class";
+            outFilename = filename.substring(0,filename.length()-3)+
+		"$py.class";
         }
         
         return compileSource(name, makeStream(file), filename, outFilename);
@@ -83,16 +89,20 @@ public class imp {
     static byte[] compileSource(String name, InputStream fp, String filename) {
         String outFilename = null;
         if (filename != null) {
-            outFilename = filename.substring(0,filename.length()-3)+"$py.class";
+            outFilename = filename.substring(0,filename.length()-3)+
+		"$py.class";
         }
         return compileSource(name, fp, filename, outFilename);
     }
     
-    static byte[] compileSource(String name, InputStream fp, String filename, String outFilename) {
+    static byte[] compileSource(String name, InputStream fp, String filename,
+				String outFilename)
+    {
         try {
             ByteArrayOutputStream ofp = new ByteArrayOutputStream();
     
-            if (filename == null) filename = "<unknown>";
+            if (filename == null)
+		filename = "<unknown>";
             org.python.parser.SimpleNode node;
             try {
                 node = parser.parse(fp, "exec", filename);
@@ -119,7 +129,9 @@ public class imp {
         }
     }
 
-    private static PyObject createFromSource(String name, InputStream fp, String filename) {
+    private static PyObject createFromSource(String name, InputStream fp,
+					     String filename)
+    {
         byte[] bytes = compileSource(name, fp, filename);
         PyCode code = BytecodeLoader.makeCode(name+"$py", bytes);
         return createFromCode(name, code);
@@ -138,7 +150,8 @@ public class imp {
 
 
     private static PyObject createFromClass(String name, InputStream fp) {
-        return createFromClass(name, BytecodeLoader.makeClass(name, readBytes(fp)));
+        return createFromClass(name,
+			       BytecodeLoader.makeClass(name, readBytes(fp)));
     }
 
     private static PyObject createFromClass(String name, Class c) {
@@ -149,7 +162,8 @@ public class imp {
             if (interfaces[i] == PyRunnable.class) {
                 //System.err.println("is runnable");
                 try {
-                    PyObject o = createFromCode(name, ((PyRunnable)c.newInstance()).getMain());
+                    PyObject o = createFromCode(
+			name, ((PyRunnable)c.newInstance()).getMain());
                     return o;
                 } catch (InstantiationException e) {
                     throw Py.JavaError(e);
@@ -182,7 +196,9 @@ public class imp {
         return Py.findClass(modName+"$_PyInner");
     }
 
-    private static PyObject loadPrecompiled(String name, String modName, PyList path) {
+    private static PyObject loadPrecompiled(String name, String modName,
+					    PyList path)
+    {
         //System.out.println("precomp: "+name+", "+modName);
         Class c = findPyClass(modName);
         if (c == null) {
@@ -202,7 +218,8 @@ public class imp {
     }
 
     static PyObject loadFromPath(String name, String modName, PyList path) {
-        if (Py.frozen) return loadPrecompiled(name, modName, path);
+        if (Py.frozen)
+	    return loadPrecompiled(name, modName, path);
 
         String pyName = name+".py";
         String className = name+"$py.class";
@@ -241,16 +258,20 @@ public class imp {
                     long pyTime = pyFile.lastModified();
                     long classTime = classFile.lastModified();
                     if (classTime >= pyTime) {
-                        PyObject ret = createFromPyClass(modName, makeStream(classFile), true);
-                        if (ret != null) return ret;
+                        PyObject ret = createFromPyClass(
+			    modName, makeStream(classFile), true);
+                        if (ret != null)
+			    return ret;
                     }
                 }
-                return createFromSource(modName, makeStream(pyFile), pyFile.getAbsolutePath());
+                return createFromSource(modName, makeStream(pyFile),
+					pyFile.getAbsolutePath());
             }
 
             // If no source, try loading precompiled
             if (classFile.isFile()) {
-                return createFromPyClass(modName, makeStream(classFile), false);
+                return createFromPyClass(modName, makeStream(classFile),
+					 false);
             }
                         
             File javaFile = new File(dirName, javaName);
@@ -258,7 +279,8 @@ public class imp {
                 try {
                     return createFromClass(modName, makeStream(javaFile));
                 } catch (ClassFormatError exc) {
-                    throw Py.ImportError("bad java class file in: "+javaFile.toString());
+                    throw Py.ImportError("bad java class file in: "+
+					 javaFile.toString());
                 }
             }                       
 
@@ -295,18 +317,18 @@ public class imp {
         if (ret != null) return ret;
 
         /* I don't think this is needed any more
-        ClassLoader classLoader=null;
-        if (!Py.frozen) classLoader = Py.getSystemState().getClassLoader();
-        //System.out.println("load1: "+classLoader);
+	   ClassLoader classLoader=null;
+	   if (!Py.frozen) classLoader = Py.getSystemState().getClassLoader();
+	   //System.out.println("load1: "+classLoader);
 
-        if (classLoader != null) {
-            try {
-                ret = loadFromClassLoader(name, classLoader);
-                if (ret != null) return ret;
-            } catch (Throwable t) {
-                t.printStackTrace(System.err);
-            }
-        }
+	   if (classLoader != null) {
+	   try {
+	   ret = loadFromClassLoader(name, classLoader);
+	   if (ret != null) return ret;
+	   } catch (Throwable t) {
+	   t.printStackTrace(System.err);
+	   }
+	   }
         */
         //System.out.println("load2: ");
 

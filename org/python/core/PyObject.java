@@ -21,7 +21,9 @@ public class PyObject implements java.io.Serializable {
     public transient PyClass __class__;
         
     /* must instantiate __class__ when de-serializing */
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in)
+	throws java.io.IOException, ClassNotFoundException
+    {
         in.defaultReadObject();
         __class__ = PyJavaClass.lookup(getClass());
     }
@@ -47,11 +49,11 @@ public class PyObject implements java.io.Serializable {
         If the following boilerplate is added to a subclass of PyObject,
         the instantiation time for the object will be greatly reduced.
         
-       <blockquote><pre>
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-    protected PyClass getPyClass() { return __class__; }
-       </pre></blockquote>
+	<blockquote><pre>
+	// __class__ boilerplate -- see PyObject for details
+	public static PyClass __class__;
+	protected PyClass getPyClass() { return __class__; }
+	</pre></blockquote>
 
         With PyIntegers this leads to a 50% faster instantiation time.
         This replaces the PyObject(PyClass c) constructor which is now deprecated.
@@ -103,8 +105,10 @@ public class PyObject implements java.io.Serializable {
         PyObject tmp;
         if (name == null) return "unknown object";
             
-        if ((name.equals("org.python.core.PyClass") || name.equals("org.python.core.PyJavaClass"))
-            && (this instanceof PyClass)) {
+        if ((name.equals("org.python.core.PyClass") ||
+	     name.equals("org.python.core.PyJavaClass")) &&
+            (this instanceof PyClass))
+	{
             name = ((PyClass)this).__name__;
             if (name == null) return "unknown class";
             return "class '"+name+"'";
@@ -115,7 +119,9 @@ public class PyObject implements java.io.Serializable {
             if (tmp == null) return "unnamed module";
             return "module '"+tmp+"'";
         }
-        if (name.equals("org.python.core.PyJavaPackage") && (this instanceof PyJavaPackage)) {
+        if (name.equals("org.python.core.PyJavaPackage") &&
+	    (this instanceof PyJavaPackage))
+	{
             name = ((PyJavaPackage)this).__name__;
             if (name == null) return "unnamed java package";
             return "java package '"+name+"'";
@@ -153,10 +159,9 @@ public class PyObject implements java.io.Serializable {
        <code>a.equals(b) == true</code> iff <code>cmp(a,b) == 0</code>
     **/
     public boolean equals(Object ob_other) {
-        return (ob_other instanceof PyObject) && _cmp((PyObject)ob_other) == 0;        
+        return (ob_other instanceof PyObject) &&
+	    _cmp((PyObject)ob_other) == 0;
     }
-        
-
 
     /**
        Equivalent to the standard Python __nonzero__ method.
@@ -183,10 +188,12 @@ public class PyObject implements java.io.Serializable {
     /**
        The basic method to override when implementing a callable object.
     
-       The first len(args)-len(keywords) members of args[] are plain arguments.
-       The last len(keywords) arguments are the values of the keyword arguments.
+       The first len(args)-len(keywords) members of args[] are plain
+       arguments.  The last len(keywords) arguments are the values of the
+       keyword arguments.
     
-       @param args     all arguments to the function (including keyword arguments).
+       @param args     all arguments to the function (including
+                       keyword arguments).
        @param keywords the keywords used for all keyword arguments.
     **/
     public PyObject __call__(PyObject args[], String keywords[]) {
@@ -195,17 +202,21 @@ public class PyObject implements java.io.Serializable {
 
     /**
        A variant of the __call__ method with one extra initial argument.
-       This variant is used to allow method invocations to be performed efficiently.
+       This variant is used to allow method invocations to be performed
+       efficiently.
     
-       The default behavior is to invoke <code>__call__(args, keywords)</code>
-       with the appropriate arguments.
-       The only reason to override this function would be for improved performance.
+       The default behavior is to invoke <code>__call__(args,
+       keywords)</code> with the appropriate arguments.  The only reason to
+       override this function would be for improved performance.
     
        @param arg1     the first argument to the function.
-       @param args     the last arguments to the function (including keyword arguments).
+       @param args     the last arguments to the function (including
+                       keyword arguments).
        @param keywords the keywords used for all keyword arguments.    
     **/
-    public PyObject __call__(PyObject arg1, PyObject args[], String keywords[]) {
+    public PyObject __call__(PyObject arg1, PyObject args[],
+			     String keywords[])
+    {
         PyObject[] newArgs = new PyObject[args.length+1];
         System.arraycopy(args, 0, newArgs, 1, args.length);
         newArgs[0] = arg1;
@@ -213,10 +224,10 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       A variant of the __call__ method when no keywords are passed.
-       The default behavior is to invoke <code>__call__(args, keywords)</code>
-       with the appropriate arguments.
-       The only reason to override this function would be for improved performance.
+       A variant of the __call__ method when no keywords are passed.  The
+       default behavior is to invoke <code>__call__(args, keywords)</code>
+       with the appropriate arguments.  The only reason to override this
+       function would be for improved performance.
     
        @param args     all arguments to the function.
     **/
@@ -225,20 +236,20 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       A variant of the __call__ method with no arguments.
-       The default behavior is to invoke <code>__call__(args, keywords)</code>
-       with the appropriate arguments.
-       The only reason to override this function would be for improved performance.
+       A variant of the __call__ method with no arguments.  The default
+       behavior is to invoke <code>__call__(args, keywords)</code> with the
+       appropriate arguments.  The only reason to override this function
+       would be for improved performance.
     **/
     public PyObject __call__() {
         return __call__(Py.EmptyObjects, Py.NoKeywords);
     }
 
     /**
-       A variant of the __call__ method with one argument.
-       The default behavior is to invoke <code>__call__(args, keywords)</code>
-       with the appropriate arguments.
-       The only reason to override this function would be for improved performance.
+       A variant of the __call__ method with one argument.  The default
+       behavior is to invoke <code>__call__(args, keywords)</code> with the
+       appropriate arguments.  The only reason to override this function
+       would be for improved performance.
     
        @param arg0     the single argument to the function.
     **/
@@ -247,10 +258,10 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       A variant of the __call__ method with two arguments.
-       The default behavior is to invoke <code>__call__(args, keywords)</code>
-       with the appropriate arguments.
-       The only reason to override this function would be for improved performance.
+       A variant of the __call__ method with two arguments.  The default
+       behavior is to invoke <code>__call__(args, keywords)</code> with the
+       appropriate arguments.  The only reason to override this function
+       would be for improved performance.
     
        @param arg0     the first argument to the function.
        @param arg1     the second argument to the function.
@@ -260,10 +271,10 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       A variant of the __call__ method with three arguments.
-       The default behavior is to invoke <code>__call__(args, keywords)</code>
-       with the appropriate arguments.
-       The only reason to override this function would be for improved performance.
+       A variant of the __call__ method with three arguments.  The default
+       behavior is to invoke <code>__call__(args, keywords)</code> with the
+       appropriate arguments.  The only reason to override this function
+       would be for improved performance.
     
        @param arg0     the first argument to the function.
        @param arg1     the second argument to the function.
@@ -274,24 +285,27 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       A variant of the __call__ method with four arguments.
-       The default behavior is to invoke <code>__call__(args, keywords)</code>
-       with the appropriate arguments.
-       The only reason to override this function would be for improved performance.
+       A variant of the __call__ method with four arguments.  The default
+       behavior is to invoke <code>__call__(args, keywords)</code> with the
+       appropriate arguments.  The only reason to override this function
+       would be for improved performance.
     
        @param arg0     the first argument to the function.
        @param arg1     the second argument to the function.
        @param arg2     the third argument to the function.
        @param arg3     the fourth argument to the function.
     **/
-    public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2, PyObject arg3) {
-        return __call__(new PyObject[] {arg0, arg1, arg2, arg3}, Py.NoKeywords);
+    public PyObject __call__(PyObject arg0, PyObject arg1,
+			     PyObject arg2, PyObject arg3)
+    {
+        return __call__(new PyObject[] {arg0, arg1, arg2, arg3},
+			Py.NoKeywords);
     }
         
-        public boolean isCallable() { return __findattr__("__call__") != null; }
-        public boolean isMappingType() { return true; }
-        public boolean isNumberType() { return true; }
-        public boolean isSequenceType() { return true; }
+    public boolean isCallable() { return __findattr__("__call__") != null; }
+    public boolean isMappingType() { return true; }
+    public boolean isNumberType() { return true; }
+    public boolean isSequenceType() { return true; }
         
     /* The basic functions to implement a mapping */
         
@@ -1461,19 +1475,19 @@ public class PyObject implements java.io.Serializable {
             return __call__(pargs);
         } catch (PyException e) {
             /*if (e.value instanceof PyJavaInstance) {
-                Throwable t = (Throwable)e.value.__tojava__(Throwable.class);
-                if (t != null) {
-                    throw t;
-                }
-            } else {*/
-                ThreadState ts = Py.getThreadState();
-                if (ts.frame == null) {
-                    Py.maybeSystemExit(e);
-                }
-                if (Options.showPythonProxyExceptions) {
-                    Py.stderr.println("Exception in Python proxy returning to Java:");
-                    Py.printException(e);
-                }
+	      Throwable t = (Throwable)e.value.__tojava__(Throwable.class);
+	      if (t != null) {
+	      throw t;
+	      }
+	      } else {*/
+	    ThreadState ts = Py.getThreadState();
+	    if (ts.frame == null) {
+		Py.maybeSystemExit(e);
+	    }
+	    if (Options.showPythonProxyExceptions) {
+		Py.stderr.println("Exception in Python proxy returning to Java:");
+		Py.printException(e);
+	    }
             //}
             throw e;
         }
