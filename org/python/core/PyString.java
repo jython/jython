@@ -1044,8 +1044,12 @@ public class PyString extends PySequence implements InitModule
         int seqlen = __builtin__.len(seq);
         StringBuffer buf = new StringBuffer();
 
-        for (int i=0; i < seqlen; i++) {
-            PyObject obj = seq.__getitem__(i);
+        PyObject obj;
+        for (int i=0; (obj = seq.__finditem__(i)) != null; i++) {
+            if (!(obj instanceof PyString))
+                 throw Py.TypeError(
+                        "sequence item " + i + ": expected string, " +
+                        obj.safeRepr() + " found");
             if (i > 0)
                 buf.append(string);
             buf.append(obj.__str__());
