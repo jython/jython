@@ -503,6 +503,7 @@ public class ProxyMaker {
 	}
     }
 
+    // #1
     public void addSuperMethod(Method method, int access) throws Exception {
 	Class[] parameters = method.getParameterTypes();
 	Class ret = method.getReturnType();
@@ -516,12 +517,15 @@ public class ProxyMaker {
 	addSuperMethod(name, superclass, parameters, ret, sig, access);   
     }
 
+    // #2
     public void addSuperMethod(String name, String superclass,
 			       Class[] parameters, Class ret,
 			       String sig, int access)
 	throws Exception
     {
 	Code code = classfile.addMethod(name, sig, access);
+	if (name.startsWith("super__"))
+	    name = name.substring(7);
 	callSuper(code, name, superclass, parameters, ret, sig);
     }
 
