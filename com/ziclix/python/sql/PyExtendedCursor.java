@@ -86,12 +86,25 @@ public class PyExtendedCursor extends PyCursor {
 	}
 
 	/**
+	 * Constructor PyExtendedCursor
+	 *
+	 * @param PyConnection connection
+	 * @param boolean dynamicFetch
+	 * @param PyObject rsType
+	 * @param PyObject rsConcur
+	 *
+	 */
+	PyExtendedCursor(PyConnection connection, boolean dynamicFetch, PyObject rsType, PyObject rsConcur) {
+		super(connection, dynamicFetch, rsType, rsConcur);
+	}
+
+	/**
 	 * String representation of the object.
 	 *
 	 * @return a string representation of the object.
 	 */
 	public String toString() {
-		return "<PyExtendedCursor object instance at " + hashCode() + ">";
+		return "<PyExtendedCursor object instance at " + Py.id(this) + ">";
 	}
 
 	/**

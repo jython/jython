@@ -147,6 +147,17 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 				dict.__setitem__(name, value);
 				sqltype.__setitem__(value, name);
 			}
+
+			c = Class.forName("java.sql.ResultSet");
+			fields = c.getFields();
+
+			for (int i = 0; i < fields.length; i++) {
+				Field f = fields[i];
+				PyString name = Py.newString(f.getName());
+				PyObject value = Py.newInteger(f.getInt(c));
+
+				dict.__setitem__(name, value);
+			}
 		} catch (Throwable t) {
 			throw makeException(t);
 		}

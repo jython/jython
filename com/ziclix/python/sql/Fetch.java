@@ -793,7 +793,7 @@ class DynamicFetch extends Fetch {
 		try {
 			int type = this.resultSet.getType();
 
-			if ((type == ResultSet.TYPE_SCROLL_SENSITIVE) || (type == ResultSet.TYPE_SCROLL_INSENSITIVE)) {
+			if ((type != ResultSet.TYPE_FORWARD_ONLY) || (value > 0)) {
 				if ("relative".equals(mode)) {
 					if (value < 0) {
 						value = Math.abs(this.rownumber + value);
@@ -819,7 +819,8 @@ class DynamicFetch extends Fetch {
 				// since .rownumber is the *next* row, then the JDBC value suits us fine
 				this.rownumber = this.resultSet.getRow();
 			} else {
-				throw zxJDBC.makeException(zxJDBC.NotSupportedError, "dynamic result set does not support scrolling");
+				String msg = "dynamic result set of type [" + type + "] does not support scrolling";
+				throw zxJDBC.makeException(zxJDBC.NotSupportedError, msg);
 			}
 		} catch (SQLException e) {
 			throw zxJDBC.makeException(e);

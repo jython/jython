@@ -12,6 +12,7 @@ package com.ziclix.python.sql;
 import java.sql.*;
 import java.util.*;
 import org.python.core.*;
+import com.ziclix.python.sql.util.PyArgParser;
 
 /**
  * A connection to the database.
@@ -110,7 +111,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
 		dict.__setitem__("close", new ConnectionFunc("close", 0, 0, 0, zxJDBC.getString("close")));
 		dict.__setitem__("commit", new ConnectionFunc("commit", 1, 0, 0, zxJDBC.getString("commit")));
-		dict.__setitem__("cursor", new ConnectionFunc("cursor", 2, 0, 1, zxJDBC.getString("cursor")));
+		dict.__setitem__("cursor", new ConnectionFunc("cursor", 2, 0, 4, zxJDBC.getString("cursor")));
 		dict.__setitem__("rollback", new ConnectionFunc("rollback", 3, 0, 0, zxJDBC.getString("rollback")));
 		dict.__setitem__("nativesql", new ConnectionFunc("nativesql", 4, 1, 1, zxJDBC.getString("nativesql")));
 
@@ -311,11 +312,27 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 * using other means to the extent needed by this specification.
 	 *
 	 * @param dynamicFetch if true, dynamically iterate the result
+	 *
 	 * @return a new cursor using this connection
 	 */
 	public PyCursor cursor(boolean dynamicFetch) {
+		return this.cursor(dynamicFetch, Py.None, Py.None);
+	}
 
-		PyCursor cursor = new PyExtendedCursor(this, dynamicFetch);
+	/**
+	 * Return a new Cursor Object using the connection. If the database does not
+	 * provide a direct cursor concept, the module will have to emulate cursors
+	 * using other means to the extent needed by this specification.
+	 *
+	 * @param dynamicFetch if true, dynamically iterate the result
+	 * @param rsType the type of the underlying ResultSet
+	 * @param rsConcur the concurrency of the underlying ResultSet
+	 *
+	 * @return a new cursor using this connection
+	 */
+	public PyCursor cursor(boolean dynamicFetch, PyObject rsType, PyObject rsConcur) {
+
+		PyCursor cursor = new PyExtendedCursor(this, dynamicFetch, rsType, rsConcur);
 
 		cursors.add(cursor);
 
@@ -415,6 +432,84 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
 
 			default :
 				throw argCountError(1);
+		}
+	}
+
+	/**
+	 * Method __call__
+	 *
+	 * @param PyObject arg1
+	 * @param PyObject arg2
+	 *
+	 * @return PyObject
+	 *
+	 */
+	public PyObject __call__(PyObject arg1, PyObject arg2) {
+
+		PyConnection c = (PyConnection)__self__;
+
+		switch (index) {
+
+			case 2 :
+				throw Py.TypeError(name + "() takes exactly 0, 1 or 3 arguments (2 given)");
+			default :
+				throw argCountError(2);
+		}
+	}
+
+	/**
+	 * Method __call__
+	 *
+	 * @param PyObject arg1
+	 * @param PyObject arg2
+	 * @param PyObject arg3
+	 *
+	 * @return PyObject
+	 *
+	 */
+	public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
+
+		PyConnection c = (PyConnection)__self__;
+
+		switch (index) {
+
+			case 2 :
+				return c.cursor(arg1.__nonzero__(), arg2, arg3);
+
+			default :
+				throw argCountError(3);
+		}
+	}
+
+	/**
+	 * Method __call__
+	 *
+	 * @param PyObject[] args
+	 * @param String[] keywords
+	 *
+	 * @return PyObject
+	 *
+	 */
+	public PyObject __call__(PyObject[] args, String[] keywords) {
+
+		PyConnection c = (PyConnection)__self__;
+		PyArgParser parser = new PyArgParser(args, keywords);
+
+		switch (index) {
+
+			case 2 :
+				PyObject dynamic = parser.kw("dynamic", Py.None);
+				PyObject rstype = parser.kw("rstype", Py.None);
+				PyObject rsconcur = parser.kw("rsconcur", Py.None);
+
+				dynamic = (parser.numArg() >= 1) ? parser.arg(0) : dynamic;
+				rstype = (parser.numArg() >= 2) ? parser.arg(1) : rstype;
+				rsconcur = (parser.numArg() >= 3) ? parser.arg(2) : rsconcur;
+
+				return c.cursor(dynamic.__nonzero__(), rstype, rsconcur);
+
+			default :
+				throw argCountError(args.length);
 		}
 	}
 }

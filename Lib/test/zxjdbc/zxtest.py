@@ -27,8 +27,8 @@ class zxCoreTestCase(runner.SQLTestCase):
 		connect = getattr(factory, self.factory.method)
 		return apply(connect, args, self.factory.keywords)
 
-	def cursor(self, dynamic=0):
-		c = self.db.cursor(dynamic)
+	def cursor(self, *args, **kws):
+		c = apply(self.db.cursor, args, kws)
 		if hasattr(self, "datahandler"):
 			c.datahandler = self.datahandler(c.datahandler)
 		return c
@@ -108,6 +108,29 @@ class zxAPITestCase(zxJDBCTestCase):
 			c.execute(None)
 		finally:
 			c.close()
+
+	def _test_cursorkeywords(self, *args, **kws):
+		c = self.cursor(*args, **kws)
+		try:
+			c.execute("select * from zxtesting")
+			data = c.fetchmany(1)
+			assert len(data) == 1, "expecting one row"
+		finally:
+			c.close()
+
+	def testCursorKeywords(self):
+		"""testing the creation of a cursor with keywords"""
+		self._test_cursorkeywords(dynamic=1)
+		self._test_cursorkeywords(dynamic=1,
+			rstype=zxJDBC.TYPE_SCROLL_INSENSITIVE,
+			rsconcur=zxJDBC.CONCUR_READ_ONLY
+		)
+		self._test_cursorkeywords(1,
+			rstype=zxJDBC.TYPE_SCROLL_INSENSITIVE,
+			rsconcur=zxJDBC.CONCUR_READ_ONLY
+		)
+		self._test_cursorkeywords(1,zxJDBC.TYPE_SCROLL_INSENSITIVE,zxJDBC.CONCUR_READ_ONLY)
+		self.assertRaises(TypeError, self.cursor, 1, zxJDBC.TYPE_SCROLL_INSENSITIVE)
 
 	def testFileLikeCursor(self):
 		"""testing the cursor as a file-like object"""
@@ -251,7 +274,14 @@ class zxAPITestCase(zxJDBCTestCase):
 			c.close()
 
 	def _test_scrolling(self, dynamic=0):
-		c = self.cursor(dynamic)
+		if self.vendor.name == "oracle":
+			c = self.cursor(dynamic,
+				rstype=zxJDBC.TYPE_SCROLL_INSENSITIVE,
+				rsconcur=zxJDBC.CONCUR_READ_ONLY
+			)
+		else:
+			c = self.cursor(dynamic)
+
 		try:
 			# set everything up
 			c.execute("select id, name, state from zxtesting order by id")
@@ -286,7 +316,14 @@ class zxAPITestCase(zxJDBCTestCase):
 		self._test_scrolling(0)
 
 	def _test_rownumber(self, dynamic=0):
-		c = self.cursor(dynamic)
+		if self.vendor.name == "oracle":
+			c = self.cursor(dynamic,
+				rstype=zxJDBC.TYPE_SCROLL_INSENSITIVE,
+				rsconcur=zxJDBC.CONCUR_READ_ONLY
+			)
+		else:
+			c = self.cursor(dynamic)
+
 		try:
 			if not dynamic:
 				# a dynamic cursor doesn't know if any rows really exist
@@ -318,7 +355,14 @@ class zxAPITestCase(zxJDBCTestCase):
 		self._test_rownumber(1)
 
 	def _test_rowcount(self, dynamic=0):
-		c = self.cursor(dynamic)
+		if self.vendor.name == "oracle":
+			c = self.cursor(dynamic,
+				rstype=zxJDBC.TYPE_SCROLL_INSENSITIVE,
+				rsconcur=zxJDBC.CONCUR_READ_ONLY
+			)
+		else:
+			c = self.cursor(dynamic)
+
 		try:
 			c.execute("select * from zxtesting")
 			c.next()
@@ -653,15 +697,24 @@ class zxAPITestCase(zxJDBCTestCase):
 		values = [(1996, 6, 22, 10, 11, 12), (2000, 11, 12, 3, 1, 12), (2001, 1, 12, 4, 9, 24)]
 		self._test_time(self.table("timestamptable"), zxJDBC.Timestamp, values, zxJDBC.TIMESTAMP, _cmp_)
 
+	def testOrderOfArgsMaxRowsOnly(self):
+		"""testing execute with max rows only"""
+		c = self.cursor()
+		try:
+
+			# maxrows only (SAPDB doesn't support maxrows as of version 7.2.0)
+			c.execute("select * from zxtesting", maxrows=3)
+			f = c.fetchall()
+			assert len(f) == 3, "expected length [3], got [%d]" % (len(f))
+
+		finally:
+			c.close()
+			self.db.commit()
+
 	def testOrderOfArgs(self):
 		"""testing execute with different argument orderings"""
 		c = self.cursor()
 		try:
-
-			# maxrows only
-			c.execute("select * from zxtesting", maxrows=3)
-			f = c.fetchall()
-			assert len(f) == 3, "expected length [3], got [%d]" % (len(f))
 
 			# bindings and params flipped
 			c.execute("select * from zxtesting where id = ?", bindings={0:zxJDBC.INTEGER}, params=[(3,)])

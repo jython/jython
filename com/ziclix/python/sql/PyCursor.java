@@ -38,6 +38,12 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/** Field softspace */
 	protected int softspace;
 
+	/** Field rsType */
+	protected PyObject rsType;
+
+	/** Field rsConcur */
+	protected PyObject rsConcur;
+
 	/** Field warnings */
 	protected PyObject warnings;
 
@@ -87,12 +93,27 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		this.arraysize = 1;
 		this.softspace = 0;
 		this.closed = false;
+		this.rsType = Py.None;
+		this.rsConcur = Py.None;
 		this.connection = connection;
 		this.datahandler = DATAHANDLER;
 		this.dynamicFetch = dynamicFetch;
 
 		// constructs the appropriate Fetch among other things
 		this.clear();
+	}
+
+	/**
+	 * Create the cursor, optionally choosing the type of fetch (static or dynamic).
+	 * If dynamicFetch is true, then use a dynamic fetch.
+	 * rsType and rsConcur are used to create the Statement if both are non-None
+	 */
+	PyCursor(PyConnection connection, boolean dynamicFetch, PyObject rsType, PyObject rsConcur) {
+
+		this(connection, dynamicFetch);
+
+		this.rsType = rsType;
+		this.rsConcur = rsConcur;
 	}
 
 	/** Field __class__ */
@@ -146,7 +167,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * @return a string representation of the object.
 	 */
 	public String toString() {
-		return "<PyCursor object instance at " + hashCode() + ">";
+		return "<PyCursor object instance at " + Py.id(this) + ">";
 	}
 
 	/**
@@ -240,6 +261,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("sqlStatement", null);
 		dict.__setitem__("dynamicFetch", null);
 		dict.__setitem__("getPyClass", null);
+		dict.__setitem__("rsConcur", null);
+		dict.__setitem__("rsType", null);
 	}
 
 	/**
@@ -346,17 +369,30 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/**
 	 * Prepare a statement ready for executing.
 	 *
-	 * @param sqlString
+	 * @param sqlString the sql to execute
 	 * @param maxRows max number of rows to be returned
 	 * @param prepared if true, prepare the statement, otherwise create a normal statement
 	 * @throws SQLException
 	 */
 	protected void prepareStatement(String sqlString, PyObject maxRows, boolean prepared) throws SQLException {
 
-		if (prepared) {
-			this.sqlStatement = this.connection.connection.prepareStatement(sqlString);
+		boolean normal = ((this.rsType == Py.None) && (this.rsConcur == Py.None));
+
+		if (normal) {
+			if (prepared) {
+				this.sqlStatement = this.connection.connection.prepareStatement(sqlString);
+			} else {
+				this.sqlStatement = this.connection.connection.createStatement();
+			}
 		} else {
-			this.sqlStatement = this.connection.connection.createStatement();
+			int t = this.rsType.__int__().getValue();
+			int c = this.rsConcur.__int__().getValue();
+
+			if (prepared) {
+				this.sqlStatement = this.connection.connection.prepareStatement(sqlString, t, c);
+			} else {
+				this.sqlStatement = this.connection.connection.createStatement(t, c);
+			}
 		}
 
 		if (maxRows != Py.None) {
@@ -1090,7 +1126,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return Py.None;
 
 			default :
-				throw argCountError(4);
+				throw argCountError(args.length);
 		}
 	}
 }
