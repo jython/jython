@@ -153,12 +153,25 @@ public class PyComplex extends PyObject {
         return _mul(coerce(left), this);
     }
 
-    private final static PyObject _div(PyComplex o1, PyComplex o2) {
-        double denom = o2.real*o2.real+o2.imag*o2.imag;
-        if (denom == 0)
-            throw Py.ZeroDivisionError("complex division");
-        return new PyComplex((o1.real*o2.real + o1.imag*o2.imag)/denom,
-                             (o1.imag*o2.real - o1.real*o2.imag)/denom);
+    private final static PyObject _div(PyComplex a, PyComplex b) {
+        double abs_breal = b.real < 0 ? -b.real : b.real;
+        double abs_bimag = b.imag < 0 ? -b.imag : b.imag;
+        if (abs_breal >= abs_bimag) {
+            // Divide tops and bottom by b.real
+            if (abs_breal == 0.0) {
+                throw Py.ZeroDivisionError("complex division");
+            }
+            double ratio = b.imag / b.real;
+            double denom = b.real + b.imag * ratio;
+            return new PyComplex((a.real + a.imag * ratio) / denom,
+                                 (a.imag - a.real * ratio) / denom);
+        } else {
+            /* divide tops and bottom by b.imag */
+            double ratio = b.real / b.imag;
+            double denom = b.real * ratio + b.imag;
+            return new PyComplex((a.real * ratio + a.imag) / denom,
+                                 (a.imag * ratio - a.real) / denom);
+        }
     }
 
     public PyObject __div__(PyObject right) {
