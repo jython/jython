@@ -71,8 +71,15 @@ class MakeProxies
 //             System.err.println("interface: " + interfaces[i]);
         }
         String proxyName = proxyPrefix + name + "$" + proxyNumber++;
+        String pythonModuleName;
+        PyObject mn=dict.__finditem__("__module__");
+        if (mn==null)
+            pythonModuleName = "foo";
+        else 
+            pythonModuleName = (String)mn.__tojava__(String.class);
+         
         JavaMaker jm = new JavaMaker(superclass, interfaces, name,
-                                     "foo", proxyName, dict);
+                                     pythonModuleName, proxyName, dict);
         try {
             jm.build();
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
