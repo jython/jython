@@ -19,7 +19,7 @@ at different paces.  All efforts are made to keep the two
 implementations in sync, but that's not always possible.
 
 <p><i>This list
-has been updated to describe the differences between JPython 1.1beta3 and
+has been updated to describe the differences between JPython 1.1beta4 and
 CPython 1.5.2</i>
 
 <h3>Syntax</h3>
@@ -36,244 +36,249 @@ CPython 1.5.2</i>
 <h3>Standard types, functions and behavior</h3>
 
 <UL>
-	<LI>JPython string objects support full two-byte Unicode
-	characters and the functions in the string module are
-	Unicode-aware. <I>CPython should add Unicode support in the
-	future, though the details of this are still unclear.</I>
+    <LI>JPython string objects support full two-byte Unicode
+    characters and the functions in the string module are
+    Unicode-aware. <I>CPython should add Unicode support in the
+    future, though the details of this are still unclear.</I>
 
-	<p><LI>JPython formats floating point numbers differently,
-	e.g. an upper case 'E' is used, and it switches over to E
-	notation sooner than CPython does. <I>Both behaviors are
-	acceptable.</I>
+    <p><li>JPython string objects have methods, providing a more
+    convenient interface to most of the string module functionality.
+    <i>This feature has been added to CPython and will appear in
+    version CPython 1.6.</i>
 
-	<p><LI>In JPython, 0.1**4 is printed as
-	1.0000000000000002E-4. In CPython, it is printed 0.0001, even
-	though it is not actually equal to 0.0001. <I>Both behaviors
-	are acceptable for now -- this is still being discussed.</I>
+    <p><LI>JPython formats floating point numbers differently,
+    e.g. an upper case 'E' is used, and it switches over to E
+    notation sooner than CPython does. <I>Both behaviors are
+    acceptable.</I>
 
-	<p><LI>JPython sequences support three argument
-	slices. i.e. range(3)[::-1] == [2,1,0]. <I>CPython should be
-	fixed.</I>
+    <p><LI>In JPython, 0.1**4 is printed as
+    1.0000000000000002E-4. In CPython, it is printed 0.0001, even
+    though it is not actually equal to 0.0001. <I>Both behaviors
+    are acceptable for now -- this is still being discussed.</I>
 
-	<p><LI>Every object in JPython is an instance of a class --
-	there are no types in JPython. i.e. [].__class__ is a sensible
-	thing to write in JPython. <I>CPython should be fixed - but
-	don't hold your breath.</I>
+    <p><LI>JPython sequences support three argument
+    slices. i.e. range(3)[::-1] == [2,1,0]. <I>CPython should be
+    fixed.</I>
 
-	<p><LI>The .tell() method on JPython file objects returns a
-	Python long, while the .tell() method on CPython file objects
-	returns a Python int.  <I>Whether or not both behaviors are
-	acceptable is still unclear.</I>
+    <p><LI>Every object in JPython is an instance of a class --
+    there are no types in JPython. i.e. [].__class__ is a sensible
+    thing to write in JPython. <I>CPython should be fixed - but
+    don't hold your breath.</I>
 
-	<p><LI>JPython file objects are still missing some
-	functionality -- see todo list in PyFile.java. (Hopefully in
-	the near future this can be changed to read -- JPython file
-	objects include the following extra functionality to properly
-	handle non-ascii files...) <I>JPython should be fixed.</I>
+    <p><LI>The .tell() method on JPython file objects returns a
+    Python long, while the .tell() method on CPython file objects
+    returns a Python int.  <I>Whether or not both behaviors are
+    acceptable is still unclear.</I>
 
-	<p><LI>In CPython, range(0.1, 3.2) yields the surprising [0,
-	1, 2]. JPython does the right thing (reject float arguments).
-	-- Many other functions taking int arguments have the same
-	   problem. <I>CPython should be fixed.</I>
+    <p><LI>JPython file objects are still missing some
+    functionality -- see todo list in PyFile.java. (Hopefully in
+    the near future this can be changed to read -- JPython file
+    objects include the following extra functionality to properly
+    handle non-ascii files...) <I>JPython should be fixed.</I>
 
-	<p><LI>In CPython, the list.append() method takes multiple
-	arguments and forms a tuple. JPython's append() method
-	requires one argument only. <I>CPython should be fixed -- but
-	probably won't be due to backwards compatibility.</I>
+    <p><LI>In CPython, range(0.1, 3.2) yields the surprising [0,
+    1, 2]. JPython does the right thing (reject float arguments).
+    -- Many other functions taking int arguments have the same
+       problem. <I>CPython should be fixed.</I>
 
-	<p><LI>The __name__ attribute of built-in extension modules
-	(e.g. 'sys') is different. <I>Both behaviors are
-	acceptable.</I>
+    <p><LI>In CPython, the list.append() method takes multiple
+    arguments and forms a tuple. JPython's append() method
+    requires one argument only. <I>CPython should be fixed -- but
+    probably won't be due to backwards compatibility.</I>
 
-	<p><LI>In many cases, introspection yields different results.
-	<I>Where appropriate and possible, JPython will adhere to
-	CPython's introspection behavior.  Some differences are
-	acceptable.</I>
+    <p><LI>The __name__ attribute of built-in extension modules
+    (e.g. 'sys') is different. <I>Both behaviors are
+    acceptable.</I>
 
-	<p><LI>JPython defines __debug__, but always sets it equal to
-	1.  <I>JPython should implement CPython's -O option.</I>
+    <p><LI>In many cases, introspection yields different results.
+    <I>Where appropriate and possible, JPython will adhere to
+    CPython's introspection behavior.  Some differences are
+    acceptable.</I>
 
-	<p><LI>The locals() dictionary in JPython is mutable from
-	within a function. After &quot;def foo(x=1): locals()['x'] =
-	2; print x&quot; foo() prints 1 in CPython and 2 in
-	JPython. Jim thinks that JPython's behavior is better here
-	-- but the best answer might be that locals() should be
-	   considered a read-only dictionary.<I> Proper behavior here
-	   is still unclear.</I> 
+    <p><LI>JPython defines __debug__, but always sets it equal to
+    1.  <I>JPython should implement CPython's -O option.</I>
 
-	<p><LI>JPython doesn't support restricted execution mode and
-	doesn't have the magic __builtins__ in every namespace.
-	<I>JPython will probably never support restricted execution
-	mode -- Java's security model is recommended instead.</I>
+    <p><LI>The locals() dictionary in JPython is mutable from
+    within a function. After &quot;def foo(x=1): locals()['x'] =
+    2; print x&quot; foo() prints 1 in CPython and 2 in
+    JPython. Jim thinks that JPython's behavior is better here
+    -- but the best answer might be that locals() should be
+       considered a read-only dictionary.<I> Proper behavior here
+       is still unclear.</I> 
 
-	<p><LI>JPython uses different values for the IOError
-	argument. This causes trouble for people who unpack the value
-	into an (errno, message) tuple. <I>Both behaviors are
-	acceptable.</I>
+    <p><LI>JPython doesn't support restricted execution mode and
+    doesn't have the magic __builtins__ in every namespace.
+    <I>JPython will probably never support restricted execution
+    mode -- Java's security model is recommended instead.</I>
 
-	<p><LI>JPython code objects are missing other attributes --
-	co_code, co_consts, co_lnotab, co_names, co_nlocals,
-	co_stacksize. <I>co_flags is now supported because the Python
-	debugger requires it.  Other attributes will probably never be
-	supported in JPython due to its implementation of code objects
-	as compiled Java bytecodes.</I>
+    <p><LI>JPython uses different values for the IOError
+    argument. This causes trouble for people who unpack the value
+    into an (errno, message) tuple. <I>Both behaviors are
+    acceptable.</I>
 
-	<p><li>Accessing, setting, or deleting attributes on built-in
-	objects may raise <tt>AttributeError</tt> or
-	<tt>TypeError</tt> differently.  <i>This is considered
-	implementation dependent.  In JPython the following rules are
-	used: when getting a non-existant attribute,
-	<tt>AttributeError</tt> is raised; when setting or deleting a
-	readonly attribute, <tt>TypeError</tt> is raised; when setting
-	or deleting a non-existant attribute, <tt>AttributeError</tt>
-	is raised.  Be aware though currently neither JPython nor
-	CPython are completely consistent.</i>
+    <p><LI>JPython code objects are missing other attributes --
+    co_code, co_consts, co_lnotab, co_names, co_nlocals,
+    co_stacksize. <I>co_flags is now supported because the Python
+    debugger requires it.  Other attributes will probably never be
+    supported in JPython due to its implementation of code objects
+    as compiled Java bytecodes.</I>
 
-	<p><li>Function objects do not have writable func_code or
-	func_defaults attributes. <i>While these are writable in
-	CPython, I haven't decided whether they should be writable in
-	JPython.</i>
+    <p><li>Accessing, setting, or deleting attributes on built-in
+    objects may raise <tt>AttributeError</tt> or
+    <tt>TypeError</tt> differently.  <i>This is considered
+    implementation dependent.  In JPython the following rules are
+    used: when getting a non-existant attribute,
+    <tt>AttributeError</tt> is raised; when setting or deleting a
+    readonly attribute, <tt>TypeError</tt> is raised; when setting
+    or deleting a non-existant attribute, <tt>AttributeError</tt>
+    is raised.  Be aware though currently neither JPython nor
+    CPython are completely consistent.</i>
 
-	<p><LI>JPython has &quot;true&quot; garbage collection whereas
-	CPython uses reference counting. This means that in JPython
-	users don't need to worry about handling circular references
-	as these are guaranteed to be collected properly.&nbsp; On the
-	other hand, users of JPython have no guarantees of when an
-	object will be finalized -- this can cause problems for people
-	who use open(&quot;foo&quot;, 'r').read() excessively. <I>Both
-	behaviors are acceptable -- and highly unlikely to change.</I>
+    <p><li>Function objects do not have writable func_code or
+    func_defaults attributes. <i>While these are writable in
+    CPython, I haven't decided whether they should be writable in
+    JPython.</i>
 
-	<p><LI>In JPython, __del__() methods in user-defined classes
-	are never called. <i>Some future version of JPython might
-	provide limited support for __del__(), but see the above
-	item.</i>
+    <p><LI>JPython has &quot;true&quot; garbage collection whereas
+    CPython uses reference counting. This means that in JPython
+    users don't need to worry about handling circular references
+    as these are guaranteed to be collected properly.&nbsp; On the
+    other hand, users of JPython have no guarantees of when an
+    object will be finalized -- this can cause problems for people
+    who use open(&quot;foo&quot;, 'r').read() excessively. <I>Both
+    behaviors are acceptable -- and highly unlikely to change.</I>
 
-	<p><LI>The dictionaries used by classes, instances, and
-	modules in JPython are not the same as the dictionaries
-	created by {}. They are StringMap's which require all of their
-	keys to be strings. After &quot;class c: pass&quot;,
-	c.__dict__[1] = 2 will work in CPython, but will raise a
-	&quot;TypeError: keys in namespace must be strings&quot; error
-	in JPython.  <I>Both behaviors are acceptable -- CPython might
-	adopt JPython's approach in the future for the performance
-	gains it can provide.</I>
+    <p><LI>In JPython, __del__() methods in user-defined classes
+    are never called. <i>Some future version of JPython might
+    provide limited support for __del__(), but see the above
+    item.</i>
+
+    <p><LI>The dictionaries used by classes, instances, and
+    modules in JPython are not the same as the dictionaries
+    created by {}. They are StringMap's which require all of their
+    keys to be strings. After &quot;class c: pass&quot;,
+    c.__dict__[1] = 2 will work in CPython, but will raise a
+    &quot;TypeError: keys in namespace must be strings&quot; error
+    in JPython.  <I>Both behaviors are acceptable -- CPython might
+    adopt JPython's approach in the future for the performance
+    gains it can provide.</I>
 
 </UL>
 
 <h3>Extension modules</h3>
 
 <UL>
-	<LI>JPython supports all Java packages as extension
-	modules. i.e. from &quot;java.lang import System&quot; will
-	work in any JPython implementation. <I>This functionality
-	might be added as an optional extension to some future version
-	of CPython.</I>
+    <LI>JPython supports all Java packages as extension
+    modules. i.e. from &quot;java.lang import System&quot; will
+    work in any JPython implementation. <I>This functionality
+    might be added as an optional extension to some future version
+    of CPython.</I>
 
-	<p><LI>JPython includes the builtin module <tt>jarray</tt> -- which
-	allows Python programmers to create and manipulate Java array
-	objects.
+    <p><LI>JPython includes the builtin module <tt>jarray</tt> -- which
+    allows Python programmers to create and manipulate Java array
+    objects.
 
-	<p><LI>Lots of builtin extension modules don't exist in JPython.
-	<UL>
-	    <LI>Modules struct, cPickle, cStringIO, and operator were
-	    all added for JPython v1.1.  The following are likely to
-	    be implemented in a future version of JPython -- cmath.
-	    
-	    <p><LI>The following are under consideration (working code
-	    would make the decision much easier ;-) -- array, select,
-	    a dbm/gdbm/bsddb style module, Numeric. 
+    <p><LI>Lots of builtin extension modules don't exist in JPython.
+    <UL>
+	<LI>Modules struct, cPickle, cStringIO, and operator were
+	all added for JPython v1.1.  The following are likely to
+	be implemented in a future version of JPython -- cmath.
 
-	    <p><LI>The following are highly unlikely any time soon --
-	    Tkinter.
-	    
-	    <p><LI>Let me know if something should be added to this
-	    list.
-	</UL>
+	<p><LI>The following are under consideration (working code
+	would make the decision much easier ;-) -- array, select,
+	a dbm/gdbm/bsddb style module, Numeric. 
 
-	<p><LI>__builtin__ module
-	<UL>
-	    <p><LI>Incomplete implementation of __import__ -- only one
-	    argument is allowed and replacing this with a user-defined 
-	    function has no effect. <I>JPython might be fixed in a
-	    future release, but CPython will probably adopt a new
-	    import mechanism in the near future, so JPython may not
-	    change until the new mechanism is defined.</I>
-	</UL>
+	<p><LI>The following are highly unlikely any time soon --
+	Tkinter.
 
-	<p><LI>os module
-	<UL>
-		<LI>popen() and system() are missing. <I>JPython should be
-		fixed, patches would be graciously accepted.</I>
+	<p><LI>Let me know if something should be added to this
+	list.
+    </UL>
 
-		<p><LI>os.path.normcase() exists but may not be correctly
-		implemented. This one is extremely
-		frustrating as there seems no portable way to
-		implement in Java.
+    <p><LI>__builtin__ module
+    <UL>
+	<p><LI>Incomplete implementation of __import__ -- only one
+	argument is allowed and replacing this with a user-defined 
+	function has no effect. <I>JPython might be fixed in a
+	future release, but CPython will probably adopt a new
+	import mechanism in the near future, so JPython may not
+	change until the new mechanism is defined.</I>
+    </UL>
 
-		<p><LI>chmod(), chown(), getpid(), fork(), ... are
-		missing, stat() exists but is implemented
-		incompletely. These functions are all very Unix
-		specific and it is unlikely they will ever be properly
-		supported in a 100% Pure Java implementation.
+    <p><LI>os module
+    <UL>
+	    <LI>popen() and system() are missing. <I>JPython should be
+	    fixed, patches would be graciously accepted.</I>
 
-		<p>Finn Bock has created
-		a JNI/C++ implementation for the posix module.  See
-		<a href="http://pip.dknet.dk/~pip1848/jpython/modules.html">
-		Finn Bock's JPython modules page</a> for details.
-		Note that his cPickle, cStringIO, binascii, and struct 
-		modules have all been integrated into JPython 1.1.
-	</UL>
+	    <p><LI>os.path.normcase() exists but may not be correctly
+	    implemented. This one is extremely
+	    frustrating as there seems no portable way to
+	    implement in Java.
 
-	<p><LI>The socket module is limited.
+	    <p><LI>chmod(), chown(), getpid(), fork(), ... are
+	    missing, stat() exists but is implemented
+	    incompletely. These functions are all very Unix
+	    specific and it is unlikely they will ever be properly
+	    supported in a 100% Pure Java implementation.
 
-	<p><LI>sys module
+	    <p>Finn Bock has created
+	    a JNI/C++ implementation for the posix module.  See
+	    <a href="http://pip.dknet.dk/~pip1848/jpython/modules.html">
+	    Finn Bock's JPython modules page</a> for details.
+	    Note that his cPickle, cStringIO, binascii, and struct 
+	    modules have all been integrated into JPython 1.1.
+    </UL>
 
-	<UL>
-	    <p><LI>JPython is still missing exitfunc
+    <p><LI>The socket module is limited.
 
-	    <p><LI>Also missing executable, getrefcount,
-	    setcheckinterval which don't make much sense for JPython.
-	    
-	</UL>
+    <p><LI>sys module
 
-	<p><LI>thread module
-	<UL>
-	    <p><LI>CPython's thread modules defines some aliases that
-	    JPython's doesn't. <I>These aliases are considered
-	    obsolete and won't be supported by JPython.</I>
-	</UL>
+    <UL>
+	<p><LI>JPython is still missing exitfunc
 
-	<p><li>A wrapper for an md5 module has been added, but in
-	    order to use it you must download and install some extra
-	    Java code.  See the file
-	    <tt>org/python/modules/MD5Module.java</tt> for details.
+	<p><LI>Also missing executable, getrefcount,
+	setcheckinterval which don't make much sense for JPython.
 
-	<p><li>The time module may produce some different values than with
-	    CPython.  This is due to Java 1.1 compatibility, and this
-	    may be improved in later releases.
+    </UL>
+
+    <p><LI>thread module
+    <UL>
+	<p><LI>CPython's thread modules defines some aliases that
+	JPython's doesn't. <I>These aliases are considered
+	obsolete and won't be supported by JPython.</I>
+    </UL>
+
+    <p><li>A wrapper for an md5 module has been added, but in
+	order to use it you must download and install some extra
+	Java code.  See the file
+	<tt>org/python/modules/MD5Module.java</tt> for details.
+
+    <p><li>The time module may produce some different values than with
+	CPython.  This is due to Java 1.1 compatibility, and this
+	may be improved in later releases.
 	
 </UL>
 
 <h3>Interpreter and environment</h3>
 
 <UL>
-	<p><LI>JPython doesn't catch interrupts. <I>Only fixable with
-	a GUI console since interrupts are not supported by Java.</I>
+    <p><LI>JPython doesn't catch interrupts. <I>Only fixable with
+    a GUI console since interrupts are not supported by Java.</I>
 
-	<p><LI>JPython doesn't have command line editing. <I>Only
-	fixable with a GUI console.  However, Un*x users can check out 
-	<tt>rlterm</tt> which provides generic GNU Readline support
-	for any terminal based interactive program.  <tt>rlterm</tt>
-	is part of the
-	<a href="ftp://ftp-icf.llnl.gov/pub/Yorick/">Yorick</a> package.</I>
+    <p><LI>JPython doesn't have command line editing. <I>Only
+    fixable with a GUI console.  However, Un*x users can check out 
+    <tt>rlterm</tt> which provides generic GNU Readline support
+    for any terminal based interactive program.  <tt>rlterm</tt>
+    is part of the
+    <a href="ftp://ftp-icf.llnl.gov/pub/Yorick/">Yorick</a> package.</I>
 
-	<p><LI>JPython should have a feature similar to
-	$PYTHONSTARTUP, which specifies a script to run at the start
-	of interactive mode only.
-	
-	<p><LI>JPython supports
-	<a href="interpreter.html">different command line options</a> than
-	CPython, e.g. &quot;-jar&quot; and &quot;-D&quot;.  It
-	also has a different convention for indicating non-interactive
-	standard input (the Java runtime needs help).
+    <p><LI>JPython should have a feature similar to
+    $PYTHONSTARTUP, which specifies a script to run at the start
+    of interactive mode only.
+
+    <p><LI>JPython supports
+    <a href="interpreter.html">different command line options</a> than
+    CPython, e.g. &quot;-jar&quot; and &quot;-D&quot;.  It
+    also has a different convention for indicating non-interactive
+    standard input (the Java runtime needs help).
 </UL>
