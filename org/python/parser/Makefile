@@ -1,6 +1,5 @@
 # GNU make compatible
-
-include ../../../../rules/make.rules
+include ../../../rules/make.rules
 CLASSPATH = ../../..
 
 JJTREE = jjtree
