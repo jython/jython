@@ -12,6 +12,7 @@ public class LocalsCompiler extends Visitor
     int mode;
     static final int GET = 0;
     static final int SET = 1;
+    static final int DEL = 2;
 
     public LocalsCompiler() {
         mode = GET;
@@ -21,7 +22,15 @@ public class LocalsCompiler extends Visitor
     }
 
     public Object set(SimpleNode node) throws Exception {
-        mode = SET;
+        return set(node, SET);
+    }
+
+    public Object del(SimpleNode node) throws Exception {
+        return set(node, DEL);
+    }
+
+    public Object set(SimpleNode node, int newmode) throws Exception {
+        mode = newmode;
         try {
             node.visit(this);
         } catch (ParseException exc) {
@@ -70,6 +79,10 @@ public class LocalsCompiler extends Visitor
     }
 
     public Object del_stmt(SimpleNode node) throws Exception {
+        int n = node.getNumChildren();
+        for (int i=0; i<n; i++) {
+            del(node.getChild(i));
+        }
         return null;
     }
 
@@ -197,6 +210,14 @@ public class LocalsCompiler extends Visitor
                 if (node.getChild(i).id != PythonGrammarTreeConstants.JJTCOMMA)
                 {
                     set(node.getChild(i));
+                }
+            }
+        } else if (mode == DEL) {
+            int n = node.getNumChildren();
+            for (int i=0; i<n; i++) {
+                if (node.getChild(i).id != PythonGrammarTreeConstants.JJTCOMMA)
+                {
+                    del(node.getChild(i));
                 }
             }
         }
