@@ -1,0 +1,303 @@
+Title: zxJDBC
+
+<h3>Database connectivity in Jython</h3>
+
+<p>The zxJDBC package provides a nearly 100% <a
+href="http://www.python.org">Python</a> <a
+href="http://www.python.org/topics/database/DatabaseAPI-2.0.html">
+DB API 2.0</a> compliant interface for database connectivity in <a
+href="http://jython.sourceforge.net/">Jython</a>. It is implemented
+entirely in <a href="http://www.javasoft.com">Java</a> and makes
+use of the <a href="http://www.javasoft.com/jdbc">JDBC</a> API.
+This means any database capable of being accessed through JDBC,
+either directly or using the JDBC-ODBC bridge, can be manipulated
+using zxJDBC.</p>
+
+<h3>Getting a Connection</h3>
+<p>First, make sure a valid JDBC driver is in your classpath.
+Then start Jython and import the zxJDBC connection factory.</p>
+
+<h4>Using a Driver</h4>
+<p>The most common way to establish a connection is through a Driver.
+Simply supply the database, username, password and JDBC driver
+classname to the connect method. If your driver requires special
+arguments, pass them into the <code>connect</code> method as
+standard Python keyword arguments. You will be returned a
+connection object.</p>
+
+<pre>
+Jython 2.1a3 on java1.3.0 (JIT: null)
+Type "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
+&gt;&gt;&gt; d, u, p, v = "jdbc:mysql://localhost/test", None, None, "org.gjt.mm.mysql.Driver"
+&gt;&gt;&gt; db = zxJDBC.connect(d, u, p, v)
+ <i><b>optionally</b></i>
+&gt;&gt;&gt; db = zxJDBC.connect(d, u, p, v, CHARSET='iso_1')
+&gt;&gt;&gt;
+</pre>
+
+<a name="connectx"/>
+<h4>Using a DataSource (or ConnectionPooledDataSource)</h4>
+<p>The only required argument is the fully-qualified classname
+of the DataSource, all keywords will use JavaBeans reflection to
+set properties on the DataSource.</p>
+
+<pre>
+Jython 2.1a3 on java1.3.0 (JIT: null)
+Type "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
+&gt;&gt;&gt; params = {}
+&gt;&gt;&gt; params['serverName'] = 'localhost'
+&gt;&gt;&gt; params['databaseName'] = 'ziclix'
+&gt;&gt;&gt; params['user'] = None
+&gt;&gt;&gt; params['password'] = None
+&gt;&gt;&gt; params['port'] = 3306
+&gt;&gt;&gt; db = apply(zxJDBC.connectx, ("org.gjt.mm.mysql.MysqlDataSource",), params)
+&gt;&gt;&gt;
+</pre>
+
+<h4>Using a JNDI lookup</h4>
+<p>It is possible for zxJDBC to use a Connection found through a JNDI lookup.  This
+is particularly useful in an application server (such as when using PyServlet).  The
+bound object can be either a String, Connection, DataSource or ConnectionPooledDataSource.
+The <code>lookup</code> will figure out the instance type and access the Connection
+accordingly,</p>
+
+<p>The only required argument is the JNDI lookup name.  All keyword arguments will be
+converted to their proper
+<a href="http://java.sun.com/j2se/1.3/docs/api/javax/naming/Context.html">Context</a>
+field value if the keyword matches one
+of the constants.  If a field name does not exist for the keyword, it will passed as
+declared.  The resulting environment will be used to build the
+<a href="http://java.sun.com/j2se/1.3/docs/api/javax/naming/InitialContext.html">InitialContext</a>.
+</p>
+
+<p><i>This example uses the simple Sun FileSystem JNDI reference implementation.  Please
+consult the JNDI implementation you intend to use for the InitialContextFactory classname
+as well as the connection URL.</i></p>
+
+<pre>
+Jython 2.1a3 on java1.3.0 (JIT: null)
+Type "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
+&gt;&gt;&gt; jndiName = "/temp/jdbc/mysqldb"
+&gt;&gt;&gt; factory = "com.sun.jndi.fscontext.RefFSContextFactory"
+&gt;&gt;&gt; db = zxJDBC.lookup(jndiName, INITIAL_CONTEXT_FACTORY=factory)
+&gt;&gt;&gt;
+</pre>
+
+<h3><a name="dynamiccursor"/>Getting a Cursor</h3>
+<p>
+	In order execute any operation, a cursor is required from the connection.  There
+	are two different kinds of cursors: <i>static</i> and <i>dynamic</i>.
+</p>
+<p>
+	The primary difference between the two is the way they manage the underlying ResultSet.
+	In the <i>static</i> version, the entire ResultSet is iterated immediately, the data
+	converted and stored with the cursor and the ResultSet closed.  This allows the cursor
+	to know the rowcount (not available otherwise within JDBC) and set the <code>.rowcount</code>
+	attribute properly.  The major disadvantage to this approach is the space/time constraints
+	might be extraordinary.
+</p>
+<p>
+	The solution to the problem are <i>dynamic</i> cursors which keep a handle to the open ResultSet
+	and iterate as required.  This drastically decreases memory consumption and increases
+	perceived response time because no work is done until asked.  The drawback is the <code>.rowcount</code>
+	attribute can never be accurately set.
+</p>
+
+<p>
+	To execute a query simply provide the SQL expression and call <code>
+	execute</code>. The cursor now has a <code>description</code>
+	attribute detailing the column information. To navigate the result
+	set, call one of the <code>fetch</code> methods and a list of
+	tuples will be returned.
+</p>
+
+<pre>
+&gt;&gt;&gt; c = db.cursor()   # this gets a static cursor
+ <i><b>or</b></i>
+&gt;&gt;&gt; c = db.cursor(1)  # this gets a dynamic cursor
+&gt;&gt;&gt; c.execute("select count(*) c from player")
+&gt;&gt;&gt; c.description
+[('c', 3, 17, None, 15, 0, 1)]
+&gt;&gt;&gt; for a in c.fetchall():
+...  print a
+...
+(13569,)
+&gt;&gt;&gt;
+</pre>
+
+<p>When finished, close the connections.</p>
+
+<pre>
+&gt;&gt;&gt; c.close()
+&gt;&gt;&gt; db.close()
+&gt;&gt;&gt;
+</pre>
+
+<h3>Standard extensions to the Python DB API</h3>
+
+<dl>
+
+<dt><p><code class="methodname">connection.dbname</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getDatabaseProductName()">
+DatabaseMetaData.getDatabaseProductName</a></dd>
+
+<dt><p><code class="methodname">connection.dbversion</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getDatabaseProductVersion()">
+DatabaseMetaData.getDatabaseProductVersion</a></dd>
+
+<dt><p><code class="methodname">cursor.tables(qualifier,owner,table,type)</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getTables(java.lang.String, java.lang.String, java.lang.String, java.lang.String[])">
+DatabaseMetaData.getTables</a></dd>
+
+<dt><p><code class="methodname">cursor.columns(qualifier,owner,table,column)</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getColumns(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+DatabaseMetaData.getColumns</a></dd>
+
+<dt><p><code class="methodname">cursor.foreignkeys(primary_qualifier,primary_owner,pimary_table,
+foreign_qualifier,foreign_owner,foreign_table)</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getCrossReference(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+DatabaseMetaData.getCrossReference</a></dd>
+
+<dt><p><code class="methodname">cursor.primarykeys(qualifier,owner,table)</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getPrimaryKeys(java.lang.String, java.lang.String, java.lang.String)">
+DatabaseMetaData.getPrimaryKeys</a></dd>
+
+<dt><p><code class="methodname">cursor.procedures(qualifier,owner,procedure)</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getProcedures(java.lang.String, java.lang.String, java.lang.String)">
+DatabaseMetaData.getProcedures</a></dd>
+
+<dt><p><code class="methodname">cursor.procedurecolumns(qualifier,owner,procedure,column)</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getProcedureColumns(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+DatabaseMetaData.getProcedureColumns</a></dd>
+
+<dt><p><code class="methodname">cursor.statistics(qualifier,owner,table,unique,accuracy)</code></p></dt>
+
+<dd>Same as <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getIndexInfo(java.lang.String, java.lang.String, java.lang.String, boolean, boolean)">
+DatabaseMetaData.getIndexInfo</a></dd>
+</dl>
+
+<h3><a name="bindings"/>Datatype mapping callbacks through DataHandler</h3>
+
+<p>The DataHandler interface has three methods for handling type
+mappings. They are called at two different times, one when fetching
+and the other when binding objects for use in a prepared statement.
+I have chosen this architecture for type binding because I noticed
+a number of discrepancies in how different JDBC drivers handled
+database types, in particular the additional types available in
+later JDBC versions.</p>
+
+<dl>
+<dt><p><code class="methodname">public PyObject
+getPyObject(ResultSet set, int col, int type);</code></p></dt>
+
+<dd>This method is called upon fetching data from the database.
+Given the JDBC type, return the appropriate PyObject subclass from
+the Java object at column col in the ResultSet set.</dd>
+
+<dt><p><code class="methodname">public Object getJDBCObject(PyObject
+object, int type);</code></p></dt>
+
+<dd>This method is called when a PreparedStatement is created
+through use of the <code>execute</code> method. When the parameters
+are being bound to the statement, the DataHandler gets a callback
+to map the type. This is only called if type bindings are present.</dd>
+
+<dt><p><code class="methodname">public Object getJDBCObject(PyObject
+object);</code></p></dt>
+
+<dd>This method is called when no type bindings are present during
+the execution of a PreparedStatement.</dd>
+
+<dt><p><code class="methodname">public void preExecute(Statement stmt) throws SQLException;</code></p></dt>
+
+<dd>A callback prior to each execution of the statement.  If the statement is a PreparedStatement (created when parameters are sent to the <code>execute</code> method), all the parameters will have been set.</dd>
+
+<dt><p><code class="methodname">public void postExecute(Statement stmt) throws SQLException;</code></p></dt>
+
+<dd>A callback after successfully executing the statement.  This is particularly useful for cases such as auto-incrementing columns where the statement knows the inserted value.</dd>
+
+</dl>
+
+<p>It is simple to use these callbacks to achieve the desired
+result for your database driver. In the majority of cases nothing
+needs to be done to get the correct datatype mapping. However, in
+the cases where drivers differ from the spec or handle values
+differently, the DataHandler callbacks should provide the
+solution.</p>
+
+<h4>Example DataHandler for Informix booleans</h4>
+
+<p>One such case where a driver needs a special mapping is Informix
+booleans. The are represented as the characters 't' and 'f' in the
+database and have their own type <code>boolean</code>. You can see
+from the example below, without the special DataHandler, the
+boolean type mapping fails.</p>
+
+<pre>
+Jython 2.1a3 on java1.3.0 (JIT: null)
+Type "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
+&gt;&gt;&gt; zxJDBC.autocommit = 0
+&gt;&gt;&gt; d, u, p, v = "database", "user", "password", "com.informix.jdbc.IfxDriver"
+&gt;&gt;&gt; db = zxJDBC.connect(d, u, p, v)
+&gt;&gt;&gt; c = db.cursor()
+&gt;&gt;&gt; c.execute("create table g (a boolean)")
+&gt;&gt;&gt; c.execute("insert into g values (?)", [1])
+Traceback (innermost last):
+File "&lt;console&gt;", line 1, in ?
+Error: No cast from integer to boolean. [SQLCode: -9634]
+&gt;&gt;&gt; from com.ziclix.python.sql.informix import InformixDataHandler
+&gt;&gt;&gt; c.datahandler = InformixDataHandler(c.datahandler)
+&gt;&gt;&gt; c.execute("insert into g values (?)", [1], {0:zxJDBC.OTHER})
+&gt;&gt;&gt;
+</pre>
+
+<p>As you can see, the default handler fails to convert the Python
+<code>1</code> into an Informix boolean because the IfxDriver
+treats booleans as JDBC type <code>OTHER</code>. The
+InformixDataHandler is intimately aware of the IfxDriver mappings
+and understands how to interpret Python values as booleans when the
+JDBC type is <code>OTHER</code>.</p>
+
+<p>This functionality is also useful in handling the more advanced
+JDBC 2.0 types <code>CLOB</code>, <code>BLOB</code> and <code>
+Array</code>.</p>
+
+<p>You can also implement the DataHandler from within Jython as in
+this simple example:</p>
+
+<pre>
+&gt;&gt;&gt; class PyHandler(DataHandler):
+&gt;&gt;&gt;  def __init__(self, handler):
+&gt;&gt;&gt;   self.handler = handler
+&gt;&gt;&gt;  def getPyObject(self, set, col, datatype):
+&gt;&gt;&gt;   return self.handler.getPyObject(set, col, datatype)
+&gt;&gt;&gt;  def getJDBCObject(self, object, datatype):
+&gt;&gt;&gt;   print "handling prepared statement"
+&gt;&gt;&gt;   return self.handler.getJDBCObject(object, datatype)
+&gt;&gt;&gt;
+&gt;&gt;&gt; c.datahandler = PyHandler(c.datahandler)
+&gt;&gt;&gt; c.execute("insert into g values (?)", [1])
+handling prepared statement
+&gt;&gt;&gt;
+</pre>

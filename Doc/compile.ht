@@ -12,11 +12,11 @@ for whatever reason, the following offers a few tips to keep in
 mind.</P>
 
 <ul>
-<li>The source directories from CVS or the nightly buils contain both 
+<li>The source directories from CVS or the nightly buils contain both
 makefiles and a build.xml file. Only the build.xml is updated at this time.
 We are using ant-1.2 to compile the sources and create the .jar file.
 <p>
-The build.xml file will search for a properties file called 
+The build.xml file will search for a properties file called
 <code>ant.properties</code> which can contain values to control paths
 and local options. My <code>ant.properties</code> file look like this:
 <blockquote><pre>
@@ -42,16 +42,25 @@ jython.home=d:\\jython\\CVS
 # Needed when installing documentation.
 scp.command=scp
 scp.user=bckfnn
+
+# Needed for building zxJDBC DataHandlers
+# If missing, the appropriate DataHandler will not be built
+oracle.jar=d:/java/lib/classes12.zip
+mysql.jar=d:/java/lib/mm.mysql-2.0.6.jar
+informix.jar=d:/java/lib/ifxjdbc.jar;d:/java/lib/ifxjdbcx.jar
+postgresql.jar=d:/java/lib/postgresql.jar
+jdbc.jar=d:/java/lib/jdbc2_0-stdext.jar
+
 </pre></blockquote>
 <p>
 
-<li>Some of the sources in the org.python.parser package are generated 
-from python.jtt file by the JavaCC parser generator. If you need to 
-make changes to the grammar file you will need to download this 
+<li>Some of the sources in the org.python.parser package are generated
+from python.jtt file by the JavaCC parser generator. If you need to
+make changes to the grammar file you will need to download this
 JavaCC. The generated files are also in the distribution, so usually
 this is not necessary.
 
-<P>To regenerate the parser from the grammar, run jjtree on python.jjt, 
+<P>To regenerate the parser from the grammar, run jjtree on python.jjt,
 and then run javacc on the resulting python.jj. This should produce all
 of the required source files to build the org.python.parser package.
 The build.xml file already contain the needed entries to run the JavaCC
@@ -71,11 +80,11 @@ the Java2 sources when using a Java1 compiler.
 
 <li>One of the sources depends on the servlet classes and can only compile
 when servlet.jar is included on the classpath. Again, the build.xml have
-a conditional check and will not compile the PyServlet class if the 
+a conditional check and will not compile the PyServlet class if the
 servlet classes isn't available during compilation.
 <p>
 
-<li>The CVS only contain a few of the standard python modules. The rest 
+<li>The CVS only contain a few of the standard python modules. The rest
 most come from a CPython installation. Setting this up can be performed by
 creating a file ".jython" in your home directory and including a line like
 this:
@@ -84,16 +93,16 @@ python.path=d:\\python\\Python-2.1\\Lib
 </pre></blockquote>
 
 <li>The PyXML sources (the content of ./Lib/xml) is not included in the
-CVS repository. This is mainly because PyXML is developed and released in its 
+CVS repository. This is mainly because PyXML is developed and released in its
 own time cycle. To install PyXML support in a CVS version, the ant properties
 <code>PyXmlHome</code> and <code>python.home</code> must be configured and
 the ant task <code>installXML</code> must be executed.
 </ul>
 
-<P>If you have further interest in the Jython source and Jython's 
-continued development, you can read the archives for the 
+<P>If you have further interest in the Jython source and Jython's
+continued development, you can read the archives for the
 <a href="http://www.geocrawler.com/lists/3/SourceForge/7018/0/">
-Jython-dev mailing list</a> or you can 
+Jython-dev mailing list</a> or you can
 <a href="http://lists.sourceforge.net/mailman/listinfo/jython-dev">join</a>
 the list.
 
