@@ -8,6 +8,10 @@ public class PySlice extends PyObject {
 
     public PySlice(PyObject start, PyObject stop, PyObject step) {
         super(__class__);
+        if (start == null) start = Py.None;
+        if (stop == null) stop = Py.None;
+        if (step == null) step = Py.One;
+
         this.start = start;
         this.stop = stop;
         this.step = step;
