@@ -44,7 +44,13 @@ where options include:
   --compiler fullpath
   -C fullpath
       Use a different compiler than `standard' javac if.  this is set to
-      `NONE' then compile ends with .java
+      `NONE' then compile ends with .java.  Alternatively, you can set the
+      property python.jpythonc.compiler in the registry.
+
+  --compileropts options
+  -J options
+      Options passed directly to the Java compiler.  Alternatively, you can
+      set the property python.jpythonc.compileropts in the registry.
 
   --falsenames names
   -f names
@@ -96,6 +102,7 @@ def getOptions():
         addfiles = ''
         falsenames = ''
         compiler = None
+        jopts = None
         addpackages = ''
         
     options = Opts()
@@ -115,10 +122,10 @@ def getOptions():
 
     try:
         opts, args = getopt.getopt(
-            sysargs, 'p:j:dcab:A:w:s:C:f:h',
+            sysargs, 'p:j:dcab:A:w:s:C:f:J:h',
             ['package=', 'jar=', 'deep', 'core', 'all', 'bean=',
              'addpackages=', 'workdir=', 'skip=', 'compiler=',
-             'falsenames=', 'help'])
+             'falsenames=', 'compileropts', 'help'])
     except getopt.error, msg:
         usage(1, msg)
 
@@ -145,6 +152,8 @@ def getOptions():
             options.skip = arg
         elif opt in ('-C', '--compiler'):
             options.compiler = arg
+        elif opt in ('-J', '--compileropts'):
+            options.jopts = arg.split()
         elif opt in ('-f', '--falsenames'):
             options.falsenames = arg.split(',')
 
