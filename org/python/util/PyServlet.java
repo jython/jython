@@ -71,11 +71,22 @@ public class PyServlet extends HttpServlet {
             rootPath += File.separator;
 
         Properties props = new Properties();
-        Enumeration e = getInitParameterNames();
+
+        // Context parameters
+        ServletContext context = getServletContext();
+        Enumeration e = context.getInitParameterNames();
+        while (e.hasMoreElements()) {
+            String name = (String) e.nextElement();
+            props.put(name, context.getInitParameter(name));
+        }
+
+        // Config parameters
+        e = getInitParameterNames();
         while (e.hasMoreElements()) {
             String name = (String) e.nextElement();
             props.put(name, getInitParameter(name));
         }
+
         if (props.getProperty("python.home") == null &&
                                 System.getProperty("python.home") == null) {
             props.put("python.home", rootPath + "WEB-INF" +
