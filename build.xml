@@ -121,7 +121,7 @@
         <mkdir dir="${outputDir}" />
     </target>
 
-    <target name="tree" depends="prepare">
+    <target name="tree" depends="prepare" if="javaccHome2">
         <jjtree
             javacchome="${javaccHome2}"
             target="org/python/parser/python.jjt"
@@ -129,7 +129,7 @@
         />
     </target>
 
-    <target name="parser" depends="tree">
+    <target name="parser" depends="tree" if="javaccHome2">
         <javacc
             javacchome="${javaccHome2}"
             target="org/python/parser/python.jj"
