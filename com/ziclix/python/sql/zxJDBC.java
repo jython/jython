@@ -299,21 +299,35 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/**
 	 * Return a newly instantiated Error.
 	 */
-	public static PyException newError(Throwable e) {
+	public static PyException newError(Throwable t) {
 
-		if (e instanceof PyException) {
-			throw (PyException)e;
+		if (Options.showJavaExceptions) {
+			StdoutWrapper stderr = Py.stderr;
+
+			stderr.println("Java Traceback:");
+
+			java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
+
+			if (t instanceof PyException) {
+				((PyException)t).super__printStackTrace(new java.io.PrintWriter(buf));
+			} else {
+				t.printStackTrace(new java.io.PrintWriter(buf));
+			}
+
+			stderr.print(buf.toString());
 		}
 
-		try {
+		if (t instanceof PyException) {
+			return (PyException)t;
+		} else if (t instanceof SQLException) {
 			StringBuffer buffer = new StringBuffer();
 
-			createExceptionMessage((SQLException)e, buffer, 0);
+			createExceptionMessage((SQLException)t, buffer, 0);
 
 			return newError(buffer.toString());
-		} catch (ClassCastException ex) {}
-
-		return newError(e.getMessage());
+		} else {
+			return newError(t.getMessage());
+		}
 	}
 
 	/**
