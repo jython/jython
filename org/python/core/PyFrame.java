@@ -15,7 +15,10 @@ public class PyFrame extends PyObject
     public int f_lineno;
     public PyObject f_builtins;
     public PyObject[] f_fastlocals;
-
+    public PyCell[] f_env; // nested scopes: cell + free env
+    public int f_ncells;
+    public int f_nfreevars;
+    
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
 
@@ -36,7 +39,13 @@ public class PyFrame extends PyObject
         f_builtins = builtins;
         // This needs work to be efficient with multiple interpreter states
         if (locals == null && code != null && code.co_varnames.length > 0) {
-            f_fastlocals = new PyObject[code.co_varnames.length];
+            f_fastlocals = new PyObject[code.co_varnames.length-code.xxx_npurecell]; // internal: may change
+        }
+        if (code != null) { // reserve space for env
+            int env_sz = 0;
+            if (code.co_freevars != null) env_sz += (f_nfreevars = code.co_freevars.length);
+            if (code.co_cellvars != null) env_sz += (f_ncells = code.co_cellvars.length);
+            if (env_sz > 0) f_env = new PyCell[env_sz];
         }
     }
 
@@ -135,14 +144,14 @@ public class PyFrame extends PyObject
     }
 
     public PyObject getlocal(String index) {
-        //System.err.println("getlocal: "+index);
+        // System.err.println("getlocal: "+index);
         if (f_locals == null)
             getf_locals();
         PyObject ret = f_locals.__finditem__(index);
         if (ret != null)
             return ret;
 
-        throw Py.NameError("local: '"+index+"'");
+        throw Py.UnboundLocalError("local: '"+index+"'");
         //return getglobal(index);
     }
 
@@ -204,4 +213,28 @@ public class PyFrame extends PyObject
     public void delglobal(String index) {
         f_globals.__delitem__(index);
     }
+    
+    // nested scopes helpers
+    
+    public PyObject getclosure(int index) {
+        return f_env[index];
+    }
+        
+    public PyObject getderef(int index) {
+        PyObject obj=f_env[index].ob_ref;
+        if (obj != null) return obj;
+        String name;
+        if (index >= f_ncells) name = f_code.co_freevars[index-f_ncells];
+        else name = f_code.co_cellvars[index];
+        throw Py.UnboundLocalError("local: '"+name+"'");        
+    }
+    
+    public void setderef(int index,PyObject value) {
+        f_env[index].ob_ref = value;
+    }
+    
+    public void to_cell(int parm_index,int env_index) {
+        f_env[env_index].ob_ref=f_fastlocals[parm_index];       
+    }
+    
 }

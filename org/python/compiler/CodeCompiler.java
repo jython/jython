@@ -3,6 +3,9 @@
 package org.python.compiler;
 
 import org.python.parser.*;
+import org.python.core.Py;
+import org.python.core.PyObject;
+import org.python.core.PyException;
 import java.io.IOException;
 import java.util.Stack;
 import java.util.Hashtable;
@@ -30,8 +33,11 @@ public class CodeCompiler extends Visitor
     int temporary;
 
     public boolean fast_locals, print_results;
-    public Hashtable locals;
-    public Hashtable globals;
+    
+    public Future futures;
+    public Hashtable tbl;
+    public ScopeInfo my_scope;
+    
     boolean optimizeGlobals = true;
     public Vector names;
     public String className;
@@ -160,27 +166,40 @@ public class CodeCompiler extends Visitor
    }
 
 
+    public void error(String msg,boolean err,SimpleNode node) throws Exception {
+        if (!err) {
+            try {
+                Py.warning(Py.SyntaxWarning,msg,(module.sfilename!=null)?module.sfilename:"?",
+                           node.beginLine,null,Py.None);
+                return;
+            } catch(PyException e) {
+                if (!Py.matchException(e,Py.SyntaxWarning)) throw e;
+            }
+        }
+        throw new ParseException(msg,node);
+    }
+
     public void parse(SimpleNode node, Code code,
                       boolean fast_locals, String className,
-                      boolean classBody, ArgListCompiler ac)
+                      boolean classBody, ScopeInfo scope)
         throws Exception
     {
         this.fast_locals = fast_locals;
         this.className = className;
         this.code = code;
 
-        //Check out locals if fast_locals is on
-        LocalsCompiler lc = new LocalsCompiler();
-        int n = ac.names.size();
-        for (int i=0; i<n; i++) {
-            lc.addLocal((String)ac.names.elementAt(i));
+        if (scope == null) {
+            futures = new Future();
+            futures.preprocessFutures(node,null);
+            new ScopesCompiler(this).parse(node);
+            scope = node.scope;
         }
-        lc.parse(node);
+        
+        my_scope = scope;
+        names = scope.names;
 
-        names = lc.names;
-        locals = lc.locals;
-        globals = lc.globals;
-        optimizeGlobals = lc.optimizeGlobals;
+        tbl = scope.tbl;
+        optimizeGlobals = !scope.exec&&!scope.from_import_star;
 
         mode = GET;
         Object exit = node.visit(this);
@@ -189,7 +208,7 @@ public class CodeCompiler extends Visitor
         if (classBody) {
             loadFrame();
             code.invokevirtual("org/python/core/PyFrame", "getf_locals",
-                               "()Lorg/python/core/PyObject;");
+            "()Lorg/python/core/PyObject;");
             code.areturn();
         } else {
             if (exit == null) {
@@ -294,16 +313,49 @@ public class CodeCompiler extends Visitor
         }
     }
 
-    int f_globals, PyFunction_init;
+    int getclosure;
+    
+    public boolean makeClosure(Vector freenames) throws Exception {
+        if (freenames == null) return false;
+        int n = freenames.size();
+        if (n == 0) return false;
+
+        if (mrefs.getclosure == 0) {
+            mrefs.getclosure = code.pool.Methodref(
+            "org/python/core/PyFrame", "getclosure",
+            "(I)Lorg/python/core/PyObject;");
+        }
+        
+        int tmp = code.getLocal();
+        code.iconst(n);
+        code.anewarray(code.pool.Class("org/python/core/PyObject"));
+        code.astore(tmp);
+
+        for(int i=0; i<n; i++) {
+            code.aload(tmp);
+            code.iconst(i);
+            code.aload(1); // get frame
+            code.iconst(((SymInfo)tbl.get(freenames.elementAt(i))).env_index);
+            code.invokevirtual(getclosure);
+            code.aastore();
+        }
+        
+        code.aload(tmp);
+        code.freeLocal(tmp);
+        
+        return true;
+    }
+    
+    
+    
+    int f_globals, PyFunction_init, PyFunction_closure_init;
 
     public Object funcdef(SimpleNode node) throws Exception {
         String name = getName(node.getChild(0));
-        ArgListCompiler ac = new ArgListCompiler();
         SimpleNode suite;
         if (node.getNumChildren() == 3) {
             suite = node.getChild(2);
             //Parse arguments
-            node.getChild(1).visit(ac);
         } else {
             suite = node.getChild(1);
         }
@@ -320,19 +372,33 @@ public class CodeCompiler extends Visitor
         }
         code.getfield(mrefs.f_globals);
 
-        makeArray(ac.getDefaults());
-
-        module.PyCode(suite, name, ac, true, className, false, false,
-                      node.beginLine).get(code);
-
+        makeArray(node.scope.ac.getDefaults());
+        
+        node.scope.setup_closure(my_scope);
+        node.scope.dump();
+        module.PyCode(suite, name, true, className, false, false,
+                      node.beginLine, node.scope).get(code);
+        Vector freenames = node.scope.freevars;
+        node.scope = null; // release scope info
+        
         getDocString(suite);
 
-        if (mrefs.PyFunction_init == 0) {
-            mrefs.PyFunction_init = code.pool.Methodref(
+        if (!makeClosure(freenames)) {
+            if (mrefs.PyFunction_init == 0) {
+                mrefs.PyFunction_init = code.pool.Methodref(
                 "org/python/core/PyFunction", "<init>",
                 "(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;)V");
+            }
+            code.invokespecial(mrefs.PyFunction_init);
+        } else {
+            if (mrefs.PyFunction_closure_init == 0) {
+                mrefs.PyFunction_closure_init = code.pool.Methodref(
+                "org/python/core/PyFunction", "<init>",
+                "(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;[Lorg/python/core/PyObject;)V");
+            }
+            code.invokespecial(mrefs.PyFunction_closure_init);
+
         }
-        code.invokespecial(mrefs.PyFunction_init);
 
         set(node.getChild(0));
         return null;
@@ -627,6 +693,7 @@ public class CodeCompiler extends Visitor
     public int importAll, importFrom;
 
     public Object ImportFrom(SimpleNode node) throws Exception {
+        Future.checkFromFuture(node); // future stmt support
         setline(node);
         String name = (String)node.getChild(0).visit(this);
         code.ldc(name);
@@ -676,11 +743,6 @@ public class CodeCompiler extends Visitor
     }
 
     public Object global_stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++) {
-            Object name = node.getChild(i).getInfo();
-            globals.put(name, name);
-        }
         return null;
     }
 
@@ -715,7 +777,7 @@ public class CodeCompiler extends Visitor
     }
 
     public int assert1, assert2;
-    public Object assert_stmt(SimpleNode node) throws Exception {
+    public Object assert_stmt(SimpleNode node) throws Exception { // ?? pending __debug__ should be treated as temp global
         setline(node);
         Label end_of_assert = code.getLabel();
  
@@ -1874,9 +1936,9 @@ public class CodeCompiler extends Visitor
 
     public int PyTuple_init, PyList_init, PyDictionary_init;
     public Object tuple(SimpleNode node) throws Exception {
-        if (mode ==AUGSET)
+        /* if (mode ==AUGSET)
             throw new ParseException(
-                      "augmented assign to tuple not possible", node);
+                      "augmented assign to tuple not possible", node); */
         if (mode == SET) return seqSet(node);
         if (mode == DEL) return seqDel(node);
 
@@ -1898,9 +1960,9 @@ public class CodeCompiler extends Visitor
     }
 
     public Object list(SimpleNode node) throws Exception {
-        if (mode ==AUGSET)
+        /* if (mode ==AUGSET)
             throw new ParseException(
-                      "augmented assign to list not possible", node);
+                      "augmented assign to list not possible", node); */
 
         if (node.getNumChildren() > 1 && node.getChild(1).id ==
                       PythonGrammarTreeConstants.JJTFOR_STMT)
@@ -2003,15 +2065,12 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public int PyFunction_init1;
+    public int PyFunction_init1,PyFunction_closure_init1;
     public Object lambdef(SimpleNode node) throws Exception {
         String name = "<lambda>";
-        ArgListCompiler ac = new ArgListCompiler();
         SimpleNode suite;
         if (node.getNumChildren() == 2) {
             suite = node.getChild(1);
-            //Parse arguments
-            node.getChild(0).visit(ac);
         } else {
             suite = node.getChild(0);
         }
@@ -2033,17 +2092,31 @@ public class CodeCompiler extends Visitor
         }
         code.getfield(mrefs.f_globals);
 
-        makeArray(ac.getDefaults());
+        makeArray(node.scope.ac.getDefaults());
+        
+        node.scope.setup_closure(my_scope); 
+        node.scope.dump();
+        module.PyCode(retSuite, name, true, className,
+                      false, false, node.beginLine, node.scope).get(code);
+        Vector freenames = node.scope.freevars;
+        node.scope = null; // release scope info
 
-        module.PyCode(retSuite, name, ac, true, className,
-                      false, false, node.beginLine).get(code);
-
-        if (mrefs.PyFunction_init1 == 0) {
-            mrefs.PyFunction_init1 = code.pool.Methodref(
+        if (!makeClosure(freenames)) {
+            if (mrefs.PyFunction_init1 == 0) {
+                mrefs.PyFunction_init1 = code.pool.Methodref(
                 "org/python/core/PyFunction", "<init>",
                 "(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;)V");
+            }
+            code.invokespecial(mrefs.PyFunction_init1);
+        } else {
+            if (mrefs.PyFunction_closure_init1 == 0) {
+                mrefs.PyFunction_closure_init1 = code.pool.Methodref(
+                "org/python/core/PyFunction", "<init>",
+                "(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;[Lorg/python/core/PyObject;)V");
+            }
+            code.invokespecial(mrefs.PyFunction_closure_init1);
         }
-        code.invokespecial(mrefs.PyFunction_init1);
+        
         return null;
     }
 
@@ -2090,7 +2163,7 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public int makeClass;
+    public int makeClass,makeClass_closure;
     public Object classdef(SimpleNode node) throws Exception {
         setline(node);
 
@@ -2106,22 +2179,34 @@ public class CodeCompiler extends Visitor
             bases[i] = node.getChild(i+1);
         makeArray(bases);
 
+        node.scope.setup_closure(my_scope);
+        node.scope.dump();
         //Make code object out of suite
-        module.PyCode(node.getChild(n-1), name,
-                      new ArgListCompiler(), false, name, true, false,
-                      node.beginLine).get(code);
+        module.PyCode(node.getChild(n-1), name, false, name, true, false,
+                      node.beginLine, node.scope).get(code);
+        Vector freenames = node.scope.freevars;
+        node.scope = null; // release scope info
 
         //Get doc string (if there)
         getDocString(node.getChild(n-1));
 
         //Make class out of name, bases, and code
-        if (mrefs.makeClass == 0) {
-            mrefs.makeClass = code.pool.Methodref(
+        if (!makeClosure(freenames)) {
+            if (mrefs.makeClass == 0) {
+                mrefs.makeClass = code.pool.Methodref(
                 "org/python/core/Py", "makeClass",
                 "(Ljava/lang/String;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+            }
+            code.invokestatic(mrefs.makeClass);
+        } else {
+            if (mrefs.makeClass_closure == 0) {
+                mrefs.makeClass_closure = code.pool.Methodref(
+                "org/python/core/Py", "makeClass",
+                "(Ljava/lang/String;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;[Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+            }
+            code.invokestatic(mrefs.makeClass_closure);            
         }
-        code.invokestatic(mrefs.makeClass);
-
+        
         //Assign this new class to the given name
         set(node.getChild(0));
         return null;
@@ -2161,6 +2246,7 @@ public class CodeCompiler extends Visitor
     int getglobal, getlocal1, getlocal2;
     int setglobal, setlocal1, setlocal2;
     int delglobal, dellocal1, dellocal2;
+    int getderef,setderef;
 
     public Object Name(SimpleNode node) throws Exception {
         String name;
@@ -2174,29 +2260,52 @@ public class CodeCompiler extends Visitor
         else if (mode == AUGSET) 
             mode = SET;
 
+        SymInfo syminf = (SymInfo)tbl.get(name);
+        
         switch (mode) {
         case GET:
             loadFrame();
-            if (fast_locals) {
-                Integer i = (Integer)locals.get(name);
-                if (i == null && optimizeGlobals) {
-                    code.ldc(name);
-                    if (mrefs.getglobal == 0) {
-                        mrefs.getglobal = code.pool.Methodref(
+            if (syminf != null) {
+                if (fast_locals) {
+                    if ((syminf.flags&ScopeInfo.GLOBAL) !=0 && optimizeGlobals) {
+                        code.ldc(name);
+                        if (mrefs.getglobal == 0) {
+                            mrefs.getglobal = code.pool.Methodref(
                             "org/python/core/PyFrame", "getglobal",
                             "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+                        }
+                        code.invokevirtual(mrefs.getglobal);
+                        return null;
                     }
-                    code.invokevirtual(mrefs.getglobal);
-                    return null;
-                }
-                if (i != null) {
-                    code.iconst(i.intValue());
-                    if (mrefs.getlocal2 == 0) {
-                        mrefs.getlocal2 = code.pool.Methodref(
+                    if ((syminf.flags&ScopeInfo.GLOBAL)==0 && (syminf.flags&ScopeInfo.CELL)!=0) {
+                        code.iconst(syminf.env_index);
+                        if (mrefs.getderef == 0) {
+                            mrefs.getderef = code.pool.Methodref(
+                            "org/python/core/PyFrame", "getderef",
+                            "(I)Lorg/python/core/PyObject;");
+                        }
+                        code.invokevirtual(mrefs.getderef);
+                        return null;
+                    }
+                    if ((syminf.flags&ScopeInfo.GLOBAL)==0 && (syminf.flags&ScopeInfo.BOUND)!=0) {
+                        code.iconst(syminf.locals_index);
+                        if (mrefs.getlocal2 == 0) {
+                            mrefs.getlocal2 = code.pool.Methodref(
                             "org/python/core/PyFrame", "getlocal",
                             "(I)Lorg/python/core/PyObject;");
+                        }
+                        code.invokevirtual(mrefs.getlocal2);
+                        return null;
                     }
-                    code.invokevirtual(mrefs.getlocal2);
+                }
+                if (my_scope.nested_scopes && (syminf.flags&ScopeInfo.FREE) != 0) {
+                    code.iconst(syminf.env_index);
+                    if (mrefs.getderef == 0) {
+                        mrefs.getderef = code.pool.Methodref(
+                        "org/python/core/PyFrame", "getderef",
+                        "(I)Lorg/python/core/PyObject;");
+                    }
+                    code.invokevirtual(mrefs.getderef);
                     return null;
                 }
             }
@@ -2211,7 +2320,7 @@ public class CodeCompiler extends Visitor
 
         case SET:
             loadFrame();
-            if (globals.get(name) != null) {
+            if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
                 code.ldc(name);
                 code.aload(temporary);
                 if (mrefs.setglobal == 0) {
@@ -2231,24 +2340,34 @@ public class CodeCompiler extends Visitor
                     }
                     code.invokevirtual(mrefs.setlocal1);
                 } else {
-                    Integer i = (Integer)locals.get(name);
-                    if (i == null) {
+                    if (syminf == null) {
                         System.err.println("internal compiler error: "+node);
                     }
-                    code.iconst(i.intValue());
-                    code.aload(temporary);
-                    if (mrefs.setlocal2 == 0) {
-                        mrefs.setlocal2 = code.pool.Methodref(
+                    if ((syminf.flags&ScopeInfo.CELL) != 0) {
+                        code.iconst(syminf.env_index);
+                        code.aload(temporary);
+                        if (mrefs.setderef == 0) {
+                            mrefs.setderef = code.pool.Methodref(
+                            "org/python/core/PyFrame", "setderef",
+                            "(ILorg/python/core/PyObject;)V");
+                        }
+                        code.invokevirtual(mrefs.setderef);
+                    } else {
+                        code.iconst(syminf.locals_index);
+                        code.aload(temporary);
+                        if (mrefs.setlocal2 == 0) {
+                            mrefs.setlocal2 = code.pool.Methodref(
                             "org/python/core/PyFrame", "setlocal",
                             "(ILorg/python/core/PyObject;)V");
+                        }
+                        code.invokevirtual(mrefs.setlocal2);
                     }
-                    code.invokevirtual(mrefs.setlocal2);
                 }
             }
             return null;
-        case DEL:
+        case DEL: {
             loadFrame();
-            if (globals.get(name) != null) {
+            if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
                 code.ldc(name);
                 if (mrefs.delglobal == 0) {
                     mrefs.delglobal = code.pool.Methodref(
@@ -2266,8 +2385,13 @@ public class CodeCompiler extends Visitor
                     }
                     code.invokevirtual(mrefs.dellocal1);
                 } else {
-                    Integer i = (Integer)locals.get(name);
-                    code.iconst(i.intValue());
+                    if (syminf == null) {
+                        System.err.println("internal compiler error: "+node);
+                    }
+                    if ((syminf.flags&ScopeInfo.CELL) != 0) {
+                        error("can not delete variable '"+name+"' referenced in nested scope",true,node);
+                    }
+                    code.iconst(syminf.locals_index);
                     if (mrefs.dellocal2 == 0) {
                         mrefs.dellocal2 = code.pool.Methodref(
                             "org/python/core/PyFrame", "dellocal",
@@ -2276,7 +2400,7 @@ public class CodeCompiler extends Visitor
                     code.invokevirtual(mrefs.dellocal2);
                 }
             }
-            return null;
+            return null; }
         }
         return null;
     }

@@ -12,22 +12,39 @@ public class PyTableCode extends PyCode
     int nargs;
     public int co_firstlineno = -1;
     public String co_varnames[];
+    public String co_cellvars[];
+    public int xxx_npurecell; // internal: may change
+    public String co_freevars[];
     public String co_filename;
     public int co_flags;
     public boolean args, keywords;
     PyFunctionTable funcs;
     int func_id;
-
+   
+    
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
                        int firstlineno,
                        boolean args, boolean keywords,
                        PyFunctionTable funcs, int func_id)
     {
+        this(argcount,varnames,filename,name,firstlineno,args,keywords,funcs,func_id,null,null,0);
+    }
+    
+    public PyTableCode(int argcount, String varnames[],
+                       String filename, String name,
+                       int firstlineno,
+                       boolean args, boolean keywords,
+                       PyFunctionTable funcs, int func_id,
+                       String[] cellvars,String[] freevars,int xxx_npurecell) // may change
+    {
         co_argcount = nargs = argcount;
         co_varnames = varnames;
         co_filename = filename;
         co_firstlineno = firstlineno;
+        co_cellvars = cellvars;
+        co_freevars = freevars;
+        this.xxx_npurecell = xxx_npurecell;
         this.args = args;
         co_name = name;
         if (args) {
@@ -46,7 +63,7 @@ public class PyTableCode extends PyCode
     private static final String[] __members__ = {
         "co_name", "co_argcount",
         "co_varnames", "co_filename", "co_firstlineno",
-        "co_flags"
+        "co_flags","co_cellvars","co_freevars"
         // not supported: co_nlocals, co_code, co_consts, co_names,
         // co_lnotab, co_stacksize
     };
@@ -74,18 +91,25 @@ public class PyTableCode extends PyCode
         throwReadonly(name);
     }
 
+    private static PyTuple toPyStringTuple(String[] ar) {
+        if (ar == null) return Py.EmptyTuple;
+        int sz = ar.length;
+        PyString[] pystr = new PyString[sz];
+        for (int i = 0; i < sz; i++) {
+            pystr[i] = new PyString(ar[i]);
+        }
+        return new PyTuple(pystr);
+    }
+    
     public PyObject __findattr__(String name) {
         // have to craft co_varnames specially
-        if (name == "co_varnames") {
-            PyString varnames[] = new PyString[co_varnames.length];
-            for (int i = 0; i < co_varnames.length; i++)
-                varnames[i] = new PyString(co_varnames[i]);
-            return new PyTuple(varnames);
-        }
+        if (name == "co_varnames") return toPyStringTuple(co_varnames);
+        if (name == "co_cellvars") return toPyStringTuple(co_cellvars);
+        if (name == "co_freevars") return toPyStringTuple(co_freevars);
         return super.__findattr__(name);
     }
 
-    public PyObject call(PyFrame frame) {
+    public PyObject call(PyFrame frame, PyObject closure) {
 //         System.err.println("tablecode call: "+co_name);
         ThreadState ts = Py.getThreadState();
         if (ts.systemState == null) {
@@ -107,6 +131,20 @@ public class PyTableCode extends PyCode
                 frame.f_builtins = ts.systemState.builtins;
             }
         }
+        // nested scopes: setup env with closure
+        int env_j = 0;
+        int ncells = frame.f_ncells;
+        int nfreevars = frame.f_nfreevars;
+        PyCell[] env = frame.f_env;
+        PyTuple freevars = (PyTuple)closure;
+        for (int i = 0; i < ncells; i++,env_j++) {
+            env[env_j] = new PyCell();
+        }
+        for (int i=0; i<nfreevars; i++,env_j++) {
+            env[env_j] = (PyCell)freevars.get(i);
+        }
+        
+        
         ts.frame = frame;
 
         // Handle trace function for debugging
@@ -198,56 +236,56 @@ public class PyTableCode extends PyCode
         return ret;
     }
 
-    public PyObject call(PyObject globals, PyObject[] defaults) {
+    public PyObject call(PyObject globals, PyObject[] defaults, PyObject closure) {
         if (co_argcount != 0 || args || keywords)
-            return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults);
+            return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
-        return call(frame);
+        return call(frame, closure);
     }
 
-    public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults)
+    public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults, PyObject closure)
     {
         if (co_argcount != 1 || args || keywords)
             return call(new PyObject[] {arg1},
-                        Py.NoKeywords, globals, defaults);
+                        Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
-        return call(frame);
+        return call(frame, closure);
     }
 
     public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
-                         PyObject[] defaults)
+                         PyObject[] defaults, PyObject closure)
     {
         if (co_argcount != 2 || args || keywords)
             return call(new PyObject[] {arg1, arg2},
-                        Py.NoKeywords, globals, defaults);
+                        Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
         frame.f_fastlocals[1] = arg2;
-        return call(frame);
+        return call(frame, closure);
     }
 
     public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
-                         PyObject globals, PyObject[] defaults)
+                         PyObject globals, PyObject[] defaults, PyObject closure)
     {
         if (co_argcount != 2 || args || keywords)
             return call(new PyObject[] {arg1, arg2, arg3},
-                        Py.NoKeywords, globals, defaults);
+                        Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
         frame.f_fastlocals[1] = arg2;
         frame.f_fastlocals[2] = arg3;
-        return call(frame);
+        return call(frame, closure);
     }
 
     public PyObject call(PyObject self, PyObject call_args[],
                          String call_keywords[], PyObject globals,
-                         PyObject[] defaults)
+                         PyObject[] defaults, PyObject closure)
     {
         PyObject[] os = new PyObject[call_args.length+1];
         os[0] = (PyObject)self;
         System.arraycopy(call_args, 0, os, 1, call_args.length);
-        return call(os, call_keywords, globals, defaults);
+        return call(os, call_keywords, globals, defaults, closure);
     }
 
     private String prefix() {
@@ -255,7 +293,7 @@ public class PyTableCode extends PyCode
     }
 
     public PyObject call(PyObject call_args[], String call_keywords[],
-                         PyObject globals, PyObject[] defaults)
+                         PyObject globals, PyObject[] defaults, PyObject closure)
     {
         //Needs try except finally blocks
         PyFrame my_frame = new PyFrame(this, globals);
@@ -347,7 +385,7 @@ public class PyTableCode extends PyCode
                 actual_args[nargs-1] = extra_keywords;
             }
         }
-        return call(my_frame);
+        return call(my_frame, closure);
     }
 
     public String toString() {

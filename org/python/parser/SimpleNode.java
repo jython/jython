@@ -14,6 +14,9 @@ public class SimpleNode implements Node
     Object info;
     public int aug_tmp1, aug_tmp2, aug_tmp3, aug_tmp4;
 
+    public org.python.compiler.ScopeInfo scope; // for nested scopes
+    public boolean from_future_checked = false; // from __future__ support
+    
     public SimpleNode(int i) {
         id = i;
     }
@@ -357,4 +360,3 @@ public class SimpleNode implements Node
     }
 
 }
-

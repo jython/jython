@@ -239,21 +239,58 @@ public final class Py
     public static void RuntimeWarning(String message) {
         warning(RuntimeWarning, message);
     }
-
+    
+    private static PyObject warnings_mod;
+    private static PyObject importWarnings() {
+        if (warnings_mod != null) return warnings_mod;
+        PyObject mod;
+        try {
+            mod = __builtin__.__import__("warnings");
+        } catch(PyException e) {
+            if (matchException(e,ImportError)) {
+                return null;
+            }
+            throw e;
+        }
+        warnings_mod = mod;
+        return mod;
+    }
+    
+    private static String warn_hcategory(PyObject category) {
+        PyObject name = category.__findattr__("__name__");
+        if (name != null) return "["+name+"]";
+        return "[warning]";
+    }
+    
     public static void warning(PyObject category, String message) {
         PyObject func = null;
-        PyObject mod = __builtin__.__import__("warnings");
+        PyObject mod = importWarnings();
         if (mod != null)
             func = mod.__getattr__("warn");
         if (func == null) {
-            System.err.println("warning: " + message);
+            System.err.println(warn_hcategory(category) + ": " + message);
             return;
         } else {
             func.__call__(Py.newString(message), category);
         }
     }
 
+    public static void warning(PyObject category, String message,String filename,int lineno, String module, PyObject registry) {
+        PyObject func = null;
+        PyObject mod = importWarnings();
+        if (mod != null)
+            func = mod.__getattr__("warn_explicit");
+        if (func == null) {
+            System.err.println(filename + ":" + lineno + ":" + warn_hcategory(category) + ": " + message);
+            return;
+        } else {
+            func.__call__(new PyObject[] {Py.newString(message), category, 
+                Py.newString(filename), Py.newInteger(lineno),
+                (module == null)?Py.None:Py.newString(module), registry}, Py.NoKeywords);
+        }
+    }
 
+    
     public static PyObject JavaError;
     public static PyException JavaError(Throwable t) {
 //         System.err.println("t: "+t);
@@ -395,6 +432,34 @@ public final class Py
         return t ? Py.One : Py.Zero;
     }
 
+    // nested scopes:  String[] cellvars,String[] freevars,int xxx_npurecell
+
+    public static PyCode newCode(int argcount, String varnames[],
+                                 String filename, String name,
+                                 boolean args, boolean keywords,
+                                 PyFunctionTable funcs, int func_id,
+                                 String[] cellvars,String[] freevars,int xxx_npurecell)
+    {
+        return new PyTableCode(argcount, varnames,
+                               filename, name, 0, args, keywords, funcs,
+                               func_id, cellvars, freevars, xxx_npurecell);
+    }
+
+    public static PyCode newCode(int argcount, String varnames[],
+                                 String filename, String name,
+                                 int firstlineno,
+                                 boolean args, boolean keywords,
+                                 PyFunctionTable funcs, int func_id,
+                                 String[] cellvars,String[] freevars,int xxx_npurecell)
+
+    {
+        return new PyTableCode(argcount, varnames,
+                               filename, name, firstlineno, args, keywords,
+                               funcs, func_id, cellvars, freevars, xxx_npurecell);
+    }
+        
+    // --
+    
     public static PyCode newCode(int argcount, String varnames[],
                                  String filename, String name,
                                  boolean args, boolean keywords,
@@ -422,7 +487,7 @@ public final class Py
 
     public static PyObject newJavaFunc(Class cls, String name) {
         try {
-            java.lang.reflect.Method m = cls.getMethod(name, new Class[] {
+            java.lang.reflect.Method m = cls.getMethod(name, new Class[] { 
                        PyObject[].class, String[].class });
             return new JavaFunc(m);
         } catch (NoSuchMethodException e) {
@@ -1302,18 +1367,32 @@ public final class Py
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc)
     {
-        return makeClass(name, bases, code, doc, null);
+        return makeClass(name, bases, code, doc, null, null);
     }
+    
+    public static PyObject makeClass(String name, PyObject[] bases,
+                                     PyCode code, PyObject doc,PyObject[] closure_cells)
+    {
+        return makeClass(name, bases, code, doc, null, closure_cells);
+    }
+
+    
+    public static PyObject makeClass(String name, PyObject[] bases,
+                                     PyCode code, PyObject doc,
+                                     Class proxyClass) {
+        return makeClass(name, bases, code, doc, proxyClass, null);                                      
+    }
+
 
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,
-                                     Class proxyClass)
+                                     Class proxyClass,PyObject[] closure_cells)
     {
         PyFrame frame = getFrame();
         PyObject globals = frame.f_globals;
 
         PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords,
-                                  globals, Py.EmptyObjects);
+                                  globals, Py.EmptyObjects,new PyTuple(closure_cells));
         if (doc != null)
             dict.__setitem__("__doc__", doc);
 
@@ -1529,50 +1608,50 @@ class JavaCode extends PyCode {
             this.co_name = ((PyReflectedFunction) func).__name__;
     }
 
-    public PyObject call(PyFrame frame) {
+    public PyObject call(PyFrame frame, PyObject closure) {
         System.out.println("call #1");
         return Py.None;
     }
 
     public PyObject call(PyObject args[], String keywords[],
-                                  PyObject globals, PyObject[] defaults)
+                                  PyObject globals, PyObject[] defaults, PyObject closure)
     {
         return func.__call__(args, keywords);
     }
 
     public PyObject call(PyObject self, PyObject args[],
                                   String keywords[],
-                                  PyObject globals, PyObject[] defaults)
+                                  PyObject globals, PyObject[] defaults, PyObject closure)
     {
         return func.__call__(self, args, keywords);
     }
 
-    public PyObject call(PyObject globals, PyObject[] defaults)
+    public PyObject call(PyObject globals, PyObject[] defaults, PyObject closure)
     {
         return func.__call__();
     }
 
     public PyObject call(PyObject arg1, PyObject globals,
-                                  PyObject[] defaults)
+                                  PyObject[] defaults, PyObject closure)
     {
         return func.__call__(arg1);
     }
 
     public PyObject call(PyObject arg1, PyObject arg2,
-                                  PyObject globals, PyObject[] defaults)
+                                  PyObject globals, PyObject[] defaults, PyObject closure)
     {
         return func.__call__(arg1, arg2);
     }
 
     public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
-                                  PyObject globals, PyObject[] defaults)
+                                  PyObject globals, PyObject[] defaults, PyObject closure)
     {
         return func.__call__(arg1, arg2, arg3);
     }
 }
 
 /**
- * A function object wrapper for a java method which comply with the
+ * A function object wrapper for a java method which comply with the 
  * PyArgsKeywordsCall standard.
  */
 class JavaFunc extends PyObject {

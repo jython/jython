@@ -192,6 +192,11 @@ class PyCodeConstant extends Constant
     public int co_firstlineno;
     public boolean arglist, keywordlist;
     String fname;
+    
+    // for nested scopes
+    public String[] cellvars;
+    public String[] freevars;
+    public int xxx_npurecell;
 
     public PyCodeConstant() { ;
     }
@@ -221,11 +226,16 @@ class PyCodeConstant extends Constant
         //c.aconst_null();
 
         c.iconst(id);
+        
+        if (cellvars != null) CodeCompiler.makeStrings(c, cellvars, cellvars.length); else c.aconst_null();
+        if (freevars != null) CodeCompiler.makeStrings(c, freevars, freevars.length); else c.aconst_null();
 
+        c.iconst(xxx_npurecell);
+        
         int mref_newCode = c.pool.Methodref(
             "org/python/core/Py",
             "newCode",
-            "(I[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZZLorg/python/core/PyFunctionTable;I)Lorg/python/core/PyCode;");
+            "(I[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZZLorg/python/core/PyFunctionTable;I[Ljava/lang/String;[Ljava/lang/String;I)Lorg/python/core/PyCode;");
 
         c.invokestatic(mref_newCode);
         //c.aconst_null();
@@ -328,20 +338,33 @@ public class Module
         }
         return true;
     }
-        
+
+    private static final String[] emptyStringAr = new String[0];
+    
+    private String[] toNameAr(Vector names,boolean nullok) {
+        int sz = names.size();
+        if (sz ==0 && nullok) return null;
+        return (String[])names.toArray(emptyStringAr);
+    }
+    
+    
+    private int to_cell;
+    
     public PyCodeConstant PyCode(SimpleNode tree, String name,
-                                 ArgListCompiler ac,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults, 
-                                 int firstlineno)
+                                 int firstlineno, ScopeInfo scope)
         throws Exception
     {
         PyCodeConstant code = new PyCodeConstant();
-        int i;
-        code.arglist = ac.arglist;
-        code.keywordlist = ac.keywordlist;
-        code.argcount = ac.names.size();
-
+        ArgListCompiler ac = (scope != null)?scope.ac:null;
+        
+        if (ac != null) {
+            code.arglist = ac.arglist;
+            code.keywordlist = ac.keywordlist;
+            code.argcount = ac.names.size();
+        }
+        
         code.co_name = name;
         code.co_firstlineno = firstlineno;
         code.id = codes.size();
@@ -362,18 +385,39 @@ public class Module
         //Do something to add init_code to tree
         CodeCompiler compiler = new CodeCompiler(this, printResults);
 
-        if (ac.init_code.getNumChildren() > 0) {
+        if (ac != null && ac.init_code.getNumChildren() > 0) {
             ac.init_code.jjtAddChild(tree, ac.init_code.getNumChildren());
             tree = ac.init_code;
         }
-
-        compiler.parse(tree, c, fast_locals, className, classBody, ac);
-
-        code.names = new String[compiler.names.size()];
-        for(i=0; i<compiler.names.size(); i++) {
-            code.names[i] = (String)compiler.names.elementAt(i);
+        
+        if (scope != null) {
+          int nparamcell = scope.xxx_paramcells.size();
+          if (nparamcell > 0) {
+            if (to_cell == 0) {
+                to_cell = classfile.pool.Methodref("org/python/core/PyFrame","to_cell","(II)V");
+            }
+            Hashtable tbl = scope.tbl;
+            Vector paramcells = scope.xxx_paramcells;
+            for (int i = 0; i < nparamcell; i++) {
+                c.aload(1);
+                SymInfo syminf = (SymInfo)tbl.get(paramcells.elementAt(i));
+                c.iconst(syminf.locals_index);
+                c.iconst(syminf.env_index);
+                c.invokevirtual(to_cell);
+            }
+          }
         }
 
+        compiler.parse(tree, c, fast_locals, className, classBody, scope);
+
+        code.names = toNameAr(compiler.names,false);
+        
+        if (scope != null) {
+            code.cellvars = toNameAr(scope.cellvars,true);
+            code.freevars = toNameAr(scope.freevars,true);
+            code.xxx_npurecell = scope.xxx_npurecell;
+        }
+        
         code.module = this;
         code.name = code.fname;
         return code;
@@ -503,9 +547,7 @@ public class Module
         //Add __doc__ if it exists
         //Add __file__ for filename (if it exists?)
 
-        Constant main = module.PyCode(node, "?",
-                                      new ArgListCompiler(),
-                                      false, null, false, printResults, 0);
+        Constant main = module.PyCode(node, "?",false, null, false, printResults, 0,null);
         module.mainCode = main;
         module.write(ostream);
     }
