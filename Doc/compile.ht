@@ -19,6 +19,7 @@ We are using ant-1.2 to compile the sources and create the .jar file.
 The build.xml file will search for a properties file called
 <code>ant.properties</code> which can contain values to control paths
 and local options. My <code>ant.properties</code> file look like this:
+
 <blockquote><pre>
 # javaccHome2 is needed when making modification to the grammar.
 javaccHome2 = d:\\java\\Javacc2.0\\bin\\lib
@@ -56,7 +57,6 @@ mysql.jar=d:/java/lib/mm.mysql-2.0.6.jar
 informix.jar=d:/java/lib/ifxjdbc.jar;d:/java/lib/ifxjdbcx.jar
 postgresql.jar=d:/java/lib/postgresql.jar
 jdbc.jar=d:/java/lib/jdbc2_0-stdext.jar
-
 </pre></blockquote>
 <p>
 
@@ -119,8 +119,12 @@ the list.
 Suggested tools and support software:
 
 <ul>
-<li> <A HREF="http://www.metamata.com/javacc/">JavaCC 2.0</A>
-<li> <A HREF="http://jakarta.apache.org/ant/">Ant 1.2</A>
+<li> <A HREF="http://www.webgain.com/products/java_cc/">JavaCC 2.0</A>
+<li> <A HREF="http://jakarta.apache.org/ant/">Ant</A>
 <li> <A HREF="http://java.sun.com/products/servlet/index.html">Servlet classes</A>
+<li> <A HREF="http://mmmysql.sourceforge.net/">MySQL JDBC Driver</A>
+<li> <A HREF="http://www.informix.com/evaluate/">Informix JDBC Driver</A>
+<li> <A HREF="http://jdbc.postgresql.org/">Postgresql JDBC Driver</A>
+<li> <A HREF="http://otn.oracle.com/software/tech/java/sqlj_jdbc/content.html">Oracle JDBC Driver</A>
 </ul>
 
