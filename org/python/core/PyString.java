@@ -96,7 +96,10 @@ class StringFuncs extends PyBuiltinFunctionSet
         case 117:
             return new PyInteger(s.startswith(tostring(arg)) ? 1 : 0);
         case 118:
-            return new PyString(s.translate(tostring(arg)));
+            if (arg instanceof PyString)
+                return new PyString(s.translate(tostring(arg)));
+            else
+                return new PyString(s.translate(arg));
         default:
             throw argCountError(1);
         }
@@ -1242,7 +1245,7 @@ public class PyString extends PySequence implements InitModule
         StringBuffer buf = new StringBuffer(string.length());
         for (int i=0; i < string.length(); i++) {
             char c = string.charAt(i);
-            if (deletechars.indexOf(c) >= 0)
+            if (deletechars != null && deletechars.indexOf(c) >= 0)
                 continue;
             try {
                 buf.append(table.charAt(c));
@@ -1253,6 +1256,42 @@ public class PyString extends PySequence implements InitModule
             }
         }
         return buf.toString();
+    }
+
+    public String translate(PyObject table) {
+        StringBuffer v = new StringBuffer(string.length());
+        for (int i=0; i < string.length(); i++) {
+            char ch = string.charAt(i);
+
+            PyObject w = Py.newInteger(ch);
+            PyObject x = table.__finditem__(w);
+            if (x == null) {
+                /* No mapping found: default to 1-1 mapping */
+                v.append(ch);
+                continue;
+            }
+
+            /* Apply mapping */
+            if (x instanceof PyInteger) {
+                int value = ((PyInteger) x).getValue();
+                v.append((char) value);
+            } else if (x == Py.None) {
+                ;
+            } else if (x instanceof PyString) {
+                if (x.__len__() != 1) {
+                    /* 1-n mapping */
+                    throw new PyException(Py.NotImplementedError,
+                          "1-n mappings are currently not implemented");
+                }
+                v.append(x.toString());
+            }
+            else {
+                /* wrong return value */
+                throw Py.TypeError(
+                     "character mapping must return integer, None or unicode");
+            }
+        }
+        return v.toString();
     }
 
     public boolean islower() {
