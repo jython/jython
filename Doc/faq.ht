@@ -36,8 +36,11 @@ Title: JPython FAQ
     incidental.
 
 <p><li><b>What is the current status of JPython?</b>
-    <p>As of this writing (17-Jun-1999) JPython 1.1beta2 has been
-    released.  Jim Hugunin, JPython's author, has moved out to sunny
+    <p>As of this writing (22-Sep-1999) JPython 1.1 is currently in
+    beta status.  Check the
+    <a href="http://www.jpython.org">www.jpython.org</a> site for the
+    most current release.
+    Jim Hugunin, JPython's author, has moved out to sunny
     California to work on Xerox PARC's
     <a href="http://www.parc.xerox.com/spl/projects/aop/">AspectJ</a>
     language.  JPython continues to be maintained by Barry Warsaw at
