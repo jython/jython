@@ -48,7 +48,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected DataHandler datahandler;
 
 	/** Field sqlStatement */
-	protected PreparedStatement sqlStatement;
+	protected Statement sqlStatement;
 
 	// they are stateless instances, so we only need to instantiate it once
 	private static DataHandler DATAHANDLER = null;
@@ -142,7 +142,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	public void __setattr__(String name, PyObject value) {
 
 		if ("arraysize".equals(name)) {
-			arraysize = ((PyInteger)value).getValue();
+			arraysize = value.__int__().getValue();
 		} else if ("datahandler".equals(name)) {
 			this.datahandler = (DataHandler)value.__tojava__(DataHandler.class);
 		} else {
@@ -159,7 +159,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	public PyObject __findattr__(String name) {
 
 		if ("arraysize".equals(name)) {
-			return new PyInteger(arraysize);
+			return Py.newInteger(arraysize);
 		} else if ("__methods__".equals(name)) {
 			return __methods__;
 		} else if ("__members__".equals(name)) {
@@ -167,7 +167,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		} else if ("description".equals(name)) {
 			return this.fetch.getDescription();
 		} else if ("rowcount".equals(name)) {
-			return new PyInteger(this.fetch.getRowCount());
+			return Py.newInteger(this.fetch.getRowCount());
 		} else if ("warnings".equals(name)) {
 			return warnings;
 		} else if ("rowid".equals(name)) {
@@ -273,11 +273,16 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * @param sqlString
 	 * @param maxRows max number of rows to be returned
+	 * @param prepared if true, prepare the statement, otherwise create a normal statement
 	 * @throws SQLException
 	 */
-	protected void prepareStatement(String sqlString, PyObject maxRows) throws SQLException {
+	protected void prepareStatement(String sqlString, PyObject maxRows, boolean prepared) throws SQLException {
 
-		this.sqlStatement = this.connection.prepareStatement(sqlString);
+		if (prepared) {
+			this.sqlStatement = this.connection.prepareStatement(sqlString);
+		} else {
+			this.sqlStatement = this.connection.createStatement();
+		}
 
 		if (maxRows != Py.None) {
 			this.sqlStatement.setMaxRows(maxRows.__int__().getValue());
@@ -362,9 +367,25 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 		clear();
 
+		boolean hasParams = hasParams(params);
+
 		try {
-			prepareStatement(sqlString, maxRows);
-			execute(params, bindings);
+			prepareStatement(sqlString, maxRows, hasParams);
+
+			if (hasParams) {
+				execute(params, bindings);
+			} else {
+				this.datahandler.preExecute(this.sqlStatement);
+
+				if (this.sqlStatement.execute(sqlString)) {
+					create(this.sqlStatement.getResultSet());
+				}
+
+				this.rowid = this.datahandler.getRowId(this.sqlStatement);
+
+				addWarning(this.sqlStatement.getWarnings());
+				this.datahandler.postExecute(this.sqlStatement);
+			}
 		} catch (PyException e) {
 			throw e;
 		} catch (Exception e) {
@@ -373,31 +394,23 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Method execute
+	 * The workhorse for properly executing a prepared statement.
 	 *
-	 * @param PyObject params
-	 * @param PyObject bindings
+	 * @param PyObject params a non-None seq of sequences or entities
+	 * @param PyObject bindings an optional dictionary of index:DBApiType mappings
 	 *
 	 * @throws SQLException
 	 *
 	 */
 	protected void execute(PyObject params, PyObject bindings) throws SQLException {
 
-		boolean seq = isSeq(params);
-
-		// the optional argument better be a sequence
-		if (!seq && (Py.None != params)) {
-			throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("optionalSecond"));
-		}
-
-		boolean hasParams = (seq && (params.__len__() > 0));
-
 		// if we have a sequence of sequences, let's run through them and finish
-		if (hasParams && isSeqSeq(params)) {
-			for (int i = 0; i < params.__len__(); i++) {
+		if (isSeqSeq(params)) {
+
+			// [(3, 4)] or [(3, 4), (5, 6)]
+			for (int i = 0, len = params.__len__(); i < len; i++) {
 				PyObject param = params.__getitem__(i);
 
-				// [(3, 4)] or [(3, 4), (5, 6)]
 				execute(param, bindings);
 			}
 
@@ -405,44 +418,44 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			return;
 		}
 
-		if (hasParams) {
+		// [3, 4] or (3, 4)
+		PreparedStatement preparedStatement = (PreparedStatement)this.sqlStatement;
 
-			// clear the statement so all new bindings take affect
-			this.sqlStatement.clearParameters();
+		// clear the statement so all new bindings take affect
+		preparedStatement.clearParameters();
 
-			// [3, 4] or (3, 4)
-			for (int i = 0; i < params.__len__(); i++) {
-				PyObject index = Py.newInteger(i);
-				PyObject param = params.__getitem__(i);
+		for (int i = 0, len = params.__len__(); i < len; i++) {
+			PyObject param = params.__getitem__(i);
 
-				if (bindings != Py.None) {
-					PyObject binding = bindings.__finditem__(index);
+			if (bindings != Py.None) {
+				PyObject binding = bindings.__finditem__(Py.newInteger(i));
 
-					if (binding != null) {
-						try {
-							int bindingValue = binding.__int__().getValue();
+				if (binding != null) {
+					int bindingValue = 0;
 
-							this.datahandler.setJDBCObject(this.sqlStatement, i + 1, param, bindingValue);
-
-							continue;
-						} catch (PyException e) {
-							throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("bindingValue"));
-						}
+					try {
+						bindingValue = binding.__int__().getValue();
+					} catch (PyException e) {
+						throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("bindingValue"));
 					}
-				}
 
-				this.datahandler.setJDBCObject(this.sqlStatement, i + 1, param);
+					this.datahandler.setJDBCObject(preparedStatement, i + 1, param, bindingValue);
+
+					continue;
+				}
 			}
+
+			this.datahandler.setJDBCObject(preparedStatement, i + 1, param);
 		}
 
-		this.datahandler.preExecute(this.sqlStatement);
-		this.sqlStatement.execute();
+		this.datahandler.preExecute(preparedStatement);
+		preparedStatement.execute();
+		create(preparedStatement.getResultSet());
 
-		this.rowid = this.datahandler.getRowId(this.sqlStatement);
+		this.rowid = this.datahandler.getRowId(preparedStatement);
 
-		create(this.sqlStatement.getResultSet());
-		this.datahandler.postExecute(this.sqlStatement);
-		addWarning(this.sqlStatement.getWarnings());
+		addWarning(preparedStatement.getWarnings());
+		this.datahandler.postExecute(preparedStatement);
 
 		return;
 	}
@@ -586,7 +599,12 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
+	 * Method isSeq
+	 *
+	 * @param PyObject object
+	 *
 	 * @return true for any PyList, PyTuple or java.util.List
+	 *
 	 */
 	protected boolean isSeq(PyObject object) {
 
@@ -604,7 +622,36 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * @return true for any PyList, PyTuple or java.util.List of PyLists, PyTuples or java.util.Lists
+	 * Method hasParams
+	 *
+	 * @param PyObject params
+	 *
+	 * @return boolean
+	 *
+	 */
+	protected boolean hasParams(PyObject params) {
+
+		if (Py.None == params) {
+			return false;
+		}
+
+		boolean isSeq = isSeq(params);
+
+		// the optional argument better be a sequence
+		if (!isSeq) {
+			throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("optionalSecond"));
+		}
+
+		return params.__len__() > 0;
+	}
+
+	/**
+	 * Method isSeqSeq
+	 *
+	 * @param PyObject object
+	 *
+	 * @return true is a sequence of sequences
+	 *
 	 */
 	protected boolean isSeqSeq(PyObject object) {
 
