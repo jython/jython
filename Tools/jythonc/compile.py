@@ -1,5 +1,6 @@
 # Copyright © Corporation for National Research Initiatives
 
+import sys
 from SimpleCompiler import SimpleCompiler
 from PythonModule import PythonModule
 from ObjectFactory import ObjectFactory
@@ -378,6 +379,9 @@ class Compiler:
         code, outtext, errtext = javac.compile(self.javasources,
                                                javac=self.options.compiler)
         print code, outtext, errtext
+	if code <> 0:
+	    print 'ERROR DURING JAVA COMPILATION... EXITING'
+	    sys.exit(code)
 
     def makeAdapter(self, outdir, proxy):
         os = java.io.ByteArrayOutputStream()
