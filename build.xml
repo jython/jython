@@ -214,6 +214,20 @@
              includes="**/*.class,**/ucnhash.dat,**/*.properties" />
     </target>
 
+    <target name="doc" depends="init">
+        <delete>
+            <fileset dir="Doc" includes="*.html" />
+        </delete>
+        <!-- Create .html files in Doc -->
+        <execon executable="${python.home}/python" dir="Doc">
+            <arg line="${ht2html.dir}/ht2html.py"/>
+            <arg line="-s JPyLocalGenerator"/>
+            <fileset dir="Doc">
+                <include name="*.ht" />
+            </fileset>
+        </execon>
+    </target>
+
     <target name="javadoc" depends="compile">
         <mkdir dir="${apidocDir}" />
         <javadoc sourcepath="${sourceDir}"
