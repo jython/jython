@@ -416,9 +416,16 @@ public class Module implements ClassConstants, CompilationContext
             "(" + $pyFrame + ")" + $pyObj,
             ClassFile.PUBLIC);
 
-        //Do something to add init_code to tree
         CodeCompiler compiler = new CodeCompiler(this, printResults);
 
+        Label genswitch = c.getLabel();
+        if (scope.generator) {
+            c.goto_(genswitch);
+        }
+        Label start = c.getLabel();
+        start.setPosition();
+
+        //Do something to add init_code to tree
         if (ac != null && ac.init_code.size() > 0) {
             ac.appendInitCode((Suite) tree);
         }
@@ -445,6 +452,25 @@ public class Module implements ClassConstants, CompilationContext
         compiler.parse(tree, c, fast_locals, className, classBody,
                        scope, cflags);
 
+        if (scope.generator) {
+            genswitch.setPosition();
+            c.aload(1);
+            if (compiler.f_lasti == 0) {
+                compiler.f_lasti = c.pool.Fieldref(
+                        "org/python/core/PyFrame", "f_lasti", "I"); 
+            }
+            c.getfield(compiler.f_lasti);
+
+            Label[] yields = new Label[compiler.yields.size()+1];
+
+            yields[0] = start;
+            for (int i = 1; i < yields.length; i++) {
+                yields[i] = (Label) compiler.yields.elementAt(i-1);
+            }
+            c.tableswitch(start, 0, yields);
+            // XXX: Generate an error
+        }
+
         // !classdef only
         if (!classBody) code.names = toNameAr(compiler.names,false);
 
@@ -456,6 +482,12 @@ public class Module implements ClassConstants, CompilationContext
 
         if (compiler.optimizeGlobals) {
             code.moreflags |= org.python.core.PyTableCode.CO_OPTIMIZED;
+        }
+        if (compiler.my_scope.generator) {
+            code.moreflags |= org.python.core.PyTableCode.CO_GENERATOR;
+        }
+        if (cflags != null && cflags.generator_allowed) {
+            code.moreflags |= org.python.core.PyTableCode.CO_GENERATOR_ALLOWED;
         }
 
         code.module = this;

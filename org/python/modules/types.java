@@ -30,6 +30,8 @@ public class types implements ClassDictInit {
         dict.__setitem__("FrameType", PyJavaClass.lookup(PyFrame.class));
         dict.__setitem__("FunctionType",
                          PyJavaClass.lookup(PyFunction.class));
+        dict.__setitem__("GeneratorType",
+                         PyJavaClass.lookup(PyGenerator.class));
         dict.__setitem__("InstanceType",
                          PyJavaClass.lookup(PyInstance.class));
         dict.__setitem__("IntType", PyJavaClass.lookup(PyInteger.class));

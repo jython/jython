@@ -27,6 +27,8 @@ public class PyTableCode extends PyCode
     final public static int CO_VARARGS        = 0x0004;
     final public static int CO_VARKEYWORDS    = 0x0008;
     final public static int CO_NESTED         = 0x0010;
+    final public static int CO_GENERATOR      = 0x0020;
+    final public static int CO_GENERATOR_ALLOWED = 0x1000;
     final public static int CO_FUTUREDIVISION = 0x2000;
 
 
@@ -219,6 +221,8 @@ public class PyTableCode extends PyCode
                 e.traceback = tb;
             }
 
+            frame.f_lasti = -1;
+
             if (frame.tracefunc != null) {
                 frame.tracefunc.traceException(frame, e);
             }
@@ -254,6 +258,9 @@ public class PyTableCode extends PyCode
             return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults,
                         closure);
         PyFrame frame = new PyFrame(this, globals);
+        if ((co_flags & CO_GENERATOR) != 0) {
+            return new PyGenerator(frame, closure);
+        }
         return call(frame, closure);
     }
 
@@ -265,6 +272,9 @@ public class PyTableCode extends PyCode
                         Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
+        if ((co_flags & CO_GENERATOR) != 0) {
+            return new PyGenerator(frame, closure);
+        }
         return call(frame, closure);
     }
 
@@ -277,6 +287,9 @@ public class PyTableCode extends PyCode
         PyFrame frame = new PyFrame(this, globals);
         frame.f_fastlocals[0] = arg1;
         frame.f_fastlocals[1] = arg2;
+        if ((co_flags & CO_GENERATOR) != 0) {
+            return new PyGenerator(frame, closure);
+        }
         return call(frame, closure);
     }
 
@@ -291,6 +304,9 @@ public class PyTableCode extends PyCode
         frame.f_fastlocals[0] = arg1;
         frame.f_fastlocals[1] = arg2;
         frame.f_fastlocals[2] = arg3;
+        if ((co_flags & CO_GENERATOR) != 0) {
+            return new PyGenerator(frame, closure);
+        }
         return call(frame, closure);
     }
 
@@ -401,6 +417,9 @@ public class PyTableCode extends PyCode
             if (extra_keywords != null) {
                 actual_args[nargs-1] = extra_keywords;
             }
+        }
+        if ((co_flags & CO_GENERATOR) != 0) {
+            return new PyGenerator(my_frame, closure);
         }
         return call(my_frame, closure);
     }

@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier;
 import java.util.Hashtable;
 import org.python.core.PyObject;
 import org.python.core.PyProxy;
+import org.python.core.Py;
 
 public class JavaMaker extends ProxyMaker implements ClassConstants
 {
@@ -46,7 +47,7 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
             int n = list.length;
             code.iconst(n);
             code.anewarray(code.pool.Class("java/lang/String"));
-            int strings = code.getLocal();
+            int strings = code.getLocal("[java/lang/String");
             code.astore(strings);
             for(int i=0; i<n; i++) {
                 code.aload(strings);

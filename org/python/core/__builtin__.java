@@ -217,6 +217,11 @@ public class __builtin__ implements ClassDictInit
         return  Py.compile_flags(data,filename,type,Py.getCompilerFlags());
     }
 
+    public static PyCode compile(String data, String filename, String type,
+                                 int flags, boolean inherit) {
+        return  Py.compile_flags(data,filename,type,new CompilerFlags(flags));
+    }
+
     public static PyComplex complex(PyObject real, PyObject imag) {
         if (real instanceof PyString)
             throw Py.TypeError("complex() can't take second arg" + 
@@ -505,7 +510,7 @@ public class __builtin__ implements ClassDictInit
             System.arraycopy(t.list, 0, a, 0, a.length);
             return new PyList(a);
         }
-        return new PyList(make_array(o));
+        return new PyList(o);
     }
 
     public static PyObject locals() {

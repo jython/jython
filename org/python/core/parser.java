@@ -109,6 +109,8 @@ public class parser {
         } catch (IOException exc) { }
 
         PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader));
+        if (cflags != null)
+            g.token_source.generator_allowed = cflags.generator_allowed;
         modType node = null;
         try {
             if (kind.equals("eval")) {

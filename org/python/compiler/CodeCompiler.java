@@ -53,6 +53,8 @@ public class CodeCompiler extends Visitor
     public String className;
 
     public Stack continueLabels, breakLabels, finallyLabels;
+    public Stack inFinallyLabels;
+    public Vector yields = new Vector();
 
     /* break/continue finally's level.
      * This is the lowest level in finallyLabels which should
@@ -72,6 +74,7 @@ public class CodeCompiler extends Visitor
         continueLabels = new Stack();
         breakLabels = new Stack();
         finallyLabels = new Stack();
+        inFinallyLabels = new Stack();
         this.print_results = print_results;
     }
 
@@ -88,8 +91,21 @@ public class CodeCompiler extends Visitor
         code.aload(1);
     }
 
+
+    int f_lasti;
+
+    public void setLastI(int idx) throws Exception {
+        if (mrefs.f_lasti == 0) {
+            mrefs.f_lasti = code.pool.Fieldref(
+                        "org/python/core/PyFrame", "f_lasti", "I");
+        }
+        loadFrame();
+        code.iconst(idx);
+        code.putfield(mrefs.f_lasti);
+    }
+
     public int storeTop() throws Exception {
-        int tmp = code.getLocal();
+        int tmp = code.getLocal("org/python/core/PyObject");
         code.astore(tmp);
         return tmp;
     }
@@ -126,8 +142,7 @@ public class CodeCompiler extends Visitor
     public void set(SimpleNode node, int tmp) throws Exception {
         //System.out.println("tmp: "+tmp);
         if (inSet) {
-            System.out.println("recurse set: "+tmp+", "+temporary+", "+
-                               code.getLocal()+", "+code.getLocal());
+            System.out.println("recurse set: "+tmp+", "+temporary);
         }
         temporary = tmp;
         visit(node);
@@ -136,18 +151,18 @@ public class CodeCompiler extends Visitor
 
     private void saveAugTmps(SimpleNode node, int count) throws Exception {
         if (count >= 4) {
-            augtmp4 = code.getLocal();
+            augtmp4 = code.getLocal("org/python/core/PyObject");
             code.astore(augtmp4);
         }
         if (count >= 3) {
-            augtmp3 = code.getLocal();
+            augtmp3 = code.getLocal("org/python/core/PyObject");
             code.astore(augtmp3);
         }
         if (count >= 2) {
-            augtmp2 = code.getLocal();
+            augtmp2 = code.getLocal("org/python/core/PyObject");
             code.astore(augtmp2);
         }
-        augtmp1 = code.getLocal();
+        augtmp1 = code.getLocal("org/python/core/PyObject");
         code.astore(augtmp1);
 
         code.aload(augtmp1);
@@ -204,6 +219,8 @@ public class CodeCompiler extends Visitor
         } else {
             if (exit == null) {
                 //System.out.println("no exit");
+                setLastI(-1);
+
                 getNone();
                 code.areturn();
             }
@@ -244,6 +261,10 @@ public class CodeCompiler extends Visitor
     }
 
     public Object visitExpression(Expression node) throws Exception {
+        if (my_scope.generator && node.body != null) {
+            module.error("'return' with argument inside generator",
+                         true, node);
+        }
         return visitReturn(new Return(node.body, node), true);
     }
 
@@ -263,7 +284,7 @@ public class CodeCompiler extends Visitor
             }
             code.getstatic(mrefs.EmptyObjects);
         } else {
-            int tmp = code.getLocal();
+            int tmp = code.getLocal("[org/python/core/PyObject");
             code.iconst(n);
             code.anewarray(code.pool.Class("org/python/core/PyObject"));
             code.astore(tmp);
@@ -302,7 +323,7 @@ public class CodeCompiler extends Visitor
             "org/python/core/PyFrame", "getclosure", "(I)" + $pyObj);
         }
 
-        int tmp = code.getLocal();
+        int tmp = code.getLocal("[org/python/core/PyObject");
         code.iconst(n);
         code.anewarray(code.pool.Class("org/python/core/PyObject"));
         code.astore(tmp);
@@ -498,7 +519,7 @@ public class CodeCompiler extends Visitor
         }
 
         for (int i = finallyLabels.size() - 1; i >= bcfLevel; i--) {
-            code.jsr((Label)finallyLabels.elementAt(i));
+            doFinallyPart((InFinally)finallyLabels.elementAt(i));
         }
 
         code.goto_((Label)breakLabels.peek());
@@ -512,16 +533,120 @@ public class CodeCompiler extends Visitor
         }
 
         for (int i = finallyLabels.size() - 1; i >= bcfLevel; i--) {
-            code.jsr((Label)finallyLabels.elementAt(i));
+            doFinallyPart((InFinally)finallyLabels.elementAt(i));
         }
-
         code.goto_((Label)continueLabels.peek());
-        return null;
+        return Exit;
     }
+
+    int yield_count = 0;
+
+    int f_savedlocals;
 
     public Object visitYield(Yield node) throws Exception {
+
+        setline(node);
+        if (!fast_locals) {
+            throw new ParseException("'yield' outside function", node);
+        }
+
+        if (!finallyLabels.empty()) {
+            throw new ParseException("'yield' not allowed in a 'try' "+
+                                     "block with a 'finally' clause", node);
+        }
+        
+
+
+        InFinally inFinally = null;
+        if (inFinallyLabels.size() > 0)
+            inFinally = (InFinally) inFinallyLabels.peek();
+
+
+        if (inFinally == null) {
+            saveLocals();
+            visit(node.value);
+            setLastI(++yield_count);
+            code.areturn();
+            Label restart = code.getLabel();
+            yields.addElement(restart);
+            restart.setPosition();
+            restoreLocals();
+        } else {
+            saveLocals();
+            visit(node.value);
+            code.areturn();
+            code.ret(inFinally.retLocal);
+            inFinally.labels[inFinally.cnt++].setPosition();
+            code.stack = 1;
+            code.astore(inFinally.retLocal);
+            restoreLocals();
+        }   
         return null;
     }
+
+    private void restoreLocals() throws Exception {
+        Vector v = code.getActiveLocals();
+
+        loadFrame();
+        if (mrefs.f_savedlocals == 0) {
+            mrefs.f_savedlocals = code.pool.Fieldref(
+                    "org/python/core/PyFrame", "f_savedlocals",
+                    "[Ljava/lang/Object;");
+        }
+        code.getfield(mrefs.f_savedlocals);
+
+        int locals = code.getLocal("[java/lang/Object");
+        code.astore(locals);
+
+        for (int i = 0; i < v.size(); i++) {
+            String type = (String) v.elementAt(i);
+            if (type == null)
+                continue;
+            code.aload(locals);
+            code.iconst(i);
+            code.aaload();
+            code.checkcast(code.pool.Class(type));
+            code.astore(i);
+        }
+        code.freeLocal(locals);
+    }
+
+
+    private void saveLocals() throws Exception {
+        Vector v = code.getActiveLocals();
+//System.out.println("bs:" + bs);
+        code.iconst(v.size());
+        //code.anewarray(code.pool.Class("org/python/core/PyObject"));
+        code.anewarray(code.pool.Class("java/lang/Object"));
+        int locals = code.getLocal("[java/lang/Object");
+        code.astore(locals);
+
+        for (int i = 0; i < v.size(); i++) {
+            String type = (String) v.elementAt(i);
+            if (type == null)
+                continue;
+            code.aload(locals);
+            code.iconst(i);
+            //code.checkcast(code.pool.Class("java/lang/Object"));
+            if (i == 2222) {
+                code.aconst_null();
+            } else
+                code.aload(i);
+            code.aastore();
+        }
+
+        if (mrefs.f_savedlocals == 0) {
+            mrefs.f_savedlocals = code.pool.Fieldref(
+                    "org/python/core/PyFrame", "f_savedlocals",
+                    "[Ljava/lang/Object;");
+        }
+
+        loadFrame();
+        code.aload(locals);
+        code.putfield(mrefs.f_savedlocals);
+        code.freeLocal(locals);
+    }
+
 
     public Object visitReturn(Return node) throws Exception {
         return visitReturn(node, false);
@@ -534,17 +659,25 @@ public class CodeCompiler extends Visitor
         if (!inEval && !fast_locals) {
             throw new ParseException("'return' outside function", node);
         }
+        int tmp = 0;
         if (node.value != null) {
+            if (my_scope.generator)
+                throw new ParseException("'return' with argument " +
+                                         "inside generator", node);
             visit(node.value);
+            tmp = code.getReturnLocal();
+            code.astore(tmp);
+        }
+        for (int i = finallyLabels.size() - 1; i >= 0; i--) {
+            doFinallyPart((InFinally) finallyLabels.elementAt(i));
+        }
+        setLastI(-1);
+
+        if (node.value != null) {
+            code.aload(tmp);
         } else {
             getNone();
         }
-        int tmp = code.getLocal();
-        code.astore(tmp);
-        for (int i = finallyLabels.size() - 1; i >= 0; i--) {
-            code.jsr((Label)finallyLabels.elementAt(i));
-        }
-        code.aload(tmp);
         code.areturn();
         return Exit;
     }
@@ -843,19 +976,15 @@ public class CodeCompiler extends Visitor
         Label start_loop = code.getLabel();
         Label next_loop = code.getLabel();
 
-        int list_tmp = code.getLocal();
-        int iter_tmp = code.getLocal();
-        int expr_tmp = code.getLocal();
+        int iter_tmp = code.getLocal("org/python/core/PyObject");
+        int expr_tmp = code.getLocal("org/python/core/PyObject");
 
         setline(node);
 
         //parse the list
         visit(node.iter);
-        code.astore(list_tmp);
 
         //set up the loop iterator
-
-        code.aload(list_tmp);
         if (mrefs.iter == 0) {
             mrefs.iter = code.pool.Methodref(
                 "org/python/core/PyObject",
@@ -900,7 +1029,6 @@ public class CodeCompiler extends Visitor
 
         break_loop.setPosition();
 
-        code.freeLocal(list_tmp);
         code.freeLocal(iter_tmp);
         code.freeLocal(expr_tmp);
 
@@ -961,20 +1089,36 @@ public class CodeCompiler extends Visitor
         Label start = code.getLabel();
         Label end = code.getLabel();
         Label handlerStart = code.getLabel();
-        Label finallyStart = code.getLabel();
         Label finallyEnd = code.getLabel();
         Label skipSuite = code.getLabel();
 
         Object ret;
 
         // Do protected suite
-        finallyLabels.push(finallyStart);
+        int yieldCount = 0;
+        if (my_scope.generator) {
+            YieldChecker checker = new YieldChecker();
+            checker.visit(node.finalbody);
+            yieldCount = checker.yieldCount;
+        }
+        if (yieldCount > 0) {
+            throw new ParseException("'yield' in finally not yet supported",
+                                     node);
+        }
+
+        InFinally inFinally = new InFinally(yieldCount + 1);
+        
+        finallyLabels.push(inFinally);
+
+        int excLocal = code.getLocal("java/lang/Throwable");
+        code.aconst_null();
+        code.astore(excLocal);
 
         start.setPosition();
         ret = suite(node.body);
         end.setPosition();
         if (ret == null) {
-            code.jsr(finallyStart);
+            doFinallyPart(inFinally);
             code.goto_(finallyEnd);
         }
 
@@ -983,7 +1127,6 @@ public class CodeCompiler extends Visitor
         // Handle any exceptions that get thrown in suite
         handlerStart.setPosition();
         code.stack = 1;
-        int excLocal = code.getLocal();
         code.astore(excLocal);
 
         code.aload(excLocal);
@@ -996,37 +1139,73 @@ public class CodeCompiler extends Visitor
         }
         code.invokestatic(mrefs.add_traceback);
 
-        code.jsr(finallyStart);
+        doFinallyPart(inFinally);
         code.aload(excLocal);
+        code.checkcast(code.pool.Class("java/lang/Throwable"));
         code.athrow();
 
         // Do finally suite
-        finallyStart.setPosition();
+        inFinally.labels[0].setPosition();
         code.stack = 1;
-        int retLocal = code.getLocal();
-        code.astore(retLocal);
+        inFinally.retLocal = code.getFinallyLocal("ret");
+        code.astore(inFinally.retLocal);
 
         // Trick the JVM verifier into thinking this code might not
         // be executed
-        code.iconst(1);
-        code.ifeq(skipSuite);
+        //code.iconst(1);
+        //code.ifeq(skipSuite);
+
+        inFinallyLabels.push(inFinally);
 
         // The actual finally suite is always executed (since 1 != 0)
         ret = suite(node.finalbody);
 
-        // Fake jump to here to pretend this could always happen
-        skipSuite.setPosition();
+        inFinallyLabels.pop();
 
-        code.ret(retLocal);
+        // Fake jump to here to pretend this could always happen
+        //skipSuite.setPosition();
+
+        code.ret(inFinally.retLocal);
+        code.freeFinallyLocal(inFinally.retLocal);
+
         finallyEnd.setPosition();
 
-        code.freeLocal(retLocal);
         code.freeLocal(excLocal);
         code.addExceptionHandler(start, end, handlerStart,
                                  code.pool.Class("java/lang/Throwable"));
 
         // According to any JVM verifiers, this code block might not return
         return null;
+    }
+
+    private void doFinallyPart(InFinally inFinally) throws Exception {
+        if (inFinally.labels.length == 1) {
+            code.jsr(inFinally.labels[0]);
+        } else {
+            Label endOfFinal = code.getLabel();
+            for (int i = 0; i < inFinally.labels.length; i++) {
+                setLastI(++yield_count);
+                code.jsr(inFinally.labels[i]);
+                
+                //code.areturn();
+                if (i < inFinally.labels.length-1) {
+                    code.goto_(endOfFinal);
+                    Label restart = code.getLabel();
+                    yields.addElement(restart);
+                    restart.setPosition();
+                }
+            }
+            endOfFinal.setPosition();
+        }
+    }
+
+    class YieldChecker extends Visitor {
+        public int yieldCount = 0;
+
+        public Object visitYield(Yield node) throws Exception {
+            yieldCount++;
+            return super.visitYield(node);
+        }
     }
 
     public int set_exception;
@@ -1057,7 +1236,8 @@ public class CodeCompiler extends Visitor
         }
         code.invokestatic(mrefs.set_exception);
 
-        int exc = storeTop();
+        int exc = code.getFinallyLocal("java/lang/Throwable");
+        code.astore(exc);
 
         if (node.orelse == null) {
             //No else clause to worry about
@@ -1074,7 +1254,7 @@ public class CodeCompiler extends Visitor
             else_end.setPosition();
         }
 
-        code.freeLocal(exc);
+        code.freeFinallyLocal(exc);
         code.addExceptionHandler(start, end, handler_start,
                                  code.pool.Class("java/lang/Throwable"));
         return null;
@@ -1122,8 +1302,8 @@ public class CodeCompiler extends Visitor
 
 
     public Object visitCompare(Compare node) throws Exception {
-        int tmp1 = code.getLocal();
-        int tmp2 = code.getLocal();
+        int tmp1 = code.getLocal("org/python/core/PyObject");
+        int tmp2 = code.getLocal("org/python/core/PyObject");
         int op;
 
         if (mrefs.nonzero == 0) {
@@ -1291,6 +1471,7 @@ public class CodeCompiler extends Visitor
         temporary = storeTop();
         augmode = expr_contextType.Store;
         visit(node.target);
+        code.freeLocal(temporary);
 
         return null;
     }
@@ -1301,7 +1482,7 @@ public class CodeCompiler extends Visitor
     {
         c.iconst(n);
         c.anewarray(c.pool.Class("java/lang/String"));
-        int strings = c.getLocal();
+        int strings = c.getLocal("[java/lang/String");
         c.astore(strings);
         for (int i=0; i<n; i++) {
             c.aload(strings);
@@ -1673,7 +1854,7 @@ public class CodeCompiler extends Visitor
         code.iconst(nodes.length);
         code.invokestatic(mrefs.unpackSequence);
 
-        int tmp = code.getLocal();
+        int tmp = code.getLocal("[org/python/core/PyObject");
         code.astore(tmp);
 
         for (int i = 0; i < nodes.length; i++) {
@@ -1755,8 +1936,6 @@ public class CodeCompiler extends Visitor
 
         code.dup();
 
-        int tmp_list = storeTop();
-        code.aload(tmp_list);
         code.ldc("append");
 
         if (mrefs.getattr == 0) {
@@ -1765,8 +1944,9 @@ public class CodeCompiler extends Visitor
                 "(" + $str + ")" + $pyObj);
         }
         code.invokevirtual(mrefs.getattr);
-        String tmp_append = "_[" + (++list_comprehension_count) + "]";
 
+        String tmp_append = "_[" + (++list_comprehension_count) + "]";
+            
         set(new Name(tmp_append, Name.Store, node));
 
         stmtType n = new Expr(new Call(new Name(tmp_append, Name.Load, node), 
@@ -2140,5 +2320,19 @@ public class CodeCompiler extends Visitor
 
     protected Object unhandled_node(SimpleNode node) throws Exception {
         throw new Exception("Unhandled node " + node);
+    }
+
+
+    class InFinally {
+        public int retLocal;
+        public Label[] labels;
+        public int cnt = 1;
+    
+        public InFinally(int labelcnt) {
+            labels = new Label[labelcnt];
+            for (int i = 0; i < labelcnt; i++) {
+                labels[i] = code.getLabel();
+            }
+        }
     }
 }

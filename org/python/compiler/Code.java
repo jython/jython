@@ -27,11 +27,13 @@ public class Code extends Attribute
     public DataOutputStream code;
     ByteArrayOutputStream stream;
     String sig;
-    boolean locals[];
+    String locals[];
     int nlocals;
+    int argcount;
     int att_name;
     Vector labels, exceptions;
     LineNumberTable linenumbers;
+    int returnLocal;
 
     public Label getLabel() {
         Label l = new Label(this);
@@ -56,10 +58,8 @@ public class Code extends Attribute
         code = new DataOutputStream(stream);
         nlocals = -ConstantPool.sigSize(sig, false);
         if (!isStatic) nlocals = nlocals+1;
-        locals = new boolean[nlocals+128];
-        for(int i=0; i<nlocals; i++) {
-            locals[i] = true;
-        }
+        argcount = nlocals;
+        locals = new String[nlocals+128];
         labels = new Vector();
         exceptions = new Vector();
         try {
@@ -69,28 +69,60 @@ public class Code extends Attribute
         }
     }
 
-    public int getLocal() {
+    public int getLocal(String type) {
         //Could optimize this to skip arguments?
-        for(int l = 0; l<nlocals; l++) {
-            if (!locals[l]) {
-                locals[l] = true;
+        for(int l = argcount; l<nlocals; l++) {
+            if (locals[l] == null) {
+                locals[l] = type;
                 return l;
             }
         }
         if (nlocals >= locals.length) {
-            boolean[] new_locals = new boolean[locals.length*2];
+            String[] new_locals = new String[locals.length*2];
             System.arraycopy(locals, 0, new_locals, 0, locals.length);
             locals = new_locals;
         }
-        locals[nlocals] = true;
+        locals[nlocals] = type;
         nlocals += 1;
         return nlocals-1;
     }
 
     public void freeLocal(int l) {
-        locals[l] = false;
+        if (locals[l] == null)
+            System.out.println("Double free:" + l);
+        locals[l] = null;
     }
 
+
+    java.util.BitSet finallyLocals = new java.util.BitSet();
+
+    public int getFinallyLocal(String type) {
+        int l = getLocal(type);
+        finallyLocals.set(l);
+        return l;
+    }
+
+    public void freeFinallyLocal(int l) {
+        finallyLocals.clear(l);
+        freeLocal(l);
+    }
+
+    public int getReturnLocal() {
+        if (returnLocal == 0)
+            returnLocal = getLocal("return");
+        return returnLocal;
+    }
+
+    public Vector getActiveLocals() {
+        Vector ret = new Vector();
+        ret.setSize(nlocals);
+        for (int l = argcount; l<nlocals; l++) {
+            if (l == returnLocal || finallyLocals.get(l))
+                continue;
+            ret.setElementAt(locals[l], l);
+        }
+        return ret;
+    }
 
     public void addExceptionHandler(Label begin, Label end,
                                     Label handler, int exc)
@@ -510,7 +542,7 @@ public class Code extends Attribute
         int position = size();
         push(-1);
         code.writeByte(170);
-        for(int j=0; j<((3-position)%4); j++) code.writeByte(0);
+        for(int j=0; j < 3-(position%4); j++) code.writeByte(0);
         def.setBranch(position, 4);
         code.writeInt(low);
         code.writeInt(labels.length-1);

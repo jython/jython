@@ -261,7 +261,7 @@ public class ProxyMaker implements ClassConstants
         else {
             code.iconst(parameters.length);
             code.anewarray(code.pool.Class("java/lang/Object"));
-            int array = code.getLocal();
+            int array = code.getLocal("[org/python/core/PyObject");
             code.astore(array);
 
             int local_index;
@@ -343,7 +343,7 @@ public class ProxyMaker implements ClassConstants
             start = code.getLabel();
             end = code.getLabel();
             jcallName = "_jcallexc";
-            instLocal = code.getLocal();
+            instLocal = code.getLocal("org/python/core/PyObject");
             code.astore(instLocal);
             start.setPosition();
             code.aload(instLocal);
@@ -428,7 +428,7 @@ public class ProxyMaker implements ClassConstants
                 handlerStart = code.getLabel();
                 handlerStart.setPosition();
                 code.stack = 1;
-                int excLocal = code.getLocal();
+                int excLocal = code.getLocal("java/lang/Throwable");
                 code.astore(excLocal);
 
                 code.aload(excLocal);
@@ -448,7 +448,7 @@ public class ProxyMaker implements ClassConstants
                 handlerStart = code.getLabel();
                 handlerStart.setPosition();
                 code.stack = 1;
-                int excLocal = code.getLocal();
+                int excLocal = code.getLocal("java/lang/Throwable");
                 code.astore(excLocal);
                 code.aload(instLocal);
                 code.aload(excLocal);
@@ -490,7 +490,7 @@ public class ProxyMaker implements ClassConstants
         code.ldc(name);
 
         if (!isAbstract) {
-            int tmp = code.getLocal();
+            int tmp = code.getLocal("org/python/core/PyObject");
             int jfindattr = code.pool.Methodref(
                 "org/python/core/Py",
                 "jfindattr",
@@ -781,8 +781,6 @@ public class ProxyMaker implements ClassConstants
         doConstants();
         addClassDictInit();
     }
-
-
 
     public static String makeProxy(Class superclass, OutputStream ostream)
         throws Exception

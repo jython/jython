@@ -57,7 +57,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     public Object visitInteractive(Interactive node) throws Exception {
         beginScope("<single-top>", TOPSCOPE, node, null);
-        visit(node.body);
+        suite(node.body);
         endScope();
         return null;
     }
@@ -231,6 +231,14 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     public Object visitListComp(ListComp node) throws Exception {
         String tmp = "_[" + (++cur.list_comprehension_count) + "]";
         cur.addBound(tmp);
+        traverse(node);
+        return null;
+    }
+
+
+    public Object visitYield(Yield node) throws Exception {
+        cur.generator = true;
+        cur.yield_count++;
         traverse(node);
         return null;
     }

@@ -53,6 +53,8 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public boolean unqual_exec;
     public boolean exec;
     public boolean from_import_star;
+    public boolean generator;
+    public int yield_count;
 
     public ArgListCompiler ac;
 
@@ -229,5 +231,10 @@ public class ScopeInfo extends Object implements ScopeConstants {
             }
         }
 
+    }
+
+    public String toString() {
+        return "ScopeInfo[" + scope_name + " " + kind + "]@" +
+                System.identityHashCode(this);
     }
 }

@@ -9,6 +9,7 @@ import org.python.parser.ast.Module;
 public class Future extends Object implements PythonGrammarTreeConstants {
 
     private boolean division;
+    private boolean generators;
 
     private static final String FUTURE = "__future__";
 
@@ -28,6 +29,10 @@ public class Future extends Object implements PythonGrammarTreeConstants {
             }
             if (feature.equals("division")) {
                 division = true;
+                continue;
+            }
+            if (feature.equals("generators")) {
+                generators = true;
                 continue;
             }
             throw new ParseException("future feature "+feature+
@@ -68,6 +73,9 @@ public class Future extends Object implements PythonGrammarTreeConstants {
 
         if (cflags != null) {
             cflags.division      = cflags.division      ||  division;
+        }
+        if (cflags != null) {
+            cflags.generator_allowed = cflags.generator_allowed || generators;
         }
     }
 

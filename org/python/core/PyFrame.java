@@ -18,6 +18,8 @@ public class PyFrame extends PyObject
     public PyCell[] f_env; // nested scopes: cell + free env
     public int f_ncells;
     public int f_nfreevars;
+    public int f_lasti;
+    public Object[] f_savedlocals;
 
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
