@@ -13,6 +13,7 @@
  * other compatibility work.
  */
 
+
 package org.python.modules.sre;
 
 import java.util.*;
@@ -131,6 +132,7 @@ public class PatternObject extends PyObject {
         Vector list = new Vector();
 
         while (state.start <= state.end) {
+            state.state_reset();
             state.ptr = state.start;
             int status = state.SRE_SEARCH(code, 0);
             if (status > 0) {

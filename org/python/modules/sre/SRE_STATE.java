@@ -13,6 +13,8 @@
  * other compatibility work.
  */
 
+// Last updated to _sre.c: 2.52
+
 package org.python.modules.sre;
 
 import java.util.*;
@@ -54,10 +56,12 @@ public class SRE_STATE {
 
     public static final int SRE_AT_BEGINNING               = 0;
     public static final int SRE_AT_BEGINNING_LINE          = 1;
-    public static final int SRE_AT_BOUNDARY                = 2;
-    public static final int SRE_AT_NON_BOUNDARY            = 3;
-    public static final int SRE_AT_END                     = 4;
-    public static final int SRE_AT_END_LINE                = 5;
+    public static final int SRE_AT_BEGINNING_STRING        = 2;
+    public static final int SRE_AT_BOUNDARY                = 3;
+    public static final int SRE_AT_NON_BOUNDARY            = 4;
+    public static final int SRE_AT_END                     = 5;
+    public static final int SRE_AT_END_LINE                = 6;
+    public static final int SRE_AT_END_STRING              = 7;
 
     public static final int SRE_CATEGORY_DIGIT             = 0;
     public static final int SRE_CATEGORY_NOT_DIGIT         = 1;
@@ -228,6 +232,7 @@ public class SRE_STATE {
 
         switch (at) {
         case SRE_AT_BEGINNING:
+        case SRE_AT_BEGINNING_STRING:
             return ptr == beginning;
 
         case SRE_AT_BEGINNING_LINE:
@@ -238,6 +243,9 @@ public class SRE_STATE {
 
         case SRE_AT_END_LINE:
             return ptr == end || SRE_IS_LINEBREAK(str[ptr]);
+
+        case SRE_AT_END_STRING:
+            return ptr == end;
 
         case SRE_AT_BOUNDARY:
             /* word boundary */
@@ -608,13 +616,13 @@ public class SRE_STATE {
                 /* args: <skip> <pattern> */
                 //TRACE(pidx, ptr, "ASSERT_NOT " + (int) pattern[pidx]);
                 this.ptr = ptr - pattern[pidx + 1];
-                if (this.ptr < this.beginning)
-                    return 0;
-                i = SRE_MATCH(pattern, pidx + 2, level + 1);
-                if (i < 0)
-                    return i;
-                if (i != 0)
-                    return 0;
+                if (this.ptr >= this.beginning) {
+                    i = SRE_MATCH(pattern, pidx + 2, level + 1);
+                    if (i < 0)
+                        return i;
+                    if (i != 0)
+                        return 0;
+                }
                 pidx += pattern[pidx];
                 break;
 
@@ -646,13 +654,14 @@ public class SRE_STATE {
                 /* this operator only works if the repeated item is
                    exactly one character wide, and we're not already
                    collecting backtracking points.  for other cases,
-                   use the MAX_REPEAT operator instead */
+                   use the MAX_REPEAT operator */
 
                 /* <REPEAT_ONE> <skip> <1=min> <2=max> item <SUCCESS> tail */
 
-                //TRACE(pidx, ptr, "REPEAT_ONE " + (int)pattern[pidx+1] + " " + (int)pattern[pidx+2]);
+                int mincount = pattern[pidx+1];
 
-                if (ptr + pattern[pidx+1] > end)
+                //TRACE(pidx, ptr, "REPEAT_ONE " + mincount + " " + (int)pattern[pidx+2]);
+                if (ptr + mincount > end)
                     return 0; /* cannot match */
 
                 this.ptr = ptr;
@@ -668,7 +677,7 @@ public class SRE_STATE {
                    string.  check if the rest of the pattern matches,
                    and backtrack if not. */
 
-                if (count < pattern[pidx+1])
+                if (count < mincount)
                     return 0;
 
                 if (pattern[pidx + pattern[pidx]] == SRE_OP_SUCCESS) {
@@ -681,12 +690,12 @@ public class SRE_STATE {
                        the rest of the pattern cannot possibly match */
                     chr = pattern[pidx + pattern[pidx]+1];
                     for (;;) {
-                        while (count >= pattern[pidx+1] &&
+                        while (count >= mincount && 
                                (ptr >= end || str[ptr] != chr)) {
                             ptr--;
                             count--;
                         }
-                        if (count < pattern[pidx+1])
+                        if (count < mincount)
                             break;
                         this.ptr = ptr;
                         i = SRE_MATCH(pattern, pidx + pattern[pidx], level + 1);
@@ -699,7 +708,7 @@ public class SRE_STATE {
                 } else {
                     /* general case */
                     lastmark = this.lastmark;
-                    while (count >= pattern[pidx+1]) {
+                    while (count >= mincount) {
                         this.ptr = ptr;
                         i = SRE_MATCH(pattern, pidx + pattern[pidx], level + 1);
                         if (i != 0)
@@ -715,7 +724,7 @@ public class SRE_STATE {
 
             case SRE_OP_REPEAT:
                 /* create repeat context.  all the hard work is done
-                   by the UNTIL operator */
+                   by the UNTIL operator (MAX_UNTIL, MIN_UNTIL) */
                 /* <REPEAT> <skip> <1=min> <2=max> item <UNTIL> tail */
 
                 //TRACE(pidx, ptr, "REPEAT " + (int)pattern[pidx+1] + " " + (int)pattern[pidx+2]);
@@ -785,6 +794,7 @@ public class SRE_STATE {
                 if (i != 0)
                     return i;
                 this.repeat = rp;
+                this.ptr = ptr;
                 return 0;
 
             case SRE_OP_MIN_UNTIL:
@@ -797,7 +807,7 @@ public class SRE_STATE {
 
                 count = rp.count + 1;
 
-                //TRACE(pidx, ptr, "MIN_UNTIL " + count);
+                //TRACE(pidx, ptr, "MIN_UNTIL " + count + " " + rp.pidx);
 
                 this.ptr = ptr;
 
@@ -815,20 +825,32 @@ public class SRE_STATE {
 
                 /* see if the tail matches */
                 this.repeat = rp.prev;
-                /* RECURSIVE */
-                i = SRE_MATCH(pattern, pidx, level + 1);
+                if (pattern[rp.pidx + 2] == 65535) {
+                    /* unbounded repeat */
+                    for (;;) {
+                        i = SRE_MATCH(pattern, pidx, level + 1);
+                        if (i != 0 || ptr >= end)
+                            break;
+                        this.ptr = ++ptr;
+                    }
+                } else
+                    i = SRE_MATCH(pattern, pidx, level + 1);
                 if (i != 0)
                     return i;
+
+                this.ptr = ptr;
                 this.repeat = rp;
 
                 if (count >= pattern[rp.pidx+2] && pattern[rp.pidx+2] != 65535)
                     return 0;
 
                 rp.count = count;
+                /* RECURSIVE */
                 i = SRE_MATCH(pattern, rp.pidx + 3, level + 1);
                 if (i != 0)
                     return i;
                 rp.count = count - 1;
+                this.ptr = ptr;
                 return 0;
 
 
