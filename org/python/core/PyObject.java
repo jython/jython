@@ -288,6 +288,11 @@ public class PyObject implements java.io.Serializable {
 	return __call__(new PyObject[] {arg0, arg1, arg2, arg3}, Py.NoKeywords);
     }
 	
+	public boolean isCallable() { return __findattr__("__call__") != null; }
+	public boolean isMappingType() { return true; }
+	public boolean isNumberType() { return true; }
+	public boolean isSequenceType() { return true; }
+	
     /* The basic functions to implement a mapping */
 	
     /**
@@ -369,6 +374,16 @@ public class PyObject implements java.io.Serializable {
     }
     public void __delslice__(PyObject start, PyObject stop, PyObject step) {
 	throw Py.AttributeError("__delslice__");
+    }
+
+    public PyObject __getslice__(PyObject start, PyObject stop) {
+	return __getslice__(start, stop, Py.One);
+    }
+    public void __setslice__(PyObject start, PyObject stop, PyObject value) {
+	__setslice__(start, stop, Py.One, value);
+    }
+    public void __delslice__(PyObject start, PyObject stop) {
+	__delslice__(start, stop, Py.One);
     }
 
     /**
@@ -743,18 +758,22 @@ public class PyObject implements java.io.Serializable {
     }
 
     public final PyObject _in(PyObject o) {
+        return Py.newBoolean(o.__contains__(this));
+    }
+    
+    public boolean __contains__(PyObject o) {
 	PyObject tmp;
 	int i = 0;
 
-	while ((tmp = o.__finditem__(i++)) != null) {
-	    if (_eq(tmp).__nonzero__()) return Py.One;
+	while ((tmp = __finditem__(i++)) != null) {
+	    if (o._eq(tmp).__nonzero__()) return true;
 	}
 
-	return Py.Zero;
+	return false;
     }
 
     public final PyObject _notin(PyObject o) {
-	return _in(o).__not__();
+	return Py.newBoolean(!o.__contains__(this));
     }
 	
     /**

@@ -75,6 +75,8 @@ public class PyBuiltinFunctionSet extends PyObject {
                 return __call__(args[0], args[1]);
             case 3:
                 return __call__(args[0], args[1], args[2]);
+            case 4:
+                return __call__(args[0], args[1], args[2], args[3]);
             default:
                 return fancyCall(args);
         }
@@ -94,5 +96,9 @@ public class PyBuiltinFunctionSet extends PyObject {
 
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         throw argCountError(3);
+    }    
+    
+    public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3, PyObject arg4) {
+        throw argCountError(4);
     }
 }
