@@ -18,4 +18,8 @@ public class PyNone extends PySingleton {
 	    return Py.NoConversion;
 	return null;
     }
+
+    public String safeRepr() {
+	return "'None' object";
+    }
 }
