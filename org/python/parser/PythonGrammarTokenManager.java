@@ -2418,25 +2418,23 @@ static final long[] jjtoSpecial = {
 static final long[] jjtoMore = {
    0x0L, 0xff8780000000L, 
 };
-private ASCII_CharStream input_stream;
+private CharStream input_stream;
 private final int[] jjrounds = new int[52];
 private final int[] jjstateSet = new int[104];
 StringBuffer image;
 int jjimageLen;
 int lengthOfMatch;
 protected char curChar;
-public PythonGrammarTokenManager(ASCII_CharStream stream)
+public PythonGrammarTokenManager(CharStream stream)
 {
-   if (ASCII_CharStream.staticFlag)
-      throw new Error("ERROR: Cannot use a static CharStream class with a non-static lexical analyzer.");
    input_stream = stream;
 }
-public PythonGrammarTokenManager(ASCII_CharStream stream, int lexState)
+public PythonGrammarTokenManager(CharStream stream, int lexState)
 {
    this(stream);
    SwitchTo(lexState);
 }
-public void ReInit(ASCII_CharStream stream)
+public void ReInit(CharStream stream)
 {
    jjmatchedPos = jjnewStateCnt = 0;
    curLexState = defaultLexState;
@@ -2450,7 +2448,7 @@ private final void ReInitRounds()
    for (i = 52; i-- > 0;)
       jjrounds[i] = 0x80000000;
 }
-public void ReInit(ASCII_CharStream stream, int lexState)
+public void ReInit(CharStream stream, int lexState)
 {
    ReInit(stream);
    SwitchTo(lexState);
@@ -2661,7 +2659,7 @@ final void SkipLexicalActions(Token matchedToken)
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
             if (parens == 0) {
                 indent = 0;
                 input_stream.backup(1);
@@ -2675,7 +2673,7 @@ final void SkipLexicalActions(Token matchedToken)
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
             indent = (indent/8+1)*8;
             if (indent == indentation[level])
                 SwitchTo(INDENTATION_UNCHANGED);
@@ -2686,7 +2684,7 @@ final void SkipLexicalActions(Token matchedToken)
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
             indent += 1;
             if (indent == indentation[level])
                 SwitchTo(INDENTATION_UNCHANGED);
@@ -2697,7 +2695,7 @@ final void SkipLexicalActions(Token matchedToken)
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
             indent = 0;
             if (indent == indentation[level])
                 SwitchTo(INDENTATION_UNCHANGED);
@@ -2708,7 +2706,7 @@ final void SkipLexicalActions(Token matchedToken)
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
             if (parens == 0 && single_input && indent==0) {
                 //System.out.println("force newline");
                 //backup a character!
@@ -2729,7 +2727,7 @@ final void SkipLexicalActions(Token matchedToken)
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
                                                    indent = 0;
          break;
       default :
@@ -2745,7 +2743,7 @@ final void MoreLexicalActions()
          if (image == null)
               image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen)));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen)));
+            image.append(input_stream.GetSuffix(jjimageLen));
          jjimageLen = 0;
                            image.setLength(image.length()-3);
          break;
@@ -2753,7 +2751,7 @@ final void MoreLexicalActions()
          if (image == null)
               image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen)));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen)));
+            image.append(input_stream.GetSuffix(jjimageLen));
          jjimageLen = 0;
                            image.setLength(image.length()-2);
          break;
@@ -2761,7 +2759,7 @@ final void MoreLexicalActions()
          if (image == null)
               image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen)));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen)));
+            image.append(input_stream.GetSuffix(jjimageLen));
          jjimageLen = 0;
         int l = image.length();
         image.setLength(l-1);
@@ -2771,7 +2769,7 @@ final void MoreLexicalActions()
          if (image == null)
               image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen)));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen)));
+            image.append(input_stream.GetSuffix(jjimageLen));
          jjimageLen = 0;
              image.setCharAt(image.length()-1, '\n');
          break;
@@ -2787,14 +2785,14 @@ final void TokenLexicalActions(Token matchedToken)
         if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
                               matchedToken.kind = NEWLINE;
          break;
       case 8 :
         if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
             Token t1 = matchedToken;
             //System.out.println("final_newline: "+level);
             t1.kind = DEDENT;
@@ -2806,7 +2804,7 @@ final void TokenLexicalActions(Token matchedToken)
         if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
             if (indent > indentation[level]) {
                 level++;
                 indentation[level] = indent;
@@ -2873,28 +2871,28 @@ final void TokenLexicalActions(Token matchedToken)
         if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
     matchedToken.image = image.toString();
          break;
       case 100 :
         if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
     matchedToken.image = image.toString();
          break;
       case 101 :
         if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
     matchedToken.image = image.toString();
          break;
       case 102 :
         if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
-            image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
+            image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
     matchedToken.image = image.toString();
          break;
       default : 
