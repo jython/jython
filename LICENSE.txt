@@ -1,0 +1,169 @@
+JPython (Version 1.1.x)
+CNRI LICENSE AGREEMENT
+
+IMPORTANT: PLEASE READ THE FOLLOWING
+AGREEMENT CAREFULLY.
+SUBMITTING THE REQUIRED INFORMATION AND
+CLICKING ON THE BUTTON WHERE INDICATED
+BELOW CONSTITUTES YOUR ACKNOWLEDGMENT
+THAT YOU HAVE READ AND AGREED TO THE TERMS
+AND CONDITIONS OF THIS AGREEMENT. THE
+JPYTHON SOFTWARE IDENTIFIED BELOW WILL BE
+RELEASED TO YOU WHEN THE REQUIRED
+INFORMATION IS RECEIVED. THIS AGREEMENT
+WILL BE EFFECTIVE BETWEEN YOU AND CNRI AS OF
+THE DATE OF RELEASE TO YOU OF THE JPYTHON
+SOFTWARE.
+
+1. The Corporation for National Research Initiatives
+("CNRI"), a District of Columbia corporation having a place
+of business at 1895 Preston White Drive, Reston, VA 20191,
+desiring to encourage the wide dissemination of the following
+computer program and documentation ("Software"), provides
+Licensee identified below ("Licensee") with the Software in
+binary and source code form, subject to the terms and
+conditions of this Agreement:
+* JPython, Version 1.1.x, where x is any integer
+
+2. CNRI owns the Software and copyrights therein. Except as
+otherwise provided in paragraph 8 below, CNRI hereby grants
+Licensee a non-exclusive, non-transferable, royalty-free,
+worldwide license to reproduce, analyze, test, perform and/or
+display publicly, distribute, prepare derivative works and
+otherwise use the Software, provided, however, that CNRI's
+License Agreement, and CNRI's notice of copyright, i.e.,
+"Copyright (c) 1998 Corporation for National Research
+Initiatives; All Rights Reserved," are both retained in the
+Software alone or in any derivative version prepared by
+Licensee. Alternatively, in lieu of CNRI's License Agreement,
+Licensee may substitute the following text, provided,
+however, that such text is displayed prominently in the
+Software alone or in any derivative version prepared by
+Licensee:
+    JPython (Version 1.0.x) is made available subject to the
+    terms and conditions in CNRI's License Agreement. This
+    Agreement may be located on the Internet using the following
+    unique, persistent identifier in URN format: hdl:1895.22/1002.
+    The Handle System can be used to resolve this identifier to
+    access the CNRI License Agreement on the Internet. For
+    information about using the Handle System see the
+    documentation at http://www.handle.net
+
+3. In the event Licensee, at its sole cost and expense, uses the
+Software to prepare a derivative work that is based on or
+incorporates the Software or any part thereof, and wants to
+make the derivative work available to the public for
+commercial or noncommercial purposes, or uses the software
+in this derivative form to provide a service to the public, then
+Licensee hereby agrees: (i) to indicate in any such work, in a
+prominently visible way, the specific modifications made to
+CNRI's Software; (ii) not to introduce deliberately any
+modifications where there is reason to believe they will be
+harmful to other users and their systems; and (iii) to notify
+CNRI of any release to the public of Licensee's derivative
+version, or any service offered to the public by Licensee based
+thereon.
+
+4. Licensee agrees to assume full responsibility for the sale
+and other use of the Software in Licensee's derivative version,
+and Licensee expressly agrees to indemnify and hold harmless
+CNRI, its officers, employees and agents, from and against
+any and all claims, lawsuits and causes of action (including
+reasonable attorneys' fees and related costs) by third parties,
+including but not limited to personal injury, property damage,
+or damage or loss due to infringement of any other rights
+which result to such third parties, directly or indirectly, from
+Licensee's sale or use of the Software or Licensee's derivative
+versions.
+
+5. Licensee agrees to share with CNRI any bug fixes, patches,
+ports to other platforms, minor corrections and the like made
+by Licensee to the Software. Licensee hereby agrees and
+acknowledges that any such changes shall be deemed free of
+any claims under copyright, patent or other rights or interests
+and that CNRI may reproduce, disseminate and otherwise use
+the changes as part of the Software at no cost to CNRI or its
+licensed users, and to authorize others to do so. CNRI may, at
+its sole discretion, decide whether or not to incorporate any
+such changes in the Software.
+
+6. In the installation, running or other permitted use of the
+Software provided to Licensee under this Agreement, CNRI
+has no objection if Licensee makes use of computer programs
+owned by others, provided, however, that such use has been
+licensed and Licensee complies with the terms and conditions
+of any license agreements accompanying such programs.
+Licensee hereby acknowledges that CNRI shall not be deemed
+a party to or otherwise subject to any obligations of Licensee
+to third parties. CNRI does not represent that the Software will
+operate in an uninterrupted manner or in combination with
+other computer programs.
+
+7. Licensee may not use CNRI's trademarks or trade name,
+including JPython or CNRI, in a
+trademark sense to endorse or promote products or services of
+Licensee, or any third party. Licensee may use the mark
+JPython in connection with Licensee's derivative versions that
+are
+based on or incorporate the Software, but only in the form
+"JPython-based_____________,"
+or equivalent.
+
+8. The Software contains OROMatcher regular expression
+software from ORO, Inc. Copyright 1997 by ORO, Inc.
+("ORO software"). OROMatcher (TM) is a trademark of
+Original Reusable Objects, Inc. Except as permitted by
+applicable law and this Agreement, Licensee may not
+decompile, reverse engineer, disassemble, or modify the ORO
+software provided herein. Licensee acknowledges that
+redistribution of the ORO software separate from JPython or
+direct use of the ORO software interfaces requires a separate
+license from ORO, Inc. http://www.oroinc.com/
+
+9. CNRI is making the Software available to Licensee on an
+"AS IS" basis. CNRI MAKES NO REPRESENTATIONS OR
+WARRANTIES, EXPRESS OR IMPLIED. BY WAY OF
+EXAMPLE, BUT NOT LIMITATION, CNRI MAKES NO
+AND DISCLAIMS ANY REPRESENTATION OR
+WARRANTY OF MERCHANTABILITY OR FITNESS FOR
+ANY PARTICULAR PURPOSE OR THAT THE USE OF
+THE SOFTWARE WILL NOT INFRINGE ANY THIRD
+PARTY RIGHTS.
+
+10. TO THE EXTENT PERMITTED BY LAW, CNRI
+SHALL NOT BE LIABLE TO LICENSEE OR OTHER
+USERS OF THE SOFTWARE FOR ANY INCIDENTAL,
+SPECIAL, OR CONSEQUENTIAL DAMAGES OR LOSS
+AS A RESULT OF USING, MODIFYING OR
+DISTRIBUTING THE SOFTWARE, OR ANY
+DERIVATIVE THEREOF, EVEN IF ADVISED OF THE
+POSSIBILITY THEREOF. SOME STATES DO NOT
+ALLOW THE LIMITATION OR EXCLUSION OF
+LIABILITY SO THE ABOVE DISCLAIMER MAY NOT
+APPLY TO LICENSEE.
+
+11. This Agreement may be terminated by CNRI: (i)
+immediately upon written notice from CNRI of any material
+breach by the Licensee, if the nature of the breach is such that
+it cannot be promptly remedied; or (ii) sixty (60) days
+following notice from CNRI to Licensee of a material
+remediable breach, if Licensee has not remedied such breach
+within that sixty-day period.
+
+12. Licensee hereby agrees that any dispute arising out of or in
+connection with the construction, validity, interpretation,
+performance, enforcement, operation, breach or termination of
+this Agreement shall be settled promptly by negotiation
+between the Parties. If the dispute is not settled by negotiation,
+the dispute shall be submitted to arbitration in accordance with
+the rules then in effect of the American Arbitration
+Association. This Agreement constitutes the entire agreement
+between the Parties with respect to the subject matter hereof.
+
+13. Nothing in this Agreement shall be deemed to create any
+relationship of agency, partnership, or joint venture between
+the Parties. This Agreement shall be governed by and
+interpreted in accordance with the laws of the Commonwealth
+of Virginia. In the event any part of this Agreement is declared
+invalid or otherwise unenforceable by a court of competent
+jurisdiction, the remaining provisions shall remain in force.
