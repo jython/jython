@@ -187,9 +187,11 @@ public final class Py {
             return (PyException)t;
 		} else if (t instanceof InvocationTargetException) {
 		    return JavaError(((InvocationTargetException)t).getTargetException());
-		} else if (t instanceof java.io.IOException) {
+		} /* Remove this automatic coercion, people want to see the real exceptions!
+		else if (t instanceof java.io.IOException) {
 		    return IOError((java.io.IOException)t);
-		} else if (t instanceof OutOfMemoryError) {
+		} */
+		else if (t instanceof OutOfMemoryError) {
 		    MemoryError((OutOfMemoryError)t);
 		    return null;
 		} else {
@@ -642,6 +644,13 @@ public final class Py {
 	}
 
 	public static boolean matchException(PyException pye, PyObject e) {
+	    // A special case for IOError's to allow them to also match java.io.IOExceptions
+	    // This is a hack for 1.0.x until I can do it right in 1.1
+	    if (e == Py.IOError) {
+	        if (__builtin__.isinstance(pye.value, PyJavaClass.lookup(java.io.IOException.class))) {
+	            return true;
+	        }
+	    }
 	    if (e instanceof PyClass) {
 	        return __builtin__.isinstance(pye.value, (PyClass)e);
 	    } else {
