@@ -9,6 +9,7 @@ options
     COMMON_TOKEN_ACTION = true;              // CommonTokenAction(Token)
 //    DEBUG_PARSER = true;
 //    DEBUG_TOKEN_MANAGER = true;
+    USER_CHAR_STREAM = true;
 }
 
 

@@ -95,7 +95,7 @@ public class parser {
             bufreader.mark(nbytes);
         } catch (IOException exc) { }
 
-        PythonGrammar g = new PythonGrammar(bufreader);
+        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader));
         SimpleNode node = null;
         try {
             if (kind.equals("eval")) {
