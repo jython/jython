@@ -17,6 +17,6 @@
 <li><a href="http://www.python.org/doc/lib/lib.html">Library Reference</a>
 <h3>Other</h3>
 <li><a href="differences.html">Jython vs. CPython</a>
-<li><a href="faq.html">Jython FAQ</a>
+<li><a href="http://www.jython.org/cgi-bin/faqw.py?req=index">Jython FAQ (exit)</a>
 <li><a href="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</a> (exit)
 <LI><A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
