@@ -219,7 +219,6 @@ public class exceptions implements ClassDictInit {
         PyObject dict = empty__init__(arg, kws);
         dict.__setitem__("__init__", getJavaFunc("Exception__init__"));
         dict.__setitem__("__str__", getJavaFunc("Exception__str__"));
-        dict.__setitem__("__repr__", getJavaFunc("Exception__str__"));
         dict.__setitem__("__getitem__", getJavaFunc("Exception__getitem__"));
         return dict;
     }
