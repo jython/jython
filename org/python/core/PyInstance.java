@@ -205,8 +205,11 @@ public class PyInstance extends PyObject {
         if (result != null)
             return result;
         result = ifindclass(name, stopAtJava);
-        if (result != null)
-            return result._doget(this);
+        if (result != null) {
+            PyObject gotten = result._doget(this);
+            gotten._setClass(__class__);
+            return gotten;
+        }
         return ifindfunction(name);
     }
     
@@ -476,10 +479,17 @@ public class PyInstance extends PyObject {
             return null;
             
         PySlice slice = (PySlice)key;
-            
-        if (slice.step != Py.None)
-            return null;
-        
+
+        if (slice.step != Py.None && slice.step != Py.One) {
+            if (slice.step instanceof PyInteger) {
+                if (((PyInteger)slice.step).getValue() != 1) {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
+
         PyObject func = __findattr__(name);
         if (func == null)
             return null;
@@ -524,7 +534,6 @@ public class PyInstance extends PyObject {
             proxy.__setitem__(key, value);
             return;
         }
-            
         if (trySlice(key, "__setslice__", value) != null)
             return;
             
@@ -537,7 +546,6 @@ public class PyInstance extends PyObject {
             proxy.__delitem__(key);
             return;
         }
-            
         if (trySlice(key, "__delslice__", null) != null)
             return;
         invoke("__delitem__", key);
