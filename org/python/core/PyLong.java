@@ -5,7 +5,7 @@ import java.math.BigInteger;
 import java.io.Serializable;
 
 /**
- * A builtin python long. This is implemented as a 
+ * A builtin python long. This is implemented as a
  * java.math.BigInteger.
  */
 

@@ -59,8 +59,10 @@ public class ArgParser {
      * @param  funcname   Name of the method. Used in error messages.
      * @param  args       The actual call arguments supplied in the call.
      * @param  args       The actual keyword names supplied in the call.
-     * @param  p0         The first expected argument in the method definition.
-     * @param  p1         The second expected argument in the method definition.
+     * @param  p0         The first expected argument in the method
+                          definition.
+     * @param  p1         The second expected argument in the method
+                          definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String p0, String p1) {
@@ -74,9 +76,12 @@ public class ArgParser {
      * @param  funcname   Name of the method. Used in error messages.
      * @param  args       The actual call arguments supplied in the call.
      * @param  args       The actual keyword names supplied in the call.
-     * @param  p0         The first expected argument in the method definition.
-     * @param  p1         The second expected argument in the method definition.
-     * @param  p2         The third expected argument in the method definition.
+     * @param  p0         The first expected argument in the method
+                          definition.
+     * @param  p1         The second expected argument in the method
+                          definition.
+     * @param  p2         The third expected argument in the method
+                          definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String p0, String p1, String p2) {
@@ -90,7 +95,8 @@ public class ArgParser {
      * @param funcname   Name of the method. Used in error messages.
      * @param args       The actual call arguments supplied in the call.
      * @param args       The actual keyword names supplied in the call.
-     * @param paramnames The list of expected argument in the method definition.
+     * @param paramnames The list of expected argument in the method
+                          definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String[] paramnames) {

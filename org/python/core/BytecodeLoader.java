@@ -70,7 +70,7 @@ public class BytecodeLoader {
     /**
      * Turn the java byte code in data into a java class.
      * @param name      the name of the class
-     * @param referents a list of superclass and interfaces that 
+     * @param referents a list of superclass and interfaces that
      *                  the new class will reference.
      * @param data      the java byte code.
      */
@@ -93,7 +93,7 @@ public class BytecodeLoader {
     }
 
     /**
-     * Turn the java byte code for a compiled python module into a 
+     * Turn the java byte code for a compiled python module into a
      * java class.
      * @param name      the name of the class
      * @param data      the java byte code.

@@ -12,11 +12,12 @@ import java.lang.reflect.*;
 
 public class exceptions implements ClassDictInit {
 
-    public static String __doc__ = 
+    public static String __doc__ =
 "Python's standard exception class hierarchy.\n" +
 "\n" +
 "Here is a rundown of the class hierarchy.  The classes found here are\n" +
-"inserted into both the exceptions module and the `built-in' module.  It is\n" +
+"inserted into both the exceptions module and the `built-in' module. "+
+"It is\n" +
 "recommended that user defined class based exceptions be derived from the\n" +
 "`Exception' class, although this is currently not enforced.\n" +
 "\n" +
@@ -79,6 +80,7 @@ public class exceptions implements ClassDictInit {
 
     private exceptions() { ; }
 
+    /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         dict.invoke("clear");
         dict.__setitem__("__name__", new PyString("exceptions"));
@@ -116,7 +118,8 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "TabError", "IndentationError", "empty__init__",
                    "Improper mixture of spaces and tabs.");
 
-        buildClass(dict, "EnvironmentError", "StandardError", "EnvironmentError",
+        buildClass(dict, "EnvironmentError", "StandardError",
+                   "EnvironmentError",
                    "Base class for I/O related errors.");
 
         buildClass(dict, "IOError", "EnvironmentError", "empty__init__",
@@ -128,7 +131,8 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "RuntimeError", "StandardError", "empty__init__",
                    "Unspecified run-time error.");
 
-        buildClass(dict, "NotImplementedError", "RuntimeError", "empty__init__",
+        buildClass(dict, "NotImplementedError", "RuntimeError",
+                   "empty__init__",
                    "Method or function hasn't been implemented yet.");
 
         buildClass(dict, "SystemError", "StandardError", "empty__init__",
@@ -153,7 +157,8 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "UnicodeError", "ValueError", "empty__init__",
                    "Unicode related error.");
 
-        buildClass(dict, "KeyboardInterrupt", "StandardError", "empty__init__",
+        buildClass(dict, "KeyboardInterrupt", "StandardError",
+                   "empty__init__",
                    "Program interrupted by user.");
 
         buildClass(dict, "AssertionError", "StandardError", "empty__init__",
@@ -165,11 +170,14 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "OverflowError", "ArithmeticError", "empty__init__",
                    "Result too large to be represented.");
 
-        buildClass(dict, "FloatingPointError", "ArithmeticError", "empty__init__",
+        buildClass(dict, "FloatingPointError", "ArithmeticError",
+                   "empty__init__",
                    "Floating point operation failed.");
 
-        buildClass(dict, "ZeroDivisionError", "ArithmeticError", "empty__init__",
-                   "Second argument to a division or modulo operation was zero.");
+        buildClass(dict, "ZeroDivisionError", "ArithmeticError",
+                   "empty__init__",
+                   "Second argument to a division or modulo operation "+
+                   "was zero.");
 
         buildClass(dict, "LookupError", "StandardError", "empty__init__",
                    "Base class for lookup errors.");
@@ -212,7 +220,6 @@ public class exceptions implements ClassDictInit {
     }
 
 
-
     // An empty __init__ method
     public static PyObject empty__init__(PyObject[] arg, String[] kws) {
         PyObject dict = new PyStringMap();
@@ -220,7 +227,6 @@ public class exceptions implements ClassDictInit {
         return dict;
     }
 
-    
 
     public static PyObject Exception(PyObject[] arg, String[] kws) {
         PyObject dict = empty__init__(arg, kws);
@@ -251,7 +257,9 @@ public class exceptions implements ClassDictInit {
             return args.__str__();
     }
 
-    public static PyObject Exception__getitem__(PyObject[] arg, String[] kws) {
+    public static PyObject Exception__getitem__(PyObject[] arg,
+                                                String[] kws)
+    {
         ArgParser ap = new ArgParser("__getitem__", arg, kws, "self", "i");
         PyObject self = ap.getPyObject(0);
         PyObject i = ap.getPyObject(1);
@@ -305,7 +313,9 @@ public class exceptions implements ClassDictInit {
         return dict;
     }
 
-    public static void EnvironmentError__init__(PyObject[] arg, String[] kws) {
+    public static void EnvironmentError__init__(PyObject[] arg,
+                                                String[] kws)
+    {
         ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
         PyObject self = ap.getPyObject(0);
         PyObject args = ap.getList(1);
@@ -327,7 +337,8 @@ public class exceptions implements ClassDictInit {
             self.__setattr__("errno", tmp[0]);
             self.__setattr__("strerror", tmp[1]);
             self.__setattr__("filename", tmp[2]);
-            self.__setattr__("args", args.__getslice__(Py.Zero, Py.newInteger(2), Py.One));
+            self.__setattr__("args",
+                     args.__getslice__(Py.Zero, Py.newInteger(2), Py.One));
         }
         if (args.__len__() == 2) {
             // common case: PyErr_SetFromErrno()
@@ -337,13 +348,15 @@ public class exceptions implements ClassDictInit {
         }
     }
 
-    public static PyString EnvironmentError__str__(PyObject[] arg, String[] kws) {
+    public static PyString EnvironmentError__str__(PyObject[] arg,
+                                                   String[] kws)
+    {
         ArgParser ap = new ArgParser("__init__", arg, kws, "self");
         PyObject self = ap.getPyObject(0);
 
         if (self.__getattr__("filename") != Py.None) {
             return Py.newString("[Errno %s] %s: %s").__mod__(
-                       new PyTuple(new PyObject[] { 
+                       new PyTuple(new PyObject[] {
                             self.__getattr__("errno"),
                             self.__getattr__("strerror"),
                             self.__getattr__("filename")})).__str__();
@@ -386,11 +399,13 @@ public class exceptions implements ClassDictInit {
     }
 
     private static PyObject buildClass(PyObject dict, String classname,
-                                       String superclass, String classCodeName,
+                                       String superclass,
+                                       String classCodeName,
                                        String doc) {
         PyObject[] sclass = Py.EmptyObjects;
         if (superclass != null)
-             sclass = new PyObject[] { dict.__getitem__(new PyString(superclass)) };
+             sclass = new PyObject[] {
+                            dict.__getitem__(new PyString(superclass)) };
         PyObject cls = Py.makeClass(
                             classname, sclass,
                             Py.newJavaCode(exceptions.class, classCodeName),

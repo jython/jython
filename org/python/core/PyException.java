@@ -5,7 +5,7 @@ import java.io.*;
 /**
  * A wrapper for all python exception. Note that the wellknown
  * python exception are <b>not</b> subclasses of PyException.
- * Instead the python exception class is stored in the 
+ * Instead the python exception class is stored in the
  * <code>type</code> field and value or class instance is stored
  * in the <code>value</code> field.
  */

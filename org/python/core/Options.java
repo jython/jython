@@ -20,7 +20,7 @@ public class Options
     /**
      * When true, python exception raised in overriden methods will
      * be shown on stderr. This option is remarkable usefull when
-     * python is used for implementing CORBA server. Some CORBA 
+     * python is used for implementing CORBA server. Some CORBA
      * servers will turn python exception (say a NameError) into an
      * anonymous user exception without any stacktrace. Setting this
      * option will show the stacktrace.

@@ -12,7 +12,7 @@ import java.io.*;
 // - name, mode, closed should be read-only
 
 /**
- * A python file wrapper around a java stream, reader/writer or file. 
+ * A python file wrapper around a java stream, reader/writer or file.
  */
 
 public class PyFile extends PyObject

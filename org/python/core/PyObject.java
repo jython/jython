@@ -463,7 +463,7 @@ public class PyObject implements java.io.Serializable {
 
     /**
      * Equivalent to the standard Python __getitem__ method.
-     * This variant takes a primitive <code>int</code> as the key.  
+     * This variant takes a primitive <code>int</code> as the key.
      * This method should not be overridden.
      * Override the <code>__finditem__</code> method instead.
      *
@@ -528,7 +528,7 @@ public class PyObject implements java.io.Serializable {
 
     /**
      * A variant of the __setitem__ method which accepts a primitive
-     * <code>int</code> as the key. 
+     * <code>int</code> as the key.
      * By default, this will call
      * <code>__setitem__(PyObject key, PyObject value)</code>
      * with the appropriate args.
