@@ -96,7 +96,7 @@ def join(path, *args):
     f = File(path)
     for a in args:
 	g = File(a)
-	if g.isAbsolute():
+	if g.isAbsolute() or len(f.getPath()) == 0:
 	    f = g
 	else:
 	    f = File(f, a)
