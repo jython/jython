@@ -251,8 +251,8 @@ class JavaProxy:
                 if isFinal(access):
                     pass
                     #addSuperMethod(method, access)     
-            elif isFinal(access):
-                continue
+            #elif isFinal(access):
+            #    continue
 
             throws = method.exceptionTypes
             mdict[sig] = access, ret, throws
