@@ -23,6 +23,7 @@ skipped = [
     'test_curses',
     'test_dbm',
     'test_dl',
+    'test_email_codecs', # Needs asian codecs.
     'test_fcntl',
     'test_fork1',
     'test_frozen',
