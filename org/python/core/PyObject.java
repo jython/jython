@@ -12,7 +12,7 @@ its subclasses.
 
 public class PyObject implements java.io.Serializable {
     /**
-    The <code>__class__</code> attribute of this object.
+    The Python class of this object.
     Unlike in CPython, all types have this attribute, even builtins.
     This should only be set in the constructor, never modified otherwise.
     **/
@@ -574,11 +574,23 @@ public class PyObject implements java.io.Serializable {
 		else return new PyTuple(new PyObject[] {this, (PyObject)o});
 	}
 
-	/** The basic comparision operations **/
-	public int __cmp__(PyObject o) {
+	/* The basic comparision operations */
+	/**
+	Equivalent to the standard Python __cmp__ method.
+	
+	@param other the object to compare this with.
+	@return -1 if this < 0; 0 if this == o; +1 if this > o; -2 if no comparison is implemented
+	**/
+	public int __cmp__(PyObject other) {
 		return -2;
 	}
 
+    /**
+    Implements cmp(this, other)
+    
+    @param other the object to compare this with.
+    @return -1 if this < 0; 0 if this == o; +1 if this > o
+    **/
 	public final int _cmp(PyObject o2_in) {
 		PyObject o2 = o2_in;
 		PyObject o1 = this;
@@ -1349,22 +1361,52 @@ public class PyObject implements java.io.Serializable {
 		}
     }
 	
-	/** Shortcut method for calling methods from Java **/
+	/* Shortcut methods for calling methods from Java */
+	
+	/** Shortcut for calling a method on a PyObject from Java.
+	This form is equivalent to o.__getattr__(name).__call__(args, keywords)
+	
+	@param name the name of the method to call.  This must be an interned string!
+	@param args an array of the arguments to the call.
+	@param keywords the keywords to use in the call.
+	@return the result of calling the method name with args and keywords.
+	**/
 	public PyObject invoke(String name, PyObject[] args, String[] keywords) {
 	    PyObject f = __getattr__(name);
 	    return f.__call__(args, keywords);
 	}
 	
+	/**
+	Shortcut for calling a method on a PyObject with no args.
+	
+	@param name the name of the method to call.  This must be an interned string!
+	@return the result of calling the method name with no args
+	**/
 	public PyObject invoke(String name) {
 	    PyObject f = __getattr__(name);
 	    return f.__call__();
 	}
-
+	
+	/**
+	Shortcut for calling a method on a PyObject with one arg.
+	
+	@param name the name of the method to call.  This must be an interned string!
+	@param arg1 the one argument of the method.
+	@return the result of calling the method name with arg1
+	**/
 	public PyObject invoke(String name, PyObject arg1) {
 	    PyObject f = __getattr__(name);
 	    return f.__call__(arg1);
 	}
 	
+	/**
+	Shortcut for calling a method on a PyObject with two args.
+	
+	@param name the name of the method to call.  This must be an interned string!
+	@param arg1 the first argument of the method.
+	@param arg2 the second argument of the method.
+	@return the result of calling the method name with arg1 and arg2
+	**/
 	public PyObject invoke(String name, PyObject arg1, PyObject arg2) {
 	    PyObject f = __getattr__(name);
 	    return f.__call__(arg1, arg2);
