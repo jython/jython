@@ -408,9 +408,19 @@ public class PyList extends PySequence implements ClassDictInit
      * standard comparison function, cmpobject(), if the user-supplied
      * function is NULL.
      */
-    private static int docompare(PyObject x, PyObject y, PyObject compare) {
-        if (compare == null)
-            return x._cmp(y);
+    private static int docompare(PyObject x, PyObject y,
+                                 PyObject compare, String cmpop) {
+        if (compare == null) {
+            /* NOTE: we rely on the fact here that the sorting algorithm
+               only ever checks whether k<0, i.e., whether x<y.  So we
+               invoke the rich comparison function with _lt ('<'), and
+               return -1 when it returns true and 0 when it returns
+               false. */
+            if (cmpop == "<")
+                return x._lt(y).__nonzero__() ? -1 : 0;
+            if (cmpop == "<=")
+                return x._le(y).__nonzero__() ? -1 : 1;
+        }
 
         PyObject ret = compare.__call__(new PyObject[] {x, y});
 
@@ -431,7 +441,7 @@ public class PyList extends PySequence implements ClassDictInit
             int j = i;
             while (--j >= off) {
                 PyObject q = array[j];
-                if (docompare(q, key, compare) <= 0)
+                if (docompare(q, key, compare, "<=") <= 0)
                     break;
                 array[j+1] = q;
                 array[j] = key;
@@ -494,17 +504,17 @@ public class PyList extends PySequence implements ClassDictInit
             r = hi - 1;                      /* Last */
 
             left = array[l]; right = array[lo];
-            if (docompare(left, right, compare) < 0) {
+            if (docompare(left, right, compare, "<") < 0) {
                 array[lo] = left; array[l] = right;
             }
 
             left = array[r]; right = array[l];
-            if (docompare(left, right, compare) < 0) {
+            if (docompare(left, right, compare, "<") < 0) {
                 array[r] = left; array[l] = right;
             }
 
             left = array[l]; right = array[lo];
-            if (docompare(left, right, compare) < 0) {
+            if (docompare(left, right, compare, "<") < 0) {
                 array[lo] = left; array[l] = right;
             }
             pivot = array[l];
@@ -515,13 +525,13 @@ public class PyList extends PySequence implements ClassDictInit
             for (;;) {
                 /* Move left index to element > pivot */
                 while (l < hi) {
-                    if (docompare(array[l], pivot, compare) >= 0)
+                    if (docompare(array[l], pivot, compare, "<") >= 0)
                         break;
                     l++;
                 }
                 /* Move right index to element < pivot */
                 while (r >= lo) {
-                    if (docompare(pivot, array[r], compare) >= 0)
+                    if (docompare(pivot, array[r], compare, "<") >= 0)
                         break;
                     r--;
                 }
