@@ -108,6 +108,13 @@ public class PyBuiltinFunctionSet extends PyObject implements Cloneable
         }
     }
 
+    public PyObject __call__(PyObject[] args, String[] kws) {
+        if (kws.length != 0)
+            throw Py.TypeError(
+                    name+"(): this function takes no keyword arguments");
+        return __call__(args);
+    }
+
     public PyObject __call__() {
         throw argCountError(0);
     }
