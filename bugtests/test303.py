@@ -7,7 +7,4 @@ import support
 support.compileJava("test303j.java")
 
 import test303j.A
-try:
-    import test303j.A.B
-except ImportError:
-    raise support.TestWarning('It should be possible to import test303j.A.B')
+import test303j.A.B
