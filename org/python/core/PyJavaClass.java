@@ -196,8 +196,8 @@ public class PyJavaClass extends PyClass {
 
 		__bases__ = new PyTuple(bases);
 
-		setFields(c);
 		setBeanInfo(c, sc);
+		setFields(c);
 		setMethods(c);
 	    //System.err.println("setting constructors: "+c.getName());
 		
@@ -217,10 +217,11 @@ public class PyJavaClass extends PyClass {
 			Field field = fields[i];
 			if (field.getDeclaringClass() != c) continue;
 
-            String name = field.getName().intern();
+            String name = getName(field.getName());
+            boolean isstatic = Modifier.isStatic(field.getModifiers());
             
             // Handle the special static __class__ fields on PyObject instances
-            if (name == "__class__" && Modifier.isStatic(field.getModifiers()) && 
+            if (name == "__class__" &&  isstatic && 
                     PyObject.class.isAssignableFrom(field.getDeclaringClass()) &&
                     field.getType().isAssignableFrom(PyJavaClass.class)) {
                 try {
@@ -228,6 +229,14 @@ public class PyJavaClass extends PyClass {
                     continue;
                 } catch (Throwable t) {
                     System.err.println("invalid __class__ field on: "+c.getName());
+                }
+            }
+            
+            if (isstatic) {
+                PyObject prop = lookup(name, false);
+                if (prop != null && prop instanceof PyBeanProperty) {
+                    ((PyBeanProperty)prop).field = field;
+                    return;
                 }
             }
 			__dict__.__setitem__(name, new PyReflectedField(field));
@@ -355,13 +364,17 @@ public class PyJavaClass extends PyClass {
                         prop.setMethod = oldProp.setMethod;
                     }
                 }
-            } else {
+            } /* This is now handled in setFields which gets called after setBeanProperties
+            else {
                 // Keep static fields around...
                 PyReflectedField field = (PyReflectedField)o;
                 if (Modifier.isStatic(field.field.getModifiers())) {
                     prop.field = field.field;
+                } else {
+                    // If the field is not static (and thus subsumable) don't overwrite
+                    return;
                 }
-            }
+            }*/
         }
         if (set) __dict__.__setitem__(name, prop);
     }
