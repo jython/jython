@@ -95,9 +95,33 @@ public class jython
         interp.setLocals(mod.__dict__);
         //System.err.println("imp");
 
+        String msg = "";
         if (Options.importSite) {
             try {
                 imp.load("site");
+
+                if (opts.notice) {
+                    PyObject builtins = Py.getSystemState().builtins;
+                    boolean copyright = builtins.__finditem__("copyright") != null;
+                    boolean credits   = builtins.__finditem__("credits") != null;
+                    boolean license   = builtins.__finditem__("license") != null;
+                    if (copyright) {
+                        msg += "\"copyright\"";
+                        if (credits && license)
+                            msg += ", ";
+                        else if (credits || license)
+                            msg += " or ";
+                    }
+                    if (credits) {
+                        msg += "\"credits\"";
+                        if (license)
+                            msg += " or ";
+                    }
+                    if (license)
+                        msg += "\"license\"";
+                    if (msg.length() > 0)
+                        System.err.println("Type " + msg + " for more information.");
+                }
             } catch (PyException pye) {
                 if (!Py.matchException(pye, Py.ImportError)) {
                     System.err.println("error importing site");
