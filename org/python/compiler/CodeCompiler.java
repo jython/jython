@@ -769,6 +769,7 @@ public class CodeCompiler extends Visitor {
 		Label handlerStart = code.getLabel();
 		Label finallyStart = code.getLabel();
 		Label finallyEnd = code.getLabel();
+		Label skipSuite = code.getLabel();
 
         Object ret;
 
@@ -803,7 +804,17 @@ public class CodeCompiler extends Visitor {
         code.stack = 1;
         int retLocal = code.getLocal();
         code.astore(retLocal);
+        
+        // Trick the JVM verifier into thinking this code might not be executed
+        code.iconst(1);
+        code.ifeq(skipSuite);
+        
+        // The actual finally suite is always executed (since 1 != 0)
         ret = finallySuite.visit(this);
+        
+        // Fake jump to here to pretend this could always happen
+        skipSuite.setPosition();
+        
         code.ret(retLocal);
         finallyEnd.setPosition();
 
@@ -811,7 +822,8 @@ public class CodeCompiler extends Visitor {
         code.freeLocal(excLocal);
 		code.addExceptionHandler(start, end, handlerStart, code.pool.Class("java/lang/Throwable"));
 
-        return ret;
+        // According to any JVM verifiers, this code block might not return
+        return null;
     }
 
 	public int set_exception;
