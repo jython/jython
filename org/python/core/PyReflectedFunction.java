@@ -163,7 +163,7 @@ public class PyReflectedFunction extends PyObject {
     
 
     protected void throwError(String message) {
-        throw Py.TypeError(__name__+"(): "+message);
+	throw Py.TypeError(__name__+"(): "+message);
     }
     
     private static void addRange(StringBuffer buf, int min, int max,
@@ -222,7 +222,6 @@ public class PyReflectedFunction extends PyObject {
             }
         }
         addRange(buf, startRange, maxArgs, " or ");
-        
         throwError("expected "+buf+" args; got "+nArgs);
     }
     
@@ -293,7 +292,9 @@ public class PyReflectedFunction extends PyObject {
         throwError(ordinal(errArg)+" arg can't be coerced to "+buf);
     }
 
-    protected void throwError(int errArg, int nArgs, boolean self, boolean keywords) {
+    protected void throwError(int errArg, int nArgs, boolean self,
+			      boolean keywords)
+    {
         if (keywords) throwError("takes no keyword arguments");
         
         if (errArg == -2) {
