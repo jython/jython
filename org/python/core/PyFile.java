@@ -24,7 +24,8 @@ public class PyFile extends PyObject
 
         void setMode(String mode) {
             reading = mode.indexOf('r') >= 0;
-            writing = mode.indexOf('w') >= 0 || mode.indexOf("+") >= 0;
+            writing = mode.indexOf('w') >= 0 || mode.indexOf("+") >= 0 ||
+                      mode.indexOf('a') >= 0;
             binary  = mode.indexOf('b') >= 0;
         }
         public String read(int n) throws java.io.IOException {
