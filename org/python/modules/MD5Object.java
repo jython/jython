@@ -3,6 +3,7 @@ package org.python.modules;
 
 import org.python.core.*;
 
+// Implementation of the MD5 object as returned from md5.new()
 
 public class MD5Object extends PyObject
 {
@@ -19,8 +20,13 @@ public class MD5Object extends PyObject
 
     public PyObject update(PyObject arg) {
         if (!(arg instanceof PyString))
-            throw Py.TypeError("argument 1 expected string, " +
-                               arg.__repr__() + " found");
+            // TBD: this should be able to call safeRepr() on the arg, but
+            // I can't currently do this because safeRepr is protected so
+            // that it's not accessible from Python.  This is bogus;
+            // arbitrary Java code should be able to get safeRepr but we
+            // still want to hide it from Python.  There should be another
+            // way to hide Java methods from Python.
+            throw Py.TypeError("argument 1 expected string"); 
         data += arg.toString();
         return Py.None;
     }
