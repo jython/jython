@@ -1,17 +1,19 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+
+
 /**
  * The abstract superclass of PyObjects that implements a Sequence.
  * Minimize the work in creating such objects.
  *
- * Method names are designed to make it possible for PySequence
- * to implement java.util.List interface when JDK 1.2 is ubiquitous.
+ * Method names are designed to make it possible for PySequence to
+ * implement java.util.List interface when JDK 1.2 is ubiquitous.
  * 
  * All subclasses must implements get, getslice, and repeat methods.
  *
- * Subclasses that are mutable should also implement:
- * set, setslice, del, and delRange.
+ * Subclasses that are mutable should also implement: set, setslice, del,
+ * and delRange.
  */
 
 abstract public class PySequence extends PyObject
@@ -51,7 +53,8 @@ abstract public class PySequence extends PyObject
      */
     abstract protected PyObject repeat(int count);
 
-    /* These methods only apply to writeable sequences */
+    // These methods only apply to mutable sequences
+
     /**
      * Sets the given element of the sequence.
      * 

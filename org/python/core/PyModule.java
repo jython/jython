@@ -1,7 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyModule extends PyObject {
+public class PyModule extends PyObject
+{
     public PyObject __dict__;
 
     public PyModule(String name, PyObject dict) {
