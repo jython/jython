@@ -1,10 +1,10 @@
 from org.python.core import Py
 
-NoneType = Py.NoneType
 ArrayType = Py.ArrayType
 BuiltinFunctionType = Py.BuiltinFunctionType
 ClassType = Py.ClassType
 DictionaryType = Py.DictionaryType
+EllipsisType = Py.EllipsisType
 FileType = Py.FileType
 FloatType = Py.FloatType
 FrameType = Py.FrameType
@@ -17,6 +17,7 @@ ListType = Py.ListType
 LongType = Py.LongType
 MethodType = Py.MethodType
 ModuleType = Py.ModuleType
+NoneType = Py.NoneType
 ReflectedArgsType = Py.ReflectedArgsType
 ReflectedCodeType = Py.ReflectedCodeType
 ReflectedConstructorType = Py.ReflectedConstructorType
