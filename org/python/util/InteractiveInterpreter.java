@@ -47,6 +47,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
     public boolean runsource(String source, String filename, String symbol) {
         PyObject code;
         try {
+            cflags.interactive = true;
             code = org.python.modules.codeop.compile_command_flags(
                 source, filename, symbol,cflags);
         } catch (PyException exc) {
@@ -62,6 +63,8 @@ public class InteractiveInterpreter extends PythonInterpreter {
             } else {
                 throw exc;
             }
+        } finally {
+            cflags.interactive = false;
         }
         // Case 2
         if (code == Py.None)

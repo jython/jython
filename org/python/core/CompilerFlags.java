@@ -13,5 +13,9 @@ public class CompilerFlags extends Object {
     public boolean nested_scopes = true;
     public boolean division;
 
+    // 'interactive' is true when reading from the console.
+    // When false en empty line does not terminate an indented statement.
+    public boolean interactive;
+
     public String encoding;
 }

@@ -118,7 +118,7 @@ public class parser {
                 node = g.file_input();
             }
             else if (kind.equals("single")) {
-                node = g.single_input();
+                node = g.single_input(cflags.interactive);
             }
             else {
                throw Py.ValueError("parse kind must be eval, exec, " +

@@ -104,6 +104,7 @@ TOKEN_MGR_DECLS:
     int indent;
     boolean seen_eof = false;
     boolean single_input = false;
+    boolean interactive = false;
     boolean compound = false;
     public boolean forcedNewline = false;
 
@@ -124,7 +125,7 @@ TOKEN_MGR_DECLS:
     void CommonTokenAction(Token t) {
         if (t.kind == EOF) {
             //System.out.println("EOF: "+single_input+", "+curLexState);
-            if (!single_input) {
+            if (!interactive) {
                 if (curLexState == DEFAULT) {
                     t.kind = NEWLINE;
                 }
@@ -135,8 +136,13 @@ TOKEN_MGR_DECLS:
                 while (level-- >= 0)
                     t = addDedent(t);
                 //t = addDedent(t);
-                t.kind = EOF;
-                t.image = "<EOF>";
+                if (!single_input) {
+                    t.kind = EOF;
+                    t.image = "<EOF>";
+                } else {
+                    t.kind = NEWLINE;
+                    t.image = "<FORCENL>";
+                }
             }
         }
     }
@@ -212,13 +218,16 @@ SKIP :
         }
 |   <CRLF1: ("\r\n" | "\n" | "\r")>
         {
-
             if (parens == 0 && single_input && indent==0) {
                 //System.out.println("force newline");
                 //backup a character!
                 forcedNewline = true;
-                input_stream.backup(1);
-                SwitchTo(FORCE_NEWLINE);
+                if (interactive) {
+                    input_stream.backup(1);
+                    SwitchTo(FORCE_NEWLINE);
+                } else {
+                    SwitchTo(INDENTING);
+                }
             }
             else {
                 //doPrompt();
@@ -453,7 +462,10 @@ MORE : /* Strings */
 
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-modType single_input(): {token_source.single_input=true;}
+modType single_input(boolean interactive): {
+    token_source.single_input=true;
+    token_source.interactive = interactive;
+}
 {
     (<NEWLINE> |  simple_stmt() |  compound_stmt() <NEWLINE>)
     { return (modType) jjtree.popNode(); }
