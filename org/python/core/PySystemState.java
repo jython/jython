@@ -160,7 +160,8 @@ public class PySystemState extends PyObject
 
         // This isn't quite right...
         builtins = PyJavaClass.lookup(__builtin__.class).__dict__;
-        //this(System.getProperties(), new String[0]);
+        PyModule __builtin__ = new PyModule("__builtin__", builtins);
+        modules.__setitem__("__builtin__", __builtin__);
     }
 
     private static PyList defaultPath;
