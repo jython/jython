@@ -46,7 +46,8 @@ public class PyDictionary extends PyObject {
     }
 
     public void __delitem__(PyObject key) throws PyException {
-        table.remove(key);
+        Object ret = table.remove(key);
+        if (ret == null) throw Py.KeyError(key.toString());
     }
 
     public String toString() {
