@@ -114,11 +114,12 @@ public class ParseException extends Exception {
    * of the final stack trace, and hence the correct error message
    * gets displayed.
    */
+   public static boolean verboseExceptions = false;
   public String getMessage() {
     if (!specialConstructor) {
       return super.getMessage();
     }
-    if (Options.parserVerboseExceptions) {
+    if (verboseExceptions) {
         String expected = "";
         int maxSize = 0;
         for (int i = 0; i < expectedTokenSequences.length; i++) {
