@@ -628,6 +628,8 @@ class SimpleCompiler(BaseEvaluator):
 
     def addModule(self, mod, value=1):
         #print 'add module', mod.name, mod
+        if self.module.imports.has_key(mod) and value == 1:
+            return
         self.module.imports[mod] = value
 
     def addSetAttribute(self, obj, name, value):
