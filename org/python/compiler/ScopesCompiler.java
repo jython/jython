@@ -8,9 +8,9 @@ import java.util.*;
 public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     private CompilationContext code_compiler;
-    
+
     private boolean nested_scopes = false;
-    
+
     private Stack scopes;
     private ScopeInfo cur = null;
 
@@ -23,14 +23,14 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     private int level      = 0;
     private int func_level = 0;
 
-    public ScopesCompiler(CompilationContext code_compiler) { // ?? polish
+    public ScopesCompiler(CompilationContext code_compiler) {
         this.code_compiler = code_compiler;
         scopes = new Stack();
         mode = GET;
-        String nested_scopes_opt = org.python.core.PySystemState.registry.getProperty("python.xfutures.nested_scopes");
-        if (nested_scopes_opt != null && nested_scopes_opt.equals("on")) nested_scopes = true; else
+        /*String nested_scopes_opt = org.python.core.PySystemState.registry.getProperty("python.xfutures.nested_scopes");
+        if (nested_scopes_opt != null && nested_scopes_opt.equals("on")) nested_scopes = true; else*/
         nested_scopes = code_compiler.getFutures().areNestedScopesOn();
-        // System.err.println("nested-scopes: "+nested_scopes);      
+        // System.err.println("nested-scopes: "+nested_scopes);
     }
 
     public Object set(SimpleNode node) throws Exception {
@@ -271,7 +271,7 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     }
 
     public Object for_stmt(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);        
+        if (mode != GET) illassign(node);
         set(node.getChild(0));
         node.getChild(1).visit(this);
         node.getChild(2).visit(this);
@@ -580,7 +580,10 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     public Object Name(SimpleNode node) throws Exception {
         String name = (String)node.getInfo();
-        if ( mode != GET) cur.addBound(name);
+        if ( mode != GET) {
+            if (name.equals("__debug__")) code_compiler.error("can not assign to __debug__",false,node);
+            cur.addBound(name);
+        }
         else cur.addUsed(name);
         return null;
     }

@@ -7,9 +7,11 @@ import org.python.core.*;
 public class InteractiveInterpreter extends PythonInterpreter {
     public InteractiveInterpreter() {
         super();
+        cflags = new CompilerFlags();
     }
     public InteractiveInterpreter(PyObject locals) {
         super(locals);
+        cflags = new CompilerFlags();
     }
 
     /**
@@ -45,8 +47,8 @@ public class InteractiveInterpreter extends PythonInterpreter {
     public boolean runsource(String source, String filename, String symbol) {
         PyObject code;
         try {
-            code = org.python.modules.codeop.compile_command(
-                source, filename, symbol);
+            code = org.python.modules.codeop.compile_command_flags(
+                source, filename, symbol,cflags);
         } catch (PyException exc) {
             if (Py.matchException(exc, Py.SyntaxError)) {
                 // Case 1

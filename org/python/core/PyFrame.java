@@ -40,7 +40,7 @@ public class PyFrame extends PyObject
         // This needs work to be efficient with multiple interpreter states
         if (locals == null && code != null) {
             if ((code.co_flags&PyTableCode.CO_OPTIMIZED)!=0 || code.nargs > 0) { // ! f_fastlocals needed for arg passing too
-                if (code.co_nlocals>0) f_fastlocals = new PyObject[code.co_nlocals-code.xxx_npurecell]; // internal: may change
+                if (code.co_nlocals>0) f_fastlocals = new PyObject[code.co_nlocals-code.jy_npurecell]; // internal: may change
             } else f_locals = new PyStringMap();
         }
         if (code != null) { // reserve space for env

@@ -13,7 +13,7 @@ public class PyTableCode extends PyCode
     public int co_firstlineno = -1;
     public String co_varnames[];
     public String co_cellvars[];
-    public int xxx_npurecell; // internal: may change
+    public int jy_npurecell; // internal: jython specific
     public String co_freevars[];
     public String co_filename;
     public int co_flags;
@@ -43,7 +43,7 @@ public class PyTableCode extends PyCode
                        int firstlineno,
                        boolean args, boolean keywords,
                        PyFunctionTable funcs, int func_id,
-                       String[] cellvars,String[] freevars,int xxx_npurecell,int moreflags) // may change
+                       String[] cellvars,String[] freevars,int npurecell,int moreflags) // may change
     {
         co_argcount = nargs = argcount;
         co_varnames = varnames;
@@ -52,7 +52,7 @@ public class PyTableCode extends PyCode
         co_firstlineno = firstlineno;
         co_cellvars = cellvars;
         co_freevars = freevars;
-        this.xxx_npurecell = xxx_npurecell;
+        this.jy_npurecell = npurecell;
         this.args = args;
         co_name = name;
         if (args) {

@@ -196,7 +196,7 @@ class PyCodeConstant extends Constant
     // for nested scopes
     public String[] cellvars;
     public String[] freevars;
-    public int xxx_npurecell;
+    public int jy_npurecell;
     
     public int moreflags;
 
@@ -236,7 +236,7 @@ class PyCodeConstant extends Constant
         if (cellvars != null) CodeCompiler.makeStrings(c, cellvars, cellvars.length); else c.aconst_null();
         if (freevars != null) CodeCompiler.makeStrings(c, freevars, freevars.length); else c.aconst_null();
 
-        c.iconst(xxx_npurecell);
+        c.iconst(jy_npurecell);
         
         c.iconst(moreflags);
         
@@ -359,11 +359,21 @@ public class Module
     
     
     private int to_cell;
+
+    public PyCodeConstant PyCode(SimpleNode tree, String name,
+                                 boolean fast_locals, String className,
+                                 boolean classBody, boolean printResults,
+                                 int firstlineno, ScopeInfo scope)
+        throws Exception
+    {
+        return PyCode(tree,name,fast_locals,className,classBody,printResults,firstlineno,scope,null);
+    }
+
     
     public PyCodeConstant PyCode(SimpleNode tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults, 
-                                 int firstlineno, ScopeInfo scope)
+                                 int firstlineno, ScopeInfo scope,org.python.core.CompilerFlags cflags)
         throws Exception
     {
         PyCodeConstant code = new PyCodeConstant();
@@ -401,13 +411,13 @@ public class Module
         }
         
         if (scope != null) {
-          int nparamcell = scope.xxx_paramcells.size();
+          int nparamcell = scope.jy_paramcells.size();
           if (nparamcell > 0) {
             if (to_cell == 0) {
                 to_cell = classfile.pool.Methodref("org/python/core/PyFrame","to_cell","(II)V");
             }
             Hashtable tbl = scope.tbl;
-            Vector paramcells = scope.xxx_paramcells;
+            Vector paramcells = scope.jy_paramcells;
             for (int i = 0; i < nparamcell; i++) {
                 c.aload(1);
                 SymInfo syminf = (SymInfo)tbl.get(paramcells.elementAt(i));
@@ -418,7 +428,7 @@ public class Module
           }
         }
 
-        compiler.parse(tree, c, fast_locals, className, classBody, scope);
+        compiler.parse(tree, c, fast_locals, className, classBody, scope,cflags);
 
         // !classdef only
         if (!classBody) code.names = toNameAr(compiler.names,false);
@@ -426,12 +436,16 @@ public class Module
         if (scope != null) {
             code.cellvars = toNameAr(scope.cellvars,true);
             code.freevars = toNameAr(scope.freevars,true);
-            code.xxx_npurecell = scope.xxx_npurecell;
-            if (compiler.optimizeGlobals) {
-                code.moreflags |= org.python.core.PyTableCode.CO_OPTIMIZED;
-            }
+            code.jy_npurecell = scope.jy_npurecell;
         }
-        
+
+        if (compiler.optimizeGlobals) {
+            code.moreflags |= org.python.core.PyTableCode.CO_OPTIMIZED;
+        }
+        if (compiler.my_scope.nested_scopes) {
+            code.moreflags |= org.python.core.PyTableCode.CO_NESTED;
+        }
+         
         code.module = this;
         code.name = code.fname;
         return code;
@@ -553,7 +567,7 @@ public class Module
     public static void compile(SimpleNode node, OutputStream ostream,
                                String name, String filename,
                                boolean linenumbers, boolean printResults,
-                               boolean setFile)
+                               boolean setFile,org.python.core.CompilerFlags cflags)
         throws Exception
     {
         Module module = new Module(name, filename, linenumbers);
@@ -561,7 +575,7 @@ public class Module
         //Add __doc__ if it exists
         //Add __file__ for filename (if it exists?)
 
-        Constant main = module.PyCode(node, "?",false, null, false, printResults, 0,null);
+        Constant main = module.PyCode(node, "?",false, null, false, printResults, 0,null,cflags);
         module.mainCode = main;
         module.write(ostream);
     }

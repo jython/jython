@@ -125,7 +125,7 @@ public class imp
                 fp.close();
             }
             org.python.compiler.Module.compile(node, ofp, name+"$py",
-                                               filename, true, false, true);
+                                               filename, true, false, true,null);
 
             if (outFilename != null) {
                 File classFile = new File(outFilename);

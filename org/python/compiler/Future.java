@@ -40,7 +40,7 @@ public class Future extends Object {
         return true;
     }
     
-    public void preprocessFutures(SimpleNode node,CompilerFlags cflags) throws Exception {
+    public void preprocessFutures(SimpleNode node,org.python.core.CompilerFlags cflags) throws Exception {
         if (cflags != null) {
             nested_scopes = cflags.nested_scopes;
         }

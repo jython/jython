@@ -3,11 +3,17 @@ package org.python.modules;
 
 import org.python.core.*;
 
-public class codeop {
+public class codeop implements ClassDictInit {
     public static PyString __doc__ = new PyString(
         "Utility to compile possibly incomplete Python source code.\n"
     );
 
+    public static void classDictInit(PyObject dict) 
+    { 
+        dict.__delitem__("compile_command_flags");
+        dict.__delitem__("classInitDict");
+    }
+ 
     public static PyList __all__ = new PyList(new PyString[] {
         new PyString("compile_command") 
     });
@@ -23,11 +29,17 @@ public class codeop {
     public static PyObject compile_command(String string, String filename,
                                            String kind)
     {
+        return compile_command_flags(string,filename,kind,null);
+    }
+    
+    public static PyObject compile_command_flags(String string,String filename,String kind,CompilerFlags cflags)
+    {
         org.python.parser.SimpleNode node =
             parser.partialParse(string+"\n", kind, filename);
 
         if (node == null)
             return Py.None;
-        return Py.compile(node, Py.getName(), filename, true, true);
+        return Py.compile_flags(node, Py.getName(), filename, true, true,cflags);
     }
+
 }

@@ -103,9 +103,9 @@ public class ScopeInfo extends Object implements ScopeConstants {
         
     public Vector cellvars = new Vector();
     
-    public Vector xxx_paramcells = new Vector();
+    public Vector jy_paramcells = new Vector();
     
-    public int xxx_npurecell; // ?? xxx
+    public int jy_npurecell;
     
     public int cell;
     
@@ -130,7 +130,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
                 if ((flags&NGLOBAL) == 0 && (flags&BOUND) != 0) { // not func global and bound ?
                     if (nested_scopes) {
                         info.flags |= CELL;
-                        if ((info.flags&PARAM) != 0) xxx_paramcells.addElement(name);                        
+                        if ((info.flags&PARAM) != 0) jy_paramcells.addElement(name);                        
                         cellvars.addElement(name);
                         info.env_index = cell++;
                         if ((flags&PARAM) == 0) purecells.addElement(name);
@@ -162,7 +162,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
                 if (nested) up.inner_free.put(name,PRESENT);
             }
         }
-        if ((xxx_npurecell = purecells.size()) > 0) {
+        if ((jy_npurecell = purecells.size()) > 0) {
             int sz = purecells.size();
             for (int i = 0; i < sz; i++) {
                 names.addElement(purecells.elementAt(i));

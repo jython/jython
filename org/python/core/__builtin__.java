@@ -130,6 +130,8 @@ public class __builtin__ implements ClassDictInit
                                   new BuiltinFunctions("isinstance", 10, 2));
         dict.__setitem__("id", new BuiltinFunctions("id", 11, 1));
         dict.__setitem__("__import__", new ImportFunction());
+        
+        dict.__delitem__("execfile_flags"); // -execfile_flags
     }
 
     public static PyObject abs(PyObject o) {
@@ -208,9 +210,8 @@ public class __builtin__ implements ClassDictInit
         throw Py.TypeError("number coercion failed");
     }
 
-    public static PyCode compile(String data, String filename, String type) {
-        return Py.compile(new java.io.StringBufferInputStream(data+"\n\n"),
-                          filename, type);
+    public static PyCode compile(String data, String filename, String type) {       
+        return  Py.compile_flags(data,filename,type,Py.getCompilerFlags());
     }
 
     public static PyComplex complex(PyObject real, PyObject imag) {
@@ -258,8 +259,8 @@ public class __builtin__ implements ClassDictInit
             code = (PyCode)o;
         else {
             if (o instanceof PyString)
-                code = __builtin__.compile(((PyString)o).toString(),
-                                           "<string>", "eval");
+                code = Py.compile_flags(((PyString)o).toString(),
+                                           "<string>", "eval",null); // eval does not inherit co_nested
             else
                 throw Py.TypeError(
                     "eval: argument 1 must be string or code object");
@@ -278,6 +279,13 @@ public class __builtin__ implements ClassDictInit
     public static void execfile(String name, PyObject globals,
                                 PyObject locals)
     {
+        execfile_flags(name,globals,locals,Py.getCompilerFlags());
+    }
+    
+    
+    public static void execfile_flags(String name, PyObject globals,
+                                PyObject locals,CompilerFlags cflags)
+    {
         java.io.FileInputStream file;
         try {
             file = new java.io.FileInputStream(name);
@@ -287,7 +295,7 @@ public class __builtin__ implements ClassDictInit
         PyCode code;
 
         try {
-            code = Py.compile(file, name, "exec");
+            code = Py.compile_flags(file, name, "exec",cflags);
         } finally {
             try {
                 file.close();
@@ -301,6 +309,7 @@ public class __builtin__ implements ClassDictInit
     public static void execfile(String name, PyObject globals) {
         execfile(name, globals, globals);
     }
+    
     public static void execfile(String name) {
         execfile(name, null, null);
     }

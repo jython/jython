@@ -6,6 +6,7 @@ import org.python.parser.*;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyException;
+import org.python.core.CompilerFlags;
 import java.io.IOException;
 import java.util.Stack;
 import java.util.Hashtable;
@@ -185,7 +186,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
     public void parse(SimpleNode node, Code code,
                       boolean fast_locals, String className,
-                      boolean classBody, ScopeInfo scope)
+                      boolean classBody, ScopeInfo scope,CompilerFlags cflags)
         throws Exception
     {
         this.fast_locals = fast_locals;
@@ -194,7 +195,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
         if (scope == null) {
             futures = new Future();
-            futures.preprocessFutures(node,null);
+            futures.preprocessFutures(node,cflags);
             new ScopesCompiler(this).parse(node);
             scope = node.scope;
         }
@@ -781,15 +782,14 @@ public class CodeCompiler extends Visitor implements CompilationContext
     }
 
     public int assert1, assert2;
-    public Object assert_stmt(SimpleNode node) throws Exception { // ?? pending __debug__ should be treated as temp global
+    public Object assert_stmt(SimpleNode node) throws Exception {
         setline(node);
         Label end_of_assert = code.getLabel();
  
         /* First do an if __debug__: */
-        SimpleNode debugName = new SimpleNode(PythonGrammarTreeConstants.JJTNAME);
-        debugName.setInfo("__debug__");
-        debugName.visit(this);
-                
+        loadFrame();
+        emitGetGlobal("__debug__");
+        
         if (mrefs.nonzero == 0) {
             mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
                                                 "__nonzero__", "()Z");
@@ -2252,6 +2252,16 @@ public class CodeCompiler extends Visitor implements CompilationContext
     int delglobal, dellocal1, dellocal2;
     int getderef,setderef;
 
+    void emitGetGlobal(String name) throws Exception {
+        code.ldc(name);
+        if (mrefs.getglobal == 0) {
+            mrefs.getglobal = code.pool.Methodref(
+            "org/python/core/PyFrame", "getglobal",
+            "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+        }
+        code.invokevirtual(mrefs.getglobal);
+    }
+    
     public Object Name(SimpleNode node) throws Exception {
         String name;
         if (fast_locals)
@@ -2274,13 +2284,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (!my_scope.nested_scopes) flags &= ~ScopeInfo.FREE;
                 if ((flags&ScopeInfo.GLOBAL) !=0 || 
                      optimizeGlobals&&(flags&(ScopeInfo.BOUND|ScopeInfo.CELL|ScopeInfo.FREE))==0) {
-                    code.ldc(name);
-                    if (mrefs.getglobal == 0) {
-                        mrefs.getglobal = code.pool.Methodref(
-                        "org/python/core/PyFrame", "getglobal",
-                        "(Ljava/lang/String;)Lorg/python/core/PyObject;");
-                    }
-                    code.invokevirtual(mrefs.getglobal);
+                    emitGetGlobal(name);
                     return null;
                 }
                 if (fast_locals) {

@@ -432,17 +432,17 @@ public final class Py
         return t ? Py.One : Py.Zero;
     }
 
-    // nested scopes:  String[] cellvars,String[] freevars,int xxx_npurecell & int moreflags
+    // nested scopes:  String[] cellvars,String[] freevars,int npurecell & int moreflags
 
     public static PyCode newCode(int argcount, String varnames[],
                                  String filename, String name,
                                  boolean args, boolean keywords,
                                  PyFunctionTable funcs, int func_id,
-                                 String[] cellvars,String[] freevars,int xxx_npurecell,int moreflags)
+                                 String[] cellvars,String[] freevars,int npurecell,int moreflags)
     {
         return new PyTableCode(argcount, varnames,
                                filename, name, 0, args, keywords, funcs,
-                               func_id, cellvars, freevars, xxx_npurecell,moreflags);
+                               func_id, cellvars, freevars, npurecell,moreflags);
     }
 
     public static PyCode newCode(int argcount, String varnames[],
@@ -450,12 +450,12 @@ public final class Py
                                  int firstlineno,
                                  boolean args, boolean keywords,
                                  PyFunctionTable funcs, int func_id,
-                                 String[] cellvars,String[] freevars,int xxx_npurecell,int moreflags)
+                                 String[] cellvars,String[] freevars,int npurecell,int moreflags)
 
     {
         return new PyTableCode(argcount, varnames,
                                filename, name, firstlineno, args, keywords,
-                               funcs, func_id, cellvars, freevars, xxx_npurecell,moreflags);
+                               funcs, func_id, cellvars, freevars, npurecell,moreflags);
     }
         
     // --
@@ -1109,7 +1109,7 @@ public final class Py
             } else
                 throw Py.TypeError(
                     "exec: argument 1 must be string, code or file object");
-            code = __builtin__.compile(contents, "<string>", "exec");
+            code = Py.compile_flags(contents, "<string>", "exec",Py.getCompilerFlags());
         }
         Py.runCode(code, locals, globals);
     }
@@ -1441,6 +1441,18 @@ public final class Py
         return name;
     }
 
+
+    public static CompilerFlags getCompilerFlags() {
+        CompilerFlags cflags = null;
+        PyFrame frame = Py.getFrame();
+        if (frame!=null && frame.f_code != null) {
+            cflags = new CompilerFlags(frame.f_code.co_flags);
+        }
+        return cflags; 
+    }
+        
+    // w/o compiler-flags
+    
     public static PyCode compile(SimpleNode node, String filename) {
         return compile(node, getName(), filename);
     }
@@ -1456,11 +1468,27 @@ public final class Py
                                  boolean linenumbers,
                                  boolean printResults)
     {
+        return compile_flags(node,name,filename,linenumbers,printResults,null);
+    }
+ 
+    public static PyCode compile(InputStream istream, String filename,
+                                 String type)
+    {
+        return compile_flags(istream,filename,type,null);
+    }
+    
+    // with compiler-flags
+    
+    public static PyCode compile_flags(SimpleNode node, String name,
+                                 String filename,
+                                 boolean linenumbers,
+                                 boolean printResults,CompilerFlags cflags)
+    {
         try {
             ByteArrayOutputStream ostream = new ByteArrayOutputStream();
             org.python.compiler.Module.compile(node, ostream, name, filename,
                                                linenumbers, printResults,
-                                               false);
+                                               false,cflags);
 
             saveClassFile(name, ostream);
 
@@ -1470,16 +1498,21 @@ public final class Py
         }
     }
 
-    public static PyCode compile(InputStream istream, String filename,
-                                 String type)
+    public static PyCode compile_flags(InputStream istream, String filename,
+                                 String type,CompilerFlags cflags)
     {
         SimpleNode node = parser.parse(istream, type, filename);
         boolean printResults = false;
         if (type.equals("single"))
             printResults = true;
-        return Py.compile(node, getName(), filename, true, printResults);
+        return Py.compile_flags(node, getName(), filename, true, printResults,cflags);
     }
-
+    
+    public static PyCode compile_flags(String data, String filename, String type,CompilerFlags cflags) {
+        return Py.compile_flags(new java.io.StringBufferInputStream(data+"\n\n"),
+                          filename, type,cflags);
+    }
+    
     public static PyObject[] unpackSequence(PyObject o, int length) {
         if (o instanceof PyTuple) {
             PyTuple tup = (PyTuple)o;
