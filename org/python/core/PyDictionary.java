@@ -5,15 +5,34 @@ import java.util.Hashtable;
 
 
 
-class DictFunctions extends PyBuiltinFunctionSet 
+class DictFuncs extends PyBuiltinFunctionSet 
 {
-    DictFunctions(String name, int index, int argcount) {
+    DictFuncs(String name, int index, int argcount) {
         super(name, index, argcount, argcount, true, null);
+    }
+
+    DictFuncs(String name, int index, int minargs, int maxargs) {
+        super(name, index, minargs, maxargs, true, null);
     }
 
     public PyObject __call__() {
         PyDictionary dict = (PyDictionary)__self__;
         switch (index) {
+        case 1:
+            return new PyInteger(dict.__len__());
+        case 2:
+            return new PyInteger(dict.__nonzero__() ? 1 : 0);
+        case 3:
+            return dict.copy();
+        case 4:
+            dict.clear();
+            return Py.None;
+        case 5:
+            return dict.items();
+        case 6:
+            return dict.keys();
+        case 7:
+            return dict.values();
         default:
             throw argCountError(0);
         }
@@ -22,6 +41,20 @@ class DictFunctions extends PyBuiltinFunctionSet
     public PyObject __call__(PyObject arg) {
         PyDictionary dict = (PyDictionary)__self__;
         switch (index) {
+        case 11:
+            return new PyInteger(dict.__cmp__(arg));
+        case 12:
+            return new PyInteger(dict.has_key(arg) ? 1 : 0);
+        case 13:
+            return dict.get(arg);
+        case 14:
+            if (arg instanceof PyDictionary) {
+                dict.update((PyDictionary)arg);
+                return Py.None;
+            }
+            else
+                throw Py.TypeError("dictionary expected, got " +
+                                   arg.safeRepr());
         default:
             throw argCountError(1);
         }
@@ -30,6 +63,8 @@ class DictFunctions extends PyBuiltinFunctionSet
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         PyDictionary dict = (PyDictionary)__self__;
         switch (index) {
+        case 13:
+            return dict.get(arg1, arg2);
         default:
             throw argCountError(2);
         }
@@ -54,15 +89,13 @@ public class PyDictionary extends PyObject implements InitModule
         __methods__ = list;
     }
 
-    public void initModule(PyObject dict) {
+    // Used by PyJavaClass.init()
+    public PyDictionary() {
+        this(new Hashtable());
     }
 
     public PyDictionary(Hashtable t) {
         table = t;
-    }
-
-    public PyDictionary() {
-        this(new Hashtable());
     }
 
     public PyDictionary(PyObject elements[]) {
@@ -70,6 +103,26 @@ public class PyDictionary extends PyObject implements InitModule
         for (int i = 0; i < elements.length; i+=2) {
             table.put(elements[i], elements[i+1]);
         }
+    }
+
+    public void initModule(PyObject dict) {
+        dict.__setitem__("__len__", new DictFuncs("__len__", 1, 0));
+        dict.__setitem__("__nonzero__", new DictFuncs("__nonzero__", 2, 0));
+        dict.__setitem__("copy", new DictFuncs("copy", 3, 0));
+        dict.__setitem__("clear", new DictFuncs("clear", 4, 0));
+        dict.__setitem__("items", new DictFuncs("items", 5, 0));
+        dict.__setitem__("keys", new DictFuncs("keys", 6, 0));
+        dict.__setitem__("values", new DictFuncs("values", 7, 0));
+        dict.__setitem__("__cmp__", new DictFuncs("__cmp__", 11, 1));
+        dict.__setitem__("has_key", new DictFuncs("has_key", 12, 1));
+        dict.__setitem__("get", new DictFuncs("get", 13, 1, 2));
+        dict.__setitem__("update", new DictFuncs("update", 14, 1));
+        // Hide thse from Python
+        dict.__setitem__("__finditem__", null);
+        dict.__setitem__("__setitem__", null);
+        dict.__setitem__("__delitem__", null);
+        dict.__setitem__("toString", null);
+        dict.__setitem__("hashCode", null);
     }
 
     protected String safeRepr() {
@@ -107,9 +160,10 @@ public class PyDictionary extends PyObject implements InitModule
         table.put(key, value);
     }
 
-    public void __delitem__(PyObject key) throws PyException {
+    public void __delitem__(PyObject key) {
         Object ret = table.remove(key);
-        if (ret == null) throw Py.KeyError(key.toString());
+        if (ret == null)
+            throw Py.KeyError(key.toString());
     }
 
     public String toString() {
@@ -136,7 +190,7 @@ public class PyDictionary extends PyObject implements InitModule
         return buf.toString();
     }
 
-    public int __cmp__(PyObject ob_other) throws PyException {
+    public int __cmp__(PyObject ob_other) {
         if (ob_other.__class__ != __class__)
             return -2;
 
