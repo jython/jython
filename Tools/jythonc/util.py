@@ -30,9 +30,10 @@ def closezips():
 import sys
 import string
 
-from org.python.core import imp,Py
+from org.python.core import Py
 
 from yapm import YaPM
+from PathVFS import PathVFS
 
 def findClass(c):
     return Py.findClassEx(c)
@@ -42,8 +43,13 @@ def reportPublicPlainClasses(jpkg):
     classes.remove('__name__')
     return string.join(classes,',')
 
+_path_vfs = None
+
 def openResource(res):
-    return imp.getSyspathJavaLoader().getResourceAsStream(res)
+    global _path_vfs
+    if not _path_vfs:
+        _path_vfs = PathVFS(sys.registry)    
+    return _path_vfs.open(res)
 
 _ypm = None
 
