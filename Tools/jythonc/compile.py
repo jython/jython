@@ -242,7 +242,8 @@ class Compiler:
             if value == '*':
                 self.packages[m.name] = m.getClasses()
             else:
-                self.packages[m.name] = None
+                if not self.packages.has_key(m.name):
+                    self.packages[m.name] = None
         elif isinstance(m, ImportName.Module):
             if m.file is None:
                 file = os.path.join(m.path[0], '__init__.py')
