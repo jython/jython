@@ -1147,14 +1147,15 @@ public class PyInteger extends PyObject
         dict
             .__setitem__(
                 "__new__",
-                new PyNewWrapper(PyObject.class, "__new__", -1, -1) {
+                new PyNewWrapper(PyInteger.class, "__new__", -1, -1) {
             public PyObject new_impl(
                 boolean init,
                 PyType subtype,
                 PyObject[] args,
                 String[] keywords) {
                 ArgParser ap =
-                    new ArgParser("int", args, keywords, "x", "base");
+                    new ArgParser("int", args, keywords, 
+                            new String[] {"x", "base"}, 0);
                 PyObject x = ap.getPyObject(0, null);
                 int base = ap.getInt(1, -909);
                 if (x == null)
@@ -1173,9 +1174,12 @@ public class PyInteger extends PyObject
     
     //-
     
+    private static final PyType INTTYPE = PyType.fromClass(PyInteger.class);
+    
     private int value;
 
     public PyInteger(int v) {
+        super(INTTYPE);
         value = (int)v;
     }
 

@@ -84,7 +84,7 @@ import os
 # Filename used for testing
 if os.name == 'java':
     # Jython disallows @ in module names
-    TESTFN = '$test'
+    TESTFN = '__test' # xxx mmh, something good and that works on unix too
 elif os.name != 'riscos':
     TESTFN = '@test'
     # Unicode name only used if TEST_FN_ENCODING exists for the platform.

@@ -266,9 +266,6 @@ abstract public class PySequence extends PyObject
         if (seq instanceof PyList || seq instanceof PyTuple)
             return seq;
 
-        if (!seq.isSequenceType())
-             throw Py.TypeError(msg);
-
         PyList list = new PyList();
         PyObject iter = Py.iter(seq, msg);
         for (PyObject item = null; (item = iter.__iternext__()) != null; ) {

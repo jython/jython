@@ -10,9 +10,9 @@ public class PyGetSetDescr extends PyDescriptor {
     private Method set_meth;
     private Class getset_type;
 
-    public PyGetSetDescr(String name, Class c, String get, String set) {
+    public PyGetSetDescr(PyType dtype, String name, Class c, String get, String set) {
         this.name = name;
-        this.dtype = PyType.fromClass(c);
+        this.dtype = dtype;
         try {
             get_meth = c.getMethod(get, new Class[] {
             });
@@ -33,6 +33,10 @@ public class PyGetSetDescr extends PyDescriptor {
 
         }
     }
+
+    public PyGetSetDescr(String name, Class c, String get, String set) {
+        this(PyType.fromClass(c),name,c,get,set);
+    }
     
     public String toString() {
         return "<attribute '"+name+"' of '"+dtype.fastGetName()+"' objects>";
@@ -48,7 +52,11 @@ public class PyGetSetDescr extends PyDescriptor {
                 PyType objtype = obj.getType();
                 if (objtype != dtype && !objtype.isSubType(dtype))
                     throw get_wrongtype(objtype);
-                return Py.java2py(get_meth.invoke(obj, new Object[0]));
+                Object v = get_meth.invoke(obj, new Object[0]);
+                if (v == null) {
+                    obj.noAttributeError(name);
+                }
+                return Py.java2py(v);
             }
             return this;
         } catch (IllegalArgumentException e) {

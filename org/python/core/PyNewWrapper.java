@@ -2,7 +2,7 @@ package org.python.core;
 
 public abstract class PyNewWrapper extends PyBuiltinFunctionWide {
 
-    private PyType for_type;
+    protected PyType for_type;
 
     public PyNewWrapper(Class c, String name, int minargs, int maxargs) {
         super(new DefaultInfo(name, minargs, maxargs));
@@ -57,8 +57,8 @@ public abstract class PyNewWrapper extends PyBuiltinFunctionWide {
                     + " is not a subtype of "
                     + for_type.fastGetName());
         }
-        // xxx with subclassing this should become more subtle
-        if (subtype != for_type) {
+        
+        if (subtype.getStatic() != for_type) {
             throw Py.TypeError(
                 for_type.fastGetName()
                     + ".__new__("
@@ -67,6 +67,7 @@ public abstract class PyNewWrapper extends PyBuiltinFunctionWide {
                     + subtype.fastGetName()
                     + ".__new__()");
         }
+        
         PyObject[] rest = new PyObject[nargs-1];
         System.arraycopy(args,1,rest,0,nargs-1);
         return new_impl(false,subtype,rest,keywords);

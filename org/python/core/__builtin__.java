@@ -112,6 +112,9 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("object",PyType.fromClass(PyObject.class));
         dict.__setitem__("type",PyType.fromClass(PyType.class));
         dict.__setitem__("int",PyType.fromClass(PyInteger.class));
+        dict.__setitem__("dict",PyType.fromClass(PyDictionary.class));
+        
+        dict.__setitem__("staticmethod",PyType.fromClass(PyStaticMethod.class));
         
         /* - */
         
@@ -150,7 +153,7 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject apply(PyObject o, PyObject args) {
-        return o.__call__(make_array(args));
+        return o.__call__(Py.make_array(args));
     }
 
     public static PyObject apply(PyObject o, PyObject args,
@@ -163,7 +166,7 @@ public class __builtin__ implements ClassDictInit
             java.util.Enumeration ev = table.elements();
             int n = table.size();
             kw = new String[n];
-            PyObject[] aargs = make_array(args);
+            PyObject[] aargs = Py.make_array(args);
             a = new PyObject[n+aargs.length];
             System.arraycopy(aargs, 0, a, 0, aargs.length);
             int offset = aargs.length;
@@ -892,7 +895,7 @@ public class __builtin__ implements ClassDictInit
             System.arraycopy(l.list, 0, a, 0, a.length);
             return new PyTuple(a);
         }
-        return new PyTuple(make_array(o));
+        return new PyTuple(Py.make_array(o));
     }
 
     public static PyType type(PyObject o) {
@@ -1005,46 +1008,6 @@ public class __builtin__ implements ClassDictInit
         return module;
     }
 
-    private static PyObject[] make_array(PyObject o) {
-        if (o instanceof PyTuple)
-            return ((PyTuple)o).list;
-
-        PyObject iter = o.__iter__();
-
-        // Guess result size and allocate space.
-        int n = 10;
-        try {
-            n = o.__len__();
-        } catch (PyException exc) { }
-
-        PyObject[] objs= new PyObject[n];
-
-        int i;
-        for (i = 0; ; i++) {
-            PyObject item = iter.__iternext__();
-            if (item == null)
-                break;
-            if (i >= n) {
-                if (n < 500) {
-                    n += 10;
-                } else {
-                    n += 100;
-                }
-                PyObject[] newobjs = new PyObject[n];
-                System.arraycopy(objs, 0, newobjs, 0, objs.length);
-                objs = newobjs;
-            }
-            objs[i] = item;
-        }
-
-        // Cut back if guess was too large.
-        if (i < n) {
-            PyObject[] newobjs = new PyObject[i];
-            System.arraycopy(objs, 0, newobjs, 0, i);
-            objs = newobjs;
-        }
-        return objs;
-    }
 }
 
 

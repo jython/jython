@@ -286,7 +286,7 @@ public class PyStringMap extends PyObject
         ts.exitRepr(this);
         return buf.toString();
     }
-
+  
     public synchronized int __cmp__(PyObject other) {
         if (!(other instanceof PyStringMap ||
                   other instanceof PyDictionary)) {

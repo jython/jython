@@ -115,8 +115,7 @@ public class PyClass extends PyObject
                         }
                         // xxx explicitly disable this for now, types will allow this
                         if (PyObject.class.isAssignableFrom(proxy)) 
-                            throw Py.TypeError("subclassing PyObject subclasses" +
-                                " not supported");
+                            throw Py.TypeError("subclassing PyObject subclasses" +                                " not supported");
                         baseClass = proxy;
                     }
                 }

@@ -12,6 +12,7 @@ Command line options:
 -q: quiet     -- don't print anything except if a test fails
 -g: generate  -- write the output file for a test instead of comparing it
 -a: all       -- execute tests in all test(/regrtest.py) dirs on sys.path
+  : broad     -- execute tests in all test(/regrtest.py) dirs on sys.path
 -x: exclude   -- arguments are tests to *exclude*
 [NOT SUPPORTED -s: single    -- run only a single test (see below)]
 -r: random    -- randomize test execution order
@@ -118,6 +119,69 @@ def savememo(memo,good,bad,skipped):
     finally:
         f.close()
     
+class _Args:
+
+    def __init__(self,txt):
+        self.args = []
+        for s in txt.split('\n'):
+            self.pos = 0
+            self.chunk = 0
+            self.s = s
+            self.state = self.space
+            for ch in s:
+                self.state(ch)
+                self.pos += 1
+            if self.state == self.quoted:
+                raise Exception,"Expected closing quote for arg"
+            self.state('"')
+
+    def space(self,ch):
+        if ch.isspace():
+            pass
+        elif ch == '"':
+            self.state = self.quoted
+        else:
+            self.chunk = 1
+            self.state = self.unquoted
+
+    def quoted(self,ch):
+        if ch == '"':
+            if not self.s[self.pos-1] == '\\':
+                arg = self.s[self.pos-self.chunk:self.pos];
+                arg = arg.replace('\\"','"').replace('\\\\','\\')
+                self.args.append(arg)
+                self.chunk = 0
+                self.state = self.space
+                return
+        self.chunk += 1
+
+    def unquoted(self,ch):
+        if ch.isspace():
+            self.state = self.space
+        elif ch == '"':
+            self.state = self.quoted
+        else:
+            self.chunk += 1
+            return
+        self.args.append(self.s[self.pos-self.chunk:self.pos])
+        self.chunk = 0
+
+def _loadargs(fn):
+    f=open(fn,'r')
+    txt = f.read()
+    f.close()
+    return _Args(txt).args
+
+_INDIRECTARGS = '@'
+
+def with_indirect_args(args):
+    new_args = []
+    for arg in args:
+        if arg.startswith(_INDIRECTARGS):
+            new_args.extend(_loadargs(arg[1:]))
+        else:
+            new_args.append(arg)
+    return new_args
 
 
 # - * -
@@ -161,10 +225,12 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
 
     test_support.record_original_stdout(sys.stdout)
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hvgqxrlu:am:', # 's'
+        args = with_indirect_args(sys.argv[1:])
+        opts, args = getopt.getopt(args, 'hvgqxrlu:am:', # 's'
                                    ['help', 'verbose', 'quiet', 'generate',
                                     'exclude', 'random', # 'single',
-                                    'findleaks', 'use=','all','memo='])
+                                    'findleaks', 'use=','all','memo=',
+                                    'broad','oneonly='])
     except getopt.error, msg:
         usage(2, msg)
 
@@ -174,6 +240,14 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
 
     all = 0
     memo = None
+    oneonly = []
+
+    def strip_py(args):
+        for i in range(len(args)):
+            # Strip trailing ".py" from arguments
+            if args[i][-3:] == os.extsep+'py':
+                args[i] = args[i][:-3]
+        return None
     
     for o, a in opts:
         if o in ('-h', '--help'):
@@ -187,6 +261,11 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
             generate = 1
         elif o in ('-a', '--all'):
             all = 1
+        elif o in ('--broad',):
+            all = 1
+        elif o in ('--oneonly',):
+            oneonly = a.split(',')
+            strip_py(oneonly)
         elif o in ('-x', '--exclude'):
             exclude = 1
 ##         elif o in ('-s', '--single'):
@@ -244,10 +323,9 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
 ##             fp.close()
 ##         except IOError:
 ##             pass
-    for i in range(len(args)):
-        # Strip trailing ".py" from arguments
-        if args[i][-3:] == os.extsep+'py':
-            args[i] = args[i][:-3]
+
+    strip_py(args)
+
     stdtests = STDTESTS[:]
     nottests = NOTTESTS[:]
     if exclude:
@@ -274,7 +352,10 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
   
     for test in tests:
         test_basename = test
-        for testdir in testdirs:
+        consider_dirs = testdirs
+        if test_basename in oneonly:
+            consider_dirs = testdirs[:1]
+        for testdir in consider_dirs:
             test = test_basename
             if not os.path.isfile(os.path.join(testdir,test+'.py')):
                 continue

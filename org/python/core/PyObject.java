@@ -284,8 +284,12 @@ public class PyObject implements java.io.Serializable {
                 PyType subtype,
                 PyObject[] args,
                 String[] keywords) {
-                return new PyObject();
-            } // xxx
+                if (for_type == subtype) {
+                    return new PyObject();
+                } else {
+                    return new PyObjectDerived(subtype);
+                }   
+            }
         });
     }
 
@@ -307,6 +311,10 @@ public class PyObject implements java.io.Serializable {
         throws java.io.IOException, ClassNotFoundException {
         in.defaultReadObject();
         objtype = PyType.fromClass(getClass());
+    }
+
+    public PyObject(PyType objtype) {
+        this.objtype = objtype; 
     }
 
     // A package private constructor used by PyJavaClass
@@ -349,6 +357,13 @@ public class PyObject implements java.io.Serializable {
     } */
 
     /**
+     * Dispatch __init__ behavior
+     */
+    public void dispatch__init__(PyType type,PyObject[] args,String[] keywords) {
+    }
+
+
+    /**
      * Equivalent to the standard Python __repr__ method.  This method
      * should not typically need to be overrriden.  The easiest way to
      * configure the string representation of a <code>PyObject</code> is to
@@ -367,7 +382,7 @@ public class PyObject implements java.io.Serializable {
             return "unknown object";
         }
 
-        String name = getType().fastGetName();
+        String name = getType().getFullName();
         if (name == null)
             return "unknown object";
 
@@ -379,7 +394,7 @@ public class PyObject implements java.io.Serializable {
             return "unknown object";
         }
 
-        String name = getType().fastGetName();
+        String name = getType().getFullName();
         if (name == null)
             return "unknown object";
 
@@ -767,7 +782,7 @@ public class PyObject implements java.io.Serializable {
             throw Py.KeyError(key.toString());
         return ret;
     }
-
+    
     /**
      * Equivalent to the standard Python __setitem__ method.
      *
@@ -2598,11 +2613,19 @@ public class PyObject implements java.io.Serializable {
     /* descriptors and lookup protocols */
 
     /** xxx implements where meaningful
-     * @return __dict__ or null
+     * @return internal object per instance dict or null
+     */
+    public PyObject fastGetDict() {
+        return null;
+    }
+
+    /** xxx implements where meaningful
+     * @return internal object __dict__ or null
      */
     public PyObject getDict() {
         return null;
     }
+
 
     public boolean implementsDescrSet() {
         return objtype.has_set;
@@ -2646,7 +2669,7 @@ public class PyObject implements java.io.Serializable {
             }
         }
 
-        PyObject obj_dict = getDict();
+        PyObject obj_dict = fastGetDict();
         if (obj_dict != null) {
             res = obj_dict.__finditem__(name);
             if (res != null)
@@ -2673,7 +2696,7 @@ public class PyObject implements java.io.Serializable {
             }
         }
 
-        PyObject obj_dict = getDict();
+        PyObject obj_dict = fastGetDict();
         if (obj_dict != null) {
             obj_dict.__setitem__(name, value);
             return;
@@ -2702,7 +2725,7 @@ public class PyObject implements java.io.Serializable {
             }
         }
 
-        PyObject obj_dict = getDict();
+        PyObject obj_dict = fastGetDict();
         if (obj_dict != null) {
             try {
                 obj_dict.__delitem__(name);

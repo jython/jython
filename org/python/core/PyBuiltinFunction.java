@@ -4,6 +4,8 @@ public abstract class PyBuiltinFunction extends PyObject {
 
     public interface Info {
         String getName();
+        int getMaxargs();
+        int getMinargs();
         PyException unexpectedCall(int nargs, boolean keywords);
     }
 
@@ -26,6 +28,21 @@ public abstract class PyBuiltinFunction extends PyObject {
             return name;
         }
 
+        public int getMaxargs() {
+            return maxargs;
+        }
+        public int getMinargs() {
+            return minargs;
+        }
+        
+        public static boolean check(int nargs,int minargs,int maxargs) {
+            if (nargs < minargs)
+                return false;
+            if (maxargs != -1 && nargs > maxargs)
+                return false;
+            return true;
+        }
+        
         public static PyException unexpectedCall(
             int nargs,
             boolean keywords,
@@ -36,12 +53,20 @@ public abstract class PyBuiltinFunction extends PyObject {
                 return Py.TypeError(name + "() takes no keyword arguments");
             String argsblurb;
             if (minargs == maxargs) {
-                if (minargs == 1)
+                if (minargs == 0)
+                    argsblurb = "no arguments";
+                else if (minargs == 1)
                     argsblurb = "exactly one argument";
                 else
                     argsblurb = minargs + " arguments";
+            } else if (maxargs == -1) {
+                return Py.TypeError(name + "() requires at least " +
+                        minargs + " (" + nargs + " given)");
             } else {
-                argsblurb = minargs + "-" + maxargs + " arguments";
+                if (minargs <= 0) 
+                    argsblurb = "at most "+ maxargs + " argumens";
+                else
+                    argsblurb = minargs + "-" + maxargs + " arguments";
             }
 
             return Py.TypeError(
@@ -51,7 +76,7 @@ public abstract class PyBuiltinFunction extends PyObject {
         public PyException unexpectedCall(int nargs, boolean keywords) {
             return unexpectedCall(nargs, keywords, name, minargs, maxargs);
         }
-
+        
     }
 
     protected PyBuiltinFunction() {}

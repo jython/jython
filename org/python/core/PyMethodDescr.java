@@ -22,6 +22,13 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
         return name;
     }
 
+    public int getMaxargs() {
+        return maxargs;
+    }
+    public int getMinargs() {
+        return minargs;
+    }
+    
     public String toString() {
         return "<method '"+name+"' of '"+dtype.fastGetName()+"' objects>";
     }
