@@ -222,15 +222,20 @@ public class PyReflectedFunction extends PyObject {
 	    return arg.getName();
 	}
 	
-    protected void throwBadArgError(int errArg) {
+    protected void throwBadArgError(int errArg, int nArgs, boolean self) {
         Hashtable table = new Hashtable();
         ReflectedArgs[] argsl = argslist;
         int n = nargs;
         for(int i=0; i<n; i++) {
             ReflectedArgs rargs = argsl[i];
             Class[] args = rargs.args;
-            
-            if (args.length > errArg) {
+            int len = args.length;
+            /*if (!args.isStatic && !self) {
+                len = len-1;
+            }*/
+            // This check works almost all the time.
+            // I'm still a little worried about non-static methods called with an explict self...
+            if (len == nArgs) {
                 if (errArg == -1) {
                     table.put(rargs.declaringClass, rargs.declaringClass);
                 } else {
@@ -272,7 +277,7 @@ public class PyReflectedFunction extends PyObject {
             // Bad declared class
         }*/
         
-        throwBadArgError(errArg);
+        throwBadArgError(errArg, nArgs, self);
     }
 
     // Included only for debugging purposes...
