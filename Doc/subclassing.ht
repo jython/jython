@@ -47,7 +47,7 @@ SuperClass.foo(self)
 
 This works with the majority of methods, but protected methods cannot be
 called from subclasses in this way. 
-Instead you have to use the "self.super_foo()" call style.
+Instead you have to use the "self.super__foo()" call style.
 
 <h3>Example</h3>
 
