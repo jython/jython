@@ -24,6 +24,7 @@ public class exceptions implements ClassDictInit {
 "Exception\n" +
 " |\n" +
 " +-- SystemExit\n" +
+" +-- StopIteration\n" +
 " +-- StandardError\n" +
 " |    |\n" +
 " |    +-- KeyboardInterrupt\n" +
@@ -68,6 +69,7 @@ public class exceptions implements ClassDictInit {
 " |    |    |\n" +
 " |    |    +-- UnicodeError\n" +
 " |    |\n" +
+" |    +-- ReferenceError\n" +
 " |    +-- SystemError\n" +
 " |    +-- MemoryError\n" +
 " |\n" +
@@ -76,6 +78,7 @@ public class exceptions implements ClassDictInit {
 "      +-- UserWarning\n" +
 "      +-- DeprecationWarning\n" +
 "      +-- SyntaxWarning\n" +
+"      +-- OverflowWarning\n" +
 "      +-- RuntimeWarning";
 
     private exceptions() { ; }
@@ -142,6 +145,9 @@ public class exceptions implements ClassDictInit {
                    "the Python version, and the hardware/OS "+
                    "platform and version.");
 
+        buildClass(dict, "ReferenceError", "StandardError", "empty__init__",
+                    "Weak ref proxy used after referent went away.");
+
         buildClass(dict, "EOFError", "StandardError", "empty__init__",
                    "Read beyond end of file.");
 
@@ -203,6 +209,9 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "SystemExit", "Exception", "SystemExit",
                    "Request to exit from the interpreter.");
 
+        buildClass(dict, "StopIterator", "Exception", "empty__init__",
+                   "Signal the end from iterator.next().");
+
         buildClass(dict, "Warning", "Exception", "empty__init__",
                    "Base class for warning categories.");
 
@@ -217,6 +226,10 @@ public class exceptions implements ClassDictInit {
 
         buildClass(dict, "RuntimeWarning", "Warning", "empty__init__",
                    "Base class for warnings about dubious runtime behavior.");
+
+        buildClass(dict, "OverflowWarning", "Warning", "empty__init__",
+                   "Base class for warnings about numeric overflow.");
+
         ts.frame = ts.frame.f_back;
     }
 

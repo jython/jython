@@ -123,6 +123,11 @@ public final class Py
         return new PyException(Py.TypeError, message);
     }
 
+    public static PyObject ReferenceError;
+    public static PyException ReferenceError(String message) {
+        return new PyException(Py.ReferenceError, message);
+    }
+
     public static PyObject SystemError;
     public static PyException SystemError(String message) {
         return new PyException(Py.SystemError, message);
@@ -178,6 +183,10 @@ public final class Py
         }
     }
 
+    public static PyObject StopIterator;
+    public static PyException StopIterator(String message) {
+        return new PyException(Py.StopIterator, message);
+    }
 
     public static PyObject ImportError;
     public static PyException ImportError(String message) {
@@ -237,6 +246,11 @@ public final class Py
     public static PyObject SyntaxWarning;
     public static void SyntaxWarning(String message) {
         warning(SyntaxWarning, message);
+    }
+
+    public static PyObject OverflowWarning;
+    public static void OverflowWarning(String message) {
+        warning(OverflowWarning, message);
     }
 
     public static PyObject RuntimeWarning;
@@ -522,6 +536,7 @@ public final class Py
 
         Exception           = initExc("Exception", exc, dict);
         SystemExit          = initExc("SystemExit", exc, dict);
+        StopIterator        = initExc("StopIterator", exc, dict);
         StandardError       = initExc("StandardError", exc, dict);
         KeyboardInterrupt   = initExc("KeyboardInterrupt", exc, dict);
         ImportError         = initExc("ImportError", exc, dict);
@@ -548,12 +563,14 @@ public final class Py
         FloatingPointError  = initExc("FloatingPointError", exc, dict);
         ValueError          = initExc("ValueError", exc, dict);
         UnicodeError        = initExc("UnicodeError", exc, dict);
+        ReferenceError      = initExc("ReferenceError", exc, dict);
         SystemError         = initExc("SystemError", exc, dict);
         MemoryError         = initExc("MemoryError", exc, dict);
         Warning             = initExc("Warning", exc, dict);
         UserWarning         = initExc("UserWarning", exc, dict);
         DeprecationWarning  = initExc("DeprecationWarning", exc, dict);
         SyntaxWarning       = initExc("SyntaxWarning", exc, dict);
+        OverflowWarning     = initExc("OverflowWarning", exc, dict);
         RuntimeWarning      = initExc("RuntimeWarning", exc, dict);
     }
 
