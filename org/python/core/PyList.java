@@ -78,6 +78,17 @@ public class PyList extends PySequence implements InitModule
 {
     protected PyObject[] list;
     protected int length;
+    protected static PyObject __methods__;
+
+    static {
+        PyList list = new PyList();
+        String[] methods = {
+            "append", "count", "extend", "index", "insert", "pop",
+            "remove", "reverse", "sort"};
+        for (int i = 0; i < methods.length; i++)
+            list.append(new PyString(methods[i]));
+        __methods__ = list;
+    }
     
     public void initModule(PyObject dict) {
         dict.__setitem__("reverse", new ListFunctions("reverse", 1, 0));
@@ -94,6 +105,7 @@ public class PyList extends PySequence implements InitModule
         dict.__setitem__("initModule", null);
         dict.__setitem__("toString", null);
         dict.__setitem__("hashCode", null);
+        // set __methods__ for dir()
     }
     
     public PyList() {
@@ -118,6 +130,17 @@ public class PyList extends PySequence implements InitModule
 
     public int __len__() { 
         return length; 
+    }
+
+    public PyObject __findattr__(String name) {
+        if (name.equals("__methods__")) {
+            PyList mlist = (PyList)__methods__;
+            PyString methods[] = new PyString[mlist.length];
+            for (int i = 0; i < mlist.length; i++)
+                methods[i] = (PyString)mlist.list[i];
+            return new PyList(methods);
+        }
+        return super.__findattr__(name);
     }
 
     protected PyObject get(int i) {
