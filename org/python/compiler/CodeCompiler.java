@@ -663,33 +663,33 @@ public class CodeCompiler extends Visitor implements CompilationContext
         int n = node.getNumChildren();
         for (int i=0; i<n; i++) {
             SimpleNode cnode = node.getChild(i);
+            SimpleNode asnameNode;
             if (cnode.id == PythonGrammarTreeConstants.JJTDOTTED_AS_NAME) {
                 String name = (String)cnode.getChild(0).visit(this);
-                String asname = (String)cnode.getChild(1).getInfo();
+                asnameNode = cnode.getChild(1);
                 code.ldc(name);
-                code.ldc(asname);
                 loadFrame();
                 if (mrefs.importOneAs == 0) {
                      mrefs.importOneAs = code.pool.Methodref(
                         "org/python/core/imp", "importOneAs",
-                        "(Ljava/lang/String;Ljava/lang/String;Lorg/python/core/PyFrame;)V");
+                        "(Ljava/lang/String;Lorg/python/core/PyFrame;)Lorg/python/core/PyObject;");
                 }
                 code.invokestatic(mrefs.importOneAs);
-                continue;
+            } else {
+                String name = (String)cnode.visit(this);
+                asnameNode = cnode.getChild(0);
+                code.ldc(name);
+                loadFrame();
+                if (mrefs.importOne == 0) {
+                    mrefs.importOne = code.pool.Methodref(
+                        "org/python/core/imp", "importOne",
+                         "(Ljava/lang/String;Lorg/python/core/PyFrame;)Lorg/python/core/PyObject;");
+                }
+                code.invokestatic(mrefs.importOne);
             }
+            
+            set(asnameNode);
 
-            String name = (String)node.getChild(i).visit(this);
-            code.ldc(name);
-            loadFrame();
-            if (mrefs.importOne == 0) {
-                mrefs.importOne = code.pool.Methodref(
-                    "org/python/core/imp", "importOne",
-                    "(Ljava/lang/String;Lorg/python/core/PyFrame;)V");
-            }
-            code.invokestatic(mrefs.importOne);
-            //SimpleNode top = node.getChild(i);
-            //if (top.id != PythonGrammarTreeConstants.JJTNAME) top = top.getChild(0);
-            //set(top);
         }
         return null;
     }
@@ -705,27 +705,34 @@ public class CodeCompiler extends Visitor implements CompilationContext
         int n = node.getNumChildren();
         if (n > 1) {
             String[] names = new String[n-1];
-            String[] asnames = new String[n-1];
+            SimpleNode[] asnameNodes = new SimpleNode[n-1];
             for (int i=0; i<n-1; i++) {
                 SimpleNode cnode = node.getChild(i+1);
                 if (cnode.id == PythonGrammarTreeConstants.JJTIMPORT_AS_NAME) {
                     names[i] = (String)cnode.getChild(0).getInfo();
-                    asnames[i] = (String)cnode.getChild(1).getInfo();
+                    asnameNodes[i] = cnode.getChild(1); 
                 } else {
                     names[i] = (String)cnode.getInfo();
-                    asnames[i] = names[i];
+                    asnameNodes[i] = cnode;
                 }
             }
             makeStrings(code, names, names.length);
-            makeStrings(code, asnames, asnames.length);
 
             loadFrame();
             if (mrefs.importFrom == 0) {
                 mrefs.importFrom = code.pool.Methodref(
-                    "org/python/core/imp", "importFromAs",
-                    "(Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Lorg/python/core/PyFrame;)V");
+                    "org/python/core/imp", "importFrom",
+                    "(Ljava/lang/String;[Ljava/lang/String;Lorg/python/core/PyFrame;)[Lorg/python/core/PyObject;");
             }
             code.invokestatic(mrefs.importFrom);
+            int tmp = storeTop();
+            for (int i=0; i<n-1; i++) {
+                code.aload(tmp);
+                code.iconst(i);
+                code.aaload();
+                set(asnameNodes[i]);
+            }
+            code.freeLocal(tmp);
         } else {
             loadFrame();
             if (mrefs.importAll == 0) {

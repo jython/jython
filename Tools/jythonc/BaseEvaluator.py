@@ -12,6 +12,7 @@ class BaseEvaluator:
         self.augtemps = {}
         self.lineno = -1
         self.visitor = PythonVisitor(self)
+        self.imp_accu = None
 
     def parse(self, node):
         try:
@@ -164,6 +165,8 @@ class BaseEvaluator:
 
     def freeTemp(self, tmp): pass
 
+    def makeFreeDecl(self,type,value): pass
+
     def expr_stmt(self, lhss, rhs):
         if len(lhss) == 0:
             return self.visit(rhs).makeStatement()
@@ -271,20 +274,34 @@ class BaseEvaluator:
         for modname, asname in names:
             if asname is None:
                 asname = modname
-            self.set_name(asname, module.getattr(modname))
             asnames.append(asname)
             modnames.append(modname)
 
         topmodname = jast.StringConstant(".".join(top))
-        modnames = jast.FilledArray(
+        modnamesArray = jast.FilledArray(
             "String",
             map(lambda x: jast.StringConstant(x), modnames))
-        asnames = jast.FilledArray(
-            "String",
-            map(lambda x: jast.StringConstant(x), asnames))
-        return jast.InvokeStatic(
-            "org.python.core.imp", "importFromAs",
-            [topmodname, modnames, asnames, self.frame.frame])
+
+        do_import = jast.InvokeStatic("org.python.core.imp", "importFrom",
+                                      [topmodname, modnamesArray,
+                                       self.frame.frame])
+
+        if not self.imp_accu:
+            imp_accu = self.imp_accu = jast.Identifier("imp_accu")
+            self.makeFreeDecl("PyObject[]",imp_accu)
+        else:
+            imp_accu = self.imp_accu
+        
+        stmts = [jast.Set(imp_accu,do_import)]
+        
+        for i in range(len(asnames)):
+            asname = asnames[i]
+            modname = modnames[i]
+            code = jast.Subscript(imp_accu,i)
+            stmts.append(self.set_name(asname, 
+         	module.getattr(modname).makeReference(code)))
+
+        return stmts       
 
     #external interfaces
     def execstring(self, data):

@@ -12,7 +12,7 @@ import java.util.zip.*;
  */
 public class imp
 {
-    public static final int APIVersion = 8;
+    public static final int APIVersion = 9;
 
     private imp() { ; }
 
@@ -619,46 +619,47 @@ public class imp
      * Called from jpython generated code when a statement like "import spam"
      * is executed.
      */
-    public static void importOne(String mod, PyFrame frame) {
+    public static PyObject importOne(String mod, PyFrame frame) {
         //System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod,
                                                  frame.f_globals,
-                                                 frame.f_locals,
+                                                 frame.getf_locals(),
                                                  Py.EmptyTuple);
-        int dot = mod.indexOf('.');
+        /*int dot = mod.indexOf('.');
         if (dot != -1) {
             mod = mod.substring(0, dot).intern();
-        }
+        }*/
         //System.err.println("mod: "+mod+", "+dot);
-        frame.setlocal(mod, module);
+        return module;
     }
 
     /**
      * Called from jpython generated code when a statement like
      * "import spam as foo" is executed.
      */
-    public static void importOneAs(String mod, String asname, PyFrame frame) {
+    public static PyObject importOneAs(String mod, PyFrame frame) {
         //System.out.println("importOne(" + mod + ")");
         PyObject module = __builtin__.__import__(mod,
                                                  frame.f_globals,
-                                                 frame.f_locals,
+                                                 frame.getf_locals(),
                                                  getStarArg());
-        frame.setlocal(asname, module);
+        // frame.setlocal(asname, module);
+        return module;
     }
 
     /**
      * Called from jpython generated code when a stamenet like
      * "from spam.eggs import foo, bar" is executed.
      */
-    public static void importFrom(String mod, String[] names, PyFrame frame) {
-        importFromAs(mod, names, names, frame);
+    public static PyObject[] importFrom(String mod, String[] names, PyFrame frame) {
+        return importFromAs(mod, names, null, frame);
     }
 
     /**
      * Called from jpython generated code when a stamenet like
      * "from spam.eggs import foo as spam" is executed.
      */
-    public static void importFromAs(String mod, String[] names,
+    public static PyObject[] importFromAs(String mod, String[] names,
                                     String[] asnames, PyFrame frame)
     {
         //StringBuffer sb = new StringBuffer();
@@ -672,14 +673,16 @@ public class imp
 
         PyObject module = __builtin__.__import__(mod,
                                                  frame.f_globals,
-                                                 frame.f_locals,
+                                                 frame.getf_locals(),
                                                  new PyTuple(pynames));
+        PyObject[] submods = new PyObject[names.length];
         for (int i=0; i<names.length; i++) {
             PyObject submod = module.__findattr__(names[i]);
             if (submod == null)
                 throw Py.ImportError("cannot import name " + names[i]);
-            frame.setlocal(asnames[i], submod);
+            submods[i] = submod;
         }
+        return submods;
     }
 
     private static PyTuple all = null;
@@ -698,7 +701,7 @@ public class imp
         //System.out.println("importAll(" + mod + ")");
         PyObject module = __builtin__.__import__(mod,
                                                  frame.f_globals,
-                                                 frame.f_locals,
+                                                 frame.getf_locals(),
                                                  getStarArg());
         PyObject names;
         boolean filter = true;

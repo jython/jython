@@ -563,6 +563,15 @@ class PostOperation(UnsafeExpression):
         return "%s%s" % (self.x.safeSourceString(), self.op)
 
 
+class Subscript(UnsafeExpression):
+    def __init__(self, x, ind):
+        self.ind = ind
+        self.x = x
+
+    def sourceString(self):
+        return "%s[%s]" % (self.x.safeSourceString(), self.ind)
+
+
 
 class InvokeLocal(Expression):
     def __init__(self, name, args):

@@ -253,6 +253,8 @@ class SimpleCompiler(BaseEvaluator, CompilationContext):
         self.options = options
         self.listComprehensionStack = []
 
+        self.free_decls = []
+
     def isAlwaysFalse(self, name):
         if self.options is None:
             return 0
@@ -281,7 +283,7 @@ class SimpleCompiler(BaseEvaluator, CompilationContext):
             self.frame.setScope(node.scope)
         ret = BaseEvaluator.parse(self, node)
         #print 'parse', ret
-        decs = self.frame.getDeclarations()
+        decs = self.free_decls + self.frame.getDeclarations()
         if len(decs) != 0:
             return [decs, jast.SimpleComment('Code'), ret]
         else:
@@ -294,6 +296,9 @@ class SimpleCompiler(BaseEvaluator, CompilationContext):
 
     def freeTemp(self, tmp):
         self.frame.freetemp(tmp.asAny())
+
+    def makeFreeDecl(self,type,value):
+        self.free_decls.append(jast.Declare(type,value))
 
     #primitive values
     def int_const(self, value):
@@ -435,18 +440,17 @@ class SimpleCompiler(BaseEvaluator, CompilationContext):
     def import_stmt(self, names):
         ret = []
         for dotted, asname in names:
-            modname = jast.StringConstant(".".join(dotted))
+            modnameConst = jast.StringConstant(".".join(dotted))
             if asname:
-                self.set_name(asname, self.get_module(dotted,0))
-                asname = jast.StringConstant(asname)
-                ret.append(jast.InvokeStatic("org.python.core.imp",
-                                "importOneAs",
-                                 [modname, asname, self.frame.frame]))
+                code = jast.InvokeStatic("org.python.core.imp","importOneAs",
+                                         [modnameConst, self.frame.frame])
+                code = self.get_module(dotted,0).makeReference(code)
+                ret.append(self.set_name(asname,code))
             else:
-                self.set_name(dotted[0], self.get_module(dotted,1))
-                ret.append(jast.InvokeStatic("org.python.core.imp",
-                                "importOne",
-                                 [modname, self.frame.frame]))
+                code = jast.InvokeStatic("org.python.core.imp","importOne",
+                                         [modnameConst, self.frame.frame])
+                code = self.get_module(dotted,1).makeReference(code)
+            	ret.append(self.set_name(dotted[0],code))
         return ret
 
 
