@@ -1198,7 +1198,7 @@ public class PyList extends PySequence {
         list_sort(compare);
     }
 
-    final void list_sort(PyObject compare) {
+    final synchronized void list_sort(PyObject compare) {
         MergeState ms = new MergeState(list, length, compare);
         ms.sort();
     }
@@ -1212,7 +1212,7 @@ public class PyList extends PySequence {
     }
 
     final void list_sort() {
-        sort(null);
+        list_sort(null);
     }
 
     public int hashCode() {
