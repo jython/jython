@@ -37,6 +37,7 @@ print "Executing unittest tests"
 from test_jreload import *
 from test_javashell import *
 from test_jy_compile import *
+from test_jy_internals import *
 
 import unittest
 unittest.main() # calls SystemExit
