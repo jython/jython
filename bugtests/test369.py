@@ -22,7 +22,7 @@ PrettyPrint(doc, ofile)
 if ofile.getvalue() != """\
 <?xml version='1.0' encoding='UTF-8'?>\n\
 <!DOCTYPE test>\n\
-<test>Some <b>text</b> here</test> """:
+<test>Some <b>text</b> here</test>\n""":
     raise support.TestError("xml was parsed incorrectly")
 
 
