@@ -20,7 +20,10 @@ installed the package.  If it was not, it can be invoked as follows:
 <p>JPython 1.1 has a new version of the jpythonc tool, which generates 
 actual Java source code, and then invokes a Java compiler over this
 source code to create the .class files.  Thus, you will need access to 
-a Java compiler in order to use jpythonc.
+a Java compiler in order to use jpythonc.  It is recommended that you
+use Sun's standard <tt>javac</tt> compiler, or IBM's excellent
+<tt>jikes</tt> compiler.  Specifically, the Microsoft SDK <tt>jvc</tt> 
+compiler is not recommended.
 
 <P>Invoke jpython like this:
 
