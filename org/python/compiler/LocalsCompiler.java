@@ -13,6 +13,7 @@ public class LocalsCompiler extends Visitor
     static final int GET = 0;
     static final int SET = 1;
     static final int DEL = 2;
+    boolean optimizeGlobals = true;
 
     public LocalsCompiler() {
         mode = GET;
@@ -127,6 +128,12 @@ public class LocalsCompiler extends Visitor
 
     public Object ImportFrom(SimpleNode node) throws Exception {
         int n = node.getNumChildren();
+        if (n == 1) { 
+            // ImportAll
+            optimizeGlobals = false;
+            return null;
+        }
+
         for (int i=1; i<n; i++) {
             SimpleNode cnode = node.getChild(i);
             if (cnode.id == PythonGrammarTreeConstants.JJTIMPORT_AS_NAME) {
@@ -150,6 +157,7 @@ public class LocalsCompiler extends Visitor
 
     public Object exec_stmt(SimpleNode node) throws Exception {
         //Disable locals somehow here?
+        optimizeGlobals = false;
         return null;
     }
 

@@ -32,6 +32,7 @@ public class CodeCompiler extends Visitor
     public boolean fast_locals, print_results;
     public Hashtable locals;
     public Hashtable globals;
+    boolean optimizeGlobals = true;
     public Vector names;
     public String className;
 
@@ -178,6 +179,7 @@ public class CodeCompiler extends Visitor
         names = lc.names;
         locals = lc.locals;
         globals = lc.globals;
+        optimizeGlobals = lc.optimizeGlobals;
 
         mode = GET;
         Object exit = node.visit(this);
@@ -2162,20 +2164,19 @@ public class CodeCompiler extends Visitor
         switch (mode) {
         case GET:
             loadFrame();
-            Integer i=null;
-            if (fast_locals)
-                i = (Integer)locals.get(name);
-
-            if (!fast_locals || i != null) {
-                if (i == null) {
+            if (fast_locals) {
+                Integer i = (Integer)locals.get(name);
+                if (i == null && optimizeGlobals) {
                     code.ldc(name);
-                    if (mrefs.getlocal1 == 0) {
-                        mrefs.getlocal1 = code.pool.Methodref(
-                            "org/python/core/PyFrame", "getname",
+                    if (mrefs.getglobal == 0) {
+                        mrefs.getglobal = code.pool.Methodref(
+                            "org/python/core/PyFrame", "getglobal",
                             "(Ljava/lang/String;)Lorg/python/core/PyObject;");
                     }
-                    code.invokevirtual(mrefs.getlocal1);
-                } else {
+                    code.invokevirtual(mrefs.getglobal);
+                    return null;
+                }
+                if (i != null) {
                     code.iconst(i.intValue());
                     if (mrefs.getlocal2 == 0) {
                         mrefs.getlocal2 = code.pool.Methodref(
@@ -2183,17 +2184,18 @@ public class CodeCompiler extends Visitor
                             "(I)Lorg/python/core/PyObject;");
                     }
                     code.invokevirtual(mrefs.getlocal2);
+                    return null;
                 }
-            } else {
-                code.ldc(name);
-                if (mrefs.getglobal == 0) {
-                    mrefs.getglobal = code.pool.Methodref(
-                        "org/python/core/PyFrame", "getglobal",
-                        "(Ljava/lang/String;)Lorg/python/core/PyObject;");
-                }
-                code.invokevirtual(mrefs.getglobal);
             }
+            code.ldc(name);
+            if (mrefs.getlocal1 == 0) {
+                mrefs.getlocal1 = code.pool.Methodref(
+                    "org/python/core/PyFrame", "getname",
+                    "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+            }
+            code.invokevirtual(mrefs.getlocal1);
             return null;
+
         case SET:
             loadFrame();
             if (globals.get(name) != null) {
@@ -2216,7 +2218,7 @@ public class CodeCompiler extends Visitor
                     }
                     code.invokevirtual(mrefs.setlocal1);
                 } else {
-                    i = (Integer)locals.get(name);
+                    Integer i = (Integer)locals.get(name);
                     if (i == null) {
                         System.err.println("internal compiler error: "+node);
                     }
@@ -2251,7 +2253,7 @@ public class CodeCompiler extends Visitor
                     }
                     code.invokevirtual(mrefs.dellocal1);
                 } else {
-                    i = (Integer)locals.get(name);
+                    Integer i = (Integer)locals.get(name);
                     code.iconst(i.intValue());
                     if (mrefs.dellocal2 == 0) {
                         mrefs.dellocal2 = code.pool.Methodref(
