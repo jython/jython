@@ -249,9 +249,7 @@ public class PyInstance extends PyObject
         if (f == null) {
             f = ifindclass(name, false);
             if (f != null) {
-                if (f instanceof PyFunction ||
-                    f instanceof PyBuiltinFunctionSet)
-                {
+                if (f instanceof PyFunction) {
                     return f.__call__(this, arg1);
                 } else {
                     f = f._doget(this);
@@ -268,9 +266,7 @@ public class PyInstance extends PyObject
         if (f == null) {
             f = ifindclass(name, false);
             if (f != null) {
-                if (f instanceof PyFunction ||
-                    f instanceof PyBuiltinFunctionSet)
-                {
+                if (f instanceof PyFunction) {
                     return f.__call__(this, arg1, arg2);
                 } else {
                     f = f._doget(this);
