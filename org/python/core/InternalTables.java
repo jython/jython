@@ -45,9 +45,13 @@ public abstract class InternalTables {
     static InternalTables createInternalTables() {
         String cands = PySystemState.registry.getProperty(
                                     "python.options.internalTablesImpl");
-        if (cands == null)
-            cands = ">2:>1";
-        else
+        if (cands == null) {
+            String version = System.getProperty("java.version");
+            if (version.compareTo("1.2") >= 0)
+                cands = ">2:>1";
+            else
+                cands = ">1";
+        } else
             cands = cands + ":>2:>1";
         StringTokenizer candEnum = new StringTokenizer(cands,":");
         while (candEnum.hasMoreTokens()) {
