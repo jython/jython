@@ -26,7 +26,7 @@ import org.python.core.*;
  *
  * e.g. http://localhost:8080/test/hello.py
  *
- * class test(HttpServlet):
+ * class hello(HttpServlet):
  *     def doGet(self,req, res):
  *         res.setContentType("text/html");
  *         out = res.getOutputStream()
@@ -64,13 +64,20 @@ public class PyServlet extends HttpServlet {
     private Hashtable cache = new Hashtable();
 
     public void init() {
+        String rootPath = getServletContext().getRealPath("/");
+
         Properties props = new Properties();
         Enumeration e = getInitParameterNames();
         while (e.hasMoreElements()) {
             String name = (String) e.nextElement();
             props.setProperty(name, getInitParameter(name));
         }
- 
+        if (props.getProperty("python.home") == null && 
+                                   System.getProperty("python.home") == null) {
+            props.setProperty("python.home", rootPath + File.separator +
+                                             "WEB-INF" + File.separator +
+                                             "lib");
+        }
         PythonInterpreter.initialize(System.getProperties(), props, new String[0]);
         interp = new PythonInterpreter();
 
@@ -79,6 +86,8 @@ public class PyServlet extends HttpServlet {
         sys.add_package("javax.servlet.http");
         sys.add_package("javax.servlet.jsp");
         sys.add_package("javax.servlet.jsp.tagext");
+
+        sys.path.append(new PyString(rootPath));
     }
 
     public void service(ServletRequest req, ServletResponse res)
@@ -86,6 +95,9 @@ public class PyServlet extends HttpServlet {
     {
         String spath = ((HttpServletRequest) req).getServletPath();
         String rpath = getServletContext().getRealPath(spath);
+
+        interp.set("__file__", rpath);
+        
         HttpServlet servlet = getServlet(rpath);
         if (servlet !=  null)
             servlet.service(req, res);
