@@ -2769,7 +2769,11 @@ final void SkipLexicalActions(Token matchedToken)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1)));
-          indent = 0;
+        indent = 0;
+        if (indent == indentation[level])
+            SwitchTo(INDENTATION_UNCHANGED);
+        else
+            SwitchTo(INDENTING);
          break;
       default :
          break;
