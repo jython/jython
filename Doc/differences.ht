@@ -19,7 +19,7 @@ at different paces.  All efforts are made to keep the two
 implementations in sync, but that's not always possible.
 
 <p><i>This list
-has been updated to describe the differences between JPython 1.1 and
+has been updated to describe the differences between JPython 1.1beta3 and
 CPython 1.5.2</i>
 
 <h3>Syntax</h3>
@@ -85,14 +85,10 @@ CPython 1.5.2</i>
 	(e.g. 'sys') is different. <I>Both behaviors are
 	acceptable.</I>
 
-	<p><LI>In many cases, introspection yields different results;
-	e.g. dir([]) yields an empty list in JPython but a list of
-	list methods in CPython. Arguably, JPython is right, although
-	I find CPython's behavior more convenient. <I>Both behaviors
-	are acceptable.</I>
-
-	<p><LI>In JPython, dir() doesn't return __name__ even if it is
-	supported. <I>JPython should be fixed</I>
+	<p><LI>In many cases, introspection yields different results.
+	<I>Where appropriate and possible, JPython will adhere to
+	CPython's introspection behavior.  Some differences are
+	acceptable.</I>
 
 	<p><LI>JPython defines __debug__, but always sets it equal to
 	1.  <I>JPython should implement CPython's -O option.</I>
@@ -120,8 +116,9 @@ CPython 1.5.2</i>
 	is considered obsolete and won't be supported by JPython.</I>
 
 	<p><LI>JPython code objects are missing other attributes --
-	co_code, co_consts, co_flags, co_lnotab, co_names, co_nlocals,
-	co_stacksize. <I>These attributes will probably never be
+	co_code, co_consts, co_lnotab, co_names, co_nlocals,
+	co_stacksize. <I>co_flags is now supported because the Python
+	debugger requires it.  Other attributes will probably never be
 	supported in JPython due to its implementation of code objects
 	as compiled Java bytecodes.</I>
 
@@ -153,13 +150,13 @@ CPython 1.5.2</i>
 <h3>Extension modules</h3>
 
 <UL>
-	<LI>JPython supports all java packages as extension
+	<LI>JPython supports all Java packages as extension
 	modules. i.e. from &quot;java.lang import System&quot; will
 	work in any JPython implementation. <I>This functionality
 	might be added as an optional extension to some future version
 	of CPython.</I>
 
-	<p><LI>JPython includes the builtin module jarray -- which
+	<p><LI>JPython includes the builtin module <tt>jarray</tt> -- which
 	allows Python programmers to create and manipulate Java array
 	objects.
 
@@ -201,7 +198,7 @@ CPython 1.5.2</i>
 		implement in Java.
 
 		<p><LI>chmod(), chown(), getpid(), fork(), ... are
-		missing, stat exists but is implemented
+		missing, stat() exists but is implemented
 		incompletely. These functions are all very Unix
 		specific and it is unlikely they will ever be properly
 		supported in a 100% Pure Java implementation.
@@ -232,6 +229,16 @@ CPython 1.5.2</i>
 	    JPython's doesn't. <I>These aliases are considered
 	    obsolete and won't be supported by JPython.</I>
 	</UL>
+
+	<p><li>A wrapper for an md5 module has been added, but in
+	    order to use it you must download and install some extra
+	    Java code.  See the file
+	    <tt>org/python/modules/MD5Module.java</tt> for details.
+
+	<p><li>The time module may produce some different values than with
+	    CPython.  This is due to Java 1.1 compatibility, and this
+	    may be improved in later releases.
+	
 </UL>
 
 <h3>Interpreter and environment</h3>
@@ -241,7 +248,11 @@ CPython 1.5.2</i>
 	a GUI console since interrupts are not supported by Java.</I>
 
 	<p><LI>JPython doesn't have command line editing. <I>Only
-	fixable with a GUI console.</I>
+	fixable with a GUI console.  However, Un*x users can check out 
+	<tt>rlterm</tt> which provides generic GNU Readline support
+	for any terminal based interactive program.  <tt>rlterm</tt>
+	is part of the
+	<a href="ftp://ftp-icf.llnl.gov/pub/Yorick/">Yorick</a>package.</I>
 
 	<p><LI>JPython should have a feature similar to
 	$PYTHONSTARTUP, which specifies a script to run at the start
