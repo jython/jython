@@ -103,6 +103,10 @@ public class PyObject implements java.io.Serializable {
         return new PyString(toString());
     }
         
+    // TBD: safeRepr() is protected so that it's not accessible from
+    // Python.  This is bogus; arbitrary Java code should be able to get
+    // safeRepr but we still want to hide it from Python.  There should be
+    // another way to hide Java methods from Python.
     protected String safeRepr() {
         if (__class__ == null) {
             return "unknown object";
