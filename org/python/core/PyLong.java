@@ -268,4 +268,8 @@ public class PyLong extends PyObject
         else
             return new PyString("0x"+s+"L");
     }
+
+    public PyString __str__() {
+        return Py.newString(value.toString());
+    }
 }
