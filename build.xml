@@ -30,7 +30,7 @@
 
         <property name="sourceDir" value="${basedir}" />
         <property name="outputDir" value="${basedir}/build" />
-        <property name="apidocDir" value="${basedir}/Doc/api" />
+        <property name="apidocDir" value="${basedir}/Doc/javadoc" />
         <property name="debug" value="off" />
         <property name="optimize" value="on" />
 
@@ -229,14 +229,7 @@
     </target>
 
     <target name="javadoc" depends="compile">
-        <delete>
-            <fileset dir="${apidocDir}" includes="**/*.html" />
-            <fileset dir="${apidocDir}" includes="**/*.css" />
-            <fileset dir="${apidocDir}" includes="package-list" />
-        </delete>
-        <delete dir="${apidocDir}/org" />
-        <delete dir="${apidocDir}/com" />
-
+        <delete dir="${apidocDir}" />
         <mkdir dir="${apidocDir}" />
         <javadoc sourcepath="${sourceDir}"
                  destdir="${apidocDir}"
