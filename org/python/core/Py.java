@@ -863,8 +863,11 @@ public final class Py {
         // Sun JVM with the JIT enabled won't cause other problems.  When
         // you're getting weird bugs, the first thing to do is TURN OFF THE 
         // JIT!
+        //
+        // Note: this looks funny because the java.compiler property can be
+        // null, e.g. in Hotspot
         if (!dementedJITworkaround &&
-            System.getProperty("java.compiler").equals("sunwjit"))
+            "sunwjit".equals(System.getProperty("java.compiler")))
         {
             ByteArrayOutputStream bs = new ByteArrayOutputStream();
             PrintStream err = new PrintStream(bs);
