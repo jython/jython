@@ -420,6 +420,13 @@ public class PyString extends PySequence implements InitModule
         }
     }
 
+    public boolean __contains__(PyObject o) {
+        if (!(o instanceof PyString) || o.__len__() != 1)
+            throw Py.TypeError("string member test needs char left operand");
+        PyString other = (PyString) o;
+        return string.indexOf(other.string) >= 0;
+    }
+
     protected PyObject repeat(int count) {
         int s = string.length();
         char new_chars[] = new char[s*count];
