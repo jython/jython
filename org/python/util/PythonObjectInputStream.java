@@ -54,6 +54,3 @@ public class PythonObjectInputStream extends ObjectInputStream {
         return __builtin__.__import__(name, null, null, silly_list);
     }
 }
-
-
-        
