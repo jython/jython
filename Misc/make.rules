@@ -68,9 +68,11 @@ CLASSPATHSWITCH = $(CLASSPATH):$(BOOTSTRAPCLASSES)
 SOURCES = $(wildcard *.java)
 CLASSES= $(SOURCES:%.java=%.class)
 
+.PHONY: all clean realclean
+
 all: $(CLASSES)
 
-clean:
+clean::
 	-rm *.class
 
-realclean: clean
+realclean:: clean
