@@ -1,7 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyInteger extends PyObject {
+public class PyInteger extends PyObject
+{
     private int value; 
 
     public PyInteger(int v) {
