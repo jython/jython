@@ -342,15 +342,15 @@ public final class Py {
 			ZeroDivisionError = new PyString("ZeroDivisionError");
 			MemoryError = new PyString("MemoryError");
 			OverflowError = new PyString("OverflowError");
-			
-			StandardError = new PyTuple(new PyObject[]
-		        {Py.SystemError, Py.ImportError, Py.NameError, Py.IOError, Py.KeyboardInterrupt, Py.TypeError, Py.LookupError, Py.AttributeError, Py.SyntaxError, Py.ValueError, Py.ArithmeticError, Py.RuntimeError, Py.EOFError, Py.MemoryError, Py.AssertionError});
-
-			ArithmeticError = new PyTuple(new PyObject[]
-		        {Py.OverflowError, Py.ZeroDivisionError, Py.FloatingPointError});
 
 			LookupError = new PyTuple(new PyObject[]
 		        {Py.KeyError, Py.IndexError});
+		        
+			ArithmeticError = new PyTuple(new PyObject[]
+		        {Py.OverflowError, Py.ZeroDivisionError, Py.FloatingPointError});
+		        
+			StandardError = new PyTuple(new PyObject[]
+		        {Py.SystemError, Py.ImportError, Py.NameError, Py.IOError, Py.KeyboardInterrupt, Py.TypeError, Py.LookupError, Py.AttributeError, Py.SyntaxError, Py.ValueError, Py.ArithmeticError, Py.RuntimeError, Py.EOFError, Py.MemoryError, Py.AssertionError});
 
 			Exception = new PyTuple(new PyObject[]
 		        {Py.SystemExit, Py.StandardError});
