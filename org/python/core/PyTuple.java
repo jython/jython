@@ -19,18 +19,28 @@ public class PyTuple extends PySequence {
 
 	protected PyObject getslice(int start, int stop, int step) {
 		int n = sliceLength(start, stop, step);
-		PyObject new_list[] = new PyObject[n];
+		PyObject[] newList = new PyObject[n];
+		
+		if (step == 1) {
+		    System.arraycopy(list, start, newList, 0, stop-start);
+		    return new PyTuple(newList);
+		}
 		int j = 0;
-		for(int i=start; j<n; i+=step) new_list[j++] = list[i];
-		return new PyTuple(new_list);
+		for(int i=start; j<n; i+=step) {
+			newList[j] = list[i];
+			j++;
+		}
+		return new PyTuple(newList);
 	}
 
+
 	protected PyObject repeat(int count) {
-		PyObject new_list[] = new PyObject[list.length*count];
+		int l = list.length;
+		PyObject[] newList = new PyObject[l*count];
 		for(int i=0; i<count; i++) {
-			System.arraycopy(list, 0, new_list, i*list.length, list.length);
+		    System.arraycopy(list, 0, newList, i*l, l);
 		}
-		return new PyTuple(new_list);
+		return new PyTuple(newList);
 	}
 
 	public PyObject __add__(PyObject generic_other) {
