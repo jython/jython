@@ -92,7 +92,7 @@ public class PyInteger extends PyObject {
 		int b = ((PyInteger)right).value;
 		int x = a + b;
 		if ((x^a) < 0 && (x^b) < 0)
-			throw Py.OverflowError("integer addition");
+			throw Py.OverflowError("integer addition: "+this+" + "+right);
 		return new PyInteger(x);
 	}
 
@@ -101,14 +101,18 @@ public class PyInteger extends PyObject {
 		int b = ((PyInteger)right).value;
 		int x = a - b;
 		if ((x^a) < 0 && (x^~b) < 0)
-			throw Py.OverflowError("integer subtraction");
+			throw Py.OverflowError("integer subtraction: "+this+" - "+right);
 		return new PyInteger(x);
 	}
 
 	public PyObject __mul__(PyObject right) {
-		long x = ((long)value)*((PyInteger)right).value;
+		double x = (double)value;
+		x *= ((PyInteger)right).value;
+		//long x = ((long)value)*((PyInteger)right).value;
+		//System.out.println("mul: "+this+" * "+right+" = "+x);
+		
 		if (x > Integer.MAX_VALUE || x < Integer.MIN_VALUE)
-			throw Py.OverflowError("integer multiplication");
+			throw Py.OverflowError("integer multiplication: "+this+" * "+right);
 		return new PyInteger((int)x);
 	}
 
