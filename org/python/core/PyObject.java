@@ -324,20 +324,24 @@ public class PyObject implements java.io.Serializable {
        int argslen = args.length;
        int nstar = 0;
 
+       String name = "";
+       if (this instanceof PyFunction)
+           name = ((PyFunction) this).__name__ + "() ";
+
        if (kwargs != null) {
            PyObject keys = kwargs.__findattr__("keys");
            if (keys == null)
-               throw Py.TypeError("** argument must be a dictionary");
+               throw Py.TypeError(name + "argument after ** must be a dictionary");
            for (int i = 0; i < keywords.length; i++)
                if (kwargs.__finditem__(keywords[i]) != null)
-                   throw Py.TypeError(
-                          "keyword parameter redefined: " + keywords[i]);
+                   throw Py.TypeError(name + 
+                          "got multiple values for keyword argument '" + keywords[i] + "'");
            argslen += kwargs.__len__();
        }
        if (starargs != null) {
            if (!(starargs instanceof PySequence || 
                        starargs instanceof PyInstance))
-               throw Py.TypeError("* argument must be a sequence");
+               throw Py.TypeError(name + "argument after * must be a sequence");
            nstar = starargs.__len__();
            argslen += nstar;
        }
@@ -366,8 +370,8 @@ public class PyObject implements java.io.Serializable {
            PyObject key;
            for (int i = 0; (key = keys.__finditem__(i)) != null; i++) {
                if (!(key instanceof PyString))
-                   throw Py.TypeError(
-                       "** argumentr must be a dictionary with string keys");
+                   throw Py.TypeError(name + 
+                       "keywords must be strings");
                newkeywords[keywords.length + i] =
                           ((PyString) key).internedString();
                newargs[argidx++] = kwargs.__finditem__(key);
