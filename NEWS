@@ -1,5 +1,49 @@
 JPython NEWS
 
+22-Sep-1999 JPython 1.1beta3 released
+
+  New JPython features and bug fixes
+
+    - JPython can now optionally access non-public members of Java
+      classes.  By setting the registry entry
+      python.security.respectJavaAccessibility=false, JPython can
+      access private, package-private, and protected fields, methods,
+      and constructors.  By default, normal Java access rules are
+      followed, i.e. only public members can be accessed.  This
+      feature only works if running with Java 1.2.  Thanks to Tony
+      Plate for his initial implementation.
+    - A new framework for looking up the methods for builtin types has 
+      been enabled.  This can speed up method calls by a factor of 2.
+      The feature is currently experimental and has only been
+      implemented for list objects, but will be implemented for other
+      builtin objects for the next release.
+    - Some workarounds for weird JIT bugs have been added, but this
+      may not fix all problems related to running JPython under JVMs
+      with JIT enabled.
+    - A wrapper for a free md5 builtin module is included, although
+      the md5 implementation is not.  See the comment in
+      org/python/modules/MD5Module.java for details.
+    - New semantics for registry key python.modules.builtin (and
+      correspondingly the org/python/modules/Setup.java file).
+
+  Improved CPython 1.5.2 compatibility
+
+    - sys.modules['__builtin__'] and "import __builtin__" has been
+      fixed.
+    - Builtin methods and functions now have the standard __name__,
+      __doc__, __self__, and __members__ attributes.
+    - Dictionaries and lists now have a __methods__ attribute, and
+      dir({}) or dir([]) return the list of members.
+    - repr(8to16bitstring) now prints standard octal escapes for 8bit
+      characters.  It still prints hex escapes for 16bit characters.
+    - Added abspath() to os.path (i.e. javapath)
+    - Code objects now have a co_flags attribute
+    - Frame objects now have f_trace attribute, and dir(frame) works
+    - None() now raises a TypeError
+    - tuple(somelist) immutability patch
+    - re match objects now have groupdict() method
+    - Finn Bock patch for setting of a module's __name__ after reload
+
 16-Jun-1999 JPython 1.1beta2 released
 
     - Updates and bug fixes to jpythonc tool.  New registry entries
