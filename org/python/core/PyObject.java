@@ -688,8 +688,9 @@ public class PyObject implements java.io.Serializable {
         return false;
     }
 
+    // overridden by PyMethod
     public void _setClass(PyObject myclass) {}
-
+    
     /* Numeric coercion */
     /**
        Implements numeric coercion
@@ -1768,7 +1769,7 @@ public class PyObject implements java.io.Serializable {
         
     /* A convenience function for PyProxy's */
     // Possibly add _jcall(), _jcall(Object, ...) as future optimization
-    public PyObject _jcall(Object[] args) {
+    public PyObject _jcallexc(Object[] args) throws Throwable {
         PyObject[] pargs = new PyObject[args.length];
         try {
             int n = args.length;
@@ -1776,26 +1777,43 @@ public class PyObject implements java.io.Serializable {
                 pargs[i] = Py.java2py(args[i]);
             return __call__(pargs);
         } catch (PyException e) {
-            /*if (e.value instanceof PyJavaInstance) {
-              Throwable t = (Throwable)e.value.__tojava__(Throwable.class);
-              if (t != null) {
-              throw t;
-              }
-              } else {*/
-            ThreadState ts = Py.getThreadState();
-            if (ts.frame == null) {
-                Py.maybeSystemExit(e);
+            if (e.value instanceof PyJavaInstance) {
+                Throwable t = (Throwable)e.value.__tojava__(Throwable.class);
+                if (t != null) {
+                    throw t;
+                }
+            } else {
+                ThreadState ts = Py.getThreadState();
+                if (ts.frame == null) {
+                    Py.maybeSystemExit(e);
+                }
+                if (Options.showPythonProxyExceptions) {
+                    Py.stderr.println(
+                        "Exception in Python proxy returning to Java:");
+                    Py.printException(e);
+                }
             }
-            if (Options.showPythonProxyExceptions) {
-                Py.stderr.println(
-                    "Exception in Python proxy returning to Java:");
-                Py.printException(e);
-            }
-            //}
             throw e;
         }
     }
         
+    public void _jthrow(Throwable t) {
+        if (t instanceof RuntimeException)
+            throw (RuntimeException)t;
+        if (t instanceof Error)
+            throw (Error)t;
+        throw Py.JavaError(t);
+    }
+    
+    public PyObject _jcall(Object[] args) {
+        try {
+            return _jcallexc(args);
+        } catch (Throwable t) {
+            _jthrow(t);
+            return null;
+        }
+    }
+
     /* Shortcut methods for calling methods from Java */
         
     /**

@@ -51,10 +51,10 @@ public class PyReflectedConstructor extends PyReflectedFunction {
         
         // If this is the constructor for a proxy class or not...
         if (PyProxy.class.isAssignableFrom(declaringClass)) {
-            if (self instanceof PyJavaInstance) {
-                throw Py.TypeError(
-                    "invalid self argument to proxy constructor");
-            }
+//             if (self instanceof PyJavaInstance) {
+//                 throw Py.TypeError(
+//                     "invalid self argument to proxy constructor");
+//             }
         }
         else {
             if (!(iself instanceof PyJavaInstance)) {

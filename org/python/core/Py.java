@@ -595,7 +595,6 @@ public final class Py {
         //frozen = false;               
         initProperties(null, packages, props, specs, frozenPackage);
                 
-                
         ThreadState ts = getThreadState();
         if (ts.getInitializingProxy() != null) {
             proxy._setPyInstance(ts.getInitializingProxy());
@@ -610,7 +609,21 @@ public final class Py {
 
         //System.out.println("path: "+sys.path.__str__());
 
-        PyObject mod = imp.importName(module.intern(), false);
+        PyObject mod;
+        Class modClass = Py.findClass(module+"$_PyInner");
+        if (modClass != null) {
+            //System.err.println("found as class: "+modClass);
+            PyCode code=null;
+            try {
+                code = ((PyRunnable)modClass.newInstance()).getMain();
+            } catch (Throwable t) {
+                throw Py.JavaError(t);
+            }
+            mod = imp.createFromCode(module, code);
+        } else {
+            mod = imp.importName(module.intern(), false);
+            //System.err.println("found as mod: "+mod);
+        }
         PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
 
         PyInstance instance = new PyInstance(pyc);
@@ -1210,7 +1223,7 @@ public final class Py {
         if (doc != null)
             dict.__setitem__("__doc__", doc);
 
-        for(int i=0; i<bases.length; i++) {
+        for (int i=0; i<bases.length; i++) {
             if (!(bases[i] instanceof PyClass)) {
                 PyObject c = bases[i].__class__;
                 // Only try the meta-class trick on __class__'s that are
