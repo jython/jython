@@ -780,11 +780,10 @@ public final class Py {
         }
 
         if (exc.value instanceof PyJavaInstance) {
-            Throwable javaError =
-                (Throwable)exc.value.__tojava__(Throwable.class);
+            Object javaError = exc.value.__tojava__(Throwable.class);
 
-            if (javaError != null) {
-                stderr.println(getStackTrace(javaError));
+            if (javaError != null && javaError != Py.NoConversion) {
+                stderr.println(getStackTrace((Throwable)javaError));
             }
         }
 
