@@ -4,7 +4,23 @@ import java.util.zip.*;
 import java.io.*;
 
 public class jpython {
-    private static String usage = "jpython [-i] [filename | -] [args]*";
+    private static String usage =
+	"usage: jpython [option] ... [-jar jar | -c cmd | file | -] [arg] "+
+	"...\n"+
+	"Options and arguments:\n"+
+	"-i       : inspect interactively after running script, and force\n"+
+	"           prompts, even if stdin does not appear to be a terminal\n"+
+	"-S       : don't imply `import site' on initialization\n"+
+	"-X       : disable class based built-in exceptions\n"+
+	"--help   : print this usage message and exit\n"+
+	"--version: print JPython version number and exit\n"+
+	"-Dprop=v : Set the property `prop' to value `v'\n"+
+	"-jar jar : program read from __run__.py in jar file\n"+
+	"-c cmd   : program passed in as string (terminates option list)\n"+
+	"file     : program read from script file\n"+
+	"-        : program read from stdin (default; interactive mode if a "+
+	"tty)\n"+
+	"arg ...  : arguments passed to program in sys.argv[1:]";
 
     public static void runJar(String filename) {
         try {
@@ -35,8 +51,13 @@ public class jpython {
         // Parse the command line options
         CommandLineOptions opts = new CommandLineOptions();
         if (!opts.parse(args)) {
+	    if (opts.version) {
+		System.err.println(InteractiveConsole.getDefaultBanner());
+		System.exit(0);
+	    }
             System.err.println(usage);
-            System.exit(-1);
+	    int exitcode = opts.help ? 0 : -1;
+            System.exit(exitcode);
         }
         
         // Setup the basic python system state from these options
@@ -109,15 +130,17 @@ class CommandLineOptions {
     public String filename;
     public boolean jar, interactive, notice;
     private boolean fixInteractive;
+    public boolean help, version;
     public String[] argv;
     public java.util.Properties properties;
     public String command;
 
     public CommandLineOptions() {
-        filename=null;
+        filename = null;
         jar = fixInteractive = false;
         interactive = notice = true;
         properties = new java.util.Properties();
+	help = version = false;
     }
 
     public void setProperty(String key, String value) {
@@ -128,24 +151,40 @@ class CommandLineOptions {
         int index=0;
         while (index < args.length && args[index].startsWith("-")) {
             String arg = args[index];
-            if (arg.equals("-")) {
-                if (!fixInteractive) interactive = false;
+	    if (arg.equals("--help")) {
+		help = true;
+		return false;
+	    }
+	    else if (arg.equals("--version")) {
+		version = true;
+		return false;
+            }
+	    else if (arg.equals("-")) {
+                if (!fixInteractive)
+		    interactive = false;
                 filename = "-";
-            } else if (arg.equals("-i")) {
+            }
+	    else if (arg.equals("-i")) {
                 fixInteractive = true;
                 interactive = true;
-            } else if (arg.equals("-jar")) {
+            }
+	    else if (arg.equals("-jar")) {
                 jar = true;
-                if (!fixInteractive) interactive = false;
-            } else if (arg.equals("-X")) {
+                if (!fixInteractive)
+		    interactive = false;
+            }
+	    else if (arg.equals("-X")) {
                 Options.classBasedExceptions = false;
-            } else if (arg.equals("-S")) {
+            }
+	    else if (arg.equals("-S")) {
                 Options.importSite = false;
-            } else if (arg.equals("-c")) {
+            }
+	    else if (arg.equals("-c")) {
                 command = args[++index];
                 if (!fixInteractive) interactive = false;              
                 break;
-            } else if (arg.startsWith("-D")) {
+            }
+	    else if (arg.startsWith("-D")) {
                 String key = null; 
                 String value = null;
                 int equals = arg.indexOf("=");
@@ -157,13 +196,20 @@ class CommandLineOptions {
                       }*/
                     key = arg.substring(2, arg.length());
                     value = arg2; //.substring(1, arg2.length());
-                } else {
+                }
+		else {
                     key = arg.substring(2, equals);
                     value = arg.substring(equals+1, arg.length());
                 }
                 setProperty(key, value);
-            } else {
-                System.err.println("Unknown option: "+args[index]);
+            }
+	    else {
+		String opt = args[index];
+		if (opt.startsWith("--"))
+		    opt = opt.substring(2);
+		else if (opt.startsWith("-"))
+		    opt = opt.substring(1);
+                System.err.println("jpython: illegal option -- " + opt);
                 return false;
             }
             index += 1;
@@ -171,21 +217,23 @@ class CommandLineOptions {
         notice = interactive;
         if (filename == null && index < args.length && command == null) {
             filename = args[index++];
-            if (!fixInteractive) interactive = false;
+            if (!fixInteractive)
+		interactive = false;
             notice = false;
         }
-        if (command != null) notice = false;
+        if (command != null)
+	    notice = false;
 
         int n = args.length-index+1;
         argv = new String[n];
         //new String[args.length-index+1];
-        if (filename != null) argv[0] = filename;
+        if (filename != null)
+	    argv[0] = filename;
         else argv[0] = "";
 
         for(int i=1; i<n; i++, index++) {
             argv[i] = args[index];
         }
-
         return true;
     }
 }
