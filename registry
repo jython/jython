@@ -3,7 +3,7 @@
 # All of these settings could be erased with no change in behavior
 
 # This is how Jim sets his path on his Windows development machine
-#python.path=.;c:\\jpython\\Lib;d:\\Python-1.5.2\\Lib
+#python.path=.;c:\\Jython\\Lib;d:\\Python-1.5.2\\Lib
 # This is how Barry sets his path on his Unix development machine
 #python.path = /home/bwarsaw/projects/python/Lib
 python.path = .
@@ -20,17 +20,17 @@ python.cachedir = cachedir
 python.packages.paths = java.class.path, sun.boot.class.path
 python.packages.directories = java.ext.dirs
 
-# To force JIT compilation of JPython code -- should be unnecessary
+# To force JIT compilation of Jython code -- should be unnecessary
 # Setting this to true will cause jdk1.2rc1 to core dump on Windows
 python.options.compileClass = false
 
-# Allow JPython's classloader to find and load .class files on
+# Allow Jython's classloader to find and load .class files on
 # sys.path.  This only happens for anonymous inner classes, but may
 # have unintended side-effects.  This option is temporary.
 python.options.extendedClassLoader = true
 
 # Set verbosity to error, warning, message, comment, or debug
-# for varying levels of informative messages from JPython
+# for varying levels of informative messages from Jython
 python.verbose = message
 
 # Setting this to true will support old 1.0 style keyword+"_" names
@@ -41,7 +41,7 @@ python.deprecated.keywordMangling = false
 # This might be helpful on systems without system-level threads
 python.console.poll = false
 
-# Setting this to false will allow JPython to provide access to
+# Setting this to false will allow Jython to provide access to
 # non-public fields, methods, and constructors of Java objects.
 python.security.respectJavaAccessibility = true
 
@@ -68,5 +68,5 @@ python.security.respectJavaAccessibility = true
 # This specifies the command used by jythonc to compile Java source
 # code, along with the complete classpath to use.
 # python.jythonc.compiler = /depot/java/plat/bin/jikes
-# python.jythonc.classpath = /usr/java1.2/jre/lib/rt.jar:/jpython/dist:.
+# python.jythonc.classpath = /usr/java1.2/jre/lib/rt.jar:/Jython/dist:.
 # python.jythonc.compileropts = +E +D -g
