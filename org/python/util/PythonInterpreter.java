@@ -37,11 +37,11 @@ public class PythonInterpreter {
     }
     
     public PythonInterpreter(PyObject dict, PySystemState systemState) {
-        PySystemState.initialize();
         if (dict == null)
             dict = new PyStringMap();
         if (systemState == null)
             systemState = new PySystemState();
+        PySystemState.initialize();
         module = new PyModule("main", dict);
         this.systemState = systemState;
         locals = module.__dict__;
@@ -51,7 +51,6 @@ public class PythonInterpreter {
     protected void setState() {
         Py.setSystemState(systemState);
     }
-        
     
     /**
      * Set the Python object to use for the standard output stream
