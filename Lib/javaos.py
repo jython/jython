@@ -89,3 +89,9 @@ def stat(path):
         raise OSError(0, 'No such file or directory', path)
     mtime = f.lastModified() / 1000.0
     return (0, 0, 0, 0, 0, 0, size, mtime, mtime, 0)
+
+def utime(path, times):
+    # Only the modification time is changed (and only on java2).
+    if times and hasattr(File, "setLastModified"):
+        File(path).setLastModified(long(times[1] * 1000.0))
+
