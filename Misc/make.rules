@@ -1,16 +1,51 @@
 # -*- makefile -*-
+# Copyright © Corporation for National Research Initiatives
 #
-# Generic Makefile rules for building JPython
+# Generic Makefile rules for building JPython.  Assumes GNU make.
+# Configure your build of JPython by modifying macros in this file.
+
+# Uncomment these 3 lines to use the Jikes compiler.  Jikes is a Java
+# compiler available from IBM's alphaWorks.  It is much faster than
+# Sun's javac.  I have tested JPython with Jikes 0.47 on Solaris.  You 
+# may need to change BOOTSTRAPCLASSES to point to your standard Java
+# classes.  Jikes requires you to supply your own standard classes;
+# the one described below comes from Sun's production JDK 1.2 for
+# Solaris.
+#
+# Get Jikes from http://www.alphaWorks.ibm.com/formula/Jikes
+
+JAVAC = jikes +E +D
+OPT = -g
+BOOTSTRAPCLASSES = /usr/java1.2/jre/lib/rt.jar
+
+# Uncomment these 3 lines to use Sun's javac compiler
 
 #JAVAC = javac
-JAVAC = jikes +E +D
-JAVA = java
 #OPT = -g:lines,vars,source
-OPT = -g
+#BOOTSTRAPCLASSES =
 
-CLASSPATH = "MUST OVERRIDE"
-JIKESPATH = /usr/java1.2/jre/lib/rt.jar
-CLASSPATHSWITCH = $(CLASSPATH):$(JIKESPATH)
+# This is the Java intepreter to use
+JAVA = java
+
+# JPython uses the OROMatcher regular expression library from ORO,
+# Inc. to provide its Perl5 compatible regular expression support.  We
+# cannot distribute OROMatcher as source or separate class files, so
+# you will have to either download OROMatcher yourself, or disable
+# regular expressions in JPython.
+
+# OROMatcher is available from www.oroinc.com.  If you download it
+# yourself, change the definition of OROMATCHERROOT to point to the
+# directory where you installed it.
+#
+# If you do not have the OROMatcher regular expression library,
+# read the comments in the file org/python/modules/Makefile.
+
+OROMATCHERROOT = ../../../../nondist/ORO
+
+# You shouldn't need to change anything below this line
+
+CLASSPATH = "SUBDIRS MUST OVERRIDE"
+CLASSPATHSWITCH = $(CLASSPATH):$(BOOTSTRAPCLASSES)
 
 .SUFFIXES= .java .class
 
