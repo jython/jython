@@ -6,9 +6,11 @@ by an instance of the class <code>PyObject</code> or one of
 its subclasses.
 
 @author Jim Hugunin - hugunin@python.org
-@version 1.0, 3/24/98
+@version 1.1, 1/5/98
 @since JPython 0.0
 **/
+
+
 
 public class PyObject implements java.io.Serializable {
     /**
@@ -36,10 +38,29 @@ public class PyObject implements java.io.Serializable {
        of <code>PyObject</code> being instantiated.
     **/
     public PyObject() {
-        __class__ = PyJavaClass.lookup(getClass());
+	PyClass c = getPyClass();
+	if (c == null) c = PyJavaClass.lookup(getClass());
+	__class__ = c;
     }
 
+    /** This method is provided to efficiently initialize the __class__ attribute.
+	If the following boilerplate is added to a subclass of PyObject,
+	the instantiation time for the object will be greatly reduced.
+	
+       <blockquote><pre>
+    // __class__ boilerplate -- see PyObject for details
+    public static PyClass __class__;
+    protected PyClass getPyClass() { return __class__; }
+       </pre></blockquote>
+
+	With PyIntegers this leads to a 50% faster instantiation time.
+	This replaces the PyObject(PyClass c) constructor which is now deprecated.
+    **/
+
+    protected PyClass getPyClass() { return null; }
+
     /**
+       #### This method is now deprecated and will go away in the future ####
        A more sophisticated constructor for a <code>PyObject</code>.
        Can be more efficient as it allows the subclass of PyObject to cache its
        known <code>__class__</code>.
@@ -55,6 +76,7 @@ public class PyObject implements java.io.Serializable {
     
        @param c a <code>PyClass</code> instance giving the <code>__class__</code>
        of the new <code>PyObject</code>
+       @deprecated see get PyClass for details
     **/
     public PyObject(PyClass c) {
         if (c == null) {

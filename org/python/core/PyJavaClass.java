@@ -114,7 +114,18 @@ public class PyJavaClass extends PyClass {
 
     private void init__class__(Class c) {
         if (!PyObject.class.isAssignableFrom(c)) return;
-        
+
+	/* Handle the special static __class__ fields on PyObject instances
+            if (name == "__class__" &&  isstatic && 
+		PyObject.class.isAssignableFrom(field.getDeclaringClass()) &&
+		field.getType().isAssignableFrom(PyJavaClass.class)) {
+                try {
+                    field.set(null, this);
+                    continue;
+                } catch (Throwable t) {
+                    System.err.println("invalid __class__ field on: "+c.getName());
+                }
+		}*/
         try {
             Field field = c.getField("__class__");
             if (Modifier.isStatic(field.getModifiers()) && 
@@ -256,19 +267,7 @@ public class PyJavaClass extends PyClass {
             String name = getName(field.getName());
             boolean isstatic = Modifier.isStatic(field.getModifiers());
             
-            // Handle the special static __class__ fields on PyObject instances
-            if (name == "__class__" &&  isstatic && 
-		PyObject.class.isAssignableFrom(field.getDeclaringClass()) &&
-		field.getType().isAssignableFrom(PyJavaClass.class)) {
-                try {
-                    field.set(null, this);
-                    continue;
-                } catch (Throwable t) {
-                    System.err.println("invalid __class__ field on: "+c.getName());
-                }
-            }
-            
-            if (isstatic) {
+             if (isstatic) {
                 PyObject prop = lookup(name, false);
                 if (prop != null && prop instanceof PyBeanProperty) {
                     ((PyBeanProperty)prop).field = field;
