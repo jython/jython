@@ -117,7 +117,7 @@ public class PyFunction extends PyObject
         }
         if (name == "__dict__") {
             if (__dict__ == null)
-                __dict__ = new PyStringMap();
+                return Py.None;
             return __dict__;
         }
         if (__dict__ != null) {
