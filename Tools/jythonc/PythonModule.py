@@ -341,13 +341,31 @@ class PythonModule:
     def dumpMain(self):
         meths = []
         if self.javamain:
-            args = [jast.StringConstant(self.getclassname(self.name+'$'+self.pyinner.name)),
-                    jast.Identifier('args'), 
+            code = []
+            newargs = jast.Identifier("newargs")
+            code.append(jast.Declare("String[]", newargs, 
+                   jast.NewArray("String", ["args.length+1"])))
+            code.append(jast.Set(jast.Identifier("newargs[0]"),  
+                   jast.StringConstant(self.name)))
+
+            args = [jast.Identifier('args'), 
+                    jast.IntegerConstant(0),
+                    jast.Identifier('newargs'), 
+                    jast.IntegerConstant(1),
+                    jast.Identifier('args.length')]
+            code.append(jast.InvokeStatic("System", "arraycopy", args))
+
+            args = [jast.StringConstant(self.getclassname(
+                           self.name+'$'+self.pyinner.name)),
+                    jast.Identifier('newargs'), 
                     self.getPackages(), self.getProperties(), 
                     self.getFrozen()]
-            maincode = jast.Block([jast.InvokeStatic("Py", "runMain", args)])
+
+            code.append([jast.InvokeStatic("Py", "runMain", args)])
+            maincode = jast.Block(code)
             meths.append(jast.Method("main", "public static", 
                                      ["void", ("String[]", "args")], maincode))
+
         return meths
         #args = [jast.StringConstant(self.name), jast.Identifier('dict')]
         #initcode = jast.Block([jast.InvokeStatic("Py", "initRunnable", args)])
