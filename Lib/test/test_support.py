@@ -78,6 +78,8 @@ try:
 except NameError:
     have_unicode = 0
 
+is_jython = sys.platform.startswith('java')
+
 import os
 # Filename used for testing
 if os.name == 'java':
@@ -232,22 +234,8 @@ def symbol(n, level):
 levels = [0]*20
 currentLevel = 0
 def print_test(txt, level=-1):
-	global currentLevel
-	if level == -1:
-		level = currentLevel
-	else:
-		n = currentLevel - level
-		if n > 0:
-			levels[level+1:level+n+1] = [0]*n
-		currentLevel = level
-	levels[level] = levels[level]+1
-
-	number = "  "*(level)+symbol(levels[level], level)+'.'
-
-	#number = string.join(map(str, levels[:level]), '.')
-	print number, txt
-	
-	return level
+    print txt
+    return level
 	
 oldStdout = None
 
