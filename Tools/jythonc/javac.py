@@ -4,6 +4,8 @@ from java.lang import System
 
 runtime = java.lang.Runtime.getRuntime()
 
+
+
 def dumpStream(stream, txtarr):
     array = jarray.zeros( 1024, 'b' )
     while 1:
@@ -12,6 +14,8 @@ def dumpStream(stream, txtarr):
             break
         txtarr.append(array[:len].tostring())
 
+
+
 def findDefaultJavac():
     jhome = System.getProperty("java.home")
     if jhome is None:
@@ -26,6 +30,8 @@ def getClasspath():
     cpath = System.getProperty("java.class.path")
     return cpath
 
+
+
 def compile(files, javac=None, cpathopt="-classpath",
             cpath=None, options=None, sourcedir=None):
     cmd = []

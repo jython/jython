@@ -9,13 +9,16 @@ def lookup(name):
 
 
 from java.util.zip import ZipFile
+
 zipfiles = {}
+
 def getzip(filename):
     if zipfiles.has_key(filename):
         return zipfiles[filename]
     zipfile = ZipFile(filename)
     zipfiles[filename] = zipfile
     return zipfile
+
 
 def closezips():
     for zf in zipfiles.values():
