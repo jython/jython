@@ -1,3 +1,5 @@
+package org.python.modules;
+
 /* Class for implementing md4 and md5 hash algorithms.
  * There are constructors for prepping the hash algorithm (doing the
  * padding, mainly) for a String or a byte[], and an mdcalc() method 
