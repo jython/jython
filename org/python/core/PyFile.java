@@ -721,6 +721,10 @@ public class PyFile extends PyObject
         char c2 = ' ';
         char c3 = ' ';
         int n = mode.length();
+        for (int i = 0; i < n; i++) {
+            if ("awrtb+".indexOf(mode.charAt(i)) < 0)
+                throw Py.IOError("Unknown open mode:" + mode);
+        }
         if (n > 0) {
             c1 = mode.charAt(0);
             if (n > 1) {
