@@ -34,7 +34,7 @@ public class PyDictionary extends PyObject {
     }
 
     public PyObject __finditem__(int index) {
-        throw Py.TypeError("using dictionary as a sequence");
+        throw Py.TypeError("loop over non-sequence");
     }
 
     public PyObject __finditem__(PyObject key) {
