@@ -1,8 +1,15 @@
 # Copyright © Corporation for National Research Initiatives
+
+import os
+
+import jarray
 from java.util.zip import *
 from java.io import *
-import string, os, jarray
 from util import lookup
+
+DOT = '.'
+SLASH = '/'
+
 
 
 def copy(instream, outstream):
@@ -11,7 +18,8 @@ def copy(instream, outstream):
         if instream.available() == 0:
             break
         n = instream.read(data)
-        if n == -1: break
+        if n == -1:
+            break
         outstream.write(data, 0, n)
 
 
@@ -29,19 +37,18 @@ class JavaArchive:
 
     def addClass(self, rootdir, classname, properties=None):
         filename = apply(os.path.join, classname.split('.'))+'.class'
-        outfile = string.join(filename.split(os.sep), '/')
+        outfile = SLASH.join(filename.split(os.sep))
         if self.jar_entries.has_key(outfile):
             return
         self.jar_entries[outfile] = 1
 
         self.addFile(rootdir, filename)
         if properties is not None:
-            self.manifest.append("Name: "+
-                                 string.join(classname.split('.'), '/'))
+            self.manifest.append("Name: "+ SLASH.join(classname.split('.')))
             self.addToManifest(properties)
 
     def addEntry(self, entry):
-        outfile = string.join(entry.classname.split('.'), '/')+'.class'
+        outfile = SLASH.join(entry.classname.split('.')) + '.class'
         if self.jar_entries.has_key(outfile):
             return
         self.jar_entries[outfile] = 1
@@ -60,20 +67,21 @@ class JavaArchive:
         if len(self.manifest) == 0:
             return
         outfile = "META-INF/MANIFEST.MF"
+        NL = '\n'
         self.zipfile.putNextEntry(ZipEntry(outfile))
-        self.zipfile.write(string.join(self.manifest, "\n"))
+        self.zipfile.write(NL.join(self.manifest))
 
     def dumpFiles(self):
         for rootdir, filename in self.files:
             infile = os.path.join(rootdir, filename)
-            outfile = string.join(filename.split(os.sep), '/')
+            outfile = SLASH.join(filename.split(os.sep))
             instream = FileInputStream(infile)
             self.zipfile.putNextEntry(ZipEntry(outfile))
             copy(instream, self.zipfile)
             instream.close()
 
         for entry in self.entries:
-            outfile = string.join(entry.classname.split('.'), '/')+'.class'
+            outfile = SLASH.join(entry.classname.split('.')) + '.class'
             instream = entry.getInputStream()
             self.zipfile.putNextEntry(ZipEntry(outfile))
             copy(instream, self.zipfile)
@@ -92,7 +100,7 @@ class JavaArchive:
     # add just one class from a package
     def addOneClass(self, pkgclass):
         parts = pkgclass.split('.')
-        package = string.join(parts[:-1], '.')
+        package = DOT.join(parts[:-1])
         pkg = lookup(package)
         filename = os.path.join(pkg.__path__[0], parts[-1]) + '.class'
         entryname = '/'.join(parts) + '.class'
@@ -117,7 +125,7 @@ class JavaArchive:
             filename = entry.name
             if filename[-6:] != '.class':
                 continue
-            name = string.replace(filename[:-6], '/', '.')
+            name = filename[:-6].replace(SLASH, DOT)
 
             if name[:len(package)] != package:
                 continue
@@ -132,7 +140,7 @@ class JavaArchive:
             name = package+file[:-6]
             if name in skiplist:
                 continue
-            entryname = string.join(name.split('.'), '/')+'.class'
+            entryname = SLASH.join(name.split('.')) + '.class'
             self.zipfile.putNextEntry(ZipEntry(entryname))
             instream = FileInputStream(os.path.join(directory, file))
             copy(instream, self.zipfile)

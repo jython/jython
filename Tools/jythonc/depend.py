@@ -1,13 +1,22 @@
 # Copyright © Corporation for National Research Initiatives
 
+import sys
+import os
+from types import TypeType
+
 from java import io
-import string
-import sys, os, types
 from java.util.zip import ZipFile
+
 
 
 def fix(n):
-    return string.join(string.split(n, '/'), '.')
+    DOT = '.'
+    return DOT.join(n.split('/'))
+
+def unfix(n):
+    SLASH = '/'
+    return SLASH.join(n.split('.'))
+
 
 def getClass(t, names):
     #print t, names
@@ -18,7 +27,7 @@ def getClass(t, names):
             index = index+off
         getClass(t[index+1:], names)
     elif t[0] == 'L':
-        end = string.index(t, ';')
+        end = t.index(';')
         value = t[1:end]
         names[fix(value)] = 1
         return end, t[1:end]
@@ -102,7 +111,7 @@ def getFile(name):
         return ZipEntry(package.__file__, name)
     elif hasattr(package, '__path__') and len(package.__path__) == 1:
         return DirEntry(package.__path__[0], name)
-    elif isinstance(package, types.TypeType):
+    elif isinstance(package, TypeType):
         # this 'package' is a java class
         f = getFile(name[:dot])
         if f:
@@ -120,7 +129,7 @@ class ZipEntry:
 
     def getInputStream(self):
         zf = getzip(self.filename)
-        zfilename = string.join(string.split(self.classname,'.'), '/')+'.class'
+        zfilename = unfix(self.classname) + '.class'
         entry = zf.getEntry(zfilename)
         return zf.getInputStream(entry)
 
