@@ -1,309 +1,324 @@
 // -*- java -*-
 // Copyright © Corporation for National Research Initiatives
- options {
-  NODE_SCOPE_HOOK = true;
-  MULTI = false;
-  LOOKAHEAD = 1;
-  CHOICE_AMBIGUITY_CHECK = 2;
-  OTHER_AMBIGUITY_CHECK = 1;
-  STATIC = false;
-  DEBUG_PARSER = false;
-  DEBUG_LOOKAHEAD = false;
-  OPTIMIZE_TOKEN_MANAGER = false;
-  DEBUG_TOKEN_MANAGER = false;
-  ERROR_REPORTING = true;
-  JAVA_UNICODE_ESCAPE = false;
-  UNICODE_INPUT = false;
-  IGNORE_CASE = false;
-  USER_TOKEN_MANAGER = false;
-  USER_CHAR_STREAM = false;
-  BUILD_PARSER = true;
-  BUILD_TOKEN_MANAGER = true;
-  SANITY_CHECK = true;
-  FORCE_LA_CHECK = false;
-  COMMON_TOKEN_ACTION = true;
+
+options 
+{
+    // only non-defaults are given here.
+    NODE_SCOPE_HOOK = true;                  // call jjtree*NodeScope()
+    STATIC = false;                          // multiple parsers
+    COMMON_TOKEN_ACTION = true;              // CommonTokenAction(Token)
+//    DEBUG_PARSER = true;
+//    DEBUG_TOKEN_MANAGER = true;
 }
 
 
 PARSER_BEGIN(PythonGrammar)
 package org.python.parser;
 
-public class PythonGrammar {
- void jjtreeOpenNodeScope(Node n)
-  {
+public class PythonGrammar 
+{
+    void jjtreeOpenNodeScope(Node n) {
         ((SimpleNode)n).beginLine = getToken(1).beginLine;
-       ((SimpleNode)n).beginColumn = getToken(1).beginColumn;
-  }
+        ((SimpleNode)n).beginColumn = getToken(1).beginColumn;
+    }
 
-  void jjtreeCloseNodeScope(Node n)
-  {
+    void jjtreeCloseNodeScope(Node n) {
         ((SimpleNode)n).endLine = getToken(0).endLine;
-       ((SimpleNode)n).endColumn = getToken(0).endColumn;
-  }
-
+        ((SimpleNode)n).endColumn = getToken(0).endColumn;
+    }
 }
 
 PARSER_END(PythonGrammar)
 
 TOKEN_MGR_DECLS:
 {
-   int indentation[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-   int level = 0;
-   int dedents = 0;
-   int parens=0;
-   int indent;
-   boolean seen_eof=false;
-   boolean single_input=false;
-   boolean compound=false;
-   public boolean forcedNewline = false;
+    int indentation[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    int level = 0;
+    int dedents = 0;
+    int parens = 0;
+    int indent;
+    boolean seen_eof = false;
+    boolean single_input = false;
+    boolean compound = false;
+    public boolean forcedNewline = false;
 
-        static Token addDedent(Token previous) {
-                Token t = new Token();
-                t.kind = DEDENT;
-                t.beginLine = previous.beginLine;
-                t.endLine = previous.endLine;
-                t.beginColumn = previous.beginColumn;
-                t.endColumn = previous.endColumn;
-                t.image = "<DEDENT>";
-                t.specialToken = null;
-                t.next = null;
-                previous.next = t;
-                return t;
-        }
+    static Token addDedent(Token previous) {
+        Token t = new Token();
+        t.kind = DEDENT;
+        t.beginLine = previous.beginLine;
+        t.endLine = previous.endLine;
+        t.beginColumn = previous.beginColumn;
+        t.endColumn = previous.endColumn;
+        t.image = "<DEDENT>";
+        t.specialToken = null;
+        t.next = null;
+        previous.next = t;
+        return t;
+    }
 
-        void CommonTokenAction(Token t) {
-                if (t.kind == EOF) {
-                        //System.out.println("EOF: "+single_input+", "+curLexState);
-                        if (!single_input) {
-                                if (curLexState == DEFAULT) {
-                                        t.kind = NEWLINE;
-                                } else {
-                                        t.kind = DEDENT;
-                                        level -= 1;
-                                }
-                                while (level-- >= 0) t = addDedent(t);
-                                //t = addDedent(t);
-                                t.kind = EOF;
-                                t.image = "<EOF>";
-                        }
+    void CommonTokenAction(Token t) {
+        if (t.kind == EOF) {
+            //System.out.println("EOF: "+single_input+", "+curLexState);
+            if (!single_input) {
+                if (curLexState == DEFAULT) {
+                    t.kind = NEWLINE;
                 }
+                else {
+                    t.kind = DEDENT;
+                    level -= 1;
+                }
+                while (level-- >= 0)
+                    t = addDedent(t);
+                //t = addDedent(t);
+                t.kind = EOF;
+                t.image = "<EOF>";
+            }
         }
+    }
 }
+
 
 SKIP :
 {
-        <SPACE:" ">
-|       "\t"
+    <SPACE: " ">
+|   "\t"
 |   "\014"
-|        <CONTINUATION: ("\\") ("\r\n"|"\n"|"\r")>
-|       <NEWLINE1:("\r\n"|"\n"|"\r")>
+|   <CONTINUATION: ("\\") ("\r\n"|"\n"|"\r")>
+|   <NEWLINE1: ("\r\n"|"\n"|"\r")>
         {
-                //System.out.println("newline, "+parens+", "+indent+", "+single_input);
-                //System.out.println("token: "+matchedToken);
-                //doPrompt();
-                if (parens == 0) {
-                        indent = 0;
-                        input_stream.backup(1);
-                        if (level == 0) SwitchTo(FORCE_NEWLINE1);
-                        else SwitchTo(FORCE_NEWLINE2);
-                }
+            if (parens == 0) {
+                indent = 0;
+                input_stream.backup(1);
+                if (level == 0)
+                    SwitchTo(FORCE_NEWLINE1);
+                else
+                    SwitchTo(FORCE_NEWLINE2);
+            }
         }
 }
+
 
 <FORCE_NEWLINE1> TOKEN :
 { <NEWLINE: ("\n" | "\r")> : INDENTATION_UNCHANGED }
 
+
 <FORCE_NEWLINE2> TOKEN :
 { <NEWLINE2: ("\n" | "\r")> { matchedToken.kind = NEWLINE; }: INDENTING }
 
+
 <FORCE_NEWLINE> TOKEN :
 {
-        <NEWLINE3: ("\n" | "\r")>
+    <NEWLINE3: ("\n" | "\r")>
         {
-                Token t1 = matchedToken;
-                //System.out.println("final_newline: "+level);
-                t1.kind = DEDENT;
-                while (level-- > 0) t1 = addDedent(t1);
-                t1.kind = NEWLINE;
+            Token t1 = matchedToken;
+            //System.out.println("final_newline: "+level);
+            t1.kind = DEDENT;
+            while (level-- > 0) 
+                t1 = addDedent(t1);
+            t1.kind = NEWLINE;
         } : DEFAULT
 }
 
 <INDENTING, INDENTATION_UNCHANGED> SKIP :
 {
-        "\t"
-        { indent = (indent/8+1)*8;
-                if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
-                else SwitchTo(INDENTING);
+    "\t"
+        {
+            indent = (indent/8+1)*8;
+            if (indent == indentation[level])
+                SwitchTo(INDENTATION_UNCHANGED);
+            else
+                SwitchTo(INDENTING);
         }
-|       " "
-        { indent += 1;
-                if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
-                else SwitchTo(INDENTING);
+|   " "
+        {
+            indent += 1;
+            if (indent == indentation[level])
+                SwitchTo(INDENTATION_UNCHANGED);
+            else
+                SwitchTo(INDENTING);
         }
 |   "\014"
-    { indent = 0;
-                if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
-                else SwitchTo(INDENTING);
+        {
+            indent = 0;
+            if (indent == indentation[level])
+                SwitchTo(INDENTATION_UNCHANGED);
+            else
+                SwitchTo(INDENTING);
         }
-|       <CRLF1: ("\r\n" | "\n" | "\r")>
+|   <CRLF1: ("\r\n" | "\n" | "\r")>
         {
 
-                //System.out.println("indenting newline: "+parens+", "+indent+", "+single_input);
-                if (parens == 0 && single_input && indent==0) {
-                        //System.out.println("force newline");
-                        //backup a character!
-                        forcedNewline = true;
-                        input_stream.backup(1);
-                        SwitchTo(FORCE_NEWLINE);
-                } else {
-                        //doPrompt();
-                        indent = 0;
-                        if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
-                        else SwitchTo(INDENTING);
-                }
+            if (parens == 0 && single_input && indent==0) {
+                //System.out.println("force newline");
+                //backup a character!
+                forcedNewline = true;
+                input_stream.backup(1);
+                SwitchTo(FORCE_NEWLINE);
+            }
+            else {
+                //doPrompt();
+                indent = 0;
+                if (indent == indentation[level])
+                    SwitchTo(INDENTATION_UNCHANGED);
+                else
+                    SwitchTo(INDENTING);
+            }
         }
 }
+
+
 
 <INDENTATION_UNCHANGED> SKIP :
 {
-        <""> : DEFAULT
+    <""> : DEFAULT
 }
+
 
 <INDENTING> TOKEN :
 {
-        <DEDENT: "">
+    <DEDENT: "">
         {
-                if (indent > indentation[level]) {
-                        level++;
-                        indentation[level] = indent;
-                        matchedToken.kind=INDENT;
-                        matchedToken.image = "<INDENT>";
-                } else {
-                        Token t = matchedToken;
-                        level -= 1;
-                        while (level > 0 && indent < indentation[level]) {
-                                level--;
-                                t = addDedent(t);
-                        }
-                        if (indent != indentation[level]) {
-                            throw new TokenMgrError("inconsistent dedent",
-                                                    t.endLine, t.endColumn);
-                        }
-                        t.next = null;
+            if (indent > indentation[level]) {
+                level++;
+                indentation[level] = indent;
+                matchedToken.kind=INDENT;
+                matchedToken.image = "<INDENT>";
+            }
+            else {
+                Token t = matchedToken;
+                level -= 1;
+                while (level > 0 && indent < indentation[level]) {
+                    level--;
+                    t = addDedent(t);
                 }
+                if (indent != indentation[level]) {
+                    throw new TokenMgrError("inconsistent dedent",
+                                            t.endLine, t.endColumn);
+                }
+                t.next = null;
+            }
         } : DEFAULT
 }
 
+
 <UNREACHABLE> TOKEN :
 {
-        < INDENT:"<INDENT>">
+    < INDENT:"<INDENT>">
 //|     < DEDENT:"<DEDENT>">
 }
 
+
 <DEFAULT, INDENTING, INDENTATION_UNCHANGED> SPECIAL_TOKEN: /* COMMENTS */
 {
-  <SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* >  { indent = 0; }
+    <SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* >  { indent = 0; }
 }
+
 
 TOKEN : /* SEPARATORS */
 {
-  < LPAREN: "(" > {parens++;}
-| < RPAREN: ")" > {parens--;}
-| < LBRACE: "{" > {parens++;}
-| < RBRACE: "}" > {parens--;}
-| < LBRACKET: "[" > {parens++;}
-| < RBRACKET: "]" > {parens--;}
-| < SEMICOLON: ";" >
-| < COMMA: "," >
-| < DOT: "." >
-|       < COLON: ":" >
+    < LPAREN: "(" > {parens++;}
+|   < RPAREN: ")" > {parens--;}
+|   < LBRACE: "{" > {parens++;}
+|   < RBRACE: "}" > {parens--;}
+|   < LBRACKET: "[" > {parens++;}
+|   < RBRACKET: "]" > {parens--;}
+|   < SEMICOLON: ";" >
+|   < COMMA: "," >
+|   < DOT: "." >
+|   < COLON: ":" >
 }
+
 
 TOKEN : /* OPERATORS */
 {
-        < PLUS: "+" >
-|       < MINUS: "-" >
-|       < MULTIPLY: "*" >
-|       < DIVIDE: "/" >
-|       < POWER: "**" >
-|       < LSHIFT: "<<" >
-|       < RSHIFT: ">>" >
-|       < MODULO: "%" >
-|       < NOT: "~" >
-|       < XOR: "^" >
-|       < OR: "|" >
-|       < AND: "&" >
-|       < EQUAL: "=" >
-|       < GREATER: ">" >
-|       < LESS: "<" >
-|       < EQEQUAL: "==" >
-|       < EQLESS: "<=" >
-|       < EQGREATER: ">=" >
-|       < LESSGREATER: "<>" >
-|       < NOTEQUAL: "!=" >
-|       < PLUSEQ: "+=" >
-|       < MINUSEQ: "-=" >
-|       < MULTIPLYEQ: "*=" >
-|       < DIVIDEEQ: "/=" >
-|       < MODULOEQ: "%=" >
-|       < ANDEQ: "&=" >
-|       < OREQ: "|=" >
-|       < XOREQ: "^=" >
-|       < LSHIFTEQ: "<<=" >
-|       < RSHIFTEQ: ">>=" >
-|       < POWEREQ: "**=" >
+    < PLUS: "+" >
+|   < MINUS: "-" >
+|   < MULTIPLY: "*" >
+|   < DIVIDE: "/" >
+|   < POWER: "**" >
+|   < LSHIFT: "<<" >
+|   < RSHIFT: ">>" >
+|   < MODULO: "%" >
+|   < NOT: "~" >
+|   < XOR: "^" >
+|   < OR: "|" >
+|   < AND: "&" >
+|   < EQUAL: "=" >
+|   < GREATER: ">" >
+|   < LESS: "<" >
+|   < EQEQUAL: "==" >
+|   < EQLESS: "<=" >
+|   < EQGREATER: ">=" >
+|   < LESSGREATER: "<>" >
+|   < NOTEQUAL: "!=" >
+|   < PLUSEQ: "+=" >
+|   < MINUSEQ: "-=" >
+|   < MULTIPLYEQ: "*=" >
+|   < DIVIDEEQ: "/=" >
+|   < MODULOEQ: "%=" >
+|   < ANDEQ: "&=" >
+|   < OREQ: "|=" >
+|   < XOREQ: "^=" >
+|   < LSHIFTEQ: "<<=" >
+|   < RSHIFTEQ: ">>=" >
+|   < POWEREQ: "**=" >
 }
 
 TOKEN : /* KEYWORDS */
 {
-        < OR_BOOL: "or" >
-|       < AND_BOOL: "and" >
-|       < NOT_BOOL: "not" >
-|       < IS: "is" >
-|       < IN: "in" >
-|       < LAMBDA: "lambda" >
-|       < IF: "if" >
-|       < ELSE: "else" >
-|       < ELIF: "elif" >
-|       < WHILE: "while" >
-|       < FOR: "for" >
-|       < TRY: "try" >
-|       < EXCEPT: "except" >
-|       < DEF: "def" >
-|       < CLASS: "class" >
-|       < FINALLY: "finally" >
-|       < PRINT: "print" >
-|       < PASS: "pass" >
-|       < BREAK: "break" >
-|       < CONTINUE: "continue" >
-|       < RETURN: "return" >
-|       < IMPORT: "import" >
-|       < FROM: "from" >
-|       < DEL: "del" >
-|       < RAISE: "raise" >
-|       < GLOBAL: "global" >
-|       < EXEC: "exec" >
-|       < ASSERT: "assert" >
-|       < AS: "as" >
+    < OR_BOOL: "or" >
+|   < AND_BOOL: "and" >
+|   < NOT_BOOL: "not" >
+|   < IS: "is" >
+|   < IN: "in" >
+|   < LAMBDA: "lambda" >
+|   < IF: "if" >
+|   < ELSE: "else" >
+|   < ELIF: "elif" >
+|   < WHILE: "while" >
+|   < FOR: "for" >
+|   < TRY: "try" >
+|   < EXCEPT: "except" >
+|   < DEF: "def" >
+|   < CLASS: "class" >
+|   < FINALLY: "finally" >
+|   < PRINT: "print" >
+|   < PASS: "pass" >
+|   < BREAK: "break" >
+|   < CONTINUE: "continue" >
+|   < RETURN: "return" >
+|   < IMPORT: "import" >
+|   < FROM: "from" >
+|   < DEL: "del" >
+|   < RAISE: "raise" >
+|   < GLOBAL: "global" >
+|   < EXEC: "exec" >
+|   < ASSERT: "assert" >
+|   < AS: "as" >
 }
+
 
 TOKEN : /* Python identifiers */
 {
-  < NAME:         <LETTER> ( <LETTER> | <DIGIT>)* >
-|  < #LETTER: ["_","a"-"z","A"-"Z"] >
+    < NAME: <LETTER> ( <LETTER> | <DIGIT>)* >
+|   < #LETTER: ["_","a"-"z","A"-"Z"] >
 }
+
 
 TOKEN : /* Numeric literals */
 {
- < DECNUMBER: ["1"-"9"] (["0"-"9"])* (["j", "J", "l","L"])? | "0" ["j", "J"] >
-| < HEXNUMBER: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ (["l","L"])?>
-| < OCTNUMBER: "0" (["0"-"7"])* (["l","L"])?>
+    < DECNUMBER:
+        ["1"-"9"] (["0"-"9"])* (["j", "J", "l", "L"])?
+      | "0" ["j", "J"]
+      >
+|   < HEXNUMBER: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ (["l","L"])? >
+|   < OCTNUMBER: "0" (["0"-"7"])* (["l","L"])? >
 |
-  < FLOAT:
+    < FLOAT:
         (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["j", "J"])?
       | "." (["0"-"9"])+ (<EXPONENT>)? (["j", "J"])?
       | (["0"-"9"])+ <EXPONENT> (["j", "J"])?
-  >
+      >
 |   < #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
 |   < #DIGIT: ["0" - "9"] >
 }
@@ -317,14 +332,12 @@ TOKEN : /* Numeric literals */
 }*/
 
 
-
-
 MORE : /* Strings */
 {
-        <(["u", "U"])? (["r", "R"])? "'" > :  IN_STRING11
-|       <(["u", "U"])? (["r", "R"])? "\"" > :  IN_STRING21
-|       <(["u", "U"])? (["r", "R"])? "'''" > :  IN_STRING13
-|       <(["u", "U"])? (["r", "R"])? "\"\"\"" > :  IN_STRING23
+    < (["u", "U"])? (["r", "R"])? "'" > :  IN_STRING11
+|   < (["u", "U"])? (["r", "R"])? "\"" > :  IN_STRING21
+|   < (["u", "U"])? (["r", "R"])? "'''" > :  IN_STRING13
+|   < (["u", "U"])? (["r", "R"])? "\"\"\"" > :  IN_STRING23
 }
 
 <IN_STRING11> TOKEN : { <SINGLE_STRING: "'"> : DEFAULT}
@@ -338,58 +351,66 @@ MORE : /* Strings */
 <IN_STRING23> MORE: { "\\\"\"\"" }
 
 <IN_STRING13, IN_STRING23> MORE:
-{       <"\r\n"|"\n"|"\r">  | <~["\n","\r"]> }
+{ <"\r\n"|"\n"|"\r">  | <~["\n","\r"]> }
 
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 SimpleNode single_input(): {token_source.single_input=true;}
 {
-        (<NEWLINE> |  simple_stmt() |  compound_stmt() <NEWLINE>)
-        { return jjtThis; }
+    (<NEWLINE> |  simple_stmt() |  compound_stmt() <NEWLINE>)
+    { return jjtThis; }
 }
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
 SimpleNode file_input(): {token_source.single_input=false;}
 {
-        (<NEWLINE> | stmt())* <EOF>
-        { return jjtThis; }
+    (<NEWLINE> | stmt())* <EOF>
+    { return jjtThis; }
 }
 
 //eval_input: testlist NEWLINE* ENDMARKER
 SimpleNode eval_input(): {token_source.single_input=false;}
-{       SmartTestList() (<NEWLINE>)* <EOF>
-        { return jjtThis; }
+{
+    SmartTestList() (<NEWLINE>)* <EOF>
+    { return jjtThis; }
 }
 
 //funcdef: 'def' NAME parameters ':' suite
 void funcdef(): {}
-{<DEF> AnyName() parameters() <COLON> suite()}
+{ <DEF> AnyName() parameters() <COLON> suite() }
 
 //parameters: '(' [varargslist] ')'
 void parameters() #void: {}
-{<LPAREN> [varargslist()] <RPAREN>}
+{ <LPAREN> [varargslist()] <RPAREN> }
 
 //varargslist: (fpdef ['=' test] ',')* ('*' NAME [',' ('**'|'*' '*') NAME] | ('**'|'*' '*') NAME) | fpdef ['=' test] (',' fpdef ['=' test])* [',']
 void varargslist(): {}
-{  defaultarg() (LOOKAHEAD(2) <COMMA> defaultarg())* [LOOKAHEAD(3) <COMMA> ExtraArgList()] [LOOKAHEAD(2) <COMMA> ExtraKeywordList()] [<COMMA>]
- | (LOOKAHEAD(2) ExtraArgList() [<COMMA> ExtraKeywordList()] | ExtraKeywordList()) }
+{
+    defaultarg() (LOOKAHEAD(2) <COMMA> defaultarg())*
+        [LOOKAHEAD(3) <COMMA> ExtraArgList()]
+        [LOOKAHEAD(2) <COMMA> ExtraKeywordList()]
+        [<COMMA>]
+|   ( LOOKAHEAD(2) ExtraArgList() [<COMMA> ExtraKeywordList()]
+    | ExtraKeywordList()
+    )
+}
 
 void ExtraArgList(): {}
-{<MULTIPLY> Name()}
+{ <MULTIPLY> Name() }
 
 void ExtraKeywordList(): {}
-{(<POWER>|<MULTIPLY> <MULTIPLY>) Name()}
+{ (<POWER>|<MULTIPLY> <MULTIPLY>) Name() }
 
 void defaultarg(): {}
-{fpdef() [<EQUAL> test()]}
+{ fpdef() [<EQUAL> test()] }
 
 //fpdef: NAME | '(' fplist ')'
 void fpdef() #void: {}
-{Name() | <LPAREN> fplist() <RPAREN>}
+{ Name() | <LPAREN> fplist() <RPAREN> }
 
 //fplist: fpdef (',' fpdef)* [',']
 void fplist(): {}
-{fpdef() (LOOKAHEAD(2) <COMMA> fpdef())* [<COMMA>]}
+{ fpdef() (LOOKAHEAD(2) <COMMA> fpdef())* [<COMMA>] }
 
 
 //stmt: simple_stmt | compound_stmt
@@ -398,88 +419,113 @@ void stmt() #void: {}
 
 //simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
 void simple_stmt() #void: {}
-{ small_stmt() (LOOKAHEAD(2) <SEMICOLON> small_stmt())* [<SEMICOLON>] <NEWLINE> }
+{ small_stmt() (LOOKAHEAD(2) <SEMICOLON> small_stmt())* [<SEMICOLON>] <NEWLINE>
+}
 
 //small_stmt: expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt | import_stmt | global_stmt | exec_stmt | assert_stmt
 void small_stmt() #void: {}
-{expr_stmt() | print_stmt()  | del_stmt() | pass_stmt() | flow_stmt() | import_stmt() | global_stmt() | exec_stmt() | assert_stmt() }
+{
+    expr_stmt()
+|   print_stmt()
+|   del_stmt()
+|   pass_stmt()
+|   flow_stmt()
+|   import_stmt()
+|   global_stmt()
+|   exec_stmt()
+|   assert_stmt()
+}
 
 //expr_stmt: testlist (augassign testlist | ('=' testlist)*)
 void expr_stmt(): {}
-{ SmartTestList() (
-     <PLUSEQ> SmartTestList() #aug_plus(2)
-   | <MINUSEQ> SmartTestList() #aug_minus(2)
-   | <MULTIPLYEQ> SmartTestList() #aug_multiply(2)
-   | <DIVIDEEQ> SmartTestList() #aug_divide(2)
-   | <MODULOEQ> SmartTestList() #aug_modulo(2)
-   | <ANDEQ> SmartTestList() #aug_and(2)
-   | <OREQ> SmartTestList() #aug_or(2)
-   | <XOREQ> SmartTestList() #aug_xor(2)
-   | <LSHIFTEQ> SmartTestList() #aug_lshift(2)
-   | <RSHIFTEQ> SmartTestList() #aug_rshift(2)
-   | <POWEREQ> SmartTestList() #aug_power(2)
-   | (<EQUAL> SmartTestList())*
-   )
+{
+    SmartTestList() (
+    <PLUSEQ> SmartTestList() #aug_plus(2)
+|   <MINUSEQ> SmartTestList() #aug_minus(2)
+|   <MULTIPLYEQ> SmartTestList() #aug_multiply(2)
+|   <DIVIDEEQ> SmartTestList() #aug_divide(2)
+|   <MODULOEQ> SmartTestList() #aug_modulo(2)
+|   <ANDEQ> SmartTestList() #aug_and(2)
+|   <OREQ> SmartTestList() #aug_or(2)
+|   <XOREQ> SmartTestList() #aug_xor(2)
+|   <LSHIFTEQ> SmartTestList() #aug_lshift(2)
+|   <RSHIFTEQ> SmartTestList() #aug_rshift(2)
+|   <POWEREQ> SmartTestList() #aug_power(2)
+|   (<EQUAL> SmartTestList())*
+    )  
 }
 
-//print_stmt: 'print' (test ',')* [test]
-void print_stmt(): {}
-{ LOOKAHEAD(2) <PRINT> test() (LOOKAHEAD(2) <COMMA> test())* [Comma()] | <PRINT> }
+//print_stmt: 'print' (test ',')* [test] | 'print' '>>' test (, test)+ [,]
+void print_stmt() #print_stmt: {}
+{
+    LOOKAHEAD(2) <PRINT> <RSHIFT> test() #print_ext(1)
+        [ (LOOKAHEAD(2) <COMMA> test())+ [Comma()] ]
+|   LOOKAHEAD(2) <PRINT> test() (LOOKAHEAD(2) <COMMA> test())* [Comma()]
+|   <PRINT>
+}
 
 //del_stmt: 'del' exprlist
 void del_stmt(): {}
-{<DEL> exprlist()}
+{ <DEL> exprlist() }
 
 //pass_stmt: 'pass'
 void pass_stmt(): {}
-{<PASS>}
+{ <PASS> }
 
 //flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt
 void flow_stmt() #void: {}
-{<BREAK> #break_stmt(0) | <CONTINUE> #continue_stmt(0) | return_stmt() | raise_stmt()}
+{
+    <BREAK> #break_stmt(0)
+|   <CONTINUE> #continue_stmt(0)
+|   return_stmt()
+|   raise_stmt()
+}
 
 //return_stmt: 'return' [testlist]
 void return_stmt(): {}
-{<RETURN> [SmartTestList()]}
+{ <RETURN> [SmartTestList()] }
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
 void raise_stmt(): {}
-{<RAISE> [test() [<COMMA> test() [<COMMA> test()]]]}
+{ <RAISE> [test() [<COMMA> test() [<COMMA> test()]]] }
 
 //import_stmt: 'import' dotted_name (',' dotted_name)* | 'from' dotted_name 'import' ('*' | NAME (',' NAME)*)
 void import_stmt() #void: {}
-{<IMPORT> Import() | <FROM> ImportFrom() }
+{ <IMPORT> Import() | <FROM> ImportFrom() }
 
 void Import(): {}
 { dotted_as_name() (<COMMA> dotted_as_name())* }
 
 void ImportFrom(): {}
-{ dotted_name() <IMPORT> (<MULTIPLY> | import_as_name() (<COMMA> import_as_name())*) }
+{
+    dotted_name() <IMPORT> (
+        <MULTIPLY> | import_as_name() (<COMMA> import_as_name())*
+        )
+}
 
 //dotted_as_name: dotted_name [NAME NAME]
 void dotted_as_name() #void:{}
-{dotted_name() [<AS> Name() #dotted_as_name(2)] }
+{ dotted_name() [<AS> Name() #dotted_as_name(2)] }
 
 //dotted_name: NAME ('.' NAME)*
 void dotted_name(): {}
-{AnyName() (<DOT> AnyName())* }
+{ AnyName() (<DOT> AnyName())* }
 
 //import_as_name: NAME [NAME NAME]
 void import_as_name() #void: {}
-{AnyName() [<AS> Name() #import_as_name(2)]}
+{ AnyName() [<AS> Name() #import_as_name(2)] }
 
 //global_stmt: 'global' NAME (',' NAME)*
 void global_stmt(): {}
-{<GLOBAL> Name() (<COMMA> Name())*}
+{ <GLOBAL> Name() (<COMMA> Name())* }
 
 //exec_stmt: 'exec' expr ['in' test [',' test]]
 void exec_stmt(): {}
-{<EXEC> expr() [<IN> test() [<COMMA> test()]]}
+{ <EXEC> expr() [<IN> test() [<COMMA> test()]] }
 
 //assert_stmt: 'assert' test [',' test]
 void assert_stmt(): {}
-{<ASSERT> test() [<COMMA> test()]}
-
+{ <ASSERT> test() [<COMMA> test()] }
 
 //compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | funcdef | classdef
 void compound_stmt() #void : { token_source.compound = true; }
@@ -487,20 +533,28 @@ void compound_stmt() #void : { token_source.compound = true; }
 
 //if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
 void if_stmt(): {}
-{<IF> test() <COLON> suite() (<ELIF> test() <COLON> suite())* [ <ELSE> <COLON> suite()]}
+{
+    <IF> test() <COLON> suite()
+         (<ELIF> test() <COLON> suite())* [ <ELSE> <COLON> suite()]
+}
 
 //while_stmt: 'while' test ':' suite ['else' ':' suite]
 void while_stmt(): {}
-{<WHILE> test() <COLON> suite() [<ELSE> <COLON> suite()]}
+{ <WHILE> test() <COLON> suite() [<ELSE> <COLON> suite()] }
 
 //for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
 void for_stmt(): {}
-{<FOR> exprlist() <IN> SmartTestList() <COLON> suite() [<ELSE> <COLON> suite()]}
+{ <FOR> exprlist() <IN> SmartTestList() <COLON> suite()
+       [<ELSE> <COLON> suite()]
+}
 
 //try_stmt: ('try' ':' suite (except_clause ':' suite)+ #diagram:break
 //           ['else' ':' suite] | 'try' ':' suite 'finally' ':' suite)
 void try_stmt(): {}
-{<TRY> <COLON> suite() ((<EXCEPT> except_clause() <COLON> suite())+ [<ELSE> <COLON> suite()] | <FINALLY> <COLON> suite())}
+{ <TRY> <COLON> suite() (
+    (<EXCEPT> except_clause() <COLON> suite())+ [<ELSE> <COLON> suite()]
+    | <FINALLY> <COLON> suite()) 
+}
 
 //except_clause: 'except' [test [',' test]]
 void except_clause(): {}
@@ -508,103 +562,116 @@ void except_clause(): {}
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
 void suite(): {}
-{ simple_stmt() |  <NEWLINE> <INDENT> (stmt())+ <DEDENT>}
+{ simple_stmt() |  <NEWLINE> <INDENT> (stmt())+ <DEDENT> }
 
 
 //test: and_test ('or' and_test)* | lambdef
 void test() #void: {}
-{lambdef() | and_test() (<OR_BOOL> and_test() #or_boolean(2))* }
+{ lambdef() | and_test() (<OR_BOOL> and_test() #or_boolean(2))* }
 
 //and_test: not_test ('and' not_test)*
 void and_test() #void: {}
-{not_test() (<AND_BOOL> not_test() #and_boolean(2))*}
+{ not_test() (<AND_BOOL> not_test() #and_boolean(2))* }
 
 //not_test: 'not' not_test | comparison
 void not_test() #void: {}
-{<NOT_BOOL> not_test() #not_1op(1) | comparison()}
+{ <NOT_BOOL> not_test() #not_1op(1) | comparison() }
 
 //comparison: expr (comp_op expr)*
 void comparison() #void: {}
-{(expr() (comp_op() expr())*) #comparision(>1)}
+{ (expr() (comp_op() expr())*) #comparision(>1) }
 
 
 //comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
 void comp_op() #void: {}
-{       <LESS> #less_cmp(0)
-        | <GREATER> #greater_cmp(0)
-        | <EQEQUAL> #equal_cmp(0)
-        | <EQGREATER> #greater_equal_cmp(0)
-        | <EQLESS> #less_equal_cmp(0)
-        | <LESSGREATER> #notequal_cmp(0)
-        | <NOTEQUAL> #notequal_cmp(0)
-        | <IN> #in_cmp(0)
-        | <NOT_BOOL> <IN> #not_in_cmp(0)
-        | LOOKAHEAD(2) <IS> <NOT_BOOL> #is_not_cmp(0)
-        | <IS> #is_cmp(0)
-
+{
+    <LESS> #less_cmp(0)
+|   <GREATER> #greater_cmp(0)
+|   <EQEQUAL> #equal_cmp(0)
+|   <EQGREATER> #greater_equal_cmp(0)
+|   <EQLESS> #less_equal_cmp(0)
+|   <LESSGREATER> #notequal_cmp(0)
+|   <NOTEQUAL> #notequal_cmp(0)
+|   <IN> #in_cmp(0)
+|   <NOT_BOOL> <IN> #not_in_cmp(0)
+|   LOOKAHEAD(2) <IS> <NOT_BOOL> #is_not_cmp(0)
+|   <IS> #is_cmp(0)
 }
 
 //expr: xor_expr ('|' xor_expr)*
 void expr() #void : {}
-{xor_expr() (<OR> xor_expr() #or_2op(2))*}
+{ xor_expr() (<OR> xor_expr() #or_2op(2))* }
 
 //xor_expr: and_expr ('^' and_expr)*
 void xor_expr() #void : {}
-{and_expr() (<XOR> and_expr() #xor_2op(2))*}
+{ and_expr() (<XOR> and_expr() #xor_2op(2))* }
 
 //and_expr: shift_expr ('&' shift_expr)*
 void and_expr() #void : {}
-{shift_expr() (<AND> shift_expr() #and_2op(2))*}
+{ shift_expr() (<AND> shift_expr() #and_2op(2))* }
 
 //shift_expr: arith_expr (('<<'|'>>') arith_expr)*
 void shift_expr() #void : {}
-{arith_expr() (<LSHIFT> arith_expr() #lshift_2op(2)
-                                | <RSHIFT> arith_expr() #rshift_2op(2) )*}
+{
+    arith_expr() (<LSHIFT> arith_expr() #lshift_2op(2)
+|   <RSHIFT> arith_expr() #rshift_2op(2) )*
+}
 
 //arith_expr: term (('+'|'-') term)*
 void arith_expr() #void : {}
-{term() (<PLUS> term() #add_2op(2)
-                | <MINUS> term() #sub_2op(2) )*}
+{
+    term() (<PLUS> term() #add_2op(2)
+|   <MINUS> term() #sub_2op(2) )*
+}
 
 //term: factor (('*'|'/'|'%') factor)*
 void term() #void : {}
-{factor()  ( <MULTIPLY> factor() #mul_2op(2)
-                        | <DIVIDE> factor() #div_2op(2)
-                        | <MODULO> factor() #mod_2op(2) )*}
+{
+    factor()  ( <MULTIPLY> factor() #mul_2op(2)
+|   <DIVIDE> factor() #div_2op(2)
+|   <MODULO> factor() #mod_2op(2) )*
+}
 
 //factor: ('+'|'-'|'~') factor | power
 void factor() #void: {}
-{ <PLUS> factor() #pos_1op(1)
-        | <MINUS> factor() # neg_1op(1)
-        | <NOT> factor() #invert_1op(1)
-        | power() } /*Modified, no recursion*/
+{
+    <PLUS> factor() #pos_1op(1)
+|   <MINUS> factor() #neg_1op(1)
+|   <NOT> factor() #invert_1op(1)
+|   power()
+} /*Modified, no recursion*/
 
 //power: atom trailer* ('**' factor)*
 void power() #void: {}
-{atomtrailer() (<POWER> factor() #pow_2op(2))*}
+{ atomtrailer() (LOOKAHEAD(2) <POWER> factor() #pow_2op(2))* }
 
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 void atomtrailer() #void: {}
-{atom() ( (LOOKAHEAD(2) <LPAREN> <RPAREN> #Call_Op(1) | <LPAREN> arglist() <RPAREN> #Call_Op(2))
-                        | <LBRACKET> subscriptlist() <RBRACKET> #Index_Op(2)
-                        | <DOT> AnyName() #Dot_Op(2) )*}
+{
+    atom() ( (LOOKAHEAD(2) <LPAREN> <RPAREN> #Call_Op(1)
+|   <LPAREN> arglist() <RPAREN> #Call_Op(2))
+|   <LBRACKET> subscriptlist() <RBRACKET> #Index_Op(2)
+|   <DOT> AnyName() #Dot_Op(2) )*
+}
 
 
 //atom: '(' [testlist] ')' | '[' [testlist] ']' | '{' [dictmaker] '}' | '`' testlist '`' | NAME | NUMBER | STRING+
 void atom() #void: {}
-{       LOOKAHEAD(2) (  <LPAREN> <RPAREN> ) #tuple
-        |  ( <LPAREN> [SmartTestList()] <RPAREN> )
-        | ( <LBRACKET> [testlist()] <RBRACKET> ) #list
-        | ( <LBRACE> [dictmaker()] <RBRACE> ) #dictionary
-        | "`" SmartTestList() "`" #str_1op(1)
-        | Name()
-        | Number()
-        | String() (String() #strjoin(2))* }
+{
+    LOOKAHEAD(2) (  <LPAREN> <RPAREN> ) #tuple
+|   ( <LPAREN> [SmartTestList()] <RPAREN> )
+|   ( <LBRACKET> [testlist()] <RBRACKET> ) #list
+|   ( <LBRACE> [dictmaker()] <RBRACE> ) #dictionary
+|   "`" SmartTestList() "`" #str_1op(1)
+|   Name()
+|   Number()
+|   String() (String() #strjoin(2))* 
+}
 
 
 //lambdef: 'lambda' [varargslist] ':' test
 void lambdef():{}
-{<LAMBDA> [varargslist()] <COLON> test()}
+{ <LAMBDA> [varargslist()] <COLON> test() }
 
 //subscriptlist: subscript (',' subscript)* [',']
 void subscriptlist() #void: {}
@@ -612,9 +679,11 @@ void subscriptlist() #void: {}
 
 //subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
 void subscript() #void: {}
-{<DOT> <DOT> <DOT> #Ellipses
-        | (test() (slice())?) #Slice(>1)
-        | slice() #Slice(>0) }
+{
+    <DOT> <DOT> <DOT> #Ellipses
+|   (test() (slice())?) #Slice(>1)
+|   slice() #Slice(>0) 
+}
 
 //sliceop: ':' [test]
 void slice() #void: {}
@@ -646,45 +715,48 @@ void classdef(): {}
 //arglist: (argument ',')* 
 //              (argument [',']| '*' test [',' '**' test] | '**' test)
 void arglist(): {}
-{  normalargs() [<COMMA> 
-   [LOOKAHEAD(2) ExtraArgValueList() 
-        [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()]]
- | [LOOKAHEAD(2) ExtraArgValueList() 
-        [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()] 
+{
+    normalargs() [<COMMA> 
+    [LOOKAHEAD(2) ExtraArgValueList() 
+    [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()]]
+|   [LOOKAHEAD(2) ExtraArgValueList() 
+    [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()] 
 }
 
 void normalargs() #void: {}
 { argument() (LOOKAHEAD(2) <COMMA> argument())* }
 
 void ExtraArgValueList(): {}
-{<MULTIPLY> test()}
+{ <MULTIPLY> test() }
 
 void ExtraKeywordValueList(): {}
-{(<POWER>|<MULTIPLY> <MULTIPLY>) test()}
+{ (<POWER>|<MULTIPLY> <MULTIPLY>) test() }
 
 
 //argument: [test '='] test     # Really [keyword '='] test
 void argument() #void: {}
-{ ([LOOKAHEAD(2) AnyName() <EQUAL>] test()) #Keyword(>1)}
+{ ([LOOKAHEAD(2) AnyName() <EQUAL>] test()) #Keyword(>1) }
 
 
 void Number() #void :
 {
-   Token t;
+    Token t;
 }
 {
- (
-  t=<HEXNUMBER> { jjtThis.setInteger(t.image.substring(2,t.image.length()), 16); }
- )#Int
-|  (
-  t=<OCTNUMBER> { jjtThis.setInteger(t.image, 8); }
- )#Int
-| (
-  t=<DECNUMBER> { jjtThis.setInteger(t.image, 10); }
- )#Int
-| (
-  t=<FLOAT> { jjtThis.setFloat(t.image); }
- )#Float
+    (
+        t=<HEXNUMBER> {
+            jjtThis.setInteger(t.image.substring(2,t.image.length()), 16);
+        }
+    )#Int
+|   (
+        t=<OCTNUMBER> { jjtThis.setInteger(t.image, 8); }
+    )#Int
+|   (
+        t=<DECNUMBER> { jjtThis.setInteger(t.image, 10); }
+    )#Int
+|   (
+        t=<FLOAT> { jjtThis.setFloat(t.image); }
+    )#Float
 }
 
 void Complex(): {}
@@ -692,56 +764,56 @@ void Complex(): {}
 
 void Name() #Name:
 {
-   Token t;
+    Token t;
 }
 {
-   t = <NAME> { jjtThis.setInfo(t.image); }
+    t = <NAME> { jjtThis.setInfo(t.image); }
 }
 
 void String() #void :
 {
-   Token t;
+    Token t;
 }
 {
-        ( t=<SINGLE_STRING> { jjtThis.setString(t.image, 1); } )#String
-|       ( t=<SINGLE_STRING2> { jjtThis.setString(t.image, 1); } )#String
-|       ( t=<TRIPLE_STRING> { jjtThis.setString(t.image, 3); } )#String
-|       ( t=<TRIPLE_STRING2> { jjtThis.setString(t.image, 3); } )#String
-
+    ( t=<SINGLE_STRING> { jjtThis.setString(t.image, 1); } )#String
+|   ( t=<SINGLE_STRING2> { jjtThis.setString(t.image, 1); } )#String
+|   ( t=<TRIPLE_STRING> { jjtThis.setString(t.image, 3); } )#String
+|   ( t=<TRIPLE_STRING2> { jjtThis.setString(t.image, 3); } )#String
 }
 
 void AnyName() #void:
 {
-   Token t;
+    Token t;
 }
-{       ( t= <NAME> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <OR_BOOL> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <AND_BOOL> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <NOT_BOOL> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <IS> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <IN> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <LAMBDA> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <IF> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <ELSE> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <ELIF> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <WHILE> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <FOR> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <TRY> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <EXCEPT> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <DEF> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <CLASS> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <FINALLY> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <PRINT> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <PASS> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <BREAK> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <CONTINUE> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <RETURN> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <IMPORT> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <FROM> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <DEL> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <RAISE> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <GLOBAL> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <EXEC> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <ASSERT> { jjtThis.setInfo(t.image); } )#Name
-  | ( t = <AS> { jjtThis.setInfo(t.image); } )#Name
+{
+    ( t= <NAME> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <OR_BOOL> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <AND_BOOL> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <NOT_BOOL> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <IS> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <IN> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <LAMBDA> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <IF> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <ELSE> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <ELIF> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <WHILE> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <FOR> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <TRY> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <EXCEPT> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <DEF> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <CLASS> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <FINALLY> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <PRINT> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <PASS> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <BREAK> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <CONTINUE> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <RETURN> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <IMPORT> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <FROM> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <DEL> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <RAISE> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <GLOBAL> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <EXEC> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <ASSERT> { jjtThis.setInfo(t.image); } )#Name
+|   ( t = <AS> { jjtThis.setInfo(t.image); } )#Name
 }
