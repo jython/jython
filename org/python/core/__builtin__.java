@@ -2,7 +2,6 @@
 package org.python.core;
 
 import java.util.Hashtable;
-import java.math.BigInteger;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet
 {
@@ -112,6 +111,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("type",PyType.fromClass(PyType.class));
         dict.__setitem__("int",PyType.fromClass(PyInteger.class));
         dict.__setitem__("float",PyType.fromClass(PyFloat.class));
+        dict.__setitem__("long", PyType.fromClass(PyLong.class));
         dict.__setitem__("dict",PyType.fromClass(PyDictionary.class));
         dict.__setitem__("list",PyType.fromClass(PyList.class));
 
@@ -371,10 +371,6 @@ public class __builtin__ implements ClassDictInit
         return list;
     }
 
-    public static PyFloat float$(PyObject o) {
-        return o.__float__();
-    }
-
     public static PyObject getattr(PyObject o, PyString n) {
         return o.__getattr__(n);
     }
@@ -422,20 +418,6 @@ public class __builtin__ implements ClassDictInit
         return input(new PyString(""));
     }
 
-    /** not used anymore
-     * @deprecated
-     */
-    public static PyInteger int$(PyString o, int base) {
-        return Py.newInteger(o.__str__().atoi(base));
-    }
-
-    /** not used anymore
-     * @deprecated
-     */
-    public static PyInteger int$(PyObject o) {
-        return o.__int__();
-    }
-
     private static PyStringMap internedStrings;
     public static PyString intern(PyString s) {
         if (internedStrings == null) {
@@ -461,7 +443,6 @@ public class __builtin__ implements ClassDictInit
         return Py.isSubClass(derived,cls);
     }
 
-
     public static int len(PyObject o) {
         try {
             return o.__len__();
@@ -485,18 +466,6 @@ public class __builtin__ implements ClassDictInit
 
     public static PyObject locals() {
         return Py.getFrame().getf_locals();
-    }
-
-    public static PyLong long$(BigInteger o) {
-        return Py.newLong(o);
-    }
-
-    public static PyLong long$(PyObject o) {
-        return o.__long__();
-    }
-
-    public static PyLong long$(PyString o, int base) {
-        return o.__str__().atol(base);
     }
 
     public static PyObject map(PyObject[] argstar) {
@@ -967,7 +936,6 @@ public class __builtin__ implements ClassDictInit
 
         for (int i=0;; i++) {
             PyObject[] next = new PyObject[itemsize];
-            PyInteger index = new PyInteger(i);
             PyObject item;
 
             for (int j=0; j < itemsize; j++) {
