@@ -71,11 +71,14 @@ public class PySystemState extends PyObject {
         return new PyTuple(new PyObject[] {exc.type, exc.value, exc.traceback});
     }
 
-    private static String findRoot() {
-        String root;
+    private static String findRoot(Properties preProperties, Properties postProperties) {
+        String root=null;
         try {
-            root = System.getProperty("install.root");
-            String version = System.getProperty("java.version");
+            if (postProperties != null) root = postProperties.getProperty("python.home");
+            if (root == null) root = preProperties.getProperty("python.home");
+            if (root == null) root = preProperties.getProperty("install.root");
+            
+            String version = preProperties.getProperty("java.version");
             if (version.equals("11")) version = "1.1";
             if (version.equals("12")) version = "1.2";
             if (version.startsWith("java")) version = version.substring(4, version.length());
@@ -89,7 +92,7 @@ public class PySystemState extends PyObject {
         if (root != null) return root;
 
         // If install.root is undefined find jpython.jar in class.path
-        String classpath = System.getProperty("java.class.path");
+        String classpath = preProperties.getProperty("java.class.path");
         if (classpath == null) return null;
 
         int jpy = classpath.toLowerCase().indexOf("jpython.jar");
@@ -100,7 +103,7 @@ public class PySystemState extends PyObject {
         return classpath.substring(start, jpy);
     }
 
-    private void addRegistryFile(File file) {
+    private static void addRegistryFile(File file) {
 		if (file.exists()) {
 		    registry = new Properties(registry);
 			try {
@@ -122,14 +125,14 @@ public class PySystemState extends PyObject {
 	    return initRegistry(System.getProperties());
 	}*/
 
-    private boolean getBooleanOption(String name, boolean defaultValue) {
+    private static boolean getBooleanOption(String name, boolean defaultValue) {
         String prop = registry.getProperty("python.options."+name);
         if (prop == null) return defaultValue;
         return prop.equalsIgnoreCase("true") || prop.equalsIgnoreCase("yes");
     }
     
   
-    private String getStringOption(String name, String defaultValue) {
+    private static String getStringOption(String name, String defaultValue) {
         String prop = registry.getProperty("python.options."+name);
         if (prop == null) return defaultValue;
         return prop;
@@ -181,18 +184,37 @@ public class PySystemState extends PyObject {
     }
     
     public PySystemState() {
-        this(System.getProperties(), new String[0]);
+        initialize();
+        modules = new PyStringMap();
+        
+        argv = (PyList)defaultArgv.repeat(1);
+        path = (PyList)defaultPath.repeat(1);
+
+        // Set up the initial standard ins and outs
+        __stdout__ = stdout = new PyFile(System.out, "<stdout>");
+        __stderr__ = stderr = new PyFile(System.err, "<stderr>");
+        __stdin__ = stdin = new PyFile(getSystemIn(), "<stdin>");
+
+	    // This isn't quite right...
+        builtins = PyJavaClass.lookup(__builtin__.class).__dict__;
+        //this(System.getProperties(), new String[0]);
     }
 
     private static PyList defaultPath;
+    private static PyList defaultArgv;
+    
 	public static Properties registry; // = init_registry();
     public static String prefix;
     public static String exec_prefix="";
     
-    private void initRegistry(Properties defaults) {
-        if (registry != null) return;
-        registry = defaults;
-        prefix = exec_prefix = findRoot();
+    private static void initRegistry(Properties preProperties, Properties postProperties) {
+        if (registry != null) {
+            Py.writeError("systemState", "trying to reinitialize registry");
+            return;
+        }
+        
+        registry = preProperties;
+        prefix = exec_prefix = findRoot(preProperties, postProperties);
         
 	    // Load the default registry
 	    if (prefix != null) {
@@ -204,42 +226,76 @@ public class PySystemState extends PyObject {
         	    ;
         	}
 		}
+		if (postProperties != null) {
+            for (Enumeration e = postProperties.keys(); e.hasMoreElements(); ) {
+                String key = (String)e.nextElement();
+                String value = (String)postProperties.get(key);
+                registry.put(key, value);
+    		}
+    	}
         // Set up options from registry
         setOptionsFromRegistry();
     }
 
-	public PySystemState(Properties defaults, String[] argv) {
-        //registry = defaults;
-        //prefix = findRoot();
-        modules = new PyStringMap();
-
-        initRegistry(defaults);
+    private static boolean initialized = false;
+    public static void initialize() {
+        if (initialized) return;
         
-        path = (PyList)defaultPath.repeat(1);
+        initialize(System.getProperties(), null, new String[] {""});
+    }
+    
+	public static synchronized void initialize(Properties preProperties, 
+	Properties postProperties, String[] argv) {
+	    if (initialized) {
+	        if (postProperties != null) {
+	            Py.writeError("systemState", "trying to reinitialize with new properties");
+	        }
+	        return;
+	    }
+	    initialized = true;
+	    
+	    //System.err.println("ss1");
+        initRegistry(preProperties, postProperties);
+	    //System.err.println("ss2");
+        defaultArgv = new PyList();
+        for(int i=0; i<argv.length; i++) {
+            defaultArgv.append(new PyString(argv[i]));
+        }
+        
+        // Finish up standard Python initialization...
+        Py.defaultSystemState = new PySystemState();
+	    Py.setSystemState(Py.defaultSystemState);
+	    if (Options.classBasedExceptions) Py.initClassExceptions();
 
-        // Set up the initial standard ins and outs
-        __stdout__ = stdout = new PyFile(System.out, "<stdout>");
-        __stderr__ = stderr = new PyFile(System.err, "<stderr>");
-        __stdin__ = stdin = new PyFile(getSystemIn(), "<stdin>");
-
-        // Should move these to Py
-        Py.stderr = new StdoutWrapper("stderr");
-        Py.stdout = new StdoutWrapper("stdout");
-
-	    // This isn't quite right...
-        builtins = PyJavaClass.lookup(__builtin__.class).__dict__;
+        // Make sure that Exception classes have been loaded
+		PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");        
 	}
 	
-	public void setOptionsFromRegistry() {
-		// Initialize the path (and add system defaults)
-		defaultPath = initPath(registry);
-		if (prefix != null) {
-		    defaultPath.append(new PyString(new File(prefix, "Lib").toString()));
-		}
+	private static void initStaticFields() {
+	    Py.None = new PyNone();
+	    Py.NoKeywords = new String[0];
+	    Py.EmptyObjects = new PyObject[0];
 
-        // Set up the known Java packages
-		initPackages(registry);	    
-	    
+	    Py.EmptyTuple = new PyTuple(Py.EmptyObjects);
+    	Py.NoConversion = new PySingleton("Error");  	
+    	Py.Ellipsis = new PyEllipsis();
+    	
+    	Py.Zero = new PyInteger(0);
+    	Py.One = new PyInteger(1);
+
+        Py.EmptyString = new PyString("");
+    	Py.Newline = new PyString("\n");
+    	Py.Space = new PyString(" ");
+
+        Py.initStringExceptions();
+
+        // Setup standard wrappers for stdout and stderr...
+        Py.stderr = new StdoutWrapper("stderr");
+        Py.stdout = new StdoutWrapper("stdout");
+    }
+	
+	
+	public static void setOptionsFromRegistry() {
 	    // Set the more unusual options
 	    Options.showJavaExceptions = 
 	        getBooleanOption("showJavaExceptions", Options.showJavaExceptions);
@@ -251,24 +307,35 @@ public class PySystemState extends PyObject {
 	        getBooleanOption("showPythonProxyExceptions", Options.showPythonProxyExceptions);
 	    Options.verbosePackageCache = 
 	        getBooleanOption("verbosePackageCache", Options.verbosePackageCache);
+	        
+	    initStaticFields();
+	    
+		// Initialize the path (and add system defaults)
+		defaultPath = initPath(registry);
+		if (prefix != null) {
+		    defaultPath.append(new PyString(new File(prefix, "Lib").toString()));
+		}
+
+        // Set up the known Java packages
+		initPackages(registry);
 	}
     public static PackageManager packageManager;
     public static File cachedir;
 
-    private void initCacheDirectory(Properties props) {
+    private static void initCacheDirectory(Properties props) {
         cachedir = new File(props.getProperty("python.cachedir", "cachedir"));
         if (!cachedir.isAbsolute()) {
             cachedir = new File(PySystemState.prefix, cachedir.getPath());
         }
     }
 
-	private void initPackages(Properties props) {
+	private static void initPackages(Properties props) {
 	    initCacheDirectory(props);
 	    File pkgdir = new File(cachedir, "packages");
 	    packageManager = new PackageManager(pkgdir, props);
 	}
 
-	private PyList initPath(Properties props) {
+	private static PyList initPath(Properties props) {
 		PyList path = new PyList();
 		String pypath = props.getProperty("python.path", "");
 		StringTokenizer tok = new StringTokenizer(pypath, java.io.File.pathSeparator);

@@ -138,6 +138,11 @@ public final class Py {
 	static void maybeSystemExit(PyException exc) {
 	    if (Py.matchException(exc, Py.SystemExit)) {
 		    PyObject value = exc.value;
+		    //System.err.println("exiting: "+value.getClass().getName());
+		    if (value instanceof PyInstance) {
+		        PyObject tmp = value.__findattr__("code");
+		        if (tmp != null) value = tmp;
+		    }
 		    if (value instanceof PyInteger) {
 		        System.exit(((PyInteger)value).getValue());
 		    } else {
@@ -467,46 +472,7 @@ public final class Py {
     public static PySystemState defaultSystemState;
 	// This is a hack to get initializations to work in proper order
 	public static synchronized boolean initPython() {
-	    if (!initialized) {
-	        initialized = true;
-	        //System.out.println("initializing Py");
-	        //initialized = true;
-    	    None = new PyNone();
-    	    NoKeywords = new String[0];
-    	    EmptyObjects = new PyObject[0];
-
-            //System.out.println("initializing Py 1");
-
-    	    EmptyTuple = new PyTuple(EmptyObjects);
-
-        	NoConversion = new PySingleton("Error");
-            //System.out.println("initializing Py 2");
-        	
-        	Ellipsis = new PyEllipsis();
-            //System.out.println("initializing Py 2.5");
-        	
-        	Zero = new PyInteger(0);
-        	One = new PyInteger(1);
-
-            EmptyString = new PyString("");
-        	Newline = new PyString("\n");
-        	Space = new PyString(" ");
-
-            initStringExceptions();
-
-            //System.out.println("initializing Py 3");
-            defaultSystemState = new PySystemState(System.getProperties(), new String[0]);
-    	    //interp = InterpreterState.getInterpreterState();
-    	    Py.setSystemState(defaultSystemState);
-
-            initClassExceptions();
-
-            // Make sure that Exception classes have been loaded
-    		PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");
-
-    	    //System.out.println("inited Python");
-    	}
-
+	    PySystemState.initialize();
 		return true;
 	}
 
@@ -1255,6 +1221,7 @@ public final class Py {
     public static final int WARNING=0;
     public static final int MESSAGE=1;
     public static final int COMMENT=2;
+    public static final int DEBUG=3;
 
     public static void maybeWrite(String type, String msg, int level) {
         if (level <= Options.verbose) {
@@ -1273,6 +1240,9 @@ public final class Py {
     }
     public static void writeComment(String type, String msg) {
         maybeWrite(type, msg, COMMENT);
+    }    
+    public static void writeDebug(String type, String msg) {
+        maybeWrite(type, msg, DEBUG);
     }
 
 }
