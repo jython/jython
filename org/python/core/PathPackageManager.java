@@ -9,7 +9,8 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-/** Path package manager. Gathering classes info dynamically
+/**
+ * Path package manager. Gathering classes info dynamically
  * from a set of directories in path {@link #searchPath}, and
  * statically from a set of jars, like {@link CachedJarsPackageManager}.
  */
@@ -26,8 +27,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
      * Scans for package pkg.name the directories in path.
      */
     protected boolean packageExists(PyList path, String pkg, String name) {
-        String child = pkg.replace('.',File.separatorChar) +
-                       File.separator + name;
+        String child = pkg.replace('.', File.separatorChar) + File.separator + name;
 
         for (int i=0; i < path.__len__(); i++) {
             String dir = path.get(i).__str__().toString();
@@ -36,21 +36,37 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
             File f = new File(dir,child);
             if (f.isDirectory() && imp.caseok(f, name, name.length())) {
                 /*
-                 This fails if the directory is really a Python package, such as email.
-                 - scan the directory looking for at least one non-jython generated
-                   class file.  For performance, apply the reverse, if there exists a
-                   .py file or $py.class file, it's not a java package.
+                 Figure out if we have a directory a mixture of python and java
+                 or just an empty directory (which means Java) or a directory
+                 with only Python source (which means Python).
                  */
-                File[] files = f.listFiles(new FileFilter() {
-                    public boolean accept(File file) {
-                        String name = file.getName();
-                        return (name.endsWith(".py") || name.endsWith("$py.class"));
-                    }
-                });
-                return files.length == 0;
+                PackageExistsFileFilter m = new PackageExistsFileFilter();
+                f.listFiles(m);
+                return m.packageExists();
             }
         }
         return false;
+    }
+
+    class PackageExistsFileFilter implements FileFilter {
+        private boolean java;
+        private boolean python;
+        public boolean accept(File file) {
+            String name = file.getName();
+            if(name.endsWith(".py") || name.endsWith("$py.class")) {
+                python = true;
+            } else if(name.endsWith(".class")) {
+                java = true;
+            }
+            return false;
+        }
+
+        public boolean packageExists() {
+            if(python && !java) {
+               return false;
+            }
+            return true;
+        }
     }
 
     /**
@@ -177,9 +193,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         }
     }
 
-    public PyList doDir(PyJavaPackage jpkg, boolean instantiate,
-                        boolean exclpkgs)
-    {
+    public PyList doDir(PyJavaPackage jpkg, boolean instantiate, boolean exclpkgs) {
         PyList basic = basicDoDir(jpkg,instantiate,exclpkgs);
         PyList ret = new PyList();
 
