@@ -42,6 +42,22 @@ public abstract class PackageManager extends Object {
     public abstract PyList doDir(PyJavaPackage jpkg, boolean instantiate,
                                  boolean exclpkgs);
 
+    /**
+     * Append a directory to the list of directories searched for
+     * java packages and java classes.
+     * 
+     * @param dir   A directory.
+     */
+    public abstract void addDirectory(java.io.File dir);
+
+    /**
+     * Append a directory to the list of directories searched for
+     * java packages and java classes.
+     * 
+     * @param dir   A directory name.
+     */
+    public abstract void addJarDir(String dir);
+
     /** Basic helper implementation of {@link #doDir}.
      * It merges information from jpkg {@link PyJavaPackage#clsSet}
      * and {@link PyJavaPackage#__dict__}.
