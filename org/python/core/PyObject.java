@@ -161,7 +161,7 @@ public class PyObject implements java.io.Serializable {
     }
 
     public int hashCode() {
-        return Py.id(this);
+        return System.identityHashCode(this);
     }
 
     /**
@@ -1057,11 +1057,12 @@ public class PyObject implements java.io.Serializable {
         itmp = this.__class__.__cmp__(o2_in.__class__);
 
         if (itmp == 0)
-            return Py.id(this) < Py.id(o2_in) ? -1 : 1;
+            return System.identityHashCode(this) < 
+                   System.identityHashCode(o2_in) ? -1 : 1;
         if (itmp != -2)
             return itmp;
-        return
-            Py.id(this.__class__) < Py.id(o2_in.__class__) ? -1 : 1;
+        return System.identityHashCode(this.__class__) < 
+               System.identityHashCode(o2_in.__class__) ? -1 : 1;
     }
 
 

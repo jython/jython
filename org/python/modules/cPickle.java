@@ -824,6 +824,11 @@ public class cPickle implements ClassDictInit {
             file.flush();
         }
 
+        private static final int get_id(PyObject o) {
+            // we don't pickle Java instances so we don't have to consider that case
+            return System.identityHashCode(o);
+        }
+
 
         // Save name as in pickle.py but semantics are slightly changed.
         private void put(int i) {
@@ -883,7 +888,7 @@ public class cPickle implements ClassDictInit {
                 }
             }
 
-            int d = Py.id(object);
+            int d = get_id(object);
 
             PyClass t = __builtin__.type(object);
 
@@ -1114,12 +1119,12 @@ public class cPickle implements ClassDictInit {
                 }
                 file.write("\n");
             }
-            put(putMemo(Py.id(object), object));
+            put(putMemo(get_id(object), object));
         }
 
 
         final private void save_tuple(PyObject object) {
-            int d = Py.id(object);
+            int d = get_id(object);
 
             file.write(MARK);
 
@@ -1159,7 +1164,7 @@ public class cPickle implements ClassDictInit {
                 file.write(LIST);
             }
 
-            put(putMemo(Py.id(object), object));
+            put(putMemo(get_id(object), object));
 
             int len = object.__len__();
             boolean using_appends = bin && len > 1;
@@ -1185,7 +1190,7 @@ public class cPickle implements ClassDictInit {
                 file.write(DICT);
             }
 
-            put(putMemo(Py.id(object), object));
+            put(putMemo(get_id(object), object));
 
             PyObject list = object.invoke("keys");
             int len = list.__len__();
@@ -1234,7 +1239,7 @@ public class cPickle implements ClassDictInit {
                     save(args.__finditem__(i));
             }
 
-            int mid = putMemo(Py.id(object), object);
+            int mid = putMemo(get_id(object), object);
             if (bin) {
                 file.write(OBJ);
                 put(mid);
@@ -1278,7 +1283,7 @@ public class cPickle implements ClassDictInit {
             file.write("\n");
             file.write(name.toString());
             file.write("\n");
-            put(putMemo(Py.id(object), object));
+            put(putMemo(get_id(object), object));
         }
 
 
@@ -1378,9 +1383,6 @@ public class cPickle implements ClassDictInit {
         private transient int filled;
         private transient int prime;
 
-        // Not actually used, since there is no delete methods.
-        private String DELETEDKEY = "<deleted key>";
-
         public PickleMemo(int capacity) {
             prime = 0;
             keys = null;
@@ -1451,12 +1453,6 @@ public class cPickle implements ClassDictInit {
                 } else if (tkey == key && values[index] == value) {
                     position[index] = pos;
                     break;
-                } else if (values[index] == DELETEDKEY) {
-                    table[index] = key;
-                    position[index] = pos;
-                    values[index] = value;
-                    size++;
-                    break;
                 }
                 index = (index+stepsize) % maxindex;
             }
@@ -1490,7 +1486,7 @@ public class cPickle implements ClassDictInit {
 
                 for(int i=0; i<n; i++) {
                     Object value = oldValues[i];
-                    if (value == null || value == DELETEDKEY) continue;
+                    if (value == null) continue;
                     insertkey(oldKeys[i], oldPositions[i], value);
                 }
             }

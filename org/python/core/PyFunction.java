@@ -189,6 +189,6 @@ public class PyFunction extends PyObject
                               func_defaults,  func_closure);
     }
     public String toString() {
-        return "<function "+__name__+" at "+hashCode()+">";
+        return "<function "+__name__+" "+Py.idstr(this)+">";
     }
 }

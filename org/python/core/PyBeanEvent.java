@@ -37,6 +37,6 @@ public class PyBeanEvent extends PyObject {
 
     public String toString() {
         return "<beanEvent "+__name__+" for event "+
-            eventClass.toString()+" at "+hashCode()+">";
+            eventClass.toString()+" "+Py.idstr(this)+">";
     }
 }

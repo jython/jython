@@ -334,6 +334,6 @@ public class PyReflectedFunction extends PyObject
 
     public String toString() {
         //printArgs();
-        return "<java function "+__name__+" at "+Py.id(this)+">";
+        return "<java function "+__name__+" "+Py.idstr(this)+">";
     }
 }

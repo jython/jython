@@ -165,6 +165,6 @@ public class PyReflectedConstructor extends PyReflectedFunction
 
     public String toString() {
         //printArgs();
-        return "<java constructor "+__name__+" at "+Py.id(this)+">";
+        return "<java constructor "+__name__+" "+Py.idstr(this)+">";
     }
 }

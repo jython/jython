@@ -859,6 +859,6 @@ public class PyJavaClass extends PyClass
     }
 
     public String toString()  {
-        return "<jclass "+__name__+" at "+Py.id(this)+">";
+        return "<jclass "+__name__+" "+Py.idstr(this)+">";
     }
 }

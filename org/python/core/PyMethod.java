@@ -124,9 +124,11 @@ public class PyMethod extends PyObject
         if (other instanceof PyMethod) {
             PyMethod mother = (PyMethod)other;
             if (im_self != mother.im_self)
-                return Py.id(im_self) < Py.id(mother.im_self) ? -1 : 1;
+                return System.identityHashCode(im_self) < 
+                       System.identityHashCode(mother.im_self) ? -1 : 1;
             if (im_func != mother.im_func)
-                return Py.id(im_func) < Py.id(mother.im_func) ? -1 : 1;
+                return System.identityHashCode(im_func) < 
+                       System.identityHashCode(mother.im_func) ? -1 : 1;
             return 0;
         }
         return -2;
@@ -146,6 +148,6 @@ public class PyMethod extends PyObject
         else
             return "<method " + classname + "." +
                 __name__ + " of " + im_self.__class__.__name__ +
-                " instance at " + Py.id(im_self) + ">";
+                " instance " + Py.idstr(im_self) + ">";
     }
 }

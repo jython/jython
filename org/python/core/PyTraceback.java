@@ -55,6 +55,6 @@ public class PyTraceback extends PyObject
     }
 
     public String toString() {
-        return "<traceback object at " + hashCode() + ">";
+        return "<traceback object at " + " "+Py.idstr(this) + ">";
     }
 }

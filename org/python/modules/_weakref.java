@@ -272,8 +272,8 @@ public class _weakref implements ClassDictInit {
         }
 
         public String toString() {
-            String ret = "<weakref at " +
-                    Integer.toString(System.identityHashCode(this), 16) +";";
+            String ret = "<weakref " +
+                    Py.idstr(this) +";";
             PyObject obj = (PyObject) gref.get();
             if (obj != null)
                 ret += " to " + obj.safeRepr() + ">";
@@ -350,13 +350,12 @@ public class _weakref implements ClassDictInit {
         public PyObject __ixor__(PyObject o) { return py().__ixor__(o); }
 
         public String toString() {
-            String ret = "<weakref at " +
-                    Integer.toString(System.identityHashCode(this), 16);
+            String ret = "<weakref " +Py.idstr(this);
             PyObject obj = (PyObject) gref.get();
             if (obj == null)
                 obj = Py.None;
-            ret += " to " + obj.safeRepr() + " at "+
-                    Integer.toString(System.identityHashCode(obj), 16) + ">";
+            ret += " to " + obj.safeRepr() + " "+
+                    Py.idstr(obj) + ">";
             return ret;
         }
     }

@@ -87,8 +87,8 @@ public class PyBeanProperty extends PyReflectedField {
         if (myType != null) {
             typeName = myType.getName();
         }
-        return "<beanProperty "+__name__+" type: "+typeName+" at "+
-            Py.id(this)+">";
+        return "<beanProperty "+__name__+" type: "+typeName+" "+
+            Py.idstr(this)+">";
     }
 }
 

@@ -427,7 +427,7 @@ public class PyTableCode extends PyCode
     }
 
     public String toString() {
-        return "<code object " + co_name + " at " + hashCode() +
+        return "<code object " + co_name + " "+Py.idstr(this) +
             ", file \"" + co_filename + "\", line " +
             co_firstlineno + ">";
     }

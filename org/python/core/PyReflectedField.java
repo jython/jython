@@ -56,6 +56,6 @@ public class PyReflectedField extends PyObject {
     }
 
     public String toString() {
-        return "<reflected field "+field.toString()+" at "+Py.id(this)+">";
+        return "<reflected field "+field.toString()+" "+Py.idstr(this)+">";
     }
 }

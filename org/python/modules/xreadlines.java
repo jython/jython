@@ -52,7 +52,7 @@ public class xreadlines {
         }
 
         public String toString() {
-            return "<xreadlines object at " + Py.id(this) + ">";
+            return "<xreadlines object " + Py.idstr(this) + ">";
         }
 
         // __class__ boilerplate -- see PyObject for details

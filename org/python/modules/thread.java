@@ -56,7 +56,7 @@ public class thread implements ClassDictInit
         throw new PyException(Py.SystemExit, new PyInteger(0));
     }
 
-    public static int get_ident() {
-        return System.identityHashCode(Thread.currentThread());
+    public static long get_ident() {
+        return Py.java_obj_id(Thread.currentThread());
     }
 }

@@ -404,7 +404,7 @@ public class __builtin__ implements ClassDictInit
         return o.__hex__();
     }
 
-    public static int id(PyObject o) {
+    public static long id(PyObject o) {
         return Py.id(o);
     }
 

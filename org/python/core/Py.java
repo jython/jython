@@ -1690,14 +1690,20 @@ public final class Py
         }
     }
 
-    public static int id(PyObject o) {
-        if (o instanceof PyJavaInstance) {
-            return System.identityHashCode(((PyJavaInstance)o).javaProxy);
-        } else {
-            return System.identityHashCode(o);
-        }
-    }
+    private static IdImpl idimpl = IdImpl.getInstance();
 
+    public static long id(PyObject o) {
+        return idimpl.id(o);
+    }
+    
+    public static String idstr(PyObject o) {
+        return idimpl.idstr(o);
+    }
+    
+    public static long java_obj_id(Object o) {
+        return idimpl.java_obj_id(o);
+    }
+    
     public static String safeRepr(PyObject o) {
         return o.safeRepr();
     }

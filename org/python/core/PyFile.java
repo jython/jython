@@ -946,8 +946,8 @@ public class PyFile extends PyObject
     }
 
     public String toString() {
-        return "<file " + name + ", mode " + mode + " at " +
-               Py.id(this) + ">";
+        return "<file " + name + ", mode " + mode + " " +
+               Py.idstr(this) + ">";
     }
 
     private void err_closed() {

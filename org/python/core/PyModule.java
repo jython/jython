@@ -78,8 +78,8 @@ public class PyModule extends PyObject
     }
 
     public String toString()  {
-        return "<module "+__dict__.__finditem__("__name__")+" at "+
-            Py.id(this)+">";
+        return "<module "+__dict__.__finditem__("__name__")+" "+
+            Py.idstr(this)+">";
     }
 
     static private PyObject silly_list = null;

@@ -292,6 +292,6 @@ public class PyClass extends PyObject
             smod = "<unknown>";
         else
             smod = ((PyString)mod).toString();
-        return "<class "+smod+"."+__name__+" at "+Py.id(this)+">";
+        return "<class "+smod+"."+__name__+" "+Py.idstr(this)+">";
     }
 }

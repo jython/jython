@@ -174,6 +174,6 @@ public class PyJavaPackage extends PyObject {
     }
 
     public String toString()  {
-        return "<java package "+__name__+" at "+Py.id(this)+">";
+        return "<java package "+__name__+" "+Py.idstr(this)+">";
     }
 }

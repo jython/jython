@@ -128,6 +128,6 @@ public class PyBeanEventProperty extends PyReflectedField
 
     public String toString() {
         return "<beanEventProperty "+__name__+" for event "+
-            eventClass.toString()+" at "+hashCode()+">";
+            eventClass.toString()+" "+Py.idstr(this)+">";
     }
 }

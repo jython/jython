@@ -497,7 +497,8 @@ public final class SHA1 {
         return new String(digestBits, 0, 0, digestBits.length);
     }
 
+    // XXX should become PyObject and use Py.idstr?
     public String toString() {
-        return "<SHA object at " + this.hashCode() + ">";
+        return "<SHA object at" + System.identityHashCode(this) + ">";
     }
 }

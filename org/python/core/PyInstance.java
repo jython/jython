@@ -385,7 +385,7 @@ public class PyInstance extends PyObject
                     smod = ((PyString)mod).toString()+'.';
             }
             return new PyString("<"+smod+__class__.__name__+
-                                " instance at "+Py.id(this)+">");
+                                " instance "+Py.idstr(this)+">");
         }
 
         if (!(ret instanceof PyString))
