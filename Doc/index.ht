@@ -74,6 +74,10 @@ Java packages.
 	re-implemented in Java for Jython), experience Python
 	programmers keep the Library Reference Manual under their
 	pillow for easy access.
+
+        <LI>The Python <A HREF="http://www.python.org/doc/current/ref/ref.html">
+        Language Reference</A> (for language lawyers).
+
     </UL>
 
 <h3>Other Useful Links</h3>
