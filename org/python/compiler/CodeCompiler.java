@@ -1646,7 +1646,11 @@ public class CodeCompiler extends Visitor {
 	}
 
 	public Object String(SimpleNode node) throws Exception {
-		module.PyString((String)node.getInfo()).get(code);
+	    String s = (String)node.getInfo();
+	    if (s.length() > 32767) {
+	        throw new ParseException("string constant too large (more than 32767 characters)", node);
+	    }
+		module.PyString(s).get(code);
 		return null;
 	}
 }
