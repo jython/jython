@@ -1434,7 +1434,7 @@ public final class Py
                 return c.__call__(new PyString(name),
                                   new PyTuple(bases),
                                   dict);
-            } else if (bases[i] instanceof org.python.util.PyMetaClass) {
+            } else if (bases[i] instanceof PyMetaClass) {
                 // experimental PyMetaClass hook
                 try {
                     return (PyObject)bases[i].getClass().getConstructor(pyClassCtrSignature).newInstance(
