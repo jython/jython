@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 /*
@@ -11,8 +12,8 @@ To do:
 - name, mode, closed should be read-only
 */
 
-public class PyFile extends PyObject {
-
+public class PyFile extends PyObject
+{
     private static class FileWrapper {
         public String read(int n) throws java.io.IOException {
             throw new java.io.IOException("file not open for reading");
@@ -42,7 +43,6 @@ public class PyFile extends PyObject {
     }
 
     private static class InputStreamWrapper extends FileWrapper {
-
         java.io.InputStream istream;
 
         public InputStreamWrapper(java.io.InputStream s) {
@@ -54,16 +54,17 @@ public class PyFile extends PyObject {
                 n = istream.available();
             byte buf[] = new byte[n];
             n = istream.read(buf);
-            if (n < 0) n = 0;
+            if (n < 0)
+		n = 0;
             return new String(buf, 0, 0, n);
         }
 
         public int read() throws java.io.IOException {
-           return istream.read();
+	    return istream.read();
         }
 
         public int available() throws java.io.IOException {
-           return istream.available();
+	    return istream.available();
         }
 
         public void unread(int c) throws java.io.IOException {
@@ -73,11 +74,9 @@ public class PyFile extends PyObject {
         public void close() throws java.io.IOException {
             istream.close();
         }
-
     }
 
     private static class OutputStreamWrapper extends FileWrapper {
-
         private java.io.OutputStream ostream;
 
         public OutputStreamWrapper(java.io.OutputStream s) {
@@ -85,6 +84,7 @@ public class PyFile extends PyObject {
         }
 
         private static final int MAX_WRITE = 30000;
+
         public void write(String s) throws java.io.IOException {
             byte[] bytes = s.getBytes();
             int n = bytes.length;
@@ -107,7 +107,6 @@ public class PyFile extends PyObject {
     }
 
     private static class IOStreamWrapper extends InputStreamWrapper {
-
         private java.io.OutputStream ostream;
 
         public IOStreamWrapper(java.io.InputStream istream,
@@ -131,7 +130,6 @@ public class PyFile extends PyObject {
     }
     
     private static class WriterWrapper extends FileWrapper {
-
         private java.io.Writer writer;
 
         public WriterWrapper(java.io.Writer s) {
@@ -139,6 +137,7 @@ public class PyFile extends PyObject {
         }
 
         private static final int MAX_WRITE = 30000;
+
         public void write(String s) throws java.io.IOException {
             writer.write(s);
         }
@@ -154,7 +153,6 @@ public class PyFile extends PyObject {
     
 
     private static class RFileWrapper extends FileWrapper {
-
         java.io.RandomAccessFile file;
 
         public RFileWrapper(java.io.RandomAccessFile file) {
@@ -169,7 +167,8 @@ public class PyFile extends PyObject {
             }
             byte[] buf = new byte[n];
             n = file.read(buf);
-            if (n < 0) n = 0;
+            if (n < 0)
+		n = 0;
             return new String(buf, 0, 0, n);
         }
 
@@ -213,7 +212,6 @@ public class PyFile extends PyObject {
     }
 
     private static class TextWrapper extends FileWrapper {
-
         private FileWrapper file;
         private String sep;
         private boolean sep_is_nl;
@@ -290,7 +288,6 @@ public class PyFile extends PyObject {
         public void close() throws java.io.IOException {
             file.close();
         }
-
     }
 
     public String name;
@@ -300,8 +297,8 @@ public class PyFile extends PyObject {
 
     private FileWrapper file;
 
-    private static java.io.InputStream _pb(java.io.InputStream s,
-                                           String mode) {
+    private static java.io.InputStream _pb(java.io.InputStream s, String mode)
+    {
         if (mode.indexOf('b') < 0) {
             try {
                 s = (java.io.PushbackInputStream)s;
@@ -324,12 +321,14 @@ public class PyFile extends PyObject {
     }
 
     public PyFile(java.io.InputStream istream, java.io.OutputStream ostream,
-                  String name, String mode) {
+                  String name, String mode)
+    {
         this(new IOStreamWrapper(_pb(istream, mode), ostream), name, mode);
     }
 
     public PyFile(java.io.InputStream istream, java.io.OutputStream ostream,
-                  String name) {
+                  String name)
+    {
         this(istream, ostream, name, "r+");
     }
 
@@ -420,7 +419,8 @@ public class PyFile extends PyObject {
             // What about bufsize?
             java.io.RandomAccessFile rfile =
                 new java.io.RandomAccessFile(f, jmode);
-            if (c1 == 'a') rfile.seek(rfile.length());
+            if (c1 == 'a')
+		rfile.seek(rfile.length());
             RFileWrapper iofile = new RFileWrapper(rfile);
             return iofile;
         } catch (java.io.IOException e) {
