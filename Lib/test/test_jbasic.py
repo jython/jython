@@ -107,3 +107,4 @@ flag = 0
 b1.dispatchEvent(doit)
 assert flag == 1, 'one actions per event - again'
 
+# TBD: JPython does not properly exit after this code!
