@@ -307,7 +307,7 @@ public class PyString extends PySequence {
             list.append(new PyString(string.substring(lastbreak, index)));
             lastbreak = index + sepLength;
         }
-        if (splits < maxsplit && lastbreak < length) {
+        if (lastbreak <= length) {
             list.append(new PyString(string.substring(lastbreak, length)));
         }
         return list;
