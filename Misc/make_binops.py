@@ -10,16 +10,16 @@ template = """\
      * Equivalent to the standard Python __%(name)s__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the %(name)s, or null if this operation 
+     * @return    the result of the %(name)s, or null if this operation
      *            is not defined
      **/
     public PyObject __%(name)s__(PyObject other) { %(function)s }
-	
+
     /**
      * Equivalent to the standard Python __r%(name)s__ method
      * @param     other the object to perform this binary operation with
      *            (the left-hand operand).
-     * @return    the result of the %(name)s, or null if this operation 
+     * @return    the result of the %(name)s, or null if this operation
      *            is not defined.
      **/
     public PyObject __r%(name)s__(PyObject other) { %(rfunction)s }
@@ -28,7 +28,7 @@ template = """\
      * Equivalent to the standard Python __i%(name)s__ method
      * @param     other the object to perform this binary operation with
      *            (the right-hand operand).
-     * @return    the result of the %(name)s, or null if this operation 
+     * @return    the result of the %(name)s, or null if this operation
      *            is not defined
      **/
     public PyObject __i%(name)s__(PyObject other) { return _%(name)s(other); }
@@ -37,7 +37,7 @@ template = """\
      * Implements the Python expression <code>this %(op)s other</code>
      * @param     other the object to perform this binary operation with.
      * @return    the result of the %(name)s.
-     * @exception PyTypeError if this operation can't be performed 
+     * @exception PyTypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _%(name)s(PyObject o2) {
@@ -85,17 +85,17 @@ comment = """\
 template1 = comment + """\
     public %(ret)s __%(name)s__() {
         PyObject ret = invoke("__%(name)s__");
-        if (ret instanceof %(ret)s) 
+        if (ret instanceof %(ret)s)
             return (%(ret)s)ret;
         throw Py.TypeError("__%(name)s__() should return a %(retname)s");
     }
-	
+
 """
 template2 = comment + """\
     public PyObject __%(name)s__() {
         return invoke("__%(name)s__");
     }
-	
+
 """
 
 string = 'PyString', 'string'
@@ -128,7 +128,7 @@ template = comment + """\
                 return %(function)s;
         }
     }
-	
+
 """
 
 
@@ -139,7 +139,7 @@ template2 = comment + """\
             return ret;
         return super.__%(name)s__(o);
     }
-	
+
 """
 
 fp.write('    // Binary ops\n\n')
