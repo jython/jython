@@ -420,7 +420,7 @@ public class PyFile extends PyObject
 
         public void seek(long pos, int how) throws java.io.IOException {
             if (how == 1)
-                pos += file.getFilePointer();
+                pos += filePosition;
             else if (how == 2)
                 pos += file.length();
             if (pos < 0)
