@@ -68,9 +68,27 @@ public class JavaMaker extends ProxyMaker
         Code code = classfile.addMethod("<init>", sig, access);
         callSuper(code, "<init>", name, parameters, null, sig);
         code.aload(0);
+        getArgs(code, parameters);
+
+        int initProxy = code.pool.Methodref(
+                 classfile.name, "__initProxy__",
+                 "([Ljava/lang/Object;)V");
+        code.invokevirtual(initProxy);
+        code.return_();
+    }
+
+    public void addProxy() throws Exception {
+        if (methods != null)
+            super.addProxy();
+
+        // _initProxy method
+        Code code = classfile.addMethod("__initProxy__", "([Ljava/lang/Object;)V", Modifier.PUBLIC);
+
+        code.aload(0);
         code.ldc(pythonModule);
         code.ldc(pythonClass);
-        getArgs(code, parameters);
+
+        code.aload(1);
 
         makeStrings(code, packages);
         makeStrings(code, properties);
@@ -82,11 +100,7 @@ public class JavaMaker extends ProxyMaker
             "(Lorg/python/core/PyProxy;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;[Ljava/lang/String;[Ljava/lang/String;Z)V");
         code.invokestatic(initProxy);
         code.return_();
-    }
 
-    public void addProxy() throws Exception {
-        if (methods != null)
-            super.addProxy();
         if (main)
             addMain();
     }
