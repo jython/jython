@@ -5,8 +5,8 @@
 # This is how Jim sets his path on his Windows development machine
 #python.path=.;c:\\jpython\\Lib;d:\\Python-1.5.2\\Lib
 # This is how Barry sets his path on his Unix development machine
-python.path = /home/bwarsaw/projects/python/Lib
-#python.path = .
+#python.path = /home/bwarsaw/projects/python/Lib
+python.path = .
 
 # Set the directory to use for caches (currently just package information)
 # This directory should be writable by the user
