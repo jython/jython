@@ -66,16 +66,17 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		m[3] = new PyString("rollback");
 		m[4] = new PyString("nativesql");
 		__methods__ = new PyList(m);
-		m = new PyObject[9];
+		m = new PyObject[10];
 		m[0] = new PyString("autocommit");
 		m[1] = new PyString("dbname");
 		m[2] = new PyString("dbversion");
-		m[3] = new PyString("driverversion");
-		m[4] = new PyString("url");
-		m[5] = new PyString("__connection__");
-		m[6] = new PyString("__cursors__");
-		m[7] = new PyString("__statements__");
-		m[8] = new PyString("closed");
+		m[3] = new PyString("drivername");
+		m[4] = new PyString("driverversion");
+		m[5] = new PyString("url");
+		m[6] = new PyString("__connection__");
+		m[7] = new PyString("__cursors__");
+		m[8] = new PyString("__statements__");
+		m[9] = new PyString("closed");
 		__members__ = new PyList(m);
 	}
 
@@ -186,6 +187,12 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		} else if ("dbversion".equals(name)) {
 			try {
 				return Py.newString(this.connection.getMetaData().getDatabaseProductVersion());
+			} catch (SQLException e) {
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
+			}
+		} else if ("drivername".equals(name)) {
+			try {
+				return Py.newString(this.connection.getMetaData().getDriverName());
 			} catch (SQLException e) {
 				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 			}

@@ -48,6 +48,7 @@ class Test:
 class Vendor:
 	def __init__(self, name, datahandler=None):
 		self.name = name
+		self.scroll = None
 		self.datahandler = datahandler
 		self.tests = []
 		self.tables = {}
@@ -93,6 +94,8 @@ class ConfigParser(xmllib.XMLParser):
 			v = Vendor(attrs['name'], attrs['datahandler'])
 		else:
 			v = Vendor(attrs['name'])
+		if attrs.has_key('scroll'):
+			v.scroll = attrs['scroll']
 		self.vendors.append(v)
 
 	def start_test(self, attrs):

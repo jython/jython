@@ -48,8 +48,9 @@ class OracleSPTest(zxCoreTestCase):
 			c.execute("select * from user_errors where name like '%s%%'" % (name.upper()))
 			errors = c.fetchall()
 			try:
-				assert errors is None, "found errors"
+				assert not errors, "found errors"
 			except AssertionError, e:
+				print "printing errors:"
 				for a in errors:
 					print a
 				raise e
@@ -102,7 +103,7 @@ class OracleSPTest(zxCoreTestCase):
 		try:
 			params = ["testProcin"]
 			c.callproc("procin", params)
-			self.assertEquals(None, c.fetchall())
+			self.assertEquals([], c.fetchall())
 			c.execute("select * from sptest")
 			self.assertEquals(1, len(c.fetchall()))
 		finally:

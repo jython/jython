@@ -297,9 +297,9 @@ class zxAPITestCase(zxJDBCTestCase):
 			c.close()
 
 	def _test_scrolling(self, dynamic=0):
-		if self.vendor.name == "oracle":
+		if self.vendor.scroll:
 			c = self.cursor(dynamic,
-				rstype=zxJDBC.TYPE_SCROLL_INSENSITIVE,
+				rstype=getattr(zxJDBC, self.vendor.scroll),
 				rsconcur=zxJDBC.CONCUR_READ_ONLY
 			)
 		else:
@@ -339,9 +339,9 @@ class zxAPITestCase(zxJDBCTestCase):
 		self._test_scrolling(0)
 
 	def _test_rownumber(self, dynamic=0):
-		if self.vendor.name == "oracle":
+		if self.vendor.scroll:
 			c = self.cursor(dynamic,
-				rstype=zxJDBC.TYPE_SCROLL_INSENSITIVE,
+				rstype=getattr(zxJDBC, self.vendor.scroll),
 				rsconcur=zxJDBC.CONCUR_READ_ONLY
 			)
 		else:
@@ -378,9 +378,9 @@ class zxAPITestCase(zxJDBCTestCase):
 		self._test_rownumber(1)
 
 	def _test_rowcount(self, dynamic=0):
-		if self.vendor.name == "oracle":
+		if self.vendor.scroll:
 			c = self.cursor(dynamic,
-				rstype=zxJDBC.TYPE_SCROLL_INSENSITIVE,
+				rstype=getattr(zxJDBC, self.vendor.scroll),
 				rsconcur=zxJDBC.CONCUR_READ_ONLY
 			)
 		else:
@@ -810,9 +810,15 @@ class zxAPITestCase(zxJDBCTestCase):
 	def _test_fetching(self, dynamic=0):
 		c = self.cursor(dynamic)
 		try:
-			# make sure None is result from an empty result set
+			# make sure None if the result is an empty result set
 			c.execute("select * from zxtesting where 1<0")
-			self.assertEquals(None, c.fetchall())
+			self.assertEquals(None, c.fetchone())
+			# make sure an empty sequence if the result is an empty result set
+			c.execute("select * from zxtesting where 1<0")
+			self.assertEquals([], c.fetchmany())
+			# make sure an empty sequence if the result is an empty result set
+			c.execute("select * from zxtesting where 1<0")
+			self.assertEquals([], c.fetchall())
 			# test some arraysize features
 			c.execute("select * from zxtesting")
 			f = c.fetchmany()
@@ -841,7 +847,7 @@ class zxAPITestCase(zxJDBCTestCase):
 		c = self.cursor()
 		try:
 			f = c.fetchall()
-			assert f is None, "expecting no results since no execute*() has been called"
+			assert not f, "expecting no results since no execute*() has been called"
 		finally:
 			c.close()
 
@@ -907,7 +913,46 @@ class zxAPITestCase(zxJDBCTestCase):
 			self.db.commit()
 			c.close()
 
-class LOBTest(zxJDBCTestCase):
+	def _test_fetchapi(self, dynamic=0):
+		"""Test the public Java API for Fetch"""
+		from com.ziclix.python.sql import Fetch, WarningListener
+		cur = self.cursor()
+		try:
+			c = self.db.__connection__
+			stmt = c.prepareStatement("select * from zxtesting where id < ?")
+			stmt.setInt(1, 5)
+			rs = stmt.executeQuery()
+			fetch = Fetch.newFetch(cur.datahandler, dynamic)
+			class WL(WarningListener):
+				def warning(self, event):
+					raise event.getWarning()
+			wl = WL()
+			fetch.addWarningListener(wl)
+			# the RS is closed by Fetch
+			fetch.add(rs)
+
+			if not dynamic:
+				self.assertEquals(4, fetch.getRowCount())
+			assert fetch.fetchone()
+			assert fetch.fetchmany(2)
+			assert fetch.fetchall()
+			assert not fetch.fetchall()
+			self.assertEquals(4, fetch.getRowCount())
+			assert fetch.removeWarningListener(wl)
+			fetch.close()
+			stmt.close()
+		finally:
+			cur.close()
+
+	def testStaticFetchAPI(self):
+		"""Test static Java Fetch API"""
+		self._test_fetchapi(0)
+
+	def testDynamicFetchAPI(self):
+		"""Test dynamic Java Fetch API"""
+		self._test_fetchapi(1)
+
+class LOBTestCase(zxJDBCTestCase):
 
 	def _test_blob(self, obj=0):
 		assert self.has_table("blobtable"), "no blob table"

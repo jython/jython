@@ -51,40 +51,52 @@ abstract public class Fetch {
 	protected int rownumber;
 
 	/** Field cursor */
-	protected PyCursor cursor;
+	protected DataHandler datahandler;
 
 	/** Field description */
 	protected PyObject description;
 
+	/** A list of warning listeners. */
+	protected List listeners;
+
 	/**
 	 * Constructor Fetch
 	 *
-	 * @param PyCursor cursor
+	 * @param datahandler
 	 *
 	 */
-	protected Fetch(PyCursor cursor) {
+	protected Fetch(DataHandler datahandler) {
 
 		this.rowcount = -1;
 		this.rownumber = -1;
-		this.cursor = cursor;
 		this.description = Py.None;
+		this.datahandler = datahandler;
+		this.listeners = new ArrayList(3);
 	}
 
 	/**
 	 * Method newFetch
 	 *
-	 * @param PyCursor cursor
+	 * @param datahandler
+	 * @param dynamic
 	 *
 	 * @return Fetch
 	 *
 	 */
-	public static Fetch newFetch(PyCursor cursor) {
+	public static Fetch newFetch(DataHandler datahandler, boolean dynamic) {
 
-		if (cursor.dynamicFetch) {
-			return new DynamicFetch(cursor);
+		if (dynamic) {
+			return new DynamicFetch(datahandler);
 		} else {
-			return new StaticFetch(cursor);
+			return new StaticFetch(datahandler);
 		}
+	}
+
+	/**
+	 *        The number of rows in the current result set.
+	 */
+	public int getRowCount() {
+		return this.rowcount;
 	}
 
 	/**
@@ -130,11 +142,11 @@ abstract public class Fetch {
 
 		PyObject sequence = fetchmany(1);
 
-		if (sequence != Py.None) {
-			sequence = sequence.__getitem__(0);
+		if (sequence.__len__() == 1) {
+			return sequence.__getitem__(0);
+		} else {
+			return Py.None;
 		}
-
-		return sequence;
 	}
 
 	/**
@@ -206,7 +218,9 @@ abstract public class Fetch {
 	/**
 	 * Cleanup any resources.
 	 */
-	public abstract void close() throws SQLException;
+	public void close() throws SQLException {
+		this.listeners.clear();
+	}
 
 	/**
 	 * Builds a tuple containing the meta-information about each column.
@@ -336,13 +350,13 @@ abstract public class Fetch {
 
 				case DatabaseMetaData.procedureColumnOut :
 				case DatabaseMetaData.procedureColumnInOut :
-					obj = cursor.getDataHandler().getPyObject(callableStatement, i + 1, dataType);
+					obj = datahandler.getPyObject(callableStatement, i + 1, dataType);
 
 					params.__setitem__(j++, obj);
 					break;
 
 				case DatabaseMetaData.procedureColumnReturn :
-					obj = cursor.getDataHandler().getPyObject(callableStatement, i + 1, dataType);
+					obj = datahandler.getPyObject(callableStatement, i + 1, dataType);
 
 					// Oracle sends ResultSets as a return value
 					Object rs = obj.__tojava__(ResultSet.class);
@@ -357,7 +371,7 @@ abstract public class Fetch {
 		}
 
 		if (results.__len__() == 0) {
-			return Py.None;
+			return results;
 		}
 
 		PyList ret = new PyList();
@@ -377,11 +391,10 @@ abstract public class Fetch {
 	 */
 	protected PyList createResults(ResultSet set, Set skipCols, PyObject metaData) throws SQLException {
 
-		PyObject tuple = Py.None;
 		PyList res = new PyList();
 
 		while (set.next()) {
-			tuple = createResult(set, skipCols, metaData);
+			PyObject tuple = createResult(set, skipCols, metaData);
 
 			res.append(tuple);
 		}
@@ -408,15 +421,38 @@ abstract public class Fetch {
 			} else {
 				int type = ((PyInteger)metaData.__getitem__(i).__getitem__(1)).getValue();
 
-				row[i] = this.cursor.getDataHandler().getPyObject(set, i + 1, type);
+				row[i] = datahandler.getPyObject(set, i + 1, type);
 			}
 		}
 
-		this.cursor.addWarning(set.getWarnings());
+		SQLWarning warning = set.getWarnings();
+
+		if (warning != null) {
+			fireWarning(warning);
+		}
 
 		PyTuple tuple = new PyTuple(row);
 
 		return tuple;
+	}
+
+	protected void fireWarning(SQLWarning warning) {
+
+		WarningEvent event = new WarningEvent(this, warning);
+
+		for (int i = listeners.size() - 1; i >= 0; i--) {
+			try {
+				((WarningListener)listeners.get(i)).warning(event);
+			} catch (Throwable t) {}
+		}
+	}
+
+	public void addWarningListener(WarningListener listener) {
+		this.listeners.add(listener);
+	}
+
+	public boolean removeWarningListener(WarningListener listener) {
+		return this.listeners.remove(listener);
 	}
 }
 
@@ -439,9 +475,9 @@ class StaticFetch extends Fetch {
 	 * Construct a static fetch.  The entire result set is iterated as it
 	 * is added and the result set is immediately closed.
 	 */
-	public StaticFetch(PyCursor cursor) {
+	public StaticFetch(DataHandler datahandler) {
 
-		super(cursor);
+		super(datahandler);
 
 		this.results = new LinkedList();
 		this.descriptions = new LinkedList();
@@ -509,7 +545,7 @@ class StaticFetch extends Fetch {
 		try {
 			PyObject result = this.createResults(callableStatement, procedure, params);
 
-			if ((result != Py.None) && (result.__len__() > 0)) {
+			if (result.__len__() > 0) {
 				this.results.add(result);
 				this.descriptions.add(this.createDescription(procedure));
 
@@ -537,7 +573,8 @@ class StaticFetch extends Fetch {
 	 * An Error (or subclass) exception is raised if the previous call to executeXXX()
 	 * did not produce any result set or no call was issued yet.
 	 *
-	 * @return a sequence of sequences from the result set, or None when no more data is available
+	 * @return a sequence of sequences from the result set, or an empty sequence when
+	 *         no more data is available
 	 */
 	public PyObject fetchall() {
 		return fetchmany(this.rowcount);
@@ -562,17 +599,18 @@ class StaticFetch extends Fetch {
 	 * If the size parameter is used, then it is best for it to retain the same value
 	 * from one fetchmany() call to the next.
 	 *
-	 * @return a sequence of sequences from the result set, or None when no more data is available
+	 * @return a sequence of sequences from the result set, or an empty sequence when
+	 *         no more data is available
 	 */
 	public PyObject fetchmany(int size) {
 
-		PyObject res = Py.None, current = Py.None;
+		PyObject res = new PyList();
 
-		if ((results != null) && (results.size() > 0)) {
-			current = (PyObject)results.get(0);
-		} else {
-			return current;
+		if ((results == null) || (results.size() == 0)) {
+			return res;
 		}
+
+		PyObject current = (PyObject)results.get(0);
 
 		if (size <= 0) {
 			size = this.rowcount;
@@ -639,6 +677,8 @@ class StaticFetch extends Fetch {
 	 */
 	public void close() throws SQLException {
 
+		super.close();
+
 		this.rownumber = -1;
 
 		this.results.clear();
@@ -663,8 +703,8 @@ class DynamicFetch extends Fetch {
 	/**
 	 * Construct a dynamic fetch.
 	 */
-	public DynamicFetch(PyCursor cursor) {
-		super(cursor);
+	public DynamicFetch(DataHandler datahandler) {
+		super(datahandler);
 	}
 
 	/**
@@ -747,11 +787,11 @@ class DynamicFetch extends Fetch {
 	 */
 	private PyObject fetch(int size, boolean all) {
 
-		if (this.resultSet == null) {
-			return Py.None;
-		}
-
 		PyList res = new PyList();
+
+		if (this.resultSet == null) {
+			return res;
+		}
 
 		try {
 			all = (size < 0) ? true : all;
@@ -771,7 +811,7 @@ class DynamicFetch extends Fetch {
 			throw zxJDBC.makeException(e);
 		}
 
-		return (res.__len__() == 0) ? Py.None : res;
+		return res;
 	}
 
 	/**
@@ -820,6 +860,7 @@ class DynamicFetch extends Fetch {
 				this.rownumber = this.resultSet.getRow();
 			} else {
 				String msg = "dynamic result set of type [" + type + "] does not support scrolling";
+
 				throw zxJDBC.makeException(zxJDBC.NotSupportedError, msg);
 			}
 		} catch (SQLException e) {
@@ -831,6 +872,8 @@ class DynamicFetch extends Fetch {
 	 * Close the underlying ResultSet.
 	 */
 	public void close() throws SQLException {
+
+		super.close();
 
 		if (this.resultSet == null) {
 			return;

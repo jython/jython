@@ -23,6 +23,7 @@
 				<ignore name="testIndexInfo"/>
 			</testcase>
 			<testcase from="zxtest" import="BCPTestCase"/>
+			<!--<testcase from="zxtest" import="LOBTestCase"/>-->
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 		</test>
 		<!--
@@ -82,6 +83,7 @@
 				<ignore name="testBestRow"/>
 			</testcase>
 			<testcase from="zxtest" import="BCPTestCase"/>
+			<!--<testcase from="zxtest" import="LOBTestCase"/>-->
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 		</test>
 		<test name="datasource" os="java">
@@ -96,6 +98,7 @@
 			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testBestRow"/>
 			</testcase>
+			<!--<testcase from="zxtest" import="LOBTestCase"/>-->
 			<testcase from="zxtest" import="BCPTestCase"/>
 		</test>
 		<!--
@@ -134,7 +137,8 @@
 		</table>
 	</vendor>
 	<vendor name="oracle"
-		datahandler="com.ziclix.python.sql.handler.OracleDataHandler">
+		datahandler="com.ziclix.python.sql.handler.OracleDataHandler"
+		scroll="TYPE_SCROLL_INSENSITIVE">
 		<test name="driver" os="java">
 			<factory class="com.ziclix.python.sql.zxJDBC" method="connect">
 				<argument name="url" value="jdbc:oracle:thin:@localhost:1521:ziclix"/>
@@ -145,6 +149,7 @@
 			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testRowid"/>
 			</testcase>
+			<!--<testcase from="zxtest" import="LOBTestCase"/>-->
 			<testcase from="zxtest" import="BCPTestCase"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 			<testcase from="sptest" import="OracleSPTest"/>
@@ -161,6 +166,7 @@
 				<ignore name="testRowid"/>
 			</testcase>
 			<testcase from="zxtest" import="BCPTestCase"/>
+			<testcase from="zxtest" import="LOBTestCase"/>
 			<testcase from="sptest" import="OracleSPTest"/>
 		</test>
 		-->
@@ -189,54 +195,21 @@
 			create table b_clobtable (a int, b clob)
 		</table>
 	</vendor>
-	<vendor name="microsoft"
-		datahandler="com.ziclix.python.sql.handler.SQLServerDataHandler">
+	<vendor name="netdirect"
+		datahandler="com.ziclix.python.sql.handler.SQLServerDataHandler"
+		scroll="TYPE_SCROLL_INSENSITIVE">
 		<!--
-		<test name="freetds" os="java">
+		<test name="driver" os="java">
 			<factory class="com.ziclix.python.sql.zxJDBC" method="connect">
-				<argument name="url" value="jdbc:freetds:sqlserver://localhost:1433/ziclix"/>
+				<argument name="url" value="jdbc:JSQLConnect://127.0.0.1:1433/ziclix"/>
 				<argument name="usr" value="jython"/>
 				<argument name="pwd" value="jython"/>
-				<argument name="driver" value="com.internetcds.jdbc.tds.Driver"/>
+				<argument name="driver" value="com.jnetdirect.jsql.JSQLDriver"/>
 			</factory>
 			<testcase from="zxtest" import="zxAPITestCase">
 				<ignore name="testRowid"/>
 			</testcase>
-			<testcase from="dbextstest" import="dbextsTestCase">
-				<ignore name="testBulkcopy"/>
-				<ignore name="testBulkcopyWithDynamicColumns"/>
-			</testcase>
-		</test>
-		-->
-		<test name="opta driver" os="java">
-			<factory class="com.ziclix.python.sql.zxJDBC" method="connect">
-				<argument name="url" value="jdbc:inetdae7:localhost:1433?database=ziclix"/>
-				<argument name="usr" value="jython"/>
-				<argument name="pwd" value="jython"/>
-				<argument name="driver" value="com.inet.tds.TdsDriver"/>
-			</factory>
-			<testcase from="zxtest" import="zxAPITestCase">
-				<ignore name="testRowid"/>
-			</testcase>
-			<testcase from="dbextstest" import="dbextsTestCase">
-				<ignore name="testBulkcopy"/>
-				<ignore name="testBulkcopyWithDynamicColumns"/>
-			</testcase>
-			<!--
-			<testcase from="sptest" import="SQLServerSPTest"/>
-			-->
-		</test>
-		<!--
-		<test name="microsoft driver" os="java">
-			<factory class="com.ziclix.python.sql.zxJDBC" method="connect">
-				<argument name="url" value="jdbc:microsoft:sqlserver://localhost:1433"/>
-				<argument name="usr" value="jython"/>
-				<argument name="pwd" value="jython"/>
-				<argument name="driver" value="com.microsoft.jdbc.sqlserver.SQLServerDriver"/>
-			</factory>
-			<testcase from="zxtest" import="zxAPITestCase">
-				<ignore name="testRowid"/>
-			</testcase>
+			<testcase from="zxtest" import="LOBTestCase"/>
 			<testcase from="zxtest" import="BCPTestCase"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 			<testcase from="sptest" import="SQLServerSPTest"/>
@@ -358,6 +331,7 @@
 				<ignore name="testOrderOfArgsMaxRowsOnly"/>
 			</testcase>
 			<testcase from="zxtest" import="BCPTestCase"/>
+			<!--<testcase from="zxtest" import="LOBTestCase"/>-->
 			<testcase from="dbextstest" import="dbextsTestCase">
 				<ignore name="testQueryWithMaxRows"/>
 			</testcase>

@@ -24,7 +24,7 @@ import com.ziclix.python.sql.util.*;
  * @author last revised by $Author$
  * @version $Revision$
  */
-public class PyCursor extends PyObject implements ClassDictInit {
+public class PyCursor extends PyObject implements ClassDictInit, WarningListener {
 
 	/** Field fetch */
 	protected Fetch fetch;
@@ -269,7 +269,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("classDictInit", null);
 		dict.__setitem__("toString", null);
 		dict.__setitem__("getDataHandler", null);
-		dict.__setitem__("addWarning", null);
+		dict.__setitem__("warning", null);
 		dict.__setitem__("fetch", null);
 		dict.__setitem__("statement", null);
 		dict.__setitem__("dynamicFetch", null);
@@ -347,7 +347,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 		PyObject row = fetchone();
 
-		return (row == Py.None) ? null : row;
+		return row.__nonzero__() ? row : null;
 	}
 
 	/**
@@ -390,6 +390,10 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		try {
 			if (sql instanceof PyStatement) {
 				stmt = (PyStatement)sql;
+
+				if (stmt.closed) {
+					throw zxJDBC.makeException(zxJDBC.ProgrammingError, "statement is closed");
+				}
 			} else {
 				Statement sqlStatement = null;
 				String sqlString = sql.__str__().toString();
@@ -620,7 +624,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 			this.updatecount = (uc < 0) ? Py.None : Py.newInteger(uc);
 
-			addWarning(stmt.getWarnings());
+			warning(new WarningEvent(this, stmt.getWarnings()));
 			this.datahandler.postExecute(stmt);
 		} catch (PyException e) {
 			throw e;
@@ -650,7 +654,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * An Error (or subclass) exception is raised if the previous call to executeXXX()
 	 * did not produce any result set or no call was issued yet.
 	 *
-	 * @return a sequence of sequences from the result set, or None when no more data is available
+	 * @return a sequence of sequences from the result set, or an empty sequence when
+	 *         no more data is available
 	 */
 	public PyObject fetchall() {
 		return this.fetch.fetchall();
@@ -675,9 +680,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * If the size parameter is used, then it is best for it to retain the same value
 	 * from one fetchmany() call to the next.
 	 *
-	 *
 	 * @param size
-	 * @return a sequence of sequences from the result set, or None when no more data is available
+	 * @return a sequence of sequences from the result set, or an empty sequence when
+	 *         no more data is available
 	 */
 	public PyObject fetchmany(int size) {
 		return this.fetch.fetchmany(size);
@@ -741,7 +746,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * @param warning
 	 */
-	protected void addWarning(SQLWarning warning) {
+	public void warning(WarningEvent event) {
+
+		SQLWarning warning = event.getWarning();
 
 		if (warning == null) {
 			return;
@@ -764,7 +771,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		SQLWarning next = warning.getNextWarning();
 
 		if (next != null) {
-			addWarning(next);
+			warning(new WarningEvent(event.getSource(), next));
 		}
 
 		return;
@@ -789,7 +796,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			this.fetch.close();
 		} catch (Exception e) {}
 		finally {
-			this.fetch = Fetch.newFetch(this);
+			this.fetch = Fetch.newFetch(this.datahandler, this.dynamicFetch);
+
+			this.fetch.addWarningListener(this);
 		}
 
 		if (this.statement != null) {
