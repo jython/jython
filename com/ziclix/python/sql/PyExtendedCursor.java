@@ -151,9 +151,9 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		String q = datahandler.getMetaDataName(qualifier);
-		String o = datahandler.getMetaDataName(owner);
-		String t = datahandler.getMetaDataName(table);
+		String q = getMetaDataName(qualifier);
+		String o = getMetaDataName(owner);
+		String t = getMetaDataName(table);
 		String[] y = null;
 
 		if (type != Py.None) {
@@ -163,11 +163,11 @@ public class PyExtendedCursor extends PyCursor {
 				y = new String[len];
 
 				for (int i = 0; i < len; i++) {
-					y[i] = datahandler.getMetaDataName(type.__getitem__(i));
+					y[i] = getMetaDataName(type.__getitem__(i));
 				}
 			} else {
 				y = new String[1];
-				y[0] = datahandler.getMetaDataName(type);
+				y[0] = getMetaDataName(type);
 			}
 		}
 
@@ -190,10 +190,10 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		String q = datahandler.getMetaDataName(qualifier);
-		String o = datahandler.getMetaDataName(owner);
-		String t = datahandler.getMetaDataName(table);
-		String c = datahandler.getMetaDataName(column);
+		String q = getMetaDataName(qualifier);
+		String o = getMetaDataName(owner);
+		String t = getMetaDataName(table);
+		String c = getMetaDataName(column);
 
 		try {
 			this.fetch.add(getMetaData().getColumns(q, o, t, c));
@@ -213,9 +213,9 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		String q = datahandler.getMetaDataName(qualifier);
-		String o = datahandler.getMetaDataName(owner);
-		String p = datahandler.getMetaDataName(procedure);
+		String q = getMetaDataName(qualifier);
+		String o = getMetaDataName(owner);
+		String p = getMetaDataName(procedure);
 
 		try {
 			this.fetch.add(getMetaData().getProcedures(q, o, p));
@@ -236,10 +236,10 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		String q = datahandler.getMetaDataName(qualifier);
-		String o = datahandler.getMetaDataName(owner);
-		String p = datahandler.getMetaDataName(procedure);
-		String c = datahandler.getMetaDataName(column);
+		String q = getMetaDataName(qualifier);
+		String o = getMetaDataName(owner);
+		String p = getMetaDataName(procedure);
+		String c = getMetaDataName(column);
 
 		try {
 			this.fetch.add(getMetaData().getProcedureColumns(q, o, p, c));
@@ -260,9 +260,9 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		String q = datahandler.getMetaDataName(qualifier);
-		String o = datahandler.getMetaDataName(owner);
-		String t = datahandler.getMetaDataName(table);
+		String q = getMetaDataName(qualifier);
+		String o = getMetaDataName(owner);
+		String t = getMetaDataName(table);
 
 		try {
 			this.fetch.add(getMetaData().getPrimaryKeys(q, o, t));
@@ -290,12 +290,12 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		String pq = datahandler.getMetaDataName(primaryQualifier);
-		String po = datahandler.getMetaDataName(primaryOwner);
-		String pt = datahandler.getMetaDataName(primaryTable);
-		String fq = datahandler.getMetaDataName(foreignQualifier);
-		String fo = datahandler.getMetaDataName(foreignOwner);
-		String ft = datahandler.getMetaDataName(foreignTable);
+		String pq = getMetaDataName(primaryQualifier);
+		String po = getMetaDataName(primaryOwner);
+		String pt = getMetaDataName(primaryTable);
+		String fq = getMetaDataName(foreignQualifier);
+		String fo = getMetaDataName(foreignOwner);
+		String ft = getMetaDataName(foreignTable);
 
 		try {
 			this.fetch.add(getMetaData().getCrossReference(pq, po, pt, fq, fo, ft));
@@ -322,9 +322,9 @@ public class PyExtendedCursor extends PyCursor {
 
 		skipCols.add(new Integer(12));
 
-		String q = datahandler.getMetaDataName(qualifier);
-		String o = datahandler.getMetaDataName(owner);
-		String t = datahandler.getMetaDataName(table);
+		String q = getMetaDataName(qualifier);
+		String o = getMetaDataName(owner);
+		String t = getMetaDataName(table);
 		boolean u = unique.__nonzero__();
 		boolean a = accuracy.__nonzero__();
 
@@ -396,9 +396,9 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		String c = datahandler.getMetaDataName(qualifier);
-		String s = datahandler.getMetaDataName(owner);
-		String t = datahandler.getMetaDataName(table);
+		String c = getMetaDataName(qualifier);
+		String s = getMetaDataName(owner);
+		String t = getMetaDataName(table);
 		int p = DatabaseMetaData.bestRowUnknown;	// scope
 		boolean n = true;													// nullable
 
@@ -421,15 +421,44 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		String q = datahandler.getMetaDataName(qualifier);
-		String o = datahandler.getMetaDataName(owner);
-		String t = datahandler.getMetaDataName(table);
+		String q = getMetaDataName(qualifier);
+		String o = getMetaDataName(owner);
+		String t = getMetaDataName(table);
 
 		try {
 			this.fetch.add(getMetaData().getVersionColumns(q, o, t));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
+	}
+
+	/**
+	 * Method getMetaDataName
+	 *
+	 * @param PyObject name
+	 *
+	 * @return String
+	 *
+	 */
+	protected String getMetaDataName(PyObject name) {
+
+		if (name == Py.None) {
+			return null;
+		}
+
+		String string = name.__str__().toString();
+
+		// see if the driver can help us
+		try {
+			if (connection.connection.getMetaData().storesLowerCaseIdentifiers()) {
+				return string.toLowerCase();
+			} else if (connection.connection.getMetaData().storesUpperCaseIdentifiers()) {
+				return string.toUpperCase();
+			}
+		} catch (SQLException e) {}
+
+		// well we don't know yet so give it to the datahandler
+		return datahandler.getMetaDataName(name);
 	}
 }
 
