@@ -8,7 +8,9 @@ public class MatchObject extends PyObject {
     public RegexObject re;
     private MatchResult match;
 
-    public MatchObject(RegexObject re, String string, int pos, int endpos, MatchResult match) {
+    public MatchObject(RegexObject re, String string,
+		       int pos, int endpos, MatchResult match)
+    {
         this.string = string;
         this.pos = pos;
         this.endpos = endpos;
@@ -41,7 +43,11 @@ public class MatchObject extends PyObject {
     }
 
     public PyTuple span(int g) {
-        return new PyTuple(new PyObject[] {new PyInteger(start(g)), new PyInteger(end(g))});
+        return new PyTuple(
+	    new PyObject[] {
+		new PyInteger(start(g)),
+		new PyInteger(end(g))
+	    });
     }
 
     public PyTuple span() {
@@ -68,7 +74,8 @@ public class MatchObject extends PyObject {
 
     private int getindex(PyString s) {
         PyInteger v = (PyInteger)re.groupindex.__finditem__(s);
-        if (v == null) throw org.python.modules.re.ReError("group "+s+" is undefined");
+        if (v == null)
+	    throw org.python.modules.re.ReError("group "+s+" is undefined");
         return v.getValue();
     }
 
@@ -91,24 +98,27 @@ public class MatchObject extends PyObject {
         } else if (o instanceof PyString) {
             s = group((PyString)o);
         } else {
-            throw org.python.modules.re.ReError("group index must be a string or integer");
+            throw org.python.modules.re.ReError(
+		"group index must be a string or integer");
         }
-        if (s == null) return Py.None;
-        else return new PyString(s);
+        if (s == null)
+	    return Py.None;
+        else
+	    return new PyString(s);
     }
 
     public PyObject group(PyObject[] args) {
         int n = args.length;
 
-        if (n == 0) return new PyString(group(0));
-
-        if (n == 1) return group(args[0]);
+        if (n == 0)
+	    return new PyString(group(0));
+        if (n == 1)
+	    return group(args[0]);
 
         PyObject[] res = new PyObject[n];
         for(int i=0; i < n; i++) {
             res[i] = group(args[i]);
         }
-
         return new PyTuple(res);
     }
 }
