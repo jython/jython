@@ -121,12 +121,15 @@ class _tcpsocket:
 	return self.ostream.write(s)
 
     def getsockname(self):
-	assert self.sock
-	if self.server:
-	    host = self.sock.getInetAddress().getHostAddress()
+	if not self.sock:
+	    host, port = self.addr or ("", 0)
+	    host = java.net.InetAddress.getByName(host).getHostAddress()
 	else:
-	    host = self.sock.getLocalAddress().getHostAddress()
-	port = self.sock.getLocalPort()
+	    if self.server:
+		host = self.sock.getInetAddress().getHostAddress()
+	    else:
+		host = self.sock.getLocalAddress().getHostAddress()
+	    port = self.sock.getLocalPort()
 	return (host, port)
 
     def getpeername(self):
