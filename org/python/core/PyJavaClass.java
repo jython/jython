@@ -385,12 +385,24 @@ public class PyJavaClass extends PyClass
         return declared;
     }
 
+    private boolean ignoreMethod(Method method) {
+        Class[] exceptions = method.getExceptionTypes();
+        for (int j = 0; j < exceptions.length; j++) {
+            if (exceptions[j] == PyIgnoreMethodTag.class) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /* Add all methods declared by this class */
     private void setMethods(Class c, Method[] methods) {
         for (int i=0; i<methods.length; i++) {
             Method method = methods[i];
             Class dc = method.getDeclaringClass();
             if (dc != c)
+                continue;
+            if (ignoreMethod(method))
                 continue;
             addMethod(method);
         }
@@ -500,6 +512,8 @@ public class PyJavaClass extends PyClass
         for (i=0; i<n; i++) {
             Method method = meths[i];
 
+            if (ignoreMethod(method))
+                continue;
             if (method.getDeclaringClass() != c ||
                 Modifier.isStatic(method.getModifiers()))
             {
@@ -636,16 +650,32 @@ public class PyJavaClass extends PyClass
         return declared;
     }
 
+    private boolean ignoreConstructor(Constructor method) {
+        Class[] exceptions = method.getExceptionTypes();
+        for (int j = 0; j < exceptions.length; j++) {
+            if (exceptions[j] == PyIgnoreMethodTag.class) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void setConstructors(Class c) {
         if (Modifier.isInterface(c.getModifiers())) {
             __init__ = null;
         } else {
             Constructor[] constructors = getAccessibleConstructors(c);
-            if (constructors.length > 0) {
-                __init__ = new PyReflectedConstructor(constructors[0]);
-                for (int i=1; i < constructors.length; i++) {
+            for (int i = 0; i < constructors.length; i++) {
+                if (ignoreConstructor(constructors[i])) {
+                    continue;
+                }
+                if (__init__ == null) {
+                    __init__ = new PyReflectedConstructor(constructors[i]);
+                } else {
                     __init__.addConstructor(constructors[i]);
                 }
+            }
+            if (__init__ != null) {
                 __dict__.__setitem__("__init__", __init__);
             }
         }
