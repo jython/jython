@@ -826,6 +826,8 @@ public final class Py
             PyObject mod = imp.createFromCode("__main__", code);
         } catch (PyException e) {
             Py.getSystemState().callExitFunc();
+            if (Py.matchException(e, Py.SystemExit))
+                return;
             throw e;
         }
         Py.getSystemState().callExitFunc();
