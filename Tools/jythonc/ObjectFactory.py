@@ -207,7 +207,6 @@ class PyClass(FixedObject):
         else:
             self.pySupername = full_py
             self.supername = modname
-        self.supername = ':'+self.supername # ':' => Compiler will in case prefix this with opts.javapackage
 
     def isSuperclassJava(self):
         if hasattr(self, 'javaclasses'):
@@ -253,7 +252,9 @@ class PyClass(FixedObject):
                         cls = mod.classes.get(names[-1], None)
                         if cls:
                             if cls.value.isSuperclassJava():
-                                self._takeSupername(cls.value,mod,modname = modname)
+                                # pass no modname but just mod,
+                                # javapackage should be included
+                                self._takeSupername(cls.value,mod)
                                 continue
 
         if len(self.javaclasses) and self.supername == None:

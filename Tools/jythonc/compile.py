@@ -313,9 +313,6 @@ class Compiler:
             methods.append( (name, args, sig) )
         if pyc.isSuperclassJava():
             supername, pySupername = pyc.supername, pyc.pySupername
-            if supername and supername[0] == ':':
-                supername = supername[1:]
-                if self.javapackage: supername = self.javapackage + '.' + supername
             return proxies.JavaProxy(pyc.name, (supername, pySupername), 
                                     pyc.javaclasses, methods, module, pyc.issuperproxy)
         return None
