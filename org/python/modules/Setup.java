@@ -47,5 +47,6 @@ public class Setup
         "exceptions:org.python.core.exceptions",
         "_codecs",
         "imp",
+        "sha",
     };
 }
