@@ -796,7 +796,7 @@ public final class Py
                                String[] packages,
                                String[] props,
                                String frozenPackage,
-                               String[] modules)
+                               String[] modules) throws Exception
     {
         //System.err.println("main: "+module);
 
@@ -813,9 +813,8 @@ public final class Py
             }
             PyObject mod = imp.createFromCode("__main__", code);
         } catch (PyException e) {
-            Py.printException(e);
             Py.getSystemState().callExitFunc();
-            System.exit(-1);
+            throw e;
         }
         Py.getSystemState().callExitFunc();
     }
