@@ -39,5 +39,4 @@ from test_javashell import *
 from test_compil import *
 
 import unittest
-unittest.main()
-
+unittest.main() # calls SystemExit

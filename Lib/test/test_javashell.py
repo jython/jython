@@ -8,6 +8,52 @@ from LazyDict import LazyDict
 import os
 import javashell
 
+# testCmds is a list of (command, expectedOutput)
+# each command is executed twice, once in unitialized environment and
+# once with initialized environment
+
+# smaller set of commands for simple test
+testCmds = [
+    ("echo hello world", "hello world"),
+    ]
+
+# can instead set testCmds = fullTestCmds
+
+# Note that the validation is incomplete for several of these
+# - they should validate depending on platform and pre-post, but
+# they don't.
+
+# can assign testCmds = fullTestCmds for more extensive tests
+key, value = "testKey", "testValue"
+fullTestCmds = [
+            # no quotes, should output both words
+            ("echo hello there", "hello there"),
+            # should print PATH (on NT)
+            ("echo PATH=%PATH%", "(PATH=.*;.*)|(PATH=%PATH%)"),
+            # should print 'testKey=%testKey%' on NT before initialization,
+            # should print 'testKey=' on 95 before initialization,
+            # and 'testKey=testValue' after
+            ("echo %s=%%%s%%" % (key,key),
+                    "(%s=)" % (key,)),     
+            # should print PATH (on Unix)
+            ( "echo PATH=$PATH", "PATH=.*" ),
+            # should print 'testKey=testValue' on Unix after initialization
+            ( "echo %s=$%s" % (key,key),
+                    "(%s=$%s)|(%s=)|(%s=%s)" % (key, key, key, key, value ) ), 
+            # should output quotes on NT but not on Unix
+            ( 'echo "hello there"', '"?hello there"?' ),
+            # should print 'why' to stdout.
+            ( r'''jython -c "import sys;sys.stdout.write( 'why\n' )"''', "why" ),
+            # should print 'why' to stderr.
+            # doesn't work on NT because of quoting issues.
+            # Have to add the print to give some output to stdout...
+            # empty string matches everything...
+            ( r'''jython -c "import sys;sys.stderr.write('why\n');print " ''',
+              '' )
+            ]
+
+testCmds = fullTestCmds
+
 class JavaShellTest(unittest.TestCase):
     """This test validates the subshell functionality (javashell, os.environ, popen*).
     Does some white box as well as black box testing.
@@ -47,44 +93,12 @@ class JavaShellTest(unittest.TestCase):
 
     def testSystem( self ):
         """test system and environment functionality"""
+        # this doesn't quite test 'system', because system 
         os.environ = LazyDict( populate=os._getEnvironment )
         assert not os.environ._populated, \
                 "before population, os.environ._populated should be false"
         
-        key, value = "testKey", "testValue"
         org = os.environ
-        testCmds = [
-            # test commands and regexes to match first line of expected
-            # output on first and second runs
-            # Note that the validation is incomplete for several of these
-            # - they should validate depending on platform and pre-post, but
-            # they don't.
-
-            # no quotes, should output both words
-            ("echo hello there", "hello there"),
-            # should print PATH (on NT)
-            ("echo PATH=%PATH%", "(PATH=.*;.*)|(PATH=%PATH%)"),
-            # should print 'testKey=%testKey%' on NT before initialization,
-            # should print 'testKey=' on 95 before initialization,
-            # and 'testKey=testValue' after
-            ("echo %s=%%%s%%" % (key,key),
-                    "(%s=)" % (key,)),     
-            # should print PATH (on Unix)
-            ( "echo PATH=$PATH", "PATH=.*" ),
-            # should print 'testKey=testValue' on Unix after initialization
-            ( "echo %s=$%s" % (key,key),
-                    "(%s=$%s)|(%s=)|(%s=%s)" % (key, key, key, key, value ) ), 
-            # should output quotes on NT but not on Unix
-            ( 'echo "hello there"', '"?hello there"?' ),
-            # should print 'why' to stdout.
-            ( r'''jython -c "import sys;sys.stdout.write( 'why\n' )"''', "why" ),
-            # should print 'why' to stderr, but it won't right now.  Have
-            # to add the print to give some output...empty string matches every
-            # thing...
-            ( r'''jython -c "import sys;sys.stderr.write('why\n');print " ''',
-              "" )
-            ]
-
         self._testCmds( javashell._shellEnv, testCmds, "default" )
 
         # trigger initialization of environment
@@ -113,17 +127,21 @@ class JavaShellTest(unittest.TestCase):
                 "(this may not apply to all platforms!)"
 
     def testBadShell( self ):
-        "attempt to get an environment with a shell that is not startable"
+        "Attempting to get an environment with a shell that is not startable"
+        print "testBadShell: ignore warnings about failing to get environment"
         se2 = javashell._ShellEnv( ["badshell", "-c"], "set" )
         str(se2.environment) # trigger initialization
         assert not se2.environment.items(), "environment should be empty"
+        print "end testBadShell"
 
     def testBadGetEnv( self ):
-        "attempt to get an environment with a command that does not print an environment"
+        "Attempting to get an environment with a command that does not print an environment"
+        print "testBadGetEnv: ignore warnings about command not printing environment"
         envCmd="echo This command does not print environment"    
         se2 = javashell._ShellEnv( javashell._shellEnv.cmd, envCmd, None )
         str(se2.environment) # trigger initialization
         assert not se2.environment.items(), "environment should be empty"
+        print "end testBadGetEnv"
 
     def testPutEnv( self ):
         "Put an environment variable and ensure that spawned processes see the change"
@@ -140,5 +158,8 @@ class JavaShellTest(unittest.TestCase):
             ))
 
 if __name__ == "__main__":
-    unittest.main()
+    try:
+        unittest.main()
+    except SystemExit:
+        pass
 
