@@ -55,6 +55,35 @@ public class PackageManager {
             makeJavaPackage(key, value);
         }
     }
+    
+    public PyObject lookupName(String name) {
+        int dot = name.indexOf('.');
+        String firstName=name;
+        String lastName=null;
+        if (dot != -1) {
+            firstName = name.substring(0,dot);
+            lastName = name.substring(dot+1, name.length());
+        }
+        firstName = firstName.intern();
+        PyObject top = findName(firstName);
+        if (top == null) return null;
+        name = lastName;
+        while (name != null) {
+            dot = lastName.indexOf('.');
+            firstName = name;
+            lastName = null;
+            if (dot != -1) {
+                firstName = name.substring(0,dot);
+                lastName = name.substring(dot+1, name.length());
+            }
+            firstName = firstName.intern();
+            top = top.__findattr__(firstName);
+            if (top == null) return null;
+            name = lastName;
+        }
+        return top;
+    }
+        
 
     /**
         Find a top-level package by name (a top-level package is one without

@@ -29,10 +29,13 @@ public class PyModule extends PyObject {
     		        }
     		        
     		        if (ret == null) {
-                		Class c = Py.findClass(name+'.'+attr);
+    		            ret = PySystemState.packageManager.lookupName(name+'.'+attr);
+    		            
+                		/*Class c = Py.findClass(name+'.'+attr);
                 		if (c != null)
-                			ret = PyJavaClass.lookup(c);
+                			ret = PyJavaClass.lookup(c);*/
                 	}
+                	    
     		        if (ret != null) {
     		            // Allow a package component to change its own meaning
     		            PyObject tmp = __dict__.__finditem__(attr);
@@ -41,6 +44,8 @@ public class PyModule extends PyObject {
     		            return ret;
     		        }
     		    }
+    		    // Not found in package
+    		    
 		    }
 
 			return super.__findattr__(attr);
