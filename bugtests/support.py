@@ -72,6 +72,25 @@ def runJava(cls, **kw):
     return ret
 
 
+def runJython(cls, **kw):
+    cmd = "jython "
+    p = execCmd('cmd /C "%s %s"' % (cmd, cls))
+
+    import java
+    if kw.has_key("output"):
+	outstream = java.io.FileOutputStream(kw['output'])
+    else:
+	outstream = java.lang.System.out
+
+    import java
+    thread.start_new_thread(StreamReader, (p.inputStream, outstream))
+    thread.start_new_thread(StreamReader, (p.errorStream, outstream))
+    ret = p.waitFor()
+    if ret != 0 and not kw.has_key("expectError"):
+	raise TestError, "%s failed with %d" % (cmd, ret)
+    return ret
+
+
 def StreamReader(instream, outstream):
     while 1:
         ch = instream.read()
