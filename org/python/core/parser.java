@@ -67,11 +67,13 @@ public class parser {
 
 
     public static Node parse(String string, String kind) {
-        return parse(new StringBufferInputStream(string), kind, "<string>");
+        return parse(new StringBufferInputStream(string),
+                     kind, "<string>", null);
     }
 
+
     public static SimpleNode parse(InputStream istream, String kind,
-                                   String filename)
+                                   String filename, CompilerFlags cflags)
     {
         int nbytes;
         try {
@@ -85,7 +87,16 @@ public class parser {
         if (nbytes > 100000)
             nbytes = 100000;
 
-        Reader reader = new InputStreamReader(istream);
+        Reader reader = null;
+        try {
+            if (cflags != null && cflags.encoding != null) {
+                reader = new InputStreamReader(istream, cflags.encoding);
+            }
+        } catch (UnsupportedEncodingException exc) { ; }
+        if (reader == null) {
+            reader = new InputStreamReader(istream);
+        }
+            
         //if (Options.fixMacReaderBug);
         reader = new FixMacReaderBug(reader);
 
@@ -129,19 +140,21 @@ public class parser {
     }
 
     public static SimpleNode partialParse(String string, String kind,
-                                          String filename)
+                                          String filename,
+                                          CompilerFlags cflags)
     {
         SimpleNode node = null;
         //System.err.println(new PyString(string).__repr__().toString());
         try {
-            node = parse(new StringBufferInputStream(string), kind, filename);
+            node = parse(new StringBufferInputStream(string),
+                         kind, filename, cflags);
         }
         catch (PySyntaxError e) {
             //System.out.println("e: "+e.lineno+", "+e.column+", "+
             //                   e.forceNewline);
             try {
                 node = parse(new StringBufferInputStream(string+"\n"),
-                             kind, filename);
+                             kind, filename, cflags);
             }
             catch (PySyntaxError e1) {
                 //System.out.println("e1: "+e1.lineno+", "+e1.column+

@@ -18,6 +18,7 @@ public class jython
         "-jar jar : program read from __run__.py in jar file\n"+
         "-c cmd   : program passed in as string (terminates option list)\n"+
         "-W arg   : warning control (arg is action:message:category:module:lineno)\n"+
+        "-E codec : Use a different codec the reading from the console.\n"+
         "file     : program read from script file\n"+
         "-        : program read from stdin (default; interactive mode if a "+
         "tty)\n"+
@@ -179,6 +180,13 @@ public class jython
         }
 
         if (opts.interactive) {
+            if (opts.encoding == null) {
+                opts.encoding = PySystemState.registry.getProperty(
+                                "python.console.encoding", null);
+            }
+            if (opts.encoding != null) {
+                interp.cflags.encoding = opts.encoding;
+            }
             try {
                 interp.interact(null);
             } catch (Throwable t) {
@@ -200,6 +208,7 @@ class CommandLineOptions
     public java.util.Properties properties;
     public String command;
     public java.util.Vector warnoptions = new java.util.Vector();
+    public String encoding;
 
     public CommandLineOptions() {
         filename = null;
@@ -264,7 +273,9 @@ class CommandLineOptions
             }
             else if (arg.equals("-W")) {
                 warnoptions.addElement(args[++index]);
-                break;
+            }
+            else if (arg.equals("-E")) {
+                encoding = args[++index];
             }
             else if (arg.startsWith("-D")) {
                 String key = null; 

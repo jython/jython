@@ -1516,7 +1516,7 @@ public final class Py
     public static PyCode compile_flags(InputStream istream, String filename,
                                  String type,CompilerFlags cflags)
     {
-        SimpleNode node = parser.parse(istream, type, filename);
+        SimpleNode node = parser.parse(istream, type, filename, cflags);
         boolean printResults = false;
         if (type.equals("single"))
             printResults = true;

@@ -42,6 +42,12 @@ python.deprecated.keywordMangling = false
 # This might be helpful on systems without system-level threads
 python.console.poll = false
 
+# Setting this to a valid codec name will cause the console to use a
+# different encoding when reading commands from the console.
+# The default java encoding is still used when reading python sources
+# from the filesystem.
+#python.console.encoding = cp850
+
 # Setting this to false will allow Jython to provide access to
 # non-public fields, methods, and constructors of Java objects.
 python.security.respectJavaAccessibility = true

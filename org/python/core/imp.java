@@ -120,7 +120,7 @@ public class imp
                 filename = "<unknown>";
             org.python.parser.SimpleNode node = null; //*Forte*
             try {
-                node = parser.parse(fp, "exec", filename);
+                node = parser.parse(fp, "exec", filename, null);
             } finally {
                 fp.close();
             }
