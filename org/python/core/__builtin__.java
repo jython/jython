@@ -111,6 +111,7 @@ public class __builtin__ implements ClassDictInit
         
         dict.__setitem__("object",PyType.fromClass(PyObject.class));
         dict.__setitem__("type",PyType.fromClass(PyType.class));
+        dict.__setitem__("int",PyType.fromClass(PyInteger.class));
         
         /* - */
         
@@ -406,10 +407,16 @@ public class __builtin__ implements ClassDictInit
         return input(new PyString(""));
     }
 
+    /** not used anymore
+     * @deprecated
+     */
     public static PyInteger int$(PyString o, int base) {
         return Py.newInteger(o.__str__().atoi(base));
     }
 
+    /** not used anymore
+     * @deprecated
+     */
     public static PyInteger int$(PyObject o) {
         return o.__int__();
     }
