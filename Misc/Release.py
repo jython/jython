@@ -250,17 +250,19 @@ def do_build(tagname):
     tagname = string.translate(tagname, trans, '.')
     print 'tagname:', tagname
     # make full distribution
+    unlink_ex('export/LICENSE.txt')
+    os.system('cp nondist/LICENSE-ORO.txt export/LICENSE.txt')
     os.system('cp jpython.jar export')
     os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
     os.rename('JPython'+tagname+'.class', 'JPythonORO'+tagname+'.class')
     # make non-ORO distribution
-    os.unlink('export/LICENSE.txt')
-    os.unlink('export/jpython.jar')
+    unlink_ex('export/LICENSE.txt')
+    os.system('cp dist/LICENSE.txt export/LICENSE.txt')
+    unlink_ex('export/jpython.jar')
     os.system('cp jpython-only.jar export/jpython.jar')
-    os.system('cp nondist/LICENSE-ORO.txt export/LICENSE.txt')
     os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
     os.rename('JPython'+tagname+'.class', 'JPythonONLY'+tagname+'.class')
-    os.rename('JPythonORO'+tagname+'.class', 'JPython'+tagname+'.class')
+##    os.rename('JPythonORO'+tagname+'.class', 'JPython'+tagname+'.class')
     
 
 def do_clean():
@@ -280,7 +282,7 @@ def do_clean():
         outfp.write(line)
     infp.close()
     outfp.close()
-    os.remove('CVS/Entries.old')
+    unlink_ex('CVS/Entries.old')
     unlink_ex(PYLIB)
 
 
