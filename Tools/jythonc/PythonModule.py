@@ -71,7 +71,7 @@ class PythonInner:
 
     def getLongConstant(self, value):
         code = jast.InvokeStatic("Py", "newLong",
-                                 [jast.StringConstant(str(value)[:-1])])
+                                 [jast.StringConstant(str(value))])
         return self.getConstant(value, code, "l")
 
     def getImaginaryConstant(self, value):
