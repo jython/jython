@@ -312,7 +312,7 @@ public class PyInstance extends PyObject
         if (setter != null) {
             setter.__call__(this, new PyString(name), value);
         } else {
-            if (__class__.proxyClass != null) {
+            if (__class__.getProxyClass() != null) {
                 PyObject field = __class__.lookup(name, false);
                 if (field == null) {
                     noField(name, value);
