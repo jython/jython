@@ -5,12 +5,21 @@ package org.python.compiler;
 import org.python.parser.*;
 import java.io.IOException;
 import java.util.Vector;
+import java.util.Enumeration;
 
-public class ArgListCompiler extends org.python.parser.Visitor {
+public class ArgListCompiler extends org.python.parser.Visitor
+{
     public boolean arglist, keywordlist;
     public Vector defaults;
     public Vector names;
     public SimpleNode init_code;
+
+    public ArgListCompiler() {
+        arglist = keywordlist = false;
+        defaults = new Vector();
+        names = new Vector();
+        init_code = new SimpleNode(PythonGrammarTreeConstants.JJTSUITE);
+    }
 
     public void reset() {
         arglist = keywordlist = false;
@@ -25,14 +34,6 @@ public class ArgListCompiler extends org.python.parser.Visitor {
             children[i] = (SimpleNode)defaults.elementAt(i);
         }
         return children;
-    }
-
-
-    public ArgListCompiler() {
-        arglist = keywordlist = false;
-        defaults = new Vector();
-        names = new Vector();
-        init_code = new SimpleNode(PythonGrammarTreeConstants.JJTSUITE);
     }
 
     public Object varargslist(SimpleNode node) throws Exception {
@@ -57,8 +58,15 @@ public class ArgListCompiler extends org.python.parser.Visitor {
 
     public Object defaultarg(SimpleNode node) throws Exception {
         Object name = node.getChild(0).visit(this);
+        // make sure the named argument isn't already in the list of arguments
+        for (Enumeration e=names.elements(); e.hasMoreElements();) {
+            String objname = (String)e.nextElement();
+            if (objname.equals(name))
+                throw new ParseException("duplicate keyword found: " + name,
+                                         node);
+        }
         names.addElement(name);
-
+        
         //Handle tuple arguments properly
         if (node.getChild(0).id == PythonGrammarTreeConstants.JJTFPLIST) {
             SimpleNode expr = new SimpleNode(
