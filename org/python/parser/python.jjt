@@ -248,6 +248,7 @@ TOKEN : /* OPERATORS */
 |   < MINUS: "-" >
 |   < MULTIPLY: "*" >
 |   < DIVIDE: "/" >
+|   < FLOORDIVIDE: "//" >
 |   < POWER: "**" >
 |   < LSHIFT: "<<" >
 |   < RSHIFT: ">>" >
@@ -268,6 +269,7 @@ TOKEN : /* OPERATORS */
 |   < MINUSEQ: "-=" >
 |   < MULTIPLYEQ: "*=" >
 |   < DIVIDEEQ: "/=" >
+|   < FLOORDIVIDEEQ: "//=" >
 |   < MODULOEQ: "%=" >
 |   < ANDEQ: "&=" >
 |   < OREQ: "|=" >
@@ -475,6 +477,7 @@ void expr_stmt(): {}
 |   <MINUSEQ> SmartTestList() #aug_minus(2)
 |   <MULTIPLYEQ> SmartTestList() #aug_multiply(2)
 |   <DIVIDEEQ> SmartTestList() #aug_divide(2)
+|   <FLOORDIVIDEEQ> SmartTestList() #aug_floordivide(2)
 |   <MODULOEQ> SmartTestList() #aug_modulo(2)
 |   <ANDEQ> SmartTestList() #aug_and(2)
 |   <OREQ> SmartTestList() #aug_or(2)
@@ -660,6 +663,7 @@ void term() #void : {}
 {
     factor()  ( <MULTIPLY> factor() #mul_2op(2)
 |   <DIVIDE> factor() #div_2op(2)
+|   <FLOORDIVIDE> factor() #floordiv_2op(2)
 |   <MODULO> factor() #mod_2op(2) )*
 }
 
