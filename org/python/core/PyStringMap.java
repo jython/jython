@@ -546,7 +546,7 @@ public class PyStringMap extends PyObject
     }
 }
 
-class PyStringMapIter extends PyObject {
+class PyStringMapIter extends PyIterator {
     String[] keyTable;
     PyObject[] valTable;
     private int idx;
@@ -555,14 +555,6 @@ class PyStringMapIter extends PyObject {
         this.keyTable = keys;
         this.valTable = values;
         this.idx = 0;
-    }
-
-    public PyObject __iter__() {
-        return this;
-    }
-
-    public PyObject next() {
-        return __iternext__();
     }
 
     public PyObject __iternext__() {

@@ -1,6 +1,6 @@
 package org.python.core;
 
-public class PyCallIter extends PyObject {
+public class PyCallIter extends PyIterator {
     private PyObject callable;
     private PyObject sentinel;
     private int idx;
@@ -8,10 +8,6 @@ public class PyCallIter extends PyObject {
     public PyCallIter(PyObject callable, PyObject sentinel) {
         this.callable = callable;
         this.sentinel = sentinel;
-    }
-
-    public PyObject __iter__() {
-        return this;
     }
 
     public PyObject __iternext__() {
@@ -26,10 +22,6 @@ public class PyCallIter extends PyObject {
         if (val._eq(sentinel).__nonzero__())
             return null;
         return val;
-    }
-
-    public PyObject next() {
-        return __iternext__();
     }
 
     // __class__ boilerplate -- see PyObject for details

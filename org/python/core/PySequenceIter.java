@@ -1,6 +1,6 @@
 package org.python.core;
 
-public class PySequenceIter extends PyObject {
+public class PySequenceIter extends PyIterator {
     private PyObject seq;
     private int idx;
 
@@ -9,16 +9,8 @@ public class PySequenceIter extends PyObject {
         this.idx = 0;
     }
 
-    public PyObject __iter__() {
-        return this;
-    }
-
     public PyObject __iternext__() {
         return seq.__finditem__(idx++);
-    }
-
-    public PyObject next() {
-        return __iternext__();
     }
 
     // __class__ boilerplate -- see PyObject for details

@@ -133,6 +133,14 @@ public class PyList extends PySequence implements ClassDictInit
         length = elements.length;
     }
 
+    public PyList(PyObject o) {
+        this();
+        PyObject iter = o.__iter__();
+        for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+            append(item);
+        }
+    }
+
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'list' object";
     }

@@ -413,19 +413,11 @@ public class PyDictionary extends PyObject implements ClassDictInit
     }
 }
 
-class PyDictionaryIter extends PyObject {
+class PyDictionaryIter extends PyIterator {
     private Enumeration enumeration;
 
     public PyDictionaryIter(PyObject dict, Enumeration e) {
         enumeration = e;
-    }
-
-    public PyObject __iter__() {
-        return this;
-    }
-
-    public PyObject next() {
-        return __iternext__();
     }
 
     public PyObject __iternext__() {
