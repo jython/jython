@@ -1,23 +1,64 @@
 #Python Registry
 
-#This is how I set my path on Windows
+#This is how I set my path on my Windows development machine
 #python.path=.;c:\\Python-1.5.1\\Lib
 python.path=.
 
-java.packages.java		=	beans,lang,io,util,net,applet,lang.reflect,math,text,util.zip, \
-                            awt, awt.datatransfer, awt.event, awt.image, \
-                            rmi, rmi.server, rmi.dgc, rmi.registry
+# This is the complete set of packages under java.* for java-1.2
+# Some of these aren't available in java-1.1, and will raise AttributeError's when used
+java.packages.java      = \
+        applet, \
+        awt, awt.color, awt.datatransfer, awt.dnd, awt.event, \
+                awt.font, awt.geom, awt.im, awt.image, \
+                awt.image.renderable, awt.print, \
+        beans,  beans.beancontext, \
+        io, \
+        lang, lang.ref, lang.reflect, \
+        math, \
+        net, \
+        rmi, rmi.activation, rmi.dgc, rmi.registry, rmi.server, \
+        security, security.acl, security.cert, security.interfaces, \
+                security.spec, \
+        sql, \
+        text, \
+        util, util.jar, util.mime, util.zip
 
-#Where to find swing in JDK 1.1
+#Where to find swing in JDK 1.1 using swing 1.0.x
 java.packages.com.sun.java.swing = basic, border, event, plaf, table, target, text, tree, undo
 
-#Where to find swing in JDK 1.2
+#Where to find swing in JDK 1.2beta4 and earlier
 java.packages.java.awt.swing = basic, border, event, plaf, table, target, text, tree, undo
 
+#The final resting place of swing (JSK1.2beta5 and later as well as swing-1.1beta3 and later for jdk1.1)
+java.packages.javax.swing = basic, border, colorchooser, event, filechooser, \
+                            table, text, text.html, tree, undo
+
 java.packages.org.python	=	core,parser,modules,compiler,rmi
+
+# CORBA packages in jdk1.2beta4.
+java.packages.org.omg = \
+        CORBA, CORBA.ContainedPackage, CORBA.ContainerPackage, \
+                CORBA.DynAnyPackage, CORBA.InterfaceDefPackage, \
+                CORBA.ORBPackage, CORBA.portable, \
+                CORBA.TypeCodePackage, CORBA.ValueDefPackage, \
+        CosNaming, CosNaming.NamingContextPackage
+
+
+
+
+#Example of adding the Java3d packages
+#java.packages.javax = media.j3d, vecmath
+#java.packages.com.sun.j3d = audioengines, audioengines.javasound, \
+#                            loaders, loaders.lw3d
+#java.packages.com.sun.j3d.utils = applet, audio, geometry, image, universe, \
+#                            behaviors.interpolators, behaviors.mouse, behaviors.picking
 
 #To enable experimental inner class support set this to true
 python.options.innerclasses = false
 
+#To force JIT compilation of JPython code -- should be unnecessary
+#Setting this to true will cause jdk1.2rc1 to core dump on Windows
+python.options.compileClass = false
+
 #Only enable this if you're SURE you want it
-#python.proxy.savedir = c:\\jpython
+#python.proxy.savedir = c:\\jpython\\src
