@@ -621,7 +621,7 @@ public class imp
                                   PyObject locals)
     {
         PyObject __all__ = module.__findattr__("__all__");
-        if (__all__ != null) names = __all__;        
+        if (__all__ != null) names = __all__;
         int i=0;
         PyObject name;
         while ((name=names.__finditem__(i++)) != null) {
