@@ -355,9 +355,9 @@ class Compiler:
         for filename, mod in self.modules.items():
             self.processModule(mod, outdir)
 
-        self.java2class()
+        self.java2class(outdir)
 
-    def java2class(self):
+    def java2class(self, outdir):
         if self.options.compiler == "NONE":
             self.write('\nLeaving .java files, no compiler specified')
             return
@@ -365,7 +365,8 @@ class Compiler:
         code, outtext, errtext = javac.compile(
             self.javasources,
             javac=self.options.compiler,
-            options=self.options.jopts)
+            options=self.options.jopts,
+            sourcedir=outdir)
         print code, outtext, errtext
 	if code <> 0:
 	    print 'ERROR DURING JAVA COMPILATION... EXITING'
