@@ -214,9 +214,25 @@ public class PyClass extends PyObject
     }
 
     public void __setattr__(String name, PyObject value) {
-        if (name == "__dict__" || name == "__name__" || name == "__bases__") {
-            throw Py.TypeError("read-only special attribute: "+name);
+        if (name == "__dict__") {
+            if (!value.isMappingType())
+                throw Py.TypeError("__dict__ must be a dictionary object");
+            __dict__ = value;
+            return;
         }
+        if (name == "__name__") {
+            if (!(value instanceof PyString))
+                throw Py.TypeError("__name__ must be a string object");
+            __name__ = value.toString();
+            return;
+        }
+        if (name == "__bases__") {
+            if (!(value instanceof PyTuple))
+                throw Py.TypeError("__bases__ must be a tuple object");
+            __bases__ = (PyTuple) value;
+            return;
+        }
+        
         __dict__.__setitem__(name, value);
     }
 
