@@ -4,7 +4,8 @@ package org.python.core;
 import java.io.OutputStream;
 import java.io.Writer;
 
-public class StdoutWrapper extends OutputStream {
+public class StdoutWrapper extends OutputStream
+{
     protected String name;
     
     public StdoutWrapper() {
@@ -156,10 +157,9 @@ public class StdoutWrapper extends OutputStream {
             file.write("\n");
             file.flush();
             file.softspace = false;
-        } else {
+        }
+        else {
             obj.invoke("write", Py.Newline);
-            obj.invoke("flush");
-
             obj.__setattr__("softspace", Py.Zero);
         }
     }
