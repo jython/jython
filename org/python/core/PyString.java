@@ -2,21 +2,272 @@
 package org.python.core;
 
 
-public class PyString extends PySequence
+class StringFuncs extends PyBuiltinFunctionSet 
+{
+    StringFuncs(String name, int index, int argcount) {
+        super(name, index, argcount, argcount, true, null);
+    }
+
+    StringFuncs(String name, int index, int mincount, int maxcount) {
+        super(name, index, mincount, maxcount, true, null);
+    }
+
+    private String tostring(PyObject o) {
+        if (o instanceof PyString)
+            return ((PyString)o).toString();
+        throw Py.TypeError("1st arg can't be coerced to string");
+    }
+
+    private String tostring(PyObject o, String which) {
+        if (o instanceof PyString)
+            return ((PyString)o).toString();
+        throw Py.TypeError(which + " arg can't be coerced to string");
+    }
+
+    private int toint(PyObject o) {
+        if (o instanceof PyInteger)
+            return ((PyInteger)o).getValue();
+        throw Py.TypeError("2nd arg can't be coerced to int");
+    }
+
+    private int toint(PyObject o, String which) {
+        if (o instanceof PyInteger)
+            return ((PyInteger)o).getValue();
+        throw Py.TypeError(which + " arg can't be coerced to int");
+    }
+
+    public PyObject __call__() {
+        PyString s = (PyString)__self__;
+        switch (index) {
+        case 1:
+            return s.__str__();
+        case 2:
+            return new PyInteger(s.__len__());
+        case 3:
+            return s.__repr__();
+        case 101:
+            return new PyString(s.lower());
+        case 102:
+            return new PyString(s.upper());
+        case 103:
+            return new PyString(s.swapcase());
+        case 104:
+            return new PyString(s.strip());
+        case 105:
+            return new PyString(s.lstrip());
+        case 106:
+            return new PyString(s.rstrip());
+        case 107:
+            return s.split();
+        case 113:
+            return new PyString(s.capitalize());
+        default:
+            throw argCountError(0);
+        }
+    }
+
+    public PyObject __call__(PyObject arg) {
+        PyString s = (PyString)__self__;
+        switch (index) {
+        case 11:
+            return new PyInteger(s.__cmp__(arg));
+        case 12:
+            return s.__add__(arg);
+        case 13:
+            return s.__mod__(arg);
+        case 107:
+            return s.split(tostring(arg));
+        case 108:
+            return new PyInteger(s.index(tostring(arg)));
+        case 109:
+            return new PyInteger(s.rindex(tostring(arg)));
+        case 110:
+            return new PyInteger(s.count(tostring(arg)));
+        case 111:
+            return new PyInteger(s.find(tostring(arg)));
+        case 112:
+            return new PyInteger(s.rfind(tostring(arg)));
+        case 114:
+            return new PyInteger(s.endswith(tostring(arg)) ? 1 : 0);
+        case 115:
+            return new PyString(s.join(arg));
+        case 117:
+            return new PyInteger(s.startswith(tostring(arg)) ? 1 : 0);
+        case 118:
+            return new PyString(s.translate(tostring(arg)));
+        default:
+            throw argCountError(1);
+        }
+    }
+
+    public PyObject __call__(PyObject arg1, PyObject arg2) {
+        PyString s = (PyString)__self__;
+        String args, args1, args2;
+        int argi;
+        switch (index) {
+        case 107:
+            args = tostring(arg1);
+            argi = toint(arg2);
+            return s.split(args, argi);
+        case 108:
+            args = tostring(arg1);
+            argi = toint(arg2);
+            return new PyInteger(s.index(args, argi));
+        case 109:
+            args = tostring(arg1);
+            argi = toint(arg2);
+            return new PyInteger(s.rindex(args, argi));
+        case 110:
+            args = tostring(arg1);
+            argi = toint(arg2);
+            return new PyInteger(s.count(args, argi));
+        case 111:
+            args = tostring(arg1);
+            argi = toint(arg2);
+            return new PyInteger(s.find(args, argi));
+        case 112:
+            args = tostring(arg1);
+            argi = toint(arg2);
+            return new PyInteger(s.rfind(args, argi));
+        case 114:
+            args = tostring(arg1);
+            argi = toint(arg2);
+            return new PyInteger(s.endswith(args, argi) ? 1 : 0);
+        case 116:
+            args1 = tostring(arg1);
+            args2 = tostring(arg2, "2nd");
+            return new PyString(s.replace(args1, args2));
+        case 117:
+            args = tostring(arg1);
+            argi = toint(arg2);
+            return new PyInteger(s.startswith(args, argi) ? 1 : 0);
+        case 118:
+            args1 = tostring(arg1);
+            args2 = tostring(arg2, "2nd");
+            return new PyString(s.translate(args1, args2));
+        default:
+            throw argCountError(2);
+        }
+    }
+
+    public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
+        PyString s = (PyString)__self__;
+        String args, args1, args2;
+        int argi, argi2, argi3;
+        switch (index) {
+        case 108:
+            args = tostring(arg1);
+            argi2 = toint(arg2);
+            argi3 = toint(arg3, "3rd");
+            return new PyInteger(s.index(args, argi2, argi3));
+        case 109:
+            args = tostring(arg1);
+            argi2 = toint(arg2);
+            argi3 = toint(arg3, "3rd");
+            return new PyInteger(s.rindex(args, argi2, argi3));
+        case 110:
+            args = tostring(arg1);
+            argi2 = toint(arg2);
+            argi3 = toint(arg3, "3rd");
+            return new PyInteger(s.count(args, argi2, argi3));
+        case 111:
+            args = tostring(arg1);
+            argi2 = toint(arg2);
+            argi3 = toint(arg3, "3rd");
+            return new PyInteger(s.find(args, argi2, argi3));
+        case 112:
+            args = tostring(arg1);
+            argi2 = toint(arg2);
+            argi3 = toint(arg3, "3rd");
+            return new PyInteger(s.rfind(args, argi2, argi3));
+        case 116:
+            args1 = tostring(arg1);
+            args2 = tostring(arg2, "2nd");
+            argi = toint(arg3, "3rd");
+            return new PyString(s.replace(args1, args2, argi));
+        case 117:
+            args = tostring(arg1);
+            argi2 = toint(arg2);
+            argi3 = toint(arg3, "3rd");
+            return new PyInteger(s.startswith(args, argi2, argi3) ? 1 : 0);
+        default:
+            throw argCountError(3);
+        }
+    }
+}
+
+
+
+
+public class PyString extends PySequence implements InitModule
 {
     private String string;
     private transient int cached_hashcode=0;
     private transient boolean interned=false;
 
-    public static PyClass __class__;
+    // for PyJavaClass.init()
+    public PyString() {
+        string = "";
+    }
 
-    public PyString(String new_string) {
-        super(__class__);
-        string = new_string;
+    public PyString(String string) {
+        this.string = string;
     }
         
     public PyString(char c) {
         this(String.valueOf(c));
+    }
+
+    public void initModule(PyObject dict) {
+        dict.__setitem__("__str__", new StringFuncs("__str__", 1, 0));
+        dict.__setitem__("__len__", new StringFuncs("__len__", 2, 0));
+        dict.__setitem__("__repr__", new StringFuncs("__repr__", 3, 0));
+        dict.__setitem__("__cmp__", new StringFuncs("__cmp__", 11, 1));
+        dict.__setitem__("__add__", new StringFuncs("__add__", 12, 1));
+        dict.__setitem__("__mod__", new StringFuncs("__mod__", 13, 1));
+        // new experimental string methods
+        dict.__setitem__("lower", new StringFuncs("lower", 101, 0));
+        dict.__setitem__("upper", new StringFuncs("upper", 102, 0));
+        dict.__setitem__("swapcase", new StringFuncs("swapcase", 103, 0));
+        dict.__setitem__("strip", new StringFuncs("strip", 104, 0));
+        dict.__setitem__("lstrip", new StringFuncs("lstrip", 105, 0));
+        dict.__setitem__("rstrip", new StringFuncs("rstrip", 106, 0));
+        dict.__setitem__("split", new StringFuncs("split", 107, 0, 2));
+        dict.__setitem__("index", new StringFuncs("index", 108, 1, 3));
+        dict.__setitem__("rindex", new StringFuncs("rindex", 109, 1, 3));
+        dict.__setitem__("count", new StringFuncs("count", 110, 1, 3));
+        dict.__setitem__("find", new StringFuncs("find", 111, 1, 3));
+        dict.__setitem__("rfind", new StringFuncs("rfind", 112, 1, 3));
+        dict.__setitem__("capitalize", new StringFuncs("capitalize", 113, 0));
+        dict.__setitem__("endswith", new StringFuncs("endswith", 114, 1, 2));
+        dict.__setitem__("join", new StringFuncs("join", 115, 1));
+        dict.__setitem__("replace", new StringFuncs("replace", 116, 2, 3));
+        dict.__setitem__("startswith",
+                         new StringFuncs("startswith", 117, 1, 3));
+        dict.__setitem__("translate", new StringFuncs("translate", 118, 1, 2));
+        // TBD: CPython currently doesn't have these as string methods, but
+        // they'd be easy to add for JPython.  For now, compatibility says
+        // to access these only through the string module
+        //
+        // ljust()
+        // rjust()
+        // center()
+        // zfill()
+        // expandtabs()
+        // capwords()
+        //
+        // Hide these from Python!
+        dict.__setitem__("toString", null);
+        dict.__setitem__("internedString", null);
+        dict.__setitem__("hashCode", null);
+        dict.__setitem__("equals", null);
+        dict.__setitem__("__int__", null);
+        dict.__setitem__("__long__", null);
+        dict.__setitem__("__float__", null);
+        dict.__setitem__("__tojava__", null);
+        dict.__setitem__("atof", null);
+        dict.__setitem__("atoi", null);
+        dict.__setitem__("atol", null);
     }
 
     protected String safeRepr() {
@@ -1022,7 +1273,7 @@ final class StringFormatter
                 push();
             }
             while (true) {
-                switch(c = pop()) {
+                switch (c = pop()) {
                 case '-': ljustFlag=true; continue;
                 case '+': signFlag=true; continue;
                 case ' ': blankFlag=true; continue;
@@ -1097,6 +1348,8 @@ final class StringFormatter
                 break;
             case 'f':
                 string = formatFloatDecimal(arg, false);
+//                 if (altFlag && string.indexOf('.') == -1)
+//                     string += '.';
                 break;
             case 'g':
             case 'G':
@@ -1116,6 +1369,8 @@ final class StringFormatter
                 } else {
                     string = formatFloatDecimal(arg, true);
                 }
+//                 if (altFlag && string.indexOf('.') == -1)
+//                     string += '.';
                 break;
             case 'c':
                 fill = ' ';
