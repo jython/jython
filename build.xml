@@ -205,7 +205,7 @@
                                org.python.util,
                                com.ziclix.python.sql"
                  windowtitle="Jython API documentation"
-                 bottom="&lt;a href='http://www.jython.org'>Jython homepage&lt;/a>"
+                 bottom="&lt;a href='http://www.jython.org' target='_top'>Jython homepage&lt;/a>"
         />
     </target>
 
