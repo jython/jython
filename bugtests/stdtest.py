@@ -10,6 +10,8 @@ skipped = [
     'test_al',
     'test_asynchat',
     'test_audioop',
+    'test_b1',
+    'test_b2',
     'test_bastion',
     'test_bsddb',
     'test_capi',
@@ -61,8 +63,6 @@ skipped = [
 
 failures = [
     'test_array',
-    'test_b1',
-    'test_b2',
     'test_binop',
     'test_builtin',
     'test_coercion',
