@@ -77,7 +77,7 @@ public class MatchObject extends PyObject {
     private int getindex(PyString s) {
         PyInteger v = (PyInteger)re.groupindex.__finditem__(s);
         if (v == null)
-	    throw org.python.modules.re.ReError("group "+s+" is undefined");
+	    throw Py.IndexError("group '"+s+"' is undefined");
         return v.getValue();
     }
 
