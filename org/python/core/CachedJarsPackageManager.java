@@ -232,7 +232,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
                 entry = (JarXEntry)jarfiles.get(jarcanon);
 
-                if (entry == null) {
+                if (entry == null && cache) {
                     message("processing new jar, '"+
                     jarcanon+"'");
 
@@ -254,7 +254,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 }
 
 
-                if (mtime != 0 && entry.mtime == mtime) {
+                if (mtime != 0 && entry != null && entry.mtime == mtime) {
                     zipPackages = readCacheFile(entry, jarcanon);
                 }
 
