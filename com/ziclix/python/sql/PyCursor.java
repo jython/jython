@@ -256,6 +256,55 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
+	 * Returns an iteratable object.
+	 *
+	 * @return PyObject
+	 *
+	 * @since Jython 2.2, DB API 2.0+
+	 */
+	public PyObject __iter__() {
+		return this;
+	}
+
+	/**
+	 * Returns the next row from the currently executing SQL statement
+	 * using the same semantics as .fetchone().  A StopIteration
+	 * exception is raised when the result set is exhausted for Python
+	 * versions 2.2 and later.
+	 *
+	 * @return PyObject
+	 *
+	 * @since Jython 2.2, DB API 2.0+
+	 */
+	public PyObject next() {
+
+		PyObject row = __iternext__();
+
+		if (row == null) {
+			throw Py.StopIteration(null);
+		}
+
+		return row;
+	}
+
+	/**
+	 * Return the next element of the sequence that this is an iterator
+	 * for. Returns null when the end of the sequence is reached.
+	 *
+	 * @since Jython 2.2
+	 */
+	public PyObject __iternext__() {
+
+		PyObject row = fetchone();
+
+		if (row == Py.None) {
+			row = null;
+		}
+
+		return row;
+	}
+
+	/**
 	 * Return ths DatabaseMetaData for the current connection.
 	 *
 	 * @return DatabaseMetaData

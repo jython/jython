@@ -99,6 +99,21 @@ class zxAPITestCase(zxJDBCTestCase):
 		finally:
 			c.close()
 
+	def testIteration(self):
+		"""testing the iteration protocol"""
+		c = self.cursor()
+		try:
+			c.execute("select * from zxtesting")
+			cnt = 0
+			for a in c:
+				assert a is not None, "row is None"
+				self.assertEquals(3, len(a))
+				cnt += 1
+			self.assertEquals(7, cnt)
+			c.execute("select * from zxtesting")
+		finally:
+			c.close()
+
 	def testColumns(self):
 		"""testing cursor.columns()"""
 		c = self.cursor()
@@ -357,6 +372,7 @@ class zxAPITestCase(zxJDBCTestCase):
 			c.close()
 
 	def testUpdateCount(self):
+		"""testing update count functionality"""
 		c = self.cursor()
 		try:
 			c.execute("insert into zxtesting values (?, ?, ?)", [(500, 'bz', 'or')])
@@ -558,7 +574,7 @@ class zxAPITestCase(zxJDBCTestCase):
 			c.close()
 
 	def testRowid(self):
-		"""test the autoincrement facilities of the different handlers"""
+		"""testing the autoincrement facilities of the different handlers"""
 		assert self.has_table("autoincrementtable"), "no autoincrement table"
 
 		c = self.cursor()
