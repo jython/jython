@@ -586,6 +586,17 @@ public class PyJavaClass extends PyClass
                 continue;
 
             Class eClass = args[0];
+
+            // This test and call of getClassLoader() function as a
+            // workaround for a bug in MRJ2.2.4. The bug occured when
+            // this program was compiled with jythonc:
+            //    import java
+            //    print dir(java.awt.Button)
+            // The 'actionPerformed' attributed would be missing.
+            if (eClass.getInterfaces().length > 0)
+                 eClass.getInterfaces()[0].getClassLoader();
+            // And of Mac workaround
+
             if (!(java.util.EventListener.class.isAssignableFrom(eClass)))
                 continue;
 
