@@ -1,3 +1,5 @@
+// Copyright © Corporation for National Research Initiatives
+
 /* Support for java-1.2 collections
 This will only compile with jdk-1.2 or later.
 The rest of JPython works just fine with out it, so feel free to
@@ -7,7 +9,8 @@ just leave this uncompiled if you're using jdk-1.1.
 package org.python.core;
 import java.util.*;
 
-public class CollectionProxy2 extends CollectionProxy {
+public class CollectionProxy2 extends CollectionProxy
+{
     public CollectionProxy instanceFindCollection(Object object) {
         if (object instanceof List) {
             return new ListProxy(((List)object));
@@ -26,7 +29,8 @@ public class CollectionProxy2 extends CollectionProxy {
     }
 }
 
-class ListProxy extends CollectionProxy {
+class ListProxy extends CollectionProxy
+{
     List proxy;
 
     public ListProxy(List proxy) {
@@ -36,7 +40,6 @@ class ListProxy extends CollectionProxy {
     public int __len__() {
         return proxy.size();
     }
-
 
     public PyObject __finditem__(int key) {
         try {
@@ -79,7 +82,8 @@ class ListProxy extends CollectionProxy {
     }
 }
 
-class MapProxy extends CollectionProxy {
+class MapProxy extends CollectionProxy
+{
     Map proxy;
 
     public MapProxy(Map proxy) {
@@ -95,7 +99,8 @@ class MapProxy extends CollectionProxy {
     }
 
     public void __setitem__(PyObject key, PyObject value) {
-        proxy.put(Py.tojava(key, Object.class), Py.tojava(value, Object.class));
+        proxy.put(Py.tojava(key, Object.class),
+		  Py.tojava(value, Object.class));
     }
 
     public void __delitem__(PyObject key) {
@@ -104,7 +109,8 @@ class MapProxy extends CollectionProxy {
 }
 
 
-class IteratorProxy extends CollectionProxy {
+class IteratorProxy extends CollectionProxy
+{
     Iterator proxy;
     int counter;
 
@@ -115,7 +121,8 @@ class IteratorProxy extends CollectionProxy {
 
     public PyObject __finditem__(int key) {
         if (key != counter) {
-            throw Py.ValueError("iterator indices must be consecutive ints starting at 0");
+            throw Py.ValueError(
+		"iterator indices must be consecutive ints starting at 0");
         }
         counter++;
         if (proxy.hasNext()) {
