@@ -1,6 +1,6 @@
 <!-- Copyright 2000 Dj Walker-Morgan -->
 
-<project name="jython" default="jar" basedir=".">
+<project name="jython" default="copy-dist" basedir=".">
 
     <!--
       This propery should be specified in the ant.property file
@@ -217,7 +217,7 @@
         -->
         <echo file="${outputDir}/mainClass.mf"
               message="Main-Class: org.python.util.jython${line.separator}"/>
-        <jar jarfile="jython.jar"
+        <jar jarfile="${distDir}/jython.jar"
              basedir="${outputDir}"
              manifest="${outputDir}/mainClass.mf"
              includes="**/*.class,**/ucnhash.dat,**/*.properties" />
@@ -262,7 +262,7 @@
         />
     </target>
 
-    <target name="copy-dist" depends="dist-prepare,compile">
+    <target name="copy-dist" depends="dist-prepare,jar">
         <!-- Misc files -->
         <copy todir="${distDir}">
             <fileset dir="${sourceDir}" includes="
@@ -271,7 +271,6 @@
                 LICENSE.txt,
                 README.txt,
                 registry,
-                jython.jar,
                 build.xml,
                 "/>
         </copy>
