@@ -162,7 +162,7 @@ public class PyJavaClass extends PyClass
     private synchronized void init__bases__(Class c) {
         if (__bases__ != null) return;
 
-        Class interfaces[] = c.getInterfaces();
+        Class interfaces[] = getAccessibleInterfaces(c);
         int nInterfaces = interfaces.length;
         int nBases = 0;
         int i;
@@ -205,6 +205,28 @@ public class PyJavaClass extends PyClass
         init__class__(c);
         proxyClass = c;
         __name__ = c.getName();
+    }
+
+    /**
+     * Return the list of all accessible interfaces for a class.  This will
+     * only the public interfaces. Since we can't set accessibility on
+     * interfaces, the Options.respectJavaAccessibility is not honored.
+     */
+    private static Class[] getAccessibleInterfaces(Class c) {
+        // can't modify accessibility of interfaces in Java2
+        // thus get only public interfaces
+        Class[] in = c.getInterfaces();
+        java.util.Vector v=new java.util.Vector();
+        for (int i = 0; i < in.length; i++) {
+            if (!Modifier.isPublic(in[i].getModifiers()))
+                continue;
+            v.addElement(in[i]);
+        }
+        if (v.size() == in.length)
+            return in;
+        Class[] ret = new Class[v.size()];
+        v.copyInto(ret);
+        return ret;
     }
 
      /**
