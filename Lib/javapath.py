@@ -20,8 +20,16 @@ from java.io import File
 from java.lang import System
 import os
 
+def _tostr(s, method):
+    if isinstance(s, "".__class__):
+        return s
+    import org
+    raise TypeError, "%s() argument must be a string object, not %s" % (
+                method, org.python.core.Py.safeRepr(s))
+        
 def dirname(path):
     """Return the directory component of a pathname"""
+    path = _tostr(path, "dirname")
     result = File(path).getParent()
     if not result:
 	if isabs(path):
@@ -32,6 +40,7 @@ def dirname(path):
 
 def basename(path):
     """Return the final component of a pathname"""
+    path = _tostr(path, "basename")
     return File(path).getName()
 
 def split(path):
@@ -41,6 +50,7 @@ def split(path):
     final slash.  Either part may be empty.
 
     """
+    path = _tostr(path, "split")
     return (dirname(path), basename(path))
 
 def splitext(path):
@@ -75,24 +85,30 @@ def exists(path):
     Returns false for broken symbolic links.
 
     """
+    path = _tostr(path, "exists")
     return File(path).exists()
 
 def isabs(path):
     """Test whether a path is absolute"""
+    path = _tostr(path, "isabs")
     return File(path).isAbsolute()
 
 def isfile(path):
     """Test whether a path is a regular file"""
+    path = _tostr(path, "isfile")
     return File(path).isFile()
 
 def isdir(path):
     """Test whether a path is a directory"""
+    path = _tostr(path, "isdir")
     return File(path).isDirectory()
 
 def join(path, *args):
     """Join two or more pathname components, inserting os.sep as needed"""
+    path = _tostr(path, "join")
     f = File(path)
     for a in args:
+        a = _tostr(a, "join")
 	g = File(a)
 	if g.isAbsolute() or len(f.getPath()) == 0:
 	    f = g
@@ -106,6 +122,7 @@ def normcase(path):
     XXX Not done right under JDK.
 
     """
+    path = _tostr(path, "normcase")
     return File(path).getPath()
 
 def commonprefix(m):
@@ -130,6 +147,8 @@ def islink(path):
 
 def samefile(path, path2):
     """Test whether two pathnames reference the same actual file"""
+    path = _tostr(path, "samefile")
+    path2 = _tostr(path2, "samefile")
     f = File(path)
     f2 = File(path2)
     return f.getCanonicalPath() == f2.getCanonicalPath()
@@ -216,10 +235,12 @@ def normpath(path):
 
 # Return an absolute path.
 def abspath(path):
+    path = _tostr(path, "abspath")
     return File(path).getAbsolutePath()
 
 
 def getsize(path):
+    path = _tostr(path, "getsize")
     f = File(path)
     size = f.length()
     # Sadly, if the returned length is zero, we don't really know if the file
@@ -229,12 +250,14 @@ def getsize(path):
     return size
 
 def getmtime(path):
+    path = _tostr(path, "getmtime")
     f = File(path)
     return f.lastModified() / 1000.0
 
 def getatime(path):
     # We can't detect access time so we return modification time. This
     # matches the behaviour in os.stat().
+    path = _tostr(path, "getatime")
     f = File(path)
     return f.lastModified() / 1000.0
 
