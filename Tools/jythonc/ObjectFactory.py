@@ -95,6 +95,11 @@ class ObjectFactory:
     def makeNull(self):
         return Object(jast.Null, Generic)
 
+    def makeSlice(self, items):
+        code = jast.New("PySlice", 
+            [items[0].asAny(), items[1].asAny(), items[2].asAny()])
+        return Object(code, Generic)
+
     def makeFunctionFrame(self):
         return SimpleCompiler.LocalFrame(self.parent)
 

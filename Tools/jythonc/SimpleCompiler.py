@@ -341,6 +341,14 @@ class SimpleCompiler(BaseEvaluator):
                 ret.append(self.visit(index))
         return ret
 
+    def slice_op(self, s0, s1, s2):
+        ret = []
+        for index in (s0, s1, s2):
+            if index is None:
+                ret.append(self.factory.makeNull())
+            else:
+                ret.append(self.visit(index))
+        return  self.factory.makeSlice(ret)
 
     def bool_op(self, x, y, swap=0):
         tmp = self.frame.gettemp("PyObject")
