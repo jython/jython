@@ -209,7 +209,7 @@ class StringFuncs extends PyBuiltinFunctionSet
 
 
 
-public class PyString extends PySequence implements InitModule
+public class PyString extends PySequence implements ClassDictInit
 {
     private String string;
     private transient int cached_hashcode=0;
@@ -228,7 +228,7 @@ public class PyString extends PySequence implements InitModule
         this(String.valueOf(c));
     }
 
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("__str__", new StringFuncs("__str__", 1, 0));
         dict.__setitem__("__len__", new StringFuncs("__len__", 2, 0));
         dict.__setitem__("__repr__", new StringFuncs("__repr__", 3, 0));

@@ -84,9 +84,9 @@ class SeqFuncs extends PyBuiltinFunctionSet
  * Method names are designed to make it possible for PySequence to
  * implement java.util.List interface when JDK 1.2 is ubiquitous.
  * 
- * All subclasses must declare that they implement the InitModule
- * interface, and provide an initModule() method that calls
- * PySequence.initModule().
+ * All subclasses must declare that they implement the ClassDictInit
+ * interface, and provide an classDictInit() method that calls
+ * PySequence.classDictInit().
  *
  * Subclasses must also implement get, getslice, and repeat methods.
  *
@@ -112,7 +112,7 @@ abstract public class PySequence extends PyObject
         super(c);
     }
 
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("__nonzero__", new SeqFuncs("__nonzero__", 1, 0));
         dict.__setitem__("__getitem__", new SeqFuncs("__getitem__", 11, 1));
         dict.__setitem__("__delitem__", new SeqFuncs("__delitem__", 12, 1));
@@ -125,7 +125,7 @@ abstract public class PySequence extends PyObject
         dict.__setitem__("__setslice__", new SeqFuncs("__setslice__", 41, 4));
         // TBD: __tojava__()
         // hide these from Python!
-        dict.__setitem__("initModule", null);
+        dict.__setitem__("classDictInit", null);
     }
 
     // These methods must be defined for any sequence

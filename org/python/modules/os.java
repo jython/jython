@@ -3,10 +3,10 @@ package org.python.modules;
 
 import org.python.core.*;
 
-public class os implements InitModule {
+public class os implements ClassDictInit {
     public static String[] __depends__ = new String[] {"javaos", };
     
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
         // Fake from javaos import *
         PyFrame frame = new PyFrame(null, dict, dict, null);
         imp.importAll("javaos", frame);

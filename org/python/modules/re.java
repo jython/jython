@@ -4,7 +4,7 @@ package org.python.modules;
 import org.python.core.*;
 import com.oroinc.text.regex.*;
 
-public class re implements InitModule
+public class re implements ClassDictInit
 {
     public static PyObject error = new PyString("re.error");
 
@@ -12,7 +12,7 @@ public class re implements InitModule
         return new PyException(error, message);
     }
     
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("IGNORECASE",
                          new PyInteger(Perl5Compiler.CASE_INSENSITIVE_MASK));
         dict.__setitem__("I",

@@ -32,19 +32,19 @@ class TupleFunctions extends PyBuiltinFunctionSet
 
 
 
-public class PyTuple extends PySequence implements InitModule
+public class PyTuple extends PySequence implements ClassDictInit
 {
     // TBD: this should not be public, but it is required to be public by
     // many classes, including the thread.java and PyClass.java classes.
     // URG!  This should be fixed.
     public PyObject[] list;
 
-    public void initModule(PyObject dict) {
-        super.initModule(dict);
+    public static void classDictInit(PyObject dict) {
+        PySequence.classDictInit(dict);
         dict.__setitem__("__len__", new TupleFunctions("__len__", 3, 0));
         dict.__setitem__("__add__", new TupleFunctions("__add__", 15, 1));
         // hide these from Python!
-        dict.__setitem__("initModule", null);
+        dict.__setitem__("classDictInit", null);
         dict.__setitem__("toString", null);
         dict.__setitem__("hashCode", null);
     }

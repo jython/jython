@@ -4,11 +4,11 @@ package org.python.modules;
 import org.python.core.*;
 import java.lang.Math;
 
-public class math implements InitModule {
+public class math implements ClassDictInit {
     public static PyFloat pi = new PyFloat(Math.PI);
     public static PyFloat e = new PyFloat(Math.E);
 
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
     }
 
     private static double check(double v) {

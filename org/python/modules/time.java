@@ -50,9 +50,9 @@ class TimeFunctions extends PyBuiltinFunctionSet
 
 
 
-public class time implements InitModule
+public class time implements ClassDictInit
 {
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("time", new TimeFunctions("time", 0, 0));
         dict.__setitem__("clock", new TimeFunctions("clock", 0, 0));
 
@@ -315,7 +315,7 @@ public class time implements InitModule
         }
     }
 
-    // set by initModule()
+    // set by classDictInit()
     public static int timezone;
     public static int altzone = -1;
     public static int daylight;
@@ -503,7 +503,7 @@ public class time implements InitModule
                     catch (NoSuchMethodError e) {}
                     XXXAPI 1.2 END */
                     if (use_getid)
-                        // See note in initModule() above
+                        // See note in classDictInit() above
                         s = s + cal.getTimeZone().getID();
                 }
                 break;

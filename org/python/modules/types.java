@@ -2,8 +2,8 @@
 package org.python.modules;
 import org.python.core.*;
 
-public class types implements InitModule {
-    public void initModule(PyObject dict) {
+public class types implements ClassDictInit {
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("ArrayType", PyJavaClass.lookup(PyArray.class));
         dict.__setitem__("BuiltinFunctionType",
                          PyJavaClass.lookup(PyReflectedFunction.class));

@@ -319,7 +319,7 @@ import org.python.core.*;
  * @author Finn Bock, bckfnn@pipmail.dknet.dk
  * @version cPickle.java,v 1.30 1999/05/15 17:40:12 fb Exp
  */
-public class cPickle implements InitModule {
+public class cPickle implements ClassDictInit {
     /**
      * The doc string
      */
@@ -501,8 +501,8 @@ public class cPickle implements InitModule {
     /**
      * Initialization when module is imported.
      */
-    public void initModule(PyObject dict) {
-	this.dict = dict;
+    public static void classDictInit(PyObject dict) {
+	cPickle.dict = dict;
 
 	// XXX: Hack for JPython 1.0.1. By default __builtin__ is not in
 	// sys.modules.

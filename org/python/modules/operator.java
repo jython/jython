@@ -78,9 +78,9 @@ class OperatorFunctions extends PyBuiltinFunctionSet
 
 
 
-public class operator implements InitModule
+public class operator implements ClassDictInit
 {
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("__add__", new OperatorFunctions("__add__", 0, 2));
         dict.__setitem__("add", new OperatorFunctions("add", 0, 2));
         dict.__setitem__("__concat__",

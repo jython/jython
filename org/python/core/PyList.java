@@ -78,7 +78,7 @@ class ListFunctions extends PyBuiltinFunctionSet
 
 
 
-public class PyList extends PySequence implements InitModule
+public class PyList extends PySequence implements ClassDictInit
 {
     protected PyObject[] list;
     protected int length;
@@ -94,8 +94,8 @@ public class PyList extends PySequence implements InitModule
         __methods__ = list;
     }
     
-    public void initModule(PyObject dict) {
-        super.initModule(dict);
+    public static void classDictInit(PyObject dict) {
+        PySequence.classDictInit(dict);
         dict.__setitem__("reverse", new ListFunctions("reverse", 1, 0));
         dict.__setitem__("sort", new ListFunctions("sort", 2, 0, 1));
         dict.__setitem__("__len__", new ListFunctions("__len__", 3, 0));

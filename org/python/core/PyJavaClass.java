@@ -132,7 +132,8 @@ public class PyJavaClass extends PyClass
         int i;
         for (i=0; i<nInterfaces; i++) {
             Class inter = interfaces[i];
-            if (inter == InitModule.class || inter == PyProxy.class)
+            if (inter == InitModule.class || inter == PyProxy.class ||
+                inter == ClassDictInit.class)
                 continue;
             nBases++;
         }
@@ -153,7 +154,8 @@ public class PyJavaClass extends PyClass
 
         for (i=0; i<nInterfaces; i++) {
             Class inter = interfaces[i];
-            if (inter == InitModule.class || inter == PyProxy.class)
+            if (inter == InitModule.class || inter == PyProxy.class ||
+                inter == ClassDictInit.class)
                 continue;
             tmp = PyJavaClass.lookup(inter);
             tmp.initialize();
@@ -168,7 +170,18 @@ public class PyJavaClass extends PyClass
         proxyClass = c;
         __name__ = c.getName();
             
-        if (InitModule.class.isAssignableFrom(c)) {
+        if (ClassDictInit.class.isAssignableFrom(c)) {
+            initialize();
+            try {
+                Method m = c.getMethod("classDictInit", 
+                     new Class[] { PyObject.class });
+                m.invoke(null, new Object[] { __dict__ });
+            }
+            catch (Exception exc) {
+                // System.err.println("Got exception: " + exc + " " + c);
+                throw Py.JavaError(exc);
+            }
+        } else if (InitModule.class.isAssignableFrom(c)) {
             initialize();
             try {
                 InitModule m = (InitModule)c.newInstance();
