@@ -125,8 +125,8 @@ public class imp {
             }
 
             return ofp.toByteArray();
-        } catch (Exception e) {
-            throw Py.JavaError(e);
+        } catch (Throwable t) {
+            throw parser.fixParseError(null, t, filename);
         }
     }
 
