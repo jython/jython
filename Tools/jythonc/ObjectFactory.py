@@ -228,6 +228,12 @@ class PyClass(FixedObject):
             base = base.value
             if hasattr(base, "name"):
                 jc = compile.getJavaClass(base.name)
+                if jc is None:
+                    idx = base.name.rfind('.')
+                    if idx > 0:
+                        #crude support for innerclasses.
+                        name = base.name[:idx] + '$' + base.name[idx+1:]
+                        jc = compile.getJavaClass(name)
                 if jc is not None:
                     self.javaclasses.append(jc)
                     self.proxyname = self.name
