@@ -113,12 +113,23 @@ Title: JPython FAQ
     the jpython launch script):</P>
 
 <pre>
-    <B>jre -mx32m &lt;...&gt;</B>
+    jre -mx32m &lt;...&gt;
 </pre>
 
     <P>This will set your upper memory limit to 32 MB.  Obviously,
     higher limits should be used if required by your program - and
     supported by your computer..
+
+<p><li><b>Why can't I use "from java import ..." on Windows?"</b>
+
+    <p>This problem can occur if you are using Microsoft's VM
+    (i.e. <tt>jview.exe</tt>) which provides the standard classes in a 
+    different format.  You need to run the following command in a
+    console window before using JPython:
+
+<pre>
+    clspack -auto
+</pre>
 
 <p><li><b>Semantic Differences between JPython and CPython</b>
 
