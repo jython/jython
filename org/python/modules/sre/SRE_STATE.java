@@ -62,6 +62,10 @@ public class SRE_STATE {
     public static final int SRE_AT_END                     = 5;
     public static final int SRE_AT_END_LINE                = 6;
     public static final int SRE_AT_END_STRING              = 7;
+    public static final int SRE_AT_LOC_BOUNDARY            = 8;
+    public static final int SRE_AT_LOC_NON_BOUNDARY        = 9;
+    public static final int SRE_AT_UNI_BOUNDARY            = 10;
+    public static final int SRE_AT_UNI_NON_BOUNDARY        = 11;
 
     public static final int SRE_CATEGORY_DIGIT             = 0;
     public static final int SRE_CATEGORY_NOT_DIGIT         = 1;
@@ -73,7 +77,6 @@ public class SRE_STATE {
     public static final int SRE_CATEGORY_NOT_LINEBREAK     = 7;
     public static final int SRE_CATEGORY_LOC_WORD          = 8;
     public static final int SRE_CATEGORY_LOC_NOT_WORD      = 9;
-
     public static final int SRE_CATEGORY_UNI_DIGIT         = 10;
     public static final int SRE_CATEGORY_UNI_NOT_DIGIT     = 11;
     public static final int SRE_CATEGORY_UNI_SPACE         = 12;
@@ -261,6 +264,23 @@ public class SRE_STATE {
                 return false;
             that = (ptr > beginning) ? SRE_IS_WORD(str[ptr-1]) : false;
             thiS = (ptr < end) ? SRE_IS_WORD(str[ptr]) : false;
+            return thiS == that;
+
+        case SRE_AT_LOC_BOUNDARY:
+        case SRE_AT_UNI_BOUNDARY:
+            if (beginning == end)
+                return false;
+            that = (ptr > beginning) ? SRE_LOC_IS_WORD(str[ptr-1]) : false;
+            thiS = (ptr < end) ? SRE_LOC_IS_WORD(str[ptr]) : false;
+            return thiS != that;
+
+        case SRE_AT_LOC_NON_BOUNDARY:
+        case SRE_AT_UNI_NON_BOUNDARY:
+            /* word non-boundary */
+            if (beginning == end)
+                return false;
+            that = (ptr > beginning) ? SRE_LOC_IS_WORD(str[ptr-1]) : false;
+            thiS = (ptr < end) ? SRE_LOC_IS_WORD(str[ptr]) : false;
             return thiS == that;
         }
 
