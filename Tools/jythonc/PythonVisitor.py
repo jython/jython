@@ -49,10 +49,17 @@ class PythonVisitor(Visitor):
         # a SimpleCompiler
         self.walker = walker
 
-    def getName(self, node):
+    # The fast_locals arg is supplied when this method is used for
+    # names in local scope.
+    def getName(self, node, fast_locals=0):
         if not node.id == JJTNAME:
             return None
-        return node.getInfo()
+        s = node.getInfo()
+        if fast_locals:
+            return s
+        if s[:2] == '__' and s[-2:] != '__' and self.walker.className:
+            s = "_%s%s" % (self.walker.className, s)
+        return s
 
     def walk(self, node):
         self.suite(node)
@@ -249,7 +256,8 @@ class PythonVisitor(Visitor):
 
     def Name(self, node):
         #self.startnode(node)
-        return self.walker.name_const(node.getInfo())
+        return self.walker.name_const(
+                self.getName(node, self.walker.frame.fast_locals))
 
     def Int(self, node):
         #self.startnode(node)
@@ -323,7 +331,7 @@ class PythonVisitor(Visitor):
     def Dot_Op(self, node):
         #self.startnode(node)   
         obj = node.getChild(0)
-        name = node.getChild(1).getInfo()
+        name = self.getName(node.getChild(1))
         return self.walker.get_attribute(obj, name)
 
     def Index_Op(self, node):
@@ -367,7 +375,7 @@ class PythonVisitor(Visitor):
         # Check for method invocation
         if callee.id == JJTDOT_OP and kwargs is None and starargs is None:
             object = callee.getChild(0)
-            name = callee.getChild(1).getInfo()
+            name = self.getName(callee.getChild(1))
             return self.walker.invoke(object, name, args, keyargs)
         if kwargs or starargs:
             return self.walker.call_extra(callee, args, 
@@ -478,7 +486,7 @@ class PythonVisitor(Visitor):
     def funcdef(self, node):
         self.startnode(node)
 
-        funcname = node.getChild(0).getInfo()
+        funcname = self.getName(node.getChild(0))
 
         Body = node.getChild(node.numChildren-1)
 
@@ -496,7 +504,7 @@ class PythonVisitor(Visitor):
 
     def classdef(self, node):
         self.startnode(node)
-        name = node.getChild(0).getInfo()
+        name = self.getName(node.getChild(0))
 
         n = node.numChildren
         suite = node.getChild(n-1)

@@ -26,8 +26,8 @@ class BaseEvaluator:
     def setline(self, lineno):
         self.lineno = lineno
 
-    def getName(self, name):
-        return self.visitor.getName(name)
+    def getName(self, name, fast_locals=0):
+        return self.visitor.getName(name, fast_locals)
 
     def visit(self, node):
         return node.visit(self.visitor)
@@ -62,7 +62,7 @@ class BaseEvaluator:
 
     def delete(self, node):
         if node.id == JJTNAME:
-            return self.del_name(node.getInfo())
+            return self.del_name(self.getName(node, self.frame.fast_locals))
         elif node.id == JJTLIST or node.id == JJTTUPLE:
             return self.del_list(nodeToList(node))
         elif node.id == JJTINDEX_OP:
@@ -70,7 +70,7 @@ class BaseEvaluator:
                             node.getChild(1))
         elif node.id == JJTDOT_OP:
             return self.del_attribute(node.getChild(0),
-                            node.getChild(1).getInfo()) 
+                            self.getName(node.getChild(1)))
         else:
             raise TypeError, 'help, fancy lhs: %s' % node
 
@@ -88,7 +88,8 @@ class BaseEvaluator:
 
     def set(self, node, value):
         if node.id == JJTNAME:
-            return self.set_name(node.getInfo(), value)
+            return self.set_name(self.getName(node, self.frame.fast_locals),
+                                 value)
         elif node.id == JJTLIST or node.id == JJTFPLIST or node.id == JJTTUPLE:
             return self.set_list(nodeToList(node), value)
         elif node.id == JJTINDEX_OP:
@@ -96,7 +97,7 @@ class BaseEvaluator:
                             node.getChild(1), value)
         elif node.id == JJTDOT_OP:
             return self.set_attribute(node.getChild(0),
-                            node.getChild(1).getInfo(), value)  
+                            self.getName(node.getChild(1)), value)  
         else:
             raise TypeError, 'help, fancy lhs: %s' % node
 
