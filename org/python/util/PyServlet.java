@@ -12,23 +12,22 @@ import org.python.core.*;
  * This servlet is used to re-serve JPython servlets.  It stores
  * bytecode for JPython servlets and re-uses it if the underlying .py
  * file has not changed.
- *
+ * <p>
  * Many people have been involved with this class:
- *
- * Chris Gokey
- * David Syer
- * Finn Bock
- *
+ * <ul>
+ * <li>Chris Gokey
+ * <li>David Syer
+ * <li>Finn Bock
+ * </ul>
  * If somebody is missing from this list, let us know. 
- *
- *
- * <pre>
+ * <p>
  *
  * e.g. http://localhost:8080/test/hello.py
+ * <pre>
  *
  * from javax.servlet.http import HttpServlet
  * class hello(HttpServlet):
- *     def doGet(self,req, res):
+ *     def doGet(self, req, res):
  *         res.setContentType("text/html");
  *         out = res.getOutputStream()
  *         print >>out, "<html>"
@@ -38,23 +37,24 @@ import org.python.core.*;
  *         print >>out, "</html>"
  *         out.close()
  *         return
+ * </pre>
  *
  * in web.xml for the PyServlet context:
- *
- * <web-app>
- *     <servlet>
- *         <servlet-name>PyServlet</servlet-name>
- *         <servlet-class>org.python.util.PyServlet</servlet-class>
- *         <init-param>
- *             <param-name>python.home</param-name>
- *             <param-value>/usr/home/jython-2.0</param-value>
- *         </init-param>
- *     </servlet>
- *     <servlet-mapping>
- *         <servlet-name>PyServlet</servlet-name>
- *         <url-pattern>*.py</url-pattern>
- *     </servlet-mapping>
- * </web-app>
+ * <pre>
+ * &lt;web-app>
+ *     &lt;servlet>
+ *         &lt;servlet-name>PyServlet&lt;/servlet-name>
+ *         &lt;servlet-class>org.python.util.PyServlet&lt;/servlet-class>
+ *         &lt;init-param>
+ *             &lt;param-name>python.home&lt;/param-name>
+ *             &lt;param-value>/usr/home/jython-2.1&lt;/param-value>
+ *         &lt;/init-param>
+ *     &lt;/servlet>
+ *     &lt;servlet-mapping>
+ *         &lt;servlet-name>PyServlet&lt;/servlet-name>
+ *         &lt;url-pattern>*.py&lt;/url-pattern>
+ *     &lt;/servlet-mapping>
+ * &lt;/web-app>
  *
  * </pre>
  */
