@@ -1,4 +1,4 @@
-Welcome to Jython 2.0 beta 2
+Welcome to Jython 2.0 rc 1
 =============================
 
 Jython is the successor to JPython. The Jython project was
@@ -15,7 +15,8 @@ been broken.
 
     - The user configuration file is now called <user.home>/.jython
 
-    - The jar file conytaining all jython is now called jython.jar.
+    - The jar file containing all the jython classes is now called 
+      jython.jar.
 
     - Text files will pass data read and written through the default
       codecs for the JVM. Binary files will write only the lower eight
