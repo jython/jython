@@ -1037,8 +1037,8 @@ public class PyString extends PySequence implements ClassDictInit
         int j = 0;
         for (int i = 0; i < n; ) {
             /* Find a line and append it */
-            while (i < n && (Character.getType(chars[i]) &
-                                   Character.LINE_SEPARATOR) == 0)
+            while (i < n && chars[i] != '\n' && chars[i] != '\r' && 
+                    Character.getType(chars[i]) != Character.LINE_SEPARATOR)
                 i++;
 
             /* Skip the line break reading CRLF as one line break */
