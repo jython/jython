@@ -21,6 +21,32 @@ AF_INET = 2
 SOCK_DGRAM = 1
 SOCK_STREAM = 2
 
+def _gethostbyaddr(name):
+    # This is as close as I can get; at least the types are correct...
+    addresses = java.net.InetAddress.getAllByName(gethostbyname(name))
+    names = []
+    addrs = []
+    for addr in addresses:
+      names.append(addr.getHostName())
+      addrs.append(addr.getHostAddress())
+    return (names, addrs)
+
+def getfqdn(name=None):
+    """
+    Return a fully qualified domain name for name. If name is omitted or empty
+    it is interpreted as the local host.  To find the fully qualified name,
+    the hostname returned by gethostbyaddr() is checked, then aliases for the
+    host, if available. The first name which includes a period is selected.
+    In case no fully qualified domain name is available, the hostname is retur
+    New in version 2.0.
+    """
+    if not name:
+        name = gethostname()
+    names, addrs = _gethostbyaddr(name)
+    for a in names:
+        if a.find(".") >= 0:
+            return a
+    return name
 
 def gethostname():
     return java.net.InetAddress.getLocalHost().getHostName()
@@ -29,13 +55,7 @@ def gethostbyname(name):
     return java.net.InetAddress.getByName(name).getHostAddress()
 
 def gethostbyaddr(name):
-    # This is as close as I can get; at least the types are correct...
-    addresses = java.net.InetAddress.getAllByName(gethostbyname(name))
-    names = []
-    addrs = []
-    for addr in addresses:
-	names.append(addr.getHostName())
-	addrs.append(addr.getHostAddress())
+    names, addrs = _gethostbyaddr(name)
     return (names[0], names, addrs)
 
 
