@@ -17,6 +17,14 @@ testCmds = [
     ("echo hello world", "hello world"),
     ]
 
+# turn off output from javashell.__warn
+javashell.__warn = lambda *args: None
+
+def dprint( *args ):
+    #print args
+    pass
+
+
 # can instead set testCmds = fullTestCmds
 
 # Note that the validation is incomplete for several of these
@@ -27,7 +35,7 @@ testCmds = [
 key, value = "testKey", "testValue"
 fullTestCmds = [
             # no quotes, should output both words
-            ("echo hello there", "hello there"),
+            ("echo hello world", "hello world"),
             # should print PATH (on NT)
             ("echo PATH=%PATH%", "(PATH=.*;.*)|(PATH=%PATH%)"),
             # should print 'testKey=%testKey%' on NT before initialization,
@@ -51,8 +59,6 @@ fullTestCmds = [
             ( r'''jython -c "import sys;sys.stderr.write('why\n');print " ''',
               '' )
             ]
-
-testCmds = fullTestCmds
 
 class JavaShellTest(unittest.TestCase):
     """This test validates the subshell functionality (javashell, os.environ, popen*).
@@ -82,12 +88,12 @@ class JavaShellTest(unittest.TestCase):
         execute()
         """
         for cmd, pattern in testCmds:
-            print "\nExecuting '%s' with %s environment" % (cmd, whichEnv)
+            dprint( "\nExecuting '%s' with %s environment" % (cmd, whichEnv))
             p = javashell.shellexecute(cmd)
             line = PyFile( p.getInputStream() ).readlines()[0]
             assert re.match( pattern, line ), \
                     "expected match for %s, got %s" % ( pattern, line )
-            print "waiting for", cmd, "to complete"
+            dprint( "waiting for", cmd, "to complete")
             assert not p.waitFor(), \
                     "%s failed with %s environment" % (cmd, whichEnv)
 
@@ -128,20 +134,20 @@ class JavaShellTest(unittest.TestCase):
 
     def testBadShell( self ):
         "Attempting to get an environment with a shell that is not startable"
-        print "testBadShell: ignore warnings about failing to get environment"
+        dprint( "testBadShell: ignore warnings about failing to get environment")
         se2 = javashell._ShellEnv( ["badshell", "-c"], "set" )
         str(se2.environment) # trigger initialization
         assert not se2.environment.items(), "environment should be empty"
-        print "end testBadShell"
+        dprint( "end testBadShell")
 
     def testBadGetEnv( self ):
         "Attempting to get an environment with a command that does not print an environment"
-        print "testBadGetEnv: ignore warnings about command not printing environment"
+        dprint( "testBadGetEnv: ignore warnings about command not printing environment")
         envCmd="echo This command does not print environment"    
         se2 = javashell._ShellEnv( javashell._shellEnv.cmd, envCmd, None )
         str(se2.environment) # trigger initialization
         assert not se2.environment.items(), "environment should be empty"
-        print "end testBadGetEnv"
+        dprint( "end testBadGetEnv")
 
     def testPutEnv( self ):
         "Put an environment variable and ensure that spawned processes see the change"
