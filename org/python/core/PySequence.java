@@ -127,7 +127,6 @@ abstract public class PySequence extends PyObject
         else return index;
     }
 
-
     public synchronized PyObject __finditem__(int index) {
         index = fixindex(index);
         if (index == -1)
