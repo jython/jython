@@ -267,10 +267,10 @@ def writeResults(comp, opts):
 
     extraPackages = []
 
-    if opts.core:
-        addCore(extraPackages)
     if opts.all:
         addAll(extraPackages)
+    elif opts.core:
+        addCore(extraPackages)
 
     ja = JavaArchive(extraPackages)
     ja.addToManifest({'Main-Class': mainclass})
