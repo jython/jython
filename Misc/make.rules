@@ -26,16 +26,16 @@ BOOTSTRAPCLASSES = /usr/java1.2/jre/lib/rt.jar
 
 # Uncomment these 3 lines to use Sun's 1.2 javac compiler
 
-#JAVAC = javac
-#OPT = -g:lines,vars,source
-#BOOTSTRAPCLASSES =
+# JAVAC = javac
+# OPT = -g:lines,vars,source
+# BOOTSTRAPCLASSES =
 
 # Uncomment these 3 lines to use Sun's 1.1 javac compiler.  See the
 # notes in org/python/modules/time.java for compatibility issues.
 
-#JAVAC = /depot/java/bin1.1/javac
-#OPT = -g
-#BOOTSTRAPCLASSES = /depot/java/plat/jdk1.1/lib/classes.zip
+# JAVAC = /depot/java/bin1.1/javac
+# OPT = -g
+# BOOTSTRAPCLASSES = /depot/java/plat/jdk1.1/lib/classes.zip
 
 # This is the Java intepreter to use
 JAVA = java
