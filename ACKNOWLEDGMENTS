@@ -7,9 +7,9 @@ Copyright © Corporation for National Research Initiatives
     continues to provide valuable assistance, as does Python's
     inventor Guido van Rossum.
 
-    You can contact the JPython maintainers directly via
-    jpython@python.org, or the JPython community at
-    jpython-interest@python.org.
+    You can contact the Jython maintainers directly via
+    jython-dev@lists.sourceforge.net, or the Jython community at
+    jython-users@lists.sourceforge.net.
 
     Finn Bock has been a frequent and valuable contributor to the
     JPython-interest@python.org mailing list, and has provided bug
@@ -38,6 +38,7 @@ Copyright © Corporation for National Research Initiatives
     dsyer
     Tim Hochberg
     Bernhard Bablok
+    Dj Walker-Morgan
 
 
 Local Variables:
