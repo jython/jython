@@ -36,9 +36,9 @@ public class PyObject implements java.io.Serializable {
 
 
     /**
-       The standard constructor for a <code>PyObject</code>.
-       It will set the <code>__class__</code> field to correspond to the specific subclass
-       of <code>PyObject</code> being instantiated.
+       The standard constructor for a <code>PyObject</code>.  It will set
+       the <code>__class__</code> field to correspond to the specific
+       subclass of <code>PyObject</code> being instantiated.
     **/
     public PyObject() {
         PyClass c = getPyClass();
@@ -47,9 +47,10 @@ public class PyObject implements java.io.Serializable {
         __class__ = c;
     }
 
-    /** This method is provided to efficiently initialize the __class__ attribute.
-        If the following boilerplate is added to a subclass of PyObject,
-        the instantiation time for the object will be greatly reduced.
+    /** This method is provided to efficiently initialize the __class__
+        attribute.  If the following boilerplate is added to a subclass of
+        PyObject, the instantiation time for the object will be greatly
+        reduced.
         
 	<blockquote><pre>
 	// __class__ boilerplate -- see PyObject for details
@@ -58,7 +59,8 @@ public class PyObject implements java.io.Serializable {
 	</pre></blockquote>
 
         With PyIntegers this leads to a 50% faster instantiation time.
-        This replaces the PyObject(PyClass c) constructor which is now deprecated.
+        This replaces the PyObject(PyClass c) constructor which is now
+        deprecated.
     **/
 
     protected PyClass getPyClass() {
@@ -80,9 +82,9 @@ public class PyObject implements java.io.Serializable {
        ...
        </pre></blockquote>
     
-       @param c a <code>PyClass</code> instance giving the <code>__class__</code>
-       of the new <code>PyObject</code>
-       @deprecated see get PyClass for details
+       @param c a <code>PyClass</code> instance giving the
+       <code>__class__</code> of the new <code>PyObject</code> @deprecated
+       see get PyClass for details
     **/
     public PyObject(PyClass c) {
         if (c == null) {
@@ -92,10 +94,10 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-       Equivalent to the standard Python __repr__ method.
-       This method should not typically need to be overrriden.
-       The easiest way to configure the string representation of a <code>PyObject</code>
-       is to override the standard Java <code>toString</code> method.
+       Equivalent to the standard Python __repr__ method.  This method
+       should not typically need to be overrriden.  The easiest way to
+       configure the string representation of a <code>PyObject</code> is to
+       override the standard Java <code>toString</code> method.
     **/
     public PyString __repr__() {
         return new PyString(toString());
@@ -138,20 +140,20 @@ public class PyObject implements java.io.Serializable {
     }
         
     /**
-       Equivalent to the standard Python __str__ method.
-       This method should not typically need to be overridden.
-       The easiest way to configure the string representation of a <code>PyObject</code>
-       is to override the standard Java <code>toString</code> method.
+       Equivalent to the standard Python __str__ method.  This method
+       should not typically need to be overridden.  The easiest way to
+       configure the string representation of a <code>PyObject</code> is to
+       override the standard Java <code>toString</code> method.
     **/
     public PyString __str__() {
         return __repr__();
     }
 
     /**
-       Equivalent to the standard Python __hash__ method.
-       This method can not be overridden.
-       Instead, you should override the standard Java <code>hashCode</code> method
-       to return an appropriate hash code for the <code>PyObject</code>.
+       Equivalent to the standard Python __hash__ method.  This method can
+       not be overridden.  Instead, you should override the standard Java
+       <code>hashCode</code> method to return an appropriate hash code for
+       the <code>PyObject</code>.
     **/
     public final PyInteger __hash__() {
         return new PyInteger(hashCode());
@@ -347,9 +349,8 @@ public class PyObject implements java.io.Serializable {
     
     /**
        A variant of the __finditem__ method which accepts a primitive
-       <code>int</code> as the key.
-       By default, this method will call <code>__finditem__(PyObject key)</code>
-       with the appropriate args.
+       <code>int</code> as the key.  By default, this method will call
+       <code>__finditem__(PyObject key)</code> with the appropriate args.
        The only reason to override this method is for performance.
     
        @param key the key to lookup in this sequence.
@@ -362,10 +363,9 @@ public class PyObject implements java.io.Serializable {
     }
         
     /**
-       A variant of the __finditem__ method which accepts a Java 
-       <code>String</code> as the key.
-       By default, this method will call <code>__finditem__(PyObject key)</code>
-       with the appropriate args.
+       A variant of the __finditem__ method which accepts a Java
+       <code>String</code> as the key.  By default, this method will call
+       <code>__finditem__(PyObject key)</code> with the appropriate args.
        The only reason to override this method is for performance.
     
        <b>Warning: key must be an interned string!!!!!!!!</b>
@@ -373,7 +373,6 @@ public class PyObject implements java.io.Serializable {
        @param key the key to lookup in this sequence - 
        <b> must be an interned string </b>.
        @return the value corresponding to key or null if key is not found.
-    
     
        @see org.python.core.PyObject#__finditem__(org.python.core.PyObject)
     **/
@@ -723,7 +722,8 @@ public class PyObject implements java.io.Serializable {
        Equivalent to the standard Python __cmp__ method.
         
        @param other the object to compare this with.
-       @return -1 if this < 0; 0 if this == o; +1 if this > o; -2 if no comparison is implemented
+       @return -1 if this < 0; 0 if this == o; +1 if this > o; -2 if no
+       comparison is implemented 
     **/
     public int __cmp__(PyObject other) {
         return -2;
@@ -954,14 +954,16 @@ public class PyObject implements java.io.Serializable {
        Implements the three argument power function
     
        @param o2 the power to raise this number to.
-       @param o3 the modulus to perform this operation in or null if no modulo is to be used
+       @param o3 the modulus to perform this operation in or null if no
+       modulo is to be used
        @return this object raised to the given power in the given modulus
     **/
     public PyObject __pow__(PyObject o2, PyObject o3) throws PyException { return null; }
 
     /* This code is generated by make_binops.py */
     /**Equivalent to the standard Python __add__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand).
        @return the result of the add, or null if this operation is not defined
     **/
     public PyObject __add__(PyObject other) { return null; }
@@ -975,7 +977,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this + other</code>
        @param other the object to perform this binary operation with.
        @return the result of the add.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands.
     **/
     public final PyObject _add(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1024,13 +1027,15 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __sub__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand).
        @return the result of the sub, or null if this operation is not defined
     **/
     public PyObject __sub__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rsub__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
        @return the result of the sub, or null if this operation is not defined.
     **/
     public PyObject __rsub__(PyObject other) { return null; }
@@ -1038,7 +1043,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this - other</code>
        @param other the object to perform this binary operation with.
        @return the result of the sub.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _sub(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1087,13 +1093,15 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __mul__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
        @return the result of the mul, or null if this operation is not defined
     **/
     public PyObject __mul__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rmul__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
+       @param other the object to perform this binary operation with (the
+       left-hand operand).
        @return the result of the mul, or null if this operation is not defined.
     **/
     public PyObject __rmul__(PyObject other) { return null; }
@@ -1101,7 +1109,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this * other</code>
        @param other the object to perform this binary operation with.
        @return the result of the mul.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _mul(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1150,13 +1159,15 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __div__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
        @return the result of the div, or null if this operation is not defined
     **/
     public PyObject __div__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rdiv__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
        @return the result of the div, or null if this operation is not defined.
     **/
     public PyObject __rdiv__(PyObject other) { return null; }
@@ -1164,7 +1175,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this / other</code>
        @param other the object to perform this binary operation with.
        @return the result of the div.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _div(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1213,13 +1225,15 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __mod__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
        @return the result of the mod, or null if this operation is not defined
     **/
     public PyObject __mod__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rmod__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
        @return the result of the mod, or null if this operation is not defined.
     **/
     public PyObject __rmod__(PyObject other) { return null; }
@@ -1227,7 +1241,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this % other</code>
        @param other the object to perform this binary operation with.
        @return the result of the mod.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _mod(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1274,21 +1289,26 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __divmod__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
-       @return the result of the divmod, or null if this operation is not defined
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
+       @return the result of the divmod, or null if this operation is not
+       defined 
     **/
     public PyObject __divmod__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rdivmod__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
-       @return the result of the divmod, or null if this operation is not defined.
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
+       @return the result of the divmod, or null if this operation is not
+       defined. 
     **/
     public PyObject __rdivmod__(PyObject other) { return null; }
 
     /**Implements the Python expression <code>this divmod other</code>
        @param other the object to perform this binary operation with.
        @return the result of the divmod.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _divmod(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1338,13 +1358,15 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __pow__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
        @return the result of the pow, or null if this operation is not defined
     **/
     public PyObject __pow__(PyObject other) { return __pow__(other, null); }
         
     /**Equivalent to the standard Python __rpow__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
        @return the result of the pow, or null if this operation is not defined.
     **/
     public PyObject __rpow__(PyObject other) { return null; }
@@ -1352,7 +1374,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this ** other</code>
        @param other the object to perform this binary operation with.
        @return the result of the pow.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _pow(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1399,21 +1422,26 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __lshift__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
-       @return the result of the lshift, or null if this operation is not defined
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
+       @return the result of the lshift, or null if this operation is not
+       defined 
     **/
     public PyObject __lshift__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rlshift__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
-       @return the result of the lshift, or null if this operation is not defined.
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
+       @return the result of the lshift, or null if this operation is not
+       defined. 
     **/
     public PyObject __rlshift__(PyObject other) { return null; }
 
     /**Implements the Python expression <code>this << other</code>
        @param other the object to perform this binary operation with.
        @return the result of the lshift.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _lshift(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1463,21 +1491,26 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __rshift__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
-       @return the result of the rshift, or null if this operation is not defined
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
+       @return the result of the rshift, or null if this operation is not
+       defined 
     **/
     public PyObject __rshift__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rrshift__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
-       @return the result of the rshift, or null if this operation is not defined.
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
+       @return the result of the rshift, or null if this operation is not
+       defined. 
     **/
     public PyObject __rrshift__(PyObject other) { return null; }
 
     /**Implements the Python expression <code>this >> other</code>
        @param other the object to perform this binary operation with.
        @return the result of the rshift.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _rshift(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1527,13 +1560,15 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __and__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
        @return the result of the and, or null if this operation is not defined
     **/
     public PyObject __and__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rand__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
        @return the result of the and, or null if this operation is not defined.
     **/
     public PyObject __rand__(PyObject other) { return null; }
@@ -1541,7 +1576,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this & other</code>
        @param other the object to perform this binary operation with.
        @return the result of the and.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _and(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1590,13 +1626,15 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __or__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
        @return the result of the or, or null if this operation is not defined
     **/
     public PyObject __or__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __ror__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
        @return the result of the or, or null if this operation is not defined.
     **/
     public PyObject __ror__(PyObject other) { return null; }
@@ -1604,7 +1642,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this | other</code>
        @param other the object to perform this binary operation with.
        @return the result of the or.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands. 
     **/
     public final PyObject _or(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1653,13 +1692,15 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**Equivalent to the standard Python __xor__ method
-       @param other the object to perform this binary operation with (the right-hand operand).
+       @param other the object to perform this binary operation with (the
+       right-hand operand). 
        @return the result of the xor, or null if this operation is not defined
     **/
     public PyObject __xor__(PyObject other) { return null; }
         
     /**Equivalent to the standard Python __rxor__ method
-       @param other the object to perform this binary operation with (the left-hand operand).
+       @param other the object to perform this binary operation with (the
+       left-hand operand). 
        @return the result of the xor, or null if this operation is not defined.
     **/
     public PyObject __rxor__(PyObject other) { return null; }
@@ -1667,7 +1708,8 @@ public class PyObject implements java.io.Serializable {
     /**Implements the Python expression <code>this ^ other</code>
        @param other the object to perform this binary operation with.
        @return the result of the xor.
-       @exception PyTypeError if this operation can't be performed with these operands.
+       @exception PyTypeError if this operation can't be performed with
+       these operands.
     **/
     public final PyObject _xor(PyObject o2_in) {
         PyObject o2 = o2_in;
@@ -1770,7 +1812,8 @@ public class PyObject implements java.io.Serializable {
     /**
        Shortcut for calling a method on a PyObject with no args.
         
-       @param name the name of the method to call.  This must be an interned string!
+       @param name the name of the method to call.  This must be an
+       interned string! 
        @return the result of calling the method name with no args
     **/
     public PyObject invoke(String name) {
@@ -1781,7 +1824,8 @@ public class PyObject implements java.io.Serializable {
     /**
        Shortcut for calling a method on a PyObject with one arg.
         
-       @param name the name of the method to call.  This must be an interned string!
+       @param name the name of the method to call.  This must be an
+       interned string!
        @param arg1 the one argument of the method.
        @return the result of calling the method name with arg1
     **/
@@ -1793,7 +1837,8 @@ public class PyObject implements java.io.Serializable {
     /**
        Shortcut for calling a method on a PyObject with two args.
         
-       @param name the name of the method to call.  This must be an interned string!
+       @param name the name of the method to call.  This must be an
+       interned string! 
        @param arg1 the first argument of the method.
        @param arg2 the second argument of the method.
        @return the result of calling the method name with arg1 and arg2
