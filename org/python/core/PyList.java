@@ -723,15 +723,7 @@ public class PyList extends PySequence {
 
     protected void resize(int n) {
         if (list.length < n) {
-            PyObject[] newList = new PyObject[(int    public void append(PyObject o) {
-        list_append(o);
-    }
-
-    final void list_append(PyObject o) {
-        resize(length+1);
-        list[length-1] = o;
-    }
-)(n*1.5)];
+            PyObject[] newList = new PyObject[(int)(n*1.5)];
             System.arraycopy(list, 0, newList, 0, length);
             list = newList;
         }
@@ -743,6 +735,14 @@ public class PyList extends PySequence {
      *
      * @param o the element to add.
      */
+    public void append(PyObject o) {
+        list_append(o);
+    }
+
+    final void list_append(PyObject o) {
+        resize(length+1);
+        list[length-1] = o;
+    }
 
     /**
      * Return the number elements in the list that equals the argument.
