@@ -13,15 +13,12 @@ public class PyTableCode extends PyCode
     PyFunctionTable funcs;
     int func_id;
 
-    public static PyClass __class__;
-                            
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
                        int firstlineno,
                        boolean args, boolean keywords,
                        PyFunctionTable funcs, int func_id)
     {
-        super(__class__);
         co_argcount = nargs = argcount;
         co_varnames = varnames;
         co_filename = filename;
@@ -41,6 +38,48 @@ public class PyTableCode extends PyCode
         this.func_id = func_id;
     }
 
+    private static final String[] __members__ = {
+        "co_name", "co_argcount",
+        "co_varnames", "co_filename", "co_firstlineno",
+        "co_flags"
+        // not supported: co_nlocals, co_code, co_consts, co_names,
+        // co_lnotab, co_stacksize
+    };
+
+    public PyObject __dir__() {
+        PyString members[] = new PyString[__members__.length];
+        for (int i = 0; i < __members__.length; i++)
+            members[i] = new PyString(__members__[i]);
+        return new PyList(members);
+    }
+
+    private void throwReadonly(String name) {
+        for (int i = 0; i < __members__.length; i++)
+            if (__members__[i] == name)
+                throw Py.TypeError("readonly attribute");
+        throw Py.AttributeError(name);
+    }
+
+    public void __setattr__(String name, PyObject value) {
+        // no writable attributes
+        throwReadonly(name);
+    }
+
+    public void __delattr__(String name) {
+        throwReadonly(name);
+    }
+
+    public PyObject __findattr__(String name) {
+        // have to craft co_varnames specially
+        if (name == "co_varnames") {
+            PyString varnames[] = new PyString[co_varnames.length];
+            for (int i = 0; i < co_varnames.length; i++)
+                varnames[i] = new PyString(co_varnames[i]);
+            return new PyTuple(varnames);
+        }
+        return super.__findattr__(name);
+    }
+    
     public PyObject call(PyFrame frame) {
         //System.out.println("tablecode call: "+co_name);
         ThreadState ts = Py.getThreadState();
@@ -195,14 +234,18 @@ public class PyTableCode extends PyCode
         return call(frame);
     }   
         
-    /*
-      public PyObject call(PyObject arg1, PyObject arg2, PyObject globals, PyObject[] defaults) {
-      if (co_argcount != 2) return call(new PyObject[] {arg1, arg2}, Py.NoKeywords, globals, defaults);
-      PyFrame frame = new PyFrame(this, globals);
-      frame.f_fastlocals[0] = arg1;
-      frame.f_fastlocals[1] = arg2;
-      return call(frame);
-      }*/
+//     public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
+//                          PyObject[] defaults)
+//     {
+//         if (co_argcount != 2)
+//             return call(new PyObject[] {arg1, arg2}, Py.NoKeywords, globals,
+//             defaults);
+//         }
+//         PyFrame frame = new PyFrame(this, globals);
+//         frame.f_fastlocals[0] = arg1;
+//         frame.f_fastlocals[1] = arg2;
+//         return call(frame);
+//     }
 
     public PyObject call(PyObject self, PyObject call_args[],
                          String call_keywords[], PyObject globals,
@@ -221,9 +264,7 @@ public class PyTableCode extends PyCode
     public PyObject call(PyObject call_args[], String call_keywords[],
                          PyObject globals, PyObject[] defaults)
     {
-        //System.out.println("call: "+nargs+", "+call_args.length+", "+func.func_defaults.length+", "+call_keywords.length);
         //Needs try except finally blocks
-
         PyFrame my_frame = new PyFrame(this, globals);
 
         PyObject actual_args[], extra_args[] = null;
@@ -289,7 +330,6 @@ public class PyTableCode extends PyCode
             for (i=plain_args; i<co_argcount; i++) {
                 if (actual_args[i] == null) {
                     if (co_argcount-i > defaults.length) {
-                        //System.out.println("nea: "+nargs+", "+i+", "+defaults.length+", "+plain_args);
                         throw Py.TypeError(
                             prefix()+
                             "not enough arguments; expected "+
@@ -310,5 +350,11 @@ public class PyTableCode extends PyCode
             }
         }
         return call(my_frame);
+    }
+
+    public String toString() {
+        return "<code object " + co_name + " at " + hashCode() +
+            ", file \"" + co_filename + "\", line " +
+            co_firstlineno + ">";
     }
 }
