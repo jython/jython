@@ -239,6 +239,7 @@ public class imp
 
         for (int i=0; i<n; i++) {
             String dirName = path.get(i).toString();
+
             // TBD: probably should tie this into -v option a la CPython
             if (dirName.endsWith(".jar") || dirName.endsWith(".zip")) {
                 // Handle .jar and .zip files on the path sometime in the
@@ -445,16 +446,18 @@ public class imp
     }
 
     /**
-     * Called from jpython generated code when a statement like "import spam" 
+     * Called from jpython generated code when a statement like "import spam"
      * is executed.
      */
     public static void importOne(String mod, PyFrame frame) {
         //System.out.println("importOne(" + mod + ")");
-        PyObject module = getImportFunc(frame).__call__(new PyObject[] {
+        PyObject module = getImportFunc(frame).__call__(
+            new PyObject[] {
                 Py.newString(mod),
                 frame.f_globals,
                 frame.f_locals,
-                Py.EmptyTuple } );
+                Py.EmptyTuple
+            });
 
         int dot = mod.indexOf('.');
         if (dot != -1) {
@@ -475,24 +478,27 @@ public class imp
         //System.out.println("importFrom(" + mod + ", [" + sb + "]");
 
         PyObject[] pynames = new PyObject[names.length];
-        for(int i=0; i<names.length; i++)
+        for (int i=0; i<names.length; i++)
             pynames[i] = Py.newString(names[i]);
 
-        PyObject module = getImportFunc(frame).__call__(new PyObject[] {
+        PyObject module = getImportFunc(frame).__call__(
+            new PyObject[] {
                 Py.newString(mod),
                 frame.f_globals,
                 frame.f_locals,
-                new PyTuple(pynames) });
-        for(int i=0; i<names.length; i++) {
+                new PyTuple(pynames)
+            });
+        for (int i=0; i<names.length; i++)
             frame.setlocal(names[i], module.__getattr__(names[i]));
-        }
     }
 
-    private static PyTuple all = new PyTuple(new PyString[] 
-           { Py.newString('*') });
+    private static PyTuple all = new PyTuple(
+        new PyString[] {
+            Py.newString('*')
+        });
 
     /**
-     * Called from jpython generated code when a stamenet like 
+     * Called from jpython generated code when a statement like 
      * "from spam.eggs import *" is executed.
      */
     public static void importAll(String mod, PyFrame frame) {
@@ -505,7 +511,6 @@ public class imp
 
         loadNames(module.__dir__(), module, frame.getf_locals());
     }
-
 
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals)
@@ -580,12 +585,11 @@ public class imp
         return ret;
     }
 
-
     private static PyObject __import__ = Py.newString("__import__");
 
     private static PyObject getImportFunc(PyFrame frame) {
         // Set up f_builtins if not already set
-	PyObject builtins = frame.f_builtins;
+        PyObject builtins = frame.f_builtins;
         if (builtins == null)
             builtins = Py.getSystemState().builtins;
         return builtins.__getitem__(__import__);
