@@ -8,7 +8,7 @@ public abstract class InternalTables {
     // (x|X)__> --> org.python.core.X__InternalTables
     // >(x|X)__ --> org.python.core.InternalTablesX__
     // other (X__|__.__) --> other
-    static private Object tryImpl(String id) {
+    static private InternalTables tryImpl(String id) {
         try {
             if(id.indexOf('.') < 0) {
                 boolean glue = true;
@@ -48,7 +48,7 @@ public abstract class InternalTables {
             cands = cands + ":>2:>1";
         java.util.StringTokenizer candEnum = new java.util.StringTokenizer(cands,":");
         while (candEnum.hasMoreTokens()) {
-            InternalTables tbl = (InternalTables)tryImpl(candEnum.nextToken().trim());
+            InternalTables tbl = tryImpl(candEnum.nextToken().trim());
             if (tbl != null) return tbl;
         }
         return null; // never reached
