@@ -342,16 +342,7 @@ public class imp
             return true;
         if (isDir)
             return false;
-        String dir = entry.toString();
-        int idx = dir.indexOf('!');
-        if (idx > 0) {
-            dir = dir.substring(0, idx);
-        }
-        if (dir.length() < 5) {
-            return false;
-        }
-        String ext = dir.substring(dir.length() - 4);
-        return ext.equalsIgnoreCase(".zip") || ext.equalsIgnoreCase(".jar");
+        return SyspathArchive.getArchiveName(entry.toString()) != null;
     }
 
     static PyObject loadFromPath(String name, PyList path) {

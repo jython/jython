@@ -8,10 +8,7 @@ public class SyspathArchive extends PyString {
 
     public SyspathArchive(String archiveName) throws IOException {
         super(archiveName);
-        int idx = archiveName.indexOf('!');
-        if (idx > 0) {
-            archiveName = archiveName.substring(0, idx);
-        }
+        archiveName = getArchiveName(archiveName);
         zipFile = new ZipFile(new File(archiveName));
         Py.getSystemState().packageManager.addJar(archiveName);
     }
@@ -21,18 +18,38 @@ public class SyspathArchive extends PyString {
         this.zipFile = zipFile;
     }
 
+    static String getArchiveName(String dir) {
+        String lowerName = dir.toLowerCase();
+        int idx = lowerName.indexOf(".zip");
+        if (idx < 0) {
+            idx = lowerName.indexOf(".jar");
+        }
+        if (idx < 0) {
+            return null;
+        }
+
+        if (idx == dir.length() - 4) {
+            return dir;
+        }
+        char ch = dir.charAt(idx+4);
+        if (ch == File.separatorChar || ch == '/') {
+            return dir.substring(0, idx+4);
+        }
+        return null;
+    }
+
     public SyspathArchive makeSubfolder(String folder) {
-        return new SyspathArchive(zipFile, super.toString() + "!" + folder);
+        return new SyspathArchive(zipFile, super.toString() + "/" + folder);
     }
 
     private String makeEntry(String entry) {
         String archive = super.toString();
-        int idx = archive.indexOf('!');
-        if (idx < 0) {
+        String folder = getArchiveName(super.toString());
+        if (archive.length() == folder.length()) {
             return entry;
+        } else {
+            return archive.substring(folder.length()+1) + "/" + entry;
         }
-        String folder = archive.substring(idx+1);
-        return folder + "/" + entry;
     }
 
     ZipEntry getEntry(String entryName) {
