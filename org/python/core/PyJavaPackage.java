@@ -168,6 +168,11 @@ public class PyJavaPackage extends PyObject {
             __mgr__ = newMgr;
             return;
         }
+        if (attr == "__file__") {
+            __file__ = value.__str__().toString();
+            return;
+        }
+
         super.__setattr__(attr,value);
     }
 
