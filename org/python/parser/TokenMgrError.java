@@ -140,14 +140,14 @@ public class TokenMgrError extends Error
     // added: 12-Mar-1999 baw
    public TokenMgrError(String message, int errorLine, int errorColumn) {
       this(message, LEXICAL_ERROR);
-	   this.EOFSeen = false;
-	   this.errorLine = errorLine;
-	   this.errorColumn = errorColumn;
+           this.EOFSeen = false;
+           this.errorLine = errorLine;
+           this.errorColumn = errorColumn;
    }
 
    public TokenMgrError(boolean EOFSeen, int lexState, int errorLine, int errorColumn, String errorAfter, char curChar, int reason) {
       this(LexicalError(EOFSeen, lexState, errorLine, errorColumn,
-			errorAfter, curChar), reason);
+                        errorAfter, curChar), reason);
       // modified: 12-Mar-1999 baw
       this.EOFSeen = EOFSeen;
       this.errorLine = errorLine;
