@@ -113,9 +113,13 @@ public class JDBC20DataHandler extends FilterDataHandler {
 			case Types.DECIMAL :
 
 				// in JDBC 2.0, use of a scale is deprecated
-				BigDecimal bd = set.getBigDecimal(col);
+				try {
+					BigDecimal bd = set.getBigDecimal(col);
 
-				obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
+					obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
+				} catch (SQLException e) {
+					obj = super.getPyObject(set, col, type);
+				}
 				break;
 
 			case Types.CLOB :
