@@ -57,13 +57,7 @@ public class PyInstance extends PyObject
 
     public PyInstance(PyClass iclass, PyObject dict) {
         super(iclass);
-        //__class__ = iclass;
         __dict__ = dict;
-        //Prepare array of proxy classes to be possibly filled in in __init__
-        /*if (__class__.proxyClass != null) {
-          //System.err.println("proxies: "+__class__.__name__);
-          //javaProxies = new Object[__class__.proxyClasses.length];
-          }*/
     }
 
     public PyInstance(PyClass iclass) {
@@ -96,16 +90,19 @@ public class PyInstance extends PyObject
         } finally {
             ts.popInitializingProxy();
         }
-        //proxy._setPyInstance(this);
-        //proxy._setPySystemState(Py.getSystemState());
+
+        if (javaProxy != null && javaProxy != proxy) {
+            // The javaProxy can be initialized in Py.jfindattr()
+            throw Py.TypeError("Proxy instance already initialized");
+        }
+        PyInstance proxyInstance = proxy._getPyInstance();
+        if (proxyInstance != null && proxyInstance != this) {
+            // The proxy was initialized to another instance!!
+            throw Py.TypeError("Proxy initialization conflict");
+        }
+
         javaProxy = proxy;
     }
-
-    /*protected void setProxy(PyProxy proxy, int index) {
-      proxy._setPyInstance(this);
-      proxy._setPySystemState(Py.getSystemState());
-      javaProxies[index] = proxy;
-      }*/
 
     public Object __tojava__(Class c) {
         if ((c == Object.class || c == Serializable.class) &&
