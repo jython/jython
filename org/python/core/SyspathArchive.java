@@ -9,8 +9,11 @@ public class SyspathArchive extends PyString {
     public SyspathArchive(String archiveName) throws IOException {
         super(archiveName);
         archiveName = getArchiveName(archiveName);
+        if(archiveName == null) {
+            throw new IOException("path '" + archiveName + "' not an archive");
+        }
         zipFile = new ZipFile(new File(archiveName));
-        Py.getSystemState().packageManager.addJar(archiveName, false);
+        PySystemState.packageManager.addJar(archiveName, false);
     }
 
     SyspathArchive(ZipFile zipFile, String archiveName) {

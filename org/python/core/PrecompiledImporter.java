@@ -7,10 +7,6 @@ package org.python.core;
 public class PrecompiledImporter extends PyObject {
 
     public PrecompiledImporter() {
-        this(Py.None);
-    }
-
-    public PrecompiledImporter(PyObject path) {
         super();
     }
 
@@ -32,55 +28,66 @@ public class PrecompiledImporter extends PyObject {
     public PyObject find_module(String name, PyObject path) {
         if (Py.frozenModules != null) {
             //System.out.println("precomp: "+name+", "+name);
-            Class c;
-
+            Class c = null;
             if (Py.frozenModules.get(name+".__init__") != null) {
                 //System.err.println("trying: "+name+".__init__$_PyInner");
-                Py.writeComment("import", "trying " + name + " as precompiled package");
+                Py.writeDebug("import", "trying " + name + " as precompiled package");
                 c = findPyClass(name+".__init__");
                 if (c == null) {
                     return Py.None;
                 }
-                Py.writeComment("import", "'" + name + "' as " +
-                                "precompiled package");
                 //System.err.println("found: "+name+".__init__$_PyInner");
+                return new PrecompiledLoader(c, true);
             } else if (Py.frozenModules.get(name) != null) {
-                Py.writeComment("import", "trying " + name + " as precompiled module");
+                Py.writeDebug("import", "trying " + name + " as precompiled module");
                 c = findPyClass(name);
                 if (c == null) {
                     return Py.None;
                 }
-                Py.writeComment("import", "'" + name + "' as " +
-                                "precompiled module");
-            } else {
-                return Py.None;
+                return new PrecompiledLoader(c, false);
             }
-            return this;
         }
         return Py.None;
     }
 
-    public PyObject load_module(String name) {
-        if (Py.frozenModules != null) {
-            Class c;
-            if (Py.frozenModules.get(name+".__init__") != null) {
-                c = findPyClass(name+".__init__");
-                if (c == null) {
-                    throw Py.ImportError(name);
-                }
+    /**
+     * Returns a string representation of the object.
+     *
+     * @return a string representation of the object.
+     */
+    public String toString() {
+        return this.getType().toString();
+    }
+
+    public class PrecompiledLoader extends PyObject {
+
+        private Class _class;
+        private boolean _package;
+
+        public PrecompiledLoader(Class class_, boolean package_) {
+            this._class = class_;
+            this._package = package_;
+        }
+
+        public PyObject load_module(String name) {
+            if(this._package) {
                 PyModule m = imp.addModule(name);
                 m.__dict__.__setitem__("__path__", new PyList());
-            } else if (Py.frozenModules.get(name) != null) {
-                c = findPyClass(name);
-                if (c == null) {
-                    throw Py.ImportError(name);
-                }
-            } else {
-                throw Py.ImportError(name);
+                m.__dict__.__setitem__("__loader__", this);
             }
-            return imp.createFromClass(name, c);
+            Py.writeComment("import", "'" + name + "' as precompiled "
+              + (this._package ? "package" : "module"));
+            return imp.createFromClass(name, this._class);
         }
-        throw Py.ImportError(name);
+
+        /**
+         * Returns a string representation of the object.
+         *
+         * @return a string representation of the object.
+         */
+        public String toString() {
+            return this.getType().toString();
+        }
     }
 
     private Class findPyClass(String name) {

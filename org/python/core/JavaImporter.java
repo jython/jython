@@ -6,10 +6,6 @@ package org.python.core;
 public class JavaImporter extends PyObject {
 
     public JavaImporter() {
-        this(Py.None);
-    }
-
-    public JavaImporter(PyObject path) {
         super();
     }
 
@@ -41,5 +37,13 @@ public class JavaImporter extends PyObject {
     public PyObject load_module(String name) {
         return PySystemState.packageManager.lookupName(name.intern());
     }
-}
 
+    /**
+     * Returns a string representation of the object.
+     *
+     * @return a string representation of the object.
+     */
+    public String toString() {
+        return this.getType().toString();
+    }
+}

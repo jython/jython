@@ -41,20 +41,16 @@ public class ZipFileImporter extends PyObject {
      */
     public PyObject find_module(String name, PyObject path) {
         ZipModuleInfo zip = getModuleInfo(name, this.archive);
-        return zip == null ? Py.None : this;
+        return (zip == null) ? Py.None : new ZipFileLoader(zip);
     }
 
     /**
-     * A loaded module for the fully qualified name.
-     * @param name the fully qualified name
-     * @return a loaded module (added to sys.path)
+     * Returns a string representation of the object.
+     *
+     * @return a string representation of the object.
      */
-    public PyObject load_module(String name) {
-        ZipModuleInfo zip = getModuleInfo(name, this.archive);
-        if(zip == null) {
-            throw Py.ImportError("error loading " + name);
-        }
-        return loadFromZipFile(name, zip);
+    public String toString() {
+        return this.getType().toString();
     }
 
     /**
@@ -105,7 +101,7 @@ public class ZipFileImporter extends PyObject {
         ZipModuleInfo info = null;
         if (sourceEntry != null) {
             Py.writeDebug("import", "trying source entry: " + sourceName
-                    + " from jar/zip file " + zipArchive);
+              + " from jar/zip file " + zipArchive);
             if (compiledEntry != null) {
                 Py.writeDebug("import", "trying precompiled entry "
                         + compiledName + " from jar/zip file " + zipArchive);
@@ -126,34 +122,53 @@ public class ZipFileImporter extends PyObject {
     }
 
     /**
-     * Load the module with the information provided in the info.
-     * @param moduleName the module name to add to sys.path
-     * @param info the information about the module to load
-     * @return the loaded module
+     * Loader for zipfile python sources.
      */
-    private PyObject loadFromZipFile(String moduleName, ZipModuleInfo info) {
+    public class ZipFileLoader extends PyObject {
 
-        PyModule m = null;
-        if(info.path != null) {
-            m = imp.addModule(moduleName);
-            m.__dict__.__setitem__("__path__", info.path);
-            m.__dict__.__setitem__("__loader__", this);
+        private ZipModuleInfo _info;
+
+        public ZipFileLoader(ZipModuleInfo info) {
+            this._info = info;
         }
 
-        InputStream is = null; // should this be closed?
-        ZipEntry entry = info.zipEntry;
-        try {
-            is = info.archive.getInputStream(entry);
-        } catch (IOException e) {
-            Py.writeDebug("import", "loadFromZipFile exception: " + e.toString());
-            throw Py.ImportError("error loading from zipfile");
+        /**
+         * A loaded module for the fully qualified name.
+         * @param moduleName the fully qualified name
+         * @return a loaded module (added to sys.path)
+         */
+        public PyObject load_module(String moduleName) {
+            PyModule m = null;
+            if(this._info.path != null) {
+                m = imp.addModule(moduleName);
+                m.__dict__.__setitem__("__path__", this._info.path);
+                m.__dict__.__setitem__("__loader__", this);
+            }
+
+            InputStream is = null; // should this be closed?
+            ZipEntry entry = this._info.zipEntry;
+            try {
+                is = this._info.archive.getInputStream(entry);
+            } catch (IOException e) {
+                Py.writeDebug("import", "loadFromZipFile exception: " + e.toString());
+                throw Py.ImportError("error loading from zipfile");
+            }
+            if (this._info.compiled) {
+                PyObject o = imp.createFromPyClass(moduleName, is, true, entry.getName());
+                return (m == null) ? o : m;
+            } else {
+                PyObject o = imp.createFromSource(moduleName, is, entry.getName(), null);
+                return (m == null) ? o : m;
+            }
         }
-        if (info.compiled) {
-            PyObject o = imp.createFromPyClass(moduleName, is, true, entry.getName());
-            return (m == null) ? o : m;
-        } else {
-            PyObject o = imp.createFromSource(moduleName, is, entry.getName(), null);
-            return (m == null) ? o : m;
+
+        /**
+         * Returns a string representation of the object.
+         *
+         * @return a string representation of the object.
+         */
+        public String toString() {
+            return this.getType().toString();
         }
     }
 
