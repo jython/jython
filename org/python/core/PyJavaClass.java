@@ -113,7 +113,8 @@ public class PyJavaClass extends PyClass
         try {
             Field field = c.getField("__class__");
             if (Modifier.isStatic(field.getModifiers()) && 
-                field.getType().isAssignableFrom(PyJavaClass.class))
+                field.getType().isAssignableFrom(PyJavaClass.class) &&
+                field.getDeclaringClass() == c)
             {
                 field.set(null, this);
             }
