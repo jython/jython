@@ -74,6 +74,8 @@ public class PySystemState extends PyObject
 
     public PyObject executable = Py.None;
 
+    private static PyJavaClass __builtin__class;
+
     private ClassLoader classLoader = null;
     public ClassLoader getClassLoader() {
         return classLoader;
@@ -182,8 +184,7 @@ public class PySystemState extends PyObject
         __stdin__ = stdin = new PyFile(getSystemIn(), "<stdin>");
 
         // This isn't quite right...
-        builtins = PyJavaClass.lookup(__builtin__.class).
-                                  __getattr__("__dict__");
+        builtins = __builtin__class.__getattr__("__dict__");
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
 
@@ -351,7 +352,7 @@ public class PySystemState extends PyObject
 
         if (classLoader != null)
             Py.defaultSystemState.setClassLoader(classLoader);
-        Py.initClassExceptions();
+        Py.initClassExceptions(__builtin__class.__getattr__("__dict__"));
         // Make sure that Exception classes have been loaded
         PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");
     }
@@ -372,7 +373,7 @@ public class PySystemState extends PyObject
         Py.Newline = new PyString("\n");
         Py.Space = new PyString(" ");
 
-        Py.initStringExceptions();
+        __builtin__class = PyJavaClass.lookup(__builtin__.class);
 
         // Setup standard wrappers for stdout and stderr...
         Py.stderr = new StderrWrapper();

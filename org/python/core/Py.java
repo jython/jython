@@ -377,164 +377,46 @@ public final class Py
                                funcs, func_id);
     }
 
-    // This is just to save a reference, so the weak implementation
-    // of internal tables does not remove it shortly after initialization.
-    private static PyJavaClass __builtin__class;
-
-    public static void setBuiltinExceptions() {
-        __builtin__class =
-                     PyJavaClass.lookup(org.python.core.__builtin__.class);
-        PyObject dict = __builtin__class.__getattr__("__dict__");
-        dict.__setitem__("Exception", Py.Exception);
-        dict.__setitem__("TypeError", Py.TypeError);
-        dict.__setitem__("LookupError", Py.LookupError);
-        dict.__setitem__("IOError", Py.IOError);
-        dict.__setitem__("ArithmeticError", Py.ArithmeticError);
-        dict.__setitem__("NotImplementedError", Py.NotImplementedError);
-        dict.__setitem__("OSError", Py.OSError);
-        dict.__setitem__("SystemError", Py.SystemError);
-        dict.__setitem__("RuntimeError", Py.RuntimeError);
-        dict.__setitem__("AssertionError", Py.AssertionError);
-        dict.__setitem__("FloatingPointError", Py.FloatingPointError);
-        dict.__setitem__("ValueError", Py.ValueError);
-        dict.__setitem__("UnicodeError", Py.UnicodeError);
-        dict.__setitem__("NameError", Py.NameError);
-        dict.__setitem__("UnboundLocalError", Py.UnboundLocalError);
-        dict.__setitem__("EOFError", Py.EOFError);
-        dict.__setitem__("KeyError", Py.KeyError);
-        dict.__setitem__("MemoryError", Py.MemoryError);
-        dict.__setitem__("SystemExit", Py.SystemExit);
-        dict.__setitem__("KeyboardInterrupt", Py.KeyboardInterrupt);
-        dict.__setitem__("OverflowError", Py.OverflowError);
-        dict.__setitem__("ZeroDivisionError", Py.ZeroDivisionError);
-        dict.__setitem__("StandardError", Py.StandardError);
-        dict.__setitem__("IndexError", Py.IndexError);
-        dict.__setitem__("ImportError", Py.ImportError);
-        dict.__setitem__("EnvironmentError", Py.EnvironmentError);
-        dict.__setitem__("AttributeError", Py.AttributeError);
-        dict.__setitem__("SyntaxError", Py.SyntaxError);
-        dict.__setitem__("IndentationError", Py.IndentationError);
-        dict.__setitem__("TabError", Py.TabError);
+    private static PyObject initExc(String name, PyObject exceptions,
+                                    PyObject dict) {
+        PyObject tmp = exceptions.__getattr__(name);
+        dict.__setitem__(name, tmp);
+        return tmp;
     }
 
+    static void initClassExceptions(PyObject dict) {
+        PyObject exc = imp.load("exceptions");
 
-    static void initStringExceptions() {
-        TypeError = new PyString("TypeError");
-        IOError = new PyString("IOError");
-        NotImplementedError = new PyString("NotImplementedError");
-        OSError = new PyString("OSError");
-        SystemError = new PyString("SystemError");
-        AssertionError = new PyString("AssertionError");
-        FloatingPointError = new PyString("FloatingPointError");
-        ValueError = new PyString("ValueError");
-        UnicodeError = new PyString("UnicodeError");
-        NameError = new PyString("NameError");
-        UnboundLocalError = new PyString("UnboundLocalError");
-        EOFError = new PyString("EOFError");
-        KeyError = new PyString("KeyError");
-        MemoryError = new PyString("MemoryError");
-        SystemExit = new PyString("SystemExit");
-        KeyboardInterrupt = new PyString("KeyboardInterrupt");
-        OverflowError = new PyString("OverflowError");
-        ZeroDivisionError = new PyString("ZeroDivisionError");
-        IndexError = new PyString("IndexError");
-        ImportError = new PyString("ImportError");
-        AttributeError = new PyString("AttributeError");
-        SyntaxError = new PyString("SyntaxError");
-
-        LookupError = new PyTuple(new PyObject[]
-            {Py.IndexError, Py.KeyError});
-
-        ArithmeticError = new PyTuple(new PyObject[]
-            {Py.ZeroDivisionError, Py.OverflowError, Py.FloatingPointError});
-
-        RuntimeError = new PyTuple(new PyObject[]
-            {Py.NotImplementedError});
-
-        EnvironmentError = new PyTuple(new PyObject[]
-            {Py.OSError, Py.IOError});
-
-        StandardError = new PyTuple(new PyObject[]
-            {Py.ValueError, Py.TypeError, Py.NameError,
-             Py.AssertionError, Py.LookupError, Py.SyntaxError,
-             Py.SystemError, Py.KeyboardInterrupt, Py.AttributeError,
-             Py.MemoryError, Py.EnvironmentError, Py.RuntimeError,
-             Py.ImportError, Py.ArithmeticError, Py.EOFError,
-             Py.UnicodeError, Py.UnboundLocalError,
-            });
-
-        Exception = new PyTuple(new PyObject[]
-            {Py.StandardError, Py.SystemExit});
-
-        JavaError = new PyString("JavaError");
-        setBuiltinExceptions();
-    }
-
-    static void initClassExceptions() {
-        PyObject exceptions = imp.load("exceptions");
-        PyObject tmp;
-
-        tmp = exceptions.__findattr__("Exception");
-        if (tmp != null) Exception = tmp;
-        tmp = exceptions.__findattr__("TypeError");
-        if (tmp != null) TypeError = tmp;
-        tmp = exceptions.__findattr__("LookupError");
-        if (tmp != null) LookupError = tmp;
-        tmp = exceptions.__findattr__("IOError");
-        if (tmp != null) IOError = tmp;
-        tmp = exceptions.__findattr__("ArithmeticError");
-        if (tmp != null) ArithmeticError = tmp;
-        tmp = exceptions.__findattr__("NotImplementedError");
-        if (tmp != null) NotImplementedError = tmp;
-        tmp = exceptions.__findattr__("OSError");
-        if (tmp != null) OSError = tmp;
-        tmp = exceptions.__findattr__("SystemError");
-        if (tmp != null) SystemError = tmp;
-        tmp = exceptions.__findattr__("RuntimeError");
-        if (tmp != null) RuntimeError = tmp;
-        tmp = exceptions.__findattr__("AssertionError");
-        if (tmp != null) AssertionError = tmp;
-        tmp = exceptions.__findattr__("FloatingPointError");
-        if (tmp != null) FloatingPointError = tmp;
-        tmp = exceptions.__findattr__("ValueError");
-        if (tmp != null) ValueError = tmp;
-        tmp = exceptions.__findattr__("UnicodeError");
-        if (tmp != null) UnicodeError = tmp;
-        tmp = exceptions.__findattr__("NameError");
-        if (tmp != null) NameError = tmp;
-        tmp = exceptions.__findattr__("UnboundLocalError");
-        if (tmp != null) UnboundLocalError = tmp;
-        tmp = exceptions.__findattr__("EOFError");
-        if (tmp != null) EOFError = tmp;
-        tmp = exceptions.__findattr__("KeyError");
-        if (tmp != null) KeyError = tmp;
-        tmp = exceptions.__findattr__("MemoryError");
-        if (tmp != null) MemoryError = tmp;
-        tmp = exceptions.__findattr__("SystemExit");
-        if (tmp != null) SystemExit = tmp;
-        tmp = exceptions.__findattr__("KeyboardInterrupt");
-        if (tmp != null) KeyboardInterrupt = tmp;
-        tmp = exceptions.__findattr__("OverflowError");
-        if (tmp != null) OverflowError = tmp;
-        tmp = exceptions.__findattr__("ZeroDivisionError");
-        if (tmp != null) ZeroDivisionError = tmp;
-        tmp = exceptions.__findattr__("StandardError");
-        if (tmp != null) StandardError = tmp;
-        tmp = exceptions.__findattr__("IndexError");
-        if (tmp != null) IndexError = tmp;
-        tmp = exceptions.__findattr__("ImportError");
-        if (tmp != null) ImportError = tmp;
-        tmp = exceptions.__findattr__("EnvironmentError");
-        if (tmp != null) EnvironmentError = tmp;
-        tmp = exceptions.__findattr__("AttributeError");
-        if (tmp != null) AttributeError = tmp;
-        tmp = exceptions.__findattr__("SyntaxError");
-        if (tmp != null) SyntaxError = tmp;
-        tmp = exceptions.__findattr__("IndentationError");
-        if (tmp != null) IndentationError = tmp;
-        tmp = exceptions.__findattr__("TabError");
-        if (tmp != null) TabError = tmp;
-        setBuiltinExceptions();
+        Exception           = initExc("Exception", exc, dict);
+        SystemExit          = initExc("SystemExit", exc, dict);
+        StandardError       = initExc("StandardError", exc, dict);
+        KeyboardInterrupt   = initExc("KeyboardInterrupt", exc, dict);
+        ImportError         = initExc("ImportError", exc, dict);
+        EnvironmentError    = initExc("EnvironmentError", exc, dict);
+        IOError             = initExc("IOError", exc, dict);
+        OSError             = initExc("OSError", exc, dict);
+        EOFError            = initExc("EOFError", exc, dict);
+        RuntimeError        = initExc("RuntimeError", exc, dict);
+        NotImplementedError = initExc("NotImplementedError", exc, dict);
+        NameError           = initExc("NameError", exc, dict);
+        UnboundLocalError   = initExc("UnboundLocalError", exc, dict);
+        AttributeError      = initExc("AttributeError", exc, dict);
+        SyntaxError         = initExc("SyntaxError", exc, dict);
+        IndentationError    = initExc("IndentationError", exc, dict);
+        TabError            = initExc("TabError", exc, dict);
+        TypeError           = initExc("TypeError", exc, dict);
+        AssertionError      = initExc("AssertionError", exc, dict);
+        LookupError         = initExc("LookupError", exc, dict);
+        IndexError          = initExc("IndexError", exc, dict);
+        KeyError            = initExc("KeyError", exc, dict);
+        ArithmeticError     = initExc("ArithmeticError", exc, dict);
+        OverflowError       = initExc("OverflowError", exc, dict);
+        ZeroDivisionError   = initExc("ZeroDivisionError", exc, dict);
+        FloatingPointError  = initExc("FloatingPointError", exc, dict);
+        ValueError          = initExc("ValueError", exc, dict);
+        UnicodeError        = initExc("UnicodeError", exc, dict);
+        SystemError         = initExc("SystemError", exc, dict);
+        MemoryError         = initExc("MemoryError", exc, dict);
     }
 
     public static PySystemState defaultSystemState;
