@@ -25,14 +25,39 @@ def getClasspath():
     return cpath
 
 def compile(files, javac=None, cpathopt="-classpath", cpath=None, options=[]):
+    cmd = []
+    # Search order for a Java compiler:
+    #   1. -C/--compiler command line option
+    #   2. python.jpythonc.compiler property (see registry)
+    #   3. guess a path to javac
+    if javac is None:
+        javac = sys.registry.getProperty("python.jpythonc.compiler")
+        # in case there are arguments on the property
+        if javac:
+            cmd.extend(javac.split())
     if javac is None:
         javac = findDefaultJavac()
+        cmd.append(javac)
+    # Classpath:
+    #   1. python.jpythonc.classpath property (see registry)
+    #   2. java.class.path property
+    if cpath is None:
+        cpath = sys.registry.getProperty("python.jpythonc.classpath")
     if cpath is None:
         cpath = getClasspath()
-    args = [javac, cpathopt, cpath]+options+files
-    print args
+    cmd.extend([cpathopt, cpath])
+    cmd.extend(options)
+    cmd.extend(files)
+    print 'Compiling with args:', cmd
 
-    proc = runtime.exec(args)
+    try:
+        proc = runtime.exec(cmd)
+    except IOError:
+        msg = '''No java compiler found: %s
+
+Consider using the -C/--compiler command line switch, or setting
+the property python.jpythonc.compiler in the registry.''' % javac
+        return 1, '', msg
     done = None
     while not done:
 	try:
