@@ -10,7 +10,7 @@ where options include:
 
   --jar jarfile
   -j jarfile
-      Compile into jarfile (implies -deep)
+      Compile into jarfile (implies --deep)
 
   --deep
   -d
