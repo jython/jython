@@ -1249,20 +1249,18 @@ public class PyString extends PySequence implements ClassDictInit
             sign = string.charAt(b);
             if (sign == '-' || sign == '+') {
                 b++;
-                while (b < e && Character.isWhitespace(string.charAt(b)))
-                    b++;
+                while (b < e && Character.isWhitespace(string.charAt(b))) b++;
             }
-        }
 
-        if (base == 0 || base == 16) {
-            if (string.charAt(b) == '0') {
-                if (b < e-1 && string.charAt(b+1) == 'x') {
-                    if (base == 0)
+            if (base == 0 || base == 16) {
+                if (string.charAt(b) == '0') {
+                    if (b < e-1 && (string.charAt(b+1) == 'x' || string.charAt(b+1) == 'X')) {
                         base = 16;
-                    b += 2;
-                } else {
-                    if (base == 0)
-                        base = 8;
+                        b += 2;
+                    } else {
+                        if (base == 0)
+                            base = 8;
+                    }
                 }
             }
         }
@@ -1312,20 +1310,25 @@ public class PyString extends PySequence implements ClassDictInit
             sign = string.charAt(b);
             if (sign == '-' || sign == '+') {
                 b++;
-                while (b < e && Character.isWhitespace(str.charAt(b)))
-                    b++;
+                while (b < e && Character.isWhitespace(str.charAt(b))) b++;
+            }
+
+
+            if (base == 0 || base == 16) {
+                if (string.charAt(b) == '0') {
+                    if (b < e-1 && (string.charAt(b+1) == 'x' || string.charAt(b+1) == 'X')) {
+                        base = 16;
+                        b += 2;
+                    } else {
+                        if (base == 0)
+                            base = 8;
+                    }
+                }
             }
         }
+        if (base == 0)
+            base = 10;
 
-        if (base == 0) {
-            if (str.charAt(b) != '0')
-                base = 10;
-            else if (str.charAt(b+1) == 'x' || str.charAt(b+1) == 'X') {
-                base = 16;
-                b += 2;
-            } else
-                base = 8;
-        }
         if (base < 2 || base > 36)
             throw Py.ValueError("invalid base for long literal:" + base);
 
@@ -1340,9 +1343,9 @@ public class PyString extends PySequence implements ClassDictInit
                 bi = new java.math.BigInteger(str, base);
             return new PyLong(bi);
         } catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __int__: "+str);
+            throw Py.ValueError("invalid literal for __long__: "+str);
         } catch (StringIndexOutOfBoundsException exc) {
-            throw Py.ValueError("invalid literal for __int__: "+str);
+            throw Py.ValueError("invalid literal for __long__: "+str);
         }
     }
 
