@@ -56,10 +56,8 @@ class ListFunctions extends PyBuiltinFunctionSet {
 
 public class PyList extends PySequence implements InitModule {
     public void initModule(PyObject dict) {
-		dict.__setitem__("append", new ListFunctions().init("append", 0, 2, true) );
+		//dict.__setitem__("append", new ListFunctions().init("append", 0, 2, true) );
 	}
-            
-    
     
     public PyObject[] list;
     public int length;
@@ -165,7 +163,7 @@ public class PyList extends PySequence implements InitModule {
 	    }
 	}
 
-	protected PyObject repeat(int count) {
+	public PyObject repeat(int count) {
 		int l = length;
 		PyObject[] newList = new PyObject[l*count];
 		for(int i=0; i<count; i++) {
