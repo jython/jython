@@ -18,8 +18,8 @@ public class PyJavaClass extends PyClass
         return tbl;
     }
     
-    public static final boolean isLazy(PyJavaClass jc) { // ?? for jreload
-        return jc.proxyClass == null;
+    public final boolean isLazy() {
+        return proxyClass == null;
     }
 
     public static final PyJavaClass lookup(String name,PackageManager mgr) {
@@ -796,7 +796,7 @@ public class PyJavaClass extends PyClass
     }
 
     public Object __tojava__(Class c) {
-        if (c != PyJavaClass.class) initialize(); // ?? for isLazy
+        initialize();
         return super.__tojava__(c);
     }
 

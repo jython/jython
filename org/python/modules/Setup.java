@@ -48,5 +48,6 @@ public class Setup
         "imp",
         "sha",
         "ucnhash",
+        "_jython",
     };
 }
