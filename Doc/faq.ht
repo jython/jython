@@ -61,7 +61,7 @@ Title: JPython FAQ
     However, you can essentially apply the Python Y2K stance to
     JPython by, e.g. substituting the word "Java" for "C" in FAQ
     question 4.65 (<em>ignore the clip from the Python copyright
-    notice).
+    notice</em>).
 
 <p><li><b><A NAME="Supported Modules"></A>What parts of the Python
     library are supported?</b>
