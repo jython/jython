@@ -296,8 +296,8 @@ public class PyTableCode extends PyCode
                 if (index < co_argcount) {
                     if (actual_args[index] != null) {
                         throw Py.TypeError(prefix()+
-                                           "duplicate keyword argument: "+
-                                           call_keywords[i]);
+                                           "got multiple values for keyword argument '"+
+                                           call_keywords[i] + "'");
                     }
                     actual_args[index] =
                         call_args[i+(call_args.length-call_keywords.length)];
@@ -305,8 +305,8 @@ public class PyTableCode extends PyCode
                 else {
                     if (extra_keywords == null) {
                         throw Py.TypeError(prefix()+
-                                           "unexpected keyword argument: "+
-                                           call_keywords[i]);
+                                           "got an unexpected keyword argument '"+
+                                           call_keywords[i] + "'");
                     }
                     extra_keywords.__setitem__(
                         call_keywords[i],
@@ -331,11 +331,13 @@ public class PyTableCode extends PyCode
             for (i=plain_args; i<co_argcount; i++) {
                 if (actual_args[i] == null) {
                     if (co_argcount-i > defaults.length) {
+                        int min = co_argcount-defaults.length;
                         throw Py.TypeError(
                             prefix()+
-                            "not enough arguments; expected "+
-                            (co_argcount-defaults.length)+" got "+
-                            (call_args.length-call_keywords.length));
+                            "takes at least " + min +
+                            (min == 1 ? " argument (" : " arguments (") + 
+                            (call_args.length-call_keywords.length)+
+                            " given)");
                     }
                     actual_args[i] = defaults[defaults.length-(co_argcount-i)];
                 }
