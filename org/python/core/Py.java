@@ -844,7 +844,7 @@ public final class Py {
 	}
 
 
-	static PyObject runCode(PyCode code, PyObject locals, PyObject globals) {
+	public static PyObject runCode(PyCode code, PyObject locals, PyObject globals) {
 	    //System.out.println("run code");
 		PyFrame f;
 		/*if (globals == null && locals == null) {
