@@ -18,20 +18,28 @@ public class parser {
 	}
 
 	static PyException fixParseError(InputStream istream, Throwable t, String filename) {
+	    return fixParseError(istream, t, filename, false);
+	}
+	
+	static PyException fixParseError(InputStream istream, Throwable t, String filename, boolean forceNewline) {
 		if (t instanceof ParseException) {
 			ParseException e = (ParseException)t;
 			Token tok = e.currentToken;
 			int col = tok.next.beginColumn;
 			int line = tok.next.beginLine;
 			String text=getLine(istream, line);
-			return new PySyntaxError(e.getMessage(), line, col, text, filename);
+			return new PySyntaxError(e.getMessage(), line, col, text, filename, forceNewline);
 		}
 		if (t instanceof TokenMgrError) {
 			TokenMgrError e = (TokenMgrError)t;
+			boolean eofSeen = e.EOFSeen;
+
 			int col = e.errorColumn;
 			int line = e.errorLine;
+			//System.err.println("eof seen: "+eofSeen+", "+e.curChar+", "+col+", "+line);
 			String text = getLine(istream, line);
-			return new PySyntaxError(e.getMessage(), line, col, text, filename);
+			if (eofSeen) col -= 1;
+			return new PySyntaxError(e.getMessage(), line, col, text, filename, forceNewline);
 		}
 		else return Py.JavaError(t);
 	}
@@ -72,9 +80,10 @@ public class parser {
 			try {
 			    //System.err.println("resetting istream");
 				istream.reset();
-				throw fixParseError(istream, t, filename);
+				throw fixParseError(istream, t, filename, g.token_source.forcedNewline);
 			} catch (IOException ioe) {
-				throw Py.IOError(ioe);
+			    throw fixParseError(null, t, filename, g.token_source.forcedNewline);
+				//throw Py.IOError(ioe);
 			}
 		}
 		return node;
@@ -82,14 +91,18 @@ public class parser {
 	
 	public static SimpleNode partialParse(String string, String kind, String filename) {
 	    SimpleNode node = null;
+	    //System.err.println(new PyString(string).__repr__().toString());
 	    try {
 	        node = parse(new StringBufferInputStream(string), kind, filename);
 	    } catch (PySyntaxError e) {
+	        //System.out.println("e: "+e.lineno+", "+e.column+", "+e.forceNewline);
+	        
 	        try {
 	            node = parse(new StringBufferInputStream(string+"\n"), kind, filename);
 	        } catch (PySyntaxError e1) {
-	            if (e.lineno == e1.lineno && e.column == e1.column)
-	                throw e;
+	            //System.out.println("e1: "+e1.lineno+", "+e1.column+", "+e1.forceNewline);
+	            if (e.forceNewline || !e1.forceNewline) throw e;
+	            
 	        }
 	        return null;
 	    }

@@ -54,6 +54,7 @@ TOKEN_MGR_DECLS:
    boolean single_input=false;
    public Runnable showSecondaryPrompt = null;
    boolean compound=false;
+   public boolean forcedNewline = false;
 
 	static Token addDedent(Token previous) {
 		Token t = new Token();
@@ -162,6 +163,7 @@ SKIP :
 		if (parens == 0 && single_input && indent==0) {
 			//System.out.println("force newline");
 			//backup a character!
+			forcedNewline = true;
 			input_stream.backup(1);
 			SwitchTo(FORCE_NEWLINE);
 		} else {
