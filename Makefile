@@ -13,7 +13,18 @@ SUBDIRS= \
 	org/python/core \
 	org/python/modules \
 	org/python/util \
-	org/python/rmi
+	org/python/rmi \
+	tests/scripts/javatests
+
+CLEANDIRS = $(SUBDIRS) \
+	tests/bugs \
+	tests/bugs/pr133 \
+	tests/scripts \
+	Lib \
+	Lib/pawt \
+	Tools/jpythonc2 \
+	Tools/peekaboo \
+	demo/javaclasses/pygraph
 
 all: subdirs installer
 
@@ -27,14 +38,14 @@ installer:
 	-(cd installer; $(MAKE))
 
 clean::
-	@for d in $(SUBDIRS); \
+	@for d in $(CLEANDIRS); \
 	do \
 	    (cd $$d; $(MAKE) clean); \
 	done
 	-(cd installer; $(MAKE) clean)
 
 realclean::
-	@for d in $(SUBDIRS); \
+	@for d in $(CLEANDIRS); \
 	do \
 	    (cd $$d; $(MAKE) realclean); \
 	done
