@@ -60,6 +60,7 @@ the property python.jpythonc.compiler in the registry.''' % e
         return 1, '', msg
     done = None
     while not done:
+        proc.waitFor()
 	try:
 	    proc.exitValue()
 	    done = 1
