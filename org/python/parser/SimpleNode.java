@@ -102,7 +102,7 @@ public class SimpleNode implements Node {
     }
 
     protected String dumpThis(boolean b) {
-        return Boolean.toString(b);
+        return String.valueOf(b);
     }
 
 
