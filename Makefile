@@ -3,6 +3,10 @@
 # Makefile for building JPython.  See the instructions in
 # rules/make.rules for details.
 
+include rules/make.rules
+
+.PHONY: installer
+
 SUBDIRS= \
 	org/python/parser \
 	org/python/compiler \
@@ -10,22 +14,27 @@ SUBDIRS= \
 	org/python/modules \
 	org/python/util
 
-all: subdirs
+all: subdirs installer
 
-subdirs: $(SUBDIRS)
+subdirs:
 	@for d in $(SUBDIRS); \
 	do \
 		(cd $$d; $(MAKE)); \
 	done
 
-clean: $(SUBDIRS)
+installer:
+	-(cd installer; $(MAKE))
+
+clean::
 	@for d in $(SUBDIRS); \
 	do \
 	    (cd $$d; $(MAKE) clean); \
 	done
+	-(cd installer; $(MAKE) clean)
 
-realclean: $(SUBDIRS)
+realclean::
 	@for d in $(SUBDIRS); \
 	do \
 	    (cd $$d; $(MAKE) realclean); \
 	done
+	-(cd installer; $(MAKE) realclean)
