@@ -1,642 +1,729 @@
+# Copyright © Corporation for National Research Initiatives
 import string
 from Output import SourceFile
 
+
 class Statement:
-	def __repr__(self):
-		out = SourceFile('Foo')
-		self.writeSource(out)
-		return str(out)
+    def __repr__(self):
+        out = SourceFile('Foo')
+        self.writeSource(out)
+        return str(out)
 
-	def exits(self): return 0
+    def exits(self):
+        return 0
 
+
 class Class(Statement):
-	def __init__(self, name, access, superclass, interfaces, body):
-		self.name = name
-		self.access = access
-		self.superclass = superclass
-		self.interfaces = interfaces
-		self.body = body
-		
-	def writeSource(self, out):
-		out.write("%s class %s extends %s ", self.access, self.name, self.superclass)
-		if len(self.interfaces) > 0:
-			out.write("implements %s ", string.join(self.interfaces, ", "))
-		self.body.writeSource(out)
+    def __init__(self, name, access, superclass, interfaces, body):
+        self.name = name
+        self.access = access
+        self.superclass = superclass
+        self.interfaces = interfaces
+        self.body = body
 
-	def __repr__(self):
-		return "Class(%s, %s, %s, %s, %s)" % (self.name, self.access, self.superclass, self.interfaces, self.body)
+    def writeSource(self, out):
+        out.write("%s class %s extends %s ", self.access, self.name,
+                  self.superclass)
+        if len(self.interfaces) > 0:
+            out.write("implements %s ", string.join(self.interfaces, ", "))
+        self.body.writeSource(out)
 
+    def __repr__(self):
+        return "Class(%s, %s, %s, %s, %s)" % (self.name, self.access,
+                                              self.superclass,
+                                              self.interfaces, self.body)
+
+
 class Method(Statement):
-	def __init__(self, name, access, args, body, throws=[]):
-		self.name = name
-		self.access = access
-		self.args = args
-		self.body = body
-		self.throws = throws
-		
-	def writeSource(self, out):
-		argtext = []
-		for type, name in self.args[1:]:
-			argtext.append(type+" "+name)
-		if len(self.throws) == 0: throwstext = ""
-		else: throwstext = " throws "+string.join(self.throws, ", ")
+    def __init__(self, name, access, args, body, throws=[]):
+        self.name = name
+        self.access = access
+        self.args = args
+        self.body = body
+        self.throws = throws
 
-		out.write("%s %s %s(%s)%s ", self.access, self.args[0], self.name,
-			string.join(argtext, ", "), throwstext)
-		self.body.writeSource(out)
-		out.writeln()
+    def writeSource(self, out):
+        argtext = []
+        for type, name in self.args[1:]:
+            argtext.append(type+" "+name)
+        if len(self.throws) == 0:
+            throwstext = ""
+        else:
+            throwstext = " throws "+string.join(self.throws, ", ")
 
-	def __repr__(self):
-		return "Method(%s, %s, %s, %s)" % (self.name, self.access, self.args, self.body)
+        out.write("%s %s %s(%s)%s ", self.access, self.args[0], self.name,
+                  string.join(argtext, ", "), throwstext)
+        self.body.writeSource(out)
+        out.writeln()
 
+    def __repr__(self):
+        return "Method(%s, %s, %s, %s)" % (self.name, self.access,
+                                           self.args, self.body)
 
+
 class Constructor(Statement):
-	def __init__(self, name, access, args, body, throws=[]):
-		self.name = name
-		self.access = access
-		self.args = args
-		self.body = body
-		self.throws = throws
-		
-	def writeSource(self, out):
-		argtext = []
-		for type, name in self.args:
-			argtext.append(type+" "+name)
-		if len(self.throws) == 0: throwstext = ""
-		else: throwstext = " throws "+string.join(self.throws, ", ")
-		
-		out.write("%s %s(%s)%s ", self.access, self.name,
-			string.join(argtext, ", "), throwstext)
-		self.body.writeSource(out)
-		out.writeln()
+    def __init__(self, name, access, args, body, throws=[]):
+        self.name = name
+        self.access = access
+        self.args = args
+        self.body = body
+        self.throws = throws
 
-	def __repr__(self):
-		return "Constructor(%s, %s, %s, %s)" % (self.name, self.access, self.args, self.body)
+    def writeSource(self, out):
+        argtext = []
+        for type, name in self.args:
+            argtext.append(type+" "+name)
+        if len(self.throws) == 0:
+            throwstext = ""
+        else:
+            throwstext = " throws "+string.join(self.throws, ", ")
+
+        out.write("%s %s(%s)%s ", self.access, self.name,
+                  string.join(argtext, ", "), throwstext)
+        self.body.writeSource(out)
+        out.writeln()
+
+    def __repr__(self):
+        return "Constructor(%s, %s, %s, %s)" % (self.name, self.access,
+                                                self.args, self.body)
 
 
-
+
 class BlankLine(Statement):
-	def writeSource(self, out):
-		out.writeln()
-		
-	def __repr__(self):
-		return "BlankLine()"
-		
+    def writeSource(self, out):
+        out.writeln()
+
+    def __repr__(self):
+        return "BlankLine()"
+
 Blank = BlankLine()
 
 
+
 class Import(Statement):
-	def __init__(self, package):
-		self.package = package
-		
-	def writeSource(self, out):		
-		out.writeln("import %s;", self.package)
-		
-	def __repr__(self):
-		return "Import(%s)" % (self.package)
+    def __init__(self, package):
+        self.package = package
+
+    def writeSource(self, out):         
+        out.writeln("import %s;", self.package)
+
+    def __repr__(self):
+        return "Import(%s)" % (self.package)
 
 
+
 class SimpleComment(Statement):
-	""" ??? """
-	def __init__(self, text):
-		self.text = text
-		
-	def writeSource(self, out):		
-		out.writeln("// "+self.text)
-		
-	def __repr__(self):
-		return "SimpleComment(%s)" % (self.text)
+    """ ??? """
+    def __init__(self, text):
+        self.text = text
 
+    def writeSource(self, out):         
+        out.writeln("// "+self.text)
+
+    def __repr__(self):
+        return "SimpleComment(%s)" % (self.text)
+
+
+
 class Comment(Statement):
-	""" ??? """
-	def __init__(self, text):
-		self.text = text
-		
-	def writeSource(self, out):
-		lines = string.split(self.text, '\n')
-		if len(lines) == 1:
-			out.writeln("/* %s */", self.text)
-			return
+    """ ??? """
+    def __init__(self, text):
+        self.text = text
 
-		out.writeln("/* %s", lines[0])
-		for line in lines[1:-1]:
-			out.writeln(line)
-		out.writeln("%s */", lines[-1])
-		
-	def __repr__(self):
-		return "Comment(%s)" % (self.package)
+    def writeSource(self, out):
+        lines = string.split(self.text, '\n')
+        if len(lines) == 1:
+            out.writeln("/* %s */", self.text)
+            return
+
+        out.writeln("/* %s", lines[0])
+        for line in lines[1:-1]:
+            out.writeln(line)
+        out.writeln("%s */", lines[-1])
+
+    def __repr__(self):
+        return "Comment(%s)" % (self.package)
 
 
-
+
 class Declare(Statement):
-	def __init__(self, type, name, value=None):
-		self.type = type
-		self.name = name
-		self.value = value
-		
-	def writeSource(self, out):
-		if self.value is not None:
-			out.writeln("%s %s = %s;", self.type, self.name.sourceString(), self.value.sourceString())
-		else:
-			out.writeln("%s %s;", self.type, self.name.sourceString())
+    def __init__(self, type, name, value=None):
+        self.type = type
+        self.name = name
+        self.value = value
+
+    def writeSource(self, out):
+        if self.value is not None:
+            out.writeln("%s %s = %s;", self.type, self.name.sourceString(),
+                        self.value.sourceString())
+        else:
+            out.writeln("%s %s;", self.type, self.name.sourceString())
+
+    def __repr__(self):
+        return "Declare(%s, %s, %s)" % (self.type, self.name, self.value)
 
 
-	def __repr__(self):
-		return "Declare(%s, %s, %s)" % (self.type, self.name, self.value)
-
-
+
 class Pass(Statement):
-	def writeSource(self, out): pass
+    def writeSource(self, out):
+        pass
 
-	def __repr__(self):
-		return "Pass()"
+    def __repr__(self):
+        return "Pass()"
 
+
+
 def flatten(lst):
-	ret = []
-	for item in lst:
-		if isinstance(item, type(lst)):
-			ret.extend(flatten(item))
-		elif isinstance(item, Block):
-			ret.extend(item.code)
-		else:
-			ret.append(item)
-	return ret
+    ret = []
+    for item in lst:
+        if isinstance(item, type(lst)):
+            ret.extend(flatten(item))
+        elif isinstance(item, Block):
+            ret.extend(item.code)
+        else:
+            ret.append(item)
+    return ret
 
 
+
 class FreeBlock(Statement):
-	def __init__(self, code=None):
-		if code is None: code = []
-		self.code = flatten(code)
-		self.locals = {}
-		self.tempindex = 0
-		
-	def addlocal(self, name, type):
-		self.locals[name] = type
-		
-	def writeSource(self, out):
-		for name, type in self.locals.items():
-			tn = type.typename
-			if tn == 'PyObject':
-				out.writeln('%s %s = null;', tn, name)			
-			elif tn == 'int':
-				out.writeln('%s %s = 0;', tn, name)						
-			elif tn == 'char':
-				out.writeln("%s %s = '\\000';", tn, name)						
-			else:
-				out.writeln('%s %s;', tn, name)
+    def __init__(self, code=None):
+        if code is None:
+            code = []
+        self.code = flatten(code)
+        self.locals = {}
+        self.tempindex = 0
 
-		if len(self.locals) > 0:
-			out.writeln()
+    def addlocal(self, name, type):
+        self.locals[name] = type
 
-		for stmt in self.code:
-			#print stmt
-			stmt.writeSource(out)
+    def writeSource(self, out):
+        for name, type in self.locals.items():
+            tn = type.typename
+            if tn == 'PyObject':
+                out.writeln('%s %s = null;', tn, name)
+            elif tn == 'int':
+                out.writeln('%s %s = 0;', tn, name)
+            elif tn == 'char':
+                out.writeln("%s %s = '\\000';", tn, name)
+            else:
+                out.writeln('%s %s;', tn, name)
 
-	def exits(self):
-		last = self.code[-1]
-		if not hasattr(last, 'exits'):
-			print last, self.code
-			print 'oops'
-		else:
-			return last.exits()
+        if len(self.locals) > 0:
+            out.writeln()
 
-	def __repr__(self):
-		return "FreeBlock(%s)" % (self.code)
+        for stmt in self.code:
+            #print stmt
+            stmt.writeSource(out)
+
+    def exits(self):
+        last = self.code[-1]
+        if not hasattr(last, 'exits'):
+            print last, self.code
+            print 'oops'
+        else:
+            return last.exits()
+
+    def __repr__(self):
+        return "FreeBlock(%s)" % (self.code)
 
 
-
+
 class Block(FreeBlock):
-	def writeSource(self, out):
-		out.beginBlock()
-		FreeBlock.writeSource(self, out)
-		out.endBlock()
+    def writeSource(self, out):
+        out.beginBlock()
+        FreeBlock.writeSource(self, out)
+        out.endBlock()
 
-	def __repr__(self):
-		return "Block(%s)" % (self.code)
+    def __repr__(self):
+        return "Block(%s)" % (self.code)
 
 
-
+
 class TryCatch(Statement):
-	def __init__(self, body, exctype, excname, catchbody):
-		self.body = body
-		self.exctype = exctype
-		self.excname = excname
-		self.catchbody = catchbody
-		
-	def writeSource(self, out):
-		out.write("try ")
-		self.body.writeSource(out)
-		out.write("catch (%s %s) ", self.exctype, self.excname.sourceString())
-		self.catchbody.writeSource(out)
+    def __init__(self, body, exctype, excname, catchbody):
+        self.body = body
+        self.exctype = exctype
+        self.excname = excname
+        self.catchbody = catchbody
 
-	def exits(self):
-		return self.body.exits() and self.catchbody.exits()
-		
+    def writeSource(self, out):
+        out.write("try ")
+        self.body.writeSource(out)
+        out.write("catch (%s %s) ", self.exctype, self.excname.sourceString())
+        self.catchbody.writeSource(out)
+
+    def exits(self):
+        return self.body.exits() and self.catchbody.exits()
+
+
+
 class TryCatches(Statement):
-	def __init__(self, body, catches):
-		self.body = body
-		self.catches = catches
-		
-	def writeSource(self, out):
-		out.write("try ")
-		self.body.writeSource(out)
-		for exctype, excname, catchbody in self.catches:
-			out.write("catch (%s %s) ", exctype, excname.sourceString())
-			catchbody.writeSource(out)
+    def __init__(self, body, catches):
+        self.body = body
+        self.catches = catches
 
-	def exits(self):
-		return self.body.exits() and self.catchbody.exits()
-		
+    def writeSource(self, out):
+        out.write("try ")
+        self.body.writeSource(out)
+        for exctype, excname, catchbody in self.catches:
+            out.write("catch (%s %s) ", exctype, excname.sourceString())
+            catchbody.writeSource(out)
+
+    def exits(self):
+        return self.body.exits() and self.catchbody.exits()
+
+
+
 class TryFinally(Statement):
-	def __init__(self, body, finalbody):
-		self.body = body
-		self.finalbody = finalbody
-		
-	def writeSource(self, out):
-		out.write("try ")
-		self.body.writeSource(out)
-		out.write("finally ")
-		self.finalbody.writeSource(out)
+    def __init__(self, body, finalbody):
+        self.body = body
+        self.finalbody = finalbody
 
-	def exits(self):
-		return self.body.exits() or self.finalbody.exits()
+    def writeSource(self, out):
+        out.write("try ")
+        self.body.writeSource(out)
+        out.write("finally ")
+        self.finalbody.writeSource(out)
+
+    def exits(self):
+        return self.body.exits() or self.finalbody.exits()
 
 
+
 class If(Statement):
-	def __init__(self, test, thenBody, elseBody=None):
-		self.test = test
-		self.thenBody = thenBody
-		self.elseBody = elseBody
-		
-	def writeSource(self, out):
-		out.write("if (%s) ", self.test.sourceString())
-		self.thenBody.writeSource(out)
-		if self.elseBody is not None:
-			out.write("else ")
-			self.elseBody.writeSource(out)
+    def __init__(self, test, thenBody, elseBody=None):
+        self.test = test
+        self.thenBody = thenBody
+        self.elseBody = elseBody
 
-	def exits(self):
-		if self.elseBody is None: return 0
-		return self.thenBody.exits() and self.elseBody.exits()
+    def writeSource(self, out):
+        out.write("if (%s) ", self.test.sourceString())
+        self.thenBody.writeSource(out)
+        if self.elseBody is not None:
+            out.write("else ")
+            self.elseBody.writeSource(out)
 
+    def exits(self):
+        if self.elseBody is None:
+            return 0
+        return self.thenBody.exits() and self.elseBody.exits()
+
+
+
 class MultiIf(Statement):
-	def __init__(self, tests, elseBody=None):
-		self.tests = tests
-		self.elseBody = elseBody
-		
-	def writeSource(self, out):
-		for i in range(len(self.tests)):
-			test, body = self.tests[i]
-			if i > 0:
-				out.write("else ")
-			
-			out.write("if (%s) ", test.sourceString())
-			body.writeSource(out)
-		if self.elseBody is not None:
-			out.write("else ")
-			self.elseBody.writeSource(out)
+    def __init__(self, tests, elseBody=None):
+        self.tests = tests
+        self.elseBody = elseBody
 
-	def exits(self):
-		if self.elseBody is None: return 0
-		if not self.elseBody.exits(): return 0
-		
-		for test, body in self.tests:
-			if not body.exits(): return 0
-			
-		return 1
+    def writeSource(self, out):
+        for i in range(len(self.tests)):
+            test, body = self.tests[i]
+            if i > 0:
+                out.write("else ")
 
+            out.write("if (%s) ", test.sourceString())
+            body.writeSource(out)
+        if self.elseBody is not None:
+            out.write("else ")
+            self.elseBody.writeSource(out)
+
+    def exits(self):
+        if self.elseBody is None:
+            return 0
+        if not self.elseBody.exits():
+            return 0
+        for test, body in self.tests:
+            if not body.exits():
+                return 0
+        return 1
+
+
+
 class While(Statement):
-	def __init__(self, test, body):
-		self.test = test
-		self.body = body
-		
-	def writeSource(self, out):
-		out.write("while (%s) ", self.test.sourceString())
-		self.body.writeSource(out)
+    def __init__(self, test, body):
+        self.test = test
+        self.body = body
 
+    def writeSource(self, out):
+        out.write("while (%s) ", self.test.sourceString())
+        self.body.writeSource(out)
+
+
+
 class WhileElse(Statement):
-	def __init__(self, test, body, else_body, while_temp):
-		self.test = test
-		self.body = body
-		self.else_body = else_body
-		self.while_temp = while_temp
-		
-	def writeSource(self, out):
-		out.write("while (%s=%s) ", self.while_temp.sourceString(), self.test.sourceString())
-		self.body.writeSource(out)
-		out.write("if (!%s) ", self.while_temp.sourceString())
-		self.else_body.writeSource(out)
-		
+    def __init__(self, test, body, else_body, while_temp):
+        self.test = test
+        self.body = body
+        self.else_body = else_body
+        self.while_temp = while_temp
+
+    def writeSource(self, out):
+        out.write("while (%s=%s) ", self.while_temp.sourceString(),
+                  self.test.sourceString())
+        self.body.writeSource(out)
+        out.write("if (!%s) ", self.while_temp.sourceString())
+        self.else_body.writeSource(out)
+
+
+
 class Switch(Statement):
-	def __init__(self, index, cases, defaultCase=None):
-		self.index = index
-		self.cases = cases
-		self.defaultCase = defaultCase
-		
-	def writeSource(self, out):
-		out.write("switch (%s)", self.index.sourceString())
-		out.beginBlock()
-		for label, code in self.cases:
-			out.writeln("case %s:", label.sourceString())
-			code.writeSource(out)
-		if self.defaultCase is not None:
-			out.writeln("default:")
-			self.defaultCase.writeSource(out)
-		out.endBlock()
-		
+    def __init__(self, index, cases, defaultCase=None):
+        self.index = index
+        self.cases = cases
+        self.defaultCase = defaultCase
+
+    def writeSource(self, out):
+        out.write("switch (%s)", self.index.sourceString())
+        out.beginBlock()
+        for label, code in self.cases:
+            out.writeln("case %s:", label.sourceString())
+            code.writeSource(out)
+        if self.defaultCase is not None:
+            out.writeln("default:")
+            self.defaultCase.writeSource(out)
+        out.endBlock()
 
 
+
 class Return(Statement):
-	def __init__(self, value=None):
-		self.value = value
-		
-	def writeSource(self, out):
-		if self.value is None:
-			out.writeln("return;")
-		else:
-			out.writeln("return %s;", self.value.sourceString())
+    def __init__(self, value=None):
+        self.value = value
 
-	def exits(self):
-		return 1
-		
+    def writeSource(self, out):
+        if self.value is None:
+            out.writeln("return;")
+        else:
+            out.writeln("return %s;", self.value.sourceString())
+
+    def exits(self):
+        return 1
+
+
+
 class Throw(Statement):
-	def __init__(self, value):
-		self.value = value
-		
-	def writeSource(self, out):
-		out.writeln("throw %s;", self.value.sourceString())
+    def __init__(self, value):
+        self.value = value
 
-	def exits(self):
-		# Interesting question...
-		return 1
+    def writeSource(self, out):
+        out.writeln("throw %s;", self.value.sourceString())
 
+    def exits(self):
+        # Interesting question...
+        return 1
+
+
+
 class Break(Statement):
-	def writeSource(self, out):
-		out.writeln("break;")
-		
+    def writeSource(self, out):
+        out.writeln("break;")
+
 class Continue(Statement):
-	def writeSource(self, out):
-		out.writeln("continue;")
+    def writeSource(self, out):
+        out.writeln("continue;")
 
 
+
 class Expression:
-	def __repr__(self):
-		return self.sourceString()
-		
-	def safeSourceString(self):
-		return self.sourceString()
+    def __repr__(self):
+        return self.sourceString()
 
-	def writeSource(self, out):
-		out.writeln(self.sourceString()+";")
-		
-	def exits(self):
-		return 0
+    def safeSourceString(self):
+        return self.sourceString()
 
+    def writeSource(self, out):
+        out.writeln(self.sourceString()+";")
+
+    def exits(self):
+        return 0
+
+
+
 class UnsafeExpression(Expression):
-	def safeSourceString(self):
-		return "("+self.sourceString()+")"	
+    def safeSourceString(self):
+        return "("+self.sourceString()+")"      
 
+
+
 class Cast(UnsafeExpression):
-	def __init__(self, totype, value):
-		self.totype = totype
-		self.value = value
-		
-	def sourceString(self):
-		return "(%s)%s" % (self.totype, self.value.safeSourceString())
+    def __init__(self, totype, value):
+        self.totype = totype
+        self.value = value
 
+    def sourceString(self):
+        return "(%s)%s" % (self.totype, self.value.safeSourceString())
+
+
+
 class Set(UnsafeExpression):
-	def __init__(self, lvalue, value):
-		self.lvalue = lvalue
-		self.value = value
+    def __init__(self, lvalue, value):
+        self.lvalue = lvalue
+        self.value = value
 
-	def sourceString(self):
-		return "%s = %s" % (self.lvalue.safeSourceString(), self.value.safeSourceString())	
+    def sourceString(self):
+        return "%s = %s" % (self.lvalue.safeSourceString(),
+                            self.value.safeSourceString())      
 
+
+
 class Constant(Expression):
-	def __init__(self, value):
-		self.value = value
-		
-	def sourceString(self):
-		return repr(self.value)
-	
+    def __init__(self, value):
+        self.value = value
+
+    def sourceString(self):
+        return repr(self.value)
+
 
 class IntegerConstant(Constant):
-	pass
-	
+    pass
+
 class FloatConstant(Constant):
-	pass
-	
+    pass
+
 class CharacterConstant(Constant):
-	pass
+    pass
 
+
+
 class StringConstant(Constant):
-	def sourceString(self):
-		ret = ['"']
-		for c in self.value:
-			oc = ord(c)
-			if c == '"':
-				ret.append('\\"')
-			elif c == '\\':
-				ret.append('\\\\')
-			elif oc >= 032 and oc <= 0177:
-				ret.append(c)
-			elif oc <= 0377:
-				ret.append("\\%03o" % oc)
-			else:
-				ret.append("\\u%04x" % oc)
-		ret.append('"')
-		return string.join(ret, '')
+    def sourceString(self):
+        ret = ['"']
+        for c in self.value:
+            oc = ord(c)
+            if c == '"':
+                ret.append('\\"')
+            elif c == '\\':
+                ret.append('\\\\')
+            elif oc >= 032 and oc <= 0177:
+                ret.append(c)
+            elif oc <= 0377:
+                ret.append("\\%03o" % oc)
+            else:
+                ret.append("\\u%04x" % oc)
+        ret.append('"')
+        return string.join(ret, '')
 
+
+
 class Operation(UnsafeExpression):
-	def __init__(self, op, x, y=None):
-		self.op = op
-		self.x = x
-		self.y = y
-		
-	def sourceString(self):
-		if self.y is None:
-			return "%s%s" % (self.op, self.x.safeSourceString())		
-		else:
-			return "%s %s %s" % (self.x.safeSourceString(), self.op,  self.y.safeSourceString())
-		
+    def __init__(self, op, x, y=None):
+        self.op = op
+        self.x = x
+        self.y = y
+
+    def sourceString(self):
+        if self.y is None:
+            return "%s%s" % (self.op, self.x.safeSourceString())
+        else:
+            return "%s %s %s" % (self.x.safeSourceString(), self.op,
+                                 self.y.safeSourceString())
+
+
 class TriTest(UnsafeExpression):
-	def __init__(self, test, x, y):
-		self.test = test
-		self.x = x
-		self.y = y
-		
-	def sourceString(self):
-		return "%s ? %s : %s" % (self.test.safeSourceString(), self.x.safeSourceString(), self.y.safeSourceString())
-	
+    def __init__(self, test, x, y):
+        self.test = test
+        self.x = x
+        self.y = y
 
+    def sourceString(self):
+        return "%s ? %s : %s" % (self.test.safeSourceString(),
+                                 self.x.safeSourceString(),
+                                 self.y.safeSourceString())
+
+
+
 class PostOperation(UnsafeExpression):
-	def __init__(self, x, op):
-		self.op = op
-		self.x = x
-		
-	def sourceString(self):
-		return "%s%s" % (self.x.safeSourceString(), self.op)
+    def __init__(self, x, op):
+        self.op = op
+        self.x = x
 
+    def sourceString(self):
+        return "%s%s" % (self.x.safeSourceString(), self.op)
+
+
+
 class InvokeLocal(Expression):
-	def __init__(self, name, args):
-		self.name = name
-		self.args = args
-		
-	def sourceString(self):
-		args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
-		return "%s(%s)" % (self.name, args)
+    def __init__(self, name, args):
+        self.name = name
+        self.args = args
 
+    def sourceString(self):
+        args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
+        return "%s(%s)" % (self.name, args)
+
+
+
 class Invoke(Expression):
-	def __init__(self, this, name, args):
-		self.name = name
-		self.this = this
-		self.args = args
-		
-	def sourceString(self):
-		args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
-		return "%s.%s(%s)" % (self.this.safeSourceString(), self.name, args)
+    def __init__(self, this, name, args):
+        self.name = name
+        self.this = this
+        self.args = args
 
+    def sourceString(self):
+        args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
+        return "%s.%s(%s)" % (self.this.safeSourceString(), self.name, args)
+
+
+
 class InvokeStatic(Expression):
-	def __init__(self, this, name, args):
-		self.name = name
-		self.this = this
-		self.args = args
-		
-	def sourceString(self):
-		args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
-		return "%s.%s(%s)" % (self.this, self.name, args)
+    def __init__(self, this, name, args):
+        self.name = name
+        self.this = this
+        self.args = args
+
+    def sourceString(self):
+        args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
+        return "%s.%s(%s)" % (self.this, self.name, args)
 
 
-
+
 class GetInstanceAttribute(Expression):
-	def __init__(self, this, name):
-		self.name = name
-		self.this = this
-		
-	def sourceString(self):
-		return "%s.%s" % (self.this.sourceString(), self.name)
+    def __init__(self, this, name):
+        self.name = name
+        self.this = this
 
+    def sourceString(self):
+        return "%s.%s" % (self.this.sourceString(), self.name)
+
+
+
 class GetStaticAttribute(Expression):
-	def __init__(self, this, name):
-		self.name = name
-		self.this = this
-		
-	def sourceString(self):
-		return "%s.%s" % (self.this, self.name)
+    def __init__(self, this, name):
+        self.name = name
+        self.this = this
 
+    def sourceString(self):
+        return "%s.%s" % (self.this, self.name)
+
+
+
 class SetInstanceAttribute(Expression):
-	def __init__(self, this, name, value):
-		self.name = name
-		self.this = this
-		self.value = value
-		
-	def sourceString(self):
-		return "%s.%s = %s" % (self.this.sourceString(), self.name, self.value.sourceString())
+    def __init__(self, this, name, value):
+        self.name = name
+        self.this = this
+        self.value = value
 
+    def sourceString(self):
+        return "%s.%s = %s" % (self.this.sourceString(), self.name,
+                               self.value.sourceString())
+
+
+
 class SetStaticAttribute(Expression):
-	def __init__(self, this, name, value):
-		self.name = name
-		self.this = this
-		self.value = value
-		
-	def sourceString(self):
-		return "%s.%s = %s" % (self.this, self.name, self.value.sourceString())
+    def __init__(self, this, name, value):
+        self.name = name
+        self.this = this
+        self.value = value
 
+    def sourceString(self):
+        return "%s.%s = %s" % (self.this, self.name, self.value.sourceString())
+
+
+
 class Identifier(Expression):
-	def __init__(self, name):
-		self.name = name
-		
-	def sourceString(self):
-		return str(self.name)
+    def __init__(self, name):
+        self.name = name
 
+    def sourceString(self):
+        return str(self.name)
+
+
+
 class New(Expression):
-	def __init__(self, name, args):
-		self.name = name
-		self.args = args
-		
-	def sourceString(self):
-		#print 'new', self.args
-		args = string.join(map(lambda arg: arg.sourceString(), self.args), ', ')
-		return "new %s(%s)" % (self.name, args)
+    def __init__(self, name, args):
+        self.name = name
+        self.args = args
 
+    def sourceString(self):
+        #print 'new', self.args
+        args = string.join(map(lambda arg: arg.sourceString(), self.args),', ')
+        return "new %s(%s)" % (self.name, args)
+
+
+
 class FilledArray(Expression):
-	def __init__(self, type, values):
-		self.type = type
-		self.values = values
-	
-	def sourceString(self):
-		args = string.join(map(lambda arg:arg.sourceString(), self.values), ', ')
-		return "new %s[] {%s}" % (self.type, args)
+    def __init__(self, type, values):
+        self.type = type
+        self.values = values
 
+    def sourceString(self):
+        args = string.join(map(lambda arg:arg.sourceString(),
+                               self.values), ', ')
+        return "new %s[] {%s}" % (self.type, args)
+
+
+
 class NewArray(Expression):
-	def __init__(self, type, dimensions):
-		self.type = type
-		if type(dimensions) == type(0):
-			dimensions = [dimensions]
-		self.dimensions = dimensions
-	
-	def sourceString(self):
-		args = string.join(map(lambda arg:str(arg), self.dimensions), '][')
-		return "new %s[%s]" % (self.type, args)
+    def __init__(self, type, dimensions):
+        self.type = type
+        if type(dimensions) == type(0):
+            dimensions = [dimensions]
+        self.dimensions = dimensions
 
+    def sourceString(self):
+        args = string.join(map(lambda arg:str(arg), self.dimensions), '][')
+        return "new %s[%s]" % (self.type, args)
+
+
+
 class StringArray(FilledArray):
-	def __init__(self, values):
-		lst = []
-		for value in values:
-			if value is None:
-				jv = Null
-			else:
-				jv = StringConstant(value)
-				
-			lst.append(jv)
-		self.values = lst
-		self.type = "String"
+    def __init__(self, values):
+        lst = []
+        for value in values:
+            if value is None:
+                jv = Null
+            else:
+                jv = StringConstant(value)
+            lst.append(jv)
+        self.values = lst
+        self.type = "String"
 
+
+
 class ClassReference(Expression):
-	def __init__(self, name):
-		self.name = name
-		
-	def sourceString(self):
-		return module.simpleClassName(self.name)
+    def __init__(self, name):
+        self.name = name
 
+    def sourceString(self):
+        return module.simpleClassName(self.name)
+
+
+
 True = Identifier("true")
 False = Identifier("false")
 Null = Identifier("null")
 
 
+##class SetIndex(Expression):
+##    def __init__(self, lvalue, index, value):
 
-"""	
-class SetIndex(Expression):
-	def __init__(self, lvalue, index, value):
-		
+##class SetAttribute(Expression):
+##    def __init__(self, lvalue, name, value):
 
-class SetAttribute(Expression):
-	def __init__(self, lvalue, name, value):
-"""
-	
-# Python also has a complicated set sequence form here, but that's just sugar for ???
+
+
+# Python also has a complicated set sequence form here, but that's just sugar
+# for ???
 
 if __name__ == '__main__':
-	from Output import SourceFile
-	out = SourceFile('Foo')
-	
-	
-	
-	x = Identifier('x')
-	one = IntegerConstant(1)
-	s = While(Operation('<', x, one), Set(x, Operation('+', x, one)))
-	s.writeSource(out)
-	
-	print out
+    from Output import SourceFile
+    out = SourceFile('Foo')
+
+    x = Identifier('x')
+    one = IntegerConstant(1)
+    s = While(Operation('<', x, one), Set(x, Operation('+', x, one)))
+    s.writeSource(out)
+
+    print out
 
 """
 public static int Func1(char CharPar1, char CharPar2) {
-	char CharLoc1 = CharPar1;
-	char CharLoc2 = CharLoc1;
-	if (CharLoc2 != CharPar2) {
-		return Ident1;
-	} else {
-		return Ident2;
-	}
+    char CharLoc1 = CharPar1;
+    char CharLoc2 = CharLoc1;
+    if (CharLoc2 != CharPar2) {
+        return Ident1;
+    } else {
+        return Ident2;
+    }
 }
 """
