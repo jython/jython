@@ -33,7 +33,7 @@ import org.python.core.*;
 class MD5Functions extends PyBuiltinFunctionSet 
 {
     public MD5Functions(String name, int index, int minargs, int maxargs) {
-        super(name, index, minargs, maxargs);
+        super(name, index, minargs, maxargs, false, null);
     }
 
     public PyObject __call__() {
