@@ -3,6 +3,10 @@ package org.python.core;
 import java.util.Vector;
 import java.io.Serializable;
 
+/**
+ * A python class.
+ */
+
 public class PyClass extends PyObject
 {
     /**
@@ -41,7 +45,7 @@ public class PyClass extends PyObject
         proxyClass = null;
     }
 
-    public PyClass(PyClass c) {
+    protected PyClass(PyClass c) {
         super(c);
         proxyClass = null;
     }
