@@ -140,7 +140,7 @@ public class cStringIO {
             opencheck();
             int newpos = (size < 0) ? count : Math.min(pos+size, count);
             String r = null;
-            if (size == 1) {
+            if (size == 1 && newpos > pos) {
                 r = cStringIO.getString(buf[pos]);
             } else {
                 r = new String(buf, pos, newpos-pos);
