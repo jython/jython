@@ -134,7 +134,20 @@ public class PyFloat extends PyObject
 
     public PyObject __pow__(PyObject right, PyObject modulo) {
         // Rely completely on Java's pow function
-        double ret = Math.pow(value, ((PyFloat)right).value);
+
+        double iw = ((PyFloat)right).value;
+        if (iw == 0) {
+            if (modulo != null)
+                return new PyFloat(modulo(1.0, ((PyFloat)modulo).value));
+            return new PyFloat(1.0);
+        }
+        if (value == 0.0) {
+            if (iw < 0.0)
+                throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
+            return new PyFloat(0);
+        }
+
+        double ret = Math.pow(value, iw);
         if (modulo == null) {
             return new PyFloat(ret);
         } else {

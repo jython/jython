@@ -162,7 +162,10 @@ public class PyLong extends PyObject
     public PyObject __pow__(PyObject right, PyObject modulo) {
         BigInteger y = ((PyLong)right).value;
         if (y.compareTo(BigInteger.valueOf(0)) < 0) {
-            throw Py.ValueError("long to negative power");
+            if (value.compareTo(BigInteger.valueOf(0)) != 0)
+                throw Py.ValueError("long integer to a negative power");
+            else
+                throw Py.ZeroDivisionError("zero to a negative power");
         }
         if (modulo == null)
             return new PyLong(value.pow(y.intValue()));
