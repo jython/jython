@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.modules;
 
 import org.python.core.*;
@@ -9,7 +10,6 @@ public class PyLock extends PyObject {
     public boolean acquire() {
         return acquire(true);
     }
-
 
     public synchronized boolean acquire(boolean waitflag) {
         if (waitflag) {
