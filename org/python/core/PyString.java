@@ -1,156 +1,172 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 public class PyString extends PySequence {
-	private String string;
-	private transient int cached_hashcode=0;
-	private transient boolean interned=false;
+    private String string;
+    private transient int cached_hashcode=0;
+    private transient boolean interned=false;
 
     public static PyClass __class__;
-	public PyString(String new_string) {
-	    super(__class__);
-		string = new_string;
-	}
-	
-	public PyString(char c) {
-	    this(String.valueOf(c));
-	}
 
-	public PyString __str__() {
-		return this;
-	}
+    public PyString(String new_string) {
+	super(__class__);
+	string = new_string;
+    }
 	
-	public int __len__() {
-	    return string.length();
-	}
+    public PyString(char c) {
+	this(String.valueOf(c));
+    }
 
-	public String toString() { return string; }
+    public PyString __str__() {
+	return this;
+    }
 	
-	public String internedString() {
-	    if (interned) {
-	        return string;
+    public int __len__() {
+	return string.length();
+    }
+
+    public String toString() {
+	return string;
+    }
+	
+    public String internedString() {
+	if (interned) {
+	    return string;
+	} else {
+	    string = string.intern();
+	    interned = true;
+	    return string;
+	}
+    }
+
+    // Do I need to do more for Unicode?
+    public PyString __repr__() {
+	char quote = '"';
+	if (string.indexOf('\'') == -1 || string.indexOf('"') != -1)
+	    quote = '\'';
+
+	StringBuffer buf = new StringBuffer(string.length()+5);
+	buf.append(quote);
+	boolean didhex = false;
+
+	for (int i=0; i<string.length(); i++) {
+	    char c = string.charAt(i);
+	    if (didhex && Character.digit(c, 16) != -1) {
+		buf.append("\\x");
+		buf.append(Integer.toString(c, 16));
+		continue;
+	    }
+			
+	    didhex = false;
+	    if (c == quote || c == '\\') {
+		buf.append('\\');
+		buf.append(c);
 	    } else {
-	        string = string.intern();
-	        interned = true;
-	        return string;
+		if (c >= ' ' && c <= 0177) {
+		    buf.append(c);
+		} 
+		else if (c == '\n') buf.append("\\n");
+		else if (c == '\t') buf.append("\\t");
+		else if (c == '\b') buf.append("\\b");
+		else if (c == '\f') buf.append("\\f");
+		else if (c == '\r') buf.append("\\r");
+		else {
+		    buf.append("\\x");
+		    buf.append(Integer.toString(c, 16));
+		    didhex = true;
+		}
 	    }
 	}
+	buf.append(quote);
+	return new PyString(buf.toString());
+    }
 
-
-	// Do I need to do more for Unicode?
-	public PyString __repr__() {
-		char quote = '"';
-		if (string.indexOf('\'') == -1 || string.indexOf('"') != -1) quote = '\'';
-		StringBuffer buf = new StringBuffer(string.length()+5);
-		buf.append(quote);
-		boolean didhex = false;
-		for(int i=0; i<string.length(); i++) {
-			char c = string.charAt(i);
-			if (didhex && Character.digit(c, 16) != -1) {
-		        buf.append("\\x");
-		        buf.append(Integer.toString(c, 16));
-		        continue;
-			}
-			
-			didhex = false;
-			if (c == quote || c == '\\') {
-				buf.append('\\');
-				buf.append(c);
-			} else {
-			    if (c >= ' ' && c <= 0177) {
-			        buf.append(c);
-			    } 
-			    else if (c == '\n') buf.append("\\n");
-			    else if (c == '\t') buf.append("\\t");
-			    else if (c == '\b') buf.append("\\b");
-			    else if (c == '\f') buf.append("\\f");
-			    else if (c == '\r') buf.append("\\r");
-			    else {
-			        buf.append("\\x");
-			        buf.append(Integer.toString(c, 16));
-			        didhex = true;
-			    }
-			}
-		}
-		buf.append(quote);
-		return new PyString(buf.toString());
-	}
-
-	public boolean equals(Object other) {
-	    if (!(other instanceof PyString)) return false;
+    public boolean equals(Object other) {
+	if (!(other instanceof PyString))
+	    return false;
 	    
-	    PyString o = (PyString)other;
-	    if (interned && o.interned) return string == o.string;
+	PyString o = (PyString)other;
+	if (interned && o.interned)
+	    return string == o.string;
 	    
-	    return string.equals(o.string);
+	return string.equals(o.string);
+    }
+
+    public int __cmp__(PyObject other) {
+	if (!(other instanceof PyString))
+	    return -2;
+
+	int c = string.compareTo(((PyString)other).string);
+	return c < 0 ? -1 : c > 0 ? 1 : 0;
+    }
+
+    public int hashCode() {
+	if (cached_hashcode == 0)
+	    cached_hashcode = string.hashCode();
+	return cached_hashcode;
+    }
+
+    private byte[] getBytes() {
+	byte[] buf = new byte[string.length()];
+	string.getBytes(0, string.length(), buf, 0);
+	return buf;
+    }
+
+    public Object __tojava__(Class c) {
+	//This is a hack to make almost all Java calls happy
+	if (c == String.class || c == Object.class)
+	    return string;
+	if (c == Character.TYPE)
+	    if (string.length() == 1)
+		return new Character(string.charAt(0));
+
+	if (c.isArray() && c.getComponentType() == Byte.TYPE) {
+	    return getBytes();
 	}
 
-	public int __cmp__(PyObject other) {
-		if (!(other instanceof PyString)) return -2;
+	if (c.isInstance(this))
+	    return this;
 
-		int c = string.compareTo(((PyString)other).string);
-		return c < 0 ? -1 : c > 0 ? 1 : 0;
+	return Py.NoConversion;
+    }
+
+    protected PyObject get(int i) {
+	return new PyString(string.substring(i,i+1));
+    }
+
+    protected PyObject getslice(int start, int stop, int step) {
+	if (step == 1) {
+	    return new PyString(string.substring(start, stop));
+	} else {
+	    int n = sliceLength(start, stop, step);
+	    char new_chars[] = new char[n];
+	    int j = 0;
+	    for (int i=start; j<n; i+=step)
+		new_chars[j++] = string.charAt(i);
+
+	    return new PyString(new String(new_chars));
 	}
+    }
 
-	public int hashCode() {
-		if (cached_hashcode == 0) cached_hashcode = string.hashCode();
-		return cached_hashcode;
+    protected PyObject repeat(int count) {
+	int s = string.length();
+	char new_chars[] = new char[s*count];
+	for (int i=0; i<count; i++) {
+	    string.getChars(0, s, new_chars, i*s);
 	}
+	return new PyString(new String(new_chars));
+    }
 
-	private byte[] getBytes() {
-		byte[] buf = new byte[string.length()];
-		string.getBytes(0, string.length(), buf, 0);
-		return buf;
+    public PyObject __add__(PyObject generic_other) {
+	if (generic_other instanceof PyString) {
+	    return new PyString(string.concat(((PyString)generic_other).string));
+	} else {
+	    return null;
 	}
-
-	public Object __tojava__(Class c) {
-		//This is a hack to make almost all Java calls happy
-		if (c == String.class || c == Object.class) return string;
-		if (c == Character.TYPE)
-			if (string.length() == 1) return new Character(string.charAt(0));
-
-		if (c.isArray() && c.getComponentType() == Byte.TYPE) {
-			return getBytes();
-		}
-
-		if (c.isInstance(this)) return this;
-		return Py.NoConversion;
-	}
-
-	protected PyObject get(int i) {
-		return new PyString(string.substring(i,i+1));
-	}
-
-	protected PyObject getslice(int start, int stop, int step) {
-		if (step == 1) {
-			return new PyString(string.substring(start, stop));
-		} else {
-		    int n = sliceLength(start, stop, step);
-			char new_chars[] = new char[n];
-			int j = 0;
-			for(int i=start; j<n; i+=step) new_chars[j++] = string.charAt(i);
-			return new PyString(new String(new_chars));
-		}
-	}
-
-	protected PyObject repeat(int count) {
-		int s = string.length();
-		char new_chars[] = new char[s*count];
-		for(int i=0; i<count; i++) {
-			string.getChars(0, s, new_chars, i*s);
-		}
-		return new PyString(new String(new_chars));
-	}
-
-	public PyObject __add__(PyObject generic_other) {
-		if (generic_other instanceof PyString) {
-			return new PyString(string.concat(((PyString)generic_other).string));
-		} else {
-			return null;
-		}
-	}
+    }
 
 
-	public PyObject __mod__(PyObject other) {
+    public PyObject __mod__(PyObject other) {
         StringFormatter fmt = new StringFormatter(string);
         return new PyString(fmt.format(other));
     }
@@ -163,31 +179,31 @@ public class PyString extends PySequence {
         return s;
     }   
 
- 	public PyInteger __int__() {
- 	    try {
-		    return new PyInteger(Integer.valueOf(stripPlus(string)).intValue());
-		} catch (NumberFormatException exc) {
-		    throw Py.ValueError("invalid literal for __int__: "+string);
-		}
+    public PyInteger __int__() {
+	try {
+	    return new PyInteger(Integer.valueOf(stripPlus(string)).intValue());
+	} catch (NumberFormatException exc) {
+	    throw Py.ValueError("invalid literal for __int__: "+string);
 	}
+    }
 
-	public PyLong __long__() {
- 	    try {
-    		return new PyLong(new java.math.BigInteger(stripPlus(string)));
-		} catch (NumberFormatException exc) {
-		    throw Py.ValueError("invalid literal for __long__: "+string);
-		}
+    public PyLong __long__() {
+	try {
+	    return new PyLong(new java.math.BigInteger(stripPlus(string)));
+	} catch (NumberFormatException exc) {
+	    throw Py.ValueError("invalid literal for __long__: "+string);
 	}
+    }
 
-	public PyFloat __float__() {
- 	    try {
-    		return new PyFloat(Double.valueOf(string).doubleValue());
-		} catch (NumberFormatException exc) {
-		    throw Py.ValueError("invalid literal for __float__: "+string);
-		}
+    public PyFloat __float__() {
+	try {
+	    return new PyFloat(Double.valueOf(string).doubleValue());
+	} catch (NumberFormatException exc) {
+	    throw Py.ValueError("invalid literal for __float__: "+string);
 	}
+    }
 	
-	// Add in methods from string module
+    // Add in methods from string module
     public String lower() {
         return string.toLowerCase();
     }
@@ -199,11 +215,12 @@ public class PyString extends PySequence {
     public String swapcase() {
         char[] chars = string.toCharArray();
         int n=chars.length;
-        for(int i=0; i<n; i++) {
+        for (int i=0; i<n; i++) {
             char c = chars[i];
             if (Character.isUpperCase(c)) {
                 chars[i] = Character.toLowerCase(c);
-            } else if (Character.isLowerCase(c)) {
+            }
+	    else if (Character.isLowerCase(c)) {
                 chars[i] = Character.toUpperCase(c);
             }
         }
@@ -214,13 +231,16 @@ public class PyString extends PySequence {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int start=0;
-        while (start < n && Character.isWhitespace(chars[start])) start++;
+        while (start < n && Character.isWhitespace(chars[start]))
+	    start++;
 
         int end=n-1;
-        while (end >= 0 && Character.isWhitespace(chars[end])) end--;
+        while (end >= 0 && Character.isWhitespace(chars[end]))
+	    end--;
 
         if (end >= start) {
-            return (end < n-1 || start > 0) ? string.substring(start, end+1) : string;
+            return (end < n-1 || start > 0)
+		? string.substring(start, end+1) : string;
         } else {
             return "";
         }
@@ -230,7 +250,8 @@ public class PyString extends PySequence {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int start=0;
-        while (start < n && Character.isWhitespace(chars[start])) start++;
+        while (start < n && Character.isWhitespace(chars[start]))
+	    start++;
 
         return (start > 0) ? string.substring(start, n) : string;
     }
@@ -239,7 +260,8 @@ public class PyString extends PySequence {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int end=n-1;
-        while (end >= 0 && Character.isWhitespace(chars[end])) end--;
+        while (end >= 0 && Character.isWhitespace(chars[end]))
+	    end--;
 
         return (end < n-1) ? string.substring(0, end+1) : string;
     }
@@ -254,28 +276,34 @@ public class PyString extends PySequence {
     }
 
     public PyList split(String sep, int maxsplit) {
-        if (sep != null) return splitfields(sep, maxsplit);
+        if (sep != null)
+	    return splitfields(sep, maxsplit);
 
         PyList list = new PyList();
 
         char[] chars = string.toCharArray();
         int n=chars.length;
 
-        if (maxsplit <= 0) maxsplit = n;
+        if (maxsplit <= 0)
+	    maxsplit = n;
 
         int splits=0;
         int index=0;
         while (index < n && splits < maxsplit) {
-            while (index < n && Character.isWhitespace(chars[index])) index++;
-            if (index == n) break;
+            while (index < n && Character.isWhitespace(chars[index]))
+		index++;
+            if (index == n)
+		break;
             int start = index;
 
-            while (index < n && !Character.isWhitespace(chars[index])) index++;
+            while (index < n && !Character.isWhitespace(chars[index]))
+		index++;
             list.append(new PyString(string.substring(start, index)));
             splits++;
         }
         if (index < n) {
-            while (index < n && Character.isWhitespace(chars[index])) index++;
+            while (index < n && Character.isWhitespace(chars[index]))
+		index++;
             list.append(new PyString(string.substring(index, n)));
         }
         return list;
@@ -289,13 +317,16 @@ public class PyString extends PySequence {
         PyList list = new PyList();
         
         int length = string.length();
-        if (maxsplit <= 0) maxsplit = length;
+        if (maxsplit <= 0)
+	    maxsplit = length;
+
         int lastbreak = 0;
         int splits = 0;
         int sepLength = sep.length();
         while (splits < maxsplit) {
             int index = string.indexOf(sep, lastbreak);
-            if (index == -1) break;
+            if (index == -1)
+		break;
             splits += 1;
             list.append(new PyString(string.substring(lastbreak, index)));
             lastbreak = index + sepLength;
@@ -317,8 +348,10 @@ public class PyString extends PySequence {
     public int index(String sub, int start, int end) {
         int n = string.length();
 
-        if (start < 0) start = n+start;
-        if (end < 0) end = n+end;
+        if (start < 0)
+	    start = n+start;
+        if (end < 0)
+	    end = n+end;
 
         int index;
         if (end < n) {
@@ -326,7 +359,8 @@ public class PyString extends PySequence {
         } else {
             index = string.indexOf(sub, start);
         }
-        if (index == -1) throw Py.ValueError("substring not found in string.index");
+        if (index == -1)
+	    throw Py.ValueError("substring not found in string.index");
         return index;
     }
 
@@ -341,8 +375,10 @@ public class PyString extends PySequence {
     public int rindex(String sub, int start, int end) {
         int n = string.length();
 
-        if (start < 0) start = n+start;
-        if (end < 0) end = n+end;
+        if (start < 0)
+	    start = n+start;
+        if (end < 0)
+	    end = n+end;
 
         int index;
         if (start > 0) {
@@ -350,7 +386,8 @@ public class PyString extends PySequence {
         } else {
             index = string.lastIndexOf(sub, end);
         }
-        if (index == -1) throw Py.ValueError("substring not found in string.rindex");
+        if (index == -1)
+	    throw Py.ValueError("substring not found in string.rindex");
         return index;
     }
 
@@ -363,10 +400,14 @@ public class PyString extends PySequence {
 
     public int count(String sub, int start, int end) {
         int n = string.length();
-        if (start < 0) start = n+start;
-        if (end < 0) end = n+end;
-        if (end > n) end = n;
-        if (start > end) start = end;
+        if (start < 0)
+	    start = n+start;
+        if (end < 0)
+	    end = n+end;
+        if (end > n)
+	    end = n;
+        if (start > end)
+	    start = end;
 
         int slen = sub.length();
         //end = end-slen;
@@ -374,7 +415,8 @@ public class PyString extends PySequence {
         int count=0;
         while (start < end) {
             int index = string.indexOf(sub, start);
-            if (index >= end || index == -1) break;
+            if (index >= end || index == -1)
+		break;
             count++;
             start = index+slen;
         }
@@ -391,15 +433,20 @@ public class PyString extends PySequence {
     
     public int find(String sub, int start, int end) {
         int n = string.length();
-        if (start < 0) start = n+start;
-        if (end < 0) end = n+end;
-        if (end > n) end = n;
-        if (start > end) start = end;
+        if (start < 0)
+	    start = n+start;
+        if (end < 0)
+	    end = n+end;
+        if (end > n)
+	    end = n;
+        if (start > end)
+	    start = end;
         int slen = sub.length();
         end = end-slen;
 
         int index = string.indexOf(sub, start);
-        if (index > end) return -1;
+        if (index > end)
+	    return -1;
         return index;
     }
     
@@ -413,18 +460,22 @@ public class PyString extends PySequence {
     
     public int rfind(String sub, int start, int end) {
         int n = string.length();
-        if (start < 0) start = n+start;
-        if (end < 0) end = n+end;
-        if (end > n) end = n;
-        if (start > end) start = end;
+        if (start < 0)
+	    start = n+start;
+        if (end < 0)
+	    end = n+end;
+        if (end > n)
+	    end = n;
+        if (start > end)
+	    start = end;
         int slen = sub.length();
         end = end-slen;
 
         int index = string.lastIndexOf(sub, end);
-        if (index < start) return -1;
+        if (index < start)
+	    return -1;
         return index;
     }
-
 
     public double atof() {
         try {
@@ -457,22 +508,27 @@ public class PyString extends PySequence {
                 }
                 if (s.charAt(0) == '0') {
                     if (s.charAt(1) == 'x') {
-                        if (base == 0) base = 16;
+                        if (base == 0)
+			    base = 16;
                         s = s.substring(2,s.length());
                     } else {
-                        if (base == 0) base = 8;
+                        if (base == 0)
+			    base = 8;
                     }
                 }  
             }
-            if (base == 0) base = 10;
+            if (base == 0)
+		base = 10;
         } catch (IndexOutOfBoundsException ex) {
             throw Py.ValueError("non-integer argument to string.atoi");
         }
         
         try {
             int value = Integer.valueOf(s, base).intValue();
-            if (neg) return -value;
-            else return value;
+            if (neg)
+		return -value;
+            else
+		return value;
         } catch (NumberFormatException exc) {
             throw Py.ValueError("non-integer argument to string.atoi");
         }
@@ -506,21 +562,26 @@ public class PyString extends PySequence {
                 }
                 if (s.charAt(0) == '0') {
                     if (s.charAt(1) == 'x') {
-                        if (base == 0) base = 16;
+                        if (base == 0)
+			    base = 16;
                         s = s.substring(2,s.length());
                     } else {
-                        if (base == 0) base = 8;
+                        if (base == 0)
+			    base = 8;
                     }
                 }
             }
-            if (base == 0) base = 10;
+            if (base == 0)
+		base = 10;
         } catch (IndexOutOfBoundsException ex) {
             throw Py.ValueError("non-integer argument to string.atol 1");
         }
         try {
             java.math.BigInteger value = new java.math.BigInteger(s, base);
-            if (neg) return new PyLong(value.negate());
-            else return new PyLong(value);
+            if (neg)
+		return new PyLong(value.negate());
+            else
+		return new PyLong(value);
         } catch (NumberFormatException exc) {
             throw Py.ValueError("non-integer argument to string.atol");
         }
@@ -528,34 +589,40 @@ public class PyString extends PySequence {
 
     private static String spaces(int n) {
         char[] chars = new char[n];
-        for(int i=0; i<n; i++) chars[i] = ' ';
+        for (int i=0; i<n; i++)
+	    chars[i] = ' ';
         return new String(chars);
     }
 
     public String ljust(int width) {
         int n = width-string.length();
-        if (n <= 0) return string;
+        if (n <= 0)
+	    return string;
         return string+spaces(n);
     }
 
     public String rjust(int width) {
         int n = width-string.length();
-        if (n <= 0) return string;
+        if (n <= 0)
+	    return string;
         return spaces(n)+string;
     }
 
     public String center(int width) {
         int n = width-string.length();
-        if (n <= 0) return string;
+        if (n <= 0)
+	    return string;
         int half = n/2;
-        if (n%2 > 0 &&  width%2 > 0) half += 1;
+        if (n%2 > 0 &&  width%2 > 0)
+	    half += 1;
         return spaces(half)+string+spaces(n-half);
     }
 
     public String zfill(int width) {
         String s = string;
         int n = s.length();
-        if (n >= width) return s;
+        if (n >= width)
+	    return s;
         char start = s.charAt(0);
         char[] chars = new char[width];
         int nzeros = width-n;
@@ -605,7 +672,8 @@ public class PyString extends PySequence {
     }
     
     public String capitalize() {
-        if (string.length() == 0) return string;
+        if (string.length() == 0)
+	    return string;
         String first = string.substring(0,1).toUpperCase();
         return first.concat(string.substring(1,string.length()).toLowerCase());
     }   
@@ -629,7 +697,8 @@ public class PyString extends PySequence {
         boolean addSep=false;
 
         while ((obj = seq.__finditem__(i++)) != null) {
-            if (addSep) buf.append(sep);
+            if (addSep)
+		buf.append(sep);
             buf.append(obj.toString());
             addSep = true;
         }
@@ -692,18 +761,20 @@ final class StringFormatter{
         PyObject ret = null;
         switch(argIndex) {
             // special index indicating a mapping
-            case -3:
-                return args;
-            // special index indicating a single item that has already been used
-            case -2:
-                break;
-            // special index indicating a single item that has not yet been used
-            case -1:
-                argIndex=-2;
-                return args;
-            default:
-                ret = args.__finditem__(argIndex++);
-                break;
+	case -3:
+	    return args;
+            // special index indicating a single item that has already been
+            // used
+	case -2:
+	    break;
+            // special index indicating a single item that has not yet been
+            // used
+	case -1:
+	    argIndex=-2;
+	    return args;
+	default:
+	    ret = args.__finditem__(argIndex++);
+	    break;
         }
         if (ret == null)
             throw Py.TypeError("not enough arguments for format string");
@@ -714,12 +785,14 @@ final class StringFormatter{
         char c = pop();
         if (c == '*') {
             PyObject o = getarg();
-            if (o instanceof PyInteger) return ((PyInteger)o).getValue();
+            if (o instanceof PyInteger)
+		return ((PyInteger)o).getValue();
             throw Py.TypeError("* wants int");
         } else {
-           if (Character.isDigit(c)) {
+	    if (Character.isDigit(c)) {
                 int numStart = index-1;
-                while (Character.isDigit(c = pop())) {;}
+                while (Character.isDigit(c = pop()))
+		    ;
                 index -= 1;
                 return Integer.valueOf(format.substring(numStart, index)).intValue();
             }
@@ -734,9 +807,13 @@ final class StringFormatter{
 
     public String formatInteger(long v, int radix, boolean unsigned) {
         if (unsigned) {
-            if (v < 0) v = 0x100000000l + v;
+            if (v < 0)
+		v = 0x100000000l + v;
         } else {
-            if (v < 0) { negative = true; v = -v; }
+            if (v < 0) {
+		negative = true;
+		v = -v;
+	    }
         }
         String s = Long.toString(v, radix);
         while (s.length() < precision) {
@@ -754,7 +831,8 @@ final class StringFormatter{
     public String formatFloatDecimal(double v, boolean truncate) {
         java.text.NumberFormat format = java.text.NumberFormat.getInstance();
         int prec = precision;
-        if (prec == -1) prec = 6;
+        if (prec == -1)
+	    prec = 6;
         if (v < 0) {
             v = -v;
             negative = true;
@@ -771,7 +849,9 @@ final class StringFormatter{
         return ret;
     }
 
-    public String formatFloatExponential(PyObject arg, char e, boolean truncate) {
+    public String formatFloatExponential(PyObject arg, char e,
+					 boolean truncate)
+    {
         StringBuffer buf = new StringBuffer();
         double v = arg.__float__().getValue();
         boolean isNegative = false;
@@ -780,17 +860,24 @@ final class StringFormatter{
             isNegative = true;
         }
         double power = 0.0;
-        if (v > 0) power = Math.floor(Math.log(v)/Math.log(10));
+        if (v > 0)
+	    power = Math.floor(Math.log(v)/Math.log(10));
         //System.err.println("formatExp: "+v+", "+power);
         int savePrecision = precision;
         
-        if (truncate) precision = -1;
-        else precision = 3;
+        if (truncate)
+	    precision = -1;
+        else
+	    precision = 3;
         
         String exp = formatInteger((long)power, 10, false);
-        if (negative) { negative = false; exp = '-'+exp; }
+        if (negative) {
+	    negative = false;
+	    exp = '-'+exp;
+	}
         else {
-            if (!truncate) exp = '+'+exp;
+            if (!truncate)
+		exp = '+'+exp;
         }
         
         precision = savePrecision;
@@ -814,9 +901,10 @@ final class StringFormatter{
             // special index indicating a single item rather than a tuple
             argIndex = -1;
             if (args instanceof PyDictionary ||
-                    args instanceof PyStringMap ||
-                    (!(args instanceof PySequence) && 
-                      args.__findattr__("__getitem__") != null)) {
+		args instanceof PyStringMap ||
+		(!(args instanceof PySequence) && 
+		 args.__findattr__("__getitem__") != null))
+	    {
                 dict = args;
                 argIndex = -3;
             }
@@ -838,29 +926,31 @@ final class StringFormatter{
                 continue;
             }
             c = pop();
-			if (c == '(') {
-			    //System.out.println("( found");
-		        if (dict == null)
-		            throw Py.TypeError("format requires a mapping");
-		        int parens = 1;
-		        int keyStart = index;
-		        while (parens > 0) {
-		            c = pop();
-		            if (c == ')') parens--;
-		            else if (c == '(') parens++;
-		        }
-		        this.args = dict.__getitem__(new PyString(format.substring(keyStart, index-1)));
-		        //System.out.println("args: "+args+", "+argIndex);
-			} else {
-			    push();
-			}
+	    if (c == '(') {
+		//System.out.println("( found");
+		if (dict == null)
+		    throw Py.TypeError("format requires a mapping");
+		int parens = 1;
+		int keyStart = index;
+		while (parens > 0) {
+		    c = pop();
+		    if (c == ')')
+			parens--;
+		    else if (c == '(')
+			parens++;
+		}
+		this.args = dict.__getitem__(new PyString(format.substring(keyStart, index-1)));
+		//System.out.println("args: "+args+", "+argIndex);
+	    } else {
+		push();
+	    }
             while (true) {
                 switch(c = pop()) {
-                    case '-': ljustFlag=true; continue;
-                    case '+': signFlag=true; continue;
-                    case ' ': blankFlag=true; continue;
-                    case '#': altFlag=true; continue;
-                    case '0': zeroFlag=true; continue;
+		case '-': ljustFlag=true; continue;
+		case '+': signFlag=true; continue;
+		case ' ': blankFlag=true; continue;
+		case '#': altFlag=true; continue;
+		case '0': zeroFlag=true; continue;
                 }
                 break;
             }
@@ -869,7 +959,8 @@ final class StringFormatter{
             c = pop();
             if (c == '.') {
                 precision = getNumber();
-                if (precision == -1) precision = 0;
+                if (precision == -1)
+		    precision = 0;
                 c = pop();
             }
             if (c == 'h' || c == 'l' || c == 'L') {
@@ -884,73 +975,84 @@ final class StringFormatter{
             char fill = ' ';
             String string=null;
             negative = false;
-            if (zeroFlag) fill = '0';
-            else fill = ' ';
-            switch(c) {
-                case 's':
-                    fill = ' ';
-                    string = arg.__str__().toString();
-                    if (precision >= 0 && string.length() > precision) {
-                        string = string.substring(0, precision);
-                    }
-                    break;
-                case 'i':
-                case 'd':
-                    string = formatInteger(arg, 10, false);
-                    break;
-                case 'u':
-                    string = formatInteger(arg, 10, true);
-                    break;
-                case 'o':
-                    string = formatInteger(arg, 8, true);
-                    if (altFlag) { string = "0" + string; ; }
-                    break;
-                case 'x':
-                    string = formatInteger(arg, 16, true);
-                    if (altFlag) { string = "0x" + string;   }
-                    break;
-                case 'X':
-                    string = formatInteger(arg, 16, true);
-                    //Do substitution of caps for lowercase here
-                    if (altFlag) { string = "0X" + string; }
-                    break;
-                case 'e':
-                case 'E':
-                    string = formatFloatExponential(arg, c, false);
-                    break;
-                case 'f':
-                    string = formatFloatDecimal(arg, false);
-                    break;
-                case 'g':
-                case 'G':
-                    int prec = precision;
-                    if (prec == -1) prec = 6;
-                    double v = arg.__float__().getValue();
-                    int digits = (int)Math.ceil(ExtraMath.log10(v));
-                    if (digits > 0) {
-                        if (digits <= prec) {
-                            precision = prec-digits;
-                            string = formatFloatDecimal(arg, true);
-                        } else {
-                            string = formatFloatExponential(arg, (char)(c-2), true);
-                        }
-                    } else {
-                        string = formatFloatDecimal(arg, true);
-                    }
-                    break;
-                case 'c':
-                    fill = ' ';
-                    if (arg instanceof PyString) {
-                        string = ((PyString)arg).toString();
-                        if (string.length() != 1)
-                            throw Py.TypeError("%c requires int or char");
-                        break;
-                    }
-                    string = new Character((char)arg.__int__().getValue()).toString();
-                    break;
+            if (zeroFlag)
+		fill = '0';
+            else
+		fill = ' ';
 
-                default:
-                    throw Py.ValueError("unsupported format character '"+c+"'");
+            switch(c) {
+	    case 's':
+		fill = ' ';
+		string = arg.__str__().toString();
+		if (precision >= 0 && string.length() > precision) {
+		    string = string.substring(0, precision);
+		}
+		break;
+	    case 'i':
+	    case 'd':
+		string = formatInteger(arg, 10, false);
+		break;
+	    case 'u':
+		string = formatInteger(arg, 10, true);
+		break;
+	    case 'o':
+		string = formatInteger(arg, 8, true);
+		if (altFlag) {
+		    string = "0" + string;
+		}
+		break;
+	    case 'x':
+		string = formatInteger(arg, 16, true);
+		if (altFlag) {
+		    string = "0x" + string;
+		}
+		break;
+	    case 'X':
+		string = formatInteger(arg, 16, true);
+		//Do substitution of caps for lowercase here
+		if (altFlag) {
+		    string = "0X" + string;
+		}
+		break;
+	    case 'e':
+	    case 'E':
+		string = formatFloatExponential(arg, c, false);
+		break;
+	    case 'f':
+		string = formatFloatDecimal(arg, false);
+		break;
+	    case 'g':
+	    case 'G':
+		int prec = precision;
+		if (prec == -1)
+		    prec = 6;
+		double v = arg.__float__().getValue();
+		int digits = (int)Math.ceil(ExtraMath.log10(v));
+		if (digits > 0) {
+		    if (digits <= prec) {
+			precision = prec-digits;
+			string = formatFloatDecimal(arg, true);
+		    } else {
+			string = formatFloatExponential(arg, (char)(c-2),
+							true);
+		    }
+		} else {
+		    string = formatFloatDecimal(arg, true);
+		}
+		break;
+	    case 'c':
+		fill = ' ';
+		if (arg instanceof PyString) {
+		    string = ((PyString)arg).toString();
+		    if (string.length() != 1)
+			throw Py.TypeError("%c requires int or char");
+		    break;
+		}
+		string = new Character((char)arg.__int__().getValue()).toString();
+		break;
+
+	    default:
+		throw Py.ValueError("unsupported format character '"+c+"'");
             }
             String signString = "";
             if (negative) {
@@ -964,23 +1066,28 @@ final class StringFormatter{
             }
 
             int length = string.length() + signString.length();
-            if (width < length) width = length;
+            if (width < length)
+		width = length;
             if (ljustFlag && fill==' ') {
                 buffer.append(signString);
                 buffer.append(string);
-                while (width-- > length) buffer.append(fill);
+                while (width-- > length)
+		    buffer.append(fill);
             } else {
                 if (fill != ' ') {
                     buffer.append(signString);
                 }
-                while (width-- > length) buffer.append(fill);
+                while (width-- > length)
+		    buffer.append(fill);
                 if (fill == ' ') {
                     buffer.append(signString);
                 }
                 buffer.append(string);
             }
         }
-        if (argIndex == -1 || (argIndex >= 0 && args.__finditem__(argIndex) != null)) {
+        if (argIndex == -1 ||
+	    (argIndex >= 0 && args.__finditem__(argIndex) != null))
+	{
             throw Py.TypeError("not all arguments converted");
         }
         return buffer.toString();
