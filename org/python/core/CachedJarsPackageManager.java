@@ -148,7 +148,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * Eventually just using previously cached info.
      * Eventually updated info is not cached.
      * Persistent cache storage access goes through
-     * {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
+     * inOpenCacheFile() and outCreateCacheFile().
      */
     public void addJarToPackages(java.net.URL jarurl) {
         addJarToPackages(jarurl,null,false);
@@ -158,7 +158,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * Eventually just using previously cached info.
      * Eventually updated info is (re-)cached if param cache is true.
      * Persistent cache storage access goes through
-     * {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
+     * inOpenCacheFile() and outCreateCacheFile().
      */
     public void addJarToPackages(URL jarurl,boolean cache) {
         addJarToPackages(jarurl,null,cache);
@@ -168,7 +168,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * Eventually just using previously cached info.
      * Eventually updated info is not cached.
      * Persistent cache storage access goes through
-     * {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
+     * inOpenCacheFile() and outCreateCacheFile().
      */
     public void addJarToPackages(File jarfile) {
         addJarToPackages(null,jarfile,false);
@@ -178,7 +178,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
      * Eventually just using previously cached info.
      * Eventually updated info is (re-)cached if param cache is true.
      * Persistent cache storage access goes through
-     * {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
+     * inOpenCacheFile() and outCreateCacheFile().
      */
     public void addJarToPackages(File jarfile,boolean cache) {
         addJarToPackages(null,jarfile,cache);
@@ -366,7 +366,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /** Initializes cache. Eventually reads back cache index.
-     * Index persistent storage is accessed through {@link #inOpenIndex}.
+     * Index persistent storage is accessed through inOpenIndex().
      */
     protected void initCache() {
         indexModified = false;
@@ -394,7 +394,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /** Write back cache index.
-     * Index persistent storage is accessed through {@link #outOpenIndex}.
+     * Index persistent storage is accessed through outOpenIndex().
      */
     public void saveCache() {
         if(jarfiles == null || !indexModified ) return;
@@ -421,7 +421,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     // hooks for changing cache storage
 
     /** To pass a cachefile id by ref. And for internal use.
-     * @see #outCreateCacheFile
+     * @see outCreateCacheFile
      */
     public static class JarXEntry extends Object {
         /** cachefile id */
