@@ -1,6 +1,6 @@
 Jython NEWS
 
-xx-xxx-2001 Jython 2.1 alpha 1
+14-mar-2001 Jython 2.1 alpha 1
 
   New features.
    - Improve speed when indexing a string and iterating over a string
@@ -16,6 +16,7 @@ xx-xxx-2001 Jython 2.1 alpha 1
    - Added a PyServlet class to the util package.
    - Warning framework (pep-0230).
    - Added sys.add_classdir and sys.add_extdir.
+   - Added nested scope to the interpreter (pep-0227).
 
   Bug fixes.
    - Allow self referencing adapters to be collected when using weak
@@ -24,6 +25,7 @@ xx-xxx-2001 Jython 2.1 alpha 1
    - Fixes #127340 where serializable parameter received a PyObject
      instead of the wrapped java object.
    - Include a LineNumberTable in the compiled class files.
+   - Fixed a java version test bug in the installer.
 
 17-Jan-2001 Jython 2.0 final release
 
