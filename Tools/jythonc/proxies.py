@@ -54,7 +54,7 @@ def makeReturn(code, ret):
     else:
         r = jast.InvokeStatic("Py", "tojava",
                               [code, jast.StringConstant(ret.__name__)])
-        r = jast.Cast(typeName(cls), r)
+        r = jast.Cast(typeName(ret), r)
     return jast.Return(r)
 
 
