@@ -15,6 +15,9 @@ public class ThreadState {
     //public PyInstance initializingProxy = null;
     private Stack initializingProxies = null;
 
+    public int compareStateNesting = 0;
+    private PyDictionary compareStateDict;
+
     public PyInstance getInitializingProxy() {
         if (initializingProxies == null || initializingProxies.empty()) {
             return null;
@@ -72,5 +75,11 @@ public class ThreadState {
                 reprStack.delRange(i, reprStack.length, 1);
             }
         }
+    }
+
+    public PyDictionary getCompareStateDict() {
+        if (compareStateDict == null)
+            compareStateDict = new PyDictionary();
+        return compareStateDict;
     }
 }

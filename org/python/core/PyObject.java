@@ -821,6 +821,38 @@ public class PyObject implements java.io.Serializable {
        @return -1 if this < 0; 0 if this == o; +1 if this > o
     **/
     public final int _cmp(PyObject o2_in) {
+        ThreadState ts = Py.getThreadState();
+        try {
+            if (++ts.compareStateNesting > 500) {
+                PyDictionary stateDict = ts.getCompareStateDict();
+
+                PyObject pair = make_pair(o2_in);
+        
+                if (stateDict.__finditem__(pair) != null) {
+                    // already comparing these objects.  assume
+                    // they're equal until shown otherwise */
+                    return 0;
+                }
+                stateDict.__setitem__(pair, pair);
+                int res = _cmp_unsafe(o2_in);
+                stateDict.__delitem__(pair);
+                return res;
+            }
+            return _cmp_unsafe(o2_in);
+        } finally {
+            ts.compareStateNesting--;
+        }
+    }
+
+
+    private PyObject make_pair(PyObject o) {
+        if (System.identityHashCode(this) < System.identityHashCode(o))
+            return new PyIdentityTuple(new PyObject[] { this, o });
+        else
+            return new PyIdentityTuple(new PyObject[] { o, this });
+    }
+
+    private final int _cmp_unsafe(PyObject o2_in) {
         // Shortcut for equal objects
         if (this == o2_in)
             return 0;
@@ -1949,4 +1981,51 @@ public class PyObject implements java.io.Serializable {
         PyObject f = __getattr__(name);
         return f.__call__(arg1, arg2);
     }
+}
+
+
+
+/*
+ * A very specialized tuple-like class used when detecting cycles during 
+ * object comparisons. This classes is different from an normal tuple 
+ * by hashing and comparing its elements by identity.
+ */
+
+class PyIdentityTuple extends PyObject {
+
+    PyObject[] list;
+
+    public PyIdentityTuple(PyObject elements[]) {
+        list = elements;
+    }
+
+    public int hashCode() {
+        int x, y;
+        int len = list.length;
+        x = 0x345678;
+
+        for (len--; len>=0; len--) {
+            y = System.identityHashCode(list[len]);
+            x = (x + x + x) ^ y;
+        }
+        x ^= list.length;
+        return x;
+    }
+
+    public boolean equals(Object o) {
+        if (!(o instanceof PyIdentityTuple))
+            return false;
+        PyIdentityTuple that = (PyIdentityTuple)o;
+        if (list.length != that.list.length)
+            return false;
+        for (int i = 0; i < list.length; i++) {
+            if (list[i] != that.list[i])
+                return false;
+        }
+        return true;
+    }
+
+    // __class__ boilerplate -- see PyObject for details
+    public static PyClass __class__;
+    protected PyClass getPyClass() { return __class__; }
 }
