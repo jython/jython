@@ -55,6 +55,14 @@ python.security.respectJavaAccessibility = true
 #python.options.internalTablesImpl = soft
 #python.options.internalTablesImpl = weak
 
+# Setting this to true will force Jython will use the first module
+# found on sys.path where java File.isFile() returns true.
+# Setting this to true has no effect on unix-type filesystems. 
+# On Windows/HPS+ systems, setting it to true will enable Jython-2.0 
+# behaviour.
+python.options.caseok = false
+
+
 # Use this registry entry to control the list of builtin modules; you
 # can add, remove, or override builtin modules.  The value for this
 # registry key is a comma separated list of module entries, each entry 

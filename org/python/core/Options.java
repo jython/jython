@@ -73,6 +73,14 @@ public class Options
      */
     public static String proxyDebugDirectory = null;
 
+    /**
+     * If true, Jython will use the first module found on sys.path
+     * where java File.isFile() returns true. Setting this to true 
+     * have no effect on unix-type filesystems. On Windows/HPS+ 
+     * systems setting it to true will enable Jython-2.0 behaviour.
+     */
+    public static boolean caseok = false;
+
     //
     // ####### END OF OPTIONS
     //
@@ -143,6 +151,10 @@ public class Options
                 throw Py.ValueError("Illegal verbose option setting: '"+
                                     prop+"'");
         }
+
+        Options.caseok =
+            getBooleanOption("options.caseok", Options.pollStandardIn);
+
         // additional initializations which must happen after the registry
         // is guaranteed to be initialized.
         JavaAccessibility.initialize();

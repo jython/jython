@@ -294,7 +294,7 @@ public class imp
 
             // First check for packages
             File dir = new File(dirName, name);
-            if (dir.isDirectory() &&
+            if (dir.isDirectory() && caseok(dir, name) &&
                 (new File(dir, "__init__.py").isFile() ||
                  new File(dir, "__init__$py.class").isFile()))
             {
@@ -313,8 +313,8 @@ public class imp
             File classFile = new File(dirName, className);
             Py.writeDebug("import", "trying source " + pyFile.getPath());
 
-            if (pyFile.isFile()) {
-                if (classFile.isFile()) {
+            if (pyFile.isFile() && caseok(pyFile, pyName)) {
+                if (classFile.isFile() && caseok(classFile, className)) {
                     Py.writeDebug("import", "trying precompiled " +
                                   classFile.getPath());
                     long pyTime = pyFile.lastModified();
@@ -333,12 +333,23 @@ public class imp
 
             // If no source, try loading precompiled
             Py.writeDebug("import", "trying " + classFile.getPath());
-            if (classFile.isFile()) {
+            if (classFile.isFile() && caseok(classFile, className)) {
                 return createFromPyClass(modName, makeStream(classFile),
                                          false, classFile.getPath());
             }
         }
         return null;
+    }
+
+    private static boolean caseok(File file, String filename) {
+        if (Options.caseok)
+            return true;
+        try {
+            File canFile = new File(file.getCanonicalPath());
+            return filename.equals(canFile.getName());
+        } catch (IOException exc) {
+            return false;
+        }
     }
 
     static PyObject loadFromClassLoader(String name,
