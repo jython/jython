@@ -585,7 +585,7 @@ public class imp
         }
         
         // This should be better "protected"
-        ((PyStringMap)nm.__dict__).clear();
+        //((PyStringMap)nm.__dict__).clear();
         
         nm.__setattr__("__name__", new PyString(modName));
         PyObject ret = loadFromPath(name, modName, path);
