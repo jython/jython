@@ -809,7 +809,8 @@ public class PyJavaClass extends PyClass
     }
 
     private PyObject findInnerClass(String name) {
-        Class innerClass = Py.relFindClass(getProxyClass(),__name__+"$"+name);
+        Class p = getProxyClass();
+        Class innerClass = Py.relFindClass(p, p.getName()+"$"+name);
         if (innerClass == null) return null;
 
         PyJavaClass jinner = lookup(innerClass);

@@ -13,11 +13,8 @@ public class PyJavaInnerClass extends PyJavaClass
     public PyJavaInnerClass(Class c, PyJavaClass parent) {
         super(c);
         this.parent = parent;
-        int dollar = __name__.indexOf('$');
-        if (dollar != -1) {
-            __name__ = __name__.substring(0, dollar)+
-                "." + __name__.substring(dollar+1, __name__.length());
-        }
+        String pname = parent.__name__;
+        __name__ = pname + "." + __name__.substring(pname.length() + 1);
     }
 
     PyObject lookup(String name, boolean stop_at_java) {
