@@ -66,6 +66,8 @@ public class PyTuple extends PySequence implements InitModule
     }
 
     protected PyObject getslice(int start, int stop, int step) {
+        if (step > 0 && stop < start)
+            stop = start;
         int n = sliceLength(start, stop, step);
         PyObject[] newList = new PyObject[n];
                 

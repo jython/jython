@@ -152,6 +152,8 @@ public class PyList extends PySequence implements InitModule
     }
 
     protected PyObject getslice(int start, int stop, int step) {
+        if (step > 0 && stop < start)
+            stop = start;
         int n = sliceLength(start, stop, step);
         PyObject[] newList = new PyObject[n];
                 
@@ -196,6 +198,8 @@ public class PyList extends PySequence implements InitModule
 
         if (step != 1)
             throw Py.ValueError("step size must be 1 for setting list slice");
+        if (stop < start)
+            stop = start;
 
         PySequence seq = (PySequence)value;
                 

@@ -420,6 +420,8 @@ public class PyString extends PySequence implements InitModule
     }
 
     protected PyObject getslice(int start, int stop, int step) {
+        if (step > 0 && stop < start)
+            stop = start;
         if (step == 1)
             return new PyString(string.substring(start, stop));
         else {
