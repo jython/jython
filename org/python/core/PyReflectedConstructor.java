@@ -4,6 +4,7 @@ package org.python.core;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.InstantiationException;
 
 
 public class PyReflectedConstructor extends PyReflectedFunction {
@@ -122,11 +123,14 @@ public class PyReflectedConstructor extends PyReflectedFunction {
 		jself = ctor.newInstance(callData.getArgsArray());
 	    }
 	    catch (InvocationTargetException e) {
-		Class sup = iself.__class__.proxyClass.getSuperclass();
-		String msg = "Constructor failed for Java superclass";
-		if (sup != null)
-		    msg += " " + sup.getName();
-		throw Py.TypeError(msg);
+		if (e.getTargetException() instanceof InstantiationException) {
+		    Class sup = iself.__class__.proxyClass.getSuperclass();
+		    String msg = "Constructor failed for Java superclass";
+		    if (sup != null)
+			msg += " " + sup.getName();
+		    throw Py.TypeError(msg);
+		}
+		else throw Py.JavaError(e);
 	    }
 	    catch (Throwable t) {
 		throw Py.JavaError(t);
