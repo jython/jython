@@ -1,0 +1,243 @@
+Title: Java Reload (experimental) simple Support
+
+<h3>Java Reload (experimental) simple Support - JReload</h3>
+<h4>Introduction and usage, plus some notes on java classes unloading and 
+ internalTablesImpl option</h4>
+
+<p> The "jreload" module is not the definitive word about java classes
+reloading under jython. It is still experimental and its interface may
+improve or change to become more pythonic. </p>
+<p> "jreload" cannot cover all the possible reload-flavors, 
+and its goal is to offer a simple interface for the most common cases,
+e.g. quick trial-and-error experimenting. </p>
+<p> Java classes reloading in jython is not enabled by "jreload", some
+of the modifications occurred to jython run-time have made it possible. Now
+jython can deal with java classes with the same name (without clashes)
+and run-time supports unloading of java classes by different ways,
+which is a must feature for some uses of reloading</p>
+
+<p><i>[The expert user can now play directly with class-loaders and reloading as he would from java.] </i></p>
+
+<p>The main idea of the "jreload" interface is that of a load-set.
+A load-set is a package-like object that can host a complete hierarchy of
+java packages, which can be reloaded as a whole.</p>
+
+<p><i>Why there is no support for reloading a single class?
+Java classes are loaded through class-loaders, actually there is no support
+in java to redefine an already loaded class through its class-loader. In order
+to reload a class one should create a new class-loader, but classes
+from different class-loaders cannot interoperate, so we need to reload
+all related classes through the new class-loader.
+Note: The normal python reload built-in does nothing for java classes and simply returns the old version.
+</i></p>
+
+<p> The "jreload" module exports the following functions: </p>
+
+<blockquote></pre>
+makeLoadSet(name, path)<br>
+reload(loadSet)
+</pre></blockquote>
+
+<p>makeLoadSet creates and returns a new load-set with the given name. The created load-set
+will behave like a package and import statement related to it can be issued.
+name should be a valid python identifier like any python module name and
+should not clash with any module that has been or will be imported.
+Internally the created load-set will be added to sys.modules, the same
+way it happens to modules on import. You can issue the same makeLoadSet
+from many places, it is idempotent like modules imports are. </p>
+<p>path should be a list of directory or jar paths. The created load-set
+will enable importing the classes present there. path should be disjoint
+from both sys.path and java classpath, otherwise one can get very confusing
+results.
+</p>
+<p><i>For example: if a load-set 'X' is created and its hierarchy contains
+java packages 'p' and 'p.q', then the following references can be used
+in import statements: 'X', 'X.p', 'X.p.q'.</i></p>
+
+<p> reload(loadSet) reloads all the classes in the package hierarchy hosted
+by loadSet and returns loadSet.</p>
+
+
+<p><i>Note: The current version of "jreload" (jreload.__version__=='0.3') does
+not support removing or substituting jars on the fly.</i></p>
+
+<!--table-stop-->
+
+<a name="example"><h3>Example</h3></a>
+
+<p>The following example should help make things clearer: (its files should  be present in the jython Demo dir)</p>
+<li> Demo/jreload/example.jar contains example.Version <a href="#jarVersion">(source)</a> and example.PrintVer <a href="#PrintVer">(source)</a></li>
+<li> Demo/jreload/_xample contains a slightly modified version of example.Version <a href="#newVersion">(source)</a></li>
+
+<pre>
+>>> import sys
+>>> import os
+>>> import jreload
+>>> def xp(name): return os.path.join(sys.prefix,'Demo/jreload/'+name) # builds a path under 'Demo/jreload' 
+...
+>>> X=jreload.makeLoadSet('X',[xp('.'),xp('example.jar')])
+>>> from X import example
+>>> dir(example)
+['PrintVer', 'Version', '__name__']
+>>> X.example.Version
+&lt;jclass example.Version at 6781345>
+>>> from X.example import * # works but in general import * from java pkgs is not for production code
+>>> v=Version(1)
+>>> PrintVer.print(v)
+version 1
+>>> os.rename(xp('_xample'),xp('example')) # _xample becomes example, hiding and "patching" jar contents 
+>>> jreload.reload(X) # (re)loads example dir example.Version and jar example.PrintVer
+&lt;java load-set X>
+>>> nv2=example.Version(2)
+>>> example.PrintVer.print(nv2)
+new version 2
+>>> PrintVer.print(nv2)
+Traceback (innermost last):
+  File "&lt;console>", line 1, in ?
+TypeError: print(): 1st arg can't be coerced to example.Version
+>>> example.PrintVer.print(v)
+Traceback (innermost last):
+  File "&lt;console>", line 1, in ?
+TypeError: print(): 1st arg can't be coerced to example.Version
+>>> os.rename(xp('example'),xp('_xample'))
+</pre>
+
+<p>Note: Differently from python packages reload, load-sets reload the complete hosted hierarchy. <br>
+Note: Class versions across reloads are not interoperable.
+</p>
+
+<p>Like for python classes and python reload, old versions are kept around,
+if there are still references to them. But what happens if they are no longer used?</p>
+
+<a name="unload" ><h3>Java Classes Unloading</h3></a>
+
+<p>One would expect that no longer referenced java classes would be unloaded, but  the situation is not that simple.</p>
+<p>In order to give a python-class-like view on python side and for implementation reasons jython wraps java classes (in instances of org.python.core.PyJavaClass). Clearly the mapping from java classes to their wrapped version should be
+unique (e.g. to guarantee == and 'is' semantic). So jython keeps this mapping
+in an internal table.  This is also good because building the wrappers is expensive. </p>
+
+<p>Note: Unless one cannot predict the amount of reloading
+that will be performed by an application or for the case of long-running
+highly dynamic apps, the unloading issue can simply be ignored. </p>
+
+<p>Clearly the entries somehow block unloading. On the other hand
+java classes unloading is just a memory consumption optimization (and as such
+is it presented in Java Language Specification). Actual jvms clearly support this. JPython simply kept the entries in the table forever but
+Jython and "jreload" try to make unloading possible.</p>
+
+<p><i>Note: java never unloads system classes (java.* etc) nor classes 
+from classpath. Further Jython cannot unload sys.path java classes.
+So the whole unload issue makes sense only with "jreload" or custom
+class-loaders.</i></p>
+
+<h4>Java 2 and jython internalTablesImpl option</h4>
+<p>Under java2 jython offers table implementations that exploit
+soft/weak references in order to discard entries (when this is OK)
+for unloading.</p>
+
+<p>A possible policy would be to keep an entry  as long as the corresponding java class is still referenced outside the table (both by java or jython code). But this one cannot be implemented. <i>[Tech.: One cannot add fields to final java class java.lang.Class!]</i> So entries are kept as long as the wrapped version is still in use.</p>
+
+These implementations can be chosen trough python.options.internalTablesImpl
+registry option. Note: they only influence classes unloading, there is no
+need and reason to use them, unless one depends on class unloading to avoid
+memory leakage.
+
+<p><b>internalTablesImpl = weak -- </b>Sets implementation using weak-refs.
+Table entries for not referenced (outside the table) wrapped versions
+are "discarded" at garbage collection points. If a class or some of
+its instances are continuously passed from java to jython side, but no
+long-living reference to it is kept from jython side, this can imply
+a performance penalty (rebuilding the wrapped version is expensive).
+On the other hand this is a good setting for testing if unloading
+actually happens or some references hunting around prevent it.
+</p>
+<p><i>[Note: With jdk 1.3 java -verbose:class can help tracking class unloads,
+and System.gc forces class unloading. With jdk 1.2 java -verbose:gc
+should give some information on class unloading, but unloading 
+of classes happen at unpredictable points and System.gc does not trigger it.
+Also weak-refs allow testing for unloading and gc.]
+</i></p>
+
+<p><b>internalTablesImpl = soft --</b>Sets implementation using soft-refs.
+Table entries for not referenced (outside the table) wrapped versions
+are "discarded" on memory shortage, given soft-reference definition.
+Soft-references behavior is not specified in full details, so the 
+actual behavior will depend on the concrete jvm. But if actual (jvm) implementations are not too bad, this should be a good setting for production code,
+which relies on unloading to avoid out of memory failures.
+</p>
+
+<h4>Java 1.1</h4>
+<p>To be honest the unloading support that jython can offer under java 1.1 (given the absence of weak/soft-refs) is error-prone and anything serious would
+require "too much" caution, <i>but this should not be a real issue</i>. Support
+ is offered only for "jreload" needs, in these forms:<p>
+
+<li>Before reload(X) one can issue X.unload(). X.unload() discards 
+all the entries for  the old versions of the classes in X. This is safe only if all python subclasses and all instances of them have been destroyed.</li>
+<li>One can "extract" the information needed in order to discard the entries for the versions actually present in X at a later point (after a whole series
+of reloads):
+<blockquote><pre>
+u_t1=X.unload # extract unload info for time t1 versions
+... reloads ...
+u_t1() # discard entries for time t1 versions
+</pre></blockquote>
+u_t1() is safe only if at that point all subclasses/instances of the involved versions have been destroyed.
+</li>
+
+<p><i>Note: these idioms work also with the standard internal tables
+implementation under java2, and for compatibility even with the weak/soft implementations.</i></p>
+
+<h3>JReload Example Source Files</h3>
+<a name="jarVersion"><h4>Jar example.Version</h4></a>
+<pre>
+package example;
+
+public class Version {
+
+ private int ver;
+
+ public Version(int ver) {
+  this.ver = ver;
+ }
+
+ public String toString() {
+   return "version "+ver;
+ }
+
+}
+</pre>
+<a href="#example">Back to example transcript</a>
+
+<a name="PrintVer"><h4>example.PrintVer</h4></a>
+<pre>
+package example;
+
+public class PrintVer {
+
+ static public void print(Version ver) {
+  System.out.println(ver);
+ }
+
+}
+</pre>
+<a href="#example">Back to example transcript</a>
+<a name="newVersion"><h4>New example.Version</h4></a>
+<pre>
+package example;
+
+public class Version {
+
+ private int ver;
+
+ public Version(int ver) {
+  this.ver = ver;
+ }
+
+ public String toString() {
+   return "new version "+ver;
+ }
+
+}
+</pre>
+<a href="#example">Back to example transcript</a>
+
+
