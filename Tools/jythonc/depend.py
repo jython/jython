@@ -53,7 +53,7 @@ def dependencies(file):
     types = []
 
     i = 0
-    while i < n:
+    while i < n-1:
         tag = data.readByte()
         if tag == 1:
             name = data.readUTF()
@@ -79,8 +79,26 @@ def dependencies(file):
             data.readShort()
             types.append(data.readShort())
         i = i+1
-    names = {}
+    data.readShort() # access_flags
+    data.readShort() # this_class
+    data.readShort() # super_class
 
+    interfaces_count = data.readShort()
+    for i in range(interfaces_count):
+        data.readShort()
+
+    fields_count = data.readShort()
+    for i in range(fields_count):
+        data.readShort() # access_flags
+    	data.readShort() # name_index
+        types.append(data.readShort())
+        attributes_count = data.readShort()
+        for j in range(attributes_count):
+            data.readShort() # attribute_name_index 
+            attribute_length = data.readInt()
+            data.skip(attribute_length)
+
+    names = {}
     for c in classes:
         #print c, strings[c-1]
         name = fix(strings[c-1])
