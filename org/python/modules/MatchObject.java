@@ -2,9 +2,10 @@
 package org.python.modules;
 
 import org.python.core.*;
-import com.oroinc.text.regex.*;
+import org.apache.oro.text.regex.*;
 
-public class MatchObject extends PyObject {
+public class MatchObject extends PyObject
+{
     public String string;
     public int pos, endpos;
     public RegexObject re;
@@ -60,18 +61,22 @@ public class MatchObject extends PyObject {
         return span(getindex(s));
     }
 
-    public PyTuple groups() {
+    public PyTuple groups(PyObject defalt) {
         int n = match.groups()-1;
         PyObject[] ret = new PyObject[n];
         for(int i=0; i<n; i++) {
             String tmp = match.group(i+1);
             if (tmp == null) {
-                ret[i] = Py.None;
+                ret[i] = defalt;
             } else {   
                 ret[i] = new PyString(tmp);
             }
         }
         return new PyTuple(ret);
+    }
+
+    public PyTuple groups() {
+        return groups(Py.None);
     }
 
     private int getindex(PyString s) {
