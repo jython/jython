@@ -2,7 +2,8 @@
 package org.python.core;
 import java.io.*;
 
-public class PyException extends RuntimeException {
+public class PyException extends RuntimeException
+{
     public PyObject type;
     public PyObject value = Py.None;
     public PyTraceback traceback;
