@@ -137,7 +137,10 @@ public final class Py {
 		        System.exit(((PyInteger)value).getValue());
 		    } else {
 		        if (value != Py.None) {
-    		        try { Py.println(value); }
+    		        try { 
+    		            Py.println(value);
+    		            System.exit(1);
+    		        }
     		        catch (Throwable t0) { }
     		    }
 		        System.exit(0);
