@@ -1,5 +1,5 @@
-Welcome to Jython 2.0 rc 1
-=============================
+Welcome to Jython 2.0
+=======================
 
 Jython is the successor to JPython. The Jython project was
 created in accordance with the CNRI JPython 1.1.x license, in
