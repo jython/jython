@@ -7,16 +7,18 @@
 # You will need to get Sun's JavaCC (Java Compiler Compiler) to build
 # the JPython parser.  JavaCC can be downloaded from
 # http://www.sun.com/suntest/products/JavaCC/index.html
-# I have tested JPython with JavaCC 0.7.1, but had some problems with
-# 0.8pre2 so I don't currently recommend getting that version.
+# I currently use JavaCC 0.7.1 to build JPython, our grammar files are
+# incompatible with any newer version of JavaCC.  While this will be
+# fixed in some future version, for now don't rebuild the .java files
+# in org/python/parser.
 
 # Uncomment these 3 lines to use the Jikes compiler.  Jikes is a Java
 # compiler available from IBM's alphaWorks.  It is much faster than
-# Sun's javac.  You'll need at least Jikes 0.50, whidh I have tested
-# on Solaris.  You may need to change BOOTSTRAPCLASSES to point to
-# your standard Java classes.  Jikes requires you to supply your own
-# standard classes; the one described below comes from Sun's
-# production JDK 1.2 for Solaris.
+# Sun's javac.  You'll need at least Jikes 0.50.  I've tested up to
+# Jikes 1.02, which seems to work well.  You may need to change
+# BOOTSTRAPCLASSES to point to your standard Java classes.  Jikes
+# requires you to supply your own standard classes; the one described
+# below comes from Sun's production JDK 1.2 for Solaris.
 #
 # Get Jikes from http://www.alphaWorks.ibm.com/formula/Jikes
 
