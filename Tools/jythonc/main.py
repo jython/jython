@@ -3,30 +3,65 @@
 """Usage: jpythonc [options] module+
 
 where options include:
-  -package package    put all compiled code into a java package
-  -jar jarfile        compile into jarfile (implies -deep)
-  -deep               compile all python dependencies of the module 
-  -core               include the core JPython libraries
-  -all                include all of the JPython libraries
 
-  -bean jarfile       compile into jarfile, include manifest for bean  
-  -addpackages packs  include java dependencies from this list of packages
-                      default is org.python.modules and com.oroinc.text.regex
-  -workdir directory  working directory for compiler (default is ./jpywork)
-  -skip modules       don't include any of these modules in compilation
-  -compiler fullpath  use a different compiler than "standard" javac
-                      if this is set to "NONE" then compile ends with .java
-  -falsenames names   a comma-separated list of names that are always false
-                      can be used to short-circuit if clauses
+  --package package
+  -p package
+      put all compiled code into the named Java package
+
+  --jar jarfile
+  -j jarfile
+      Compile into jarfile (implies -deep)
+
+  --deep
+  -d
+      Compile all Python dependencies of the module 
+
+  --core
+  -c
+      Include the core JPython libraries
+      
+  --all
+  -a
+      Include all of the JPython libraries
+
+  --bean jarfile
+  -b jarfile
+      Compile into jarfile, include manifest for bean
+      
+  --addpackages packs
+  -A packs
+      Include java dependencies from this list of packages.  Default is
+      org.python.modules and com.oroinc.text.regex
+      
+  --workdir directory
+  -w directory
+      Specify working directory for compiler (default is ./jpywork)
+      
+  --skip modules
+  -s modules
+      Don't include any of these modules in compilation
+      
+  --compiler fullpath
+  -C fullpath
+      Use a different compiler than `standard' javac if.  this is set to
+      `NONE' then compile ends with .java
+
+  --falsenames names
+  -f names
+      A comma-separated list of names that are always false can be used to
+      short-circuit if clauses
 
   --help
-  -h                  Print this message and exit
+  -h
+      Print this message and exit
 """
 
 from compile import Compiler
 import sys, string, os
-from Options import *
+import getopt
                 
+
+
 def addCore(extraPackages):
     skiplist = ['org.python.core.parser',
                 'org.python.core.BytecodeLoader',
@@ -40,11 +75,7 @@ def addAll(extraPackages):
         extraPackages.append(('org.python.'+name, []))
                 
                       
-## XXX: This seems unused! -baw
-##options_to_add = """
-##  -addfiles files     add the comma-separated list of files to the archive
-##"""
-
+
 def usage(errcode, msg=''):
     print __doc__ % globals()
     if msg:
@@ -53,42 +84,87 @@ def usage(errcode, msg=''):
 
 
 def getOptions():
+    class Opts:
+        jar = None
+        workdir = 'jpywork'
+        core = 0
+        all = 0
+        deep = 0
+        bean = None
+        skip = ''
+        package = None
+        addfiles = ''
+        falsenames = ''
+        compiler = None
+        addpackages = ''
+        
+    options = Opts()
+
+    oldopts = ['-jar', '-workdir', '-core', '-all', '-deep',
+               '-bean', '-skip', '-package', '-addfiles', '-falsenames',
+               '-compiler', '-addpackages']
+
+    # For backwards compatibility, long options used to take only a single
+    # dash.  Convert them to GNU style (e.g. as supported by getopt)
+    sysargs = []
+    for arg in sys.argv[1:]:
+        if arg in oldopts:
+            sysargs.append('-'+arg)
+        else:
+            sysargs.append(arg)
+
     try:
-        opts = Options({'jar'        : None,
-                        'workdir'    :"jpywork",
-                        'core'       : YesNo,
-                        'all'        : YesNo,
-                        'deep'       : YesNo,
-                        'bean'       : None,
-                        'skip'       : "",
-                        'package'    : None,
-                        'addfiles'   : "",
-                        'falsenames' : "",
-                        'compiler'   : None,
-                        'bean'       : None,
-                        'addpackages': "",
-                        })
-    except KeyError, value:
-        print 'illegal argument: -'+value
-        print
-        usage()
+        opts, args = getopt.getopt(
+            sysargs, 'p:j:dcab:A:w:s:C:f:h',
+            ['package=', 'jar=', 'deep', 'core', 'all', 'bean=',
+             'addpackages=', 'workdir=', 'skip=', 'compiler=',
+             'falsenames=', 'help'])
+    except getopt.error, msg:
+        usage(1, msg)
 
-    if len(opts.args) == 0:
-        print 'nothing to compile'
-        print
-        usage()
+    for opt, arg in opts:
+        if opt in ('-h', '--help'):
+            usage(0)
+        elif opt in ('-p', '--package'):
+            options.package = arg
+        elif opt in ('-j', '--jar'):
+            options.jar = arg
+        elif opt in ('-d', '--deep'):
+            options.deep = 1
+        elif opt in ('-c', '--core'):
+            options.core = 1
+        elif opt in ('-a', '--all'):
+            options.all = 1
+        elif opt in ('-b', '--bean'):
+            options.bean = arg
+        elif opt in ('-A', '--addpackages'):
+            options.addpackages = arg
+        elif opt in ('-w', '--workdir'):
+            options.workdir = arg
+        elif opt in ('-s', '--skip'):
+            options.skip = arg
+        elif opt in ('-C', '--compiler'):
+            options.compiler = arg
+        elif opt in ('-f', '--falsenames'):
+            options.falsenames = arg.split(',')
 
-    if opts.jar is not None:
+    # there should be at least one module to compile
+    if len(args) == 0:
+        usage(0, 'nothing to compile')
+
+    # post processing
+    options.args = args
+
+    if options.jar is not None:
+        options.deep = 1
+    elif options.core or options.all:
         opts.deep = 1
-    elif opts.core or opts.all:
-        opts.deep = 1
 
-    opts.falsenames = opts.falsenames.split(",")
+    if not os.path.isabs(options.workdir):
+        options.workdir = os.path.join(".", options.workdir)  
 
-    if not os.path.isabs(opts.workdir):
-        opts.workdir = os.path.join(".", opts.workdir)  
+    return options
 
-    return opts
 
 
 mainclass = basepath = None
