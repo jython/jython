@@ -302,54 +302,44 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	public static PyException newError(Throwable t) {
 
 		if (Options.showJavaExceptions) {
-			StdoutWrapper stderr = Py.stderr;
-
-			stderr.println("Java Traceback:");
-
 			java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
+			java.io.PrintWriter writer = new java.io.PrintWriter(buf);
+
+			writer.println("Java Traceback:");
 
 			if (t instanceof PyException) {
-				((PyException)t).super__printStackTrace(new java.io.PrintWriter(buf));
+				((PyException)t).super__printStackTrace(writer);
 			} else {
-				t.printStackTrace(new java.io.PrintWriter(buf));
+				t.printStackTrace(writer);
 			}
 
-			stderr.print(buf.toString());
+			Py.stderr.print(buf.toString());
 		}
 
 		if (t instanceof PyException) {
 			return (PyException)t;
 		} else if (t instanceof SQLException) {
+			SQLException sqlException = (SQLException)t;
 			StringBuffer buffer = new StringBuffer();
 
-			createExceptionMessage((SQLException)t, buffer, 0);
+			do {
+				buffer.append(sqlException.getMessage());
+				buffer.append(" [SQLCode: " + sqlException.getErrorCode() + "]");
+
+				if (sqlException.getSQLState() != null) {
+					buffer.append(", [SQLState: " + sqlException.getSQLState() + "]");
+				}
+
+				sqlException = sqlException.getNextException();
+
+				if (sqlException != null) {
+					buffer.append(System.getProperty("line.separator"));
+				}
+			} while (sqlException != null);
 
 			return newError(buffer.toString());
 		} else {
 			return newError(t.getMessage());
-		}
-	}
-
-	/**
-	 * Create SQL exception messages
-	 *
-	 * @param SQLException exception
-	 * @param StringBuffer buffer
-	 * @param int level
-	 *
-	 */
-	protected static void createExceptionMessage(SQLException exception, StringBuffer buffer, int level) {
-
-		buffer.append(exception.getMessage());
-		buffer.append(" [SQLCode: " + exception.getErrorCode() + "]");
-
-		if (exception.getSQLState() != null) {
-			buffer.append(", [SQLState: " + exception.getSQLState() + "]");
-		}
-
-		if (exception.getNextException() != null) {
-			buffer.append(System.getProperty("line.separator"));
-			createExceptionMessage(exception.getNextException(), buffer, level + 1);
 		}
 	}
 
