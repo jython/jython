@@ -2,7 +2,7 @@
 
 from java import io
 import string
-import sys, os
+import sys, os, types
 from java.util.zip import ZipFile
 
 
@@ -102,6 +102,11 @@ def getFile(name):
         return ZipEntry(package.__file__, name)
     elif hasattr(package, '__path__') and len(package.__path__) == 1:
         return DirEntry(package.__path__[0], name)
+    elif isinstance(package, types.TypeType):
+        # this 'package' is a java class
+        f = getFile(name[:dot])
+        if f:
+            return f
 
 
 
