@@ -712,12 +712,7 @@ public class PyJavaClass extends PyClass
                 keywords.put(words[i]+"_", words[i].intern());
             }
         }
-        String newName = (String)keywords.get(name);
-        if (newName != null) {
-            return newName;
-        } else {
-            return null;
-        }
+        return (String)keywords.get(name);
     }
 
     PyObject[] lookupGivingClass(String name, boolean stop_at_java) {
