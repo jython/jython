@@ -204,7 +204,9 @@ public class __builtin__ implements InitModule
     }
 
     public static PyObject dir(PyObject o) {
-        return o.__dir__();
+        PyList ret = (PyList)o.__dir__();
+        ret.sort();
+        return ret;
     }
 
     public static PyObject dir() {
