@@ -1,6 +1,8 @@
 # Copyright © Corporation for National Research Initiatives
-import string
 from Output import SourceFile
+
+COMMASPACE = ', '
+
 
 
 class Statement:
@@ -25,7 +27,7 @@ class Class(Statement):
         out.write("%s class %s extends %s ", self.access, self.name,
                   self.superclass)
         if len(self.interfaces) > 0:
-            out.write("implements %s ", string.join(self.interfaces, ", "))
+            out.write("implements %s ", COMMASPACE.join(self.interfaces))
         self.body.writeSource(out)
 
     def __repr__(self):
@@ -49,10 +51,10 @@ class Method(Statement):
         if len(self.throws) == 0:
             throwstext = ""
         else:
-            throwstext = " throws "+string.join(self.throws, ", ")
+            throwstext = " throws " + COMMASPACE.join(self.throws)
 
         out.write("%s %s %s(%s)%s ", self.access, self.args[0], self.name,
-                  string.join(argtext, ", "), throwstext)
+                  COMMASPACE.join(argtext), throwstext)
         self.body.writeSource(out)
         out.writeln()
 
@@ -76,10 +78,10 @@ class Constructor(Statement):
         if len(self.throws) == 0:
             throwstext = ""
         else:
-            throwstext = " throws "+string.join(self.throws, ", ")
+            throwstext = " throws " + COMMASPACE.join(self.throws)
 
         out.write("%s %s(%s)%s ", self.access, self.name,
-                  string.join(argtext, ", "), throwstext)
+                  COMMASPACE.join(argtext), throwstext)
         self.body.writeSource(out)
         out.writeln()
 
@@ -131,7 +133,7 @@ class Comment(Statement):
         self.text = text
 
     def writeSource(self, out):
-        lines = string.split(self.text, '\n')
+        lines = self.text.split('\n')
         if len(lines) == 1:
             out.writeln("/* %s */", self.text)
             return
@@ -439,6 +441,19 @@ class Expression:
     def writeSource(self, out):
         out.writeln(self.sourceString()+";")
 
+    def _calcargs(self):
+        args = []
+        for a in self.args:
+            try:
+                ss = a.sourceString()
+            except AttributeError, msg:
+                print '=====>', msg
+                print '=====>', a.__class__
+                print '=====>', a
+                raise
+            args.append(ss)
+        return COMMASPACE.join(args)
+
     def exits(self):
         return 0
 
@@ -506,7 +521,7 @@ class StringConstant(Constant):
             else:
                 ret.append("\\u%04x" % oc)
         ret.append('"')
-        return string.join(ret, '')
+        return ''.join(ret)
 
 
 
@@ -553,8 +568,7 @@ class InvokeLocal(Expression):
         self.args = args
 
     def sourceString(self):
-        args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
-        return "%s(%s)" % (self.name, args)
+        return '%s(%s)' % (self.name, self._calcargs())
 
 
 
@@ -565,8 +579,8 @@ class Invoke(Expression):
         self.args = args
 
     def sourceString(self):
-        args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
-        return "%s.%s(%s)" % (self.this.safeSourceString(), self.name, args)
+        return '%s.%s(%s)' % (self.this.safeSourceString(),
+                              self.name, self._calcargs())
 
 
 
@@ -577,8 +591,7 @@ class InvokeStatic(Expression):
         self.args = args
 
     def sourceString(self):
-        args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
-        return "%s.%s(%s)" % (self.this, self.name, args)
+        return '%s.%s(%s)' % (self.this, self.name, self._calcargs())
 
 
 
@@ -640,9 +653,7 @@ class New(Expression):
         self.args = args
 
     def sourceString(self):
-        #print 'new', self.args
-        args = string.join(map(lambda arg: arg.sourceString(), self.args),', ')
-        return "new %s(%s)" % (self.name, args)
+        return 'new %s(%s)' % (self.name, self._calcargs())
 
 
 
@@ -652,9 +663,9 @@ class FilledArray(Expression):
         self.values = values
 
     def sourceString(self):
-        args = string.join(map(lambda arg:arg.sourceString(),
-                               self.values), ', ')
-        return "new %s[] {%s}" % (self.type, args)
+        return 'new %s[] {%s}' % (
+            self.type,
+            COMMASPACE.join(map(lambda arg: arg.sourceString(), self.values)))
 
 
 
@@ -666,8 +677,9 @@ class NewArray(Expression):
         self.dimensions = dimensions
 
     def sourceString(self):
-        args = string.join(map(lambda arg:str(arg), self.dimensions), '][')
-        return "new %s[%s]" % (self.type, args)
+        return 'new %s[%s]' % (
+            self.type,
+            ']['.join(map(lambda arg: str(arg), self.dimensions)))
 
 
 
