@@ -27,20 +27,15 @@ public class PathVFSJavaLoader extends ClassLoader {
         
         java.io.InputStream in = vfs.open(name.replace('.','/')+".class");
         if (in == null) throw new ClassNotFoundException(name);
-        
         try {
-            int av = in.available();
-            byte[] buf = new byte[av];
-            in.read(buf);
+	    byte[] buf = org.python.core.FileUtil.readBytes( in );
             in.close();
             return loadClassFromBytes(name,buf);
         } catch(java.io.IOException e) {
             throw new ClassNotFoundException(name);
         }
-        
     }
 
-    
     private Class loadClassFromBytes(String name, byte[] data) {
         Class c = defineClass(name, data, 0, data.length);
         resolveClass(c);

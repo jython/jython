@@ -27,13 +27,9 @@ public class imp
         return module;
     }
 
-    // Simplistic implementation
-    // Some InputStream's might require multiple read's to get it all...
     private static byte[] readBytes(InputStream fp) {
         try {
-            byte[] buf;
-            buf = new byte[fp.available()];
-            fp.read(buf);
+            byte[] buf = FileUtil.readBytes( fp );
             fp.close();
             return buf;
         } catch (IOException ioe) {

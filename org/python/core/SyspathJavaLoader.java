@@ -107,9 +107,7 @@ public class SyspathJavaLoader extends ClassLoader
                     continue;
                 }
                 try {
-                    int size = fis.available();
-                    byte[] buffer = new byte[size];
-                    fis.read(buffer);
+		    byte[] buffer = FileUtil.readBytes( fis );
                     fis.close();
                     return loadClassFromBytes(name, buffer);
                 }
