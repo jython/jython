@@ -276,4 +276,65 @@ public class sys {
 	public static PyJavaPackage add_package(String n) {
 		return addPackage(n);
 	}
+	
+	public static void settrace(PyObject tracefunc) {
+	    InterpreterState interp = Py.getThreadState().interp;
+	    
+	    if (tracefunc == Py.None) {
+	        interp.tracefunc = null;
+	    } else {
+	        interp.tracefunc = new PythonTraceFunction(tracefunc);
+	    }
+	}
+	
+	public static void setprofile(PyObject profilefunc) {
+	    InterpreterState interp = Py.getThreadState().interp;
+	    
+	    if (profilefunc == Py.None) {
+	        interp.profilefunc = null;
+	    } else {
+	        interp.profilefunc = new PythonTraceFunction(profilefunc);
+	    }
+	}
+}
+
+class PythonTraceFunction extends TraceFunction {
+    PyObject tracefunc;
+    
+    PythonTraceFunction(PyObject tracefunc) {
+        this.tracefunc = tracefunc;
+    }
+    
+    private synchronized TraceFunction safeCall(PyFrame frame, String label, PyObject arg) {
+        ThreadState ts = Py.getThreadState();
+        if (ts.tracing) return null;
+        
+        if (tracefunc == null) return null;
+        
+        //System.err.println("trace - "+label+" - "+frame.f_code.co_name+" - "+frame.f_lineno+" - "+this);
+        ts.tracing = true;
+        PyObject ret = tracefunc.__call__(frame, new PyString(label), arg);
+        ts.tracing = false;
+        if (ret == tracefunc) return this;
+        if (ret == Py.None) return null;
+        //System.err.println("end trace - "+label+" - "+frame.f_code.co_name+" - "+frame.f_lineno+" - "+this+" - "+ret);//+" - "+tracefunc);
+        return new PythonTraceFunction(ret);
+    }
+    
+    public TraceFunction traceCall(PyFrame frame) {
+        return safeCall(frame, "call", Py.None);
+    }
+    
+    public TraceFunction traceReturn(PyFrame frame, PyObject ret) {
+        return safeCall(frame, "return", ret);
+    }
+    
+    public TraceFunction traceLine(PyFrame frame, int line) {
+        return safeCall(frame, "line", Py.None);        
+    }
+    
+    public TraceFunction traceException(PyFrame frame, PyException exc) {
+        return safeCall(frame, "exception",
+                new PyTuple(new PyObject[] {exc.type, exc.value, exc.traceback}));
+    }
 }
