@@ -5,7 +5,7 @@ import org.python.core.*;
 import java.util.zip.*;
 import java.io.*;
 
-public class jpython
+public class jython
 {
     private static String usage =
         "usage: jython [options] [-jar jar | -c cmd | file | -] [args]\n"+
