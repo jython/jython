@@ -225,17 +225,22 @@ public class PyInstance extends PyObject {
 	            if (field == null) {
 	                noField(name, value);
 	            } else if (!field._doset(this, value)) {
-	                __dict__.__setitem__(name, value); //throw Py.TypeError("attr not settable: "+name);
+	                unassignableField(name, value);
 	            }
 	        } else {
 		        __dict__.__setitem__(name, value);
 		    }
 		}
 	}
+	
     protected void noField(String name, PyObject value) {
         __dict__.__setitem__(name, value);
     }
-
+    
+    protected void unassignableField(String name, PyObject value) {
+        __dict__.__setitem__(name, value);
+    }
+    
 	public void __delattr__(String name) throws PyException {
 	    // Need code to handle _dodel
 		PyObject deller = __class__.__delattr__;

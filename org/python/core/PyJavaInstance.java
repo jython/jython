@@ -48,7 +48,11 @@ public class PyJavaInstance extends PyInstance implements java.io.Externalizable
 	}
 
     protected void noField(String name, PyObject value) {
-		    throw Py.TypeError("can't set arbitrary attribute in java instance: "+name);
+		throw Py.TypeError("can't set arbitrary attribute in java instance: "+name);
+    }
+    
+    protected void unassignableField(String name, PyObject value) {
+		throw Py.TypeError("can't assign to this attribute in java instance: "+name);
     }
 
     public int hashCode() {
