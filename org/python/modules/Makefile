@@ -1,5 +1,9 @@
-# GNU make compatible
+# Copyright © Corporation for National Research Initiatives
 include ../../../rules/make.rules
-JPYTHONROOT = ../../..
-OROMATCHERROOT = ../../../../nondist/ORO
-CLASSPATH = $(JPYTHONROOT):$(OROMATCHERROOT)
+CLASSPATH = ../../..:$(OROMATCHERROOT)
+
+# Uncomment these lines if you do not have the OROMatcher regular
+# expression library.
+
+#SKIP = MatchObject.class RegexObject.class re.class
+#CLASSES= $(filter-out $(SKIP),$(SOURCES:%.java=%.class))
