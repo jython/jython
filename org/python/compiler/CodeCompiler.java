@@ -1261,7 +1261,7 @@ public class CodeCompiler extends Visitor
     }
 
 
-
+    public int callextra;
     public int call1, call2;
     public int calla0, calla1, calla2, calla3, calla4;
     public Object Call_Op(SimpleNode node) throws Exception {
@@ -1275,9 +1275,25 @@ public class CodeCompiler extends Visitor
         SimpleNode[] values;
         String[] keys=null;
         int nKeywords=0;
+        SimpleNode starargs = null;
+        SimpleNode kwargs = null;
 
         if (args != null) {
             int n = args.getNumChildren();
+
+            SimpleNode lastarg = args.getChild(n-1);
+            if (lastarg.id == PythonGrammarTreeConstants.JJTEXTRAKEYWORDVALUELIST) {
+                n--;
+                kwargs = lastarg;
+            }
+            if (n > 0) {
+                lastarg = args.getChild(n-1);
+                if (lastarg.id == PythonGrammarTreeConstants.JJTEXTRAARGVALUELIST) {
+                    n--;
+                    starargs = lastarg;
+                }
+            }
+
             values = new SimpleNode[n];
             keys = new String[n];
 
@@ -1298,7 +1314,7 @@ public class CodeCompiler extends Visitor
         }
                 
         // Detect a method invocation with no keywords
-        if (nKeywords == 0 &&
+        if (nKeywords == 0 && starargs == null && kwargs == null &&
             callee.id == PythonGrammarTreeConstants.JJTDOT_OP)
         {
             return Invoke(callee.getChild(0), callee.getChild(1), values);
@@ -1306,7 +1322,27 @@ public class CodeCompiler extends Visitor
                 
         callee.visit(this);
 
-        if (nKeywords > 0) {
+        if (starargs != null || kwargs != null) {
+            makeArray(values);
+            makeStrings(code, keys, nKeywords);
+            if (starargs == null)
+                code.aconst_null();
+            else
+                starargs.getChild(0).visit(this);
+            if (kwargs == null)
+                code.aconst_null();
+            else
+                kwargs.getChild(0).visit(this);
+
+            if (mrefs.callextra == 0) {
+                mrefs.callextra = code.pool.Methodref(
+                    "org/python/core/PyObject", "_callextra",
+                    "([Lorg/python/core/PyObject;[Ljava/lang/String;" +
+                     "Lorg/python/core/PyObject;" +
+                     "Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+            }
+            code.invokevirtual(mrefs.callextra);
+        } else if (nKeywords > 0) {
             makeArray(values);
             makeStrings(code, keys, nKeywords);
 

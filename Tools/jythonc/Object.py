@@ -221,6 +221,24 @@ class PyObject:
             return self.domethod(code, "__call__", PyObjectArray(args),
                                  makeStringArray(keynames))
 
+    def call_extra(self, code, args, keyargs, starargs, kwargs):
+        keynames = []
+        for name, value in keyargs:
+            PyObject.attributes[name] = value
+            keynames.append(name)
+            args.append(value)
+
+        if not starargs:
+            starargs = Object(jast.Null, self)
+        if not kwargs:
+            kwargs = Object(jast.Null, self)
+
+        return self.domethod(code, "_callextra",
+                             PyObjectArray(args),
+                             makeStringArray(keynames),
+                             starargs,
+                             kwargs)
+
     def invoke(self, code, name, args, keyargs):
         if keyargs:
             return self.getattr(code, name).call(args, keyargs)

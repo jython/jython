@@ -609,9 +609,25 @@ void dictmaker() #void: {}
 void classdef(): {}
 {<CLASS> Name() [<LPAREN> testlist() <RPAREN>] <COLON> suite()}
 
-//arglist:  argument (',' argument)* [',']
+//arglist: (argument ',')* 
+//              (argument [',']| '*' test [',' '**' test] | '**' test)
 void arglist(): {}
-{ argument() (LOOKAHEAD(2) <COMMA> argument())* [<COMMA>] }
+{  normalargs() [<COMMA> 
+   [LOOKAHEAD(2) ExtraArgValueList() 
+        [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()]]
+ | [LOOKAHEAD(2) ExtraArgValueList() 
+        [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()] 
+}
+
+void normalargs() #void: {}
+{ argument() (LOOKAHEAD(2) <COMMA> argument())* }
+
+void ExtraArgValueList(): {}
+{<MULTIPLY> test()}
+
+void ExtraKeywordValueList(): {}
+{(<POWER>|<MULTIPLY> <MULTIPLY>) test()}
+
 
 //argument: [test '='] test     # Really [keyword '='] test
 void argument() #void: {}

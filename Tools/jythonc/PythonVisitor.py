@@ -317,9 +317,23 @@ class PythonVisitor(Visitor):
         args = []
         keyargs = []
 
+        kwargs = starargs = None
+
         if node.numChildren != 1:
             argsNode = node.getChild(1)
-            for i in range(argsNode.numChildren):
+
+            n = argsNode.numChildren
+            lastarg = argsNode.getChild(n-1);
+            if lastarg.id == JJTEXTRAKEYWORDVALUELIST:
+                n = n - 1
+                kwargs = lastarg
+            if n > 0:
+                lastarg = argsNode.getChild(n-1);
+                if lastarg.id == JJTEXTRAARGVALUELIST:
+                    n = n - 1
+                    starargs = lastarg;
+
+            for i in range(n):
                 argNode = argsNode.getChild(i)
                 if argNode.id != JJTKEYWORD:
                     if len(keyargs) > 0:
@@ -331,10 +345,14 @@ class PythonVisitor(Visitor):
                                     argNode.getChild(1)))
 
         # Check for method invocation
-        if callee.id == JJTDOT_OP:
+        if callee.id == JJTDOT_OP and kwargs is None and starargs is None:
             object = callee.getChild(0)
             name = callee.getChild(1).getInfo()
             return self.walker.invoke(object, name, args, keyargs)
+        if kwargs or starargs:
+            return self.walker.call_extra(callee, args, 
+                                          keyargs, starargs, kwargs)
+
         return self.walker.call(callee, args, keyargs)
 
     def binop(self, node, name):

@@ -174,6 +174,17 @@ class BaseEvaluator:
         return self.visit(callee).call(self.visitall(args),
                                        self.visitnames(kws))
 
+    def call_extra(self, callee, args, kws, starargs, kwargs):
+        #print "call_extra", self.visit(callee)
+        if starargs:
+            starargs = self.visit(starargs.getChild(0))
+        if kwargs:
+            kwargs = self.visit(kwargs.getChild(0))
+        return self.visit(callee).call_extra(self.visitall(args),
+                                            self.visitnames(kws),
+                                            starargs,
+                                            kwargs)
+
     def global_stmt(self, names):
         for name in names:
             self.globalnames[name] = 1

@@ -316,6 +316,74 @@ public class PyObject implements java.io.Serializable {
         return __call__(new PyObject[] {arg0, arg1, arg2, arg3},
                         Py.NoKeywords);
     }
+
+    /** @deprecated **/
+    public PyObject _callextra(PyObject[] args, String[] keywords, 
+            PyObject starargs, PyObject kwargs) {
+
+       int argslen = args.length;
+       int nstar = 0;
+
+       if (kwargs != null) {
+           PyObject keys = kwargs.__findattr__("keys");
+           if (keys == null)
+               throw Py.TypeError("** argument must be a dictionary");
+           for (int i = 0; i < keywords.length; i++)
+               if (kwargs.__finditem__(keywords[i]) != null)
+                   throw Py.TypeError(
+                          "keyword parameter redefined: " + keywords[i]);
+           argslen += kwargs.__len__();
+       }
+       if (starargs != null) {
+           if (!(starargs instanceof PySequence || 
+                       starargs instanceof PyInstance))
+               throw Py.TypeError("* argument must be a sequence");
+           nstar = starargs.__len__();
+           argslen += nstar;
+       }
+
+       PyObject[] newargs = new PyObject[argslen];
+       int argidx = args.length - keywords.length;
+       System.arraycopy(args, 0, newargs, 0, argidx);
+       
+       if (starargs != null) {
+           PyObject a;
+           for (int i = 0; (a = starargs.__finditem__(i)) != null && 
+                                              i < nstar; i++) {
+               newargs[argidx++] = a;
+           }
+       }
+       System.arraycopy(args, args.length - keywords.length, 
+                        newargs, argidx, keywords.length);
+       argidx += keywords.length;
+
+       if (kwargs != null) {
+           String[] newkeywords = 
+                       new String[keywords.length + kwargs.__len__()];
+           System.arraycopy(keywords, 0, newkeywords, 0, keywords.length);
+
+           PyObject keys = kwargs.invoke("keys");
+           PyObject key;
+           for (int i = 0; (key = keys.__finditem__(i)) != null; i++) {
+               if (!(key instanceof PyString))
+                   throw Py.TypeError(
+                       "** argumentr must be a dictionary with string keys");
+               newkeywords[keywords.length + i] =
+                          ((PyString) key).internedString();
+               newargs[argidx++] = kwargs.__finditem__(key);
+           }
+           keywords = newkeywords;
+       }
+
+       if (newargs.length != argidx) {
+          args = new PyObject[argidx];
+          System.arraycopy(newargs, 0, args, 0, argidx);
+       } else
+          args = newargs;
+       return __call__(args, keywords);
+    }
+
+
         
     public boolean isCallable() { return __findattr__("__call__") != null; }
     public boolean isMappingType() { return true; }
