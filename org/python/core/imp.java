@@ -447,7 +447,7 @@ public class imp
         return null;
     }
 
-    private static boolean caseok(File file, String filename, int namelen) {
+    static boolean caseok(File file, String filename, int namelen) {
         if (Options.caseok)
             return true;
         try {
