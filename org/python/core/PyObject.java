@@ -1785,9 +1785,9 @@ public class PyObject implements java.io.Serializable {
             return __call__(pargs);
         } catch (PyException e) {
             if (e.value instanceof PyJavaInstance) {
-                Throwable t = (Throwable)e.value.__tojava__(Throwable.class);
-                if (t != null) {
-                    throw t;
+                Object t = e.value.__tojava__(Throwable.class);
+                if (t != null && t != Py.NoConversion) {
+                    throw (Throwable)t;
                 }
             } else {
                 ThreadState ts = Py.getThreadState();
