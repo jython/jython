@@ -172,13 +172,18 @@
             <exclude name="**/ReadlineConsole.java"
                      unless="readline.present"/>
 
-            <exclude name="**/handler/InformixDataHandler.java" unless="informix.present"/>
-            <exclude name="**/handler/MySQLDataHandler.java" unless="mysql.present"/>
-            <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present"/>
-            <exclude name="**/handler/PostgresqlDataHandler.java" unless="postgresql.present"/>
+            <exclude name="**/handler/InformixDataHandler.java"
+                     unless="informix.present"/>
+            <exclude name="**/handler/MySQLDataHandler.java"
+                     unless="mysql.present"/>
+            <exclude name="**/handler/OracleDataHandler.java"
+                     unless="oracle.present"/>
+            <exclude name="**/handler/PostgresqlDataHandler.java"
+                     unless="postgresql.present"/>
             <exclude name="**/connect/Lookup.java" unless="jndi.present"/>
             <exclude name="**/connect/Lookup.java" unless="javax.sql.present"/>
-            <exclude name="**/connect/Connectx.java" unless="javax.sql.present"/>
+            <exclude name="**/connect/Connectx.java"
+                     unless="javax.sql.present"/>
             <classpath refid="main.classpath"/>
         </javac>
 
@@ -216,7 +221,8 @@
                                org.python.util,
                                com.ziclix.python.sql"
                  windowtitle="Jython API documentation"
-                 bottom="&lt;a href='http://www.jython.org' target='_top'>Jython homepage&lt;/a>"
+                 bottom="&lt;a href='http://www.jython.org'
+                         target='_top'>Jython homepage&lt;/a>"
         />
     </target>
 
