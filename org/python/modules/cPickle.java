@@ -1287,7 +1287,7 @@ public class cPickle implements ClassDictInit {
         }
 
         final private int putMemo(int id, PyObject object) {
-            int memo_len = memo.size();
+            int memo_len = memo.size() + 1;
             memo.put(id, memo_len, object);
             return memo_len;
         }
