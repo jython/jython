@@ -12,6 +12,15 @@ package org.python.core;
 public class PyFile extends PyObject
 {
     private static class FileWrapper {
+        protected boolean reading;
+        protected boolean writing;
+        protected boolean binary;
+
+        void setMode(String mode) {
+            reading = mode.indexOf('r') >= 0;
+            writing = mode.indexOf('w') >= 0 || mode.indexOf("+") >= 0;
+            binary  = mode.indexOf('b') >= 0;
+        }
         public String read(int n) throws java.io.IOException {
             throw new java.io.IOException("file not open for reading");
         }
@@ -37,6 +46,24 @@ public class PyFile extends PyObject
         }
         public void close() throws java.io.IOException {
         }
+        protected byte[] getBytes(String s) {
+            // Yes, I known the method is depricated, but it is the fastest 
+            // way of converting between between byte[] and String
+            if (binary) {
+                byte[] buf = new byte[s.length()];
+                s.getBytes(0, s.length(), buf, 0);
+                return buf;
+            } else
+                return s.getBytes();
+        }
+        protected String getString(byte[] buf, int offset, int len) {
+            // Yes, I known the method is depricated, but it is the fastest 
+            // way of converting between between byte[] and String
+            if (binary) {
+                return new String(buf, 0, offset, len); 
+            } else
+                return new String(buf, offset, len);
+        }
     }
 
     private static class InputStreamWrapper extends FileWrapper {
@@ -55,7 +82,7 @@ public class PyFile extends PyObject
                 byte buf[] = new byte[1024];
                 StringBuffer sbuf = new StringBuffer();
                 for (int read=0; read >= 0; read=istream.read(buf))
-                    sbuf.append(new String(buf, 0, 0, read));
+                    sbuf.append(getString(buf, 0, read));
                 return sbuf.toString();
             }
             // read the next chunk available, but make sure it's at least
@@ -98,7 +125,7 @@ public class PyFile extends PyObject
         private static final int MAX_WRITE = 30000;
 
         public void write(String s) throws java.io.IOException {
-            byte[] bytes = s.getBytes();
+            byte[] bytes = getBytes(s);
             int n = bytes.length;
             int i = 0;
             while (i < n) {
@@ -128,7 +155,7 @@ public class PyFile extends PyObject
         }
 
         public void write(String s) throws java.io.IOException {
-            ostream.write(s.getBytes());
+            ostream.write(getBytes(s));
         }
 
         public void flush() throws java.io.IOException {
@@ -180,7 +207,7 @@ public class PyFile extends PyObject
             n = file.read(buf);
             if (n < 0)
                 n = 0;
-            return new String(buf, 0, 0, n);
+            return getString(buf, 0, n);
         }
 
         public int read() throws java.io.IOException {
@@ -196,7 +223,7 @@ public class PyFile extends PyObject
         }
 
         public void write(String s) throws java.io.IOException {
-            file.write(s.getBytes());
+            file.write(getBytes(s));
         }
 
         public long tell() throws java.io.IOException {
@@ -321,6 +348,7 @@ public class PyFile extends PyObject
     }
 
     public PyFile(FileWrapper file, String name, String mode) {
+        file.setMode(mode);
         this.name = name;
         this.mode = mode;
         this.softspace = false;
