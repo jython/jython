@@ -8,8 +8,8 @@ import java.util.Enumeration;
 public class PyReflectedFunction extends PyObject {
     public String __name__;
     public PyObject __doc__ = Py.None;
-    protected ReflectedArgs[] argslist;
-    protected int nargs;
+    public ReflectedArgs[] argslist;
+    public int nargs;
 
     public static PyClass __class__;
     public PyReflectedFunction(String name, PyClass c) {
