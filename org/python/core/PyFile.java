@@ -720,9 +720,9 @@ public class PyFile extends PyObject
             // What about bufsize?
             java.io.RandomAccessFile rfile =
                 new java.io.RandomAccessFile(f, jmode);
-            if (c1 == 'a')
-                rfile.seek(rfile.length());
             RFileWrapper iofile = new RFileWrapper(rfile);
+            if (c1 == 'a')
+                iofile.seek(0, 2);
             return iofile;
         } catch (java.io.IOException e) {
             throw Py.IOError(e);
