@@ -676,7 +676,16 @@ public class PyJavaClass extends PyClass {
 
 	//return null;
     }
-	
+
+    public PyObject __dir__() {
+	initialize();
+	if (__dict__ instanceof PyStringMap) {
+	    return ((PyStringMap)__dict__).keys();
+	} else {
+	    return __dict__.invoke("keys");
+	}
+    }
+
     public PyObject __findattr__(String name) {
         if (name == "__dict__") {
             if (__dict__ == null) init__dict__();
