@@ -616,8 +616,10 @@ public class imp
         PyObject names;
         if (module instanceof PyJavaPackage)
             names = ((PyJavaPackage)module).fillDir();
-        else
-            names = module.__dir__();
+        else {
+            PyObject __all__ = module.__findattr__("__all__");
+            names = (__all__ != null)  ? __all__ : module.__dir__();
+        }
 
         loadNames(names, module, frame.getf_locals());
     }
@@ -625,8 +627,6 @@ public class imp
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals)
     {
-        PyObject __all__ = module.__findattr__("__all__");
-        if (__all__ != null) names = __all__;
         int i=0;
         PyObject name;
         while ((name=names.__finditem__(i++)) != null) {
