@@ -1,4 +1,4 @@
-Welcome to Jython 2.0 alpha 1
+Welcome to Jython 2.0 alpha 2
 =============================
 
 Jython is the successor to JPython. The Jython project was
@@ -30,3 +30,6 @@ been broken.
 
     - The \x escape have changed, now it will eat two hex characters
       but never more. The behaviour matches CPython2.0
+
+    - The python.path property is appended to sys.path instead of
+      being inserted at position 1 in sys.path.
