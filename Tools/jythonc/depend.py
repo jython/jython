@@ -148,7 +148,7 @@ class ResourceEntry:
         return java.lang.Class.getResourceAsStream("".__class__, self.name)
 
     def getZipName(self):
-        return self.name
+        return self.name[1:]
 
 
 ##class ZipEntry:
