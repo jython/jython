@@ -165,15 +165,15 @@ public class SimpleNode implements Node
 		int i=0;
 		while (i < ndigits && s.charAt(i) == '0') i++;
 		if ((ndigits - i) > 11) {
-		    throw new PythonTokenError("integer literal too large",
-					       beginLine, beginColumn);
+		    throw new TokenMgrError("integer literal too large",
+					    beginLine, beginColumn);
 		}
 
 		long l = Long.valueOf(s, radix).longValue();
 		if (l > 0xffffffffl || (radix == 10 && l > Integer.MAX_VALUE))
 		{
-		    throw new PythonTokenError("integer literal too large",
-					       beginLine, beginColumn);
+		    throw new TokenMgrError("integer literal too large",
+					    beginLine, beginColumn);
 		}
 		setInfo(new Integer((int)l));
 	    }

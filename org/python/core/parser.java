@@ -39,15 +39,16 @@ public class parser {
 	    return new PySyntaxError(e.getMessage(), line, col,
 				     text, filename, forceNewline);
 	}
-	if (t instanceof PythonTokenError) {
-	    PythonTokenError e = (PythonTokenError)t;
+	if (t instanceof TokenMgrError) {
+	    TokenMgrError e = (TokenMgrError)t;
 	    boolean eofSeen = e.EOFSeen;
 
 	    int col = e.errorColumn;
 	    int line = e.errorLine;
 	    //System.err.println("eof seen: "+eofSeen+", "+e.curChar+", "+col+", "+line);
 	    String text = getLine(istream, line);
-	    if (eofSeen) col -= 1;
+	    if (eofSeen)
+		col -= 1;
 	    return new PySyntaxError(e.getMessage(), line, col,
 				     text, filename, forceNewline);
 	}
@@ -120,9 +121,9 @@ public class parser {
 	}
 	catch (PySyntaxError e) {
 	    //System.out.println("e: "+e.lineno+", "+e.column+", "+e.forceNewline);
-	        
 	    try {
-		node = parse(new StringBufferInputStream(string+"\n"), kind, filename);
+		node = parse(new StringBufferInputStream(string+"\n"),
+			     kind, filename);
 	    }
 	    catch (PySyntaxError e1) {
 		//System.out.println("e1: "+e1.lineno+", "+e1.column+", "+e1.forceNewline);
