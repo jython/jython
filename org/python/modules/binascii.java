@@ -796,6 +796,7 @@ static long[] crc_32_tab = new long[] {
     public static int crc32(String bin_data, long crc) {
         int len = bin_data.length();
 
+        crc &= 0xFFFFFFFFL;
         crc = crc ^ 0xFFFFFFFFL;
         for (int i = 0; i < len; i++) {
             char ch = bin_data.charAt(i);
