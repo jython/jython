@@ -49,5 +49,6 @@ public class Setup
         "ucnhash",
         "_jython",
         "new:org.python.modules.newmodule",
+        "_weakref",
     };
 }
