@@ -1450,8 +1450,6 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String join(PyObject seq) {
-        // trigger same TypeError as CPython if seq is not a sequence
-        int seqlen = __builtin__.len(seq);
         StringBuffer buf = new StringBuffer();
 
         PyObject iter = seq.__iter__();
