@@ -4,7 +4,7 @@
 
     <!--
       This propery should be specified in the ant.property file
-      property name="javaccHome2" value="/opt/javacc2.0/bin/lib"
+      property name="javaccHome" value="/opt/javacc2.0/bin/lib"
     -->
 
     <!-- Give users a change to override editing this file. -->
@@ -32,8 +32,11 @@
         <property name="outputDir" value="${basedir}/build" />
         <property name="distDir" value="${basedir}/dist" />
         <property name="apidocDir" value="${distDir}/Doc/javadoc" />
+        
+        <property name="targetver" value="1.1" />
         <property name="debug" value="off" />
         <property name="optimize" value="on" />
+        
         <property name="release" value="22a0" />
 
         <property name="python.lib" value="${python.home}/Lib" />
@@ -108,6 +111,7 @@
         <echo>jdbc        = ${javax.sql.present}</echo>
         <echo>jdbc3.0     = ${jdbc30.present}</echo>
 
+        <property name="parser" value="${sourceDir}/org/python/parser" />
     </target>
 
     <target name="clean" depends="init">
@@ -115,43 +119,21 @@
         <delete>
            <fileset dir="${distDir}" excludes="jython.jar"/>
         </delete>
-        <property name="parser" value="${sourceDir}/org/python/parser" />
-        <delete file="${parser}/python.jj" />
-        <delete file="${parser}/PythonGrammar.java" />
-        <delete file="${parser}/PythonGrammarConstants.java" />
-        <delete file="${parser}/PythonGrammarTokenManager.java" />
-        <delete file="${parser}/PythonGrammarTreeConstants.java" />
-        <delete file="${parser}/Token.java" />
-        <delete file="${parser}/ASCII_CharStream.java" />
     </target>
 
     <target name="prepare" depends="init">
         <mkdir dir="${outputDir}" />
     </target>
 
-    <target name="tree" depends="prepare" if="javaccHome2">
-        <jjtree
-            javacchome="${javaccHome2}"
-            target="org/python/parser/python.jjt"
-            outputdirectory="org/python/parser/"
-        />
-    </target>
-
-    <target name="parser" depends="tree" if="javaccHome2">
-        <javacc
-            javacchome="${javaccHome2}"
-            target="org/python/parser/python.jj"
-            outputdirectory="org/python/parser/"
-        />
-        <!-- Damn! The task above assumes that the generated name
-             is basename of the input file. So we fake it to be the case-->
-        <touch file="org/python/parser/python.java" />
+    <target name="parser" depends="init" if="javaccHome">
+        <ant dir="${parser}" />
     </target>
 
     <target name="compile" depends="prepare,parser">
         <javac
             srcdir="${sourceDir}/"
             destdir="${outputDir}/"
+            target="${targetver}"
             debug="${debug}"
             optimize="${optimize}">
             <include name="org/**"/>
@@ -204,6 +186,7 @@
             srcdir="${sourceDir}/Lib"
             includes="jxxload_help/**"
             destdir="${outputDir}/"
+            target="${targetver}"
             debug="${debug}"
             optimize="${optimize}"
         />
