@@ -12,7 +12,8 @@ SUBDIRS= \
 	org/python/compiler \
 	org/python/core \
 	org/python/modules \
-	org/python/util
+	org/python/util \
+	org/python/rmi
 
 all: subdirs installer
 
