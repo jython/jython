@@ -35,8 +35,8 @@ public class BytecodeLoader extends ClassLoader
         return ((PyRunnable)c.newInstance()).getMain();
     }
 
-    public static Class makeClass(String name, byte[] data) {
-        return new BytecodeLoader().loadClass(name, data);
+    public Class makeClass(String name, byte[] data) {
+        return loadClass(name, data);
     }
 
     public static PyCode makeCode(String name, byte[] data)
