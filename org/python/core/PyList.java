@@ -1,60 +1,126 @@
 package org.python.core;
 import java.util.Vector;
-/* TODO: Change to implementation based on PyObject[] */
-public class PyList extends PySequence {
-	public Vector list;
 
+class ListFunctions extends PyBuiltinFunctionSet {
+    /*public PyObject __call__() {
+        switch(index) {
+            case 4:
+                return __builtin__.globals();
+            default:
+                throw argCountError(0);
+        }
+    }    
+    public PyObject __call__(PyObject arg1) {
+        switch(index) {
+            case 0:
+                return Py.newString(__builtin__.chr(Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
+            case 1:
+                return Py.newInteger(__builtin__.len(arg1));
+            case 2:
+                return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
+            case 3:
+                return Py.newInteger(__builtin__.ord(Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
+            case 5:
+                return __builtin__.hash(arg1);
+            case 7:
+                return __builtin__.list(arg1);
+            case 8:
+                return __builtin__.tuple(arg1);
+            default:
+                throw argCountError(1);
+        }
+    }*/
+    public PyObject __call__(PyObject arg1, PyObject arg2) {
+        switch(index) {
+            case 0:
+                ((PyList)arg1).append(arg2);
+                return Py.None;
+            default:
+                throw argCountError(2);
+        }
+    }
+    /*public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
+        switch(index) {
+            case 2:
+                return __builtin__.range(
+                    Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
+                    Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
+                    Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
+            default:
+                throw argCountError(3);
+        }
+    }*/
+}
+
+
+
+public class PyList extends PySequence implements InitModule {
+    public void initModule(PyObject dict) {
+		dict.__setitem__("append", new ListFunctions().init("append", 0, 2, true) );
+	}
+            
+    
+    
+    public PyObject[] list;
+    public int length;
+    
 	public PyList() {
-		this(new Vector());
+		this(Py.EmptyObjects);
 	}
 
     public static PyClass __class__;
 	public PyList(Vector ilist) {
-	    super(__class__);
-		list = ilist;
+	    this(new PyObject[ilist.size()]);
+	    for(int i=0; i<ilist.size(); i++) {
+	        list[i] = (PyObject)ilist.elementAt(i);
+	    }
 	}
 
 	public PyList(PyObject elements[]) {
-		this(new Vector(elements.length));
-		for(int i=0; i<elements.length; i++) {
-			list.addElement(elements[i]);
-		}
+	    super(__class__);
+	    list = elements;
+	    length = elements.length;
 	}
 
 	public int __len__() { 
-	    return list.size(); 
+	    return length; 
 	}
 
 	protected PyObject get(int i) {
-		return (PyObject)list.elementAt(i);
+	    return list[i];
 	}
 
 	protected PyObject getslice(int start, int stop, int step) {
 		int n = sliceLength(start, stop, step);
-		Vector new_list = new java.util.Vector(n);
+		PyObject[] newList = new PyObject[n];
+		
+		if (step == 1) {
+		    System.arraycopy(list, start, newList, 0, stop-start);
+		    return new PyList(newList);
+		}
 		int j = 0;
 		for(int i=start; j<n; i+=step) {
-			new_list.addElement(list.elementAt(i));
+			newList[j] = list[i];
 			j++;
 		}
-		return new PyList(new_list);
+		return new PyList(newList);
 	}
 
 	protected void del(int i) {
-		list.removeElementAt(i);
+	    length = length-1;
+	    System.arraycopy(list, i+1, list, i, length-i);
 	}
 
 	protected void delRange(int start, int stop, int step) {
-		int n = sliceLength(start, stop, step);
-		int j = 0;
-		for(int i=start; j<n; i+=step-1) {
-			list.removeElementAt(i);
-			j++;
-		}
+		if (step != 1)
+		    throw Py.ValueError("step size must be 1 for deleting list slice");
+		    
+	    System.arraycopy(list, stop, list, start, length-stop);
+	    length = length-(stop-start);
 	}
 
 	protected void set(int i, PyObject value) {
-		list.setElementAt(value, i);
+	    list[i] = value;
 	}
 
 	protected void setslice(int start, int stop, int step, PyObject value) {
@@ -68,57 +134,55 @@ public class PyList extends PySequence {
 		// Hack to make recursive setslices work correctly.
 		// Could avoid the copy if we wanted to be more clever about
 		// the code to do the moving
-		if (seq == this) {
-		    seq = new PyList((Vector)this.list.clone());
-		}
+
 
 		int n = seq.__len__();
 		int i;
-		int size = __len__();
-		int newSize = size-(stop-start)+n;
+		int length = this.length;
+		int newLength = length-(stop-start)+n;
 
+		if (newLength > length || newLength < length) {
+		    resize(newLength);
+		    System.arraycopy(list, stop, list, stop+(newLength-length), length-stop);
+		} /*else if (newLength < length) {
+		    System.arraycopy(list, stop, list, stop+(newLength-length), length-stop);
+		    this.length = newLength;
+    	}*/
 
-		if (newSize > size) {
-		    list.setSize(newSize);
-		    int offset = newSize-size;
-		    for(i=size-1; i>=stop; i--) {
-		        list.setElementAt(list.elementAt(i), i+offset);
-		    }
+		PyObject[] otherList = null;
+		if (value instanceof PyTuple) otherList = ((PyTuple)value).list;
+		if (value instanceof PyList) {
+		    otherList = ((PyList)value).list;
+		    if (otherList == list) otherList = (PyObject[])otherList.clone();;
+		}
+		
+		if (otherList != null) {
+		    System.arraycopy(otherList, 0, list, start, n);
 		} else {
-		    if (newSize < size) {
-    		    int offset = newSize-size;
-    		    for(i=stop; i<size; i++) {
-    		        list.setElementAt(list.elementAt(i), i+offset);
-    		    }
-    		}
-    		list.setSize(newSize);
-    	}
-
-	    for(i=0; i<n; i++) {
-	        list.setElementAt(seq.get(i), i+start);
+	        for(i=0; i<n; i++) {
+	           list[i+start] = seq.get(i);
+	        }
 	    }
 	}
 
 	protected PyObject repeat(int count) {
-		int l = __len__();
-		java.util.Vector new_list = new java.util.Vector(l*count);
+		int l = length;
+		PyObject[] newList = new PyObject[l*count];
 		for(int i=0; i<count; i++) {
-			for(int j=0; j<l; j++) {
-				new_list.addElement(list.elementAt(j));
-			}
+		    System.arraycopy(list, 0, newList, i*l, l);
 		}
-		return new PyList(new_list);
+		return new PyList(newList);
 	}
 
-	public PyObject __add__(PyObject generic_other) {
-		if (generic_other instanceof PyList) {
-			PyList other = (PyList)generic_other;
-			java.util.Vector new_list = new java.util.Vector(__len__()+other.__len__());
-			int l = __len__();
-			for(int i=0; i<l; i++) new_list.addElement(list.elementAt(i));
-			l = other.__len__();
-			for(int i=0; i<l; i++) new_list.addElement(other.list.elementAt(i));
-			return new PyList(new_list);
+	public PyObject __add__(PyObject genericOther) {
+		if (genericOther instanceof PyList) {
+			PyList other = (PyList)genericOther;
+			
+			PyObject[] newList = new PyObject[length+other.length];
+			System.arraycopy(list, 0, newList, 0, length);
+			System.arraycopy(other.list, 0, newList, length, other.length);
+			
+			return new PyList(newList);
 		} else {
 			return null;
 		}
@@ -126,36 +190,55 @@ public class PyList extends PySequence {
 
 	public PyString __repr__() {
 		StringBuffer buf = new StringBuffer("[");
-		for(int i=0; i<__len__()-1; i++) {
-			buf.append(((PyObject)list.elementAt(i)).__repr__().toString());
+		for(int i=0; i<length-1; i++) {
+			buf.append(((PyObject)list[i]).__repr__().toString());
 			buf.append(", ");
 		}
-		if (__len__() > 0) buf.append(((PyObject)list.elementAt(__len__()-1)).__repr__().toString());
+		if (length > 0) buf.append(((PyObject)list[length-1]).__repr__().toString());
 		buf.append("]");
 
 		return new PyString(buf.toString());
 	}
 
+    protected void resize(int n) {
+        if (list.length < n) {
+			PyObject[] newList = new PyObject[(int)(n*1.5)];
+			System.arraycopy(list, 0, newList, 0, length);
+			list = newList;
+		}
+		length = n;
+	}
+
 	public void append(PyObject o) {
-		list.addElement(o);
+	    resize(length+1);
+	    list[length-1] = o;
 	}
 
 	public int count(PyObject o) {
-		int n=0;
-		for(int i=0; i<__len__(); i++) {
-			if (list.elementAt(i).equals(o)) n++;
+		int count=0;
+		int n = length;
+		PyObject[] list = this.list;
+		for(int i=0; i<n; i++) {
+			if (list[i].equals(o)) count++;
 		}
-		return n;
+		return count;
 	}
 
 	public int index(PyObject o) {
-		int i = list.indexOf(o);
-		if (i == -1) throw Py.ValueError("item not found in list");
+		int n = length;
+		PyObject[] list = this.list;
+		int i=0;
+		for(; i<n; i++) {
+			if (list[i].equals(o)) break;
+		}
+		if (i == n) throw Py.ValueError("item not found in list");
 		return i;
 	}
 
 	public void insert(int index, PyObject o) {
-		list.insertElementAt(o, index);
+	    resize(length+1);
+	    System.arraycopy(list, index, list, index+1, length-index);
+	    list[index] = o;
 	}
 
 	public void remove(PyObject o) {
@@ -163,12 +246,14 @@ public class PyList extends PySequence {
 	}
 
 	public void reverse() {
-		Object tmp;
-		int n = __len__();
-		for(int i=0; i<n/2; i++) {
-			tmp = list.elementAt(i);
-			list.setElementAt(list.elementAt(n-1-i), i);
-			list.setElementAt(tmp, n-1-i);
+		PyObject tmp;
+		int n = length;
+		PyObject[] list = this.list;
+		int j = n-1;
+		for(int i=0; i<n/2; i++, j--) {
+			tmp = list[i];
+			list[i] = list[j];
+			list[j] = tmp;
 		}
 	}
 
@@ -362,17 +447,18 @@ public class PyList extends PySequence {
 
     // Future PyLists will probably have their own PyObject[]
     // For now, we must copy one out of and back into the vector
-	public void sort(PyObject compare) {
+	public synchronized void sort(PyObject compare) {
+	    /*
 	    int n = __len__();
 	    PyObject[] array = new PyObject[n];
 	    int i;
 	    for(i=0; i<n; i++)
 	        array[i] = (PyObject)list.elementAt(i);
+        */
+	    quicksort(list, 0, length, compare);
 
-	    quicksort(array, 0, n, compare);
-
-	    for(i=0; i<n; i++)
-	        list.setElementAt(array[i], i);
+	    /*for(i=0; i<n; i++)
+	        list.setElementAt(array[i], i);*/
 	}
 
 	public void sort() {
