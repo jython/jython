@@ -652,7 +652,7 @@ public class PyJavaClass extends PyClass {
         }
         
         // For backwards compatibilty, support keyword_ as a substitute for
-        // keyword An improved parser makes this no longer necessary
+        // keyword.  An improved parser makes this no longer necessary.
         if (Options.deprecatedKeywordMangling && name.endsWith("_")) {
             String newName = unmangleKeyword(name);
             if (newName != null)
