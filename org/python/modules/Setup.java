@@ -49,5 +49,6 @@ public class Setup
         "sha",
         "ucnhash",
         "_jython",
+        "new:org.python.modules.newmodule",
     };
 }
