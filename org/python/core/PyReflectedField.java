@@ -1,6 +1,9 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+
 
 public class PyReflectedField extends PyObject {
     public Field field;

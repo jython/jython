@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Hashtable;
