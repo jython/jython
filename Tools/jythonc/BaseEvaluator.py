@@ -106,12 +106,16 @@ class BaseEvaluator:
         if len(seq) > 0 and seq[-1].id == JJTCOMMA:
             del seq[-1]
         n = len(seq)
-        tmp, code = self.makeTemp(value)
-        stmts = [code]
 
+        unpacked = jast.InvokeStatic("org.python.core.Py", "unpackSequence",
+                                      [value.asAny(), jast.IntegerConstant(n)])
+        tmp = self.frame.gettemp('PyObject[]')
+        stmts = [ jast.Set(tmp, unpacked) ]
+        
         for i in range(n):
-            stmts.append(self.set(seq[i], tmp.igetitem(i)))
-        self.freeTemp(tmp)
+            code = jast.Subscript(tmp, i)
+            stmts.append(self.set(seq[i], self.factory.makePyObject(code)))
+        self.frame.freetemp(tmp)
         return stmts
 
     def set_item(self, obj, index, value):
