@@ -313,13 +313,13 @@ class SimpleCompiler(BaseEvaluator):
             self.frame.addglobal(name)
         return jast.SimpleComment('global '+string.join(names, ','))
 
-    def get_module(self, names, top=0):
+    def get_module(self, names, topmost=0):
         ret = self.factory.importName(names[0])
         top = ret
 
         for part in names[1:]:
             top = top.getattr(part)
-        if top:
+        if topmost:
             return top
         else:
             return ret
