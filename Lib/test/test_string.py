@@ -209,6 +209,15 @@ test('replace', 'one!two!three!', 'one@two@three@', '!', '@')
 test('replace', 'one!two!three!', 'one!two!three!', 'x', '@')
 test('replace', 'one!two!three!', 'one!two!three!', 'x', '@', 2)
 
+test('count', 'aaa', 3, 'a')
+test('count', 'aaa', 2, 'a', 0, 2)
+test('count', 'ababab', 3, 'ab', 0)
+test('count', 'ababab', 2, 'ab', 0, 5)
+test('count', 'ababab', 2, 'ab', 1)
+test('count', 'ababab', 2, 'ab', 1, 6)
+test('count', 'ababab', 0, 'abc')
+test('count', 'ababab', 7, '')
+
 string.whitespace
 string.lowercase
 string.uppercase
