@@ -62,10 +62,14 @@ def runJava(cls, **kw):
 	outstream = java.io.FileOutputStream(kw['output'])
     else:
 	outstream = java.lang.System.out
+    if kw.has_key("error"):
+	errstream = java.io.FileOutputStream(kw['error'])
+    else:
+	errstream = java.lang.System.out
 
     import java
     thread.start_new_thread(StreamReader, (p.inputStream, outstream))
-    thread.start_new_thread(StreamReader, (p.errorStream, outstream))
+    thread.start_new_thread(StreamReader, (p.errorStream, errstream))
     ret = p.waitFor()
     if ret != 0 and not kw.has_key("expectError"):
 	raise TestError, "%s failed with %d" % (cmd, ret)
@@ -81,10 +85,14 @@ def runJython(cls, **kw):
 	outstream = java.io.FileOutputStream(kw['output'])
     else:
 	outstream = java.lang.System.out
+    if kw.has_key("error"):
+	errstream = java.io.FileOutputStream(kw['error'])
+    else:
+	errstream = java.lang.System.out
 
     import java
     thread.start_new_thread(StreamReader, (p.inputStream, outstream))
-    thread.start_new_thread(StreamReader, (p.errorStream, outstream))
+    thread.start_new_thread(StreamReader, (p.errorStream, errstream))
     ret = p.waitFor()
     if ret != 0 and not kw.has_key("expectError"):
 	raise TestError, "%s failed with %d" % (cmd, ret)
