@@ -11,13 +11,13 @@ import org.python.compiler.AdapterMaker;
 import org.python.compiler.ProxyMaker;
 
 
-class MakeProxies 
+class MakeProxies
 {
     private static Class makeClass(Class referent, Vector secondary,String name,
                                    ByteArrayOutputStream bytes)
     {
         Vector referents = null;
-        
+
         if (secondary != null) {
             if (referent != null) {
                 secondary.insertElementAt(referent,0);
@@ -29,7 +29,7 @@ class MakeProxies
                 referents.addElement(referent);
             }
         }
-        
+
         return BytecodeLoader.makeClass(name, referents, bytes.toByteArray());
     }
 
@@ -67,9 +67,9 @@ class MakeProxies
         PyObject mn=dict.__finditem__("__module__");
         if (mn==null)
             pythonModuleName = "foo";
-        else 
+        else
             pythonModuleName = (String)mn.__tojava__(String.class);
-         
+
         JavaMaker jm = new JavaMaker(superclass, interfaces, name,
                                      pythonModuleName, proxyName, dict);
         try {

@@ -10,7 +10,7 @@ public class Options
     // the interpreter print out the Java exception in the traceback?
     public static boolean showJavaExceptions = false;
 
-    // if this is not null, it must be a string indicating the directory to 
+    // if this is not null, it must be a string indicating the directory to
     // save proxy adapter class files to
     public static String proxyCacheDirectory = null;
 
@@ -41,16 +41,16 @@ public class Options
     // have unintended side-effects.  This option is temporary.
     public static boolean extendedClassLoader = true;
     */
-    
+
     // TBD
     public static boolean importSite = true;
 
     // TBD
     public static int verbose = Py.MESSAGE;
-    
+
     // TBD
     public static boolean deprecatedKeywordMangling = true;
-    
+
     // TBD
     public static boolean parserVerboseExceptions = false;
 
@@ -68,7 +68,7 @@ public class Options
             return defaultValue;
         return prop.equalsIgnoreCase("true") || prop.equalsIgnoreCase("yes");
     }
-    
+
     private static String getStringOption(String name, String defaultValue) {
         String prop = PySystemState.registry.getProperty("python."+name);
         if (prop == null)
@@ -82,14 +82,14 @@ public class Options
             getBooleanOption("options.showJavaExceptions",
                              Options.showJavaExceptions);
 
-        Options.showPythonProxyExceptions = 
+        Options.showPythonProxyExceptions =
             getBooleanOption("options.showPythonProxyExceptions",
                              Options.showPythonProxyExceptions);
 
-        Options.skipCompile = 
+        Options.skipCompile =
             getBooleanOption("options.skipCompile", Options.skipCompile);
 
-        Options.deprecatedKeywordMangling = 
+        Options.deprecatedKeywordMangling =
             getBooleanOption("deprecated.keywordMangling",
                              Options.deprecatedKeywordMangling);
 

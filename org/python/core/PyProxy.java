@@ -7,7 +7,7 @@ public interface PyProxy
 {
     abstract public void _setPyInstance(PyInstance proxy);
     abstract public PyInstance _getPyInstance();
-        
+
     abstract public void _setPySystemState(PySystemState ss);
     abstract public PySystemState _getPySystemState();
 }

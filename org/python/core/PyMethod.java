@@ -17,13 +17,13 @@ public class PyMethod extends PyObject
         im_self = self;
         im_class = wherefound;
     }
-        
+
     public PyMethod(PyObject self, PyFunction f, PyObject wherefound) {
         this(self, (PyObject)f, wherefound);
         __name__ = f.__name__;
         __doc__ = f.__doc__;
     }
-        
+
     public PyMethod(PyObject self, PyReflectedFunction f, PyObject wherefound)
     {
         this(self, (PyObject)f, wherefound);

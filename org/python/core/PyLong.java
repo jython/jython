@@ -120,7 +120,7 @@ public class PyLong extends PyObject
         else
             throw Py.TypeError("xxx");
     }
-        
+
 
     public PyObject __add__(PyObject right) {
         if (!canCoerce(right))

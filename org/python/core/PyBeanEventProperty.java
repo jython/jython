@@ -13,7 +13,7 @@ public class PyBeanEventProperty extends PyReflectedField
     public String __name__;
 
     public static PyClass __class__;
-    public PyBeanEventProperty(String eventName, Class eventClass, 
+    public PyBeanEventProperty(String eventName, Class eventClass,
                                Method addMethod, Method eventMethod)
     {
         super(__class__);
@@ -26,18 +26,18 @@ public class PyBeanEventProperty extends PyReflectedField
     public PyObject _doget(PyObject self) {
         if (self == null)
             return this;
-            
+
         initAdapter();
-            
+
         Object jself = Py.tojava(self, addMethod.getDeclaringClass());
-            
+
         Object field;
         try {
             field = adapterField.get(getAdapter(jself));
         } catch (Exception exc) {
             throw Py.JavaError(exc);
         }
-            
+
         PyCompoundCallable func;
         if (field == null) {
             func = new PyCompoundCallable();
@@ -61,7 +61,7 @@ public class PyBeanEventProperty extends PyReflectedField
             return (Class)o;
         Class pc = Py.findClass("org.python.proxies."+c.getName()+"$Adapter");
         if (pc == null) {
-            //System.err.println("adapter not found for: "+"org.python.proxies."+c.getName()+"$Adapter");           
+            //System.err.println("adapter not found for: "+"org.python.proxies."+c.getName()+"$Adapter");
             pc = MakeProxies.makeAdapter(c);
         }
         tbl.putAdapterClass(c, pc);

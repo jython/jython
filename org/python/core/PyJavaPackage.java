@@ -8,48 +8,48 @@ import java.io.File;
 
 public class PyJavaPackage extends PyObject {
     public String __name__;
-        
-    
+
+
     public PyStringMap __dict__;
     //public String _unparsedAll;
     /** Its keys are the names of statically known classes.
      * E.g. from jars pre-scan.
      */
-    public PyStringMap clsSet;    
+    public PyStringMap clsSet;
     public String __file__;
     //public PyList __all__;
 
     /** (Control) package manager whose hierarchy contains this java pkg.
      */
     public PackageManager __mgr__;
-    
+
     public static PyClass __class__;
     public PyJavaPackage(String name) {
         this(name, null, null);
     }
-    
+
     public PyJavaPackage(String name,String jarfile) {
         this(name, null, jarfile);
     }
-    
+
     public PyJavaPackage(String name,PackageManager mgr) {
         this(name, mgr, null);
     }
 
-   
+
     public PyJavaPackage(String name,PackageManager mgr,String jarfile) {
         super(__class__);
 
         __file__ = jarfile;
         __name__ = name;
-        
+
         if( mgr == null )
            __mgr__ = PySystemState.packageManager; // default
         else
            __mgr__ = mgr;
-        
+
         clsSet= new PyStringMap();
-        
+
         __dict__ = new PyStringMap();
         __dict__.__setitem__("__name__", new PyString(__name__));
     }
@@ -57,7 +57,7 @@ public class PyJavaPackage extends PyObject {
     public PyJavaPackage addPackage(String name) {
         return addPackage(name, null);
     }
-    
+
     public PyJavaPackage addPackage(String name, String jarfile) {
         int dot = name.indexOf('.');
         String firstName=name;
@@ -77,7 +77,7 @@ public class PyJavaPackage extends PyObject {
         if (lastName != null) return p.addPackage(lastName, jarfile);
         else return p;
     }
-    
+
     public PyObject addClass(String name,Class c) {
         PyObject ret = PyJavaClass.lookup(c);
         __dict__.__setitem__(name.intern(), ret);
@@ -126,9 +126,9 @@ public class PyJavaPackage extends PyObject {
         Class c;
 
         c = __mgr__.findClass(__name__,name);
-        
+
         if (c != null) return addClass(name,c);
-    
+
         if (name == "__name__") return new PyString(__name__);
         if (name == "__dict__") return __dict__;
         if (name == "__mgr__") return Py.java2py(__mgr__);
@@ -145,7 +145,7 @@ public class PyJavaPackage extends PyObject {
 
         return null;
     }
-        
+
     public void __setattr__(String attr, PyObject value) throws PyException {
         if (attr == "__mgr__") {
             PackageManager newMgr = (PackageManager)Py.tojava(value,PackageManager.class);

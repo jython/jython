@@ -29,7 +29,7 @@ public class PyInstance extends PyObject
         if (javaProxy != null)
             ((PyProxy) javaProxy)._setPySystemState(Py.getSystemState());
     }
-    
+
     private void writeObject(java.io.ObjectOutputStream out)
         throws java.io.IOException
     {
@@ -51,7 +51,7 @@ public class PyInstance extends PyObject
 
 
     /**
-       Returns a new 
+       Returns a new
     **/
 
     public PyInstance(PyClass iclass, PyObject dict) {
@@ -112,7 +112,7 @@ public class PyInstance extends PyObject
         }
         if (c.isInstance(this))
             return this;
-                
+
         if (c.isPrimitive()) {
             if (primitiveMap == null) {
                 primitiveMap = new Hashtable();
@@ -129,13 +129,13 @@ public class PyInstance extends PyObject
             if (tmp != null)
                 c = tmp;
         }
-                
+
         if (javaProxy == null && __class__.proxyClass != null) {
             makeProxy();
         }
         if (c.isInstance(javaProxy))
             return javaProxy;
-                
+
         if (__class__.__tojava__ != null) {
             //try {
             PyObject ret =
@@ -178,7 +178,7 @@ public class PyInstance extends PyObject
             makeProxy();
         }
     }
-        
+
     /*private PyProxy createProxy(Class c) {
       try {
       return (PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
@@ -186,23 +186,23 @@ public class PyInstance extends PyObject
       throw Py.JavaError(exc);
       }
       }*/
-        
+
     /*public PyObject __jgetattr__(String name) {
       System.err.println("jgetting: "+name);
       PyObject ret = __findattr__(name, true);
       if (ret != null) return ret;
       throw Py.AttributeError(name);
       }*/
-        
+
     public PyObject __jfindattr__(String name) {
         //System.err.println("jfinding: "+name);
         return __findattr__(name, true);
     }
-        
+
     public PyObject __findattr__(String name) {
         return __findattr__(name, false);
     }
-        
+
     public PyObject __findattr__(String name, boolean stopAtJava) {
         PyObject result = ifindlocal(name);
         if (result != null)
@@ -213,24 +213,24 @@ public class PyInstance extends PyObject
             return result2[0]._doget(this, result2[1]);
         return ifindfunction(name);
     }
-    
+
     protected PyObject ifindlocal(String name) {
         if (name == "__dict__") return __dict__;
         if (name == "__class__") return __class__;
         if (__dict__ == null) return null;
-                
+
         return __dict__.__finditem__(name);
     }
-        
+
     protected PyObject ifindclass(String name, boolean stopAtJava) {
         return __class__.lookup(name, stopAtJava);
     }
-        
+
     protected PyObject ifindfunction(String name) {
         PyObject getter = __class__.__getattr__;
         if (getter == null)
             return null;
-                
+
         try {
             return getter.__call__(this, new PyString(name));
         } catch (PyException exc) {
@@ -238,7 +238,7 @@ public class PyInstance extends PyObject
             throw exc;
         }
     }
-        
+
     public PyObject invoke(String name) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -255,7 +255,7 @@ public class PyInstance extends PyObject
         if (f == null) throw Py.AttributeError(name);
         return f.__call__();
     }
-    
+
     public PyObject invoke(String name, PyObject arg1) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -274,7 +274,7 @@ public class PyInstance extends PyObject
         if (f == null) throw Py.AttributeError(name);
         return f.__call__(arg1);
     }
-    
+
     public PyObject invoke(String name, PyObject arg1, PyObject arg2) {
         PyObject f = ifindlocal(name);
         if (f == null) {
@@ -293,8 +293,8 @@ public class PyInstance extends PyObject
         if (f == null) throw Py.AttributeError(name);
         return f.__call__(arg1, arg2);
     }
-        
-        
+
+
     public void __setattr__(String name, PyObject value) {
         if (name == "__class__") {
             if (value instanceof PyClass) {
@@ -324,15 +324,15 @@ public class PyInstance extends PyObject
             }
         }
     }
-        
+
     protected void noField(String name, PyObject value) {
         __dict__.__setitem__(name, value);
     }
-    
+
     protected void unassignableField(String name, PyObject value) {
         __dict__.__setitem__(name, value);
     }
-    
+
     public void __delattr__(String name) throws PyException {
         // Need code to handle _dodel
         PyObject deller = __class__.__delattr__;
@@ -350,7 +350,7 @@ public class PyInstance extends PyObject
             return null;
         return meth.__call__(args, keywords);
     }
-        
+
     public PyObject invoke_ex(String name) {
         PyObject meth = __findattr__(name);
         if (meth == null)
@@ -406,7 +406,7 @@ public class PyInstance extends PyObject
             throw Py.TypeError("__str__ method must return a string");
         return (PyString)ret;
     }
-        
+
     public int hashCode() {
         PyObject ret;
         ret = invoke_ex("__hash__");
@@ -459,7 +459,7 @@ public class PyInstance extends PyObject
         if (ret != null) {
             return ret.__nonzero__();
         }
-                
+
         try {
             return __len__() == 0 ? false : true;
         } catch (PyException exc) {
@@ -482,7 +482,7 @@ public class PyInstance extends PyObject
         if (proxy != CollectionProxy.NoProxy) {
             return proxy.__len__();
         }
-            
+
         PyObject ret = invoke("__len__");
         if (ret instanceof PyInteger)
             return ((PyInteger)ret).getValue();
@@ -496,11 +496,11 @@ public class PyInstance extends PyObject
         }
         return __finditem__(new PyInteger(key));
     }
-        
+
     private PyObject trySlice(PyObject key, String name, PyObject extraArg) {
         if (!(key instanceof PySlice))
             return null;
-            
+
         PySlice slice = (PySlice)key;
 
         if (slice.step != Py.None && slice.step != Py.One) {
@@ -516,33 +516,33 @@ public class PyInstance extends PyObject
         PyObject func = __findattr__(name);
         if (func == null)
             return null;
-            
+
         PyObject start = slice.start;
         PyObject stop = slice.stop;
-            
+
         if (start == Py.None)
             start = Py.Zero;
         if (stop == Py.None)
             stop = new PyInteger(PySystemState.maxint);
-            
+
         if (extraArg == null) {
             return func.__call__(start, stop);
         } else {
             return func.__call__(start, stop, extraArg);
         }
     }
-        
+
     public PyObject __finditem__(PyObject key) {
         CollectionProxy proxy = getCollection();
         if (proxy != CollectionProxy.NoProxy) {
             return proxy.__finditem__(key);
         }
-            
+
         try {
             PyObject ret = trySlice(key, "__getslice__", null);
             if (ret != null)
                 return ret;
-                    
+
             return invoke("__getitem__", key);
         } catch (PyException e) {
             if (Py.matchException(e, Py.IndexError))
@@ -559,7 +559,7 @@ public class PyInstance extends PyObject
         }
         if (trySlice(key, "__setslice__", value) != null)
             return;
-            
+
         invoke("__setitem__", key, value);
     }
 
@@ -603,66 +603,66 @@ public class PyInstance extends PyObject
      **/
     public PyString __hex__() {
         PyObject ret = invoke("__hex__");
-        if (ret instanceof PyString) 
+        if (ret instanceof PyString)
             return (PyString)ret;
         throw Py.TypeError("__hex__() should return a string");
     }
-	
+
     /**
      * Implements the __oct__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyString __oct__() {
         PyObject ret = invoke("__oct__");
-        if (ret instanceof PyString) 
+        if (ret instanceof PyString)
             return (PyString)ret;
         throw Py.TypeError("__oct__() should return a string");
     }
-	
+
     /**
      * Implements the __int__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyInteger __int__() {
         PyObject ret = invoke("__int__");
-        if (ret instanceof PyInteger) 
+        if (ret instanceof PyInteger)
             return (PyInteger)ret;
         throw Py.TypeError("__int__() should return a int");
     }
-	
+
     /**
      * Implements the __float__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyFloat __float__() {
         PyObject ret = invoke("__float__");
-        if (ret instanceof PyFloat) 
+        if (ret instanceof PyFloat)
             return (PyFloat)ret;
         throw Py.TypeError("__float__() should return a float");
     }
-	
+
     /**
      * Implements the __long__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyLong __long__() {
         PyObject ret = invoke("__long__");
-        if (ret instanceof PyLong) 
+        if (ret instanceof PyLong)
             return (PyLong)ret;
         throw Py.TypeError("__long__() should return a long");
     }
-	
+
     /**
      * Implements the __complex__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
     public PyComplex __complex__() {
         PyObject ret = invoke("__complex__");
-        if (ret instanceof PyComplex) 
+        if (ret instanceof PyComplex)
             return (PyComplex)ret;
         throw Py.TypeError("__complex__() should return a complex");
     }
-	
+
     /**
      * Implements the __pos__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -670,7 +670,7 @@ public class PyInstance extends PyObject
     public PyObject __pos__() {
         return invoke("__pos__");
     }
-	
+
     /**
      * Implements the __neg__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -678,7 +678,7 @@ public class PyInstance extends PyObject
     public PyObject __neg__() {
         return invoke("__neg__");
     }
-	
+
     /**
      * Implements the __abs__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -686,7 +686,7 @@ public class PyInstance extends PyObject
     public PyObject __abs__() {
         return invoke("__abs__");
     }
-	
+
     /**
      * Implements the __invert__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -694,7 +694,7 @@ public class PyInstance extends PyObject
     public PyObject __invert__() {
         return invoke("__invert__");
     }
-	
+
     // Binary ops
 
     /**
@@ -714,7 +714,7 @@ public class PyInstance extends PyObject
                 return o1._add(o2);
         }
     }
-	
+
     /**
      * Implements the __radd__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -732,7 +732,7 @@ public class PyInstance extends PyObject
                 return o2._add(o1);
         }
     }
-	
+
     /**
      * Implements the __iadd__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -743,7 +743,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__iadd__(o);
     }
-	
+
     /**
      * Implements the __sub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -761,7 +761,7 @@ public class PyInstance extends PyObject
                 return o1._sub(o2);
         }
     }
-	
+
     /**
      * Implements the __rsub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -779,7 +779,7 @@ public class PyInstance extends PyObject
                 return o2._sub(o1);
         }
     }
-	
+
     /**
      * Implements the __isub__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -790,7 +790,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__isub__(o);
     }
-	
+
     /**
      * Implements the __mul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -808,7 +808,7 @@ public class PyInstance extends PyObject
                 return o1._mul(o2);
         }
     }
-	
+
     /**
      * Implements the __rmul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -826,7 +826,7 @@ public class PyInstance extends PyObject
                 return o2._mul(o1);
         }
     }
-	
+
     /**
      * Implements the __imul__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -837,7 +837,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__imul__(o);
     }
-	
+
     /**
      * Implements the __div__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -855,7 +855,7 @@ public class PyInstance extends PyObject
                 return o1._div(o2);
         }
     }
-	
+
     /**
      * Implements the __rdiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -873,7 +873,7 @@ public class PyInstance extends PyObject
                 return o2._div(o1);
         }
     }
-	
+
     /**
      * Implements the __idiv__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -884,7 +884,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__idiv__(o);
     }
-	
+
     /**
      * Implements the __mod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -902,7 +902,7 @@ public class PyInstance extends PyObject
                 return o1._mod(o2);
         }
     }
-	
+
     /**
      * Implements the __rmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -920,7 +920,7 @@ public class PyInstance extends PyObject
                 return o2._mod(o1);
         }
     }
-	
+
     /**
      * Implements the __imod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -931,7 +931,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__imod__(o);
     }
-	
+
     /**
      * Implements the __divmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -949,7 +949,7 @@ public class PyInstance extends PyObject
                 return o1._divmod(o2);
         }
     }
-	
+
     /**
      * Implements the __rdivmod__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -967,7 +967,7 @@ public class PyInstance extends PyObject
                 return o2._divmod(o1);
         }
     }
-	
+
     /**
      * Implements the __pow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -985,7 +985,7 @@ public class PyInstance extends PyObject
                 return o1._pow(o2);
         }
     }
-	
+
     /**
      * Implements the __rpow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1003,7 +1003,7 @@ public class PyInstance extends PyObject
                 return o2._pow(o1);
         }
     }
-	
+
     /**
      * Implements the __ipow__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1014,7 +1014,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__ipow__(o);
     }
-	
+
     /**
      * Implements the __lshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1032,7 +1032,7 @@ public class PyInstance extends PyObject
                 return o1._lshift(o2);
         }
     }
-	
+
     /**
      * Implements the __rlshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1050,7 +1050,7 @@ public class PyInstance extends PyObject
                 return o2._lshift(o1);
         }
     }
-	
+
     /**
      * Implements the __ilshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1061,7 +1061,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__ilshift__(o);
     }
-	
+
     /**
      * Implements the __rshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1079,7 +1079,7 @@ public class PyInstance extends PyObject
                 return o1._rshift(o2);
         }
     }
-	
+
     /**
      * Implements the __rrshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1097,7 +1097,7 @@ public class PyInstance extends PyObject
                 return o2._rshift(o1);
         }
     }
-	
+
     /**
      * Implements the __irshift__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1108,7 +1108,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__irshift__(o);
     }
-	
+
     /**
      * Implements the __and__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1126,7 +1126,7 @@ public class PyInstance extends PyObject
                 return o1._and(o2);
         }
     }
-	
+
     /**
      * Implements the __rand__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1144,7 +1144,7 @@ public class PyInstance extends PyObject
                 return o2._and(o1);
         }
     }
-	
+
     /**
      * Implements the __iand__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1155,7 +1155,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__iand__(o);
     }
-	
+
     /**
      * Implements the __or__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1173,7 +1173,7 @@ public class PyInstance extends PyObject
                 return o1._or(o2);
         }
     }
-	
+
     /**
      * Implements the __ror__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1191,7 +1191,7 @@ public class PyInstance extends PyObject
                 return o2._or(o1);
         }
     }
-	
+
     /**
      * Implements the __ior__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1202,7 +1202,7 @@ public class PyInstance extends PyObject
             return ret;
         return super.__ior__(o);
     }
-	
+
     /**
      * Implements the __xor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1220,7 +1220,7 @@ public class PyInstance extends PyObject
                 return o1._xor(o2);
         }
     }
-	
+
     /**
      * Implements the __rxor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1238,7 +1238,7 @@ public class PyInstance extends PyObject
                 return o2._xor(o1);
         }
     }
-	
+
     /**
      * Implements the __ixor__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
@@ -1249,5 +1249,5 @@ public class PyInstance extends PyObject
             return ret;
         return super.__ixor__(o);
     }
-	
+
 }

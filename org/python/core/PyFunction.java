@@ -22,11 +22,11 @@ public class PyFunction extends PyObject
         func_defaults = defaults;
         func_code = code;
     }
-        
+
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code) {
         this(globals, defaults, code, null);
     }
-        
+
     private static final String[] __members__ = {
         "__doc__", "func_doc",
         "__name__", "func_name", "__dict__",
@@ -37,7 +37,7 @@ public class PyFunction extends PyObject
         PyString members[] = new PyString[__members__.length];
         for (int i = 0; i < __members__.length; i++)
             members[i] = new PyString(__members__[i]);
-        PyList ret = new PyList(members); 
+        PyList ret = new PyList(members);
         addKeys(ret, "__dict__");
         ret.sort();
         return ret;
@@ -69,7 +69,7 @@ public class PyFunction extends PyObject
         } else if (name == "__dict__" || name == "func_dict") {
             if (value instanceof PyDictionary || value instanceof PyStringMap)
                 __dict__ = value;
-            else if (value == Py.None) 
+            else if (value == Py.None)
                 __dict__ = null;
             else
                 throw Py.TypeError("func_dict must be set to a dict object");
@@ -121,7 +121,7 @@ public class PyFunction extends PyObject
         }
         return super.__findattr__(name);
     }
-    
+
     public PyObject _doget(PyObject container) {
         return _doget(container, null);
     }
@@ -132,7 +132,7 @@ public class PyFunction extends PyObject
 
     public PyObject __call__() {
         return func_code.call(func_globals, func_defaults);
-    }   
+    }
     public PyObject __call__(PyObject arg) {
         return func_code.call(arg, func_globals, func_defaults);
     }
@@ -142,7 +142,7 @@ public class PyFunction extends PyObject
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         return func_code.call(arg1, arg2, arg3, func_globals, func_defaults);
     }
-        
+
     public PyObject __call__(PyObject[] args, String[] keywords) {
         return func_code.call(args, keywords, func_globals, func_defaults);
     }

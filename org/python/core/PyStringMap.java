@@ -23,7 +23,7 @@ public class PyStringMap extends PyObject
         throws java.io.IOException
     {
         out.defaultWriteObject();
-        
+
         String[] keyTable = keys;
         PyObject[] valueTable = values;
         int n = keyTable.length;
@@ -37,19 +37,19 @@ public class PyStringMap extends PyObject
             out.writeObject(values[i]);
         }
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
         throws java.io.IOException, ClassNotFoundException
     {
         in.defaultReadObject();
-        
+
         prime = 1;
         keys = null;
         values = null;
         int n = size;
-        
+
         resize(n);
-        
+
         for (int i=0; i<n; i++) {
             String key = in.readUTF().intern();
             insertkey(key, (PyObject)in.readObject());
@@ -76,7 +76,7 @@ public class PyStringMap extends PyObject
             __setitem__(elements[i], elements[i+1]);
         }
     }
-        
+
     public synchronized int __len__() {
         return size;
     }
@@ -228,7 +228,7 @@ public class PyStringMap extends PyObject
             throw Py.KeyError(key.toString());
         }
     }
-        
+
     public synchronized void clear() {
         for (int i=0; i<keys.length; i++) {
             keys[i] = null;
@@ -236,7 +236,7 @@ public class PyStringMap extends PyObject
         }
         size = 0;
     }
-        
+
 
     public synchronized String toString() {
         ThreadState ts = Py.getThreadState();
@@ -247,7 +247,7 @@ public class PyStringMap extends PyObject
         String[] keyTable = keys;
         PyObject[] valueTable = values;
         int n = keyTable.length;
-            
+
         StringBuffer buf = new StringBuffer("{");
 
         for (int i=0; i<n; i++) {
@@ -261,17 +261,17 @@ public class PyStringMap extends PyObject
             buf.append(value.__repr__().toString());
             buf.append(", ");
         }
-            
+
         // A hack to remove the final ", " from the string repr
         int len = buf.length();
         if (len > 4) {
             buf.setLength(len-2);
         }
-            
+
         buf.append("}");
         ts.exitRepr(this);
         return buf.toString();
-    }              
+    }
 
     public synchronized int __cmp__(PyObject other) {
         if (!(other instanceof PyStringMap || other instanceof PyDictionary)) {
@@ -326,26 +326,26 @@ public class PyStringMap extends PyObject
 
     public synchronized PyStringMap copy() {
         int n = keys.length;
-        
+
         PyStringMap map = new PyStringMap(n);
         System.arraycopy(keys, 0, map.keys, 0, n);
         System.arraycopy(values, 0, map.values, 0, n);
-        
+
         map.filled = filled;
         map.size = size;
         map.prime = prime;
-        
+
         return map;
     }
-    
+
     public synchronized void update(PyStringMap map) {
         String[] keyTable = map.keys;
         PyObject[] valueTable = map.values;
         int n = keyTable.length;
-            
+
         if (2*filled+n > keys.length)
             resize(2*filled+n);
-            
+
         for (int i=0; i<n; i++) {
             String key = keyTable[i];
             if (key == null || key == "<deleted key>")
@@ -353,7 +353,7 @@ public class PyStringMap extends PyObject
             insertkey(key, valueTable[i]);
         }
     }
-    
+
     public void update(PyDictionary dict) {
         java.util.Hashtable table = dict.table;
 
@@ -413,7 +413,7 @@ public class PyStringMap extends PyObject
         String[] keyTable = keys;
         PyObject[] valueTable = values;
         int n = keyTable.length;
-            
+
         PyList l = new PyList();
         for (int i=0; i<n; i++) {
             String key = keyTable[i];
@@ -425,13 +425,13 @@ public class PyStringMap extends PyObject
         }
         return l;
     }
-        
+
 
     synchronized String[] jkeys() {
         String[] keyTable = keys;
         //PyObject[] valueTable = values;
         int n = keyTable.length;
-            
+
         String[] newKeys = new String[size];
         int j=0;
 
@@ -449,7 +449,7 @@ public class PyStringMap extends PyObject
         String[] keyTable = keys;
         //PyObject[] valueTable = values;
         int n = keyTable.length;
-            
+
         PyList l = new PyList();
         for (int i=0; i<n; i++) {
             String key = keyTable[i];
@@ -463,7 +463,7 @@ public class PyStringMap extends PyObject
     public synchronized PyList values() {
         PyObject[] valueTable = values;
         int n = valueTable.length;
-            
+
         PyList l = new PyList();
         for (int i=0; i<n; i++) {
             PyObject value = valueTable[i];

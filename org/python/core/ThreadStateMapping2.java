@@ -4,7 +4,6 @@ package org.python.core;
 public class ThreadStateMapping2 extends ThreadStateMapping {
     private static ThreadLocal cachedThreadState = new ThreadLocal();
 
-    
     public ThreadState getThreadState(PySystemState newSystemState) {
         ThreadState ts = (ThreadState)cachedThreadState.get();
         if (ts != null) {

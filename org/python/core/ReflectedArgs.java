@@ -137,7 +137,7 @@ class ReflectedArgs {
         // This makes them higher priority than byte[]
         if (arg == String.class)
             return 40;
-                
+
         if (arg.isArray()) {
             Class componentType = arg.getComponentType();
             if (componentType == Object.class)

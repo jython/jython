@@ -3,7 +3,7 @@ package org.python.core;
 
 
 
-class TupleFunctions extends PyBuiltinFunctionSet 
+class TupleFunctions extends PyBuiltinFunctionSet
 {
     TupleFunctions(String name, int index, int argcount) {
         super(name, index, argcount, argcount, true, null);
@@ -70,7 +70,7 @@ public class PyTuple extends PySequence implements ClassDictInit
             stop = start;
         int n = sliceLength(start, stop, step);
         PyObject[] newList = new PyObject[n];
-                
+
         if (step == 1) {
             System.arraycopy(list, start, newList, 0, stop-start);
             return new PyTuple(newList);
@@ -92,8 +92,8 @@ public class PyTuple extends PySequence implements ClassDictInit
         return new PyTuple(newList);
     }
 
-    public int __len__() { 
-        return list.length; 
+    public int __len__() {
+        return list.length;
     }
 
     public PyObject __add__(PyObject generic_other) {
@@ -136,7 +136,7 @@ public class PyTuple extends PySequence implements ClassDictInit
 //         }
 //         return true;
 //     }
-        
+
     private String subobjRepr(PyObject o) {
         if (o == null)
             return "null";

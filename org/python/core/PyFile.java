@@ -53,7 +53,7 @@ public class PyFile extends PyObject
             return null;
         }
         protected byte[] getBytes(String s) {
-            // Yes, I known the method is depricated, but it is the fastest 
+            // Yes, I known the method is depricated, but it is the fastest
             // way of converting between between byte[] and String
             if (binary) {
                 byte[] buf = new byte[s.length()];
@@ -63,10 +63,10 @@ public class PyFile extends PyObject
                 return s.getBytes();
         }
         protected String getString(byte[] buf, int offset, int len) {
-            // Yes, I known the method is depricated, but it is the fastest 
+            // Yes, I known the method is depricated, but it is the fastest
             // way of converting between between byte[] and String
             if (binary) {
-                return new String(buf, 0, offset, len); 
+                return new String(buf, 0, offset, len);
             } else
                 return new String(buf, offset, len);
         }
@@ -191,7 +191,7 @@ public class PyFile extends PyObject
             return super.__tojava__(cls);
         }
     }
-    
+
     private static class WriterWrapper extends FileWrapper {
         private java.io.Writer writer;
 
@@ -212,8 +212,8 @@ public class PyFile extends PyObject
         public void close() throws java.io.IOException {
             writer.close();
         }
-    }    
-    
+    }
+
     private static class RFileWrapper extends FileWrapper {
         /** The default buffer size, in bytes. */
         protected static final int defaultBufferSize = 4096;
@@ -277,7 +277,7 @@ public class PyFile extends PyObject
 
 
         private int readBytes( byte b[], int off, int len )
-             throws IOException 
+             throws IOException
         {
             // Check for end of file.
             if( endOfFile )
@@ -381,8 +381,8 @@ public class PyFile extends PyObject
                 // the new buffer.
                 if (copyLength < len) {
                     seek(filePosition, 0);
-                    System.arraycopy(b, copyLength, buffer, 
-                                     (int)(filePosition - bufferStart), 
+                    System.arraycopy(b, copyLength, buffer,
+                                     (int)(filePosition - bufferStart),
                                      len - copyLength);
                     bufferModified = true;
                     long myDataEnd = filePosition + (len - copyLength);
@@ -553,7 +553,7 @@ public class PyFile extends PyObject
         }
 
         public Object __tojava__(Class cls) throws IOException {
-            return file.__tojava__(cls); 
+            return file.__tojava__(cls);
         }
     }
 
@@ -627,7 +627,7 @@ public class PyFile extends PyObject
     public PyFile(java.io.OutputStream ostream) {
         this(ostream, "<???>", "w");
     }
-    
+
     public PyFile(java.io.Writer ostream, String name, String mode) {
         this(new WriterWrapper(ostream), name, mode);
     }
@@ -638,7 +638,7 @@ public class PyFile extends PyObject
 
     public PyFile(java.io.Writer ostream) {
         this(ostream, "<???>", "w");
-    }    
+    }
 
     public PyFile(java.io.RandomAccessFile file, String name, String mode) {
         this(new RFileWrapper(file), name, mode);
@@ -706,7 +706,7 @@ public class PyFile extends PyObject
                 fo = null;
             }
             // What about bufsize?
-            java.io.RandomAccessFile rfile = 
+            java.io.RandomAccessFile rfile =
                 new java.io.RandomAccessFile(f, jmode);
             if (c1 == 'a')
                 rfile.seek(rfile.length());
@@ -794,7 +794,7 @@ public class PyFile extends PyObject
     public void write(String s) {
         if (closed)
             err_closed();
-        try {                
+        try {
             file.write(s);
             softspace = false;
         } catch (java.io.IOException e) {

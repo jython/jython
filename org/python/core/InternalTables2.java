@@ -1,22 +1,22 @@
 // Copyright 2000 Samuele Pedroni
- 
+
 package org.python.core;
 
 import java.util.*;
 import java.lang.ref.*;
 
 public class InternalTables2 extends InternalTables1 {
-    
+
     protected static class TableProvid2 extends HashMap implements Table {
     }
 
     protected void commitTemp() {
         ((TableProvid2)classes).putAll((TableProvid2)temp);
         temp.clear();
-    }    
+    }
 
     protected WeakHashMap adapters;
-    
+
     protected Object getAdapter(Object o,String evc) {
         HashMap ads = (HashMap)adapters.get(o);
         if (ads == null) return null;
@@ -24,7 +24,7 @@ public class InternalTables2 extends InternalTables1 {
         if (adw == null) return null;
         return adw.get();
     }
-    
+
     protected void putAdapter(Object o,String evc,Object ad) {
         HashMap ads = (HashMap)adapters.get(o);
         if (ads == null) {
@@ -34,28 +34,28 @@ public class InternalTables2 extends InternalTables1 {
         ads.put(evc,new WeakReference(ad));
     }
 
-    protected Iterator iter;    
+    protected Iterator iter;
     protected Iterator grand;
-    
+
     public void _beginCanonical() {
         beginStable(JCSTABLE);
         iter = ((TableProvid2)classes).values().iterator();
         iterType = JCLASS;
     }
-    
+
     public void _beginLazyCanonical() {
         beginStable(GSTABLE);
         iter = ((TableProvid2)lazyClasses).values().iterator();
         iterType = LAZY_JCLASS;
     }
-    
+
     public void _beginOverAdapterClasses() {
         beginStable(GSTABLE);
         iter = ((TableProvid2)adapterClasses).entrySet().iterator();
         iterType = ADAPTER_CLASS;
-        
+
     }
-    
+
     public void _beginOverAdapters() {
         beginStable((short)0);
         grand = adapters.values().iterator();
@@ -100,7 +100,7 @@ public class InternalTables2 extends InternalTables1 {
         iter = null;
         return null;
     }
-    
+
     public void _flushCurrent() {
        iter.remove();
        switch(iterType) {
@@ -111,17 +111,17 @@ public class InternalTables2 extends InternalTables1 {
            if (((HashMap)cur).size() == 0) grand.remove();
        }
     }
-       
+
     public InternalTables2() {
         super(true);
-        
+
         classes = new TableProvid2();
         temp = new TableProvid2();
         counters = new TableProvid2();
         lazyClasses = new TableProvid2();
-       
+
         adapterClasses = new TableProvid2();
-        
+
         adapters = new WeakHashMap();
     }
 }

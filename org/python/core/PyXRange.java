@@ -14,8 +14,8 @@ public class PyXRange extends PySequence {
     int start, stop, step; // directly from xrange(start, stop, step)
     int cycleLength;       // The length of an uncopied xrange
     int copies;            // The number of copies made (used to implement
-                           // xrange(x,y,z)*n) 
-    
+                           // xrange(x,y,z)*n)
+
     public PyXRange(int start, int stop, int step) {
         if (step == 0)
             throw Py.ValueError("zero step for xrange()");
@@ -30,8 +30,8 @@ public class PyXRange extends PySequence {
         copies = 1;
     }
 
-    public int __len__() { 
-        return cycleLength*copies; 
+    public int __len__() {
+        return cycleLength*copies;
     }
 
     private int getInt(int i) {

@@ -2,7 +2,7 @@
 package org.python.core;
 
 
-class SeqFuncs extends PyBuiltinFunctionSet 
+class SeqFuncs extends PyBuiltinFunctionSet
 {
     SeqFuncs(String name, int index, int argcount) {
         super(name, index, argcount, argcount, true, null);
@@ -83,7 +83,7 @@ class SeqFuncs extends PyBuiltinFunctionSet
  *
  * Method names are designed to make it possible for PySequence to
  * implement java.util.List interface when JDK 1.2 is ubiquitous.
- * 
+ *
  * All subclasses must declare that they implement the ClassDictInit
  * interface, and provide an classDictInit() method that calls
  * PySequence.classDictInit().
@@ -129,26 +129,26 @@ abstract public class PySequence extends PyObject
     }
 
     // These methods must be defined for any sequence
-        
+
     /**
      * @param index index of element to return.
      * @return the element at the given position in the list.
      */
     abstract protected PyObject get(int index);
-        
+
     /**
      * Returns a range of elements from the sequence.
-     * 
+     *
      * @param start the position of the first element.
      * @param stop one more than the position of the last element.
      * @param step the step size.
      * @return a sequence corresponding the the given range of elements.
      */
     abstract protected PyObject getslice(int start, int stop, int step);
-        
+
     /**
      * Repeats the given sequence.
-     * 
+     *
      * @param count the number of times to repeat the sequence.
      * @return this sequence repeated count times.
      */
@@ -158,27 +158,27 @@ abstract public class PySequence extends PyObject
 
     /**
      * Sets the given element of the sequence.
-     * 
+     *
      * @param index index of the element to set.
      * @param value the value to set this element to.
      */
     protected void set(int index, PyObject value) {
         throw Py.TypeError("can't assign to immutable object");
     }
-        
+
     /**
      * Sets the given range of elements.
      */
     protected void setslice(int start, int stop, int step, PyObject value) {
         throw Py.TypeError("can't assign to immutable object");
     }
-        
+
     protected void del(int i) throws PyException {
         throw Py.TypeError("can't remove from immutable object");
     }
     protected void delRange(int start, int stop, int step) {
         throw Py.TypeError("can't remove from immutable object");
-    }   
+    }
 
     public boolean __nonzero__() {
         return __len__() != 0;
@@ -254,15 +254,15 @@ abstract public class PySequence extends PyObject
         int i = 0;
         for ( ; i < ol1 && i < ol2; i++) {
             if (!o1.__getitem__(i)._eq(o2.__getitem__(i)).__nonzero__())
-                return i; 
+                return i;
         }
-        if (ol1 == ol2) 
+        if (ol1 == ol2)
             return -2;
         return (ol1 < ol2) ? -1 : -3;
     }
 
 
-    // Return a copy of a sequence where the __len__() method is 
+    // Return a copy of a sequence where the __len__() method is
     // telling the thruth.
     protected static PyObject fastSequence(PyObject seq, String msg) {
         if (seq instanceof PyList || seq instanceof PyTuple)
@@ -409,7 +409,7 @@ abstract public class PySequence extends PyObject
         int stop = getStop(s_stop, start, step, length);
         return getslice(start, stop, step);
     }
-    
+
     public synchronized void __setslice__(PyObject s_start, PyObject s_stop,
                                           PyObject s_step, PyObject value)
     {
@@ -419,7 +419,7 @@ abstract public class PySequence extends PyObject
         int stop = getStop(s_stop, start, step, length);
         setslice(start, stop, step, value);
     }
-    
+
     public synchronized void __delslice__(PyObject s_start, PyObject s_stop,
                                           PyObject s_step)
     {

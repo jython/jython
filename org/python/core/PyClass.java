@@ -9,17 +9,17 @@ public class PyClass extends PyObject
      * Holds the namespace for this class
      **/
     public PyObject __dict__;
-        
+
     /**
      * The base classes of this class
      **/
     public PyTuple __bases__;
-        
+
     /**
      * The name of this class
      **/
     public String __name__;
-        
+
     // Store these methods for performance optimization
     // These are only used by PyInstance
     PyObject __getattr__, __setattr__, __delattr__, __tojava__,
@@ -35,7 +35,7 @@ public class PyClass extends PyObject
         super(fakeArg);
         proxyClass = null;
     }
-    
+
     public PyClass() {
         super(__class__);
         proxyClass = null;
@@ -50,7 +50,7 @@ public class PyClass extends PyObject
         this();
         init(name, bases, dict);
     }
-        
+
     protected Class getProxyClass() {
         return proxyClass;
     }
@@ -93,7 +93,7 @@ public class PyClass extends PyObject
                                                    proxyName, __dict__);
             }
         }
-        
+
         if (proxyClass != null) {
             PyObject superDict =
                 PyJavaClass.lookup(proxyClass).__findattr__("__dict__");
@@ -120,7 +120,7 @@ public class PyClass extends PyObject
         __del__ = lookup("__del__", false);
         __contains__ = lookup("__contains__", false);
     }
-        
+
     protected void findModule(PyObject dict) {
         PyObject module = dict.__finditem__("__module__");
         if (module == null || module == Py.None) {
@@ -133,13 +133,13 @@ public class PyClass extends PyObject
             }
         }
     }
-            
+
     public Object __tojava__(Class c) {
         if ((c == Object.class || c == Class.class) && proxyClass != null) {
             return proxyClass;
         }
         return super.__tojava__(c);
-    }   
+    }
 
     // returns [PyObject, PyClass]
     PyObject[] lookupGivingClass(String name, boolean stop_at_java) {
@@ -164,14 +164,14 @@ public class PyClass extends PyObject
         PyObject[] result = lookupGivingClass(name, stop_at_java);
         return result[0];
     }
-        
+
     public PyObject __findattr__(String name) {
         if (name == "__dict__") return __dict__;
         if (name == "__name__") return new PyString(__name__);
         if (name == "__bases__") return __bases__;
-    
+
         PyObject[] result = lookupGivingClass(name, false);
-            
+
         if (result[0] == null)
             return super.__findattr__(name);
 
@@ -184,7 +184,7 @@ public class PyClass extends PyObject
         }
         __dict__.__setitem__(name, value);
     }
-        
+
     public void __delattr__(String name) {
         __dict__.__delitem__(name);
     }

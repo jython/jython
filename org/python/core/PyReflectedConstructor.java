@@ -39,18 +39,18 @@ public class PyReflectedConstructor extends PyReflectedFunction
     public PyObject __call__(PyObject self, PyObject[] args, String[] keywords)
     {
         ReflectedArgs[] argsl = argslist;
-        
+
         if (self == null || !(self instanceof PyInstance)) {
             throw Py.TypeError("invalid self argument to constructor");
         }
-            
+
         PyInstance iself = (PyInstance)self;
         Class javaClass = iself.__class__.proxyClass;
         //Class[] javaClasses = iself.__class__.proxyClasses;
         //int myIndex = -1;
         boolean proxyConstructor=false;
         Class declaringClass = argsl[0].declaringClass;
-        
+
         // If this is the constructor for a proxy class or not...
         if (PyProxy.class.isAssignableFrom(declaringClass)) {
 //             if (self instanceof PyJavaInstance) {
@@ -66,13 +66,13 @@ public class PyReflectedConstructor extends PyReflectedFunction
                 } else {
                     throw Py.TypeError("invalid self argument");
                 }
-                    
+
                 PyJavaClass jc = PyJavaClass.lookup(javaClass);
                 jc.initConstructors();
                 return jc.__init__.__call__(iself, args, keywords);
             }
         }
-            
+
 
         if (declaringClass.isAssignableFrom(javaClass)) {
             proxyConstructor = true;
@@ -80,7 +80,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
             throw Py.TypeError("self invalid - must implement: "+
                                declaringClass.getName());
         }
-                
+
         if (iself.javaProxy != null) {
             Class sup = iself.__class__.proxyClass;
             if (PyProxy.class.isAssignableFrom(sup))
@@ -88,7 +88,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
             throw Py.TypeError("instance already instantiated for "+
                                sup.getName());
         }
-            
+
         ReflectedCallData callData = new ReflectedCallData();
         Object method=null;
 
@@ -158,7 +158,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
         }
         PyObject[] newArgs = new PyObject[args.length-1];
         System.arraycopy(args, 1, newArgs, 0, newArgs.length);
-            
+
         return __call__(args[0], newArgs, keywords);
     }
 

@@ -3,7 +3,7 @@ package org.python.core;
 
 public class PyInteger extends PyObject
 {
-    private int value; 
+    private int value;
 
     public PyInteger(int v) {
         value = (int)v;
@@ -16,7 +16,7 @@ public class PyInteger extends PyObject
     protected String safeRepr() {
         return "'int' object";
     }
-    
+
     public String toString() {
         return Integer.toString(value);
     }
@@ -30,19 +30,19 @@ public class PyInteger extends PyObject
     }
 
     public Object __tojava__(Class c) {
-        if (c == Integer.TYPE || c == Number.class || 
+        if (c == Integer.TYPE || c == Number.class ||
             c == Object.class || c == Integer.class)
         {
             return new Integer(value);
         }
-        
+
         if (c == Boolean.TYPE || c == Boolean.class)
             return new Boolean(value != 0);
         if (c == Byte.TYPE || c == Byte.class)
             return new Byte((byte)value);
         if (c == Short.TYPE || c == Short.class)
             return new Short((short)value);
-                
+
         if (c == Long.TYPE || c == Long.class)
             return new Long(value);
         if (c == Float.TYPE || c == Float.class)
@@ -122,7 +122,7 @@ public class PyInteger extends PyObject
         x *= rightv;
         //long x = ((long)value)*((PyInteger)right).value;
         //System.out.println("mul: "+this+" * "+right+" = "+x);
-                
+
         if (x > Integer.MAX_VALUE || x < Integer.MIN_VALUE)
             throw Py.OverflowError("integer multiplication: "+this+
                                    " * "+right);

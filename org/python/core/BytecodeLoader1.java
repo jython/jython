@@ -6,7 +6,7 @@ import java.util.*;
 
 public class BytecodeLoader1 extends ClassLoader implements Loader {
     private Vector parents;
-    
+
     public BytecodeLoader1() {
         parents = BytecodeLoader.init();
     }
@@ -15,11 +15,11 @@ public class BytecodeLoader1 extends ClassLoader implements Loader {
         if (!parents.contains(referent))
             parents.addElement(referent);
     }
- 
+
     // override from abstract base class
     protected Class loadClass(String name, boolean resolve)
         throws ClassNotFoundException
-    {        
+    {
         Class c = findLoadedClass(name);
         if (c != null)
             return c;

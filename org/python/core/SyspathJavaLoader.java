@@ -40,7 +40,7 @@ public class SyspathJavaLoader extends ClassLoader
 
         return null;
     }
-  
+
     // override from abstract base class
     protected Class loadClass(String name, boolean resolve)
         throws ClassNotFoundException
@@ -55,14 +55,14 @@ public class SyspathJavaLoader extends ClassLoader
         // TBD: This registry option is temporary.
         try {
           return Class.forName(name);
-        } 
+        }
         catch(ClassNotFoundException e) {
         }
-        
+
         Class c = findLoadedClass(name);
         if (c != null)
          return c;
-        
+
         /* previously: if
             Options.extendedClassLoader &&
             // KLUDGE ALERT: without this test, running jpython
@@ -90,8 +90,8 @@ public class SyspathJavaLoader extends ClassLoader
                 }
             }
         }
-        
-        // couldn't find the .class file on sys.path        
+
+        // couldn't find the .class file on sys.path
         throw new ClassNotFoundException(name);
     }
 

@@ -2,11 +2,11 @@ package org.python.core;
 
 /**
  * A utilityclass for handling mixed positional and keyword arguments.
- * 
+ *
  * A typical usage:
  * <pre>
  *  public MatchObject search(PyObject[] args, String[] kws) {
- *      ArgParser ap = new ArgParser("search", args, kws, 
+ *      ArgParser ap = new ArgParser("search", args, kws,
  *                                   "pattern", "pos", "endpos");
  *      String string = ap.getString(0);
  *      int start     = ap.getInt(1, 0);
@@ -45,7 +45,7 @@ public class ArgParser {
         check();
     }
 
-    public ArgParser(String funcname, PyObject[] args, String[] kws, 
+    public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String p0, String p1) {
         this(funcname, args, kws);
         this.params = new String[] { p0, p1 };
@@ -59,7 +59,7 @@ public class ArgParser {
         check();
     }
 
-    public ArgParser(String funcname, PyObject[] args, String[] kws, 
+    public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String[] paramnames) {
         this(funcname, args, kws);
         this.params = paramnames;
@@ -116,7 +116,7 @@ public class ArgParser {
     private PyObject getRequiredArg(int pos) {
         PyObject ret = getOptionalArg(pos);
         if (ret == null)
-            throw Py.TypeError(funcname + ": The " + ordinal(pos) + 
+            throw Py.TypeError(funcname + ": The " + ordinal(pos) +
                                " argument is required");
         return ret;
     }
@@ -148,7 +148,7 @@ public class ArgParser {
         }
 
         Object ret = value.__tojava__(clss);
-        if (ret == Py.NoConversion) 
+        if (ret == Py.NoConversion)
             throw Py.TypeError("argument " + (pos+1) + ": expected " +
                                classname + ", " + Py.safeRepr(value) +
                                " found");

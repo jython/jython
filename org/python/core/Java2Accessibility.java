@@ -11,16 +11,16 @@ import java.lang.reflect.*;
 public class Java2Accessibility extends JavaAccessibility
 {
     void setAccess(Field field, boolean flag) throws SecurityException {
-	field.setAccessible(flag);
+        field.setAccessible(flag);
     }
 
     void setAccess(Method method, boolean flag) throws SecurityException {
-	method.setAccessible(flag);
+        method.setAccessible(flag);
     }
 
     void setAccess(Constructor constructor, boolean flag)
         throws SecurityException
     {
- 	constructor.setAccessible(flag);
+        constructor.setAccessible(flag);
     }
 }

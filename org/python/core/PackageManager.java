@@ -14,13 +14,13 @@ public abstract class PackageManager extends Object {
     }
 
     abstract public Class findClass(String pkg,String name,String reason);
-    
+
     public Class findClass(String pkg,String name) {
         return findClass(pkg,name,"java class");
     }
 
     public void notifyPackageImport(String pkg,String name) {}
-    
+
     /** Dynamically check if pkg.name exists as java pkg in the controlled hierarchy.
      * Should be overriden.
      * @param pkg parent pkg name
@@ -114,12 +114,12 @@ public abstract class PackageManager extends Object {
         if(name.length() != 0) p=p.addPackage(name,jarfile);
 
         if (classes != null) p.addPlaceholders(classes);
-        
+
         return p;
     }
 
     private static final int MAXSKIP = 512;
-    
+
     /** Check that a given stream is a valid Java .class file.
      * And return its access permissions as an int.
      */

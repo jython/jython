@@ -49,7 +49,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
             throw argCountError(1);
         }
     }
-    
+
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         switch (index) {
         case 2:
@@ -68,7 +68,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
             throw argCountError(2);
         }
     }
-    
+
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         switch (index) {
         case 2:
@@ -107,7 +107,7 @@ public class __builtin__ implements ClassDictInit
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("None", Py.None);
         dict.__setitem__("Ellipsis", Py.Ellipsis);
-                
+
         // Work in debug mode by default
         // Hopefully add -O option in the future to change this
         dict.__setitem__("__debug__", Py.One);
@@ -125,7 +125,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("isinstance", new BuiltinFunctions("isinstance", 10, 2)); // ?? for jreload
         dict.__setitem__("id", new BuiltinFunctions("id", 11, 1));
         dict.__setitem__("__import__", new ImportFunction());
-    } 
+    }
 
     public static PyObject abs(PyObject o) {
         return o.__abs__();
@@ -230,12 +230,12 @@ public class __builtin__ implements ClassDictInit
     public static PyObject dir() {
         PyObject l = locals();
         PyList ret;
-            
+
         if (l instanceof PyStringMap)
             ret = ((PyStringMap)l).keys();
         if (l instanceof PyDictionary)
             ret = ((PyDictionary)l).keys();
-            
+
         ret = (PyList)l.invoke("keys");
         ret.sort();
         return ret;
@@ -278,7 +278,7 @@ public class __builtin__ implements ClassDictInit
             throw Py.IOError(e);
         }
         PyCode code;
-                
+
         try {
             code = Py.compile(file, name, "exec");
         } finally {
@@ -384,13 +384,13 @@ public class __builtin__ implements ClassDictInit
     public static PyInteger int$(PyObject o) {
         return o.__int__();
     }
-    
+
     private static PyStringMap internedStrings;
     public static PyString intern(PyString s) {
         if (internedStrings == null) {
             internedStrings = new PyStringMap();
         }
-        
+
         String istring = s.internedString();
         PyObject ret = internedStrings.__finditem__(istring);
         if (ret != null)
@@ -668,7 +668,7 @@ public class __builtin__ implements ClassDictInit
             n = (stop-start+step-1)/step;
         else
             n = (stop-start+step+1)/step;
-                
+
         if (n <= 0)
             return new PyList();
         PyObject[] l = new PyObject[n];
@@ -901,7 +901,7 @@ public class __builtin__ implements ClassDictInit
         return __import__(name, globals, null, null);
     }
 
-    public static PyObject __import__(String name, PyObject globals, 
+    public static PyObject __import__(String name, PyObject globals,
                                       PyObject locals) {
         return __import__(name, globals, locals, null);
     }
@@ -964,10 +964,10 @@ class ImportFunction extends PyObject {
         return load(module, globals, locals, fromlist);
     }
 
-    private PyObject load(String module, 
+    private PyObject load(String module,
                           PyObject globals, PyObject locals, PyObject fromlist)
     {
-        PyObject mod = imp.importName(module.intern(), 
+        PyObject mod = imp.importName(module.intern(),
                                       fromlist.__len__() == 0,
                                       globals);
         return mod;

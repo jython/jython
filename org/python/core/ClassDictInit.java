@@ -3,7 +3,7 @@
 package org.python.core;
 
 /**
- * An empty tagging interface. If a java class implements this 
+ * An empty tagging interface. If a java class implements this
  * interface, it must also have a method like:
  * <pre>
  *       public static void classDictInit(PyObject dict) { .. }

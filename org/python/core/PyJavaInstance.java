@@ -14,7 +14,7 @@ public class PyJavaInstance
     public PyJavaInstance(PyJavaClass iclass) {
         super(iclass, null);
     }
-        
+
     public PyJavaInstance(Object proxy) {
         super(PyJavaClass.lookup(proxy.getClass()), null);
         javaProxy = proxy;
@@ -50,7 +50,7 @@ public class PyJavaInstance
             else if (Modifier.isAbstract(mods)) {
                 throw Py.TypeError("can't instantiate abstract class ("+
                                    __class__.__name__+")");
-            } 
+            }
         }
 
         PyReflectedConstructor init = ((PyJavaClass)__class__).__init__;
@@ -65,7 +65,7 @@ public class PyJavaInstance
         throw Py.TypeError("can't set arbitrary attribute in java instance: "+
                            name);
     }
-    
+
     protected void unassignableField(String name, PyObject value) {
         throw Py.TypeError("can't assign to this attribute in java instance: "+
                            name);
@@ -78,7 +78,7 @@ public class PyJavaInstance
             return super.hashCode();
         }
     }
-    
+
     public PyObject _is(PyObject o) {
         if (o instanceof PyJavaInstance) {
             return javaProxy == ((PyJavaInstance)o).javaProxy
@@ -86,11 +86,11 @@ public class PyJavaInstance
         }
         return Py.Zero;
     }
-        
+
     public PyObject _isnot(PyObject o) {
         return _is(o).__not__();
     }
-    
+
     public int __cmp__(PyObject o) {
         if (!(o instanceof PyJavaInstance))
             return -2;

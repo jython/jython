@@ -174,14 +174,14 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     public void addJarToPackages(File jarfile,boolean cache) {
         addJarToPackages(null,jarfile,cache);
     }
-    
+
     private void addJarToPackages(URL jarurl,File jarfile,boolean cache) {
-        try {            
+        try {
             boolean caching = jarfiles!=null;
 
             URLConnection jarconn = null;
             boolean localfile = true;
-            
+
             if (jarfile == null) {
                 jarconn = jarurl.openConnection();
                 // This is necessary because 'file:' url-connections
@@ -189,12 +189,12 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 // And in order to handle localfiles (from urls too) uniformly.
                 if(jarconn.getURL().getProtocol().equals("file")) {
                     // ??pending: need to use java2 URLDecoder.decode?
-                    // but under 1.1 this is absent and should be simulated.                    
-                    jarfile = new File(jarurl.getFile().replace('/',File.separatorChar)); 
+                    // but under 1.1 this is absent and should be simulated.
+                    jarfile = new File(jarurl.getFile().replace('/',File.separatorChar));
                 }
                 else localfile = false;
             }
-            
+
             if (localfile && !jarfile.exists()) return;
 
             Hashtable zipPackages = null;
@@ -259,7 +259,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 InputStream jarin;
                 if (jarconn == null) jarin = new BufferedInputStream(new FileInputStream(jarfile));
                 else jarin = jarconn.getInputStream();
-                
+
                 zipPackages = getZipPackages(jarin);
 
                 if(caching) writeCacheFile(entry, jarcanon, zipPackages, brandNew); // Write the cache file
@@ -400,7 +400,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     // hooks for changing cache storage
-    
+
     /** To pass a cachefile id by ref. And for internal use.
      * @see #outCreateCacheFile
      */

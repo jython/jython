@@ -1,18 +1,18 @@
 // Copyright 2000 Samuele Pedroni
- 
+
 package org.python.core;
 
 import java.lang.ref.*;
 import java.util.*;
 
 public abstract class AutoInternalTables extends InternalTables2 {
-        
+
     protected ReferenceQueue queue = new ReferenceQueue();
 
     protected abstract Reference newAutoRef(short type,Object key, Object obj);
-    protected abstract short getAutoRefType(Reference ref);    
+    protected abstract short getAutoRefType(Reference ref);
     protected abstract Object getAutoRefKey(Reference ref);
-    
+
     private synchronized void cleanup() {
         if (keepstable >= GSTABLE)
          return;
@@ -24,42 +24,42 @@ public abstract class AutoInternalTables extends InternalTables2 {
             case JCLASS:
                 Class cl = (Class)key;
                 classes.remove(cl);
-                classesDec(cl.getName());                
+                classesDec(cl.getName());
                 break;
             case LAZY_JCLASS:
                 lazyClasses.remove(key);
                 break;
             case ADAPTER_CLASS:
-                adapterClasses.remove(key);    
+                adapterClasses.remove(key);
             }
         }
     }
-    
-    
+
+
     protected boolean queryCanonical(String name) {
         cleanup();
         return super.queryCanonical(name);
     }
-    
+
     protected PyJavaClass getCanonical(Class c) {
         cleanup();
         Reference ref = (Reference)classesGet(c);
         if (ref == null) return null;
         return (PyJavaClass)ref.get();
     }
-    
+
     protected PyJavaClass getLazyCanonical(String name) {
         cleanup();
         Reference ref = (Reference)lazyClasses.get(name);
         if (ref == null) return null;
         return (PyJavaClass)ref.get();
     }
-    
+
     protected void putCanonical(Class c,PyJavaClass canonical) {
         cleanup();
         classesPut(c,newAutoRef(JCLASS,c,canonical));
     }
-    
+
     protected void putLazyCanonical(String name,PyJavaClass canonical) {
         cleanup();
         lazyClasses.put(name,newAutoRef(LAZY_JCLASS,name,canonical));
@@ -71,7 +71,7 @@ public abstract class AutoInternalTables extends InternalTables2 {
         if (ref == null) return null;
         return (Class)ref.get();
     }
-    
+
     protected void putAdapterClass(Class c,Class ac) {
         cleanup();
         adapterClasses.put(c,newAutoRef(ADAPTER_CLASS,c,ac));
@@ -81,33 +81,33 @@ public abstract class AutoInternalTables extends InternalTables2 {
         cleanup();
         return super.getAdapter(o,evc);
     }
-    
+
     protected void putAdapter(Object o,String evc,Object ad) {
         cleanup();
         super.putAdapter(o,evc,ad);
     }
-    
-        
+
+
     public boolean _doesSomeAutoUnload() { return true; }
-    
+
     public void _forceCleanup() { cleanup(); }
 
     public void _beginCanonical() {
         cleanup();
         super._beginCanonical();
     }
-    
+
     public void _beginLazyCanonical() {
         cleanup();
         super._beginLazyCanonical();
     }
-    
+
     public void _beginOverAdapterClasses() {
         cleanup();
         super._beginOverAdapterClasses();
 
     }
-    
+
     public void _beginOverAdapters() {
         cleanup();
         super._beginOverAdapters();
@@ -116,8 +116,8 @@ public abstract class AutoInternalTables extends InternalTables2 {
     public Object _next() {
         if (iterType == ADAPTER) {
             Object ret = super._next();
-            if (ret != null) return ret; 
-        }  else { 
+            if (ret != null) return ret;
+        }  else {
             while(iter.hasNext()) {
                 cur = iter.next();
                 switch(iterType) {
@@ -138,15 +138,15 @@ public abstract class AutoInternalTables extends InternalTables2 {
             }
             cur = null;
             iter = null;
-            endStable();            
+            endStable();
         }
         cleanup();
         return null;
     }
-    
+
     public void _flush(PyJavaClass jc) {
         cleanup();
         super._flush(jc);
     }
-        
+
 }

@@ -60,7 +60,7 @@ public class PyFloat extends PyObject
     }
 
     public Object __tojava__(Class c) {
-        if (c == Double.TYPE || c == Number.class || 
+        if (c == Double.TYPE || c == Number.class ||
             c == Double.class || c == Object.class)
         {
             return new Double(value);
@@ -104,9 +104,8 @@ public class PyFloat extends PyObject
         else
             throw Py.TypeError("xxx");
     }
-        
 
-        
+
     public PyObject __add__(PyObject right) {
         if (!canCoerce(right))
             return null;

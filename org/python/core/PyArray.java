@@ -63,14 +63,14 @@ public class PyArray extends PySequence {
         return Py.NoConversion;
     }
 
-    public int __len__() { 
-        return Array.getLength(data); 
+    public int __len__() {
+        return Array.getLength(data);
     }
-        
+
     protected PyObject get(int i) {
         return Py.java2py(Array.get(data, i));
     }
-        
+
     protected PyObject getslice(int start, int stop, int step) {
         if (step != 1)
             throw Py.TypeError("step != 1 not implemented yet");

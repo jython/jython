@@ -87,8 +87,8 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                     try {
                         int acc = checkAccess(new BufferedInputStream(new FileInputStream(cand)));
                         if ((acc == -1) || filterByAccess(jname, acc) ) continue;
-                    } catch(IOException e) { 
-                        continue; 
+                    } catch(IOException e) {
+                        continue;
                     }
                 }
 
@@ -116,7 +116,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
     }
 
 
-    // ??pending: 
+    // ??pending:
     // Uses simply split and not a StringTokenizer+trim to adhere to sun jvm parsing of classpath.
     // E.g. "a;" is parsed by sun jvm as a, ""; the latter is interpreted as cwd.
     // jview trims and cwd is per default in classpath. The logic here should work
@@ -137,7 +137,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 if (entry.length() == 0 || dir.isDirectory()) addDirectory(dir);
             }
         }
-    }            
+    }
 
     public PyList doDir(PyJavaPackage jpkg,boolean instantiate,boolean exclpkgs) {
         PyList basic = basicDoDir(jpkg,instantiate,exclpkgs);

@@ -16,15 +16,15 @@ public class PyModule extends PyObject
 
     protected PyObject impAttr(String attr) {
         PyObject path = __dict__.__finditem__("__path__");
-        PyObject pyname = __dict__.__finditem__("__name__");      
-        
+        PyObject pyname = __dict__.__finditem__("__name__");
+
         if (path == null || pyname == null) return null;
-        
+
         String name = pyname.__str__().toString();
         String fullName = (name+'.'+attr).intern();
-               
+
         PyObject modules = Py.getSystemState().modules;
-       
+
         PyObject ret = modules.__finditem__(fullName);
         if (ret != null) return ret;
 
@@ -55,9 +55,9 @@ public class PyModule extends PyObject
         }
 
         return null;
-        
+
     }
-    
+
     public PyObject __findattr__(String attr) {
         PyObject ret;
         ret = __dict__.__finditem__(attr);
@@ -68,7 +68,7 @@ public class PyModule extends PyObject
 
         PyObject pyname = __dict__.__finditem__("__name__");
         if (pyname == null) return null;
-        
+
         return impHook(pyname.__str__().toString()+'.'+attr);
     }
 
@@ -84,12 +84,12 @@ public class PyModule extends PyObject
         return "<module "+__dict__.__finditem__("__name__")+" at "+
             Py.id(this)+">";
     }
-    
+
     static private PyObject silly_list = null;
-    
+
     private static PyObject impHook(String name) {
         if (silly_list == null) {
-            silly_list = new PyTuple(new PyString[] { Py.newString("__doc__"),}); 
+            silly_list = new PyTuple(new PyString[] { Py.newString("__doc__"),});
         }
         try {
             return __builtin__.__import__(name, null, null, silly_list);

@@ -31,7 +31,7 @@ public class codecs {
 
 
     public static void register(PyObject search_function) {
-        if (!search_function.isCallable()) 
+        if (!search_function.isCallable())
            throw Py.TypeError("argument must be callable");
         searchPath.append(search_function);
     }
@@ -54,7 +54,7 @@ public class codecs {
             if (result == Py.None)
                 continue;
             if (!(result instanceof PyTuple) || result.__len__() != 4)
-                throw Py.TypeError("codec search functions must return 4-tuples"); 
+                throw Py.TypeError("codec search functions must return 4-tuples");
             break;
         }
         if (i == searchPath.__len__())
@@ -69,7 +69,7 @@ public class codecs {
     private static String normalizestring(String string) {
         return string.toLowerCase().replace(' ', '-');
     }
- 
+
 
     private static boolean import_encodings_called = false;
 
@@ -112,8 +112,8 @@ public class codecs {
         /* Decode via the codec registry */
         PyObject decoder = getDecoder(encoding);
         PyObject result = decoder.__call__(v, new PyString(errors));
-        
-        if (!(result instanceof PyTuple) || result.__len__() != 2) 
+
+        if (!(result instanceof PyTuple) || result.__len__() != 2)
             throw Py.TypeError("decoder must return a tuple (object,integer)");
         return result.__getitem__(0).__str__();
     }
@@ -138,7 +138,7 @@ public class codecs {
             return PyUnicode_DecodeUTF8(v.toString(), v.__len__(), errors);
         else if (encoding.equals("latin-1"))
             return PyUnicode_DecodeLatin1(v.toString(), v.__len__(), errors);
-        else 
+        else
 */
 
         if (encoding.equals("ascii"))
@@ -147,8 +147,8 @@ public class codecs {
         /* Decode via the codec registry */
         PyObject encoder = getEncoder(encoding);
         PyObject result = encoder.__call__(v, new PyString(errors));
-        
-        if (!(result instanceof PyTuple) || result.__len__() != 2) 
+
+        if (!(result instanceof PyTuple) || result.__len__() != 2)
             throw Py.TypeError("encoder must return a tuple (object,integer)");
         return result.__getitem__(0).__str__();
     }
@@ -190,7 +190,7 @@ public class codecs {
         for (int i = 0; i < size; ) {
             int ch = str.charAt(i);
             if (ch > 0xFF) {
-                codecs.decoding_error("utf-8", unicode, errors, 
+                codecs.decoding_error("utf-8", unicode, errors,
                                       "ordinal not in range(255)");
                 i++;
                 continue;
@@ -205,28 +205,28 @@ public class codecs {
             int n = utf8_code_length[ch];
 
             if (i + n > size) {
-                codecs.decoding_error("utf-8", unicode, errors, 
+                codecs.decoding_error("utf-8", unicode, errors,
                                       "unexpected end of data");
                 i++;
                 continue;
             }
 
-	
+
             switch (n) {
             case 0:
-                codecs.decoding_error("utf-8", unicode, errors, 
+                codecs.decoding_error("utf-8", unicode, errors,
                                       "unexpected code byte");
                 i++;
                 continue;
             case 1:
-                codecs.decoding_error("utf-8", unicode, errors, 
+                codecs.decoding_error("utf-8", unicode, errors,
                                       "internal error");
                 i++;
                 continue;
             case 2:
                 char ch1 = str.charAt(i+1);
                 if ((ch1 & 0xc0) != 0x80) {
-                    codecs.decoding_error("utf-8", unicode, errors, 
+                    codecs.decoding_error("utf-8", unicode, errors,
                                           "invalid data");
                     i++;
                     continue;
@@ -243,16 +243,16 @@ public class codecs {
 
             case 3:
                 ch1 = str.charAt(i+1);
-                char ch2 = str.charAt(i+2); 
+                char ch2 = str.charAt(i+2);
                 if ((ch1 & 0xc0) != 0x80 || (ch2 & 0xc0) != 0x80) {
-                    codecs.decoding_error("utf-8", unicode, errors, 
+                    codecs.decoding_error("utf-8", unicode, errors,
                                           "invalid data");
                     i++;
                     continue;
                 }
                 ch = ((ch & 0x0f) << 12) + ((ch1 & 0x3f) << 6) + (ch2 & 0x3f);
                 if (ch < 0x800 || (ch >= 0xd800 && ch < 0xe000)) {
-                    codecs.decoding_error("utf-8", unicode, errors, 
+                    codecs.decoding_error("utf-8", unicode, errors,
                                           "illegal encoding");
                     i++;
                     continue;
@@ -262,12 +262,12 @@ public class codecs {
 
             case 4:
                 ch1 = str.charAt(i+1);
-                ch2 = str.charAt(i+2); 
-                char ch3 = str.charAt(i+3); 
+                ch2 = str.charAt(i+2);
+                char ch3 = str.charAt(i+3);
                 if ((ch1 & 0xc0) != 0x80 ||
                     (ch2 & 0xc0) != 0x80 ||
                     (ch3 & 0xc0) != 0x80) {
-                    codecs.decoding_error("utf-8", unicode, errors, 
+                    codecs.decoding_error("utf-8", unicode, errors,
                                           "invalid data");
                     i++;
                     continue;
@@ -279,7 +279,7 @@ public class codecs {
                                            byte encoding */
                     (ch > 0x10ffff)) {  /* maximum value allowed for
                                            UTF-16 */
-                    codecs.decoding_error("utf-8", unicode, errors, 
+                    codecs.decoding_error("utf-8", unicode, errors,
                                           "illegal encoding");
                     i++;
                     continue;
@@ -298,7 +298,7 @@ public class codecs {
 
             default:
                 /* Other sizes are only needed for UCS-4 */
-                codecs.decoding_error("utf-8", unicode, errors, 
+                codecs.decoding_error("utf-8", unicode, errors,
                                       "unsupported Unicode code range");
                 i++;
             }
@@ -312,7 +312,7 @@ public class codecs {
     public static String PyUnicode_EncodeUTF8(String str, String errors) {
         int size = str.length();
         StringBuffer v = new StringBuffer(size * 3);
- 
+
         for (int i = 0; i < size; ) {
             int ch = str.charAt(i++);
             if (ch < 0x80)
@@ -342,7 +342,7 @@ public class codecs {
         }
         return v.toString();
     }
-  
+
 
 
     /* --- 7-bit ASCII Codec -------------------------------------------- */
@@ -384,7 +384,7 @@ public class codecs {
     private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
 
     // The modified flag is used by cPickle.
-    public static String PyUnicode_EncodeRawUnicodeEscape(String str, String errors, 
+    public static String PyUnicode_EncodeRawUnicodeEscape(String str, String errors,
                   boolean modifed) {
 
         int size = str.length();
@@ -461,7 +461,7 @@ public class codecs {
         if (errors == null || errors == "strict")
             throw Py.UnicodeError(type + " encoding error: " + details);
         else if (errors == "ignore") { }
-        else if (errors == "replace") 
+        else if (errors == "replace")
             dest.append('?');
         else
             throw Py.ValueError(type + " encoding error; unknown error handling code: " + errors);

@@ -68,8 +68,6 @@ public class ThreadStateMapping {
         return ts;
     }
 
-
-    
     /**
      * Enumerates through the thread table looking for dead thread
      * references and removes them.  Called internally by

@@ -51,11 +51,11 @@ public class PyBeanProperty extends PyReflectedField {
         if (setMethod == null) {
             throw Py.AttributeError("read-only attr: "+__name__);
         }
-        
+
         Object iself = Py.tojava(self, setMethod.getDeclaringClass());
-        
+
         Object jvalue=null;
-                
+
         // Special handling of tuples
         // try to call a class constructor
         if (value instanceof PyTuple) {

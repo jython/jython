@@ -42,7 +42,7 @@ protected void debug(String msg) {Py.writeDebug("*sys-package-mgr*",msg); }
         new StringTokenizer(path, java.io.File.pathSeparator);
         while  (tok.hasMoreTokens())  {
             // ??pending: do jvms trim? how is interpreted entry=""?
-            String entry = tok.nextToken();            
+            String entry = tok.nextToken();
             addJarDir(entry);
         }
     }
@@ -73,19 +73,19 @@ protected void debug(String msg) {Py.writeDebug("*sys-package-mgr*",msg); }
 
         if (fakepath != null) addClassPath(fakepath);
     }
-    
+
     public void notifyPackageImport(String pkg,String name) {
         if (pkg != null && pkg.length()>0) name = pkg + '.' + name;
-        Py.writeComment("import","'"+name+"' as java package");     
+        Py.writeComment("import","'"+name+"' as java package");
     }
-    
+
     public Class findClass(String pkg,String name) {
         Class c = super.findClass(pkg,name);
         if (c != null)
           Py.writeComment("import","'"+name+"' as java class");
         return c;
     }
-    
+
     public Class findClass(String pkg,String name,String reason) {
         if (pkg != null && pkg.length()>0) name = pkg + '.' + name;
         return Py.findClassEx(name,reason);

@@ -1,9 +1,9 @@
 // Copyright 2000 Samuele Pedroni
- 
+
 package org.python.core;
 
 public abstract class InternalTables {
-    
+
     // x__ --> org.python.core.X__InternalTables
     // (x|X)__> --> org.python.core.X__InternalTables
     // >(x|X)__ --> org.python.core.InternalTablesX__
@@ -33,13 +33,13 @@ public abstract class InternalTables {
             }
             // System.err.println("*InternalTables*-create-try: "+id); // ??dbg
             return (InternalTables)Class.forName(id).newInstance();
-        } 
+        }
         catch(Throwable e) {
             // System.err.println(" exc: "+e); // ??dbg
             return null;
         }
     }
-    
+
     static InternalTables createInternalTables() {
         String cands = PySystemState.registry.getProperty("python.options.internalTablesImpl");
         if (cands == null)
@@ -53,11 +53,11 @@ public abstract class InternalTables {
         }
         return null; // never reached
     }
-    
+
     protected abstract boolean queryCanonical(String name);
     protected abstract PyJavaClass getCanonical(Class c);
     protected abstract PyJavaClass getLazyCanonical(String name);
-    
+
     protected abstract void putCanonical(Class c,PyJavaClass canonical);
     protected abstract void putLazyCanonical(String name,PyJavaClass canonical);
 
@@ -66,31 +66,31 @@ public abstract class InternalTables {
 
     protected abstract Object getAdapter(Object o,String evc);
     protected abstract void putAdapter(Object o,String evc,Object ad);
-    
+
     public boolean _doesSomeAutoUnload() { return false; }
-    
+
     public void _forceCleanup() {}
 
     public abstract void _beginCanonical();
     public abstract void _beginLazyCanonical();
-    
+
     public abstract void _beginOverAdapterClasses();
     public abstract void _beginOverAdapters();
-    
+
     public abstract Object _next();
     public abstract void _flushCurrent();
-    
+
     public abstract void _flush(PyJavaClass jc);
-    
+
 
     static public class _LazyRep {
         public String name;
         public PackageManager mgr;
-        
+
         _LazyRep(String name, PackageManager mgr) {
             this.name = name;
             this.mgr = mgr;
         }
     }
-    
+
 }

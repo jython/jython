@@ -15,7 +15,7 @@ public class BytecodeLoader {
     }
 
 
-    static Class findParentClass(Vector parents, String name) 
+    static Class findParentClass(Vector parents, String name)
         throws ClassNotFoundException
     {
         for (int i = 0; i < parents.size(); i++) {
@@ -23,7 +23,7 @@ public class BytecodeLoader {
                 return ((ClassLoader)parents.elementAt(i)).loadClass(name);
             } catch(ClassNotFoundException e) { }
         }
-        // couldn't find the .class file on sys.path        
+        // couldn't find the .class file on sys.path
         throw new ClassNotFoundException(name);
     }
 

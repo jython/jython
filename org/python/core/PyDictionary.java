@@ -5,7 +5,7 @@ import java.util.Hashtable;
 
 
 
-class DictFuncs extends PyBuiltinFunctionSet 
+class DictFuncs extends PyBuiltinFunctionSet
 {
     DictFuncs(String name, int index, int argcount) {
         super(name, index, argcount, argcount, true, null);
@@ -133,7 +133,7 @@ public class PyDictionary extends PyObject implements ClassDictInit
     protected String safeRepr() {
         return "'dict' object";
     }
-    
+
     public PyObject __findattr__(String name) {
         if (name.equals("__methods__")) {
             PyList mlist = (PyList)__methods__;
@@ -176,7 +176,7 @@ public class PyDictionary extends PyObject implements ClassDictInit
         if (!ts.enterRepr(this)) {
             return "{...}";
         }
-            
+
         java.util.Enumeration ek = table.keys();
         java.util.Enumeration ev = table.elements();
         int n = table.size();
@@ -190,7 +190,7 @@ public class PyDictionary extends PyObject implements ClassDictInit
                 buf.append(", ");
         }
         buf.append("}");
-                
+
         ts.exitRepr(this);
         return buf.toString();
     }

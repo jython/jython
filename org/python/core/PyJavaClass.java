@@ -9,15 +9,15 @@ public class PyJavaClass extends PyClass
     public PyReflectedConstructor __init__;
 
     public PackageManager __mgr__;
-    
+
     private static InternalTables tbl;
-    
+
     public synchronized final static InternalTables getInternalTables() {
         if(tbl == null)
           tbl = InternalTables.createInternalTables();
         return tbl;
     }
-    
+
     public final boolean isLazy() {
         return proxyClass == null;
     }
@@ -28,9 +28,9 @@ public class PyJavaClass extends PyClass
         }
         PyJavaClass ret = new PyJavaClass(name, mgr);
         tbl.putLazyCanonical(name, ret);
-        return ret;        
+        return ret;
     }
-    
+
     public synchronized static final PyJavaClass lookup(Class c) {
         if (tbl == null) {
             tbl = InternalTables.createInternalTables();
@@ -38,7 +38,7 @@ public class PyJavaClass extends PyClass
             jc.init(PyJavaClass.class);
             tbl.putCanonical(PyJavaClass.class,jc);
         }
-        PyJavaClass ret = tbl.getCanonical(c);        
+        PyJavaClass ret = tbl.getCanonical(c);
         if (ret != null)
             return ret;
         PyJavaClass lazy = tbl.getLazyCanonical(c.getName());
@@ -46,15 +46,15 @@ public class PyJavaClass extends PyClass
             initLazy(lazy);
             if (lazy.proxyClass == c) return lazy;
         }
-        
+
         ret = new PyJavaClass(c);
         tbl.putCanonical(c,ret);
-                
+
         return ret;
     }
 
     public static PyClass __class__;
-    
+
     private PyJavaClass(boolean fakeArg) {
         super(true);
     }
@@ -63,15 +63,15 @@ public class PyJavaClass extends PyClass
         super(__class__);
         init(c);
     }
-        
+
     protected PyJavaClass(String name,PackageManager mgr) {
         super(__class__);
         __name__ = name;
         this.__mgr__ = mgr;
     }
-        
-    protected void findModule(PyObject dict) {} 
-    
+
+    protected void findModule(PyObject dict) {}
+
     protected Class getProxyClass() {
         initialize();
         return proxyClass;
@@ -82,7 +82,7 @@ public class PyJavaClass extends PyClass
         tbl.putCanonical(jc.proxyClass,jc);
         jc.__mgr__ = null;
     }
-   
+
     private boolean initialized=false;
 
     // Prevent recursive calls to initialize()
@@ -100,10 +100,10 @@ public class PyJavaClass extends PyClass
         init__bases__(proxyClass);
         init__dict__();
 
-        if (ClassDictInit.class.isAssignableFrom(proxyClass) 
+        if (ClassDictInit.class.isAssignableFrom(proxyClass)
                             && proxyClass != ClassDictInit.class) {
             try {
-                Method m = proxyClass.getMethod("classDictInit", 
+                Method m = proxyClass.getMethod("classDictInit",
                      new Class[] { PyObject.class });
                 m.invoke(null, new Object[] { __dict__ });
             }
@@ -112,7 +112,7 @@ public class PyJavaClass extends PyClass
                 throw Py.JavaError(exc);
             }
         }
-            
+
         if (InitModule.class.isAssignableFrom(proxyClass)) {
             try {
                 InitModule m = (InitModule)proxyClass.newInstance();
@@ -123,7 +123,7 @@ public class PyJavaClass extends PyClass
                 throw Py.JavaError(exc);
             }
         }
-                
+
         initialized = true;
         initializing = false;
     }
@@ -147,7 +147,7 @@ public class PyJavaClass extends PyClass
             return;
 
 //         // Handle the special static __class__ fields on PyObject instances
-//         if (name == "__class__" &&  isstatic && 
+//         if (name == "__class__" &&  isstatic &&
 //             PyObject.class.isAssignableFrom(field.getDeclaringClass()) &&
 //             field.getType().isAssignableFrom(PyJavaClass.class)) {
 //             try {
@@ -160,7 +160,7 @@ public class PyJavaClass extends PyClass
 
         try {
             Field field = c.getField("__class__");
-            if (Modifier.isStatic(field.getModifiers()) && 
+            if (Modifier.isStatic(field.getModifiers()) &&
                 field.getType().isAssignableFrom(PyJavaClass.class) &&
                 field.getDeclaringClass() == c)
             {
@@ -170,12 +170,12 @@ public class PyJavaClass extends PyClass
         catch (NoSuchFieldException exc) {}
         catch (IllegalAccessException exc1) {}
     }
-    
+
     private synchronized void init__bases__(Class c) {
         if (__bases__ != null) return;
-        
+
         Class interfaces[] = c.getInterfaces();
-        int nInterfaces = interfaces.length;            
+        int nInterfaces = interfaces.length;
         int nBases = 0;
         int i;
         for (i=0; i<nInterfaces; i++) {
@@ -185,7 +185,7 @@ public class PyJavaClass extends PyClass
                 continue;
             nBases++;
         }
-            
+
         Class superclass = c.getSuperclass();
         int index=0;
         PyObject[] bases;
@@ -211,7 +211,7 @@ public class PyJavaClass extends PyClass
         }
 
         __bases__ = new PyTuple(bases);
-    }        
+    }
 
     private void init(Class c)  {
         init__class__(c);
@@ -225,13 +225,13 @@ public class PyJavaClass extends PyClass
       * false, in which case all fields are returned.
       */
     private static Field[] getAccessibleFields(Class c) {
- 	if (!JavaAccessibility.accessIsMutable())
+        if (!JavaAccessibility.accessIsMutable())
             // returns just the public fields
- 	    return c.getFields();
+            return c.getFields();
         // from here on out we know we must be using at least Java 1.2.
         // Note that an ArrayList would be better here because we don't
-        // need access to be synchronized, but that would prevent this file 
-        // from being compiled on Java 1.1 (as opposed to being compilable, 
+        // need access to be synchronized, but that would prevent this file
+        // from being compiled on Java 1.1 (as opposed to being compilable,
         // but not having the feature available).
         java.util.Vector fields = new java.util.Vector();
         while (c != null) {
@@ -263,7 +263,7 @@ public class PyJavaClass extends PyClass
 
             String name = getName(field.getName());
             boolean isstatic = Modifier.isStatic(field.getModifiers());
-            
+
             if (isstatic) {
                 if (name.startsWith("__doc__") && name.length() > 7)
                     continue;
@@ -278,7 +278,7 @@ public class PyJavaClass extends PyClass
             __dict__.__setitem__(name, new PyReflectedField(field));
         }
     }
-        
+
     /* Produce a good Python name for a Java method.  If the Java method
        ends in '$', strip it (this handles reserved Java keywords) Don't
        make any changes to keywords since this is now handled by parser
@@ -288,7 +288,7 @@ public class PyJavaClass extends PyClass
         if (name.endsWith("$")) name = name.substring(0, name.length()-1);
         return name.intern();
     }
-    
+
     private void addMethod(Method meth) {
         String name = getName(meth.getName());
         if (name == "_getPyInstance" || name == "_setPyInstance" ||
@@ -296,7 +296,7 @@ public class PyJavaClass extends PyClass
         {
             return;
         }
-           
+
         // Special case to handle a few troublesome methods in java.awt.*.
         // These methods are all deprecated and interfere too badly with
         // bean properties to be tolerated.  This is totally a hack, but a
@@ -304,8 +304,8 @@ public class PyJavaClass extends PyClass
         String classname = proxyClass.getName();
         if (classname.startsWith("java.awt.") &&
             classname.indexOf('.', 9) == -1)
-        { 
-            if (name == "layout" || name == "insets" || 
+        {
+            if (name == "layout" || name == "insets" ||
                 name == "size" || name == "minimumSize" ||
                 name == "preferredSize" || name == "maximumSize" ||
                 name == "bounds" || name == "enable")
@@ -313,19 +313,19 @@ public class PyJavaClass extends PyClass
                 return;
             }
         }
-        
+
         // See if any of my superclasses are using 'name' for something
         // else.  Or if I'm already using it myself
         PyObject o = lookup(name, false);
-            
+
         // If it's being used as a function, then things get more
         // interesting...
         PyReflectedFunction func;
         if (o != null && o instanceof PyReflectedFunction) {
             func = (PyReflectedFunction)o;
-                
+
             PyObject o1 = __dict__.__finditem__(name);
-                
+
             /* If this function already exists, add this method to the
                signature.  If this alters the signature of the function in
                some significant way, then return a duplicate and stick it in
@@ -342,7 +342,7 @@ public class PyJavaClass extends PyClass
                 Field docField = proxyClass.getField("__doc__" + name);
                 int mods = docField.getModifiers();
                 if (docField.getType() == PyString.class &&
-                       Modifier.isPublic(mods) && 
+                       Modifier.isPublic(mods) &&
                        Modifier.isStatic(mods));
                     func.__doc__ = (PyString) docField.get(null);
             } catch (NoSuchFieldException ex) {
@@ -359,16 +359,16 @@ public class PyJavaClass extends PyClass
       * false, in which case all methods are returned.
       */
     private static Method[] getAccessibleMethods(Class c) {
- 	if (!JavaAccessibility.accessIsMutable())
+        if (!JavaAccessibility.accessIsMutable())
             // returns just the public methods
- 	    return c.getMethods();
+            return c.getMethods();
         Method[] declared = c.getDeclaredMethods();
         for (int i=0; i < declared.length; i++) {
             // TBD: this is a permanent change.  Should we provide a way to
             // restore the original accessibility flag?
             JavaAccessibility.setAccessible(declared[i], true);
         }
-	return declared;
+        return declared;
     }
 
     /* Add all methods declared by this class */
@@ -381,7 +381,7 @@ public class PyJavaClass extends PyClass
             addMethod(method);
         }
     }
-        
+
     /* Adds a bean property to this class */
     void addProperty(String name, Class propClass,
                      Method getMethod, Method setMethod)
@@ -389,7 +389,7 @@ public class PyJavaClass extends PyClass
         // This will skip indexed property types
         if (propClass == null)
             return;
-        
+
         boolean set = true;
         name = getName(name);
 
@@ -398,11 +398,11 @@ public class PyJavaClass extends PyClass
 
         // Check to see if this name is already being used...
         PyObject o = lookup(name, false);
-        
+
         if (o != null) {
             if (!(o instanceof PyReflectedField))
                 return;
-            
+
             if (o instanceof PyBeanProperty) {
                 PyBeanProperty oldProp = (PyBeanProperty)o;
                 if (prop.myType == oldProp.myType) {
@@ -413,7 +413,7 @@ public class PyJavaClass extends PyClass
                     {
                         set = false;
                     }
-                    
+
                     // Add old get/set methods to current prop
                     // Handles issues with private classes
                     if (oldProp.getMethod != null) {
@@ -456,8 +456,8 @@ public class PyJavaClass extends PyClass
         }
         PyBeanEvent event = new PyBeanEvent(name, eventClass, addMethod);
         __dict__.__setitem__(event.__name__, event);
-    }   
-        
+    }
+
 
     /* A reimplementation of java.beans.Introspector.decapitalize.
        This is needed due to bugs in Netscape Navigator
@@ -596,9 +596,9 @@ public class PyJavaClass extends PyClass
       * inherited like methods or fields.
       */
     private static Constructor[] getAccessibleConstructors(Class c) {
- 	if (!JavaAccessibility.accessIsMutable())
+        if (!JavaAccessibility.accessIsMutable())
             // returns just the public fields
- 	    return c.getConstructors();
+            return c.getConstructors();
         // return all constructors
 
 
@@ -633,7 +633,7 @@ public class PyJavaClass extends PyClass
         setConstructors(proxyClass);
         constructorsInitialized = true;
     }
-      
+
     /*
       If the new name conflicts with a Python keyword, add an '_'
     */
@@ -658,7 +658,7 @@ public class PyJavaClass extends PyClass
             return null;
         }
     }
-    
+
     PyObject[] lookupGivingClass(String name, boolean stop_at_java) {
         if (stop_at_java)
             return new PyObject[] {null, null};
@@ -668,7 +668,7 @@ public class PyJavaClass extends PyClass
             initConstructors();
             return new PyObject[] {__init__, null};
         }
-        
+
         // For backwards compatibilty, support keyword_ as a substitute for
         // keyword.  An improved parser makes this no longer necessary.
         if (Options.deprecatedKeywordMangling && name.endsWith("_")) {
@@ -708,27 +708,27 @@ public class PyJavaClass extends PyClass
                 return super.lookupGivingClass(name, false)[0];
             return __init__;
         }
-    
+
         PyObject result = lookup(name, false);
         if (result != null)
             return result._doget(null);
-        
+
         // A cache of missing attributes to short-circuit later tests
         if (missingAttributes != null &&
             missingAttributes.__finditem__(name) != null)
         {
             return null;
         }
-        
+
         // These two tests can be expensive, see above for short-circuiting
         result = findClassAttr(name);
         if (result != null)
             return result;
-            
+
         result = findInnerClass(name);
         if (result != null)
             return result;
-        
+
         // Add this attribute to missing attributes cache
         if (missingAttributes == null) {
             missingAttributes = new PyStringMap();
@@ -736,7 +736,7 @@ public class PyJavaClass extends PyClass
         missingAttributes.__setitem__(name, this);
         return null;
     }
-        
+
     private PyJavaInstance classInstance;
     private PyObject findClassAttr(String name) {
         if (classInstance == null) {
@@ -748,7 +748,7 @@ public class PyJavaClass extends PyClass
         //__dict__.__setitem__(name, result);
         //return result;
     }
-        
+
     private PyObject findInnerClass(String name) {
         Class innerClass = Py.relFindClass(getProxyClass(),__name__+"$"+name);
         if (innerClass == null) return null;
@@ -772,7 +772,7 @@ public class PyJavaClass extends PyClass
         if (field == null) {
             throw Py.NameError("attribute not found: "+name);
         }
-            
+
         if (!field._dodel(null)) {
             __dict__.__delitem__(name);
             //throw Py.TypeError("attr not deletable: "+name);

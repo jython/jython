@@ -44,7 +44,7 @@ public class PyException extends RuntimeException
     public PyException(PyObject type, PyObject value) {
         this.type = type;
         this.value = value;
-                
+
         PyFrame frame = Py.getFrame();
         traceback = new PyTraceback(frame);
         if (frame != null && frame.tracefunc != null) {
@@ -61,12 +61,12 @@ public class PyException extends RuntimeException
         this.value = value;
         this.traceback = traceback;
     }
-        
+
     private boolean printingStackTrace = false;
     public void printStackTrace() {
         Py.printException(this);
     }
-        
+
     public synchronized void printStackTrace(PrintStream s) {
         //System.err.println("printStackTrace: "+s+", "+printingStackTrace);
         if (printingStackTrace) {
@@ -80,7 +80,7 @@ public class PyException extends RuntimeException
             }
         }
     }
-        
+
     public synchronized void super__printStackTrace(PrintWriter w) {
         try {
             printingStackTrace = true;
@@ -89,8 +89,8 @@ public class PyException extends RuntimeException
             printingStackTrace = false;
         }
         //Py.printException(this, null, new PyFile(s));
-    }   
-        
+    }
+
     public synchronized String toString() {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         if (!printingStackTrace) {

@@ -16,19 +16,19 @@ public class JavaAccessibility
     private static JavaAccessibility access = null;
 
     static void initialize() {
-	// If we can find it, and the registry option
-	// python.security.respectJavaAccessibility is set, then we set the
-	// access object to an instance of the subclass Java2Accessibility
+        // If we can find it, and the registry option
+        // python.security.respectJavaAccessibility is set, then we set the
+        // access object to an instance of the subclass Java2Accessibility
         if (Options.respectJavaAccessibility)
             return;
-	try {
+        try {
             Class c = Class.forName("org.python.core.Java2Accessibility");
             Class.forName("java.lang.reflect.AccessibleObject");
             access = (JavaAccessibility)c.newInstance();
         }
-	catch (InstantiationException e) {}
-	catch (IllegalAccessException e) {}
-	catch (ClassNotFoundException e) {}
+        catch (InstantiationException e) {}
+        catch (IllegalAccessException e) {}
+        catch (ClassNotFoundException e) {}
     }
 
     static boolean accessIsMutable() {
@@ -51,21 +51,21 @@ public class JavaAccessibility
     public static void setAccessible(Field field, boolean flag)
         throws SecurityException
     {
- 	if (access != null)
- 	    access.setAccess(field, flag);
+        if (access != null)
+            access.setAccess(field, flag);
     }
-    
+
     public static void setAccessible(Method method, boolean flag)
         throws SecurityException
     {
- 	if (access != null)
- 	    access.setAccess(method, flag);
+        if (access != null)
+            access.setAccess(method, flag);
     }
-    
+
     public static void setAccessible(Constructor constructor, boolean flag)
         throws SecurityException
     {
- 	if (access != null)
- 	    access.setAccess(constructor, flag);
+        if (access != null)
+            access.setAccess(constructor, flag);
     }
 }

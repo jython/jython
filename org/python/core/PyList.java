@@ -93,7 +93,7 @@ public class PyList extends PySequence implements ClassDictInit
             list.append(new PyString(methods[i]));
         __methods__ = list;
     }
-    
+
     public static void classDictInit(PyObject dict) {
         PySequence.classDictInit(dict);
         dict.__setitem__("reverse", new ListFunctions("reverse", 1, 0));
@@ -111,7 +111,7 @@ public class PyList extends PySequence implements ClassDictInit
         dict.__setitem__("toString", null);
         dict.__setitem__("hashCode", null);
     }
-    
+
     public PyList() {
         this(Py.EmptyObjects);
     }
@@ -132,8 +132,8 @@ public class PyList extends PySequence implements ClassDictInit
         return "'list' object";
     }
 
-    public int __len__() { 
-        return length; 
+    public int __len__() {
+        return length;
     }
 
     public PyObject __findattr__(String name) {
@@ -156,7 +156,7 @@ public class PyList extends PySequence implements ClassDictInit
             stop = start;
         int n = sliceLength(start, stop, step);
         PyObject[] newList = new PyObject[n];
-                
+
         if (step == 1) {
             System.arraycopy(list, start, newList, 0, stop-start);
             return new PyList(newList);
@@ -178,7 +178,7 @@ public class PyList extends PySequence implements ClassDictInit
     protected void delRange(int start, int stop, int step) {
         if (step != 1)
             throw Py.ValueError("step size must be 1 for deleting list slice");
-                    
+
         System.arraycopy(list, stop, list, start, length-stop);
         int newLength = length-(stop-start);
         int oldLength = length;
@@ -202,7 +202,7 @@ public class PyList extends PySequence implements ClassDictInit
             stop = start;
 
         PySequence seq = (PySequence)value;
-                
+
         // Hack to make recursive setslices work correctly.
         // Could avoid the copy if we wanted to be more clever about
         // the code to do the moving
@@ -272,11 +272,11 @@ public class PyList extends PySequence implements ClassDictInit
     public PyObject __add__(PyObject genericOther) {
         if (genericOther instanceof PyList) {
             PyList other = (PyList)genericOther;
-                        
+
             PyObject[] newList = new PyObject[length+other.length];
             System.arraycopy(list, 0, newList, 0, length);
             System.arraycopy(other.list, 0, newList, length, other.length);
-                        
+
             return new PyList(newList);
         } else {
             return null;
@@ -288,7 +288,7 @@ public class PyList extends PySequence implements ClassDictInit
         if (!ts.enterRepr(this)) {
             return "[...]";
         }
-            
+
         StringBuffer buf = new StringBuffer("[");
         for (int i=0; i<length-1; i++) {
             buf.append(((PyObject)list[i]).__repr__().toString());
@@ -383,7 +383,7 @@ public class PyList extends PySequence implements ClassDictInit
         setslice(n, n+1, 1, Py.EmptyTuple);
         return v;
     }
-    
+
     public void extend(PyObject o) {
         setslice(length, length, 1, o);
     }

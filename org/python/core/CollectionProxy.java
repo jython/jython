@@ -5,16 +5,16 @@ import java.util.*;
 
 public class CollectionProxy {
     public static final CollectionProxy NoProxy = new EnumerationProxy(null);
-    
+
     private static boolean checkedJava2 = false;
     private static CollectionProxy java2Proxy = null;
     public CollectionProxy instanceFindCollection(Object object) {
         return null;
     }
-    
+
     public static CollectionProxy findCollection(Object object) {
         if (object == null) return NoProxy;
-        
+
         if (!checkedJava2) {
             checkedJava2 = true;
             try {
@@ -108,16 +108,16 @@ class EnumerationProxy extends CollectionProxy {
 
 class VectorProxy extends CollectionProxy {
     Vector proxy;
-    
+
     public VectorProxy(Vector proxy) {
         this.proxy = proxy;
-    }    
-    
+    }
+
     public int __len__() {
         return proxy.size();
-    }   
-    
-    
+    }
+
+
     public PyObject __finditem__(int key) {
         try {
             return Py.java2py(proxy.elementAt(key));
@@ -125,7 +125,7 @@ class VectorProxy extends CollectionProxy {
             return null;
         }
     }
-    
+
     public PyObject __finditem__(PyObject key) {
         if (key instanceof PyInteger) {
             return __finditem__(((PyInteger)key).getValue());
@@ -133,7 +133,7 @@ class VectorProxy extends CollectionProxy {
             throw Py.TypeError("only integer keys accepted");
         }
     }
-        
+
     public void __setitem__(PyObject key, PyObject value) {
         if (key instanceof PyInteger) {
             proxy.setElementAt(Py.tojava(value, Object.class),
@@ -153,24 +153,24 @@ class VectorProxy extends CollectionProxy {
 
 class DictionaryProxy extends CollectionProxy {
     Dictionary proxy;
-    
+
     public DictionaryProxy(Dictionary proxy) {
         this.proxy = proxy;
-    }      
-    
+    }
+
     public int __len__() {
         return proxy.size();
     }
-    
+
     public PyObject __finditem__(PyObject key) {
         return Py.java2py(proxy.get(Py.tojava(key, Object.class)));
     }
-        
+
     public void __setitem__(PyObject key, PyObject value) {
         proxy.put(Py.tojava(key, Object.class),
                   Py.tojava(value, Object.class));
     }
-        
+
     public void __delitem__(PyObject key) {
         proxy.remove(Py.tojava(key, Object.class));
     }

@@ -13,14 +13,14 @@ class ReflectedCallData {
         self = null;
         errArg = -2;
     }
-    
+
     public void setLength(int newLength) {
         length = newLength;
         if (newLength <= args.length)
             return;
         args = new Object[newLength];
     }
-    
+
     public Object[] getArgsArray() {
         if (length == args.length)
             return args;

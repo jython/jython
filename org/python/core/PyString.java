@@ -2,7 +2,7 @@
 package org.python.core;
 
 
-class StringFuncs extends PyBuiltinFunctionSet 
+class StringFuncs extends PyBuiltinFunctionSet
 {
     StringFuncs(String name, int index, int argcount) {
         super(name, index, argcount, argcount, true, null);
@@ -223,7 +223,7 @@ public class PyString extends PySequence implements ClassDictInit
     public PyString(String string) {
         this.string = string;
     }
-        
+
     public PyString(char c) {
         this(String.valueOf(c));
     }
@@ -289,7 +289,7 @@ public class PyString extends PySequence implements ClassDictInit
     public PyString __str__() {
         return this;
     }
-        
+
     public int __len__() {
         return string.length();
     }
@@ -297,7 +297,7 @@ public class PyString extends PySequence implements ClassDictInit
     public String toString() {
         return string;
     }
-        
+
     public String internedString() {
         if (interned)
             return string;
@@ -322,7 +322,7 @@ public class PyString extends PySequence implements ClassDictInit
         boolean unicode = false;
 
         if (use_quotes) {
-            quote = str.indexOf('\'') >= 0 && 
+            quote = str.indexOf('\'') >= 0 &&
                              str.indexOf('"') == -1 ? '"' : '\'';
             v.append(quote);
         }
@@ -370,7 +370,7 @@ public class PyString extends PySequence implements ClassDictInit
 
     private static ucnhashAPI pucnHash = null;
 
-    public static String decode_UnicodeEscape(String str, int start, int end, 
+    public static String decode_UnicodeEscape(String str, int start, int end,
                                               String errors, boolean unicode)
     {
         StringBuffer v = new StringBuffer(end-start);
@@ -381,9 +381,9 @@ public class PyString extends PySequence implements ClassDictInit
             if (ch != '\\') {
                 v.append(ch);
                 s++;
-	        continue;
+                continue;
             }
-    
+
             /* \ - Escapes */
             s++;
             ch = str.charAt(s++);
@@ -474,7 +474,7 @@ public class PyString extends PySequence implements ClassDictInit
                      mod = mod.__call__();
                      pucnHash = (ucnhashAPI) mod.__tojava__(Object.class);
                      if (pucnHash.getCchMax() < 0)
-                         codecs.decoding_error("unicode escape", v, errors, 
+                         codecs.decoding_error("unicode escape", v, errors,
                                  "Unicode names not loaded");
                 }
 
@@ -486,14 +486,14 @@ public class PyString extends PySequence implements ClassDictInit
                      * exceed the maximum length of the unicode character names
                      */
                     int maxLen = pucnHash.getCchMax();
-                    while (endBrace < end && str.charAt(endBrace) != '}' 
+                    while (endBrace < end && str.charAt(endBrace) != '}'
                            && (endBrace - startName) <= maxLen) {
                         endBrace++;
                     }
                     if (endBrace != end && str.charAt(endBrace) == '}') {
                          int value = pucnHash.getValue(str, startName, endBrace);
                          if (value < 0) {
-                             codecs.decoding_error("unicode escape", v, errors, 
+                             codecs.decoding_error("unicode escape", v, errors,
                                  "Invalid Unicode Character Name");
                              v.append('\\');
                              v.append(str.charAt(s-1));
@@ -517,7 +517,7 @@ public class PyString extends PySequence implements ClassDictInit
                         }
                         s = endBrace + 1;
                     } else {
-                         codecs.decoding_error("unicode escape", v, errors, 
+                         codecs.decoding_error("unicode escape", v, errors,
                               "Unicode name missing closing brace");
                          v.append('\\');
                          v.append(str.charAt(s-1));
@@ -525,9 +525,9 @@ public class PyString extends PySequence implements ClassDictInit
                     }
                     break;
                 }
-                codecs.decoding_error("unicode escape", v, errors, 
+                codecs.decoding_error("unicode escape", v, errors,
                      "Missing opening brace for Unicode Character Name escape");
- 
+
                 /* fall through on purpose */
            default:
                v.append('\\');
@@ -541,11 +541,11 @@ public class PyString extends PySequence implements ClassDictInit
     public boolean equals(Object other) {
         if (!(other instanceof PyString))
             return false;
-            
+
         PyString o = (PyString)other;
         if (interned && o.interned)
             return string == o.string;
-            
+
         return string.equals(o.string);
     }
 
@@ -726,7 +726,7 @@ public class PyString extends PySequence implements ClassDictInit
             case '\0':
                 if (s != n)
                     throw Py.ValueError("null byte in argument for complex()");
-		if (!done)
+                if (!done)
                     sw_error = true;
                 break;
 
@@ -757,7 +757,7 @@ public class PyString extends PySequence implements ClassDictInit
                 got_im = true;
                 s++;
                 c = string.charAt(s);
-     
+
                 if  (c != '+' && c != '-')
                     done = true;
                 break;
@@ -793,12 +793,12 @@ public class PyString extends PySequence implements ClassDictInit
                 /* accept a real part */
                 x = sign * z;
                 got_re = true;
-                if (got_im) 
+                if (got_im)
                     done = true;
                 z = -1.0;
                 sign = 1;
                 break;
-					
+
              }  /* end of switch  */
 
         } while (s < n && !sw_error);
@@ -810,7 +810,7 @@ public class PyString extends PySequence implements ClassDictInit
 
         return new PyComplex(x,y);
     }
- 
+
     private int endDouble(String string, int s) {
         int n = string.length();
         while (s < n) {
@@ -830,7 +830,7 @@ public class PyString extends PySequence implements ClassDictInit
         }
         return s-1;
     }
- 
+
     // Add in methods from string module
     public String lower() {
         return string.toLowerCase();
@@ -959,13 +959,13 @@ public class PyString extends PySequence implements ClassDictInit
         return list;
     }
 
-    private PyList splitfields(String sep, int maxsplit) {        
+    private PyList splitfields(String sep, int maxsplit) {
         if (sep.length() == 0) {
             throw Py.ValueError("empty separator");
         }
 
         PyList list = new PyList();
-        
+
         int length = string.length();
         if (maxsplit < 0)
             maxsplit = length;
@@ -1110,15 +1110,15 @@ public class PyString extends PySequence implements ClassDictInit
         }
         return count;
     }
- 
+
     public int find(String sub) {
         return find(sub, 0, string.length());
     }
-    
+
     public int find(String sub, int start) {
         return find(sub, start, string.length());
     }
-    
+
     public int find(String sub, int start, int end) {
         int n = string.length();
         if (start < 0)
@@ -1137,15 +1137,15 @@ public class PyString extends PySequence implements ClassDictInit
             return -1;
         return index;
     }
-    
+
     public int rfind(String sub) {
         return rfind(sub, 0, string.length());
     }
-    
+
     public int rfind(String sub, int start) {
         return rfind(sub, start, string.length());
     }
-    
+
     public int rfind(String sub, int start, int end) {
         int n = string.length();
         if (start < 0)
@@ -1171,13 +1171,13 @@ public class PyString extends PySequence implements ClassDictInit
         for (int i = 0; i < n; i++) {
             char ch = string.charAt(i);
             if (Character.isDigit(ch)) {
-                if (s == null) 
+                if (s == null)
                     s = new StringBuffer(string);
                 s.setCharAt(i, Character.forDigit(Character.digit(ch, 10), 10));
             }
         }
         String sval = string;
-        if (s != null) 
+        if (s != null)
             sval = s.toString();
         try {
             return Double.valueOf(sval).doubleValue();
@@ -1225,7 +1225,7 @@ public class PyString extends PySequence implements ClassDictInit
                     if (base == 0)
                         base = 8;
                 }
-            }  
+            }
         }
 
         if (base == 0)
@@ -1365,14 +1365,14 @@ public class PyString extends PySequence implements ClassDictInit
     public String expandtabs() {
         return expandtabs(8);
     }
-    
+
     public String expandtabs(int tabsize) {
         String s = string;
         StringBuffer buf = new StringBuffer((int)(s.length()*1.5));
         char[] chars = s.toCharArray();
         int n = chars.length;
         int position = 0;
-        
+
         for(int i=0; i<n; i++) {
             char c = chars[i];
             if (c == '\t') {
@@ -1382,7 +1382,7 @@ public class PyString extends PySequence implements ClassDictInit
                     buf.append(' ');
                 }
                 continue;
-            } 
+            }
             if (c == '\n' || c == '\r') {
                 position = -1;
             }
@@ -1391,23 +1391,23 @@ public class PyString extends PySequence implements ClassDictInit
         }
         return buf.toString();
     }
-    
+
     public String capitalize() {
         if (string.length() == 0)
             return string;
         String first = string.substring(0,1).toUpperCase();
         return first.concat(string.substring(1,string.length()).toLowerCase());
-    }   
-    
+    }
+
     public String replace(String oldPiece, String newPiece) {
         return replace(oldPiece, newPiece, string.length());
     }
-    
+
     public String replace(String oldPiece, String newPiece, int maxsplit) {
         PyString newstr = new PyString(newPiece);
         return newstr.join(split(oldPiece, maxsplit));
     }
-    
+
     public String join(PyObject seq) {
         // trigger same TypeError as CPython if seq is not a sequence
         int seqlen = __builtin__.len(seq);
@@ -1426,11 +1426,11 @@ public class PyString extends PySequence implements ClassDictInit
         return buf.toString();
     }
 
-    
+
     public boolean startswith(String prefix) {
         return string.startsWith(prefix);
     }
-    
+
     public boolean startswith(String prefix, int offset) {
         return string.startsWith(prefix, offset);
     }
@@ -1463,10 +1463,10 @@ public class PyString extends PySequence implements ClassDictInit
         String substr = string.substring(start, end);
         return substr.endsWith(suffix);
     }
-        
+
     //public static String zfill(PyObject o, int width) {
     //    return zfill(o.toString(), width);
-    //}    
+    //}
 
     public String translate(String table) {
         return translate(table, null);
@@ -1535,7 +1535,7 @@ public class PyString extends PySequence implements ClassDictInit
         /* Shortcut for single character strings */
         if (n == 1)
             return Character.isLowerCase(string.charAt(0));
- 
+
         boolean cased = false;
         for (int i = 0; i < n; i++) {
             char ch = string.charAt(i);
@@ -1554,7 +1554,7 @@ public class PyString extends PySequence implements ClassDictInit
         /* Shortcut for single character strings */
         if (n == 1)
             return Character.isUpperCase(string.charAt(0));
- 
+
         boolean cased = false;
         for (int i = 0; i < n; i++) {
             char ch = string.charAt(i);
@@ -1590,7 +1590,7 @@ public class PyString extends PySequence implements ClassDictInit
         int n = string.length();
 
         /* Shortcut for single character strings */
-        if (n == 1) 
+        if (n == 1)
             return _isalnum(string.charAt(0));
 
         if (n == 0)
@@ -1613,7 +1613,7 @@ public class PyString extends PySequence implements ClassDictInit
         return Character.isLetterOrDigit(ch) ||
                Character.getType(ch) == Character.LETTER_NUMBER;
     }
- 
+
     public boolean isdecimal() {
         int n = string.length();
 
@@ -1689,9 +1689,9 @@ public class PyString extends PySequence implements ClassDictInit
 
         /* Shortcut for single character strings */
         if (n == 1)
-            return Character.isTitleCase(string.charAt(0)) || 
+            return Character.isTitleCase(string.charAt(0)) ||
                    Character.isUpperCase(string.charAt(0));
- 
+
         boolean cased = false;
         boolean previous_is_cased = false;
         for (int i = 0; i < n; i++) {
@@ -1747,7 +1747,7 @@ public class PyString extends PySequence implements ClassDictInit
     public PyString encode() {
         return encode(null, null);
     }
-    
+
     public PyString encode(String encoding) {
         return encode(encoding, null);
     }
@@ -1841,7 +1841,7 @@ final class StringFormatter
         int end = s.length();
         int ptr = 0;
 
-	int numnondigits = 0;
+        int numnondigits = 0;
         if (type == 'x' || type == 'X')
             numnondigits = 2;
 
@@ -1853,23 +1853,23 @@ final class StringFormatter
             ptr++;
         }
 
-	int numdigits = end - numnondigits - ptr;
+        int numdigits = end - numnondigits - ptr;
         if (!altFlag) {
             switch (type) {
-            case 'o' : 
+            case 'o' :
                 if (numdigits > 1) {
                      ++ptr;
                      --numdigits;
                 }
                 break;
-            case 'x' : 
-            case 'X' : 
+            case 'x' :
+            case 'X' :
                 ptr += 2;
                 numnondigits -= 2;
                 break;
             }
         }
-	if (precision > numdigits) {
+        if (precision > numdigits) {
             StringBuffer buf = new StringBuffer();
             for (int i = 0; i < numnondigits; ++i)
                 buf.append(s.charAt(ptr++));
@@ -1878,11 +1878,11 @@ final class StringFormatter
             for (int i = 0; i < numdigits; i++)
                 buf.append(s.charAt(ptr++));
             s = buf.toString();
-	} else if (end < s.length() || ptr > 0)
+        } else if (end < s.length() || ptr > 0)
             s = s.substring(ptr, end);
 
         switch (type) {
-        case 'x' : 
+        case 'x' :
             s = s.toLowerCase();
             break;
         }
@@ -1951,12 +1951,12 @@ final class StringFormatter
             power = Math.floor(Math.log(v)/Math.log(10));
         //System.err.println("formatExp: "+v+", "+power);
         int savePrecision = precision;
-        
+
         if (truncate)
             precision = -1;
         else
             precision = 3;
-        
+
         String exp = formatInteger((long)power, 10, false);
         if (negative) {
             negative = false;
@@ -1966,9 +1966,9 @@ final class StringFormatter
             if (!truncate)
                 exp = '+'+exp;
         }
-        
+
         precision = savePrecision;
-        
+
         double base = v/Math.pow(10, power);
         buf.append(formatFloatDecimal(base, truncate));
         buf.append(e);
@@ -1989,7 +1989,7 @@ final class StringFormatter
             argIndex = -1;
             if (args instanceof PyDictionary ||
                 args instanceof PyStringMap ||
-                (!(args instanceof PySequence) && 
+                (!(args instanceof PySequence) &&
                  args.__findattr__("__getitem__") != null))
             {
                 dict = args;
@@ -2108,9 +2108,9 @@ final class StringFormatter
                 }
                 break;
             case 'x':
-                if (arg instanceof PyLong) 
+                if (arg instanceof PyLong)
                     string = formatLong(arg.__hex__(), c, altFlag);
-                else { 
+                else {
                     string = formatInteger(arg, 16, true);
                     string = string.toLowerCase();
                     if (altFlag) {

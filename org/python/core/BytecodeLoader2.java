@@ -7,7 +7,7 @@ import java.security.*;
 
 public class BytecodeLoader2 extends SecureClassLoader implements Loader {
     private Vector parents;
-    
+
     public BytecodeLoader2() {
         parents = BytecodeLoader.init();
     }
@@ -16,11 +16,11 @@ public class BytecodeLoader2 extends SecureClassLoader implements Loader {
         if (!parents.contains(referent))
             parents.addElement(referent);
     }
-  
+
     // override from abstract base class
     protected Class loadClass(String name, boolean resolve)
         throws ClassNotFoundException
-    {        
+    {
         Class c = findLoadedClass(name);
         if (c != null)
             return c;

@@ -8,7 +8,7 @@ public class PyBuiltinFunctionSet extends PyObject implements Cloneable
     public PyObject __doc__;
     public PyObject __self__;
     public static PyObject __members__;
-    
+
     // internal implementation
     protected String name;
     protected int minargs, maxargs;
@@ -61,7 +61,7 @@ public class PyBuiltinFunctionSet extends PyObject implements Cloneable
         }
         return this;
     }
-        
+
     public String toString() {
         if (isMethod)
             return "<builtin method '"+name+"'>";
@@ -129,8 +129,8 @@ public class PyBuiltinFunctionSet extends PyObject implements Cloneable
 
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         throw argCountError(3);
-    }    
-    
+    }
+
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3,
                              PyObject arg4)
     {

@@ -18,7 +18,7 @@ public class PySyntaxError extends PyException {
     {
         super(Py.SyntaxError);
         PyObject[] tmp = new PyObject[] {
-            new PyString(filename), new PyInteger(line), 
+            new PyString(filename), new PyInteger(line),
             new PyInteger(column), new PyString(text)
         };
 

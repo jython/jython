@@ -24,14 +24,14 @@ public class ThreadState {
         }
         return (PyInstance)initializingProxies.peek();
     }
-    
+
     public void pushInitializingProxy(PyInstance proxy) {
         if (initializingProxies == null) {
             initializingProxies = new Stack();
         }
         initializingProxies.push(proxy);
     }
-    
+
     public void popInitializingProxy() {
         if (initializingProxies == null || initializingProxies.empty()) {
             throw Py.RuntimeError("invalid initializing proxies state");
@@ -50,7 +50,7 @@ public class ThreadState {
         tracing = false;
         //System.out.println("new thread state");
     }
-    
+
     public boolean enterRepr(PyObject obj) {
         //if (reprStack == null) System.err.println("reprStack: null");
         //else System.err.println("reprStack: "+reprStack.__len__());
@@ -65,7 +65,7 @@ public class ThreadState {
         reprStack.append(obj);
         return true;
     }
-    
+
     public void exitRepr(PyObject obj) {
         if (reprStack == null)
             return;

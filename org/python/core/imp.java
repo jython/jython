@@ -9,7 +9,7 @@ import java.util.Properties;
 public class imp
 {
     public static final int APIVersion = 8;
-    
+
     public static PyModule addModule(String name) {
         PyObject modules = Py.getSystemState().modules;
         PyModule module = (PyModule)modules.__finditem__(name);
@@ -20,7 +20,7 @@ public class imp
         modules.__setitem__(name, module);
         return module;
     }
-    
+
     // Simplistic implementation
     // Some InputStream's might require multiple read's to get it all...
     private static byte[] readBytes(InputStream fp) {
@@ -34,7 +34,7 @@ public class imp
             throw Py.IOError(ioe);
         }
     }
-    
+
     private static InputStream makeStream(File file) {
         try {
             return new FileInputStream(file);
@@ -53,7 +53,7 @@ public class imp
         if (api != APIVersion) {
             if (testing) {
                 return null;
-            } else { 
+            } else {
                 throw Py.ImportError("invalid api version("+api+" != "+
                                      APIVersion+") in: "+name);
             }
@@ -77,19 +77,19 @@ public class imp
     public static byte[] compileSource(String name, File file) {
         return compileSource(name, file, null, null);
     }
-    
+
     public static byte[] compileSource(String name, File file, String filename,
                                        String outFilename)
     {
         if (filename == null) {
             filename = file.toString();
         }
-        
+
         if (outFilename == null) {
             outFilename = filename.substring(0,filename.length()-3)+
                 "$py.class";
         }
-        
+
         return compileSource(name, makeStream(file), filename, outFilename);
     }
 
@@ -101,13 +101,13 @@ public class imp
         }
         return compileSource(name, fp, filename, outFilename);
     }
-    
+
     static byte[] compileSource(String name, InputStream fp, String filename,
                                 String outFilename)
     {
         try {
             ByteArrayOutputStream ofp = new ByteArrayOutputStream();
-    
+
             if (filename == null)
                 filename = "<unknown>";
             org.python.parser.SimpleNode node = null; //*Forte*
@@ -282,8 +282,8 @@ public class imp
 
             // First check for packages
             File dir = new File(dirName, name);
-            if (dir.isDirectory() && 
-                (new File(dir, "__init__.py").isFile() || 
+            if (dir.isDirectory() &&
+                (new File(dir, "__init__.py").isFile() ||
                  new File(dir, "__init__$py.class").isFile()))
             {
                 PyList pkgPath = new PyList();
@@ -353,7 +353,7 @@ public class imp
     private static PyObject load(String name, PyList path) {
         PyObject ret = loadBuiltin(name, path);
         if (ret != null) return ret;
-        
+
         ret = loadFromPath(name, path);
         if (ret != null) return ret;
 
@@ -385,7 +385,7 @@ public class imp
         PyObject tmp = dict.__finditem__("__name__");
         if (tmp == null) return null;
         String name = tmp.toString();
-        
+
         tmp = dict.__finditem__("__path__");
         if (tmp != null && tmp instanceof PyList) {
             return name.intern();
@@ -400,7 +400,7 @@ public class imp
     private static PyObject dottedFind(PyObject mod, String name) {
       int dot = 0;
       int last_dot= 0;
-    
+
       do {
         String tmpName;
         dot = name.indexOf('.', last_dot);
@@ -416,13 +416,13 @@ public class imp
       } while (dot != -1);
       return mod;
     }
-    
+
     public static PyObject importName(String name, boolean top) {
         if (name.length() == 0)
             throw Py.ValueError("Empty module name");
         int dot = name.indexOf('.');
         if (dot != -1) {
-            PyObject modules = Py.getSystemState().modules;             
+            PyObject modules = Py.getSystemState().modules;
             PyObject mod = modules.__finditem__(name);
             if (mod != null && !top)
                 return mod;
@@ -508,7 +508,7 @@ public class imp
 
         return importName(name, top);
 }
-            
+
     /**
      * Called from jpython generated code when a statement like "import spam"
      * is executed.
@@ -528,7 +528,7 @@ public class imp
     }
 
     /**
-     * Called from jpython generated code when a statement like 
+     * Called from jpython generated code when a statement like
      * "import spam as foo" is executed.
      */
     public static void importOneAs(String mod, String asname, PyFrame frame) {
@@ -539,9 +539,9 @@ public class imp
                                                  getStarArg());
         frame.setlocal(asname, module);
     }
-        
+
     /**
-     * Called from jpython generated code when a stamenet like 
+     * Called from jpython generated code when a stamenet like
      * "from spam.eggs import foo, bar" is executed.
      */
     public static void importFrom(String mod, String[] names, PyFrame frame) {
@@ -549,7 +549,7 @@ public class imp
     }
 
     /**
-     * Called from jpython generated code when a stamenet like 
+     * Called from jpython generated code when a stamenet like
      * "from spam.eggs import foo as spam" is executed.
      */
     public static void importFromAs(String mod, String[] names, String[] asnames,
@@ -584,7 +584,7 @@ public class imp
     }
 
     /**
-     * Called from jpython generated code when a statement like 
+     * Called from jpython generated code when a statement like
      * "from spam.eggs import *" is executed.
      */
     public static void importAll(String mod, PyFrame frame) {
@@ -596,11 +596,11 @@ public class imp
         PyObject names;
         if (module instanceof PyJavaPackage) names = ((PyJavaPackage)module).fillDir();
         else names = module.__dir__();
-                          
+
         loadNames(names, module, frame.getf_locals());
     }
 
-    // if __all__ is present, things work properly under the assumption 
+    // if __all__ is present, things work properly under the assumption
     // that names is sorted (__*__ names come first)
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals)
@@ -633,7 +633,7 @@ public class imp
     static PyObject reload(PyModule m) {
         String name = m.__getattr__("__name__").toString().intern();
 
-        PyObject modules = Py.getSystemState().modules;         
+        PyObject modules = Py.getSystemState().modules;
         PyModule nm = (PyModule)modules.__finditem__(name);
 
         if (nm == null || !nm.__getattr__("__name__").toString().equals(name)) {
@@ -653,10 +653,10 @@ public class imp
             path = (PyList)pkg.__getattr__("__path__");
             name = name.substring(dot+1, name.length()).intern();
         }
-        
+
         // This should be better "protected"
         //((PyStringMap)nm.__dict__).clear();
-        
+
         nm.__setattr__("__name__", new PyString(modName));
         PyObject ret = loadFromPath(name, modName, path);
         modules.__setitem__(modName, ret);

@@ -24,7 +24,7 @@ public class parser {
     {
         return fixParseError(reader, t, filename, false);
     }
-        
+
     static PyException fixParseError(BufferedReader reader, Throwable t,
                                      String filename, boolean forceNewline)
     {
@@ -118,7 +118,7 @@ public class parser {
         }
         return node;
     }
-        
+
     public static SimpleNode partialParse(String string, String kind,
                                           String filename)
     {

@@ -7,7 +7,7 @@ import java.io.Writer;
 public class StdoutWrapper extends OutputStream
 {
     protected String name;
-    
+
     public StdoutWrapper() {
         name = "stdout";
     }
@@ -27,7 +27,7 @@ public class StdoutWrapper extends OutputStream
         }
         if (obj instanceof PyJavaInstance) {
             PyFile f = null;
-            
+
             Object tmp = obj.__tojava__(OutputStream.class);
             if ((tmp != Py.NoConversion) && (tmp != null)) {
                 OutputStream os = (OutputStream)tmp;

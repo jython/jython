@@ -11,51 +11,51 @@ public final class Py
     static String frozenPackage=null;
     private final static Object PRESENT=new Object();
     static java.util.Hashtable frozenModules;
-        
+
     static boolean initialized;
-        
+
     /* Holds the singleton None and Ellipsis objects */
     /** The singleton None Python object **/
     public static PyObject None;
-        
+
     /** The singleton Ellipsis Python object - written as ... when indexing **/
     public static PyObject Ellipsis;
 
     /** A zero-length array of Strings to pass to functions that
         don't have any keyword arguments **/
     public static String[] NoKeywords;
-        
+
     /** A zero-length array of PyObject's to pass to functions that
         expect zero-arguments **/
     public static PyObject[] EmptyObjects;
-        
+
     /** A tuple with zero elements **/
     public static PyTuple EmptyTuple;
-        
+
     /** The Python integer 0 - also used as false **/
     public static PyInteger Zero;
-        
+
     /** The Python integer 1 - also used as true **/
     public static PyInteger One;
 
     /** A zero-length Python string **/
     public static PyString EmptyString;
-    
+
     /** A Python string containing '\n' **/
     public static PyString Newline;
-        
+
     /** A Python string containing ' ' **/
     public static PyString Space;
-        
+
     /** A unique object to indicate no conversion is possible
         in __tojava__ methods **/
-    public static Object NoConversion;  
-        
+    public static Object NoConversion;
+
     public static PyObject OSError;
     public static PyObject NotImplementedError;
     public static PyObject EnvironmentError;
-        
-        
+
+
     /* The standard Python exceptions */
     public static PyObject OverflowError;
     public static PyException OverflowError(String message) {
@@ -163,7 +163,7 @@ public final class Py
                 System.exit(((PyInteger)value).getValue());
             } else {
                 if (value != Py.None) {
-                    try { 
+                    try {
                         Py.println(value);
                         System.exit(1);
                     }
@@ -173,7 +173,7 @@ public final class Py
             }
         }
     }
-        
+
 
     public static PyObject ImportError;
     public static PyException ImportError(String message) {
@@ -205,7 +205,7 @@ public final class Py
             "You might want to try the -mx flag to increase heap size");
         System.exit(-1);
     }
-        
+
     public static PyException MemoryError(String message) {
         return new PyException(Py.MemoryError, message);
     }
@@ -240,7 +240,7 @@ public final class Py
     }
 
     // Don't allow any constructors.  Class only provides static methods.
-    private Py() { ; } 
+    private Py() { ; }
 
     /** @deprecated **/
     //public static InterpreterState interp;
@@ -249,7 +249,7 @@ public final class Py
        Convert a given <code>PyObject</code> to an instance of a Java class.
        Identical to <code>o.__tojava__(c)</code> except that it will
        raise a <code>TypeError</code> if the conversion fails.
-    
+
        @param o the <code>PyObject</code> to convert.
        @param c the class to convert it to.
     **/
@@ -268,9 +268,9 @@ public final class Py
         if (c == null) throw Py.TypeError("can't convert to: "+s);
         return tojava(o, c); // prev:Class.forName
     }
-        
+
     /* Helper functions for PyProxy's */
-        
+
     /** @deprecated **/
     public static PyObject jfindattr(PyProxy proxy, String name) {
         PyInstance o = proxy._getPyInstance();
@@ -279,7 +279,7 @@ public final class Py
         PyObject ret = o.__jfindattr__(name);
         if (ret == null)
             return null;
-        
+
         // Set the current system state to match proxy -- usually this is a waste of time :-(
         Py.setSystemState(proxy._getPySystemState());
         return ret;
@@ -302,7 +302,7 @@ public final class Py
 
     /* Convenience methods to create new constants without using "new" */
     private static PyInteger[] integerCache = null;
-    
+
     public static final PyInteger newInteger(int i) {
         if (integerCache == null) {
             integerCache = new PyInteger[1000];
@@ -323,35 +323,35 @@ public final class Py
         else
             return newInteger((int)i);
     }
-    
+
     public static PyLong newLong(String s) {
         return new PyLong(s);
     }
-    
+
     public static PyComplex newImaginary(double v) {
         return new PyComplex(0, v);
     }
-    
+
     public static PyFloat newFloat(float v) {
         return new PyFloat((double)v);
-    }    
-    
+    }
+
     public static PyFloat newFloat(double v) {
         return new PyFloat(v);
     }
-    
+
     public static PyString newString(char c) {
         return makeCharacter(c);
-    }    
-    
+    }
+
     public static PyString newString(String s) {
         return new PyString(s);
     }
-    
+
     public static PyInteger newBoolean(boolean t) {
         return t ? Py.One : Py.Zero;
     }
-    
+
     public static PyCode newCode(int argcount, String varnames[],
                                  String filename, String name,
                                  boolean args, boolean keywords,
@@ -378,7 +378,7 @@ public final class Py
     private static PyJavaClass __builtin__class;
 
     public static void setBuiltinExceptions() {
-        __builtin__class = 
+        __builtin__class =
                      PyJavaClass.lookup(org.python.core.__builtin__.class);
         PyObject dict = __builtin__class.__getattr__("__dict__");
         dict.__setitem__("Exception", Py.Exception);
@@ -458,7 +458,7 @@ public final class Py
              Py.ImportError, Py.ArithmeticError, Py.EOFError,
              Py.UnicodeError, Py.UnboundLocalError,
             });
-        
+
         Exception = new PyTuple(new PyObject[]
             {Py.StandardError, Py.SystemExit});
 
@@ -469,7 +469,7 @@ public final class Py
     static void initClassExceptions() {
         PyObject exceptions = imp.load("exceptions");
         PyObject tmp;
-        
+
         tmp = exceptions.__findattr__("Exception");
         if (tmp != null) Exception = tmp;
         tmp = exceptions.__findattr__("TypeError");
@@ -525,11 +525,11 @@ public final class Py
         tmp = exceptions.__findattr__("AttributeError");
         if (tmp != null) AttributeError = tmp;
         tmp = exceptions.__findattr__("SyntaxError");
-        if (tmp != null) SyntaxError = tmp;        
+        if (tmp != null) SyntaxError = tmp;
         tmp = exceptions.__findattr__("IndentationError");
-        if (tmp != null) IndentationError = tmp;        
+        if (tmp != null) IndentationError = tmp;
         tmp = exceptions.__findattr__("TabError");
-        if (tmp != null) TabError = tmp;        
+        if (tmp != null) TabError = tmp;
         setBuiltinExceptions();
     }
 
@@ -540,7 +540,7 @@ public final class Py
         return true;
     }
 
-    
+
     public static Class relFindClass(Class home,String name) {
         try {
             ClassLoader loader = home.getClassLoader();
@@ -552,9 +552,9 @@ public final class Py
             throw Py.JavaError(t);
         }
     }
-    
+
     private static boolean secEnv=false;
-    
+
     public static Class findClass(String name) {
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
@@ -604,7 +604,7 @@ public final class Py
                     secEnv=true;
                 }
                 writeDebug("import", "trying " + name + " as " + reason + " in syspath loader");
-                return classLoader.loadClass(name);                
+                return classLoader.loadClass(name);
             }
 
             writeDebug("import", "trying " + name + " as " + reason + " in Class.forName");
@@ -630,9 +630,9 @@ public final class Py
     }
 
     private static boolean propertiesInitialized = false;
-    private static synchronized void initProperties(String[] args, 
+    private static synchronized void initProperties(String[] args,
                                                     String[] packages,
-                                                    String[] props, 
+                                                    String[] props,
                                                     String frozenPackage,
                                                     String[] modules,
                                                     ClassLoader classLoader)
@@ -645,7 +645,7 @@ public final class Py
                 if (frozenPackage.length() > 0)
                     Py.frozenPackage = frozenPackage;
             }
-            
+
             java.util.Properties sprops;
             try {
                 sprops = new java.util.Properties(System.getProperties());
@@ -659,7 +659,7 @@ public final class Py
                 }
             }
             //System.err.println("sprops: "+sprops);
-        
+
             if (args == null)
                 args = new String[0];
             PySystemState.initialize(sprops, null, args, classLoader);
@@ -668,7 +668,7 @@ public final class Py
         if (modules != null) {
             if(frozenModules == null)
               frozenModules = new java.util.Hashtable();
-            
+
             // System.err.println("modules: "); // ?? dbg
             for (int i = 0; i < modules.length; i++) {
                 String modname = modules[i];
@@ -697,7 +697,7 @@ public final class Py
     {
         initProxy(proxy, module, pyclass, args, packages, props, null, null);
     }
-                                                                            
+
     public static void initProxy(PyProxy proxy, String module, String pyclass,
                                  Object[] args, String[] packages,
                                  String[] props,
@@ -705,17 +705,17 @@ public final class Py
                                  String[] modules)
     {
 //         System.out.println("initProxy");
-//         frozen = false;               
+//         frozen = false;
         initProperties(null, packages, props, frozenPackage, modules,
                     proxy.getClass().getClassLoader());
-                
+
         ThreadState ts = getThreadState();
         if (ts.getInitializingProxy() != null) {
             proxy._setPyInstance(ts.getInitializingProxy());
             proxy._setPySystemState(ts.systemState);
             return;
         }
-                
+
         //System.out.println("path: "+sys.path.__str__());
 
         PyObject mod;
@@ -740,7 +740,7 @@ public final class Py
         proxy._setPyInstance((PyInstance)instance);
         proxy._setPySystemState(ts.systemState);
 
-        PyObject[] pargs; 
+        PyObject[] pargs;
         if (args == null || args.length == 0) {
             pargs = Py.EmptyObjects;
         } else {
@@ -775,7 +775,7 @@ public final class Py
                                String[] modules)
     {
         //System.err.println("main: "+module);
-       
+
         Class mainClass=null;
         try {
             mainClass = Class.forName(module); // ??pending: should use Py.findClass?
@@ -844,11 +844,11 @@ public final class Py
     {
         //System.err.println("printingException: "+t+", "+file);
         StdoutWrapper stderr = Py.stderr;
-            
+
         if (file != null) {
             stderr = new FixedFileWrapper(file);
         }
-            
+
         if (Options.showJavaExceptions) {
             stderr.println("Java Traceback:");
             java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
@@ -862,7 +862,7 @@ public final class Py
         }
 
         PyException exc = Py.JavaError(t);
-                
+
         maybeSystemExit(exc);
 
         if (f != null && exc.traceback.tb_frame != f) {
@@ -978,7 +978,7 @@ public final class Py
         else {
             if (e == pye.type)
                 return true;
-                
+
             if (e instanceof PyTuple) {
                 PyObject[] l = ((PyTuple)e).list;
                 for (int i=0; i<l.length; i++) {
@@ -999,7 +999,7 @@ public final class Py
         }
         return ts.exception;
     }
-    
+
     public static PyException makeException(PyObject type) {
         if (type instanceof PyInstance) {
             return new PyException(type.__class__, type);
@@ -1041,7 +1041,7 @@ public final class Py
                 locals = Py.getFrame().getf_locals();
             }
         }
-                        
+
         if (globals == null)
             globals = Py.getFrame().f_globals;
 
@@ -1081,19 +1081,19 @@ public final class Py
     public static final ThreadState getThreadState() {
         return getThreadState(null);
     }
-    
+
     public static final ThreadState
         getThreadState(PySystemState newSystemState)
     {
         if (threadStateMapping == null) {
             synchronized (Py.class) {
-                if (threadStateMapping == null) 
+                if (threadStateMapping == null)
                     threadStateMapping = ThreadStateMapping.makeMapping();
             }
         }
         return threadStateMapping.getThreadState(newSystemState);
     }
-    
+
     public static final PySystemState
         setSystemState(PySystemState newSystemState)
     {
@@ -1105,7 +1105,7 @@ public final class Py
         }
         return oldSystemState;
     }
-    
+
     public static final PySystemState getSystemState() {
         return getThreadState().systemState;
         //defaultSystemState;
@@ -1186,7 +1186,7 @@ public final class Py
     public static void println() {
         stdout.println();
     }
-    
+
     /* A collection of convenience functions for converting PyObjects
        to Java primitives */
 
@@ -1211,11 +1211,11 @@ public final class Py
             throw Py.TypeError("integer required");
         return i.shortValue();
     }
-        
+
     public static int py2int(PyObject o) {
         return py2int(o, "integer required");
     }
-        
+
     public static int py2int(PyObject o, String msg) {
         if (o instanceof PyInteger)
             return (int)((PyInteger)o).getValue();
@@ -1224,7 +1224,7 @@ public final class Py
             throw Py.TypeError(msg);
         return ((Integer)obj).intValue();
     }
-        
+
     public static long py2long(PyObject o) {
         if (o instanceof PyInteger)
             return (long)((PyInteger)o).getValue();
@@ -1257,10 +1257,10 @@ public final class Py
             throw Py.TypeError("float required");
         return i.doubleValue();
     }
-        
+
     public static char py2char(PyObject o) {
         return py2char(o, "char required");
-    }   
+    }
 
     public static char py2char(PyObject o, String msg) {
         if (o instanceof PyString) {
@@ -1278,13 +1278,13 @@ public final class Py
             throw Py.TypeError(msg);
         return i.charValue();
     }
-        
+
     public static void py2void(PyObject o) {
         if (o != Py.None) {
             throw Py.TypeError("None required for void return");
         }
     }
-        
+
     private static PyString[] letters=null;
 
 
@@ -1296,7 +1296,7 @@ public final class Py
         if (c > 255) {
             return new PyString(new Character(c).toString());
         }
-        
+
         if (letters == null) {
             letters = new PyString[256];
             for(char j=0; j<256; j++) {
@@ -1313,7 +1313,7 @@ public final class Py
 
         if (o instanceof PyProxy)
             return ((PyProxy)o)._getPyInstance();
-                
+
         if (o instanceof Number) {
             if (o instanceof Double || o instanceof Float) {
                 return new PyFloat(((Number)o).doubleValue());
@@ -1381,8 +1381,8 @@ public final class Py
         PyClass pyclass = new PyClass();
         if (proxyClass != null)
             pyclass.proxyClass = proxyClass;
-     
-        pyclass.init(name, new PyTuple(bases), dict);       
+
+        pyclass.init(name, new PyTuple(bases), dict);
         return pyclass;
     }
 
@@ -1437,7 +1437,7 @@ public final class Py
                 return tup.list;
             throw Py.ValueError("unpack tuple of wrong size");
         }
-        
+
         PyObject[] ret = new PyObject[length];
         try {
             for(int i=0; i<length; i++) {
@@ -1454,7 +1454,7 @@ public final class Py
                 throw exc;
             }
         }
-        
+
         if (o.__finditem__(length) != null) {
             throw Py.ValueError("unpack sequence too long");
         }
@@ -1495,7 +1495,7 @@ public final class Py
 
     public static void writeError(String type, String msg) {
         maybeWrite(type, msg, ERROR);
-    }   
+    }
     public static void writeWarning(String type, String msg) {
         maybeWrite(type, msg, WARNING);
     }
@@ -1504,7 +1504,7 @@ public final class Py
     }
     public static void writeComment(String type, String msg) {
         maybeWrite(type, msg, COMMENT);
-    }    
+    }
     public static void writeDebug(String type, String msg) {
         maybeWrite(type, msg, DEBUG);
     }
@@ -1543,7 +1543,7 @@ class FixedFileWrapper extends StdoutWrapper {
         name = "fixed file";
         this.file = file;
     }
-    
+
     protected PyObject myFile() {
         return file;
     }

@@ -12,7 +12,7 @@ public class PyReflectedField extends PyObject {
     public PyReflectedField(PyClass c) {
         super(c);
     }
-    
+
     public PyReflectedField(Field field) {
         super(__class__);
         this.field = field;
@@ -26,7 +26,7 @@ public class PyReflectedField extends PyObject {
             iself = Py.tojava(self, field.getDeclaringClass());
         }
         Object value;
-            
+
         try {
             value = field.get(iself);
         } catch (IllegalAccessException exc) {
@@ -46,7 +46,7 @@ public class PyReflectedField extends PyObject {
             iself = Py.tojava(self, field.getDeclaringClass());
         }
         Object fvalue = Py.tojava(value, field.getType());
-        
+
         try {
             field.set(iself, fvalue);
         } catch (IllegalAccessException exc) {

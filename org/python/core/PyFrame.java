@@ -10,7 +10,7 @@ public class PyFrame extends PyObject
     public int f_lineno;
     public PyObject f_builtins;
     public PyObject[] f_fastlocals;
-        
+
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
 
@@ -34,11 +34,11 @@ public class PyFrame extends PyObject
             f_fastlocals = new PyObject[code.co_varnames.length];
         }
     }
-        
+
     public PyFrame(PyTableCode code, PyObject globals) {
         this(code, null, globals, null);
-    }   
-        
+    }
+
     public String toString() {
         if (f_code == null) {
             return "<frame (unknown code) at line "+f_lineno+">";
@@ -155,7 +155,7 @@ public class PyFrame extends PyObject
         if (ret != null) {
             return ret;
         }
-                
+
         // Set up f_builtins if not already set
         if (f_builtins == null) {
             f_builtins = Py.getSystemState().builtins;

@@ -79,7 +79,7 @@ public class PyTableCode extends PyCode
         }
         return super.__findattr__(name);
     }
-    
+
     public PyObject call(PyFrame frame) {
 //         System.err.println("tablecode call: "+co_name);
         ThreadState ts = Py.getThreadState();
@@ -90,7 +90,7 @@ public class PyTableCode extends PyCode
 
         // Cache previously defined exception
         PyException previous_exception = ts.exception;
-            
+
         // Push frame
         frame.f_back = ts.frame;
         if (frame.f_builtins == null) {
@@ -116,10 +116,10 @@ public class PyTableCode extends PyCode
             // immediately after, one for the first line of the function.
             //
             // JPython on the other hand only lays down a call in the
-            // generated Java function to set the line number for the first 
+            // generated Java function to set the line number for the first
             // line of the function (i.e. not the def line).  This
             // difference in behavior doesn't seem to affect arg tuple
-            // unpacking tracebacks, but it does mean that function tracing 
+            // unpacking tracebacks, but it does mean that function tracing
             // gives slightly different behavior.  Is this bad?  Until
             // someone complains... no.
             //
@@ -144,7 +144,7 @@ public class PyTableCode extends PyCode
             frame.tracefunc = ss.tracefunc.traceCall(frame);
             frame.setline(co_firstlineno);
         }
-        
+
         // Handle trace function for profiling
         if (ss.profilefunc != null) {
             ss.profilefunc.traceCall(frame);
@@ -164,20 +164,20 @@ public class PyTableCode extends PyCode
                 tb.tb_next = e.traceback;
                 e.traceback = tb;
             }
-                        
+
             if (frame.tracefunc != null) {
                 frame.tracefunc.traceException(frame, e);
             }
             if (ss.profilefunc != null) {
                 ss.profilefunc.traceException(frame, e);
             }
-            
+
             //Rethrow the exception to the next stack frame
             ts.exception = previous_exception;
             ts.frame = ts.frame.f_back;
             throw e;
         }
-                
+
         if (frame.tracefunc != null) {
             frame.tracefunc.traceReturn(frame, ret);
         }
@@ -199,7 +199,7 @@ public class PyTableCode extends PyCode
         PyFrame frame = new PyFrame(this, globals);
         return call(frame);
     }
-    
+
     public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults)
     {
         if (co_argcount != 1 || args || keywords)
@@ -209,7 +209,7 @@ public class PyTableCode extends PyCode
         frame.f_fastlocals[0] = arg1;
         return call(frame);
     }
-    
+
     public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
                          PyObject[] defaults)
     {
@@ -221,7 +221,7 @@ public class PyTableCode extends PyCode
         frame.f_fastlocals[1] = arg2;
         return call(frame);
     }
-    
+
     public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
                          PyObject globals, PyObject[] defaults)
     {
@@ -233,8 +233,8 @@ public class PyTableCode extends PyCode
         frame.f_fastlocals[1] = arg2;
         frame.f_fastlocals[2] = arg3;
         return call(frame);
-    }   
-        
+    }
+
 //     public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
 //                          PyObject[] defaults)
 //     {
@@ -257,7 +257,7 @@ public class PyTableCode extends PyCode
         System.arraycopy(call_args, 0, os, 1, call_args.length);
         return call(os, call_keywords, globals, defaults);
     }
-        
+
     private String prefix() {
         return co_name.toString()+"() ";
     }
@@ -335,7 +335,7 @@ public class PyTableCode extends PyCode
                         throw Py.TypeError(
                             prefix()+
                             "takes at least " + min +
-                            (min == 1 ? " argument (" : " arguments (") + 
+                            (min == 1 ? " argument (" : " arguments (") +
                             (call_args.length-call_keywords.length)+
                             " given)");
                     }

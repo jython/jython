@@ -10,7 +10,7 @@ public class PyComplex extends PyObject {
         real = r;
         imag = i;
     }
-        
+
     protected String safeRepr() {
         return "'complex' object";
     }
@@ -18,7 +18,7 @@ public class PyComplex extends PyObject {
     /*public double getReal() {
       return real;
       }
-        
+
       public double getImag() {
       return image;
       }*/
