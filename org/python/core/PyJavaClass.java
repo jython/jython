@@ -761,6 +761,14 @@ public class PyJavaClass extends PyClass
             initConstructors();
         PyInstance inst = new PyJavaInstance(this);
         inst.__init__(args, keywords);
+
+        if (proxyClass != null && PyObject.class.isAssignableFrom(proxyClass)) {
+            // It would be better if we didn't have to create a PyInstance
+            // in the first place.
+            ((PyObject)inst.javaProxy).__class__ = this;
+            return (PyObject)inst.javaProxy;
+        }
+
         return inst;
     }
 

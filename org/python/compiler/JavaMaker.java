@@ -33,7 +33,7 @@ public class JavaMaker extends ProxyMaker
     {
         super("foo");
         if (superclass == null)
-            superclass = PyObject.class;
+            superclass = Object.class;
         this.classname = superclass.getName();
 //         methods != null ? superclass.getName() : "org.python.proxies."+superclass.getName());
         this.interfaces = interfaces;
