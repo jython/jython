@@ -32,5 +32,5 @@ if __name__ == '__main__':
 	print c
 	c.setCelsius(0)
 	print c
-	c.setFahrenheight(212)
+	c.setFahrenheit(212)
 	print c
