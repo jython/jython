@@ -4,8 +4,10 @@ package org.python.modules;
 import org.python.core.*;
 import com.oroinc.text.regex.*;
 
-public class re implements InitModule {
+public class re implements InitModule
+{
     public static PyObject error = new PyString("re.error");
+
     public static PyException ReError(String message) {
         return new PyException(error, message);
     }
@@ -21,8 +23,9 @@ public class re implements InitModule {
         dict.__setitem__("DOTALL",
                          new PyInteger(Perl5Compiler.SINGLELINE_MASK));
         dict.__setitem__("S", new PyInteger(Perl5Compiler.SINGLELINE_MASK));
-        dict.__setitem__("VERBOSE", new PyInteger(0));
-        dict.__setitem__("X", new PyInteger(0));
+        dict.__setitem__("VERBOSE",
+                         new PyInteger(Perl5Compiler.EXTENDED_MASK));
+        dict.__setitem__("X", new PyInteger(Perl5Compiler.EXTENDED_MASK));
         dict.__setitem__("LOCALE", new PyInteger(0));
         dict.__setitem__("L", new PyInteger(0));
     }
