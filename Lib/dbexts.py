@@ -77,7 +77,7 @@ def console(rows, headers=()):
 
 	# Check row entry lengths
 	output = []
-	headers = map(string.upper, list(headers))
+	headers = map(string.upper, list(map(lambda x: x or "", headers)))
 	collen = map(len,headers)
 	output.append(headers)
 	if rows and len(rows) > 0:
@@ -179,6 +179,8 @@ class dbexts:
 		self.autocommit = autocommit
 		self.formatter = formatter
 		self.out = out
+		self.rowid = None
+		self.updatecount = None
 
 		if not jndiname:
 			if cfg == None: cfg = os.path.join(os.path.split(__file__)[0], "dbexts.ini")
@@ -264,6 +266,8 @@ class dbexts:
 					f = cursor.fetchall()
 					if f: self.results = choose(self.results is None, [], self.results) + f
 					s = cursor.nextset()
+		if hasattr(cursor, "rowid"): self.rowid = cursor.rowid
+		if hasattr(cursor, "updatecount"): self.updatecount = cursor.updatecount
 		if self.autocommit or cursor is None: self.db.commit()
 		if cursor: cursor.close()
 
@@ -315,6 +319,15 @@ class dbexts:
 		else:
 			self.__execute__(sql, params, bindings, maxrows=maxrows)
 		return (self.headers, self.results)
+
+	def callproc(self, procname, params=None, bindings=None, maxrows=None):
+		""" execute a stored procedure """
+		cur = self.begin()
+		try:
+			cur.callproc(procname, params=params, bindings=bindings, maxrows=maxrows)
+		finally:
+			self.commit(cur)
+		self.display()
 
 	def pk(self, table, owner=None, schema=None):
 		""" display the table's primary keys """
