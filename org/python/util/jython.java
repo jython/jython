@@ -97,9 +97,11 @@ public class jpython {
             }
         }
  
+	// was there a filename on the command line?
         if (opts.filename != null) {
             String path = new java.io.File(opts.filename).getParent();
-            if (path == null) path = "";
+            if (path == null)
+		path = "";
             Py.getSystemState().path.insert(0, new PyString(path));
             if (opts.jar) {
                 runJar(opts.filename);
@@ -117,6 +119,14 @@ public class jpython {
                 }
             }
         }
+	else {
+	    // if there was no file name on the command line, then "" is
+	    // the first element on sys.path.  This is here because if
+	    // there /was/ a filename on the c.l., and say the -i option
+	    // was given, sys.path[0] will have gotten filled in with the
+	    // dir of the argument filename.
+	    Py.getSystemState().path.insert(0, new PyString(""));
+	}
 
         if (opts.interactive) {
             try {
