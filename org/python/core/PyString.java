@@ -1367,8 +1367,8 @@ public class PyString extends PySequence implements ClassDictInit
         int n = string.length();
 
         /* Shortcut for single character strings */
-        if (n == 1)
-            return Character.isLetterOrDigit(string.charAt(0));
+        if (n == 1) 
+            return _isalnum(string.charAt(0));
 
         if (n == 0)
             return false;
@@ -1376,10 +1376,89 @@ public class PyString extends PySequence implements ClassDictInit
         for (int i = 0; i < n; i++) {
             char ch = string.charAt(i);
 
-            if (!Character.isLetterOrDigit(ch))
+            if (!_isalnum(ch))
                 return false;
         }
         return true;
+    }
+
+    private boolean _isalnum(char ch) {
+        // This can ever be entirely compatible with CPython. In CPython
+        // The type is not used, the numeric property is determined from
+        // the presense of digit, decimal or numeric fields. These fields
+        // are not available in exactly the same way in java.
+        return Character.isLetterOrDigit(ch) ||
+               Character.getType(ch) == Character.LETTER_NUMBER;
+    }
+ 
+    public boolean isdecimal() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1) {
+            char ch = string.charAt(0);
+            return _isdecimal(ch);
+        }
+
+        if (n == 0)
+            return false;
+
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+
+            if (!_isdecimal(ch))
+                return false;
+        }
+        return true;
+    }
+
+    private boolean _isdecimal(char ch) {
+        // See the comment in _isalnum. Here it is even worse.
+        return Character.getType(ch) == Character.DECIMAL_DIGIT_NUMBER;
+    }
+
+    public boolean isdigit() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1)
+            return Character.isDigit(string.charAt(0));
+
+        if (n == 0)
+            return false;
+
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+
+            if (!Character.isDigit(ch))
+                return false;
+        }
+        return true;
+    }
+
+    public boolean isnumeric() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1)
+            return _isnumeric(string.charAt(0));
+
+        if (n == 0)
+            return false;
+
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+            if (!_isnumeric(ch))
+                return false;
+        }
+        return true;
+    }
+
+    private boolean _isnumeric(char ch) {
+        int type = Character.getType(ch);
+        return type == Character.DECIMAL_DIGIT_NUMBER ||
+               type == Character.LETTER_NUMBER ||
+               type == Character.OTHER_NUMBER;
     }
 
     public boolean istitle() {
@@ -1411,6 +1490,25 @@ public class PyString extends PySequence implements ClassDictInit
                 previous_is_cased = false;
         }
         return cased;
+    }
+
+    public boolean isspace() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1)
+            return Character.isWhitespace(string.charAt(0));
+
+        if (n == 0)
+            return false;
+
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+
+            if (!Character.isWhitespace(ch))
+                return false;
+        }
+        return true;
     }
 
     public PyString encode() {
