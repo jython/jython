@@ -102,9 +102,10 @@ public class PyJavaClass extends PyClass
 //         d.__setitem__("__module__", Py.None);
         __dict__ = d;
         try {
-            setBeanInfoCustom(proxyClass);
+            Method[] methods = getAccessibleMethods(proxyClass);
+            setBeanInfoCustom(proxyClass, methods);
             setFields(proxyClass);
-            setMethods(proxyClass);
+            setMethods(proxyClass, methods);
         } catch (SecurityException se) {}
     }
 
@@ -340,34 +341,17 @@ public class PyJavaClass extends PyClass
  	if (!JavaAccessibility.accessIsMutable())
             // returns just the public methods
  	    return c.getMethods();
-        // from here on out we know we must be using at least Java 1.2.
-        // Note that an ArrayList would be better here because we don't
-        // need access to be synchronized, but that would prevent this file
-        // from being compiled on Java 1.1 (as opposed to being compilable,
-        // but not having the feature available).
-        java.util.Vector methods = new java.util.Vector();
-        while (c != null) {
-            // get all declared methods for this class, mutate their
-            // accessibility and pop it into the array for later
-            Method[] declared = c.getDeclaredMethods();
-            for (int i=0; i < declared.length; i++) {
-                // TBD: this is a permanent change.  Should we provide a way to
-                // restore the original accessibility flag?
-                JavaAccessibility.setAccessible(declared[i], true);
-                methods.addElement(declared[i]);
-            }
-            // walk down superclass chain
-            c = c.getSuperclass();
+        Method[] declared = c.getDeclaredMethods();
+        for (int i=0; i < declared.length; i++) {
+            // TBD: this is a permanent change.  Should we provide a way to
+            // restore the original accessibility flag?
+            JavaAccessibility.setAccessible(declared[i], true);
         }
-//        return (Method[])methods.toArray(new Method[methods.size()]);
-        Method[] ret = new Method[methods.size()];
-        methods.copyInto(ret);
-        return ret;
+	return declared;
     }
 
     /* Add all methods declared by this class */
-    private void setMethods(Class c) {
-        Method[] methods = getAccessibleMethods(c);
+    private void setMethods(Class c, Method[] methods) {
         for (int i=0; i<methods.length; i++) {
             Method method = methods[i];
             Class dc = method.getDeclaringClass();
@@ -474,10 +458,8 @@ public class PyJavaClass extends PyClass
     }
 
     // This method is a workaround for Netscape's stupid security bug!
-    private void setBeanInfoCustom(Class c) {
+    private void setBeanInfoCustom(Class c, Method[] meths) {
         //try {
-        Method[] meths = c.getMethods();
-
         int i;
         int n = meths.length;
         for (i=0; i<n; i++) {
@@ -597,7 +579,15 @@ public class PyJavaClass extends PyClass
             // returns just the public fields
  	    return c.getConstructors();
         // return all constructors
-        return c.getDeclaredConstructors();
+
+
+        Constructor[] declared = c.getDeclaredConstructors();
+        for (int i=0; i < declared.length; i++) {
+            // TBD: this is a permanent change.  Should we provide a way to
+            // restore the original accessibility flag?
+            JavaAccessibility.setAccessible(declared[i], true);
+        }
+        return declared;
     }
 
     private void setConstructors(Class c) {
