@@ -17,7 +17,7 @@ public class PackageCache {
     private boolean indexModified;
     public Hashtable jarfiles;
     
-	public Hashtable packages;
+    public Hashtable packages;
 
     public PyStringMap topLevelPackages;
     public PyList searchPath;
@@ -37,18 +37,18 @@ public class PackageCache {
         
         return topPackage.__findattr__(name);
         /*
-        // Next search the searchPath for this name
-        PyObject item;
-        int i = 0;
-        while ( (item = searchPath.__finditem__(i++)) != null) {
-            File testdir = new File(item.toString(), name);
-            if (testdir.isDirectory()) {
-                return new PyJavaDirPackage(testdir.getCanonicalPath());
-            }
-            // Maybe check for name.class here?
-        }
-        return null;
-        // Assume that Class.forName will be tried after this is all over...
+	  // Next search the searchPath for this name
+	  PyObject item;
+	  int i = 0;
+	  while ( (item = searchPath.__finditem__(i++)) != null) {
+	  File testdir = new File(item.toString(), name);
+	  if (testdir.isDirectory()) {
+	  return new PyJavaDirPackage(testdir.getCanonicalPath());
+	  }
+	  // Maybe check for name.class here?
+	  }
+	  return null;
+	  // Assume that Class.forName will be tried after this is all over...
         */
     }
 
@@ -64,26 +64,26 @@ public class PackageCache {
             int cid = istream.readByte();
             //System.out.println(""+i+" : "+cid);
             switch (cid) {
-                case 7: istream.skipBytes(2); break;
-                case 9:
-                case 10:
-                case 11: istream.skipBytes(4); break;
-                case 8: istream.skipBytes(2); break;
-                case 3:
-                case 4: istream.skipBytes(4); break;
-                case 5:
-                case 6: istream.skipBytes(8); i++; break;
-                case 12: istream.skipBytes(4); break;
-                case 1:
-                    //System.out.println("utf: "+istream.readUTF()+";");
-                    int slength = istream.readShort();
-                    istream.skipBytes(slength);
-                    break;
-                default:
-                    //System.err.println("unexpected cid: "+cid+", "+i+", "+nconstants);
-                    //for (int j=0; j<10; j++) { System.err.print(", "+istream.readByte()); }
-                    //System.err.println();
-                    return -1;
+	    case 7: istream.skipBytes(2); break;
+	    case 9:
+	    case 10:
+	    case 11: istream.skipBytes(4); break;
+	    case 8: istream.skipBytes(2); break;
+	    case 3:
+	    case 4: istream.skipBytes(4); break;
+	    case 5:
+	    case 6: istream.skipBytes(8); i++; break;
+	    case 12: istream.skipBytes(4); break;
+	    case 1:
+		//System.out.println("utf: "+istream.readUTF()+";");
+		int slength = istream.readShort();
+		istream.skipBytes(slength);
+		break;
+	    default:
+		//System.err.println("unexpected cid: "+cid+", "+i+", "+nconstants);
+		//for (int j=0; j<10; j++) { System.err.print(", "+istream.readByte()); }
+		//System.err.println();
+		return -1;
             }
         }
         return istream.readShort();
@@ -118,13 +118,13 @@ public class PackageCache {
     }
 
     /*public static String[] vectorToStrings(Vector vec) {
-        int n = vec.size();
-        String[] ret = new String[n];
-        for(int i=0; i<n; i++) {
-            ret[i] = (String)vec.elementAt(i);
-        }
-        return ret;
-    }*/
+      int n = vec.size();
+      String[] ret = new String[n];
+      for(int i=0; i<n; i++) {
+      ret[i] = (String)vec.elementAt(i);
+      }
+      return ret;
+      }*/
     public static String vectorToString(Vector vec) {
         int n = vec.size();
         StringBuffer ret = new StringBuffer();
@@ -158,9 +158,9 @@ public class PackageCache {
     }
 
     public static void writeCacheFile(File cachefile, long mtime,
-      String cpath, Hashtable packs) throws IOException {
-	    DataOutputStream ostream = new DataOutputStream(
-              new BufferedOutputStream(new FileOutputStream(cachefile)));
+				      String cpath, Hashtable packs) throws IOException {
+	DataOutputStream ostream = new DataOutputStream(
+							new BufferedOutputStream(new FileOutputStream(cachefile)));
         ostream.writeUTF(cpath);
         ostream.writeLong(mtime);
         if (Options.verbosePackageCache) {
@@ -173,27 +173,27 @@ public class PackageCache {
             ostream.writeUTF(classes);
         }
         ostream.close();
-      }
+    }
 
     public static Hashtable readCacheFile(File cachefile, long mtime, String cpath)
-    throws IOException {
-	    DataInputStream istream = new DataInputStream(
-              new BufferedInputStream(new FileInputStream(cachefile)));
-	    String old_cpath = istream.readUTF();
-	    long old_mtime = istream.readLong();
-	    Hashtable packs = new Hashtable();
-	    try {
-	        while (true) {
-	            String packageName = istream.readUTF();
-	            String classes = istream.readUTF();
-	            packs.put(packageName, classes);
-	        }
-	    } catch (EOFException eof) {
-	        ;
+	throws IOException {
+	DataInputStream istream = new DataInputStream(
+						      new BufferedInputStream(new FileInputStream(cachefile)));
+	String old_cpath = istream.readUTF();
+	long old_mtime = istream.readLong();
+	Hashtable packs = new Hashtable();
+	try {
+	    while (true) {
+		String packageName = istream.readUTF();
+		String classes = istream.readUTF();
+		packs.put(packageName, classes);
 	    }
-	    istream.close();
+	} catch (EOFException eof) {
+	    ;
+	}
+	istream.close();
 
-	    return packs;
+	return packs;
     }
 
     public void addDirectory(File directory) throws IOException {
@@ -257,56 +257,58 @@ public class PackageCache {
 
     public void findPackages(Properties registry) throws IOException {
         String paths = registry.getProperty("python.packages.paths", 
-            "java.class.path,sun.boot.class.path");
+					    "java.class.path,sun.boot.class.path");
         String directories = registry.getProperty("python.packages.directories", 
-            "java.ext.dirs");
+						  "java.ext.dirs");
         
-		StringTokenizer tok = new StringTokenizer(paths, ",");
-		while  (tok.hasMoreTokens())  {
-			String entry = tok.nextToken().trim();
-			String tmp = registry.getProperty(entry);
-			if (tmp == null) continue;
-			addClassPath(tmp);
-		}
+	StringTokenizer tok = new StringTokenizer(paths, ",");
+	while  (tok.hasMoreTokens())  {
+	    String entry = tok.nextToken().trim();
+	    String tmp = registry.getProperty(entry);
+	    if (tmp == null) continue;
+	    addClassPath(tmp);
+	}
 		
-		tok = new StringTokenizer(directories, ",");
-		while  (tok.hasMoreTokens())  {
-			String entry = tok.nextToken().trim();
-			String tmp = registry.getProperty(entry);
-			if (tmp == null) continue;	
-			addJarPath(tmp);
-		}
+	tok = new StringTokenizer(directories, ",");
+	while  (tok.hasMoreTokens())  {
+	    String entry = tok.nextToken().trim();
+	    String tmp = registry.getProperty(entry);
+	    if (tmp == null) continue;	
+	    addJarPath(tmp);
+	}
+    }
+
+
+    public PyJavaPackage doAddPackage(String name, String classes) {
+	//System.out.println("add package: "+name);
+	int dot = name.indexOf('.');
+	String firstName=name;
+	String lastName=null;
+	if (dot != -1) {
+	    firstName = name.substring(0,dot);
+	    lastName = name.substring(dot+1, name.length());
 	}
 
-
-	public PyJavaPackage doAddPackage(String name, String classes) {
-	    //System.out.println("add package: "+name);
-		int dot = name.indexOf('.');
-		String firstName=name;
-		String lastName=null;
-		if (dot != -1) {
-			firstName = name.substring(0,dot);
-			lastName = name.substring(dot+1, name.length());
-		}
-
-		firstName = firstName.intern();
-		PyJavaPackage p = (PyJavaPackage)topLevelPackages.__finditem__(firstName);
-		if (p == null) {
-			p = new PyJavaPackage(firstName);
-		    topLevelPackages.__setitem__(firstName, p);
-		}
-		PyJavaPackage ret = p;
-		if (lastName != null) ret = p.addPackage(lastName);
-		ret._unparsedAll = classes;
-		return ret;
+	firstName = firstName.intern();
+	PyJavaPackage p = (PyJavaPackage)topLevelPackages.__finditem__(firstName);
+	if (p == null) {
+	    p = new PyJavaPackage(firstName);
+	    topLevelPackages.__setitem__(firstName, p);
 	}
+	PyJavaPackage ret = p;
+	if (lastName != null) ret = p.addPackage(lastName);
+	ret._unparsedAll = classes;
+	return ret;
+    }
 
 
     public void addSysPackages() {
         //PySystemState ss = Py.getSystemState();
         
         try {
-            cachedir = new File(PySystemState.prefix, "pkgcache").getCanonicalPath();
+	    File cdir = new File(PySystemState.prefix, "pkgcache");
+	    cdir.mkdirs();
+            cachedir = cdir.getCanonicalPath();
             loadIndex();
             findPackages(PySystemState.registry);
             saveIndex();
@@ -337,59 +339,59 @@ public class PackageCache {
     }
 
     public void addJarPath(String path) throws IOException {
-		StringTokenizer tok = new StringTokenizer(path, java.io.File.pathSeparator);
-		while  (tok.hasMoreTokens())  {
-			String entry = tok.nextToken();
-			addJarDir(entry);
-		}
+	StringTokenizer tok = new StringTokenizer(path, java.io.File.pathSeparator);
+	while  (tok.hasMoreTokens())  {
+	    String entry = tok.nextToken();
+	    addJarDir(entry);
 	}
+    }
 	
-	public void addClassPath(String path) throws IOException {
-		StringTokenizer tok = new StringTokenizer(path, java.io.File.pathSeparator);
-		while  (tok.hasMoreTokens())  {
-			String entry = tok.nextToken().trim();
-			if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
-			    addJar(new File(entry));
-			} else {
-			    addDirectory(new File(entry));
-			}
-		}
-	}
-	public void loadIndex() throws IOException {
-	    indexModified = false;
-
-	    File indexFile = new File(cachedir, "index.cache");
-	    jarfiles = new Hashtable();
-	    if (!indexFile.exists()) return;
-
-	    DataInputStream istream = new DataInputStream(
-              new BufferedInputStream(new FileInputStream(indexFile)));
-	    try {
-	        while (true) {
-	            String jarfile = istream.readUTF();
-	            JarEntry je = new JarEntry();
-	            je.cachefile = istream.readUTF();
-	            je.mtime = istream.readLong();
-	            jarfiles.put(jarfile, je);
-	        }
-	    } catch (EOFException eof) {
-	        ;
+    public void addClassPath(String path) throws IOException {
+	StringTokenizer tok = new StringTokenizer(path, java.io.File.pathSeparator);
+	while  (tok.hasMoreTokens())  {
+	    String entry = tok.nextToken().trim();
+	    if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
+		addJar(new File(entry));
+	    } else {
+		addDirectory(new File(entry));
 	    }
-	    istream.close();
 	}
+    }
+    public void loadIndex() throws IOException {
+	indexModified = false;
 
-	public void saveIndex() throws IOException {
-	    if (!indexModified) return;
-	    indexModified = false;
+	File indexFile = new File(cachedir, "index.cache");
+	jarfiles = new Hashtable();
+	if (!indexFile.exists()) return;
+
+	DataInputStream istream = new DataInputStream(
+						      new BufferedInputStream(new FileInputStream(indexFile)));
+	try {
+	    while (true) {
+		String jarfile = istream.readUTF();
+		JarEntry je = new JarEntry();
+		je.cachefile = istream.readUTF();
+		je.mtime = istream.readLong();
+		jarfiles.put(jarfile, je);
+	    }
+	} catch (EOFException eof) {
+	    ;
+	}
+	istream.close();
+    }
+
+    public void saveIndex() throws IOException {
+	if (!indexModified) return;
+	indexModified = false;
 
         if (Options.verbosePackageCache) {
             System.err.println("packageCache: writing modified index file");
         }
 
-	    File indexFile = new File(cachedir, "index.cache");
-	    DataOutputStream ostream = new DataOutputStream(
-              new BufferedOutputStream(new FileOutputStream(indexFile)));
-        for (Enumeration e = jarfiles.keys() ; e.hasMoreElements() ;) {
+	File indexFile = new File(cachedir, "index.cache");
+	DataOutputStream ostream = new DataOutputStream(
+		new BufferedOutputStream(new FileOutputStream(indexFile)));
+        for (Enumeration e = jarfiles.keys(); e.hasMoreElements();) {
             String jarfile = (String)e.nextElement();
             JarEntry je = (JarEntry)jarfiles.get(jarfile);
             ostream.writeUTF(jarfile);
@@ -397,25 +399,25 @@ public class PackageCache {
             ostream.writeLong(je.mtime);
         }
         ostream.close();
-	}
+    }
 
     /*public static void main(String[] args) throws IOException {
-        System.out.println("start");
-        long t0 = System.currentTimeMillis();
-        loadIndex();
-        addJarPath(System.getProperty("java.ext.dirs"));
-        addJar(new File("d:\\jdk1.2\\jre\\lib\\rt.jar"));
+      System.out.println("start");
+      long t0 = System.currentTimeMillis();
+      loadIndex();
+      addJarPath(System.getProperty("java.ext.dirs"));
+      addJar(new File("d:\\jdk1.2\\jre\\lib\\rt.jar"));
 
-        //Hashtable packages = getPackages(new File("d:\\jdk1.2\\jre\\lib\\rt.jar")); //loadCacheIndex(new File(new File(cachedir), "index").toString());
-        saveIndex();
-        addSysPackages();
-        long t1 = System.currentTimeMillis();
+      //Hashtable packages = getPackages(new File("d:\\jdk1.2\\jre\\lib\\rt.jar")); //loadCacheIndex(new File(new File(cachedir), "index").toString());
+      saveIndex();
+      addSysPackages();
+      long t1 = System.currentTimeMillis();
 
-        //System.out.println("packages: "+packages);
-        System.out.println("jarfiles: "+jarfiles);
+      //System.out.println("packages: "+packages);
+      System.out.println("jarfiles: "+jarfiles);
 
 
-        System.out.println("end: "+(t1-t0)/1000.);
-        //System.out.println("packages: "+packages);
-    }*/
+      System.out.println("end: "+(t1-t0)/1000.);
+      //System.out.println("packages: "+packages);
+      }*/
 }
