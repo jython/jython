@@ -4,7 +4,7 @@
     <target name="init">
         <property name="sourceDir" value="." />
         <property name="outputDir" value="build" />
-        <property name="debug" value="no" />
+        <property name="debug" value="off" />
 
         <available classname="java.util.List" property="java2" />
         <available classname="javax.servlet.Servlet" property="servlet" />
