@@ -6,9 +6,14 @@
 // accept2dyear
 // strptime()
 //
-// There may also be some incompatibilities in strftime(), because the Java 
+// There may also be some incompatibilities in strftime(), because the Java
 // tools for creating those formats don't always map to C's strftime()
 // function.
+//
+// NOTE: This file cannot be compiled cleaning using the JDK 1.1 APIs (but
+// compiled against the 1.2 APIs, it /can/ be run on a 1.1 JVM).  To
+// compile using the 1.1 APIs, search for the string "XXXAPI" and remove
+// the double-slashes at the start of these lines.
 
 package org.python.modules;
 
@@ -45,6 +50,8 @@ public class time implements InitModule
 
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
+
+        // /* XXXAPI 1.2 START
         try {
             tzname = new PyTuple(
                 new PyObject[] {
@@ -52,10 +59,13 @@ public class time implements InitModule
                     new PyString(tz.getDisplayName(true, TimeZone.SHORT))
                 });
         }
-        catch (NoSuchMethodError e) {
-            // getDisplayName() is only available in Java 1.2.  This is the
-            // next best thing, but it isn't really correct, or what the
-            // Python time module spec wants.
+        catch (NoSuchMethodError e) {}
+        // XXXAPI 1.2 END */
+
+        // getDisplayName() is only available in Java 1.2.  This is the
+        // next best thing, but it isn't really correct, or what the Python
+        // time module spec wants, but it does work for Java 1.1
+        if (tzname == null) {
             tzname = new PyTuple(
                 new PyObject[] {
                     new PyString(tz.getID()),
@@ -65,16 +75,18 @@ public class time implements InitModule
         daylight = tz.useDaylightTime() ? 1 : 0;
 
         timezone = -tz.getRawOffset() / 1000;
-        if (tz instanceof SimpleTimeZone)
+        if (tz instanceof SimpleTimeZone) {
+            // /* XXXAPI 1.2 START
             try {
-                // Java 1.2
                 SimpleTimeZone stz = (SimpleTimeZone)tz;
                 altzone = timezone - stz.getDSTSavings() / 1000;
             }
-            catch (NoSuchMethodError e) {
+            catch (NoSuchMethodError e) {}
+            // XXXAPI 1.2 END */
+        }
+        if (altzone == -1)
                 // best we can do for Java 1.1.  This is wrong though.
                 altzone = timezone;
-            }
     }
                 
     public static double time$() {
@@ -289,9 +301,9 @@ public class time implements InitModule
 
     // set by initModule()
     public static int timezone;
-    public static int altzone = 0;
+    public static int altzone = -1;
     public static int daylight;
-    public static PyTuple tzname;
+    public static PyTuple tzname = null;
     // TBD: should we accept 2 digit years?  should we make this attribute
     // writable but ignore its value?
     public static final int accept2dyear = 0;
@@ -460,17 +472,23 @@ public class time implements InitModule
                 // timezone name
                 if (cal == null)
                     cal = _tupletocal(tup);
-                try {
-                    s = s + cal.getTimeZone().getDisplayName(
-                        // in daylight savings time?  true if == 1
-                        // -1 means the information was not available;
-                        // treat this as if not in dst
-                        item(tup, 8) > 0,
-                        TimeZone.SHORT);
-                }
-                catch (NoSuchMethodError e) {
-                    // See note in initModule() above
-                    s = s + cal.getTimeZone().getID();
+                {
+                    boolean use_getid = true;
+                    // /* XXXAPI 1.2 START
+                    try {
+                        s = s + cal.getTimeZone().getDisplayName(
+                            // in daylight savings time?  true if == 1 -1
+                            // means the information was not available;
+                            // treat this as if not in dst
+                            item(tup, 8) > 0,
+                            TimeZone.SHORT);
+                        use_getid = false;
+                    }
+                    catch (NoSuchMethodError e) {}
+                    // XXXAPI 1.2 END */
+                    if (use_getid)
+                        // See note in initModule() above
+                        s = s + cal.getTimeZone().getID();
                 }
                 break;
             case '%':
