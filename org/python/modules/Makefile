@@ -2,5 +2,5 @@
 
 include ../../../../rules/make.rules
 JPYTHONROOT = ../../..
-OROMATCHERROOT = ../../../../ORO
+OROMATCHERROOT = ../../../../../nondist/ORO
 CLASSPATH = $(JPYTHONROOT):$(OROMATCHERROOT)
