@@ -170,7 +170,8 @@ public class PyJavaClass extends PyClass
         proxyClass = c;
         __name__ = c.getName();
             
-        if (ClassDictInit.class.isAssignableFrom(c)) {
+        if (ClassDictInit.class.isAssignableFrom(c) 
+                            && c != ClassDictInit.class) {
             initialize();
             try {
                 Method m = c.getMethod("classDictInit", 
