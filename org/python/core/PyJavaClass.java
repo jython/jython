@@ -777,7 +777,7 @@ public class PyJavaClass extends PyClass
 
         PyObject result = lookup(name, false);
         if (result != null)
-            return result._doget(null);
+            return result.__get__(null, null); // xxx messy
 
         // A cache of missing attributes to short-circuit later tests
         if (missingAttributes != null &&
@@ -828,7 +828,7 @@ public class PyJavaClass extends PyClass
     public void __setattr__(String name, PyObject value) {
         PyObject field = lookup(name, false);
         if (field != null) {
-            if (field._doset(null, value))
+            if (field.jtryset(null, value))
                 return;
         }
         __dict__.__setitem__(name, value);
@@ -840,9 +840,8 @@ public class PyJavaClass extends PyClass
             throw Py.NameError("attribute not found: "+name);
         }
 
-        if (!field._dodel(null)) {
+        if (!field.jdontdel()) {
             __dict__.__delitem__(name);
-            //throw Py.TypeError("attr not deletable: "+name);
         }
     }
 

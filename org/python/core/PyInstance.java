@@ -208,7 +208,9 @@ public class PyInstance extends PyObject
         // it wasn't found in the instance, try the class
         PyObject[] result2 = instclass.lookupGivingClass(name, stopAtJava);
         if (result2[0] != null)
-            return result2[0]._doget(this, result2[1]);
+            // xxx do we need to use result2[1] (wherefound) for java cases for backw comp?
+            return result2[0].__get__(this, instclass); 
+            // xxx do we need to use 
         return ifindfunction(name);
     }
 
@@ -245,7 +247,7 @@ public class PyInstance extends PyObject
                 if (f instanceof PyFunction) {
                     return f.__call__(this);
                 } else {
-                    f = f._doget(this);
+                    f = f.__get__(this, instclass);
                 }
             }
         }
@@ -262,7 +264,7 @@ public class PyInstance extends PyObject
                 if (f instanceof PyFunction) {
                     return f.__call__(this, arg1);
                 } else {
-                    f = f._doget(this);
+                    f = f.__get__(this, instclass);
                 }
             }
         }
@@ -279,7 +281,7 @@ public class PyInstance extends PyObject
                 if (f instanceof PyFunction) {
                     return f.__call__(this, arg1, arg2);
                 } else {
-                    f = f._doget(this);
+                    f = f.__get__(this, instclass);
                 }
             }
         }
@@ -310,7 +312,7 @@ public class PyInstance extends PyObject
                 PyObject field = instclass.lookup(name, false);
                 if (field == null) {
                     noField(name, value);
-                } else if (!field._doset(this, value)) {
+                } else if (!field.jtryset(this, value)) {
                     unassignableField(name, value);
                 }
             } else {
@@ -328,7 +330,6 @@ public class PyInstance extends PyObject
     }
 
     public void __delattr__(String name) {
-        // Need code to handle _dodel
         PyObject deller = instclass.__delattr__;
         if (deller != null) {
             deller.__call__(this, new PyString(name));

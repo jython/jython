@@ -17,7 +17,7 @@ public class PyBeanEvent extends PyObject {
         throw Py.TypeError("write only attribute");
     }
 
-    public boolean _dodel(PyObject container) {
+    boolean _jdontdel() {
         throw Py.TypeError("can't delete this attribute");
     }
 

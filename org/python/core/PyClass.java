@@ -246,8 +246,8 @@ public class PyClass extends PyObject
 
         if (result[0] == null)
             return super.__findattr__(name);
-
-        return result[0]._doget(null, result[1]);
+        // xxx do we need to use result[1] (wherefound) for java cases for backw comp?
+        return result[0].__get__(null, this);
     }
 
     public void __setattr__(String name, PyObject value) {
@@ -277,6 +277,13 @@ public class PyClass extends PyObject
         __dict__.__delitem__(name);
     }
 
+    public void __rawdir__(PyDictionary accum) {
+        addKeys(accum, "__dict__");
+        PyObject[] bases = __bases__.list;
+        for (int i=0; i < bases.length; i++)
+            bases[i].__rawdir__(accum);
+    }
+    
     public PyObject __call__(PyObject[] args, String[] keywords) {
         PyInstance inst;
         if (__del__ == null)

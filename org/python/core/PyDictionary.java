@@ -12,7 +12,7 @@ public class PyDictionary extends PyObject implements ClassDictInit
 {
     /* type info */
 
-    public static final String exposed_name = ("dict");
+    public static final String exposed_name = "dict";
 
     public static void typeSetup(PyObject dict, PyType.Newstyle marker) {
         class exposed___ne__ extends PyBuiltinFunctionNarrow {
@@ -105,8 +105,8 @@ public class PyDictionary extends PyObject implements ClassDictInit
             public PyObject __call__(PyObject arg0) {
                 int ret = self.dict___cmp__(arg0);
                 if (ret == -2) {
-                    throw Py.TypeError(("dict")
-                            + ".__cmp__(x,y) requires y to be '" + ("dict")
+                    throw Py.TypeError("dict"
+                            + ".__cmp__(x,y) requires y to be '" + "dict"
                             + "', not a '" + (arg0).getType().fastGetName()
                             + "'");
                 }
@@ -117,8 +117,8 @@ public class PyDictionary extends PyObject implements ClassDictInit
                 PyDictionary self = (PyDictionary) gself;
                 int ret = self.dict___cmp__(arg0);
                 if (ret == -2) {
-                    throw Py.TypeError(("dict")
-                            + ".__cmp__(x,y) requires y to be '" + ("dict")
+                    throw Py.TypeError("dict"
+                            + ".__cmp__(x,y) requires y to be '" + "dict"
                             + "', not a '" + (arg0).getType().fastGetName()
                             + "'");
                 }

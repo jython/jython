@@ -14,21 +14,19 @@ import java.util.Iterator;
  *
  */
 public class PyType extends PyObject {
+    /* type info */
 
-    public static void typeSetup(PyObject dict, Newstyle marker) {
-        dict.__setitem__(
-            "__dict__",
-            new PyGetSetDescr("__dict__", PyType.class, "getDict", null));
-        dict.__setitem__(
-            "__name__",
-            new PyGetSetDescr("__name__", PyType.class, "fastGetName", null));
-        dict.__setitem__(
-            "__base__",
-            new PyGetSetDescr("__name__", PyType.class, "getBase", null));
-        dict.__setitem__(
-            "__bases__",
-            new PyGetSetDescr("__name__", PyType.class, "getBases", null));
+    public static final String exposed_name = "type";
 
+    public static void typeSetup(PyObject dict, PyType.Newstyle marker) {
+        dict.__setitem__("__dict__", new PyGetSetDescr("__dict__",
+                PyType.class, "getDict", null));
+        dict.__setitem__("__name__", new PyGetSetDescr("__name__",
+                PyType.class, "fastGetName", null));
+        dict.__setitem__("__base__", new PyGetSetDescr("__base__",
+                PyType.class, "getBase", null));
+        dict.__setitem__("__bases__", new PyGetSetDescr("__bases__",
+                PyType.class, "getBases", null));
         class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -37,58 +35,60 @@ public class PyType extends PyObject {
                 return self;
             }
 
-            exposed___getattribute__(PyType self,PyBuiltinFunction.Info info) {
+            exposed___getattribute__(PyType self, PyBuiltinFunction.Info info) {
                 super(info);
-                this.self=self;
+                this.self = self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getattribute__((PyType)self,info);
+                return new exposed___getattribute__((PyType) self, info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    String name=(arg0.asName(0));
-                    PyObject ret=self.type___findattr__(name);
-                    if (ret==null)
+                    String name = (arg0.asName(0));
+                    PyObject ret = self.type___findattr__(name);
+                    if (ret == null)
                         self.noAttributeError(name);
                     return ret;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="attribute name must be string";
+                        msg = "attribute name must be string";
                         break;
                     default:
-                        msg="xxx";
+                        msg = "xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyType self=(PyType)gself;
+            public PyObject inst_call(PyObject gself, PyObject arg0) {
+                PyType self = (PyType) gself;
                 try {
-                    String name=(arg0.asName(0));
-                    PyObject ret=self.type___findattr__(name);
-                    if (ret==null)
+                    String name = (arg0.asName(0));
+                    PyObject ret = self.type___findattr__(name);
+                    if (ret == null)
                         self.noAttributeError(name);
                     return ret;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="attribute name must be string";
+                        msg = "attribute name must be string";
                         break;
                     default:
-                        msg="xxx";
+                        msg = "xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
         }
-        dict.__setitem__("__getattribute__",new PyMethodDescr("__getattribute__",PyType.class,1,1,new exposed___getattribute__(null,null)));
+        dict.__setitem__("__getattribute__", new PyMethodDescr(
+                "__getattribute__", PyType.class, 1, 1,
+                new exposed___getattribute__(null, null)));
         class exposed___setattr__ extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -97,54 +97,54 @@ public class PyType extends PyObject {
                 return self;
             }
 
-            exposed___setattr__(PyType self,PyBuiltinFunction.Info info) {
+            exposed___setattr__(PyType self, PyBuiltinFunction.Info info) {
                 super(info);
-                this.self=self;
+                this.self = self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___setattr__((PyType)self,info);
+                return new exposed___setattr__((PyType) self, info);
             }
 
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
+            public PyObject __call__(PyObject arg0, PyObject arg1) {
                 try {
-                    String name=(arg0.asName(0));
-                    self.type___setattr__(name,arg1);
+                    self.type___setattr__(arg0.asName(0), arg1);
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="attribute name must be string";
+                        msg = "attribute name must be string";
                         break;
                     default:
-                        msg="xxx";
+                        msg = "xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyType self=(PyType)gself;
+            public PyObject inst_call(PyObject gself, PyObject arg0,
+                    PyObject arg1) {
+                PyType self = (PyType) gself;
                 try {
-                    String name=(arg0.asName(0));
-                    self.type___setattr__(name,arg1);
+                    self.type___setattr__(arg0.asName(0), arg1);
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="attribute name must be string";
+                        msg = "attribute name must be string";
                         break;
                     default:
-                        msg="xxx";
+                        msg = "xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
         }
-        dict.__setitem__("__setattr__",new PyMethodDescr("__setattr__",PyType.class,2,2,new exposed___setattr__(null,null)));
+        dict.__setitem__("__setattr__", new PyMethodDescr("__setattr__",
+                PyType.class, 2, 2, new exposed___setattr__(null, null)));
         class exposed___delattr__ extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -153,54 +153,53 @@ public class PyType extends PyObject {
                 return self;
             }
 
-            exposed___delattr__(PyType self,PyBuiltinFunction.Info info) {
+            exposed___delattr__(PyType self, PyBuiltinFunction.Info info) {
                 super(info);
-                this.self=self;
+                this.self = self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___delattr__((PyType)self,info);
+                return new exposed___delattr__((PyType) self, info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    String name=(arg0.asName(0));
-                    self.type___delattr__(name);
+                    self.type___delattr__(arg0.asName(0));
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="attribute name must be string";
+                        msg = "attribute name must be string";
                         break;
                     default:
-                        msg="xxx";
+                        msg = "xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyType self=(PyType)gself;
+            public PyObject inst_call(PyObject gself, PyObject arg0) {
+                PyType self = (PyType) gself;
                 try {
-                    String name=(arg0.asName(0));
-                    self.type___delattr__(name);
+                    self.type___delattr__(arg0.asName(0));
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="attribute name must be string";
+                        msg = "attribute name must be string";
                         break;
                     default:
-                        msg="xxx";
+                        msg = "xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
         }
-        dict.__setitem__("__delattr__",new PyMethodDescr("__delattr__",PyType.class,1,1,new exposed___delattr__(null,null)));
+        dict.__setitem__("__delattr__", new PyMethodDescr("__delattr__",
+                PyType.class, 1, 1, new exposed___delattr__(null, null)));
         class exposed___subclasses__ extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -209,13 +208,13 @@ public class PyType extends PyObject {
                 return self;
             }
 
-            exposed___subclasses__(PyType self,PyBuiltinFunction.Info info) {
+            exposed___subclasses__(PyType self, PyBuiltinFunction.Info info) {
                 super(info);
-                this.self=self;
+                this.self = self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___subclasses__((PyType)self,info);
+                return new exposed___subclasses__((PyType) self, info);
             }
 
             public PyObject __call__() {
@@ -223,39 +222,83 @@ public class PyType extends PyObject {
             }
 
             public PyObject inst_call(PyObject gself) {
-                PyType self=(PyType)gself;
+                PyType self = (PyType) gself;
                 return self.type_getSubclasses();
             }
 
         }
-        dict.__setitem__("__subclasses__",new PyMethodDescr("__subclasses__",PyType.class,0,0,new exposed___subclasses__(null,null)));
-        
-        dict.__setitem__(
-            "__new__",
-            new PyNewWrapper(PyType.class,"__new__",-1,-1) {
-                public PyObject new_impl(boolean init,PyType subtype,PyObject[] args,String[] keywords) {
-                    if (args.length==1 && keywords.length == 0) {
-                        return args[0].getType();
-                    }
-                    if (args.length + keywords.length != 3)
-                        throw Py.TypeError("type() takes exactly 1 or 3 arguments");
-                    ArgParser ap =
-                        new ArgParser("type()", args, keywords, "name", "bases","dict");
-                    String name = ap.getString(0);
-                    PyObject bases = ap.getPyObject(1);
-                    if (!(bases instanceof PyTuple)) 
-                        throw Py.TypeError("type(): bases must be tuple");
-                    PyObject dict = ap.getPyObject(2);
-                    if (!(dict instanceof PyDictionary||
-                          dict instanceof PyStringMap))
-                        throw Py.TypeError("type(): dict must be dict");
-                    return newType(this,subtype,name,(PyTuple)bases,dict);    
-                    
-                }
-            });
+        dict.__setitem__("__subclasses__", new PyMethodDescr("__subclasses__",
+                PyType.class, 0, 0, new exposed___subclasses__(null, null)));
+        class exposed___call__ extends PyBuiltinFunctionWide {
+
+            private PyType self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___call__(PyType self, PyBuiltinFunction.Info info) {
+                super(info);
+                this.self = self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___call__((PyType) self, info);
+            }
+
+            public PyObject inst_call(PyObject self, PyObject[] args) {
+                return inst_call(self, args, Py.NoKeywords);
+            }
+
+            public PyObject __call__(PyObject[] args) {
+                return __call__(args, Py.NoKeywords);
+            }
+
+            public PyObject __call__(PyObject[] args, String[] keywords) {
+                return self.type___call__(args, keywords);
+            }
+
+            public PyObject inst_call(PyObject gself, PyObject[] args,
+                    String[] keywords) {
+                PyType self = (PyType) gself;
+                return self.type___call__(args, keywords);
+            }
+
+        }
+        dict.__setitem__("__call__", new PyMethodDescr("__call__",
+                PyType.class, -1, -1, new exposed___call__(null, null)));
+        dict.__setitem__("__new__", new PyNewWrapper(PyType.class, "__new__",
+                -1, -1) {
+
+            public PyObject new_impl(boolean init, PyType subtype,
+                    PyObject[] args, String[] keywords) {
+                return type_new(this, init, subtype, args, keywords);
+            }
+
+        });
+    }
+ 
+    public static PyObject type_new(PyObject new_, boolean init,
+            PyType subtype, PyObject[] args, String[] keywords) {
+        if (args.length == 1 && keywords.length == 0) {
+            return args[0].getType();
+        }
+        if (args.length + keywords.length != 3)
+            throw Py.TypeError("type() takes exactly 1 or 3 arguments");
+        ArgParser ap = new ArgParser("type()", args, keywords, "name", "bases",
+                "dict");
+        String name = ap.getString(0);
+        PyObject bases = ap.getPyObject(1);
+        if (!(bases instanceof PyTuple))
+            throw Py.TypeError("type(): bases must be tuple");
+        PyObject dict = ap.getPyObject(2);
+        if (!(dict instanceof PyDictionary || dict instanceof PyStringMap))
+            throw Py.TypeError("type(): dict must be dict");
+        return newType(new_, subtype, name, (PyTuple) bases, dict);
 
     }
-
+    
+    
     public PyObject getStatic() {
         PyType cur = this;
         while (cur.underlying_class == null) {
@@ -667,6 +710,25 @@ public class PyType extends PyObject {
         return null;
     }
 
+    public PyObject super_lookup(PyType ref,String name) {
+        PyObject[] mro = this.mro;
+        int i;
+        for (i=0; i < mro.length; i++) {
+            if (mro[i] == ref)
+                break;
+        }
+        i++;
+        for (; i < mro.length; i++) {
+            PyObject dict = mro[i].fastGetDict();
+            if (dict != null) {
+                PyObject obj = dict.__finditem__(name);
+                if (obj != null)
+                    return obj;
+            }
+        }
+        return null;
+    }    
+    
     private PyType(boolean dummy) {
         super(true);
     }
@@ -1186,7 +1248,14 @@ public class PyType extends PyObject {
             }
         }
     }
-
+    
+    protected void __rawdir__(PyDictionary accum) {
+        PyObject[] mro = this.mro;
+        for (int i = 0; i < mro.length; i++) {
+            mro[i].addKeys(accum, "__dict__");
+        }
+    }
+    
     /**
      * @see org.python.core.PyObject#fastGetDict()
      */
@@ -1276,6 +1345,10 @@ public class PyType extends PyObject {
      * @see org.python.core.PyObject#__call__(org.python.core.PyObject[], java.lang.String[])
      */
     public PyObject __call__(PyObject[] args, String[] keywords) {
+        return type___call__(args,keywords);
+    }
+
+    final PyObject type___call__(PyObject[] args, String[] keywords) {
         PyObject new_ = lookup("__new__");
         if (non_instantiable || new_ == null) {
             throw Py.TypeError("cannot create '" + name + "' instances");
@@ -1284,7 +1357,5 @@ public class PyType extends PyObject {
         
         return invoke_new_(new_,this,true,args,keywords);
     }
-
-    // xxx other __call__ shortcuts
 
 }

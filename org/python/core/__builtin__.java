@@ -114,7 +114,10 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("int",PyType.fromClass(PyInteger.class));
         dict.__setitem__("dict",PyType.fromClass(PyDictionary.class));
         
+        dict.__setitem__("property",PyType.fromClass(PyProperty.class));
         dict.__setitem__("staticmethod",PyType.fromClass(PyStaticMethod.class));
+        dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
+        dict.__setitem__("super",PyType.fromClass(PySuper.class));
         
         /* - */
         

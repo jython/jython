@@ -61,7 +61,9 @@ public class PyFunction extends PyObject
         for (int i = 0; i < __members__.length; i++)
             members[i] = new PyString(__members__[i]);
         PyList ret = new PyList(members);
-        addKeys(ret, "__dict__");
+        PyDictionary accum = new PyDictionary();
+        addKeys(accum, "__dict__");
+        ret.extend(accum.keys());
         ret.sort();
         return ret;
     }

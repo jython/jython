@@ -12,6 +12,7 @@ import org.python.modules.Setup;
  * The "sys" module.
  */
 
+// xxx this should really be a module!
 public class PySystemState extends PyObject
 {
     /**
@@ -176,7 +177,7 @@ public class PySystemState extends PyObject
             return;
         PyObject ret = selftype.lookup(name); // xxx fix fix fix
         if (ret != null) {
-            ret._doset(this, value);
+            ret.jtryset(this, value);
             return;
         }
         if (__dict__ == null) {
@@ -194,6 +195,10 @@ public class PySystemState extends PyObject
         throw Py.AttributeError("del '"+name+"'");
     }
 
+    // xxx
+    public void __rawdir__(PyDictionary accum) {
+        accum.update(__dict__);
+    }
 
     public String safeRepr() throws PyIgnoreMethodTag {
         return "module 'sys'";
