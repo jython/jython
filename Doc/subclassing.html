@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="Author" CONTENT="Jim Hugunin">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (WinNT; I) [Netscape]">
+   <TITLE>Subclassing Java Classes in JPython</TITLE>
+</HEAD>
+<BODY>
+
+<CENTER>
+<H2>
+Subclassing Java Classes in JPython</H2></CENTER>
+
+<H3>
+A Short Example</H3>
+The example below should both demonstrate how this subclassing is performed
+and why it is useful.&nbsp; At first glance, the code looks exactly like
+subclassing any other Python class.&nbsp; The key difference in this example
+is that awt.event.ActionListener is a Java class, not a Python one.&nbsp;
+In the 4th line from the end, "b.addListener(SpamListener())", a Java method
+is being called that requires an instance of the Java class ActionListener.&nbsp;
+By providing a Python subclass of this Java class, everybody is happy.
+<PRE>from java import awt
+
+class SpamListener(awt.event.ActionListener):
+&nbsp;&nbsp;&nbsp; def actionPerformed(self,event):
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if event.getActionCommand() == "Spam": print 'Spam and eggs!'</PRE>
+
+<PRE>f = awt.Frame("Subclassing Example")
+b = awt.Button("Spam")
+b.addActionListener(SpamListener())
+f.add(b, "Center")
+f.pack()
+f.setVisible(1)</PRE>
+Note: This example can be accomplished much more elegantly by using <A HREF="properties.html">JavaBeans
+properties (and event properties)</A>.
+<H3>
+Calling Methods in Your Superclass</H3>
+In Python, if I want to call the foo method in my superclass, I use the
+form:
+<PRE>SuperClass.foo(self)</PRE>
+If SuperClass is a Java class instead of a Python one, I must instead use
+the form:
+<PRE>self.super__foo()</PRE>
+For every method in SuperClass, one of the magic "super__" methods will
+be created that can be used to call it.&nbsp; This difference is required
+by the different method lookup semantics in Python and Java and I think
+the current solution is the best that can be found.
+<H4>
+Example</H4>
+The following example shows how the java.io.InputStream class can be effectively
+subclassed.&nbsp; What makes this class difficult is that the read method
+is overloaded for three different method signatures:
+<OL>
+<LI>
+abstract int read()</LI>
+
+<LI>
+int read(byte[])</LI>
+
+<LI>
+int read(byte[], int, int)</LI>
+</OL>
+The first one of these methods must be overridden in a subclass.&nbsp;
+The other two versions can be ignored.&nbsp; Unfortunately, Python has
+no notion of method overloading based on type signatures (this might be
+related to the fact that Python doesn't have type signatures ;-)&nbsp;
+In order to implement a subclass of java.io.InputStream that overrides
+the "read" method, a Python method must be implemented that handles all
+three possible cases.&nbsp; The example below shows the easiest way to
+acheive this:
+<PRE>from java.io import InputStream
+
+class InfiniteOnes(InputStream):&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; def read(self, *args):
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if len(args) > 0:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return apply(self.super__read, args)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+io = InfiniteOnes()
+
+for i in range(10): print io.read(),
+print</PRE>
+
+<H4>
+Example Continued</H4>
+To continue the example above, this new instance of java.io.InputStream
+can be passed to any Java method that expects an InputStream as shown below:
+<PRE>from java.io import DataInputStream
+
+dp = DataInputStream(io)
+dp.skipBytes(1000)
+print dp.readByte()
+print dp.readShort()
+print dp.readInt()</PRE>
+
+<H3>
+Invoking Your Superclass's Constructor</H3>
+You can explictly invoke your superclass's constructor using the standard
+Python syntax of explictly calling the "__init__" method on the superclass
+and passing in "self" as the first argument.&nbsp; If you wish to call
+your superclass's constructor, you must do so within your own "__init__"
+method.&nbsp; When your "__init__" method finishes, if your Java superclasses
+have not yet been explicitly initialized, their empty constructors will
+be called at this point.
+
+<P>It's important to realize that your superclass is not initialized until
+you either explictly call it's "__init__" method, or your own "__init__"
+method terminates.&nbsp; You must do one of these two things before accessing
+any methods in your superclass.
+<H4>
+Example</H4>
+
+<PRE>from java.util import Random
+
+class rand(Random):
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; def __init__(self, multiplier=1.0, seed=None):
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; self.multiplier = multiplier
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if seed is None:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Random.__init__(self)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; else:&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Random.__init__(self, seed)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; def nextDouble(self):
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return self.super__nextDouble()*self.multiplier
+
+r = rand(100, 23)
+
+for i in range(10):
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; print r.nextDouble(),
+print</PRE>
+This example shows how the superclass's constructor can be effectively
+called in order to explictly choose a non-empty version.
+<H3>
+Caching Proxy Classes (Efficiency)</H3>
+In order to subclass from a Java class, a Java proxy class must be created
+by JPython.&nbsp; This proxy class is a true Java subclass of the class
+you wish to subclass from in Python.&nbsp; If you do nothing special, these
+proxy classes will be created on the fly whenever one is needed.&nbsp;
+I you find that the time required for generating these proxies is a problem,
+you have two options for convincing JPython to use a cache instead of recreating
+them every time.
+
+<P>You can set the "python.proxy.savedir" variable in your registry file.&nbsp;
+You must set this to point to a directory in your Java Classpath.&nbsp;
+I strongly reccommend setting it to &lt;JPYTHON>/JavaCode where JPython
+is the directory into which the distribution was installed.&nbsp; This
+will cause JPython to cache copies of any new proxy classes that it creates.
+
+<P>You can also explicitly create proxy classes with the following command:
+<PRE>java org.python.compiler.ProxyMaker &lt;directory> &lt;classname></PRE>
+This will create the proxy class for a given Java class and install it
+in the given directory (which must be on your Java Classpath - see above).
+
+<P>The danger of these caching mechanisms is that JPython currently has
+no way to invalidate this cache.&nbsp; So if you install an improved version
+of JPython that produces different proxy files, or if you modify one of
+the classes to which you've previously created a proxy, the change won't
+be properly handled.&nbsp; So, only use proxy class caching if you feel
+comfortable with JPython already, and if you start running into problems
+with proxy classes, my first suggestion is to disable proxy class caching
+and to delete your cache directory (&lt;directory>/org/python/proxies).
+<BR>&nbsp;
+</BODY>
+</HTML>

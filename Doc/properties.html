@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="Author" CONTENT="Jim Hugunin">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (WinNT; I) [Netscape]">
+   <TITLE>Properties</TITLE>
+</HEAD>
+<BODY>
+
+<H1>
+Properties</H1>
+JPython uses JavaBean properties to make it easier to interact with most
+Java classes.&nbsp; These properties can be used as normal object attributes,
+and can also be specified to the class constructor as keyword arguments
+(this idea is stolen from TkInter where it seems to work extremely well).
+
+<P>These properties are generated automatically using the JavaBean Introspector
+which identifies properties either from common design patterns, or from
+explicitly specified BeanInfo.
+
+<P>As a first example, consider the case where you wish to create a button
+that is disabled.
+
+<P>The first example shows how you would do this in the typical Java fashion:
+<UL><TT>b = awt.Button()</TT>
+<BR><TT>b.setEnabled(0)</TT></UL>
+The second example shows how enabled can be set as a property:
+<UL><TT>b = awt.Button()</TT>
+<BR><TT>b.enabled = 0</TT></UL>
+The final example sets this property at instantiation time using a keyword
+argument:
+<UL><TT>b = awt.Button(enabled=0)</TT></UL>
+
+<H2>
+Tuples</H2>
+If the value of a property is specified as a tuple, then the property will
+be created by applying the constructor for the type of the property to
+the tuple.&nbsp; This is particularly handy for specifying sizes:
+<UL><TT>frame = awt.Frame(size=(500,100))</TT></UL>
+It can also be handy for specifying color as an RGB triple:
+<UL><TT>frame.background = 255,255,0</TT></UL>
+will set the background color of the frame to yellow.
+<H2>
+Event Properties</H2>
+In standard Java, the event handlers for a widget are specified by passing
+in an instance of a class that implements the appropriate interface.&nbsp;
+This is the only reasonable approach to take in a language that doesn't
+have first-class functions.&nbsp; In JPython, for every event listener
+supported by a class, there will be a property added to the class for each
+method supplied by the event listener class.&nbsp; These properties can
+be set to give a function to be called when the appropriate event occurs.
+
+<P>The standard Java style for setting an event listener is shown below:
+<BR>&nbsp;
+<UL><TT>class action(awt.event.ActionListener):</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp; def actionPerformed(self,event):</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; java.lang.System.exit(0)</TT><TT></TT>
+
+<P><TT>button = awt.Button("Close Me!")</TT>
+<BR><TT>button.addActionListener(action())</TT></UL>
+This can be written in a more Pythonesque (and compact) style by using
+event properties as follows:
+<UL><TT>def exit(event):</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp; java.lang.System.exit(0)</TT><TT></TT>
+
+<P><TT>button = awt.Button("Close Me!", actionPerformed=exit)</TT></UL>
+
+</BODY>
+</HTML>

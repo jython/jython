@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+
+<HEAD>
+	<META NAME="GENERATOR" Content="Visual Page 1.0 for Windows">
+	<META HTTP-EQUIV="Content-Type" CONTENT="text/html;CHARSET=iso-8859-1">
+	<TITLE>Compiling Python Source to Real Java Classes</TITLE>
+</HEAD>
+
+<BODY>
+
+<H2>Compiling Python Source to Real Java Classes - jpythonc</H2>
+<P>The previous section describes how Python classes can be created that subclass from Java classes.&nbsp; This
+works very well when you want to pass a Python class into Java from JPython.&nbsp; This is not adequate for building
+real Java &quot;.class&quot; files that implement a Java class and can be passed directly to Java programs.&nbsp;
+This sort of functionality is required to build applets, servlets, or JavaBeans in JPython that can be used exactly
+like their Java equivalents.&nbsp; It is also very valuable for users who wish to subclass Python classes in Java.</P>
+
+<P>In order to build a real java class from a Python class, you will use the jpythonc tool.&nbsp; A script to access
+jpythonc should have been installed in the JPython installation directory when you installed the package.&nbsp;
+If it was not, it can be invoked as follows: &quot;jpython Tools\jpythonc\jpythonc.py&quot;.</P>
+
+<P>This script accepts the following arguments:</P>
+
+<P><B>jpythonc</B> [<B>-jar</B> jarfile] [<B>-cab</B> cabfile] [<B>-dir</B> directory] <I>[-main]<B> </B></I>[<B>-core</B>
+| -<B>all</B>] [<B>-deep</B>] [<B>-lib</B> libraries] [-<B>skip</B> modules] [module]* <BR>
+&nbsp; 
+<TABLE BORDER="1">
+	<TR>
+		<TD><B>-jar</B> jarfile</TD>
+		<TD>Specifies a .jar file to create and put the results of the freeze into.&nbsp; <BR>
+			Not really useful for &quot;shallow&quot; freezes</TD>
+	</TR>
+	<TR>
+		<TD><B>-cab</B> cabfile</TD>
+		<TD>Specifies a .cab file to create and put the files into.&nbsp; <BR>
+			This only works with Microsoft's JVM (.cab is a MS format)</TD>
+	</TR>
+	<TR>
+		<TD><B>-dir</B> directory</TD>
+		<TD>Specifies that the files should be put into the given directory.&nbsp; <BR>
+			If none of the first three options are specified, -dir '.' is assumed</TD>
+	</TR>
+	<TR>
+		<TD><I>-main</I></TD>
+		<TD><I>Might be added to create a main method in generated class</I>&nbsp; <BR>
+			<I>Will only be added if someone convinces me it's necessary</I></TD>
+	</TR>
+	<TR>
+		<TD><B>-core</B></TD>
+		<TD>Include the core JPython libraries (about 130K)&nbsp; <BR>
+			Needed for applets since Netscape doesn't yet support multiple archives</TD>
+	</TR>
+	<TR>
+		<TD>-<B>all</B></TD>
+		<TD>Include all of the JPython libraries (everything in core + compiler and parser)</TD>
+	</TR>
+	<TR>
+		<TD><B>-deep</B></TD>
+		<TD>Compile both this one class and all dependencies.&nbsp; <BR>
+			This is used for creating applets</TD>
+	</TR>
+	<TR>
+		<TD>-<B>bean </B>jarfile</TD>
+		<TD>Creates a .jar file containing a bean&nbsp; <BR>
+			The correct manifest file will be generated and included</TD>
+	</TR>
+	<TR>
+		<TD><B>-lib</B> libraries</TD>
+		<TD>Specifies a set of libraries (delimited by the platform's path separator character)&nbsp; <BR>
+			Dependencies in these libraries will not be included in the result of the freeze&nbsp; <BR>
+			This option only makes sense when combined with <B>-deep</B></TD>
+	</TR>
+	<TR>
+		<TD>-<B>skip </B>modules</TD>
+		<TD>Specifies a comma-separated list of modules not to freeze, or include in archive</TD>
+	</TR>
+	<TR>
+		<TD><B>-useproxy</B></TD>
+		<TD><B>For Expert Users Only!</B>&nbsp; <BR>
+			The generated proxy class will be a shell around the standard JPython proxy class&nbsp; <BR>
+			You must have a cached copy of the appropriate proxy class to use this flag</TD>
+	</TR>
+	<TR>
+		<TD>module*</TD>
+		<TD>A list of Python modules to freeze&nbsp; <BR>
+			Can be either modules names that are on the python.path or .py files</TD>
+	</TR>
+</TABLE>
+The Python module must contain a Python class with the same name as the module, and that Python class must subclass
+exactly one Java class or interface.&nbsp; The real Java class created will be a subclass of whatever Java class
+is subclassed.
+<H2>Examples</H2>
+<P>On my Windows NT machine, I used the following command to create the file appletdemo.jar (containing all of
+the applet demos on the web site, as well as the core JPython libraries):</P>
+<PRE>c:\jpython\Demo\applet&gt; jpythonc -core -deep -jar appletdemo.jar *.py</PRE>
+<P>To generate a skeleton class to allow a Python class to be used as java.awt.Component in a Java gui program,
+I used the following command:</P>
+<PRE>c:\jpython\Demo\javaclasses&gt; jpythonc Graph.py</PRE>
+<P>To generate a JPython-based bean I do the following:</P>
+<PRE>c:\jpython\Demo\bean&gt; jpythonc -deep -bean f2c.jar conversion.FahrenheitToCelsius</PRE>
+<P>To use this with SUN's BDK, I do the following (the important steps are to make the bean and the JPython libraries
+known to the tool).</P>
+<P>1) modify BDK\beanbox\run.bat (or run.sh) to include the jpython\JavaCode in the CLASSPATH <BR>
+2) copy f2c.jar to BDK\jars</P>
+
+<P>You should now be able to access the FahrenheitToCelsius bean from SUN's BeanBox (or other Bean-aware tool).
+
+</BODY>
+
+</HTML>

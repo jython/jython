@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+
+<HEAD>
+	<META NAME="GENERATOR" Content="Visual Page 1.0 for Windows">
+	<META HTTP-EQUIV="Content-Type" CONTENT="text/html;CHARSET=iso-8859-1">
+	<TITLE>Accessing Java from JPython</TITLE>
+</HEAD>
+
+<BODY>
+
+<H2 ALIGN="CENTER">Accessing Java from JPython</H2>
+<P>One of the goals of JPython is to make it as simple as possible to use existing Java libraries from Python.
+<H3>Example</H3>
+<P>The following example of an interactive session with JPython shows how a user could create an instance of the
+Java random number class (found in java.util.Random) and then interact with that instance.</P>
+<PRE>C:\jpython&gt;jpython
+&gt;&gt;&gt; from java.util import Random
+&gt;&gt;&gt; r = Random()
+&gt;&gt;&gt; r.nextInt()
+-790940041
+&gt;&gt;&gt; for i in range(5):
+...&nbsp;&nbsp;&nbsp;&nbsp; print r.nextDouble()
+...
+0.23347681506123852
+0.8526595592189546
+0.3647833839988137
+0.3384865260567278
+0.5514469740469587
+&gt;&gt;&gt;</PRE>
+<H3>More Details</H3>
+<P>Hopefully, this example should make it clear that there are very few differences between using Java packages
+and using Python packages when working under JPython.&nbsp; There are a few things to keep in mind.
+<H4>Importing</H4>
+<P>You can import from any Java package, just like you would from a Python package.&nbsp; However, you are not
+allowed to do &quot;from package import *&quot; with Java packages.&nbsp; i.e. &quot;from java.lang import *&quot;
+is illegal.</P>
+<P>In order to use a Java package under JPython, you must make JPython aware of the package.&nbsp; This can be
+done in one of two ways.&nbsp; You can modify the JPython registry entry to include the package under the &quot;java.packages&quot;
+key (see the previous section for more details on this).&nbsp; Or you can call the function &quot;sys.add_package(package_name)&quot;
+at runtime to make JPython aware of any arbitrary package.&nbsp; The previous example assumed that JPython was
+aware of the &quot;java.util&quot; package (which it is by default).&nbsp; If it wasn't aware of this package,
+a new line would need to be added to the top of the example which read, &quot;import sys; sys.add_package('java.util')&quot;
+<H4>Creating Class Instances</H4>
+<P>You can create an instance of a Java class exactly the way you would create an instance of a Python class.&nbsp;
+You must &quot;call&quot; the class with a set of arguments that is appropriate for one of the Java class's constructors.&nbsp;
+See the section below for more details on what constitutes appropriate arguments.
+<H4>Calling Java Methods and Functions</H4>
+<P>Java classes have both static and instance methods this makes them behave much like a cross between a Python
+module and class.&nbsp; As a user, you should rarely need to be concerned with this difference.</P>
+<P>Java methods and functions are called just exactly like their Python counterparts.&nbsp; There is some automatic
+type coercion that goes on both for the types being passed in and for the value returned by the method.&nbsp; The
+following table shows how Python objects are coerced to Java objects when passed as arguments in a function call.
+The Java Types show the expected java type for the argument, and the Allowed Python Types shows what Python objects
+can be converted to the given Java type.&nbsp; Notice the special behavior of String's when a java.lang.Object
+is expected.&nbsp; This behavior might change if I am shown that it causes problems. <BR>
+&nbsp; 
+<TABLE BORDER="1" WIDTH="100%">
+	<TR>
+		<TH>Java Types</TH>
+		<TH>Allowed Python Types</TH>
+	</TR>
+	<TR>
+		<TD>char</TD>
+		<TD>String (must have length 1)&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>boolean</TD>
+		<TD>Integer (true = nonzero)&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>byte, short, int, long</TD>
+		<TD>Integer or Float</TD>
+	</TR>
+	<TR>
+		<TD>float, double</TD>
+		<TD>Float</TD>
+	</TR>
+	<TR>
+		<TD>java.lang.String, byte[]</TD>
+		<TD>String&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>java.lang.Class</TD>
+		<TD>Class or JavaClass (only if class subclasses from exactly one Java class)</TD>
+	</TR>
+	<TR>
+		<TD>Foo[]</TD>
+		<TD>Array (must contain objects of class or subclass of Foo)</TD>
+	</TR>
+	<TR>
+		<TD>java.lang.Object</TD>
+		<TD>String-&gt;java.lang.String, all others unchanged&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>org.python.core.PyObject</TD>
+		<TD>All unchanged&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>Foo</TD>
+		<TD>Instance-&gt;Foo (if Instance is subclass of Foo);&nbsp; <BR>
+			JavaInstance -&gt; Foo (if JavaInstance is instance of Foo or subclass)&nbsp;</TD>
+	</TR>
+</TABLE>
+Returned values from a Java method are also possibly coerced back to an object that is more readily usable in Python.&nbsp;
+The following table shows those coercions. <BR>
+&nbsp; <BR>
+&nbsp; 
+<TABLE BORDER="1" WIDTH="100%">
+	<TR>
+		<TH>Java Type</TH>
+		<TH>Returned Python Type</TH>
+	</TR>
+	<TR>
+		<TD>char</TD>
+		<TD>String (of length 1)&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>boolean</TD>
+		<TD>Integer (true = 1, false = 0)&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>byte, short, int, long</TD>
+		<TD>Integer</TD>
+	</TR>
+	<TR>
+		<TD>float, double</TD>
+		<TD>Float</TD>
+	</TR>
+	<TR>
+		<TD>java.lang.String</TD>
+		<TD>String&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>java.lang.Class</TD>
+		<TD>JavaClass which represents given Java Class</TD>
+	</TR>
+	<TR>
+		<TD>Foo[]</TD>
+		<TD>Array (containing objects of class or subclass of Foo)</TD>
+	</TR>
+	<TR>
+		<TD>org.python.core.PyObject (or subclass)</TD>
+		<TD>Unchanged&nbsp;</TD>
+	</TR>
+	<TR>
+		<TD>Foo</TD>
+		<TD>JavaInstance which represents the Java Class Foo</TD>
+	</TR>
+</TABLE>
+&nbsp;
+<H4>Overloaded Java Method Signatures</H4>
+<P>Java methods are allowed to be overloaded for different signatures (types and number of arguments). When different
+versions of the method differ in the number of arguments that they expect, the appropriate method can be easily
+determined from the number of arguments passed to the method.</P>
+<P>When the difference is instead in the types of the arguments, more work is required.&nbsp; The possible signatures
+are sorted in a consistent order that should ensure the appropriate method is chosen first.&nbsp; More information
+on exactly how this sorting is performed will be provided when I have the time.</P>
+<P>If you need to call a Java method with a particular signature and this is not happening in the easy way, you
+can use the following workaround:</P>
+<P>Assume that foo has two methods, &quot;void foo(int x); void foo(byte x);&quot;.&nbsp; To call the second method
+you could write the following:</P>
+<PRE>from java.lang import Byte</PRE>
+<PRE>foo(Byte(10))</PRE>
+<P>I'm not convinced that any better solution to this problem is possible.
+<H4>Naming Conflicts with Python Keywords</H4>
+<P>Because Java has a different set of keywords than Python, there are many Java classes that have method and function
+names that conflict with Python's keyword set.&nbsp; The most frequent offenders seem to be &quot;print&quot;,
+&quot;in&quot;, &quot;exec&quot;, and &quot;from&quot;.  Any Java name that conflicts with a Python reserved word
+is modified by adding a &quot;_&quot; to the end of it.  Thus, you would write:</P>
+
+<P>java.lang.System.out.print_(&quot;hi&quot;)</P>
+
+<P>or</P>
+
+<P>java.lang.Runtime.getRuntime().exec_(&quot;foo&quot;)
+
+</BODY>
+
+</HTML>

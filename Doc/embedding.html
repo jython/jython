@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+
+<HEAD>
+	<META NAME="GENERATOR" Content="Visual Page 1.0 for Windows">
+	<META HTTP-EQUIV="Content-Type" CONTENT="text/html;CHARSET=iso-8859-1">
+	<TITLE>Embedding JPython</TITLE>
+</HEAD>
+
+<BODY>
+
+<H2 ALIGN="CENTER">Embedding JPython</H2>
+<P>There are several options for embedding JPython in a Java application.&nbsp; Sometimes the nicest approach is
+to make a real Java class out of a Python class and then just use that Python class from Java code.&nbsp; The simplest
+approach to embedding JPython is to use the PythonInterpreter object.</P>
+<P>JavaDoc documentation for <A HREF="api/org.python.util.PythonInterpreter.html">org.python.util.PythonInterpreter</A>
+<BR>
+The following example is distributed under Demo/embed/SimpleEmbedded.java
+
+<UL>
+	<TT>import org.python.util.PythonInterpreter;</TT> <BR>
+	<TT>import org.python.core.*;</TT>
+	<P><TT>public class SimpleEmbedded {</TT> <BR>
+	<TT>&nbsp;&nbsp;&nbsp; public static void main(String []args) throws PyException {</TT> <BR>
+	<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PythonInterpreter interp = new PythonInterpreter();</TT></P>
+	<P><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.out.println(&quot;Hello, brave new world&quot;);</TT>
+	<BR>
+	<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; interp.exec(&quot;import sys&quot;);</TT> <BR>
+	<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; interp.exec(&quot;print sys&quot;);</TT></P>
+	<P><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; interp.set(&quot;a&quot;, new PyInteger(42));</TT> <BR>
+	<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; interp.exec(&quot;print a&quot;);</TT> <BR>
+	<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; interp.exec(&quot;x = 2+2&quot;);</TT> <BR>
+	<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PyObject x = interp.get(&quot;x&quot;);</TT></P>
+
+	<P><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.out.println(&quot;x: &quot;+x);</TT> <BR>
+	<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.out.println(&quot;Goodbye, cruel world&quot;);</TT> <BR>
+	<TT>&nbsp;&nbsp;&nbsp; }</TT> <BR>
+	<TT>}</TT>
+</UL>
+
+
+</BODY>
+
+</HTML>
