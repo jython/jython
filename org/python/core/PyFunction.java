@@ -98,10 +98,9 @@ public class PyFunction extends PyObject
         } else if (name == "__dict__" || name == "func_dict") {
             if (value instanceof PyDictionary || value instanceof PyStringMap)
                 __dict__ = value;
-            else if (value == Py.None)
-                __dict__ = null;
             else
-                throw Py.TypeError("func_dict must be set to a dict object");
+                throw Py.TypeError("setting function's dictionary " + 
+                                   "to a non-dict");
         } else {
             if (__dict__ == null)
                 __dict__ = new PyStringMap();
@@ -111,8 +110,7 @@ public class PyFunction extends PyObject
 
     public void __delattr__(String name) {
         if (name == "__dict__" || name == "func_dict") {
-            __dict__ = null;
-            return;
+            throw Py.TypeError("function's dictionary may not be deleted");
         } else if (name == "func_defaults") {
             func_defaults = Py.EmptyObjects;
             return;
@@ -144,9 +142,9 @@ public class PyFunction extends PyObject
                 return Py.None;
             return new PyTuple(func_defaults);
         }
-        if (name == "__dict__") {
+        if (name == "__dict__" || name == "func_dict") {
             if (__dict__ == null)
-                return Py.None;
+                __dict__ = new PyStringMap();
             return __dict__;
         }
         if (__dict__ != null) {
