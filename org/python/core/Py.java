@@ -44,6 +44,11 @@ public final class Py {
 	in __tojava__ methods **/
 	public static Object NoConversion;	
 	
+	public static PyObject OSError;
+	public static PyObject NotImplementedError;
+	public static PyObject EnvironmentError;
+	
+	
 	/* The standard Python exceptions */
 	public static PyObject OverflowError;
 	public static PyException OverflowError(String message) {
@@ -324,40 +329,139 @@ public final class Py {
 			filename, name, firstlineno, args, keywords, funcs, func_id);
 	}
 
-    static void initExceptions() {
-			KeyboardInterrupt = new PyString("KeyboardInterrupt");
-			ImportError = new PyString("ImportError");
-			SystemError = new PyString("SystemError");
-			AttributeError = new PyString("AttributeError");
-			RuntimeError = new PyString("RuntimeError");
-			EOFError = new PyString("EOFError");
-			AssertionError = new PyString("AssertionError");
-			FloatingPointError = new PyString("FloatingPointError");
-			IndexError = new PyString("IndexError");
-			NameError = new PyString("NameError");
-			KeyError = new PyString("KeyError");
-			TypeError = new PyString("TypeError");
-			IOError = new PyString("IOError");
-			SyntaxError = new PyString("SyntaxError");
-			ValueError = new PyString("ValueError");
-			SystemExit = new PyString("SystemExit");
-			ZeroDivisionError = new PyString("ZeroDivisionError");
-			MemoryError = new PyString("MemoryError");
-			OverflowError = new PyString("OverflowError");
+    public static void setBuiltinExceptions() {
+        PyObject dict = PyJavaClass.lookup(org.python.core.__builtin__.class).__dict__;
+        dict.__setitem__("Exception", Py.Exception);
+        dict.__setitem__("TypeError", Py.TypeError);
+        dict.__setitem__("LookupError", Py.LookupError);
+        dict.__setitem__("IOError", Py.IOError);
+        dict.__setitem__("ArithmeticError", Py.ArithmeticError);
+        dict.__setitem__("NotImplementedError", Py.NotImplementedError);
+        dict.__setitem__("OSError", Py.OSError);
+        dict.__setitem__("SystemError", Py.SystemError);
+        dict.__setitem__("RuntimeError", Py.RuntimeError);
+        dict.__setitem__("AssertionError", Py.AssertionError);
+        dict.__setitem__("FloatingPointError", Py.FloatingPointError);
+        dict.__setitem__("ValueError", Py.ValueError);
+        dict.__setitem__("NameError", Py.NameError);
+        dict.__setitem__("EOFError", Py.EOFError);
+        dict.__setitem__("KeyError", Py.KeyError);
+        dict.__setitem__("MemoryError", Py.MemoryError);
+        dict.__setitem__("SystemExit", Py.SystemExit);
+        dict.__setitem__("KeyboardInterrupt", Py.KeyboardInterrupt);
+        dict.__setitem__("OverflowError", Py.OverflowError);
+        dict.__setitem__("ZeroDivisionError", Py.ZeroDivisionError);
+        dict.__setitem__("StandardError", Py.StandardError);
+        dict.__setitem__("IndexError", Py.IndexError);
+        dict.__setitem__("ImportError", Py.ImportError);
+        dict.__setitem__("EnvironmentError", Py.EnvironmentError);
+        dict.__setitem__("AttributeError", Py.AttributeError);
+        dict.__setitem__("SyntaxError", Py.SyntaxError);
+    }
 
-			LookupError = new PyTuple(new PyObject[]
-		        {Py.KeyError, Py.IndexError});
-		        
-			ArithmeticError = new PyTuple(new PyObject[]
-		        {Py.OverflowError, Py.ZeroDivisionError, Py.FloatingPointError});
-		        
-			StandardError = new PyTuple(new PyObject[]
-		        {Py.SystemError, Py.ImportError, Py.NameError, Py.IOError, Py.KeyboardInterrupt, Py.TypeError, Py.LookupError, Py.AttributeError, Py.SyntaxError, Py.ValueError, Py.ArithmeticError, Py.RuntimeError, Py.EOFError, Py.MemoryError, Py.AssertionError});
 
-			Exception = new PyTuple(new PyObject[]
-		        {Py.SystemExit, Py.StandardError});
+    static void initStringExceptions() {
+        TypeError = new PyString("TypeError");
+        IOError = new PyString("IOError");
+        NotImplementedError = new PyString("NotImplementedError");
+        OSError = new PyString("OSError");
+        SystemError = new PyString("SystemError");
+        AssertionError = new PyString("AssertionError");
+        FloatingPointError = new PyString("FloatingPointError");
+        ValueError = new PyString("ValueError");
+        NameError = new PyString("NameError");
+        EOFError = new PyString("EOFError");
+        KeyError = new PyString("KeyError");
+        MemoryError = new PyString("MemoryError");
+        SystemExit = new PyString("SystemExit");
+        KeyboardInterrupt = new PyString("KeyboardInterrupt");
+        OverflowError = new PyString("OverflowError");
+        ZeroDivisionError = new PyString("ZeroDivisionError");
+        IndexError = new PyString("IndexError");
+        ImportError = new PyString("ImportError");
+        AttributeError = new PyString("AttributeError");
+        SyntaxError = new PyString("SyntaxError");
 
-            JavaError = new PyString("JavaError");
+        LookupError = new PyTuple(new PyObject[]
+            {Py.IndexError, Py.KeyError});
+
+        ArithmeticError = new PyTuple(new PyObject[]
+            {Py.ZeroDivisionError, Py.OverflowError, Py.FloatingPointError});
+
+        RuntimeError = new PyTuple(new PyObject[]
+            {Py.NotImplementedError});
+
+
+        EnvironmentError = new PyTuple(new PyObject[]
+            {Py.OSError, Py.IOError});
+
+        StandardError = new PyTuple(new PyObject[]
+            {Py.ValueError, Py.TypeError, Py.NameError, Py.AssertionError, Py.LookupError, Py.SyntaxError, Py.SystemError, Py.KeyboardInterrupt, Py.AttributeError, Py.MemoryError, Py.EnvironmentError, Py.RuntimeError, Py.ImportError, Py.ArithmeticError, Py.EOFError});
+        
+        Exception = new PyTuple(new PyObject[]
+            {Py.StandardError, Py.SystemExit});
+
+        JavaError = new PyString("JavaError");
+        setBuiltinExceptions();
+    }
+
+    static void initClassExceptions() {
+        PyObject exceptions = imp.load("exceptions");
+        PyObject tmp;
+        
+        tmp = exceptions.__findattr__("Exception");
+        if (tmp != null) Exception = tmp;
+        tmp = exceptions.__findattr__("TypeError");
+        if (tmp != null) TypeError = tmp;
+        tmp = exceptions.__findattr__("LookupError");
+        if (tmp != null) LookupError = tmp;
+        tmp = exceptions.__findattr__("IOError");
+        if (tmp != null) IOError = tmp;
+        tmp = exceptions.__findattr__("ArithmeticError");
+        if (tmp != null) ArithmeticError = tmp;
+        tmp = exceptions.__findattr__("NotImplementedError");
+        if (tmp != null) NotImplementedError = tmp;
+        tmp = exceptions.__findattr__("OSError");
+        if (tmp != null) OSError = tmp;
+        tmp = exceptions.__findattr__("SystemError");
+        if (tmp != null) SystemError = tmp;
+        tmp = exceptions.__findattr__("RuntimeError");
+        if (tmp != null) RuntimeError = tmp;
+        tmp = exceptions.__findattr__("AssertionError");
+        if (tmp != null) AssertionError = tmp;
+        tmp = exceptions.__findattr__("FloatingPointError");
+        if (tmp != null) FloatingPointError = tmp;
+        tmp = exceptions.__findattr__("ValueError");
+        if (tmp != null) ValueError = tmp;
+        tmp = exceptions.__findattr__("NameError");
+        if (tmp != null) NameError = tmp;
+        tmp = exceptions.__findattr__("EOFError");
+        if (tmp != null) EOFError = tmp;
+        tmp = exceptions.__findattr__("KeyError");
+        if (tmp != null) KeyError = tmp;
+        tmp = exceptions.__findattr__("MemoryError");
+        if (tmp != null) MemoryError = tmp;
+        tmp = exceptions.__findattr__("SystemExit");
+        if (tmp != null) SystemExit = tmp;
+        tmp = exceptions.__findattr__("KeyboardInterrupt");
+        if (tmp != null) KeyboardInterrupt = tmp;
+        tmp = exceptions.__findattr__("OverflowError");
+        if (tmp != null) OverflowError = tmp;
+        tmp = exceptions.__findattr__("ZeroDivisionError");
+        if (tmp != null) ZeroDivisionError = tmp;
+        tmp = exceptions.__findattr__("StandardError");
+        if (tmp != null) StandardError = tmp;
+        tmp = exceptions.__findattr__("IndexError");
+        if (tmp != null) IndexError = tmp;
+        tmp = exceptions.__findattr__("ImportError");
+        if (tmp != null) ImportError = tmp;
+        tmp = exceptions.__findattr__("EnvironmentError");
+        if (tmp != null) EnvironmentError = tmp;
+        tmp = exceptions.__findattr__("AttributeError");
+        if (tmp != null) AttributeError = tmp;
+        tmp = exceptions.__findattr__("SyntaxError");
+        if (tmp != null) SyntaxError = tmp;        
+        setBuiltinExceptions();
     }
 
     public static PySystemState defaultSystemState;
@@ -388,12 +492,14 @@ public final class Py {
         	Newline = new PyString("\n");
         	Space = new PyString(" ");
 
-            initExceptions();
+            initStringExceptions();
 
             //System.out.println("initializing Py 3");
             defaultSystemState = new PySystemState(System.getProperties(), new String[0]);
     	    //interp = InterpreterState.getInterpreterState();
     	    Py.setSystemState(defaultSystemState);
+
+            initClassExceptions();
 
             // Make sure that Exception classes have been loaded
     		PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");

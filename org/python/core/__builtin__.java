@@ -62,30 +62,6 @@ public class __builtin__ implements InitModule {
     public void initModule(PyObject dict) {
         dict.__setitem__("None", Py.None);
         dict.__setitem__("Ellipsis", Py.Ellipsis);
-        
-	dict.__setitem__("StandardError", Py.StandardError);
-	dict.__setitem__("KeyboardInterrupt", Py.KeyboardInterrupt);
-	dict.__setitem__("ImportError", Py.ImportError);
-	dict.__setitem__("SystemError", Py.SystemError);
-	dict.__setitem__("AttributeError", Py.AttributeError);
-	dict.__setitem__("ArithmeticError", Py.ArithmeticError);
-	dict.__setitem__("RuntimeError", Py.RuntimeError);
-	dict.__setitem__("EOFError", Py.EOFError);
-	dict.__setitem__("AssertionError", Py.AssertionError);
-	dict.__setitem__("FloatingPointError", Py.FloatingPointError);
-	dict.__setitem__("IndexError", Py.IndexError);
-	dict.__setitem__("NameError", Py.NameError);
-	dict.__setitem__("KeyError", Py.KeyError);
-	dict.__setitem__("TypeError", Py.TypeError);
-	dict.__setitem__("LookupError", Py.LookupError);
-	dict.__setitem__("Exception", Py.Exception);
-	dict.__setitem__("IOError", Py.IOError);
-	dict.__setitem__("SyntaxError", Py.SyntaxError);
-	dict.__setitem__("ValueError", Py.ValueError);
-	dict.__setitem__("SystemExit", Py.SystemExit);
-	dict.__setitem__("ZeroDivisionError", Py.ZeroDivisionError);
-	dict.__setitem__("MemoryError", Py.MemoryError);
-	dict.__setitem__("OverflowError", Py.OverflowError);
 		
 	// Work in debug mode by default
 	// Hopefully add -O option in the future to change this
