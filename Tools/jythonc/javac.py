@@ -1,14 +1,16 @@
 # Copyright © Corporation for National Research Initiatives
-import java, jarray, os, time, sys
+import java, jarray, os, time, sys, thread
 from java.lang import System
 
 runtime = java.lang.Runtime.getRuntime()
 
-def dumpStream(stream):
-    count = stream.available()
-    array = jarray.zeros( count, 'b' )
-    count = stream.read( array )
-    return array.tostring()
+def dumpStream(stream, txtarr):
+    array = jarray.zeros( 1024, 'b' )
+    while 1:
+        len = stream.read(array)
+        if len < 0:
+            break
+        txtarr.append(array[:len].tostring())
 
 def findDefaultJavac():
     jhome = System.getProperty("java.home")
@@ -66,6 +68,10 @@ Consider using the -C/--compiler command line switch, or setting
 the property python.jpythonc.compiler in the registry.''' % e
         return 1, '', msg
     done = None
+    procout = []
+    procerr = []
+    thread.start_new_thread(dumpStream, (proc.inputStream, procout))
+    thread.start_new_thread(dumpStream, (proc.errorStream, procerr))
     while not done:
         proc.waitFor()
 	try:
@@ -73,8 +79,8 @@ the property python.jpythonc.compiler in the registry.''' % e
 	    done = 1
 	except java.lang.IllegalThreadStateException:
 	    pass
-    return (proc.exitValue(), dumpStream(proc.inputStream),
-	    dumpStream(proc.errorStream))
+    return (proc.exitValue(), "".join(procout), "".join(procerr))
+
 
 
 if __name__ == '__main__':
