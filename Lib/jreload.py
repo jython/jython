@@ -84,7 +84,7 @@ def unloadf(ls):
     return _Unload(ls)
 
 def makeLoadSet(name,path):
-    if sys.modules.has_key('name'): return sys.modules[name]
+    if sys.modules.has_key(name): return sys.modules[name]
     sys.modules[name] = ls = LoadSet(name,path)
     return ls
 
