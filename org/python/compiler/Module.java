@@ -154,6 +154,7 @@ class PyCodeConstant extends Constant {
 	public int argcount;
 	public String[] names;
 	public int id;
+	public int co_firstlineno;
 	public boolean arglist, keywordlist;
 	String fname;
 
@@ -173,6 +174,7 @@ class PyCodeConstant extends Constant {
 
 		c.ldc(((PyStringConstant)module.filename).value);
 		c.ldc(co_name);
+		c.iconst(co_firstlineno);
 
 		c.iconst(arglist ? 1 : 0);
 		c.iconst(keywordlist ? 1 : 0);
@@ -184,7 +186,7 @@ class PyCodeConstant extends Constant {
 		c.iconst(id);
 
 		int mref_newCode = c.pool.Methodref("org/python/core/Py", "newCode",
-			"(I[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZLorg/python/core/PyFunctionTable;I)Lorg/python/core/PyCode;");
+			"(I[Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZZLorg/python/core/PyFunctionTable;I)Lorg/python/core/PyCode;");
 
 		c.invokestatic(mref_newCode);
 		//c.aconst_null();
@@ -252,15 +254,28 @@ public class Module {
 								ArgListCompiler ac,
 								boolean fast_locals, boolean class_body)
 								throws Exception {
-		return PyCode(tree, name, ac, fast_locals, class_body, false);
+		return PyCode(tree, name, ac, fast_locals, class_body, false, 0);
 		                        }
-
-
+    public PyCodeConstant PyCode(SimpleNode tree, String name,
+								ArgListCompiler ac,
+								boolean fast_locals, boolean class_body,
+								int firstlineno)
+								throws Exception {
+		return PyCode(tree, name, ac, fast_locals, class_body, false, firstlineno);
+		                        }
+    public PyCodeConstant PyCode(SimpleNode tree, String name,
+								ArgListCompiler ac,
+								boolean fast_locals, boolean class_body,
+								boolean printResults)
+								throws Exception {
+		return PyCode(tree, name, ac, fast_locals, class_body, printResults, 0);
+		                        }
+		                        
 	Vector codes;
 	public PyCodeConstant PyCode(SimpleNode tree, String name,
 								ArgListCompiler ac,
 								boolean fast_locals, boolean class_body,
-								boolean printResults)
+								boolean printResults, int firstlineno)
 								throws Exception {
 		PyCodeConstant code = new PyCodeConstant();
 		int i;
@@ -269,6 +284,7 @@ public class Module {
 		code.argcount = ac.names.size();
 
 		code.co_name = name;
+		code.co_firstlineno = firstlineno;
 		code.id = codes.size();
 
 		//Better names in the future?

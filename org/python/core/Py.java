@@ -291,9 +291,17 @@ public final class Py {
 			boolean args, boolean keywords,
 			PyFunctionTable funcs, int func_id) {
 		return new PyTableCode(argcount, varnames,
-			filename, name, args, keywords, funcs, func_id);
+			filename, name, 0, args, keywords, funcs, func_id);
 	}
 
+    public static PyCode newCode(int argcount, String varnames[],
+			String filename, String name,
+			int firstlineno,
+			boolean args, boolean keywords,
+			PyFunctionTable funcs, int func_id) {
+		return new PyTableCode(argcount, varnames,
+			filename, name, firstlineno, args, keywords, funcs, func_id);
+	}
 
 
 	// This is a hack to get initializations to work in proper order

@@ -251,7 +251,7 @@ public class CodeCompiler extends Visitor {
 
 		makeArray(ac.getDefaults());
 
-		module.PyCode(suite, name, ac, true, false).get(code);
+		module.PyCode(suite, name, ac, true, false, node.beginLine).get(code);
 
         getDocString(suite);
 
@@ -1436,7 +1436,7 @@ public class CodeCompiler extends Visitor {
 
 		makeArray(ac.getDefaults());
 
-		module.PyCode(retSuite, name, ac, true, false).get(code);
+		module.PyCode(retSuite, name, ac, true, false, node.beginLine).get(code);
 
 		if (mrefs.PyFunction_init1 == 0) {
 			mrefs.PyFunction_init1 = code.pool.Methodref("org/python/core/PyFunction", "<init>",
@@ -1501,7 +1501,7 @@ public class CodeCompiler extends Visitor {
 		makeArray(bases);
 
 		//Make code object out of suite
-		module.PyCode(node.getChild(n-1), name, new ArgListCompiler(), false, true).get(code);
+		module.PyCode(node.getChild(n-1), name, new ArgListCompiler(), false, true, node.beginLine).get(code);
 
         //Get doc string (if there)
         getDocString(node.getChild(n-1));
