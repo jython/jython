@@ -1,5 +1,19 @@
 Jython NEWS
 
+29-jul-2001 Jython 2.1 alpha 3
+
+  New features.
+   - A settable console encoding will allow windows users to enter
+     national characters at the command prompt.
+   - Non-public classes are available when respectJavaAccessibility is false
+   - The names of zip- and jarfiles can be added to sys.path.
+
+  Bug fixes.
+   - The standard python library files are from CPython-2.1.1
+   - A complete list of fixed bugs can be found on SF:
+        http://sourceforge.net/tracker/?group_id=12867&atid=112867
+     Select Status=Any and Group=Fixed in 2.1a3
+
 18-jul-2001 Jython 2.1 alpha 2
 
   New features.
