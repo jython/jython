@@ -1,10 +1,13 @@
+// Copyright © Corporation for National Research Initiatives
+
 package org.python.compiler;
 
 import java.io.*;
 import java.util.*;
 import org.python.parser.*;
 
-class PyIntegerConstant extends Constant {
+class PyIntegerConstant extends Constant 
+{
     int value;
 
     public PyIntegerConstant(int value) {
@@ -40,7 +43,8 @@ class PyIntegerConstant extends Constant {
     }
 }
 
-class PyFloatConstant extends Constant {
+class PyFloatConstant extends Constant
+{
     double value;
 
     public PyFloatConstant(double value) {
@@ -73,7 +77,8 @@ class PyFloatConstant extends Constant {
     }
 }
 
-class PyComplexConstant extends Constant {
+class PyComplexConstant extends Constant
+{
     double value;
 
     public PyComplexConstant(double value) {
@@ -109,7 +114,8 @@ class PyComplexConstant extends Constant {
     }
 }
 
-class PyStringConstant extends Constant {
+class PyStringConstant extends Constant
+{
     String value;
 
     public PyStringConstant(String value) {
@@ -143,7 +149,8 @@ class PyStringConstant extends Constant {
     }
 }
 
-class PyLongConstant extends Constant {
+class PyLongConstant extends Constant
+{
     String value;
 
     public PyLongConstant(String value) {
@@ -176,7 +183,8 @@ class PyLongConstant extends Constant {
     }
 }
 
-class PyCodeConstant extends Constant {
+class PyCodeConstant extends Constant
+{
     public String co_name;
     public int argcount;
     public String[] names;
@@ -225,7 +233,8 @@ class PyCodeConstant extends Constant {
     }
 }
 
-public class Module {
+public class Module
+{
     ClassFile classfile;
     Constant filename;
     String sfilename;

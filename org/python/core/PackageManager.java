@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 import java.util.*;
@@ -245,7 +246,8 @@ public class PackageManager {
         } catch (IOException ioe) {
             // silently skip any bad directories
             Py.writeWarning("packageManager",
-			    "skipping bad directory, '" + directory.toString() + "'");
+			    "skipping bad directory, '" +
+			    directory.toString() + "'");
         }
     }
 
@@ -268,7 +270,8 @@ public class PackageManager {
 
             Hashtable zipPackages = null;
             if (jarEntry.mtime == mtime) {
-                zipPackages = readCacheFile(jarEntry.cachefile, mtime, canonicalJarfile);
+                zipPackages = readCacheFile(jarEntry.cachefile, mtime,
+					    canonicalJarfile);
             }
 
             if (zipPackages == null) {
