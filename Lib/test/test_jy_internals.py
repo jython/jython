@@ -85,7 +85,26 @@ class LongAsScaledDoubleValueTests(unittest.TestCase):
           for y in [0,255]:
             assert float((v+d)*256+y) == (((v+d)*256+y)*256).scaledDoubleValue(e)
             assert e[0] == 1        
-        
+
+class ExtraMathTests(unittest.TestCase):
+    def test_epsilon(self):
+        from org.python.core import ExtraMath
+        self.assertNotEqual(1.0 + ExtraMath.EPSILON, 1.0)
+        self.assertEqual(1.0 + (ExtraMath.EPSILON/2.0), 1.0)
+    def test_close(self):
+        from org.python.core import ExtraMath
+        self.assert_(ExtraMath.close(3.0, 3.0))
+        self.assert_(ExtraMath.close(3.0, 3.0 + ExtraMath.CLOSE))
+        self.assert_(not ExtraMath.close(3.0, 3.0 + 4.0*ExtraMath.CLOSE))
+    def test_closeFloor(self):
+        from org.python.core import ExtraMath
+        import math
+        self.assertEquals(ExtraMath.closeFloor(3.5), 3.0)
+        self.assertEquals(ExtraMath.closeFloor(3.0 - ExtraMath.EPSILON), 3.0)
+        self.assertEquals(
+          ExtraMath.closeFloor(3.0 - 3.0 * ExtraMath.CLOSE), 2.0)
+        self.assertEquals(ExtraMath.closeFloor(math.log10(10**3)), 3.0)
+
 def test_main():
     test_suite = unittest.TestSuite()
     test_loader = unittest.TestLoader()
@@ -93,6 +112,7 @@ def test_main():
         test_suite.addTest(test_loader.loadTestsFromTestCase(case))
     suite_add(WeakIdentityMapTests)
     suite_add(LongAsScaledDoubleValueTests)
+    suite_add(ExtraMathTests)
     run_suite(test_suite)
 
 if __name__ == "__main__":
