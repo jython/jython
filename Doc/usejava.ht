@@ -1,17 +1,20 @@
-Title: Accessing Java from JPython
+Title: Accessing Java from Jython
 
-<h3>Accessing Java from JPython</h3>
+<h3>Accessing Java from Jython</h3>
 
-<P>One of the goals of JPython is to make it as simple as possible to
+<P>One of the goals of Jython is to make it as simple as possible to
 use existing Java libraries from Python.
 
 <H3>Example</H3>
 
-<P>The following example of an interactive session with JPython shows
+<P>The following example of an interactive session with Jython shows
 how a user could create an instance of the Java random number class
 (found in java.util.Random) and then interact with that instance.</P>
 
-<PRE>C:\jpython&gt;jpython
+<blockquote><PRE>
+C:\jython&gt;jython
+Jython 2.0 on java1.2.1
+Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from java.util import Random
 &gt;&gt;&gt; r = Random()
 &gt;&gt;&gt; r.nextInt()
@@ -24,32 +27,28 @@ how a user could create an instance of the Java random number class
 0.3647833839988137
 0.3384865260567278
 0.5514469740469587
-&gt;&gt;&gt;</PRE>
+&gt;&gt;&gt;
+</PRE></blockquote>
 
 <H3>More Details</H3>
 
 <P>Hopefully, this example should make it clear that there are very
 few differences between using Java packages and using Python packages
-when working under JPython.  There are a few things to keep in mind.
+when working under Jython.  There are a few things to keep in mind.
 
 <H4>Importing</H4>
 
-With JPython 1.1, importing Java packages has gotten much easier.  For
-example, &quot;from package import *&quot; with Java packages now
-works.  Also you no longer need to use "sys.add_package()" to make
-JPython aware of new packages at runtime:
-
 <p>
-<pre>
-JPython 1.1beta1 on java1.2.1
-Copyright (C) 1997-1999 Corporation for
+<blockquote><pre>
+Jython 2.0 on java1.2.1
+Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from java.util import *
 &gt;&gt;&gt; Random
 &lt;jclass java.util.Random at 31702169&gt;
 &gt;&gt;&gt; Hashtable
 &lt;jclass java.util.Hashtable at 7538094&gt;
 &gt;&gt;&gt; 
-</pre>
+</pre></blockquote>
 
 <H4>Creating Class Instances</H4>
 
@@ -92,7 +91,7 @@ it is shown to cause problems.
     </TR>
     <TR>
 	<TD>byte, short, int, long</TD>
-	<TD>Integer or Float</TD>
+	<TD>Integer</TD>
     </TR>
     <TR>
 	<TD>float, double</TD>
@@ -196,8 +195,10 @@ workaround:</P>
 foo(byte x);&quot;.  To call the second method you could write the
 following:</P>
 
-<PRE>from java.lang import Byte</PRE>
-<PRE>foo(Byte(10))</PRE>
+<blockquote><PRE>
+from java.lang import Byte
+foo(Byte(10))
+</PRE></blockquote>
 
 <P>I'm not convinced that any better solution to this problem is possible.
 
@@ -209,14 +210,18 @@ with Python's keyword set.  Where the intent can be unambiguously
 determined, no identifier mangling is necessary, such as when keywords 
 are used as attributes on objects.  Thus you can naturally write:
 
-<p><tt>java.lang.System.out.print("hi")</tt>
+<blockquote><PRE>
+java.lang.System.out.print("hi")
+</PRE></blockquote>
 
-<p>or
+or
 
-<p><tt>java.lang.Runtime.getRuntime().exec(cmd)</tt>
+<blockquote><PRE>
+java.lang.Runtime.getRuntime().exec(cmd)</tt>
+</PRE></blockquote>
 
 <p>In the rare case where the conflict can't be resolved due to Python's
 grammar, you should modify the reserved word by appended an underscore 
 to the end of it, e.g. <tt>print_</tt>
 
-<p>With JPython 1.1, this should rarely be needed.
+<p>

@@ -1,11 +1,11 @@
-Title: Embedding JPython
+Title: Embedding Jython
 
-<h3>Embedding JPython</h3>
+<h3>Embedding Jython</h3>
 
-<P>There are several options for embedding JPython in a Java
+<P>There are several options for embedding Jython in a Java
 application.  Sometimes the nicest approach is to make a real Java
 class out of a Python class and then just use that Python class from
-Java code.  The simplest approach to embedding JPython is to use the
+Java code.  The simplest approach to embedding Jython is to use the
 PythonInterpreter object.</P>
 
 <P>JavaDoc documentation for 

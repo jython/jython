@@ -1,6 +1,6 @@
-Title: JPython FAQ
+Title: Jython FAQ
 
-<h3>The JPython FAQ</h3>
+<h3>The Jython FAQ</h3>
 
 <ol>
 <li><b>What is JPython?</b>
@@ -13,20 +13,32 @@ Title: JPython FAQ
     support to make it trivial to use Java packages from within
     JPython.
 
-<p><li><b>Is JPython the same language as Python?</b>
-    <P>We will always strive to ensure that JPython remains as
+<p><li><b>What is Jython?</b>
+
+    <p>Jython is the successor to JPython. The Jython project was
+    created in accordance with the CNRI JPython 1.1.x license, in
+    order to ensure the continued existence and development of this
+    important piece of Python software.  The intent is to manage this
+    project with the same open policies that are serving CPython so well.
+
+    <p>Mailing lists, CVS and all current information on the Jython
+    project is available at SourceForge, at 
+    <a href="http://sourceforge.net/projects/jython">The Jython project</a>.
+
+<p><li><b>Is Jython the same language as Python?</b>
+    <P>We will always strive to ensure that Jython remains as
     compatible with CPython as possible.  Nevertheless, there are a
     number of
     <a href="differences.html">differences</a>
     between the two implementations that are
-    unlikely to go away.  These range from the trivial - JPython's
+    unlikely to go away.  These range from the trivial - Jython's
     code objects don't have a co_code attribute because they don't
-    have any Python bytecodes; to the significant - JPython uses
+    have any Python bytecodes; to the significant - Jython uses
     Java's true garbage collection rather than Python's reference
     counting scheme.
 
     <P>Python has never really had much of a language definition
-    beyond it's C-based implementation.  The existence of JPython
+    beyond it's C-based implementation.  The existence of Jython
     changed that for the first time and will hopefully lead to a much
     clearer sense of what Python the language is; independent of any
     specific implementation.
@@ -37,20 +49,12 @@ Title: JPython FAQ
     are essential and which are incidental.
 
 <p><li><b>What is the current status of JPython?</b>
-    <p>JPython 1.1rc1 was released on 21-Jan-2000, with the final
-    release expected before the
-    <a href="http://www.python.org/workshops/2000-01/">8th
-    International Python Conference</a>. Check the
-    <a href="http://www.jpython.org">www.jpython.org</a> site for the
-    most current release.
-    Jim Hugunin, JPython's author, has moved out to sunny
-    California to work on Xerox PARC's
-    <a href="http://www.parc.xerox.com/spl/projects/aop/">AspectJ</a>
-    language.  JPython continues to be maintained by Barry Warsaw at
-    CNRI, with help and input from Python's author Guido van Rossum,
-    other CNRI folks, and the many contributors on the
-    <a href="http://www.python.org/mailman/listinfo/jpython-interest">
-    JPython-Interest</a> mailing list.
+    <p>JPython 1.1 was released on 28-Jan-2000. Since then, there have 
+    been no further developments on JPython.
+
+<p><li><b>What is the current status of Jython?</b>
+    <p>The Jython project was announced on 19-oct-2000. A release of 
+    jython-2.0 is planned before the end of the year.
 
 <p><li><b>JPython and Y2K</b>
 
@@ -58,23 +62,23 @@ Title: JPython FAQ
     points you to the
     <a href="http://www.python.org/cgi-bin/faqw.py?querytype=anykeywords&casefold=yes&req=search&query=y2k">
     Python FAQ entry on the subject</a>, with the additional caveat
-    that JPython is of course dependent on any Y2K issues associated
+    that Jython is of course dependent on any Y2K issues associated
     with the underlying JVM and Java class libraries you're using.
     However, you can essentially apply the Python Y2K stance to
-    JPython by, e.g. substituting the word "Java" for "C" in FAQ
+    Jython by, e.g. substituting the word "Java" for "C" in FAQ
     question 4.65 (<em>ignore the clip from the Python copyright
     notice</em>).
 
 <p><li><b><A NAME="Supported Modules"></A>What parts of the Python
     library are supported?</b>
 
-    <P>The good news is that JPython now supports the large majority
+    <P>The good news is that Jython now supports the large majority
     of the standard Python library.  The bad news is that this has
     moved so rapidly, it's hard to keep the documentation up to
     date.
 
     <p>Built-in modules (e.g. those that are written in C for CPython) 
-    are a differnet story.  These would have to be ported to Java, or
+    are a different story.  These would have to be ported to Java, or
     implemented with a JNI bridge in order to be used by JPython.
     Some built-in modules have been ported to JPython, most notably
     cStringIO, cPickle, struct, and binascii (donated by Finn Bock).
@@ -88,9 +92,9 @@ Title: JPython FAQ
 
     <P>If there is some standard Python module that you have a real
     need for that doesn't work with JPython yet, please
-    <a href="mailto:jpython@python.org">send us mail</a>.
+    <a href="mailto:jython-dev@lists.sourceforge.net">send us mail</a>.
 
-<p><li><b>How fast is JPython?</b>
+<p><li><b>How fast is Jython?</b>
 
     <p>At <a href="http://www.python.org/workshops/1997-10/">IPC-6</a>
     JimH reported speeds equal to CPython 1.4 on the pystone
@@ -98,18 +102,18 @@ Title: JPython FAQ
     it about 2x faster than the 1.4 release.  The current release of
     CPython is 1.5.2 which might be only slightly faster than 1.5.
     JimH re-ran his benchmark tests against CPython 1.5 and his then
-    current release of JPython, finding that JPython was about 2.5x
+    current release of Jython, finding that Jython was about 2.5x
     slower than CPython 1.5.  I have recently run a few informal
     benchmarks and found some interesting numbers: using Sun's JDK
-    1.2.1 with JIT on a Solaris 2.6 Sparc Ultra 2, I found JPython
+    1.2.1 with JIT on a Solaris 2.6 Sparc Ultra 2, I found Jython
     1.1beta3 to produce pystone numbers equal to (or very slightly
     better than) CPython 1.5.2+.
 
     <p>The problem, of course, is that JITs are still not reliable
-    enough for JPython.  Turning off the JIT on the above platform,
-    can slow JPython down by a factor of 10.
+    enough for Jython.  Turning off the JIT on the above platform,
+    can slow Jython down by a factor of 10.
 
-    <P>The speed of JPython is tied very tightly to the speed of the
+    <P>The speed of Jython is tied very tightly to the speed of the
     underlying JVM.  The benchmark results that JimH reported were all
     using Microsoft's JVM from Internet Explorer 4.0.  The next
     fastest JVM that he used was almost a factor of 2 slower than
@@ -118,17 +122,17 @@ Title: JPython FAQ
     performance on a wider variety of JVM's.</P>
 
     <P>Finally, pystone is not the last word in benchmarking.  At the
-    moment I'm more concerned with making JPython complete and correct
+    moment I'm more concerned with making Jython complete and correct
     than with performance.  We will continually be revisiting
     performance issues both to examine better benchmark's for
-    comparing JPython and CPython (as well as other scripting
-    languages for the JVM) and work at optimizing JPython's
+    comparing Jython and CPython (as well as other scripting
+    languages for the JVM) and work at optimizing Jython's
     performance.
 
-<p><li><b>Why do weird things sometimes happen in JPython?</b>
+<p><li><b>Why do weird things sometimes happen in Jython?</b>
 
     <p>More likely than not, the problem is with the JIT
-    (Just-in-time) compiler your JVM is using.  JPython acts
+    (Just-in-time) compiler your JVM is using.  Jython acts
     like a bizarre Java compiler, taking Python source code and
     emitting Java bytecode.  It's bizarre because the emitted bytecode
     doesn't look quite like the way bytecode would come out of a Java
@@ -136,8 +140,9 @@ Title: JPython FAQ
     do incorrect and inexplicable things.  If you're seeing strange
     stuff happen, or weird bugs, the first thing to do is to turn off
     your JIT and try again.  If the bug still exists with the JIT
-    turned off then consider <a href="http://www.python.org/jpython-bugs">
-    submitting a bug report</a>.
+    turned off then consider 
+    <a href="http://sourceforge.net/bugs/?group_id=12867">submitting a 
+    bug report</a>.
 
 <p><li><b>Why did I get an OutOfMemoryError?</b>
 
@@ -163,15 +168,15 @@ Title: JPython FAQ
     <p>This problem can occur if you are using Microsoft's VM
     (i.e. <tt>jview.exe</tt>) which provides the standard classes in a 
     different format.  You need to run the following command in a
-    console window before using JPython:
+    console window before using Jython:
 
 <pre>
     clspack -auto
 </pre>
 
-<p><li><b>Semantic Differences between JPython and CPython</b>
+<p><li><b>Semantic Differences between Jython and CPython</b>
 
-    <P>There are several several differences between JPython and
+    <P>There are several several differences between Jython and
     CPython that wil probably never go away.  These differences are
     primarily related to underlying differences between the C and Java
     programming languages/environments.  See <a
@@ -180,12 +185,12 @@ Title: JPython FAQ
     differences you'll notice:
 
     <p><UL>
-	<LI><em>JPython has true garbage collection - CPython uses
+	<LI><em>Jython has true garbage collection - CPython uses
 	reference counting.</em>
 
-	<br>This means that in JPython users don't need to worry about
+	<br>This means that in Jython users don't need to worry about
 	    creating circular references as these are guarnteed to be
-	    collected properly.  On the other hand, users of JPython have
+	    collected properly.  On the other hand, users of Jython have
 	    no guarantees of when an object will be finalized (short of
 	    calling System.gc() to force garbage collection).
 	    Theoretically, this might cause problems for users who were
@@ -195,13 +200,13 @@ Title: JPython FAQ
 	    methods, no Python object's <tt>__del__()</tt> method is
 	    ever called.
 
-	<p><LI><em>Control-C can not be caught by JPython, but will exit the
+	<p><LI><em>Control-C can not be caught by Jython, but will exit the
 	    shell completely</em>
     </UL>
 
 <p><li><b>Why can't I multiply inherit from two Java classes?</b>
 
-    <P>In an earlier version of JPython, you actually could.  This was
+    <P>In earlier versions of JPython, you actually could.  This was
     deliberately disabled in 1.1 for a variety of good reasons. For a
     detailed discussion on this issue see the following archive
     messages:

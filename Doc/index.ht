@@ -1,40 +1,40 @@
-Title: Overview of JPython documentation
+Title: Overview of Jython documentation
 
-<h3>Overview of JPython Documentation</h3>
+<h3>Overview of Jython Documentation</h3>
 
 <P>There is a variety of documentation available to help you learn to
-use JPython.  We will be expanding this information in the future so
+use Jython.  We will be expanding this information in the future so
 check back here often.  You can use the sidebar you see on the left
 side of this page as a table of contents to easily jump to the
 documentation you're interested in.  A more detailed description of
 these links is provided below.
 
-<h3>JPython Specific Documentation</h3>
+<h3>Jython Specific Documentation</h3>
 
-The following documentation is specific to JPython:
+The following documentation is specific to Jython:
 
 <ul>
-    <li>For a one-page introduction to what JPython is, and why you
+    <li>For a one-page introduction to what Jython is, and why you
 	should care, check out <A HREF="whatis.html"><em>What is
-	JPython?</em></A>.
+	Jython?</em></A>.
 
     <li>Here is information on <a href="interpreter.html">invoking the 
-	JPython interpreter</a> by typing <em>jpython</em> at the
+	Jython interpreter</a> by typing <em>jython</em> at the
 	shell prompt.
 
-    <li>The <a href="registry.html">JPython registry</a> replaces
+    <li>The <a href="registry.html">Jython registry</a> replaces
 	environment variables for <code>PYTHONPATH</code> and more.
 
     <li>The <a href="embedding.html">embedding</a> document describes
-	how to call JPython from a Java application.
+	how to call Jython from a Java application.
 
     <li>You might also be interested in <a
-	href="compile.html">building JPython from the source code</a>.
+	href="compile.html">building Jython from the source code</a>.
 </ul>
 
 <h3>Interaction with Java Packages</h3>
 
-Most JPython applications will want to use the vast array of Java
+Most Jython applications will want to use the vast array of Java
 packages available.  The following documentation helps you work with
 Java packages.
 
@@ -50,18 +50,18 @@ Java packages.
     <li>This document describes how to
 	<a href="subclassing.html">subclass Java classes in Python</a>.
 
-    <li>The <a href="jpythonc.html">jpythonc</a> utility compiles
+    <li>The <a href="jythonc.html">jythonc</a> utility compiles
 	Python source code to real Java classes, and is used for
 	building applets, servlets, beans, etc.
 </ul>
 
 <h3>General Python Documentation</h3>
 
-    <P>While JPython has only been publically available for eight
+    <P>While Jython has only been publically available for eight
     months, the Python language has been around for many years.  The
     majority of the
     <A HREF="http://www.python.org/doc/">standard Python
-    documentation</A> applies to JPython.  A few very handy places to
+    documentation</A> applies to Jython.  A few very handy places to
     look are:</P>
 
     <UL>
@@ -71,7 +71,7 @@ Java packages.
 	<LI>The Python <A HREF="http://www.python.org/doc/lib/lib.html">
 	Library Reference</A>.  Although many of these modules are not
 	yet implemented (those coded in C for CPython must be
-	re-implemented in Java for JPython), experience Python
+	re-implemented in Java for Jython), experience Python
 	programmers keep the Library Reference Manual under their
 	pillow for easy access.
     </UL>
@@ -79,20 +79,20 @@ Java packages.
 <h3>Other Useful Links</h3>
 
 <ul>
-    <li>JPython and CPython are two different implementations of the
+    <li>Jython and CPython are two different implementations of the
 	same language.  There are naturally some differences between
 	the two implementations, sometimes reflecting undefined
 	aspects of the Python language, sometimes reflecting quirks of 
 	the independent implementations.  Here is a more detailed
 	discussion and <a href="differences.html">comparision of
-	JPython and CPython</a>.
+	Jython and CPython</a>.
 
-    <li>The <a href="faq.html">JPython FAQ</a> may already contain the 
+    <li>The <a href="faq.html">Jython FAQ</a> may already contain the 
 	answer to your question...
 
     <li>...and if it doesn't, then the
-	<a href="http://www.python.org/pipermail/jpython-interest/">
-	JPython-interest mailing list archives</a> might help.
+	<a href="http://www.geocrawler.com/archives/3/7017/2000/">
+	Jython-users mailing list archives</a> might help.
 
     <li>You might also be interested in reading
 	<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">
@@ -106,9 +106,9 @@ Java packages.
 If you still have unanswered questions you can usually get help from:
 
 <UL>
-    <LI>The <A HREF="http://www.python.org/mailman/listinfo/jpython-interest">
-	jpython-interest</A> mailing list.
+    <LI>The <A HREF="http://lists.sourceforge.net/mailman/listinfo/jython-users">
+	jython-users</A> mailing list.
     <LI>The <A HREF="news:comp.lang.python">comp.lang.python</A> newsgroup.
-    <LI>JPython's developers, who can be reached at
-	<A HREF="mailto:jpython@python.org">jpython@python.org</A>.
+    <LI>Jython's developers, who can be reached at
+	<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>.
 </UL>

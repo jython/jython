@@ -2,7 +2,7 @@ Title: Properties
 
 <h3>Properties</h3>
 
-JPython uses JavaBean properties to make it easier to interact with
+Jython uses JavaBean properties to make it easier to interact with
 most Java classes.  These properties can be used as normal object
 attributes, and can also be specified to the class constructor as
 keyword arguments (this idea is stolen from TkInter where it seems to
@@ -17,24 +17,24 @@ button that is disabled.
 
 <P>The first example shows how you would do this in the typical Java fashion:
 
-<pre>
+<blockquote><pre>
 b = awt.Button()
 b.setEnabled(0)
-</pre>
+</pre></blockquote>
 
 The second example shows how enabled can be set as a property:
 
-<pre>
+<blockquote><pre>
 b = awt.Button()
 b.enabled = 0
-</pre>
+</pre></blockquote>
 
 The final example sets this property at instantiation time using a keyword
 argument:
 
-<pre>
+<blockquote><pre>
 b = awt.Button(enabled=0)
-</pre>
+</pre></blockquote>
 
 <h3>Tuples</h3>
 
@@ -43,13 +43,15 @@ will be created by applying the constructor for the type of the
 property to the tuple.  This is particularly handy for specifying
 sizes:
 
-<pre>
+<blockquote><pre>
 frame = awt.Frame(size=(500,100))
-</pre>
+</pre></blockquote>
 
 It can also be handy for specifying color as an RGB triple:
 
-<pre>frame.background = 255,255,0</pre>
+<blockquote><pre>
+frame.background = 255,255,0
+</pre></blockquote>
 
 will set the background color of the frame to yellow.
 
@@ -58,7 +60,7 @@ will set the background color of the frame to yellow.
 In standard Java, the event handlers for a widget are specified by
 passing in an instance of a class that implements the appropriate
 interface.  This is the only reasonable approach to take in a language
-that doesn't have first-class functions.  In JPython, for every event
+that doesn't have first-class functions.  In Jython, for every event
 listener supported by a class, there will be a property added to the
 class for each method supplied by the event listener class.  These
 properties can be set to give a function to be called when the
@@ -66,21 +68,40 @@ appropriate event occurs.
 
 <P>The standard Java style for setting an event listener is shown below:
 
-<pre>
+<blockquote><pre>
 class action(awt.event.ActionListener):
     def actionPerformed(self,event):
         java.lang.System.exit(0)
 
 button = awt.Button("Close Me!")
 button.addActionListener(action())
-</pre>
+</pre></blockquote>
 
 This can be written in a more Pythonesque (and compact) style by using
 event properties as follows:
 
-<pre>
+<blockquote><pre>
 def exit(event):
     java.lang.System.exit(0)
 
 button = awt.Button("Close Me!", actionPerformed=exit)
-</pre>
+</pre></blockquote>
+
+<h3>Methods, Properties and Event Properties</h3>
+
+Jython have only one namespace for these three class attributes. 
+Java can be seen as having a unique namespace for each of the three
+types. As a consequense, there can be conflicts between methods,
+properties and event properties. 
+These conflicts are resolved so that:
+
+<blockquote>
+  properties < event-properties < fields < methods
+</blockquote>
+
+This means that a method will override a field with the same name. 
+Some carefull handling of properties and static fields allow for 
+the existence of, and access to, both an instance property and a 
+static field with the same name.
+
+<p>

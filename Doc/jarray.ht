@@ -1,22 +1,22 @@
-Title: Java Arrays in JPython
+Title: Java Arrays in Jython
 
-<h3>Java Arrays in JPython - JArray</h3>
+<h3>Java Arrays in Jython - JArray</h3>
 
 Many Java methods require Java array objects as arguments.  The way
 that these arguments are used means that they must correspond to
-fixed-length, mutable sequences, so'metimes of primitive data types.
+fixed-length, mutable sequences, sometimes of primitive data types.
 The PyArray class is added to support these Java arrays and instances
 of this class will be automatically returned from any Java method call
 that produces an array.  In addition, the "jarray" module is provided
-to allow users of JPython to create these arrays themselves, primarily
+to allow users of Jython to create these arrays themselves, primarily
 for the purpose of passing them to a Java method.
 
 <P>The jarray module exports two functions:
 
-<pre>
+<blockquote><pre>
 array(sequence, type)
 zeros(length, type)
-</pre>
+</pre></blockquote>
 
 <P>array will create a new array of the same length as the input
 sequence and will populate it with the values in sequence.  zeros will

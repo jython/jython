@@ -1,35 +1,35 @@
-Title: Compiling Python Source to Real Java Classes
+Title: Using the Jython compiler - jythonc
 
-<h3>Compiling Python Source to Real Java Classes - jpythonc</h3>
+<h3>Compiling Python Source to Real Java Classes</h3>
 
 <P>The previous section describes how Python classes can be created
 that subclass from Java classes.  This works very well when you want
-to pass a Python class into Java from JPython.  This is not adequate
+to pass a Python class into Java from Jython.  This is not adequate
 for building real Java ".class" files that implement a Java class and
 can be passed directly to Java programs.  This sort of functionality
-is required to build applets, servlets, or JavaBeans in JPython that
+is required to build applets, servlets, or JavaBeans in Jython that
 can be used exactly like their Java equivalents.  It is also very
 valuable for users who wish to subclass Python classes in Java.</P>
 
 <P>In order to build a real java class from a Python class, you will
-use the <tt>jpythonc</tt> tool.  A script called "jpythonc" should
-have been installed in the JPython installation directory when you
+use the <tt>jythonc</tt> tool.  A script called "jythonc" should
+have been installed in the Jython installation directory when you
 installed the package.  If it was not, it can be invoked as follows:
-"jpython&nbsp;Tools\jpythonc\jpythonc.py".</P>
+"jython&nbsp;Tools\jythonc\jythonc.py".</P>
 
-<p>JPython 1.1 has a new version of the jpythonc tool, which generates 
-actual Java source code, and then invokes a Java compiler over this
-source code to create the .class files.  Thus, you will need access to 
-a Java compiler in order to use jpythonc.  It is recommended that you
-use Sun's standard <tt>javac</tt> compiler, or IBM's excellent
-<tt>jikes</tt> compiler.  Specifically, the Microsoft SDK <tt>jvc</tt> 
-compiler is not recommended.
+<p>The jythonc tool generates actual Java source code, and then 
+invokes a Java compiler over this source code to create the .class 
+files. Thus, you will need access to a Java compiler in order to use
+jythonc. 
+It is recommended that you use Sun's standard <tt>javac</tt> compiler,
+or IBM's excellent <tt>jikes</tt> compiler.  
+Specifically, the Microsoft SDK <tt>jvc</tt> compiler is not recommended.
 
-<P>Invoke jpythonc like this:
+<P>Invoke jythonc like this:
 
-<P><B>jpythonc [options] [module]*</b>
+<P><B>jythonc [options] [module]*</b>
 
-<p>Options are given in the table below.  Note that jpythonc now uses
+<p>Options are given in the table below.  Note that jythonc now uses
 the standard Python <tt>getopt</tt> module, meaning that both long and 
 short forms of the options are available.  The old option names still
 work, and are described below, but noted as
@@ -61,14 +61,14 @@ future version.
     <TD><B>--core</B>
 	<br><b>-c</b>
 	<br><font size=-1 color="blue"><b>-core</b></font>
-    </td><TD>Include the core JPython libraries (about 130K).  Needed for
+    </td><TD>Include the core Jython libraries (about 130K).  Needed for
 	applets since Netscape doesn't yet support multiple archives.
 	Implies the <b>--deep</b> option.
 </TR><TR>
     <TD><b>--all</B>
 	<br><b>-a</b>
 	<br><font size=-1 color="blue"><b>-all</b></font>
-    </td><TD>Include all of the JPython libraries (everything in core +
+    </td><TD>Include all of the Jython libraries (everything in core +
 	compiler and parser).  Implies the <b>--deep</b> option.
 </TR><TR>
     <TD><b>--bean</b> <em>jarfile</em>
@@ -83,7 +83,7 @@ future version.
 	    <em>pkgs</em></font>
     </td><td>Include Java dependencies from this list of packages.
 	Default is <tt>org.python.modules</tt> and
-	<tt>com.oroinc.text.regex</tt>.
+	<tt>org.apache.oro.text.regex</tt>.
 </TR><TR>
     <TD><B>--workdir</B> <em>directory</em>
 	<br><B>-w</B> <em>directory</em>
@@ -104,14 +104,14 @@ future version.
     </td><td>Use a different compiler than `standard' javac.  If this
 	is set to "NONE" then compile ends with the generation of the
 	Java source file.  Alternatively, you can set the property
-	<tt>python.jpythonc.compiler</tt> in the
+	<tt>python.jythonc.compiler</tt> in the
 	<a href="registry.html">registry</a>.
 </tr><tr>
     <td><b>--compileropts</b> <em>options</em>
 	<br><b>-J</b> <em>options</em>
     </td><td>Options passed directly to the Java compiler.
 	Alternatively, you can set the property
-	<tt>python.jpythonc.compileropts</tt> in the
+	<tt>python.jythonc.compileropts</tt> in the
 	<a href="registry.html">registry</a>.
 </tr><tr>
     <td><b>--falsenames</b> <em>names</em>
@@ -130,38 +130,96 @@ future version.
 </TR>
 </TABLE>
 
-<p>The Python module must contain a Python class with the same name as
-the module, and that Python class must subclass exactly one Java class
-or interface.  The real Java class created will be a subclass of
-whatever Java class is subclassed.
+<p>In order to create real java class, the Python module must contain 
+a Python class with the same name as the module, and that Python class 
+must subclass exactly one Java class or interface.
+The real Java class created will be a subclass of whatever Java class 
+is subclassed.
 
-<!--table-stop-->
+<p>
+
+<h3>Compiling python methods to java methods</h3>
+
+Normally, compiled python methods are not directly callable from
+java. There is simple not sufficient information in a python method
+definition to create a useable java method. There are however two 
+ways a python method be made into real java method. Both ways require
+that the python class have a java class or a java interface as its 
+base classes.
+
+<ul>
+<li><b>Overriding / Implementing a java method.</b>
+
+    <p>By overriding a java method, the overridden method's signature
+    is used for the real java class. That includes return type, 
+    privacy modifier, arguments, argument types and throws clauses.
+
+<p><li><b>Adding java method signature to python methods docstrings.</b>
+
+    <p>Using a special convention in the method docstring
+    allow for the creation of a corresponding java method.
+    The signature must be written on one line and must start with the 
+    text "@sig". All class names (except those ion java.lang) must
+    be specified as fully qualified class names. Example:
+    <blockquote><pre>
+        def setExpression(self, e):
+            "@sig public void setExpression(java.lang.String e)"
+    </pre></blockquote>
+</ul>
+
 <h3>Examples</h3>
 
 <P>On my Windows NT machine, I used the following command to create
 the file appletdemo.jar (containing all of the applet demos on the web
-site, as well as the core JPython libraries):</P>
+site, as well as the core Jython libraries):</P>
 
-<PRE>c:\jpython\Demo\applet&gt; jpythonc -core -deep -jar appletdemo.jar *.py</PRE>
+<PRE>c:\jython\Demo\applet&gt; jythonc --core --deep --jar appletdemo.jar *.py</PRE>
+
+<P><em>Note:</em> One special thing to consider when building applets is the java VM 
+version used when compiling the sources must usually be the same as 
+the VM version used by the browser. If a newer JVM is used when compiling
+the applets, the compiled code may have references to classes that does 
+not exists in older JVM's.
 
 <P>To generate a skeleton class to allow a Python class to be used as
 java.awt.Component in a Java gui program, I used the following
 command:</P>
 
-<PRE>c:\jpython\Demo\javaclasses&gt; jpythonc Graph.py</PRE>
+<PRE>c:\jython\Demo\javaclasses&gt; jythonc Graph.py</PRE>
 
-<P>To generate a JPython-based bean I do the following:</P>
+<P>To generate a Jython-based bean I do the following:</P>
 
-<PRE>c:\jpython\Demo\bean&gt; jpythonc -deep -bean f2c.jar conversion.FahrenheitToCelsius</PRE>
+<PRE>c:\jython\Demo\bean&gt; jythonc --deep --bean f2c.jar conversion.FahrenheitToCelsius</PRE>
 
 <P>To use this with SUN's BDK, I do the following (the important steps
-are to make the bean and the JPython libraries known to the tool).</P>
+are to make the bean and the Jython libraries known to the tool).</P>
 
 <ol>
     <li>modify BDK\beanbox\run.bat (or run.sh) to include the
-	jpython\JavaCode in the CLASSPATH
+	jython\JavaCode in the CLASSPATH
     <li>copy f2c.jar to BDK\jars
 </ol>
 
 <P>You should now be able to access the FahrenheitToCelsius bean from
 SUN's BeanBox (or other Bean-aware tool).
+
+<p>
+<h3>Freezing modules</h3>
+
+jythonc can also be used to freeze a python application. The frozen 
+application can then be distributed and deployed as any other java
+application.
+
+<p>Some diffrences between an interpreted application and a frozen 
+application exists:
+
+<ul>
+<li>Properties are diffrent. XXX
+<li>sys.argv[0]
+<li>loading of python classes.
+</ul>
+
+<h3>Examples</h3>
+
+XXX
+<p>

@@ -1,6 +1,6 @@
-Title: Subclassing Java Classes in JPython
+Title: Subclassing Java Classes in Jython
 
-<h3>Subclassing Java Classes in JPython</h3>
+<h3>Subclassing Java Classes in Jython</h3>
 
 <h3>A Short Example</h3>
 
@@ -14,7 +14,7 @@ a Java method is being called that
 requires an instance of the Java class ActionListener. By providing a
 Python subclass of this Java class, everybody is happy.
 
-<PRE>
+<blockquote><PRE>
 from java import awt
 
 class SpamListener(awt.event.ActionListener):
@@ -30,7 +30,7 @@ b.addActionListener(SpamListener())
 f.add(b, "Center")
 f.pack()
 f.setVisible(1)
-</PRE>
+</PRE></blockquote>
 
 Note: This example can be accomplished much more elegantly by using
 <A HREF="properties.html">JavaBeans properties 
@@ -41,11 +41,13 @@ Note: This example can be accomplished much more elegantly by using
 In Python, if I want to call the foo method in my superclass, I use
 the form:
 
-<PRE>SuperClass.foo(self)</PRE>
+<blockquote><PRE>
+SuperClass.foo(self)
+</PRE></blockquote>
 
-With JPython 1.1, the same thing works even if the superclass is a
-Java class.  You no longer need to use the "super__foo()" style call
-chain that was required with earlier versions of JPython.
+This works with the majority of methods, but protected methods cannot be
+called from subclasses in this way. 
+Instead you have to use the "self.super_foo()" call style.
 
 <h3>Example</h3>
 
@@ -68,7 +70,7 @@ overrides the "read" method, a Python method must be implemented that
 handles all three possible cases.  The example below shows the easiest
 way to acheive this:
 
-<PRE>
+<blockquote><PRE>
 from java.io import InputStream
 
 class InfiniteOnes(InputStream):
@@ -84,7 +86,7 @@ io = InfiniteOnes()
 for i in range(10):
     print io.read(),
 print
-</PRE>
+</PRE></blockquote>
 
 <h3>Example Continued</h3>
 
@@ -92,7 +94,7 @@ To continue the example above, this new instance of
 java.io.InputStream can be passed to any Java method that expects an
 InputStream as shown below:
 
-<PRE>
+<blockquote><PRE>
 from java.io import DataInputStream
 
 dp = DataInputStream(io)
@@ -100,7 +102,7 @@ dp.skipBytes(1000)
 print dp.readByte()
 print dp.readShort()
 print dp.readInt()
-</PRE>
+</PRE></blockquote>
 
 <h3>Invoking Your Superclass's Constructor</h3>
 
@@ -119,7 +121,7 @@ before accessing any methods in your superclass.
 
 <h3>Example</h3>
 
-<PRE>
+<blockquote><PRE>
 from java.util import Random
 
 class rand(Random):
@@ -137,46 +139,9 @@ r = rand(100, 23)
 
 for i in range(10):
     print r.nextDouble()
-</PRE>
+</PRE></blockquote>
 
 This example shows how the superclass's constructor can be effectively
 called in order to explictly choose a non-empty version.
 
-<h3>Caching Proxy Classes (Efficiency)</h3>
-
-<b>Note:</b> This section may be out of date, w.r.t. JPython
-1.1betaX.  It will be updated before the final release of 1.1.</b>
-
-<p>In order to subclass from a Java class, a Java proxy class must be
-created by JPython.  This proxy class is a true Java subclass of the
-class you wish to subclass from in Python.  If you do nothing special,
-these proxy classes will be created on the fly whenever one is needed.
-If you find that the time required for generating these proxies is a
-problem, you have two options for convincing JPython to use a cache
-instead of recreating them every time.
-
-<P>You can set the "python.proxy.savedir" variable in your registry
-file.  You must set this to point to a directory in your Java
-Classpath.  I strongly reccommend setting it to &lt;JPYTHON>/JavaCode
-where JPython is the directory into which the distribution was
-installed.  This will cause JPython to cache copies of any new proxy
-classes that it creates.
-
-<P>You can also explicitly create proxy classes with the following
-command:
-
-<PRE>java org.python.compiler.ProxyMaker &lt;directory> &lt;classname></PRE>
-
-This will create the proxy class for a given Java class and install it
-in the given directory (which must be on your Java Classpath - see
-above).
-
-<P>The danger of these caching mechanisms is that JPython currently
-has no way to invalidate this cache.  So if you install an improved
-version of JPython that produces different proxy files, or if you
-modify one of the classes to which you've previously created a proxy,
-the change won't be properly handled.  So, only use proxy class
-caching if you feel comfortable with JPython already, and if you start
-running into problems with proxy classes, my first suggestion is to
-disable proxy class caching and to delete your cache directory
-(&lt;directory>/org/python/proxies).
+<p>
