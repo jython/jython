@@ -380,8 +380,8 @@ class PythonModule:
                     jast.Identifier('args.length')]
             code.append(jast.InvokeStatic("System", "arraycopy", args))
 
-            args = [jast.StringConstant(self.getclassname(
-                           self.name+'$'+self.pyinner.name)),
+            args = [jast.GetStaticAttribute(self.getclassname(
+                           self.name+'.'+self.pyinner.name), "class"),
                     jast.Identifier('newargs'), 
                     self.getPackages(), self.getProperties(), 
                     self.getFrozen(), jast.StringArray(self.modules.keys())]
