@@ -10,6 +10,7 @@
 package com.ziclix.python.sql;
 
 import java.sql.*;
+import java.util.*;
 import org.python.core.*;
 
 /**
@@ -26,6 +27,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
 
 	/** Field supportsTransactions */
 	protected boolean supportsTransactions;
+
+	/** Field cursors */
+	protected List cursors;
 
 	/** Field __class__ */
 	public static PyClass __class__;
@@ -55,13 +59,14 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		m[3] = new PyString("rollback");
 		m[4] = new PyString("nativesql");
 		__methods__ = new PyList(m);
-		m = new PyObject[6];
+		m = new PyObject[7];
 		m[0] = new PyString("autocommit");
 		m[1] = new PyString("dbname");
 		m[2] = new PyString("dbversion");
 		m[3] = new PyString("driverversion");
 		m[4] = new PyString("url");
 		m[5] = new PyString("__connection__");
+		m[6] = new PyString("__cursors__");
 		__members__ = new PyList(m);
 	}
 
@@ -71,6 +76,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	public PyConnection(Connection connection) throws SQLException {
 
 		this.connection = connection;
+		this.cursors = new LinkedList();
 		this.supportsTransactions = this.connection.getMetaData().supportsTransactions();
 
 		if (this.supportsTransactions) {
@@ -115,6 +121,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		dict.__setitem__("getPyClass", null);
 		dict.__setitem__("connection", null);
 		dict.__setitem__("classDictInit", null);
+		dict.__setitem__("cursors", null);
 	}
 
 	/**
@@ -180,6 +187,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
 			}
 		} else if ("__connection__".equals(name)) {
 			return Py.java2py(this.connection);
+		} else if ("__cursors__".equals(name)) {
+			return Py.java2py(Collections.unmodifiableList(this.cursors));
 		} else if ("__methods__".equals(name)) {
 			return __methods__;
 		} else if ("__members__".equals(name)) {
@@ -199,9 +208,17 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 */
 	public void close() {
 
-		try {
+		synchronized (this.cursors) {
 
-			// close the cursors too?
+			// close the cursors
+			for (int i = this.cursors.size() - 1; i >= 0; i--) {
+				((PyCursor)this.cursors.get(i)).close();
+			}
+
+			this.cursors.clear();
+		}
+
+		try {
 			this.connection.close();
 		} catch (SQLException e) {
 			throw zxJDBC.makeException(e);
@@ -285,7 +302,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 * @return a new cursor using this connection
 	 */
 	public PyCursor cursor() {
-		return new PyExtendedCursor(this);
+		return cursor(false);
 	}
 
 	/**
@@ -297,7 +314,22 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 * @return a new cursor using this connection
 	 */
 	public PyCursor cursor(boolean dynamicFetch) {
-		return new PyExtendedCursor(this, dynamicFetch);
+
+		PyCursor cursor = new PyExtendedCursor(this, dynamicFetch);
+
+		cursors.add(cursor);
+
+		return cursor;
+	}
+
+	/**
+	 * Unregister an open PyCursor.
+	 *
+	 * @param PyCursor cursor
+	 *
+	 */
+	void unregister(PyCursor cursor) {
+		this.cursors.remove(cursor);
 	}
 }
 

@@ -265,6 +265,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	public void close() {
 
 		this.clear();
+		this.connection.unregister(this);
 
 		this.closed = true;
 	}

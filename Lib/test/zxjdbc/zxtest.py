@@ -42,11 +42,13 @@ class zxJDBCTestCase(zxCoreTestCase):
 
 		try:
 			c.execute("drop table zxtesting")
+			self.db.commit()
 		except:
 			self.db.rollback()
 
 		try:
 			c.execute("create table zxtesting (id int not null, name varchar(32), state varchar(32), primary key (id))")
+			self.db.commit()
 			c.execute("insert into zxtesting (id, name, state) values (1, 'test0', 'il')")
 			c.execute("insert into zxtesting (id, name, state) values (2, 'test1', 'wi')")
 			c.execute("insert into zxtesting (id, name, state) values (3, 'test2', 'tx')")
@@ -131,6 +133,18 @@ class zxAPITestCase(zxJDBCTestCase):
 		finally:
 			c.close()
 		self.assertRaises(zxJDBC.InternalError, c.execute, ("select * from zxtesting",))
+
+	def testClosingConnectionWithOpenCursors(self):
+		"""testing that a closed connection closes any open cursors"""
+		c = self.cursor()
+		d = self.cursor()
+		e = self.cursor()
+		self.db.close()
+		# open a new connection so the tearDown can run
+		self.db = self.connect()
+		self.assertRaises(zxJDBC.InternalError, c.execute, ("select * from zxtesting",))
+		self.assertRaises(zxJDBC.InternalError, d.execute, ("select * from zxtesting",))
+		self.assertRaises(zxJDBC.InternalError, e.execute, ("select * from zxtesting",))
 
 	def testNativeSQL(self):
 		"""testing the connection's ability to convert sql"""
