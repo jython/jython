@@ -52,6 +52,11 @@ public class InteractiveInterpreter extends PythonInterpreter {
                 // Case 1
                 showexception(exc);
                 return false;
+            } else if (Py.matchException(exc, Py.ValueError) ||
+                       Py.matchException(exc, Py.OverflowError)) {
+                // Should not print the stack trace, just the error.
+                showexception(exc);
+                return false;
             } else {
                 throw exc;
             }
