@@ -1,4 +1,4 @@
-This example shows one way to incorporate a JPython class into a Java
+This example shows one way to incorporate a Jython class into a Java
 program.
 
 To do this you should follow the following steps:
@@ -6,11 +6,11 @@ To do this you should follow the following steps:
 Note: path names are given for a Unix machine.  Make the obvious
 translation for Windows.
 
-1. run "jpython Graph.py" in this directory
+1. run "jython Graph.py" in this directory
 
-   This is just to make sure the JPython code works on your machine
+   This is just to make sure the Jython code works on your machine
 
-2. run "jpythonc -package pygraph Graph.py" in this directory
+2. run "jythonc -package pygraph Graph.py" in this directory
 
    This should produce the Java class pygraph.Graph.  Because this is
    only a shallow freeze of the code in Graph.py, you can modify the
@@ -25,8 +25,8 @@ translation for Windows.
 
 3. run "javac pygraph/PythonGraph.java"
 
-   You must have both the current directory ('.') and the JPython
-   library directory (<install_dir>\jpython.jar) in your CLASSPATH for
+   You must have both the current directory ('.') and the Jython
+   library directory (<install_dir>\jython.jar) in your CLASSPATH for
    this to work.
 
 4. run "java pygraph.PythonGraph"
