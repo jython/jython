@@ -87,8 +87,8 @@ Java packages.
 	discussion and <a href="differences.html">comparision of
 	Jython and CPython</a>.
 
-    <li>The <a href="faq.html">Jython FAQ</a> may already contain the 
-	answer to your question...
+    <li>The <a href="http://jython.sourceforge.net/cgi-bin/faqw.py?req=index">
+        Jython FAQ</a> may already contain the answer to your question...
 
     <li>...and if it doesn't, then the
 	<a href="http://www.geocrawler.com/archives/3/7017/2000/">
