@@ -6,7 +6,11 @@ xx-xxx-2002 Jython 2.2 alpha1
    - Iterators (pep-234).
    - Changing the Division Operator (pep-238)
    - Implemented a new compiler AST.
-
+   - Quitting (Ctrl-Z/D) Jython in interactive mode will force the running JVM
+     to exit, even if there are non-daemon threads (e.g. AWT), this is likely 
+     the expected behavior.  The behavior for (non-interactive) scripts is 
+     unchanged and still matches that of Java programs.
+     
   Bug fixes.
    - Renamed the use of the java1.4 reserved words 'assert'.
  
