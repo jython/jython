@@ -1,3 +1,5 @@
+"""generates code for compare nodes for CodeCompiler.java"""
+
 code = """	static Integer %(name)s;
 	public Object %(name)s_cmp(SimpleNode node) throws Exception {
 		if (mrefs.%(name)s == null) %(name)s = new Integer(make_binop("%(name)s"));

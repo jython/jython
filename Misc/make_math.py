@@ -1,3 +1,5 @@
+"""generate most of the code for the math module"""
+
 template = """\
     public static double %(name)s(double v) throws PyException {\r
         return check(Math.%(name)s(v));\r

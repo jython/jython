@@ -1,0 +1,18 @@
+INDEX: this file
+bughtml.py: script to convert .xml bug reports into .html pages
+create_dist.py: creates scripts to package up a version of jpython for release
+create_pylib.py: creates a script to build the pylib???.jar file
+editbug.py: swing gui to edit bug reports (very weak)
+jpybugreport.py: cgi script used to process bug reports on python.org
+jpylicense103.py: cgi script to collect registration data for jpython downloads
+process_licenses.py: script to read registration licenses.txt file and print info
+process_licenses1.py: script to generate more detailed info for licenses.txt (broken)
+make_binops.py: generates code for binops in PyObject and for all "simple" ops in PyInstance
+make_cmp.py: generates code for compare nodes for CodeCompiler.java
+make_excs.py: generate code for exceptions and for the types module
+make_math.py: generate most of the code for the math module
+make_operations.py: Generate most of the code for the operator module
+make_visitor.py: generate vistor code for javacc grammar.  code goes in SimpleNode.java
+reportTemplate.html: template html file used by bughtml.py
+webformat.py: script to generate jpython's web pages
+xml2py.py: utility module to make xml easier for jpython (used by bughtml.py)
