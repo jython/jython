@@ -18,11 +18,11 @@ where options include:
 
   --core
   -c
-      Include the core JPython libraries
+      Include the core JPython libraries (implies --deep)
       
   --all
   -a
-      Include all of the JPython libraries
+      Include all of the JPython libraries (implies --deep)
 
   --bean jarfile
   -b jarfile
@@ -67,7 +67,7 @@ def addCore(extraPackages):
                 'org.python.core.BytecodeLoader',
                 'org.python.core.jpython',
                 ]
-    extraPackages.append( ('org.python.core', skiplist) )
+    extraPackages.append(('org.python.core', skiplist))
 
 
 def addAll(extraPackages):
@@ -158,7 +158,7 @@ def getOptions():
     if options.jar is not None:
         options.deep = 1
     elif options.core or options.all:
-        opts.deep = 1
+        options.deep = 1
 
     if not os.path.isabs(options.workdir):
         options.workdir = os.path.join(".", options.workdir)  
@@ -265,6 +265,9 @@ def writeResults(comp, opts):
 
     for dep in comp.trackJavaDependencies():
         ja.addEntry(dep)
+
+    if opts.core or opts.all:
+        ja.addSingleClass('org.python.modules.Setup')
 
     ja.dump(jarfile)
         
