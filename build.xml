@@ -10,6 +10,7 @@
 
         <available classname="java.util.List" property="java2" />
         <available classname="javax.servlet.Servlet" property="servlet" />
+        <available classname="java.lang.ref.WeakReference" property="weakref" />
         <available classname="org.gnu.readline.Readline" property="readline" />
 
         <!-- This propery should be specified in the ant.property file
@@ -77,12 +78,20 @@
             value="**/PyServlet.java"/>
     </target>
 
+    <target name="check.weakref" unless="weakref">
+        <property name="exclude.weakref.files" 
+            value="**/_weakref.java"/>
+    </target>
+
     <target name="check.readline" unless="readline">
         <property name="exclude.readline.files" 
             value="**/ReadlineConsole.java"/>
     </target>
 
-    <target name="checks" depends="check.javaversion,check.servlet,check.readline" />
+    <target name="checks" depends="check.javaversion,
+                                   check.servlet,
+                                   check.weakref,
+                                   check.readline" />
 
     <target name="compile" depends="prepare,parser,checks">
         <javac 
@@ -92,6 +101,7 @@
             excludes="org/python/parser/python.java,
                       ${exclude.java2.files},
                       ${exclude.servlet.files},
+                      ${exclude.weakref.files},
                       ${exclude.readline.files}"
             debug="${debug}"
             optimize="${optimize}"
