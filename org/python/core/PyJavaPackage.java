@@ -55,7 +55,7 @@ public class PyJavaPackage extends PyObject {
         clsSet= new PyStringMap();
 
         __dict__ = new PyStringMap();
-        __dict__.__setitem__("__name__", new PyString(__name__));
+        // __dict__.__setitem__("__name__", new PyString(__name__)); ??
     }
 
     public PyJavaPackage addPackage(String name) {
