@@ -13,7 +13,7 @@
         <available classname="org.gnu.readline.Readline" property="readline" />
 
         <!-- This propery should be specified in the ant.property file
-           property name="javaccHome" value="/opt/javacc2.0/bin/lib" /-->
+           property name="javaccHome2" value="/opt/javacc2.0/bin/lib" /-->
 
         <!-- Give users a change to override editing this file-->
         <property file="ant.properties" />
