@@ -63,6 +63,13 @@ class BlankLine(Statement):
 Blank = BlankLine()
 
 
+class Import(Statement):
+	def __init__(self, package):
+		self.package = package
+		
+	def writeSource(self, out):		
+		out.writeln("import %s;", self.package)
+		
 class SimpleComment(Statement):
 	""" ??? """
 	def __init__(self, text):
@@ -497,6 +504,18 @@ class NewArray(Expression):
 		args = string.join(map(lambda arg:str(arg), self.dimensions), '][')
 		return "new %s[%s]" % (self.type, args)
 
+class StringArray(FilledArray):
+	def __init__(self, values):
+		lst = []
+		for value in values:
+			if value is None:
+				jv = Null
+			else:
+				jv = StringConstant(value)
+				
+			lst.append(jv)
+		self.values = lst
+		self.type = "String"
 
 class ClassReference(Expression):
 	def __init__(self, name):

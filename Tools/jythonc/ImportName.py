@@ -65,13 +65,17 @@ class JavaClass(Namespace):
 				eps[name] = value.eventClass
 		return eps
 
-	def addEvents(self, attrs, events):		
+	def addEvents(self, attrs, events, source=None):
 		for name, value in self.eventProperties.items():
 			if attrs.has_key(name):
-				events[name] = value
+				try:
+					events[value][source] = 1
+				except KeyError:
+					d = {source:1}
+					events[value] = d
 		
 		for base in self.bases:
-			base.addEvents(attrs, events)
+			base.addEvents(attrs, events, source)
 		
 
 	

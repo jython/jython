@@ -4,6 +4,7 @@ from java.lang.reflect import Modifier
 from java.lang import *
 import org, java
 from types import *
+import string
 
 
 def aget(dict, key, default):
@@ -24,18 +25,6 @@ def nullReturn(ret):
 	else:
 		value = jast.Null
 	return jast.Return(value)
-		
-def mkStrings(values):
-	lst = []
-	for value in values:
-		if value is None:
-			jv = jast.Null
-		else:
-			jv = jast.StringConstant(value)
-			
-		lst.append(jv)
-	return jast.FilledArray("String", lst)
-
 
 def makeReturn(code, ret):
 	if ret == Void.TYPE:
@@ -68,7 +57,7 @@ class JavaProxy:
 		self.name = name
 		self.methods = methods
 		
-		self.packages = self.properties = jast.Null
+		self.packages = self.properties = self.specialClasses = jast.Null
 		self.modname = "foo"
 
 		self.modifier = "public"
@@ -78,6 +67,7 @@ class JavaProxy:
 		if module is not None:
 			self.packages = module.getPackages()
 			self.properties = module.getProperties()
+			self.specialClasses = module.getSpecialClasses()
 			self.modname = module.name
 
 		self.isAdapter = 0
@@ -99,7 +89,6 @@ class JavaProxy:
 		self.addConstructors(self.superclass)
 
 		self.innerClasses = []
-		self.specialClasses = []
 
 	def dumpAll(self):
 		self.statements = []
@@ -109,7 +98,6 @@ class JavaProxy:
 		self.addPyProxyInterface()
 		return self.statements
 		
-
 	def dumpInnerClasses(self):
 		for ic in self.innerClasses:
 			self.statements.append(ic)
@@ -119,7 +107,7 @@ class JavaProxy:
 		names.sort()
 		#print 'adding methods', self.name, names
 		for name, args, sig in self.methods:
-			print name, args, sig
+			#print name, args, sig
 			if sig is not None:
 				self.callMethod(name, sig[0], sig[1], sig[2], 0)
 				continue
@@ -127,7 +115,7 @@ class JavaProxy:
 			if not self.jmethods.has_key(name): continue
 			
 			for sig, (access, ret) in self.jmethods[name].items():
-				print sig, access, ret
+				#print sig, access, ret
 				self.callMethod(name, access, ret, sig, 1)
 				
 			sigs = self.jmethods[name]
@@ -265,16 +253,12 @@ class JavaProxy:
 		this = jast.Identifier("this")
 	
 		supercall = jast.InvokeLocal("super", argids)
-	
-		if self.frozen:
-			frozen = jast.True
-		else:
-			frozen = jast.False
 
-		specialClasses = mkStrings(self.specialClasses)
-
+		#specialClasses = jast.StringArray(self.specialClasses)
+		frozen = self.module.getFrozen()
+		
 		initargs = [this, jast.StringConstant(self.modname), jast.StringConstant(self.name),
-				objects, self.packages, self.properties, specialClasses, frozen]
+				objects, self.packages, self.properties, self.specialClasses, frozen]
 		
 	
 		initproxy = jast.InvokeStatic("Py", "initProxy", initargs)
@@ -301,28 +285,16 @@ class JavaProxy:
 
 
 	def makeClass(self):
-		body = jast.Block(self.dumpAll())
-		inters = map(lambda i: i.__name__, self.interfaces)
-		return jast.Class(self.name, self.modifier, self.superclass.__name__, inters, body)
+		mycode = self.dumpAll()			
+		body = jast.Block(mycode)
+		return jast.Class(self.name, self.modifier, self.superclass.__name__,
+		    map(lambda i: i.__name__, self.interfaces), body)
 
-	def makeClassFile(self):
-		header = []
-		if self.package is not None:
-			header.append(jast.Identifier("package %s" % self.package))
-			header.append(jast.Blank)
-		header.append(jast.Identifier("import org.python.core.*"))
-		header.append(jast.Blank)
-		
-		return jast.FreeBlock([header, self.makeClass()])
-
-	def dump(self, directory):
-		cf = self.makeClassFile()
-		sf = jast.Output.SourceFile(self.name)
-		cf.writeSource(sf)
-		sf.dump(directory)
-		return cf
-
-
+	def getDescription(self):
+		ret = self.name+' extends '+self.superclass.__name__
+		if len(self.interfaces) > 0:
+			ret = ret+' implements '+string.join(map(lambda i: i.__name__, self.interfaces), ', ')
+		return ret
 
 
 if __name__ == '__main__':
@@ -331,4 +303,4 @@ if __name__ == '__main__':
 	
 	jp = JavaProxy("Foo", [java.util.Random], methods) #applet.Applet], methods)
 	
-	print jp.makeClassFile()
+	print jast.Block(jp.dumpAll())
