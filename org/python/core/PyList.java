@@ -251,6 +251,18 @@ public class PyList extends PySequence implements InitModule
         return new PyList(newList);
     }
 
+    public PyObject __imul__(PyObject o) {
+        int l = length;
+        int count = o.__int__().getValue();
+
+        resize(l * count);
+
+        for (int i=0; i<count; i++) {
+            System.arraycopy(list, 0, list, i*l, l);
+        }
+        return this;
+    }
+
     public PyObject __add__(PyObject genericOther) {
         if (genericOther instanceof PyList) {
             PyList other = (PyList)genericOther;
@@ -370,6 +382,10 @@ public class PyList extends PySequence implements InitModule
         setslice(length, length, 1, o);
     }
 
+    public PyObject __iadd__(PyObject o) {
+        extend(o);
+        return this;
+    }
 
     /* Implementation is taken from Python 1.5 as written by Guido van
      * Rossum Port to Java is by Jim Hugunin.  This function will almost

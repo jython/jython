@@ -9,6 +9,7 @@ public class SimpleNode implements Node
     protected PythonGrammar parser;
     public int endLine, endColumn, beginLine, beginColumn;
     Object info;
+    public int aug_tmp1, aug_tmp2, aug_tmp3, aug_tmp4;
 
     public SimpleNode(int i) {
         id = i;
@@ -396,6 +397,28 @@ public class SimpleNode implements Node
             return visitor.Name(this);
         case PythonGrammarTreeConstants.JJTSTRING:
             return visitor.String(this);
+        case PythonGrammarTreeConstants.JJTAUG_PLUS:
+            return visitor.aug_plus(this);
+        case PythonGrammarTreeConstants.JJTAUG_MINUS:
+            return visitor.aug_minus(this);
+        case PythonGrammarTreeConstants.JJTAUG_MULTIPLY:
+            return visitor.aug_multiply(this);
+        case PythonGrammarTreeConstants.JJTAUG_DIVIDE:
+            return visitor.aug_divide(this);
+        case PythonGrammarTreeConstants.JJTAUG_MODULO:
+            return visitor.aug_modulo(this);
+        case PythonGrammarTreeConstants.JJTAUG_AND:
+            return visitor.aug_and(this);
+        case PythonGrammarTreeConstants.JJTAUG_OR:
+            return visitor.aug_or(this);
+        case PythonGrammarTreeConstants.JJTAUG_XOR:
+            return visitor.aug_xor(this);
+        case PythonGrammarTreeConstants.JJTAUG_LSHIFT:
+            return visitor.aug_lshift(this);
+        case PythonGrammarTreeConstants.JJTAUG_RSHIFT:
+            return visitor.aug_rshift(this);
+        case PythonGrammarTreeConstants.JJTAUG_POWER:
+            return visitor.aug_power(this);
         default:
             return null;
         }

@@ -241,6 +241,17 @@ TOKEN : /* OPERATORS */
 |       < EQGREATER: ">=" >
 |       < LESSGREATER: "<>" >
 |       < NOTEQUAL: "!=" >
+|       < PLUSEQ: "+=" >
+|       < MINUSEQ: "-=" >
+|       < MULTIPLYEQ: "*=" >
+|       < DIVIDEEQ: "/=" >
+|       < MODULOEQ: "%=" >
+|       < ANDEQ: "&=" >
+|       < OREQ: "|=" >
+|       < XOREQ: "^=" >
+|       < LSHIFTEQ: "<<=" >
+|       < RSHIFTEQ: ">>=" >
+|       < POWEREQ: "**=" >
 }
 
 TOKEN : /* KEYWORDS */
@@ -392,9 +403,23 @@ void simple_stmt() #void: {}
 void small_stmt() #void: {}
 {expr_stmt() | print_stmt()  | del_stmt() | pass_stmt() | flow_stmt() | import_stmt() | global_stmt() | exec_stmt() | assert_stmt() }
 
-//expr_stmt: testlist ('=' testlist)*
+//expr_stmt: testlist (augassign testlist | ('=' testlist)*)
 void expr_stmt(): {}
-{SmartTestList() (<EQUAL> SmartTestList())*}
+{ SmartTestList() (
+     <PLUSEQ> SmartTestList() #aug_plus(2)
+   | <MINUSEQ> SmartTestList() #aug_minus(2)
+   | <MULTIPLYEQ> SmartTestList() #aug_multiply(2)
+   | <DIVIDEEQ> SmartTestList() #aug_divide(2)
+   | <MODULOEQ> SmartTestList() #aug_modulo(2)
+   | <ANDEQ> SmartTestList() #aug_and(2)
+   | <OREQ> SmartTestList() #aug_or(2)
+   | <XOREQ> SmartTestList() #aug_xor(2)
+   | <LSHIFTEQ> SmartTestList() #aug_lshift(2)
+   | <RSHIFTEQ> SmartTestList() #aug_rshift(2)
+   | <POWEREQ> SmartTestList() #aug_power(2)
+   | (<EQUAL> SmartTestList())*
+   )
+}
 
 //print_stmt: 'print' (test ',')* [test]
 void print_stmt(): {}

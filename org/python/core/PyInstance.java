@@ -574,294 +574,415 @@ public class PyInstance extends PyObject
     // Unary ops
 
     /**
-       Implements the __hex__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __hex__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyString __hex__() {
         PyObject ret = invoke("__hex__");
-        if (ret instanceof PyString)
+        if (ret instanceof PyString) 
             return (PyString)ret;
         throw Py.TypeError("__hex__() should return a string");
     }
-        
+	
     /**
-       Implements the __oct__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __oct__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyString __oct__() {
         PyObject ret = invoke("__oct__");
-        if (ret instanceof PyString)
+        if (ret instanceof PyString) 
             return (PyString)ret;
         throw Py.TypeError("__oct__() should return a string");
     }
-        
+	
     /**
-       Implements the __int__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __int__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyInteger __int__() {
         PyObject ret = invoke("__int__");
-        if (ret instanceof PyInteger)
+        if (ret instanceof PyInteger) 
             return (PyInteger)ret;
         throw Py.TypeError("__int__() should return a int");
     }
-        
+	
     /**
-       Implements the __float__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __float__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyFloat __float__() {
         PyObject ret = invoke("__float__");
-        if (ret instanceof PyFloat)
+        if (ret instanceof PyFloat) 
             return (PyFloat)ret;
         throw Py.TypeError("__float__() should return a float");
     }
-        
+	
     /**
-       Implements the __long__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __long__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyLong __long__() {
         PyObject ret = invoke("__long__");
-        if (ret instanceof PyLong)
+        if (ret instanceof PyLong) 
             return (PyLong)ret;
         throw Py.TypeError("__long__() should return a long");
     }
-        
+	
     /**
-       Implements the __complex__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __complex__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyComplex __complex__() {
         PyObject ret = invoke("__complex__");
-        if (ret instanceof PyComplex)
+        if (ret instanceof PyComplex) 
             return (PyComplex)ret;
         throw Py.TypeError("__complex__() should return a complex");
     }
-        
+	
     /**
-       Implements the __pos__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __pos__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __pos__() {
         return invoke("__pos__");
     }
-        
+	
     /**
-       Implements the __neg__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __neg__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __neg__() {
         return invoke("__neg__");
     }
-        
+	
     /**
-       Implements the __abs__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __abs__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __abs__() {
         return invoke("__abs__");
     }
-        
+	
     /**
-       Implements the __invert__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __invert__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __invert__() {
         return invoke("__invert__");
     }
-        
+	
     // Binary ops
 
     /**
-       Implements the __add__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __add__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __add__(PyObject o) {
         return invoke_ex("__add__", o);
     }
-        
+	
     /**
-       Implements the __radd__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __radd__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __radd__(PyObject o) {
         return invoke_ex("__radd__", o);
     }
-        
+	
     /**
-       Implements the __sub__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __iadd__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __iadd__(PyObject o) {
+        PyObject ret = invoke_ex("__iadd__", o);
+        if (ret != null)
+            return ret;
+        return super.__iadd__(o);
+    }
+	
+    /**
+     * Implements the __sub__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __sub__(PyObject o) {
         return invoke_ex("__sub__", o);
     }
-        
+	
     /**
-       Implements the __rsub__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rsub__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rsub__(PyObject o) {
         return invoke_ex("__rsub__", o);
     }
-        
+	
     /**
-       Implements the __mul__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __isub__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __isub__(PyObject o) {
+        PyObject ret = invoke_ex("__isub__", o);
+        if (ret != null)
+            return ret;
+        return super.__isub__(o);
+    }
+	
+    /**
+     * Implements the __mul__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __mul__(PyObject o) {
         return invoke_ex("__mul__", o);
     }
-        
+	
     /**
-       Implements the __rmul__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rmul__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rmul__(PyObject o) {
         return invoke_ex("__rmul__", o);
     }
-        
+	
     /**
-       Implements the __div__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __imul__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __imul__(PyObject o) {
+        PyObject ret = invoke_ex("__imul__", o);
+        if (ret != null)
+            return ret;
+        return super.__imul__(o);
+    }
+	
+    /**
+     * Implements the __div__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __div__(PyObject o) {
         return invoke_ex("__div__", o);
     }
-        
+	
     /**
-       Implements the __rdiv__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rdiv__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rdiv__(PyObject o) {
         return invoke_ex("__rdiv__", o);
     }
-        
+	
     /**
-       Implements the __mod__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __idiv__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __idiv__(PyObject o) {
+        PyObject ret = invoke_ex("__idiv__", o);
+        if (ret != null)
+            return ret;
+        return super.__idiv__(o);
+    }
+	
+    /**
+     * Implements the __mod__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __mod__(PyObject o) {
         return invoke_ex("__mod__", o);
     }
-        
+	
     /**
-       Implements the __rmod__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rmod__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rmod__(PyObject o) {
         return invoke_ex("__rmod__", o);
     }
-        
+	
     /**
-       Implements the __divmod__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __imod__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __imod__(PyObject o) {
+        PyObject ret = invoke_ex("__imod__", o);
+        if (ret != null)
+            return ret;
+        return super.__imod__(o);
+    }
+	
+    /**
+     * Implements the __divmod__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __divmod__(PyObject o) {
         return invoke_ex("__divmod__", o);
     }
-        
+	
     /**
-       Implements the __rdivmod__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rdivmod__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rdivmod__(PyObject o) {
         return invoke_ex("__rdivmod__", o);
     }
-        
+	
     /**
-       Implements the __pow__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __pow__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __pow__(PyObject o) {
         return invoke_ex("__pow__", o);
     }
-        
+	
     /**
-       Implements the __rpow__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rpow__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rpow__(PyObject o) {
         return invoke_ex("__rpow__", o);
     }
-        
+	
     /**
-       Implements the __lshift__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __ipow__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __ipow__(PyObject o) {
+        PyObject ret = invoke_ex("__ipow__", o);
+        if (ret != null)
+            return ret;
+        return super.__ipow__(o);
+    }
+	
+    /**
+     * Implements the __lshift__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __lshift__(PyObject o) {
         return invoke_ex("__lshift__", o);
     }
-        
+	
     /**
-       Implements the __rlshift__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rlshift__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rlshift__(PyObject o) {
         return invoke_ex("__rlshift__", o);
     }
-        
+	
     /**
-       Implements the __rshift__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __ilshift__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __ilshift__(PyObject o) {
+        PyObject ret = invoke_ex("__ilshift__", o);
+        if (ret != null)
+            return ret;
+        return super.__ilshift__(o);
+    }
+	
+    /**
+     * Implements the __rshift__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rshift__(PyObject o) {
         return invoke_ex("__rshift__", o);
     }
-        
+	
     /**
-       Implements the __rrshift__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rrshift__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rrshift__(PyObject o) {
         return invoke_ex("__rrshift__", o);
     }
-        
+	
     /**
-       Implements the __and__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __irshift__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __irshift__(PyObject o) {
+        PyObject ret = invoke_ex("__irshift__", o);
+        if (ret != null)
+            return ret;
+        return super.__irshift__(o);
+    }
+	
+    /**
+     * Implements the __and__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __and__(PyObject o) {
         return invoke_ex("__and__", o);
     }
-        
+	
     /**
-       Implements the __rand__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rand__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rand__(PyObject o) {
         return invoke_ex("__rand__", o);
     }
-        
+	
     /**
-       Implements the __or__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __iand__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __iand__(PyObject o) {
+        PyObject ret = invoke_ex("__iand__", o);
+        if (ret != null)
+            return ret;
+        return super.__iand__(o);
+    }
+	
+    /**
+     * Implements the __or__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __or__(PyObject o) {
         return invoke_ex("__or__", o);
     }
-        
+	
     /**
-       Implements the __ror__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __ror__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __ror__(PyObject o) {
         return invoke_ex("__ror__", o);
     }
-        
+	
     /**
-       Implements the __xor__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __ior__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __ior__(PyObject o) {
+        PyObject ret = invoke_ex("__ior__", o);
+        if (ret != null)
+            return ret;
+        return super.__ior__(o);
+    }
+	
+    /**
+     * Implements the __xor__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __xor__(PyObject o) {
         return invoke_ex("__xor__", o);
     }
-        
+	
     /**
-       Implements the __rxor__ method by looking it up
-       in the instance's dictionary and calling it if it is found.
-    **/
+     * Implements the __rxor__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
     public PyObject __rxor__(PyObject o) {
         return invoke_ex("__rxor__", o);
+    }
+	
+    /**
+     * Implements the __ixor__ method by looking it up
+     * in the instance's dictionary and calling it if it is found.
+     **/
+    public PyObject __ixor__(PyObject o) {
+        PyObject ret = invoke_ex("__ixor__", o);
+        if (ret != null)
+            return ret;
+        return super.__ixor__(o);
     }
 }

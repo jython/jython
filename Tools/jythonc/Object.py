@@ -157,6 +157,9 @@ class PyObject:
 
     binop = compop
 
+    def aug_binop(self, code, op, y):
+        return self.domethod(code, op, y)
+
     def igetitem(self, code, index):
         return self.domethod(code, "__getitem__",
                              Object(jast.IntegerConstant(index), IntType))

@@ -8,6 +8,7 @@ import jast
 class BaseEvaluator:
     def __init__(self):
         self.globalnames = {}
+        self.augtemps = {}
         self.lineno = -1
         self.visitor = PythonVisitor(self)
 
@@ -28,6 +29,24 @@ class BaseEvaluator:
 
     def visit(self, node):
         return node.visit(self.visitor)
+
+    def getAugTmps(self, node):
+        tmps = self.augtemps[node]
+        for var in tmps:
+            self.freeTemp(var)
+        del self.augtemps[node]
+        return tmps
+            
+    def setAugTmps(self, node, stmts, *vars):
+        ret = []
+        for var in vars:
+            tmp, code = self.makeTemp(var)
+	    print stmts.__class__
+            stmts.append(code)
+            ret.append(tmp)
+        self.augtemps[node] = ret
+        return ret
+
 
     def suite(self, nodes):
         ret = []
@@ -82,6 +101,8 @@ class BaseEvaluator:
             raise TypeError, 'help, fancy lhs: %s' % node
 
     def set_list(self, seq, value):
+        if hasattr(self, 'AUG'):
+            raise SyntaxError, "augmented assign to tuple not possible"
         if len(seq) > 0 and seq[-1].id == JJTCOMMA:
             del seq[-1]
         n = len(seq)
@@ -95,21 +116,49 @@ class BaseEvaluator:
 
     def set_item(self, obj, index, value):
         if index.id == JJTSLICE:
-            start, stop, step = self.getSlice(index)
-            return self.visit(obj).setslice(start, stop, step, value)
-        return self.visit(obj).setitem(self.visit(index), value)
+            if hasattr(self, 'AUG'):
+                o, start, stop, step = self.getAugTmps(obj)
+            else:
+                o = self.visit(obj)
+                start, stop, step = self.getSlice(index)
+            return o.setslice(start, stop, step, value)
+
+        if hasattr(self, 'AUG'):
+            o, idx = self.getAugTmps(obj)
+        else:
+            o = self.visit(obj)
+            idx = self.visit(index)
+        return o.setitem(idx, value)
 
     def set_attribute(self, obj, name, value):
-        return self.visit(obj).setattr(name, value)
+        if hasattr(self, 'AUG'):
+            o, = self.getAugTmps(obj)
+        else:
+            o = self.visit(obj)
+        return o.setattr(name, value)
 
     def get_item(self, obj, index):
         if index.id == JJTSLICE:
             start, stop, step = self.getSlice(index)
-            return self.visit(obj).getslice(start, stop, step)
-        return self.visit(obj).getitem(self.visit(index))
+            o = self.visit(obj)
+
+            if hasattr(self, 'AUG'):
+                o, start, stop, step = self.setAugTmps(obj, self.AUG, 
+                             o, start, stop, step)
+            return o.getslice(start, stop, step)
+
+        idx = self.visit(index)
+        o = self.visit(obj)
+
+        if hasattr(self, 'AUG'):
+            o, idx = self.setAugTmps(obj, self.AUG, o, idx)
+        return o.getitem(idx)
 
     def get_attribute(self, obj, name):
-        return self.visit(obj).getattr(name)
+        o = self.visit(obj)
+        if hasattr(self, 'AUG'):
+            o, = self.setAugTmps(obj, self.AUG, o)
+        return o.getattr(name)
 
     def makeTemp(self, value):
         return value
@@ -134,6 +183,19 @@ class BaseEvaluator:
 
     def unary_op(self, name, x):
         return self.visit(x).unop(name)
+
+    def aug_binary_op(self, name, lhs, rhs):
+        tmp, code = self.makeTemp(self.visit(rhs))
+        stmts = [code]
+
+        self.AUG = stmts
+        l = self.visit(lhs)
+        result = l.aug_binop(name, tmp)
+        stmts.append(self.set(lhs, result))
+        del self.AUG
+        self.freeTemp(tmp)
+        
+        return stmts
 
     def compare_op(self, start, compares):
         x = self.visit(start)

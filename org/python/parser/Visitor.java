@@ -313,4 +313,52 @@ public class Visitor {
     public Object String(SimpleNode n) throws Exception {
         throw new ParseException("Unhandled Node: "+n);
     }
+
+    public Object augassign(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_plus(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_minus(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_multiply(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_divide(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_modulo(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_and(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_or(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_xor(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_lshift(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_rshift(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
+    public Object aug_power(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
 }

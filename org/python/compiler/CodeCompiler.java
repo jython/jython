@@ -16,6 +16,8 @@ public class CodeCompiler extends Visitor
     public static final int GET=0;
     public static final int SET=1;
     public static final int DEL=2;
+    public static final int AUGGET=3;
+    public static final int AUGSET=4;
 
     public static final Object DoFinally=new Integer(2);
 
@@ -105,6 +107,53 @@ public class CodeCompiler extends Visitor
             mode = GET;
         }
     }
+
+
+    private void saveAugTmps(SimpleNode node, int count) throws Exception {
+        if (count >= 4) {
+            node.aug_tmp4 = code.getLocal();
+            code.astore(node.aug_tmp4);
+        }
+        if (count >= 3) {
+            node.aug_tmp3 = code.getLocal();
+            code.astore(node.aug_tmp3);
+        }
+        if (count >= 2) {
+            node.aug_tmp2 = code.getLocal();
+            code.astore(node.aug_tmp2);
+        }
+        node.aug_tmp1 = code.getLocal();
+        code.astore(node.aug_tmp1);
+
+        code.aload(node.aug_tmp1);
+        if (count >= 2)
+            code.aload(node.aug_tmp2);
+        if (count >= 3)
+            code.aload(node.aug_tmp3);
+        if (count >= 4)
+            code.aload(node.aug_tmp4);
+    }
+
+
+    private void restoreAugTmps(SimpleNode node, int count) throws Exception {
+       code.aload(node.aug_tmp1);
+       code.freeLocal(node.aug_tmp1);
+       if (count == 1)
+           return;
+       code.aload(node.aug_tmp2);
+       code.freeLocal(node.aug_tmp2);
+       if (count == 2)
+           return;
+       code.aload(node.aug_tmp3);
+       code.freeLocal(node.aug_tmp3);
+       if (count == 3)
+           return;
+       code.aload(node.aug_tmp4);
+       code.freeLocal(node.aug_tmp4);
+       if (count == 4)
+           return;
+   }
+
 
     public void parse(SimpleNode node, Code code,
                       boolean fast_locals, String className,
@@ -288,6 +337,12 @@ public class CodeCompiler extends Visitor
     public Object expr_stmt(SimpleNode node) throws Exception {
         setline(node);
         int n = node.getNumChildren();
+        if (n == 1 && 
+              node.getChild(0).id >= PythonGrammarTreeConstants.JJTAUG_PLUS &&
+              node.getChild(0).id <= PythonGrammarTreeConstants.JJTAUG_POWER) {
+           node.getChild(0).visit(this);
+           return null;
+        }
 
         node.getChild(n-1).visit(this);
         if (n == 1) {
@@ -1188,6 +1243,76 @@ public class CodeCompiler extends Visitor
         return binaryop(node, "_pow");
     }
 
+
+    public Object aug_binaryop(SimpleNode node, String name) throws Exception {
+        //node.dump("aug_binaryop:");
+        node.getChild(1).visit(this);
+        int tmp = storeTop();
+
+        mode = AUGGET;
+        node.getChild(0).visit(this);
+
+        code.aload(tmp);
+
+        code.invokevirtual("org/python/core/PyObject", name,
+                 "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+        code.freeLocal(tmp);
+
+        temporary = storeTop();
+        mode = AUGSET;
+        node.getChild(0).visit(this);
+        mode = GET;
+
+        return null;
+    }
+
+    public Object aug_plus(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__iadd__");
+    }
+
+    public Object aug_minus(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__isub__");
+    }
+
+    public Object aug_multiply(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__imul__");
+    }
+
+    public Object aug_divide(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__idiv__");
+    }
+
+    public Object aug_modulo(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__imod__");
+    }
+
+    public Object aug_and(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__iand__");
+    }
+
+    public Object aug_or(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__ior__");
+    }
+
+    public Object aug_xor(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__ixor__");
+    }
+
+    public Object aug_lshift(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__ilshift__");
+    }
+
+    public Object aug_rshift(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__irshift__");
+    }
+
+    public Object aug_power(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__ipow__");
+    }
+
+
+
+
     public static void makeStrings(Code c, String[] names, int n)
         throws IOException
     {
@@ -1421,28 +1546,38 @@ public class CodeCompiler extends Visitor
 
     public int getslice, setslice, delslice;
     public Object Slice_Op(SimpleNode seq, SimpleNode node) throws Exception {
-        int old_mode = mode;
-        mode = GET;             
-        seq.visit(this);
-                
-        SimpleNode[] slice = new SimpleNode[3];
-        int n = node.getNumChildren();
-        int i=0;
-        for (int j=0; j<n; j++) {
-            SimpleNode child = node.getChild(j);
-            if (child.id == PythonGrammarTreeConstants.JJTCOLON)
-                i++;
-            else
-                slice[i] = child;
-        }
-        for (i=0; i<3; i++) {
-            if (slice[i] == null) {
-                code.aconst_null();
-            } else {
-                slice[i].visit(this);
+        if (mode == AUGSET) {
+            restoreAugTmps(node, 4);
+            mode = SET;
+        } else {
+            int old_mode = mode;
+            mode = GET;
+            seq.visit(this);
+
+            SimpleNode[] slice = new SimpleNode[3];
+            int n = node.getNumChildren();
+            int i=0;
+            for (int j=0; j<n; j++) {
+                SimpleNode child = node.getChild(j);
+                if (child.id == PythonGrammarTreeConstants.JJTCOLON)
+                    i++;
+                else
+                    slice[i] = child;
+            }
+            for (i=0; i<3; i++) {
+                if (slice[i] == null) {
+                    code.aconst_null();
+                } else {
+                    slice[i].visit(this);
+                }
+            }
+            mode = old_mode;
+
+            if (mode == AUGGET) {
+                saveAugTmps(node, 4);
+                mode = GET;
             }
         }
-        mode = old_mode;
 
         switch(mode) {
         case DEL:
@@ -1481,12 +1616,22 @@ public class CodeCompiler extends Visitor
         SimpleNode index = node.getChild(1);
         if (index.id == PythonGrammarTreeConstants.JJTSLICE)
             return Slice_Op(seq, index);
-                
-        int old_mode = mode;
-        mode = GET;             
-        seq.visit(this);
-        index.visit(this);
-        mode = old_mode;
+
+        if (mode == AUGSET) {
+            restoreAugTmps(node, 2);
+            mode = SET;
+        } else {
+            int old_mode = mode;
+            mode = GET;             
+            seq.visit(this);
+            index.visit(this);
+            mode = old_mode;
+
+            if (mode == AUGGET) {
+                saveAugTmps(node, 2);
+                mode = GET;
+            }
+        }
 
         switch(mode) {
         case DEL:
@@ -1520,13 +1665,24 @@ public class CodeCompiler extends Visitor
 
     public int getattr, delattr, setattr;
     public Object Dot_Op(SimpleNode node) throws Exception {
-        String name = getName(node.getChild(1));
-        int old_mode = mode;
-        mode = GET;
-        node.getChild(0).visit(this);
-        mode = old_mode;
 
-        code.ldc(name);
+        if (mode == AUGSET) {
+            restoreAugTmps(node, 2);
+            mode = SET;
+        } else {
+            String name = getName(node.getChild(1));
+            int old_mode = mode;
+            mode = GET;
+            node.getChild(0).visit(this);
+            mode = old_mode;
+            code.ldc(name);
+
+            if (mode == AUGGET) {
+                saveAugTmps(node, 2);
+                mode = GET;
+            }
+        }
+        
         switch(mode) {
         case DEL:
             if (mrefs.delattr == 0) {
@@ -1621,6 +1777,9 @@ public class CodeCompiler extends Visitor
 
     public int PyTuple_init, PyList_init, PyDictionary_init;
     public Object tuple(SimpleNode node) throws Exception {
+        if (mode ==AUGSET)
+            throw new ParseException(
+                      "augmented assign to tuple not possible", node);
         if (mode == SET) return seqSet(node);
         if (mode == DEL) return seqDel(node);
 
@@ -1642,6 +1801,9 @@ public class CodeCompiler extends Visitor
     }
 
     public Object list(SimpleNode node) throws Exception {
+        if (mode ==AUGSET)
+            throw new ParseException(
+                      "augmented assign to list not possible", node);
         if (mode == SET) return seqSet(node);
         if (mode == DEL) return seqDel(node);
 
@@ -1842,6 +2004,11 @@ public class CodeCompiler extends Visitor
             name = (String)node.getInfo();
         else
             name = getName(node);
+
+        if (mode == AUGGET) 
+            mode = GET;
+        else if (mode == AUGSET) 
+            mode = SET;
 
         switch (mode) {
         case GET:

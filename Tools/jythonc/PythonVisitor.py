@@ -226,6 +226,11 @@ class PythonVisitor(Visitor):
         return self.walker.for_stmt(index, sequence, body, else_body)
 
     def expr_stmt(self, node):
+        if node.getNumChildren() == 1:
+            n = node.getChild(0)
+            if n.id >= JJTAUG_PLUS and n.id <= JJTAUG_POWER:
+                return self.walker.visit(n)
+
         self.startnode(node)
         rhs = node.getChild(node.numChildren-1)
         return self.walker.expr_stmt(nodeToList(node)[:-1], rhs)
@@ -382,6 +387,23 @@ class PythonVisitor(Visitor):
     def pos_1op(self, node): return self.unop(node, 'pos')
     def not_1op(self, node): return self.unop(node, 'not')
     def str_1op(self, node): return self.unop(node, 'repr')
+
+    def aug_binaryop(self, node, name):
+        #self.startnode(node)
+        return self.walker.aug_binary_op(name, 
+                         node.getChild(0), node.getChild(1))
+
+    def aug_plus(self, node): return self.aug_binaryop(node, "__iadd__")
+    def aug_minus(self, node): return self.aug_binaryop(node, "__isub__")
+    def aug_multiply(self, node): return self.aug_binaryop(node, "__imul__")
+    def aug_divide(self, node): return self.aug_binaryop(node, "__idiv__")
+    def aug_modulo(self, node): return self.aug_binaryop(node, "__imod__")
+    def aug_and(self, node): return self.aug_binaryop(node, "__iand__")
+    def aug_or(self, node): return self.aug_binaryop(node, "__ior__")
+    def aug_xor(self, node): return self.aug_binaryop(node, "__ixor__")
+    def aug_lshift(self, node): return self.aug_binaryop(node, "__ilshift__")
+    def aug_rshift(self, node): return self.aug_binaryop(node, "__irshift__")
+    def aug_power(self, node): return self.aug_binaryop(node, "__ipow__")
 
     def getString(self, node):
         if node.id == JJTSTRING:
