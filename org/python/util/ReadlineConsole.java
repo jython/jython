@@ -25,7 +25,13 @@ public class ReadlineConsole extends InteractiveConsole {
             // Silently ignore errors during load of the native library.
             // Will use a pure java fallback.
         }
-        Readline.initReadline("jpython");
+
+        // hook into the builtins table so that clients like cmd.Cmd can
+        // also use readline.
+        Py.getSystemState().builtins.__setitem__("raw_input",
+              Py.newJavaFunc(this.getClass(), "_raw_input"));
+
+        Readline.initReadline("jython");
     }
 
 
@@ -38,14 +44,28 @@ public class ReadlineConsole extends InteractiveConsole {
      * This subclass implements the functionality using JavaReadline.
      **/
     public String raw_input(PyObject prompt) {
+        return _raw_input(new PyObject[] { prompt }, new String[0]);
+    }
+
+    /**
+     * Central point of dispatch to Readline library for all clients,
+     * whether the console itself or others like cmd.Cmd interpreters.
+     * Both of these uses come through here.
+     *
+     * @param prompt the prompt to be displayed at the beginning of line
+     * @return the user input
+     **/
+    public static String _raw_input(PyObject args[], String kws[]) {
+        ArgParser ap = new ArgParser("raw_input", args, kws, "prompt");
+        PyObject prompt = ap.getPyObject(0, new PyString(""));        
         try {
             String line = Readline.readline(
                             prompt==null ? "" : prompt.toString());
             return (line == null ? "" : line);
         } catch (java.io.EOFException eofe) {
-           throw new PyException(Py.EOFError);
+            throw new PyException(Py.EOFError);
         } catch (java.io.IOException e) {
-           throw new PyException(Py.IOError);
+            throw new PyException(Py.IOError);
         }
     }
 }
