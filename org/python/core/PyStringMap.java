@@ -238,6 +238,11 @@ public class PyStringMap extends PyObject
         
 
     public synchronized String toString() {
+        ThreadState ts = Py.getThreadState();
+        if (!ts.enterRepr(this)) {
+            return "{...}";
+        }
+
         String[] keyTable = keys;
         PyObject[] valueTable = values;
         int n = keyTable.length;
@@ -263,6 +268,7 @@ public class PyStringMap extends PyObject
         }
             
         buf.append("}");
+        ts.exitRepr(this);
         return buf.toString();
     }              
 
