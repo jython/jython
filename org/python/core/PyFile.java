@@ -1,16 +1,14 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-/*
-To do:
-- readlines(sizehint)
-- readinto(array)
-- modes w, a should disallow reading
-- what to do about buffer size?
-- isatty()
-- fileno() (defined, but always raises an exception, for urllib)
-- name, mode, closed should be read-only
-*/
+// To do:
+// - readlines(sizehint)
+// - readinto(array)
+// - modes w, a should disallow reading
+// - what to do about buffer size?
+// - isatty()
+// - fileno() (defined, but always raises an exception, for urllib)
+// - name, mode, closed should be read-only
 
 public class PyFile extends PyObject
 {
