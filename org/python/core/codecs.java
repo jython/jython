@@ -77,7 +77,7 @@ public class codecs {
         if (!import_encodings_called) {
             import_encodings_called = true;
             try {
-                imp.importName("encodings", true);
+                __builtin__.__import__("encodings");
             } catch (PyException exc) {
                 if (exc.type != Py.ImportError)
                     throw exc;

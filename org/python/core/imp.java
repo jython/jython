@@ -493,14 +493,10 @@ public class imp
      */
     public static void importOne(String mod, PyFrame frame) {
         //System.out.println("importOne(" + mod + ")");
-        PyObject module = getImportFunc(frame).__call__(
-            new PyObject[] {
-                Py.newString(mod),
-                frame.f_globals,
-                frame.f_locals,
-                Py.EmptyTuple
-            });
-
+        PyObject module = __builtin__.__import__(mod,
+                                                 frame.f_globals,
+                                                 frame.f_locals,
+                                                 Py.EmptyTuple);
         int dot = mod.indexOf('.');
         if (dot != -1) {
             mod = mod.substring(0, dot).intern();
@@ -515,14 +511,10 @@ public class imp
      */
     public static void importOneAs(String mod, String asname, PyFrame frame) {
         //System.out.println("importOne(" + mod + ")");
-        PyObject module = getImportFunc(frame).__call__(
-            new PyObject[] {
-                Py.newString(mod),
-                frame.f_globals,
-                frame.f_locals,
-                getStarArg()
-            });
-
+        PyObject module = __builtin__.__import__(mod,
+                                                 frame.f_globals,
+                                                 frame.f_locals,
+                                                 getStarArg());
         frame.setlocal(asname, module);
     }
         
@@ -549,13 +541,10 @@ public class imp
         for (int i=0; i<names.length; i++)
             pynames[i] = Py.newString(names[i]);
 
-        PyObject module = getImportFunc(frame).__call__(
-            new PyObject[] {
-                Py.newString(mod),
-                frame.f_globals,
-                frame.f_locals,
-                new PyTuple(pynames)
-            });
+        PyObject module = __builtin__.__import__(mod,
+                                                 frame.f_globals,
+                                                 frame.f_locals,
+                                                 new PyTuple(pynames));
         for (int i=0; i<names.length; i++) {
             PyObject submod = module.__findattr__(names[i]);
             if (submod == null)
@@ -578,11 +567,10 @@ public class imp
      */
     public static void importAll(String mod, PyFrame frame) {
         //System.out.println("importAll(" + mod + ")");
-        PyObject module = getImportFunc(frame).__call__(new PyObject[] {
-                Py.newString(mod),
-                frame.f_globals,
-                frame.f_locals,
-                getStarArg() } );
+        PyObject module = __builtin__.__import__(mod,
+                                                 frame.f_globals,
+                                                 frame.f_locals,
+                                                 getStarArg());
         PyObject names;
         if (module instanceof PyJavaPackage) names = ((PyJavaPackage)module).fillDir();
         else names = module.__dir__();
@@ -590,7 +578,8 @@ public class imp
         loadNames(names, module, frame.getf_locals());
     }
 
-    // if __all__ is present, things work properly under the assumption that names is sorted (__*__ names come first)
+    // if __all__ is present, things work properly under the assumption 
+    // that names is sorted (__*__ names come first)
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals)
     {
@@ -650,17 +639,5 @@ public class imp
         PyObject ret = loadFromPath(name, modName, path);
         modules.__setitem__(modName, ret);
         return ret;
-    }
-
-    private static PyObject __import__ = null;
-
-    private static PyObject getImportFunc(PyFrame frame) {
-        if (__import__ == null)
-            __import__ = Py.newString("__import__");
-        // Set up f_builtins if not already set
-        PyObject builtins = frame.f_builtins;
-        if (builtins == null)
-            builtins = Py.getSystemState().builtins;
-        return builtins.__getitem__(__import__);
     }
 }

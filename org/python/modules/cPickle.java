@@ -1990,28 +1990,9 @@ public class cPickle implements ClassDictInit {
 
 
     private static PyObject importModule(String name) {
-        PyFrame frame = Py.getFrame();
-        if (frame == null)
-            return null;
-        PyObject globals = frame.f_globals;
-
-        PyObject builtins = frame.f_builtins;
-        if (builtins == null)
-            builtins = Py.getSystemState().builtins;
-
         PyObject silly_list = new PyTuple(new PyString[] { 
             Py.newString("__doc__"),
         });
-
-        PyObject __import__ = builtins.__finditem__("__import__");
-        if (__import__ == null)
-            return null;
-
-        PyObject module = __import__.__call__(new PyObject[] {
-                Py.newString(name),
-                globals,
-                globals,
-                silly_list } );
-        return module;
+        return __builtin__.__import__(name, null, null, silly_list);
     }
 }
