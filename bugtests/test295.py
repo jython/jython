@@ -5,9 +5,5 @@
 import support
 
 import traceback 
-try:
-    traceback.extract_stack() 
-except AttributeError, msg:
-    raise support.TestWarning(msg)
-
+traceback.extract_stack() 
 
