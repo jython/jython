@@ -77,12 +77,14 @@ public interface PythonGrammarTreeConstants
   public int JJTCOMMA = 70;
   public int JJTCLASSDEF = 71;
   public int JJTARGLIST = 72;
-  public int JJTKEYWORD = 73;
-  public int JJTINT = 74;
-  public int JJTFLOAT = 75;
-  public int JJTCOMPLEX = 76;
-  public int JJTNAME = 77;
-  public int JJTSTRING = 78;
+  public int JJTEXTRAARGVALUELIST = 73;
+  public int JJTEXTRAKEYWORDVALUELIST = 74;
+  public int JJTKEYWORD = 75;
+  public int JJTINT = 76;
+  public int JJTFLOAT = 77;
+  public int JJTCOMPLEX = 78;
+  public int JJTNAME = 79;
+  public int JJTSTRING = 80;
 
 
   public String[] jjtNodeName = {
@@ -159,6 +161,8 @@ public interface PythonGrammarTreeConstants
     "Comma",
     "classdef",
     "arglist",
+    "ExtraArgValueList",
+    "ExtraKeywordValueList",
     "Keyword",
     "Int",
     "Float",
