@@ -9,13 +9,16 @@ public class re implements InitModule {
     }
     
     public void initModule(PyObject dict) {
-        dict.__setitem__("IGNORECASE", new PyInteger(Perl5Compiler.CASE_INSENSITIVE_MASK));
-        dict.__setitem__("I", new PyInteger(Perl5Compiler.CASE_INSENSITIVE_MASK));
-        dict.__setitem__("MULTILINE", new PyInteger(Perl5Compiler.MULTILINE_MASK));
+        dict.__setitem__("IGNORECASE",
+			 new PyInteger(Perl5Compiler.CASE_INSENSITIVE_MASK));
+        dict.__setitem__("I",
+			 new PyInteger(Perl5Compiler.CASE_INSENSITIVE_MASK));
+        dict.__setitem__("MULTILINE",
+			 new PyInteger(Perl5Compiler.MULTILINE_MASK));
         dict.__setitem__("M", new PyInteger(Perl5Compiler.MULTILINE_MASK));
-        dict.__setitem__("DOTALL", new PyInteger(Perl5Compiler.SINGLELINE_MASK));
+        dict.__setitem__("DOTALL",
+			 new PyInteger(Perl5Compiler.SINGLELINE_MASK));
         dict.__setitem__("S", new PyInteger(Perl5Compiler.SINGLELINE_MASK));
-        
         dict.__setitem__("VERBOSE", new PyInteger(0));
         dict.__setitem__("X", new PyInteger(0));
         dict.__setitem__("LOCALE", new PyInteger(0));
@@ -51,7 +54,8 @@ public class re implements InitModule {
         return search(pattern, string, 0);
     }
 
-    public static MatchObject search(String pattern, String string, int flags) {
+    public static MatchObject search(String pattern, String string, int flags)
+    {
         return cachecompile(pattern, flags).search(string);
     }
 
@@ -64,19 +68,25 @@ public class re implements InitModule {
         throw Py.TypeError("pattern must be string or RegexObject");
     }
 
-    public static PyString sub(PyObject pattern, PyObject repl, String string) {
+    public static PyString sub(PyObject pattern, PyObject repl, String string)
+    {
         return sub(pattern, repl, string, 0);
     }
     
-    public static PyString sub(PyObject pattern, PyObject repl, String string, int count) {
+    public static PyString sub(PyObject pattern, PyObject repl,
+			       String string, int count)
+    {
         return getPattern(pattern).sub(repl, string, count);
     }
 
-    public static PyTuple subn(PyObject pattern, PyObject repl, String string) {
+    public static PyTuple subn(PyObject pattern, PyObject repl, String string)
+    {
         return subn(pattern, repl, string, 0);
     }
     
-    public static PyTuple subn(PyObject pattern, PyObject repl, String string, int count) {
+    public static PyTuple subn(PyObject pattern, PyObject repl,
+			       String string, int count)
+    {
         return getPattern(pattern).subn(repl, string, count);
     }
 
