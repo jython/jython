@@ -103,6 +103,11 @@ public class PyJavaClass extends PyClass {
         setMethods(proxyClass);
     }
 
+    protected Class getProxyClass() {
+        initialize();
+        return proxyClass;
+    }
+
     private boolean initialized=false;
     private void initialize() {
         if (initialized) return;

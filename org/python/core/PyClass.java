@@ -40,6 +40,10 @@ public class PyClass extends PyObject {
 	    this();
 	    init(name, bases, dict);
 	}
+	
+	protected Class getProxyClass() {
+	    return proxyClass;
+	}
 
 	void init(String name, PyTuple bases, PyObject dict) {
 	    //System.out.println("bases: "+bases+", "+name.string);
@@ -52,7 +56,7 @@ public class PyClass extends PyObject {
 		    Vector interfaces = new Vector();
 		    Class baseClass = null;
     		for (int i=0; i<bases.list.length; i++) {
-    			Class previousProxy = ((PyClass)bases.list[i]).proxyClass;
+    			Class previousProxy = ((PyClass)bases.list[i]).getProxyClass();
     			if (previousProxy != null) {
     			    if (previousProxy.isInterface()) {
     			        interfaces.addElement(previousProxy);
@@ -180,7 +184,9 @@ public class PyClass extends PyObject {
 	        jm.build();
 	        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     		jm.classfile.write(bytes);
-    	    //bytes.writeTo(new java.io.FileOutputStream("c:\\jpython\\test\\proxy$"+__name__+".class"));
+    		//String filename = "c:\\jpython\\test\\"+__name__+"$"+(proxyNumber-1)+".class";
+    		//System.out.println("filename: "+filename);
+    	    //bytes.writeTo(new java.io.FileOutputStream("c:\\jpython\\test\\"+proxyName+".class"));
     		Class pc = BytecodeLoader.makeClass(jm.myClass, bytes.toByteArray());
 	        return pc;
     	} catch (Exception exc) {
