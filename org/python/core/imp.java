@@ -6,7 +6,7 @@ import java.util.Properties;
 
 public class imp {
     private static String[] builtinNames = new String[] {
-        "jarray", "math", "thread", "operator", "strop", "time",
+        "jarray", "math", "thread", "operator", "time",
         "os", "types", "py_compile", "codeop", "re", "code",
         "synchronize", "cPickle", "cStringIO",
     };
