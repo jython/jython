@@ -3,8 +3,12 @@
 """
 
 import support
+import java
 
 support.compileJava("classes/test336p/Data.java")
 support.compileJava("classes/test336p/data/MyData.java")
 
-from test336p.data import MyData
+try:
+    from test336p.data import MyData
+except java.lang.NoClassDefFoundError:
+    raise support.TestWarning("Should not fail")
