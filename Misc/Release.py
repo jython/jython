@@ -112,9 +112,9 @@ def rmdirhier(dirname):
 
 # preparations
 
-def make_jpython_jar(prepdir='.', withoro=1, jarname='jpython.jar'):
+def make_jpython_jar(withoro=1, jarname='jpython.jar'):
     # change dirs no manifest file, no zip compression
-    jarcmd = ['jar cvfM0', os.path.join(prepdir, jarname)]
+    jarcmd = ['jar cvfM0', jarname]
     jarcmd.append('-C dist')
     jarcmd.append('dummy')                        # JDK 1.2 jar bug workaround
     #
@@ -133,7 +133,7 @@ def make_jpython_jar(prepdir='.', withoro=1, jarname='jpython.jar'):
     os.system(cmd)
 
 
-def make_pylib_jar(prepdir='.'):
+def make_pylib_jar():
     # TBD: Jim only includes these files from the standard library.  Why?  I
     # guess every download byte counts!  I still don't like explicitly
     # including specific files; probably better to explicitly exclude those we 
@@ -182,7 +182,7 @@ def make_pylib_jar(prepdir='.'):
     for file in files:
         includep[file] = 1
     # glom up the jar command
-    jarcmd = ['jar cvfM', os.path.join(prepdir, PYLIB)]
+    jarcmd = ['jar cvfM', PYLIB]
     # add the __run__.py file
     jarcmd.append('-C dist/util')
     jarcmd.append('doesnotexist')                 # JDK 1.2 jar bug workaround
@@ -202,13 +202,13 @@ def make_pylib_jar(prepdir='.'):
     os.system(cmd)
 
 
-def make_jars(prepdir='.'):
+def make_jars():
     print 'making all-inclusive jar...'
-    make_jpython_jar(prepdir)
+    make_jpython_jar()
     print 'making jpython-only jar...'
-    make_jpython_jar(prepdir=prepdir, withoro=0, jarname='jpython-only.jar')
+    make_jpython_jar(withoro=0, jarname='jpython-only.jar')
     print 'making pylib jar...'
-    make_pylib_jar(prepdir)
+    make_pylib_jar()
 
 
 
@@ -250,10 +250,12 @@ def do_build(tagname):
     tagname = string.translate(tagname, trans, '.')
     print 'tagname:', tagname
     # make non-ORO distro
+    os.rename('export/LICENSE-ORO.txt', 'LICENSE.txt')
     os.system('cp jpython-only.jar export/jpython.jar')
     os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
     os.rename('JPython'+tagname+'.class', 'JPythonONLY'+tagname+'.class')
     # make full distribution
+    os.rename('LICENSE.txt', 'export/LICENSE.txt')
     os.unlink('export/jpython.jar')
     os.system('cp -f jpython.jar export')
     os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
@@ -263,6 +265,20 @@ def do_clean():
     rmdirhier('export')
     unlink_ex('jpython.jar')
     unlink_ex('jpython-only.jar')
+    # clean up the CVS/Entries file
+    os.rename('CVS/Entries', 'CVS/Entries.old')
+    infp = open('CVS/Entries.old')
+    outfp = open('CVS/Entries', 'w')
+    while 1:
+        line = infp.readline()
+        if not line:
+            break
+        if line[:8] == 'D/export':
+            continue
+        outfp.write(line)
+    infp.close()
+    outfp.close()
+    os.remove('CVS/Entries.old')
     unlink_ex(PYLIB)
 
 
