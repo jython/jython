@@ -84,8 +84,15 @@ class Namespace:
 
 
 class Package(Namespace):
+    _classes = {}
+    def __init__(self, mod, *args):
+        apply(Namespace.__init__, (self, mod)+args)
+        if isinstance(mod, PyJavaPackage):
+            classes = PyJavaPackage._unparsedAll._doget(self.mod)
+            if classes:
+                self._classes[self.name] = classes
     def getClasses(self):
-        return PyJavaPackage._unparsedAll._doget(self.mod)
+        return self._classes.get(self.name, None)
 
 
 
