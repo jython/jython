@@ -375,7 +375,7 @@ public final class Py
 
     public static void setBuiltinExceptions() {
         PyObject dict = PyJavaClass.lookup(
-            org.python.core.__builtin__.class).__dict__;
+            org.python.core.__builtin__.class).__getattr__("__dict__");
         dict.__setitem__("Exception", Py.Exception);
         dict.__setitem__("TypeError", Py.TypeError);
         dict.__setitem__("LookupError", Py.LookupError);
