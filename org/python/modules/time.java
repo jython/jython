@@ -262,12 +262,24 @@ public class time implements ClassDictInit
         });
     }
 
+    public static PyTuple localtime() {
+        return localtime(time$());
+    }
+
     public static PyTuple localtime(double secs) {
         return _timefields(secs, TimeZone.getDefault());
     }
 
+    public static PyTuple gmtime() {
+        return gmtime(time$());
+    }
+
     public static PyTuple gmtime(double secs) {
         return _timefields(secs, TimeZone.getTimeZone("GMT"));
+    }
+
+    public static String ctime() {
+        return ctime(time$());
     }
 
     public static String ctime(double secs) {
@@ -345,6 +357,10 @@ public class time implements ClassDictInit
         return yearstr.substring(yearstr.length()-2, yearstr.length());
     }
 
+    public static String asctime() {
+        return asctime(localtime());
+    }
+
     public static String asctime(PyTuple tup) {
         checkLocale();
         int day = item(tup, 6);
@@ -374,6 +390,10 @@ public class time implements ClassDictInit
     // TBD: should we accept 2 digit years?  should we make this attribute
     // writable but ignore its value?
     public static final int accept2dyear = 0;
+
+    public static String strftime(String format) {
+        return strftime(format, localtime());
+    }
 
     public static String strftime(String format, PyTuple tup) {
         checkLocale();
