@@ -370,38 +370,92 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public int print1, print2, print3;
+    public int print1, print2, print3, print4, print5, print6;
+
+    public Object print_ext(SimpleNode node) throws Exception {
+        // There better be exactly one child
+        node.getChild(0).visit(this);
+        return null;
+    }
 
     public Object print_stmt(SimpleNode node) throws Exception {
         setline(node);
         int n = node.getNumChildren();
-        for (int i=0; i<n-1; i++) {
-            node.getChild(i).visit(this);
+        // Extended print statement assumes there's at least one child
+        // node, otherwise a syntax error should have been raised.
+        int tmp = -1;
+        int printcomma, printlnv, println;
+        int i = 0, nochildren = 0;
+        boolean printext = false;
+
+        if (node.getNumChildren() > 0 &&
+            node.getChild(0).id == PythonGrammarTreeConstants.JJTPRINT_EXT)
+        {
+            printext = true;
+            node.getChild(0).visit(this);
+            tmp = storeTop();
+            i = 1;
+            nochildren = 1;
+            if (mrefs.print4 == 0) {
+                mrefs.print4 = pool.Methodref(
+                    "org/python/core/Py", "printComma",
+                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+            }
+            printcomma = mrefs.print4;
+            if (mrefs.print5 == 0) {
+                mrefs.print5 = pool.Methodref(
+                    "org/python/core/Py", "println",
+                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+            }
+            println = mrefs.print5;
+            if (mrefs.print6 == 0) {
+                mrefs.print6 = pool.Methodref(
+                    "org/python/core/Py", "printlnv",
+                    "(Lorg/python/core/PyObject;)V");
+            }
+            printlnv = mrefs.print6;
+        }
+        else {
             if (mrefs.print1 == 0) {
                 mrefs.print1 = pool.Methodref(
                     "org/python/core/Py", "printComma",
                     "(Lorg/python/core/PyObject;)V");
             }
-            code.invokestatic(mrefs.print1);
-        }
-        if (node.getNumChildren() == 0) {
+            printcomma = mrefs.print1;
+            if (mrefs.print2 == 0) {
+                mrefs.print2 = pool.Methodref(
+                    "org/python/core/Py", "println",
+                    "(Lorg/python/core/PyObject;)V");
+            }
+            println = mrefs.print2;
             if (mrefs.print3 == 0) {
-                mrefs.print3 = pool.Methodref("org/python/core/Py",
-                                              "println", "()V");
+                mrefs.print3 = pool.Methodref(
+                    "org/python/core/Py",
+                    "println", "()V");
             }
-            code.invokestatic(mrefs.print3);
-
-        } else {
+            printlnv = mrefs.print3;
+        }
+        for (; i < n-1; i++) {
+            if (printext)
+                code.aload(tmp);
+            node.getChild(i).visit(this);
+            code.invokestatic(printcomma);
+        }
+        if (node.getNumChildren() == nochildren) {
+            if (printext)
+                code.aload(tmp);
+            code.invokestatic(printlnv);
+        }
+        else {
             if (node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA) {
+                if (printext)
+                    code.aload(tmp);
                 node.getChild(n-1).visit(this);
-                if (mrefs.print2 == 0) {
-                    mrefs.print2 = pool.Methodref(
-                        "org/python/core/Py", "println",
-                        "(Lorg/python/core/PyObject;)V");
-                }
-                code.invokestatic(mrefs.print2);
+                code.invokestatic(println);
             }
         }
+        if (printext)
+            code.freeLocal(tmp);
         return null;
     }
 
