@@ -207,12 +207,8 @@ abstract public class PySequence extends PyObject {
 	}
 
 	public PyObject __mul__(PyObject count) {
-		if (count instanceof PyInteger) {
-		    int value = ((PyInteger)count).getValue();
-			return repeat(value >= 0 ? value : 0);
-		} else {
-			throw Py.TypeError("can't multiply sequence with non-int");
-		}
+	    int repeats = Py.py2int(count, "can't multiply sequence with non-int");
+	    return repeat(repeats >= 0 ? repeats : 0);
 	}
 
 	public PyObject __rmul__(PyObject count) {

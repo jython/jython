@@ -835,13 +835,18 @@ public final class Py {
 		if (i == null) throw Py.TypeError("integer required");
 		return i.shortValue();
 	}
+	
 	public static int py2int(PyObject o) {
-		if (o instanceof PyInteger) return (int)((PyInteger)o).getValue();
-
-		Integer i = (Integer)o.__tojava__(Integer.TYPE);
-		if (i == null) throw Py.TypeError("integer required");
-		return i.intValue();
+	    return py2int(o, "integer required");
 	}
+	
+	public static int py2int(PyObject o, String msg) {
+		if (o instanceof PyInteger) return (int)((PyInteger)o).getValue();
+        Object obj = o.__tojava__(Integer.TYPE);
+        if (obj == Py.NoConversion) throw Py.TypeError(msg);
+        return ((Integer)obj).intValue();
+	}
+	
 	public static long py2long(PyObject o) {
 		if (o instanceof PyInteger) return (long)((PyInteger)o).getValue();
 
