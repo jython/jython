@@ -417,7 +417,7 @@ public class SRE_STATE {
 
         case SRE_OP_NOT_LITERAL_IGNORE:
             /* repeated non-literal */
-            chr = pattern[1];
+            chr = pattern[pidx+1];
             //TRACE(pidx, ptr, "COUNT NOT_LITERAL_IGNORE " + (int) chr);
             while (ptr < end && lower(str[ptr]) != chr)
                 ptr++;
