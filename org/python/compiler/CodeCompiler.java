@@ -104,6 +104,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public void set(SimpleNode node) throws Exception {
         int tmp = storeTop();
         set(node, tmp);
+        code.aconst_null();
+        code.astore(tmp);
         code.freeLocal(tmp);
     }
 
