@@ -15,6 +15,7 @@ xx-xxx-2001 Jython 2.1 alpha 1
    - Added the "new" module
    - Added a PyServlet class to the util package.
    - Warning framework (pep-0230).
+   - Added sys.add_classdir and sys.add_extdir.
 
   Bug fixes.
    - Allow self referencing adapters to be collected when using weak
