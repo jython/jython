@@ -10,6 +10,7 @@ options
 //    DEBUG_PARSER = true;
 //    DEBUG_TOKEN_MANAGER = true;
     USER_CHAR_STREAM = true;
+    UNICODE_INPUT = true;
 }
 
 
