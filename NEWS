@@ -1,4 +1,36 @@
-JPython NEWS
+Jython NEWS
+
+xx-Nov-2000 Jython 2.0 alpha 1
+
+  New features.
+    - Integrate the free ORO regular expression matcher from the apache
+      project.
+
+  CPython2.0 compatibility, including 
+    - List comprehension.
+    - Extended call syntax.
+    - Extended print statement
+    - Augmented assignment.
+    - Unicode support libraries and codecs.
+    - sre unicode regular expression.
+
+  Some backward incompatibility is introduced:
+    - The user configuration file is now called <user.home>/.jython
+    - Text files will pass data read and written through the default
+      codecs for the JVM. Binary files will write only the lower eight
+      bits of each unicode character.
+    - arrays passed to java code will no longer autocoerce just 
+      because the elements can be autocoerced.
+    - The precedence of java loading have changed. Now the sys.path
+      is searched for python modules before the CLASSPATH and sys.path
+      is searched for java class and java packages.
+
+  Bug fixes.
+    - Many, including the errata.
+
+  Improved CPython 2.0 compatibility
+    - codecs module
+    - sha module.
 
 26-Jan-2000 JPython 1.1 final released
 
