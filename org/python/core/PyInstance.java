@@ -26,6 +26,8 @@ public class PyInstance extends PyObject
         PyClass pyc = (PyClass)mod.__getattr__(name.intern());
 
         __class__ = pyc;
+        if (javaProxy != null)
+            ((PyProxy) javaProxy)._setPySystemState(Py.getSystemState());
     }
     
     private void writeObject(java.io.ObjectOutputStream out)

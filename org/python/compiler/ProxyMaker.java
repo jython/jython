@@ -578,7 +578,7 @@ public class ProxyMaker
         // implement PyProxy interface
         classfile.addField("__systemState",
                            "Lorg/python/core/PySystemState;",
-                           Modifier.PROTECTED);
+                           Modifier.PROTECTED | Modifier.TRANSIENT);
 
         // setProxy method
         code = classfile.addMethod("_setPySystemState",

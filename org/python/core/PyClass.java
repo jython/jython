@@ -1,6 +1,7 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 import java.util.Vector;
+import java.io.Serializable;
 
 public class PyClass extends PyObject
 {
@@ -29,7 +30,11 @@ public class PyClass extends PyObject
     protected Class proxyClass;
 
     public static PyClass __class__;
-    
+
+    // Store all proxies (by name) which implements Serializable.
+    public static java.util.Hashtable serializableProxies =
+                                       new java.util.Hashtable();
+
     PyClass(boolean fakeArg) {
         super(fakeArg);
         proxyClass = null;
@@ -62,13 +67,16 @@ public class PyClass extends PyObject
         __dict__ = dict;
 
         findModule(dict);
-                
+        boolean serializable = false;
+
         if (proxyClass == null) {
             Vector interfaces = new Vector();
             Class baseClass = null;
             for (int i=0; i<bases.list.length; i++) {
                 Class previousProxy = ((PyClass)bases.list[i]).getProxyClass();
                 if (previousProxy != null) {
+                    if (Serializable.class.isAssignableFrom(previousProxy))
+                        serializable = true;
                     if (previousProxy.isInterface()) {
                         interfaces.addElement(previousProxy);
                     } else {
@@ -84,8 +92,15 @@ public class PyClass extends PyObject
                 }
             }
             if (baseClass != null || interfaces.size() != 0) {
+                String proxyName = __name__;
+                if (serializable)
+                    proxyName = dict.__finditem__("__module__").toString() +
+                                       "$" + __name__;
                 proxyClass = MakeProxies.makeProxy(baseClass, interfaces,
-                                                   __name__, __dict__);
+                                                   proxyName, __dict__);
+                if (serializable) {
+                    serializableProxies.put(proxyName, proxyClass);
+                }
             }
         }
         
