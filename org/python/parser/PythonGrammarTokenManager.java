@@ -16,6 +16,7 @@ public class PythonGrammarTokenManager implements PythonGrammarConstants
     boolean interactive = false;
     boolean compound = false;
     public boolean forcedNewline = false;
+    public boolean generator_allowed = false;
 
     static Token addDedent(Token previous) {
         Token t = new Token();
@@ -52,6 +53,10 @@ public class PythonGrammarTokenManager implements PythonGrammarConstants
                     t.kind = NEWLINE;
                     t.image = "<FORCENL>";
                 }
+            }
+        } else if (t.kind == YIELD) {
+            if (!generator_allowed) {
+                t.kind = NAME;
             }
         }
     }
@@ -2966,7 +2971,7 @@ final void TokenLexicalActions(Token matchedToken)
                 matchedToken.kind=INDENT;
                 matchedToken.image = "<INDENT>";
             }
-            else {
+            else if (level > 0) {
                 Token t = matchedToken;
                 level -= 1;
                 while (level > 0 && indent < indentation[level]) {
