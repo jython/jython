@@ -1,5 +1,10 @@
 JPython NEWS
 
+26-Jan-2000 JPython 1.1 final released
+
+  - Only one small CPython compatibility patch to os.mkdir() and
+    os.makedirs() -- optional `mode' argument, which is ignored.
+
 21-Jan-2000 JPython 1.1 release candidate 1 released
 
   New JPython features and bug fixes
