@@ -14,6 +14,8 @@ def test(name, input, output, *args):
         value = apply(f, (input,) + args)
     except:
          value = sys.exc_type
+    if value <> output:
+        print 'value=', value, ', output=', output
     assert value == output
 
 test('atoi', " 1 ", 1)
