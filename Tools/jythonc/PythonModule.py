@@ -1,7 +1,7 @@
 import jast
 import java
 from PythonVisitor import Arguments
-import string
+import string, os
 
 """
 class foo
@@ -180,15 +180,30 @@ defaultProps = {
 	"python.options.showJavaExceptions": "true",
 }
 
+
 class PythonModule:
+	def addjavaclass(self, name):
+		if self.package is not None:
+			name = self.package + '.' + name
+		self.javaclasses.append(name)
+
+	def addinnerclass(self, name):
+		self.addjavaclass(self.name+'$'+name)
+
 	def __init__(self, name, filename="<unknown>", packages = [], properties=defaultProps):
+		package = None
+		dot = name.rfind('.')
+		if dot != -1:
+			package = name[:dot]
+			name = name[dot+1:]
+			
 		self.name = name
 		self.filename = filename
 		self.superclass = java.lang.Object
 		self.interfaces = []
 		self.temps = []
 		
-		self.package = None
+		self.package = package
 		
 		self.javamain = 1
 
@@ -206,6 +221,9 @@ class PythonModule:
 		self.pyinner = PythonInner(self)
 		self.javaproxy = None
 		self.frozen = 1
+		
+		self.javaclasses = []
+		self.addjavaclass(self.name)
 		
 	def getFrozen(self):
 		if self.frozen:
@@ -289,7 +307,10 @@ class PythonModule:
 
 	def dumpInnerClasses(self):
 		ret = [self.pyinner.makeClass()]
+		self.addinnerclass(self.pyinner.name)
+		
 		for inner in self.innerClasses:
+			self.addinnerclass(inner.name)
 			ret.append(inner.makeClass())
 		return ret
 		
@@ -322,9 +343,18 @@ class PythonModule:
 	def dump(self, directory):
 		cf = self.makeClassFile()
 		sf = jast.Output.SourceFile(self.name)
-		cf.writeSource(sf)
+		if self.package is not None:
+			pack = apply(os.path.join, self.package.split('.'))
+			directory = os.path.join(directory, pack)
+		if not os.path.exists(directory):
+			os.makedirs(directory)
+		try:
+			cf.writeSource(sf)
+		except:
+			print string.join(sf.text, '')
+			raise
 		sf.dump(directory)
-		return cf
+		return os.path.join(directory, self.name+'.java')
 
 if __name__ == '__main__':
 	pm = PythonModule("baz")

@@ -29,6 +29,42 @@ class BaseEvaluator:
 			ret.append(self.visit(node))
 		return ret
 
+	def del_stmt(self, nodes):
+		stmts = []
+		for node in nodes:
+			stmts.append(self.delete(node))
+		return stmts
+
+
+	def delete(self, node):
+		if node.id == JJTNAME:
+			return self.del_name(node.getInfo())
+		elif node.id == JJTLIST or node.id == JJTTUPLE:
+			return self.del_list(nodeToList(node))
+		elif node.id == JJTINDEX_OP:
+			return self.del_item(node.getChild(0), 
+					node.getChild(1))
+		elif node.id == JJTDOT_OP:
+			return self.del_attribute(node.getChild(0),
+					node.getChild(1).getInfo())	
+		else:
+			raise TypeError, 'help, fancy lhs: %s' % node
+
+
+
+	def del_list(self, seq):
+		return self.del_stmt(seq)
+
+	def del_item(self, obj, index):
+		if index.id == JJTSLICE:
+			start, stop, step = self.getSlice(index)
+			return self.visit(obj).delslice(start, stop, step)
+		return self.visit(obj).delitem(self.visit(index))
+		
+	def del_attribute(self, obj, name):
+		return self.visit(obj).delattr(name)
+
+
 	def set(self, node, value):
 		if node.id == JJTNAME:
 			return self.set_name(node.getInfo(), value)
@@ -142,6 +178,7 @@ class BaseEvaluator:
 	def importfrom_stmt(self, top, names):
 		module = self.get_module(top, 1)
 		if names == '*':
+			print 'import * from', module
 			names = module.dir()
 		ret = []
 		for name in names:

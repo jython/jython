@@ -117,7 +117,10 @@ def printNames(heading, dict):
 
 
 class Compiler:
-	def __init__(self):
+	def __init__(self, javapackage=None, deep = 1, skip=(), 
+			include=('org.python.modules', 'com.oroinc.text.regex')):
+		self.javapackage = javapackage
+		self.deep = deep
 		self.packages = {}
 		self.events = {}
 		self.depends = {}
@@ -125,9 +128,12 @@ class Compiler:
 		self.javasources = []
 		self.files = []
 		self.javaclasses = []
+		self.javadepends = {}
+		self.pypackages = {}
 		PyObject.attributes = {}
-		
-		self.deep = 1
+		self.skip = skip
+		self.dependencies = {}
+		self.include = include
 		
 	def write(self, msg):
 		print msg
@@ -143,6 +149,11 @@ class Compiler:
 		self.modules[filename] = mod
 
 	def compile(self, data, filename, name):
+		if self.javapackage is not None:
+			name = self.javapackage+'.'+name
+			
+		data = "__file__=%s\n"%repr(filename)+data+"\n\n"
+
 		mod = PythonModule(name, filename)
 		fact = ObjectFactory()
 		pi = SimpleCompiler(mod, fact)
@@ -154,25 +165,53 @@ class Compiler:
 
 		return mod
 		
+	def addJavaClass(self, name, parent):
+		#print 'add java class', name
+		
+		for package in self.include:
+			if name[:len(package)+1] == package+'.':
+				ps = self.javadepends.get(name, [])
+				ps.append(parent)
+				if len(ps) == 1:
+					self.javadepends[name] = ps
+				
+	def addDependency(self, m, attrs, mod):
+		if m is None: return
+		
+		if isinstance(m, ImportName.Package):
+			self.packages[m.name] = 1
+		elif isinstance(m, ImportName.Module):
+			if m.file is None:
+				file = os.path.join(m.path[0], '__init__.py')
+				name = m.name+'.__init__'
+				self.depends[file] = name
+				self.pypackages[m.path[0]] = m.name
+			else:
+				self.depends[m.file] = m.name
+		elif isinstance(m, ImportName.JavaClass):
+			m.addEvents(attrs, self.events, mod.name)
+			self.addJavaClass(m.name, mod.name)
+		
+		if self.dependencies.has_key(m): return
+		self.dependencies[m] = 1
+		for depend in m.getDepends():
+			#print 'depends on', depend
+			self.addDependency(depend, attrs, mod)
+
 	def addDependencies(self, mod):
 		attrs = PyObject.attributes
 		PyObject.attributes = {}
 		#print '  attrs', attrs.keys()
 		for name in mod.imports.keys():
+			#print '  depends', name
 			m = ImportName.lookupName(name)
-			#print '    depend', name, m
-			#if hasattr(m, 'reference'):
-			#	m = m.reference
-			if isinstance(m, ImportName.Package):
-				self.packages[name] = 1
-			elif isinstance(m, ImportName.Module):
-				self.depends[m.file] = name
-			elif isinstance(m, ImportName.JavaClass):
-				m.addEvents(attrs, self.events, mod.name)
+			self.addDependency(m, attrs, mod)				
 				
 		if self.deep:
 			for filename, name in self.depends.items():
 				#self.write('%s requires %s' % (mod.name, name))
+				if name in self.skip:
+					self.write('  %s skipping %s' % (mod.name, name))
 				self.compilefile(filename, name)
 
 	def filterpackages(self):
@@ -186,7 +225,7 @@ class Compiler:
 			if prefixes.has_key(name):
 				del self.packages[name]
 	
-	def processModule(self, mod):
+	def processModule(self, mod, outdir):
 		self.write('  %s module' % mod.name)
 		proxyClasses = []
 		mainProxy = None
@@ -204,23 +243,24 @@ class Compiler:
 
 		mod.packages = self.packages.keys()	
 		specialClasses = {}
+		pkg = mod.package
+		if pkg is None: pkg = ""
+		else: pkg = pkg+'.'
+		
 		if mainProxy is not None:
 			mod.javaproxy = mainProxy
-			specialClasses[mod.name+'.'+mainProxy.name] = mod.name
+			specialClasses[mod.name+'.'+mainProxy.name] = pkg+mod.name
 
 		for proxy in proxyClasses:
 			proxy.modifier = "public static"
 			mod.innerClasses.append(proxy)
-			specialClasses[mod.name+'.'+proxy.name] = mod.name+'$'+proxy.name
-			self.javaclasses.append(mod.name+'$'+proxy.name)
+			specialClasses[mod.name+'.'+proxy.name] = pkg+mod.name+'$'+proxy.name
 
 		mod.specialClasses = specialClasses
 		
-		mod.dump(outdir)
-		self.javaclasses.append(mod.name)
-		self.javaclasses.append(mod.name+'$'+mod.pyinner.name)
-		self.javasources.append(os.path.join(outdir, mod.name+".java"))
-
+		self.javasources.append(mod.dump(outdir))		
+		self.javaclasses.extend(mod.javaclasses)
+		
 	def displayPackages(self):
 		print
 		print 'Required packages:'
@@ -242,7 +282,7 @@ class Compiler:
 			
 		self.write('\nCreating .java files:')
 		for filename, mod in self.modules.items():
-			self.processModule(mod)
+			self.processModule(mod, outdir)
 			
 		self.java2class()
 	
@@ -256,6 +296,25 @@ class Compiler:
 		org.python.compiler.AdapterMaker.makeAdapter(proxy, os)
 		filename = writeclass(outdir, 'org.python.proxies.'+proxy+'$Adapter', os)
 		self.javaclasses.append('org.python.proxies.'+proxy+'$Adapter')
+
+	def trackJavaDependencies(self):
+		if len(self.javadepends) == 0: []
+		
+		from depend import depends
+		done = {}
+		self.write('Tracking java dependencies:')
+		indent = 1
+		while len(done) < len(self.javadepends):
+			for name, parents in self.javadepends.items():
+				if done.has_key(name): continue
+				self.write(('  '*indent)+name) #'%s required by %s' % (name, string.join(parents, ', ')))
+				ze, jcs = depends(name)
+				done[name] = ze
+				for jc in jcs:
+					self.addJavaClass(jc, name)
+			#print len(done), len(self.javadepends)
+			indent = indent+1
+		return done.values()
 
 
 from java.io import *

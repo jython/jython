@@ -197,6 +197,17 @@ class PyObject:
 		else:
 			return self.domethod(code, "invoke", name, PyObjectArray(args))
 		
+
+	def doraise(self, code, exc_value=None, exc_traceback=None):
+		args = [code]
+		if exc_value is not None:
+			args.append(exc_value.asAny())
+		if exc_traceback is not None:
+			args.append(exc_traceback.asAny())
+
+		return jast.Throw(jast.InvokeStatic("Py", "makeException", args))
+
+
 	def mergeWith(self, other):
 		# In simplest world, all types can be merged with each other
 		return self

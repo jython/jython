@@ -1,6 +1,7 @@
 from java.util.zip import *
 from java.io import *
 import string, os, jarray
+from util import lookup
 
 def copy(instream, outstream):
 	data = jarray.zeros(1024*4, 'b')
@@ -8,20 +9,13 @@ def copy(instream, outstream):
 		if instream.available() == 0: break
 		n = instream.read(data)
 		if n == -1: break
-		outstream.write(data, 0, n)	
-
-def lookup(name):
-	names = name.split('.')
-	top = __import__(names[0])
-	for name in names[1:]:
-		top = getattr(top, name)
-	return top
-
+		outstream.write(data, 0, n)
 
 class JavaArchive:
 	def __init__(self, packages=[]):
 		self.files = []
 		self.classes = []
+		self.entries = []
 		self.packages = packages
 		
 	def addFile(self, rootdir, filename):
@@ -31,6 +25,9 @@ class JavaArchive:
 		filename = apply(os.path.join, classname.split('.'))
 		self.addFile(rootdir, filename+'.class')
 		
+	def addEntry(self, entry):
+		self.entries.append(entry)
+
 	def addManifest(self, lines): pass
 
 	def dumpFiles(self):
@@ -41,6 +38,13 @@ class JavaArchive:
 			self.zipfile.putNextEntry(ZipEntry(outfile))
 			copy(instream, self.zipfile)
 			instream.close()
+			
+		for entry in self.entries:
+			outfile = string.join(entry.classname.split('.'), '/')+'.class'
+			instream = entry.getInputStream()
+			self.zipfile.putNextEntry(ZipEntry(outfile))
+			copy(instream, self.zipfile)
+			instream.close()			
 			
 		for package, skiplist in self.packages:
 			self.addPackage(package, skiplist)

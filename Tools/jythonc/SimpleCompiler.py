@@ -32,6 +32,10 @@ class Reference:
 			#PyObject(self.getCode(), None)
 		return self.setCode(value)
 
+	def delValue(self):
+		#self.value = None
+		return self.delCode()
+
 
 class DynamicIntReference(Reference):
 	def init(self):
@@ -43,12 +47,19 @@ class DynamicIntReference(Reference):
 	def setCode(self, value):
 		return jast.Invoke(self.iframe, "setlocal", (self.ivalue, value.asAny()))
 
+	def delCode(self):
+		return jast.Invoke(self.iframe, "dellocal", (self.ivalue,))
+
+
 class DynamicStringReference(Reference):
 	def init(self):
 		self.ivalue = jast.StringConstant(self.name)
 		
 	def getCode(self):
 		return jast.Invoke(self.iframe, "getname", (self.ivalue,))
+		
+	def delCode(self):
+		return jast.Invoke(self.iframe, "delname", (self.ivalue,))
 		
 	def setCode(self, value):
 		return jast.Invoke(self.iframe, "setlocal", (self.ivalue, value.asAny()))
@@ -60,6 +71,9 @@ class DynamicGlobalStringReference(Reference):
 		
 	def getCode(self):
 		return jast.Invoke(self.iframe, "getglobal", (self.ivalue,))
+				
+	def delCode(self):
+		return jast.Invoke(self.iframe, "delglobal", (self.ivalue,))
 		
 	def setCode(self, value):
 		return jast.Invoke(self.iframe, "setglobal", (self.ivalue, value.asAny()))
@@ -122,7 +136,14 @@ class LocalFrame:
 			return self.globalNamespace.getname(self, name)
 		ref = self.getReference(name)
 		return ref.getValue()
-		
+	
+	def delname(self, name):
+		if self.globals.has_key(name):
+			return self.globalNamespace.delname(self, name)
+		ref = self.getReference(name)
+		return ref.delValue()
+
+	
 	def setname(self, name, value):
 		if self.globals.has_key(name):
 			return self.globalNamespace.setname(self, name, value)
@@ -172,6 +193,10 @@ class BasicGlobals:
 		self.newReference = newReference
 		self.parent = parent
 		
+	def delname(self, frame, name):
+		ref = self.getReference(frame, name)
+		return ref.delValue()		
+
 	def getname(self, frame, name):
 		ref = self.getReference(frame, name)
 		return ref.getValue()
@@ -248,12 +273,16 @@ class SimpleCompiler(BaseEvaluator):
 	def set_name(self, name, value):
 		return self.frame.setname(name, value)
 		
+	def del_name(self, name):
+		return self.frame.delname(name)
+		
 	def name_const(self, name):
 		return self.frame.getname(name)
 
 	def global_stmt(self, names):
 		for name in names:
 			self.frame.addglobal(name)
+		return jast.SimpleComment('global '+string.join(names, ','))
 
 	def get_module(self, names, top=0):
 		ret = self.factory.importName(names[0])
@@ -275,13 +304,22 @@ class SimpleCompiler(BaseEvaluator):
 		return ret
 
 
-	def and_op(self, x, y):
+	def bool_op(self, x, y, swap=0):
 		tmp = self.frame.gettemp("PyObject")
 		test = jast.Invoke(jast.Set(tmp, self.visit(x).asAny()), "__nonzero__", [])
-		op = self.factory.makePyObject(jast.TriTest(test, tmp, self.visit(y).asAny()))
+		yes, no = tmp, self.visit(y).asAny()
+		if swap: yes, no = no, yes
+		
+		op = self.factory.makePyObject(jast.TriTest(test, yes, no))
 		self.frame.freetemp(tmp)
 		return op
 		
+
+	def and_op(self, x, y):
+		return self.bool_op(x, y, 0)
+		
+	def or_op(self, x, y):
+		return self.bool_op(x, y, 1)
 
 	#flow control
 	def compare_op(self, start, compares):
@@ -293,7 +331,7 @@ class SimpleCompiler(BaseEvaluator):
 			y = self.visit(other)
 			
 			if tmp:
-				tmp = self.frame.gettemp(PyObject.type)
+				tmp = self.frame.gettemp("PyObject")
 				gety = self.factory.makePyObject(jast.Set(tmp, y.asAny()))
 			else:
 				gety = y
@@ -321,12 +359,42 @@ class SimpleCompiler(BaseEvaluator):
 	def break_stmt(self):
 		return jast.Break()
 		
-	def return_stmt(self, value):
-		return jast.Return(self.visit(value).asAny())
+	def exec_stmt(self, code, globs=None, locs=None):
+		if globs is None:
+			globCode = jast.Null
+		else:
+			globCode = globs.asAny()
+			
+		if locs is None:
+			locCode = jast.Null
+		else:
+			locCode = locs.asAny()
+			
+		return jast.InvokeStatic("Py", "exec", [code.asAny(), globCode, locCode])
 		
-	def raise_stmt(self, values):
-		args = mkAnys(self.visitall(values))
-		return jast.Throw(jast.InvokeStatic("Py", "makeException", args))
+	def assert_stmt(self, test, message=None):
+		if self.isAlwaysFalse("__debug__"):
+			return jast.SimpleComment("assert")
+
+		args = [test]
+		if message is not None:
+			args.append(message)
+			
+		return jast.If(self.name_const("__debug__").nonzero(),
+				jast.InvokeStatic("Py", "assert", args))
+		
+	def return_stmt(self, value=None):
+		if value is None:
+			return jast.Return(jast.GetStaticAttribute("Py", "None"))
+		else:
+			return jast.Return(self.visit(value).asAny())
+
+	def raise_stmt(self, exc_type=None, exc_value=None, exc_traceback=None):
+		if exc_type is None:
+			return jast.Throw(jast.InvokeStatic("Py", "makeException", []))
+		
+		return exc_type.doraise(exc_value, exc_traceback)
+
 
 	def while_stmt(self, test, body, else_body=None):
 		stest = self.visit(test).nonzero()

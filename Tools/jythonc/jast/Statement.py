@@ -6,7 +6,7 @@ class Statement:
 		out = SourceFile('Foo')
 		self.writeSource(out)
 		return str(out)
-		
+
 	def exits(self): return 0
 
 class Class(Statement):
@@ -22,7 +22,10 @@ class Class(Statement):
 		if len(self.interfaces) > 0:
 			out.write("implements %s ", string.join(self.interfaces, ", "))
 		self.body.writeSource(out)
-		
+
+	def __repr__(self):
+		return "Class(%s, %s, %s, %s, %s)" % (self.name, self.access, self.superclass, self.interfaces, self.body)
+
 class Method(Statement):
 	def __init__(self, name, access, args, body):
 		self.name = name
@@ -38,6 +41,10 @@ class Method(Statement):
 			string.join(argtext, ", "))
 		self.body.writeSource(out)
 		out.writeln()
+
+	def __repr__(self):
+		return "Method(%s, %s, %s, %s)" % (self.name, self.access, self.args, self.body)
+
 
 class Constructor(Statement):
 	def __init__(self, name, access, args, body):
@@ -55,10 +62,17 @@ class Constructor(Statement):
 		self.body.writeSource(out)
 		out.writeln()
 
+	def __repr__(self):
+		return "Constructor(%s, %s, %s, %s)" % (self.name, self.access, self.args, self.body)
+
+
 
 class BlankLine(Statement):
 	def writeSource(self, out):
 		out.writeln()
+		
+	def __repr__(self):
+		return "BlankLine()"
 		
 Blank = BlankLine()
 
@@ -70,6 +84,10 @@ class Import(Statement):
 	def writeSource(self, out):		
 		out.writeln("import %s;", self.package)
 		
+	def __repr__(self):
+		return "Import(%s)" % (self.package)
+
+
 class SimpleComment(Statement):
 	""" ??? """
 	def __init__(self, text):
@@ -78,6 +96,8 @@ class SimpleComment(Statement):
 	def writeSource(self, out):		
 		out.writeln("// "+self.text)
 		
+	def __repr__(self):
+		return "SimpleComment(%s)" % (self.text)
 
 class Comment(Statement):
 	""" ??? """
@@ -94,6 +114,10 @@ class Comment(Statement):
 		for line in lines[1:-1]:
 			out.writeln(line)
 		out.writeln("%s */", lines[-1])
+		
+	def __repr__(self):
+		return "Comment(%s)" % (self.package)
+
 
 
 class Declare(Statement):
@@ -108,8 +132,16 @@ class Declare(Statement):
 		else:
 			out.writeln("%s %s;", self.type, self.name.sourceString())
 
+
+	def __repr__(self):
+		return "Declare(%s, %s, %s)" % (self.type, self.name, self.value)
+
+
 class Pass(Statement):
 	def writeSource(self, out): pass
+
+	def __repr__(self):
+		return "Pass()"
 
 def flatten(lst):
 	ret = []
@@ -160,11 +192,21 @@ class FreeBlock(Statement):
 		else:
 			return last.exits()
 
+	def __repr__(self):
+		return "FreeBlock(%s)" % (self.code)
+
+
+
 class Block(FreeBlock):
 	def writeSource(self, out):
 		out.beginBlock()
 		FreeBlock.writeSource(self, out)
 		out.endBlock()
+
+	def __repr__(self):
+		return "Block(%s)" % (self.code)
+
+
 
 class TryCatch(Statement):
 	def __init__(self, body, exctype, excname, catchbody):
@@ -212,7 +254,7 @@ class If(Statement):
 
 	def exits(self):
 		if self.elseBody is None: return 0
-		return self.thenBody.exists() and self.elseBody.exits()
+		return self.thenBody.exits() and self.elseBody.exits()
 
 class MultiIf(Statement):
 	def __init__(self, tests, elseBody=None):
@@ -366,11 +408,21 @@ class CharacterConstant(Constant):
 
 class StringConstant(Constant):
 	def sourceString(self):
-		r = repr(self.value)
-		if r[0] == '"':
-			return r
-		else:
-			return '"'+string.replace(r[1:-1], '"', '\\"')+'"'
+		ret = ['"']
+		for c in self.value:
+			oc = ord(c)
+			if c == '"':
+				ret.append('\\"')
+			elif c == '\\':
+				ret.append('\\\\')
+			elif oc >= 032 and oc <= 0177:
+				ret.append(c)
+			elif oc <= 0377:
+				ret.append("\\%03o" % oc)
+			else:
+				ret.append("\\u%04x" % oc)
+		ret.append('"')
+		return string.join(ret, '')
 
 class Operation(UnsafeExpression):
 	def __init__(self, op, x, y=None):

@@ -69,6 +69,8 @@ class JavaProxy:
 			self.properties = module.getProperties()
 			self.specialClasses = module.getSpecialClasses()
 			self.modname = module.name
+			if module.package is not None:
+				self.modname = module.package+'.'+self.modname
 
 		self.isAdapter = 0
 		self.frozen = 1

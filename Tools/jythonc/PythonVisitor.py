@@ -81,6 +81,27 @@ class PythonVisitor(Visitor):
 	single_input = suite
 	eval_input = suite
 	
+	def exec_stmt(self, node):
+		self.startnode(node)
+		code = node.getChild(0).visit(self)
+		globs = locs = None
+		if node.numChildren > 1:
+			globs = node.getChild(1).visit(self)
+		if node.numChildren > 2:
+			locs = node.getChild(2).visit(self)
+		
+		return self.walker.exec_stmt(code, globs, locs)
+		
+	def assert_stmt(self, node):
+		self.startnode(node)
+		test = node.getChild(0).visit(self)
+		if node.numChildren > 1:
+			message = node.getChild(1).visit(self)
+		else:
+			message = None
+		return self.walker.assert_stmt(test, message)
+
+
 	def pass_stmt(self, node):
 		self.startnode(node)
 		return self.walker.pass_stmt()
@@ -96,7 +117,7 @@ class PythonVisitor(Visitor):
 	def return_stmt(self, node):
 		self.startnode(node)
 		if node.numChildren == 0:
-			return self.walker.return_stmt(NoneNode)
+			return self.walker.return_stmt()
 		else:
 			return self.walker.return_stmt(node.getChild(0))
 				
@@ -106,7 +127,16 @@ class PythonVisitor(Visitor):
 		
 	def raise_stmt(self, node):
 		self.startnode(node)
-		return self.walker.raise_stmt(nodeToList(node))
+		exc_type = exc_value = exc_traceback = None
+		n = node.numChildren
+		if n > 0:
+			exc_type = node.getChild(0).visit(self)
+		if n > 1:
+			exc_value = node.getChild(1).visit(self)
+		if n > 2:
+			exc_traceback = node.getChild(2).visit(self)
+			
+		return self.walker.raise_stmt(exc_type, exc_value, exc_traceback)
 		
 	def Import(self, node):
 		self.startnode(node)
@@ -183,20 +213,24 @@ class PythonVisitor(Visitor):
 		rhs = node.getChild(node.numChildren-1)
 		return self.walker.expr_stmt(nodeToList(node)[:-1], rhs)
 		
-	def Name(self, node):
+	def del_stmt(self, node):
 		self.startnode(node)
+		return self.walker.del_stmt(nodeToList(node))
+
+	def Name(self, node):
+		#self.startnode(node)
 		return self.walker.name_const(node.getInfo())
 
 	def Int(self, node):
-		self.startnode(node)
+		#self.startnode(node)
 		return self.walker.int_const(int(node.getInfo()))
 		
 	def Float(self, node):
-		self.startnode(node)
+		#self.startnode(node)
 		return self.walker.float_const(float(node.getInfo()))
 		
 	def String(self, node):
-		self.startnode(node)
+		#self.startnode(node)
 		return self.walker.string_const(node.getInfo())
 		
 	def getSlice(self, node):
@@ -210,7 +244,7 @@ class PythonVisitor(Visitor):
 		return s
 		
 	def Slice(self, node):
-		self.startnode(node)
+		#self.startnode(node)
 		s = self.getSlice(node)
 		return self.walker.slice_op(s[0], s[1], s[2])
 
@@ -224,22 +258,22 @@ class PythonVisitor(Visitor):
 
 
 	def list(self, node):
-		self.startnode(node)
+		#self.startnode(node)
 		return self.walker.list_op(self.makeSeqArgs(node))
 		
 	def tuple(self, node):
-		self.startnode(node)
+		#self.startnode(node)
 		return self.walker.tuple_op(self.makeSeqArgs(node))
 
 	def dictionary(self, node):
-		self.startnode(node)
+		#self.startnode(node)
 		items = []
 		for i in range(0, node.numChildren, 2):
 			items.append( (node.getChild(i), node.getChild(i+1)) )
 		return self.walker.dictionary_op(items)
 
 	def Dot_Op(self, node):
-		self.startnode(node)	
+		#self.startnode(node)	
 		obj = node.getChild(0)
 		name = node.getChild(1).getInfo()
 		return self.walker.get_attribute(obj, name)
@@ -276,7 +310,7 @@ class PythonVisitor(Visitor):
 		return self.walker.call(callee, args, keyargs)
 
 	def binop(self, node, name):
-		self.startnode(node)
+		#self.startnode(node)
 		return self.walker.binary_op(name, node.getChild(0), node.getChild(1))
 
 	def add_2op(self, node): return self.binop(node, 'add')	
@@ -293,7 +327,7 @@ class PythonVisitor(Visitor):
 
 
 	def unop(self, node, name):
-		self.startnode(node)
+		#self.startnode(node)
 		return self.walker.unary_op(name, node.getChild(0))
 
 	def abs_1op(self, node): return self.unop(node, 'abs')
@@ -304,7 +338,7 @@ class PythonVisitor(Visitor):
 	def not_1op(self, node): return self.unop(node, 'not')
 	
 	def comparision(self, node):
-		self.startnode(node)
+		#self.startnode(node)
 		start = node.getChild(0)
 		tests = []
 		for i in range(1, node.numChildren, 2):
@@ -322,6 +356,8 @@ class PythonVisitor(Visitor):
 		
 
 	def try_stmt(self, node):
+		self.startnode(node)
+	
 		n = node.numChildren
 		if n == 2:
 			return self.walker.tryfinally(node.getChild(0), node.getChild(1))
@@ -347,6 +383,8 @@ class PythonVisitor(Visitor):
 		return self.walker.tryexcept(body, exceptions, elseClause)
 
 	def funcdef(self, node):
+		self.startnode(node)
+	
 		funcname = node.getChild(0).getInfo()
 		
 		Body = node.getChild(node.numChildren-1)
@@ -373,6 +411,7 @@ class PythonVisitor(Visitor):
 		return self.walker.lambdef(args, retBody)
 		
 	def classdef(self, node):
+		self.startnode(node)
 		name = node.getChild(0).getInfo()
 
 		n = node.numChildren
