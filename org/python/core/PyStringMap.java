@@ -557,6 +557,14 @@ class PyStringMapIter extends PyObject {
         this.idx = 0;
     }
 
+    public PyObject __iter__() {
+        return this;
+    }
+
+    public PyObject next() {
+        return __iternext__();
+    }
+
     public PyObject __iternext__() {
         int n = keyTable.length;
 

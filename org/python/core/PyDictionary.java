@@ -420,6 +420,14 @@ class PyDictionaryIter extends PyObject {
         enumeration = e;
     }
 
+    public PyObject __iter__() {
+        return this;
+    }
+
+    public PyObject next() {
+        return __iternext__();
+    }
+
     public PyObject __iternext__() {
         if (!enumeration.hasMoreElements())
             return null;
