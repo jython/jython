@@ -65,8 +65,8 @@ python.security.respectJavaAccessibility = true
 # functionality by having an entry such as os:com.foo.jni.os
 #python.modules.builtin = whatever
 
-# This specifies the command used by jpythonc to compile Java source
+# This specifies the command used by jythonc to compile Java source
 # code, along with the complete classpath to use.
-# python.jpythonc.compiler = /depot/java/plat/bin/jikes
-# python.jpythonc.classpath = /usr/java1.2/jre/lib/rt.jar:/jpython/dist:.
-# python.jpythonc.compileropts = +E +D -g
+# python.jythonc.compiler = /depot/java/plat/bin/jikes
+# python.jythonc.classpath = /usr/java1.2/jre/lib/rt.jar:/jpython/dist:.
+# python.jythonc.compileropts = +E +D -g

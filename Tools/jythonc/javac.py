@@ -37,28 +37,28 @@ def compile(files, javac=None, cpathopt="-classpath",
     cmd = []
     # Search order for a Java compiler:
     #   1. -C/--compiler command line option
-    #   2. python.jpythonc.compiler property (see registry)
+    #   2. python.jythonc.compiler property (see registry)
     #   3. guess a path to javac
     if javac is None:
-        javac = sys.registry.getProperty("python.jpythonc.compiler")
+        javac = sys.registry.getProperty("python.jythonc.compiler")
     if javac is None:
         javac = findDefaultJavac()
     cmd.append(javac)
     # Extra options
     #   1. -J/--compileropts command line option (passed in options)
-    #   2. python.jpythonc.compileropts property
+    #   2. python.jythonc.compileropts property
     if options is None:
-        options = sys.registry.getProperty("python.jpythonc.compileropts")
+        options = sys.registry.getProperty("python.jythonc.compileropts")
         if options:
             options = options.split()
     if options is None:
         options = []
     cmd.extend(options)
     # Classpath:
-    #   1. python.jpythonc.classpath property
+    #   1. python.jythonc.classpath property
     #   2. java.class.path property
     if cpath is None:
-        cpath = sys.registry.getProperty("python.jpythonc.classpath")
+        cpath = sys.registry.getProperty("python.jythonc.classpath")
     if cpath is None:
         cpath = getClasspath()
     if sourcedir:
@@ -73,7 +73,7 @@ def compile(files, javac=None, cpathopt="-classpath",
         msg = '''%s
 
 Consider using the -C/--compiler command line switch, or setting
-the property python.jpythonc.compiler in the registry.''' % e
+the property python.jythonc.compiler in the registry.''' % e
         return 1, '', msg
     done = None
     procout = []
