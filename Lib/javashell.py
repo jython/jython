@@ -206,7 +206,7 @@ def _getOsType( os=None ):
         ( "dos", r"(dos)|(Windows 95)|(Windows 98)|(Windows ME)" ),
         ( "mac", r"(mac)|(MacOS.*)|(Darwin)" ),
         ( "None", r"(None)" ),
-        ( "posix", r"(.*)" ), # default - posix seems to vary mast widely
+        ( "posix", r"(.*)" ), # default - posix seems to vary most widely
         )
     for osType, pattern in _osTypeMap:
         if re.match( pattern, os ):
