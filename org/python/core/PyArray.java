@@ -60,7 +60,8 @@ public class PyArray extends PySequence {
         {
             return data;
         }
-        return super.__tojava__(c);
+        if (c.isInstance(this)) return this;
+        return Py.NoConversion;
     }
 
     public int __len__() { 
