@@ -10,6 +10,9 @@
 package com.ziclix.python.sql;
 
 import org.python.core.PyObject;
+import org.python.core.PyList;
+import org.python.core.PyString;
+import org.python.core.Py;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -123,4 +126,23 @@ public abstract class FilterDataHandler extends DataHandler {
 	public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
 		return this.delegate.getPyObject(set, col, type);
 	}
+
+    /**
+     * Returns a list of datahandlers chained together through the use of delegation.
+     *
+     * @return
+     */
+    public PyObject __chain__() {
+        PyList list = new PyList();
+        DataHandler handler = this;
+        while(handler != null) {
+            list.append(Py.java2py(handler));
+            if(handler instanceof FilterDataHandler) {
+                handler = ((FilterDataHandler)handler).delegate;
+            } else {
+                handler = null;
+            }
+        }
+        return list;
+    }
 }

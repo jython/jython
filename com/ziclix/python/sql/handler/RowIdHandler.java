@@ -69,8 +69,7 @@ public abstract class RowIdHandler extends FilterDataHandler {
     if (!(o == null || o == CHECKED)) {
       try {
         return Py.java2py(((Method) o).invoke(stmt, null));
-      } catch (Throwable t) {
-      }
+      } catch (Throwable t) {}
     }
 
     return super.getRowId(stmt);
