@@ -112,11 +112,13 @@ def wrapThrows(stmt, throws, retType):
 
 
 class JavaProxy:
-    def __init__(self, name, supername, bases, methods, module=None):
+    def __init__(self, name, supername, bases, methods, module=None,
+                       issuperproxy = 1):
         self.bases = bases
         self.name = name
         self.supername = supername
         self.methods = methods
+        self.issuperproxy = issuperproxy
 
         self.packages = self.properties = jast.Null
         self.modname = "foo"
@@ -141,6 +143,7 @@ class JavaProxy:
         self.interfaces = []
 
         self.jmethods = {}
+        self.supermethods = {}
         for base in bases:
             self.addMethods(base)
             if base.isInterface():
@@ -163,6 +166,7 @@ class JavaProxy:
         self.dumpMethods()
         self.dumpConstructors()
         self.addPyProxyInterface()
+        self.addClassDictInit()
         return self.statements
 
     def dumpInnerClasses(self):
@@ -285,6 +289,9 @@ class JavaProxy:
 
 
     def callSuperMethod(self, name, supername, access, ret, sig, throws=[]):
+        if self.issuperproxy:
+            return
+        self.supermethods[supername] = supername
         args = [typeName(ret)]
         argids = []
         throws = filterThrows(throws)
@@ -355,9 +362,12 @@ class JavaProxy:
             if ret != Void.TYPE:
                 supercall = jast.Return(supercall)
 
-            supermethod = jast.Method("super__"+name,
+            supermethod = None
+            if not self.issuperproxy:
+                supermethod = jast.Method("super__"+name,
                                       jast.Modifier.ModifierString(access), 
                                       args, jast.Block([supercall]), throws)
+                self.supermethods["super__"+name] = "super__"+name
         else:           
             if self.isAdapter:
                 supercall = nullReturn(ret)
@@ -463,6 +473,18 @@ class JavaProxy:
 
         self.interfaces.append(org.python.core.PyProxy)
 
+    def addClassDictInit(self):
+        self.interfaces.append(org.python.core.ClassDictInit)
+
+        namelist = jast.InvokeStatic("Py", "java2py", [
+             jast.StringArray(self.supermethods.keys()) ]);
+
+        code = jast.Invoke(jast.Identifier("dict"), "__setitem__", [
+                         jast.StringConstant("__supernames__"), namelist]);
+
+        code = jast.Block([code])
+        self.statements.append(jast.Method("classDictInit", "static public",
+                                           ["void", ("PyObject", "dict")], code))
 
     def makeClass(self):
         mycode = self.dumpAll()                 

@@ -192,6 +192,7 @@ class PyClass(FixedObject):
         self.javaclasses = []
         self.proxyname = None
         self.supername = None
+        self.issuperproxy = 0
         import compile
         for base in self.bases:
             if hasattr(base, "javaclass"):
@@ -213,6 +214,7 @@ class PyClass(FixedObject):
                     self.javaclasses.extend(base.javaclasses)
                     self.proxyname = self.name
                     self.supername = base.name
+                    self.issuperproxy = 1
                     continue
             if isinstance(base, PyNamespace):
                 names = base.name.split('.')
@@ -226,6 +228,7 @@ class PyClass(FixedObject):
                                 self.javaclasses.extend(cls.value.javaclasses)
                                 self.proxyname = self.name
                                 self.supername = cls.value.name
+                                self.issuperproxy = 1
                                 if cls.value.name != mod.name:
                                     self.supername = mod.name + '.' + self.supername
                                 continue
