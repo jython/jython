@@ -13,7 +13,7 @@ public class BytecodeLoader extends ClassLoader {
 		resolveClass(c);
 		// I'm still not sure what this really does
 		// It does seem to make SUN's jdk1.1.6 JIT a little bit happier to include it.
-		Compiler.compileClass(c);
+		//Compiler.compileClass(c);
 		//System.err.println("compile: "+name+", "+Compiler.compileClass(c));
 		return c;
 	}

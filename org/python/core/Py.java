@@ -542,7 +542,7 @@ public final class Py {
 		printException(t, f, null);
 	}
 
-    static boolean showjavaexc=false;
+    static boolean showjavaexc=true; //false;
 	public static synchronized void printException(Throwable t, PyFrame f, PyObject file) {
 	    //System.err.println("printingException: "+t+", "+file);
 	    StdoutWrapper stderr = Py.stderr;
@@ -682,6 +682,12 @@ public final class Py {
 	}
 
     /* Implement the raise statement */
+    // reraise the current exception
+    public static PyException makeException() {
+        ThreadState ts = getThreadState();
+		return new PyException(ts.exc_type, ts.exc_value, (PyTraceback)ts.exc_traceback);
+    }
+    
 	public static PyException makeException(PyObject type) {
 	    if (type instanceof PyInstance) {
 	        return new PyException(type.__class__, type);

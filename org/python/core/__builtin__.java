@@ -46,6 +46,9 @@ public class __builtin__ implements InitModule {
 		dict.__setitem__("MemoryError", Py.MemoryError);
 		dict.__setitem__("OverflowError", Py.OverflowError);
 		
+		// Work in debug mode by default
+		// Hopefully add -O option in the future to change this
+		dict.__setitem__("__debug__", Py.One);
 		//dict.__setitem__("ord", new PyOrdFunction() );
 		//dict.__setitem__("chr", new PyChrFunction() );
 
@@ -90,7 +93,11 @@ public class __builtin__ implements InitModule {
 	private static PyString[] letters=null;
 
 	public static PyString chr(int i) {
-		if (i < 0 || i > 255) throw Py.ValueError("chr() arg not in range(256)");
+		if (i < 0 || i > 65535) throw Py.ValueError("chr() arg not in range(65535)");
+		if (i > 255) {
+		    return new PyString(new String(new char[] {(char)i}));
+		}
+		// Cache the 8-bit characters for performance
 		if (letters == null) {
 			letters = new PyString[256];
 			for(int j=0; j<256; j++) {

@@ -213,14 +213,14 @@ final class StringFormatter{
             case -2:
                 return args;
             case -1:
-                argIndex=-2;
+                argIndex=-3;
                 return args;
             default:
                 ret = args.__finditem__(argIndex++);
                 break;
         }
         if (ret == null)
-            throw Py.ValueError("not enough arguments for format string");
+            throw Py.TypeError("not enough arguments for format string");
         return ret;
     }
 
@@ -489,6 +489,9 @@ final class StringFormatter{
                 }
                 buffer.append(string);
             }
+        }
+        if (argIndex == -1 || (argIndex >= 0 && args.__finditem__(argIndex) != null)) {
+            throw Py.TypeError("not all arguments converted");
         }
         return buffer.toString();
     }

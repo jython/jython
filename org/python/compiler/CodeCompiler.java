@@ -382,12 +382,19 @@ public class CodeCompiler extends Visitor {
 		return Exit;
 	}
 
-	public int makeException1, makeException2, makeException3;
+	public int makeException0, makeException1, makeException2, makeException3;
 	public Object raise_stmt(SimpleNode node) throws Exception {
 		setline(node);
 		int n = node.getNumChildren();
 		for(int i=0; i<n; i++) node.getChild(i).visit(this);
 		switch(n) {
+		case 0:
+		    if (mrefs.makeException0 == 0) {
+				mrefs.makeException0 = code.pool.Methodref("org/python/core/Py", "makeException",
+					"()Lorg/python/core/PyException;");
+			}
+			code.invokestatic(mrefs.makeException0);
+			break;
 		case 1:
 			if (mrefs.makeException1 == 0) {
 				mrefs.makeException1 = code.pool.Methodref("org/python/core/Py", "makeException",
