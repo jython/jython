@@ -33,27 +33,11 @@ if maxint == 2147483647:
 	# XXX -2147483648
 	assert 037777777777 == -1, 'oct -1'
 	if 0xffffffff != -1: raise TestFailed, 'hex -1'
-	for s in '2147483648', '040000000000', '0x100000000':
-		try:
-			x = eval(s)
-		except (OverflowError, SyntaxError):
-			continue
-##		raise TestFailed, \
-		print \
-			  'No OverflowError on huge integer literal ' + `s`
 elif eval('maxint == 9223372036854775807'):
 	if eval('-9223372036854775807-1 != 01000000000000000000000'):
 		raise TestFailed, 'max negative int'
 	if eval('01777777777777777777777') != -1: raise TestFailed, 'oct -1'
 	if eval('0xffffffffffffffff') != -1: raise TestFailed, 'hex -1'
-	for s in '9223372036854775808', '02000000000000000000000', \
-		 '0x10000000000000000':
-		try:
-			x = eval(s)
-		except (OverflowError, SyntaxError):
-			continue
-		raise TestFailed, \
-			  'No OverflowError on huge integer literal ' + `s`
 else:
 	print 'Weird maxint value', maxint
 
@@ -67,6 +51,11 @@ x = 077777777777777777l
 x = 123456789012345678901234567890L
 x = 123456789012345678901234567890l
 
+print_test( 'Huge integers' )
+for s in '9223372036854775808', '02000000000000000000000', \
+	 '0x10000000000000000':
+		x = eval(s)
+		
 print_test('Floating point', 4)
 x = 3.14
 x = 314.
