@@ -30,11 +30,11 @@ def listdir(path):
 	raise OSError(0, 'No such directory', path)
     return list(l)
 
-def mkdir(path):
+def mkdir(path, mode='ignored'):
     if not File(path).mkdir():
 	raise OSError(0, "couldn't make directory", path)
 
-def makedirs(path):
+def makedirs(path, mode='ignored'):
     if not File(path).mkdirs():
 	raise OSError(0, "couldn't make directories", path)
 
