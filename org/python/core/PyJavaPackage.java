@@ -126,23 +126,36 @@ public class PyJavaPackage extends PyObject {
         Class c;
 
         c = __mgr__.findClass(__name__,name);
-
+        
         if (c != null) return addClass(name,c);
-
+    
         if (name == "__name__") return new PyString(__name__);
         if (name == "__dict__") return __dict__;
+        if (name == "__mgr__") return Py.java2py(__mgr__);
         if (name == "__file__") {
             if (__file__ != null) return new PyString(__file__);
 
             return Py.None;
         }
 
-        if(__mgr__.packageExists(__name__,name)) {
+        if (__mgr__.packageExists(__name__,name)) {
             __mgr__.notifyPackageImport(__name__,name);
             return addPackage(name);
         }
 
         return null;
+    }
+        
+    public void __setattr__(String attr, PyObject value) throws PyException {
+        if (attr == "__mgr__") {
+            PackageManager newMgr = (PackageManager)Py.tojava(value,PackageManager.class);
+            if (newMgr == null) {
+                throw Py.TypeError("cannot set java package __mgr__ to None");
+            }
+            __mgr__ = newMgr;
+            return;
+        }
+        super.__setattr__(attr,value);
     }
 
     public String toString()  {

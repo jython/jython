@@ -14,24 +14,18 @@ public class PyModule extends PyObject
         __dict__.__setitem__("__doc__", Py.None);
     }
 
-    public PyObject __findattr__(String attr) {
-        PyObject ret;
-        ret = __dict__.__finditem__(attr);
-        if (ret != null) return ret;
-
+    protected PyObject impAttr(String attr) {
         PyObject path = __dict__.__finditem__("__path__");
-        PyObject pyname = __dict__.__finditem__("__name__");        
+        PyObject pyname = __dict__.__finditem__("__name__");      
         
-        ret = super.__findattr__(attr);
-        if (ret != null) return ret;
         if (path == null || pyname == null) return null;
         
         String name = pyname.__str__().toString();
         String fullName = (name+'.'+attr).intern();
-        
+               
         PyObject modules = Py.getSystemState().modules;
        
-        ret = modules.__finditem__(fullName);
+        PyObject ret = modules.__finditem__(fullName);
         if (ret != null) return ret;
 
         if (path == Py.None) {
@@ -54,15 +48,28 @@ public class PyModule extends PyObject
 
         if (ret != null) {
             // Allow a package component to change its own meaning
-            PyObject tmp = __dict__.__finditem__(attr);
-            if (tmp != null)
-            ret = tmp;
+            PyObject tmp = modules.__finditem__(fullName);
+            if (tmp != null) ret = tmp;
             __dict__.__setitem__(attr, ret);
             return ret;
         }
 
         return null;
+        
+    }
+    
+    public PyObject __findattr__(String attr) {
+        PyObject ret;
+        ret = __dict__.__finditem__(attr);
+        if (ret != null) return ret;
 
+        ret = super.__findattr__(attr);
+        if (ret != null) return ret;
+
+        PyObject pyname = __dict__.__finditem__("__name__");
+        if (pyname == null) return null;
+        
+        return impHook(pyname.__str__().toString()+'.'+attr);
     }
 
     public void __setattr__(String attr, PyObject value) throws PyException {
@@ -77,4 +84,18 @@ public class PyModule extends PyObject
         return "<module "+__dict__.__finditem__("__name__")+" at "+
             Py.id(this)+">";
     }
+    
+    static private PyObject silly_list = null;
+    
+    private static PyObject impHook(String name) {
+        if (silly_list == null) {
+            silly_list = new PyTuple(new PyString[] { Py.newString("__doc__"),}); 
+        }
+        try {
+            return __builtin__.__import__(name, null, null, silly_list);
+        } catch(PyException e) {
+            return null;
+        }
+    }
+
 }

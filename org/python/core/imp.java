@@ -400,6 +400,7 @@ public class imp
     private static PyObject dottedFind(PyObject mod, String name) {
       int dot = 0;
       int last_dot= 0;
+    
       do {
         String tmpName;
         dot = name.indexOf('.', last_dot);
@@ -408,7 +409,7 @@ public class imp
         } else {
           tmpName = name.substring(last_dot, dot).intern();
         }
-        mod = mod.__findattr__(tmpName);
+        mod = mod.impAttr(tmpName);
         if (mod == null)
           throw Py.ImportError("No module named " + tmpName);
         last_dot = dot + 1;
@@ -483,7 +484,7 @@ public class imp
 
                 PyObject pkg = modules.__finditem__(pkgName);
                 if (pkg != null) {
-                    topMod = pkg.__findattr__(firstName.intern());
+                    topMod = pkg.impAttr(firstName.intern());
                     if (topMod != null ) {
                         if (dot == -1 ) {
                             //System.err.println("found-1-top: "+topMod); // ?? dbg

@@ -627,7 +627,12 @@ public class PyObject implements java.io.Serializable {
             return ret._doget(this);
         return null;
     }
-        
+    
+    // Used by import logic.
+    protected PyObject impAttr(String name) {
+        return __findattr__(name);
+    }
+    
     /**
        Equivalent to the standard Python __getattr__ method.
        This method can not be overridden.
