@@ -465,7 +465,8 @@ public class PySystemState extends PyObject {
     private static PyList initPath(Properties props) {
 	PyList path = new PyList();
 	String pypath = props.getProperty("python.path", "");
-	StringTokenizer tok = new StringTokenizer(pypath, java.io.File.pathSeparator);
+	StringTokenizer tok =
+	    new StringTokenizer(pypath, java.io.File.pathSeparator);
 	while  (tok.hasMoreTokens())  {
 	    String p = tok.nextToken();
 	    path.append(new PyString(p.trim()));

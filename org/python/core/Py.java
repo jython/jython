@@ -493,7 +493,6 @@ public final class Py {
             return null;
         } catch (IllegalArgumentException exc1) {
             //exc1.printStackTrace();
-            
             return null;
         }
     }
@@ -505,8 +504,10 @@ public final class Py {
 	Py.getSystemState().argv = new PyList(argv);
     }
 
-    private static void initProperties(String[] args, String[] packages, String[] props, 
-				       String[] specs, String frozenPackage) {
+    private static void initProperties(String[] args, String[] packages,
+				       String[] props, 
+				       String[] specs, String frozenPackage)
+    {
 	if (frozenPackage != null) {
 	    Py.frozen = true;
 	    if (frozenPackage.length() > 0) Py.frozenPackage = frozenPackage;
@@ -548,14 +549,17 @@ public final class Py {
     private static java.util.Hashtable specialClasses = null;
 
     public static void initProxy(PyProxy proxy, String module, String pyclass,
-				 Object[] args, String[] packages, String[] props,
-				 boolean frozen) {
+				 Object[] args, String[] packages,
+				 String[] props, boolean frozen)
+    {
 	initProxy(proxy, module, pyclass, args, packages, props, null, null);
     }
 									    
     public static void initProxy(PyProxy proxy, String module, String pyclass,
-				 Object[] args, String[] packages, String[] props,
-				 String[] specs, String frozenPackage) {
+				 Object[] args, String[] packages,
+				 String[] props,
+				 String[] specs, String frozenPackage)
+    {
 	//System.out.println("initProxy");
 	//frozen = false;		
 	initProperties(null, packages, props, specs, frozenPackage);
