@@ -349,7 +349,7 @@ public class cPickle implements ClassDictInit {
     public static PyObject UnpicklingError;
 
     static {
-        PyObject excModule = imp.load("cPickle_exceptions");
+        PyObject excModule = importModule("cPickle_exceptions");
        
         PickleError = excModule.__getattr__("PickleError");
         PicklingError = excModule.__getattr__("PicklingError");
@@ -505,7 +505,7 @@ public class cPickle implements ClassDictInit {
 	// sys.modules.
 	imp.importName("__builtin__", true);
 
-	PyModule copyreg = (PyModule)imp.importName("copy_reg", true);
+	PyModule copyreg = (PyModule)importModule("copy_reg");
 
 	dispatch_table = (PyDictionary)copyreg.__getattr__("dispatch_table");
 	safe_constructors = (PyDictionary)copyreg.__getattr__("safe_constructors");
@@ -1789,15 +1789,17 @@ public class cPickle implements ClassDictInit {
                return fc.__call__(new PyString(module), new PyString(name));
             }
 
-	    PyObject env = null;
-	    try {
-		env = imp.importName(module.intern(), false);
-	    } catch (PyException ex) {
-		ex.printStackTrace();
+            PyObject modules = Py.getSystemState().modules;
+            PyObject mod = modules.__finditem__(module.intern());
+            if (mod == null) {
+                mod = importModule(module);
+            }
+            PyObject global = mod.__findattr__(name.intern());
+            if (global == null) {
 		throw new PyException(Py.SystemError,
 	                  "Failed to import class " + name + " from module " + module);
 	    }
-	    return env.__getattr__(name.intern());
+	    return global;
 	}
 
 
@@ -1984,5 +1986,32 @@ public class cPickle implements ClassDictInit {
 	    }
 	    stack[stackTop++] = val;
 	}
+    }
+
+
+    private static PyObject importModule(String name) {
+        PyFrame frame = Py.getFrame();
+        if (frame == null)
+            return null;
+        PyObject globals = frame.f_globals;
+
+        PyObject builtins = frame.f_builtins;
+        if (builtins == null)
+            builtins = Py.getSystemState().builtins;
+
+        PyObject silly_list = new PyTuple(new PyString[] { 
+            Py.newString("__doc__"),
+        });
+
+        PyObject __import__ = builtins.__finditem__("__import__");
+        if (__import__ == null)
+            return null;
+
+        PyObject module = __import__.__call__(new PyObject[] {
+                Py.newString(name),
+                globals,
+                globals,
+                silly_list } );
+        return module;
     }
 }
