@@ -40,6 +40,31 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		return __class__;
 	}
 
+	/** Field __members__ */
+	protected static PyList __members__;
+
+	/** Field __methods__ */
+	protected static PyList __methods__;
+
+	static {
+		PyObject[] m = new PyObject[5];
+
+		m[0] = new PyString("close");
+		m[1] = new PyString("commit");
+		m[2] = new PyString("cursor");
+		m[3] = new PyString("rollback");
+		m[4] = new PyString("nativesql");
+		__methods__ = new PyList(m);
+		m = new PyObject[6];
+		m[0] = new PyString("autocommit");
+		m[1] = new PyString("dbname");
+		m[2] = new PyString("dbversion");
+		m[3] = new PyString("driverversion");
+		m[4] = new PyString("url");
+		m[5] = new PyString("__connection__");
+		__members__ = new PyList(m);
+	}
+
 	/**
 	 * Create a PyConnection with the open connection.
 	 */
@@ -81,6 +106,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		dict.__setitem__("commit", new ConnectionFunc("commit", 1, 0, 0, zxJDBC.getString("commit")));
 		dict.__setitem__("cursor", new ConnectionFunc("cursor", 2, 0, 1, zxJDBC.getString("cursor")));
 		dict.__setitem__("rollback", new ConnectionFunc("rollback", 3, 0, 0, zxJDBC.getString("rollback")));
+		dict.__setitem__("nativesql", new ConnectionFunc("nativesql", 4, 1, 1, zxJDBC.getString("nativesql")));
 
 		// hide from python
 		dict.__setitem__("initModule", null);
@@ -154,6 +180,10 @@ public class PyConnection extends PyObject implements ClassDictInit {
 			}
 		} else if ("__connection__".equals(name)) {
 			return Py.java2py(this.connection);
+		} else if ("__methods__".equals(name)) {
+			return __methods__;
+		} else if ("__members__".equals(name)) {
+			return __members__;
 		}
 
 		return super.__findattr__(name);
@@ -218,6 +248,30 @@ public class PyConnection extends PyObject implements ClassDictInit {
 
 		try {
 			this.connection.rollback();
+		} catch (SQLException e) {
+			throw zxJDBC.newError(e);
+		}
+	}
+
+	/**
+	 * Converts the given SQL statement into the system's native SQL grammar. A
+	 * driver may convert the JDBC sql grammar into its system's native SQL grammar
+	 * prior to sending it; this method returns the native form of the statement
+	 * that the driver would have sent.
+	 *
+	 * @param PyObject a SQL statement that may contain one or more '?' parameter placeholders
+	 *
+	 * @return the native form of this statement
+	 *
+	 */
+	public PyObject nativesql(PyObject nativeSQL) {
+
+		if (nativeSQL == Py.None) {
+			return Py.None;
+		}
+
+		try {
+			return Py.newString(this.connection.nativeSQL(nativeSQL.__str__().toString()));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
@@ -323,6 +377,9 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
 
 			case 2 :
 				return c.cursor(arg.__nonzero__());
+
+			case 4 :
+				return c.nativesql(arg);
 
 			default :
 				throw argCountError(1);

@@ -53,8 +53,13 @@ public class PyExtendedCursor extends PyCursor {
 		m[5] = new PyString("procedurecolumns");
 		m[6] = new PyString("statistics");
 		__methods__ = new PyList(m);
+
+		__methods__.extend(PyCursor.__methods__);
+
 		m = new PyObject[0];
 		__members__ = new PyList(m);
+
+		__members__.extend(PyCursor.__members__);
 	}
 
 	/**
@@ -109,6 +114,23 @@ public class PyExtendedCursor extends PyCursor {
 		// hide from python
 		dict.__setitem__("classDictInit", null);
 		dict.__setitem__("toString", null);
+	}
+
+	/**
+	 * Finds the attribute.
+	 *
+	 * @param name the name of the attribute of interest
+	 * @return the value for the attribute of the specified name
+	 */
+	public PyObject __findattr__(String name) {
+
+		if ("__methods__".equals(name)) {
+			return __methods__;
+		} else if ("__members__".equals(name)) {
+			return __members__;
+		}
+
+		return super.__findattr__(name);
 	}
 
 	/**
