@@ -100,7 +100,7 @@ def getOptions():
         skip = ''
         package = None
         addfiles = ''
-        falsenames = ''
+        falsenames = []
         compiler = None
         jopts = None
         addpackages = ''
