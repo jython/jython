@@ -82,8 +82,11 @@ public class SimpleNode implements Node
         //System.out.println("string: "+s);
         char quoteChar = s.charAt(0);
         int start=0;
-        if (quoteChar == 'u' || quoteChar == 'U')
-            start++;         
+        boolean ustring = false;
+        if (quoteChar == 'u' || quoteChar == 'U') {
+            ustring = true;
+            start++;
+        }  
         quoteChar = s.charAt(start);
         if (quoteChar == 'r' || quoteChar == 'R') {
             return s.substring(quotes+start+1, s.length()-quotes);
@@ -141,6 +144,10 @@ public class SimpleNode implements Node
                     sb.append((char)c);
                     break;
                 case 'u':
+                    if (!ustring) {
+                        sb.append('u');
+                        break;
+                    }
                     if (i+4 > n)
                         throw new TokenMgrError(
                                "Unicode-Escape decoding error: "+
