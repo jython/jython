@@ -26,9 +26,9 @@ skipped = [
     'test_fcntl',
     'test_fork1',
     'test_frozen',
-    'test_future1',
-    'test_future2',
-    'test_future3',
+    'test_future1', # called as part of test_future
+    'test_future2', # called as part of test_future
+    'test_future3', # called as part of test_future
     'test_gc',
     'test_gettext',
     'test_gdbm',
@@ -81,9 +81,6 @@ failures = [
     'test_extcall',
     'test_fpformat',
     'test_funcattrs',
-    'test_future1',
-    'test_future2',
-    'test_future3',
     'test_generators',
     'test_getargs',
     'test_hmac',
