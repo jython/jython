@@ -137,7 +137,11 @@ public class PyJavaPackage extends PyObject {
             return Py.None;
         }
 
-        if(__mgr__.packageExists(__name__,name)) return addPackage(name);
+        if(__mgr__.packageExists(__name__,name)) {
+            if (__name__.length() > 0)
+                Py.writeComment("import", "'" + __name__ + '.' + name + "' as java package");
+            return addPackage(name);
+        }
 
         return null;
     }

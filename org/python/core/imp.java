@@ -44,7 +44,7 @@ public class imp
     }
 
     private static PyObject createFromPyClass(String name, InputStream fp,
-                                              boolean testing)
+                                              boolean testing, String fileName)
     {
         byte[] data = readBytes(fp);
         int n = data.length;
@@ -68,6 +68,9 @@ public class imp
             else
                 throw Py.JavaError(t);
         }
+
+        Py.writeComment("import", "'" + name + "' as " + fileName);
+
         return createFromCode(name, code);
     }
 
@@ -137,6 +140,9 @@ public class imp
                                              String filename)
     {
         byte[] bytes = compileSource(name, fp, filename);
+
+        Py.writeComment("import", "'" + name + "' as " + filename);
+
         PyCode code = BytecodeLoader.makeCode(name+"$py", bytes);
         return createFromCode(name, code);
     }
@@ -183,12 +189,15 @@ public class imp
     }
 
     private static PyObject loadBuiltin(String name, PyList path) {
-        if (name == "sys")
+        if (name == "sys") {
+            Py.writeComment("import", "'" + name + "' as sys in builtin modules");
             return Py.java2py(Py.getSystemState());
+        }
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
-            Class c = Py.findClassEx(mod);
+            Class c = Py.findClassEx(mod, "builtin modules");
             if (c != null) {
+                Py.writeComment("import", "'" + name + "' as " + mod + " in builtin modules");
                 try {
                     return createFromClass(name, c);
                 }
@@ -206,7 +215,7 @@ public class imp
         if (Py.frozenPackage != null) {
             modName = Py.frozenPackage+"."+modName;
         }
-        return Py.findClassEx(modName+"$_PyInner");
+        return Py.findClassEx(modName+"$_PyInner", "precompiled");
     }
 
     private static PyObject loadPrecompiled(String name, String modName,
@@ -220,6 +229,8 @@ public class imp
                 //System.err.println("trying: "+modName+".__init__$_PyInner");
                 c = findPyClass(modName+".__init__");
                 if (c == null) return null;
+                Py.writeComment("import", "'" + modName + "' as precompiled package");
+
                 //System.err.println("found: "+modName+".__init__$_PyInner");
                 PyModule m = addModule(modName);
                 m.__dict__.__setitem__("__path__", new PyList());
@@ -227,6 +238,7 @@ public class imp
             else if (Py.frozenModules.get(modName) != null) {
                 c = findPyClass(modName);
                 if (c == null) return null;
+                Py.writeComment("import", "'" + modName + "' as precompiled module");
             }
             else return null;
 
@@ -287,13 +299,16 @@ public class imp
             // Now check for source
             File pyFile = new File(dirName, pyName);
             File classFile = new File(dirName, className);
+            Py.writeDebug("import", "trying source " + pyFile.getPath());
+
             if (pyFile.isFile()) {
                 if (classFile.isFile()) {
+                    Py.writeDebug("import", "trying precompiled " + classFile.getPath());
                     long pyTime = pyFile.lastModified();
                     long classTime = classFile.lastModified();
                     if (classTime >= pyTime) {
                         PyObject ret = createFromPyClass(
-                            modName, makeStream(classFile), true);
+                            modName, makeStream(classFile), true, classFile.getPath());
                         if (ret != null)
                             return ret;
                     }
@@ -303,9 +318,10 @@ public class imp
             }
 
             // If no source, try loading precompiled
+            Py.writeDebug("import", "trying " + classFile.getPath());
             if (classFile.isFile()) {
                 return createFromPyClass(modName, makeStream(classFile),
-                                         false);
+                                         false, classFile.getPath());
             }
         }
         return null;
@@ -341,9 +357,14 @@ public class imp
         ret = loadFromPath(name, path);
         if (ret != null) return ret;
 
+        Py.writeDebug("import", "trying " + name + " in packagemanager");
         ret = PySystemState.packageManager.lookupName(name);
-        if (ret != null) return ret;
+        if (ret != null) {
+            Py.writeComment("import", "'" + name + "' as java package");
+            return ret;
+        }
 
+        Py.writeComment("import", "'" + name + "' not found (ImportError)");
         throw Py.ImportError("no module named "+name);
     }
 

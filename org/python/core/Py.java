@@ -583,10 +583,13 @@ public final class Py
     }
 
 
-    public static Class findClassEx(String name) {
+    public static Class findClassEx(String name, String reason) {
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
-            if (classLoader != null) return classLoader.loadClass(name);
+            if (classLoader != null) {
+                writeDebug("import", "trying " + name + " as " + reason + " in classLoader");
+                return classLoader.loadClass(name);
+            }
 
             if(!secEnv) {
                 try {
@@ -595,9 +598,11 @@ public final class Py
                 catch(SecurityException e) {
                     secEnv=true;
                 }
+                writeDebug("import", "trying " + name + " as " + reason + " in syspath loader");
                 return classLoader.loadClass(name);                
             }
 
+            writeDebug("import", "trying " + name + " as " + reason + " in Class.forName");
             return Class.forName(name);
         }
         catch (ClassNotFoundException e) {

@@ -36,7 +36,7 @@ from yapm import YaPM
 from PathVFS import PathVFS
 
 def findClass(c):
-    return Py.findClassEx(c)
+    return Py.findClassEx(c, "java class")
 
 def reportPublicPlainClasses(jpkg):
     classes = sys.packageManager.doDir(jpkg,0,1)

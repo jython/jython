@@ -75,10 +75,11 @@ protected void debug(String msg) {Py.writeDebug("*sys-package-mgr*",msg); }
     }
 
     public Class findClass(String pkg,String name) {
-        Class c;
-        if (pkg.length()>0) c = Py.findClassEx(pkg+'.'+name);
-        else c = Py.findClassEx(name);
-
+        if (pkg.length() > 0) 
+            name = pkg + '.' + name;
+        Class c = Py.findClassEx(name, "java class");
+        if (c != null)
+            Py.writeComment("import", "'" + name + "' as java class");
         return c;
     }
 

@@ -74,7 +74,7 @@ public class PyJavaClass extends PyClass
             return;
         initializing = true;
         if (proxyClass == null) {
-            init(Py.findClassEx(__name__));
+            init(Py.findClassEx(__name__, "lazy java class"));
         }
         init__bases__(proxyClass);
         init__dict__();
