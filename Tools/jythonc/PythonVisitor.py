@@ -1,19 +1,20 @@
 # Copyright © Corporation for National Research Initiatives
+
 from org.python.parser import Visitor, SimpleNode
 from org.python.parser.PythonGrammarTreeConstants import *
 from org.python.parser import SimpleNode
 
 
-comp_ops = {JJTLESS_CMP:'lt',
-            JJTEQUAL_CMP:'eq',
-            JJTGREATER_CMP:'gt', 
-            JJTGREATER_EQUAL_CMP:'ge',
-            JJTLESS_EQUAL_CMP:'le',
-            JJTNOTEQUAL_CMP:'ne',
-            JJTIS_NOT_CMP:'isnot',
-            JJTIS_CMP:'is',
-            JJTIN_CMP:'in',
-            JJTNOT_IN_CMP:'notin'
+comp_ops = {JJTLESS_CMP         : 'lt',
+            JJTEQUAL_CMP        : 'eq',
+            JJTGREATER_CMP      : 'gt', 
+            JJTGREATER_EQUAL_CMP: 'ge',
+            JJTLESS_EQUAL_CMP   : 'le',
+            JJTNOTEQUAL_CMP     : 'ne',
+            JJTIS_NOT_CMP       : 'isnot',
+            JJTIS_CMP           : 'is',
+            JJTIN_CMP           : 'in',
+            JJTNOT_IN_CMP       : 'notin'
             }
 
 
@@ -82,6 +83,7 @@ def getDocString(suite):
 
 class PythonVisitor(Visitor):
     def __init__(self, walker):
+        # a SimpleCompiler
         self.walker = walker
 
     def getName(self, node):
@@ -193,18 +195,42 @@ class PythonVisitor(Visitor):
     def dotted_name(self, node):
         return nodeToStrings(node)
 
+    def print_ext(self, node):
+        # There better be exactly one subnode
+        self.startnode(node)
+        return node.getChild(0)
+
     def print_stmt(self, node):
         self.startnode(node)
         n = node.numChildren
         rets = []
-        for i in range(n-1):
-            rets.append(self.walker.print_continued(node.getChild(i)))
-
-        if n == 0:
-            rets.append(self.walker.print_line())
+        printext = 0
+        file = None
+        start = 0
+        nochildren = 0
+        # extended print?
+        if n > 0 and node.getChild(0).id == JJTPRINT_EXT:
+            printext = 1
+            file = self.print_ext(node.getChild(0))
+            start = 1
+            nochildren = 1
+        for i in range(start, n-1):
+            child = node.getChild(i)
+            if printext:
+                rets.append(self.walker.print_continued_to(file, child))
+            else:
+                rets.append(self.walker.print_continued(child))
+        if n == nochildren:
+            if printext:
+                rets.append(self.walker.print_line_to(file))
+            else:
+                rets.append(self.walker.print_line())
         elif node.getChild(n-1).id != JJTCOMMA:
-            rets.append(self.walker.print_line(node.getChild(n-1)))
-
+            child = node.getChild(n-1)
+            if printext:
+                rets.append(self.walker.print_line_to(file, child))
+            else:
+                rets.append(self.walker.print_line(child))
         return rets
 
     def if_stmt(self, node):
@@ -306,7 +332,6 @@ class PythonVisitor(Visitor):
                 continue
             ret.append(value)
         return ret
-
 
     def list(self, node):
         #self.startnode(node)
@@ -427,7 +452,8 @@ class PythonVisitor(Visitor):
         if node.id == JJTSTRING:
             return node.getInfo()
         elif node.id == JJTSTRJOIN:
-            return self.getString(node.getChild(0))+self.getString(node.getChild(1))
+            return self.getString(node.getChild(0)) + \
+                   self.getString(node.getChild(1))
         else:
             raise ValueError, 'non string!'
 
