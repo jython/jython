@@ -135,10 +135,12 @@ public class PyJavaPackage extends PyObject {
         PyObject ret = __dict__.__finditem__(name);
         if (ret != null) return ret;
 
-        Class c;
+        if (__mgr__.packageExists(__name__,name)) {
+            __mgr__.notifyPackageImport(__name__,name);
+            return addPackage(name);
+        }
 
-        c = __mgr__.findClass(__name__,name);
-
+        Class c = __mgr__.findClass(__name__,name);
         if (c != null) return addClass(name,c);
 
         if (name == "__name__") return new PyString(__name__);
@@ -148,11 +150,6 @@ public class PyJavaPackage extends PyObject {
             if (__file__ != null) return new PyString(__file__);
 
             return Py.None;
-        }
-
-        if (__mgr__.packageExists(__name__,name)) {
-            __mgr__.notifyPackageImport(__name__,name);
-            return addPackage(name);
         }
 
         return null;

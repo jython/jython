@@ -30,7 +30,10 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
             String dir = path.get(i).__str__().toString();
             if (dir.length() == 0) dir = null;
 
-            if (new File(dir,child).isDirectory()) return true;
+            File f = new File(dir,child);
+            if (f.isDirectory() && imp.caseok(f, name, name.length())) {
+                return true;
+            }
         }
         return false;
     }
