@@ -1,5 +1,5 @@
 """
-Basic test, just raises an TestError
+[ #448485 ] Tuple unpacking raises KeyError
 """
 
 import support
