@@ -34,15 +34,15 @@ public class sys {
     @exception PySystemExit always throws this exception.
                 When caught at top level the program will exit.
     **/
-	public static void exit(int status) {
-		throw new PyException(Py.SystemExit, new PyInteger(status));
+	public static void exit(PyObject status) {
+		throw new PyException(Py.SystemExit, status);
 	}
 
     /**
     Exit a Python program with the status 0.
     **/
 	public static void exit() {
-		exit(0);
+		exit(Py.None);
 	}
 
 	public static PyObject modules = new PyStringMap();
