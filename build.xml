@@ -105,16 +105,17 @@
 
     <target name="clean" depends="init">
         <delete dir="${outputDir}/" />
+        <delete>
+           <fileset dir="${distDir}" excludes="jython.jar"/>
+        </delete>
         <property name="parser" value="${sourceDir}/org/python/parser" />
         <delete file="${parser}/python.jj" />
         <delete file="${parser}/PythonGrammar.java" />
         <delete file="${parser}/PythonGrammarConstants.java" />
         <delete file="${parser}/PythonGrammarTokenManager.java" />
         <delete file="${parser}/PythonGrammarTreeConstants.java" />
-        <delete file="${parser}/Node.java" />
         <delete file="${parser}/Token.java" />
         <delete file="${parser}/ASCII_CharStream.java" />
-        <delete file="${parser}/JJTPythonGrammarState.java" />
     </target>
 
     <target name="prepare" depends="init">
