@@ -102,7 +102,7 @@ public class PyFile extends PyObject
             // read the next chunk available, but make sure it's at least
             // one byte so as not to trip the `empty string' return value
             // test done by the caller
-            int avail = istream.available();
+            //int avail = istream.available();
             //n = (n > avail) ? n : avail;
             byte buf[] = new byte[n];
             int read = istream.read(buf);
@@ -207,7 +207,7 @@ public class PyFile extends PyObject
             writer = s;
         }
 
-        private static final int MAX_WRITE = 30000;
+        //private static final int MAX_WRITE = 30000;
 
         public void write(String s) throws java.io.IOException {
             writer.write(s);
@@ -606,11 +606,10 @@ public class PyFile extends PyObject
     private static java.io.InputStream _pb(java.io.InputStream s, String mode)
     {
         if (mode.indexOf('b') < 0) {
-            try {
-                s = (java.io.PushbackInputStream)s;
-            } catch (ClassCastException e) {
-                s = new java.io.PushbackInputStream(s);
+            if(s instanceof java.io.PushbackInputStream) {
+                return s;
             }
+            return new java.io.PushbackInputStream(s);
         }
         return s;
     }
@@ -714,7 +713,6 @@ public class PyFile extends PyObject
             o = super.__tojava__(cls);
         return o;
     }
-
 
     private static FileWrapper _setup(String name, String mode, int bufsize) {
         char c1 = ' ';
@@ -869,8 +867,10 @@ public class PyFile extends PyObject
     }
 
     public void writelines(PyObject a) {
+        PyObject iter = Py.iter(a, "writelines() requires an iterable argument");
+
         PyObject item = null;
-        for (int i = 0; (item = a.__finditem__(i)) != null; i++) {
+        while((item = iter.__iternext__()) != null) {
             if (!(item instanceof PyString))
                 throw Py.TypeError("writelines() argument must be a " +
                                    "sequence of strings");
