@@ -1,7 +1,7 @@
 # Copyright © Corporation for National Research Initiatives
 #
-# Makefile for building all of JPython.  See the instructions in
-# rules/make.rules.
+# Makefile for building JPython.  See the instructions in
+# rules/make.rules for details.
 
 SUBDIRS= \
 	org/python/parser \
