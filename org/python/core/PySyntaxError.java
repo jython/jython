@@ -13,16 +13,10 @@ public class PySyntaxError extends PyException {
     int lineno, column;
     String text;
     String filename;
-    public boolean forceNewline;
 
-    public PySyntaxError(String s, int line, int column,
-                         String text, String filename)
-    {
-        this(s, line, column, text, filename, false);
-    }
 
     public PySyntaxError(String s, int line, int column, String text,
-                         String filename, boolean forceNewline)
+                         String filename)
     {
         super(Py.SyntaxError);
         PyObject[] tmp = new PyObject[] {
@@ -38,6 +32,5 @@ public class PySyntaxError extends PyException {
         this.column = column;
         this.text = text;
         this.filename = filename;
-        this.forceNewline = forceNewline;
     }
 }

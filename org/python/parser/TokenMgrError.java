@@ -99,10 +99,13 @@ public class TokenMgrError extends Error
     * Note: You can customize the lexical error message by modifying this method.
     */
 
-    // added: 12-Mar-1999 (baw)
-    public boolean EOFSeen;
-    public int errorLine, errorColumn;
-    public String curChar;
+   // added: 12-Mar-1999 (baw)
+   public boolean EOFSeen;
+   public int errorLine, errorColumn;
+   public String curChar;
+    
+   // 8-May-2003 (pedronis)
+   public int lexState = -1;
 
    private static final String LexicalError(boolean EOFSeen, int lexState, int errorLine, int errorColumn, String errorAfter, char curChar) {
       return("Lexical error at line " +
@@ -153,5 +156,8 @@ public class TokenMgrError extends Error
       this.errorLine = errorLine;
       this.errorColumn = errorColumn;
       this.curChar = addEscapes(String.valueOf(curChar));
+      
+      // 8-May-2003 (pedronis)
+      this.lexState = lexState;
    }
 }

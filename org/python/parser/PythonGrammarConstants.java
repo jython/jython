@@ -9,7 +9,6 @@ public interface PythonGrammarConstants {
   int NEWLINE1 = 5;
   int NEWLINE = 6;
   int NEWLINE2 = 7;
-  int NEWLINE3 = 8;
   int CRLF1 = 12;
   int DEDENT = 14;
   int INDENT = 15;
@@ -105,7 +104,7 @@ public interface PythonGrammarConstants {
   int DEFAULT = 0;
   int FORCE_NEWLINE1 = 1;
   int FORCE_NEWLINE2 = 2;
-  int FORCE_NEWLINE = 3;
+  int MAYBE_FORCE_NEWLINE_IF_EOF = 3;
   int INDENTING = 4;
   int INDENTATION_UNCHANGED = 5;
   int UNREACHABLE = 6;
@@ -113,6 +112,8 @@ public interface PythonGrammarConstants {
   int IN_STRING21 = 8;
   int IN_STRING13 = 9;
   int IN_STRING23 = 10;
+  int IN_STRING1NLC = 11;
+  int IN_STRING2NLC = 12;
 
   String[] tokenImage = {
     "<EOF>",
@@ -123,7 +124,7 @@ public interface PythonGrammarConstants {
     "<NEWLINE1>",
     "<NEWLINE>",
     "<NEWLINE2>",
-    "<NEWLINE3>",
+    "\"\"",
     "\"\\t\"",
     "\" \"",
     "\"\\f\"",
@@ -225,13 +226,17 @@ public interface PythonGrammarConstants {
     "\"\\\"\\\"\\\"\"",
     "\"\\\\\\r\\n\"",
     "<token of kind 109>",
-    "<token of kind 110>",
+    "\"\\\\\\r\\n\"",
     "<token of kind 111>",
+    "\"\"",
+    "\"\"",
+    "<token of kind 114>",
+    "<token of kind 115>",
     "\"\\r\\n\"",
     "\"\\n\"",
     "\"\\r\"",
-    "<token of kind 115>",
-    "<token of kind 116>",
+    "<token of kind 119>",
+    "<token of kind 120>",
     "\"`\"",
   };
 

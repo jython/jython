@@ -219,8 +219,10 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyCode compile(String data, String filename, String type,
-                                 int flags, boolean inherit) {
-        return  Py.compile_flags(data,filename,type,new CompilerFlags(flags));
+                                 int flags, boolean dont_inherit) {
+        if ((flags&~PyTableCode.CO_ALL_FEATURES) != 0)
+            throw Py.ValueError("compile(): unrecognised flags");
+        return  Py.compile_flags(data,filename,type,Py.getCompilerFlags(flags,dont_inherit));
     }
 
     public static PyComplex complex(PyObject real, PyObject imag) {

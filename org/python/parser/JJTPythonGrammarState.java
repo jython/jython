@@ -11,8 +11,8 @@ class JJTPythonGrammarState {
     private IntStack lines;
     private IntStack columns;
 
-    private int sp;		// number of nodes on stack
-    private int mk;		// current mark
+    private int sp; // number of nodes on stack
+    private int mk; // current mark
     private boolean node_created;
 
     private TreeBuilder builder;

@@ -27,16 +27,20 @@ public class parser {
         }
     }
 
-    static public PyException fixParseError(BufferedReader reader,
-                                            Throwable t,
-                                            String filename)
-    {
-        return fixParseError(reader, t, filename, false);
-    }
 
-    static PyException fixParseError(BufferedReader reader, Throwable t,
-                                     String filename, boolean forceNewline)
+    // if reader != null, reset it
+    public static PyException fixParseError(BufferedReader reader, Throwable t,
+                                     String filename)
     {
+        if (reader != null) {
+            // System.err.println("resetting istream");
+            try {
+                reader.reset();
+            } catch (IOException e) {
+                reader = null;
+            }
+        }
+        
         if (t instanceof ParseException) {
             ParseException e = (ParseException)t;
             Token tok = e.currentToken;
@@ -48,7 +52,7 @@ public class parser {
             }
             String text=getLine(reader, line);
             return new PySyntaxError(e.getMessage(), line, col,
-                                     text, filename, forceNewline);
+                                     text, filename);
         }
         if (t instanceof TokenMgrError) {
             TokenMgrError e = (TokenMgrError)t;
@@ -62,7 +66,7 @@ public class parser {
             if (eofSeen)
                 col -= 1;
             return new PySyntaxError(e.getMessage(), line, col,
-                                     text, filename, forceNewline);
+                                     text, filename);
         }
         else return Py.JavaError(t);
     }
@@ -73,10 +77,105 @@ public class parser {
                      kind, "<string>", null);
     }
 
-
     public static modType parse(InputStream istream, String kind,
-                                   String filename, CompilerFlags cflags)
+                                 String filename, CompilerFlags cflags) 
     {
+        BufferedReader bufreader = prepBufreader(istream, cflags);
+        
+        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader));
+
+        modType node = null;
+        try {
+            node = doparse(kind, cflags, g);
+        }
+        catch (Throwable t) {
+            throw fixParseError(bufreader, t, filename);
+        }
+        return node;
+    }
+
+    public static modType partialParse(String string, String kind,
+                                       String filename, CompilerFlags cflags,boolean stdprompt)
+    {
+        modType node = null;        
+        //System.err.println(new PyString(string).__repr__().toString());
+
+        BufferedReader bufreader = prepBufreader(new StringBufferInputStream(string),
+                                                 cflags);
+        
+        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader));
+        
+        g.token_source.partial = true;
+        g.token_source.stdprompt = stdprompt;
+
+        try {
+            node = doparse(kind, cflags, g);
+        }
+        catch (Throwable t) {
+            /*
+             CPython codeop exploits that with CPython parser adding newlines
+             to a partial valid sentence move the reported error position,
+             this is not true for our parser, so we need a different approach:
+             we check whether all sentence tokens have been consumed or
+             the remaining ones fullfill lookahead expectations. See:
+             PythonGrammar.partial_valid_sentence (def in python.jjt)
+            */
+            
+            if (g.partial_valid_sentence(t)) {
+                return null;
+            }            
+            throw fixParseError(bufreader, t, filename);
+        }
+        return node;
+        
+        
+//        try {
+//            node = parse(new StringBufferInputStream(string),
+//                         kind, filename, cflags, true);
+//        }
+//        catch (PySyntaxError e) {
+//            //System.out.println("e: "+e.lineno+", "+e.column+", "+
+//            //                   e.forceNewline);
+//            try {
+//                node = parse(new StringBufferInputStream(string+"\n"),
+//                             kind, filename, cflags, true);
+//            }
+//            catch (PySyntaxError e1) {
+//                //System.out.println("e1: "+e1.lineno+", "+e1.column+
+//                //                   ", "+e1.forceNewline);
+//                if (e.forceNewline || !e1.forceNewline) throw e;
+//            }
+//            return null;
+//        }
+//        return node;
+    }
+
+    private static modType doparse(String kind, CompilerFlags cflags, 
+                                   PythonGrammar g) throws ParseException
+    {
+        modType node = null;
+               
+        if (cflags != null)
+            g.token_source.generator_allowed = cflags.generator_allowed;
+        
+        if (kind.equals("eval")) {
+            node = g.eval_input();
+        }
+        else if (kind.equals("exec")) {
+            node = g.file_input();
+        }
+        else if (kind.equals("single")) {
+            node = g.single_input();
+        }
+        else {
+           throw Py.ValueError("parse kind must be eval, exec, " +
+                               "or single");
+        }
+        return node;
+    }
+
+    private static BufferedReader prepBufreader(InputStream istream,
+                                                CompilerFlags cflags) {
         int nbytes;
         try {
             nbytes = istream.available();
@@ -88,7 +187,7 @@ public class parser {
             nbytes = 10000;
         if (nbytes > 100000)
             nbytes = 100000;
-
+        
         Reader reader = null;
         try {
             if (cflags != null && cflags.encoding != null) {
@@ -98,77 +197,18 @@ public class parser {
         if (reader == null) {
             reader = new InputStreamReader(istream);
         }
-
+        
         //if (Options.fixMacReaderBug);
         reader = new FixMacReaderBug(reader);
-
+        
         BufferedReader bufreader = new BufferedReader(reader);
-
+        
         try {
             bufreader.mark(nbytes);
         } catch (IOException exc) { }
-
-        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader));
-        if (cflags != null)
-            g.token_source.generator_allowed = cflags.generator_allowed;
-        modType node = null;
-        try {
-            if (kind.equals("eval")) {
-                node = g.eval_input();
-            }
-            else if (kind.equals("exec")) {
-                node = g.file_input();
-            }
-            else if (kind.equals("single")) {
-                node = g.single_input(cflags.interactive);
-            }
-            else {
-               throw Py.ValueError("parse kind must be eval, exec, " +
-                                   "or single");
-            }
-        }
-        catch (Throwable t) {
-            try {
-                //System.err.println("resetting istream");
-                bufreader.reset();
-                throw fixParseError(bufreader, t, filename,
-                                    g.token_source.forcedNewline);
-            }
-            catch (IOException ioe) {
-                throw fixParseError(null, t, filename,
-                                    g.token_source.forcedNewline);
-                //throw Py.IOError(ioe);
-            }
-        }
-        return node;
+        return bufreader;
     }
 
-    public static modType partialParse(String string, String kind,
-                                          String filename,
-                                          CompilerFlags cflags)
-    {
-        modType node = null;
-        //System.err.println(new PyString(string).__repr__().toString());
-        try {
-            node = parse(new StringBufferInputStream(string),
-                         kind, filename, cflags);
-        }
-        catch (PySyntaxError e) {
-            //System.out.println("e: "+e.lineno+", "+e.column+", "+
-            //                   e.forceNewline);
-            try {
-                node = parse(new StringBufferInputStream(string+"\n"),
-                             kind, filename, cflags);
-            }
-            catch (PySyntaxError e1) {
-                //System.out.println("e1: "+e1.lineno+", "+e1.column+
-                //                   ", "+e1.forceNewline);
-                if (e.forceNewline || !e1.forceNewline) throw e;
-            }
-            return null;
-        }
-        return node;
-    }
 }
 
 

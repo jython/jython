@@ -89,6 +89,69 @@ public class PythonGrammar
         }
     }
 
+    // ! maximal currently used LOOKAHEAD is 3    
+    private static final int MAX_LOOKAHEAD = 3;
+
+    public boolean partial_valid_sentence(Throwable t) {
+        if (t instanceof TokenMgrError) {
+           // check whether EOF condition inside multi-line string,
+           // or just after newline continuation inside a string (*NLC states)
+           TokenMgrError e = (TokenMgrError)t;
+           switch(e.lexState) {
+           case IN_STRING1NLC:
+           case IN_STRING2NLC:
+           case IN_STRING13:
+           case IN_STRING23:
+               return e.EOFSeen;
+           default:
+               return false;
+           }
+        }
+        if (!(t instanceof ParseException)) 
+            return false;
+        try {
+            ParseException e = (ParseException)t;
+            int tok = getNextToken().kind;
+            if (tok == EOF) return true; // all tokens eaten
+            
+            // or check whether remaing tokens partially fullfill lookahead
+            // expectations
+        
+            int[][] expected = e.expectedTokenSequences;
+        
+            if (expected == null) return false;
+        
+            int[] ahead = new int[MAX_LOOKAHEAD-1];
+        
+            int i = 0;
+            for(;;) {
+                ahead[i] = tok;
+                i++;            
+                tok = getNextToken().kind;
+                if (tok == EOF) break;
+                if (i >= MAX_LOOKAHEAD-1) return false;
+            }
+            
+            int nahead = i;
+            
+        next_expected:
+            for(int j = 0; j<expected.length; j++) {
+                int[] cand = expected[j];
+        
+                if (cand.length <= nahead ) continue next_expected;
+        
+                for(int k = 0; k < nahead; k++)
+                    if (ahead[k] != cand[k])
+                        continue next_expected;
+                return true;
+            }
+        
+            return false;
+        } catch (TokenMgrError e1) {
+            return false;
+        }
+    }
+    
 }
 
 
@@ -101,11 +164,19 @@ TOKEN_MGR_DECLS:
     int dedents = 0;
     int parens = 0;
     int indent;
-    boolean seen_eof = false;
-    boolean single_input = false;
-    boolean interactive = false;
+
+    boolean expect_indent = false;
+
     boolean compound = false;
-    public boolean forcedNewline = false;
+    
+    public boolean single_input = false;
+
+    // parsing of partial sentence (interactive) mode
+    public boolean partial = false;
+    // control whether empty new lines on EOF force sentence closing NEWLINE even if indent
+    // is expected,i.e. classic behavior at jython prompt (different from codeop behavior)
+    public boolean stdprompt = false;
+
     public boolean generator_allowed = false;
 
     static Token addDedent(Token previous) {
@@ -123,32 +194,49 @@ TOKEN_MGR_DECLS:
     }
 
     void CommonTokenAction(Token t) {
+        /*
+           if not partial: EOF is expanded to token sequences comprising
+               if single_input: [NEWLINE] necessary DEDENT NEWLINE (afterward EOF)
+               otherwise      : [NEWLINE] necessary DEDENT EOF
+           if partial: EOF expansion happens only if EOF preceded by empty line (etc),
+           i.e. lexer is in MAYBE_FORCE_NEWLINE_IF_EOF state
+        */
         if (t.kind == EOF) {
-            //System.out.println("EOF: "+single_input+", "+curLexState);
-            if (!interactive) {
+            // System.out.println("EOF: "+single_input+", "+curLexState+", "+level);
+            if (!partial || curLexState == MAYBE_FORCE_NEWLINE_IF_EOF) {
                 if (curLexState == DEFAULT) {
                     t.kind = NEWLINE;
                 }
                 else {
                     t.kind = DEDENT;
-                    level -= 1;
+                    if (level >= 0) level -= 1;
                 }
-                while (level-- >= 0)
+                while (level >= 0) {
+                    level--;
                     t = addDedent(t);
-                //t = addDedent(t);
+                }
                 if (!single_input) {
                     t.kind = EOF;
                     t.image = "<EOF>";
                 } else {
                     t.kind = NEWLINE;
                     t.image = "<FORCENL>";
-                }
+                    single_input = false;
+                }               
             }
         } else if (t.kind == YIELD) {
             if (!generator_allowed) {
                 t.kind = NAME;
             }
         }
+    }
+    
+    void indenting(int ind) {
+        indent = ind;
+        if (indent == indentation[level])
+            SwitchTo(INDENTATION_UNCHANGED);
+        else
+            SwitchTo(INDENTING);    
     }
 }
 
@@ -181,69 +269,38 @@ SKIP :
 { <NEWLINE2: ("\n" | "\r")> { matchedToken.kind = NEWLINE; }: INDENTING }
 
 
-<FORCE_NEWLINE> TOKEN :
+// causes expected warning
+<MAYBE_FORCE_NEWLINE_IF_EOF> SKIP :
 {
-    <NEWLINE3: ("\n" | "\r")>
-        {
-            Token t1 = matchedToken;
-            //System.out.println("final_newline: "+level);
-            t1.kind = DEDENT;
-            while (level-- > 0) 
-                t1 = addDedent(t1);
-            t1.kind = NEWLINE;
-        } : DEFAULT
+    <""> { indenting(0); }
 }
 
 <INDENTING, INDENTATION_UNCHANGED> SKIP :
 {
     "\t"
-        {
-            indent = (indent/8+1)*8;
-            if (indent == indentation[level])
-                SwitchTo(INDENTATION_UNCHANGED);
-            else
-                SwitchTo(INDENTING);
-        }
+        { indenting((indent/8+1)*8); }
 |   " "
-        {
-            indent += 1;
-            if (indent == indentation[level])
-                SwitchTo(INDENTATION_UNCHANGED);
-            else
-                SwitchTo(INDENTING);
-        }
+        { indenting(indent+1); }
 |   "\014"
-        {
-            indent = 0;
-            if (indent == indentation[level])
-                SwitchTo(INDENTATION_UNCHANGED);
-            else
-                SwitchTo(INDENTING);
-        }
+        { indenting(0); }
 |   <CRLF1: ("\r\n" | "\n" | "\r")>
         {
-            if (parens == 0 && single_input && indent==0) {
+            //System.out.println("empty line");
+            // if partial single_input (interactive) mode,
+            // empty line (indent==0), and no parens open
+            // or indentetion expected (if stdprompt == true, ovveride last cond)
+            // consider forcing sentence closing NEWLINE if EOF
+            if (partial && single_input && indent == 0 &&
+                           parens == 0  && (stdprompt || !expect_indent)) {
                 //System.out.println("force newline");
                 //backup a character!
-                forcedNewline = true;
-                if (interactive) {
-                    input_stream.backup(1);
-                    SwitchTo(FORCE_NEWLINE);
-                } else {
-                    SwitchTo(INDENTING);
-                }
+                // - input_stream.backup(1); -
+                SwitchTo(MAYBE_FORCE_NEWLINE_IF_EOF);
             }
-            else {
-                //doPrompt();
-                indent = 0;
-                if (indent == indentation[level])
-                    SwitchTo(INDENTATION_UNCHANGED);
-                else
-                    SwitchTo(INDENTING);
-            }
+            else
+                indenting(0);            
         }
 }
-
 
 
 <INDENTATION_UNCHANGED> SKIP :
@@ -294,11 +351,7 @@ SKIP :
 <INDENTING, INDENTATION_UNCHANGED> SPECIAL_TOKEN: /* COMMENTS */
 {
     <SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* ("\r\n" | "\n" | "\r")> {
-        indent = 0;
-        if (indent == indentation[level])
-            SwitchTo(INDENTATION_UNCHANGED);
-        else
-            SwitchTo(INDENTING);
+        indenting(0);
     }
 }
 
@@ -442,10 +495,26 @@ MORE : /* Strings */
 <IN_STRING23> TOKEN : { <TRIPLE_STRING2: "\"\"\""> { 
     matchedToken.image = image.toString(); } : DEFAULT}
 
-<IN_STRING11,IN_STRING21> MORE: 
+<IN_STRING11> MORE: 
 {
-    <"\\\r\n">           { image.setLength(image.length()-3); }
-|   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); }
+    <"\\\r\n">           { image.setLength(image.length()-3); } : IN_STRING1NLC
+|   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); } : IN_STRING1NLC
+}
+
+<IN_STRING21> MORE: 
+{
+    <"\\\r\n">           { image.setLength(image.length()-3); } : IN_STRING2NLC
+|   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); } : IN_STRING2NLC
+}
+
+<IN_STRING1NLC> MORE:
+{
+ <""> : IN_STRING11
+}
+
+<IN_STRING2NLC> MORE:
+{
+ <""> : IN_STRING21
 }
 
 <IN_STRING11> MORE: { <("\\" ("\\"|"'")) | ~["\n","\r"]> }
@@ -465,13 +534,13 @@ MORE : /* Strings */
 }
 
 
-//single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-modType single_input(boolean interactive): {
+//single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE 
+// apparently CPython coalesces newlines, we don't
+modType single_input(): {
     token_source.single_input=true;
-    token_source.interactive = interactive;
 }
 {
-    (<NEWLINE> |  simple_stmt() |  compound_stmt() <NEWLINE>)
+    (LOOKAHEAD(2) <NEWLINE>)* [(simple_stmt() | compound_stmt() <NEWLINE>)] (<NEWLINE>)* <EOF>
     { return (modType) jjtree.popNode(); }
 }
 
@@ -482,10 +551,10 @@ modType file_input(): {token_source.single_input=false;}
     { return (modType) jjtree.popNode(); }
 }
 
-//eval_input: testlist NEWLINE* ENDMARKER
+//eval_input: NEWLINE* testlist NEWLINE* ENDMARKER
 modType eval_input(): {token_source.single_input=false;}
 {
-    SmartTestList() (<NEWLINE>)* <EOF>
+    (<NEWLINE>)* SmartTestList() (<NEWLINE>)* <EOF>
     { return (modType) jjtree.popNode(); }
 }
 
@@ -694,7 +763,8 @@ void except_clause(): {}
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
 void suite(): {}
-{ simple_stmt() |  <NEWLINE> <INDENT> (stmt())+ <DEDENT> }
+{ simple_stmt() |  <NEWLINE> 
+                   { token_source.expect_indent = true; } <INDENT> { token_source.expect_indent = false; } (stmt())+ <DEDENT> }
 
 
 //test: and_test ('or' and_test)* | lambdef
