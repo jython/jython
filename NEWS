@@ -3,8 +3,11 @@ Jython NEWS
 XX-dec-2001 Jython 2.1 beta 2
 
   New features.
+   - support for callproc() in zxJDBC is now available for most simple
+     stored procedure calls.
 
   Bug fixes.
+   - [ #495870 ] zxJDBC now only prepares statements with params.
 
 03-dec-2001 Jython 2.1 beta 1
 
@@ -132,7 +135,7 @@ XX-dec-2001 Jython 2.1 beta 2
    - Added socket.getfqdn(). Thanks to Brian Zimmer for the patch.
 
   Bug fixes.
-   - Fixed innerclass names with '$' #127200 
+   - Fixed innerclass names with '$' #127200
    - Fixed a bug where final methods were overriden in proxy #127201.
    - Fixed a bug in exec which allow a fileobject to be passed in.
      Thanks to Brian Zimmer for the patch.
@@ -140,7 +143,7 @@ XX-dec-2001 Jython 2.1 beta 2
 31-Dec-2000 Jython 2.0 beta 1
 
   New features
-    - Installer logo by Ivan Kougaenko. The logo content is still 
+    - Installer logo by Ivan Kougaenko. The logo content is still
       open, so submit you suggestions.
     - The default packages selected in the installer are now better
       attuned to the normal user (as opposed to the jython devers).
@@ -153,12 +156,12 @@ XX-dec-2001 Jython 2.1 beta 2
 25-Dec-2000 Jython 2.0 alpha 3
 
   Bug fixes.
-    - Fixed a bug that caused Infinite recursion in subpackage 
+    - Fixed a bug that caused Infinite recursion in subpackage
       import
     - Fixed conversion error when a long is converted to a java double.
     - Fixed a bug where an attribute in a package __init__.py would
       hide a submodule.
-    - Fixed missing quotes around the path to java.exe in jython.bat 
+    - Fixed missing quotes around the path to java.exe in jython.bat
       for windows.
     - Include missing re.py in installer.
     - Added threading and atexit modules from CPython2.0.
@@ -169,12 +172,12 @@ XX-dec-2001 Jython 2.1 beta 2
     - Added -v (verbose) option to jython command. It will trace
       import statements. Use three -v's for maximum information.
     - Added new registry option python.options.internalTablesImpl
-      which is a list of choices (':' separated) for internal 
-      tables implementations. These tables contain the mapping of 
+      which is a list of choices (':' separated) for internal
+      tables implementations. These tables contain the mapping of
       classes to PyJavaClasses.
       Long running applications that unloads classes can avoid a
-      memory leak by setting the property to "weak" or "soft". 
-      That will use a table implementation which use weak or soft 
+      memory leak by setting the property to "weak" or "soft".
+      That will use a table implementation which use weak or soft
       refrences.
     - Use a SecureClassLoader for loading compiled python modules.
       This should allow jython to be used with the java plugin and
@@ -184,7 +187,7 @@ XX-dec-2001 Jython 2.1 beta 2
     - Added support for formatting of long values in "%d %x %X %o".
       The support does not match CPython2.0 exactly, but matches
       what CPython2.1 will do.
-    - The \x escape will only eat two hex characters and will 
+    - The \x escape will only eat two hex characters and will
       always create a character with values < 256. Use the \u
       escape for high-byte values.
     - A ucnhash module to support the \n{name} escape.
@@ -194,17 +197,17 @@ XX-dec-2001 Jython 2.1 beta 2
       being inserted at position 1 in sys.path.
 
   Bug fixes.
-    - Package relative import works in jythonc, at least when the dotted 
+    - Package relative import works in jythonc, at least when the dotted
       package name match the directory structure.
     - Fixed oct(0) to return "0"
     - Added a os.__file__ attribute. CPython's site.py expects that.
     - Fixed a exception when calling int("0", 16)
     - Delay closing a socket until all sock.makefile() files are closed.
-    - Avoided a duplicate call to Class.getMethods(). This will improve 
+    - Avoided a duplicate call to Class.getMethods(). This will improve
       performance.
     - Allow from import * to modify the locals in a function (bug 122834).
     - Classes with the same name do no longer clash (bug 122820).
-    - Avoid a memory leak where many threads get started and stopped. The 
+    - Avoid a memory leak where many threads get started and stopped. The
       fix only works on java2.
 
 26-Nov-2000 Jython 2.0 alpha 1
@@ -213,7 +216,7 @@ XX-dec-2001 Jython 2.1 beta 2
     - Integrate the free ORO regular expression matcher from the apache
       project.
 
-  CPython2.0 compatibility, including 
+  CPython2.0 compatibility, including
     - List comprehension.
     - Extended call syntax.
     - Extended print statement
@@ -226,7 +229,7 @@ XX-dec-2001 Jython 2.1 beta 2
     - Text files will pass data read and written through the default
       codecs for the JVM. Binary files will write only the lower eight
       bits of each unicode character.
-    - arrays passed to java code will no longer autocoerce just 
+    - arrays passed to java code will no longer autocoerce just
       because the elements can be autocoerced.
     - The precedence of java loading have changed. Now the sys.path
       is searched for python modules before the CLASSPATH and sys.path
@@ -236,8 +239,8 @@ XX-dec-2001 Jython 2.1 beta 2
 
   Bug fixes.
     - Many, including the errata.
-    - Now the content of a java package is the union of the content of all 
-      locations with the corresponding valid hierarchical name 
+    - Now the content of a java package is the union of the content of all
+      locations with the corresponding valid hierarchical name
       from dirs and jars of CLASSPATH (and sys.path for dirs); i.e.
       from jpkg import * works for jpkg in a dir too.
 
@@ -301,7 +304,7 @@ XX-dec-2001 Jython 2.1 beta 2
       mechanism.
 
   Improved CPython 1.5.2 compatibility
-    - md5 module supported (no need to download anything extra)  
+    - md5 module supported (no need to download anything extra)
     - dir() on function objects now returns a list containing __doc__,
       func_doc, __namme__, func_name, func_globals, func_defaults,
       func_code.  __doc__/func_doc is writable (but not func_defaults
@@ -326,7 +329,7 @@ XX-dec-2001 Jython 2.1 beta 2
       followed, i.e. only public members can be accessed.  This
       feature only works if running with Java 1.2.  Thanks to Tony
       Plate for his initial implementation.
-    - A new framework for looking up the methods for builtin types has 
+    - A new framework for looking up the methods for builtin types has
       been enabled.  This can speed up method calls by a factor of 2.
       The feature is currently experimental and has only been
       implemented for list objects, but will be implemented for other
@@ -367,7 +370,7 @@ XX-dec-2001 Jython 2.1 beta 2
       option.
     - syncing string object methods with experimental CPython 1.6
       string methods.  This includes new optional arguments on
-      startswith() and endswith() and the moving of join() to a method 
+      startswith() and endswith() and the moving of join() to a method
       of the separator string.
     - Many other bug fixes and CPython syncs
 
@@ -395,7 +398,7 @@ XX-dec-2001 Jython 2.1 beta 2
     - New license
     - bug fixes
 
-	
+
 
 
 Local Variables:
