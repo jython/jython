@@ -22,9 +22,17 @@ public class PyModule extends PyObject
         PyObject path = __dict__.__finditem__("__path__");
         PyObject pyname = __dict__.__finditem__("__name__");        
         
-        if (path == null || pyname == null) return super.__findattr__(attr);
+        ret = super.__findattr__(attr);
+        if (ret != null) return ret;
+        if (path == null || pyname == null) return null;
         
         String name = pyname.__str__().toString();
+        String fullName = (name+'.'+attr).intern();
+        
+        PyObject modules = Py.getSystemState().modules;
+       
+        ret = modules.__finditem__(fullName);
+        if (ret != null) return ret;
 
         if (path == Py.None) {
             /* disabled:
@@ -34,24 +42,14 @@ public class PyModule extends PyObject
              */
         }
         else if (path instanceof PyList) {
-            ret = imp.loadFromPath(attr, (name+'.'+attr).intern(),
-            (PyList)path);
+            ret = imp.loadFromPath(attr, fullName,(PyList)path);
         }
         else {
             throw Py.TypeError("__path__ must be list or None");
         }
 
         if (ret == null) {
-            ret = super.__findattr__(attr);
-            if (ret != null) return ret;
-        }
-
-        if (ret == null) {
-            ret = PySystemState.packageManager.lookupName(
-            name+'.'+attr);
-            /*Class c = Py.findClass(name+'.'+attr);
-            if (c != null)
-            ret = PyJavaClass.lookup(c);*/
+            ret = PySystemState.packageManager.lookupName(fullName);
         }
 
         if (ret != null) {
