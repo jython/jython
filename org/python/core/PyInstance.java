@@ -473,7 +473,7 @@ public class PyInstance extends PyObject {
 	    PyObject stop = slice.stop;
 	    
 	    if (start == Py.None) start = Py.Zero;
-	    if (stop == Py.None) stop = new PyInteger(sys.maxint);
+	    if (stop == Py.None) stop = new PyInteger(PySystemState.maxint);
 	    
         if (extraArg == null) {
             return func.__call__(start, stop);

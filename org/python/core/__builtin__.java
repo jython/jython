@@ -363,7 +363,7 @@ public class __builtin__ implements InitModule {
 	}
 
 	public static PyObject input() {
-		return input(sys.ps1);
+		return input(Py.getSystemState().ps1);
 	}
 
 	public static PyInteger int$(PyObject o) {

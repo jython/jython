@@ -424,6 +424,8 @@ public final class Py {
 	}
 
 	private static void initProperties(String[] packages, String[] props) {
+	    // This function is completely broken in new PySystemState world
+	    // Needs reworking bad...
 	    if (props != null) {
 	        java.util.Properties sprops;
 	        try {
@@ -435,14 +437,14 @@ public final class Py {
 	        for(int i=0; i<props.length; i+=2) {
 	            sprops.put(props[i], props[i+1]);
 	        }
-	        sys.initRegistry(sprops);
+	        //.initRegistry(sprops);
         }
 
 	    //if (sys.registry == null) sys.registry = sys.initRegistry();
 
 	    if (packages != null) {
 	        for(int i=0; i<packages.length; i++) {
-	            sys.add_package(packages[i]);
+	            //sys.add_package(packages[i]);
 	        }
 	    }
 	}
