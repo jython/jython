@@ -338,6 +338,11 @@ public class cPickle implements ClassDictInit {
 		new String[] { "1.0", "1.1", "1.2" };
 
 
+    public static String[] __depends__ = new String[] { 
+        "copy_reg",
+        "cPickle_exceptions",
+    };
+
     public static PyObject PickleError;
     public static PyObject PicklingError;
     public static PyObject UnpickleableError;
