@@ -1,5 +1,12 @@
 Jython NEWS
 
+31-dec-2001 Jython 2.1 final
+
+  Bug fixes.
+   - [ #493359 ] Installer should include <EXIT> button
+   - [ #495602 ] os.path.dirname() can result in an NPE
+   - [ #495604 ] imp.find_module fails when None is 2 arg
+
 21-dec-2001 Jython 2.1 beta 2
 
   New features.
