@@ -1,8 +1,9 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.modules;
-
 import org.python.core.*;
 
-class FunctionThread extends Thread {
+class FunctionThread extends Thread
+{
     PyObject func;
     PyObject[] args;
     PySystemState systemState;
@@ -24,10 +25,11 @@ class FunctionThread extends Thread {
     }
 }
 
-public class thread implements InitModule {
+public class thread implements InitModule
+{
     public void initModule(PyObject dict) {
-		dict.__setitem__("LockType", PyJavaClass.lookup(PyLock.class));
-	}
+	dict.__setitem__("LockType", PyJavaClass.lookup(PyLock.class));
+    }
 	
     public static PyObject error = new PyString("thread.error");
 
