@@ -14,13 +14,16 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     public PyObject __call__(PyObject arg1) {
         switch(index) {
         case 0:
-            return Py.newString(__builtin__.chr(Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
+            return Py.newString(__builtin__.chr(
+		Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
         case 1:
             return Py.newInteger(__builtin__.len(arg1));
         case 2:
-            return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
+            return __builtin__.range(
+		Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
         case 3:
-            return Py.newInteger(__builtin__.ord(Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
+            return Py.newInteger(__builtin__.ord(
+		Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
         case 5:
             return __builtin__.hash(arg1);
         case 7:
@@ -35,8 +38,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         switch(index) {
         case 2:
             return __builtin__.range(
-                                     Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
-                                     Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"));
+		Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
+		Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"));
         case 6:
             return Py.newInteger(__builtin__.cmp(arg1, arg2));
                     
@@ -48,9 +51,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         switch(index) {
         case 2:
             return __builtin__.range(
-                                     Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
-                                     Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
-                                     Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
+		Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
+		Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
+		Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
         default:
             throw argCountError(3);
         }
@@ -67,16 +70,17 @@ public class __builtin__ implements InitModule {
         // Hopefully add -O option in the future to change this
         dict.__setitem__("__debug__", Py.One);
 
-        dict.__setitem__("chr", new BuiltinFunctions().init("chr", 0, 1) );
-        dict.__setitem__("range", new BuiltinFunctions().init("range", 2, 1, 3) );
-        dict.__setitem__("len", new BuiltinFunctions().init("len", 1, 1) );
-        dict.__setitem__("ord", new BuiltinFunctions().init("ord", 3, 1) );
-        dict.__setitem__("globals", new BuiltinFunctions().init("globals", 4, 0) );
-        dict.__setitem__("hash", new BuiltinFunctions().init("hash", 5, 1) );
-        dict.__setitem__("cmp", new BuiltinFunctions().init("cmp", 6, 2) );
-        dict.__setitem__("list", new BuiltinFunctions().init("list", 7, 1) );
-        dict.__setitem__("tuple", new BuiltinFunctions().init("tuple", 8, 1) );
-
+        dict.__setitem__("chr", new BuiltinFunctions().init("chr", 0, 1));
+        dict.__setitem__("range",
+			 new BuiltinFunctions().init("range", 2, 1, 3));
+        dict.__setitem__("len", new BuiltinFunctions().init("len", 1, 1));
+        dict.__setitem__("ord", new BuiltinFunctions().init("ord", 3, 1));
+        dict.__setitem__("globals",
+			 new BuiltinFunctions().init("globals", 4, 0) );
+        dict.__setitem__("hash", new BuiltinFunctions().init("hash", 5, 1));
+        dict.__setitem__("cmp", new BuiltinFunctions().init("cmp", 6, 2));
+        dict.__setitem__("list", new BuiltinFunctions().init("list", 7, 1));
+        dict.__setitem__("tuple", new BuiltinFunctions().init("tuple", 8, 1));
     } 
 
     public static PyObject abs(PyObject o) {
@@ -105,7 +109,6 @@ public class __builtin__ implements InitModule {
                 kw[i] = ((PyString)ek.nextElement()).internedString();
                 a[i+offset] = (PyObject)ev.nextElement();
             }
-
             return o.__call__(a, kw);
         } else {
             return apply(o, args);
@@ -118,7 +121,8 @@ public class __builtin__ implements InitModule {
 
 
     public static char chr(int i) {
-        if (i < 0 || i > 65535) throw Py.ValueError("chr() arg not in range(65535)");
+        if (i < 0 || i > 65535)
+	    throw Py.ValueError("chr() arg not in range(65535)");
         return (char)i;
     }
 
@@ -132,7 +136,7 @@ public class __builtin__ implements InitModule {
         if (o1.__class__ == o2.__class__) {
             return new PyTuple(new PyObject[] {o1, o2});
         }
-        ctmp=o1.__coerce_ex__(o2);
+        ctmp = o1.__coerce_ex__(o2);
         if (ctmp != null && ctmp != Py.None) {
             if (ctmp instanceof PyObject[]) {
                 return new PyTuple((PyObject[])ctmp);
@@ -140,8 +144,7 @@ public class __builtin__ implements InitModule {
                 return new PyTuple(new PyObject[] {o1, (PyObject)ctmp});
             }
         }
-
-        ctmp=o2.__coerce_ex__(o1);
+        ctmp = o2.__coerce_ex__(o1);
         if (ctmp != null && ctmp != Py.None) {
             if (ctmp instanceof PyObject[]) {
                 return new PyTuple((PyObject[])ctmp);
@@ -153,11 +156,13 @@ public class __builtin__ implements InitModule {
     }
 
     public static PyCode compile(String data, String filename, String type) {
-        return Py.compile(new java.io.StringBufferInputStream(data+"\n\n"), filename, type);
+        return Py.compile(new java.io.StringBufferInputStream(data+"\n\n"),
+			  filename, type);
     }
 
     public static PyComplex complex(PyObject real, PyObject imag) {
-        return (PyComplex)real.__complex__().__add__(imag.__complex__().__mul__(PyComplex.J));
+        return (PyComplex)real.__complex__().__add__(
+	    imag.__complex__().__mul__(PyComplex.J));
     }
 
     public static PyComplex complex(PyObject real) {
@@ -177,8 +182,10 @@ public class __builtin__ implements InitModule {
         PyObject l = locals();
         PyList ret;
             
-        if (l instanceof PyStringMap) ret = ((PyStringMap)l).keys();
-        if (l instanceof PyDictionary) ret = ((PyDictionary)l).keys();
+        if (l instanceof PyStringMap)
+	    ret = ((PyStringMap)l).keys();
+        if (l instanceof PyDictionary)
+	    ret = ((PyDictionary)l).keys();
             
         ret = (PyList)l.invoke("keys");
         ret.sort();
@@ -189,14 +196,18 @@ public class __builtin__ implements InitModule {
         return x._divmod(y);
     }
 
-    public static PyObject eval(PyObject o, PyObject globals, PyObject locals) {
+    public static PyObject eval(PyObject o, PyObject globals, PyObject locals)
+    {
         PyCode code;
-        if (o instanceof PyCode) code = (PyCode)o;
+        if (o instanceof PyCode)
+	    code = (PyCode)o;
         else {
             if (o instanceof PyString)
-                code = __builtin__.compile(((PyString)o).toString(), "<string>", "eval");
+                code = __builtin__.compile(((PyString)o).toString(),
+					   "<string>", "eval");
             else
-                throw Py.TypeError("eval: argument 1 must be string or code object");
+                throw Py.TypeError(
+		    "eval: argument 1 must be string or code object");
         }
         return Py.runCode(code, locals, globals);
     }
@@ -209,14 +220,14 @@ public class __builtin__ implements InitModule {
         return eval(o, null, null);
     }
 
-    public static void execfile(String name, PyObject globals, PyObject locals) {
+    public static void execfile(String name, PyObject globals, PyObject locals)
+    {
         java.io.FileInputStream file;
         try {
             file = new java.io.FileInputStream(name);
         } catch (java.io.FileNotFoundException e) {
             throw Py.IOError(e);
         }
-
         PyCode code;
                 
         try {
@@ -228,7 +239,6 @@ public class __builtin__ implements InitModule {
                 throw Py.IOError(e);
             }
         }
-
         Py.runCode(code, locals, globals);
     }
 
@@ -240,7 +250,8 @@ public class __builtin__ implements InitModule {
     }
 
     public static PyObject filter(PyObject f, PyString s) {
-        if (f == Py.None) return s;
+        if (f == Py.None)
+	    return s;
         PyObject[] args = new PyObject[1];
         char[] chars = s.toString().toCharArray();
         int i;
@@ -248,7 +259,8 @@ public class __builtin__ implements InitModule {
         int n = chars.length;
         for(i=0, j=0; i<n; i++) {
             args[0] = Py.makeCharacter(new Character(chars[i]));
-            if (!f.__call__(args).__nonzero__()) continue;
+            if (!f.__call__(args).__nonzero__())
+		continue;
             chars[j++] = chars[i];
         }
         return new PyString(new String(chars, 0, j));
@@ -261,9 +273,11 @@ public class __builtin__ implements InitModule {
         PyList list = new PyList();
         while ((element = l.__finditem__(i++)) != null) {
             if (f == Py.None) {
-                if (!element.__nonzero__()) continue;
+                if (!element.__nonzero__())
+		    continue;
             } else {
-                if (!f.__call__(element).__nonzero__()) continue;
+                if (!f.__call__(element).__nonzero__())
+		    continue;
             }
             list.append(element);
         }
@@ -286,7 +300,8 @@ public class __builtin__ implements InitModule {
         try {
             return o.__findattr__(n) != null;
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) return false;
+            if (Py.matchException(exc, Py.AttributeError))
+		return false;
             throw exc;
         }
     }
@@ -306,7 +321,6 @@ public class __builtin__ implements InitModule {
 
     public static PyObject input(PyObject prompt) {
         String line = raw_input(prompt);
-                
         return eval(new PyString(line));
     }
 
@@ -326,7 +340,8 @@ public class __builtin__ implements InitModule {
         
         String istring = s.internedString();
         PyObject ret = internedStrings.__finditem__(istring);
-        if (ret != null) return (PyString)ret;
+        if (ret != null)
+	    return (PyString)ret;
 
         internedStrings.__setitem__(istring, s);
         return s;
@@ -338,16 +353,20 @@ public class __builtin__ implements InitModule {
 
 
     public static boolean issubclass(PyClass subClass, PyClass superClass) {
-        if (subClass == superClass) return true;
+        if (subClass == superClass)
+	    return true;
         if (subClass.proxyClass != null && superClass.proxyClass != null) {
-            if (superClass.proxyClass.isAssignableFrom(subClass.proxyClass)) return true;
+            if (superClass.proxyClass.isAssignableFrom(subClass.proxyClass))
+		return true;
         }
-        if (subClass.__bases__ == null || superClass.__bases__ == null) return false;
+        if (subClass.__bases__ == null || superClass.__bases__ == null)
+	    return false;
         PyObject[] bases = subClass.__bases__.list;
         int n = bases.length;
         for(int i=0; i<n; i++) {
             PyClass c = (PyClass)bases[i];
-            if (issubclass(c, superClass)) return true;
+            if (issubclass(c, superClass))
+		return true;
         }
         return false;
     }
@@ -358,7 +377,8 @@ public class __builtin__ implements InitModule {
     }
 
     public static PyList list(PyObject o) {
-        if (o instanceof PyList) return (PyList)o;
+        if (o instanceof PyList)
+	    return (PyList)o;
         return new PyList(make_array(o));
     }
 
@@ -373,7 +393,8 @@ public class __builtin__ implements InitModule {
     public static PyObject map(PyObject[] argstar) {
         int i=0;
         int n = argstar.length-1;
-        if (n < 1) throw Py.TypeError("map requires at least two arguments");
+        if (n < 1)
+	    throw Py.TypeError("map requires at least two arguments");
         PyObject element;
         PyObject f = argstar[0];
         PyList list = new PyList();
@@ -388,7 +409,8 @@ public class __builtin__ implements InitModule {
                     args[j] = Py.None;
                 }
             }
-            if (!any_items) break;
+            if (!any_items)
+		break;
             if (f == Py.None) {
                 if (n == 1) {
                     list.append(args[0]);
@@ -406,33 +428,39 @@ public class __builtin__ implements InitModule {
     // I've never been happy with max and min builtin's...
 
     public static PyObject max(PyObject[] l) {
-        if (l.length == 1) return max(l[0]);
+        if (l.length == 1)
+	    return max(l[0]);
         else return max(new PyTuple(l));
     }
 
     private static PyObject max(PyObject o) {
         PyObject max = o.__finditem__(0);
-        if (max == null) throw Py.TypeError("max of empty sequence");
+        if (max == null)
+	    throw Py.TypeError("max of empty sequence");
         PyObject element;
         int i=1;
         while ((element = o.__finditem__(i++)) != null) {
-            if (element._gt(max).__nonzero__()) max = element;
+            if (element._gt(max).__nonzero__())
+		max = element;
         }
         return max;
     }
 
     public static PyObject min(PyObject[] l) {
-        if (l.length == 1) return min(l[0]);
+        if (l.length == 1)
+	    return min(l[0]);
         else return min(new PyTuple(l));
     }
 
     private static PyObject min(PyObject o) {
         PyObject min = o.__finditem__(0);
-        if (min == null) throw Py.TypeError("min of empty sequence");
+        if (min == null)
+	    throw Py.TypeError("min of empty sequence");
         PyObject element;
         int i=1;
         while ((element = o.__finditem__(i++)) != null) {
-            if (element._lt(min).__nonzero__()) min = element;
+            if (element._lt(min).__nonzero__())
+		min = element;
         }
         return min;
     }
@@ -445,11 +473,15 @@ public class __builtin__ implements InitModule {
         return new PyFile(name, "r", -1);
     }
 
-    public static PyFile open(String name, String mode) throws java.io.IOException {
+    public static PyFile open(String name, String mode)
+	throws java.io.IOException
+    {
         return new PyFile(name, mode, -1);
     }
 
-    public static PyFile open(String name, String mode, int bufsize) throws java.io.IOException {
+    public static PyFile open(String name, String mode, int bufsize)
+	throws java.io.IOException
+    {
         return new PyFile(name, mode, bufsize);
     }
 
@@ -464,21 +496,25 @@ public class __builtin__ implements InitModule {
     private static boolean coerce(PyObject[] objs) {
         PyObject x = objs[0];
         PyObject y = objs[1];
-        if (x.__class__ == y.__class__) return true;
+        if (x.__class__ == y.__class__)
+	    return true;
         Object ctmp = x.__coerce_ex__(y);
         if (ctmp != null && ctmp != Py.None) {
             if (ctmp instanceof PyObject[]) {
-                x = ((PyObject[])ctmp)[0]; y = ((PyObject[])ctmp)[1];
+                x = ((PyObject[])ctmp)[0];
+		y = ((PyObject[])ctmp)[1];
             } else {
                 y = (PyObject)ctmp;
             }
         }
         objs[0] = x; objs[1] = y;
-        if (x.__class__ == y.__class__) return true;
+        if (x.__class__ == y.__class__)
+	    return true;
         ctmp = y.__coerce_ex__(x);
         if (ctmp != null && ctmp != Py.None) {
             if (ctmp instanceof PyObject[]) {
-                y = ((PyObject[])ctmp)[0]; x = ((PyObject[])ctmp)[1];
+                y = ((PyObject[])ctmp)[0];
+		x = ((PyObject[])ctmp)[1];
             } else {
                 x = (PyObject)ctmp;
             }
@@ -508,20 +544,23 @@ public class __builtin__ implements InitModule {
                 z = tmp[1];
                 tmp[0] = y;
                 if (coerce(tmp)) {
-                    z = tmp[1]; y = tmp[0];
+                    z = tmp[1];
+		    y = tmp[0];
                     doit=true;
                 }
             }
         } else {
             tmp[1] = z;
             if (coerce(tmp)) {
-                x=tmp[0]; z=tmp[1];
+                x=tmp[0];
+		z=tmp[1];
                 tmp[0] = y;
                 if (coerce(tmp)) {
                     y=tmp[0]; z = tmp[1];
                     tmp[1] = x;
                     if (coerce(tmp)) {
-                        x=tmp[1]; y=tmp[0];
+                        x=tmp[1];
+			y=tmp[0];
                         doit = true;
                     }
                 }
@@ -530,9 +569,9 @@ public class __builtin__ implements InitModule {
 
         if (x.__class__ == y.__class__ && x.__class__ == z.__class__) {
             x = x.__pow__(y, z);
-            if (x != null) return x;
+            if (x != null)
+		return x;
         }
-
         throw Py.TypeError("__pow__ not defined for these operands");
     }
 
@@ -540,10 +579,13 @@ public class __builtin__ implements InitModule {
         if (step == 0)
             throw Py.ValueError("zero step for range()");
         int n;
-        if (step > 0) n = (stop-start+step-1)/step;
-        else n = (stop-start+step+1)/step;
+        if (step > 0)
+	    n = (stop-start+step-1)/step;
+        else
+	    n = (stop-start+step+1)/step;
                 
-        if (n <= 0) return new PyList();
+        if (n <= 0)
+	    return new PyList();
         PyObject[] l = new PyObject[n];
         int j=start;
         for (int i=0; i<n; i++) {
@@ -598,10 +640,10 @@ public class __builtin__ implements InitModule {
         if (result == null) {
             result = l.__finditem__(i++);
             if (result == null) {
-                throw Py.TypeError("reduce of empty sequence with no initial value");
+                throw Py.TypeError(
+		    "reduce of empty sequence with no initial value");
             }
         }
-
         while ((element = l.__finditem__(i++)) != null) {
             result = f.__call__(result, element);
         }
@@ -627,9 +669,11 @@ public class __builtin__ implements InitModule {
     public static PyFloat round(double f, int digits) throws PyException {
         boolean neg = f < 0;
         double multiple = Math.pow(10., digits);
-        if (neg) f = -f;
+        if (neg)
+	    f = -f;
         double tmp = Math.floor(f*multiple+0.5);
-        if (neg) tmp = -tmp;
+        if (neg)
+	    tmp = -tmp;
         return new PyFloat(tmp/multiple);
     }
 
@@ -659,7 +703,8 @@ public class __builtin__ implements InitModule {
     }
 
     public static PyTuple tuple(PyObject o) {
-        if (o instanceof PyTuple) return (PyTuple)o;
+        if (o instanceof PyTuple)
+	    return (PyTuple)o;
         if (o instanceof PyList) {
             PyList l = (PyList)o;
             PyObject[] a;
@@ -686,7 +731,6 @@ public class __builtin__ implements InitModule {
         return o.__getattr__("__dict__");
     }
 
-
     public static PyObject vars() {
         return locals();
     }
@@ -708,7 +752,8 @@ public class __builtin__ implements InitModule {
     }
 
     private static PyObject[] make_array(PyObject o) {
-        if (o instanceof PyTuple) return ((PyTuple)o).list;
+        if (o instanceof PyTuple)
+	    return ((PyTuple)o).list;
 
         int n = o.__len__();
         PyObject[] objs= new PyObject[n];
