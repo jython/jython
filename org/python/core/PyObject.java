@@ -73,7 +73,7 @@ public class PyObject implements java.io.Serializable {
 		return new PyString(toString());
 	}
 	
-	protected String safeRepr() {
+	String safeRepr() {
 	    try {
 	        return __repr__().toString();
 	    } catch (Throwable t) {

@@ -910,7 +910,14 @@ public final class Py {
 
 		for(int i=0; i<bases.length; i++) {
 		    if (!(bases[i] instanceof PyClass)) {
-		        return bases[i].__class__.__call__(new PyString(name), new PyTuple(bases), dict);
+		        PyObject c = bases[i].__class__;
+		        // Only try the meta-class trick on __class__'s that are PyInstance's
+		        // This will improve error messages for casual mistakes
+		        // While not really reducing the power of this approach (I think)
+		        if (c instanceof PyJavaClass) {
+		            throw Py.TypeError("base is not a class object: "+bases[i].safeRepr());
+		        }
+		        return c.__call__(new PyString(name), new PyTuple(bases), dict);
 		    }
 		}
 
