@@ -610,13 +610,13 @@ public class CodeCompiler extends Visitor {
 		code.invokevirtual(mrefs.nonzero);
 		code.ifne(start_loop);
 
+		finishLoop();
+
 		if (node.getNumChildren() == 3) {
 			//Do else
 			node.getChild(2).visit(this);
 		}
 		break_loop.setPosition();
-
-		finishLoop();
 
 		// Probably need to detect "guaranteed exits"
 		return null;
@@ -673,13 +673,14 @@ public class CodeCompiler extends Visitor {
 		//if no more elements then fall through
 		code.ifnonnull(start_loop);
 
+		finishLoop();
+
 		if (node.getNumChildren() > 3) {
 			//Do else clause if provided
 			node.getChild(3).visit(this);
 		}
 
 		break_loop.setPosition();
-		finishLoop();
 
 		code.freeLocal(list_tmp);
 		code.freeLocal(index_tmp);
