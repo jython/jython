@@ -58,7 +58,9 @@ public class PyBuiltinFunctionSet extends PyObject implements Cloneable
     }
 
     public PyObject _doget(PyObject container, PyObject wherefound) {
-        if (isMethod) {
+        // Eventually we may want to allow rebinding of builtins
+        // when container is a subclass of __self__.__class__.
+        if (isMethod && __self__ == Py.None) {
             // TBD: is there a better way?
             try {
                 PyBuiltinFunctionSet unique = (PyBuiltinFunctionSet)clone();
