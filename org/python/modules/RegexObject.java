@@ -207,7 +207,7 @@ public class RegexObject extends PyObject {
             try {
                 v = s.__int__();
             } catch (PyException exc) {
-                throw re.ReError("group "+s+" is undefined");
+                throw Py.IndexError("group "+s.__repr__()+" is undefined");
             }
         }
         return v.getValue();
