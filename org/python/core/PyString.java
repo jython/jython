@@ -1514,6 +1514,8 @@ public class PyString extends PySequence implements ClassDictInit
     public boolean startswith(String prefix, int start, int end) {
         if (start < 0 || start + prefix.length() > string.length())
             return false;
+        if (end > string.length())
+            end = string.length();
         String substr = string.substring(start, end);
         return substr.startsWith(prefix);
     }
