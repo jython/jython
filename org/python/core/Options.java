@@ -1,66 +1,84 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A class with static fields for each of the settable options.
+ * The options from registry and command line is copied into
+ * the fields here and the rest of Jyhton checks these fields.
+ */
 public class Options
 {
     // JPython options.  Some of these can be set from the command line
     // options, but all can be controlled through the JPython registry
 
-    // when an exception occurs in Java code, and it is not caught, should
-    // the interpreter print out the Java exception in the traceback?
+    /**
+     * when an exception occurs in Java code, and it is not caught, should
+     * the interpreter print out the Java exception in the traceback?
+     */
     public static boolean showJavaExceptions = false;
 
-    // if this is not null, it must be a string indicating the directory to
-    // save proxy adapter class files to
-    public static String proxyCacheDirectory = null;
-
-    // TBD
+    /**
+     * When true, python exception raised in overriden methods will
+     * be shown on stderr. This option is remarkable usefull when
+     * python is used for implementing CORBA server. Some CORBA 
+     * servers will turn python exception (say a NameError) into an
+     * anonymous user exception without any stacktrace. Setting this
+     * option will show the stacktrace.
+     */
     public static boolean showPythonProxyExceptions = false;
 
-    // TBD
+    /**
+     * To force JIT compilation of Jython code -- should be unnecessary
+     * Setting this to true will cause jdk1.2rc1 to core dump on Windows
+     */
     public static boolean skipCompile = true;
 
-    // TBD
-    public static boolean verbosePackageCache = false;
-
-    // TBD
+    /**
+     * Setting this to true will cause the console to poll standard in.
+     * This might be helpful on systems without system-level threads.
+     */
     public static boolean pollStandardIn = false;
 
-    // TBD
-    public static boolean classBasedExceptions = true;
-
-    // If true, JPython respects Java the accessibility flag for fields,
-    // methods, and constructors.  This means you can only access public
-    // members.  Set this to false to access all members by toggling the
-    // accessible flag on the member.
+    /**
+     * If true, JPython respects Java the accessibility flag for fields,
+     * methods, and constructors.  This means you can only access public
+     * members.  Set this to false to access all members by toggling the
+     * accessible flag on the member.
+     */
     public static boolean respectJavaAccessibility = true;
 
-    /* no longer necessary
-    // Allow JPython's classloader to find and load .class files on
-    // sys.path.  This only happens for anonymous inner classes, but may
-    // have unintended side-effects.  This option is temporary.
-    public static boolean extendedClassLoader = true;
-    */
-
-    // TBD
+    /**
+     * When false the <code>site.py</code> will not be imported.
+     * This is only honored by the command line main class.
+     */
     public static boolean importSite = true;
 
-    // TBD
+    /**
+     * Set verbosity to Py.ERROR, Py.WARNING, Py.MESSAGE, Py.COMMENT,
+     * or Py.DEBUG for varying levels of informative messages from
+     * Jython. Normally this option is set from the command line.
+     */
     public static int verbose = Py.MESSAGE;
 
-    // TBD
+    /**
+     * Setting this to true will support old 1.0 style keyword+"_" names.
+     * This isn't needed any more due to improvements in the parser
+     */
     public static boolean deprecatedKeywordMangling = true;
 
-    // TBD
-    public static boolean parserVerboseExceptions = false;
-
-    // TBD
+    /**
+     * A directory where the dynamicly generated classes are written.
+     * Nothing is ever read from here, it is only for debugging
+     * purposes.
+     */
     public static String proxyDebugDirectory = null;
 
     //
     // ####### END OF OPTIONS
     //
 
+    private Options() { ; }
+
     private static boolean getBooleanOption(String name, boolean defaultValue)
     {
         String prop = PySystemState.registry.getProperty("python."+name);
@@ -76,6 +94,10 @@ public class Options
         return prop;
     }
 
+
+    /**
+     * Initialize the static fields from the registry options.
+     */
     public static void setFromRegistry() {
         // Set the more unusual options
         Options.showJavaExceptions =
@@ -95,10 +117,6 @@ public class Options
 
         Options.pollStandardIn =
             getBooleanOption("console.poll", Options.pollStandardIn);
-
-        Options.classBasedExceptions =
-            getBooleanOption("options.classExceptions",
-                             Options.classBasedExceptions);
 
         Options.respectJavaAccessibility =
             getBooleanOption("security.respectJavaAccessibility",
