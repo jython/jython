@@ -67,35 +67,21 @@ public class PyServlet extends HttpServlet {
 
     public void init() {
         rootPath = getServletContext().getRealPath("/");
+        if (!rootPath.endsWith(File.separator))
+            rootPath += File.separator;
 
         Properties props = new Properties();
         Enumeration e = getInitParameterNames();
         while (e.hasMoreElements()) {
             String name = (String) e.nextElement();
-            props.setProperty(name, getInitParameter(name));
+            props.put(name, getInitParameter(name));
         }
         if (props.getProperty("python.home") == null && 
                                    System.getProperty("python.home") == null) {
-            props.setProperty("python.home", rootPath + File.separator +
-                                             "WEB-INF" + File.separator +
-                                             "lib");
+            props.setProperty("python.home", rootPath + "WEB-INF" +
+                                             File.separator + "lib");
         }
 
-        props.setProperty("python.packages.directories",
-                          "java.ext.dirs,pyservlet.lib");
-        props.setProperty("pyservlet.lib",
-                          rootPath + File.separator +
-                          "WEB-INF" + File.separator +
-                          "lib");
-
-        props.setProperty("python.packages.paths",
-                          "java.class.path,sun.boot.class.path,"+
-                          "pyservlet.classes");
-        props.setProperty("pyservlet.classes",
-                          rootPath + File.separator +
-                          "WEB-INF" + File.separator +
-                          "classes");
- 
         PythonInterpreter.initialize(System.getProperties(), props, new String[0]);
         reset();
 
@@ -104,6 +90,12 @@ public class PyServlet extends HttpServlet {
         sys.add_package("javax.servlet.http");
         sys.add_package("javax.servlet.jsp");
         sys.add_package("javax.servlet.jsp.tagext");
+
+        sys.add_classdir(rootPath + "WEB-INF" +
+                          File.separator + "classes");
+
+        sys.add_extdir(rootPath + "WEB-INF" +
+                          File.separator + "lib");
     }
 
     public void service(ServletRequest req, ServletResponse res)
@@ -132,9 +124,8 @@ public class PyServlet extends HttpServlet {
         PySystemState sys = Py.getSystemState();
         sys.path.append(new PyString(rootPath));
 
-        String modulesDir = rootPath + File.separator +
-                            "WEB-INF" + File.separator +
-                            "jython";
+        String modulesDir = rootPath + "WEB-INF" +
+                            File.separator + "jython";
         sys.path.append(new PyString(modulesDir));
     }
 
@@ -194,7 +185,6 @@ public class PyServlet extends HttpServlet {
     public void destroy() {
         destroyCache();
     }
-
 
     private void destroyCache() {
         for (Enumeration e = cache.elements(); e.hasMoreElements(); ) {
