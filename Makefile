@@ -8,6 +8,7 @@ include rules/make.rules
 .PHONY: installer
 
 SUBDIRS= \
+	org/apache/oro/text/regex \
 	org/python/parser \
 	org/python/compiler \
 	org/python/core \
