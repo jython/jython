@@ -26,7 +26,7 @@ public class PythonObjectInputStream extends ObjectInputStream {
         try {
             return super.resolveClass(v);
         } catch (ClassNotFoundException exc) {
-            PyObject m = imp.load(clsName);
+            PyObject m = imp.load(clsName.intern());
             //System.out.println("m:" + m); 
             Object cls = m.__tojava__(Class.class);
             //System.out.println("cls:" + cls); 
