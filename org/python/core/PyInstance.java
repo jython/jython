@@ -78,7 +78,12 @@ public class PyInstance extends PyObject {
             ts.pushInitializingProxy(this);
             try {
                 proxy = (PyProxy)c.newInstance();
-		//(PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
+	    } catch (java.lang.InstantiationException e) {
+		Class sup = c.getSuperclass();
+		String msg = "Default constructor failed for Java superclass";
+		if (sup != null)
+		    msg += " " + sup.getName();
+		throw Py.TypeError(msg);
             } catch (NoSuchMethodError nsme) {
                 throw Py.TypeError("constructor requires arguments");
             } catch (Exception exc) {
@@ -146,36 +151,12 @@ public class PyInstance extends PyObject {
     }
 
     public void __init__(PyObject[] args, String[] keywords) {
-	// // Init all interfaces from the start
-	// Class proxyClass = __class__.proxyClass;
-	// if (proxyClass != null) {
-	// if (c.
-	// for(int i=0; i<javaProxies.length; i++) {
-	// if (javaProxies[i] != null) continue;
-	// Class c = __class__.proxyClasses[i];
-	// //System.out.println("class: "+c.getSuperclass().getName());
-	// // This test is a hack to determine if the proxy class represents
-	// // a interface.
-	// if (c.getInterfaces().length > 1) {
-	// PyProxy proxy;
-	// try {
-	// proxy = createProxy(c); //(PyProxy)c.newInstance();
-	// } catch (Exception exc) {
-	// throw Py.ValueError("Can't instantiate interface: "+c.getName());
-	// }
-	// setProxy(proxy, i);
-	// //System.out.println("inited interface: "+c.getName());
-	// }
-	// }
-	// }
-
-	//Then invoke our own init function
+	// Invoke our own init function
 	PyObject init = __class__.lookup("__init__", true);
 	PyObject ret = null;
 	if (init != null) {
 	    ret = init.__call__(this, args, keywords);
 	}
-
 	if (ret == null) {
 	    if (args.length != 0) {
 		init = __class__.lookup("__init__", false);
@@ -185,12 +166,10 @@ public class PyInstance extends PyObject {
 		    throw Py.TypeError("this constructor takes no arguments");
 		}
 	    }
-	} else {
-	    if (ret != Py.None) {
-		throw Py.TypeError("constructor has no return value");
-	    }
 	}
-
+	else if (ret != Py.None) {
+	    throw Py.TypeError("constructor has no return value");
+	}
 	// Now init all superclasses that haven't already been initialized
 	if (javaProxy == null && __class__.proxyClass != null) {
 	    makeProxy();
