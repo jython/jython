@@ -215,10 +215,51 @@ public class PyFile extends PyObject
     }    
     
     private static class RFileWrapper extends FileWrapper {
-        java.io.RandomAccessFile file;
+        /** The default buffer size, in bytes. */
+        protected static final int defaultBufferSize = 4096;
+
+        /** The underlying java.io.RandomAccessFile. */
+        protected java.io.RandomAccessFile file;
+
+        /** The offset in bytes from the file start, of the next read or
+         *  write operation. */
+        protected long filePosition;
+
+        /** The buffer used to load the data. */
+        protected byte buffer[];
+
+        /** The offset in bytes of the start of the buffer, from the start
+         *  of the file. */
+        protected long bufferStart;
+
+        /** The offset in bytes of the end of the data in the buffer, from
+         *  the start of the file. This can be calculated from
+         *  <code>bufferStart + dataSize</code>, but it is cached to speed
+         *  up the read( ) method. */
+        protected long dataEnd;
+
+        /** The size of the data stored in the buffer, in bytes. This may be
+         *  less than the size of the buffer.*/
+        protected int dataSize;
+
+        /** True if we are at the end of the file. */
+        protected boolean endOfFile;
+
+        /** True if the data in the buffer has been modified. */
+        boolean bufferModified = false;
 
         public RFileWrapper(java.io.RandomAccessFile file) {
+            this(file, 8092);
+        }
+
+        public RFileWrapper(java.io.RandomAccessFile file, int bufferSize) {
             this.file = file;
+            bufferStart = 0;
+            dataEnd = 0;
+            dataSize = 0;
+            filePosition = 0;
+            buffer = new byte[bufferSize];
+            endOfFile = false;
         }
 
         public String read(int n) throws java.io.IOException {
@@ -228,14 +269,81 @@ public class PyFile extends PyObject
                     n = 0;
             }
             byte[] buf = new byte[n];
-            n = file.read(buf);
+            n = readBytes(buf, 0, n);
             if (n < 0)
                 n = 0;
             return getString(buf, 0, n);
         }
 
+
+        private int readBytes( byte b[], int off, int len )
+             throws IOException 
+        {
+            // Check for end of file.
+            if( endOfFile )
+                return -1;
+
+            // See how many bytes are available in the buffer - if none,
+            // seek to the file position to update the buffer and try again.
+            int bytesAvailable = (int)(dataEnd - filePosition);
+            if (bytesAvailable < 1) {
+                seek(filePosition, 0);
+                return readBytes( b, off, len );
+            }
+
+            // Copy as much as we can.
+            int copyLength = (bytesAvailable >= len) ? len : bytesAvailable;
+            System.arraycopy(buffer, (int)(filePosition - bufferStart),
+                             b, off, copyLength);
+            filePosition += copyLength;
+
+            // If there is more to copy...
+            if (copyLength < len) {
+                int extraCopy = len - copyLength;
+
+                // If the amount remaining is more than a buffer's length, read it
+                // directly from the file.
+                if (extraCopy > buffer.length) {
+                    file.seek(filePosition);
+                    extraCopy = file.read( b, off + copyLength, len - copyLength );
+                } else {
+                    // ...or read a new buffer full, and copy as much as possible...
+                    seek(filePosition, 0);
+                    if (!endOfFile) {
+                        extraCopy = (extraCopy > dataSize) ? dataSize : extraCopy;
+                        System.arraycopy(buffer, 0, b, off + copyLength, extraCopy);
+                    } else {
+                        extraCopy = -1;
+                    }
+                }
+
+                // If we did manage to copy any more, update the file position and
+                // return the amount copied.
+                if (extraCopy > 0) {
+                    filePosition += extraCopy;
+                    return copyLength + extraCopy;
+                }
+            }
+
+            // Return the amount copied.
+            return copyLength;
+        }
+
+
         public int read() throws java.io.IOException {
-            return file.read();
+            // If the file position is within the data, return the byte...
+            if (filePosition < dataEnd) {
+                return (int)(buffer[(int)(filePosition++ - bufferStart)] & 0xff);
+
+            // ...or should we indicate EOF...
+            } else if (endOfFile) {
+                return -1;
+
+            // ...or seek to fill the buffer, and try again.
+            } else {
+                seek(filePosition, 0);
+                return read();
+            }
         }
 
         public int available() throws java.io.IOException {
@@ -243,15 +351,60 @@ public class PyFile extends PyObject
         }
 
         public void unread(int c) throws java.io.IOException {
-            file.seek(file.getFilePointer() - 1);
+            filePosition--;
         }
 
         public void write(String s) throws java.io.IOException {
-            file.write(getBytes(s));
+            byte[] b = getBytes(s);
+            int len = b.length;
+
+            // If the amount of data is small (less than a full buffer)...
+            if (len < buffer.length) {
+                // If any of the data fits within the buffer...
+                int spaceInBuffer = 0;
+                int copyLength = 0;
+                if (filePosition >= bufferStart)
+                    spaceInBuffer = (int)((bufferStart + buffer.length) - filePosition);
+                if (spaceInBuffer > 0) {
+                    // Copy as much as possible to the buffer.
+                    copyLength = (spaceInBuffer > len) ? len : spaceInBuffer;
+                    System.arraycopy(b, 0, buffer,
+                                      (int)(filePosition - bufferStart), copyLength );
+                    bufferModified = true;
+                    long myDataEnd = filePosition + copyLength;
+                    dataEnd = myDataEnd > dataEnd ? myDataEnd : dataEnd;
+                    dataSize = (int)(dataEnd - bufferStart);
+                    filePosition += copyLength;
+                }
+
+                // If there is any data remaining, move to the new position and copy to
+                // the new buffer.
+                if (copyLength < len) {
+                    seek(filePosition, 0);
+                    System.arraycopy(b, copyLength, buffer, 
+                                     (int)(filePosition - bufferStart), 
+                                     len - copyLength);
+                    bufferModified = true;
+                    long myDataEnd = filePosition + (len - copyLength);
+                    dataEnd = myDataEnd > dataEnd ? myDataEnd : dataEnd;
+                    dataSize = (int)(dataEnd - bufferStart);
+                    filePosition += (len - copyLength);
+                }
+            } else {
+                // ...or write a lot of data...
+
+                // Flush the current buffer, and write this data to the file.
+                if (bufferModified) {
+                    flush( );
+                    bufferStart = dataEnd = dataSize = 0;
+                }
+                file.write( b, 0, len );
+                filePosition += len;
+            }
         }
 
         public long tell() throws java.io.IOException {
-            return file.getFilePointer();
+            return filePosition;
         }
 
         public void seek(long pos, int how) throws java.io.IOException {
@@ -261,14 +414,48 @@ public class PyFile extends PyObject
                 pos += file.length();
             if (pos < 0)
                 pos = 0;
+
+            // If the seek is into the buffer, just update the file pointer.
+            if (pos >= bufferStart && pos < dataEnd) {
+                filePosition = pos;
+                return;
+            }
+
+            // If the current buffer is modified, write it to disk.
+            if (bufferModified)
+                flush();
+
+            // Move to the position on the disk.
             file.seek(pos);
+            filePosition = file.getFilePointer();
+            bufferStart = filePosition;
+
+            // Fill the buffer from the disk.
+            dataSize = file.read(buffer);
+            if (dataSize < 0) {
+                dataSize = 0;
+                endOfFile = true;
+            } else {
+                endOfFile = false;
+            }
+
+            // Cache the position of the buffer end.
+            dataEnd = bufferStart + dataSize;
         }
 
         public void flush() throws java.io.IOException {
+            file.seek(bufferStart);
+            file.write(buffer, 0, dataSize);
+            bufferModified = false;
             file.getFD().sync();
         }
 
         public void close() throws java.io.IOException {
+            if (writing && bufferModified) {
+                file.seek(bufferStart);
+                file.write(buffer, 0, (int)dataSize);
+            }
+
             file.close();
         }
 
@@ -519,7 +706,7 @@ public class PyFile extends PyObject
                 fo = null;
             }
             // What about bufsize?
-            java.io.RandomAccessFile rfile =
+            java.io.RandomAccessFile rfile = 
                 new java.io.RandomAccessFile(f, jmode);
             if (c1 == 'a')
                 rfile.seek(rfile.length());
