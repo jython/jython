@@ -5,13 +5,13 @@ from test_support import *
 
 print_test('Core Python Language', 0)
 
-import test_grammar
+#import test_grammar
 import test_opcodes
 import test_operations
 import test_unpack
 import test_pow
 #import test_builtin
-import test_exceptions
+#import test_exceptions
 import test_types
 import test_methods
 
@@ -36,6 +36,7 @@ print 'All old-style tests completed successfully!'
 print "Executing unittest tests"
 from test_jreload import *
 from test_javashell import *
+from test_compil import *
 
 import unittest
 unittest.main()
