@@ -11,6 +11,7 @@ public class CompilerFlags extends Object {
     }
 
     public boolean nested_scopes;
+    public boolean division;
 
     public String encoding;
 }
