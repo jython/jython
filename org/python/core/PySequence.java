@@ -1,8 +1,82 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+
+class SeqFuncs extends PyBuiltinFunctionSet 
+{
+    SeqFuncs(String name, int index, int argcount) {
+        super(name, index, argcount, argcount, true, null);
+    }
+
+    public PyObject __call__() {
+        PySequence seq = (PySequence)__self__;
+        switch (index) {
+        case 1:
+            return new PyInteger(seq.__nonzero__() ? 1 : 0);
+        default:
+            throw argCountError(0);
+        }
+    }
+
+    public PyObject __call__(PyObject arg) {
+        PySequence seq = (PySequence)__self__;
+        switch (index) {
+        case 11:
+            return seq.__getitem__(arg);
+        case 12:
+            seq.__delitem__(arg);
+            return Py.None;
+        case 13:
+            return seq.__mul__(arg);
+        case 14:
+            return seq.__rmul__(arg);
+        case 15:
+            return new PyInteger(seq.__cmp__(arg));
+        default:
+            throw argCountError(1);
+        }
+    }
+
+    public PyObject __call__(PyObject arg1, PyObject arg2) {
+        PySequence seq = (PySequence)__self__;
+        switch (index) {
+        case 21:
+            seq.__setitem__(arg1, arg2);
+            return Py.None;
+        default:
+            throw argCountError(1);
+        }
+    }
+
+    public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
+        PySequence seq = (PySequence)__self__;
+        switch (index) {
+        case 31:
+            return seq.__getslice__(arg1, arg2, arg3);
+        case 32:
+            seq.__delslice__(arg1, arg2, arg3);
+            return Py.None;
+        default:
+            throw argCountError(3);
+        }
+    }
+
+    public PyObject __call__(PyObject arg1, PyObject arg2,
+                             PyObject arg3, PyObject arg4)
+    {
+        PySequence seq = (PySequence)__self__;
+        switch (index) {
+        case 41:
+            seq.__setslice__(arg1, arg2, arg3, arg4);
+            return Py.None;
+        default:
+            throw argCountError(4);
+        }
+    }
+}
 
 
+
 /**
  * The abstract superclass of PyObjects that implements a Sequence.
  * Minimize the work in creating such objects.
@@ -10,14 +84,27 @@ package org.python.core;
  * Method names are designed to make it possible for PySequence to
  * implement java.util.List interface when JDK 1.2 is ubiquitous.
  * 
- * All subclasses must implements get, getslice, and repeat methods.
+ * All subclasses must declare that they implement the InitModule
+ * interface, and provide an initModule() method that calls
+ * PySequence.initModule().
+ *
+ * Subclasses must also implement get, getslice, and repeat methods.
  *
  * Subclasses that are mutable should also implement: set, setslice, del,
  * and delRange.
  */
 
+// this class doesn't "implement InitModule" because otherwise
+// PyJavaClass.init() would try to instantiate it.  That fails because this
+// class is abstract.  TBD: is there a way to test for whether a class is
+// abstract?
 abstract public class PySequence extends PyObject
 {
+    /**
+     * This constructor is used by PyJavaClass.init()
+     */
+    public PySequence() {}
+
     /**
      * This constructor is used to pass on an __class__ attribute.
      */
@@ -25,7 +112,21 @@ abstract public class PySequence extends PyObject
         super(c);
     }
 
-    public PySequence() {}
+    public void initModule(PyObject dict) {
+        dict.__setitem__("__nonzero__", new SeqFuncs("__nonzero__", 1, 0));
+        dict.__setitem__("__getitem__", new SeqFuncs("__getitem__", 11, 1));
+        dict.__setitem__("__delitem__", new SeqFuncs("__delitem__", 12, 1));
+        dict.__setitem__("__mul__", new SeqFuncs("__mul__", 13, 1));
+        dict.__setitem__("__rmul__", new SeqFuncs("__rmul__", 14, 1));
+        dict.__setitem__("__cmp__", new SeqFuncs("__cmp__", 15, 1));
+        dict.__setitem__("__setitem__", new SeqFuncs("__setitem__", 21, 2));
+        dict.__setitem__("__getslice__", new SeqFuncs("__getslice__", 31, 3));
+        dict.__setitem__("__delslice__", new SeqFuncs("__delslice__", 32, 3));
+        dict.__setitem__("__setslice__", new SeqFuncs("__setslice__", 41, 4));
+        // TBD: __tojava__()
+        // hide these from Python!
+        dict.__setitem__("initModule", null);
+    }
 
     // These methods must be defined for any sequence
         
