@@ -646,12 +646,15 @@ public class PyObject implements java.io.Serializable {
 			}
 		}
 		if (ctmp != Py.None && (itmp = o2.__cmp__(o1)) != -2) return -itmp;
-		else {
-			if (this == o2_in) return 0;
-			else {
-			    return Py.id(this) < Py.id(o2_in) ? -1 : 1;
-			}
-		}
+		
+		if (this == o2_in) return 0;
+		
+		// No rational way to compare these, so ask their classes to compare
+		itmp = this.__class__.__cmp__(o2_in.__class__);
+		
+		if (itmp == 0) return Py.id(this) < Py.id(o2_in) ? -1 : 1;
+		if (itmp != -2) return itmp;
+		return Py.id(this.__class__) < Py.id(o2_in.__class__) ? -1 : 1;
 	}
 
 	public final PyObject _eq(PyObject o) {

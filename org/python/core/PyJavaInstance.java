@@ -77,11 +77,8 @@ public class PyJavaInstance extends PyInstance implements java.io.Externalizable
     public int __cmp__(PyObject o) {
         if (!(o instanceof PyJavaInstance)) return -2;
         PyJavaInstance i = (PyJavaInstance)o;
-        if (javaProxies[0].equals(i.javaProxies[0])) {
-            return 0;
-        } else {
-            return System.identityHashCode(this) < System.identityHashCode(i) ? -1 : +1;
-        }
+        if (javaProxies[0].equals(i.javaProxies[0])) return 0;
+        return -2;
     }
 
 
