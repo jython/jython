@@ -38,6 +38,8 @@ class TimeFunctions extends PyBuiltinFunctionSet
         switch (index) {
         case 0:
             return Py.newFloat(time.time$());
+        case 1:
+            return Py.newFloat(time.clock$());
         default:
             throw argCountError(0);
         }
@@ -95,7 +97,7 @@ public class time implements ClassDictInit
 
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("time", new TimeFunctions("time", 0, 0));
-        dict.__setitem__("clock", new TimeFunctions("clock", 0, 0));
+        dict.__setitem__("clock", new TimeFunctions("clock", 1, 0));
 
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
@@ -142,9 +144,14 @@ public class time implements ClassDictInit
         return System.currentTimeMillis()/1000.0;
     }
 
-    /*public static double clock() {
-      return System.currentTimeMillis()/1000.0;
-      }*/
+    private static double __initialclock__ = 0.0;
+    public static double clock$() {
+        if(__initialclock__ == 0.0) {
+            // set on the first call
+            __initialclock__ = time$();
+        }
+        return time$() - __initialclock__;
+    }
 
     private static void throwValueError(String msg) {
         throw new PyException(Py.ValueError, new PyString(msg));
