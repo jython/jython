@@ -366,6 +366,10 @@ public class __builtin__ implements InitModule
         return input(new PyString(""));
     }
 
+    public static PyInteger int$(PyString o, int base) {
+        return Py.newInteger(o.__str__().atoi(base));
+    }
+
     public static PyInteger int$(PyObject o) {
         return o.__int__();
     }
@@ -454,6 +458,10 @@ public class __builtin__ implements InitModule
 
     public static PyLong long$(PyObject o) {
         return o.__long__();
+    }
+
+    public static PyLong long$(PyString o, int base) {
+        return o.__str__().atol(base);
     }
 
     public static PyObject map(PyObject[] argstar) {

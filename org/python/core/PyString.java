@@ -443,45 +443,16 @@ public class PyString extends PySequence implements InitModule
         return new PyString(fmt.format(other));
     }
 
-    private String stripPlus(String s) {
-        s = s.trim();
-        if (s.charAt(0) == '+')
-            return s.substring(1, s.length());
-        return s;
-    }   
-
     public PyInteger __int__() {
-        try {
-            Integer i = Integer.valueOf(stripPlus(string));
-            return new PyInteger(i.intValue());
-        }
-        catch (NumberFormatException e) {
-            throw Py.ValueError("invalid literal for __int__: "+string);
-        }
-        catch (StringIndexOutOfBoundsException e) {
-            throw Py.ValueError("invalid literal for __int__: "+string);
-        }
+        return Py.newInteger(atoi(10));
     }
 
     public PyLong __long__() {
-        try {
-            return new PyLong(new java.math.BigInteger(stripPlus(string)));
-        }
-        catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __long__: "+string);
-        }
-        catch (StringIndexOutOfBoundsException e) {
-            throw Py.ValueError("invalid literal for __long__: "+string);
-        }
+        return atol(10);
     }
 
     public PyFloat __float__() {
-        try {
-            return new PyFloat(Double.valueOf(string).doubleValue());
-        }
-        catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __float__: "+string);
-        }
+        return new PyFloat(atof());
     }
         
     // Add in methods from string module
@@ -759,11 +730,24 @@ public class PyString extends PySequence implements InitModule
     }
 
     public double atof() {
+        StringBuffer s = null;
+        int n = string.length();
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+            if (Character.isDigit(ch)) {
+                if (s == null) 
+                    s = new StringBuffer(string);
+                s.setCharAt(i, Character.forDigit(Character.digit(ch, 10), 10));
+            }
+        }
+        String sval = string;
+        if (s != null) 
+            sval = s.toString();
         try {
-            return Double.valueOf(string.trim()).doubleValue();
+            return Double.valueOf(sval).doubleValue();
         }
         catch (NumberFormatException exc) {
-            throw Py.ValueError("non-float argument to string.atof");
+            throw Py.ValueError("invalid literal for __float__: "+string);
         }
     }
 
@@ -775,46 +759,59 @@ public class PyString extends PySequence implements InitModule
         if ((base != 0 && base < 2) || (base > 36)) {
             throw Py.ValueError("invalid base for atoi()");
         }
-        
-        String s = string.trim();
-        boolean neg = false;
-        try {
-            char sign = s.charAt(0);
-            if (sign == '+') {
-                s = s.substring(1,s.length()).trim();
+
+        int b = 0;
+        int e = string.length();
+
+        while (b < e && Character.isWhitespace(string.charAt(b)))
+            b++;
+
+        while (e > b && Character.isWhitespace(string.charAt(e-1)))
+            e--;
+
+        char sign = 0;
+        if (b < e) {
+            sign = string.charAt(b);
+            if (sign == '-' || sign == '+') {
+                b++;
+                while (b < e && Character.isWhitespace(string.charAt(b)))
+                    b++;
             }
-            if (base == 0 || base == 16) {
-                if (sign == '-') {
-                    neg = true;
-                    s = s.substring(1, s.length()).trim();
+        }
+
+        if (base == 0 || base == 16) {
+            if (string.charAt(b) == '0') {
+                if (string.charAt(b+1) == 'x') {
+                    if (base == 0)
+                        base = 16;
+                    b += 2;
+                } else {
+                    if (base == 0)
+                        base = 8;
                 }
-                if (s.charAt(0) == '0') {
-                    if (s.charAt(1) == 'x') {
-                        if (base == 0)
-                            base = 16;
-                        s = s.substring(2,s.length());
-                    } else {
-                        if (base == 0)
-                            base = 8;
-                    }
-                }  
-            }
-            if (base == 0)
-                base = 10;
+            }  
         }
-        catch (IndexOutOfBoundsException ex) {
-            throw Py.ValueError("non-integer argument to string.atoi");
-        }
-        
+
+        if (base == 0)
+            base = 10;
+
+        String s = string;
+        if (b > 0 || e < string.length())
+            s = string.substring(b, e);
+
         try {
-            int value = Integer.valueOf(s, base).intValue();
-            if (neg)
-                return -value;
-            else
-                return value;
-        }
-        catch (NumberFormatException exc) {
-            throw Py.ValueError("non-integer argument to string.atoi");
+            long result = Long.parseLong(s, base);
+            if (result < 0 && !(sign == '-' && result == -result))
+                throw Py.ValueError("invalid literal for __int__: "+string);
+            if (sign == '-')
+                result = - result;
+            if (result < Integer.MIN_VALUE || result > Integer.MAX_VALUE)
+                throw Py.ValueError("invalid literal for __int__: "+string);
+            return (int) result;
+        } catch (NumberFormatException exc) {
+            throw Py.ValueError("invalid literal for __int__: "+string);
+        } catch (StringIndexOutOfBoundsException exc) {
+            throw Py.ValueError("invalid literal for __int__: "+string);
         }
     }
 
@@ -823,55 +820,57 @@ public class PyString extends PySequence implements InitModule
     }
 
     public PyLong atol(int base) {
-        if ((base != 0 && base < 2) || (base > 36)) {
-            throw Py.ValueError("invalid base for atol()");
+        String str = string;
+        int b = 0;
+        int e = str.length();
+
+        while (b < e && Character.isWhitespace(str.charAt(b)))
+            b++;
+
+        while (e > b && Character.isWhitespace(str.charAt(e-1)))
+            e--;
+        if (e > b && (str.charAt(e-1) == 'L' || str.charAt(e-1) == 'l'))
+            e--;
+
+        char sign = 0;
+        if (b < e) {
+            sign = string.charAt(b);
+            if (sign == '-' || sign == '+') {
+                b++;
+                while (b < e && Character.isWhitespace(str.charAt(b)))
+                    b++;
+            }
         }
-        
-        String s = string.trim();
-        boolean neg = false;
-        try {
-            char sign = s.charAt(0);
-            if (sign == '+') {
-                s = s.substring(1,s.length()).trim();
-            }
-            if (base == 0 || base == 16) {
-                if (sign == '-') {
-                    neg = true;
-                    s = s.substring(1, s.length()).trim();
-                }
-                if (base == 0) {
-                    char lastChar = s.charAt(s.length()-1);                    
-                    if (lastChar == 'l' || lastChar == 'L') 
-                        s = s.substring(0, s.length()-1);                    
-                }
-                if (s.charAt(0) == '0') {
-                    if (s.charAt(1) == 'x') {
-                        if (base == 0)
-                            base = 16;
-                        s = s.substring(2,s.length());
-                    } else {
-                        if (base == 0)
-                            base = 8;
-                    }
-                }
-            }
-            if (base == 0)
+
+        if (base == 0) {
+            if (str.charAt(b) != '0')
                 base = 10;
+            else if (str.charAt(b+1) == 'x' || str.charAt(b+1) == 'X') {
+                base = 16;
+                b += 2;
+            } else
+                base = 8;
         }
-        catch (IndexOutOfBoundsException ex) {
-            throw Py.ValueError("non-integer argument to string.atol 1");
-        }
+        if (base < 2 || base > 36)
+            throw Py.ValueError("invalid base for long literal:" + base);
+
+        if (b > 0 || e < str.length())
+            str = str.substring(b, e);
+
         try {
-            java.math.BigInteger value = new java.math.BigInteger(s, base);
-            if (neg)
-                return new PyLong(value.negate());
+            java.math.BigInteger bi = null;
+            if (sign == '-')
+                bi = new java.math.BigInteger("-" + str, base);
             else
-                return new PyLong(value);
-        }
-        catch (NumberFormatException exc) {
-            throw Py.ValueError("non-integer argument to string.atol");
+                bi = new java.math.BigInteger(str, base);
+            return new PyLong(bi);
+        } catch (NumberFormatException exc) {
+            throw Py.ValueError("invalid literal for __int__: "+str);
+        } catch (StringIndexOutOfBoundsException exc) {
+            throw Py.ValueError("invalid literal for __int__: "+str);
         }
     }
+
 
     private static String spaces(int n) {
         char[] chars = new char[n];
