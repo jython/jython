@@ -130,7 +130,14 @@ public class PyInstance extends PyObject {
 		}
 
 		if (ret == null) {
-			if (args.length != 0) throw Py.TypeError("this constructor takes no arguments");
+			if (args.length != 0) {
+			    init = __class__.lookup("__init__", false);
+			    if (init != null) {
+			        ret = init.__call__(this, args, keywords);
+			    } else {
+			        throw Py.TypeError("this constructor takes no arguments");
+			    }
+			}
 		} else {
 			if (ret != Py.None) {
 				throw Py.TypeError("constructor has no return value");
