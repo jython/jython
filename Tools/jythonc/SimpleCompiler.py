@@ -328,8 +328,37 @@ class SimpleCompiler(BaseEvaluator):
         modname = jast.StringConstant(module.value.name)
         self.addModule(module.value.name, '*')
         #print 'import *', module.value.name
-        return jast.InvokeStatic("imp", "importAll",
+        self._loadNames(self._getnames(module), module)
+        return jast.InvokeStatic("org.python.core.imp", "importAll",
                                  [modname, self.frame.frame])
+
+
+    def _getnames(self, module):
+       #print module.value, module.value.__class__
+        mod = ImportName.lookupName(module.value.name)
+        if mod:
+            return dir(mod.mod)
+        return []
+
+    # Stolen from imp.loadNames.
+    def _loadNames(self, names, module):
+        for name in names:
+            if name == "__all__":
+               loadNames(module.getattr(name).value, module)
+            elif name[:2] == "__":
+                continue;
+            else:
+                self.set_name(name, module.getattr(name))
+
+    def import_stmt(self, names):
+        ret = []
+        for name in names:
+            self.set_name(name[0], self.get_module(name,1))
+            modname = jast.StringConstant(".".join(name))
+            ret.append(jast.InvokeStatic("org.python.core.imp", "importOne",
+                                 [modname, self.frame.frame]))
+        return ret
+
 
     def getSlice(self, index):
         indices = self.visitor.getSlice(index)

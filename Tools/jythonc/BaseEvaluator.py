@@ -3,6 +3,7 @@
 from PythonVisitor import PythonVisitor, nodeToList
 from org.python.parser.PythonGrammarTreeConstants import *
 import string
+import jast
 
 class BaseEvaluator:
     def __init__(self):
@@ -192,10 +193,13 @@ class BaseEvaluator:
             return self.importall_stmt(module)
             #print 'import * from', module
             #names = module.dir()
-        ret = []
         for name in names:
-            ret.append(self.set_name(name, module.getattr(name)))
-        return ret
+            self.set_name(name, module.getattr(name))
+        topmodname = jast.StringConstant(".".join(top))
+        modnames = jast.FilledArray("String",
+                                map(lambda x: jast.StringConstant(x), names))
+        return jast.InvokeStatic("org.python.core.imp", "importFrom",
+                                [topmodname, modnames, self.frame.frame])
 
     #external interfaces
     def execstring(self, data):
