@@ -272,6 +272,10 @@
                 README.txt,
                 registry,
                 build.xml,
+                jython.bat,
+                jythonc.bat,
+                jython,
+                jythonc,
                 "/>
         </copy>
 
