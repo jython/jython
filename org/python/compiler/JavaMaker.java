@@ -15,7 +15,7 @@ public class JavaMaker extends ProxyMaker
     //Hashtable methods;
     PyObject methods;
     public boolean frozen, main;
-    
+
     public JavaMaker(Class superclass, Class[] interfaces,
                      String pythonClass, String pythonModule, String myClass,
                      PyObject methods)
@@ -23,7 +23,7 @@ public class JavaMaker extends ProxyMaker
         this(superclass, interfaces, pythonClass, pythonModule, myClass,
              null, null, methods, false, false);
     }
-                            
+
     public JavaMaker(Class superclass, Class[] interfaces,
                      String pythonClass, String pythonModule, String myClass,
                      String[] packages, String[] properties,
@@ -120,8 +120,8 @@ public class JavaMaker extends ProxyMaker
             super.addMethod(method, access);
         } else if (methods.__finditem__(method.getName().intern()) != null) {
             super.addMethod(method, access);
- 	} else if (Modifier.isProtected(method.getModifiers())) {
- 	    addSuperMethod(method, access);
+        } else if (Modifier.isProtected(method.getModifiers())) {
+            addSuperMethod(method, access);
         }
     }
 
@@ -137,7 +137,7 @@ public class JavaMaker extends ProxyMaker
     }
 
 */
-  
+
     public void addMain() throws Exception {
         Code code = classfile.addMethod("main", "([Ljava/lang/String;)V",
                                         ClassFile.PUBLIC | ClassFile.STATIC);

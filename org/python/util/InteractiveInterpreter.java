@@ -109,7 +109,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
     public void resetbuffer() {
         buffer.setLength(0);
     }
-    
+
     /** Pause the current code, sneak an exception raiser into
      * sys.trace_func, and then continue the code hoping that JPython will
      * get control to do the break;
@@ -122,7 +122,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
             ts.frame.tracefunc = breaker;
         ts.systemState.tracefunc = oldTrace;
         //ts.thread.join();
-    }    
+    }
 }
 
 class BreakTraceFunction extends TraceFunction {

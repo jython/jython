@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.*;
 import org.python.parser.*;
 
-class PyIntegerConstant extends Constant 
+class PyIntegerConstant extends Constant
 {
     int value;
 
@@ -192,12 +192,12 @@ class PyCodeConstant extends Constant
     public int co_firstlineno;
     public boolean arglist, keywordlist;
     String fname;
-    
+
     // for nested scopes
     public String[] cellvars;
     public String[] freevars;
     public int jy_npurecell;
-    
+
     public int moreflags;
 
     public PyCodeConstant() { ;
@@ -232,14 +232,14 @@ class PyCodeConstant extends Constant
         //c.aconst_null();
 
         c.iconst(id);
-        
+
         if (cellvars != null) CodeCompiler.makeStrings(c, cellvars, cellvars.length); else c.aconst_null();
         if (freevars != null) CodeCompiler.makeStrings(c, freevars, freevars.length); else c.aconst_null();
 
         c.iconst(jy_npurecell);
-        
+
         c.iconst(moreflags);
-        
+
         int mref_newCode = c.pool.Methodref(
             "org/python/core/Py",
             "newCode",
@@ -331,7 +331,7 @@ public class Module
       throws Exception {
       return PyCode(tree, name, ac, fast_locals, class_body, printResults, 0);
       }*/
-                                        
+
     Vector codes;
     private boolean isJavaIdentifier(String s) {
         char[] chars = s.toCharArray();
@@ -339,7 +339,7 @@ public class Module
             return false;
         if (!Character.isJavaIdentifierStart(chars[0]))
             return false;
-            
+
         for(int i=1; i<chars.length; i++) {
             if (!Character.isJavaIdentifierPart(chars[i]))
                 return false;
@@ -348,7 +348,7 @@ public class Module
     }
 
     private static final String[] emptyStringAr = new String[0];
-    
+
     private String[] toNameAr(Vector names,boolean nullok) {
         int sz = names.size();
         if (sz ==0 && nullok) return null;
@@ -356,8 +356,8 @@ public class Module
         names.copyInto(nameArray);
         return nameArray;
     }
-    
-    
+
+
     private int to_cell;
 
     public PyCodeConstant PyCode(SimpleNode tree, String name,
@@ -369,22 +369,22 @@ public class Module
         return PyCode(tree,name,fast_locals,className,classBody,printResults,firstlineno,scope,null);
     }
 
-    
+
     public PyCodeConstant PyCode(SimpleNode tree, String name,
                                  boolean fast_locals, String className,
-                                 boolean classBody, boolean printResults, 
+                                 boolean classBody, boolean printResults,
                                  int firstlineno, ScopeInfo scope,org.python.core.CompilerFlags cflags)
         throws Exception
     {
         PyCodeConstant code = new PyCodeConstant();
         ArgListCompiler ac = (scope != null)?scope.ac:null;
-        
+
         if (ac != null) {
             code.arglist = ac.arglist;
             code.keywordlist = ac.keywordlist;
             code.argcount = ac.names.size();
         }
-        
+
         code.co_name = name;
         code.co_firstlineno = firstlineno;
         code.id = codes.size();
@@ -409,7 +409,7 @@ public class Module
             ac.init_code.jjtAddChild(tree, ac.init_code.getNumChildren());
             tree = ac.init_code;
         }
-        
+
         if (scope != null) {
           int nparamcell = scope.jy_paramcells.size();
           if (nparamcell > 0) {
@@ -432,7 +432,7 @@ public class Module
 
         // !classdef only
         if (!classBody) code.names = toNameAr(compiler.names,false);
-        
+
         if (scope != null) {
             code.cellvars = toNameAr(scope.cellvars,true);
             code.freevars = toNameAr(scope.freevars,true);
@@ -445,7 +445,7 @@ public class Module
         if (compiler.my_scope.nested_scopes) {
             code.moreflags |= org.python.core.PyTableCode.CO_NESTED;
         }
-         
+
         code.module = this;
         code.name = code.fname;
         return code;

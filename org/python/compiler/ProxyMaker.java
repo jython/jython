@@ -54,7 +54,7 @@ public class ProxyMaker
     public String myClass;
     public boolean isAdapter=false;
 
-    // Ctor used by makeProxy and AdapterMaker. 
+    // Ctor used by makeProxy and AdapterMaker.
     public ProxyMaker(String classname, Class superclass) {
         this.myClass = "org.python.proxies."+classname;
         if (superclass.isInterface()) {
@@ -235,18 +235,18 @@ public class ProxyMaker
         doReturn(code, ret);
     }
 
-    public void doJavaCall(Code code, String name, String type, 
+    public void doJavaCall(Code code, String name, String type,
                           String jcallName)
         throws Exception
     {
         int jcall = code.pool.Methodref(
             "org/python/core/PyObject", jcallName,
             "([Ljava/lang/Object;)Lorg/python/core/PyObject;");
-                        
+
         int py2j = code.pool.Methodref(
             "org/python/core/Py", "py2"+name,
             "(Lorg/python/core/PyObject;)"+type);
-                        
+
         code.invokevirtual(jcall);
         code.invokestatic(py2j);
     }
@@ -386,8 +386,8 @@ public class ProxyMaker
             Label forname_end = code.getLabel();
             Label forname_exch_start = code.getLabel();
             Label forname_exch_end = code.getLabel();
-            forname_start.setPosition();      
-            */  
+            forname_start.setPosition();
+            */
             int forname = code.pool.Methodref(
                 "java/lang/Class","forName",
                 "(Ljava/lang/String;)Ljava/lang/Class;");
@@ -402,9 +402,9 @@ public class ProxyMaker
             code.aconst_null();
             code.dup();
             forname_exch_end.setPosition();
-            
+
             code.addExceptionHandler(forname_start,forname_end,forname_exch_start,code.pool.Class("java/lang/ClassNotFoundException"));
-            */  
+            */
             int tojava = code.pool.Methodref(
                 "org/python/core/Py", "tojava",
                 "(Lorg/python/core/PyObject;Ljava/lang/Class;)Ljava/lang/Object;");
@@ -450,12 +450,12 @@ public class ProxyMaker
                 code.astore(excLocal);
                 code.aload(instLocal);
                 code.aload(excLocal);
- 
+
                 int jthrow = code.pool.Methodref(
                     "org/python/core/PyObject", "_jthrow",
                     "(Ljava/lang/Throwable;)V");
                 code.invokevirtual(jthrow);
- 
+
                 code.addExceptionHandler(start, end, handlerStart,
                                      code.pool.Class("java/lang/Throwable"));
                 code.freeLocal(excLocal);
@@ -465,11 +465,11 @@ public class ProxyMaker
         }
     }
 
-        
+
     public void addMethod(Method method, int access) throws Exception {
         boolean isAbstract = false;
 
-        if (Modifier.isAbstract(access)) { 
+        if (Modifier.isAbstract(access)) {
             access = access & ~Modifier.ABSTRACT;
             isAbstract = true;
         }
@@ -513,7 +513,7 @@ public class ProxyMaker
             callSuper(code, name, superclass, parameters, ret, sig);
             callPython.setPosition();
             code.aload(tmp);
-            callMethod(code, name, parameters, ret, 
+            callMethod(code, name, parameters, ret,
                        method.getExceptionTypes());
 
             addSuperMethod("super__"+name, name, superclass, parameters,
@@ -571,16 +571,16 @@ public class ProxyMaker
             if (Modifier.isStatic(access) || Modifier.isPrivate(access)) {
                 continue;
             }
-                        
+
             if (Modifier.isNative(access)) {
                 access = access & ~Modifier.NATIVE;
             }
-                        
+
             if (Modifier.isProtected(access)) {
                 access = (access & ~Modifier.PROTECTED) | Modifier.PUBLIC;
                 if (Modifier.isFinal(access)) {
                     addSuperMethod(methods[i], access);
- 		    continue;
+                    continue;
                 }
             }
             else if (Modifier.isFinal(access)) {
@@ -643,13 +643,13 @@ public class ProxyMaker
         Class ret = method.getReturnType();
         String sig = makeSignature(parameters, ret);
         String superclass = mapClass(method.getDeclaringClass());
- 	String superName = method.getName();
+        String superName = method.getName();
         String methodName = superName;
         if (Modifier.isFinal(access)) {
- 	    methodName = "super__"+superName;
+            methodName = "super__"+superName;
             access &= ~Modifier.FINAL;
- 	}
- 	addSuperMethod(methodName, superName, superclass, parameters,
+        }
+        addSuperMethod(methodName, superName, superclass, parameters,
                        ret, sig, access);
     }
 
@@ -701,7 +701,7 @@ public class ProxyMaker
         code.aload(0);
         code.getfield(field);
         code.areturn();
-                
+
         // implement PyProxy interface
         classfile.addField("__systemState",
                            "Lorg/python/core/PySystemState;",

@@ -7,9 +7,9 @@ package org.python.core;
 public abstract class PyCode extends PyObject
 {
     public String co_name;
-    
+
     abstract public PyObject call(PyFrame frame, PyObject closure);
-    
+
     public PyObject call(PyFrame frame) { return call(frame,null); } // commodity
 
     abstract public PyObject call(PyObject args[], String keywords[],

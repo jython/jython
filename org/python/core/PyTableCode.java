@@ -24,11 +24,11 @@ public class PyTableCode extends PyCode
 
     final public static int CO_OPTIMIZED    = 0x0001;
     //final public static int CO_NEWLOCALS  = 0x0002
-    final public static int CO_VARARGS	    = 0x0004;
+    final public static int CO_VARARGS      = 0x0004;
     final public static int CO_VARKEYWORDS  = 0x0008;
     final public static int CO_NESTED       = 0x0010;
 
-    
+
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
                        int firstlineno,
@@ -37,7 +37,7 @@ public class PyTableCode extends PyCode
     {
         this(argcount,varnames,filename,name,firstlineno,args,keywords,funcs,func_id,null,null,0,0);
     }
-    
+
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
                        int firstlineno,
@@ -109,7 +109,7 @@ public class PyTableCode extends PyCode
         }
         return new PyTuple(pystr);
     }
-    
+
     public PyObject __findattr__(String name) {
         // have to craft co_varnames specially
         if (name == "co_varnames") return toPyStringTuple(co_varnames);
@@ -152,8 +152,7 @@ public class PyTableCode extends PyCode
         for (int i=0; i<nfreevars; i++,env_j++) {
             env[env_j] = (PyCell)freevars.get(i);
         }
-        
-        
+
         ts.frame = frame;
 
         // Handle trace function for debugging

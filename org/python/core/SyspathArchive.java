@@ -88,5 +88,5 @@ public class SyspathArchive extends PyString {
             Py.writeDebug("import", "closing zipEntry failed");
         }
     }
-*/            
+*/
 }

@@ -34,15 +34,15 @@ public class CodeCompiler extends Visitor implements CompilationContext
     int temporary;
 
     public boolean fast_locals, print_results;
-    
+
     public Future futures;
     public Hashtable tbl;
     public ScopeInfo my_scope;
-    
+
     public Future getFutures() { return futures; }
     public String getFilename() { return module.sfilename; }
 
-    
+
     boolean optimizeGlobals = true;
     public Vector names;
     public String className;
@@ -201,7 +201,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             new ScopesCompiler(this).parse(node);
             scope = node.scope;
         }
-        
+
         my_scope = scope;
         names = scope.names;
 
@@ -250,7 +250,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
         if (suite.getNumChildren() > 0 &&
             suite.getChild(0).id == PythonGrammarTreeConstants.JJTEXPR_STMT &&
-            suite.getChild(0).getChild(0).id == PythonGrammarTreeConstants.JJTSTRING) 
+            suite.getChild(0).getChild(0).id == PythonGrammarTreeConstants.JJTSTRING)
         {
             loadFrame();
             code.ldc("__doc__");
@@ -321,7 +321,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     }
 
     int getclosure;
-    
+
     public boolean makeClosure(Vector freenames) throws Exception {
         if (freenames == null) return false;
         int n = freenames.size();
@@ -332,7 +332,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             "org/python/core/PyFrame", "getclosure",
             "(I)Lorg/python/core/PyObject;");
         }
-        
+
         int tmp = code.getLocal();
         code.iconst(n);
         code.anewarray(code.pool.Class("org/python/core/PyObject"));
@@ -346,15 +346,15 @@ public class CodeCompiler extends Visitor implements CompilationContext
             code.invokevirtual(getclosure);
             code.aastore();
         }
-        
+
         code.aload(tmp);
         code.freeLocal(tmp);
-        
+
         return true;
     }
-    
-    
-    
+
+
+
     int f_globals, PyFunction_init, PyFunction_closure_init;
 
     public Object funcdef(SimpleNode node) throws Exception {
@@ -380,14 +380,14 @@ public class CodeCompiler extends Visitor implements CompilationContext
         code.getfield(mrefs.f_globals);
 
         makeArray(node.scope.ac.getDefaults());
-        
+
         node.scope.setup_closure(my_scope);
         node.scope.dump();
         module.PyCode(suite, name, true, className, false, false,
                       node.beginLine, node.scope).get(code);
         Vector freenames = node.scope.freevars;
         node.scope = null; // release scope info
-        
+
         getDocString(suite);
 
         if (!makeClosure(freenames)) {
@@ -416,7 +416,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public Object expr_stmt(SimpleNode node) throws Exception {
         setline(node);
         int n = node.getNumChildren();
-        if (n == 1 && 
+        if (n == 1 &&
               node.getChild(0).id >= PythonGrammarTreeConstants.JJTAUG_PLUS &&
               node.getChild(0).id <= PythonGrammarTreeConstants.JJTAUG_POWER) {
            node.getChild(0).visit(this);
@@ -556,7 +556,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (breakLabels.empty()) {
             throw new ParseException("'break' outside loop", node);
         }
-            
+
         Object obj = breakLabels.peek();
         if (obj == DoFinally) {
             code.jsr((Label)finallyLabels.peek());
@@ -574,7 +574,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (continueLabels.empty()) {
             throw new ParseException("'continue' not properly in loop", node);
         }
-        
+
         Object obj = continueLabels.peek();
         if (obj == DoFinally) {
             code.jsr((Label)finallyLabels.peek());
@@ -590,7 +590,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public Object return_stmt(SimpleNode node) throws Exception {
         return return_stmt(node, false);
     }
-    
+
     public Object return_stmt(SimpleNode node, boolean inEval)
         throws Exception
     {
@@ -689,7 +689,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 }
                 code.invokestatic(mrefs.importOne);
             }
-            
+
             set(asnameNode);
 
         }
@@ -712,7 +712,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 SimpleNode cnode = node.getChild(i+1);
                 if (cnode.id == PythonGrammarTreeConstants.JJTIMPORT_AS_NAME) {
                     names[i] = (String)cnode.getChild(0).getInfo();
-                    asnameNodes[i] = cnode.getChild(1); 
+                    asnameNodes[i] = cnode.getChild(1);
                 } else {
                     names[i] = (String)cnode.getInfo();
                     asnameNodes[i] = cnode;
@@ -794,11 +794,11 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public Object assert_stmt(SimpleNode node) throws Exception {
         setline(node);
         Label end_of_assert = code.getLabel();
- 
+
         /* First do an if __debug__: */
         loadFrame();
         emitGetGlobal("__debug__");
-        
+
         if (mrefs.nonzero == 0) {
             mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
                                                 "__nonzero__", "()Z");
@@ -806,7 +806,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         code.invokevirtual(mrefs.nonzero);
 
         code.ifeq(end_of_assert);
-            
+
         /* Now do the body of the assert */
         node.getChild(0).visit(this);
         if (node.getNumChildren() == 2) {
@@ -825,10 +825,10 @@ public class CodeCompiler extends Visitor implements CompilationContext
             }
             code.invokestatic(mrefs.assert1);
         }
-        
+
         /* And finally set the label for the end of it all */
         end_of_assert.setPosition();
-        
+
         return null;
     }
 
@@ -1105,17 +1105,17 @@ public class CodeCompiler extends Visitor implements CompilationContext
         code.stack = 1;
         int retLocal = code.getLocal();
         code.astore(retLocal);
-        
+
         // Trick the JVM verifier into thinking this code might not be executed
         code.iconst(1);
         code.ifeq(skipSuite);
-        
+
         // The actual finally suite is always executed (since 1 != 0)
         ret = finallySuite.visit(this);
-        
+
         // Fake jump to here to pretend this could always happen
         skipSuite.setPosition();
-        
+
         code.ret(retLocal);
         finallyEnd.setPosition();
 
@@ -1513,9 +1513,9 @@ public class CodeCompiler extends Visitor implements CompilationContext
         String name = getName(nname);
         inst.visit(this);
         code.ldc(name);
-        
+
         //System.out.println("invoke: "+name+": "+values.length);
-        
+
         switch (values.length) {
         case 0:
             if (mrefs.invokea0 == 0) {
@@ -1543,7 +1543,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             values[0].visit(this);
             values[1].visit(this);
             code.invokevirtual(mrefs.invokea2);
-            break;                          
+            break;
         default:
             makeArray(values);
             if (mrefs.invoke2 == 0) {
@@ -1556,7 +1556,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         }
 
         return null;
-        
+
     }
 
 
@@ -1611,14 +1611,14 @@ public class CodeCompiler extends Visitor implements CompilationContext
         } else {
             values = new SimpleNode[0];
         }
-                
+
         // Detect a method invocation with no keywords
         if (nKeywords == 0 && starargs == null && kwargs == null &&
             callee.id == PythonGrammarTreeConstants.JJTDOT_OP)
         {
             return Invoke(callee.getChild(0), callee.getChild(1), values);
         }
-                
+
         callee.visit(this);
 
         if (starargs != null || kwargs != null) {
@@ -1679,7 +1679,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 values[0].visit(this);
                 values[1].visit(this);
                 code.invokevirtual(mrefs.calla2);
-                break;                      
+                break;
             case 3:
                 if (mrefs.calla3 == 0) {
                     mrefs.calla3 = code.pool.Methodref(
@@ -1781,7 +1781,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             return null;
         }
         return null;
-        
+
     }
 
     public int getitem, delitem, setitem;
@@ -1796,7 +1796,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             mode = SET;
         } else {
             int old_mode = mode;
-            mode = GET;             
+            mode = GET;
             seq.visit(this);
             index.visit(this);
             mode = old_mode;
@@ -1856,7 +1856,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 mode = GET;
             }
         }
-        
+
         switch(mode) {
         case DEL:
             if (mrefs.delattr == 0) {
@@ -1895,7 +1895,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         {
             n -= 1;
         }
-                    
+
         if (mrefs.unpackSequence == 0) {
             mrefs.unpackSequence = code.pool.Methodref(
                 "org/python/core/Py",
@@ -1910,7 +1910,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         code.aload(temporary);
         code.iconst(n);
         code.invokestatic(mrefs.unpackSequence);
-                
+
         int tmp = code.getLocal();
         code.astore(tmp);
 
@@ -2036,7 +2036,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
     public Object list_iter(SimpleNode node) throws Exception {
         if (node.getNumChildren() == 0) {
-            int tmp_append = 
+            int tmp_append =
                  ((Integer) listComprehensionAppends.peek()).intValue();
             SimpleNode exprNode = (SimpleNode) listComprehensionExprs.peek();
 
@@ -2108,8 +2108,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
         code.getfield(mrefs.f_globals);
 
         makeArray(node.scope.ac.getDefaults());
-        
-        node.scope.setup_closure(my_scope); 
+
+        node.scope.setup_closure(my_scope);
         node.scope.dump();
         module.PyCode(retSuite, name, true, className,
                       false, false, node.beginLine, node.scope).get(code);
@@ -2131,7 +2131,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             }
             code.invokespecial(mrefs.PyFunction_closure_init1);
         }
-        
+
         return null;
     }
 
@@ -2219,9 +2219,9 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 "org/python/core/Py", "makeClass",
                 "(Ljava/lang/String;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;[Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
             }
-            code.invokestatic(mrefs.makeClass_closure);            
+            code.invokestatic(mrefs.makeClass_closure);
         }
-        
+
         //Assign this new class to the given name
         set(node.getChild(0));
         return null;
@@ -2272,7 +2272,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         }
         code.invokevirtual(mrefs.getglobal);
     }
-    
+
     public Object Name(SimpleNode node) throws Exception {
         String name;
         if (fast_locals)
@@ -2280,20 +2280,20 @@ public class CodeCompiler extends Visitor implements CompilationContext
         else
             name = getName(node);
 
-        if (mode == AUGGET) 
+        if (mode == AUGGET)
             mode = GET;
-        else if (mode == AUGSET) 
+        else if (mode == AUGSET)
             mode = SET;
 
         SymInfo syminf = (SymInfo)tbl.get(name);
-        
+
         switch (mode) {
         case GET:
             loadFrame();
             if (syminf != null) {
                 int flags = syminf.flags;
                 if (!my_scope.nested_scopes) flags &= ~ScopeInfo.FREE;
-                if ((flags&ScopeInfo.GLOBAL) !=0 || 
+                if ((flags&ScopeInfo.GLOBAL) !=0 ||
                      optimizeGlobals&&(flags&(ScopeInfo.BOUND|ScopeInfo.CELL|ScopeInfo.FREE))==0) {
                     emitGetGlobal(name);
                     return null;

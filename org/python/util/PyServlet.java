@@ -8,7 +8,7 @@ import javax.servlet.http.*;
 import org.python.core.*;
 
 
-/** 
+/**
  * This servlet is used to re-serve JPython servlets.  It stores
  * bytecode for JPython servlets and re-uses it if the underlying .py
  * file has not changed.
@@ -19,7 +19,7 @@ import org.python.core.*;
  * <li>David Syer
  * <li>Finn Bock
  * </ul>
- * If somebody is missing from this list, let us know. 
+ * If somebody is missing from this list, let us know.
  * <p>
  *
  * e.g. http://localhost:8080/test/hello.py
@@ -76,7 +76,7 @@ public class PyServlet extends HttpServlet {
             String name = (String) e.nextElement();
             props.put(name, getInitParameter(name));
         }
-        if (props.getProperty("python.home") == null && 
+        if (props.getProperty("python.home") == null &&
                                    System.getProperty("python.home") == null) {
             props.put("python.home", rootPath + "WEB-INF" +
                                              File.separator + "lib");
@@ -122,7 +122,7 @@ public class PyServlet extends HttpServlet {
         String rpath = getServletContext().getRealPath(spath);
 
         interp.set("__file__", rpath);
-        
+
         HttpServlet servlet = getServlet(rpath);
         if (servlet !=  null)
             servlet.service(req, res);
@@ -177,11 +177,11 @@ public class PyServlet extends HttpServlet {
             if (cls == null)
                 throw new ServletException("No callable (class or function) "+
                                        "named " + name + " in " + path);
-            
+
             PyObject pyServlet = cls.__call__();
             Object o = pyServlet.__tojava__(HttpServlet.class);
             if (o == Py.NoConversion)
-                throw new ServletException("The value from " + name + 
+                throw new ServletException("The value from " + name +
                                        "must extend HttpServlet");
             servlet = (HttpServlet)o;
             servlet.init(getServletConfig());

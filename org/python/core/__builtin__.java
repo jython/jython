@@ -130,7 +130,7 @@ public class __builtin__ implements ClassDictInit
                                   new BuiltinFunctions("isinstance", 10, 2));
         dict.__setitem__("id", new BuiltinFunctions("id", 11, 1));
         dict.__setitem__("__import__", new ImportFunction());
-        
+
         dict.__delitem__("execfile_flags"); // -execfile_flags
     }
 
@@ -210,7 +210,7 @@ public class __builtin__ implements ClassDictInit
         throw Py.TypeError("number coercion failed");
     }
 
-    public static PyCode compile(String data, String filename, String type) {       
+    public static PyCode compile(String data, String filename, String type) {
         return  Py.compile_flags(data,filename,type,Py.getCompilerFlags());
     }
 
@@ -281,8 +281,8 @@ public class __builtin__ implements ClassDictInit
     {
         execfile_flags(name,globals,locals,Py.getCompilerFlags());
     }
-    
-    
+
+
     public static void execfile_flags(String name, PyObject globals,
                                 PyObject locals,CompilerFlags cflags)
     {
@@ -309,7 +309,7 @@ public class __builtin__ implements ClassDictInit
     public static void execfile(String name, PyObject globals) {
         execfile(name, globals, globals);
     }
-    
+
     public static void execfile(String name) {
         execfile(name, null, null);
     }
@@ -580,7 +580,7 @@ public class __builtin__ implements ClassDictInit
     /**
      * Open a file read-only.
      * @param name the file to open.
-     * @exception java.io.IOException 
+     * @exception java.io.IOException
      */
     public static PyFile open(String name) throws java.io.IOException {
         return new PyFile(name, "r", -1);
@@ -590,7 +590,7 @@ public class __builtin__ implements ClassDictInit
      * Open a file with the specified mode.
      * @param name name of the file to open.
      * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
-     * @exception java.io.IOException 
+     * @exception java.io.IOException
      */
     public static PyFile open(String name, String mode)
         throws java.io.IOException
@@ -603,7 +603,7 @@ public class __builtin__ implements ClassDictInit
      * @param name name of the file to open.
      * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
      * @param bufsize size of the internal buffer. Not currently used.
-     * @exception java.io.IOException 
+     * @exception java.io.IOException
      */
     public static PyFile open(String name, String mode, int bufsize)
         throws java.io.IOException

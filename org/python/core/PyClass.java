@@ -235,7 +235,7 @@ public class PyClass extends PyObject
             __bases__ = (PyTuple) value;
             return;
         }
-        
+
         __dict__.__setitem__(name, value);
     }
 

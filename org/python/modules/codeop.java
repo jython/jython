@@ -8,14 +8,14 @@ public class codeop implements ClassDictInit {
         "Utility to compile possibly incomplete Python source code.\n"
     );
 
-    public static void classDictInit(PyObject dict) 
-    { 
+    public static void classDictInit(PyObject dict)
+    {
         dict.__delitem__("compile_command_flags");
         dict.__delitem__("classDictInit");
     }
- 
+
     public static PyList __all__ = new PyList(new PyString[] {
-        new PyString("compile_command") 
+        new PyString("compile_command")
     });
 
     public static PyObject compile_command(String string) {
@@ -31,7 +31,7 @@ public class codeop implements ClassDictInit {
     {
         return compile_command_flags(string,filename,kind,null);
     }
-    
+
     public static PyObject compile_command_flags(String string,String filename,String kind,CompilerFlags cflags)
     {
         org.python.parser.SimpleNode node =

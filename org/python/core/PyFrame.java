@@ -18,7 +18,7 @@ public class PyFrame extends PyObject
     public PyCell[] f_env; // nested scopes: cell + free env
     public int f_ncells;
     public int f_nfreevars;
-    
+
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
 
@@ -130,7 +130,7 @@ public class PyFrame extends PyObject
             for (i=0; i<f_nfreevars; i++,j++) {
                 PyObject v = f_env[j].ob_ref;
                 if (v != null) f_locals.__setitem__(f_code.co_freevars[i],v);
-            }            
+            }
         }
         return f_locals;
     }
@@ -211,9 +211,9 @@ public class PyFrame extends PyObject
     public void dellocal(int index) {
         if (f_fastlocals != null) {
             if (f_fastlocals[index] == null) {
-              throw Py.UnboundLocalError("local: '"+f_code.co_varnames[index]+"'");                        
+              throw Py.UnboundLocalError("local: '"+f_code.co_varnames[index]+"'");
             }
-            f_fastlocals[index] = null;  
+            f_fastlocals[index] = null;
         } else
             dellocal(f_code.co_varnames[index]);
     }
@@ -225,35 +225,34 @@ public class PyFrame extends PyObject
             f_locals.__delitem__(index);
         } catch(PyException e) {
           if (!Py.matchException(e,Py.KeyError)) throw e;
-          throw Py.UnboundLocalError("local: '"+index+"'");        
+          throw Py.UnboundLocalError("local: '"+index+"'");
         }
     }
 
     public void delglobal(String index) {
         f_globals.__delitem__(index);
     }
-    
+
     // nested scopes helpers
-    
+
     public PyObject getclosure(int index) {
         return f_env[index];
     }
-        
+
     public PyObject getderef(int index) {
         PyObject obj=f_env[index].ob_ref;
         if (obj != null) return obj;
         String name;
         if (index >= f_ncells) name = f_code.co_freevars[index-f_ncells];
         else name = f_code.co_cellvars[index];
-        throw Py.UnboundLocalError("local: '"+name+"'");        
+        throw Py.UnboundLocalError("local: '"+name+"'");
     }
-    
+
     public void setderef(int index,PyObject value) {
         f_env[index].ob_ref = value;
     }
-    
+
     public void to_cell(int parm_index,int env_index) {
-        f_env[env_index].ob_ref=f_fastlocals[parm_index];       
+        f_env[env_index].ob_ref=f_fastlocals[parm_index];
     }
-    
 }

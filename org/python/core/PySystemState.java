@@ -25,7 +25,7 @@ public class PySystemState extends PyObject
     private static int PY_RELEASE_LEVEL = 0xB;
     private static int PY_RELEASE_SERIAL = 1;
 
-    public static int hexversion = ((PY_MAJOR_VERSION << 24) | 
+    public static int hexversion = ((PY_MAJOR_VERSION << 24) |
                                     (PY_MINOR_VERSION << 16) |
                                     (PY_MICRO_VERSION <<  8) |
                                     (PY_RELEASE_LEVEL <<  4) |
@@ -547,14 +547,14 @@ public class PySystemState extends PyObject
 
     /**
      * Add a classpath directory to the list of places that are searched
-     * for java packages. 
+     * for java packages.
      * <p>
-     * <b>Note</b>. Classes found in directory and subdirectory are not 
-     * made available to jython by this call. It only make the java 
+     * <b>Note</b>. Classes found in directory and subdirectory are not
+     * made available to jython by this call. It only make the java
      * package found ion the directory available. This call is mostly
      * usefull if jython is embedded in an application that deals with
      * its own classloaders. A servlet container is a very good example.
-     * Calling add_classdir("<context>/WEB-INF/classes") makes the java 
+     * Calling add_classdir("<context>/WEB-INF/classes") makes the java
      * packages in WEB-INF classes available to jython import. However the
      * actual classloading is completely handled by the servlet container's
      * context classloader.
@@ -566,7 +566,7 @@ public class PySystemState extends PyObject
     /**
      * Add a .jar & .zip directory to the list of places that are searched
      * for java .jar and .zip files. The .jar and .zip files found will be
-     * cached 
+     * cached
      * <p>
      * <b>Note</b>. Classes in .jar and .zip files found in the directory
      * are not made available to jython by this call. See the note for

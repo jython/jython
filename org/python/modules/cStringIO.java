@@ -74,7 +74,7 @@ public class cStringIO {
             }
             super.__setattr__(name, value);
         }
-            
+
         /**
          * Free the memory buffer.
          */

@@ -29,7 +29,7 @@ public class jython
     public static void runJar(String filename) {
         // TBD: this is kind of gross because a local called `zipfile' just
         // magically shows up in the module's globals.  Either `zipfile'
-        // should be called `__zipfile__' or (preferrably, IMO), __run__.py 
+        // should be called `__zipfile__' or (preferrably, IMO), __run__.py
         // should be imported and a main() function extracted.  This
         // function should be called passing zipfile in as an argument.
         //
@@ -71,15 +71,15 @@ public class jython
             int exitcode = opts.help ? 0 : -1;
             System.exit(exitcode);
         }
-        
+
         // Setup the basic python system state from these options
         PySystemState.initialize(System.getProperties(),
                                  opts.properties, opts.argv);
-        
+
         if (opts.notice) {
             System.err.println(InteractiveConsole.getDefaultBanner());
         }
-        
+
         // Now create an interpreter
         InteractiveConsole interp = null;
         try {
@@ -137,7 +137,7 @@ public class jython
                 }
             }
         }
- 
+
         if (opts.command != null) {
             try {
                 interp.exec(opts.command);
@@ -145,7 +145,7 @@ public class jython
                 Py.printException(t);
             }
         }
- 
+
         // was there a filename on the command line?
         if (opts.filename != null) {
             String path = new java.io.File(opts.filename).getParent();
@@ -271,7 +271,7 @@ class CommandLineOptions
             }
             else if (arg.equals("-c")) {
                 command = args[++index];
-                if (!fixInteractive) interactive = false;              
+                if (!fixInteractive) interactive = false;
                 break;
             }
             else if (arg.equals("-W")) {
@@ -281,7 +281,7 @@ class CommandLineOptions
                 encoding = args[++index];
             }
             else if (arg.startsWith("-D")) {
-                String key = null; 
+                String key = null;
                 String value = null;
                 int equals = arg.indexOf("=");
                 if (equals == -1) {

@@ -5,7 +5,7 @@ package org.python.compiler;
 import java.io.*;
 import java.util.Vector;
 
-class ExceptionLabel 
+class ExceptionLabel
 {
     public Label start, end, handler;
     public int exc;
@@ -19,7 +19,7 @@ class ExceptionLabel
 }
 
 
-public class Code extends Attribute 
+public class Code extends Attribute
 {
     ConstantPool pool;
     public int stack;

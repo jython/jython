@@ -96,7 +96,7 @@ public class parser {
         if (reader == null) {
             reader = new InputStreamReader(istream);
         }
-            
+
         //if (Options.fixMacReaderBug);
         reader = new FixMacReaderBug(reader);
 

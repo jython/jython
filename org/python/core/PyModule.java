@@ -24,7 +24,7 @@ public class PyModule extends PyObject
         String fullName = (name+'.'+attr).intern();
 
         PyObject ret = null;
-        
+
         if (path == Py.None) {
             /* disabled:
             ret = imp.loadFromClassLoader(
@@ -44,7 +44,7 @@ public class PyModule extends PyObject
         }
 
         if (ret != null) {
-            // Allow a package component to change its own meaning 
+            // Allow a package component to change its own meaning
             PyObject tmp = Py.getSystemState().modules.__finditem__(fullName);
             if (tmp != null) ret = tmp;
             __dict__.__setitem__(attr, ret);

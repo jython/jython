@@ -20,7 +20,7 @@ package org.python.modules.sre;
 import java.util.*;
 
 public class SRE_STATE {
-    public static final int SRE_ERROR_ILLEGAL = -1; /* illegal opcode */    
+    public static final int SRE_ERROR_ILLEGAL = -1; /* illegal opcode */
     public static final int SRE_ERROR_STATE   = -2; /* illegal state */
     public static final int SRE_ERROR_RECURSION_LIMIT = -3; /* runaway recursion */
 
@@ -140,7 +140,7 @@ public class SRE_STATE {
     public SRE_STATE(String str, int start, int end, int flags) {
         this.str = str.toCharArray();
         int size = str.length();
-    
+
         this.charsize = 1;
 
         /* adjust boundaries */
@@ -239,7 +239,7 @@ public class SRE_STATE {
             return ptr == beginning;
 
         case SRE_AT_BEGINNING_LINE:
-            return (ptr == beginning || SRE_IS_LINEBREAK(str[ptr-1])); 
+            return (ptr == beginning || SRE_IS_LINEBREAK(str[ptr-1]));
 
         case SRE_AT_END:
             return (ptr+1 == end && SRE_IS_LINEBREAK(str[ptr])) || ptr == end;
@@ -291,7 +291,7 @@ public class SRE_STATE {
 
 
     final boolean SRE_CHARSET(char[] set, int setidx, char ch) {
-        /* check if character is a member of the given set.	 return 1 if
+        /* check if character is a member of the given set. return 1 if
            so, 0 otherwise */
 
         boolean ok = true;
@@ -312,7 +312,7 @@ public class SRE_STATE {
                     return ok;
                 setidx += 2;
                 break;
- 
+
             case SRE_OP_CHARSET:
                 /* <CHARSET> <bitmap> (16 bits per code word) */
                 if (ch < 256 && (set[setidx + (ch >> 4)] & (1 << (ch & 15))) != 0)
@@ -394,7 +394,7 @@ public class SRE_STATE {
             while (ptr < end && str[ptr] != chr)
                 ptr++;
             break;
-                
+
         case SRE_OP_NOT_LITERAL_IGNORE:
             /* repeated non-literal */
             chr = pattern[1];
@@ -441,8 +441,8 @@ public class SRE_STATE {
 
         //TRACE(pidx, ptr, "ENTER " + level);
 
-        if (level > USE_RECURSION_LIMIT) 
-           return SRE_ERROR_RECURSION_LIMIT; 
+        if (level > USE_RECURSION_LIMIT)
+           return SRE_ERROR_RECURSION_LIMIT;
 
         if (pattern[pidx] == SRE_OP_INFO) {
             /* optimization info block */
@@ -549,7 +549,7 @@ public class SRE_STATE {
                 while (p < e) {
                     if (ptr >= end || str[ptr] != str[p])
                         return 0;
-                    p++; 
+                    p++;
                     ptr++;
                 }
                 pidx++;
@@ -710,7 +710,7 @@ public class SRE_STATE {
                        the rest of the pattern cannot possibly match */
                     chr = pattern[pidx + pattern[pidx]+1];
                     for (;;) {
-                        while (count >= mincount && 
+                        while (count >= mincount &&
                                (ptr >= end || str[ptr] != chr)) {
                             ptr--;
                             count--;
@@ -805,7 +805,7 @@ public class SRE_STATE {
                     rp.count = count - 1;
                     this.ptr = ptr;
                 }
-   
+
                 /* cannot match more repeated items here.  make sure the
                    tail matches */
                 this.repeat = rp.prev;
@@ -820,7 +820,7 @@ public class SRE_STATE {
             case SRE_OP_MIN_UNTIL:
                 /* minimizing repeat */
                 /* <REPEAT> <skip> <1=min> <2=max> item <MIN_UNTIL> tail */
- 
+
                 rp = this.repeat;
                 if (rp == null)
                     return SRE_ERROR_STATE;
@@ -896,7 +896,7 @@ public class SRE_STATE {
         int charset = 0;
         int overlap = 0;
         int flags = 0;
-       
+
         if (pattern[pidx] == SRE_OP_INFO) {
             /* optimization info block */
             /* <INFO> <1=skip> <2=flags> <3=min> <4=max> <5=prefix info>  */
@@ -956,14 +956,13 @@ public class SRE_STATE {
                         }
                         break;
                     }
-                    
+
                 }
                 ptr++;
             }
             return 0;
         }
 
-       
         if (pattern[pidx] == SRE_OP_LITERAL) {
             /* pattern starts with a literal */
             char chr = pattern[pidx + 1];
@@ -1070,7 +1069,7 @@ public class SRE_STATE {
         return false;
     }
 
- 
+
     /* default character predicates (run sre_chars.py to regenerate tables) */
 
     static final int SRE_DIGIT_MASK = 1;

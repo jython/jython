@@ -27,7 +27,7 @@ public class PyJavaInstance
     /**
      * Implementation of the Externalizable interface.
      * @param in the input stream.
-     * @exception java.io.IOException 
+     * @exception java.io.IOException
      * @exception ClassNotFoundException
      */
     public void readExternal(java.io.ObjectInput in)
@@ -41,7 +41,7 @@ public class PyJavaInstance
     /**
      * Implementation of the Externalizable interface.
      * @param out the output stream.
-     * @exception java.io.IOException 
+     * @exception java.io.IOException
      */
     public void writeExternal(java.io.ObjectOutput out)
         throws java.io.IOException

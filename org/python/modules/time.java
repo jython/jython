@@ -589,7 +589,7 @@ public class time implements ClassDictInit
         }
         return tz.getID();
     }
-            
+
     private static int getDSTSavings(TimeZone tz) {
         String version = System.getProperty("java.version");
         if (version.compareTo("1.2") >= 0) {

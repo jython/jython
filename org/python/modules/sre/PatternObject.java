@@ -39,8 +39,6 @@ public class PatternObject extends PyObject {
         this.indexgroup = indexgroup;
     }
 
-
-  
     public MatchObject match(String string) {
         return match(string, 0, Integer.MAX_VALUE);
     }
@@ -81,10 +79,10 @@ public class PatternObject extends PyObject {
         String string = ap.getString(1);
         int count = ap.getInt(2, 0);
 
-        return call("_sub", new PyObject[] { 
-             Py.java2py(this), 
+        return call("_sub", new PyObject[] {
+             Py.java2py(this),
              template,
-             Py.newString(string), 
+             Py.newString(string),
              Py.newInteger(count) });
     }
 
@@ -95,10 +93,10 @@ public class PatternObject extends PyObject {
         String string = ap.getString(1);
         int count = ap.getInt(2, 0);
 
-        return call("_subn", new PyObject[] { 
-             Py.java2py(this), 
-             template, 
-             Py.newString(string), 
+        return call("_subn", new PyObject[] {
+             Py.java2py(this),
+             template,
+             Py.newString(string),
              Py.newInteger(count) });
     }
 
@@ -108,9 +106,9 @@ public class PatternObject extends PyObject {
         String string = ap.getString(0);
         int count = ap.getInt(1, 0);
 
-        return call("_split", new PyObject[] { 
-             Py.java2py(this), 
-             Py.newString(string), 
+        return call("_split", new PyObject[] {
+             Py.java2py(this),
+             Py.newString(string),
              Py.newInteger(count) });
     }
 
@@ -164,7 +162,7 @@ public class PatternObject extends PyObject {
 
                 if (status == 0)
                     break;
- 
+
                 _error(status);
             }
         }
@@ -186,7 +184,7 @@ public class PatternObject extends PyObject {
         self.pattern = this;
         self.string = string;
         return self;
-    } 
+    }
 
 
     private void _error(int status) {

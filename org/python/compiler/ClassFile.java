@@ -57,7 +57,7 @@ public class ClassFile
         }
         return new String(c);
     }
-        
+
     public ClassFile(String name) {
         this(name, "java/lang/Object", SYNCHRONIZED | PUBLIC);
     }
@@ -118,7 +118,7 @@ public class ClassFile
             m.write(stream);
         }
     }
-        
+
     public void addAttribute(Attribute attr) throws IOException {
         attributes.addElement(attr);
     }
@@ -126,7 +126,7 @@ public class ClassFile
     public void write(DataOutputStream stream) throws IOException {
         //Write Header
         int thisclass = pool.Class(name);
-        int superclass = pool.Class(this.superclass); 
+        int superclass = pool.Class(this.superclass);
 
         stream.writeInt(0xcafebabe);
         stream.writeShort(0x3);
@@ -149,7 +149,7 @@ public class ClassFile
         //write out class attributes
         int n = attributes.size();
         stream.writeShort(n);
-                
+
         for (int i=0; i<n; i++) {
             ((Attribute)attributes.elementAt(i)).write(stream);
         }

@@ -20,7 +20,7 @@ public class _weakref implements ClassDictInit {
         reaperThread.setDaemon(true);
         reaperThread.start();
     }
-    
+
     /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict)
         throws PyIgnoreMethodTag
@@ -149,7 +149,7 @@ public class _weakref implements ClassDictInit {
         synchronized AbstractReference find(Class cls) {
             for (int i = references.size() - 1; i >= 0; i--) {
                 AbstractReference r = getReferenceAt(i);
-                if (r == null) 
+                if (r == null)
                     references.removeElementAt(i);
                 else if (r.callback == null && r.getClass() == cls) {
                     return r;
@@ -164,7 +164,7 @@ public class _weakref implements ClassDictInit {
         synchronized void call() {
             for (int i = references.size() - 1; i >= 0; i--) {
                 AbstractReference r = getReferenceAt(i);
-                if (r == null) 
+                if (r == null)
                     references.removeElementAt(i);
                 else
                     r.call();
@@ -185,7 +185,7 @@ public class _weakref implements ClassDictInit {
             Vector list = new Vector();
             for (int i = references.size() - 1; i >= 0; i--) {
                 AbstractReference r = getReferenceAt(i);
-                if (r == null) 
+                if (r == null)
                     references.removeElementAt(i);
                 else
                     list.addElement(r);
@@ -307,8 +307,8 @@ public class _weakref implements ClassDictInit {
         public PyLong __long__() { return py().__long__(); }
         public PyComplex __complex__() { return py().__complex__(); }
         public PyObject __pos__() { return py().__pos__(); }
-        public PyObject __neg__() { return py().__neg__(); } 
-        public PyObject __abs__() { return py().__abs__(); } 
+        public PyObject __neg__() { return py().__neg__(); }
+        public PyObject __abs__() { return py().__abs__(); }
         public PyObject __invert__() { return py().__invert__(); }
 
         public PyObject __add__(PyObject o) { return py().__add__(o); }

@@ -240,7 +240,7 @@ public final class Py
     public static void RuntimeWarning(String message) {
         warning(RuntimeWarning, message);
     }
-    
+
     private static PyObject warnings_mod;
     private static PyObject importWarnings() {
         if (warnings_mod != null) return warnings_mod;
@@ -256,13 +256,13 @@ public final class Py
         warnings_mod = mod;
         return mod;
     }
-    
+
     private static String warn_hcategory(PyObject category) {
         PyObject name = category.__findattr__("__name__");
         if (name != null) return "["+name+"]";
         return "[warning]";
     }
-    
+
     public static void warning(PyObject category, String message) {
         PyObject func = null;
         PyObject mod = importWarnings();
@@ -285,13 +285,13 @@ public final class Py
             System.err.println(filename + ":" + lineno + ":" + warn_hcategory(category) + ": " + message);
             return;
         } else {
-            func.__call__(new PyObject[] {Py.newString(message), category, 
+            func.__call__(new PyObject[] {Py.newString(message), category,
                 Py.newString(filename), Py.newInteger(lineno),
                 (module == null)?Py.None:Py.newString(module), registry}, Py.NoKeywords);
         }
     }
 
-    
+
     public static PyObject JavaError;
     public static PyException JavaError(Throwable t) {
 //         System.err.println("t: "+t);
@@ -458,9 +458,9 @@ public final class Py
                                filename, name, firstlineno, args, keywords,
                                funcs, func_id, cellvars, freevars, npurecell,moreflags);
     }
-        
+
     // --
-    
+
     public static PyCode newCode(int argcount, String varnames[],
                                  String filename, String name,
                                  boolean args, boolean keywords,
@@ -488,7 +488,7 @@ public final class Py
 
     public static PyObject newJavaFunc(Class cls, String name) {
         try {
-            java.lang.reflect.Method m = cls.getMethod(name, new Class[] { 
+            java.lang.reflect.Method m = cls.getMethod(name, new Class[] {
                        PyObject[].class, String[].class });
             return new JavaFunc(m);
         } catch (NoSuchMethodException e) {
@@ -909,7 +909,6 @@ public final class Py
             stderr.println("sys.excepthook is missing");
             displayException(exc.type, exc.value, exc.traceback);
         }
-            
 
         ts.exception = null;
     }
@@ -1404,23 +1403,23 @@ public final class Py
     {
         return makeClass(name, bases, code, doc, null, null);
     }
-    
+
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,PyObject[] closure_cells)
     {
         return makeClass(name, bases, code, doc, null, closure_cells);
     }
 
-    
+
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,
                                      Class proxyClass) {
-        return makeClass(name, bases, code, doc, proxyClass, null);                                      
+        return makeClass(name, bases, code, doc, proxyClass, null);
     }
 
 
     private static Class[] pyClassCtrSignature = {String.class,PyTuple.class,PyObject.class,Class.class};
-    
+
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,
                                      Class proxyClass,PyObject[] closure_cells)
@@ -1456,7 +1455,7 @@ public final class Py
                     throw Py.TypeError("meta-class fails to supply proper ctr: "+bases[i].safeRepr());
                 }
             }
- 
+
         }
 
         return new PyClass(name, new PyTuple(bases), dict, proxyClass);
@@ -1476,11 +1475,11 @@ public final class Py
         if (frame!=null && frame.f_code != null) {
             cflags = new CompilerFlags(frame.f_code.co_flags);
         }
-        return cflags; 
+        return cflags;
     }
-        
+
     // w/o compiler-flags
-    
+
     public static PyCode compile(SimpleNode node, String filename) {
         return compile(node, getName(), filename);
     }
@@ -1498,15 +1497,15 @@ public final class Py
     {
         return compile_flags(node,name,filename,linenumbers,printResults,null);
     }
- 
+
     public static PyCode compile(InputStream istream, String filename,
                                  String type)
     {
         return compile_flags(istream,filename,type,null);
     }
-    
+
     // with compiler-flags
-    
+
     public static PyCode compile_flags(SimpleNode node, String name,
                                  String filename,
                                  boolean linenumbers,
@@ -1535,12 +1534,12 @@ public final class Py
             printResults = true;
         return Py.compile_flags(node, getName(), filename, true, printResults,cflags);
     }
-    
+
     public static PyCode compile_flags(String data, String filename, String type,CompilerFlags cflags) {
         return Py.compile_flags(new java.io.StringBufferInputStream(data+"\n\n"),
                           filename, type,cflags);
     }
-    
+
     public static PyObject[] unpackSequence(PyObject o, int length) {
         if (o instanceof PyTuple) {
             PyTuple tup = (PyTuple)o;
@@ -1727,7 +1726,7 @@ class JavaCode extends PyCode {
 }
 
 /**
- * A function object wrapper for a java method which comply with the 
+ * A function object wrapper for a java method which comply with the
  * PyArgsKeywordsCall standard.
  */
 class JavaFunc extends PyObject {

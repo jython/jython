@@ -17,9 +17,9 @@ public class PythonInterpreter {
     PyObject locals;
 
     protected CompilerFlags cflags = null;
-    
+
     /**
-     * Initialize the jython runtime. This method should only be 
+     * Initialize the jython runtime. This method should only be
      * called once, and should be call before any other python objects
      * are created (included a PythonInterpreter).
      *
@@ -31,10 +31,10 @@ public class PythonInterpreter {
      *                        added to this property set. PostProperties
      *                        will override system properties and
      *                        registry properties.
-     * @param argv            Command line argument. These values will 
+     * @param argv            Command line argument. These values will
      *                        assigned to sys.argv.
      */
-    public static void initialize(Properties preProperties, 
+    public static void initialize(Properties preProperties,
                                   Properties postProperties,
                                   String[] argv) {
         PySystemState.initialize(preProperties, postProperties, argv);
@@ -58,7 +58,7 @@ public class PythonInterpreter {
     public PythonInterpreter(PyObject dict) {
         this(dict, null);
     }
-    
+
     public PythonInterpreter(PyObject dict, PySystemState systemState) {
         PySystemState.initialize();
         if (dict == null)
@@ -73,11 +73,11 @@ public class PythonInterpreter {
         locals = module.__dict__;
         setState();
     }
-    
+
     protected void setState() {
         Py.setSystemState(systemState);
     }
-    
+
     /**
      * Set the Python object to use for the standard output stream
      *
@@ -86,12 +86,12 @@ public class PythonInterpreter {
     public void setOut(PyObject outStream) {
         systemState.stdout = outStream;
     }
-    
+
     /**
      * Set a java.io.Writer to use for the standard output stream
      *
      * @param outStream Writer to use as output stream
-     */    
+     */
     public void setOut(java.io.Writer outStream) {
         setOut(new PyFile(outStream));
     }
@@ -100,23 +100,23 @@ public class PythonInterpreter {
      * Set a java.io.OutputStream to use for the standard output stream
      *
      * @param outStream OutputStream to use as output stream
-     */        
+     */
     public void setOut(java.io.OutputStream outStream) {
         setOut(new PyFile(outStream));
     }
-    
+
     public void setErr(PyObject outStream) {
         systemState.stderr = outStream;
     }
-    
+
     public void setErr(java.io.Writer outStream) {
         setErr(new PyFile(outStream));
     }
-    
+
     public void setErr(java.io.OutputStream outStream) {
         setErr(new PyFile(outStream));
     }
-    
+
     /**
      * Evaluate a string as Python source and return the result
      *
@@ -136,7 +136,7 @@ public class PythonInterpreter {
         setState();
         Py.exec(Py.compile_flags(s, "<string>", "exec",cflags), locals, locals);
     }
-    
+
     /**
      * Execute a Python code object in the local namespace
      *
@@ -160,7 +160,7 @@ public class PythonInterpreter {
     public void execfile(java.io.InputStream s) {
         execfile(s, "<iostream>");
     }
-   
+
     public void execfile(java.io.InputStream s, String name) {
         setState();
         Py.runCode(Py.compile_flags(s, name, "exec",cflags), locals, locals);
@@ -179,7 +179,7 @@ public class PythonInterpreter {
      * Set a variable in the local namespace
      *
      * @param name      the name of the variable
-     * @param value the value to set the variable to.  
+     * @param value the value to set the variable to.
      Will be automatically converted to an appropriate Python object.
     */
     public void set(String name, Object value) {
@@ -205,7 +205,7 @@ public class PythonInterpreter {
     public PyObject get(String name) {
         return locals.__finditem__(name.intern());
     }
-    
+
     /**
      * Get the value of a variable in the local namespace Value will be
      * returned as an instance of the given Java class.
@@ -214,7 +214,7 @@ public class PythonInterpreter {
      *
      * @param name      the name of the variable
      * @param javaclass the class of object to return
-     */ 
+     */
     public Object get(String name, Class javaclass) {
         return Py.tojava(locals.__finditem__(name.intern()), javaclass);
     }

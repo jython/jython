@@ -39,7 +39,7 @@ public class ScannerObject {
     public MatchObject search() {
         state.state_reset();
         state.ptr = state.start;
-    
+
         int status = state.SRE_SEARCH(pattern.code, 0);
         MatchObject match = pattern._pattern_new_match(state, string, status);
 

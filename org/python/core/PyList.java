@@ -369,7 +369,7 @@ public class PyList extends PySequence implements ClassDictInit
     }
 
     /**
-     * Insert the argument element into the list at the specified 
+     * Insert the argument element into the list at the specified
      * index.
      * <br>
      * Same as <code>s[index:index] = [o] if index &gt;= 0</code>.
@@ -401,7 +401,7 @@ public class PyList extends PySequence implements ClassDictInit
 
     /**
      * Reverses the items of s in place.
-     * The reverse() methods modify the list in place for economy 
+     * The reverse() methods modify the list in place for economy
      * of space when reversing a large list. It doesn't return the
      * reversed list to remind you of this side effect.
      */
@@ -665,13 +665,13 @@ public class PyList extends PySequence implements ClassDictInit
     /**
      * Sort the items of the list in place. The compare argument is a
      * function of two arguments (list items) which should return
-     * -1, 0 or 1 depending on whether the first argument is 
-     * considered smaller than, equal to, or larger than the second 
+     * -1, 0 or 1 depending on whether the first argument is
+     * considered smaller than, equal to, or larger than the second
      * argument. Note that this slows the sorting process down
      * considerably; e.g. to sort a list in reverse order it is much
-     * faster to use calls to the methods sort() and reverse() than 
+     * faster to use calls to the methods sort() and reverse() than
      * to use the built-in function sort() with a comparison function
-     * that reverses the ordering of the elements. 
+     * that reverses the ordering of the elements.
      *
      * @param compare the comparison function.
      */

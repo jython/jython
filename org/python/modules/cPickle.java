@@ -483,7 +483,6 @@ public class cPickle implements ClassDictInit {
         PyObject args = ap.getList(1);
 
         self.__setattr__("args", args);
-        
     }
 
     public static PyString _PickleError__str__(PyObject[] arg, String[] kws) {

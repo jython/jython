@@ -11,7 +11,7 @@ class Label {
     int noffsets;
     Code code;
     int stack;
-        
+
     public Label(Code code) {
         this.code = code;
         position = -1;
@@ -63,7 +63,7 @@ class Label {
             throw new InternalError("position never set for label");
         return position;
     }
-        
+
     public void setPosition() {
         position = code.size();
         //code.addLabel(this);

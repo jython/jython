@@ -75,8 +75,8 @@ public class Options
 
     /**
      * If true, Jython will use the first module found on sys.path
-     * where java File.isFile() returns true. Setting this to true 
-     * have no effect on unix-type filesystems. On Windows/HPS+ 
+     * where java File.isFile() returns true. Setting this to true
+     * have no effect on unix-type filesystems. On Windows/HPS+
      * systems setting it to true will enable Jython-2.0 behaviour.
      */
     public static boolean caseok = false;

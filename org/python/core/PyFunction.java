@@ -37,11 +37,11 @@ public class PyFunction extends PyObject
                       PyObject doc) {
         this(globals,defaults,code,doc,null);
     }
-    
+
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code) {
         this(globals, defaults, code, null,null);
     }
-    
+
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code, PyObject[] closure_cells) {
         this(globals, defaults, code, null,closure_cells);
     }

@@ -17,7 +17,7 @@ public class ReadlineConsole extends InteractiveConsole {
     }
     public ReadlineConsole(PyObject locals, String filename) {
         super(locals,filename);
-	Readline.initReadline("jpython");
+        Readline.initReadline("jpython");
     }
 
 

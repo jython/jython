@@ -53,7 +53,6 @@ public class MatchObject extends PyObject {
         return new PyTuple(result);
     }
 
-
     public PyObject groupdict(PyObject[] args, String[] kws) {
         ArgParser ap = new ArgParser("groupdict", args, kws, "default");
         PyObject def = ap.getPyObject(0, Py.None);
@@ -73,14 +72,9 @@ public class MatchObject extends PyObject {
         return result;
     }
 
-
-
-
-
     public PyObject start() {
         return start(Py.Zero);
     }
-
 
     public PyObject start(PyObject index_) {
         int index = getindex(index_);
@@ -91,12 +85,9 @@ public class MatchObject extends PyObject {
         return Py.newInteger(mark[index*2]);
     }
 
-
-
     public PyObject end() {
         return end(Py.Zero);
     }
-
 
     public PyObject end(PyObject index_) {
         int index = getindex(index_);
@@ -107,18 +98,14 @@ public class MatchObject extends PyObject {
         return Py.newInteger(mark[index*2+1]);
     }
 
-
-
-
     public PyTuple span() {
         return span(Py.Zero);
     }
 
-
     public PyTuple span(PyObject index_) {
         int index = getindex(index_);
 
-        if (index < 0 || index >= groups) 
+        if (index < 0 || index >= groups)
             throw Py.IndexError("no such group");
 
         int start = mark[index*2];
@@ -126,9 +113,6 @@ public class MatchObject extends PyObject {
 
         return _pair(start, end);
     }
-
-
-
 
     public PyObject regs() {
 
@@ -142,22 +126,13 @@ public class MatchObject extends PyObject {
     }
 
 
-
-
-
-
     PyTuple _pair(int i1, int i2) {
         return new PyTuple(new PyObject[] { Py.newInteger(i1), Py.newInteger(i2) });
     }
-       
-
-
 
     private PyObject getslice(PyObject index, PyObject def) {
         return getslice_by_index(getindex(index), def);
     }
-
-
 
     private int getindex(PyObject index) {
         if (index instanceof PyInteger)
@@ -174,12 +149,10 @@ public class MatchObject extends PyObject {
         return i;
     }
 
-
-
     private PyObject getslice_by_index(int index, PyObject def) {
-        if (index < 0 || index >= groups) 
+        if (index < 0 || index >= groups)
             throw Py.IndexError("no such group");
-        
+
         index *= 2;
         int start = mark[index];
         int end = mark[index+1];
@@ -191,11 +164,6 @@ public class MatchObject extends PyObject {
 
         return new PyString(string.substring(start, end));
     }
-
-
-
-
-
 
     public PyObject __findattr__(String key) {
         //System.out.println("__findattr__:" + key);

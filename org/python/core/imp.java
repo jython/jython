@@ -286,7 +286,7 @@ public class imp
 
         String pyName = entryName +".py";
         String className = entryName +"$py.class";
-    
+
         try {
             String sourceName = entryName + "/__init__.py";
             String compledName = entryName + "/__init__$py.class";
@@ -305,7 +305,7 @@ public class imp
                     return m;
                 }
             }
-        
+
             ZipEntry pyEntry = zipArchive.getEntry(pyName);
             ZipEntry classEntry = zipArchive.getEntry(className);
             if (pyEntry != null) {
@@ -336,7 +336,7 @@ public class imp
         }
         return null;
     }
-    
+
     private static boolean isSyspathArchive(PyObject entry, boolean isDir) {
         if (entry instanceof SyspathArchive)
             return true;
@@ -388,7 +388,7 @@ public class imp
                         continue;
                     }
                 }
-                    
+
                 PyObject ret = loadFromZipFile(name, modName,
                                               (SyspathArchive)entry);
                 // Not found in zip/jar file check next item in path
@@ -496,7 +496,6 @@ public class imp
 
         Py.writeComment("import", "'" + name + "' not found (=> ImportError)");
         return null;
-        
     }
 
     public static PyObject load(String name) {
@@ -525,7 +524,7 @@ public class imp
         String fullName = parentNameBuffer.toString().intern();
         PyObject modules = Py.getSystemState().modules;
         PyObject ret = modules.__finditem__(fullName);
-        if (ret != null) return ret;        
+        if (ret != null) return ret;
         if (mod == null) {
             ret = load(name.intern(),  Py.getSystemState().path); // ?? intern superfluous?
         } else {
@@ -534,18 +533,18 @@ public class imp
         if (ret == null || ret == Py.None) return ret;
         if (modules.__finditem__(fullName) == null) modules.__setitem__(fullName, ret);
         else ret = modules.__finditem__(fullName);
-        return ret;        
+        return ret;
     }
 
     // never returns null or None
     private static PyObject import_first(String name, StringBuffer parentNameBuffer) {
         PyObject ret = import_next(null,parentNameBuffer,name);
         if (ret == null || ret == Py.None) throw Py.ImportError("no module named "+name);
-        return ret;        
+        return ret;
     }
-    
+
     // Hierarchy-recursively search for dotted name in mod; never returns null or None
-    // ??pending: check if result is really a module/jpkg/jclass?        
+    // ??pending: check if result is really a module/jpkg/jclass?
     private static PyObject import_logic(PyObject mod, StringBuffer parentNameBuffer, String dottedName) {
         int dot = 0;
         int last_dot= 0;
@@ -589,7 +588,7 @@ public class imp
                 modules.__setitem__(parentNameBuffer.toString().intern(),Py.None);
             }
             parentNameBuffer = new StringBuffer("");
-            topMod = import_first(firstName,parentNameBuffer); // could throw ImportError            
+            topMod = import_first(firstName,parentNameBuffer); // could throw ImportError
         }
         PyObject mod = topMod;
         if (dot != -1) mod = import_logic(topMod,parentNameBuffer,name.substring(dot+1)); // could throw ImportError
@@ -605,7 +604,7 @@ public class imp
                                                    PyObject modDict) {
         return import_name(name,top,modDict);
     }
-    
+
     /**
      * Called from jpython generated code when a statement like "import spam"
      * is executed.

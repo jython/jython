@@ -45,7 +45,7 @@ public abstract class PackageManager extends Object {
     /**
      * Append a directory to the list of directories searched for
      * java packages and java classes.
-     * 
+     *
      * @param dir   A directory.
      */
     public abstract void addDirectory(java.io.File dir);
@@ -53,7 +53,7 @@ public abstract class PackageManager extends Object {
     /**
      * Append a directory to the list of directories searched for
      * java packages and java classes.
-     * 
+     *
      * @param dir   A directory name.
      */
     public abstract void addJarDir(String dir);
@@ -61,7 +61,7 @@ public abstract class PackageManager extends Object {
     /**
      * Append a jar file to the list of locations searched for
      * java packages and java classes.
-     * 
+     *
      * @param jarfile   A directory name.
      */
     public abstract void addJar(String jarfile);

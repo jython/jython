@@ -37,9 +37,9 @@ public class PythonObjectInputStream extends ObjectInputStream {
             return super.resolveClass(v);
         } catch (ClassNotFoundException exc) {
             PyObject m = importModule(clsName);
-            //System.out.println("m:" + m); 
+            //System.out.println("m:" + m);
             Object cls = m.__tojava__(Class.class);
-            //System.out.println("cls:" + cls); 
+            //System.out.println("cls:" + cls);
             if (cls != null && cls != Py.NoConversion)
                 return (Class) cls;
             throw exc;
@@ -48,7 +48,7 @@ public class PythonObjectInputStream extends ObjectInputStream {
 
 
     private static PyObject importModule(String name) {
-        PyObject silly_list = new PyTuple(new PyString[] { 
+        PyObject silly_list = new PyTuple(new PyString[] {
             Py.newString("__doc__"),
         });
         return __builtin__.__import__(name, null, null, silly_list);

@@ -190,7 +190,7 @@ public final class ReaderCharStream implements CharStream
   }
 
   /**
-   * @deprecated 
+   * @deprecated
    * @see #getEndColumn
    */
 
@@ -199,7 +199,7 @@ public final class ReaderCharStream implements CharStream
   }
 
   /**
-   * @deprecated 
+   * @deprecated
    * @see #getEndLine
    */
 
@@ -302,7 +302,7 @@ public final class ReaderCharStream implements CharStream
         bufcolumn[j] = newCol + columnDiff;
         columnDiff = nextColDiff;
         i++;
-     } 
+     }
 
      if (i < len)
      {

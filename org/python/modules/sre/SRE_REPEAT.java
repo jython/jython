@@ -19,7 +19,7 @@ package org.python.modules.sre;
 
 public class SRE_REPEAT {
     int count;
-    int pidx; 
+    int pidx;
 
     SRE_REPEAT prev;
 

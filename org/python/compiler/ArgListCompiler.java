@@ -66,7 +66,7 @@ public class ArgListCompiler extends org.python.parser.Visitor
                                          name, node);
         }
         names.addElement(name);
-        
+
         //Handle tuple arguments properly
         if (node.getChild(0).id == PythonGrammarTreeConstants.JJTFPLIST) {
             SimpleNode expr = new SimpleNode(

@@ -78,7 +78,7 @@ public class ConstantPool
             }
             sizes[index+1] = slots;
             index += slots;
-        } 
+        }
         //System.out.print("Constant: ");
         //for(int j=0; j<data.length; j++)
         //      System.out.print(Integer.toString(data[j])+", ");
@@ -89,14 +89,14 @@ public class ConstantPool
     public int UTF8(String s) throws IOException {
         tdata.writeByte(1);
         tdata.writeUTF(s);
-        return addConstant(1); 
+        return addConstant(1);
     }
 
     public int Class(String s) throws IOException {
         int c = UTF8(s);
         tdata.writeByte(7);
         tdata.writeShort(c);
-        return addConstant(1); 
+        return addConstant(1);
     }
 
     public int Fieldref(String c, String name, String type)
@@ -170,7 +170,7 @@ public class ConstantPool
         int index = addConstant(1);
         sizes[index] = sigSize(type, true);
         //System.out.println("method: "+c+", "+name+", "+type+": "+index);
-        return index;   
+        return index;
     }
 
     public int InterfaceMethodref(String c, String name, String type)
@@ -184,38 +184,38 @@ public class ConstantPool
         tdata.writeShort(nt);
         int index = addConstant(1);
         sizes[index] = sigSize(type, true);
-        return index;   
+        return index;
     }
 
     public int String(String s) throws IOException {
-        int i = UTF8(s); 
+        int i = UTF8(s);
         tdata.writeByte(8);
         tdata.writeShort(i);
-        return addConstant(1); 
+        return addConstant(1);
     }
 
     public int Integer(int i) throws IOException {
         tdata.writeByte(3);
         tdata.writeInt(i);
-        return addConstant(1); 
+        return addConstant(1);
     }
 
     public int Float(float f) throws IOException {
         tdata.writeByte(4);
         tdata.writeFloat(f);
-        return addConstant(1); 
+        return addConstant(1);
     }
 
     public int Long(long l) throws IOException {
         tdata.writeByte(5);
         tdata.writeLong(l);
-        return addConstant(2); 
+        return addConstant(2);
     }
 
     public int Double(double d) throws IOException {
         tdata.writeByte(6);
         tdata.writeDouble(d);
-        return addConstant(2); 
+        return addConstant(2);
     }
 
     public int NameAndType(String name, String type) throws IOException {
@@ -225,7 +225,7 @@ public class ConstantPool
         tdata.writeByte(12);
         tdata.writeShort(n);
         tdata.writeShort(t);
-        return addConstant(1); 
+        return addConstant(1);
     }
 
     public static void main(String[] args) throws Exception {

@@ -45,7 +45,7 @@ public class AdapterMaker extends ProxyMaker
                                ClassFile.PUBLIC);
         }
     }
-        
+
     public void addMethod(Method method, int access) throws Exception {
         Class[] parameters = method.getParameterTypes();
         Class ret = method.getReturnType();

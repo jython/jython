@@ -16,7 +16,7 @@ public class SimpleNode implements Node
 
     public org.python.compiler.ScopeInfo scope; // for nested scopes
     public boolean from_future_checked = false; // from __future__ support
-    
+
     public SimpleNode(int i) {
         id = i;
     }
@@ -81,7 +81,7 @@ public class SimpleNode implements Node
         info = parseString(s, quotes, beginLine, beginColumn);
     }
 
-    public static String parseString(String s, int quotes, 
+    public static String parseString(String s, int quotes,
                                      int beginLine, int beginColumn) {
         //System.out.println("string: "+s);
         char quoteChar = s.charAt(0);
@@ -90,7 +90,7 @@ public class SimpleNode implements Node
         if (quoteChar == 'u' || quoteChar == 'U') {
             ustring = true;
             start++;
-        }  
+        }
         quoteChar = s.charAt(start);
         if (quoteChar == 'r' || quoteChar == 'R') {
             return s.substring(quotes+start+1, s.length()-quotes);
