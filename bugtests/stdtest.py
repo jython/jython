@@ -98,7 +98,6 @@ failures = [
     'test_ntpath',
     'test_os',
     'test_operations',
-    'test_operator',
     'test_pickle',
     'test_pkgimport',
     'test_popen2',
