@@ -249,10 +249,11 @@ class Compiler:
                     self.packages[m.name] = None
         elif isinstance(m, ImportName.Module):
             if m.file is None:
-                file = os.path.join(m.path[0], '__init__.py')
-                name = m.name+'.__init__'
-                self.depends[file] = name
-                self.pypackages[m.path[0]] = m.name
+                if m.path is not None:
+                    file = os.path.join(m.path[0], '__init__.py')
+                    name = m.name+'.__init__'
+                    self.depends[file] = name
+                    self.pypackages[m.path[0]] = m.name
             else:
                 self.depends[m.file] = m.name
         elif isinstance(m, ImportName.JavaClass):
