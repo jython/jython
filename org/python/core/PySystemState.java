@@ -14,7 +14,7 @@ public class PySystemState extends PyObject {
     /**
     The current version of JPython.
     **/
-    public static String version = "1.1alpha1";
+    public static String version = "1.1alpha2";
 
     /**
     The copyright notice for this release.
@@ -79,12 +79,13 @@ public class PySystemState extends PyObject {
             if (root == null) root = preProperties.getProperty("install.root");
             
             String version = preProperties.getProperty("java.version");
-            if (version.equals("11")) version = "1.1";
-            if (version.equals("12")) version = "1.2";
             if (version.startsWith("java")) version = version.substring(4, version.length());
             if (version.startsWith("jdk") || version.startsWith("jre")) {
                 version = version.substring(3, version.length());
             }
+            if (version.equals("11")) version = "1.1";
+            if (version.equals("12")) version = "1.2";
+            
             if (version != null) platform = "java"+version;
         } catch (Exception exc) {
             return null;
@@ -126,14 +127,14 @@ public class PySystemState extends PyObject {
 	}*/
 
     private static boolean getBooleanOption(String name, boolean defaultValue) {
-        String prop = registry.getProperty("python.options."+name);
+        String prop = registry.getProperty("python."+name);
         if (prop == null) return defaultValue;
         return prop.equalsIgnoreCase("true") || prop.equalsIgnoreCase("yes");
     }
     
   
     private static String getStringOption(String name, String defaultValue) {
-        String prop = registry.getProperty("python.options."+name);
+        String prop = registry.getProperty("python."+name);
         if (prop == null) return defaultValue;
         return prop;
     }  
@@ -323,16 +324,34 @@ public class PySystemState extends PyObject {
 	public static void setOptionsFromRegistry() {
 	    // Set the more unusual options
 	    Options.showJavaExceptions = 
-	        getBooleanOption("showJavaExceptions", Options.showJavaExceptions);
-	    Options.skipCompile = 
-	        getBooleanOption("skipCompile", Options.skipCompile);
-	    Options.proxyCacheDirectory = 
-	        getStringOption("proxyCacheDirectory", Options.proxyCacheDirectory);
+	        getBooleanOption("options.showJavaExceptions", Options.showJavaExceptions);
 	    Options.showPythonProxyExceptions = 
-	        getBooleanOption("showPythonProxyExceptions", Options.showPythonProxyExceptions);
-	    Options.verbosePackageCache = 
-	        getBooleanOption("verbosePackageCache", Options.verbosePackageCache);
-	        
+	        getBooleanOption("options.showPythonProxyExceptions", Options.showPythonProxyExceptions);	        
+	    Options.skipCompile = 
+	        getBooleanOption("options.skipCompile", Options.skipCompile);
+	    Options.deprecatedKeywordMangling = 
+	        getBooleanOption("deprecated.keywordMangling", Options.deprecatedKeywordMangling);
+	    Options.pollStandardIn =
+	        getBooleanOption("console.poll", Options.pollStandardIn);
+	      
+	    // verbosity is more complicated:
+	    String prop = registry.getProperty("python.verbose");
+        if (prop != null) {
+            if (prop.equalsIgnoreCase("error")) {
+                Options.verbose = Py.ERROR;
+            } else if (prop.equalsIgnoreCase("warning")) {
+                Options.verbose = Py.WARNING;
+            } else if (prop.equalsIgnoreCase("message")) {
+                Options.verbose = Py.MESSAGE;
+            } else if (prop.equalsIgnoreCase("comment")) {
+                Options.verbose = Py.COMMENT;
+            } else if (prop.equalsIgnoreCase("debug")) {
+                Options.verbose = Py.DEBUG;
+            } else {
+                throw Py.ValueError("Illegal verbose option setting: '"+prop+"'");
+            }
+        }
+
 	    initStaticFields();
 	    
 		// Initialize the path (and add system defaults)
@@ -407,6 +426,7 @@ public class PySystemState extends PyObject {
 	    }
 	}
 }
+
 
 // This class is based on a suggestion from Yunho Jeon
 class PollingInputStream extends FilterInputStream {
