@@ -64,7 +64,8 @@ class ListFunctions extends PyBuiltinFunctionSet
         switch (index) {
         case 20:
             if (!(arg1 instanceof PyInteger)) {
-                throw Py.TypeError("illegal argument type for built-in " +                                          "operation");
+                throw Py.TypeError(
+                    "illegal argument type for built-in operation");
             }
             int index = ((PyInteger)arg1).getValue();
             list.insert(index, arg2);
