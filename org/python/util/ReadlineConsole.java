@@ -17,6 +17,14 @@ public class ReadlineConsole extends InteractiveConsole {
     }
     public ReadlineConsole(PyObject locals, String filename) {
         super(locals,filename);
+        String backingLib = PySystemState.registry.getProperty(
+                                 "python.console.readlinelib", "Editline");
+        try {
+            Readline.load(ReadlineLibrary.byName(backingLib));
+        } catch (RuntimeException e) {
+            // Silently ignore errors during load of the native library.
+            // Will use a pure java fallback.
+        }
         Readline.initReadline("jpython");
     }
 
