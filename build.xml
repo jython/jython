@@ -9,6 +9,7 @@
 
         <available classname="java.util.List" property="java2" />
         <available classname="javax.servlet.Servlet" property="servlet" />
+        <available classname="org.gnu.readline.Readline" property="readline" />
 
         <!-- This propery should be specified in the ant.property file
            property name="javaccHome" value="/opt/javacc2.0/bin/lib" /-->
@@ -57,8 +58,8 @@
     <!-- 
       Only do this task if our environment is java2.
     -->
-    <target name="checkjavaversion" unless="java2">
-        <property name="excludejava2files" 
+    <target name="check.javaversion" unless="java2">
+        <property name="exclude.java2.files" 
             value="**/CollectionProxy2.java,
                    **/Java2Accessibility.java,
                    **/InternalTables2.java,
@@ -70,19 +71,27 @@
             "/>
     </target>
 
-    <target name="checkservlet" unless="servlet">
-        <property name="excludeservletfiles" 
+    <target name="check.servlet" unless="servlet">
+        <property name="exclude.servlet.files" 
             value="**/PyServlet.java"/>
     </target>
 
-    <target name="compile" depends="prepare,parser,checkjavaversion,checkservlet">
+    <target name="check.readline" unless="readline">
+        <property name="exclude.readline.files" 
+            value="**/ReadlineConsole.java"/>
+    </target>
+
+    <target name="checks" depends="check.javaversion,check.servlet,check.readline" />
+
+    <target name="compile" depends="prepare,parser,checks">
         <javac 
             srcdir="${sourceDir}/" 
             includes="org/**"
             destdir="${outputDir}/" 
             excludes="org/python/parser/python.java,
-                      ${excludejava2files},
-                      ${excludeservletfiles}"
+                      ${exclude.java2.files},
+                      ${exclude.servlet.files},
+                      ${exclude.readline.files}"
             debug="${debug}"
         />
 
