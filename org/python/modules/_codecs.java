@@ -560,87 +560,17 @@ public class _codecs {
 
     public static PyTuple raw_unicode_escape_encode(String str, 
                                                    String errors) {
-        return codec_tuple(encodeRawUnicodeEscape(str, errors), str.length());
+        return codec_tuple(codecs.PyUnicode_EncodeRawUnicodeEscape(str, errors, false),
+                           str.length());
     }
-
-
-
-    static char[] hexdigit = "0123456789ABCDEF".toCharArray();
-
-    private static String encodeRawUnicodeEscape(String str, String errors) {
-        int size = str.length();
-        StringBuffer v = new StringBuffer(str.length());
-
-        for (int i = 0; i < size; i++) {
-            char ch = str.charAt(i);
-            if (ch >= 256) {
-                v.append("\\u");
-                v.append(hexdigit[(ch >>> 12) & 0xF]);
-                v.append(hexdigit[(ch >>> 8) & 0xF]);
-                v.append(hexdigit[(ch >>> 4) & 0xF]);
-                v.append(hexdigit[ch & 0xF]);
-            } else
-                v.append(ch);
-        }
-
-        return v.toString();
-    }
-
 
 
     public static PyTuple raw_unicode_escape_decode(String str, 
                                                     String errors) {
-        return codec_tuple(decodeRawUnicodeEscape(str, errors), str.length());
+        return codec_tuple(codecs.PyUnicode_DecodeRawUnicodeEscape(str, errors), 
+                           str.length());
     }
 
-
-    private static String decodeRawUnicodeEscape(String str, String errors) {
-        int size = str.length();
-        StringBuffer v = new StringBuffer(size);
-
-        for (int i = 0; i < size; ) {
-            char ch = str.charAt(i);
-
-            /* Non-escape characters are interpreted as Unicode ordinals */
-            if (ch != '\\') {
-                v.append(ch);
-                i++;
-	        continue;
-            }
-
-            /* \\u-escapes are only interpreted iff the number of leading
-               backslashes is odd */
-	    int bs = i;
-	    while (i < size) {
-                ch = str.charAt(i);
-                if (ch != '\\')
-                    break;
-                v.append(ch);
-                i++;
-            }
-            if (((i - bs) & 1) == 0 || i >= size || ch != 'u') {
-                continue;
-            }
-            v.setLength(v.length() - 1);
-            i++;
-
-            /* \\uXXXX with 4 hex digits */
-            int x = 0;
-            for (int j = 0; j < 4; j++) {
-                ch = str.charAt(i+j);
-                int d  = Character.digit(ch, 16);
-                if (d == -1) {
-                    codecs.decoding_error("unicode escape", v, errors,
-                                          "truncated \\uXXXX");
-            	    break;
-	        }
-                x = ((x<<4) & ~0xF) + d;
-            }
-            i += 4;
-	    v.append((char) x);
-       }
-       return v.toString();
-    }
 
 
     /* --- UnicodeEscape Codec -------------------------------------------- */
