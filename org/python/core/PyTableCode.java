@@ -81,7 +81,7 @@ public class PyTableCode extends PyCode
     }
     
     public PyObject call(PyFrame frame) {
-        //System.out.println("tablecode call: "+co_name);
+//         System.err.println("tablecode call: "+co_name);
         ThreadState ts = Py.getThreadState();
         if (ts.systemState == null) {
             ts.systemState = Py.defaultSystemState;
@@ -192,6 +192,7 @@ public class PyTableCode extends PyCode
         ts.frame = ts.frame.f_back;
         return ret;
     }
+
     public PyObject call(PyObject globals, PyObject[] defaults) {
         if (co_argcount != 0 || args || keywords)
             return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults);

@@ -144,7 +144,8 @@ public class imp
         PyModule module = addModule(name);
 
         PyTableCode code = null;
-        if (c instanceof PyTableCode) code = (PyTableCode)c;
+        if (c instanceof PyTableCode)
+            code = (PyTableCode)c;
         PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
         code.call(f);
 
