@@ -266,13 +266,23 @@ class BaseEvaluator:
             return self.importall_stmt(module)
             #print 'import * from', module
             #names = module.dir()
-        for name in names:
-            self.set_name(name, module.getattr(name))
+
+        modnames = []
+        asnames = []
+        for modname, asname in names:
+            if asname is None:
+                asname = modname
+            self.set_name(asname, module.getattr(modname))
+            asnames.append(asname)
+            modnames.append(modname)
+
         topmodname = jast.StringConstant(".".join(top))
         modnames = jast.FilledArray("String",
-                                map(lambda x: jast.StringConstant(x), names))
-        return jast.InvokeStatic("org.python.core.imp", "importFrom",
-                                [topmodname, modnames, self.frame.frame])
+                                map(lambda x: jast.StringConstant(x), modnames))
+        asnames = jast.FilledArray("String",
+                                map(lambda x: jast.StringConstant(x), asnames))
+        return jast.InvokeStatic("org.python.core.imp", "importFromAs",
+                                [topmodname, modnames, asnames, self.frame.frame])
 
     #external interfaces
     def execstring(self, data):

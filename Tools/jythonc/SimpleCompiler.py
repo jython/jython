@@ -353,10 +353,18 @@ class SimpleCompiler(BaseEvaluator):
 
     def import_stmt(self, names):
         ret = []
-        for name in names:
-            self.set_name(name[0], self.get_module(name,1))
-            modname = jast.StringConstant(".".join(name))
-            ret.append(jast.InvokeStatic("org.python.core.imp", "importOne",
+        for dotted, asname in names:
+            modname = jast.StringConstant(".".join(dotted))
+            if asname:
+                self.set_name(asname, self.get_module(dotted,0))
+                asname = jast.StringConstant(asname)
+                ret.append(jast.InvokeStatic("org.python.core.imp",
+                                "importOneAs",
+                                 [modname, asname, self.frame.frame]))
+            else:
+                self.set_name(dotted[0], self.get_module(dotted,1))
+                ret.append(jast.InvokeStatic("org.python.core.imp",
+                                "importOne",
                                  [modname, self.frame.frame]))
         return ret
 

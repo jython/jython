@@ -158,19 +158,37 @@ class PythonVisitor(Visitor):
 
     def Import(self, node):
         self.startnode(node)
-        names = []
-        for i in range(node.numChildren):
-            names.append(node.getChild(i).visit(self))
+        names = self.import_as_name(node, 0)
         return self.walker.import_stmt(names)
 
     def ImportFrom(self, node):
         self.startnode(node)
         if node.numChildren > 1:
+            names = self.import_as_name(node, 1)
             return self.walker.importfrom_stmt(node.getChild(0).visit(self), 
-                                                     nodeToStrings(node, 1))
+                                                     names)
         else:
             return self.walker.importfrom_stmt(
                 node.getChild(0).visit(self), "*")
+
+    def import_as_name(self, node, startnode=0):
+        names = []
+        for i in range(startnode, node.numChildren):
+            n = node.getChild(i)
+            if n.id == JJTDOTTED_AS_NAME:
+                dotted = n.getChild(0).visit(self)
+                asname = n.getChild(1).getInfo()
+            elif n.id == JJTIMPORT_AS_NAME:
+                dotted = n.getChild(0).getInfo()
+                asname = n.getChild(1).getInfo()
+            elif n.id == JJTDOTTED_NAME:
+                dotted = n.visit(self)
+                asname = None
+            else:
+                dotted = n.getInfo()
+                asname = None
+            names.append((dotted, asname))
+        return names
 
     def dotted_name(self, node):
         return nodeToStrings(node)

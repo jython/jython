@@ -109,6 +109,13 @@ public class LocalsCompiler extends Visitor
     public Object Import(SimpleNode node) throws Exception {
         int n = node.getNumChildren();
         for (int i=0; i<n; i++) {
+            SimpleNode cnode = node.getChild(i);
+            if (cnode.id == PythonGrammarTreeConstants.JJTDOTTED_AS_NAME) {
+                String asname = (String)cnode.getChild(1).visit(this);
+                set(cnode.getChild(1));
+                continue;
+            }
+
             set(node.getChild(i).getChild(0));
         }
         return null;
@@ -117,6 +124,12 @@ public class LocalsCompiler extends Visitor
     public Object ImportFrom(SimpleNode node) throws Exception {
         int n = node.getNumChildren();
         for (int i=1; i<n; i++) {
+            SimpleNode cnode = node.getChild(i);
+            if (cnode.id == PythonGrammarTreeConstants.JJTIMPORT_AS_NAME) {
+                String asname = (String)cnode.getChild(1).visit(this);
+                set(cnode.getChild(1));
+                continue;
+            }
             set(node.getChild(i));
         }
         return null;

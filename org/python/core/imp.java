@@ -474,12 +474,38 @@ public class imp
         //System.err.println("mod: "+mod+", "+dot);
         frame.setlocal(mod, module);
     }
+
+    /**
+     * Called from jpython generated code when a statement like 
+     * "import spam as foo" is executed.
+     */
+    public static void importOneAs(String mod, String asname, PyFrame frame) {
+        //System.out.println("importOne(" + mod + ")");
+        PyObject module = getImportFunc(frame).__call__(
+            new PyObject[] {
+                Py.newString(mod),
+                frame.f_globals,
+                frame.f_locals,
+                all
+            });
+
+        frame.setlocal(asname, module);
+    }
         
     /**
      * Called from jpython generated code when a stamenet like 
      * "from spam.eggs import foo, bar" is executed.
      */
     public static void importFrom(String mod, String[] names, PyFrame frame) {
+        importFromAs(mod, names, names, frame);
+    }
+
+    /**
+     * Called from jpython generated code when a stamenet like 
+     * "from spam.eggs import foo as spam" is executed.
+     */
+    public static void importFromAs(String mod, String[] names, String[] asnames,
+                         PyFrame frame) {
         //StringBuffer sb = new StringBuffer();
         //for(int i=0; i<names.length; i++)
         //    sb.append(names[i] + " ");
@@ -497,7 +523,7 @@ public class imp
                 new PyTuple(pynames)
             });
         for (int i=0; i<names.length; i++)
-            frame.setlocal(names[i], module.__getattr__(names[i]));
+            frame.setlocal(asnames[i], module.__getattr__(names[i]));
     }
 
     private static PyTuple all = new PyTuple(

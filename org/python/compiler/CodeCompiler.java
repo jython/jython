@@ -525,12 +525,28 @@ public class CodeCompiler extends Visitor
         return Exit;
     }
 
-    public int importOne;
+    public int importOne, importOneAs;
 
     public Object Import(SimpleNode node) throws Exception {
         setline(node);
         int n = node.getNumChildren();
         for (int i=0; i<n; i++) {
+            SimpleNode cnode = node.getChild(i);
+            if (cnode.id == PythonGrammarTreeConstants.JJTDOTTED_AS_NAME) {
+                String name = (String)cnode.getChild(0).visit(this);
+                String asname = (String)cnode.getChild(1).getInfo();
+                code.ldc(name);
+                code.ldc(asname);
+                loadFrame();
+                if (mrefs.importOneAs == 0) {
+                     mrefs.importOneAs = code.pool.Methodref(
+                        "org/python/core/imp", "importOneAs",
+                        "(Ljava/lang/String;Ljava/lang/String;Lorg/python/core/PyFrame;)V");
+                }
+                code.invokestatic(mrefs.importOneAs);
+                continue;
+            }
+
             String name = (String)node.getChild(i).visit(this);
             code.ldc(name);
             loadFrame();
@@ -557,16 +573,25 @@ public class CodeCompiler extends Visitor
         int n = node.getNumChildren();
         if (n > 1) {
             String[] names = new String[n-1];
+            String[] asnames = new String[n-1];
             for (int i=0; i<n-1; i++) {
-                names[i] = (String)node.getChild(i+1).getInfo();
+                SimpleNode cnode = node.getChild(i+1);
+                if (cnode.id == PythonGrammarTreeConstants.JJTIMPORT_AS_NAME) {
+                    names[i] = (String)cnode.getChild(0).getInfo();
+                    asnames[i] = (String)cnode.getChild(1).getInfo();
+                } else {
+                    names[i] = (String)cnode.getInfo();
+                    asnames[i] = names[i];
+                }
             }
             makeStrings(code, names, names.length);
+            makeStrings(code, asnames, asnames.length);
 
             loadFrame();
             if (mrefs.importFrom == 0) {
                 mrefs.importFrom = code.pool.Methodref(
-                    "org/python/core/imp", "importFrom",
-                    "(Ljava/lang/String;[Ljava/lang/String;Lorg/python/core/PyFrame;)V");
+                    "org/python/core/imp", "importFromAs",
+                    "(Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Lorg/python/core/PyFrame;)V");
             }
             code.invokestatic(mrefs.importFrom);
         } else {

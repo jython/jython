@@ -284,6 +284,7 @@ TOKEN : /* KEYWORDS */
 |       < GLOBAL: "global" >
 |       < EXEC: "exec" >
 |       < ASSERT: "assert" >
+|       < AS: "as" >
 }
 
 TOKEN : /* Python identifiers */
@@ -450,14 +451,22 @@ void import_stmt() #void: {}
 {<IMPORT> Import() | <FROM> ImportFrom() }
 
 void Import(): {}
-{ dotted_name() (<COMMA> dotted_name())* }
+{ dotted_as_name() (<COMMA> dotted_as_name())* }
 
 void ImportFrom(): {}
-{ dotted_name() <IMPORT> (<MULTIPLY> | Name() (<COMMA> Name())*) }
+{ dotted_name() <IMPORT> (<MULTIPLY> | import_as_name() (<COMMA> import_as_name())*) }
+
+//dotted_as_name: dotted_name [NAME NAME]
+void dotted_as_name() #void:{}
+{dotted_name() [<AS> Name() #dotted_as_name(2)] }
 
 //dotted_name: NAME ('.' NAME)*
 void dotted_name(): {}
 {AnyName() (<DOT> AnyName())* }
+
+//import_as_name: NAME [NAME NAME]
+void import_as_name() #void: {}
+{AnyName() [<AS> Name() #import_as_name(2)]}
 
 //global_stmt: 'global' NAME (',' NAME)*
 void global_stmt(): {}
@@ -734,4 +743,5 @@ void AnyName() #void:
   | ( t = <GLOBAL> { jjtThis.setInfo(t.image); } )#Name
   | ( t = <EXEC> { jjtThis.setInfo(t.image); } )#Name
   | ( t = <ASSERT> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <AS> { jjtThis.setInfo(t.image); } )#Name
 }
