@@ -22,7 +22,7 @@ public class PyClass extends PyObject
     // Store these methods for performance optimization
     // These are only used by PyInstance
     PyObject __getattr__, __setattr__, __delattr__, __tojava__,
-             __del__;
+             __del__, __contains__;
 
     // Holds the classes for which this is a proxy
     // Only used when subclassing from a Java class
@@ -113,6 +113,7 @@ public class PyClass extends PyObject
         __delattr__ = lookup("__delattr__", false);
         __tojava__ = lookup("__tojava__", false);
         __del__ = lookup("__del__", false);
+        __contains__ = lookup("__contains__", false);
     }
         
     protected void findModule(PyObject dict) {
