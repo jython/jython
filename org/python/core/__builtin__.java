@@ -861,7 +861,7 @@ public class __builtin__ implements ClassDictInit
 
     public static PyClass type(PyObject o) {
         if (o instanceof PyInstance) {
-            return PyJavaClass.lookup(PyInstance.class);
+            return PyJavaClass.lookup(o.getClass()); // was just PyInstance.class, goes with experimental PyMetaClass hook
         } else {
             return o.__class__;
         }

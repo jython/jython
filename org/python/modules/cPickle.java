@@ -6,6 +6,10 @@
  * The Netherlands.
  */
 
+/* note about impl:
+  instanceof vs. CPython type(.) is .
+*/
+
 package org.python.modules;
 
 import java.util.*;
@@ -914,7 +918,7 @@ public class cPickle implements ClassDictInit {
                 tup = reduce.__call__(object);
             }
 
-            if (tup instanceof PyString) {
+                if (tup instanceof PyString) {
                 save_global(object, tup);
                 return;
             }
