@@ -38,6 +38,20 @@ public abstract class FilterDataHandler extends DataHandler {
 	}
 
 	/**
+	 * Returns the row id of the last executed statement.
+	 *
+	 * @param Statement stmt
+	 *
+	 * @return PyObject
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	public PyObject getRowId(Statement stmt) throws SQLException {
+		return this.delegate.getRowId(stmt);
+	}
+
+	/**
 	 * Method preExecute
 	 *
 	 * @param Statement stmt

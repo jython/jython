@@ -24,31 +24,32 @@ import com.ziclix.python.sql.*;
  */
 public class InformixDataHandler extends FilterDataHandler {
 
-	/** Field serial */
-	public int serial;
-
 	/**
 	 * Decorator for handling Informix specific issues.
 	 *
 	 * @param datahandler the delegate DataHandler
 	 */
 	public InformixDataHandler(DataHandler datahandler) {
-
 		super(datahandler);
-
-		this.serial = 0;
 	}
 
 	/**
-	 * Sets the serial attribute to the last serial id.
+	 * Returns the serial for the statement.
+	 *
+	 * @param Statement stmt
+	 *
+	 * @return PyObject
+	 *
+	 * @throws SQLException
+	 *
 	 */
-	public void postExecute(Statement stmt) throws SQLException {
+	public PyObject getRowId(Statement stmt) throws SQLException {
 
 		if (stmt instanceof com.informix.jdbc.IfmxStatement) {
-			serial = ((com.informix.jdbc.IfmxStatement)stmt).getSerial();
+			return Py.newInteger(((com.informix.jdbc.IfmxStatement)stmt).getSerial());
 		}
 
-		super.postExecute(stmt);
+		return super.getRowId(stmt);
 	}
 
 	/**

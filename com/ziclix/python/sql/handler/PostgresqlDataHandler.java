@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.Types;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.math.BigDecimal;
 import org.python.core.*;
 import com.ziclix.python.sql.*;
@@ -33,6 +34,25 @@ public class PostgresqlDataHandler extends FilterDataHandler {
 	 */
 	public PostgresqlDataHandler(DataHandler datahandler) {
 		super(datahandler);
+	}
+
+	/**
+	 * Returns the last insert OID for the statement.
+	 *
+	 * @param Statement stmt
+	 *
+	 * @return PyObject
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	public PyObject getRowId(Statement stmt) throws SQLException {
+
+		if (stmt instanceof org.postgresql.Statement) {
+			return Py.newInteger(((org.postgresql.Statement)stmt).getInsertedOID());
+		}
+
+		return super.getRowId(stmt);
 	}
 
 	/**

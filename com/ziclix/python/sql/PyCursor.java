@@ -35,6 +35,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/** Field warnings */
 	protected PyObject warnings;
 
+	/** Field warnings */
+	protected PyObject rowid;
+
 	/** Field dynamicFetch */
 	protected boolean dynamicFetch;
 
@@ -111,12 +114,13 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		m[5] = new PyString("fetchmany");
 		m[6] = new PyString("callproc");
 		__methods__ = new PyList(m);
-		m = new PyObject[5];
+		m = new PyObject[6];
 		m[0] = new PyString("arraysize");
 		m[1] = new PyString("rowcount");
 		m[2] = new PyString("description");
 		m[3] = new PyString("datahandler");
 		m[4] = new PyString("warnings");
+		m[5] = new PyString("rowid");
 		__members__ = new PyList(m);
 	}
 
@@ -166,6 +170,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			return new PyInteger(this.fetch.getRowCount());
 		} else if ("warnings".equals(name)) {
 			return warnings;
+		} else if ("rowid".equals(name)) {
+			return rowid;
 		} else if ("datahandler".equals(name)) {
 			return Py.java2py(this.datahandler);
 		} else if ("dynamic".equals(name)) {
@@ -365,7 +371,13 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Perform the execution of a statement.
+	 * Method execute
+	 *
+	 * @param PyObject params
+	 * @param PyObject bindings
+	 *
+	 * @throws SQLException
+	 *
 	 */
 	protected void execute(PyObject params, PyObject bindings) throws SQLException {
 
@@ -427,6 +439,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 		this.datahandler.preExecute(this.sqlStatement);
 		this.sqlStatement.execute();
+
+		this.rowid = this.datahandler.getRowId(this.sqlStatement);
+
 		create(this.sqlStatement.getResultSet());
 		this.datahandler.postExecute(this.sqlStatement);
 		addWarning(this.sqlStatement.getWarnings());
@@ -555,6 +570,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected void clear() {
 
 		this.warnings = Py.None;
+		this.rowid = Py.None;
 
 		try {
 			this.fetch.close();

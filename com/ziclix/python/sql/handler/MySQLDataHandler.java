@@ -23,31 +23,32 @@ import com.ziclix.python.sql.*;
  */
 public class MySQLDataHandler extends FilterDataHandler {
 
-	/** Field lastInsertId */
-	public long lastInsertId;
-
 	/**
 	 * Decorator for handling MySql specific issues.
 	 *
 	 * @param datahandler the delegate DataHandler
 	 */
 	public MySQLDataHandler(DataHandler datahandler) {
-
 		super(datahandler);
-
-		this.lastInsertId = 0;
 	}
 
 	/**
-	 * Captures the last inserted id.
+	 * Returns the last insert id for the statement.
+	 *
+	 * @param Statement stmt
+	 *
+	 * @return PyObject
+	 *
+	 * @throws SQLException
+	 *
 	 */
-	public void postExecute(Statement stmt) throws SQLException {
+	public PyObject getRowId(Statement stmt) throws SQLException {
 
 		if (stmt instanceof org.gjt.mm.mysql.Statement) {
-			lastInsertId = ((org.gjt.mm.mysql.Statement)stmt).getLastInsertID();
+			return Py.newInteger(((org.gjt.mm.mysql.Statement)stmt).getLastInsertID());
 		}
 
-		super.postExecute(stmt);
+		return super.getRowId(stmt);
 	}
 
 	/**

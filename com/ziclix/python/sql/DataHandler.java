@@ -40,15 +40,33 @@ public class DataHandler {
 	public DataHandler() {}
 
 	/**
-	 * A callback prior to each execution of the statement.  If the statement is a PreparedStatement, all the
-	 * parameters will have been set.
+	 * Returns the row id of the last executed statement.
+	 *
+	 * @param Statement stmt
+	 *
+	 * @return PyObject
+	 *
+	 * @throws SQLException
+	 *
 	 */
-	public void preExecute(Statement stmt) throws SQLException {}
+	public PyObject getRowId(Statement stmt) throws SQLException {
+		return Py.None;
+	}
+
+	/**
+	 * A callback prior to each execution of the statement.  If the statement is
+	 * a PreparedStatement, all the parameters will have been set.
+	 */
+	public void preExecute(Statement stmt) throws SQLException {
+		return;
+	}
 
 	/**
 	 * A callback after successfully executing the statement.
 	 */
-	public void postExecute(Statement stmt) throws SQLException {}
+	public void postExecute(Statement stmt) throws SQLException {
+		return;
+	}
 
 	/**
 	 * Any .execute() which uses prepared statements will receive a callback for deciding
@@ -66,7 +84,7 @@ public class DataHandler {
 	/**
 	 * Any .execute() which uses prepared statements will receive a callback for deciding
 	 * how to map the PyObject to the appropriate JDBC type.  The <i>type</i> is the JDBC
-	 * as obtained from <i>java.sql.Types</i>.
+	 * type as obtained from <i>java.sql.Types</i>.
 	 *
 	 * @param stmt the current PreparedStatement
 	 * @param index the index for which this object is bound
