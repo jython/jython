@@ -654,13 +654,28 @@ public class ProxyMaker
     }
 
     public void addSuperMethod(String methodName, String superName,
-                               String superclass, Class[] parameters,
+                               String declClass, Class[] parameters,
                                Class ret, String sig, int access)
         throws Exception
     {
+        if (methodName.startsWith("super__")) {
+            /* rationale: JC java-class, P proxy-class subclassing JC
+               in order to avoid infinite recursion P should define super__foo
+               only if no class between P and JC in the hierarchy defines it yet;
+               this means that the python class needing P is the first that
+               redefines the JC method foo.
+            */
+            try {
+                superclass.getMethod(methodName,parameters);
+                return;
+            } catch(NoSuchMethodException e) {
+            } catch(SecurityException e) {
+                return;
+            }
+        }
         supernames.put(methodName, methodName);
         Code code = classfile.addMethod(methodName, sig, access);
-        callSuper(code, superName, superclass, parameters, ret, sig);
+        callSuper(code, superName, declClass, parameters, ret, sig);
     }
 
     public void addProxy() throws Exception {
