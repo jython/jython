@@ -115,10 +115,8 @@ public class PyFrame extends PyObject
 
     public void setline(int line) {
         f_lineno = line;
-        if (tracefunc != null) {
+        if (tracefunc != null)
             tracefunc = tracefunc.traceLine(this, line);
-            //System.err.println(f_code.co_name+" : "+line+", "+tracefunc);
-        }
     }
 
     public int getline() {
@@ -126,13 +124,10 @@ public class PyFrame extends PyObject
     }
 
     public PyObject getlocal(int index) {
-        //System.err.println("getlocal: "+index);
         if (f_fastlocals != null) {
             PyObject ret = f_fastlocals[index];
             if (ret != null)
                 return ret;
-//             System.err.println("no local: "+index+", "+
-//                                f_code.co_varnames[index]);
         }
         return getlocal(f_code.co_varnames[index]);
     }
@@ -159,8 +154,6 @@ public class PyFrame extends PyObject
     }
 
     public PyObject getglobal(String index) {
-        //System.err.println("getglobal: "+index);
-
         PyObject ret = f_globals.__finditem__(index);
         if (ret != null) {
             return ret;
@@ -168,8 +161,6 @@ public class PyFrame extends PyObject
                 
         // Set up f_builtins if not already set
         if (f_builtins == null) {
-//             System.err.println("Oops, forced to set f_builtins in PyFrame: "
-//                                +this+", "+index);
             f_builtins = Py.getSystemState().builtins;
         }
         ret = f_builtins.__finditem__(index);
@@ -179,12 +170,15 @@ public class PyFrame extends PyObject
     }
 
     public void setlocal(int index, PyObject value) {
-        if (f_fastlocals != null) f_fastlocals[index] = value;
-        else setlocal(f_code.co_varnames[index], value);
+        if (f_fastlocals != null)
+            f_fastlocals[index] = value;
+        else
+            setlocal(f_code.co_varnames[index], value);
     }
 
     public void setlocal(String index, PyObject value) {
-        if (f_locals == null) getf_locals();
+        if (f_locals == null)
+            getf_locals();
         f_locals.__setitem__(index, value);
     }
 
@@ -193,12 +187,15 @@ public class PyFrame extends PyObject
     }
 
     public void dellocal(int index) {
-        if (f_fastlocals != null) f_fastlocals[index] = null;
-        else dellocal(f_code.co_varnames[index]);
+        if (f_fastlocals != null)
+            f_fastlocals[index] = null;
+        else
+            dellocal(f_code.co_varnames[index]);
     }
 
     public void dellocal(String index) {
-        if (f_locals == null) getf_locals();
+        if (f_locals == null)
+            getf_locals();
         f_locals.__delitem__(index);
     }
 
