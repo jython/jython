@@ -1,4 +1,4 @@
-"""Module getopt -- Parser for command line options.
+"""Parser for command line options.
 
 This module helps scripts to parse the command line arguments in
 sys.argv.  It supports the same conventions as the Unix getopt()
@@ -8,14 +8,30 @@ may be used as well via an optional third argument.  This module
 provides a single function and an exception:
 
 getopt() -- Parse command line options
-error    -- Exception (string) raised when bad options are found
+GetoptError -- exception (class) raised with 'opt' attribute, which is the
+option involved with the exception.
 """
 
 # Long option support added by Lars Wirzenius <liw@iki.fi>.
 
-import string
+# Gerrit Holl <gerrit@nl.linux.org> moved the string-based exceptions
+# to class-based exceptions.
 
-error = 'getopt.error'
+class GetoptError(Exception):
+    opt = ''
+    msg = ''
+    def __init__(self, *args):
+        self.args = args
+        if len(args) == 1:
+            self.msg = args[0]
+        elif len(args) == 2:
+            self.msg = args[0]
+            self.opt = args[1]
+
+    def __str__(self):
+        return self.msg
+
+error = GetoptError # backward compatibility
 
 def getopt(args, shortopts, longopts = []):
     """getopt(args, options[, long_options]) -> opts, args
@@ -63,7 +79,7 @@ def getopt(args, shortopts, longopts = []):
 
 def do_longs(opts, opt, longopts, args):
     try:
-        i = string.index(opt, '=')
+        i = opt.index('=')
         opt, optarg = opt[:i], opt[i+1:]
     except ValueError:
         optarg = None
@@ -72,10 +88,10 @@ def do_longs(opts, opt, longopts, args):
     if has_arg:
         if optarg is None:
             if not args:
-                raise error, 'option --%s requires argument' % opt
+                raise GetoptError('option --%s requires argument' % opt, opt)
             optarg, args = args[0], args[1:]
     elif optarg:
-        raise error, 'option --%s must not have an argument' % opt
+        raise GetoptError('option --%s must not have an argument' % opt, opt)
     opts.append(('--' + opt, optarg or ''))
     return opts, args
 
@@ -90,11 +106,11 @@ def long_has_args(opt, longopts):
             continue
         if y != '' and y != '=' and i+1 < len(longopts):
             if opt == longopts[i+1][:optlen]:
-                raise error, 'option --%s not a unique prefix' % opt
+                raise GetoptError('option --%s not a unique prefix' % opt, opt)
         if longopts[i][-1:] in ('=', ):
             return 1, longopts[i][:-1]
         return 0, longopts[i]
-    raise error, 'option --' + opt + ' not recognized'
+    raise GetoptError('option --%s not recognized' % opt, opt)
 
 def do_shorts(opts, optstring, shortopts, args):
     while optstring != '':
@@ -102,7 +118,7 @@ def do_shorts(opts, optstring, shortopts, args):
         if short_has_arg(opt, shortopts):
             if optstring == '':
                 if not args:
-                    raise error, 'option -%s requires argument' % opt
+                    raise GetoptError('option -%s requires argument' % opt, opt)
                 optstring, args = args[0], args[1:]
             optarg, optstring = optstring, ''
         else:
@@ -114,7 +130,7 @@ def short_has_arg(opt, shortopts):
     for i in range(len(shortopts)):
         if opt == shortopts[i] != ':':
             return shortopts[i+1:i+2] == ':'
-    raise error, 'option -%s not recognized' % opt
+    raise GetoptError('option -%s not recognized' % opt, opt)
 
 if __name__ == '__main__':
     import sys
