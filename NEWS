@@ -29,6 +29,10 @@ Jython NEWS
 
   Bug fixes.
     - Many, including the errata.
+    - Now the content of a java package is the union of the content of all 
+      locations with the corresponding valid hierarchical name 
+      from dirs and jars of CLASSPATH (and sys.path for dirs); i.e.
+      from jpkg import * works for jpkg in a dir too.
 
   Improved CPython 2.0 compatibility
     - codecs module

@@ -1,3 +1,4 @@
+# Copyright 2000 Samuele Pedroni
 # see org.python.core.SysPackageManager
 
 import sys

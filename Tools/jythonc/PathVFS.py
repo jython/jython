@@ -1,3 +1,4 @@
+# Copyright 2000 Samuele Pedroni
 import sys
 
 from java import io

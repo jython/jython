@@ -1,4 +1,6 @@
 // Copyright © Corporation for National Research Initiatives
+// Copyright 2000 Samuele Pedroni
+
 package org.python.core;
 
 import java.util.*;
