@@ -94,7 +94,11 @@ public class jpython {
         }
 
         if (opts.interactive) {
-            interp.interact(null);
+            try {
+                interp.interact(null);
+            } catch (Throwable t) {
+              Py.printException(t);
+            }
         }
     }
 }
