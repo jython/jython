@@ -10,10 +10,14 @@
 // tools for creating those formats don't always map to C's strftime()
 // function.
 //
-// NOTE: This file cannot be compiled cleaning using the JDK 1.1 APIs (but
-// compiled against the 1.2 APIs, it /can/ be run on a 1.1 JVM).  To
-// compile using the 1.1 APIs, search for the string "XXXAPI" and remove
-// the double-slashes at the start of these lines.
+// NOTE: This file is prepared for the JDK 1.2 APIs, however it is
+// currently set up to compile cleanly under 1.1.
+//
+// If you would like to enable the JDK 1.2 behavior (perhaps because you
+// are running under JDK 1.2 and would like to actually have stuff like
+// time.tzname or time.altzone work correctly, just search for the string
+// "XXXAPI" and stick a couple of double slashes at the beginning of each
+// matching line.
 
 package org.python.modules;
 
@@ -51,7 +55,7 @@ public class time implements InitModule
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
 
-        // /* XXXAPI 1.2 START
+        /* XXXAPI 1.2 START
         try {
             tzname = new PyTuple(
                 new PyObject[] {
@@ -60,7 +64,7 @@ public class time implements InitModule
                 });
         }
         catch (NoSuchMethodError e) {}
-        // XXXAPI 1.2 END */
+        XXXAPI 1.2 END */
 
         // getDisplayName() is only available in Java 1.2.  This is the
         // next best thing, but it isn't really correct, or what the Python
@@ -76,13 +80,13 @@ public class time implements InitModule
 
         timezone = -tz.getRawOffset() / 1000;
         if (tz instanceof SimpleTimeZone) {
-            // /* XXXAPI 1.2 START
+            /* XXXAPI 1.2 START
             try {
                 SimpleTimeZone stz = (SimpleTimeZone)tz;
                 altzone = timezone - stz.getDSTSavings() / 1000;
             }
             catch (NoSuchMethodError e) {}
-            // XXXAPI 1.2 END */
+            XXXAPI 1.2 END */
         }
         if (altzone == -1)
                 // best we can do for Java 1.1.  This is wrong though.
@@ -474,7 +478,7 @@ public class time implements InitModule
                     cal = _tupletocal(tup);
                 {
                     boolean use_getid = true;
-                    // /* XXXAPI 1.2 START
+                    /* XXXAPI 1.2 START
                     try {
                         s = s + cal.getTimeZone().getDisplayName(
                             // in daylight savings time?  true if == 1 -1
@@ -485,7 +489,7 @@ public class time implements InitModule
                         use_getid = false;
                     }
                     catch (NoSuchMethodError e) {}
-                    // XXXAPI 1.2 END */
+                    XXXAPI 1.2 END */
                     if (use_getid)
                         // See note in initModule() above
                         s = s + cal.getTimeZone().getID();
