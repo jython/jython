@@ -1,4 +1,4 @@
-Welcome to Jython 2.0 alpha 3
+Welcome to Jython 2.0 beta 1
 =============================
 
 Jython is the successor to JPython. The Jython project was
