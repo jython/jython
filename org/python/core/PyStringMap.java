@@ -133,10 +133,7 @@ public class PyStringMap extends PyObject {
     public synchronized PyObject __finditem__(String key) {
 	    String[] table = keys;
 	    int maxindex = table.length;
-	    int index = System.identityHashCode(key);
-
-	    if (index < 0) index = -index;
-	    index %= maxindex;
+	    int index = (System.identityHashCode(key) & 0x7fffffff) % maxindex;
 
         // Fairly aribtrary choice for stepsize...
 	    int stepsize = maxindex / 5;
@@ -169,9 +166,7 @@ public class PyStringMap extends PyObject {
     private final void insertkey(String key, PyObject value) {
 	    String[] table = keys;
 	    int maxindex = table.length;
-	    int index = System.identityHashCode(key);
-	    if (index < 0) index = -index;
-	    index %= maxindex;
+	    int index = (System.identityHashCode(key) & 0x7fffffff) % maxindex;
 
         // Fairly aribtrary choice for stepsize...
 	    int stepsize = maxindex / 5;
@@ -245,9 +240,7 @@ public class PyStringMap extends PyObject {
     public synchronized void __delitem__(String key) {
 	    String[] table = keys;
 	    int maxindex = table.length;
-	    int index = System.identityHashCode(key);
-	    if (index < 0) index = -index;
-	    index %= maxindex;
+	    int index = (System.identityHashCode(key) & 0x7fffffff) % maxindex;
 
         // Fairly aribtrary choice for stepsize...
 	    int stepsize = maxindex / 5;
