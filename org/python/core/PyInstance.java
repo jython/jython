@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 import java.util.Hashtable;
 
@@ -6,12 +7,14 @@ public class PyInstance extends PyObject {
     Object javaProxy;
 
     /**
-    The namespace of this instance.  Contains all instance attributes.
+       The namespace of this instance.  Contains all instance attributes.
     **/
     public PyObject __dict__;
 
     /* Override serialization behavior */
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+    private void readObject(java.io.ObjectInputStream in)
+	throws java.io.IOException, ClassNotFoundException
+    {
         in.defaultReadObject();
         String module = in.readUTF();
         String name = in.readUTF();
@@ -24,12 +27,15 @@ public class PyInstance extends PyObject {
         __class__ = pyc;
     }
     
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+    private void writeObject(java.io.ObjectOutputStream out)
+	throws java.io.IOException
+    {
         //System.out.println("writing: "+getClass().getName());
         out.defaultWriteObject();
         PyObject name = __class__.__findattr__("__module__");
         if (!(name instanceof PyString) || name == Py.None || name == null) {
-            throw Py.ValueError("Can't find module for class: "+__class__.__name__);
+            throw Py.ValueError("Can't find module for class: "+
+				__class__.__name__);
         }
         out.writeUTF(name.toString());
         name = __class__.__findattr__("__name__");
@@ -42,7 +48,7 @@ public class PyInstance extends PyObject {
 
 
     /**
-    Returns a new 
+       Returns a new 
     **/
 
     public PyInstance(PyClass iclass, PyObject dict) {
@@ -64,7 +70,6 @@ public class PyInstance extends PyObject {
 
     private static Hashtable primitiveMap;
 
-
     protected void makeProxy() {
         Class c = __class__.proxyClass;
         PyProxy proxy;
@@ -72,7 +77,8 @@ public class PyInstance extends PyObject {
         try {
             ts.pushInitializingProxy(this);
             try {
-                proxy = (PyProxy)c.newInstance(); //(PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
+                proxy = (PyProxy)c.newInstance();
+		//(PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
             } catch (NoSuchMethodError nsme) {
                 throw Py.TypeError("constructor requires arguments");
             } catch (Exception exc) {
@@ -87,16 +93,17 @@ public class PyInstance extends PyObject {
     }
 
     /*protected void setProxy(PyProxy proxy, int index) {
-        proxy._setPyInstance(this);
-        proxy._setPySystemState(Py.getSystemState());
-        javaProxies[index] = proxy;
-    }*/
+      proxy._setPyInstance(this);
+      proxy._setPySystemState(Py.getSystemState());
+      javaProxies[index] = proxy;
+      }*/
 
     public Object __tojava__(Class c) {
         if (c == Object.class && javaProxy != null) {
             return javaProxy;
         }
-        if (c.isInstance(this)) return this;
+        if (c.isInstance(this))
+	    return this;
                 
         if (c.isPrimitive()) {
             if (primitiveMap == null) {
@@ -111,19 +118,25 @@ public class PyInstance extends PyObject {
                 primitiveMap.put(Double.TYPE, Double.class);
             }
             Class tmp = (Class)primitiveMap.get(c);
-            if (tmp != null) c = tmp;
+            if (tmp != null)
+		c = tmp;
         }
                 
         if (javaProxy == null && __class__.proxyClass != null) {
             makeProxy();
         }
-        if (c.isInstance(javaProxy)) return javaProxy;
+        if (c.isInstance(javaProxy))
+	    return javaProxy;
                 
         if (__class__.__tojava__ != null) {
             //try {
-            PyObject ret = __class__.__tojava__.__call__(this, PyJavaClass.lookup(c));
-            if (ret == Py.None) return Py.NoConversion;
-            if (ret != this) return ret.__tojava__(c);
+            PyObject ret =
+		__class__.__tojava__.__call__(this, PyJavaClass.lookup(c));
+
+            if (ret == Py.None)
+		return Py.NoConversion;
+            if (ret != this)
+		return ret.__tojava__(c);
             /*} catch (PyException exc) {
               System.err.println("Error in __tojava__ method");
               Py.printException(exc);
@@ -133,71 +146,71 @@ public class PyInstance extends PyObject {
     }
 
     public void __init__(PyObject[] args, String[] keywords) {
-        /*// Init all interfaces from the start
-          Class proxyClass = __class__.proxyClass;
-          if (proxyClass != null) {
-          if (c.
-          for(int i=0; i<javaProxies.length; i++) {
-          if (javaProxies[i] != null) continue;
-          Class c = __class__.proxyClasses[i];
-          //System.out.println("class: "+c.getSuperclass().getName());
-          // This test is a hack to determine if the proxy class represents
-          // a interface.
-          if (c.getInterfaces().length > 1) {
-          PyProxy proxy;
-          try {
-          proxy = createProxy(c); //(PyProxy)c.newInstance();
-          } catch (Exception exc) {
-          throw Py.ValueError("Can't instantiate interface: "+c.getName());
-          }
-          setProxy(proxy, i);
-          //System.out.println("inited interface: "+c.getName());
-          }
-          }
-          }*/
+	// // Init all interfaces from the start
+	// Class proxyClass = __class__.proxyClass;
+	// if (proxyClass != null) {
+	// if (c.
+	// for(int i=0; i<javaProxies.length; i++) {
+	// if (javaProxies[i] != null) continue;
+	// Class c = __class__.proxyClasses[i];
+	// //System.out.println("class: "+c.getSuperclass().getName());
+	// // This test is a hack to determine if the proxy class represents
+	// // a interface.
+	// if (c.getInterfaces().length > 1) {
+	// PyProxy proxy;
+	// try {
+	// proxy = createProxy(c); //(PyProxy)c.newInstance();
+	// } catch (Exception exc) {
+	// throw Py.ValueError("Can't instantiate interface: "+c.getName());
+	// }
+	// setProxy(proxy, i);
+	// //System.out.println("inited interface: "+c.getName());
+	// }
+	// }
+	// }
 
-        //Then invoke our own init function
-        PyObject init = __class__.lookup("__init__", true);
-        PyObject ret = null;
-        if (init != null) {
-            ret = init.__call__(this, args, keywords);
-        }
+	//Then invoke our own init function
+	PyObject init = __class__.lookup("__init__", true);
+	PyObject ret = null;
+	if (init != null) {
+	    ret = init.__call__(this, args, keywords);
+	}
 
-        if (ret == null) {
-            if (args.length != 0) {
-                init = __class__.lookup("__init__", false);
-                if (init != null) {
-                    ret = init.__call__(this, args, keywords);
-                } else {
-                    throw Py.TypeError("this constructor takes no arguments");
-                }
-            }
-        } else {
-            if (ret != Py.None) {
-                throw Py.TypeError("constructor has no return value");
-            }
-        }
+	if (ret == null) {
+	    if (args.length != 0) {
+		init = __class__.lookup("__init__", false);
+		if (init != null) {
+		    ret = init.__call__(this, args, keywords);
+		} else {
+		    throw Py.TypeError("this constructor takes no arguments");
+		}
+	    }
+	} else {
+	    if (ret != Py.None) {
+		throw Py.TypeError("constructor has no return value");
+	    }
+	}
 
-        // Now init all superclasses that haven't already been initialized
-        if (javaProxy == null && __class__.proxyClass != null) {
-            makeProxy();
-        }
+	// Now init all superclasses that haven't already been initialized
+	if (javaProxy == null && __class__.proxyClass != null) {
+	    makeProxy();
+	}
     }
         
     /*private PyProxy createProxy(Class c) {
-            try {
-                return (PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
-            } catch (Exception exc) {
-                throw Py.JavaError(exc);
-            }
-        }*/
+      try {
+      return (PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
+      } catch (Exception exc) {
+      throw Py.JavaError(exc);
+      }
+      }*/
         
-        /*public PyObject __jgetattr__(String name) {
-            System.err.println("jgetting: "+name);
-            PyObject ret = __findattr__(name, true);
-            if (ret != null) return ret;
-            throw Py.AttributeError(name);
-        }*/
+    /*public PyObject __jgetattr__(String name) {
+      System.err.println("jgetting: "+name);
+      PyObject ret = __findattr__(name, true);
+      if (ret != null) return ret;
+      throw Py.AttributeError(name);
+      }*/
         
     public PyObject __jfindattr__(String name) {
         //System.err.println("jfinding: "+name);
@@ -210,9 +223,11 @@ public class PyInstance extends PyObject {
         
     public PyObject __findattr__(String name, boolean stopAtJava) {
         PyObject result = ifindlocal(name);
-        if (result != null) return result;
+        if (result != null)
+	    return result;
         result = ifindclass(name, stopAtJava);
-        if (result != null) return result._doget(this);
+        if (result != null)
+	    return result._doget(this);
         return ifindfunction(name);
     }
     
@@ -230,7 +245,8 @@ public class PyInstance extends PyObject {
         
     protected PyObject ifindfunction(String name) {
         PyObject getter = __class__.__getattr__;
-        if (getter == null) return null;
+        if (getter == null)
+	    return null;
                 
         try {
             return getter.__call__(this, new PyString(name));
@@ -262,7 +278,9 @@ public class PyInstance extends PyObject {
         if (f == null) {
             f = ifindclass(name, false);
             if (f != null) {
-                if (f instanceof PyFunction || f instanceof PyBuiltinFunctionSet) {
+                if (f instanceof PyFunction ||
+		    f instanceof PyBuiltinFunctionSet)
+		{
                     return f.__call__(this, arg1);
                 } else {
                     f = f._doget(this);
@@ -279,7 +297,9 @@ public class PyInstance extends PyObject {
         if (f == null) {
             f = ifindclass(name, false);
             if (f != null) {
-                if (f instanceof PyFunction || f instanceof PyBuiltinFunctionSet) {
+                if (f instanceof PyFunction ||
+		    f instanceof PyBuiltinFunctionSet)
+		{
                     return f.__call__(this, arg1, arg2);
                 } else {
                     f = f._doget(this);
@@ -336,25 +356,30 @@ public class PyInstance extends PyObject {
         }
     }
 
-    public PyObject invoke_ex(String name, PyObject[] args, String[] keywords) {
+    public PyObject invoke_ex(String name, PyObject[] args, String[] keywords)
+    {
         PyObject meth = __findattr__(name);
-        if (meth == null) return null;
+        if (meth == null)
+	    return null;
         return meth.__call__(args, keywords);
     }
         
     public PyObject invoke_ex(String name) {
         PyObject meth = __findattr__(name);
-        if (meth == null) return null;
+        if (meth == null)
+	    return null;
         return meth.__call__();
     }
     public PyObject invoke_ex(String name, PyObject arg1) {
         PyObject meth = __findattr__(name);
-        if (meth == null) return null;
+        if (meth == null)
+	    return null;
         return meth.__call__(arg1);
     }
     public PyObject invoke_ex(String name, PyObject arg1, PyObject arg2) {
         PyObject meth = __findattr__(name);
-        if (meth == null) return null;
+        if (meth == null)
+	    return null;
         return meth.__call__(arg1, arg2);
     }
 
@@ -378,10 +403,13 @@ public class PyInstance extends PyObject {
             String smod;
             if (mod == Py.None) smod = "";
             else {
-                if (mod == null || !(mod instanceof PyString)) smod = "<unknown>.";
-                else smod = ((PyString)mod).toString()+'.';
+                if (mod == null || !(mod instanceof PyString))
+		    smod = "<unknown>.";
+                else
+		    smod = ((PyString)mod).toString()+'.';
             }
-            return new PyString("<"+smod+__class__.__name__+" instance at "+Py.id(this)+">");
+            return new PyString("<"+smod+__class__.__name__+
+				" instance at "+Py.id(this)+">");
         }
 
         if (!(ret instanceof PyString))
@@ -391,7 +419,8 @@ public class PyInstance extends PyObject {
 
     public PyString __str__() {
         PyObject ret = invoke_ex("__str__");
-        if (ret == null) return __repr__();
+        if (ret == null)
+	    return __repr__();
         if (!(ret instanceof PyString))
             throw Py.TypeError("__str__ method must return a string");
         return (PyString)ret;
@@ -401,7 +430,8 @@ public class PyInstance extends PyObject {
         PyObject ret;
         ret = invoke_ex("__hash__");
 
-        if (ret == null) return super.hashCode();
+        if (ret == null)
+	    return super.hashCode();
         if (ret instanceof PyInteger) {
             return ((PyInteger)ret).getValue();
         }
@@ -410,7 +440,8 @@ public class PyInstance extends PyObject {
 
     public int __cmp__(PyObject o) {
         PyObject ret = invoke_ex("__cmp__", o);
-        if (ret == null) return -2;
+        if (ret == null)
+	    return -2;
         if (ret instanceof PyInteger) {
             int v = ((PyInteger)ret).getValue();
             return v < 0 ? -1 : v > 0 ? 1 : 0;
@@ -427,15 +458,17 @@ public class PyInstance extends PyObject {
         try {
             return __len__() == 0 ? false : true;
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError)) return true;
+            if (Py.matchException(exc, Py.AttributeError))
+		return true;
             throw exc;
         }
     }
 
     private CollectionProxy collectionProxy=null;
+
     private CollectionProxy getCollection() {
-        if (collectionProxy == null) collectionProxy = 
-              CollectionProxy.findCollection(javaProxy);
+        if (collectionProxy == null)
+	    collectionProxy = CollectionProxy.findCollection(javaProxy);
         return collectionProxy;
     }
 
@@ -446,7 +479,8 @@ public class PyInstance extends PyObject {
         }
             
         PyObject ret = invoke("__len__");
-        if (ret instanceof PyInteger) return ((PyInteger)ret).getValue();
+        if (ret instanceof PyInteger)
+	    return ((PyInteger)ret).getValue();
         throw Py.TypeError("__len__() should return an int");
     }
 
@@ -455,25 +489,29 @@ public class PyInstance extends PyObject {
         if (proxy != CollectionProxy.NoProxy) {
             return proxy.__finditem__(key);
         }
-            
         return __finditem__(new PyInteger(key));
     }
         
     private PyObject trySlice(PyObject key, String name, PyObject extraArg) {
-        if (!(key instanceof PySlice)) return null;
+        if (!(key instanceof PySlice))
+	    return null;
             
         PySlice slice = (PySlice)key;
             
-        if (slice.step != Py.None) return null;
+        if (slice.step != Py.None)
+	    return null;
         
         PyObject func = __findattr__(name);
-        if (func == null) return null;
+        if (func == null)
+	    return null;
             
         PyObject start = slice.start;
         PyObject stop = slice.stop;
             
-        if (start == Py.None) start = Py.Zero;
-        if (stop == Py.None) stop = new PyInteger(PySystemState.maxint);
+        if (start == Py.None)
+	    start = Py.Zero;
+        if (stop == Py.None)
+	    stop = new PyInteger(PySystemState.maxint);
             
         if (extraArg == null) {
             return func.__call__(start, stop);
@@ -490,11 +528,13 @@ public class PyInstance extends PyObject {
             
         try {
             PyObject ret = trySlice(key, "__getslice__", null);
-            if (ret != null) return ret;
+            if (ret != null)
+		return ret;
                     
             return invoke("__getitem__", key);
         } catch (PyException e) {
-            if (Py.matchException(e, Py.IndexError)) return null;
+            if (Py.matchException(e, Py.IndexError))
+		return null;
             throw e;
         }
     }
@@ -506,7 +546,8 @@ public class PyInstance extends PyObject {
             return;
         }
             
-        if (trySlice(key, "__setslice__", value) != null) return;
+        if (trySlice(key, "__setslice__", value) != null)
+	    return;
             
         invoke("__setitem__", key, value);
     }
@@ -518,14 +559,16 @@ public class PyInstance extends PyObject {
             return;
         }
             
-        if (trySlice(key, "__delslice__", null) != null) return;
+        if (trySlice(key, "__delslice__", null) != null)
+	    return;
         invoke("__delitem__", key);
     }
 
     //Begin the numeric methods here
     public Object __coerce_ex__(PyObject o) {
         PyObject ret = invoke_ex("__coerce__", o);
-        if (ret == null || ret == Py.None) return ret;
+        if (ret == null || ret == Py.None)
+	    return ret;
         if (!(ret instanceof PyTuple))
             throw Py.TypeError("coercion should return None or 2-tuple");
         return ((PyTuple)ret).list;
@@ -534,290 +577,296 @@ public class PyInstance extends PyObject {
 
     // Generated by make_binops.py
 
-        // Unary ops
+    // Unary ops
 
-        /**
-        Implements the __hex__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+    /**
+       Implements the __hex__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyString __hex__() {
         PyObject ret = invoke("__hex__");
-        if (ret instanceof PyString) return (PyString)ret;
+        if (ret instanceof PyString)
+	    return (PyString)ret;
         throw Py.TypeError("__hex__() should return a string");
     }
         
     /**
-        Implements the __oct__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __oct__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyString __oct__() {
         PyObject ret = invoke("__oct__");
-        if (ret instanceof PyString) return (PyString)ret;
+        if (ret instanceof PyString)
+	    return (PyString)ret;
         throw Py.TypeError("__oct__() should return a string");
     }
         
     /**
-        Implements the __int__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __int__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyInteger __int__() {
         PyObject ret = invoke("__int__");
-        if (ret instanceof PyInteger) return (PyInteger)ret;
+        if (ret instanceof PyInteger)
+	    return (PyInteger)ret;
         throw Py.TypeError("__int__() should return a int");
     }
         
     /**
-        Implements the __float__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __float__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyFloat __float__() {
         PyObject ret = invoke("__float__");
-        if (ret instanceof PyFloat) return (PyFloat)ret;
+        if (ret instanceof PyFloat)
+	    return (PyFloat)ret;
         throw Py.TypeError("__float__() should return a float");
     }
         
     /**
-        Implements the __long__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __long__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyLong __long__() {
         PyObject ret = invoke("__long__");
-        if (ret instanceof PyLong) return (PyLong)ret;
+        if (ret instanceof PyLong)
+	    return (PyLong)ret;
         throw Py.TypeError("__long__() should return a long");
     }
         
     /**
-        Implements the __complex__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __complex__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyComplex __complex__() {
         PyObject ret = invoke("__complex__");
-        if (ret instanceof PyComplex) return (PyComplex)ret;
+        if (ret instanceof PyComplex)
+	    return (PyComplex)ret;
         throw Py.TypeError("__complex__() should return a complex");
     }
         
     /**
-        Implements the __pos__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __pos__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __pos__() {
         return invoke("__pos__");
     }
         
     /**
-        Implements the __neg__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __neg__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __neg__() {
         return invoke("__neg__");
     }
         
     /**
-        Implements the __abs__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __abs__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __abs__() {
         return invoke("__abs__");
     }
         
     /**
-        Implements the __invert__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __invert__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __invert__() {
         return invoke("__invert__");
     }
         
     // Binary ops
 
-        /**
-        Implements the __add__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+    /**
+       Implements the __add__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __add__(PyObject o) {
         return invoke_ex("__add__", o);
     }
         
     /**
-        Implements the __radd__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __radd__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __radd__(PyObject o) {
         return invoke_ex("__radd__", o);
     }
         
     /**
-        Implements the __sub__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __sub__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __sub__(PyObject o) {
         return invoke_ex("__sub__", o);
     }
         
     /**
-        Implements the __rsub__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rsub__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rsub__(PyObject o) {
         return invoke_ex("__rsub__", o);
     }
         
     /**
-        Implements the __mul__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __mul__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __mul__(PyObject o) {
         return invoke_ex("__mul__", o);
     }
         
     /**
-        Implements the __rmul__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rmul__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rmul__(PyObject o) {
         return invoke_ex("__rmul__", o);
     }
         
     /**
-        Implements the __div__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __div__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __div__(PyObject o) {
         return invoke_ex("__div__", o);
     }
         
     /**
-        Implements the __rdiv__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rdiv__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rdiv__(PyObject o) {
         return invoke_ex("__rdiv__", o);
     }
         
     /**
-        Implements the __mod__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __mod__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __mod__(PyObject o) {
         return invoke_ex("__mod__", o);
     }
         
     /**
-        Implements the __rmod__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rmod__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rmod__(PyObject o) {
         return invoke_ex("__rmod__", o);
     }
         
     /**
-        Implements the __divmod__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __divmod__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __divmod__(PyObject o) {
         return invoke_ex("__divmod__", o);
     }
         
     /**
-        Implements the __rdivmod__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rdivmod__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rdivmod__(PyObject o) {
         return invoke_ex("__rdivmod__", o);
     }
         
     /**
-        Implements the __pow__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __pow__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __pow__(PyObject o) {
         return invoke_ex("__pow__", o);
     }
         
     /**
-        Implements the __rpow__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rpow__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rpow__(PyObject o) {
         return invoke_ex("__rpow__", o);
     }
         
     /**
-        Implements the __lshift__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __lshift__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __lshift__(PyObject o) {
         return invoke_ex("__lshift__", o);
     }
         
     /**
-        Implements the __rlshift__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rlshift__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rlshift__(PyObject o) {
         return invoke_ex("__rlshift__", o);
     }
         
     /**
-        Implements the __rshift__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rshift__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rshift__(PyObject o) {
         return invoke_ex("__rshift__", o);
     }
         
     /**
-        Implements the __rrshift__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rrshift__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rrshift__(PyObject o) {
         return invoke_ex("__rrshift__", o);
     }
         
     /**
-        Implements the __and__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __and__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __and__(PyObject o) {
         return invoke_ex("__and__", o);
     }
         
     /**
-        Implements the __rand__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rand__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rand__(PyObject o) {
         return invoke_ex("__rand__", o);
     }
         
     /**
-        Implements the __or__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __or__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __or__(PyObject o) {
         return invoke_ex("__or__", o);
     }
         
     /**
-        Implements the __ror__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __ror__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __ror__(PyObject o) {
         return invoke_ex("__ror__", o);
     }
         
     /**
-        Implements the __xor__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __xor__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __xor__(PyObject o) {
         return invoke_ex("__xor__", o);
     }
         
     /**
-        Implements the __rxor__ method by looking it up
-        in the instance's dictionary and calling it if it is found.
-        **/
+       Implements the __rxor__ method by looking it up
+       in the instance's dictionary and calling it if it is found.
+    **/
     public PyObject __rxor__(PyObject o) {
         return invoke_ex("__rxor__", o);
     }
