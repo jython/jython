@@ -679,7 +679,7 @@ public class exceptions extends java.lang.Object implements org.python.core.Clas
         String[] newargs = new String[args.length+1];
         newargs[0] = "exceptions";
         System.arraycopy(args, 0, newargs, 1, args.length);
-        Py.runMain("org.python.core.exceptions$_PyInner", newargs, jpy$packages, jpy$properties, null);
+        Py.runMain("org.python.core.exceptions$_PyInner", newargs, jpy$packages, jpy$properties, null, new String[] {"exceptions"});
     }
     
 }

@@ -140,7 +140,7 @@ public class cPickle_exceptions extends java.lang.Object implements InitModule {
         String[] newargs = new String[args.length+1];
         newargs[0] = "cPickle_exceptions";
         System.arraycopy(args, 0, newargs, 1, args.length);
-        Py.runMain("org.python.modules.cPickle_exceptions$_PyInner", newargs, jpy$packages, jpy$properties, null);
+        Py.runMain("org.python.modules.cPickle_exceptions$_PyInner", newargs, jpy$packages, jpy$properties, null, null);
     }
     
 }

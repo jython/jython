@@ -123,6 +123,7 @@ class JavaProxy:
             self.modname = module.name
             if module.package is not None:
                 self.modname = module.package+'.'+self.modname
+            self.modules = module.modules.keys()
 
         self.isAdapter = 0
         self.frozen = 1
@@ -407,7 +408,7 @@ class JavaProxy:
         initargs = [this, jast.StringConstant(self.modname),
                     jast.StringConstant(self.name),
                     objects, self.packages, self.properties,
-                    frozen]
+                    frozen, jast.StringArray(self.modules)]
 
         initproxy = jast.InvokeStatic("Py", "initProxy", initargs)
 

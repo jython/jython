@@ -364,6 +364,7 @@ class Compiler:
 
         self.write('\nCreating .java files:')
         for filename, mod in self.modules.items():
+            mod.modules = Compiler.allmodules
             self.processModule(mod, outdir)
 
         self.java2class(outdir)

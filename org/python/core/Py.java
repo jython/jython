@@ -589,6 +589,7 @@ public final class Py
                                                     String[] packages,
                                                     String[] props, 
                                                     String frozenPackage,
+                                                    String[] modules,
                                                     ClassLoader classLoader)
     {
         if (!propertiesInitialized) {
@@ -619,7 +620,15 @@ public final class Py
             PySystemState.initialize(sprops, null, args, classLoader);
         }
 
-        
+/*
+        if (modules != null) {
+            System.out.println("modules: ");
+            for (int i = 0; i < modules.length; i++)
+                System.out.print(modules[i] + ", ");
+            System.out.println();
+        }
+*/
+
         if (packages != null) {
             for (int i=0; i<packages.length; i+=2) {
                 PySystemState.add_package(packages[i], packages[i+1]);
@@ -631,17 +640,18 @@ public final class Py
                                  Object[] args, String[] packages,
                                  String[] props, boolean frozen)
     {
-        initProxy(proxy, module, pyclass, args, packages, props, null);
+        initProxy(proxy, module, pyclass, args, packages, props, null, null);
     }
                                                                             
     public static void initProxy(PyProxy proxy, String module, String pyclass,
                                  Object[] args, String[] packages,
                                  String[] props,
-                                 String frozenPackage)
+                                 String frozenPackage,
+                                 String[] modules)
     {
 //         System.out.println("initProxy");
 //         frozen = false;               
-        initProperties(null, packages, props, frozenPackage,
+        initProperties(null, packages, props, frozenPackage, modules,
                     proxy.getClass().getClassLoader());
                 
         ThreadState ts = getThreadState();
@@ -706,7 +716,8 @@ public final class Py
 
     public static void runMain(String module, String[] args, String[] packages,
                                String[] props,
-                               String frozenPackage)
+                               String frozenPackage,
+                               String[] modules)
     {
         //System.err.println("main: "+module);
        
@@ -718,7 +729,7 @@ public final class Py
             System.exit(-1);
         }
 
-        initProperties(args, packages, props, frozenPackage,
+        initProperties(args, packages, props, frozenPackage, modules,
                        mainClass.getClassLoader());
 
         try {

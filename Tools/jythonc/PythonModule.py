@@ -369,7 +369,7 @@ class PythonModule:
                            self.name+'$'+self.pyinner.name)),
                     jast.Identifier('newargs'), 
                     self.getPackages(), self.getProperties(), 
-                    self.getFrozen()]
+                    self.getFrozen(), jast.StringArray(self.modules.keys())]
 
             code.append([jast.InvokeStatic("Py", "runMain", args)])
             maincode = jast.Block(code)
