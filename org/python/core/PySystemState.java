@@ -184,6 +184,8 @@ public class PySystemState extends PyObject
                 root = preProperties.getProperty("install.root");
             
             String version = preProperties.getProperty("java.version");
+            if (version == null)
+                version = "???";
             String lversion = version.toLowerCase();
             if (lversion.startsWith("java"))
                 version = version.substring(4, version.length());
