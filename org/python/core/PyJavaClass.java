@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
+
 import java.lang.reflect.*;
 import java.beans.*;
 
@@ -103,7 +105,8 @@ public class PyJavaClass extends PyClass {
     protected void findModule(PyObject dict) {} 
     
     private void init__dict__() {
-        if (__dict__ != null) return;
+        if (__dict__ != null)
+	    return;
         PyStringMap d = new PyStringMap();
         d.__setitem__("__module__", Py.None);
         __dict__ = d;
@@ -169,7 +172,8 @@ public class PyJavaClass extends PyClass {
         int i;
         for (i=0; i<nInterfaces; i++) {
             Class inter = interfaces[i];
-            if (inter == InitModule.class || inter == PyProxy.class) continue;
+            if (inter == InitModule.class || inter == PyProxy.class)
+		continue;
             nBases++;
         }
             
@@ -189,7 +193,8 @@ public class PyJavaClass extends PyClass {
 
         for (i=0; i<nInterfaces; i++) {
             Class inter = interfaces[i];
-            if (inter == InitModule.class || inter == PyProxy.class) continue;
+            if (inter == InitModule.class || inter == PyProxy.class)
+		continue;
             tmp = PyJavaClass.lookup(inter);
             tmp.initialize();
             bases[index++] = tmp;
@@ -247,7 +252,8 @@ public class PyJavaClass extends PyClass {
     private void addMethod(Method meth) {
         String name = getName(meth.getName());
         if (name == "_getPyInstance" || name == "_setPyInstance" ||
-            name == "_getPySystemState" || name == "_setPySystemState") {
+            name == "_getPySystemState" || name == "_setPySystemState")
+	{
 	    return;
 	}
            
@@ -256,10 +262,14 @@ public class PyJavaClass extends PyClass {
         // to be tolerated
         // This is totally a hack, but a lot of code that uses java.awt will break without it
         String classname = proxyClass.getName();
-        if (classname.startsWith("java.awt.") && classname.indexOf('.', 9) == -1) { 
+        if (classname.startsWith("java.awt.") &&
+	    classname.indexOf('.', 9) == -1)
+	{ 
             if (name == "layout" || name == "insets" || 
-                name == "size" || name == "minimumSize" || name == "preferredSize" ||
-                name == "maximumSize" || name == "bounds" || name == "enable") {
+                name == "size" || name == "minimumSize" ||
+		name == "preferredSize" || name == "maximumSize" ||
+		name == "bounds" || name == "enable")
+	    {
 		return;
 	    }
         }
@@ -280,15 +290,14 @@ public class PyJavaClass extends PyClass {
                some significant way, then return a duplicate and stick it in
                the __dict__ */
             if (o1 != o) {
-                if (func.handles(meth)) return;
+                if (func.handles(meth))
+		    return;
                 func = func.copy();
             }
-
             func.addMethod(meth);
         } else {
             func = new PyReflectedFunction(meth);
         }
-            
         __dict__.__setitem__(name, func);
     }
 
@@ -296,10 +305,11 @@ public class PyJavaClass extends PyClass {
     /* Add all methods declared by this class */
     private void setMethods(Class c) {
         Method[] methods = c.getMethods();
-        for(int i=0; i<methods.length; i++) {
+        for (int i=0; i<methods.length; i++) {
             Method method = methods[i];
             Class dc = method.getDeclaringClass();
-            if (dc != c) continue;
+            if (dc != c)
+		continue;
                         
             addMethod(method);
         }
@@ -356,30 +366,35 @@ public class PyJavaClass extends PyClass {
       }
       }*/
         
-            
-        
     /* Adds a bean property to this class */
-    void addProperty(String name, Class propClass, Method getMethod, Method setMethod) {
+    void addProperty(String name, Class propClass,
+		     Method getMethod, Method setMethod)
+    {
         // This will skip indexed property types
-        if (propClass == null) return;
+        if (propClass == null)
+	    return;
         
         boolean set = true;
         name = getName(name);
 
-        PyBeanProperty prop = new PyBeanProperty(name, propClass, getMethod, setMethod);
+        PyBeanProperty prop = new PyBeanProperty(name, propClass, getMethod,
+						 setMethod);
 
         // Check to see if this name is already being used...
         PyObject o = lookup(name, false);
         
         if (o != null) {
-            if (!(o instanceof PyReflectedField)) return;
+            if (!(o instanceof PyReflectedField))
+		return;
             
             if (o instanceof PyBeanProperty) {
                 PyBeanProperty oldProp = (PyBeanProperty)o;
                 if (prop.myType == oldProp.myType) {
                     // If this adds nothing over old property, do nothing
-                    if ((prop.getMethod == null || oldProp.getMethod != null) &&
-                        (prop.setMethod == null || oldProp.setMethod != null)) {
+                    if ((prop.getMethod == null || oldProp.getMethod != null)
+			&&
+                        (prop.setMethod == null || oldProp.setMethod != null))
+		    {
                         set = false;
                     }
                     
@@ -404,16 +419,20 @@ public class PyJavaClass extends PyClass {
                  }
                  }*/
         }
-        if (set) __dict__.__setitem__(name, prop);
+        if (set)
+	    __dict__.__setitem__(name, prop);
     }
 
     /* Adds a bean event to this class */
-    void addEvent(String name, Class eventClass, Method addMethod, Method[] meths) {
+    void addEvent(String name, Class eventClass, Method addMethod,
+		  Method[] meths)
+    {
         String eventName = eventClass.getName();
 
         for (int i=0; i<meths.length; i++) {
             PyBeanEventProperty prop;
-            prop = new PyBeanEventProperty(name, eventClass, addMethod, meths[i]);
+            prop = new PyBeanEventProperty(name, eventClass, addMethod,
+					   meths[i]);
             __dict__.__setitem__(prop.__name__, prop);
         }
         PyBeanEvent event = new PyBeanEvent(name, eventClass, addMethod);
@@ -426,10 +445,12 @@ public class PyJavaClass extends PyClass {
     */
     private static String decapitalize(String s) {
         //return java.beans.Introspector.decapitalize(s);
-        if (s.length() == 0) return s;
+        if (s.length() == 0)
+	    return s;
         char c0 = s.charAt(0);
         if (Character.isUpperCase(c0)) {
-            if (s.length() > 1 && Character.isUpperCase(s.charAt(1))) return s;
+            if (s.length() > 1 && Character.isUpperCase(s.charAt(1)))
+		return s;
             char[] cs = s.toCharArray();
             cs[0] = Character.toLowerCase(c0);
             return new String(cs);
@@ -445,11 +466,14 @@ public class PyJavaClass extends PyClass {
 
 	int i;
 	int n = meths.length;
-	for(i=0; i<n; i++) {
+	for (i=0; i<n; i++) {
 	    Method method = meths[i];
 
 	    if (method.getDeclaringClass() != c ||
-		Modifier.isStatic(method.getModifiers())) continue;
+		Modifier.isStatic(method.getModifiers()))
+	    {
+		continue;
+	    }
 
 	    String name = method.getName();
 	    Method getter = null;
@@ -461,25 +485,27 @@ public class PyJavaClass extends PyClass {
 	    String pname="";
 
 	    if (name.startsWith("get")) {
-		if (args.length != 0) continue;
+		if (args.length != 0)
+		    continue;
 		getter = method;
 		pname = decapitalize(name.substring(3));
 		myType = ret;
 		//System.out.println("get: "+name+", "+myType);
 	    } else {
 		if (name.startsWith("is")) {
-		    if (args.length != 0 || ret != Boolean.TYPE) continue;
+		    if (args.length != 0 || ret != Boolean.TYPE)
+			continue;
 		    getter = method;
 		    pname = decapitalize(name.substring(2));
 		    myType = ret;
 		} else {
 		    if (name.startsWith("set")) {
-			if (args.length != 1 || ret != Void.TYPE) continue;
+			if (args.length != 1 || ret != Void.TYPE)
+			    continue;
 			setter = method;
 			pname = decapitalize(name.substring(3));
 			myType = args[0];
 			//System.out.println("set: "+name+", "+myType);
-
 		    } else {
 			continue;
 		    }
@@ -504,25 +530,33 @@ public class PyJavaClass extends PyClass {
 	    }
 	}
 
-	for(i=0; i<n; i++) {
+	for (i=0; i<n; i++) {
 	    Method method = meths[i];
 
 	    if (method.getDeclaringClass() != c ||
-		Modifier.isStatic(method.getModifiers())) continue;
+		Modifier.isStatic(method.getModifiers()))
+	    {
+		continue;
+	    }
 
 	    String mname = method.getName();
 
 	    if (!(mname.startsWith("add") || mname.startsWith("set")) ||
-		!mname.endsWith("Listener")) continue;
+		!mname.endsWith("Listener"))
+	    {
+		continue;
+	    }
 
 	    Class[] args = method.getParameterTypes();
 	    Class ret = method.getReturnType();
 	    String pname="";
 
-	    if (args.length != 1 || ret != Void.TYPE) continue;
+	    if (args.length != 1 || ret != Void.TYPE)
+		continue;
 
 	    Class eClass = args[0];
-	    if (!(java.util.EventListener.class.isAssignableFrom(eClass))) continue;
+	    if (!(java.util.EventListener.class.isAssignableFrom(eClass)))
+		continue;
 
 	    String name = eClass.getName();
 	    int idot = name.lastIndexOf('.');
@@ -536,7 +570,6 @@ public class PyJavaClass extends PyClass {
 	  t.printStackTrace();
 	  }*/
     }
-
 
     /*private static boolean workingBeans=true;
       protected void setBeanInfo(Class c, Class sc) {
@@ -567,7 +600,7 @@ public class PyJavaClass extends PyClass {
             java.lang.reflect.Constructor[] constructors = c.getConstructors();
             if (constructors.length > 0) {
                 __init__ = new PyReflectedConstructor(constructors[0]);
-                for(int i=1; i<constructors.length; i++) {
+                for (int i=1; i<constructors.length; i++) {
                     __init__.addConstructor(constructors[i]);
                 }
                 __dict__.__setitem__("__init__", __init__);
@@ -576,7 +609,8 @@ public class PyJavaClass extends PyClass {
     }
     private boolean constructorsInitialized=false;
     void initConstructors() {
-        if (constructorsInitialized) return;
+        if (constructorsInitialized)
+	    return;
         constructorsInitialized = true;
         initialize();
         setConstructors(proxyClass);
@@ -591,7 +625,8 @@ public class PyJavaClass extends PyClass {
             keywords = new java.util.Hashtable();
             String[] words = new String[]
             {"or", "and", "not", "is", "in", "lambda", "if", "else", "elif",
-             "while", "for", "try", "except", "def", "class", "finally", "print",
+             "while", "for", "try", "except", "def", "class", "finally",
+	     "print",
              "pass", "break", "continue", "return", "import", "from", "del",
              "raise", "global", "exec", "assert"};
             for (int i=0; i<words.length; i++) {
@@ -607,20 +642,22 @@ public class PyJavaClass extends PyClass {
     }
     
     PyObject lookup(String name, boolean stop_at_java) {
-        if (stop_at_java) return null;
-        if (!initialized) initialize();
+        if (stop_at_java)
+	    return null;
+        if (!initialized)
+	    initialize();
         if (name == "__init__") {
             initConstructors();
             return __init__;
         }
         
-        // For backwards compatibilty, support keyword_ as a substitute for keyword
-        // An improved parser makes this no longer necessary
+        // For backwards compatibilty, support keyword_ as a substitute for
+        // keyword An improved parser makes this no longer necessary
         if (Options.deprecatedKeywordMangling && name.endsWith("_")) {
             String newName = unmangleKeyword(name);
-            if (newName != null) name = newName;
+            if (newName != null)
+		name = newName;
         }
-        
         return super.lookup(name, stop_at_java);
     }
 
@@ -636,12 +673,15 @@ public class PyJavaClass extends PyClass {
     private PyStringMap missingAttributes = null;
     public PyObject __findattr__(String name) {
         if (name == "__dict__") {
-            if (__dict__ == null) init__dict__();
+            if (__dict__ == null)
+		init__dict__();
             return __dict__;
         }
-        if (name == "__name__") return new PyString(__name__);
+        if (name == "__name__")
+	    return new PyString(__name__);
         if (name == "__bases__") {
-            if (__bases__ == null) initialize();
+            if (__bases__ == null)
+		initialize();
             return __bases__;
         }
         if (name == "__init__") {
@@ -650,7 +690,8 @@ public class PyJavaClass extends PyClass {
         }
     
         PyObject result = lookup(name, false);
-        if (result != null) return result._doget(null);
+        if (result != null)
+	    return result._doget(null);
         
         // A cache of missing attributes to short-circuit later tests
         if (missingAttributes != null &&
@@ -661,10 +702,12 @@ public class PyJavaClass extends PyClass {
         
         // These two tests can be expensive, see above for short-circuiting
         result = findClassAttr(name);
-        if (result != null) return result;
+        if (result != null)
+	    return result;
             
         result = findInnerClass(name);
-        if (result != null) return result;
+        if (result != null)
+	    return result;
         
         // Add this attribute to missing attributes cache
         if (missingAttributes == null) {
@@ -702,9 +745,9 @@ public class PyJavaClass extends PyClass {
     public void __setattr__(String name, PyObject value) {
         PyObject field = lookup(name, false);
         if (field != null) {
-            if (field._doset(null, value)) return;
+            if (field._doset(null, value))
+		return;
         }
-                
         __dict__.__setitem__(name, value);
     }
 
