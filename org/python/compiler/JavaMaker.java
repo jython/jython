@@ -6,7 +6,8 @@ import java.lang.reflect.Modifier;
 import java.util.Hashtable;
 import org.python.core.PyObject;
 
-public class JavaMaker extends ProxyMaker {
+public class JavaMaker extends ProxyMaker
+{
     public String pythonClass, pythonModule;
     public String[] properties;
     public String[] packages;
@@ -21,8 +22,7 @@ public class JavaMaker extends ProxyMaker {
                      PyObject methods)
     {
         this(superclass, interfaces, pythonClass, pythonModule, myClass,
-             null, null,
-             methods, false, false);
+             null, null, methods, false, false);
     }
                             
     public JavaMaker(Class superclass, String[] interfaces,
@@ -32,11 +32,12 @@ public class JavaMaker extends ProxyMaker {
                      boolean frozen, boolean main)
     {
         super("foo");
-        if (superclass == null) superclass = PyObject.class;
+        if (superclass == null)
+            superclass = PyObject.class;
         this.classname = superclass.getName();
-        //methods != null ? superclass.getName() : "org.python.proxies."+superclass.getName());
+//         methods != null ? superclass.getName() : "org.python.proxies."+superclass.getName());
         this.interfaces = interfaces;
-        //System.out.println("props: "+properties+", "+properties.length);
+//         System.out.println("props: "+properties+", "+properties.length);
         this.pythonClass = pythonClass;
         this.pythonModule = pythonModule;
         this.myClass = myClass;
@@ -46,12 +47,12 @@ public class JavaMaker extends ProxyMaker {
         this.main = main;
         this.methods = methods;
         this.superclass = superclass;
-        /*if (methods != null) {
-          this.methods = new Hashtable();
-          for (int i=0; i<methods.length; i++) {
-          this.methods.put(methods[i], methods[i]);
-          }
-          }*/
+//         if (methods != null) {
+//             this.methods = new Hashtable();
+//             for (int i=0; i<methods.length; i++) {
+//                 this.methods.put(methods[i], methods[i]);
+//             }
+//         }
     }
 
     private void makeStrings(Code code, String[] list) throws Exception {
@@ -75,7 +76,9 @@ public class JavaMaker extends ProxyMaker {
     }
 
     public void addConstructor(String name, Class[] parameters, Class ret,
-                               String sig, int access) throws Exception {
+                               String sig, int access)
+        throws Exception
+    {
         /* Need a fancy constructor for the Java side of things */
         Code code = classfile.addMethod("<init>", sig, access);
         callSuper(code, "<init>", name, parameters, null, sig);
@@ -97,18 +100,20 @@ public class JavaMaker extends ProxyMaker {
     }
 
     public void addProxy() throws Exception {
-        if (methods != null) super.addProxy();
-        if (main) addMain();
+        if (methods != null)
+            super.addProxy();
+        if (main)
+            addMain();
     }
 
-    public void addMethods(Class c) throws Exception {
-        if (methods != null) {
-            super.addMethods(c);
-        }
-    }
+//     public void addMethods(Class c) throws Exception {
+//         if (methods != null) {
+//             super.addMethods(c);
+//         }
+//     }
 
     public void addMethod(Method method, int access) throws Exception {
-        //System.out.println("add: "+method.getName()+", "+methods.containsKey(method.getName()));
+//         System.out.println("add: "+method.getName()+", "+methods.containsKey(method.getName()));
         // Check to see if it's an abstract method
         if (Modifier.isAbstract(access)) {
             // Maybe throw an exception here???
@@ -123,7 +128,7 @@ public class JavaMaker extends ProxyMaker {
     public void build() throws Exception {
         //Class superclass = Class.forName(classname);
         Class[] ints = new Class[interfaces.length];
-        for(int i=0; i<interfaces.length; i++) {
+        for (int i=0; i<interfaces.length; i++) {
             ints[i] = Class.forName(interfaces[i]);
         }
         build(superclass, ints);

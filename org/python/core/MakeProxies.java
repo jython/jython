@@ -39,10 +39,10 @@ class MakeProxies
     public static synchronized Class makeProxy(Class c, Vector vinterfaces,
                                                String name, PyObject dict)
     {
-        //System.err.println("looking up proxy for: "+c.getName());
         String[] interfaces = new String[vinterfaces.size()];
         for (int i=0; i<vinterfaces.size(); i++) {
             interfaces[i] = ((Class)vinterfaces.elementAt(i)).getName();
+//             System.err.println("interface: " + interfaces[i]);
         }
         String proxyName = proxyPrefix + name + "$" + proxyNumber++;
 
@@ -53,9 +53,11 @@ class MakeProxies
             jm.build();
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             jm.classfile.write(bytes);
-            //String filename = "c:\\jpython\\test\\"+__name__+"$"+(proxyNumber-1)+".class";
-            //System.out.println("filename: "+filename);
-            //bytes.writeTo(new java.io.FileOutputStream("c:\\jpython\\test\\"+proxyName+".class"));
+            // debugging
+//             String filename = "/tmp/jpython/test/"+proxyName+".class";
+//             System.err.println("filename: "+filename);
+//             bytes.writeTo(new java.io.FileOutputStream(filename));
+            // end debugging
             Class pc = BytecodeLoader.makeClass(jm.myClass,
                                                 bytes.toByteArray());
             return pc;

@@ -8,22 +8,23 @@ import java.lang.reflect.Method;
 import java.io.*;
 
 
-public class AdapterMaker extends ProxyMaker {
+public class AdapterMaker extends ProxyMaker
+{
     public AdapterMaker(String classname) {
         super(classname+"$Adapter");
         this.classname = classname;
     }
 
     public void build(Class listener) throws Exception {
-        names = new java.util.Hashtable();
+        names = new Hashtable();
 
         //Class superclass = org.python.core.PyAdapter.class;
         int access = ClassFile.PUBLIC | ClassFile.SYNCHRONIZED;
         classfile = new ClassFile(myClass, "java/lang/Object", access);
 
-        classfile.addInterface(mapClass(listener.getName()));
+        classfile.addInterface(mapClass(listener));
 
-        addMethods(listener);
+        addMethods(listener, new Hashtable());
         addConstructors(Object.class);
         doConstants();
     }

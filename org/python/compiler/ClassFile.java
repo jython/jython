@@ -4,7 +4,9 @@ package org.python.compiler;
 import java.util.*;
 import java.io.*;
 
-class Method {
+
+class Method
+{
     int access, name, type;
     Attribute[] atts;
 
@@ -25,7 +27,9 @@ class Method {
 }
 
 
-public class ClassFile {
+
+public class ClassFile
+{
     ConstantPool pool;
     int access;
     public String name;
@@ -100,7 +104,7 @@ public class ClassFile {
         throws IOException
     {
         stream.writeShort(atts.length);
-        for(int i=0; i<atts.length; i++) {
+        for (int i=0; i<atts.length; i++) {
             atts[i].write(stream);
         }
     }
@@ -109,7 +113,7 @@ public class ClassFile {
         throws IOException
     {
         stream.writeShort(methods.size());
-        for(int i=0; i<methods.size(); i++) {
+        for (int i=0; i<methods.size(); i++) {
             Method m = (Method)methods.elementAt(i);
             m.write(stream);
         }
@@ -136,9 +140,8 @@ public class ClassFile {
 
         //write out interfaces
         stream.writeShort(interfaces.length);
-        for(int i=0; i<interfaces.length; i++)
+        for (int i=0; i<interfaces.length; i++)
             stream.writeShort(interfaces[i]);
-
 
         writeMethods(stream, fields);
         writeMethods(stream, methods);
@@ -147,7 +150,7 @@ public class ClassFile {
         int n = attributes.size();
         stream.writeShort(n);
                 
-        for(int i=0; i<n; i++) {
+        for (int i=0; i<n; i++) {
             ((Attribute)attributes.elementAt(i)).write(stream);
         }
     }
