@@ -48,5 +48,6 @@ public class Setup
         "_codecs",
         "imp",
         "sha",
+        "ucnhash",
     };
 }
