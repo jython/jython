@@ -25,7 +25,10 @@ public class JavaMaker extends ProxyMaker {
 	                    String[] packages, String[] properties,
 	                    PyObject methods, //String[] methods,
 	                    boolean frozen, boolean main) {
-		super(methods != null ? superclass.getName() : "org.python.proxies."+superclass.getName());
+		super("foo");
+		if (superclass == null) superclass = PyObject.class;
+		this.classname = superclass.getName();
+		//methods != null ? superclass.getName() : "org.python.proxies."+superclass.getName());
 		this.interfaces = interfaces;
 		//System.out.println("props: "+properties+", "+properties.length);
 		this.pythonClass = pythonClass;
