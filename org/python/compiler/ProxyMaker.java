@@ -49,6 +49,7 @@ public class ProxyMaker
     Class superclass;
     Class[] interfaces;
     Hashtable names;
+    Hashtable supernames = new Hashtable();
     public ClassFile classfile;
     public String myClass;
     public boolean isAdapter=false;
@@ -657,8 +658,9 @@ public class ProxyMaker
                                Class ret, String sig, int access)
         throws Exception
     {
- 	Code code = classfile.addMethod(methodName, sig, access);
- 	callSuper(code, superName, superclass, parameters, ret, sig);
+        supernames.put(methodName, methodName);
+        Code code = classfile.addMethod(methodName, sig, access);
+        callSuper(code, superName, superclass, parameters, ret, sig);
     }
 
     public void addProxy() throws Exception {
@@ -708,7 +710,36 @@ public class ProxyMaker
                                    Modifier.PUBLIC);
         code.aload(0);
         code.getfield(field);
-        code.areturn();         
+        code.areturn();
+    }
+
+    public void addClassDictInit() throws Exception {
+        int n = supernames.size();
+
+        // classDictInit method
+        classfile.addInterface(mapClass(org.python.core.ClassDictInit.class));
+        Code code = classfile.addMethod("classDictInit",
+                                   "(Lorg/python/core/PyObject;)V",
+                                   Modifier.PUBLIC | Modifier.STATIC);
+        code.aload(0);
+        code.ldc("__supernames__");
+
+        String[] names = new String[n];
+        Enumeration e = supernames.keys();
+        for (int i = 0; e.hasMoreElements(); )
+           names[i++] = (String) e.nextElement();
+        CodeCompiler.makeStrings(code, names, n);
+        int j2py = code.pool.Methodref(
+                      "org/python/core/Py", "java2py",
+                      "(Ljava/lang/Object;)Lorg/python/core/PyObject;");
+        code.invokestatic(j2py);
+
+        int setitem = code.pool.Methodref(
+                      "org/python/core/PyObject", "__setitem__",
+                      "(Ljava/lang/String;Lorg/python/core/PyObject;)V");
+        code.invokevirtual(setitem);
+        code.return_();
+
     }
 
     public void build() throws Exception {
@@ -737,6 +768,7 @@ public class ProxyMaker
         }
         addMethods(superclass, seenmethods);
         doConstants();
+        addClassDictInit();
     }
 
 
