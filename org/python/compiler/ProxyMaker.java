@@ -611,7 +611,7 @@ public class ProxyMaker {
 		    classfile.addInterface(mapClass(interfaces[i].getName()));
 		    addMethods(interfaces[i]);
 		}
-		if (superclass != java.lang.Object.class)
+		//if (superclass != java.lang.Object.class)
 		    addMethods(superclass);
 
 		doConstants();
