@@ -215,6 +215,45 @@ public final class Py
     public static PyObject StandardError;
     public static PyObject Exception;
 
+    public static PyObject Warning;
+    public static void Warning(String message) {
+        warning(Warning, message);
+    }
+
+    public static PyObject UserWarning;
+    public static void UserWarning(String message) {
+        warning(UserWarning, message);
+    }
+
+    public static PyObject DeprecationWarning;
+    public static void DeprecationWarning(String message) {
+        warning(DeprecationWarning, message);
+    }
+
+    public static PyObject SyntaxWarning;
+    public static void SyntaxWarning(String message) {
+        warning(SyntaxWarning, message);
+    }
+
+    public static PyObject RuntimeWarning;
+    public static void RuntimeWarning(String message) {
+        warning(RuntimeWarning, message);
+    }
+
+    public static void warning(PyObject category, String message) {
+        PyObject func = null;
+        PyObject mod = __builtin__.__import__("warnings");
+        if (mod != null)
+            func = mod.__getattr__("warn");
+        if (func == null) {
+            System.err.println("warning: " + message);
+            return;
+        } else {
+            func.__call__(Py.newString(message), category);
+        }
+    }
+
+
     public static PyObject JavaError;
     public static PyException JavaError(Throwable t) {
 //         System.err.println("t: "+t);
@@ -431,6 +470,11 @@ public final class Py
         UnicodeError        = initExc("UnicodeError", exc, dict);
         SystemError         = initExc("SystemError", exc, dict);
         MemoryError         = initExc("MemoryError", exc, dict);
+        Warning             = initExc("Warning", exc, dict);
+        UserWarning         = initExc("UserWarning", exc, dict);
+        DeprecationWarning  = initExc("DeprecationWarning", exc, dict);
+        SyntaxWarning       = initExc("SyntaxWarning", exc, dict);
+        RuntimeWarning      = initExc("RuntimeWarning", exc, dict);
     }
 
     public static PySystemState defaultSystemState;

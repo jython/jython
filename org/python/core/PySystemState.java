@@ -74,6 +74,8 @@ public class PySystemState extends PyObject
 
     public PyObject executable = Py.None;
 
+    public static PyList warnoptions;
+
     private static PyJavaClass __builtin__class;
 
     private ClassLoader classLoader = null;
@@ -374,6 +376,8 @@ public class PySystemState extends PyObject
         Py.Space = new PyString(" ");
 
         __builtin__class = PyJavaClass.lookup(__builtin__.class);
+
+        warnoptions = new PyList();
 
         // Setup standard wrappers for stdout and stderr...
         Py.stderr = new StderrWrapper();
