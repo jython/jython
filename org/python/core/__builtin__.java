@@ -56,7 +56,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
                 Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"));
         case 6:
             return Py.newInteger(__builtin__.cmp(arg1, arg2));
-                    
+        case 9:
+            return __builtin__.apply(arg1, arg2);
         default:
             throw argCountError(2);
         }
@@ -69,6 +70,18 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
                 Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
                 Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
                 Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
+        case 9:
+            try {
+                // this catches both casts of arg3 to a PyDictionary, and
+                // all casts of keys in the dictionary to PyStrings inside
+                // apply(PyObject, PyObject, PyDictionary)
+                PyDictionary d = (PyDictionary)arg3;
+                return __builtin__.apply(arg1, arg2, d);
+            }
+            catch (ClassCastException e) {
+                throw Py.TypeError("apply() 3rd argument must be a "+
+                                   "dictionary with string keys");
+            }
         default:
             throw argCountError(3);
         }
@@ -96,6 +109,7 @@ public class __builtin__ implements InitModule
         dict.__setitem__("cmp", new BuiltinFunctions("cmp", 6, 2));
         dict.__setitem__("list", new BuiltinFunctions("list", 7, 1));
         dict.__setitem__("tuple", new BuiltinFunctions("tuple", 8, 1));
+        dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
     } 
 
     public static PyObject abs(PyObject o) {
@@ -120,7 +134,7 @@ public class __builtin__ implements InitModule
             System.arraycopy(aargs, 0, a, 0, aargs.length);
             int offset = aargs.length;
 
-            for(int i=0; i<n; i++) {
+            for (int i=0; i<n; i++) {
                 kw[i] = ((PyString)ek.nextElement()).internedString();
                 a[i+offset] = (PyObject)ev.nextElement();
             }
