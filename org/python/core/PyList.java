@@ -352,6 +352,10 @@ public class PyList extends PySequence implements ClassDictInit
      *          the <code>==</code> operator.
      */
     public int index(PyObject o) {
+        return _index(o, "list.index(x): x not in list");
+    }
+
+    private int _index(PyObject o, String message) {
         int n = length;
         PyObject[] list = this.list;
         int i=0;
@@ -360,7 +364,7 @@ public class PyList extends PySequence implements ClassDictInit
                 break;
         }
         if (i == n)
-            throw Py.ValueError("item not found in list");
+            throw Py.ValueError(message);
         return i;
     }
 
@@ -392,7 +396,7 @@ public class PyList extends PySequence implements ClassDictInit
      * @param o     the element to search for and remove.
      */
     public void remove(PyObject o) {
-        del(index(o));
+        del(_index(o, "list.remove(x): x not in list"));
     }
 
     /**
