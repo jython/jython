@@ -98,6 +98,7 @@ public class PyList extends PySequence implements ClassDictInit
         __methods__ = list;
     }
 
+    /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         PySequence.classDictInit(dict);
         dict.__setitem__("reverse", new ListFunctions("reverse", 1, 0));
@@ -316,11 +317,22 @@ public class PyList extends PySequence implements ClassDictInit
         length = n;
     }
 
+    /**
+     * Add a single element to the end of list.
+     *
+     * @param o the element to add.
+     */
     public void append(PyObject o) {
         resize(length+1);
         list[length-1] = o;
     }
 
+    /**
+     * Return the number elements in the list that equals the argument.
+     *
+     * @param o the argument to test for. Testing is done with
+     *          the <code>==</code> operator.
+     */
     public int count(PyObject o) {
         int count = 0;
         int n = length;
@@ -332,6 +344,13 @@ public class PyList extends PySequence implements ClassDictInit
         return count;
     }
 
+    /**
+     * return smallest index where an element in the list equals
+     * the argument.
+     *
+     * @param o the argument to test for. Testing is done with
+     *          the <code>==</code> operator.
+     */
     public int index(PyObject o) {
         int n = length;
         PyObject[] list = this.list;
@@ -345,6 +364,15 @@ public class PyList extends PySequence implements ClassDictInit
         return i;
     }
 
+    /**
+     * Insert the argument element into the list at the specified 
+     * index.
+     * <br>
+     * Same as <code>s[index:index] = [o] if index &gt;= 0</code>.
+     *
+     * @param index the position where the element will be inserted.
+     * @param o     the element to insert.
+     */
     public void insert(int index, PyObject o) {
         if (index < 0)
             index = 0;
@@ -355,10 +383,24 @@ public class PyList extends PySequence implements ClassDictInit
         list[index] = o;
     }
 
+    /**
+     * Remove the first occurence of the argument from the list.
+     * The elements arecompared with the <code>==</code> operator.
+     * <br>
+     * Same as <code>del s[s.index(x)]</code>
+     *
+     * @param o     the element to search for and remove.
+     */
     public void remove(PyObject o) {
         del(index(o));
     }
 
+    /**
+     * Reverses the items of s in place.
+     * The reverse() methods modify the list in place for economy 
+     * of space when reversing a large list. It doesn't return the
+     * reversed list to remind you of this side effect.
+     */
     public void reverse() {
         PyObject tmp;
         int n = length;
@@ -371,10 +413,19 @@ public class PyList extends PySequence implements ClassDictInit
         }
     }
 
+    /**
+     * Removes and return the last element in the list.
+     */
     public PyObject pop() {
         return pop(-1);
     }
 
+    /**
+     * Removes and return the <code>n</code> indexed element in the
+     * list.
+     *
+     * @param n the index of the element to remove and return.
+     */
     public PyObject pop(int n) {
         if (length==0) {
             throw Py.IndexError("pop from empty list");
@@ -389,6 +440,14 @@ public class PyList extends PySequence implements ClassDictInit
         return v;
     }
 
+
+    /**
+     * Append the elements in the argument sequence to the end of the list.
+     * <br>
+     * Same as <code>s[len(s):len(s)] = o</code>.
+     *
+     * @param o the sequence of items to append to the list.
+     */
     public void extend(PyObject o) {
         setslice(length, length, 1, o);
     }
@@ -599,12 +658,27 @@ public class PyList extends PySequence implements ClassDictInit
         insertionsort(array, off, size, compare);
     }
 
-    // Future PyLists will probably have their own PyObject[].  For now, we
-    // must copy one out of and back into the vector
+    /**
+     * Sort the items of the list in place. The compare argument is a
+     * function of two arguments (list items) which should return
+     * -1, 0 or 1 depending on whether the first argument is 
+     * considered smaller than, equal to, or larger than the second 
+     * argument. Note that this slows the sorting process down
+     * considerably; e.g. to sort a list in reverse order it is much
+     * faster to use calls to the methods sort() and reverse() than 
+     * to use the built-in function sort() with a comparison function
+     * that reverses the ordering of the elements. 
+     *
+     * @param compare the comparison function.
+     */
     public synchronized void sort(PyObject compare) {
         quicksort(list, 0, length, compare);
     }
 
+    /**
+     * Sort the items of the list in place. Items is compared with the
+     * normal relative comparison operators.
+     */
     public void sort() {
         sort(null);
     }

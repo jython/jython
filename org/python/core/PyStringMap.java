@@ -237,6 +237,9 @@ public class PyStringMap extends PyObject
         }
     }
 
+    /**
+     * Remove all items from the dictionary.
+     */
     public synchronized void clear() {
         for (int i=0; i<keys.length; i++) {
             keys[i] = null;
@@ -317,10 +320,21 @@ public class PyStringMap extends PyObject
         return 0;
     }
 
+    /**
+     * Return true if the key exist in the dictionary.
+     */
     public boolean has_key(PyObject key) {
         return __finditem__(key) != null;
     }
 
+    /**
+     * Return this[key] if the key exists in the mapping, default_object
+     * is returned otherwise.
+     *
+     * @param key            the key to lookup in the mapping.
+     * @param default_object the value to return if the key does not
+     *                       exists in the mapping.
+     */
     public PyObject get(PyObject key, PyObject default_object) {
         PyObject o = __finditem__(key);
         if (o == null)
@@ -329,10 +343,19 @@ public class PyStringMap extends PyObject
             return o;
     }
 
+    /**
+     * Return this[key] if the key exists in the mapping, None
+     * is returned otherwise.
+     *
+     * @param key  the key to lookup in the mapping.
+     */
     public PyObject get(PyObject key) {
         return get(key, Py.None);
     }
 
+    /**
+     * Return a shallow copy of the dictionary.
+     */
     public synchronized PyStringMap copy() {
         int n = keys.length;
 
@@ -347,6 +370,10 @@ public class PyStringMap extends PyObject
         return map;
     }
 
+    /**
+     * Insert all the key:value pairs from <code>map</code> into
+     * this mapping.
+     */
     public synchronized void update(PyStringMap map) {
         String[] keyTable = map.keys;
         PyObject[] valueTable = map.values;
@@ -363,6 +390,10 @@ public class PyStringMap extends PyObject
         }
     }
 
+    /**
+     * Insert all the key:value pairs from <code>dict</code> into
+     * this mapping.
+     */
     public void update(PyDictionary dict) {
         java.util.Hashtable table = dict.table;
 
@@ -376,10 +407,24 @@ public class PyStringMap extends PyObject
         }
     }
 
+    /**
+     * Return this[key] if the key exist, otherwise insert key with
+     * a None value and return None.
+     *
+     * @param key   the key to lookup in the mapping.
+     */
     public PyObject setdefault(PyObject key) {
         return setdefault(key, Py.None);
     }
 
+    /**
+     * Return this[key] if the key exist, otherwise insert key with
+     * the value of failobj and return failobj
+     *
+     * @param key     the key to lookup in the mapping.
+     * @param failobj the default value to insert in the mapping
+     *                if key does not already exist.
+     */
     public PyObject setdefault(PyObject key, PyObject failobj) {
         PyObject o = __finditem__(key);
         if (o == null)
@@ -387,7 +432,10 @@ public class PyStringMap extends PyObject
         return o;
     }
 
-
+    /**
+     * Return a random (key, value) tuple pair and remove the pair
+     * from the mapping.
+     */
     public synchronized PyObject popitem() {
         if (size == 0)
             throw Py.KeyError("popitem(): dictionary is empty");
@@ -418,6 +466,10 @@ public class PyStringMap extends PyObject
         return new PyTuple(new PyObject[] { key, val });
     }
 
+    /**
+     * Return a copy of the mappings list of (key, value) tuple
+     * pairs.
+     */
     public synchronized PyList items() {
         String[] keyTable = keys;
         PyObject[] valueTable = values;
@@ -454,6 +506,9 @@ public class PyStringMap extends PyObject
     }
 
 
+    /**
+     * Return a copy of the mappings list of keys.
+     */
     public synchronized PyList keys() {
         String[] keyTable = keys;
         //PyObject[] valueTable = values;
@@ -469,6 +524,9 @@ public class PyStringMap extends PyObject
         return l;
     }
 
+    /**
+     * Return a copy of the mappings list of values.
+     */
     public synchronized PyList values() {
         PyObject[] valueTable = values;
         int n = valueTable.length;

@@ -96,15 +96,28 @@ public class PyDictionary extends PyObject implements ClassDictInit
         __methods__ = list;
     }
 
-    // Used by PyJavaClass.init()
+    /**
+     * Create an empty dictionary.
+     */
     public PyDictionary() {
         this(new Hashtable());
     }
 
+    /**
+     * Create an new dictionary which is based on the hashtable.
+     * @param t  the hashtable used. The supplied hashtable is used as
+     *           is and must only contain PyObject key:value pairs.
+     */
     public PyDictionary(Hashtable t) {
         table = t;
     }
 
+    /**
+     * Create a new dictionary with the element as content.
+     * @param elements The initial elements that is inserted in the
+     *                 dictionary. Even numbered elements are keys,
+     *                 odd numbered elements are values.
+     */
     public PyDictionary(PyObject elements[]) {
         this();
         for (int i = 0; i < elements.length; i+=2) {
@@ -112,6 +125,7 @@ public class PyDictionary extends PyObject implements ClassDictInit
         }
     }
 
+    /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__len__", new DictFuncs("__len__", 1, 0));
         dict.__setitem__("__nonzero__", new DictFuncs("__nonzero__", 2, 0));
@@ -231,10 +245,22 @@ public class PyDictionary extends PyObject implements ClassDictInit
         return 0;
     }
 
+    /**
+     * Return true if the key exist in the dictionary.
+     */
     public boolean has_key(PyObject key) {
         return table.containsKey(key);
     }
 
+
+    /**
+     * Return this[key] if the key exists in the mapping, default_object
+     * is returned otherwise.
+     *
+     * @param key            the key to lookup in the dictionary.
+     * @param default_object the value to return if the key does not
+     *                       exists in the mapping.
+     */
     public PyObject get(PyObject key, PyObject default_object) {
         PyObject o = __finditem__(key);
         if (o == null)
@@ -243,18 +269,34 @@ public class PyDictionary extends PyObject implements ClassDictInit
             return o;
     }
 
+    /**
+     * Return this[key] if the key exists in the mapping, None
+     * is returned otherwise.
+     *
+     * @param key  the key to lookup in the dictionary.
+     */
     public PyObject get(PyObject key) {
         return get(key, Py.None);
     }
 
+    /**
+     * Return a shallow copy of the dictionary.
+     */
     public PyDictionary copy() {
         return new PyDictionary((Hashtable)table.clone());
     }
 
+    /**
+     * Remove all items from the dictionary.
+     */
     public void clear() {
         table.clear();
     }
 
+    /**
+     * Insert all the key:value pairs from <code>d</code> into
+     * this dictionary.
+     */
     public void update(PyDictionary d) {
         Hashtable otable = d.table;
 
@@ -266,6 +308,10 @@ public class PyDictionary extends PyObject implements ClassDictInit
             table.put(ek.nextElement(), ev.nextElement());
     }
 
+    /**
+     * Insert all the key:value pairs from <code>d</code> into
+     * this dictionary.
+     */
     public void update(PyStringMap d) {
         PyObject keys = d.keys();
         PyObject key;
@@ -273,10 +319,24 @@ public class PyDictionary extends PyObject implements ClassDictInit
             __setitem__(key, d.__getitem__(key));
     }
 
+    /**
+     * Return this[key] if the key exist, otherwise insert key with
+     * a None value and return None.
+     *
+     * @param key   the key to lookup in the dictionary.
+     */
     public PyObject setdefault(PyObject key) {
         return setdefault(key, Py.None);
     }
 
+    /**
+     * Return this[key] if the key exist, otherwise insert key with
+     * the value of failobj and return failobj
+     *
+     * @param key     the key to lookup in the dictionary.
+     * @param failobj the default value to insert in the dictionary
+     *                if key does not already exist.
+     */
     public PyObject setdefault(PyObject key, PyObject failobj) {
         PyObject o = __finditem__(key);
         if (o == null)
@@ -284,6 +344,10 @@ public class PyDictionary extends PyObject implements ClassDictInit
         return o;
     }
 
+    /**
+     * Return a random (key, value) tuple pair and remove the pair
+     * from the dictionary.
+     */
     public PyObject popitem() {
         java.util.Enumeration keys = table.keys();
         if (!keys.hasMoreElements())
@@ -294,6 +358,10 @@ public class PyDictionary extends PyObject implements ClassDictInit
         return new PyTuple(new PyObject[] { key, val });
     }
 
+    /**
+     * Return a copy of the dictionarys list of (key, value) tuple
+     * pairs.
+     */
     public PyList items() {
         java.util.Enumeration ek = table.keys();
         java.util.Enumeration ev = table.elements();
@@ -307,6 +375,9 @@ public class PyDictionary extends PyObject implements ClassDictInit
         return new PyList(l);
     }
 
+    /**
+     * Return a copy of the dictionarys list of keys.
+     */
     public PyList keys() {
         java.util.Enumeration e = table.keys();
         int n = table.size();
@@ -317,6 +388,9 @@ public class PyDictionary extends PyObject implements ClassDictInit
         return new PyList(l);
     }
 
+    /**
+     * Return a copy of the dictionarys list of values.
+     */
     public PyList values() {
         java.util.Enumeration e = table.elements();
         int n = table.size();
