@@ -1,3 +1,5 @@
+// Copyright © Corporation for National Research Initiatives
+
 package org.python.compiler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
