@@ -227,6 +227,8 @@ public class PyJavaClass extends PyClass
             boolean isstatic = Modifier.isStatic(field.getModifiers());
             
             if (isstatic) {
+                if (name.startsWith("__doc__") && name.length() > 7)
+                    continue;
                 PyObject prop = lookup(name, false);
                 if (prop != null && prop instanceof PyBeanProperty) {
                     ((PyBeanProperty)prop).field = field;
@@ -296,6 +298,16 @@ public class PyJavaClass extends PyClass
             func.addMethod(meth);
         } else {
             func = new PyReflectedFunction(meth);
+            try {
+                Field docField = proxyClass.getField("__doc__" + name);
+                int mods = docField.getModifiers();
+                if (docField.getType() == PyString.class &&
+                       Modifier.isPublic(mods) && 
+                       Modifier.isStatic(mods));
+                    func.__doc__ = (PyString) docField.get(null);
+            } catch (NoSuchFieldException ex) {
+            } catch (SecurityException ex) {
+            } catch (IllegalAccessException ex) {}
         }
         __dict__.__setitem__(name, func);
     }
