@@ -4,8 +4,31 @@ import org.python.core.*;
 public class jpython {
     private static String usage = "jpython [-i] [filename | -] [args]*";
 
-    public static void runJar(String jarfile) {
-    }
+    public static void runJar(String filename) {
+        return;
+        /*
+        try {
+            ZipFile zip = new ZipFile(filename);
+
+            ZipEntry runit = zip.getEntry("__run__.py");
+            if (runit == null) throw Py.ValueError("jar file missing '__run__.py'");
+
+    		PyDictionary locals = new PyDictionary();
+    		locals.__setitem__(new PyString("__name__"), new PyString(filename));
+    		locals.__setitem__(new PyString("zipfile"), Py.java2py(zip));
+
+		    InputStream file = zip.getInputStream(runit);
+            PyCode code;
+		    try {
+		        code = Py.compile(file, "__run__", "exec");
+		    } finally {
+			    file.close();
+			}
+			Py.runCode(code, locals, locals);
+		} catch (java.io.IOException e) {
+			throw Py.IOError(e);
+		}*/
+	}
 
     public static void main(String[] args) {
 	PythonInterpreter interp = new PythonInterpreter();
