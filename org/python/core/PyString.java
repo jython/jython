@@ -240,6 +240,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public PyString(String string) {
+        if (string == null) {
+            throw new IllegalArgumentException(
+                            "Cannot create PyString from null!");
+        }
         this.string = string;
     }
 
