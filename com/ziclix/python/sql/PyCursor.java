@@ -409,31 +409,27 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			this.sqlStatement.clearParameters();
 
 			// [3, 4] or (3, 4)
-			Integer binding = null;
-			PyObject param = Py.None, index = Py.None;
-
 			for (int i = 0; i < params.__len__(); i++) {
-				binding = null;
-				index = Py.newInteger(i);
-				param = params.__getitem__(i);
+				PyObject index = Py.newInteger(i);
+				PyObject param = params.__getitem__(i);
 
 				if (bindings != Py.None) {
-					PyObject tmp = bindings.__finditem__(index);
+					PyObject binding = bindings.__finditem__(index);
 
-					if (tmp != null) {
+					if (binding != null) {
 						try {
-							binding = (Integer)tmp.__tojava__(Integer.class);
-						} catch (ClassCastException e) {
+							int bindingValue = binding.__int__().getValue();
+
+							this.datahandler.setJDBCObject(this.sqlStatement, i + 1, param, bindingValue);
+
+							continue;
+						} catch (PyException e) {
 							throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("bindingValue"));
 						}
 					}
 				}
 
-				if (binding == null) {
-					this.datahandler.setJDBCObject(this.sqlStatement, i + 1, param);
-				} else {
-					this.datahandler.setJDBCObject(this.sqlStatement, i + 1, param, binding.intValue());
-				}
+				this.datahandler.setJDBCObject(this.sqlStatement, i + 1, param);
 			}
 		}
 

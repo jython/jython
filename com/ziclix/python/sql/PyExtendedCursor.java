@@ -125,27 +125,27 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		try {
-			String q = (qualifier == Py.None) ? null : (String)qualifier.__tojava__(String.class);
-			String o = (owner == Py.None) ? null : (String)owner.__tojava__(String.class);
-			String t = (table == Py.None) ? null : (String)table.__tojava__(String.class);
-			String[] y = null;
+		String q = datahandler.getMetaDataName(qualifier);
+		String o = datahandler.getMetaDataName(owner);
+		String t = datahandler.getMetaDataName(table);
+		String[] y = null;
 
-			if (type != Py.None) {
-				if (isSeq(type)) {
-					int len = type.__len__();
+		if (type != Py.None) {
+			if (isSeq(type)) {
+				int len = type.__len__();
 
-					y = new String[len];
+				y = new String[len];
 
-					for (int i = 0; i < len; i++) {
-						y[i] = (String)type.__getitem__(i).__tojava__(String.class);
-					}
-				} else {
-					y = new String[1];
-					y[0] = (String)type.__tojava__(String.class);
+				for (int i = 0; i < len; i++) {
+					y[i] = datahandler.getMetaDataName(type.__getitem__(i));
 				}
+			} else {
+				y = new String[1];
+				y[0] = datahandler.getMetaDataName(type);
 			}
+		}
 
+		try {
 			create(this.connection.getMetaData().getTables(q, o, t, y));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
@@ -164,12 +164,12 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		try {
-			String q = (qualifier == Py.None) ? null : (String)qualifier.__tojava__(String.class);
-			String o = (owner == Py.None) ? null : (String)owner.__tojava__(String.class);
-			String t = (table == Py.None) ? null : (String)table.__tojava__(String.class);
-			String c = (column == Py.None) ? null : (String)column.__tojava__(String.class);
+		String q = datahandler.getMetaDataName(qualifier);
+		String o = datahandler.getMetaDataName(owner);
+		String t = datahandler.getMetaDataName(table);
+		String c = datahandler.getMetaDataName(column);
 
+		try {
 			create(this.connection.getMetaData().getColumns(q, o, t, c));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
@@ -187,11 +187,11 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		try {
-			String q = (qualifier == Py.None) ? null : (String)qualifier.__tojava__(String.class);
-			String o = (owner == Py.None) ? null : (String)owner.__tojava__(String.class);
-			String p = (procedure == Py.None) ? null : (String)procedure.__tojava__(String.class);
+		String q = datahandler.getMetaDataName(qualifier);
+		String o = datahandler.getMetaDataName(owner);
+		String p = datahandler.getMetaDataName(procedure);
 
+		try {
 			create(this.connection.getMetaData().getProcedures(q, o, p));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
@@ -210,12 +210,12 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		try {
-			String q = (qualifier == Py.None) ? null : (String)qualifier.__tojava__(String.class);
-			String o = (owner == Py.None) ? null : (String)owner.__tojava__(String.class);
-			String p = (procedure == Py.None) ? null : (String)procedure.__tojava__(String.class);
-			String c = (column == Py.None) ? null : (String)column.__tojava__(String.class);
+		String q = datahandler.getMetaDataName(qualifier);
+		String o = datahandler.getMetaDataName(owner);
+		String p = datahandler.getMetaDataName(procedure);
+		String c = datahandler.getMetaDataName(column);
 
+		try {
 			create(this.connection.getMetaData().getProcedureColumns(q, o, p, c));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
@@ -234,11 +234,11 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		try {
-			String q = (qualifier == Py.None) ? null : (String)qualifier.__tojava__(String.class);
-			String o = (owner == Py.None) ? null : (String)owner.__tojava__(String.class);
-			String t = (table == Py.None) ? null : (String)table.__tojava__(String.class);
+		String q = datahandler.getMetaDataName(qualifier);
+		String o = datahandler.getMetaDataName(owner);
+		String t = datahandler.getMetaDataName(table);
 
+		try {
 			create(this.connection.getMetaData().getPrimaryKeys(q, o, t));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
@@ -264,14 +264,14 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		try {
-			String pq = (primaryQualifier == Py.None) ? null : (String)primaryQualifier.__tojava__(String.class);
-			String po = (primaryOwner == Py.None) ? null : (String)primaryOwner.__tojava__(String.class);
-			String pt = (primaryTable == Py.None) ? null : (String)primaryTable.__tojava__(String.class);
-			String fq = (foreignQualifier == Py.None) ? null : (String)foreignQualifier.__tojava__(String.class);
-			String fo = (foreignOwner == Py.None) ? null : (String)foreignOwner.__tojava__(String.class);
-			String ft = (foreignTable == Py.None) ? null : (String)foreignTable.__tojava__(String.class);
+		String pq = datahandler.getMetaDataName(primaryQualifier);
+		String po = datahandler.getMetaDataName(primaryOwner);
+		String pt = datahandler.getMetaDataName(primaryTable);
+		String fq = datahandler.getMetaDataName(foreignQualifier);
+		String fo = datahandler.getMetaDataName(foreignOwner);
+		String ft = datahandler.getMetaDataName(foreignTable);
 
+		try {
 			create(this.connection.getMetaData().getCrossReference(pq, po, pt, fq, fo, ft));
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
@@ -292,15 +292,17 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
-		try {
-			String q = (qualifier == Py.None) ? null : (String)qualifier.__tojava__(String.class);
-			String o = (owner == Py.None) ? null : (String)owner.__tojava__(String.class);
-			String t = (table == Py.None) ? null : (String)table.__tojava__(String.class);
-			boolean u = (unique == Py.None) ? false : ((Boolean)unique.__tojava__(Boolean.class)).booleanValue();
-			boolean a = (accuracy == Py.None) ? false : ((Boolean)accuracy.__tojava__(Boolean.class)).booleanValue();
-			Set skipCols = new HashSet();
+		Set skipCols = new HashSet();
 
-			skipCols.add(new Integer(12));
+		skipCols.add(new Integer(12));
+
+		String q = datahandler.getMetaDataName(qualifier);
+		String o = datahandler.getMetaDataName(owner);
+		String t = datahandler.getMetaDataName(table);
+		boolean u = unique.__nonzero__();
+		boolean a = accuracy.__nonzero__();
+
+		try {
 			create(this.connection.getMetaData().getIndexInfo(q, o, t, u, a), skipCols);
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
@@ -316,29 +318,30 @@ public class PyExtendedCursor extends PyCursor {
 
 		clear();
 
+		Set skipCols = new HashSet();
+
+		skipCols.add(new Integer(16));
+		skipCols.add(new Integer(17));
+
 		try {
-			Set skipCols = new HashSet();
-
-			skipCols.add(new Integer(16));
-			skipCols.add(new Integer(17));
 			create(this.connection.getMetaData().getTypeInfo(), skipCols);
-
-			// if the type is non-null, then trim the result list down to that type only
-			// if(type != null &&!Py.None.equals(type)) {
-			// for(int i = 0; i < ((PyObject) this.results.get(0)).__len__(); i++) {
-			// PyObject row = ((PyObject) this.results.get(0)).__getitem__(new PyInteger(i));
-			// PyObject sqlType = row.__getitem__(new PyInteger(1));
-			// if(type.equals(sqlType)) {
-			// this.results.remove(0);
-			// this.results.add(0, new PyList(new PyObject[] {
-			// row
-			// }));
-			// }
-			// }
-			// }
 		} catch (SQLException e) {
 			throw zxJDBC.newError(e);
 		}
+
+		// if the type is non-null, then trim the result list down to that type only
+		// if(type != null &&!Py.None.equals(type)) {
+		// for(int i = 0; i < ((PyObject) this.results.get(0)).__len__(); i++) {
+		// PyObject row = ((PyObject) this.results.get(0)).__getitem__(new PyInteger(i));
+		// PyObject sqlType = row.__getitem__(new PyInteger(1));
+		// if(type.equals(sqlType)) {
+		// this.results.remove(0);
+		// this.results.add(0, new PyList(new PyObject[] {
+		// row
+		// }));
+		// }
+		// }
+		// }
 	}
 
 	/**

@@ -40,6 +40,20 @@ public class DataHandler {
 	public DataHandler() {}
 
 	/**
+	 * Some database vendors are case sensitive on calls to DatabaseMetaData,
+	 * most notably Oracle.  This callback allows a DataHandler to affect the
+	 * name.
+	 *
+	 * @param PyString name
+	 *
+	 * @return String
+	 *
+	 */
+	public String getMetaDataName(PyObject name) {
+		return ((name == Py.None) ? null : name.__str__().toString());
+	}
+
+	/**
 	 * Returns the row id of the last executed statement.
 	 *
 	 * @param Statement stmt
@@ -258,7 +272,7 @@ public class DataHandler {
 
 			default :
 				Integer[] vals = { new Integer(col), new Integer(type) };
-				String msg = zxJDBC.getString("errorSettingIndex", vals);
+				String msg = zxJDBC.getString("errorGettingIndex", vals);
 
 				throw new SQLException(msg);
 		}

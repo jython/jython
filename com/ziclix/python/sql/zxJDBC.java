@@ -141,12 +141,14 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 			for (int i = 0; i < fields.length; i++) {
 				Field f = fields[i];
+				PyString name = Py.newString(f.getName());
+				PyObject value = new DBApiType(f.getInt(c));
 
-				dict.__setitem__(Py.newString(f.getName()), new PyInteger(f.getInt(c)));
-				sqltype.__setitem__(new PyInteger(f.getInt(c)), Py.newString(f.getName()));
+				dict.__setitem__(name, value);
+				sqltype.__setitem__(value, name);
 			}
-		} catch (Exception e) {
-			throw newError(e);
+		} catch (Throwable t) {
+			throw newError(t);
 		}
 
 		return;
@@ -298,9 +300,9 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	 */
 	public static PyException newError(Throwable e) {
 
-		try {
-			return (PyException)e;
-		} catch (ClassCastException ex) {}
+		if (e instanceof PyException) {
+			throw (PyException)e;
+		}
 
 		try {
 			StringBuffer buffer = new StringBuffer();

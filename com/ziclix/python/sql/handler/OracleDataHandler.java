@@ -33,6 +33,21 @@ public class OracleDataHandler extends FilterDataHandler {
 	}
 
 	/**
+	 * Method getMetaDataName
+	 *
+	 * @param PyString name
+	 *
+	 * @return String
+	 *
+	 */
+	public String getMetaDataName(PyObject name) {
+
+		String metaName = super.getMetaDataName(name);
+
+		return (metaName == null) ? null : metaName.toUpperCase();
+	}
+
+	/**
 	 * Provide functionality for Oracle specific types, such as ROWID.
 	 */
 	public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
