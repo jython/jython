@@ -14,6 +14,8 @@
     <!-- Classpaths                                                          -->
     <!-- =================================================================== -->
     <path id="main.classpath">
+        <pathelement path="${readline.jar}"/>
+        <pathelement path="${servlet.jar}"/>
         <pathelement path="${informix.jar}"/>
         <pathelement path="${oracle.jar}"/>
         <pathelement path="${mysql.jar}"/>
@@ -32,8 +34,6 @@
         <property name="debug" value="off" />
         <property name="optimize" value="on" />
 
-        <available classname="java.util.List" property="java2" />
-
         <available property="java2collection.present"
             classname="java.util.List"
         />
@@ -51,10 +51,12 @@
         />
         <available property="servlet.present" 
             classname="javax.servlet.Servlet"
+            classpath="${servlet.jar}"
         />
 
         <available property="readline.present"
             classname="org.gnu.readline.Readline"
+            classpath="${readline.jar}"
         />
 
         <available property="informix.present"

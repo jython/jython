@@ -43,6 +43,12 @@ jython.home=d:\\jython\\CVS
 scp.command=scp
 scp.user=bckfnn
 
+# Needed for building PyServlet support.
+servlet.jar=d:/java/servlet/servlet.jar
+
+# Needed for building Readline support.
+readline.jar=d:/java/java_readline-0.6/java_readline.jar
+
 # Needed for building zxJDBC DataHandlers
 # If missing, the appropriate DataHandler will not be built
 oracle.jar=d:/java/lib/classes12.zip
