@@ -57,10 +57,15 @@ JAVA = java
 
 OROMATCHERROOT = ../../../../nondist/ORO
 
+# Unix and Linux users should use this CLASSPATH separator
+SEP = :
+# Windows users may need to redefine the CLASSPATH separator to this
+# SEP = ;
+
 # You shouldn't need to change anything below this line
 
 CLASSPATH = "SUBDIRS MUST OVERRIDE"
-CLASSPATHSWITCH = $(CLASSPATH):$(BOOTSTRAPCLASSES)
+CLASSPATHSWITCH = $(CLASSPATH)$(SEP)$(BOOTSTRAPCLASSES)
 
 .SUFFIXES= .java .class
 
