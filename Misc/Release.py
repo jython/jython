@@ -249,13 +249,13 @@ def do_build(tagname):
     trans = string.maketrans('', '')
     tagname = string.translate(tagname, trans, '.')
     print 'tagname:', tagname
-    # first make full distribution
-    os.system('cp -f jpython.jar export')
-    os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
-    os.rename('JPython'+tagname+'.class', 'JPythonORO'+tagname+'.class')
-    # now make non-ORO distro
-    os.unlink('export/jpython.jar')
+    # make non-ORO distro
     os.system('cp jpython-only.jar export/jpython.jar')
+    os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
+    os.rename('JPython'+tagname+'.class', 'JPythonONLY'+tagname+'.class')
+    # make full distribution
+    os.unlink('export/jpython.jar')
+    os.system('cp -f jpython.jar export')
     os.system('nondist/Jshield/bin/jshield dist/jpython.isj')
     
 
