@@ -794,6 +794,7 @@ public final class Py {
 	public static boolean matchException(PyException pye, PyObject e) {
 	    // A special case for IOError's to allow them to also match java.io.IOExceptions
 	    // This is a hack for 1.0.x until I can do it right in 1.1
+	    pye.instantiate();
 	    if (e == Py.IOError) {
 	        if (__builtin__.isinstance(pye.value, PyJavaClass.lookup(java.io.IOException.class))) {
 	            return true;
