@@ -1,6 +1,6 @@
 <!-- -*- html -*- -->
 <h3>Documentation</h3>
-<li><a href="./">Overview</a>
+<li><a href="./index.html">Overview</a>
 <li><a href="whatis.html">Executive Summary</a>
 <li><a href="interpreter.html">Invoking JPython</a>
 <li><a href="registry.html">JPython Registry</a>
