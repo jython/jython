@@ -36,7 +36,7 @@ public class SysPackageManager extends PathPackageManager {
         }
     }
 
-    private void addJarDir(String jdir) {
+    public void addJarDir(String jdir) {
         File file = new File(jdir);
         if (!file.isDirectory()) return;
         String[] files = file.list();
