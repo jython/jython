@@ -408,5 +408,8 @@ class md {
         }
         return tmpstr;
     }
+    static md new_md5(String data) {
+        return new md5(data);
+    }
 
 }

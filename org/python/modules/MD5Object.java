@@ -32,7 +32,7 @@ public class MD5Object extends PyObject
     }
 
     public PyObject digest() {
-        md5 md5obj = new md5(data);
+        md md5obj = md.new_md5(data);
         md5obj.calc();
         // this is for compatibility with CPython's output
         String s = md5obj.toString();
@@ -46,7 +46,7 @@ public class MD5Object extends PyObject
     }
 
     public PyObject hexdigest() {
-        md5 md5obj = new md5(data);
+        md md5obj = md.new_md5(data);
         md5obj.calc();
         // this is for compatibility with CPython's output
         return new PyString(md5obj.toString());
