@@ -63,7 +63,8 @@
         />
 
         <echo>--- Build environment for ${ant.project.name} ---</echo>
-        <echo>--- Flags (Note: If the {property name} is displayed, then the component is not present)</echo>
+        <echo>--- Flags (Note: If the {property name} is displayed,</echo>
+        <echo>--- then the component is not present)</echo>
         <echo/>
         <echo>--- Optional Libraries ---</echo>
         <echo>oracle      = ${oracle.present}</echo>
