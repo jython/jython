@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.util.*;
 import java.io.*;
+import org.python.modules.Setup;
 
 /**
 Implements the standard Python sys module.
@@ -220,7 +221,7 @@ public class PySystemState extends PyObject {
 	return ret;
     }
 
-    String safeRepr() {
+    protected String safeRepr() {
         return "module 'sys'";
     }
 
@@ -429,43 +430,47 @@ public class PySystemState extends PyObject {
     }
 
     public static String[] builtin_module_names = null;
-
-    private static final String builtinDefaults = "jarray, math, thread, operator, time, os, types, py_compile, codeop, re, code, synchronize, cPickle, cStringIO, __builtin__:org.python.core";
-
     private static Hashtable builtinNames;
 
+    private static void addBuiltin(String name) {
+	String classname = null;
+	int colon = name.indexOf(':');
+	if (colon != -1) {
+	    String modname = name.substring(colon+1, name.length()).trim();
+	    name = name.substring(0, colon).trim();
+	    if (modname.equals("null"))
+		classname = null;
+	    else
+		classname = modname + "." + name;
+	}
+	else {
+	    name = name.trim();
+	    classname = "org.python.modules."+name;
+	}
+	if (classname != null)
+	    builtinNames.put(name, classname);
+	else
+	    builtinNames.remove(name);
+    }
+	
     private static void initBuiltins(Properties props) {
         builtinNames = new Hashtable();
+
+	// add builtins specified in the Setup.java file
+	for (int i=0; i < Setup.builtinModules.length; i++)
+	    addBuiltin(Setup.builtinModules[i]);
+
+	// add builtins specified in the registry file
 	String builtinprop = props.getProperty("python.modules.builtin", "");
-	addBuiltins(builtinDefaults);
-	addBuiltins(builtinprop);
+	StringTokenizer tok = new StringTokenizer(builtinprop, ",");
+	while (tok.hasMoreTokens())
+	    addBuiltin(tok.nextToken());
 		
 	int n = builtinNames.size();
 	builtin_module_names = new String[n];
 	Enumeration keys = builtinNames.keys();
-	for(int i=0; i<n; i++) {
+	for (int i=0; i<n; i++)
 	    builtin_module_names[i] = (String)keys.nextElement();
-	}
-    }
-	
-    private static void addBuiltins(String names) {
-	StringTokenizer tok = new StringTokenizer(names, ",");
-	while  (tok.hasMoreTokens())  {
-	    String name = tok.nextToken();
-	    String classname = null;
-	    int colon = name.indexOf(':');
-	    if (colon != -1) {
-		classname = name.substring(colon+1, name.length()).trim();
-		name = name.substring(0, colon).trim();
-		if (classname.equals("null")) classname = null;
-		else classname = classname+"."+name;
-	    } else {
-		name = name.trim();
-		classname = "org.python.modules."+name;
-	    }
-	    if (classname != null) builtinNames.put(name, classname);
-	    else builtinNames.remove(name);
-	}
     }
 	
     static String getBuiltin(String name) {
