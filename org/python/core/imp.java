@@ -1,6 +1,7 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+import java.lang.reflect.*;
 import java.io.*;
 import java.util.Hashtable;
 import java.util.Properties;
@@ -183,7 +184,23 @@ public class imp
                 }
             }
         }
-        return PyJavaClass.lookup(c);
+        PyJavaClass ret = PyJavaClass.lookup(c);
+        initModule(c, ret.__getattr__("__dict__"));
+        return ret;
+    }
+
+    public static void initModule(Class c, PyObject dict) {
+        if (ModuleDictInit.class.isAssignableFrom(c) 
+                            && c != ModuleDictInit.class) {
+            try {
+                Method m = c.getMethod("moduleDictInit", 
+                     new Class[] { PyObject.class });
+                m.invoke(null, new Object[] { dict });
+            } catch (Exception exc) {
+                // System.err.println("Got exception: " + exc + " " + proxyClass);
+                throw Py.JavaError(exc);
+            }
+        }
     }
 
     private static PyObject loadBuiltin(String name, PyList path) {
