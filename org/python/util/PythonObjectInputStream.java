@@ -19,14 +19,24 @@ public class PythonObjectInputStream extends ObjectInputStream {
             if (idx > 19)
                clsName = clsName.substring(19, idx);
             //System.out.println("new:" + clsName);
-            Class cls = (Class) PyClass.serializableProxies.get(clsName);
-            if (cls != null)
-                return cls;
+
+            idx = clsName.indexOf('$');
+            if (idx >= 0) {
+                String mod = clsName.substring(0, idx);
+                clsName = clsName.substring(idx+1);
+
+                PyObject module = importModule(mod);
+                PyObject pycls = module.__getattr__(clsName.intern());
+                Object cls = pycls.__tojava__(Class.class);
+
+                if (cls != null && cls != Py.NoConversion)
+                    return (Class) cls;
+            }
         }
         try {
             return super.resolveClass(v);
         } catch (ClassNotFoundException exc) {
-            PyObject m = imp.load(clsName.intern());
+            PyObject m = importModule(clsName);
             //System.out.println("m:" + m); 
             Object cls = m.__tojava__(Class.class);
             //System.out.println("cls:" + cls); 
@@ -34,6 +44,33 @@ public class PythonObjectInputStream extends ObjectInputStream {
                 return (Class) cls;
             throw exc;
         }
+    }
+
+
+    private static PyObject importModule(String name) {
+        PyFrame frame = Py.getFrame();
+        if (frame == null)
+            return null;
+        PyObject globals = frame.f_globals;
+
+        PyObject builtins = frame.f_builtins;
+        if (builtins == null)
+            builtins = Py.getSystemState().builtins;
+
+        PyObject silly_list = new PyTuple(new PyString[] { 
+            Py.newString("__doc__"),
+        });
+
+        PyObject __import__ = builtins.__finditem__("__import__");
+        if (__import__ == null)
+            return null;
+
+        PyObject module = __import__.__call__(new PyObject[] {
+                Py.newString(name),
+                globals,
+                globals,
+                silly_list } );
+        return module;
     }
 }
 
