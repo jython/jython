@@ -125,28 +125,35 @@ public class PyClass extends PyObject {
         }
     }
             
-
     public Object __tojava__(Class c) {
         if ((c == Object.class || c == Class.class) && proxyClass != null) {
             return proxyClass;
         }
         return super.__tojava__(c);
     }   
-        
 
-    PyObject lookup(String name, boolean stop_at_java) {
-        PyObject result;
-        result = __dict__.__finditem__(name);
+    // returns [PyObject, PyClass]
+    PyObject[] lookupGivingClass(String name, boolean stop_at_java) {
+        PyObject result = __dict__.__finditem__(name);
+        PyClass resolvedClass = this;
         if (result == null && __bases__ != null) {
             int n = __bases__.__len__();
             for (int i=0; i<n; i++) {
-                PyClass base = (PyClass)(__bases__.__getitem__(i));
-                result = base.lookup(name, stop_at_java);
+                resolvedClass = (PyClass)(__bases__.__getitem__(i));
+                PyObject[] res = resolvedClass.lookupGivingClass(name,
+                                                                 stop_at_java);
+                result = res[0];
+                resolvedClass = (PyClass)(res[1]);
                 if (result != null)
                     break;
             }
         }
-        return result;
+        return new PyObject[] {result, resolvedClass};
+    }
+
+    PyObject lookup(String name, boolean stop_at_java) {
+        PyObject[] result = lookupGivingClass(name, stop_at_java);
+        return result[0];
     }
         
     public PyObject __findattr__(String name) {
@@ -154,13 +161,12 @@ public class PyClass extends PyObject {
         if (name == "__name__") return new PyString(__name__);
         if (name == "__bases__") return __bases__;
     
-        PyObject result = lookup(name, false);
+        PyObject[] result = lookupGivingClass(name, false);
             
-        if (result == null)
+        if (result[0] == null)
             return super.__findattr__(name);
-        PyObject gotten = result._doget(null);
-        gotten._setClass(this);
-        return gotten;
+
+        return result[0]._doget(null, result[1]);
     }
 
     public void __setattr__(String name, PyObject value) {
