@@ -13,8 +13,14 @@ public abstract class PackageManager extends Object {
         topLevelPackage = new PyJavaPackage("",this);
     }
 
-    abstract public Class findClass(String pkg,String name);
+    abstract public Class findClass(String pkg,String name,String reason);
+    
+    public Class findClass(String pkg,String name) {
+        return findClass(pkg,name,"java class");
+    }
 
+    public void notifyPackageImport(String pkg,String name) {}
+    
     /** Dynamically check if pkg.name exists as java pkg in the controlled hierarchy.
      * Should be overriden.
      * @param pkg parent pkg name

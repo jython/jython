@@ -73,14 +73,22 @@ protected void debug(String msg) {Py.writeDebug("*sys-package-mgr*",msg); }
 
         if (fakepath != null) addClassPath(fakepath);
     }
-
+    
+    public void notifyPackageImport(String pkg,String name) {
+        if (pkg != null && pkg.length()>0) name = pkg + '.' + name;
+        Py.writeComment("import","'"+name+"' as java package");     
+    }
+    
     public Class findClass(String pkg,String name) {
-        if (pkg.length() > 0) 
-            name = pkg + '.' + name;
-        Class c = Py.findClassEx(name, "java class");
+        Class c = super.findClass(pkg,name);
         if (c != null)
-            Py.writeComment("import", "'" + name + "' as java class");
+          Py.writeComment("import","'"+name+"' as java class");
         return c;
+    }
+    
+    public Class findClass(String pkg,String name,String reason) {
+        if (pkg != null && pkg.length()>0) name = pkg + '.' + name;
+        return Py.findClassEx(name,reason);
     }
 
     public PyList doDir(PyJavaPackage jpkg,boolean instantiate,boolean exclpkgs) {

@@ -53,11 +53,10 @@ public class PyBeanEventProperty extends PyReflectedField
         return func;
     }
 
-    private static Hashtable adapterClasses = new Hashtable();
-
-    private static Class getAdapterClass(Class c) {
-        //System.err.println("getting adapter for: "+c+", "+c.getName());
-        Object o = adapterClasses.get(c);
+    private synchronized static Class getAdapterClass(Class c) {
+        // System.err.println("getting adapter for: "+c+", "+c.getName());
+        InternalTables tbl=PyJavaClass.getInternalTables();
+        Object o = tbl.getAdapterClass(c);
         if (o != null)
             return (Class)o;
         Class pc = Py.findClass("org.python.proxies."+c.getName()+"$Adapter");
@@ -65,23 +64,15 @@ public class PyBeanEventProperty extends PyReflectedField
             //System.err.println("adapter not found for: "+"org.python.proxies."+c.getName()+"$Adapter");           
             pc = MakeProxies.makeAdapter(c);
         }
-        adapterClasses.put(c, pc);
+        tbl.putAdapterClass(c, pc);
         return pc;
     }
 
-    // This creates a cache mapping Java object id's to adapters.  Lacking
-    // appropriate weak references in JDK 1.1, this leads to a possible
-    // memory leak.  This will be remedied when JPython can use JDK 1.2.
-    // Note that objects are referenced by their identityHashCode to
-    // minimize the size of the leak (the actual Java objects are
-    // collected)
-    private static Hashtable adapters;
-    private Object getAdapter(Object self) {
-        if (adapters == null)
-            adapters = new Hashtable();
+    private synchronized Object getAdapter(Object self) {
+        InternalTables tbl=PyJavaClass.getInternalTables();
+        String eventClassName = eventClass.getName();
 
-        String key = eventClass.getName()+"$"+System.identityHashCode(self);
-        Object adapter = adapters.get(key);
+        Object adapter = tbl.getAdapter(self, eventClassName);
         if (adapter != null)
             return adapter;
 
@@ -91,7 +82,7 @@ public class PyBeanEventProperty extends PyReflectedField
         } catch (Exception e) {
             throw Py.JavaError(e);
         }
-        adapters.put(key, adapter);
+        tbl.putAdapter(self, eventClassName, adapter);
         return adapter;
     }
 

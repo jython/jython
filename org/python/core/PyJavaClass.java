@@ -8,53 +8,63 @@ public class PyJavaClass extends PyClass
 {
     public PyReflectedConstructor __init__;
 
-    private static java.util.Hashtable classes;
-
-    public static final PyJavaClass lookup(Class c) {
-        return lookup(c.getName(), c);
+    public PackageManager __mgr__;
+    
+    private static InternalTables tbl;
+    
+    public synchronized final static InternalTables getInternalTables() {
+        if(tbl == null)
+          tbl = InternalTables.createInternalTables();
+        return tbl;
     }
     
-    public synchronized static final PyJavaClass lookup(String name, Class c) {
-        if (classes == null) {
-            classes = new java.util.Hashtable();
-            PyJavaClass jc = new PyJavaClass(true);
-            classes.put("org.python.core.PyJavaClass", jc);
-            jc.init(PyJavaClass.class);
-            Py.initPython();
+
+    public static final PyJavaClass lookup(String name,PackageManager mgr) {
+        if (tbl.queryCanonical(name)) {
+            return lookup(mgr.findClass(null,name,"forced java class"));
         }
-        PyJavaClass ret = (PyJavaClass)classes.get(name);
+        PyJavaClass ret = new PyJavaClass(name, mgr);
+        tbl.putLazyCanonical(name, ret);
+        return ret;        
+    }
+    
+    public synchronized static final PyJavaClass lookup(Class c) {
+        if (tbl == null) {
+            tbl = InternalTables.createInternalTables();
+            PyJavaClass jc = new PyJavaClass(true);
+            jc.init(PyJavaClass.class);
+            tbl.putCanonical(PyJavaClass.class,jc);
+        }
+        PyJavaClass ret = tbl.getCanonical(c);        
         if (ret != null)
             return ret;
-        ret = new PyJavaClass(name);
-        classes.put(name, ret);
-        if (c != null) {
-            ret.init(c);
+        PyJavaClass lazy = tbl.getLazyCanonical(c.getName());
+        if (lazy != null) {
+            initLazy(lazy);
+            if (lazy.proxyClass == c) return lazy;
         }
+        
+        ret = new PyJavaClass(c);
+        tbl.putCanonical(c,ret);
+                
         return ret;
     }
 
     public static PyClass __class__;
     
-    public PyJavaClass(PyClass c) {
-        super(c);
-    }
-    
-    public PyJavaClass() {
-        this(__class__);
-    }
-
     private PyJavaClass(boolean fakeArg) {
         super(true);
     }
 
-    public PyJavaClass(Class c) {
-        this();
+    protected PyJavaClass(Class c) {
+        super(__class__);
         init(c);
     }
         
-    public PyJavaClass(String name) {
-        this();
+    protected PyJavaClass(String name,PackageManager mgr) {
+        super(__class__);
         __name__ = name;
+        this.__mgr__ = mgr;
     }
         
     protected void findModule(PyObject dict) {} 
@@ -64,6 +74,12 @@ public class PyJavaClass extends PyClass
         return proxyClass;
     }
 
+    private static final void initLazy(PyJavaClass jc) {
+        jc.init(jc.__mgr__.findClass(null,jc.__name__,"lazy java class"));
+        tbl.putCanonical(jc.proxyClass,jc);
+        jc.__mgr__ = null;
+    }
+   
     private boolean initialized=false;
 
     // Prevent recursive calls to initialize()
@@ -73,8 +89,10 @@ public class PyJavaClass extends PyClass
         if (initialized || initializing)
             return;
         initializing = true;
-        if (proxyClass == null) {
-            init(Py.findClassEx(__name__, "lazy java class"));
+        synchronized(PyJavaClass.class) {
+            if (proxyClass == null) {
+                initLazy(this);
+            }
         }
         init__bases__(proxyClass);
         init__dict__();
@@ -91,6 +109,18 @@ public class PyJavaClass extends PyClass
                 throw Py.JavaError(exc);
             }
         }
+            
+        if (InitModule.class.isAssignableFrom(proxyClass)) {
+            try {
+                InitModule m = (InitModule)proxyClass.newInstance();
+                m.initModule(__dict__);
+            }
+            catch (Exception exc) {
+//                 System.err.println("Got exception: " + exc);
+                throw Py.JavaError(exc);
+            }
+        }
+                
         initialized = true;
         initializing = false;
     }
@@ -180,22 +210,10 @@ public class PyJavaClass extends PyClass
         __bases__ = new PyTuple(bases);
     }        
 
-    synchronized void init(Class c)  {
+    private void init(Class c)  {
         init__class__(c);
         proxyClass = c;
         __name__ = c.getName();
-            
-        if (InitModule.class.isAssignableFrom(c)) {
-            initialize();
-            try {
-                InitModule m = (InitModule)c.newInstance();
-                m.initModule(__dict__);
-            }
-            catch (Exception exc) {
-//                 System.err.println("Got exception: " + exc);
-                throw Py.JavaError(exc);
-            }
-        }
     }
 
      /**

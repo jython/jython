@@ -85,7 +85,7 @@ public class PyJavaPackage extends PyObject {
     }
 
     public PyObject addLazyClass(String name) {
-        PyObject ret = PyJavaClass.lookup(__name__+'.'+name,null);
+        PyObject ret = PyJavaClass.lookup(__name__+'.'+name,__mgr__);
         __dict__.__setitem__(name.intern(), ret);
         return ret;
     }
@@ -138,8 +138,7 @@ public class PyJavaPackage extends PyObject {
         }
 
         if(__mgr__.packageExists(__name__,name)) {
-            if (__name__.length() > 0)
-                Py.writeComment("import", "'" + __name__ + '.' + name + "' as java package");
+            __mgr__.notifyPackageImport(__name__,name);
             return addPackage(name);
         }
 

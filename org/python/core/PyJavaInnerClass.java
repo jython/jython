@@ -6,7 +6,7 @@ public class PyJavaInnerClass extends PyJavaClass
     public PyJavaClass parent = null;
 
     public PyJavaInnerClass(Class c, PyJavaClass parent) {
-        init(c);
+        super(c);
         this.parent = parent;
         int dollar = __name__.indexOf('$');
         if (dollar != -1) {
