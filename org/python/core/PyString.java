@@ -162,9 +162,17 @@ public class PyString extends PySequence {
         return new PyString(fmt.format(other));
     }
 
+    private String stripPlus(String s) {
+        s = s.trim();
+        if (s.charAt(0) == '+') {
+            return s.substring(1, s.length());
+        }
+        return s;
+    }   
+
  	public PyInteger __int__() {
  	    try {
-		    return new PyInteger(Integer.valueOf(string).intValue());
+		    return new PyInteger(Integer.valueOf(stripPlus(string)).intValue());
 		} catch (NumberFormatException exc) {
 		    throw Py.ValueError("invalid literal for __int__: "+string);
 		}
@@ -172,7 +180,7 @@ public class PyString extends PySequence {
 
 	public PyLong __long__() {
  	    try {
-    		return new PyLong(new java.math.BigInteger(string));
+    		return new PyLong(new java.math.BigInteger(stripPlus(string)));
 		} catch (NumberFormatException exc) {
 		    throw Py.ValueError("invalid literal for __long__: "+string);
 		}
