@@ -203,7 +203,10 @@ public class PyDictionary extends PyObject implements InitModule
         PyList akeys = keys();
         PyList bkeys = other.keys();
 
-        for(int i=0; i<bn; i++) {
+        akeys.sort();
+        bkeys.sort();
+
+        for (int i=0; i<bn; i++) {
             PyObject akey = akeys.get(i);
             PyObject bkey = bkeys.get(i);
             int c = akey._cmp(bkey);
