@@ -6,6 +6,10 @@ XX-Dec-2000 Jython 2.0 alpha 2
     - Added support for formatting of long values in "%d %x %X %o".
       The support does not match CPython2.0 exactly, but matches
       what CPython2.1 will do.
+    - The \x escape will only eat two hex characters and will 
+      always create a character with values < 256. Use the \u
+      escape for high-byte values.
+    - A ucnhash module to support the \n{name} escape.
 
   Bug fixes.
     - Package relative import work, at least when the dotted package name
