@@ -1,5 +1,6 @@
 package org.python.core;
 import java.io.OutputStream;
+import java.io.Writer;
 
 public class StdoutWrapper extends OutputStream {
     private String name;
@@ -14,9 +15,21 @@ public class StdoutWrapper extends OutputStream {
             throw Py.AttributeError("missing sys."+name);
         }
         if (obj instanceof PyJavaInstance) {
-            OutputStream os = (OutputStream)(obj.__tojava__(OutputStream.class));
-            if (os != null) {
-                PyFile f = new PyFile(os, "<java OutputStream>");
+            PyFile f = null;
+            
+            Object tmp = obj.__tojava__(OutputStream.class);
+            if ((tmp != Py.NoConversion) && (tmp != null)) {
+                OutputStream os = (OutputStream)tmp;
+                f = new PyFile(os, "<java OutputStream>");
+            } else {
+                tmp = obj.__tojava__(Writer.class);
+                if ((tmp != Py.NoConversion) && (tmp != null)) {
+                    Writer w = (Writer)tmp;
+                    f = new PyFile(w, "<java Writer>");
+                }
+            }
+            
+            if (f != null) {
                 Py.getThreadState().interp.sysdict.__setitem__(name, f);
                 return f;
             }
