@@ -1,8 +1,8 @@
 import java
 from java import awt
 
-def test(panel, size=None):
-	f = awt.Frame('AWT Tester', windowClosing=lambda event: java.lang.System.exit(0))
+def test(panel, size=None, name='AWT Tester'):
+	f = awt.Frame(name, windowClosing=lambda event: java.lang.System.exit(0))
 	if hasattr(panel, 'init'):
 		panel.init()
 
@@ -19,7 +19,7 @@ class GridBag:
 		self.gridbag = awt.GridBagLayout()
 		self.defaults = defaults
 		frame.setLayout(self.gridbag)
-		
+
 	def addRow(self, widget, **kw):
 		kw['gridwidth'] = 'REMAINDER'
 		apply(self.add, (widget, ), kw)
