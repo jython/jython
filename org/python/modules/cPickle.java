@@ -321,6 +321,15 @@ import org.python.core.*;
  */
 public class cPickle implements InitModule {
     /**
+     * The doc string
+     */
+    public static String __doc__ = 
+       "Java implementation and optimization of the Python pickle module\n" + 
+       "\n" + 
+       "$Id$\n";
+
+
+    /**
      * The program version.
      */
     public static String __version__ = "1.30";
@@ -336,20 +345,94 @@ public class cPickle implements InitModule {
     public static final String[] compatible_formats = 
 		new String[] { "1.0", "1.1", "1.2" };
 
+
+    public static PyObject PickleError;
+    public static PyObject PicklingError;
+    public static PyObject UnpickleableError;
+    public static PyObject UnpicklingError;
+
+    static {
+        PyObject excModule = imp.load("cPickle_exceptions");
+       
+        PickleError = excModule.__getattr__("PickleError");
+        PicklingError = excModule.__getattr__("PicklingError");
+        UnpickleableError = excModule.__getattr__("UnpickleableError");
+        UnpicklingError = excModule.__getattr__("UnpicklingError");
+    }
+
+
+    /**
+     * Super class for all pickling errors
+     */
+/*
+    public static class PickleError extends exceptions.Exception {
+
+        public PickleError() { }
+
+        public PickleError(PyObject[] args, String[] kws) {
+            super(args, kws);
+        }
+
+        public PyString __str__() {
+            if (args.__len__() > 0 && args.__getitem__(0).__len__()  > 0)
+                return args.__getitem__(0).__str__();
+            else
+                return new PyString("(what)");
+        }
+    }
+*/
+
     /**
      * This exception is raised when an unpicklable object is 
      * passed to Pickler.dump(). 
      */
-    public static final PyString PicklingError = 
-		new PyString("pickle.PicklingError");
+
+/*
+    public static class PicklingError extends PickleError {
+        public PicklingError() { }
+
+        public PicklingError(PyObject[] args, String[] kws) {
+            super(args, kws);
+        }
+    }
+
+*/
+
+
+
+/*
+    public static class UnpickleableError extends PicklingError {
+        public UnpickleableError() { }
+
+        public UnpickleableError(PyObject[] args, String[] kws) {
+            super(args, kws);
+        }
+        public PyString __str__() {
+            PyObject a = args.__len__() > 0 ? args.__getitem__(0) : new PyString("(what)");
+            return new PyString("Cannot pickle %s objects").__mod__(a).__str__();
+        }
+    }
+*/
 
 
     /**
      * This exception if the input file does not contain a valid pickled object
      * or it is unsafe to unpickle the object.
      */
-    public static final PyString UnpicklingError =
-		new PyString("pickle.UnpicklingError");
+
+/*
+    public static class UnpicklingError extends PickleError {
+        public UnpicklingError() { }
+
+        public UnpicklingError(PyObject[] args, String[] kws) {
+            super(args, kws);
+        }
+    }
+*/
+
+
+    public static final PyString BadPickleGet = 
+		new PyString("cPickle.BadPickleGet");
 
 
     final static char MARK            = '(';
@@ -413,10 +496,14 @@ public class cPickle implements InitModule {
     private static PyClass FileType = PyJavaClass.lookup(PyFile.class);
  
 
+    private static PyObject dict;
+
     /**
      * Initialization when module is imported.
      */
     public void initModule(PyObject dict) {
+	this.dict = dict;
+
 	// XXX: Hack for JPython 1.0.1. By default __builtin__ is not in
 	// sys.modules.
 	imp.importName("__builtin__", true);
@@ -603,6 +690,8 @@ public class cPickle implements InitModule {
 
 	FileIOFile(PyObject file) {
 	    this.file = (PyFile)file.__tojava__(PyFile.class);
+            if (this.file.closed)
+                throw Py.ValueError("I/O operation on closed file");
 	}
 
 	public void write(String str) {
@@ -811,8 +900,7 @@ public class cPickle implements InitModule {
 	    if (reduce == null) {
 		reduce = object.__findattr__("__reduce__");
 		if (reduce == null)
-		    throw new PyException(PicklingError, 
-			    "can't pickle " + t.__name__ + " objects");
+		    throw new PyException(UnpickleableError, object);
 		tup = reduce.__call__();
 	    } else {
 		tup = reduce.__call__(object);
@@ -1090,6 +1178,10 @@ public class cPickle implements InitModule {
 	
 
 	final private void save_inst(PyInstance object) {
+            if (object instanceof PyJavaInstance)
+		throw new PyException(PicklingError,
+			    "Unable to pickle java objects.");
+
 	    PyClass cls = object.__class__;
 
 	    PySequence args = null;
@@ -1758,9 +1850,17 @@ public class cPickle implements InitModule {
 
 
 	final private PyObject find_class(String module, String name) {
+            PyObject fc = dict.__finditem__("find_global");
+            if (fc != null) {
+               if (fc == Py.None)
+                   throw new PyException(UnpicklingError,
+                         "Global and instance pickles are not supported.");
+               return fc.__call__(new PyString(module), new PyString(name));
+            }
+
 	    PyObject env = null;
 	    try {
-		env = imp.importName(module.intern(), true);
+		env = imp.importName(module.intern(), false);
 	    } catch (PyException ex) {
 		ex.printStackTrace();
 		throw new PyException(Py.SystemError,
@@ -1814,12 +1914,19 @@ public class cPickle implements InitModule {
 	}
 
 	final private void load_get() {
-	    push((PyObject)memo.get(file.readlineNoNl()));
+            String py_str = file.readlineNoNl();
+            PyObject value = (PyObject)memo.get(py_str);
+            if (value == null)
+                throw new PyException(BadPickleGet, py_str);
+	    push(value);
 	}
 
 	final private void load_binget() {
-	    int i = (int)file.read(1).charAt(0);
-	    push((PyObject)memo.get(String.valueOf(i)));
+	    String py_key = String.valueOf((int)file.read(1).charAt(0));
+            PyObject value = (PyObject)memo.get(py_key);
+            if (value == null)
+                throw new PyException(BadPickleGet, py_key);
+	    push(value);
 	}
 
 	final private void load_long_binget() {
@@ -1828,7 +1935,11 @@ public class cPickle implements InitModule {
 		   (d.charAt(1)<<8) | 
 		   (d.charAt(2)<<16) |
 		   (d.charAt(3)<<24);
-	    push((PyObject)memo.get(String.valueOf(i)));
+	    String py_key = String.valueOf(i);
+            PyObject value = (PyObject)memo.get(py_key);
+            if (value == null)
+                throw new PyException(BadPickleGet, py_key);
+	    push(value);
 	}
 
 

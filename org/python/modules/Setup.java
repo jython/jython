@@ -39,6 +39,7 @@ public class Setup
         "code",
         "synchronize",
         "cPickle",
+        "cPickle_exceptions",
         "cStringIO",
         "struct",
         "binascii",
