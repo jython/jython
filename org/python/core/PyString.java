@@ -1796,6 +1796,18 @@ public class PyString extends PySequence implements ClassDictInit
     public PyString encode(String encoding, String errors) {
         return codecs.encode(this, encoding, errors);
     }
+
+    public PyString decode() {
+        return encode(null, null);
+    }
+
+    public PyString decode(String encoding) {
+        return decode(encoding, null);
+    }
+
+    public PyString decode(String encoding, String errors) {
+        return codecs.decode(this, encoding, errors);
+    }
 }
 
 
