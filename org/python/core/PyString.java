@@ -696,35 +696,24 @@ public class PyString extends PySequence
     }
     
     public String replace(String oldPiece, String newPiece, int maxsplit) {
-        return joinfields(split(oldPiece, maxsplit), newPiece);
+        PyString newstr = new PyString(newPiece);
+        return newstr.join(split(oldPiece, maxsplit));
     }
     
-    public static String join(PyObject seq) {
-        return join(seq, " ");
-    }
-
-    public static String join(PyObject seq, String sep) {
-        int i=0;
+    public String join(PyObject seq) {
+        // trigger same TypeError as CPython if seq is not a sequence
+        int seqlen = __builtin__.len(seq);
         StringBuffer buf = new StringBuffer();
-        PyObject obj;
-        boolean addSep=false;
 
-        while ((obj = seq.__finditem__(i++)) != null) {
-            if (addSep)
-                buf.append(sep);
-            buf.append(obj.toString());
-            addSep = true;
+        for (int i=0; i < seqlen; i++) {
+            PyObject obj = seq.__getitem__(i);
+            if (i > 0)
+                buf.append(string);
+            buf.append(obj.__str__());
         }
         return buf.toString();
     }
 
-    public static String joinfields(PyObject seq) {
-        return join(seq, " ");
-    }
-
-    public static String joinfields(PyObject seq, String sep) {
-        return join(seq, sep);
-    }
     
     public boolean startswith(String prefix) {
         return string.startsWith(prefix);
@@ -734,10 +723,35 @@ public class PyString extends PySequence
         return string.startsWith(prefix, offset);
     }
 
+    public boolean startswith(String prefix, int start, int end) {
+        if (start < 0 || start + prefix.length() > string.length())
+            return false;
+        String substr = string.substring(start, end);
+        return substr.startsWith(prefix);
+    }
+
     public boolean endswith(String suffix) {
         return string.endsWith(suffix);
     }
-    
+
+    public boolean endswith(String suffix, int start) {
+        return endswith(suffix, start, string.length());
+    }
+
+    public boolean endswith(String suffix, int start, int end) {
+        int len = string.length();
+
+        if (start < 0 || start > len || suffix.length() > len)
+            return false;
+
+        end = (end <= len ? end : len);
+        if (end < start)
+            return false;
+
+        String substr = string.substring(start, end);
+        return substr.endsWith(suffix);
+    }
+        
     //public static String zfill(PyObject o, int width) {
     //    return zfill(o.toString(), width);
     //}    
