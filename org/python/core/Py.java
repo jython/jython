@@ -483,11 +483,16 @@ public final class Py {
     public static Class findClass(String name) {
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
-            if (classLoader == null) return Class.forName(name);
-            else return classLoader.loadClass(name);
+            if (classLoader == null)
+                return Class.forName(name);
+            else
+                return classLoader.loadClass(name);
         } catch (ClassNotFoundException exc) {
+            //exc.printStackTrace();
             return null;
         } catch (IllegalArgumentException exc1) {
+            //exc1.printStackTrace();
+            
             return null;
         }
     }
@@ -602,7 +607,7 @@ public final class Py {
 
 	public static void runMain(String module, String[] args, String[] packages,
 	String[] props, boolean frozen) {
-	    System.err.println("main: "+module);
+	    //System.err.println("main: "+module);
         initProperties(args, packages, props, null, frozen);
         
         Class mainClass=null;
