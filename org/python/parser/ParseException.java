@@ -62,16 +62,12 @@ public class ParseException extends Exception {
     Token t = new Token();
     t.beginLine = node.beginLine;
     t.beginColumn = node.beginColumn;
-    t.endLine = node.endLine;
-    t.endColumn = node.endColumn;
     
     currentToken = new Token();
     currentToken.next = t;
     t = currentToken;
     t.beginLine = node.beginLine;
     t.beginColumn = node.beginColumn;
-    t.endLine = node.endLine;
-    t.endColumn = node.endColumn;
     
     specialConstructor = false;
   }

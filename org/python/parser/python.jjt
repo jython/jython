@@ -5,6 +5,8 @@ options
 {
     // only non-defaults are given here.
     NODE_SCOPE_HOOK = true;                  // call jjtree*NodeScope()
+    NODE_FACTORY = true;
+    NODE_USES_PARSER = true;
     STATIC = false;                          // multiple parsers
     COMMON_TOKEN_ACTION = true;              // CommonTokenAction(Token)
 //    DEBUG_PARSER = true;
@@ -16,19 +18,80 @@ options
 
 PARSER_BEGIN(PythonGrammar)
 package org.python.parser;
+import org.python.core.Py;
+import org.python.core.PyString;
+import org.python.parser.ast.modType;
 
 public class PythonGrammar 
 {
     void jjtreeOpenNodeScope(Node n) {
-        ((SimpleNode)n).beginLine = getToken(1).beginLine;
-        ((SimpleNode)n).beginColumn = getToken(1).beginColumn;
+        Token t = getToken(1);
+        jjtree.pushNodePos(t.beginLine, t.beginColumn);
     }
 
     void jjtreeCloseNodeScope(Node n) {
-        ((SimpleNode)n).endLine = getToken(0).endLine;
-        ((SimpleNode)n).endColumn = getToken(0).endColumn;
+        jjtree.setNodePos();
     }
+
+    Object makeInt(String s, int radix) {
+        if (s.endsWith("L") || s.endsWith("l")) {
+            s = s.substring(0, s.length()-1);
+            if (radix != 10)
+                return Py.newLong(new java.math.BigInteger(s, radix));
+        }
+        int ndigits = s.length();
+        int i=0;
+        while (i < ndigits && s.charAt(i) == '0')
+            i++;
+        if ((ndigits - i) > 11) {
+            return Py.newLong(new java.math.BigInteger(s, radix));
+        }
+
+        long l = Long.valueOf(s, radix).longValue();
+        if (l > 0xffffffffl || (radix == 10 && l > Integer.MAX_VALUE)) {
+            return Py.newLong(new java.math.BigInteger(s, radix));
+        }
+        return Py.newInteger((int) l);
+    }
+
+    Object makeFloat(String s) {
+        return Py.newFloat(Double.valueOf(s).doubleValue());
+    }
+
+    Object makeLong(String s) {
+        return new org.python.core.PyLong(s);
+    }
+
+    Object makeComplex(String s) {
+        s = s.substring(0, s.length() - 1);
+        return Py.newImaginary(Double.valueOf(s).doubleValue());
+    }
+
+    String makeString(String s, int quotes) {
+        //System.out.println("string: "+s);
+        char quoteChar = s.charAt(0);
+        int start=0;
+        boolean ustring = false;
+        if (quoteChar == 'u' || quoteChar == 'U') {
+            ustring = true;
+            start++;
+        }
+        quoteChar = s.charAt(start);
+        if (quoteChar == 'r' || quoteChar == 'R') {
+            return s.substring(quotes+start+1, s.length()-quotes);
+        } else {
+            StringBuffer sb = new StringBuffer(s.length());
+            char[] ca = s.toCharArray();
+            int n = ca.length-quotes;
+            int i=quotes+start;
+            int last_i=i;
+
+            return PyString.decode_UnicodeEscape(s, i, n, "strict", ustring);
+        }
+    }
+
 }
+
 
 PARSER_END(PythonGrammar)
 
@@ -302,6 +365,7 @@ TOKEN : /* KEYWORDS */
 |   < BREAK: "break" >
 |   < CONTINUE: "continue" >
 |   < RETURN: "return" >
+|   < YIELD: "yield" >
 |   < IMPORT: "import" >
 |   < FROM: "from" >
 |   < DEL: "del" >
@@ -323,17 +387,18 @@ TOKEN : /* Python identifiers */
 TOKEN : /* Numeric literals */
 {
     < DECNUMBER:
-        ["1"-"9"] (["0"-"9"])* (["j", "J", "l", "L"])?
-      | "0" ["j", "J"]
+        ["1"-"9"] (["0"-"9"])* (["l", "L"])?
+      | "0"
       >
 |   < HEXNUMBER: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ (["l","L"])? >
 |   < OCTNUMBER: "0" (["0"-"7"])* (["l","L"])? >
 |
     < FLOAT:
-        (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["j", "J"])?
-      | "." (["0"-"9"])+ (<EXPONENT>)? (["j", "J"])?
-      | (["0"-"9"])+ <EXPONENT> (["j", "J"])?
+        (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)?
+      | "." (["0"-"9"])+ (<EXPONENT>)?
+      | (["0"-"9"])+ <EXPONENT>
       >
+|   < COMPLEX: (<DECNUMBER> | <FLOAT> | "0" <DECNUMBER> ) ["j", "J"]>
 |   < #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
 |   < #DIGIT: ["0" - "9"] >
 }
@@ -388,24 +453,24 @@ MORE : /* Strings */
 
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-SimpleNode single_input(): {token_source.single_input=true;}
+modType single_input(): {token_source.single_input=true;}
 {
     (<NEWLINE> |  simple_stmt() |  compound_stmt() <NEWLINE>)
-    { return jjtThis; }
+    { return (modType) jjtree.popNode(); }
 }
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
-SimpleNode file_input(): {token_source.single_input=false;}
+modType file_input(): {token_source.single_input=false;} 
 {
     (<NEWLINE> | stmt())* <EOF>
-    { return jjtThis; }
+    { return (modType) jjtree.popNode(); }
 }
 
 //eval_input: testlist NEWLINE* ENDMARKER
-SimpleNode eval_input(): {token_source.single_input=false;}
+modType eval_input(): {token_source.single_input=false;}
 {
     SmartTestList() (<NEWLINE>)* <EOF>
-    { return jjtThis; }
+    { return (modType) jjtree.popNode(); }
 }
 
 //funcdef: 'def' NAME parameters ':' suite
@@ -417,7 +482,7 @@ void parameters() #void: {}
 { <LPAREN> [varargslist()] <RPAREN> }
 
 //varargslist: (fpdef ['=' test] ',')* ('*' NAME [',' ('**'|'*' '*') NAME] | ('**'|'*' '*') NAME) | fpdef ['=' test] (',' fpdef ['=' test])* [',']
-void varargslist(): {}
+void varargslist() #void: {}
 {
     defaultarg() (LOOKAHEAD(2) <COMMA> defaultarg())*
         [LOOKAHEAD(3) <COMMA> ExtraArgList()]
@@ -442,7 +507,7 @@ void fpdef() #void: {}
 { Name() | <LPAREN> fplist() <RPAREN> }
 
 //fplist: fpdef (',' fpdef)* [',']
-void fplist(): {}
+void fplist() #tuple: {}
 { fpdef() (LOOKAHEAD(2) <COMMA> fpdef())* [<COMMA>] }
 
 
@@ -470,7 +535,7 @@ void small_stmt() #void: {}
 }
 
 //expr_stmt: testlist (augassign testlist | ('=' testlist)*)
-void expr_stmt(): {}
+void expr_stmt() #void: {}
 {
     SmartTestList() (
     <PLUSEQ> SmartTestList() #aug_plus(2)
@@ -485,18 +550,22 @@ void expr_stmt(): {}
 |   <LSHIFTEQ> SmartTestList() #aug_lshift(2)
 |   <RSHIFTEQ> SmartTestList() #aug_rshift(2)
 |   <POWEREQ> SmartTestList() #aug_power(2)
-|   (<EQUAL> SmartTestList())*
-    )  
+|   (<EQUAL> SmartTestList())* #expr_stmt(jjtree.nodeArity()+1)
+    )
 }
 
 //print_stmt: 'print' (test ',')* [test] | 'print' '>>' test (, test)+ [,]
-void print_stmt() #print_stmt: {}
+void print_stmt() #void: {}
 {
-    LOOKAHEAD(2) <PRINT> <RSHIFT> test() #print_ext(1)
-        [ (LOOKAHEAD(2) <COMMA> test())+ [Comma()] ]
-|   LOOKAHEAD(2) <PRINT> test() (LOOKAHEAD(2) <COMMA> test())* [Comma()]
+    LOOKAHEAD(2) <PRINT> <RSHIFT> (test() 
+        [ (LOOKAHEAD(2) <COMMA> test())+ [Comma()] ] 
+        )#printext_stmt
+|   LOOKAHEAD(2) <PRINT> (test() (LOOKAHEAD(2) <COMMA> test())* [Comma()]
+        )#print_stmt
 |   <PRINT>
+        #print_stmt
 }
+
 
 //del_stmt: 'del' exprlist
 void del_stmt(): {}
@@ -506,18 +575,23 @@ void del_stmt(): {}
 void pass_stmt(): {}
 { <PASS> }
 
-//flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt
+//flow_stmt: break_stmt | continue_stmt | return_stmt | yield_stmt | raise_stmt
 void flow_stmt() #void: {}
 {
     <BREAK> #break_stmt(0)
 |   <CONTINUE> #continue_stmt(0)
 |   return_stmt()
+|   yield_stmt()
 |   raise_stmt()
 }
 
 //return_stmt: 'return' [testlist]
 void return_stmt(): {}
 { <RETURN> [SmartTestList()] }
+
+//yield_stmt: 'yield' [testlist]
+void yield_stmt(): {}
+{ <YIELD> SmartTestList() }
 
 //raise_stmt: 'raise' [test [',' test [',' test]]]
 void raise_stmt(): {}
@@ -538,16 +612,16 @@ void ImportFrom(): {}
 }
 
 //dotted_as_name: dotted_name [NAME NAME]
-void dotted_as_name() #void:{}
-{ dotted_name() [<AS> Name() #dotted_as_name(2)] }
+void dotted_as_name(): {}
+{ dotted_name() [<AS> Name()] }
 
 //dotted_name: NAME ('.' NAME)*
 void dotted_name(): {}
 { AnyName() (<DOT> AnyName())* }
 
 //import_as_name: NAME [NAME NAME]
-void import_as_name() #void: {}
-{ AnyName() [<AS> Name() #import_as_name(2)] }
+void import_as_name(): {}
+{ AnyName() [<AS> Name()] }
 
 //global_stmt: 'global' NAME (',' NAME)*
 void global_stmt(): {}
@@ -584,15 +658,17 @@ void for_stmt(): {}
 
 //try_stmt: ('try' ':' suite (except_clause ':' suite)+ #diagram:break
 //           ['else' ':' suite] | 'try' ':' suite 'finally' ':' suite)
-void try_stmt(): {}
+void try_stmt() #void: {}
 { <TRY> <COLON> suite() (
-    (<EXCEPT> except_clause() <COLON> suite())+ [<ELSE> <COLON> suite()]
-    | <FINALLY> <COLON> suite()) 
+    ((except_clause())+ [<ELSE> <COLON> suite()])
+        #try_stmt(jjtree.nodeArity()+1) 
+    | <FINALLY> <COLON> suite()
+        #tryfinally_stmt(jjtree.nodeArity()+1)) 
 }
 
 //except_clause: 'except' [test [',' test]]
 void except_clause(): {}
-{ [test() [<COMMA> test()]] }
+{ <EXCEPT> [test() [<COMMA> test()]] <COLON> suite() }
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
 void suite(): {}
@@ -600,12 +676,12 @@ void suite(): {}
 
 
 //test: and_test ('or' and_test)* | lambdef
-void test() #void: {}
-{ lambdef() | and_test() (<OR_BOOL> and_test() #or_boolean(2))* }
+void test() #or_boolean(>1): {}
+{ lambdef() | and_test() (<OR_BOOL> and_test())* }
 
 //and_test: not_test ('and' not_test)*
-void and_test() #void: {}
-{ not_test() (<AND_BOOL> not_test() #and_boolean(2))* }
+void and_test() #and_boolean(>1): {}
+{ not_test() (<AND_BOOL> not_test())* }
 
 //not_test: 'not' not_test | comparison
 void not_test() #void: {}
@@ -683,8 +759,8 @@ void power() #void: {}
 //trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 void atomtrailer() #void: {}
 {
-    atom() ( (LOOKAHEAD(2) <LPAREN> <RPAREN> #Call_Op(1)
-|   <LPAREN> arglist() <RPAREN> #Call_Op(2))
+    atom() (LOOKAHEAD(2) <LPAREN> <RPAREN> #Call_Op(1)
+|   (<LPAREN> arglist() <RPAREN>) #Call_Op(jjtree.nodeArity()+1)
 |   <LBRACKET> subscriptlist() <RBRACKET> #Index_Op(2)
 |   <DOT> AnyName() #Dot_Op(2) )*
 }
@@ -710,13 +786,13 @@ void lambdef():{}
 
 //subscriptlist: subscript (',' subscript)* [',']
 void subscriptlist() #void: {}
-{ (subscript() (LOOKAHEAD(2) <COMMA> subscript())* [Comma()]) #tuple(>1) }
+{ (subscript() (LOOKAHEAD(2) <COMMA> subscript())* [Comma()]) #subscriptlist(>1) }
 
 //subscript: '.' '.' '.' | test | [test] ':' [test] [sliceop]
 void subscript() #void: {}
 {
     <DOT> <DOT> <DOT> #Ellipses
-|   (test() (slice())?) #Slice(>1)
+|   (test() (slice())?) #Slice
 |   slice() #Slice(>0) 
 }
 
@@ -745,19 +821,19 @@ void dictmaker() #void: {}
 
 //listmaker: test ( list_for | (',' test)* [','] )
 void listmaker() #void: {}
-{ test() ( list_for() | (LOOKAHEAD(2) <COMMA> test())* [Comma()] #tuple(>1)) }
+{ test() ( (list_for())+ | (LOOKAHEAD(2) <COMMA> test())* [Comma()] #tuple(>1)) }
 
 //list_iter: [list_for | list_if]
-void list_iter(): {}
-{ [ (list_for() | list_if()) ] }
+//void list_iter() #void: {}
+//{ [ (list_for() | list_if()) ] }
 
 //list_for: 'for' exprlist 'in' testlist list_iter
-void list_for() #for_stmt: {}
-{ <FOR> exprlist() <IN> SmartTestList() list_iter() }
+void list_for(): {}
+{ <FOR> exprlist() <IN> SmartTestList() (list_if())* }
 
 //list_if: 'if' test list_iter
-void list_if() #if_stmt: {}
-{ <IF> test() list_iter() }
+void list_if() #void: {}
+{ <IF> test() }
 
 
 //classdef: 'class' NAME ['(' testlist ')'] ':' suite
@@ -766,7 +842,7 @@ void classdef(): {}
 
 //arglist: (argument ',')* 
 //              (argument [',']| '*' test [',' '**' test] | '**' test)
-void arglist(): {}
+void arglist() #void: {}
 {
     normalargs() [<COMMA> 
     [LOOKAHEAD(2) ExtraArgValueList() 
@@ -790,25 +866,29 @@ void argument() #void: {}
 { ([LOOKAHEAD(2) AnyName() <EQUAL>] test()) #Keyword(>1) }
 
 
-void Number() #void :
+void Number() #Num :
 {
     Token t;
 }
 {
     (
         t=<HEXNUMBER> {
-            jjtThis.setInteger(t.image.substring(2,t.image.length()), 16);
-        }
-    )#Int
+            String s = t.image.substring(2, t.image.length());
+            jjtThis.setImage(makeInt(s, 16));
+        } {}
+    )
 |   (
-        t=<OCTNUMBER> { jjtThis.setInteger(t.image, 8); }
-    )#Int
+        t=<OCTNUMBER> { jjtThis.setImage(makeInt(t.image, 8)); } {}
+    )
 |   (
-        t=<DECNUMBER> { jjtThis.setInteger(t.image, 10); }
-    )#Int
+        t=<DECNUMBER> { jjtThis.setImage(makeInt(t.image, 10)); } {}
+    )
 |   (
-        t=<FLOAT> { jjtThis.setFloat(t.image); }
-    )#Float
+        t=<FLOAT> { jjtThis.setImage(makeFloat(t.image)); } {}
+    )
+|   (
+        t=<COMPLEX> { jjtThis.setImage(makeComplex(t.image)); } {}
+    )
 }
 
 void Complex(): {}
@@ -819,8 +899,8 @@ void Name() #Name:
     Token t;
 }
 {
-    t = <NAME> { jjtThis.setInfo(t.image); }
-|   t = <AS> { jjtThis.setInfo(t.image); }
+    t = <NAME> { jjtThis.setImage(t.image); } {}
+|   t = <AS> { jjtThis.setImage(t.image); } {}
 }
 
 void String() #void :
@@ -828,10 +908,10 @@ void String() #void :
     Token t;
 }
 {
-    ( t=<SINGLE_STRING> { jjtThis.setString(t.image, 1); } )#String
-|   ( t=<SINGLE_STRING2> { jjtThis.setString(t.image, 1); } )#String
-|   ( t=<TRIPLE_STRING> { jjtThis.setString(t.image, 3); } )#String
-|   ( t=<TRIPLE_STRING2> { jjtThis.setString(t.image, 3); } )#String
+    ( t=<SINGLE_STRING> { jjtThis.setImage(makeString(t.image, 1)); } {} )#String
+|   ( t=<SINGLE_STRING2> { jjtThis.setImage(makeString(t.image, 1)); } {} )#String
+|   ( t=<TRIPLE_STRING> { jjtThis.setImage(makeString(t.image, 3)); } {} )#String
+|   ( t=<TRIPLE_STRING2> { jjtThis.setImage(makeString(t.image, 3)); } {} )#String
 }
 
 void AnyName() #void:
@@ -839,34 +919,35 @@ void AnyName() #void:
     Token t;
 }
 {
-    ( t= <NAME> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <OR_BOOL> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <AND_BOOL> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <NOT_BOOL> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <IS> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <IN> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <LAMBDA> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <IF> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <ELSE> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <ELIF> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <WHILE> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <FOR> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <TRY> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <EXCEPT> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <DEF> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <CLASS> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <FINALLY> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <PRINT> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <PASS> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <BREAK> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <CONTINUE> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <RETURN> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <IMPORT> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <FROM> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <DEL> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <RAISE> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <GLOBAL> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <EXEC> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <ASSERT> { jjtThis.setInfo(t.image); } )#Name
-|   ( t = <AS> { jjtThis.setInfo(t.image); } )#Name
+    ( t= <NAME> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <OR_BOOL> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <AND_BOOL> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <NOT_BOOL> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <IS> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <IN> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <LAMBDA> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <IF> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <ELSE> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <ELIF> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <WHILE> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <FOR> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <TRY> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <EXCEPT> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <DEF> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <CLASS> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <FINALLY> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <PRINT> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <PASS> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <BREAK> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <CONTINUE> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <RETURN> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <YIELD> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <IMPORT> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <FROM> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <DEL> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <RAISE> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <GLOBAL> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <EXEC> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <ASSERT> { jjtThis.setImage(t.image); } {} )#Name
+|   ( t = <AS> { jjtThis.setImage(t.image); } {} )#Name
 }
