@@ -1,5 +1,37 @@
 JPython NEWS
 
+28-Oct-1999 JPython 1.1beta4 released
+
+  New JPython features and bug fixes
+    - fixed a bug related to loading anonymous inner classes (PR#201).
+      This is an experimental patch.  See registry file for entry
+      python.options.extendedClassLoader
+    - fixed Java exceptions when calling apply() with a bogus 3rd
+      argument (PR#208)
+    - fixed a 1.1beta3 problem with method objects having their
+      im_self mysteriously changed out from under them (PR#186).
+    - fixed problems with Python classes being deeply derived from
+      Java classes and interfaces (PR#178, PR#195).
+    - Improved memory footprint when using exec().
+    - Dead threads are now reaped from thread state cache (Drew
+      Morrissey).
+    - Tuples, dictionaries, and strings now use fast method lookup
+      mechanism.
+
+  Improved CPython 1.5.2 compatibility
+    - md5 module supported (no need to download anything extra)  
+    - dir() on function objects now returns a list containing __doc__,
+      func_doc, __namme__, func_name, func_globals, func_defaults,
+      func_code.  __doc__/func_doc is writable (but not func_defaults
+      and func_code, which are writable in CPython). (PR#192)
+    - dir() on code objects returns a list containing co_name,
+      co_argcount, co_varnames, co_filename, co_firstlineno, co_flags.
+      Not supported: co_nlocals, co_code, co_consts, co_names,
+      co_lnotab, co_stacksize.  All attributes are read-only.
+    - dir() on method objects returns a list containing im_self,
+      im_func, im_class, __doc__, __name__.  These attributes are
+      read-only.
+
 22-Sep-1999 JPython 1.1beta3 released
 
   New JPython features and bug fixes
