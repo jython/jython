@@ -1,19 +1,21 @@
 # Copyright © Corporation for National Research Initiatives
 
 import sys
+import os
+from types import StringType
+
 from SimpleCompiler import SimpleCompiler
 from PythonModule import PythonModule
 from ObjectFactory import ObjectFactory
 from Object import PyObject
+
 import jast
 import ImportName
-import os, string
-from types import *
-import java, org
-
 import javac
 import proxies
 
+import java
+import org
 from java.lang import *
 
 
@@ -26,6 +28,7 @@ def getdata(filename):
 
 
 def getsig(doc, pargs, constructor=0):
+    SPACE = ' '
     if doc is None:
         return None
     #print doc
@@ -43,10 +46,10 @@ def getsig(doc, pargs, constructor=0):
     front = front.split()
     if constructor:
         ret = jret = None
-        mods = string.join(front[:-1], ' ')
+        mods = SPACE.join(front[:-1])
     else:
         ret = front[-2]
-        mods = string.join(front[:-2], ' ')
+        mods = SPACE.join(front[:-2])
         jret = insistJavaClass(ret)
     arglist = []
     if len(back) > 0:
@@ -61,15 +64,15 @@ def getsig(doc, pargs, constructor=0):
 
 
 
-primitives = {'void':Void.TYPE,
-              'int':Integer.TYPE,
-              'byte':Byte.TYPE, 
-              'short':Short.TYPE,
-              'long':Long.TYPE,
-              'float':Float.TYPE,
-              'double':Double.TYPE,
-              'boolean':Boolean.TYPE,
-              'char':Character.TYPE
+primitives = {'void'   : Void.TYPE,
+              'int'    : Integer.TYPE,
+              'byte'   : Byte.TYPE, 
+              'short'  : Short.TYPE,
+              'long'   : Long.TYPE,
+              'float'  : Float.TYPE,
+              'double' : Double.TYPE,
+              'boolean': Boolean.TYPE,
+              'char'   : Character.TYPE,
               }
 
 
@@ -83,15 +86,15 @@ def insistJavaClass(c):
 
 
 
-primNames = {'void':'V',
-             'int':'I',
-             'byte':'B', 
-             'short':'S',
-             'long':'J',
-             'float':'F',
-             'double':'D',
-             'boolean':'Z',
-             'char':'C'
+primNames = {'void'   : 'V',
+             'int'    : 'I',
+             'byte'   : 'B', 
+             'short'  : 'S',
+             'long'   : 'J',
+             'float'  : 'F',
+             'double' : 'D',
+             'boolean': 'Z',
+             'char'   : 'C'
              }
 
 
@@ -162,18 +165,19 @@ def printNames(heading, dict):
         items1.append( (key, value) )
 
     items1.sort()
+    COMMA = ', '
     for key, value in items1:
-        print '  %s used in %s' % (key, string.join(value, ', '))
+        print '  %s used in %s' % (key, COMMA.join(value))
 
 
 
 class Compiler:
-    # Bad! But this modules dicts must be available from deep 
-    #      in ObjectFactory.
+    # TBD: Bad! But this modules dicts must be available from deep in
+    # ObjectFactory.
     allmodules = {}
 
     def __init__(self, javapackage=None, deep = 1, skip=(), 
-                 include=('org.python.modules', 'com.oroinc.text.regex'),
+                 include=('org.python.modules', 'org.apache.oro.text.regex'),
                  options=None):
         self.javapackage = javapackage
         self.deep = deep
@@ -211,7 +215,7 @@ class Compiler:
         if self.javapackage is not None:
             name = self.javapackage+'.'+name
 
-        data = "__file__=%s\n"%repr(filename)+data+"\n\n"
+        data = "__file__=%s\n" % repr(filename) + data + '\n\n'
 
         mod = PythonModule(name, filename, frozen=self.deep)
         fact = ObjectFactory()
@@ -221,7 +225,6 @@ class Compiler:
         mod.addMain(code, pi)
 
         self.addDependencies(mod)
-
         return mod
 
     def addJavaClass(self, name, parent):
@@ -280,11 +283,12 @@ class Compiler:
                 self.compilefile(filename, name)
 
     def filterpackages(self):
+        DOT = '.'
         prefixes = {}
         for name in self.packages.keys():
             parts = name.split('.')
             for i in range(1, len(parts)):
-                prefixes[string.join(parts[:i], '.')] = 1
+                prefixes[DOT.join(parts[:i])] = 1
         #print prefixes
         for name, value in self.packages.items():
             if value is not None:
@@ -352,9 +356,9 @@ class Compiler:
             adapters[jc.__name__] = sources.keys()
 
         self.write('\nCreating adapters:')
+        COMMA = ', '
         for adapter, sources in adapters.items():
-            self.write('  %s used in %s' % (adapter,
-                                            string.join(sources, ', ')))
+            self.write('  %s used in %s' % (adapter, COMMA.join(sources)))
             self.makeAdapter(outdir, adapter)
 
         self.write('\nCreating .java files:')
@@ -398,7 +402,7 @@ class Compiler:
             for name, parents in self.javadepends.items():
                 if done.has_key(name):
                     continue
-                self.write(('  '*indent)+name) #'%s required by %s' % (name, string.join(parents, ', ')))
+                self.write(('  '*indent)+name)
                 ze, jcs = depends(name)
                 done[name] = ze
                 for jc in jcs:
