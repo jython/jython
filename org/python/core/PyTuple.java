@@ -62,7 +62,7 @@ public class PyTuple extends PySequence implements ClassDictInit
         list = elements;
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'tuple' object";
     }
 

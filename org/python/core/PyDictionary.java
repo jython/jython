@@ -150,7 +150,7 @@ public class PyDictionary extends PyObject implements ClassDictInit
         dict.__setitem__("classDictInit", null);
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'dict' object";
     }
 

@@ -188,7 +188,7 @@ public class PySystemState extends PyObject
     }
 
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "module 'sys'";
     }
 

@@ -132,7 +132,7 @@ public class PyMethod extends PyObject
         return -2;
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'method' object";
     }
 

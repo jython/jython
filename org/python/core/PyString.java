@@ -314,7 +314,7 @@ public class PyString extends PySequence implements ClassDictInit
         dict.__setitem__("decode_UnicodeEscape", null);
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'string' object";
     }
 

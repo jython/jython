@@ -15,7 +15,7 @@ public class PyComplex extends PyObject {
         imag = i;
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'complex' object";
     }
 

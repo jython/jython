@@ -19,7 +19,7 @@ public class PyFloat extends PyObject
         this((double)v);
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'float' object";
     }
 

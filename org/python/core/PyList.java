@@ -133,7 +133,7 @@ public class PyList extends PySequence implements ClassDictInit
         length = elements.length;
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'list' object";
     }
 

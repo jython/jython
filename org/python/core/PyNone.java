@@ -23,7 +23,7 @@ public class PyNone extends PySingleton
         return null;
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'None' object";
     }
 

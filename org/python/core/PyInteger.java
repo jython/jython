@@ -19,7 +19,7 @@ public class PyInteger extends PyObject
         return value;
     }
 
-    protected String safeRepr() {
+    public String safeRepr() throws PyIgnoreMethodTag {
         return "'int' object";
     }
 
