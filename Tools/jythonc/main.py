@@ -279,7 +279,12 @@ def writeResults(comp, opts):
         ja.addEntry(dep)
 
     if opts.core or opts.all:
-        ja.addSingleClass('org.python.modules.Setup')
+        import depend
+        ja.addEntry(depend.getFile('org.python.modules.Setup'))
+#        ze, jcs = depend.depends('org.python.modules.exceptions')
+#        ja.addEntry(ze)
+#        for jc in jcs:
+#            ja.addEntry(depend.getFile(jc))
 
     ja.dump(jarfile)
         
