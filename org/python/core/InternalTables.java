@@ -68,6 +68,8 @@ public abstract class InternalTables {
     protected abstract void putAdapter(Object o,String evc,Object ad);
     
     public boolean _doesSomeAutoUnload() { return false; }
+    
+    public void _forceCleanup() {}
 
     public abstract void _beginCanonical();
     public abstract void _beginLazyCanonical();

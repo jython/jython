@@ -89,6 +89,8 @@ public abstract class AutoInternalTables extends InternalTables2 {
     
         
     public boolean _doesSomeAutoUnload() { return true; }
+    
+    public void _forceCleanup() { cleanup(); }
 
     public void _beginCanonical() {
         cleanup();
