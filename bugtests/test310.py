@@ -6,5 +6,5 @@ import support
 
 support.compileJPythonc("test310c.py", output="test310.err",
                         jar="test310.jar", core=1)
-support.runJava("test310c", cp="test310.jar")
+support.runJava("test310c", classpath="test310.jar")
 

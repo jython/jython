@@ -15,5 +15,5 @@ else:
 
 support.compileJPythonc("test314c.py", output="test314.err",
                         jar="test314.jar", core=1)
-support.runJava("test314c", cp="test314.jar")
+support.runJava("test314c", classpath="test314.jar")
 

@@ -4,7 +4,6 @@
 
 import support
 
-
 src = """
 package com;
 public class Blob {
@@ -12,15 +11,13 @@ public class Blob {
 }
 """
 
-
 def makeBlob(value):
     f = open("test273p/com/Blob.java", "w")
     f.write(src % value);
     f.close();
 
-    support.compileJava(r"test273p\com\Blob.java")
-    support.compileJava(r"test273p\com\BlobWriter.java", classpath="test273p")
-
+    support.compileJava(r"test273p/com/Blob.java")
+    support.compileJava(r"test273p/com/BlobWriter.java", classpath="test273p")
 
 makeBlob(1)
 

@@ -1,10 +1,13 @@
 """
-Check subclassing strang thingies.
+Check subclassing strange thingies.
 """
 
 import support
 
 try:
-   class foo(12): pass
+  class foo(12): pass
 except TypeError, e:
-   support.compare(e, "base is not a class object")
+  pass
+else:
+  raise support.TestError("expecting a TypeError for attempting to subclass integer instance")
+

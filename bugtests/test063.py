@@ -24,3 +24,4 @@ else:
 
 if s[1:3:2] != (1,3,2):
    raise support.TestError("Strange return")
+
