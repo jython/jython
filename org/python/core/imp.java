@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 import java.io.*;
@@ -380,7 +381,8 @@ public class imp {
                     String tmpName;
                     dot = name.indexOf('.', last_dot+1);
                     if (dot == -1) {
-                        tmpName = name.substring(last_dot+1, name.length()).intern();
+                        tmpName = name.substring(last_dot+1,
+						 name.length()).intern();
                     } else {
                         tmpName = name.substring(last_dot+1, dot).intern();
                     }
@@ -411,7 +413,9 @@ public class imp {
         }
     }
 
-    public synchronized static PyObject importName(String name, boolean top, PyObject modDict) {
+    public synchronized static PyObject importName(String name, boolean top,
+						   PyObject modDict)
+    {
         //System.err.println("importName: "+name);
         String pkgName = getParent(modDict);
         PyObject ret;
@@ -509,7 +513,8 @@ public class imp {
         PyModule nm = (PyModule)modules.__finditem__(name);
 
         if (!nm.__getattr__("__name__").toString().equals(name)) {
-            throw Py.ImportError("reload(): module "+name+" not in sys.modules");
+            throw Py.ImportError("reload(): module "+name+
+				 " not in sys.modules");
         }
 
         PyList path = Py.getSystemState().path;
