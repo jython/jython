@@ -1,6 +1,19 @@
 package org.python.core;
 
-public abstract class PyBuiltinFunction extends PyObject {
+public abstract class PyBuiltinFunction extends PyObject implements PyType.Newstyle {
+
+    /* type info */
+
+    public static final String exposed_name="builtin_function_or_method";
+
+    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
+        dict.__setitem__("__name__", new PyGetSetDescr("__name__",
+                PyBuiltinFunction.class, "fastGetName", null));
+        dict.__setitem__("__self__", new PyGetSetDescr("__self__",
+                PyBuiltinFunction.class, "getSelf", null));
+        dict.__setitem__("__doc__", new PyGetSetDescr("__doc__",
+                PyBuiltinFunction.class, "fastGetDoc", null));
+    }
 
     public interface Info {
         String getName();
@@ -10,7 +23,7 @@ public abstract class PyBuiltinFunction extends PyObject {
     }
 
     public static class DefaultInfo implements Info {
-        
+
         public DefaultInfo(String name,int minargs,int maxargs) {
             this.name = name;
             this.minargs = minargs;
@@ -34,7 +47,7 @@ public abstract class PyBuiltinFunction extends PyObject {
         public int getMinargs() {
             return minargs;
         }
-        
+
         public static boolean check(int nargs,int minargs,int maxargs) {
             if (nargs < minargs)
                 return false;
@@ -42,7 +55,7 @@ public abstract class PyBuiltinFunction extends PyObject {
                 return false;
             return true;
         }
-        
+
         public static PyException unexpectedCall(
             int nargs,
             boolean keywords,
@@ -63,7 +76,7 @@ public abstract class PyBuiltinFunction extends PyObject {
                 return Py.TypeError(name + "() requires at least " +
                         minargs + " (" + nargs + " given)");
             } else {
-                if (minargs <= 0) 
+                if (minargs <= 0)
                     argsblurb = "at most "+ maxargs + " argumens";
                 else
                     argsblurb = minargs + "-" + maxargs + " arguments";
@@ -76,7 +89,7 @@ public abstract class PyBuiltinFunction extends PyObject {
         public PyException unexpectedCall(int nargs, boolean keywords) {
             return unexpectedCall(nargs, keywords, name, minargs, maxargs);
         }
-        
+
     }
 
     protected PyBuiltinFunction() {}
@@ -93,7 +106,7 @@ public abstract class PyBuiltinFunction extends PyObject {
 
     abstract protected PyBuiltinFunction makeBound(PyObject self);
 
-    protected PyObject getSelf() {
+    public PyObject getSelf() {
         return null;
     }
 
@@ -109,7 +122,6 @@ public abstract class PyBuiltinFunction extends PyObject {
                 + typename
                 + " object>";
         }
-
     }
 
     abstract public PyObject inst_call(PyObject self);
@@ -135,4 +147,11 @@ public abstract class PyBuiltinFunction extends PyObject {
         PyObject[] args,
         String[] keywords);
 
+    public PyObject fastGetName() {
+        return Py.newString(this.info.getName());
+    }
+
+    public PyObject fastGetDoc() {
+        return Py.None;
+    }
 }
