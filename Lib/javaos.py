@@ -23,7 +23,7 @@ and opendir), and leave all pathname manipulation to os.path
 __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
            "defpath", "name",
            "system", "environ", "putenv", "getenv",
-           "popen", "popen2", "popen3", "popen4"
+           "popen", "popen2", "popen3", "popen4", "getlogin"
            ]
 
 import java
@@ -119,3 +119,7 @@ def popen4(cmd, mode="t", bufsize=-1):
     import popen2
     stdout, stdin = popen2.popen4(cmd, bufsize)
     return stdin, stdout
+
+def getlogin():
+  return java.lang.System.getProperty("user.name")
+
