@@ -208,7 +208,7 @@ public class PySystemState extends PyObject
         if (classpath == null)
             return null;
 
-        int jpy = classpath.toLowerCase().indexOf("jpython.jar");
+        int jpy = classpath.toLowerCase().indexOf("jython.jar");
         if (jpy == -1) {
             return null;
         }
@@ -232,7 +232,7 @@ public class PySystemState extends PyObject
             try {
                 addRegistryFile(new File(prefix, "registry"));
                 File homeFile = new File(registry.getProperty("user.home"),
-                                         ".jpython");
+                                         ".jython");
                 addRegistryFile(homeFile);
             } catch (Exception exc) {
                 ;
