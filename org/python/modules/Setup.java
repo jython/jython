@@ -38,7 +38,6 @@ public class Setup
         "_sre",
         "synchronize",
         "cPickle",
-        "cPickle_exceptions",
         "cStringIO",
         "struct",
         "binascii",
