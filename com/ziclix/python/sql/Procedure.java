@@ -125,7 +125,7 @@ public class Procedure extends Object {
 			// prepare the OUT parameters
 			registerOutParameters(statement);
 		} catch (SQLException e) {
-			if (statement == null) {
+			if (statement != null) {
 				try {
 					statement.close();
 				} catch (Exception ex) {}
