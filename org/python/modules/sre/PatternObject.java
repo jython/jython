@@ -26,14 +26,17 @@ public class PatternObject extends PyObject {
     public org.python.core.PyObject groupindex;
     public int flags;
     org.python.core.PyObject indexgroup;
+    public int codesize;
 
 
     public PatternObject(PyString pattern, int flags, char[] code,
             int groups, PyObject groupindex, PyObject indexgroup) {
 
-        this.pattern = pattern.toString();
+        if (pattern != null)
+            this.pattern = pattern.toString();
         this.flags   = flags;
         this.code    = code;
+        this.codesize = code.length;
         this.groups  = groups;
         this.groupindex = groupindex;
         this.indexgroup = indexgroup;
@@ -81,12 +84,9 @@ public class PatternObject extends PyObject {
         String string = ap.getString(1);
         int count = ap.getInt(2, 0);
 
-        return call("_sub", new PyObject[] {
-             Py.java2py(this),
-             template,
-             Py.newString(string),
-             Py.newInteger(count) });
+        return subx(template, string, count, false);
     }
+
 
 
     public PyObject subn(PyObject[] args, String[] kws) {
@@ -96,11 +96,89 @@ public class PatternObject extends PyObject {
         String string = ap.getString(1);
         int count = ap.getInt(2, 0);
 
-        return call("_subn", new PyObject[] {
-             Py.java2py(this),
-             template,
-             Py.newString(string),
-             Py.newInteger(count) });
+        return subx(template, string, count, true);
+    }
+
+
+    private PyObject subx(PyObject template, String string, int count,
+                          boolean subn)
+    {
+        PyObject filter = null;
+        boolean filter_is_callable = false;
+        if (template.isCallable()) {
+            filter = template;
+            filter_is_callable = true;
+        } else {
+            boolean literal = false;
+            if (template instanceof PyString) {
+                literal = template.toString().indexOf('\\') < 0;
+            }
+            if (literal) {
+                filter = template;
+                filter_is_callable = false;
+            } else {
+                filter = call("sre", "_subx", new PyObject[] {
+                    this, template});
+                filter_is_callable = filter.isCallable();
+            }
+        }
+
+        SRE_STATE state = new SRE_STATE(string, 0, Integer.MAX_VALUE, flags);
+
+        StringBuffer buf = new StringBuffer();
+
+        int n = 0;
+        int i = 0;
+        
+        while (count == 0 || n < count) {
+            state.state_reset();
+            state.ptr = state.start;
+            int status = state.SRE_SEARCH(code, 0);
+            if (status <= 0) {
+                if (status == 0)
+                    break;
+                _error(status);
+            }
+            int b = state.start;
+            int e = state.ptr;
+
+            if (i < b) {
+                /* get segment before this match */
+                buf.append(string.substring(i, b));
+            }
+            if (! (i == b && i == e && n > 0)) {
+                PyObject item;
+                if (filter_is_callable) {
+                    /* pass match object through filter */
+                    MatchObject match = _pattern_new_match(state, string, 1);
+                    item = filter.__call__(match);
+                } else {
+                    item = filter;
+                }
+    
+                if (item != Py.None) {
+                    buf.append(item.toString());
+                }
+                i = e;
+                n++;
+            }
+
+            /* move on */
+            if (state.ptr == state.start)
+                state.start = state.ptr + 1;
+            else
+                state.start = state.ptr;
+        }
+        if (i < state.endpos) {
+            buf.append(string.substring(i, state.endpos));
+        }
+
+        if (subn)
+            return new PyTuple(new PyObject[] {
+                Py.newString(buf.toString()), Py.newInteger(n)
+            });
+        else
+            return Py.newString(buf.toString());
     }
 
 
@@ -108,16 +186,54 @@ public class PatternObject extends PyObject {
         ArgParser ap = new ArgParser("split", args, kws,
                                      "source", "maxsplit");
         String string = ap.getString(0);
-        int count = ap.getInt(1, 0);
+        int maxsplit = ap.getInt(1, 0);
 
-        return call("_split", new PyObject[] {
-             Py.java2py(this),
-             Py.newString(string),
-             Py.newInteger(count) });
+        SRE_STATE state = new SRE_STATE(string, 0, Integer.MAX_VALUE, flags);
+
+        PyList list = new PyList();
+
+        int n = 0;
+        int last = state.start;
+        while (maxsplit == 0 || n < maxsplit) {
+            state.state_reset();
+            state.ptr = state.start;
+            int status = state.SRE_SEARCH(code, 0);
+            if (status <= 0) {
+                if (status == 0)
+                    break;
+                _error(status);
+            }
+            if (state.start == state.ptr) {
+                if (last == state.end)
+                    break;
+                /* skip one character */
+                state.start = state.ptr + 1;
+                continue;
+            }
+
+            /* get segment before this match */
+            PyObject item = Py.newString(string.substring(last, state.start));
+            list.append(item);
+
+            for (int i = 0; i < groups; i++) {
+                String s = state.getslice(i+1, string, false);
+                if (s != null)
+                    list.append(Py.newString(s));
+                else
+                    list.append(Py.None);
+            }
+            n += 1;
+            last = state.start = state.ptr;
+        }
+
+        PyObject item = Py.newString(string.substring(last, state.endpos));
+        list.append(item);
+
+        return list;
     }
 
-    private PyObject call(String function, PyObject[] args) {
-        PyObject sre = imp.importName("sre", true);
+    private PyObject call(String module, String function, PyObject[] args) {
+        PyObject sre = imp.importName(module, true);
         return sre.invoke(function, args);
     }
 
@@ -148,12 +264,12 @@ public class PatternObject extends PyObject {
                                     string.substring(state.start, state.ptr));
                     break;
                 case 1:
-                    item = Py.newString(state.getslice(1, string));
+                    item = Py.newString(state.getslice(1, string, true));
                     break;
                 default:
                     PyObject[] t = new PyObject[groups];
                     for (int i = 0; i < groups; i++)
-                        t[i] = Py.newString(state.getslice(i+1, string));
+                        t[i] = Py.newString(state.getslice(i+1, string, true));
                     item = new PyTuple(t);
                     break;
                 }
@@ -175,6 +291,22 @@ public class PatternObject extends PyObject {
         return new PyList(list);
     }
 
+
+/* Enable "finditer" when iter support is added.
+    public PyObject finditer(String string) {
+        return finditer(string, 0, Integer.MAX_VALUE);
+    }
+
+    public PyObject finditer(String string, int start) {
+        return finditer(string, start, Integer.MAX_VALUE);
+    }
+
+    public PyObject finditer(String string, int start, int end) {
+        ScannerObject scanner = scanner(string, start, end);
+        PyObject search = scanner.__findattr__("search");
+        return new PyCallIterator(search, Py.None);
+    }
+*/
 
     public ScannerObject scanner(String string) {
         return scanner(string, 0, Integer.MAX_VALUE);

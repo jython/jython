@@ -22,7 +22,7 @@ import org.python.modules.sre.*;
 
 public class _sre {
     // update when constants are added or removed
-    public static int MAGIC = 20010320;
+    public static int MAGIC = 20010701;
 
 
     public static PatternObject compile(PyString pattern, int flags,

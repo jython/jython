@@ -15,7 +15,9 @@
 
 package org.python.modules.sre;
 
-public class ScannerObject {
+import org.python.core.*;
+
+public class ScannerObject extends PyObject {
     PatternObject pattern;
     String string;
     SRE_STATE state;

@@ -40,24 +40,25 @@ public class SRE_STATE {
     public static final int SRE_OP_CALL                    = 8;
     public static final int SRE_OP_CATEGORY                = 9;
     public static final int SRE_OP_CHARSET                 = 10;
-    public static final int SRE_OP_GROUPREF                = 11;
-    public static final int SRE_OP_GROUPREF_IGNORE         = 12;
-    public static final int SRE_OP_IN                      = 13;
-    public static final int SRE_OP_IN_IGNORE               = 14;
-    public static final int SRE_OP_INFO                    = 15;
-    public static final int SRE_OP_JUMP                    = 16;
-    public static final int SRE_OP_LITERAL                 = 17;
-    public static final int SRE_OP_LITERAL_IGNORE          = 18;
-    public static final int SRE_OP_MARK                    = 19;
-    public static final int SRE_OP_MAX_UNTIL               = 20;
-    public static final int SRE_OP_MIN_UNTIL               = 21;
-    public static final int SRE_OP_NOT_LITERAL             = 22;
-    public static final int SRE_OP_NOT_LITERAL_IGNORE      = 23;
-    public static final int SRE_OP_NEGATE                  = 24;
-    public static final int SRE_OP_RANGE                   = 25;
-    public static final int SRE_OP_REPEAT                  = 26;
-    public static final int SRE_OP_REPEAT_ONE              = 27;
-    public static final int SRE_OP_SUBPATTERN              = 28;
+    public static final int SRE_OP_BIGCHARSET              = 11;
+    public static final int SRE_OP_GROUPREF                = 12;
+    public static final int SRE_OP_GROUPREF_IGNORE         = 13;
+    public static final int SRE_OP_IN                      = 14;
+    public static final int SRE_OP_IN_IGNORE               = 15;
+    public static final int SRE_OP_INFO                    = 16;
+    public static final int SRE_OP_JUMP                    = 17;
+    public static final int SRE_OP_LITERAL                 = 18;
+    public static final int SRE_OP_LITERAL_IGNORE          = 19;
+    public static final int SRE_OP_MARK                    = 20;
+    public static final int SRE_OP_MAX_UNTIL               = 21;
+    public static final int SRE_OP_MIN_UNTIL               = 22;
+    public static final int SRE_OP_NOT_LITERAL             = 23;
+    public static final int SRE_OP_NOT_LITERAL_IGNORE      = 24;
+    public static final int SRE_OP_NEGATE                  = 25;
+    public static final int SRE_OP_RANGE                   = 26;
+    public static final int SRE_OP_REPEAT                  = 27;
+    public static final int SRE_OP_REPEAT_ONE              = 28;
+    public static final int SRE_OP_SUBPATTERN              = 29;
 
     public static final int SRE_AT_BEGINNING               = 0;
     public static final int SRE_AT_BEGINNING_LINE          = 1;
@@ -326,6 +327,17 @@ public class SRE_STATE {
                             (set[setidx + (ch >> 4)] & (1 << (ch & 15))) != 0)
                     return ok;
                 setidx += 16;
+                break;
+
+            case SRE_OP_BIGCHARSET:
+                /* <BIGCHARSET> <blockcount> <256 blockindices> <blocks> */
+                int count = set[setidx++];
+                int block = set[ch >> 8];
+                setidx += 128;
+                int idx = block*16 + ((ch & 255)>>4);
+                if ((set[setidx + idx] & (1 << (ch & 15))) != 0)
+                    return ok;
+                setidx += count*16;
                 break;
 
             case SRE_OP_CATEGORY:
@@ -815,6 +827,7 @@ public class SRE_STATE {
                     if (i != 0)
                         return i;
                     mark_restore(0, lastmark);
+                    this.lastmark = lastmark;
                     rp.count = count - 1;
                     this.ptr = ptr;
                 }
@@ -858,16 +871,7 @@ public class SRE_STATE {
 
                 /* see if the tail matches */
                 this.repeat = rp.prev;
-                if (pattern[rp.pidx + 2] == 65535) {
-                    /* unbounded repeat */
-                    for (;;) {
-                        i = SRE_MATCH(pattern, pidx, level + 1);
-                        if (i != 0 || ptr >= end)
-                            break;
-                        this.ptr = ++ptr;
-                    }
-                } else
-                    i = SRE_MATCH(pattern, pidx, level + 1);
+                i = SRE_MATCH(pattern, pidx, level + 1);
                 if (i != 0)
                     return i;
 
@@ -990,6 +994,8 @@ public class SRE_STATE {
                 //TRACE(pidx, ptr, "SEARCH LITERAL");
                 this.start = ptr;
                 this.ptr = ++ptr;
+                if ((flags & SRE_INFO_LITERAL) != 0)
+                    return 1;
                 status = SRE_MATCH(pattern, pidx + 2, 1);
                 if (status != 0)
                     break;
@@ -1025,10 +1031,6 @@ public class SRE_STATE {
 
         return status;
     }
-
-
-
-
 
 
     final boolean sre_category(char category, char ch) {
@@ -1174,13 +1176,18 @@ public class SRE_STATE {
 
 
 
-    String getslice(int index, String string) {
+    String getslice(int index, String string, boolean empty) {
         int i, j;
 
         index = (index - 1) * 2;
 
         if (string == null || mark[index] == -1 || mark[index+1] == -1) {
-            i = j = 0;
+            if (empty) {
+                /* want empty string */
+                i = j = 0;
+            } else {
+                return null;
+            }
         } else {
             i = mark[index];
             j = mark[index+1];
