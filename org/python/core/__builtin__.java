@@ -17,6 +17,62 @@ class PyChrFunction extends PyObject {
     }
 }*/
 
+class BuiltinFunctions extends PyBuiltinFunctionSet {
+    public PyObject __call__() {
+        switch(index) {
+            case 4:
+                return __builtin__.globals();
+            default:
+                throw argCountError(0);
+        }
+    }    
+    public PyObject __call__(PyObject arg1) {
+        switch(index) {
+            case 0:
+                return Py.newString(__builtin__.chr(Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
+            case 1:
+                return Py.newInteger(__builtin__.len(arg1));
+            case 2:
+                return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
+            case 3:
+                return Py.newInteger(__builtin__.ord(Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
+            case 5:
+                return __builtin__.hash(arg1);
+            case 7:
+                return __builtin__.list(arg1);
+            case 8:
+                return __builtin__.tuple(arg1);
+            default:
+                throw argCountError(1);
+        }
+    }
+    public PyObject __call__(PyObject arg1, PyObject arg2) {
+        switch(index) {
+            case 2:
+                return __builtin__.range(
+                    Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
+                    Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"));
+            case 6:
+                return Py.newInteger(__builtin__.cmp(arg1, arg2));
+                    
+            default:
+                throw argCountError(2);
+        }
+    }
+    public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
+        switch(index) {
+            case 2:
+                return __builtin__.range(
+                    Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
+                    Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
+                    Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
+            default:
+                throw argCountError(3);
+        }
+    }
+}
+
+
 public class __builtin__ implements InitModule {
     public void initModule(PyObject dict) {
         dict.__setitem__("None", Py.None);
@@ -49,10 +105,18 @@ public class __builtin__ implements InitModule {
 		// Work in debug mode by default
 		// Hopefully add -O option in the future to change this
 		dict.__setitem__("__debug__", Py.One);
-		//dict.__setitem__("ord", new PyOrdFunction() );
-		//dict.__setitem__("chr", new PyChrFunction() );
 
-    }
+		dict.__setitem__("chr", new BuiltinFunctions().init("chr", 0, 1) );
+		dict.__setitem__("range", new BuiltinFunctions().init("range", 2, 1, 3) );
+		dict.__setitem__("len", new BuiltinFunctions().init("len", 1, 1) );
+		dict.__setitem__("ord", new BuiltinFunctions().init("ord", 3, 1) );
+		dict.__setitem__("globals", new BuiltinFunctions().init("globals", 4, 0) );
+		dict.__setitem__("hash", new BuiltinFunctions().init("hash", 5, 1) );
+		dict.__setitem__("cmp", new BuiltinFunctions().init("cmp", 6, 2) );
+		dict.__setitem__("list", new BuiltinFunctions().init("list", 7, 1) );
+		dict.__setitem__("tuple", new BuiltinFunctions().init("tuple", 8, 1) );
+
+    } 
 
 	public static PyObject abs(PyObject o) {
 		return o.__abs__();
@@ -632,6 +696,17 @@ public class __builtin__ implements InitModule {
 
 	public static PyTuple tuple(PyObject o) {
 		if (o instanceof PyTuple) return (PyTuple)o;
+		if (o instanceof PyList) {
+		    PyList l = (PyList)o;
+		    PyObject[] a;
+		    if (l.list.length != l.length) {
+		        a = new PyObject[l.length];
+		        System.arraycopy(l.list, 0, a, 0, a.length);
+		    } else {
+		        a = l.list;
+		    }
+		    return new PyTuple(a);
+		}
 		return new PyTuple(make_array(o));
 	}
 
