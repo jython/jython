@@ -1,11 +1,17 @@
 Jython NEWS
 
-XX-Dec-2000 Jython 2.0 alpha 3
+25-Dec-2000 Jython 2.0 alpha 3
 
   Bug fixes.
     - Fixed a bug that caused Infinite recursion in subpackage 
       import
     - Fixed conversion error when a long is converted to a java double.
+    - Fixed a bug where an attribute in a package __init__.py would
+      hide a submodule.
+    - Fixed missing quotes around the path to java.exe in jython.bat 
+      for windows.
+    - Include missing re.py in installer.
+    - Added threading and atexit modules from CPython2.0.
 
 17-Dec-2000 Jython 2.0 alpha 2
 
