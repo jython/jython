@@ -12,7 +12,7 @@ public class PythonGraph {
         graph = new Graph();
         frame.add(graph, "Center");
 
-        ((PyProxy)graph).getProxy().call("setExpression", "sin(x)");
+        ((PyProxy)graph).getProxy().invoke("setExpression", new PyString("sin(x)"));
 
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent event) {
