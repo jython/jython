@@ -294,36 +294,21 @@ public class PyString extends PySequence {
         }
 
         PyList list = new PyList();
-
-        char[] chars = string.toCharArray();
-        int n=chars.length;
-
-        if (maxsplit <= 0) maxsplit = n;
-
-        int splits=0;
-        int index=0;
-        char firstChar = sep.charAt(0);
-        int nsep = sep.length();
-        int lastbreak;
-        while (index < n && splits < maxsplit) {
-            lastbreak = index;
-            while (index < n) {
-                if (chars[index] == firstChar) {
-                    if (nsep == 1) break;
-                    int j;
-                    for(j=1; j<nsep; j++) {
-                        if (chars[index+j] != sep.charAt(j)) break;
-                    }
-                    if (j == nsep) break;
-                }
-                index++;
-            }
+        
+        int length = string.length();
+        if (maxsplit <= 0) maxsplit = length;
+        int lastbreak = 0;
+        int splits = 0;
+        int sepLength = sep.length();
+        while (splits < maxsplit) {
+            int index = string.indexOf(sep, lastbreak);
+            if (index == -1) break;
+            splits += 1;
             list.append(new PyString(string.substring(lastbreak, index)));
-            index += nsep;
-            splits++;
+            lastbreak = index + sepLength;
         }
-        if (index <= n) {
-            list.append(new PyString(string.substring(index, n)));
+        if (splits < maxsplit && lastbreak < length) {
+            list.append(new PyString(string.substring(lastbreak, length)));
         }
         return list;
     }
