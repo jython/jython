@@ -5,14 +5,13 @@ import org.python.parser.*;
 import java.io.*;
 
 public class parser {
-    public static String getLine(InputStream istream, int line) {
-        if (istream == null)
+    public static String getLine(BufferedReader reader, int line) {
+        if (reader == null)
             return "";
         try {
             String text=null;
-            DataInputStream s = new DataInputStream(istream);
             for(int i=0; i      <line; i++) {
-                text = s.readLine();
+                text = reader.readLine();
             }
             return text;
         } catch (IOException ioe) {
@@ -20,13 +19,13 @@ public class parser {
         }
     }
 
-    static PyException fixParseError(InputStream istream, Throwable t,
+    static PyException fixParseError(BufferedReader reader, Throwable t,
                                      String filename)
     {
-        return fixParseError(istream, t, filename, false);
+        return fixParseError(reader, t, filename, false);
     }
         
-    static PyException fixParseError(InputStream istream, Throwable t,
+    static PyException fixParseError(BufferedReader reader, Throwable t,
                                      String filename, boolean forceNewline)
     {
         if (t instanceof ParseException) {
@@ -38,7 +37,7 @@ public class parser {
                 col = tok.next.beginColumn;
                 line = tok.next.beginLine;
             }
-            String text=getLine(istream, line);
+            String text=getLine(reader, line);
             return new PySyntaxError(e.getMessage(), line, col,
                                      text, filename, forceNewline);
         }
@@ -49,7 +48,7 @@ public class parser {
             int col = e.errorColumn;
             int line = e.errorLine;
             //System.err.println("eof seen: "+eofSeen+", "+e.curChar+", "+col+", "+line);
-            String text = getLine(istream, line);
+            String text = getLine(reader, line);
             if (eofSeen)
                 col -= 1;
             return new PySyntaxError(e.getMessage(), line, col,
@@ -66,9 +65,6 @@ public class parser {
     public static SimpleNode parse(InputStream istream, String kind,
                                    String filename)
     {
-        if (!istream.markSupported()) {
-            istream = new BufferedInputStream(istream);
-        }
         int nbytes;
         try {
             nbytes = istream.available();
@@ -80,9 +76,18 @@ public class parser {
             nbytes = 10000;
         if (nbytes > 100000)
             nbytes = 100000;
-        //System.err.println("marking istream");
-        istream.mark(nbytes);
-        PythonGrammar g = new PythonGrammar(istream);
+
+        Reader reader = new InputStreamReader(istream);
+        //if (Options.fixMacReaderBug);
+        reader = new FixMacReaderBug(reader);
+
+        BufferedReader bufreader = new BufferedReader(reader);
+
+        try {
+            bufreader.mark(nbytes);
+        } catch (IOException exc) { }
+
+        PythonGrammar g = new PythonGrammar(bufreader);
         SimpleNode node = null;
         try {
             if (kind.equals("eval")) {
@@ -101,8 +106,8 @@ public class parser {
         catch (Throwable t) {
             try {
                 //System.err.println("resetting istream");
-                istream.reset();
-                throw fixParseError(istream, t, filename,
+                bufreader.reset();
+                throw fixParseError(bufreader, t, filename,
                                     g.token_source.forcedNewline);
             }
             catch (IOException ioe) {
@@ -135,5 +140,23 @@ public class parser {
             return null;
         }
         return node;
+    }
+}
+
+
+/**
+ * A workaround for a bug in MRJ2.2's FileReader, where the value returned
+ * from read(b, o, l) sometimes are wrong.
+ */
+class FixMacReaderBug extends FilterReader {
+    public FixMacReaderBug(Reader in) {
+        super(in);
+    }
+
+    public int read(char b[], int off, int len) throws IOException {
+        int l = super.read(b, off, len);
+        if (l < -1)
+            l += off;
+        return l;
     }
 }
