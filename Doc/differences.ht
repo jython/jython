@@ -169,6 +169,7 @@ CPython 2.0</i>
     Without the 'b' option, the unicode charecters will the passed 
     through the default codec before going to/from the file.
 
+    <p><LI>The builtin 'chr' function allows values in the range [0..65535].
 </UL>
 
 <h3>Extension modules</h3>
