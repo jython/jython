@@ -63,6 +63,9 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/** The ResourceBundle with error messages and doc strings */
 	private static ResourceBundle resourceBundle = null;
 
+  /** Instance used to create date-like objects as per the API */
+  public static DateFactory datefactory = new JavaDateFactory();
+
 	static {
 		try {
 			resourceBundle = ResourceBundle.getBundle("com.ziclix.python.sql.resource.zxJDBCMessages");
@@ -397,136 +400,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * This function constructs an object holding a date value.
-	 *
-	 * @param year
-	 * @param month
-	 * @param day
-	 *
-	 * @return PyObject
-	 */
-	protected static PyObject Date(int year, int month, int day) {
-
-		Calendar c = Calendar.getInstance();
-
-		c.set(Calendar.YEAR, year);
-		c.set(Calendar.MONTH, month - 1);
-		c.set(Calendar.DATE, day);
-
-		return DateFromTicks(c.getTime().getTime() / 1000);
-	}
-
-	/**
-	 * This function constructs an object holding a time value.
-	 *
-	 * @param hour
-	 * @param minute
-	 * @param second
-	 *
-	 * @return PyObject
-	 */
-	protected static PyObject Time(int hour, int minute, int second) {
-
-		Calendar c = Calendar.getInstance();
-
-		c.set(Calendar.HOUR, hour);
-		c.set(Calendar.MINUTE, minute);
-		c.set(Calendar.SECOND, second);
-
-		return TimeFromTicks(c.getTime().getTime() / 1000);
-	}
-
-	/**
-	 * This function constructs an object holding a time stamp value.
-	 *
-	 * @param year
-	 * @param month
-	 * @param day
-	 * @param hour
-	 * @param minute
-	 * @param second
-	 *
-	 * @return PyObject
-	 */
-	protected static PyObject Timestamp(int year, int month, int day, int hour, int minute, int second) {
-
-		Calendar c = Calendar.getInstance();
-
-		c.set(Calendar.YEAR, year);
-		c.set(Calendar.MONTH, month - 1);
-		c.set(Calendar.DATE, day);
-		c.set(Calendar.HOUR, hour);
-		c.set(Calendar.MINUTE, minute);
-		c.set(Calendar.SECOND, second);
-		c.set(Calendar.MILLISECOND, 0);
-
-		return TimestampFromTicks(c.getTime().getTime() / 1000);
-	}
-
-	/**
-	 * This function constructs an object holding a date value from the
-	 * given ticks value (number of seconds since the epoch; see the
-	 * documentation of the standard Python <i>time</i> module for details).
-	 *
-	 * <i>Note:</i> The DB API 2.0 spec calls for time in seconds since the epoch
-	 * while the Java Date object returns time in milliseconds since the epoch.
-	 * This module adheres to the python API and will therefore use time in
-	 * seconds rather than milliseconds, so adjust any Java code accordingly.
-	 *
-	 * @param ticks number of seconds since the epoch
-	 *
-	 * @return PyObject
-	 */
-	protected static PyObject DateFromTicks(long ticks) {
-
-		Calendar c = Calendar.getInstance();
-
-		c.setTime(new java.util.Date(ticks * 1000));
-		c.set(Calendar.HOUR, 0);
-		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.SECOND, 0);
-		c.set(Calendar.MILLISECOND, 0);
-
-		return Py.java2py(new java.sql.Date(c.getTime().getTime()));
-	}
-
-	/**
-	 * This function constructs an object holding a time value from the
-	 * given ticks value (number of seconds since the epoch; see the
-	 * documentation of the standard Python <i>time</i> module for details).
-	 *
-	 * <i>Note:</i> The DB API 2.0 spec calls for time in seconds since the epoch
-	 * while the Java Date object returns time in milliseconds since the epoch.
-	 * This module adheres to the python API and will therefore use time in
-	 * seconds rather than milliseconds, so adjust any Java code accordingly.
-	 *
-	 * @param ticks number of seconds since the epoch
-	 *
-	 * @return PyObject
-	 */
-	protected static PyObject TimeFromTicks(long ticks) {
-		return Py.java2py(new Time(ticks * 1000));
-	}
-
-	/**
-	 * This function constructs an object holding a time stamp value from
-	 * the given ticks value (number of seconds since the epoch; see the
-	 * documentation of the standard Python <i>time</i> module for details).
-	 *
-	 * <i>Note:</i> The DB API 2.0 spec calls for time in seconds since the epoch
-	 * while the Java Date object returns time in milliseconds since the epoch.
-	 * This module adheres to the python API and will therefore use time in
-	 * seconds rather than milliseconds, so adjust any Java code accordingly.
-	 *
-	 * @param ticks number of seconds since the epoch
-	 *
-	 * @return PyObject
-	 */
-	protected static PyObject TimestampFromTicks(long ticks) {
-		return Py.java2py(new Timestamp(ticks * 1000));
-	}
-
-	/**
 	 * Method buildClass
 	 *
 	 *
@@ -590,13 +463,13 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 		switch (index) {
 
 			case 4 :
-				return zxJDBC.DateFromTicks(ticks);
+				return zxJDBC.datefactory.DateFromTicks(ticks);
 
 			case 5 :
-				return zxJDBC.TimeFromTicks(ticks);
+				return zxJDBC.datefactory.TimeFromTicks(ticks);
 
 			case 6 :
-				return zxJDBC.TimestampFromTicks(ticks);
+				return zxJDBC.datefactory.TimestampFromTicks(ticks);
 
 			default :
 				throw argCountError(1);
@@ -623,14 +496,14 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 				int month = ((Number)argb.__tojava__(Number.class)).intValue();
 				int day = ((Number)argc.__tojava__(Number.class)).intValue();
 
-				return zxJDBC.Date(year, month, day);
+				return zxJDBC.datefactory.Date(year, month, day);
 
 			case 2 :
 				int hour = ((Number)arga.__tojava__(Number.class)).intValue();
 				int minute = ((Number)argb.__tojava__(Number.class)).intValue();
 				int second = ((Number)argc.__tojava__(Number.class)).intValue();
 
-				return zxJDBC.Time(hour, minute, second);
+				return zxJDBC.datefactory.Time(hour, minute, second);
 
 			default :
 				throw argCountError(3);
@@ -658,7 +531,7 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 				int minute = ((Number)args[4].__tojava__(Number.class)).intValue();
 				int second = ((Number)args[5].__tojava__(Number.class)).intValue();
 
-				return zxJDBC.Timestamp(year, month, day, hour, minute, second);
+				return zxJDBC.datefactory.Timestamp(year, month, day, hour, minute, second);
 
 			default :
 				throw argCountError(args.length);
