@@ -702,6 +702,8 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     protected PyObject repeat(int count) {
+        if (count < 0)
+            count = 0;
         int s = string.length();
         char new_chars[] = new char[s*count];
         for (int i=0; i<count; i++) {
