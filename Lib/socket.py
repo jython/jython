@@ -20,6 +20,9 @@ AF_INET = 2
 
 SOCK_DGRAM = 1
 SOCK_STREAM = 2
+SOCK_RAW = 3 # not supported
+SOCK_RDM = 4 # not supported
+SOCK_SEQPACKET = 5 # not supported
 
 def _gethostbyaddr(name):
     # This is as close as I can get; at least the types are correct...
@@ -323,6 +326,7 @@ class _udpsocket:
 	self.sock = 0
 	sock.close()
 
+SocketType = _tcpsocket
 
 def test():
     s = socket(AF_INET, SOCK_STREAM)
