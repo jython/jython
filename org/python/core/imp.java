@@ -8,6 +8,7 @@ public class imp {
     private static String[] builtinNames = new String[] {
         "jarray", "math", "thread", "operator", "strop", "time",
         "os", "types", "py_compile", "codeop", "re", "code",
+        "synchronize",
     };
     
     public static final int APIVersion = 8;
