@@ -1142,9 +1142,11 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
         start.setPosition();
         //Do suite
-        node.getChild(0).visit(this);
+        Object exit = node.getChild(0).visit(this);
+        //System.out.println("exit: "+exit+", "+n+", "+(exit != null));
         end.setPosition();
-        code.goto_(handler_end);
+        if (exit == null)
+            code.goto_(handler_end);
 
         handler_start.setPosition();
         //Stack has eactly one item at start of handler
