@@ -92,7 +92,6 @@ public class PyList extends PySequence implements InitModule
         dict.__setitem__("insert", new ListFunctions("insert", 20, 2));
         // hide these from Python!
         dict.__setitem__("initModule", null);
-        dict.__setitem__("repeat", null);
         dict.__setitem__("toString", null);
         dict.__setitem__("hashCode", null);
     }
@@ -206,7 +205,7 @@ public class PyList extends PySequence implements InitModule
         }
     }
 
-    public PyObject repeat(int count) {
+    protected PyObject repeat(int count) {
         int l = length;
         PyObject[] newList = new PyObject[l*count];
         for (int i=0; i<count; i++) {
