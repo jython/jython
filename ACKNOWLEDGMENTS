@@ -27,8 +27,10 @@ Copyright © Corporation for National Research Initiatives
     PackageManagers and java reload support and also fixed a lot 
     of bugs.
 
-    Kevin Butler have written and contributed the code for os.environ and 
+    Kevin Butler has written and contributed the code for os.environ and 
     os.system().
+
+    Brian Zimmer contributed zxJDBC which is a Python DB API subsystem.
 
     A huge thanks goes to all the members of the jpython/jython
     mailing lists.  Other folks who have contributed to JPython and 
@@ -44,7 +46,6 @@ Copyright © Corporation for National Research Initiatives
     Tim Hochberg
     Bernhard Bablok
     Dj Walker-Morgan
-    Brian Zimmer
     Ivan Kougaenko
     Ype Kingma
     Ian Castleden
