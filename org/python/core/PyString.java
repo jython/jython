@@ -591,7 +591,7 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     protected PyObject get(int i) {
-        return new PyString(string.substring(i,i+1));
+        return Py.newString(string.charAt(i));
     }
 
     protected PyObject getslice(int start, int stop, int step) {

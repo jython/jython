@@ -304,7 +304,7 @@ public class __builtin__ implements ClassDictInit
         int j;
         int n = chars.length;
         for(i=0, j=0; i<n; i++) {
-            args[0] = Py.makeCharacter(new Character(chars[i]));
+            args[0] = Py.makeCharacter(chars[i]);
             if (!f.__call__(args).__nonzero__())
                 continue;
             chars[j++] = chars[i];

@@ -341,7 +341,7 @@ public final class Py
     }
     
     public static PyString newString(char c) {
-        return makeCharacter(new Character(c));
+        return makeCharacter(c);
     }    
     
     public static PyString newString(String s) {
@@ -1287,11 +1287,14 @@ public final class Py
         
     private static PyString[] letters=null;
 
+
     static final PyString makeCharacter(Character o) {
-        char c = o.charValue();
-        
+        return makeCharacter(o.charValue());
+    }
+
+    static final PyString makeCharacter(char c) {
         if (c > 255) {
-            return new PyString(o.toString());
+            return new PyString(new Character(c).toString());
         }
         
         if (letters == null) {
