@@ -203,7 +203,8 @@ public class CodeCompiler extends Visitor
     }
 
     public Object visitInteractive(Interactive node) throws Exception {
-        return visit(node.body);
+        traverse(node);
+        return null;
     }
 
     public Object visitModule(org.python.parser.ast.Module suite)

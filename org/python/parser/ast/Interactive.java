@@ -5,13 +5,13 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Interactive extends modType {
-    public stmtType body;
+    public stmtType[] body;
 
-    public Interactive(stmtType body) {
+    public Interactive(stmtType[] body) {
         this.body = body;
     }
 
-    public Interactive(stmtType body, SimpleNode parent) {
+    public Interactive(stmtType[] body, SimpleNode parent) {
         this(body);
         this.beginLine = parent.beginLine;
         this.beginColumn = parent.beginColumn;
@@ -35,8 +35,12 @@ public class Interactive extends modType {
     }
 
     public void traverse(VisitorIF visitor) throws Exception {
-        if (body != null)
-            body.accept(visitor);
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
     }
 
 }

@@ -13,6 +13,12 @@ public class Visitor extends VisitorBase {
     }
 
 
+    public void visit(SimpleNode[] nodes) throws Exception {
+        for (int i = 0; i < nodes.length; i++) {
+            visit(nodes[i]);
+        }
+    }
+
     /**
      * Visit the node by calling a visitXXX method.
      */

@@ -52,7 +52,7 @@ public class Future extends Object implements PythonGrammarTreeConstants {
                 beg++;
             }
         } else if (node instanceof Interactive) {
-            suite = new stmtType[] { ((Interactive) node).body };
+            suite = ((Interactive) node).body;
         } else {
             return;
         }

@@ -89,7 +89,7 @@ public class TreeBuilder implements PythonGrammarTreeConstants {
         case -1:
             System.out.println("Illegal node");
         case JJTSINGLE_INPUT:
-            return new Interactive((stmtType) popNode());
+            return new Interactive(makeStmts(arity));
         case JJTFILE_INPUT:
             return new Module(makeStmts(arity));
         case JJTEVAL_INPUT:
