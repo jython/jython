@@ -1,0 +1,24 @@
+# -*- makefile -*-
+#
+# Generic Makefile rules for building JPython
+
+JAVAC = javac
+JAVA = java
+OPT = -g:lines,vars,source
+
+CLASSPATH = "MUST OVERRIDE"
+
+.SUFFIXES= .java .class
+
+%.class: %.java
+	$(JAVAC) $(OPT) -classpath "$(CLASSPATH)" $?
+
+SOURCES = $(wildcard *.java)
+CLASSES= $(SOURCES:%.java=%.class)
+
+all: $(CLASSES)
+
+clean:
+	rm *.class
+
+realclean: clean
