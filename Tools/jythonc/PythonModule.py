@@ -386,13 +386,15 @@ class PythonModule:
 
     def makeClass(self):
         mycode = self.dumpAll()
+        supername = self.superclass.__name__
         if self.javaproxy is not None:
             mycode = [mycode, self.javaproxy.dumpAll()]
             self.superclass = self.javaproxy.superclass
             self.interfaces = self.interfaces+self.javaproxy.interfaces
+            supername = self.javaproxy.supername
 
         body = jast.Block(mycode)
-        return jast.Class(self.name, self.modifier, self.superclass.__name__,
+        return jast.Class(self.name, self.modifier, supername,
                           map(lambda i: i.__name__, self.interfaces), body)
 
 
