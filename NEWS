@@ -19,6 +19,9 @@ xx-xxx-2001 Jython 2.1 alpha 1
    - Allow self referencing adapters to be collected when using weak
      tables.
    - Added workaround for a reader bug in MRJ22Jitc.01.
+   - Fixes #127340 where serializable parameter received a PyObject
+     instead of the wrapped java object.
+   - Include a LineNumberTable in the compiled class files.
 
 17-Jan-2001 Jython 2.0 final release
 
