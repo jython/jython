@@ -822,6 +822,49 @@ public class __builtin__ implements InitModule
         return xrange(start,stop,1);
     }
 
+    public static PyObject zip(PyObject[] argstar) {
+        int itemsize = argstar.length;
+        if (itemsize < 1)
+            throw Py.TypeError("zip requires at least one sequence");
+
+        // Type check the arguments; they must be sequences.  Might as well
+        // cache the __getitem__() methods.
+        PyObject[] getitems = new PyObject[itemsize];
+
+        for (int j=0; j < itemsize; j++) {
+            PyObject getitem = argstar[j].__findattr__("__getitem__");
+            if (getitem == null) {
+                // Get the same error as CPython for instances.  This
+                // should throw an AttributeError.
+                if (argstar[j] instanceof PyInstance)
+                    argstar[j].__getattr__("__getitem__");
+                throw Py.TypeError("unindexable object");
+            }
+            getitems[j] = getitem;
+        }
+
+        PyList ret = new PyList();
+
+        for (int i=0;; i++) {
+            PyObject[] next = new PyObject[itemsize];
+            PyInteger index = new PyInteger(i);
+            PyObject item;
+
+            for (int j=0; j < itemsize; j++) {
+                try {
+                    item = getitems[j].__call__(index);
+                }
+                catch (PyException e) {
+                    if (Py.matchException(e, Py.IndexError))
+                        return ret;
+                    throw e;
+                }
+                next[j] = item;
+            }
+            ret.append(new PyTuple(next));
+        }
+    }
+
     public static synchronized PyObject __import__(PyString name) {
         return imp.importName(name.internedString(), true);
     }
