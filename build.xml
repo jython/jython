@@ -109,10 +109,7 @@
                  destdir="${apidocDir}"
                  Public="Yes"
                  packagenames="org.python.core,
-                               org.python.modules,
-                               org.python.modules.sre,
-                               org.python.util,
-                               org.python.rmi"
+                               org.python.util"
                  Windowtitle="Jython API documentation"
                  bottom="&lt;a href='http://www.jython.org'>Jython homepage&lt;/a>"
         />
