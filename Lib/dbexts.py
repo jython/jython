@@ -175,7 +175,6 @@ class dbexts:
 		self.verbose = 1
 		self.results = None
 		self.headers = None
-		self.datahandler = None
 		self.autocommit = autocommit
 		self.formatter = formatter
 		self.out = out
@@ -201,13 +200,16 @@ class dbexts:
 			if not jndiname:
 				t = self.dbs[("jdbc", dbname)]
 				self.dburl, dbuser, dbpwd, jdbcdriver = t['url'], t['user'], t['pwd'], t['driver']
-				if t.has_key("datahandler"):
+				if t.has_key('datahandler'):
+					self.datahandler = []
 					try:
-						datahandlerclass = t['datahandler'].split(".")[-1]
-						self.datahandler = __import__(t['datahandler'], globals(), locals(), datahandlerclass)
+						for dh in t['datahandler'].split(';'):
+							classname = dh.split(".")[-1]
+							datahandlerclass = __import__(dh, globals(), locals(), classname)
+							self.datahandler.append(datahandlerclass)
 					except:
 						pass
-				keys = filter(lambda x: x not in ['url', 'user', 'pwd', 'driver', 'datahandler', 'name'], t.keys())
+				keys = [x for x in t.keys() if x not in ['url', 'user', 'pwd', 'driver', 'datahandler', 'name']]
 				props = {}
 				for a in keys:
 					props[a] = t[a]
@@ -245,6 +247,7 @@ class dbexts:
 	def __getattr__(self, name):
 		if "cfg" == name:
 			return self.dbs.cfg
+		raise AttributeError("'dbexts' object has no attribute '%s'" % (name))
 
 	def close(self):
 		""" close the connection to the database """
@@ -255,7 +258,9 @@ class dbexts:
 		self.headers, self.results = None, None
 		c = self.db.cursor()
 		if __OS__ == 'java':
-			if self.datahandler: c.datahandler = self.datahandler(c.datahandler)
+			if hasattr(self, 'datahandler'):
+				for dh in self.datahandler:
+					c.datahandler = dh(c.datahandler)
 		else:
 			c = mxODBCProxy(c)
 		return c
