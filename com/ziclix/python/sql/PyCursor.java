@@ -487,7 +487,10 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		execute.executeSQL();
 
 		this.lastrowid = this.datahandler.getRowId(this.sqlStatement);
-		this.updatecount = Py.newInteger(this.sqlStatement.getUpdateCount());
+
+		int uc = this.sqlStatement.getUpdateCount();
+
+		this.updatecount = (uc < 0) ? Py.None : Py.newInteger(uc);
 
 		addWarning(this.sqlStatement.getWarnings());
 		this.datahandler.postExecute(this.sqlStatement);

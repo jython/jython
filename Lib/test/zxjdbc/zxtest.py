@@ -30,7 +30,7 @@ class zxCoreTestCase(runner.SQLTestCase):
 	def cursor(self, dynamic=0):
 		c = self.db.cursor(dynamic)
 		if hasattr(self, "datahandler"):
-			c.datahandler.__class__ = self.datahandler(c.datahandler.__class__)
+			c.datahandler = self.datahandler(c.datahandler)
 		return c
 
 class zxJDBCTestCase(zxCoreTestCase):
@@ -356,18 +356,20 @@ class zxAPITestCase(zxJDBCTestCase):
 		finally:
 			c.close()
 
-	def testUpdateCount(self, insert_only=0):
+	def testUpdateCount(self):
 		c = self.cursor()
 		try:
 			c.execute("insert into zxtesting values (?, ?, ?)", [(500, 'bz', 'or')])
 			assert c.updatecount == 1, "expected [1], got [%d]" % (c.updatecount)
 			c.execute("select * from zxtesting")
-			assert c.updatecount == -1, "expected updatecount to be -1 after query"
+			self.assertEquals(None, c.updatecount)
 			# there's a *feature* in the mysql engine where it returns 0 for delete if there is no
 			#  where clause, regardless of the actual value.  using a where clause forces it to calculate
 			#  the appropriate value
 			c.execute("delete from zxtesting where 1>0")
 			assert c.updatecount == 8, "expected [8], got [%d]" % (c.updatecount)
+			c.execute("update zxtesting set name = 'nothing'")
+			self.assertEquals(0, c.updatecount)
 		finally:
 			c.close()
 
