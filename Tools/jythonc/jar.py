@@ -92,7 +92,7 @@ class JavaArchive:
         package = string.join(parts[:-1], '.')
         pkg = lookup(package)
         filename = os.path.join(pkg.__path__[0], parts[-1]) + '.class'
-        entryname = string.join(parts, '/') + '.class'
+        entryname = '/'.join(parts) + '.class'
         self.zipfile.putNextEntry(ZipEntry(entryname))
         instream = FileInputStream(filename)
         copy(instream, self.zipfile)
