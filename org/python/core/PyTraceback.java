@@ -1,7 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyTraceback extends PyObject {
+public class PyTraceback extends PyObject
+{
     public PyObject tb_next;
     public PyFrame tb_frame;
     public int tb_lineno;
@@ -32,15 +33,11 @@ public class PyTraceback extends PyObject {
     }
 
     public void dumpStack(StringBuffer buf) {
-        //System.out.println("dumpStack: "+this+tb_next);
         buf.append(line());
-        //System.out.println(line());
         if (tb_next != Py.None && tb_next != this)
             ((PyTraceback)tb_next).dumpStack(buf);
-        else {
-            if (tb_next == this) {
-                buf.append("circularity detected!"+this+tb_next);
-            }
+        else if (tb_next == this) {
+            buf.append("circularity detected!"+this+tb_next);
         }
     }
 
@@ -51,5 +48,9 @@ public class PyTraceback extends PyObject {
         dumpStack(buf);
 
         return buf.toString();
+    }
+
+    public String toString() {
+        return "<traceback object at " + hashCode() + ">";
     }
 }
