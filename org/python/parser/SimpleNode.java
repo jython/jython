@@ -73,13 +73,17 @@ public class SimpleNode implements Node
     public void setString(String s, int quotes) {
         //System.out.println("string: "+s);
         char quoteChar = s.charAt(0);
+        int start=0;
+        if (quoteChar == 'u' || quoteChar == 'U')
+            start++;         
+        quoteChar = s.charAt(start);
         if (quoteChar == 'r' || quoteChar == 'R') {
-            info = s.substring(quotes+1, s.length()-quotes);
+            info = s.substring(quotes+start+1, s.length()-quotes);
         } else {
             StringBuffer sb = new StringBuffer(s.length());
             char[] ca = s.toCharArray();
             int n = ca.length-quotes;
-            int i=quotes;
+            int i=quotes+start;
             int last_i=i;
 
             while (i<n) {
@@ -127,6 +131,22 @@ public class SimpleNode implements Node
                         }
                     }
                     sb.append((char)c);
+                    break;
+                case 'u':
+                    if (i+4 > n)
+                        throw new TokenMgrError(
+                               "Unicode-Escape decoding error: "+
+                               "truncated \\uXXXX", beginLine, beginColumn);
+                    char u=0;
+                    for (int j = 0; j < 4; j++) {
+                        int digit = Character.digit(ca[i++], 16);
+                        if (digit == -1)
+                            throw new TokenMgrError(
+                                 "Unicode-Escape decoding error: "+
+                                 "truncated \\uXXXX", beginLine, beginColumn);
+                        u = (char)(u*16 + digit);
+                    }
+                    sb.append(u);
                     break;
                 case 'x':
                     if (Character.digit(ca[i], 16) != -1) {

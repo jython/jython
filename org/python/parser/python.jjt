@@ -309,10 +309,10 @@ TOKEN : /* Numeric literals */
 
 MORE : /* Strings */
 {
-        <(["r", "R"])? "'" > :  IN_STRING11
-|       <(["r", "R"])? "\"" > :  IN_STRING21
-|       <(["r", "R"])? "'''" > :  IN_STRING13
-|       <(["r", "R"])? "\"\"\"" > :  IN_STRING23
+        <(["u", "U"])? (["r", "R"])? "'" > :  IN_STRING11
+|       <(["u", "U"])? (["r", "R"])? "\"" > :  IN_STRING21
+|       <(["u", "U"])? (["r", "R"])? "'''" > :  IN_STRING13
+|       <(["u", "U"])? (["r", "R"])? "\"\"\"" > :  IN_STRING23
 }
 
 <IN_STRING11> TOKEN : { <SINGLE_STRING: "'"> : DEFAULT}
