@@ -227,14 +227,14 @@
             <fileset dir="Doc" includes="*.ht, **/*.gif" />
         </copy>
         <!-- Create .html files in Doc -->
-        <execon executable="${python.exe}" dir="Doc">
+        <apply executable="${python.exe}" dir="Doc">
             <env key="PYTHONPATH" path="${basedir}/Misc/htgen"/>
             <arg line="${ht2html.dir}/ht2html.py"/>
             <arg line="-s JyLocalGenerator"/>
             <fileset dir="${distDir}/Doc">
                 <include name="*.ht" />
             </fileset>
-        </execon>
+        </apply>
         <delete>
             <fileset dir="${distDir}/Doc" includes="*.ht" />
         </delete>
@@ -246,13 +246,15 @@
         <javadoc sourcepath="${sourceDir}"
                  destdir="${apidocDir}"
                  public="true"
+                 breakiterator="yes"
                  packagenames="org.python.core,
                                org.python.util,
                                com.ziclix.python.sql"
                  windowtitle="Jython API documentation"
                  bottom="&lt;a href='http://www.jython.org'
-                         target='_top'>Jython homepage&lt;/a>"
-        />
+                         target='_top'>Jython homepage&lt;/a>">
+                <classpath refid="main.classpath"/>
+        </javadoc>
     </target>
 
     <target name="copy-xml" depends="dist-prepare" if="PyXmlHome">

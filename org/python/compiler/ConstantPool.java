@@ -4,7 +4,6 @@ package org.python.compiler;
 import java.util.*;
 import java.io.*;
 
-
 class Bytes
 {
     public byte[] data;
@@ -37,8 +36,6 @@ class Bytes
     }
 }
 
-
-
 public class ConstantPool
 {
     Hashtable constants;

@@ -27,8 +27,6 @@ import java.text.DateFormat;
 import java.lang.reflect.*;
 import java.util.*;
 
-
-
 class TimeFunctions extends PyBuiltinFunctionSet
 {
     public TimeFunctions(String name, int index, int argcount) {
@@ -47,8 +45,6 @@ class TimeFunctions extends PyBuiltinFunctionSet
     }
 }
 
-
-
 public class time implements ClassDictInit
 {
     public static PyString __doc__ = new PyString(

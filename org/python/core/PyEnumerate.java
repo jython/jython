@@ -3,8 +3,8 @@ package org.python.core;
 public class PyEnumerate extends PyIterator {
 
     private long en_index;          /* current index of enumeration */
-	private PyObject en_sit;        /* secondary iterator of enumeration */
-	private PyTuple en_result;      /* result tuple  */
+    private PyObject en_sit;        /* secondary iterator of enumeration */
+    private PyTuple en_result;      /* result tuple  */
     protected static PyObject __methods__;
 
     static {

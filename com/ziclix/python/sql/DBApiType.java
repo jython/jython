@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -23,36 +22,35 @@ import org.python.core.PyInteger;
  */
 public final class DBApiType extends PyInteger {
 
-	/** Field __class__ */
-	public static PyClass __class__;
+    /**
+     * Field __class__
+     */
+    public static PyClass __class__;
 
-	/**
-	 * Constructor DBApiType
-	 *
-	 * @param int type
-	 *
-	 */
-	public DBApiType(int type) {
-		super(type);
-	}
+    /**
+     * Constructor DBApiType
+     *
+     * @param type
+     */
+    public DBApiType(int type) {
+        super(type);
+    }
 
-	/**
-	 * Constructor DBApiType
-	 *
-	 * @param Integer type
-	 *
-	 */
-	public DBApiType(Integer type) {
-		super(type.intValue());
-	}
+    /**
+     * Constructor DBApiType
+     *
+     * @param type
+     */
+    public DBApiType(Integer type) {
+        super(type.intValue());
+    }
 
-	/**
-	 * Method getPyClass
-	 *
-	 * @return PyClass
-	 *
-	 */
-	protected PyClass getPyClass() {
-		return __class__;
-	}
+    /**
+     * Method getPyClass
+     *
+     * @return PyClass
+     */
+    protected PyClass getPyClass() {
+        return __class__;
+    }
 }

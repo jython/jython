@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -20,7 +19,7 @@ import java.sql.Statement;
 /**
  * A data handler that keeps track of the update count for each execution of a
  * Statement.
- *
+ * <p/>
  * <p><b>Note:</b> MySql does not return the correct count for a
  * <a href="http://www.mysql.com/doc/D/E/DELETE.html">delete</a> statement that has
  * no <code>where</code> clause. Therefore, to assure the correct update count is returned,
@@ -34,47 +33,46 @@ import java.sql.Statement;
  */
 public class UpdateCountDataHandler extends FilterDataHandler {
 
-	private static boolean once = false;
+    private static boolean once = false;
 
-	/**
-	 * The update count for the last executed statement.
-	 */
-	public int updateCount;
+    /**
+     * The update count for the last executed statement.
+     */
+    public int updateCount;
 
-	/**
-	 * Handle capturing the update count.  The initial value of the updateCount is
-	 * <code>-1</code>.
-	 *
-	 */
-	public UpdateCountDataHandler(DataHandler datahandler) {
+    /**
+     * Handle capturing the update count.  The initial value of the updateCount is
+     * <code>-1</code>.
+     */
+    public UpdateCountDataHandler(DataHandler datahandler) {
 
-		super(datahandler);
+        super(datahandler);
 
-		if (!once) {
-			Py.writeError("UpdateCountDataHandler", zxJDBC.getString("updateCountDeprecation"));
-			once = true;
-		}
+        if (!once) {
+            Py.writeError("UpdateCountDataHandler", zxJDBC.getString("updateCountDeprecation"));
+            once = true;
+        }
 
-		this.updateCount = -1;
-	}
+        this.updateCount = -1;
+    }
 
-	/**
-	 * Sets the update count to <code>-1</code> prior to the statement being executed.
-	 */
-	public void preExecute(Statement stmt) throws SQLException {
+    /**
+     * Sets the update count to <code>-1</code> prior to the statement being executed.
+     */
+    public void preExecute(Statement stmt) throws SQLException {
 
-		super.preExecute(stmt);
+        super.preExecute(stmt);
 
-		this.updateCount = -1;
-	}
+        this.updateCount = -1;
+    }
 
-	/**
-	 * Gets the update count from the statement after successfully executing.
-	 */
-	public void postExecute(Statement stmt) throws SQLException {
+    /**
+     * Gets the update count from the statement after successfully executing.
+     */
+    public void postExecute(Statement stmt) throws SQLException {
 
-		super.postExecute(stmt);
+        super.postExecute(stmt);
 
-		this.updateCount = stmt.getUpdateCount();
-	}
+        this.updateCount = stmt.getUpdateCount();
+    }
 }

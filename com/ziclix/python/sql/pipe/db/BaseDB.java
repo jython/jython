@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -9,11 +8,13 @@
  */
 package com.ziclix.python.sql.pipe.db;
 
-import java.util.*;
-import java.lang.reflect.*;
-import org.python.core.*;
-import com.ziclix.python.sql.*;
-import com.ziclix.python.sql.handler.*;
+import com.ziclix.python.sql.DataHandler;
+import com.ziclix.python.sql.PyConnection;
+import com.ziclix.python.sql.PyCursor;
+import com.ziclix.python.sql.zxJDBC;
+import org.python.core.Py;
+
+import java.lang.reflect.Constructor;
 
 /**
  * Abstract class to assist in generating cursors.
@@ -23,73 +24,81 @@ import com.ziclix.python.sql.handler.*;
  */
 public abstract class BaseDB {
 
-	/** Field cursor */
-	protected PyCursor cursor;
+    /**
+     * Field cursor
+     */
+    protected PyCursor cursor;
 
-	/** Field dataHandler */
-	protected Class dataHandler;
+    /**
+     * Field dataHandler
+     */
+    protected Class dataHandler;
 
-	/** Field tableName */
-	protected String tableName;
+    /**
+     * Field tableName
+     */
+    protected String tableName;
 
-	/** Field connection */
-	protected PyConnection connection;
+    /**
+     * Field connection
+     */
+    protected PyConnection connection;
 
-	/**
-	 * Construct the helper.
-	 */
-	public BaseDB(PyConnection connection, Class dataHandler, String tableName) {
+    /**
+     * Construct the helper.
+     */
+    public BaseDB(PyConnection connection, Class dataHandler, String tableName) {
 
-		this.tableName = tableName;
-		this.dataHandler = dataHandler;
-		this.connection = connection;
-		this.cursor = this.cursor();
-	}
+        this.tableName = tableName;
+        this.dataHandler = dataHandler;
+        this.connection = connection;
+        this.cursor = this.cursor();
+    }
 
-	/**
-	 * Create a new constructor and optionally bind a new DataHandler.  The new DataHandler must act as
-	 * a Decorator, having a single argument constructor of another DataHandler.  The new DataHandler is
-	 * then expected to delegate all calls to the original while enhancing the functionality in any matter
-	 * desired.  This allows additional functionality without losing any previous work or requiring any
-	 * complicated inheritance dependencies.
-	 */
-	protected PyCursor cursor() {
+    /**
+     * Create a new constructor and optionally bind a new DataHandler.  The new DataHandler must act as
+     * a Decorator, having a single argument constructor of another DataHandler.  The new DataHandler is
+     * then expected to delegate all calls to the original while enhancing the functionality in any matter
+     * desired.  This allows additional functionality without losing any previous work or requiring any
+     * complicated inheritance dependencies.
+     */
+    protected PyCursor cursor() {
 
-		PyCursor cursor = this.connection.cursor(true);
-		DataHandler origDataHandler = cursor.getDataHandler(), newDataHandler = null;
+        PyCursor cursor = this.connection.cursor(true);
+        DataHandler origDataHandler = cursor.getDataHandler(), newDataHandler = null;
 
-		if ((origDataHandler != null) && (this.dataHandler != null)) {
-			Constructor cons = null;
+        if ((origDataHandler != null) && (this.dataHandler != null)) {
+            Constructor cons = null;
 
-			try {
-				Class[] args = new Class[1];
+            try {
+                Class[] args = new Class[1];
 
-				args[0] = DataHandler.class;
-				cons = this.dataHandler.getConstructor(args);
-			} catch (Exception e) {
-				return cursor;
-			}
+                args[0] = DataHandler.class;
+                cons = this.dataHandler.getConstructor(args);
+            } catch (Exception e) {
+                return cursor;
+            }
 
-			if (cons == null) {
-				String msg = zxJDBC.getString("invalidCons", new Object[]{ this.dataHandler.getName() });
+            if (cons == null) {
+                String msg = zxJDBC.getString("invalidCons", new Object[]{this.dataHandler.getName()});
 
-				throw zxJDBC.makeException(msg);
-			}
+                throw zxJDBC.makeException(msg);
+            }
 
-			try {
-				Object[] args = new Object[1];
+            try {
+                Object[] args = new Object[1];
 
-				args[0] = origDataHandler;
-				newDataHandler = (DataHandler)cons.newInstance(args);
-			} catch (Exception e) {
-				return cursor;
-			}
+                args[0] = origDataHandler;
+                newDataHandler = (DataHandler) cons.newInstance(args);
+            } catch (Exception e) {
+                return cursor;
+            }
 
-			if (newDataHandler != null) {
-				cursor.__setattr__("datahandler", Py.java2py(newDataHandler));
-			}
-		}
+            if (newDataHandler != null) {
+                cursor.__setattr__("datahandler", Py.java2py(newDataHandler));
+            }
+        }
 
-		return cursor;
-	}
+        return cursor;
+    }
 }

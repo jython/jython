@@ -49,7 +49,7 @@ public class PyXRange extends PySequence {
 
     protected PyObject getslice(int start, int stop, int step) {
         Py.DeprecationWarning("xrange object slicing is deprecated; " +
-	                      "convert to list instead");
+                              "convert to list instead");
         if (copies != 1) {
             throw Py.TypeError("cannot slice a replicated range");
         }
@@ -63,7 +63,7 @@ public class PyXRange extends PySequence {
 
     protected PyObject repeat(int howmany) {
         Py.DeprecationWarning("xrange object multiplication is deprecated; " +
-	                      "convert to list instead");
+                              "convert to list instead");
         PyXRange x = new PyXRange(start, stop, step);
         x.copies = copies*howmany;
         return x;
@@ -75,7 +75,7 @@ public class PyXRange extends PySequence {
 
     public PyObject __findattr__(String name) {
         String msg = "xrange object's 'start', 'stop' and 'step' " +
-		     "attributes are deprecated";
+                     "attributes are deprecated";
         if (name == "start") {
             Py.DeprecationWarning(msg);
             return Py.newInteger(start);

@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -18,16 +17,16 @@ import java.util.EventObject;
  */
 public class WarningEvent extends EventObject {
 
-	private SQLWarning warning;
+    private SQLWarning warning;
 
-	public WarningEvent(Object source, SQLWarning warning) {
+    public WarningEvent(Object source, SQLWarning warning) {
 
-		super(source);
+        super(source);
 
-		this.warning = warning;
-	}
+        this.warning = warning;
+    }
 
-	public SQLWarning getWarning() {
-		return this.warning;
-	}
+    public SQLWarning getWarning() {
+        return this.warning;
+    }
 }

@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -9,11 +8,11 @@
  */
 package com.ziclix.python.sql.util;
 
-import java.io.*;
-import java.sql.*;
-import java.math.*;
-import java.util.*;
-import org.python.core.*;
+import org.python.core.Py;
+import org.python.core.PyObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Parse the args and kws for a method call.
@@ -23,121 +22,124 @@ import org.python.core.*;
  */
 public class PyArgParser extends Object {
 
-	/** Field keywords */
-	protected Map keywords;
+    /**
+     * Field keywords
+     */
+    protected Map keywords;
 
-	/** Field arguments */
-	protected PyObject[] arguments;
+    /**
+     * Field arguments
+     */
+    protected PyObject[] arguments;
 
-	/**
-	 * Construct a parser with the arguments and keywords.
-	 */
-	public PyArgParser(PyObject[] args, String[] kws) {
+    /**
+     * Construct a parser with the arguments and keywords.
+     */
+    public PyArgParser(PyObject[] args, String[] kws) {
 
-		this.keywords = new HashMap();
-		this.arguments = null;
+        this.keywords = new HashMap();
+        this.arguments = null;
 
-		parse(args, kws);
-	}
+        parse(args, kws);
+    }
 
-	/**
-	 * Method parse
-	 *
-	 * @param PyObject[] args
-	 * @param String[] kws
-	 *
-	 */
-	protected void parse(PyObject[] args, String[] kws) {
+    /**
+     * Method parse
+     *
+     * @param args
+     * @param kws
+     */
+    protected void parse(PyObject[] args, String[] kws) {
 
-		// walk backwards through the kws and build the map
-		int largs = args.length;
+        // walk backwards through the kws and build the map
+        int largs = args.length;
 
-		if (kws != null) {
-			for (int i = kws.length - 1; i >= 0; i--) {
-				keywords.put(kws[i], args[--largs]);
-			}
-		}
+        if (kws != null) {
+            for (int i = kws.length - 1; i >= 0; i--) {
+                keywords.put(kws[i], args[--largs]);
+            }
+        }
 
-		this.arguments = new PyObject[largs];
+        this.arguments = new PyObject[largs];
 
-		System.arraycopy(args, 0, this.arguments, 0, largs);
-	}
+        System.arraycopy(args, 0, this.arguments, 0, largs);
+    }
 
-	/**
-	 * How many keywords?
-	 */
-	public int numKw() {
-		return this.keywords.keySet().size();
-	}
+    /**
+     * How many keywords?
+     */
+    public int numKw() {
+        return this.keywords.keySet().size();
+    }
 
-	/**
-	 * Does the keyword exist?
-	 */
-	public boolean hasKw(String kw) {
-		return this.keywords.containsKey(kw);
-	}
+    /**
+     * Does the keyword exist?
+     */
+    public boolean hasKw(String kw) {
+        return this.keywords.containsKey(kw);
+    }
 
-	/**
-	 * Return the value for the keyword, raise a KeyError if the keyword does
-	 * not exist.
-	 */
-	public PyObject kw(String kw) {
+    /**
+     * Return the value for the keyword, raise a KeyError if the keyword does
+     * not exist.
+     */
+    public PyObject kw(String kw) {
 
-		if (!hasKw(kw)) {
-			throw Py.KeyError(kw);
-		}
+        if (!hasKw(kw)) {
+            throw Py.KeyError(kw);
+        }
 
-		return (PyObject)this.keywords.get(kw);
-	}
+        return (PyObject) this.keywords.get(kw);
+    }
 
-	/**
-	 * Return the value for the keyword, return the default if the keyword does
-	 * not exist.
-	 */
-	public PyObject kw(String kw, PyObject def) {
+    /**
+     * Return the value for the keyword, return the default if the keyword does
+     * not exist.
+     */
+    public PyObject kw(String kw, PyObject def) {
 
-		if (!hasKw(kw)) {
-			return def;
-		}
+        if (!hasKw(kw)) {
+            return def;
+        }
 
-		return (PyObject)this.keywords.get(kw);
-	}
+        return (PyObject) this.keywords.get(kw);
+    }
 
-	/**
-	 * Get the array of keywords.
-	 */
-	public String[] kws() {
-		return (String[])this.keywords.keySet().toArray(new String[0]);
-	}
+    /**
+     * Get the array of keywords.
+     */
+    public String[] kws() {
+        return (String[]) this.keywords.keySet().toArray(new String[0]);
+    }
 
-	/**
-	 * Get the number of arguments.
-	 */
-	public int numArg() {
-		return this.arguments.length;
-	}
+    /**
+     * Get the number of arguments.
+     */
+    public int numArg() {
+        return this.arguments.length;
+    }
 
-	/**
-	 * Return the argument at the given index, raise an IndexError if out of range.
-	 */
-	public PyObject arg(int index) {
+    /**
+     * Return the argument at the given index, raise an IndexError if out of range.
+     */
+    public PyObject arg(int index) {
 
-		if ((index >= 0) && (index <= this.arguments.length - 1)) {
-			return this.arguments[index];
-		}
+        if ((index >= 0) && (index <= this.arguments.length - 1)) {
+            return this.arguments[index];
+        }
 
-		throw Py.IndexError("index out of range");
-	}
+        throw Py.IndexError("index out of range");
+    }
 
-	/**
-	 * Return the argument at the given index, or the default if the index is out of range.
-	 */
-	public PyObject arg(int index, PyObject def) {
+    /**
+     * Return the argument at the given index, or the default if the index is out of range.
+     */
+    public PyObject arg(int index, PyObject def) {
 
-		if ((index >= 0) && (index <= this.arguments.length - 1)) {
-			return this.arguments[index];
-		}
+        if ((index >= 0) && (index <= this.arguments.length - 1)) {
+            return this.arguments[index];
+        }
 
-		return def;
-	}
+        return def;
+    }
 }

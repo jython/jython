@@ -204,7 +204,7 @@ public class JythoncAntTask extends MatchingTask {
 
   /**
    * Sets the classpath field.
-   * @param classpath A Path object representing the "classpath" attribute.
+   * @param aClasspath A Path object representing the "classpath" attribute.
    */
   public void setClasspath(Path aClasspath) {
     classpath = aClasspath;

@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -21,87 +20,93 @@ import java.util.LinkedList;
  */
 public class Queue {
 
-	/** Field closed */
-	protected boolean closed;
+    /**
+     * Field closed
+     */
+    protected boolean closed;
 
-	/** Field queue */
-	protected LinkedList queue;
+    /**
+     * Field queue
+     */
+    protected LinkedList queue;
 
-	/** Field capacity, threshold */
-	protected int capacity, threshold;
+    /**
+     * Field capacity, threshold
+     */
+    protected int capacity, threshold;
 
-	/**
-	 * Instantiate a blocking queue with no bounded capacity.
-	 */
-	public Queue() {
-		this(0);
-	}
+    /**
+     * Instantiate a blocking queue with no bounded capacity.
+     */
+    public Queue() {
+        this(0);
+    }
 
-	/**
-	 * Instantiate a blocking queue with the specified capacity.
-	 */
-	public Queue(int capacity) {
+    /**
+     * Instantiate a blocking queue with the specified capacity.
+     */
+    public Queue(int capacity) {
 
-		this.closed = false;
-		this.capacity = capacity;
-		this.queue = new LinkedList();
-		this.threshold = (int)(this.capacity * 0.75f);
-	}
+        this.closed = false;
+        this.capacity = capacity;
+        this.queue = new LinkedList();
+        this.threshold = (int) (this.capacity * 0.75f);
+    }
 
-	/**
-	 * Enqueue an object and notify all waiting Threads.
-	 */
-	public synchronized void enqueue(Object element) throws InterruptedException {
+    /**
+     * Enqueue an object and notify all waiting Threads.
+     */
+    public synchronized void enqueue(Object element) throws InterruptedException {
 
-		if (closed) {
-			throw new QueueClosedException();
-		}
+        if (closed) {
+            throw new QueueClosedException();
+        }
 
-		this.queue.addLast(element);
-		this.notify();
+        this.queue.addLast(element);
+        this.notify();
 
-		/*
-		 * Block while the capacity of the queue has been breached.
-		 */
-		while ((this.capacity > 0) && (this.queue.size() >= this.capacity)) {
-			this.wait();
+        /*
+         * Block while the capacity of the queue has been breached.
+         */
+        while ((this.capacity > 0) && (this.queue.size() >= this.capacity)) {
+            this.wait();
 
-			if (closed) {
-				throw new QueueClosedException();
-			}
-		}
-	}
+            if (closed) {
+                throw new QueueClosedException();
+            }
+        }
+    }
 
-	/**
-	 * Blocks until an object is dequeued or the queue is closed.
-	 */
-	public synchronized Object dequeue() throws InterruptedException {
+    /**
+     * Blocks until an object is dequeued or the queue is closed.
+     */
+    public synchronized Object dequeue() throws InterruptedException {
 
-		while (this.queue.size() <= 0) {
-			this.wait();
+        while (this.queue.size() <= 0) {
+            this.wait();
 
-			if (closed) {
-				throw new QueueClosedException();
-			}
-		}
+            if (closed) {
+                throw new QueueClosedException();
+            }
+        }
 
-		Object object = this.queue.removeFirst();
+        Object object = this.queue.removeFirst();
 
-		// if space exists, notify the other threads
-		if (this.queue.size() < this.threshold) {
-			this.notify();
-		}
+        // if space exists, notify the other threads
+        if (this.queue.size() < this.threshold) {
+            this.notify();
+        }
 
-		return object;
-	}
+        return object;
+    }
 
-	/**
-	 * Close the queue and notify all waiting Threads.
-	 */
-	public synchronized void close() {
+    /**
+     * Close the queue and notify all waiting Threads.
+     */
+    public synchronized void close() {
 
-		this.closed = true;
+        this.closed = true;
 
-		this.notifyAll();
-	}
+        this.notifyAll();
+    }
 }

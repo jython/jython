@@ -227,9 +227,6 @@ class StringFuncs extends PyBuiltinFunctionSet
     }
 }
 
-
-
-
 /**
  * A builtin python string.
  */

@@ -4,7 +4,6 @@ package org.python.compiler;
 import java.util.*;
 import java.io.*;
 
-
 class Method
 {
     int access, name, type;
@@ -26,8 +25,6 @@ class Method
 
 }
 
-
-
 public class ClassFile
 {
     ConstantPool pool;

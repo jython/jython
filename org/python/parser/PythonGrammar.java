@@ -70,7 +70,7 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
         }
     }
 
-    // ! maximal currently used LOOKAHEAD is 3    
+    // ! maximal currently used LOOKAHEAD is 3
     private static final int MAX_LOOKAHEAD = 3;
 
     public boolean partial_valid_sentence(Throwable t) {
@@ -133,21 +133,21 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
         }
     }
 
-        // constructors taking a IParserHost impl
+   // constructors taking a IParserHost impl
 
-        public PythonGrammar(CharStream stream,IParserHost host) {
-            this(stream);
-            hostLiteralMkr = host;
-        }
+   public PythonGrammar(CharStream stream,IParserHost host) {
+       this(stream);
+       hostLiteralMkr = host;
+   }
 
-        public PythonGrammar(PythonGrammarTokenManager tm,
-                             IParserHost host)
-    {
+   public PythonGrammar(PythonGrammarTokenManager tm,
+                        IParserHost host)
+   {
         this(tm);
         hostLiteralMkr = host;
-        }
+   }
 
-//single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE 
+//single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 // apparently CPython coalesces newlines, we don't
   final public modType single_input() throws ParseException {
                          /*@bgen(jjtree) single_input */
@@ -4572,7 +4572,7 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
     }
   }
 
-//arglist: (argument ',')* 
+//arglist: (argument ',')*
 //              (argument [',']| '*' test [',' '**' test] | '**' test)
   final public void arglist() throws ParseException {
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {

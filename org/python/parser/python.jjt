@@ -1,7 +1,7 @@
 // -*- java -*-
 // Copyright © Corporation for National Research Initiatives
 
-options 
+options
 {
     // only non-defaults are given here.
     NODE_SCOPE_HOOK = true;                  // call jjtree*NodeScope()
@@ -20,10 +20,10 @@ PARSER_BEGIN(PythonGrammar)
 package org.python.parser;
 import org.python.parser.ast.modType;
 
-public class PythonGrammar 
+public class PythonGrammar
 {
     public IParserHost hostLiteralMkr;
-    
+
     void jjtreeOpenNodeScope(Node n) {
         Token t = getToken(1);
         jjtree.pushNodePos(t.beginLine, t.beginColumn);
@@ -89,7 +89,7 @@ public class PythonGrammar
         }
     }
 
-    // ! maximal currently used LOOKAHEAD is 3    
+    // ! maximal currently used LOOKAHEAD is 3
     private static final int MAX_LOOKAHEAD = 3;
 
     public boolean partial_valid_sentence(Throwable t) {
@@ -107,65 +107,65 @@ public class PythonGrammar
                return false;
            }
         }
-        if (!(t instanceof ParseException)) 
+        if (!(t instanceof ParseException))
             return false;
         try {
             ParseException e = (ParseException)t;
             int tok = getNextToken().kind;
             if (tok == EOF) return true; // all tokens eaten
-            
+
             // or check whether remaing tokens partially fullfill lookahead
             // expectations
-        
+
             int[][] expected = e.expectedTokenSequences;
-        
+
             if (expected == null) return false;
-        
+
             int[] ahead = new int[MAX_LOOKAHEAD-1];
-        
+
             int i = 0;
             for(;;) {
                 ahead[i] = tok;
-                i++;            
+                i++;
                 tok = getNextToken().kind;
                 if (tok == EOF) break;
                 if (i >= MAX_LOOKAHEAD-1) return false;
             }
-            
+
             int nahead = i;
-            
+
         next_expected:
             for(int j = 0; j<expected.length; j++) {
                 int[] cand = expected[j];
-        
+
                 if (cand.length <= nahead ) continue next_expected;
-        
+
                 for(int k = 0; k < nahead; k++)
                     if (ahead[k] != cand[k])
                         continue next_expected;
                 return true;
             }
-        
+
             return false;
         } catch (TokenMgrError e1) {
             return false;
         }
     }
-   
-   	// constructors taking a IParserHost impl
-   	
-   	public PythonGrammar(CharStream stream,IParserHost host) {
-   	    this(stream);
-   	    hostLiteralMkr = host;
-   	}
-   	
-   	public PythonGrammar(PythonGrammarTokenManager tm,
-   	                     IParserHost host)
-    {
+
+   // constructors taking a IParserHost impl
+
+   public PythonGrammar(CharStream stream,IParserHost host) {
+       this(stream);
+       hostLiteralMkr = host;
+   }
+
+   public PythonGrammar(PythonGrammarTokenManager tm,
+                        IParserHost host)
+   {
         this(tm);
         hostLiteralMkr = host;
-   	}
-    
+   }
+
 }
 
 
@@ -182,7 +182,7 @@ TOKEN_MGR_DECLS:
     boolean expect_indent = false;
 
     boolean compound = false;
-    
+
     public boolean single_input = false;
 
     // parsing of partial sentence (interactive) mode
@@ -236,7 +236,7 @@ TOKEN_MGR_DECLS:
                     t.kind = NEWLINE;
                     t.image = "<FORCENL>";
                     single_input = false;
-                }               
+                }
             }
         } else if (t.kind == YIELD) {
             if (!generator_allowed) {
@@ -244,13 +244,13 @@ TOKEN_MGR_DECLS:
             }
         }
     }
-    
+
     void indenting(int ind) {
         indent = ind;
         if (indent == indentation[level])
             SwitchTo(INDENTATION_UNCHANGED);
         else
-            SwitchTo(INDENTING);    
+            SwitchTo(INDENTING);
     }
 }
 
@@ -312,7 +312,7 @@ SKIP :
                 SwitchTo(MAYBE_FORCE_NEWLINE_IF_EOF);
             }
             else
-                indenting(0);            
+                indenting(0);
         }
 }
 
@@ -506,16 +506,16 @@ MORE : /* Strings */
     matchedToken.image = image.toString(); } : DEFAULT}
 <IN_STRING13> TOKEN : { <TRIPLE_STRING: "'''"> {
     matchedToken.image = image.toString(); } : DEFAULT}
-<IN_STRING23> TOKEN : { <TRIPLE_STRING2: "\"\"\""> { 
+<IN_STRING23> TOKEN : { <TRIPLE_STRING2: "\"\"\""> {
     matchedToken.image = image.toString(); } : DEFAULT}
 
-<IN_STRING11> MORE: 
+<IN_STRING11> MORE:
 {
     <"\\\r\n">           { image.setLength(image.length()-3); } : IN_STRING1NLC
 |   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); } : IN_STRING1NLC
 }
 
-<IN_STRING21> MORE: 
+<IN_STRING21> MORE:
 {
     <"\\\r\n">           { image.setLength(image.length()-3); } : IN_STRING2NLC
 |   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); } : IN_STRING2NLC
@@ -537,18 +537,18 @@ MORE : /* Strings */
 <IN_STRING13, IN_STRING23> MORE:
 {
     <"\r\n"> {
-        int l = image.length(); 
+        int l = image.length();
         image.setLength(l-1);
         image.setCharAt(l-2, '\n');
-    } 
+    }
 |   <"\n">
 |   <"\r"> { image.setCharAt(image.length()-1, '\n'); }
-|   <~["\n","\r"]> 
+|   <~["\n","\r"]>
 |   <"\\" ~["\n","\r"]>
 }
 
 
-//single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE 
+//single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 // apparently CPython coalesces newlines, we don't
 modType single_input(): {
     token_source.single_input=true;
@@ -559,7 +559,7 @@ modType single_input(): {
 }
 
 //file_input: (NEWLINE | stmt)* ENDMARKER
-modType file_input(): {token_source.single_input=false;} 
+modType file_input(): {token_source.single_input=false;}
 {
     (<NEWLINE> | stmt())* <EOF>
     { return (modType) jjtree.popNode(); }
@@ -656,8 +656,8 @@ void expr_stmt() #void: {}
 //print_stmt: 'print' (test ',')* [test] | 'print' '>>' test (, test)+ [,]
 void print_stmt() #void: {}
 {
-    LOOKAHEAD(2) <PRINT> <RSHIFT> (test() 
-        [ (LOOKAHEAD(2) <COMMA> test())+ [Comma()] ] 
+    LOOKAHEAD(2) <PRINT> <RSHIFT> (test()
+        [ (LOOKAHEAD(2) <COMMA> test())+ [Comma()] ]
         )#printext_stmt
 |   LOOKAHEAD(2) <PRINT> (test() (LOOKAHEAD(2) <COMMA> test())* [Comma()]
         )#print_stmt
@@ -766,9 +766,9 @@ void for_stmt(): {}
 void try_stmt() #void: {}
 { <TRY> <COLON> suite() (
     ((except_clause())+ [<ELSE> <COLON> suite()])
-        #try_stmt(jjtree.nodeArity()+1) 
+        #try_stmt(jjtree.nodeArity()+1)
     | <FINALLY> <COLON> suite()
-        #tryfinally_stmt(jjtree.nodeArity()+1)) 
+        #tryfinally_stmt(jjtree.nodeArity()+1))
 }
 
 //except_clause: 'except' [test [',' test]]
@@ -777,7 +777,7 @@ void except_clause(): {}
 
 //suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
 void suite(): {}
-{ simple_stmt() |  <NEWLINE> 
+{ simple_stmt() |  <NEWLINE>
                    { token_source.expect_indent = true; } <INDENT> { token_source.expect_indent = false; } (stmt())+ <DEDENT> }
 
 
@@ -882,7 +882,7 @@ void atom() #void: {}
 |   "`" SmartTestList() "`" #str_1op(1)
 |   Name()
 |   Number()
-|   String() (String() #strjoin(2))* 
+|   String() (String() #strjoin(2))*
 }
 
 
@@ -899,7 +899,7 @@ void subscript() #void: {}
 {
     <DOT> <DOT> <DOT> #Ellipses
 |   (test() (slice())?) #Slice
-|   slice() #Slice(>0) 
+|   slice() #Slice(>0)
 }
 
 //sliceop: ':' [test]
@@ -946,15 +946,15 @@ void list_if() #void: {}
 void classdef(): {}
 {<CLASS> Name() [<LPAREN> testlist() <RPAREN>] <COLON> suite()}
 
-//arglist: (argument ',')* 
+//arglist: (argument ',')*
 //              (argument [',']| '*' test [',' '**' test] | '**' test)
 void arglist() #void: {}
 {
-    normalargs() [<COMMA> 
-    [LOOKAHEAD(2) ExtraArgValueList() 
+    normalargs() [<COMMA>
+    [LOOKAHEAD(2) ExtraArgValueList()
     [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()]]
-|   [LOOKAHEAD(2) ExtraArgValueList() 
-    [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()] 
+|   [LOOKAHEAD(2) ExtraArgValueList()
+    [ <COMMA> ExtraKeywordValueList() ] | ExtraKeywordValueList()]
 }
 
 void normalargs() #void: {}

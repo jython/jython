@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -17,21 +16,19 @@ package com.ziclix.python.sql.util;
  */
 public class QueueClosedException extends RuntimeException {
 
-	/**
-	 * Constructor QueueClosedException
-	 *
-	 */
-	public QueueClosedException() {
-		super();
-	}
+    /**
+     * Constructor QueueClosedException
+     */
+    public QueueClosedException() {
+        super();
+    }
 
-	/**
-	 * Constructor QueueClosedException
-	 *
-	 * @param String msg
-	 *
-	 */
-	public QueueClosedException(String msg) {
-		super(msg);
-	}
+    /**
+     * Constructor QueueClosedException
+     *
+     * @param msg
+     */
+    public QueueClosedException(String msg) {
+        super(msg);
+    }
 }

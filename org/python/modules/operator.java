@@ -85,8 +85,6 @@ class OperatorFunctions extends PyBuiltinFunctionSet
     }
 }
 
-
-
 public class operator implements ClassDictInit
 {
     public static PyString __doc__ = new PyString(

@@ -15,8 +15,8 @@ public class PyLong extends PyObject
         BigInteger.valueOf(Long.MIN_VALUE);
     private static final BigInteger maxLong =
         BigInteger.valueOf(Long.MAX_VALUE);
-    public static final BigInteger maxULong = 
-    	BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));
+    public static final BigInteger maxULong =
+        BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));
 
     private static final BigInteger minDouble =
         new java.math.BigDecimal(Double.MIN_VALUE).toBigInteger();
@@ -58,27 +58,27 @@ public class PyLong extends PyObject
         }
         return v;
     }
-    
+
     private static final double scaledDoubleValue(BigInteger val, int[] exp){
             double x = 0;
             int signum = val.signum();
             byte[] digits;
-        
+
             if (signum >= 0) {
                 digits = val.toByteArray();
             } else {
-                digits = val.negate().toByteArray(); 
+                digits = val.negate().toByteArray();
             }
-        
+
             int count = 8;
             int i = 0;
-        
+
             if (digits[0] == 0) {
                 i++;
-                count++;            
+                count++;
             }
             count = count <= digits.length?count:digits.length;
-        
+
             while (i < count) {
                 x = x * 256 + (digits[i] & 0xff);
                 i++;
@@ -86,14 +86,14 @@ public class PyLong extends PyObject
             exp[0] = digits.length - i;
             return signum*x;
         }
-        
-    
-        
+
+
+
     public double scaledDoubleValue(int[] exp){
         return scaledDoubleValue(value,exp);
     }
-    
-    
+
+
     private long getLong(long min, long max) {
         if (value.compareTo(maxLong) <= 0 && value.compareTo(minLong) >= 0) {
             long v = value.longValue();
@@ -256,28 +256,28 @@ public class PyLong extends PyObject
         int[] ae = new int[1];
         int[] be = new int[1];
         double ad,bd;
-        
+
         ad = scaledDoubleValue(a,ae);
         bd = scaledDoubleValue(b,be);
-        
+
         if (bd == 0 ) throw Py.ZeroDivisionError("long division or modulo");
-        
+
         ad /= bd;
         int aexp = ae[0]-be[0];
-        
+
         if (aexp > Integer.MAX_VALUE/8) {
             throw Py.OverflowError("long/long too large for a float");
         } else if ( aexp < -(Integer.MAX_VALUE/8)) {
             return new PyFloat(0.0);
         }
-        
+
         ad = ad * Math.pow(2.0, aexp*8);
-        
+
         if (Double.isInfinite(ad)) {
             throw Py.OverflowError("long/long too large for a float");
         }
-               
-        return new PyFloat(ad);        
+
+        return new PyFloat(ad);
     }
 
     public PyObject __truediv__(PyObject right) {

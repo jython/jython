@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -22,23 +21,23 @@ import org.python.core.PyObject;
  */
 public interface Source {
 
-	/**
-	 * Invoked at the start of processing.
-	 */
-	public void start();
+    /**
+     * Invoked at the start of processing.
+     */
+    public void start();
 
-	/**
-	 * Return the next row from the source.
-	 * The following format:<br>
-	 * &nbsp;&nbsp;[(colName, colType), (colName, colType), ...]
-	 * for headers and:<br/>
-	 * &nbsp;&nbsp;[(col), (colName, colType), ...]
-	 * for all other data must be used.
-	 */
-	public PyObject next();
+    /**
+     * Return the next row from the source.
+     * The following format:<br>
+     * &nbsp;&nbsp;[(colName, colType), (colName, colType), ...]
+     * for headers and:<br/>
+     * &nbsp;&nbsp;[(col), (colName, colType), ...]
+     * for all other data must be used.
+     */
+    public PyObject next();
 
-	/**
-	 * Invoked at the end of processing.  This method is guarenteed to be called.
-	 */
-	public void end();
+    /**
+     * Invoked at the end of processing.  This method is guarenteed to be called.
+     */
+    public void end();
 }

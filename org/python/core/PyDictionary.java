@@ -3,7 +3,7 @@ package org.python.core;
 
 import java.util.Hashtable;
 import java.util.Enumeration;
-
+
 /**
  * A builtin python dictionary.
  */

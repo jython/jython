@@ -83,7 +83,7 @@ public class Options
 
     /**
      * If true, enable truedivision for the '/' operator.
-     */ 
+     */
     public static boolean Qnew = false;
 
     /**
@@ -99,7 +99,7 @@ public class Options
     //
     // ####### END OF OPTIONS
     //
-
+
     private Options() { ; }
 
     private static boolean getBooleanOption(String name, boolean defaultValue)

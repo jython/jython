@@ -158,7 +158,7 @@ public class jython
                 interp.cflags.division = true;
             }
         }
-            
+
         if (opts.command != null) {
             try {
                 interp.exec(opts.command);
@@ -223,8 +223,6 @@ public class jython
     }
 }
 
-
-
 class CommandLineOptions
 {
     public String filename;
@@ -324,7 +322,7 @@ class CommandLineOptions
             else if (arg.startsWith("-Q")) {
                 if (arg.length() > 2)
                     division = arg.substring(2);
-                else 
+                else
                     division = args[++index];
             }
             else {

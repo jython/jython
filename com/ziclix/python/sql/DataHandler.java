@@ -418,11 +418,11 @@ public class DataHandler {
      * Called when a stored procedure or function is executed and OUT parameters
      * need to be registered with the statement.
      *
-     * @param CallableStatement statement
-     * @param int index the JDBC offset column number
-     * @param int colType the column as from DatabaseMetaData (eg, procedureColumnOut)
-     * @param int dataType the JDBC datatype from Types
-     * @param String dataTypeName the JDBC datatype name
+     * @param statement
+     * @param index the JDBC offset column number
+     * @param colType the column as from DatabaseMetaData (eg, procedureColumnOut)
+     * @param dataType the JDBC datatype from Types
+     * @param dataTypeName the JDBC datatype name
      *
      * @throws SQLException
      *
@@ -433,8 +433,8 @@ public class DataHandler {
             statement.registerOutParameter(index, dataType);
         } catch (Throwable t) {
             SQLException cause = null;
-            SQLException ex = new SQLException("error setting index [" 
-              + index + "], coltype [" + colType + "], datatype [" + dataType 
+            SQLException ex = new SQLException("error setting index ["
+              + index + "], coltype [" + colType + "], datatype [" + dataType
               + "], datatypename [" + dataTypeName + "]");
 
             if (t instanceof SQLException) {

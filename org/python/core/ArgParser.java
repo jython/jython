@@ -31,8 +31,8 @@ public class ArgParser {
     // A marker.
     private static Object required = new Object();
     private static String[] emptyKws = new String[0];
-    
-    private PyBuiltinFunction.Info info;
+
+    //private PyBuiltinFunction.Info info;
 
     private ArgParser(String funcname, PyObject[] args, String[] kws) {
         this.funcname = funcname;
@@ -46,7 +46,7 @@ public class ArgParser {
      * Create an ArgParser with one method argument
      * @param  funcname   Name of the method. Used in error messages.
      * @param  args       The actual call arguments supplied in the call.
-     * @param  args       The actual keyword names supplied in the call.
+     * @param  kws        The actual keyword names supplied in the call.
      * @param  p0         The expected argument in the method definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
@@ -60,7 +60,7 @@ public class ArgParser {
      * Create an ArgParser with two method argument
      * @param  funcname   Name of the method. Used in error messages.
      * @param  args       The actual call arguments supplied in the call.
-     * @param  args       The actual keyword names supplied in the call.
+     * @param  kws        The actual keyword names supplied in the call.
      * @param  p0         The first expected argument in the method
                           definition.
      * @param  p1         The second expected argument in the method
@@ -77,7 +77,7 @@ public class ArgParser {
      * Create an ArgParser with three method argument
      * @param  funcname   Name of the method. Used in error messages.
      * @param  args       The actual call arguments supplied in the call.
-     * @param  args       The actual keyword names supplied in the call.
+     * @param  kws        The actual keyword names supplied in the call.
      * @param  p0         The first expected argument in the method
                           definition.
      * @param  p1         The second expected argument in the method
@@ -96,7 +96,7 @@ public class ArgParser {
      * Create an ArgParser with three method argument
      * @param funcname   Name of the method. Used in error messages.
      * @param args       The actual call arguments supplied in the call.
-     * @param args       The actual keyword names supplied in the call.
+     * @param kws        The actual keyword names supplied in the call.
      * @param paramnames The list of expected argument in the method
                           definition.
      */

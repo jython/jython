@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -30,47 +29,49 @@ import java.sql.Types;
  */
 public class SQLServerDataHandler extends FilterDataHandler {
 
-	/** Field UNICODE_VARCHAR */
-	public static final int UNICODE_VARCHAR = -9;
+    /**
+     * Field UNICODE_VARCHAR
+     */
+    public static final int UNICODE_VARCHAR = -9;
 
-	/**
-	 * Decorator for handling SQLServer specific issues.
-	 *
-	 * @param datahandler the delegate DataHandler
-	 */
-	public SQLServerDataHandler(DataHandler datahandler) {
-		super(datahandler);
-	}
+    /**
+     * Decorator for handling SQLServer specific issues.
+     *
+     * @param datahandler the delegate DataHandler
+     */
+    public SQLServerDataHandler(DataHandler datahandler) {
+        super(datahandler);
+    }
 
-	public Procedure getProcedure(PyCursor cursor, PyObject name) throws SQLException {
-		return new SQLServerProcedure(cursor, name);
-	}
+    public Procedure getProcedure(PyCursor cursor, PyObject name) throws SQLException {
+        return new SQLServerProcedure(cursor, name);
+    }
 
-	/**
-	 * Given a ResultSet, column and type, return the appropriate
-	 * Jython object.
-	 *
-	 * <p>Note: DO NOT iterate the ResultSet.
-	 *
-	 * @param set the current ResultSet set to the current row
-	 * @param col the column number (adjusted properly for JDBC)
-	 * @param type the column type
-	 * @throws SQLException if the type is unmappable
-	 */
-	public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
+    /**
+     * Given a ResultSet, column and type, return the appropriate
+     * Jython object.
+     * <p/>
+     * <p>Note: DO NOT iterate the ResultSet.
+     *
+     * @param set  the current ResultSet set to the current row
+     * @param col  the column number (adjusted properly for JDBC)
+     * @param type the column type
+     * @throws SQLException if the type is unmappable
+     */
+    public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
 
-		PyObject obj = Py.None;
+        PyObject obj = Py.None;
 
-		switch (type) {
+        switch (type) {
 
-			case UNICODE_VARCHAR :
-				obj = super.getPyObject(set, col, Types.VARCHAR);
-				break;
+            case UNICODE_VARCHAR:
+                obj = super.getPyObject(set, col, Types.VARCHAR);
+                break;
 
-			default :
-				obj = super.getPyObject(set, col, type);
-		}
+            default :
+                obj = super.getPyObject(set, col, type);
+        }
 
-		return (set.wasNull() || (obj == null)) ? Py.None : obj;
-	}
+        return (set.wasNull() || (obj == null)) ? Py.None : obj;
+    }
 }

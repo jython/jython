@@ -4,7 +4,6 @@ package org.python.core;
 import java.util.Hashtable;
 import java.math.BigInteger;
 
-
 class BuiltinFunctions extends PyBuiltinFunctionSet
 {
     public BuiltinFunctions(String name, int index, int argcount) {
@@ -100,8 +99,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
     }
 }
 
-
-
 /**
  * The builtin module. All builtin functions are defined here
  */

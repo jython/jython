@@ -2,7 +2,6 @@
 package org.python.modules;
 import org.python.core.*;
 
-
 class SynchronizedCallable extends PyObject
 {
     PyObject callable;
@@ -58,7 +57,6 @@ class SynchronizedCallable extends PyObject
 
 }
 
-
 public class synchronize
 {
     public static Object _getSync(PyObject obj) {

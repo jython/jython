@@ -2,10 +2,14 @@
 // Copyright 2000 Samuele Pedroni
 
 package org.python.core;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.StringTokenizer;
-import java.util.Hashtable;
-import java.util.zip.*;
+import java.util.zip.ZipEntry;
 
 public class SyspathJavaLoader extends ClassLoader
 {
@@ -107,7 +111,7 @@ public class SyspathJavaLoader extends ClassLoader
                     continue;
                 }
                 try {
-		    byte[] buffer = FileUtil.readBytes( fis );
+                    byte[] buffer = FileUtil.readBytes( fis );
                     fis.close();
                     return loadClassFromBytes(name, buffer);
                 }

@@ -1,11 +1,23 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.util;
 
-import org.python.core.*;
-import org.gnu.readline.*;
+import org.gnu.readline.Readline;
+import org.gnu.readline.ReadlineLibrary;
+import org.python.core.ArgParser;
+import org.python.core.Py;
+import org.python.core.PyException;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PySystemState;
 
-// Based on CPython-1.5.2's code module
-
+/**
+ * Uses:
+ *  <a href="http://java-readline.sourceforge.net/">Java Readline</a>
+ * <p/>
+ *
+ * Based on CPython-1.5.2's code module
+ *
+ */
 public class ReadlineConsole extends InteractiveConsole {
     public String filename;
 
@@ -52,12 +64,13 @@ public class ReadlineConsole extends InteractiveConsole {
      * whether the console itself or others like cmd.Cmd interpreters.
      * Both of these uses come through here.
      *
-     * @param prompt the prompt to be displayed at the beginning of line
+     * @param args should contain a single prompt
+     * @param kws keywords
      * @return the user input
      **/
     public static String _raw_input(PyObject args[], String kws[]) {
         ArgParser ap = new ArgParser("raw_input", args, kws, "prompt");
-        PyObject prompt = ap.getPyObject(0, new PyString(""));        
+        PyObject prompt = ap.getPyObject(0, new PyString(""));
         try {
             String line = Readline.readline(
                             prompt==null ? "" : prompt.toString());

@@ -8,9 +8,17 @@
 
 package org.python.modules;
 
-import java.math.BigInteger;
+import org.python.core.Py;
+import org.python.core.PyException;
+import org.python.core.PyFloat;
+import org.python.core.PyList;
+import org.python.core.PyLong;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
+import org.python.core.__builtin__;
 
-import org.python.core.*;
+import java.math.BigInteger;
 
 /**
  * This module performs conversions between Python values and C
@@ -319,26 +327,26 @@ public class struct {
             }
         }
 
-		long get_long(PyObject value) {
-			if (value instanceof PyLong){
-				Object v = value.__tojava__(Long.TYPE);
-				if (v == Py.NoConversion)
-				throw Py.OverflowError("long int too long to convert");
-				return ((Long) v).longValue();
-			} else
-				return get_int(value);
-		}
+        long get_long(PyObject value) {
+            if (value instanceof PyLong){
+                Object v = value.__tojava__(Long.TYPE);
+                if (v == Py.NoConversion)
+                throw Py.OverflowError("long int too long to convert");
+                return ((Long) v).longValue();
+            } else
+                return get_int(value);
+        }
 
-		BigInteger get_ulong(PyObject value) {
-			if (value instanceof PyLong){
-				BigInteger v = (BigInteger)value.__tojava__(BigInteger.class);
-				if (v.compareTo(PyLong.maxULong) > 0){
-					throw Py.OverflowError("unsigned long int too long to convert");
-				}
-				return v;
-			} else
-				return BigInteger.valueOf(get_int(value));
-		}
+        BigInteger get_ulong(PyObject value) {
+            if (value instanceof PyLong){
+                BigInteger v = (BigInteger)value.__tojava__(BigInteger.class);
+                if (v.compareTo(PyLong.maxULong) > 0){
+                    throw Py.OverflowError("unsigned long int too long to convert");
+                }
+                return v;
+            } else
+                return BigInteger.valueOf(get_int(value));
+        }
 
         double get_float(PyObject value) {
             if (!(value instanceof PyFloat))
@@ -651,11 +659,11 @@ public class struct {
 
     static class LEUnsignedLongFormatDef extends FormatDef {
         void pack(ByteStream buf, PyObject value) {
-			BigInteger bi = get_ulong(value);
-			if (bi.compareTo(BigInteger.valueOf(0)) < 0) {
-				throw StructError("can't convert negative long to unsigned");
-			}
-			long lvalue = bi.longValue(); // underflow is OK -- the bits are correct
+            BigInteger bi = get_ulong(value);
+            if (bi.compareTo(BigInteger.valueOf(0)) < 0) {
+                throw StructError("can't convert negative long to unsigned");
+            }
+            long lvalue = bi.longValue(); // underflow is OK -- the bits are correct
             int high    = (int) ( (lvalue & 0xFFFFFFFF00000000L)>>32 );
             int low     = (int) ( lvalue & 0x00000000FFFFFFFFL );
             LEwriteInt( buf, low );
@@ -665,7 +673,7 @@ public class struct {
         Object unpack(ByteStream buf) {
             long low       = ( LEreadInt( buf ) & 0X00000000FFFFFFFFL );
             long high      = ( LEreadInt( buf ) & 0X00000000FFFFFFFFL );
-	            java.math.BigInteger result=java.math.BigInteger.valueOf(high);
+                java.math.BigInteger result=java.math.BigInteger.valueOf(high);
             result=result.multiply(java.math.BigInteger.valueOf(0x100000000L));
             result=result.add(java.math.BigInteger.valueOf(low));
             return new PyLong(result);
@@ -675,11 +683,11 @@ public class struct {
 
     static class BEUnsignedLongFormatDef extends FormatDef {
         void pack(ByteStream buf, PyObject value) {
-			BigInteger bi = get_ulong(value);
-			if (bi.compareTo(BigInteger.valueOf(0)) < 0) {
-				throw StructError("can't convert negative long to unsigned");
-			}
-			long lvalue = bi.longValue(); // underflow is OK -- the bits are correct
+            BigInteger bi = get_ulong(value);
+            if (bi.compareTo(BigInteger.valueOf(0)) < 0) {
+                throw StructError("can't convert negative long to unsigned");
+            }
+            long lvalue = bi.longValue(); // underflow is OK -- the bits are correct
             int high    = (int) ( (lvalue & 0xFFFFFFFF00000000L)>>32 );
             int low     = (int) ( lvalue & 0x00000000FFFFFFFFL );
             BEwriteInt( buf, high );
@@ -707,8 +715,8 @@ public class struct {
         }
 
         Object unpack(ByteStream buf) {
-			long low = LEreadInt(buf) & 0x00000000FFFFFFFFL;
-			long high = ((long)(LEreadInt(buf))<<32) & 0xFFFFFFFF00000000L;
+            long low = LEreadInt(buf) & 0x00000000FFFFFFFFL;
+            long high = ((long)(LEreadInt(buf))<<32) & 0xFFFFFFFF00000000L;
             long result=(high|low);
             return new PyLong(result);
         }
@@ -725,8 +733,8 @@ public class struct {
         }
 
         Object unpack(ByteStream buf) {
-			long high = ((long)(BEreadInt(buf))<<32) & 0xFFFFFFFF00000000L;
-			long low = BEreadInt(buf) & 0x00000000FFFFFFFFL;
+            long high = ((long)(BEreadInt(buf))<<32) & 0xFFFFFFFF00000000L;
+            long low = BEreadInt(buf) & 0x00000000FFFFFFFFL;
             long result=(high|low);
             return new PyLong(result);
         }

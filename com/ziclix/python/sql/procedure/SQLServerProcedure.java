@@ -1,4 +1,3 @@
-
 /*
  * Jython Database Specification API 2.0
  *
@@ -9,9 +8,12 @@
  */
 package com.ziclix.python.sql.procedure;
 
-import java.sql.*;
-import org.python.core.*;
-import com.ziclix.python.sql.*;
+import com.ziclix.python.sql.Procedure;
+import com.ziclix.python.sql.PyCursor;
+import org.python.core.Py;
+import org.python.core.PyObject;
+
+import java.sql.SQLException;
 
 /**
  * Stored procedure support for SQLServer.
@@ -22,22 +24,22 @@ import com.ziclix.python.sql.*;
  */
 public class SQLServerProcedure extends Procedure {
 
-	public SQLServerProcedure(PyCursor cursor, PyObject name) throws SQLException {
-		super(cursor, name);
-	}
+    public SQLServerProcedure(PyCursor cursor, PyObject name) throws SQLException {
+        super(cursor, name);
+    }
 
-	protected PyObject getDefault() {
-		return Py.None;
-	}
+    protected PyObject getDefault() {
+        return Py.None;
+    }
 
-	protected String getProcedureName() {
+    protected String getProcedureName() {
 
-		StringBuffer proc = new StringBuffer();
+        StringBuffer proc = new StringBuffer();
 
-		if (this.procedureSchema.__nonzero__()) {
-			proc.append(this.procedureSchema.toString()).append(".");
-		}
+        if (this.procedureSchema.__nonzero__()) {
+            proc.append(this.procedureSchema.toString()).append(".");
+        }
 
-		return proc.append(this.procedureName.toString()).toString();
-	}
+        return proc.append(this.procedureName.toString()).toString();
+    }
 }

@@ -1,8 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-
-
 class TupleFunctions extends PyBuiltinFunctionSet
 {
     TupleFunctions(String name, int index, int argcount) {
@@ -30,8 +28,6 @@ class TupleFunctions extends PyBuiltinFunctionSet
     }
 }
 
-
-
 /**
  * A builtin python tuple.
  */

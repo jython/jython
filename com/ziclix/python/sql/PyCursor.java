@@ -742,7 +742,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
   /**
    * Adds a warning to the tuple and will follow the chain as necessary.
    *
-   * @param warning
+   * @param event
    */
   public void warning(WarningEvent event) {
 

@@ -7,10 +7,12 @@
 
 package org.python.modules;
 
-import org.python.core.*;
+import org.python.core.ClassDictInit;
+import org.python.core.Py;
+import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyObject;
+import org.python.core.PyString;
 
-
-
 class MD5Functions extends PyBuiltinFunctionSet
 {
     public MD5Functions(String name, int index, int minargs, int maxargs) {
@@ -36,8 +38,6 @@ class MD5Functions extends PyBuiltinFunctionSet
     }
 }
 
-
-
 public class MD5Module implements ClassDictInit
 {
     public static PyString __doc__ = new PyString(
@@ -67,7 +67,7 @@ public class MD5Module implements ClassDictInit
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("new", new MD5Functions("new", 0, 0, 1));
         dict.__setitem__("md5", new MD5Functions("md5", 0, 0, 1));
-		dict.__setitem__("digest_size", Py.newInteger(16));
+        dict.__setitem__("digest_size", Py.newInteger(16));
         dict.__setitem__("classDictInit", null);
     }
 }
