@@ -5,7 +5,8 @@ import org.python.core.*;
 import java.util.zip.*;
 import java.io.*;
 
-public class jpython {
+public class jpython
+{
     private static String usage =
         "usage: jpython [options] [-jar jar | -c cmd | file | -] [args]\n"+
         "Options and arguments:\n"+
@@ -145,7 +146,10 @@ public class jpython {
     }
 }
 
-class CommandLineOptions {
+
+
+class CommandLineOptions
+{
     public String filename;
     public boolean jar, interactive, notice;
     private boolean fixInteractive;
@@ -209,12 +213,8 @@ class CommandLineOptions {
                 int equals = arg.indexOf("=");
                 if (equals == -1) {
                     String arg2 = args[++index];
-                    /*if (!arg2.startsWith("=")) {
-                      System.err.println("-D option with no '=': "+args[index-1]+"::"+arg2);
-                      return false;
-                      }*/
                     key = arg.substring(2, arg.length());
-                    value = arg2; //.substring(1, arg2.length());
+                    value = arg2;
                 }
                 else {
                     key = arg.substring(2, equals);
