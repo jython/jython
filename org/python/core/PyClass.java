@@ -2,7 +2,8 @@
 package org.python.core;
 import java.util.Vector;
 
-public class PyClass extends PyObject {
+public class PyClass extends PyObject
+{
     /**
      * Holds the namespace for this class
      **/

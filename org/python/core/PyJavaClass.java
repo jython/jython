@@ -22,7 +22,6 @@ public class PyJavaClass extends PyClass
             jc.init(PyJavaClass.class);
             Py.initPython();
         }
-
         PyJavaClass ret = (PyJavaClass)classes.get(name);
         if (ret != null)
             return ret;
@@ -93,7 +92,8 @@ public class PyJavaClass extends PyClass
     }
 
     private void init__class__(Class c) {
-        if (!PyObject.class.isAssignableFrom(c)) return;
+        if (!PyObject.class.isAssignableFrom(c))
+            return;
 
 //         // Handle the special static __class__ fields on PyObject instances
 //         if (name == "__class__" &&  isstatic && 
@@ -110,7 +110,8 @@ public class PyJavaClass extends PyClass
         try {
             Field field = c.getField("__class__");
             if (Modifier.isStatic(field.getModifiers()) && 
-                field.getType().isAssignableFrom(PyJavaClass.class)) {
+                field.getType().isAssignableFrom(PyJavaClass.class))
+            {
                 field.set(null, this);
             }
         }
@@ -166,11 +167,13 @@ public class PyJavaClass extends PyClass
         if (InitModule.class.isAssignableFrom(c)) {
             initialize();
             try {
-                InitModule initModule = (InitModule)c.newInstance();
-                initModule.initModule(__dict__);
-            } catch (Exception exc) {
+                InitModule m = (InitModule)c.newInstance();
+                m.initModule(__dict__);
+            }
+            catch (Exception exc) {
+//                 System.err.println("Got exception: " + exc);
                 throw Py.JavaError(exc);
-            }           
+            }
         }
     }
 

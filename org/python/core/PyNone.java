@@ -1,7 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyNone extends PySingleton {
+public class PyNone extends PySingleton
+{
     public PyNone() {
         super("None");
     }
