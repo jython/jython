@@ -120,8 +120,11 @@ public class sys {
 		    registry = new Properties(registry);
 			try {
 				FileInputStream fp = new FileInputStream(file);
-				registry.load(fp);
-				fp.close();
+				try {
+				    registry.load(fp);
+				} finally {
+				    fp.close();
+				}
 			} catch (IOException e) {
 				System.err.println("couldn't open registry file: "+file.toString());
 			}
