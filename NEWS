@@ -1,10 +1,11 @@
 Jython NEWS
 
-xx-apr-2001 Jython 2.1 alpha 2
+xx-jun-2001 Jython 2.1 alpha 2
 
-  Bug fixes.
-   - Fix #222819, #231507 and #406193 all related to proxies and their
-     super__ methods.
+  New features.
+   - Added ReadlineConsole class. This class will make it a lot easier
+     to integrate Bablok's readline support.
+   - Display Hook for Interactive Use (pep-0217)
 
 14-mar-2001 Jython 2.1 alpha 1
 
@@ -32,7 +33,8 @@ xx-apr-2001 Jython 2.1 alpha 2
      instead of the wrapped java object.
    - Include a LineNumberTable in the compiled class files.
    - Fixed a java version test bug in the installer.
-   - Added workaround for class initializarion bug in MRJ2.2.4
+   - Added workaround for class initialization bug in MRJ2.2.4
+   - Added support for three argument getattr() calls.
 
 17-Jan-2001 Jython 2.0 final release
 
