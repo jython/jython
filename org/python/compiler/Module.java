@@ -344,7 +344,9 @@ public class Module
     private String[] toNameAr(Vector names,boolean nullok) {
         int sz = names.size();
         if (sz ==0 && nullok) return null;
-        return (String[])names.toArray(emptyStringAr);
+        String[] nameArray = new String[sz];
+        names.copyInto(nameArray);
+        return nameArray;
     }
     
     
