@@ -335,18 +335,17 @@ public class __builtin__ implements ClassDictInit
 
 
     public static PyObject filter(PyObject f, PyObject l) {
-        int i=0;
-        PyObject element;
         PyList list = new PyList();
-        while ((element = l.__finditem__(i++)) != null) {
+        PyObject iter = l.__iter__();
+        for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
             if (f == Py.None) {
-                if (!element.__nonzero__())
+                if (!item.__nonzero__())
                     continue;
             } else {
-                if (!f.__call__(element).__nonzero__())
+                if (!f.__call__(item).__nonzero__())
                     continue;
             }
-            list.append(element);
+            list.append(item);
         }
         return list;
     }
@@ -501,7 +500,6 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject map(PyObject[] argstar) {
-        int i=0;
         int n = argstar.length-1;
         if (n < 1)
             throw Py.TypeError("map requires at least two arguments");
@@ -509,10 +507,17 @@ public class __builtin__ implements ClassDictInit
         PyObject f = argstar[0];
         PyList list = new PyList();
         PyObject[] args = new PyObject[n];
+        PyObject[] iters = new PyObject[n];
+
+        for (int j = 0; j < n; j++) {
+            iters[j] = Py.iter(argstar[j+1], "argument " + j + "to map() " +
+                                             "must support iteration");
+        }
+
         while (true) {
             boolean any_items = false;
-            for(int j=0; j<n; j++) {
-                if ((element = argstar[j+1].__finditem__(i)) != null) {
+            for(int j = 0; j < n; j++) {
+                if ((element = iters[j].__iternext__()) != null) {
                     args[j] = element;
                     any_items = true;
                 } else {
@@ -530,10 +535,10 @@ public class __builtin__ implements ClassDictInit
             } else {
                 list.append(f.__call__(args));
             }
-            i = i+1;
         }
         return list;
     }
+
 
     // I've never been happy with max and min builtin's...
 
@@ -544,15 +549,14 @@ public class __builtin__ implements ClassDictInit
     }
 
     private static PyObject max(PyObject o) {
-        PyObject max = o.__finditem__(0);
+        PyObject max = null;
+        PyObject iter = o.__iter__();
+        for (PyObject item; (item = iter.__iternext__()) != null; ) {
+            if (max == null || item._gt(max).__nonzero__())
+                max = item;
+        }
         if (max == null)
             throw Py.ValueError("max of empty sequence");
-        PyObject element;
-        int i=1;
-        while ((element = o.__finditem__(i++)) != null) {
-            if (element._gt(max).__nonzero__())
-                max = element;
-        }
         return max;
     }
 
@@ -563,15 +567,14 @@ public class __builtin__ implements ClassDictInit
     }
 
     private static PyObject min(PyObject o) {
-        PyObject min = o.__finditem__(0);
+        PyObject min = null;
+        PyObject iter = o.__iter__();
+        for (PyObject item; (item = iter.__iternext__()) != null; ) {
+            if (min == null || item._lt(min).__nonzero__())
+                min = item;
+        }
         if (min == null)
             throw Py.ValueError("min of empty sequence");
-        PyObject element;
-        int i=1;
-        while ((element = o.__finditem__(i++)) != null) {
-            if (element._lt(min).__nonzero__())
-                min = element;
-        }
         return min;
     }
 
@@ -762,18 +765,18 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject reduce(PyObject f, PyObject l, PyObject z) {
-        int i=0;
-        PyObject element, result;
-        result = z;
-        if (result == null) {
-            result = l.__finditem__(i++);
-            if (result == null) {
-                throw Py.TypeError(
-                    "reduce of empty sequence with no initial value");
-            }
+        PyObject result = z;
+        PyObject iter = Py.iter(l, "reduce() arg 2 must support iteration");
+        
+        for (PyObject item; (item = iter.__iternext__()) != null; ) {
+            if (result == null)
+                result = item;
+            else
+                result = f.__call__(result, item);
         }
-        while ((element = l.__finditem__(i++)) != null) {
-            result = f.__call__(result, element);
+        if (result == null) {
+            throw Py.TypeError(
+                    "reduce of empty sequence with no initial value");
         }
         return result;
     }
@@ -827,6 +830,13 @@ public class __builtin__ implements ClassDictInit
         return slice(Py.None, stop, Py.None);
     }
 
+    public static PyObject iter(PyObject obj) {
+        return obj.__iter__();
+    }
+
+    public static PyObject iter(PyObject callable, PyObject sentinel) {
+        return new PyCallIter(callable, sentinel);
+    }
 
     public static PyString str(PyObject o) {
         return o.__str__();
@@ -986,7 +996,7 @@ public class __builtin__ implements ClassDictInit
         PyObject[] objs= new PyObject[n];
 
         for(int i=0; i<n; i++) {
-            objs[i] = o.__finditem__(i);
+            objs[i] = o.__finditem__(i); // XXX: convert to __iter__!
         }
         return objs;
     }

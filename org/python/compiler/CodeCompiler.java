@@ -933,7 +933,8 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public int safe_getitem=0;
+    public int iter=0;
+    public int iternext=0;
 
     public Object for_stmt(SimpleNode node) throws Exception {
         beginLoop();
@@ -943,7 +944,7 @@ public class CodeCompiler extends Visitor
         Label next_loop = code.getLabel();
 
         int list_tmp = code.getLocal();
-        int index_tmp = code.getLocal();
+        int iter_tmp = code.getLocal();
         int expr_tmp = code.getLocal();
 
         setline(node);
@@ -952,35 +953,39 @@ public class CodeCompiler extends Visitor
         node.getChild(1).visit(this);
         code.astore(list_tmp);
 
-        //set up the loop counter
-        code.iconst(0);
-        code.istore(index_tmp);
+        //set up the loop iterator
+
+        code.aload(list_tmp);
+        if (mrefs.iter == 0) {
+            mrefs.iter = code.pool.Methodref(
+                "org/python/core/PyObject",
+                "__iter__", "()" + $pyObj);
+        }
+        code.invokevirtual(mrefs.iter);
+        code.astore(iter_tmp);
 
         //do check at end of loop.  Saves one opcode ;-)
         code.goto_(next_loop);
 
         start_loop.setPosition();
-        //set index variable to current entry in list
+        //set iter variable to current entry in list
         set(node.getChild(0), expr_tmp);
 
         //evaluate for body
         node.getChild(2).visit(this);
 
         continue_loop.setPosition();
-        //increment counter
-        code.iinc(index_tmp, 1);
 
         next_loop.setPosition();
         setline(node);
         //get the next element from the list
-        code.aload(list_tmp);
-        code.iload(index_tmp);
-        if (mrefs.safe_getitem == 0) {
-            mrefs.safe_getitem = code.pool.Methodref(
+        code.aload(iter_tmp);
+        if (mrefs.iternext == 0) {
+            mrefs.iternext = code.pool.Methodref(
                 "org/python/core/PyObject",
-                "__finditem__", "(I)" + $pyObj);
+                "__iternext__", "()" + $pyObj);
         }
-        code.invokevirtual(mrefs.safe_getitem);
+        code.invokevirtual(mrefs.iternext);
         code.astore(expr_tmp);
         code.aload(expr_tmp);
         //if no more elements then fall through
@@ -996,7 +1001,7 @@ public class CodeCompiler extends Visitor
         break_loop.setPosition();
 
         code.freeLocal(list_tmp);
-        code.freeLocal(index_tmp);
+        code.freeLocal(iter_tmp);
         code.freeLocal(expr_tmp);
 
         // Probably need to detect "guaranteed exits"

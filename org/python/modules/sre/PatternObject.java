@@ -292,7 +292,6 @@ public class PatternObject extends PyObject {
     }
 
 
-/* Enable "finditer" when iter support is added.
     public PyObject finditer(String string) {
         return finditer(string, 0, Integer.MAX_VALUE);
     }
@@ -304,9 +303,8 @@ public class PatternObject extends PyObject {
     public PyObject finditer(String string, int start, int end) {
         ScannerObject scanner = scanner(string, start, end);
         PyObject search = scanner.__findattr__("search");
-        return new PyCallIterator(search, Py.None);
+        return new PyCallIter(search, Py.None);
     }
-*/
 
     public ScannerObject scanner(String string) {
         return scanner(string, 0, Integer.MAX_VALUE);

@@ -183,9 +183,9 @@ public final class Py
         }
     }
 
-    public static PyObject StopIterator;
-    public static PyException StopIterator(String message) {
-        return new PyException(Py.StopIterator, message);
+    public static PyObject StopIteration;
+    public static PyException StopIteration(String message) {
+        return new PyException(Py.StopIteration, message);
     }
 
     public static PyObject ImportError;
@@ -536,7 +536,7 @@ public final class Py
 
         Exception           = initExc("Exception", exc, dict);
         SystemExit          = initExc("SystemExit", exc, dict);
-        StopIterator        = initExc("StopIterator", exc, dict);
+        StopIteration       = initExc("StopIteration", exc, dict);
         StandardError       = initExc("StandardError", exc, dict);
         KeyboardInterrupt   = initExc("KeyboardInterrupt", exc, dict);
         ImportError         = initExc("ImportError", exc, dict);
@@ -1627,6 +1627,16 @@ public final class Py
             throw Py.ValueError("unpack sequence too long");
         }
         return ret;
+    }
+
+    public static PyObject iter(PyObject seq, String message) {
+        try {
+            return seq.__iter__();
+        } catch (PyException exc) {
+            if (Py.matchException(exc, Py.TypeError))
+                throw Py.TypeError(message);
+            throw exc;
+        }
     }
 
     public static int id(PyObject o) {

@@ -600,6 +600,30 @@ public class PyInstance extends PyObject
         invoke("__delitem__", key);
     }
 
+    public PyObject __iter__() {
+        PyObject func = __findattr__("__iter__");
+        if (func != null)
+            return func.__call__();
+        func = __findattr__("__getitem__");
+        if (func == null)
+            return super.__iter__();
+        return new PySequenceIter(this);
+    }
+
+    public PyObject __iternext__() {
+        PyObject func = __findattr__("next");
+        if (func != null) {
+            try {
+                return func.__call__();
+            } catch (PyException exc) {
+                if (Py.matchException(exc, Py.StopIteration))
+                    return null;
+                throw exc;
+            }
+        }
+        throw Py.TypeError("instance has no next() method");
+    }
+
     public boolean __contains__(PyObject o) {
         PyObject func = __findattr__("__contains__");
         if (func == null)

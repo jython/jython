@@ -601,6 +601,48 @@ public class PyObject implements java.io.Serializable {
         __delslice__(start, stop, Py.One);
     }
 
+    /*The basic functions to implement an iterator */
+
+
+    /**
+     * Return an iterator that is used to iterate the element of this 
+     * sequence.
+     * From version 2.2, this method is the primary protocol for looping
+     * over sequences.
+     * <p>
+     * If a PyObject subclass should support iteration based in the
+     * __finditem__() method, it must supply an implementation of __iter__()
+     * like this: 
+     * <pre>
+     *    public PyObject __iter__() {
+     *        return new PySequenceIter(this);
+     *    }
+     * </pre>
+     * 
+     * When iterating over a python sequence from java code, it should be 
+     * done with code like this:
+     * <pre>
+     *    PyObject iter = seq.__iter__();
+     *    for (PyObject item; (item = iter.__next__()) != null;  {
+     *        // Do somting with item
+     *    }
+     * </pre>
+     *
+     * @since 2.2
+     */
+    public PyObject __iter__() {
+        throw Py.TypeError("iteration over non-sequence");
+    }
+
+    /**
+     * Return the next element of the sequence that this is an iterator
+     * for. Returns null when the end of the sequence is reached.
+     *
+     * @since 2.2
+     */
+    public PyObject __iternext__() {
+        return null;
+    }
 
     /*The basic functions to implement a namespace*/
 
@@ -1261,11 +1303,9 @@ public class PyObject implements java.io.Serializable {
      * @return the result of the search.
      **/
     public boolean __contains__(PyObject o) {
-        PyObject tmp;
-        int i = 0;
-
-        while ((tmp = __finditem__(i++)) != null) {
-            if (o._eq(tmp).__nonzero__())
+        PyObject iter = __iter__();
+        for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+            if (o._eq(item).__nonzero__())
                 return true;
         }
         return false;

@@ -28,6 +28,10 @@ public class xreadlines {
             this.file = file;
         }
 
+        public PyObject __iter__() {
+            return new PySequenceIter(this);
+        }
+
         public PyObject __finditem__(PyObject idx) {
             return __finditem__(idx.__int__().getValue());
         }

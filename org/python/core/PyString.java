@@ -1460,8 +1460,9 @@ public class PyString extends PySequence implements ClassDictInit
         int seqlen = __builtin__.len(seq);
         StringBuffer buf = new StringBuffer();
 
-        PyObject obj;
-        for (int i=0; (obj = seq.__finditem__(i)) != null; i++) {
+        PyObject iter = seq.__iter__();
+        PyObject obj = null;
+        for (int i = 0; (obj = iter.__iternext__()) != null; i++) {
             if (!(obj instanceof PyString))
                  throw Py.TypeError(
                         "sequence item " + i + ": expected string, " +

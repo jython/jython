@@ -185,6 +185,10 @@ abstract public class PySequence extends PyObject
         return __len__() != 0;
     }
 
+    public PyObject __iter__() {
+        return new PySequenceIter(this);
+    }
+
     public synchronized PyObject __eq__(PyObject o) {
         if (o.__class__ != __class__)
             return null;
@@ -272,11 +276,9 @@ abstract public class PySequence extends PyObject
         if (!seq.isSequenceType())
              throw Py.TypeError(msg);
 
-        int n = seq.__len__();
-
         PyList list = new PyList();
-        PyObject item;
-        for (int i = 0; (item = list.__finditem__(i)) != null; i++) {
+        PyObject iter = Py.iter(seq, msg);
+        for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
             list.append(item);
         }
         return list;

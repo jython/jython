@@ -12,7 +12,7 @@ import java.util.zip.*;
  */
 public class imp
 {
-    public static final int APIVersion = 9;
+    public static final int APIVersion = 10;
 
     private imp() { ; }
 
@@ -743,9 +743,8 @@ public class imp
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals, boolean filter)
     {
-        int i=0;
-        PyObject name;
-        while ((name=names.__finditem__(i++)) != null) {
+        PyObject iter = names.__iter__();
+        for (PyObject name; (name = iter.__iternext__()) != null; ) {
             String sname = ((PyString)name).internedString();
             if (filter && sname.startsWith("_")) {
                 continue;

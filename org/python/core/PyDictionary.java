@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.util.Hashtable;
+import java.util.Enumeration;
 
 
 
@@ -191,6 +192,10 @@ public class PyDictionary extends PyObject implements ClassDictInit
             throw Py.KeyError(key.toString());
     }
 
+    public PyObject __iter__() {
+        return new PyDictionaryIter(this, table.keys());
+    }
+
     public String toString() {
         ThreadState ts = Py.getThreadState();
         if (!ts.enterRepr(this)) {
@@ -316,8 +321,8 @@ public class PyDictionary extends PyObject implements ClassDictInit
      */
     public void update(PyStringMap d) {
         PyObject keys = d.keys();
-        PyObject key;
-        for (int i = 0; (key = keys.__finditem__(i)) != null; i++)
+        PyObject iter = keys.__iter__();
+        for (PyObject key; (key = iter.__iternext__()) != null; )
             __setitem__(key, d.__getitem__(key));
     }
 
@@ -407,3 +412,18 @@ public class PyDictionary extends PyObject implements ClassDictInit
         throw Py.TypeError("unhashable type");
     }
 }
+
+class PyDictionaryIter extends PyObject {
+    private Enumeration enumeration;
+
+    public PyDictionaryIter(PyObject dict, Enumeration e) {
+        enumeration = e;
+    }
+
+    public PyObject __iternext__() {
+        if (!enumeration.hasMoreElements())
+            return null;
+        return (PyObject) enumeration.nextElement();
+    }
+}     
+

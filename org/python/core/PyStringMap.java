@@ -127,6 +127,10 @@ public class PyStringMap extends PyObject
         }
     }
 
+    public PyObject __iter__() {
+        return new PyStringMapIter(keys, values);
+    }
+
     private final void insertkey(String key, PyObject value) {
         String[] table = keys;
         int maxindex = table.length;
@@ -541,3 +545,34 @@ public class PyStringMap extends PyObject
         return l;
     }
 }
+
+class PyStringMapIter extends PyObject {
+    String[] keyTable;
+    PyObject[] valTable;
+    private int idx;
+
+    public PyStringMapIter(String[] keys, PyObject[] values) {
+        this.keyTable = keys;
+        this.valTable = values;
+        this.idx = 0;
+    }
+
+    public PyObject __iternext__() {
+        int n = keyTable.length;
+
+        for (; idx < n; idx++) {
+            String key = keyTable[idx];
+            if (key == null || key == "<deleted key>" || valTable[idx] == null)
+                continue;
+            idx++;
+            return Py.newString(key);
+        }
+        return null;
+    }
+
+    // __class__ boilerplate -- see PyObject for details
+    public static PyClass __class__;
+    protected PyClass getPyClass() { return __class__; }
+}
+
+

@@ -75,6 +75,10 @@ public class cStringIO {
             super.__setattr__(name, value);
         }
 
+        public PyObject __iter__() {
+            return new PyCallIter(__getattr__("readline"), Py.newString(""));
+        }
+
         /**
          * Free the memory buffer.
          */

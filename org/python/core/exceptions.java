@@ -209,7 +209,7 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "SystemExit", "Exception", "SystemExit",
                    "Request to exit from the interpreter.");
 
-        buildClass(dict, "StopIterator", "Exception", "empty__init__",
+        buildClass(dict, "StopIteration", "Exception", "empty__init__",
                    "Signal the end from iterator.next().");
 
         buildClass(dict, "Warning", "Exception", "empty__init__",

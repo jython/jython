@@ -132,13 +132,12 @@ public class PyClass extends PyObject
             // This code will add in the needed super__ methods to the class
             PyObject snames = superDict.__finditem__("__supernames__");
             if (snames != null) {
-                PyObject sname;
-                int i;
-                for (i = 0; (sname = snames.__finditem__(i)) != null; i++) {
-                    if (__dict__.__finditem__(sname) == null) {
-                        PyObject superFunc = superDict.__finditem__(sname);
+                PyObject iter = snames.__iter__();
+                for (PyObject item; (item = iter.__iternext__()) != null; ) {
+                    if (__dict__.__finditem__(item) == null) {
+                        PyObject superFunc = superDict.__finditem__(item);
                         if (superFunc != null)
-                            __dict__.__setitem__(sname, superFunc);
+                            __dict__.__setitem__(item, superFunc);
                     }
                 }
             }

@@ -32,9 +32,10 @@ public class PyArray extends PySequence {
 
     public static PyArray array(PyObject seq, Class ctype) {
         PyArray array = new PyArray(ctype, seq.__len__());
-        PyObject o;
-        for(int i=0; (o=seq.__finditem__(i)) != null; i++) {
-            array.set(i, o);
+        PyObject iter = seq.__iter__();
+        PyObject item = null;
+        for (int i = 0; (item = iter.__iternext__()) != null; i++) {
+            array.set(i, item);
         }
         return array;
     }

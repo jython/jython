@@ -49,9 +49,9 @@ public class codecs {
                    "no codec search functions registered: " +
                    "can't find encoding");
 
-        int i = 0;
+        PyObject iter = searchPath.__iter__();
         PyObject func = null;
-        for (; (func = searchPath.__finditem__(i)) != null; i++) {
+        while ((func = iter.__iternext__()) != null) {
             result = func.__call__(v);
             if (result == Py.None)
                 continue;
@@ -60,7 +60,7 @@ public class codecs {
                                    "return 4-tuples");
             break;
         }
-        if (i == searchPath.__len__())
+        if (func == null)
             throw new PyException(Py.LookupError, "unknown encoding " +
                                   encoding);
         searchCache.__setitem__(v, result);
