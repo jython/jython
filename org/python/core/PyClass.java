@@ -134,8 +134,11 @@ public class PyClass extends PyObject
             if (snames != null) {
                 PyObject sname;
                 for (int i = 0; (sname = snames.__finditem__(i)) != null; i++) {
-                    if (__dict__.__finditem__(sname) == null)
-                        __dict__.__setitem__(sname, superDict.__getitem__(sname));
+                    if (__dict__.__finditem__(sname) == null) {
+                        PyObject superFunc = superDict.__finditem__(sname);
+                        if (superFunc != null)
+                            __dict__.__setitem__(sname, superFunc);
+                    }
                 }
             }
         }
