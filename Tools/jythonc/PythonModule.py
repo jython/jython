@@ -404,7 +404,6 @@ class PythonModule:
             self.interfaces = self.interfaces+self.javaproxy.interfaces
             supername = self.javaproxy.supername
 
-        self.interfaces += [org.python.core.ModuleDictInit]
         body = jast.Block(mycode)
         return jast.Class(self.name, self.modifier, supername,
                           map(lambda i: i.__name__, self.interfaces), body)
