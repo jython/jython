@@ -262,6 +262,7 @@ public class Module implements ClassConstants
     public Constant mainCode;
     public boolean linenumbers;
     public boolean setFile=true;
+    Future futures;
 
     public Module(String name, String filename, boolean linenumbers) {
         this.linenumbers = linenumbers;
@@ -274,6 +275,7 @@ public class Module implements ClassConstants
         else
             this.filename = null;
         codes = new Vector();
+        futures = new Future();
     }
 
     public Module(String name) {
@@ -581,6 +583,7 @@ public class Module implements ClassConstants
     {
         Module module = new Module(name, filename, linenumbers);
         module.setFile = setFile;
+        module.futures.preprocessFutures(node, cflags);
         //Add __doc__ if it exists
         //Add __file__ for filename (if it exists?)
 

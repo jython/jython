@@ -37,11 +37,10 @@ public class CodeCompiler extends Visitor
 
     public boolean fast_locals, print_results;
 
-    public Future futures;
     public Hashtable tbl;
     public ScopeInfo my_scope;
 
-    public Future getFutures() { return futures; }
+    public Future getFutures() { return module.futures; }
     public String getFilename() { return module.sfilename; }
 
 
@@ -202,8 +201,6 @@ public class CodeCompiler extends Visitor
         this.code = code;
 
         if (scope == null) {
-            futures = new Future();
-            futures.preprocessFutures(node,cflags);
             new ScopesCompiler(this).parse(node);
             scope = node.scope;
         }
@@ -1408,7 +1405,14 @@ public class CodeCompiler extends Visitor
     }
 
     public Object div_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_div");
+        if (getFutures().areDivisionOn())
+            return binaryop(node, "_truediv");
+        else
+            return binaryop(node, "_div");
+    }
+
+    public Object floordiv_2op(SimpleNode node) throws Exception {
+        return binaryop(node, "_floordiv");
     }
 
     public Object mod_2op(SimpleNode node) throws Exception {
@@ -1469,7 +1473,14 @@ public class CodeCompiler extends Visitor
     }
 
     public Object aug_divide(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__idiv__");
+        if (getFutures().areDivisionOn())
+            return aug_binaryop(node, "__itruediv__");
+        else
+            return aug_binaryop(node, "__idiv__");
+    }
+
+    public Object aug_floordivide(SimpleNode node) throws Exception {
+        return aug_binaryop(node, "__ifloordiv__");
     }
 
     public Object aug_modulo(SimpleNode node) throws Exception {

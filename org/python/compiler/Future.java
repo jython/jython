@@ -7,6 +7,7 @@ import org.python.parser.*;
 public class Future extends Object implements PythonGrammarTreeConstants {
 
     private boolean nested_scopes;
+    private boolean division;
 
     private static final String FUTURE = "__future__";
 
@@ -37,6 +38,10 @@ public class Future extends Object implements PythonGrammarTreeConstants {
                 nested_scopes = true;
                 continue;
             }
+            if (feature.equals("division")) {
+                division = true;
+                continue;
+            }
             throw new ParseException("future feature "+feature+
                                      " is not defined",cand);
         }
@@ -49,8 +54,8 @@ public class Future extends Object implements PythonGrammarTreeConstants {
     {
         if (cflags != null) {
             nested_scopes = cflags.nested_scopes;
+            division = cflags.division;
         }
-
         if ( node.id != JJTFILE_INPUT && node.id != JJTSINGLE_INPUT)
             return;
         int n = node.getNumChildren();
@@ -70,6 +75,7 @@ public class Future extends Object implements PythonGrammarTreeConstants {
 
         if (cflags != null) {
             cflags.nested_scopes = cflags.nested_scopes ||  nested_scopes;
+            cflags.division      = cflags.division      ||  division;
         }
     }
 
@@ -87,6 +93,10 @@ public class Future extends Object implements PythonGrammarTreeConstants {
 
     public boolean areNestedScopesOn() {
         return nested_scopes;
+    }
+
+    public boolean areDivisionOn() {
+        return division;
     }
 
 }

@@ -398,6 +398,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
+    public Object floordiv_2op(SimpleNode node) throws Exception {
+        binaryop(node);
+        return null;
+    }
+
     public Object mod_2op(SimpleNode node) throws Exception {
         binaryop(node);
         return null;
@@ -623,6 +628,11 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     }
 
     public Object aug_divide(SimpleNode node) throws Exception {
+        aug_assign(node);
+        return null;
+    }
+
+    public Object aug_floordivide(SimpleNode node) throws Exception {
         aug_assign(node);
         return null;
     }
