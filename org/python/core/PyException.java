@@ -92,7 +92,7 @@ public class PyException extends RuntimeException
         } else {
             try {
                 printingStackTrace = true;
-                Py.printException(this, null, new PyFile(s));
+                Py.displayException(type, value, traceback, new PyFile(s));
             } finally {
                 printingStackTrace = false;
             }

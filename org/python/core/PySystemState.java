@@ -634,7 +634,7 @@ public class PySystemState extends PyObject
     }
 
     static void excepthook(PyObject type, PyObject val, PyObject tb) {
-        Py.displayException(type, val, tb);
+        Py.displayException(type, val, tb, null);
     }
 
     public void callExitFunc() throws PyIgnoreMethodTag {

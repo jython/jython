@@ -912,22 +912,27 @@ public final class Py
                 exceptHook.__call__(exc.type, exc.value, exc.traceback);
             } catch (PyException exc2) {
                 stderr.println("Error in sys.excepthook:");
-                displayException(exc2.type, exc2.value, exc2.traceback);
+                displayException(exc2.type, exc2.value, exc2.traceback, file);
                 stderr.println();
                 stderr.println("Original exception was:");
-                displayException(exc.type, exc.value, exc.traceback);
+                displayException(exc.type, exc.value, exc.traceback, file);
             }
         } else {
             stderr.println("sys.excepthook is missing");
-            displayException(exc.type, exc.value, exc.traceback);
+            displayException(exc.type, exc.value, exc.traceback, file);
         }
 
         ts.exception = null;
     }
 
     public static void displayException(PyObject type, PyObject value,
-                                        PyObject tb)
+                                        PyObject tb, PyObject file)
     {
+        StdoutWrapper stderr = Py.stderr;
+        if (file != null) {
+            stderr = new FixedFileWrapper(file);
+        }
+
         if (tb instanceof PyTraceback)
             stderr.print(((PyTraceback) tb).dumpStack());
         if (__builtin__.isinstance(value, (PyClass) Py.SyntaxError)) {
