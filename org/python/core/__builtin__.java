@@ -4,17 +4,20 @@ package org.python.core;
 import org.python.parser.SimpleNode;
 import java.util.Hashtable;
 
-class BuiltinFunctions extends PyBuiltinFunctionSet {
+
+class BuiltinFunctions extends PyBuiltinFunctionSet
+{
     public PyObject __call__() {
-        switch(index) {
+        switch (index) {
         case 4:
             return __builtin__.globals();
         default:
             throw argCountError(0);
         }
-    }    
+    }
+
     public PyObject __call__(PyObject arg1) {
-        switch(index) {
+        switch (index) {
         case 0:
             return Py.newString(__builtin__.chr(
                 Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
@@ -36,8 +39,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             throw argCountError(1);
         }
     }
+    
     public PyObject __call__(PyObject arg1, PyObject arg2) {
-        switch(index) {
+        switch (index) {
         case 2:
             return __builtin__.range(
                 Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
@@ -49,8 +53,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             throw argCountError(2);
         }
     }
+    
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-        switch(index) {
+        switch (index) {
         case 2:
             return __builtin__.range(
                 Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
@@ -63,7 +68,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 }
 
 
-public class __builtin__ implements InitModule {
+
+public class __builtin__ implements InitModule
+{
     public void initModule(PyObject dict) {
         dict.__setitem__("None", Py.None);
         dict.__setitem__("Ellipsis", Py.Ellipsis);

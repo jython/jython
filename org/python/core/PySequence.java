@@ -2,69 +2,69 @@
 package org.python.core;
 
 /**
-The abstract superclass of PyObjects that implements a Sequence.
-Minimize the work in creating such objects.
-
-Method names are designed to make it possible for PySequence
-to implement java.util.List interface when JDK 1.2 is ubiquitous.
-
-All subclasses must implements get, getslice, and repeat methods.
-
-Subclasses that are mutable should also implement:
-set, setslice, del, and delRange.
-**/
+ * The abstract superclass of PyObjects that implements a Sequence.
+ * Minimize the work in creating such objects.
+ *
+ * Method names are designed to make it possible for PySequence
+ * to implement java.util.List interface when JDK 1.2 is ubiquitous.
+ * 
+ * All subclasses must implements get, getslice, and repeat methods.
+ *
+ * Subclasses that are mutable should also implement:
+ * set, setslice, del, and delRange.
+ */
 
 abstract public class PySequence extends PyObject
 {
     /**
-       This constructor is used to pass on an __class__ attribute.
-    **/
+     * This constructor is used to pass on an __class__ attribute.
+     */
     public PySequence(PyClass c) {
         super(c);
     }
 
     public PySequence() {}
 
-    /*These methods must be defined for any sequence*/
+    // These methods must be defined for any sequence
         
     /**
-       @param index index of element to return.
-       @return the element at the given position in the list.
-    **/
+     * @param index index of element to return.
+     * @return the element at the given position in the list.
+     */
     abstract protected PyObject get(int index);
         
     /**
-       Returns a range of elements from the sequence.
-        
-       @param start the position of the first element.
-       @param stop one more than the position of the last element.
-       @param step the step size.
-       @return a sequence corresponding the the given range of elements.
-    **/
+     * Returns a range of elements from the sequence.
+     * 
+     * @param start the position of the first element.
+     * @param stop one more than the position of the last element.
+     * @param step the step size.
+     * @return a sequence corresponding the the given range of elements.
+     */
     abstract protected PyObject getslice(int start, int stop, int step);
         
     /**
-       Repeats the given sequence.
-        
-       @param count the number of times to repeat the sequence.
-       @return this sequence repeated count times.
-    **/
+     * Repeats the given sequence.
+     * 
+     * @param count the number of times to repeat the sequence.
+     * @return this sequence repeated count times.
+     */
     abstract protected PyObject repeat(int count);
 
     /* These methods only apply to writeable sequences */
     /**
-       Sets the given element of the sequence.
-        
-       @param index index of the element to set.
-       @param value the value to set this element to.
-    **/
+     * Sets the given element of the sequence.
+     * 
+     * @param index index of the element to set.
+     * @param value the value to set this element to.
+     */
     protected void set(int index, PyObject value) {
         throw Py.TypeError("can't assign to immutable object");
     }
         
     /**
-       Sets the given range of elements.
-    **/
+     * Sets the given range of elements.
+     */
     protected void setslice(int start, int stop, int step, PyObject value) {
         throw Py.TypeError("can't assign to immutable object");
     }

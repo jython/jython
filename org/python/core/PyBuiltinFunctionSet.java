@@ -1,7 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyBuiltinFunctionSet extends PyObject {
+public class PyBuiltinFunctionSet extends PyObject
+{
     public String name;
     public int index;
     public int minargs, maxargs;
