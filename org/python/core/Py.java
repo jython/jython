@@ -894,27 +894,47 @@ public final class Py
         ts.systemState.last_type = exc.type;
         ts.systemState.last_traceback = exc.traceback;
 
+        PyObject exceptHook = ts.systemState.__findattr__("excepthook");
+        if (exceptHook != null) {
+            try {
+                exceptHook.__call__(exc.type, exc.value, exc.traceback);
+            } catch (PyException exc2) {
+                stderr.println("Error in sys.excepthook:");
+                displayException(exc2.type, exc2.value, exc2.traceback);
+                stderr.println();
+                stderr.println("Original exception was:");
+                displayException(exc.type, exc.value, exc.traceback);
+            }
+        } else {
+            stderr.println("sys.excepthook is missing");
+            displayException(exc.type, exc.value, exc.traceback);
+        }
+            
+
         ts.exception = null;
-        /*_type = null;
-          ts.exc_value = null;
-          ts.exc_traceback = null;*/
+    }
 
-        stderr.print(exc.traceback.dumpStack());
-
-        if (exc instanceof PySyntaxError) {
-            PySyntaxError se = (PySyntaxError)exc;
-            stderr.println("  File \""+se.filename+"\", line "+se.lineno);
-            if (se.text != null && se.text.length() != 0) {
-                stderr.println("\t"+se.text);
+    public static void displayException(PyObject type, PyObject value,
+                                        PyObject tb)
+    {
+        if (tb instanceof PyTraceback)
+            stderr.print(((PyTraceback) tb).dumpStack());
+        if (__builtin__.isinstance(value, (PyClass) Py.SyntaxError)) {
+            stderr.println("  File \""+value.__findattr__("filename")+
+                           "\", line "+value.__findattr__("lineno"));
+            PyObject text = value.__findattr__("text");
+            if (text != Py.None && text.__len__() != 0) {
+                stderr.println("\t"+text);
                 String space = "\t";
-                for(int j=1; j<se.column; j++)
+                int col = value.__findattr__("offset").__int__().getValue();
+                for(int j=1; j<col; j++)
                     space = space+" ";
                 stderr.println(space+"^");
             }
         }
 
-        if (exc.value instanceof PyJavaInstance) {
-            Object javaError = exc.value.__tojava__(Throwable.class);
+        if (value instanceof PyJavaInstance) {
+            Object javaError = value.__tojava__(Throwable.class);
 
             if (javaError != null && javaError != Py.NoConversion) {
                 stderr.println(getStackTrace((Throwable)javaError));
@@ -922,18 +942,18 @@ public final class Py
         }
 
         PyObject typeName;
-        if (exc.type instanceof PyClass) {
-            typeName = new PyString(((PyClass)exc.type).__name__);
+        if (type instanceof PyClass) {
+            typeName = new PyString(((PyClass)type).__name__);
         } else {
-            typeName = exc.type;
+            typeName = type;
         }
-        if (exc.value != Py.None) {
+        if (value != Py.None) {
             stderr.print(typeName);
             stderr.print(": ");
-            if (exc instanceof PySyntaxError) {
-                stderr.println(exc.value.__getitem__(0));
+            if (__builtin__.isinstance(value, (PyClass) Py.SyntaxError)) {
+                stderr.println(value.__getitem__(0));
             } else {
-                stderr.println(exc.value);
+                stderr.println(value);
             }
         } else {
             stderr.println(typeName);

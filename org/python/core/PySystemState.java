@@ -131,6 +131,8 @@ public class PySystemState extends PyObject
     public PyObject stdout, stderr, stdin;
     public PyObject __stdout__, __stderr__, __stdin__;
 
+    public PyObject __displayhook__, __excepthook__;
+
     public PyObject last_value = Py.None;
     public PyObject last_type = Py.None;
     public PyObject last_traceback = Py.None;
@@ -207,6 +209,8 @@ public class PySystemState extends PyObject
         __stdout__ = stdout = new PyFile(System.out, "<stdout>");
         __stderr__ = stderr = new PyFile(System.err, "<stderr>");
         __stdin__ = stdin = new PyFile(getSystemIn(), "<stdin>");
+        __displayhook__ = new PySystemStateFunctions("displayhook", 10, 1, 1);
+        __excepthook__ = new PySystemStateFunctions("excepthook", 30, 3, 3);
 
         // This isn't quite right...
         builtins = __builtin__class.__getattr__("__dict__");
@@ -216,8 +220,8 @@ public class PySystemState extends PyObject
         if (__class__ != null) {
             __dict__ = new PyStringMap();
             __dict__.invoke("update", __class__.__getattr__("__dict__"));
-            __dict__.__setitem__("displayhook", 
-                        new PySystemStateFunctions("displayhook", 10, 1, 1));
+            __dict__.__setitem__("displayhook", __displayhook__);
+            __dict__.__setitem__("excepthook", __excepthook__);
         }
     }
 
@@ -629,6 +633,10 @@ public class PySystemState extends PyObject
         sys.builtins.__setitem__("_", o);
     }
 
+    static void excepthook(PyObject type, PyObject val, PyObject tb) {
+        Py.displayException(type, val, tb);
+    }
+
     public void callExitFunc() throws PyIgnoreMethodTag {
         PyObject exitfunc = __findattr__("exitfunc");
         if (exitfunc != null) {
@@ -689,6 +697,16 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet
             return Py.None;
         default:
             throw argCountError(1);
+        }
+    }
+    public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
+        PySystemState sys = Py.getThreadState().systemState;
+        switch (index) {
+        case 30:
+            sys.excepthook(arg1, arg2, arg3);
+            return Py.None;
+        default:
+            throw argCountError(3);
         }
     }
 }
