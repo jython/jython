@@ -47,6 +47,10 @@ public class math implements ClassDictInit {
         return check(Math.exp(v));
     }
 
+    public static double floor(PyObject v) {
+        return floor(v.__float__().getValue());
+    }
+
     public static double floor(double v) {
         return check(Math.floor(v));
     }
@@ -59,8 +63,16 @@ public class math implements ClassDictInit {
         return check(Math.pow(v, w));
     }
 
+    public static double sin(PyObject v) {
+        return sin(v.__float__().getValue());
+    }
+
     public static double sin(double v) {
         return check(Math.sin(v));
+    }
+
+    public static double sqrt(PyObject v) {
+        return sqrt(v.__float__().getValue());
     }
 
     public static double sqrt(double v) {
@@ -69,6 +81,14 @@ public class math implements ClassDictInit {
 
     public static double tan(double v) {
         return check(Math.tan(v));
+    }
+
+    public static double log10(PyObject v) {
+        if (v instanceof PyLong) {
+            // XXX: This shouldn't fail for really large longs.
+            return log10(v.__float__().getValue());
+        }
+        return log10(v.__float__().getValue());
     }
 
     public static double log10(double v) {
