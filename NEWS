@@ -1,12 +1,25 @@
 Jython NEWS
 
-XX-dec-2001 Jython 2.1 beta 2
+21-dec-2001 Jython 2.1 beta 2
 
   New features.
    - support for callproc() in zxJDBC is now available for most simple
      stored procedure calls.
 
   Bug fixes.
+   - [ #451552 ] case insensitivity on import causes prob
+   - [ #456926 ] PackageManager doesn't work correctly
+   - [ #484949 ] __import__(_) does unwanted rel search
+   - [ #488632 ] -c sys.argv diff
+   - [ #489168 ] Parse error, java traceback
+   - [ #489836 ] Private names is not mangled
+   - [ #490157 ] string.splitlines() - incorrectly splits
+   - [ #490230 ] NotImplemented not implemented
+   - [ #490961 ] PyFile.java requires JDK 1.2
+   - [ #490962 ] Typo in PyFile.java
+   - [ #490963 ] Please update ReadlineConsole.java
+   - [ #494514 ] Python object not gc()'d
+   - [ #495458 ] multi level import from .zip file.
    - [ #495870 ] zxJDBC now only prepares statements with params.
 
 03-dec-2001 Jython 2.1 beta 1
