@@ -62,8 +62,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/** Field datahandler */
 	protected DataHandler datahandler;
 
-	/** Field sqlStatement */
-	protected Statement sqlStatement;
+	/** Field statement */
+	protected PyStatement statement;
 
 	// they are stateless instances, so we only need to instantiate it once
 	private static DataHandler DATAHANDLER = null;
@@ -79,6 +79,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 	/**
 	 * Create the cursor with a static fetch.
+	 *
+	 * @param connection
 	 */
 	PyCursor(PyConnection connection) {
 		this(connection, false);
@@ -87,6 +89,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/**
 	 * Create the cursor, optionally choosing the type of fetch (static or dynamic).
 	 * If dynamicFetch is true, then use a dynamic fetch.
+	 *
+	 * @param connection
+	 * @param dynamicFetch
 	 */
 	PyCursor(PyConnection connection, boolean dynamicFetch) {
 
@@ -107,6 +112,11 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * Create the cursor, optionally choosing the type of fetch (static or dynamic).
 	 * If dynamicFetch is true, then use a dynamic fetch.
 	 * rsType and rsConcur are used to create the Statement if both are non-None
+	 *
+	 * @param connection
+	 * @param dynamicFetch
+	 * @param rsType
+	 * @param rsConcur
 	 */
 	PyCursor(PyConnection connection, boolean dynamicFetch, PyObject rsType, PyObject rsConcur) {
 
@@ -148,7 +158,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		m[7] = new PyString("next");
 		m[8] = new PyString("write");
 		__methods__ = new PyList(m);
-		m = new PyObject[9];
+		m = new PyObject[10];
 		m[0] = new PyString("arraysize");
 		m[1] = new PyString("rowcount");
 		m[2] = new PyString("rownumber");
@@ -158,6 +168,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		m[6] = new PyString("lastrowid");
 		m[7] = new PyString("updatecount");
 		m[8] = new PyString("softspace");
+		m[9] = new PyString("closed");
 		__members__ = new PyList(m);
 	}
 
@@ -225,6 +236,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			return this.dynamicFetch ? Py.One : Py.Zero;
 		} else if ("connection".equals(name)) {
 			return this.connection;
+		} else if ("closed".equals(name)) {
+			return Py.newBoolean(closed);
 		}
 
 		return super.__findattr__(name);
@@ -250,6 +263,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("executemany", new CursorFunc("executemany", 9, 1, 3, "execute sql with the parameter list"));
 		dict.__setitem__("scroll", new CursorFunc("scroll", 10, 1, 2, "scroll the cursor in the result set to a new position according to mode"));
 		dict.__setitem__("write", new CursorFunc("write", 11, 1, "execute the sql written to this file-like object"));
+		dict.__setitem__("prepare", new CursorFunc("prepare", 12, 1, "prepare the sql statement for later execution"));
 
 		// hide from python
 		dict.__setitem__("classDictInit", null);
@@ -257,28 +271,11 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("getDataHandler", null);
 		dict.__setitem__("addWarning", null);
 		dict.__setitem__("fetch", null);
-		dict.__setitem__("closed", null);
-		dict.__setitem__("sqlStatement", null);
+		dict.__setitem__("statement", null);
 		dict.__setitem__("dynamicFetch", null);
 		dict.__setitem__("getPyClass", null);
 		dict.__setitem__("rsConcur", null);
 		dict.__setitem__("rsType", null);
-	}
-
-	/**
-	 * An interface to allow the abstraction of SQL execution for
-	 * different statements.
-	 */
-	private static interface ExecuteSQL {
-
-		/**
-		 * Execute a SQL statement and add the results to Fetch as
-		 * appropriate.
-		 *
-		 * @throws SQLException
-		 *
-		 */
-		public void executeSQL() throws SQLException;
 	}
 
 	/**
@@ -341,6 +338,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * for. Returns null when the end of the sequence is reached.
 	 *
 	 * @since Jython 2.2
+	 *
+	 * @return PyObject
 	 */
 	public PyObject __iternext__() {
 
@@ -354,6 +353,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * @return DatabaseMetaData
 	 *
+	 * @throws SQLException
 	 */
 	protected DatabaseMetaData getMetaData() throws SQLException {
 		return this.connection.connection.getMetaData();
@@ -361,6 +361,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 	/**
 	 * Return the currently bound DataHandler.
+	 *
+	 * @return DataHandler
 	 */
 	public DataHandler getDataHandler() {
 		return this.datahandler;
@@ -369,35 +371,65 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/**
 	 * Prepare a statement ready for executing.
 	 *
-	 * @param sqlString the sql to execute
+	 * @param sql the sql to execute or a prepared statement
 	 * @param maxRows max number of rows to be returned
 	 * @param prepared if true, prepare the statement, otherwise create a normal statement
-	 * @throws SQLException
+	 *
+	 * @return PyStatement
 	 */
-	protected void prepareStatement(String sqlString, PyObject maxRows, boolean prepared) throws SQLException {
+	protected PyStatement prepareStatement(PyObject sql, PyObject maxRows, boolean prepared) {
 
-		boolean normal = ((this.rsType == Py.None) && (this.rsConcur == Py.None));
+		PyStatement stmt = null;
 
-		if (normal) {
-			if (prepared) {
-				this.sqlStatement = this.connection.connection.prepareStatement(sqlString);
-			} else {
-				this.sqlStatement = this.connection.connection.createStatement();
-			}
-		} else {
-			int t = this.rsType.__int__().getValue();
-			int c = this.rsConcur.__int__().getValue();
-
-			if (prepared) {
-				this.sqlStatement = this.connection.connection.prepareStatement(sqlString, t, c);
-			} else {
-				this.sqlStatement = this.connection.connection.createStatement(t, c);
-			}
+		if (sql == Py.None) {
+			return null;
 		}
 
-		if (maxRows != Py.None) {
-			this.sqlStatement.setMaxRows(maxRows.__int__().getValue());
+		try {
+			if (sql instanceof PyStatement) {
+				stmt = (PyStatement)sql;
+			} else {
+				Statement sqlStatement = null;
+				String sqlString = sql.__str__().toString();
+
+				if (sqlString.trim().length() == 0) {
+					return null;
+				}
+
+				boolean normal = ((this.rsType == Py.None) && (this.rsConcur == Py.None));
+
+				if (normal) {
+					if (prepared) {
+						sqlStatement = this.connection.connection.prepareStatement(sqlString);
+					} else {
+						sqlStatement = this.connection.connection.createStatement();
+					}
+				} else {
+					int t = this.rsType.__int__().getValue();
+					int c = this.rsConcur.__int__().getValue();
+
+					if (prepared) {
+						sqlStatement = this.connection.connection.prepareStatement(sqlString, t, c);
+					} else {
+						sqlStatement = this.connection.connection.createStatement(t, c);
+					}
+				}
+
+				int style = prepared ? PyStatement.STATEMENT_PREPARED : PyStatement.STATEMENT_STATIC;
+
+				stmt = new PyStatement(sqlStatement, sqlString, style);
+			}
+
+			if (maxRows != Py.None) {
+				stmt.statement.setMaxRows(maxRows.__int__().getValue());
+			}
+		} catch (PyException e) {
+			throw e;
+		} catch (Exception e) {
+			throw zxJDBC.makeException(e);
 		}
+
+		return stmt;
 	}
 
 	/**
@@ -410,10 +442,15 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * The procedure may also provide a result set as output. This must then be made available
 	 * through the standard fetchXXX() methods.
+	 *
+	 * @param name
+	 * @param params
+	 * @param bindings
+	 * @param maxRows
 	 */
 	public void callproc(PyObject name, final PyObject params, PyObject bindings, PyObject maxRows) {
 
-		clear();
+		this.clear();
 
 		try {
 			if (getMetaData().supportsStoredProcedures()) {
@@ -422,15 +459,15 @@ public class PyCursor extends PyObject implements ClassDictInit {
 				}
 
 				final Procedure procedure = new Procedure(this, name);
-				PyDictionary callableBindings = new PyDictionary();
-
-				this.sqlStatement = procedure.prepareCall(this.rsType, this.rsConcur);
+				Statement stmt = procedure.prepareCall(this.rsType, this.rsConcur);
 
 				if (maxRows != Py.None) {
-					this.sqlStatement.setMaxRows(maxRows.__int__().getValue());
+					stmt.setMaxRows(maxRows.__int__().getValue());
 				}
 
 				// get the bindings per the stored proc spec
+				PyDictionary callableBindings = new PyDictionary();
+
 				procedure.normalizeInput(params, callableBindings);
 
 				// overwrite with any user specific bindings
@@ -438,23 +475,11 @@ public class PyCursor extends PyObject implements ClassDictInit {
 					callableBindings.update((PyDictionary)bindings);
 				}
 
+				this.statement = new PyStatement(stmt, procedure, params);
+
 				// prepare the statement
 				prepare(params, callableBindings, procedure);
-
-				// call the procedure
-				execute(new ExecuteSQL() {
-
-					public void executeSQL() throws SQLException {
-
-						final CallableStatement callableStatement = (CallableStatement)sqlStatement;
-
-						if (callableStatement.execute()) {
-							fetch.add(callableStatement.getResultSet());
-						}
-
-						fetch.add(callableStatement, procedure, params);
-					}
-				});
+				this.statement.execute(this);
 			} else {
 				throw zxJDBC.makeException(zxJDBC.NotSupportedError, zxJDBC.getString("noStoredProc"));
 			}
@@ -462,6 +487,12 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			throw e;
 		} catch (Exception e) {
 			throw zxJDBC.makeException(e);
+		} finally {
+			if (this.statement != null) {
+
+				// close what we opened
+				this.statement.close();
+			}
 		}
 	}
 
@@ -475,6 +506,11 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * The same comments as for execute() also apply accordingly to this method.
 	 *
 	 * Return values are not defined.
+	 *
+	 * @param sql
+	 * @param params
+	 * @param bindings
+	 * @param maxRows
 	 */
 	public void executemany(PyObject sql, PyObject params, PyObject bindings, PyObject maxRows) {
 		execute(sql, params, bindings, maxRows);
@@ -505,40 +541,26 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * Return values are not defined.
 	 *
-	 * @param sql sql string
+	 * @param sql sql string or prepared statement
 	 * @param params params for a prepared statement
 	 * @param bindings dictionary of (param index : SQLType binding)
 	 * @param maxRows integer value of max rows
 	 */
 	public void execute(final PyObject sql, PyObject params, PyObject bindings, PyObject maxRows) {
 
-		if (sql == Py.None) {
-			return;
-		}
-
-		final String sqlString = sql.__str__().toString();
-
-		if (sqlString.trim().length() == 0) {
-			return;
-		}
-
-		clear();
+		this.clear();
 
 		boolean hasParams = hasParams(params);
+		PyStatement stmt = prepareStatement(sql, maxRows, hasParams);
+
+		if (stmt == null) {
+			return;
+		}
+
+		this.statement = stmt;
 
 		try {
-			prepareStatement(sqlString, maxRows, hasParams);
-
 			if (hasParams) {
-				ExecuteSQL esql = new ExecuteSQL() {
-
-					public void executeSQL() throws SQLException {
-
-						if (((PreparedStatement)sqlStatement).execute()) {
-							fetch.add(sqlStatement.getResultSet());
-						}
-					}
-				};
 
 				// if we have a sequence of sequences, let's run through them and finish
 				if (isSeqSeq(params)) {
@@ -548,25 +570,54 @@ public class PyCursor extends PyObject implements ClassDictInit {
 						PyObject param = params.__getitem__(i);
 
 						prepare(param, bindings, null);
-						execute(esql);
+						execute();
 					}
 				} else {
 					prepare(params, bindings, null);
-					execute(esql);
+					execute();
 				}
 			} else {
 
 				// execute the sql string straight up
-				execute(new ExecuteSQL() {
-
-					public void executeSQL() throws SQLException {
-
-						if (sqlStatement.execute(sqlString)) {
-							fetch.add(sqlStatement.getResultSet());
-						}
-					}
-				});
+				execute();
 			}
+		} catch (PyException e) {
+			throw e;
+		} catch (Exception e) {
+			throw zxJDBC.makeException(e);
+		} finally {
+			if (this.statement != null) {
+
+				// only close static, single-use statements
+				if (!(sql instanceof PyStatement) && (!this.dynamicFetch)) {
+					this.statement.close();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Execute the current sql statement.  Some generic functionality such
+	 * as updating the lastrowid and updatecount occur as well.
+	 */
+	protected void execute() {
+
+		try {
+			Statement stmt = this.statement.statement;
+
+			this.datahandler.preExecute(stmt);
+
+			// this performs the SQL execution and fetch per the Statement type
+			this.statement.execute(this);
+
+			this.lastrowid = this.datahandler.getRowId(stmt);
+
+			int uc = stmt.getUpdateCount();
+
+			this.updatecount = (uc < 0) ? Py.None : Py.newInteger(uc);
+
+			addWarning(stmt.getWarnings());
+			this.datahandler.postExecute(stmt);
 		} catch (PyException e) {
 			throw e;
 		} catch (Exception e) {
@@ -575,37 +626,11 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Execute the current sql statement.  Some generic functionality such
-	 * as updating the lastrowid and updatecount occur as well.
-	 *
-	 * @param ExecuteSQL execute
-	 *
-	 * @throws SQLException
-	 *
-	 */
-	protected void execute(ExecuteSQL execute) throws SQLException {
-
-		this.datahandler.preExecute(this.sqlStatement);
-
-		// this performs the SQL execution and fetch per the Statement type
-		execute.executeSQL();
-
-		this.lastrowid = this.datahandler.getRowId(this.sqlStatement);
-
-		int uc = this.sqlStatement.getUpdateCount();
-
-		this.updatecount = (uc < 0) ? Py.None : Py.newInteger(uc);
-
-		addWarning(this.sqlStatement.getWarnings());
-		this.datahandler.postExecute(this.sqlStatement);
-	}
-
-	/**
 	 * Properly prepare the parameters of a prepared statement.
 	 *
-	 * @param PyObject params a non-None seq of sequences or entities
-	 * @param PyObject bindings an optional dictionary of index:DBApiType mappings
-	 * @param Procedure procedure
+	 * @param params
+	 * @param bindings
+	 * @param procedure
 	 *
 	 * @throws SQLException
 	 *
@@ -617,7 +642,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		}
 
 		// [3, 4] or (3, 4)
-		final PreparedStatement preparedStatement = (PreparedStatement)this.sqlStatement;
+		final PreparedStatement preparedStatement = (PreparedStatement)this.statement.statement;
 		int columns = 0, column = 0, index = params.__len__();
 
 		if (procedure == null) {
@@ -710,6 +735,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * If the size parameter is used, then it is best for it to retain the same value
 	 * from one fetchmany() call to the next.
 	 *
+	 *
+	 * @param size
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
 	public PyObject fetchmany(int size) {
@@ -743,8 +770,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * signal that a specific operation is not supported by the
 	 * database (e.g. backward scrolling).
 	 *
-	 * @param int value
-	 * @param String mode
+	 *
+	 * @param value
+	 * @param mode
 	 *
 	 */
 	public void scroll(int value, String mode) {
@@ -753,6 +781,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 	/**
 	 * Adds a warning to the tuple and will follow the chain as necessary.
+	 *
+	 * @param warning
 	 */
 	protected void addWarning(SQLWarning warning) {
 
@@ -791,9 +821,10 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected void clear() {
 
 		if (closed) {
-			throw zxJDBC.makeException(zxJDBC.InternalError, "cursor is closed");
+			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "cursor is closed");
 		}
 
+		this.statement = null;
 		this.warnings = Py.None;
 		this.lastrowid = Py.None;
 		this.updatecount = Py.newInteger(-1);
@@ -804,19 +835,13 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		finally {
 			this.fetch = Fetch.newFetch(this);
 		}
-
-		try {
-			this.sqlStatement.close();
-		} catch (Exception e) {}
-		finally {
-			this.sqlStatement = null;
-		}
 	}
 
 	/**
 	 * Method isSeq
 	 *
-	 * @param PyObject object
+	 *
+	 * @param object
 	 *
 	 * @return true for any PyList, PyTuple or java.util.List
 	 *
@@ -839,7 +864,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/**
 	 * Method hasParams
 	 *
-	 * @param PyObject params
+	 *
+	 * @param params
 	 *
 	 * @return boolean
 	 *
@@ -863,7 +889,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/**
 	 * Method isSeqSeq
 	 *
-	 * @param PyObject object
+	 *
+	 * @param object
 	 *
 	 * @return true is a sequence of sequences
 	 *
@@ -898,10 +925,11 @@ class CursorFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Constructor CursorFunc
 	 *
-	 * @param String name
-	 * @param int index
-	 * @param int argcount
-	 * @param String doc
+	 *
+	 * @param name
+	 * @param index
+	 * @param argcount
+	 * @param doc
 	 *
 	 */
 	CursorFunc(String name, int index, int argcount, String doc) {
@@ -911,11 +939,12 @@ class CursorFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Constructor CursorFunc
 	 *
-	 * @param String name
-	 * @param int index
-	 * @param int minargs
-	 * @param int maxargs
-	 * @param String doc
+	 *
+	 * @param name
+	 * @param index
+	 * @param minargs
+	 * @param maxargs
+	 * @param doc
 	 *
 	 */
 	CursorFunc(String name, int index, int minargs, int maxargs, String doc) {
@@ -959,7 +988,8 @@ class CursorFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject arg
+	 *
+	 * @param arg
 	 *
 	 * @return PyObject
 	 *
@@ -1002,6 +1032,9 @@ class CursorFunc extends PyBuiltinFunctionSet {
 
 				return Py.None;
 
+			case 12 :
+				return cursor.prepareStatement(arg, Py.None, true);
+
 			default :
 				throw argCountError(1);
 		}
@@ -1010,8 +1043,9 @@ class CursorFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject arga
-	 * @param PyObject argb
+	 *
+	 * @param arga
+	 * @param argb
 	 *
 	 * @return PyObject
 	 *
@@ -1053,9 +1087,10 @@ class CursorFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject arga
-	 * @param PyObject argb
-	 * @param PyObject argc
+	 *
+	 * @param arga
+	 * @param argb
+	 * @param argc
 	 *
 	 * @return PyObject
 	 *
@@ -1089,8 +1124,9 @@ class CursorFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject[] args
-	 * @param String[] keywords
+	 *
+	 * @param args
+	 * @param keywords
 	 *
 	 * @return PyObject
 	 *

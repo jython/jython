@@ -23,6 +23,9 @@ import com.ziclix.python.sql.util.PyArgParser;
  */
 public class PyConnection extends PyObject implements ClassDictInit {
 
+	/** Field closed */
+	protected boolean closed;
+
 	/** Field connection */
 	protected Connection connection;
 
@@ -60,7 +63,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		m[3] = new PyString("rollback");
 		m[4] = new PyString("nativesql");
 		__methods__ = new PyList(m);
-		m = new PyObject[7];
+		m = new PyObject[8];
 		m[0] = new PyString("autocommit");
 		m[1] = new PyString("dbname");
 		m[2] = new PyString("dbversion");
@@ -68,14 +71,20 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		m[4] = new PyString("url");
 		m[5] = new PyString("__connection__");
 		m[6] = new PyString("__cursors__");
+		m[7] = new PyString("closed");
 		__members__ = new PyList(m);
 	}
 
 	/**
 	 * Create a PyConnection with the open connection.
+	 *
+	 * @param connection
+	 *
+	 * @throws SQLException
 	 */
 	public PyConnection(Connection connection) throws SQLException {
 
+		this.closed = false;
 		this.connection = connection;
 		this.cursors = new LinkedList();
 		this.supportsTransactions = this.connection.getMetaData().supportsTransactions();
@@ -102,7 +111,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	/**
 	 * Method classDictInit
 	 *
-	 * @param PyObject dict
+	 *
+	 * @param dict
 	 *
 	 */
 	static public void classDictInit(PyObject dict) {
@@ -194,6 +204,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
 			return __methods__;
 		} else if ("__members__".equals(name)) {
 			return __members__;
+		} else if ("closed".equals(name)) {
+			return Py.newBoolean(closed);
 		}
 
 		return super.__findattr__(name);
@@ -209,6 +221,10 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 */
 	public void close() {
 
+		if (closed) {
+			return;
+		}
+
 		synchronized (this.cursors) {
 
 			// close the cursors
@@ -223,6 +239,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
 			this.connection.close();
 		} catch (SQLException e) {
 			throw zxJDBC.makeException(e);
+		} finally {
+			this.closed = true;
 		}
 	}
 
@@ -236,6 +254,10 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 *
 	 */
 	public void commit() {
+
+		if (closed) {
+			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
+		}
 
 		if (!this.supportsTransactions) {
 			return;
@@ -260,6 +282,10 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 */
 	public void rollback() {
 
+		if (closed) {
+			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
+		}
+
 		if (!this.supportsTransactions) {
 			return;
 		}
@@ -277,12 +303,17 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 * prior to sending it; this method returns the native form of the statement
 	 * that the driver would have sent.
 	 *
-	 * @param PyObject a SQL statement that may contain one or more '?' parameter placeholders
+	 *
+	 * @param nativeSQL
 	 *
 	 * @return the native form of this statement
 	 *
 	 */
 	public PyObject nativesql(PyObject nativeSQL) {
+
+		if (closed) {
+			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
+		}
 
 		if (nativeSQL == Py.None) {
 			return Py.None;
@@ -332,6 +363,10 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	 */
 	public PyCursor cursor(boolean dynamicFetch, PyObject rsType, PyObject rsConcur) {
 
+		if (closed) {
+			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
+		}
+
 		PyCursor cursor = new PyExtendedCursor(this, dynamicFetch, rsType, rsConcur);
 
 		cursors.add(cursor);
@@ -342,7 +377,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	/**
 	 * Unregister an open PyCursor.
 	 *
-	 * @param PyCursor cursor
+	 *
+	 * @param cursor
 	 *
 	 */
 	void unregister(PyCursor cursor) {
@@ -364,11 +400,12 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Constructor ConnectionFunc
 	 *
-	 * @param String name
-	 * @param int index
-	 * @param int minargs
-	 * @param int maxargs
-	 * @param String doc
+	 *
+	 * @param name
+	 * @param index
+	 * @param minargs
+	 * @param maxargs
+	 * @param doc
 	 *
 	 */
 	ConnectionFunc(String name, int index, int minargs, int maxargs, String doc) {
@@ -413,7 +450,8 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject arg
+	 *
+	 * @param arg
 	 *
 	 * @return PyObject
 	 *
@@ -438,8 +476,9 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject arg1
-	 * @param PyObject arg2
+	 *
+	 * @param arg1
+	 * @param arg2
 	 *
 	 * @return PyObject
 	 *
@@ -460,9 +499,10 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject arg1
-	 * @param PyObject arg2
-	 * @param PyObject arg3
+	 *
+	 * @param arg1
+	 * @param arg2
+	 * @param arg3
 	 *
 	 * @return PyObject
 	 *
@@ -484,8 +524,9 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
 	/**
 	 * Method __call__
 	 *
-	 * @param PyObject[] args
-	 * @param String[] keywords
+	 *
+	 * @param args
+	 * @param keywords
 	 *
 	 * @return PyObject
 	 *

@@ -109,6 +109,33 @@ class zxAPITestCase(zxJDBCTestCase):
 		finally:
 			c.close()
 
+	def _test_preparedstatement(self, dynamic):
+		c = self.cursor(dynamic)
+		try:
+			p = c.prepare("select * from zxtesting where id = ?")
+			for i in range(1, 8):
+				try:
+					c.execute(p, (i,))
+				except:
+					print i
+					raise
+				data = c.fetchall()
+				self.assertEquals(1, len(data))
+			assert not p.closed
+			p.close()
+			assert p.closed
+			self.assertRaises(zxJDBC.ProgrammingError, c.execute, p, (1,))
+		finally:
+			c.close()
+
+	def testStaticPrepare(self):
+		"""testing the prepare() functionality for static cursors"""
+		self._test_preparedstatement(0)
+
+	def testDynamicPrepare(self):
+		"""testing the prepare() functionality for dynamic cursors"""
+		self._test_preparedstatement(1)
+
 	def _test_cursorkeywords(self, *args, **kws):
 		c = self.cursor(*args, **kws)
 		try:
@@ -182,7 +209,7 @@ class zxAPITestCase(zxJDBCTestCase):
 			c.execute("select * from zxtesting")
 		finally:
 			c.close()
-		self.assertRaises(zxJDBC.InternalError, c.execute, ("select * from zxtesting",))
+		self.assertRaises(zxJDBC.ProgrammingError, c.execute, ("select * from zxtesting",))
 
 	def testClosingConnectionWithOpenCursors(self):
 		"""testing that a closed connection closes any open cursors"""
@@ -192,9 +219,9 @@ class zxAPITestCase(zxJDBCTestCase):
 		self.db.close()
 		# open a new connection so the tearDown can run
 		self.db = self.connect()
-		self.assertRaises(zxJDBC.InternalError, c.execute, ("select * from zxtesting",))
-		self.assertRaises(zxJDBC.InternalError, d.execute, ("select * from zxtesting",))
-		self.assertRaises(zxJDBC.InternalError, e.execute, ("select * from zxtesting",))
+		self.assertRaises(zxJDBC.ProgrammingError, c.execute, ("select * from zxtesting",))
+		self.assertRaises(zxJDBC.ProgrammingError, d.execute, ("select * from zxtesting",))
+		self.assertRaises(zxJDBC.ProgrammingError, e.execute, ("select * from zxtesting",))
 
 	def testNativeSQL(self):
 		"""testing the connection's ability to convert sql"""

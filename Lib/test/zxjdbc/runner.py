@@ -184,7 +184,7 @@ if __name__ == '__main__':
 	try:
 		opts, args = getopt.getopt(sys.argv[1:], "t:", [])
 	except getopt.error, msg:
-		print "%s -s [search] -r [replace] <pattern>"
+		print "%s -t [testmask] <vendor>[,<vendor>]"
 		sys.exit(0)
 
 	mask = None
@@ -198,3 +198,4 @@ if __name__ == '__main__':
 	configParser.feed(fp.read())
 	fp.close()
 	test(configParser.vendors, args[1:], mask=mask)
+	sys.exit(0)

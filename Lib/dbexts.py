@@ -46,6 +46,7 @@ datahandler=com.ziclix.python.sql.handler.PostgresqlDataHandler
 """
 
 import os, re
+from types import StringType
 
 __author__ = "brian zimmer (bzimmer@ziclix.com)"
 __version__ = "$Revision$"[11:-2]
@@ -281,6 +282,14 @@ class dbexts:
 		""" rollback the cursor """
 		self.db.rollback()
 
+	def prepare(self, sql):
+		""" prepare the sql statement """
+		cur = self.begin()
+		try:
+			return cur.prepare(sql)
+		finally:
+			self.commit(cur)
+
 	def display(self):
 		""" using the formatter, display the results """
 		if self.formatter and self.verbose > 0:
@@ -314,9 +323,12 @@ class dbexts:
 		if delim:
 			headers = []
 			results = []
-			if comments: sql = comments(sql)
-			statements = filter(lambda x: len(x) > 0,
-				map(lambda statement: statement.strip(), sql.split(delim)))
+			if type(sql) == type(StringType):
+				if comments: sql = comments(sql)
+				statements = filter(lambda x: len(x) > 0,
+					map(lambda statement: statement.strip(), sql.split(delim)))
+			else:
+				statements = [sql]
 			for a in statements:
 				self.__execute__(a, params, bindings, maxrows=maxrows)
 				headers.append(self.headers)
