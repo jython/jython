@@ -170,11 +170,10 @@ public class operator implements ClassDictInit
     }
 
     public static int countOf(PyObject seq, PyObject item) {
-        PyObject tmp;
-        int i = 0;
         int count = 0;
 
-        while ((tmp = seq.__finditem__(i++)) != null) {
+        PyObject iter = seq.__iter__();
+        for (PyObject tmp = null; (tmp = iter.__iternext__()) != null; ) {
             if (item._eq(tmp).__nonzero__())
                 count++;
         }
@@ -182,12 +181,11 @@ public class operator implements ClassDictInit
     }
 
     public static int indexOf(PyObject seq, PyObject item) {
-        PyObject tmp;
         int i = 0;
-
-        while ((tmp = seq.__finditem__(i++)) != null) {
+        PyObject iter = seq.__iter__();
+        for (PyObject tmp = null; (tmp = iter.__iternext__()) != null; i++) {
             if (item._eq(tmp).__nonzero__())
-                return i - 1;
+                return i;
         }
         throw Py.ValueError("sequence.index(x): x not in list");
     }

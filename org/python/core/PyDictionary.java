@@ -193,7 +193,7 @@ public class PyDictionary extends PyObject implements ClassDictInit
     }
 
     public PyObject __iter__() {
-        return new PyDictionaryIter(this, table.keys());
+        return new PyDictionaryIter(this, table.keys(), PyDictionaryIter.KEYS);
     }
 
     public String toString() {
@@ -408,22 +408,62 @@ public class PyDictionary extends PyObject implements ClassDictInit
         return new PyList(l);
     }
 
+
+    /**
+     * Return an interator over (key, value) pairs.
+     */
+    public PyObject iteritems() {
+        return new PyDictionaryIter(this, table.keys(),
+                    PyDictionaryIter.ITEMS);
+    }
+
+    /**
+     * Return an interator over (key, value) pairs.
+     */
+    public PyObject iterkeys() {
+        return new PyDictionaryIter(this, table.keys(),
+                    PyDictionaryIter.KEYS);
+    }
+
+    /**
+     * Return an interator over (key, value) pairs.
+     */
+    public PyObject itervalues() {
+        return new PyDictionaryIter(this, table.keys(),
+                    PyDictionaryIter.VALUES);
+    }
     public int hashCode() {
         throw Py.TypeError("unhashable type");
     }
 }
 
 class PyDictionaryIter extends PyIterator {
-    private Enumeration enumeration;
+    public static final int KEYS = 0;
+    public static final int VALUES = 1;
+    public static final int ITEMS = 2;
 
-    public PyDictionaryIter(PyObject dict, Enumeration e) {
-        enumeration = e;
+    private PyObject dict;
+    private Enumeration enumeration;
+    private int type;
+
+    public PyDictionaryIter(PyObject dict, Enumeration e, int type) {
+        this.dict = dict;
+        this.enumeration = e;
+        this.type = type;
     }
 
     public PyObject __iternext__() {
         if (!enumeration.hasMoreElements())
             return null;
-        return (PyObject) enumeration.nextElement();
+        PyObject key = (PyObject) enumeration.nextElement();
+        switch (type) {
+        case VALUES:
+            return dict.__finditem__(key);
+        case ITEMS:
+            return new PyTuple(new PyObject[] { key, dict.__finditem__(key) });
+        default: // KEYS
+            return key;
+        }
     }
 }     
 

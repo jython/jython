@@ -834,6 +834,29 @@ public class PyFile extends PyObject
         return readlines(0);
     }
 
+    public PyObject __iter__() {
+        return this;
+    }
+
+    public PyObject __iternext__() {
+        PyString s = readline();
+        if (s.__len__() == 0)
+            return null;
+        return s;
+    }
+
+    public PyObject next() {
+        PyObject ret = __iternext__();
+        if (ret == null)
+            throw Py.StopIteration("");
+        return ret;
+    }
+
+    public PyObject xreadlines() {
+        return this;
+    }
+
+
     public void write(String s) {
         if (closed)
             err_closed();

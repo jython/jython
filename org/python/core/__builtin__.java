@@ -360,6 +360,8 @@ public class __builtin__ implements ClassDictInit
             }
             list.append(item);
         }
+        if (l instanceof PyTuple)
+            return tuple(list);
         return list;
     }
 
@@ -1022,11 +1024,39 @@ public class __builtin__ implements ClassDictInit
         if (o instanceof PyTuple)
             return ((PyTuple)o).list;
 
-        int n = o.__len__();
+        PyObject iter = o.__iter__();
+
+        // Guess result size and allocate space.
+        int n = 10;
+        try {
+            n = o.__len__();
+        } catch (PyException exc) { }
+
         PyObject[] objs= new PyObject[n];
 
-        for(int i=0; i<n; i++) {
-            objs[i] = o.__finditem__(i); // XXX: convert to __iter__!
+        int i;
+        for (i = 0; ; i++) {
+            PyObject item = iter.__iternext__();
+            if (item == null)
+                break;
+            if (i >= n) {
+                if (n < 500) {
+                    n += 10;
+                } else {
+                    n += 100;
+                }
+                PyObject[] newobjs = new PyObject[n];
+                System.arraycopy(objs, 0, newobjs, 0, objs.length);
+                objs = newobjs;
+            }
+            objs[i] = item;
+        }
+
+        // Cut back if guess was too large.
+        if (i < n) {
+            PyObject[] newobjs = new PyObject[i];
+            System.arraycopy(objs, 0, newobjs, 0, i);
+            objs = newobjs;
         }
         return objs;
     }

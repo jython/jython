@@ -1611,9 +1611,10 @@ public final class Py
         }
 
         PyObject[] ret = new PyObject[length];
+        PyObject iter = o.__iter__();
         try {
-            for(int i=0; i<length; i++) {
-                PyObject tmp = o.__finditem__(i);
+            for (int i = 0; i < length; i++) {
+                PyObject tmp = iter.__iternext__();
                 if (tmp == null) {
                     throw Py.ValueError("unpack sequence too short");
                 }
@@ -1627,7 +1628,7 @@ public final class Py
             }
         }
 
-        if (o.__finditem__(length) != null) {
+        if (iter.__iternext__() != null) {
             throw Py.ValueError("unpack sequence too long");
         }
         return ret;
