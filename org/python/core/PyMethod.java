@@ -1,7 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyMethod extends PyObject {
+public class PyMethod extends PyObject
+{
     public PyObject im_self;
     public PyObject im_func;
     public PyObject im_class;
@@ -30,10 +31,35 @@ public class PyMethod extends PyObject {
         __doc__ = f.__doc__;
     }
 
-    /*private final boolean isBound() {
-      return im_self != null && !(im_self instanceof PyClass);
-      }*/
-        
+    private static final String[] __members__ = {
+        "im_self", "im_func", "im_class",
+        "__doc__", "__name__"
+    };
+
+    // TBD: this should be unnecessary
+    public PyObject __dir__() {
+        PyString members[] = new PyString[__members__.length];
+        for (int i = 0; i < __members__.length; i++)
+            members[i] = new PyString(__members__[i]);
+        return new PyList(members);
+    }
+
+    private void throwReadonly(String name) {
+        for (int i = 0; i < __members__.length; i++)
+            if (__members__[i] == name)
+                throw Py.TypeError("readonly attribute");
+        throw Py.AttributeError(name);
+    }
+
+    public void __setattr__(String name, PyObject value) {
+        // no writable attributes
+        throwReadonly(name);
+    }
+
+    public void __delattr__(String name) {
+        throwReadonly(name);
+    }
+
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if (im_self != null)
             // bound method
@@ -74,6 +100,10 @@ public class PyMethod extends PyObject {
             return 0;
         }
         return -2;
+    }
+
+    protected String safeRepr() {
+        return "'method' object";
     }
 
     public String toString() {
