@@ -73,6 +73,18 @@ public class PyObject implements java.io.Serializable {
 		return new PyString(toString());
 	}
 	
+	protected String safeRepr() {
+	    try {
+	        return __repr__().toString();
+	    } catch (Throwable t) {
+	        if (__class__ == null) {
+	            return "<unknown>";
+	        } else {
+	            return "<instance of "+__class__.__name__+">";
+	        }
+	    }
+	}
+	
 	/**
 	Equivalent to the standard Python __str__ method.
 	This method should not typically need to be overridden.
@@ -140,7 +152,7 @@ public class PyObject implements java.io.Serializable {
     @param keywords the keywords used for all keyword arguments.
     **/
 	public PyObject __call__(PyObject args[], String keywords[]) {
-		throw Py.AttributeError("__call__ not implemented by "+__repr__());
+		throw Py.AttributeError("__call__ not implemented by "+safeRepr());
 	}
 
     /**
@@ -451,7 +463,7 @@ public class PyObject implements java.io.Serializable {
     **/	
 	public final PyObject __getattr__(PyString name) {
 		PyObject ret = __findattr__(name);
-		if (ret == null) throw Py.AttributeError(name.toString()+" not in "+__repr__());
+		if (ret == null) throw Py.AttributeError(name.toString()+" not in "+safeRepr());
 		return ret;
 	}
 	
@@ -472,7 +484,7 @@ public class PyObject implements java.io.Serializable {
     **/	
 	public final PyObject __getattr__(String name) {
 	    PyObject ret = __findattr__(name);
-		if (ret == null) throw Py.AttributeError(name+" not in "+__repr__());
+		if (ret == null) throw Py.AttributeError(name+" not in "+safeRepr());
 		return ret;
 	}
 	
