@@ -73,7 +73,6 @@ failures = [
     'test_descr',
     'test_descrtut',
     'test_difflib',
-    'test_doctest',
     'test_doctest2',
     'test_email',
     'test_extcall',
