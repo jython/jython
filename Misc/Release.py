@@ -315,7 +315,8 @@ def do_bump(tagname):
             ]
     i = 1
     for d in todo:
-        print '    %2d.', d
+        print '    %2d.' % i, d
+        i = i + 1
 
 
 
