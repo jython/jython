@@ -275,8 +275,10 @@ public final class Py
     /** @deprecated **/
     public static PyObject jfindattr(PyProxy proxy, String name) {
         PyInstance o = proxy._getPyInstance();
-        if (o == null)
-            return null;
+        if (o == null) {
+            proxy.__initProxy__(new Object[0]);
+            o = proxy._getPyInstance();
+        }
         PyObject ret = o.__jfindattr__(name);
         if (ret == null)
             return null;
@@ -709,20 +711,24 @@ public final class Py
                                  String frozenPackage,
                                  String[] modules)
     {
-//         System.out.println("initProxy");
-//         frozen = false;
         initProperties(null, packages, props, frozenPackage, modules,
                     proxy.getClass().getClassLoader());
 
+        if (proxy._getPyInstance() != null)
+            return;
+
         ThreadState ts = getThreadState();
-        if (ts.getInitializingProxy() != null) {
-            proxy._setPyInstance(ts.getInitializingProxy());
+        PyInstance instance = ts.getInitializingProxy();
+        if (instance != null) {
+            if (instance.javaProxy != null)
+                throw Py.TypeError("Proxy instance reused");
+            instance.javaProxy = proxy;
+            proxy._setPyInstance(instance);
             proxy._setPySystemState(ts.systemState);
             return;
         }
 
         //System.out.println("path: "+sys.path.__str__());
-
         PyObject mod;
         // ??pending: findClass or should avoid sys.path loading?
         Class modClass = Py.findClass(module+"$_PyInner");
@@ -741,9 +747,9 @@ public final class Py
         }
         PyClass pyc = (PyClass)mod.__getattr__(pyclass.intern());
 
-        PyInstance instance = new PyInstance(pyc);
+        instance = new PyInstance(pyc);
         instance.javaProxy = proxy;
-        proxy._setPyInstance((PyInstance)instance);
+        proxy._setPyInstance(instance);
         proxy._setPySystemState(ts.systemState);
 
         PyObject[] pargs;

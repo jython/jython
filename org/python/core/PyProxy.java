@@ -10,4 +10,6 @@ public interface PyProxy
 
     abstract public void _setPySystemState(PySystemState ss);
     abstract public PySystemState _getPySystemState();
+
+    abstract public void __initProxy__(Object[] args);
 }
