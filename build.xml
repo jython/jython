@@ -4,8 +4,10 @@
     <target name="init">
         <property name="sourceDir" value="." />
         <property name="outputDir" value="build" />
+        <property name="debug" value="no" />
 
         <available classname="java.util.List" property="java2" />
+        <available classname="javax.servlet.Servlet" property="servlet" />
 
         <!-- This propery should be specified in the ant.property file
            property name="javaccHome" value="/opt/javacc2.0/bin/lib" /-->
@@ -67,18 +69,25 @@
             "/>
     </target>
 
-    <target name="compile" depends="prepare,parser,checkjavaversion">
+    <target name="checkservlet" unless="servlet">
+        <property name="excludeservletfiles" 
+            value="**/PyServlet.java"/>
+    </target>
+
+    <target name="compile" depends="prepare,parser,checkjavaversion,checkservlet">
         <javac 
             srcdir="${sourceDir}/" 
             includes="org/**"
             destdir="${outputDir}/" 
-            excludes="org/python/parser/python.java,${excludejava2files}"
+            excludes="org/python/parser/python.java,${excludejava2files},${excludeservletfiles}"
+            debug="${debug}"
         />
 
         <javac 
             srcdir="${sourceDir}/Lib" 
             includes="jxxload_help/**"
             destdir="${outputDir}/" 
+            debug="${debug}"
         />
 
        <copy file="org/python/modules/ucnhash.dat" 
