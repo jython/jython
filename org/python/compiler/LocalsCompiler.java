@@ -172,6 +172,9 @@ public class LocalsCompiler extends Visitor
         int n = node.getNumChildren();
         for (int i=0; i<n; i++) {
             Object name = node.getChild(i).getInfo();
+            if (locals.get(name) != null)
+                throw org.python.core.Py.SyntaxError("name " + name +
+                                                " is local and global");
             globals.put(name, name);
         }
         return null;
