@@ -56,7 +56,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 		try {
 			DATAHANDLER = new JDBC20DataHandler(DATAHANDLER);
-		} catch (Exception e) {}
+		} catch (Throwable t) {}
 	}
 
 	/**
