@@ -112,8 +112,8 @@ class LocalFrame:
         # ImportAll or ExecStmt. If not it should use 
         # parent.globalNamespace.
 
-        self.globalNamespace = SlowGlobals(parent)
-        #self.globalNamespace = parent.globalNamespace
+        #self.globalNamespace = SlowGlobals(parent)
+        self.globalNamespace = parent.globalNamespace
 
         self.parent = parent
         self.newReference = newReference
