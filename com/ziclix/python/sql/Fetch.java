@@ -631,12 +631,11 @@ class StaticFetch extends Fetch {
 	 */
 	public PyObject fetchmany(int size) {
 
-		PyObject res = new PyList();
-
 		if ((results == null) || (results.size() == 0)) {
 			throw zxJDBC.makeException(zxJDBC.DatabaseError, "no results");
 		}
 
+        PyObject res = new PyList();
 		PyObject current = (PyObject) results.get(0);
 
 		if (size <= 0) {
