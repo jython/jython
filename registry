@@ -1,11 +1,17 @@
 # Python Registry
+# This default registry sets many common options to their default values
+# All of these settings could be erased with no change in behavior
 
 # This is how I set my path on my Windows development machine
-python.path=.;d:\\Python-1.5.2\\Lib
-#python.path=.
+#python.path=.;c:\\jpython\\Lib;d:\\Python-1.5.2\\Lib
+python.path=.
 
-# This is obviously a short term hack
-python.packages.cachedir = c:\\jpython\\pkgcache
+# Set the directory to use for caches (currently just package information)
+# This directory should be writable by the user
+# If this is an absolute path it is used as given
+# Otherwise it is interpreted relative to sys.prefix
+# (typically the directory of this file)
+python.cachedir = cachedir
 
 # Properties to check for initializing and updating the package cache
 # Hopefully you won't have any need to change these
@@ -15,4 +21,15 @@ python.packages.directories = java.ext.dirs
 # To force JIT compilation of JPython code -- should be unnecessary
 # Setting this to true will cause jdk1.2rc1 to core dump on Windows
 python.options.compileClass = false
-python.options.verbosePackageCache = true
+
+# Set verbosity to error, warning, message, comment, or debug
+# for varying levels of informative messages from JPython
+python.verbose = message
+
+# Setting this to true will support old 1.0 style keyword+"_" names
+# This isn't needed any more due to improvements in the parser
+python.deprecated.keywordMangling = false
+
+# Setting this to true will cause the console to poll standard in
+# This might be helpful on systems without system-level threads
+python.console.poll = false
