@@ -236,7 +236,7 @@ public class PyJavaClass extends PyClass {
                 PyObject prop = lookup(name, false);
                 if (prop != null && prop instanceof PyBeanProperty) {
                     ((PyBeanProperty)prop).field = field;
-                    return;
+                    continue;
                 }
             }
 			__dict__.__setitem__(name, new PyReflectedField(field));
