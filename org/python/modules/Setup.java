@@ -35,6 +35,7 @@ public class Setup
         "py_compile",
         "codeop",
         "re",
+        "_sre",
         "code",
         "synchronize",
         "cPickle",
