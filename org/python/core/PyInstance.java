@@ -67,7 +67,7 @@ public class PyInstance extends PyObject
         this(iclass, new PyStringMap());
     }
 
-    public PyInstance() { ; }
+    public PyInstance() {}
 
     private static Hashtable primitiveMap;
 
@@ -213,9 +213,9 @@ public class PyInstance extends PyObject
     }
     
     protected PyObject ifindlocal(String name) {
-        if (__dict__ == null) return null;
         if (name == "__dict__") return __dict__;
         if (name == "__class__") return __class__;
+        if (__dict__ == null) return null;
                 
         return __dict__.__finditem__(name);
     }
