@@ -1,5 +1,11 @@
 Jython NEWS
 
+xx-Jan-2000 Jython 2.0 beta 2
+
+  Bug fixes.
+   - Fixed innerclass names with '$' #127200 
+   - Fixed a bug where final methods were overriden in proxy #127201.
+
 31-Dec-2000 Jython 2.0 beta 1
 
   New features
