@@ -150,11 +150,6 @@ public class imp {
                 //System.err.println("is runnable");
                 try {
                     PyObject o = createFromCode(name, ((PyRunnable)c.newInstance()).getMain());
-                    if (o.__findattr__("__path__") != null) {
-                        Class ci = Py.findClass(name+".__init__$py");
-                        if (ci == null) return null;
-                        createFromCode(name, ((PyRunnable)ci.newInstance()).getMain());
-                    }
                     return o;
                 } catch (InstantiationException e) {
                     throw Py.JavaError(e);
@@ -173,6 +168,7 @@ public class imp {
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
             Class c = Py.findClass(mod);
+            //System.err.println("find class: "+mod+", "+c);
             if (c != null)
                 return createFromClass(name, c);
         }
@@ -181,8 +177,16 @@ public class imp {
 
     private static PyObject loadPrecompiled(String name, String modName, PyList path) {
         //System.out.println("precomp: "+name+", "+modName);
-        Class c = Py.findClass(modName+"$py");
-        if (c == null) return null;
+        Class c = Py.findClass(modName+"$_PyInner");
+        if (c == null) {
+            //System.err.println("trying: "+modName+".__init__$_PyInner");
+            c = Py.findClass(modName+".__init__$_PyInner");
+            if (c == null) return null;
+            //System.err.println("found: "+modName+".__init__$_PyInner");
+            PyModule m = addModule(modName);
+            m.__dict__.__setitem__("__path__", new PyList());
+        } 
+        //System.err.println("creating: "+modName+", "+c);
         return createFromClass(modName, c);
     }
 
