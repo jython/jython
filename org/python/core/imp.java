@@ -522,8 +522,12 @@ public class imp
                 frame.f_locals,
                 new PyTuple(pynames)
             });
-        for (int i=0; i<names.length; i++)
-            frame.setlocal(asnames[i], module.__getattr__(names[i]));
+        for (int i=0; i<names.length; i++) {
+            PyObject submod = module.__findattr__(names[i]);
+            if (submod == null)
+                throw Py.ImportError("cannot import name " + names[i]);
+            frame.setlocal(asnames[i], submod);
+        }
     }
 
     private static PyTuple all = new PyTuple(
