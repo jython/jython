@@ -29,6 +29,8 @@ Copyright © Corporation for National Research Initiatives
 
     Brian Zimmer contributed zxJDBC which is a Python DB API subsystem.
 
+    Cyrille Morvan has written the code for the Jythonc ant task.
+
     A huge thanks goes to all the members of the jpython/jython
     mailing lists.  Other folks who have contributed to JPython and 
     Jython in ways large and small, in no particular order:
