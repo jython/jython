@@ -1251,6 +1251,30 @@ public final class Py {
 		}
 	}
 
+    public static final int ERROR=-1;
+    public static final int WARNING=0;
+    public static final int MESSAGE=1;
+    public static final int COMMENT=2;
+
+    public static void maybeWrite(String type, String msg, int level) {
+        if (level <= Options.verbose) {
+            System.err.println(type+": "+msg);
+        }
+    }
+
+    public static void writeError(String type, String msg) {
+        maybeWrite(type, msg, ERROR);
+    }   
+    public static void writeWarning(String type, String msg) {
+        maybeWrite(type, msg, WARNING);
+    }
+    public static void writeMessage(String type, String msg) {
+        maybeWrite(type, msg, MESSAGE);
+    }
+    public static void writeComment(String type, String msg) {
+        maybeWrite(type, msg, COMMENT);
+    }
+
 }
 
 /** @deprecated **/
