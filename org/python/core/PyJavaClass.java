@@ -689,7 +689,10 @@ public class PyJavaClass extends PyClass {
             return __dict__;
         }
         if (name == "__name__") return new PyString(__name__);
-        //if (name == "__bases__") return __bases__;
+        if (name == "__bases__") {
+            if (__bases__ == null) initialize();
+            return __bases__;
+        }
         if (name == "__init__") {
             initConstructors();
             return __init__;
