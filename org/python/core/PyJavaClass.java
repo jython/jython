@@ -111,7 +111,7 @@ public class PyJavaClass extends PyClass
         if (__dict__ != null)
             return;
         PyStringMap d = new PyStringMap();
-        d.__setitem__("__module__", Py.None);
+//         d.__setitem__("__module__", Py.None);
         __dict__ = d;
            
 //         System.err.println("initdict: "+proxyClass.getName()+", "+
