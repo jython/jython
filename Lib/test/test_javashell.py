@@ -3,10 +3,10 @@ import test_support
 
 from org.python.core import PyFile
 import re
-from LazyDict import LazyDict
 
 import os
 import javashell
+from javashell import LazyDict
 
 # testCmds is a list of (command, expectedOutput)
 # each command is executed twice, once in unitialized environment and
