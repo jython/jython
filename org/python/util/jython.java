@@ -8,7 +8,7 @@ import java.io.*;
 public class jpython
 {
     private static String usage =
-        "usage: jpython [options] [-jar jar | -c cmd | file | -] [args]\n"+
+        "usage: jython [options] [-jar jar | -c cmd | file | -] [args]\n"+
         "Options and arguments:\n"+
         "-i       : inspect interactively after running script, and force\n"+
         "           prompts, even if stdin does not appear to be a terminal\n"+
@@ -21,7 +21,7 @@ public class jpython
         "-        : program read from stdin (default; interactive mode if a "+
         "tty)\n"+
         "--help   : print this usage message and exit\n"+
-        "--version: print JPython version number and exit\n"+
+        "--version: print Jython version number and exit\n"+
         "args     : arguments passed to program in sys.argv[1:]";
 
     public static void runJar(String filename) {
@@ -234,7 +234,7 @@ class CommandLineOptions
                     opt = opt.substring(2);
                 else if (opt.startsWith("-"))
                     opt = opt.substring(1);
-                System.err.println("jpython: illegal option -- " + opt);
+                System.err.println("jython: illegal option -- " + opt);
                 return false;
             }
             index += 1;
