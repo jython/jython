@@ -87,17 +87,21 @@ def filterThrows(throws):
 def wrapThrows(stmt, throws, retType):
     if len(throws) == 0: return stmt
     catches = []
+    throwableFound = 0
     for i in range(len(throws)):
         throw = throws[i]
         exctype = throw
         excname = jast.Identifier("exc%d" % i)
         body = jast.Block([jast.Throw(excname)])
         catches.append( (exctype, excname, body) )
+        if throw == "java.lang.Throwable":
+            throwableFound = 1
 
-    body = jast.Block([jast.Invoke(jast.Identifier("inst"),
+    if not throwableFound:
+        body = jast.Block([jast.Invoke(jast.Identifier("inst"),
                                    "_jthrow", [jast.Identifier("t")]),
                        nullReturn(retType)])
-    catches.append( ("java.lang.Throwable", jast.Identifier("t"), body) )
+        catches.append( ("java.lang.Throwable", jast.Identifier("t"), body) )
     return jast.TryCatches(jast.Block([stmt]), catches)
 
 
