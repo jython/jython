@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.modules;
+
 import org.python.core.*;
 
 public class os implements InitModule {
