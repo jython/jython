@@ -380,11 +380,33 @@ public class ProxyMaker
                 "org/python/core/PyObject", jcallName,
                 "([Ljava/lang/Object;)Lorg/python/core/PyObject;");
             code.invokevirtual(jcall);
-                        
+            /* catching exceptions is not vm mandatory
+            Label forname_start =code.getLabel();
+            Label forname_end = code.getLabel();
+            Label forname_exch_start = code.getLabel();
+            Label forname_exch_end = code.getLabel();
+            forname_start.setPosition();      
+            */  
+            int forname = code.pool.Methodref(
+                "java/lang/Class","forName",
+                "(Ljava/lang/String;)Ljava/lang/Class;");
             code.ldc(ret.getName());
+            code.invokestatic(forname);
+            /*
+            forname_end.setPosition();
+            code.goto_(forname_exch_end);
+            forname_exch_start.setPosition();
+            code.stack = 1;
+            code.pop(); // never reached, but this code keeps the verifier happy
+            code.aconst_null();
+            code.dup();
+            forname_exch_end.setPosition();
+            
+            code.addExceptionHandler(forname_start,forname_end,forname_exch_start,code.pool.Class("java/lang/ClassNotFoundException"));
+            */  
             int tojava = code.pool.Methodref(
                 "org/python/core/Py", "tojava",
-                "(Lorg/python/core/PyObject;Ljava/lang/String;)Ljava/lang/Object;");
+                "(Lorg/python/core/PyObject;Ljava/lang/Class;)Ljava/lang/Object;");
             code.invokestatic(tojava);
             // I guess I need this checkcast to keep the verifier happy
             code.checkcast(code.pool.Class(mapClass(ret)));

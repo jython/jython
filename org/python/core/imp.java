@@ -153,11 +153,11 @@ public class imp
         return module;
     }
 
-    private static BytecodeLoader syspathJavaLoader = null;
+    private static ClassLoader syspathJavaLoader = null;
 
-    public static synchronized BytecodeLoader getSyspathJavaLoader() {
+    public static synchronized ClassLoader getSyspathJavaLoader() {
         if (syspathJavaLoader == null)
-            syspathJavaLoader = new BytecodeLoader();
+            syspathJavaLoader = new SyspathJavaLoader();
         return syspathJavaLoader;
     }
 

@@ -164,7 +164,7 @@ public class PySystemState extends PyObject
         __stdin__ = stdin = new PyFile(getSystemIn(), "<stdin>");
 
         // This isn't quite right...
-        builtins = PyJavaClass.lookup(__builtin__.class).__dict__;
+        builtins = PyJavaClass.lookup(__builtin__.class).__getattr__("__dict__");
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
 

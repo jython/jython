@@ -35,11 +35,13 @@ public class Options
     // accessible flag on the member.
     public static boolean respectJavaAccessibility = true;
 
+    /* no longer necessary
     // Allow JPython's classloader to find and load .class files on
     // sys.path.  This only happens for anonymous inner classes, but may
     // have unintended side-effects.  This option is temporary.
     public static boolean extendedClassLoader = true;
-
+    */
+    
     // TBD
     public static boolean importSite = true;
 
@@ -101,10 +103,6 @@ public class Options
         Options.respectJavaAccessibility =
             getBooleanOption("security.respectJavaAccessibility",
                              Options.respectJavaAccessibility);
-
-        Options.extendedClassLoader =
-            getBooleanOption("options.extendedClassLoader",
-                             Options.extendedClassLoader);
 
         Options.proxyDebugDirectory =
             getStringOption("options.proxyDebugDirectory",

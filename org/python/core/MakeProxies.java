@@ -13,23 +13,24 @@ import org.python.compiler.ProxyMaker;
 
 class MakeProxies 
 {
-    private static Class makeClass(Class referent, String name,
+    private static Class makeClass(Class referent, Vector secondary,String name,
                                    ByteArrayOutputStream bytes)
     {
-        BytecodeLoader bcl;
-        ClassLoader cl;
-        // Use the superclass's class loader if it is a BytecodeLoader.
-        // referent might be null if we're deriving from an interface.  In
-        // that case, this may or may not be the RTTD.
-        if (referent != null &&
-            (cl = referent.getClassLoader()) != null &&
-            cl instanceof BytecodeLoader)
-        {
-            bcl = (BytecodeLoader)cl;
+        Vector referents = null;
+        
+        if (secondary != null) {
+            if (referent != null) {
+                secondary.insertElementAt(referent,0);
+                referents = secondary;
+            }
+        } else {
+            if (referent != null) {
+                referents = new Vector();
+                referents.addElement(referent);
+            }
         }
-        else
-            bcl = imp.getSyspathJavaLoader();
-        return bcl.makeClass(name, bytes.toByteArray());
+        
+        return new BytecodeLoader(referents).makeClass(name, bytes.toByteArray());
     }
 
     public static Class makeAdapter(Class c) {
@@ -44,7 +45,7 @@ class MakeProxies
 
         Py.saveClassFile(name, bytes);
 
-        Class pc = makeClass(c, name, bytes);
+        Class pc = makeClass(c, null, name, bytes);
         return pc;
     }
 
@@ -77,7 +78,7 @@ class MakeProxies
             jm.classfile.write(bytes);
             Py.saveClassFile(proxyName, bytes);
 
-            return makeClass(superclass, jm.myClass, bytes);
+            return makeClass(superclass, vinterfaces, jm.myClass, bytes);
         }
         catch (Exception exc) {
             throw Py.JavaError(exc);
