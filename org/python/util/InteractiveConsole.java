@@ -36,8 +36,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
         
         return "Jython " + PySystemState.version + " on " +
             PySystemState.platform + " (JIT: " +
-            ((compiler == null) ? "null" : compiler) +  ")" + 
-            "\n" + PySystemState.copyright;
+            ((compiler == null) ? "null" : compiler) +  ")";
     }
 
     public void interact(String banner) {
