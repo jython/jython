@@ -249,7 +249,7 @@ import org.python.core.*;
  * mistakes and errors are my own. Original author unknown.
  * <p>
  * @author Finn Bock, bckfnn@pipmail.dknet.dk
- * @version $Id$
+ * @version struct.java,v 1.6 1999/04/17 12:04:34 fb Exp
  */
 public class struct {
 

@@ -317,16 +317,13 @@ import org.python.core.*;
  * version, except that all mistakes and errors are my own.
  * <p>
  * @author Finn Bock, bckfnn@pipmail.dknet.dk
- * @version $Id$
+ * @version cPickle.java,v 1.30 1999/05/15 17:40:12 fb Exp
  */
 public class cPickle implements InitModule {
-    private static cPickle m;
-    private static PyStringMap ns;
-
     /**
      * The program version.
      */
-    public static String __version__ = "$Revision$";
+    public static String __version__ = "1.30";
 
     /**
      * File format version we write.
@@ -420,9 +417,6 @@ public class cPickle implements InitModule {
      * Initialization when module is imported.
      */
     public void initModule(PyObject dict) {
-
-	ns = (PyStringMap)dict;
-
 	// XXX: Hack for JPython 1.0.1. By default __builtin__ is not in
 	// sys.modules.
 	imp.importName("__builtin__", true);
@@ -434,7 +428,6 @@ public class cPickle implements InitModule {
     }
 
     public cPickle() {
-	m = this;
     }
 
 
@@ -446,7 +439,7 @@ public class cPickle implements InitModule {
      * @returns a new Pickler instance.
      */
     public static Pickler Pickler(PyObject file) {
-	return m.new Pickler(file, false);
+	return new Pickler(file, false);
     }
 
 
@@ -459,7 +452,7 @@ public class cPickle implements InitModule {
      * @returns		a new Pickler instance.
      */
     public static Pickler Pickler(PyObject file, boolean bin) {
-	return m.new Pickler(file, bin);
+	return new Pickler(file, bin);
     }
 
 
@@ -471,7 +464,7 @@ public class cPickle implements InitModule {
      * @returns		a new Unpickler instance.
      */
     public static Unpickler Unpickler(PyObject file) {
-	return m.new Unpickler(file);
+	return new Unpickler(file);
     }
 
 
@@ -497,7 +490,7 @@ public class cPickle implements InitModule {
      * @returns		a new Unpickler instance.
      */
     public static void dump(PyObject object, PyObject file, boolean bin) {
-	m.new Pickler(file, bin).dump(object);
+	new Pickler(file, bin).dump(object);
     }
 
 
@@ -533,7 +526,7 @@ public class cPickle implements InitModule {
      * @returns		a new object.
      */
     public static Object load(PyObject file) {
-	return m.new Unpickler(file).load();
+	return new Unpickler(file).load();
     }
 
 
@@ -545,7 +538,7 @@ public class cPickle implements InitModule {
      */
     public static Object loads(PyObject str) {
 	cStringIO.StringIO file = cStringIO.StringIO(str.toString());
-	return m.new Unpickler(file).load();
+	return new Unpickler(file).load();
     }
     
 
@@ -554,11 +547,11 @@ public class cPickle implements InitModule {
     private static IOFile createIOFile(PyObject file) {
 	Object f = file.__tojava__(cStringIO.StringIO.class);
 	if (f != Py.NoConversion)
-	    return m.new cStringIOFile((cStringIO.StringIO)file);
+	    return new cStringIOFile((cStringIO.StringIO)file);
 	else if (__builtin__.isinstance(file, FileType))
-	    return m.new FileIOFile(file);
+	    return new FileIOFile(file);
 	else 
-	    return m.new ObjectIOFile(file);
+	    return new ObjectIOFile(file);
     }
 
 
@@ -577,7 +570,7 @@ public class cPickle implements InitModule {
 
 
     // Use a cStringIO as a file.
-    class cStringIOFile implements IOFile {
+    static class cStringIOFile implements IOFile {
 	cStringIO.StringIO file;
 
 	cStringIOFile(PyObject file) {
@@ -605,7 +598,7 @@ public class cPickle implements InitModule {
 
 
     // Use a PyFile as a file.
-    class FileIOFile implements IOFile {
+    static class FileIOFile implements IOFile {
 	PyFile file;
 
 	FileIOFile(PyObject file) {
@@ -634,7 +627,7 @@ public class cPickle implements InitModule {
 
 
     // Use any python object as a file.
-    class ObjectIOFile implements IOFile {
+    static class ObjectIOFile implements IOFile {
 	char[] charr = new char[1];
 	StringBuffer buff = new StringBuffer();
 	PyObject write;
@@ -682,7 +675,7 @@ public class cPickle implements InitModule {
      * @see cPickle#Pickler(PyObject)
      * @see cPickle#Pickler(PyObject,boolean)
      */
-    public class Pickler {
+    static public class Pickler {
 	private IOFile file;
 	private boolean bin;
 
@@ -709,7 +702,7 @@ public class cPickle implements InitModule {
 	public PyObject inst_persistent_id = null;
 
 
-	Pickler(PyObject file, boolean bin) {
+	public Pickler(PyObject file, boolean bin) {
 	    this.file = createIOFile(file);
 	    this.bin = bin;
 	}
@@ -796,7 +789,7 @@ public class cPickle implements InitModule {
 		return;
 	    }
 
-	    int m = getMemoPosition(d);
+	    int m = getMemoPosition(d, object);
 	    if (m >= 0) {
 		get(m);
 		return;
@@ -1016,7 +1009,7 @@ public class cPickle implements InitModule {
 		save(object.__finditem__(i));
 
 	    if (len > 0) {
-		int m = getMemoPosition(d);
+		int m = getMemoPosition(d, object);
 		if (m >= 0) {
 		    if (bin) {
 			file.write(POP_MARK);
@@ -1165,8 +1158,8 @@ public class cPickle implements InitModule {
 	}
 
 
-	final private int getMemoPosition(int id) {
-	    return memo.findPosition(id);
+	final private int getMemoPosition(int id, Object o) {
+	    return memo.findPosition(id, o);
 	}
 
 	final private int putMemo(int id, PyObject object) {
@@ -1188,7 +1181,7 @@ public class cPickle implements InitModule {
 	 */
 	final private void keep_alive(PyObject obj) {
 	    int id = System.identityHashCode(memo);
-	    PyList list = (PyList) memo.findValue(id);
+	    PyList list = (PyList) memo.findValue(id, memo);
 	    if (list == null) {
 		list = new PyList();
 		memo.put(id, -1, list);
@@ -1225,7 +1218,7 @@ public class cPickle implements InitModule {
 	    PyObject value = modules.__finditem__(key);
 
 	    if (!key.equals("__main__") && 
-			value.__findattr__(clsname.toString()) == cls) {
+			value.__findattr__(clsname.toString().intern()) == cls) {
 		name = key;
 		break;
 	    }
@@ -1242,7 +1235,7 @@ public class cPickle implements InitModule {
      * integers as keys and stores both an integer and an object as value.
      * It is very private!
      */
-    private class PickleMemo {
+    static private class PickleMemo {
 	//Table of primes to cycle through
 	private final int[] primes = {
 	    13, 61, 251, 1021, 4093,
@@ -1277,7 +1270,7 @@ public class cPickle implements InitModule {
 	    return size;
 	}
 
-	private int findIndex(int key) {
+	private int findIndex(int key, Object value) {
 	    int[] table = keys;
 	    int maxindex = table.length;
 	    int index = (key & 0x7fffffff) % maxindex;
@@ -1289,7 +1282,7 @@ public class cPickle implements InitModule {
 	    //int collisions = 0;
 	    while (true) {
 		int tkey = table[index];
-		if (tkey == key) {
+		if (tkey == key && value == values[index]) {
 		    return index;
 		}
 		if (values[index] == null) return -1;
@@ -1297,15 +1290,15 @@ public class cPickle implements InitModule {
 	    }
 	}
 
-	public int findPosition(int key) {
-	    int idx = findIndex(key);
+	public int findPosition(int key, Object value) {
+	    int idx = findIndex(key, value);
 	    if (idx < 0) return -1;
 	    return position[idx];
 	}
 
 
-	public Object findValue(int key) {
-	    int idx = findIndex(key);
+	public Object findValue(int key, Object value) {
+	    int idx = findIndex(key, value);
 	    if (idx < 0) return null;
 	    return values[idx];
 	}
@@ -1329,9 +1322,8 @@ public class cPickle implements InitModule {
 		    filled++;
 		    size++;
 		    break;
-		} else if (tkey == key) {
+		} else if (tkey == key && values[index] == value) {
 		    position[index] = pos;
-		    values[index] = value;
 		    break;
 		} else if (values[index] == DELETEDKEY) {
 		    table[index] = key;
@@ -1393,7 +1385,7 @@ public class cPickle implements InitModule {
      * Unpickler.
      * @see cPickle#Unpickler(PyObject)
      */
-    public class Unpickler {
+    static public class Unpickler {
 
 	private IOFile file;
 

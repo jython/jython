@@ -124,7 +124,7 @@ import org.python.core.*;
  * written by Jack Jansen, except that all mistakes and errors are my own.
  * <p>
  * @author Finn Bock, bckfnn@pipmail.dknet.dk
- * @version $Id$
+ * @version binascii.java,v 1.6 1999/02/20 11:37:07 fb Exp
 
  */
 public class binascii {

@@ -27,17 +27,15 @@ import org.python.core.*;
  * writes a string buffer (also known as memory files). 
  * See the description on file objects for operations. 
  * @author Finn Bock, bckfnn@pipmail.dknet.dk
- * @version $Id$
+ * @version cStringIO.java,v 1.10 1999/05/20 18:03:20 fb Exp
  */
 public class cStringIO {
-    private static cStringIO m = new cStringIO();
-
     /**
      * Create an empty StringIO object
      * @return		a new StringIO object.
      */
     public static StringIO StringIO() {
-	return m.new StringIO();
+	return new StringIO();
     }
 
     /**
@@ -46,7 +44,7 @@ public class cStringIO {
      * @return		a new StringIO object.
      */
     public static StringIO StringIO(String buf) {
-	return m.new StringIO(buf);
+	return new StringIO(buf);
     }
 
 
@@ -55,7 +53,7 @@ public class cStringIO {
      * @see cStringIO#StringIO()	
      * @see cStringIO#StringIO(String)
      */
-    public class StringIO extends PyObject {
+    public static class StringIO extends PyObject {
 	transient public boolean softspace = false;
 	transient public String name = "<cStringIO>";
 	transient public String mode = "w";
