@@ -4,7 +4,7 @@ import sys
 import os
 
 from org.python.core import PyModule, PyJavaClass, PyClass, \
-     PyJavaPackage, PyBeanEventProperty, PyJavaDirPackage
+     PyJavaPackage, PyBeanEventProperty
 
 from util import lookup
 
@@ -18,8 +18,6 @@ def wrapJava(mod):
     elif isinstance(mod, PyClass):
         return Class(mod)
     elif isinstance(mod, PyJavaPackage):
-        return Package(mod)
-    elif isinstance(mod, PyJavaDirPackage):
         return Package(mod)
     else:
         return Namespace(mod)
@@ -88,12 +86,14 @@ class Namespace:
 
 
 
+from util import reportPublicPlainClasses
 class Package(Namespace):
     _classes = {}
     def __init__(self, mod, *args):
         apply(Namespace.__init__, (self, mod)+args)
         if isinstance(mod, PyJavaPackage):
-            classes = PyJavaPackage._unparsedAll._doget(self.mod)
+##            classes = PyJavaPackage._unparsedAll._doget(self.mod)
+            classes = reportPublicPlainClasses(self.mod)
             if classes:
                 self._classes[self.name] = classes
     def getClasses(self):

@@ -98,27 +98,29 @@ primNames = {'void'   : 'V',
              }
 
 
-def makeArrayName(c):
-    if c.endswith("[]"):
-        return "["+makeArrayName(c[:-2])
-    else:
-        if primNames.has_key(c):
-            return primNames[c]
-        else:
-            return "L"+c+";"
+##def makeArrayName(c):
+##    if c.endswith("[]"):
+##        return "["+makeArrayName(c[:-2])
+##    else:
+##        if primNames.has_key(c):
+##            return primNames[c]
+##        else:
+##            return "L"+c+";"
 
+import util
 def getJavaClass(c):
     if isinstance(c, StringType):
         if primitives.has_key(c):
             return primitives[c]
         if c.endswith("[]"):
-            return Class.forName(makeArrayName(c))
+            # java1.1 allows only this
+            return Class.getClass(reflect.Array.newInstance(getJavaClass(c[:-2]),0))
         try:
-            return Class.forName(c)
+            return util.findClass(c) #Class.forName(c)
         except:
             return None
     elif isinstance(c, ImportName.JavaClass):
-        return Class.forName(c.name)
+        return c.mod #Class.forName(c.name)
     elif isinstance(c, Class):
         return c
     else:

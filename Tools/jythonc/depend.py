@@ -100,52 +100,67 @@ def defaultFilter(name):
 
 
 
+from org.python.core import PyJavaPackage
 from util import lookup, getzip
+from util import openResource
 def getFile(name):
     dot = name.rfind('.')
     if dot == -1:
-        return topFile(name)
+        return PkgEntry(name)
+##        return topFile(name)
 
     package = lookup(name[:dot])
-    if hasattr(package, '__file__'):
-        return ZipEntry(package.__file__, name)
-    elif hasattr(package, '__path__') and len(package.__path__) == 1:
-        return DirEntry(package.__path__[0], name)
+    if isinstance(package, PyJavaPackage):
+        return PkgEntry(name)
+##    if hasattr(package, '__file__'):
+##        return ZipEntry(package.__file__, name)
+##    elif hasattr(package, '__path__') and len(package.__path__) == 1:
+##        return DirEntry(package.__path__[0], name)
     elif isinstance(package, TypeType):
         # this 'package' is a java class
         f = getFile(name[:dot])
         if f:
             return f
 
-
-
-class ZipEntry:
-    def __init__(self, filename, classname):
-        self.filename = filename
+class PkgEntry:
+    def __init__(self, classname):
         self.classname = classname
 
     def __repr__(self):
-        return "ZipEntry(%s, %s)" % (self.filename, self.classname)
+        return "PkgEntry(%s)" % (self.classname)
 
     def getInputStream(self):
-        zf = getzip(self.filename)
-        zfilename = unfix(self.classname) + '.class'
-        entry = zf.getEntry(zfilename)
-        return zf.getInputStream(entry)
+        res = unfix(self.classname) + '.class'
+        return openResource(res)
 
 
-class DirEntry:
-    def __init__(self, dirname, classname):
-        self.dirname = dirname
-        self.classname = classname
-
-    def __repr__(self):
-        return "DirEntry(%s, %s)" % (self.dirname, self.classname)
-
-    def getInputStream(self):
-        lastname = self.classname.split('.')[-1]
-        fullname = os.path.join(self.dirname, lastname+'.class')
-        return io.FileInputStream(fullname)
+##class ZipEntry:
+##    def __init__(self, filename, classname):
+##        self.filename = filename
+##        self.classname = classname
+##
+##    def __repr__(self):
+##        return "ZipEntry(%s, %s)" % (self.filename, self.classname)
+##
+##    def getInputStream(self):
+##        zf = getzip(self.filename)
+##        zfilename = unfix(self.classname) + '.class'
+##        entry = zf.getEntry(zfilename)
+##        return zf.getInputStream(entry)
+##
+##
+##class DirEntry:
+##    def __init__(self, dirname, classname):
+##        self.dirname = dirname
+##        self.classname = classname
+##
+##    def __repr__(self):
+##        return "DirEntry(%s, %s)" % (self.dirname, self.classname)
+##
+##    def getInputStream(self):
+##        lastname = self.classname.split('.')[-1]
+##        fullname = os.path.join(self.dirname, lastname+'.class')
+##        return io.FileInputStream(fullname)
 
 
 def depends(name):

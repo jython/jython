@@ -32,6 +32,7 @@ def getClasspath():
 
 
 
+import sys
 def compile(files, javac=None, cpathopt="-classpath",
             cpath=None, options=None, sourcedir=None):
     cmd = []
@@ -54,15 +55,28 @@ def compile(files, javac=None, cpathopt="-classpath",
     if options is None:
         options = []
     cmd.extend(options)
+    # new:
     # Classpath:
     #   1. python.jythonc.classpath property
+    #   +
     #   2. java.class.path property
+    #   +
+    #   3. sourcedir
+    #   +
+    #   4. sys.path
     if cpath is None:
-        cpath = sys.registry.getProperty("python.jythonc.classpath")
-    if cpath is None:
-        cpath = getClasspath()
-    if sourcedir:
-        cpath = cpath + java.io.File.pathSeparator + sourcedir
+        sep = java.io.File.pathSeparator
+        cpath = []
+        part = sys.registry.getProperty("python.jythonc.classpath")
+        if part != None:
+            cpath.extend(part.split(sep))
+        part = getClasspath()
+        if part != None:
+            cpath.extend(part.split(sep))
+        if sourcedir:
+            cpath.append(sourcedir)
+        cpath.extend(sys.path)
+        cpath = sep.join(cpath)
     cmd.extend([cpathopt, cpath])
     cmd.extend(files)
     print 'Compiling with args:', cmd

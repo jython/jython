@@ -167,9 +167,8 @@ def getOptions():
 
 
 def addCore(extraPackages):
-    skiplist = ['org.python.core.parser',
-                'org.python.core.BytecodeLoader',
-                'org.python.core.jpython',
+    skiplist = [ 'org.python.core.parser',
+                 #'org.python.core.BytecodeLoader',
                 ]
     extraPackages.append(('org.python.core', skiplist))
 
