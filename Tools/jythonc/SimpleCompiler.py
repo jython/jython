@@ -703,10 +703,10 @@ class SimpleCompiler(BaseEvaluator):
         return self.set_name(name, c)
 
     def addModule(self, mod, value=1):
-        #print 'add module', mod.name, mod
+        #print 'add module', mod
         if self.module.imports.has_key(mod) and value == 1:
             return
-        self.module.imports[mod] = value
+        self.module.imports[mod] = (value, self.module)
 
     def addSetAttribute(self, obj, name, value):
         #print ' add set attribute', name, value

@@ -228,7 +228,6 @@ class Compiler:
         fact.parent = pi
         code = jast.Block(pi.execstring(data))
         mod.addMain(code, pi)
-
         self.addDependencies(mod)
         return mod
 
@@ -276,9 +275,15 @@ class Compiler:
         attrs = PyObject.attributes
         PyObject.attributes = {}
         #print '  attrs', attrs.keys()
-        for name, value in mod.imports.items():
+
+        for name, (value, module) in mod.imports.items():
             #print '  depends', name
-            m = ImportName.lookupName(name)
+            if module.package:
+                m = ImportName.lookupName(module.package + '.' + name)
+                if m is None:
+                    m = ImportName.lookupName(name)
+            else:
+                m = ImportName.lookupName(name)
             self.addDependency(m, attrs, mod, value)            
 
         if self.deep:
