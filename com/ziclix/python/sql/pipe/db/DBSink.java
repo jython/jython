@@ -90,7 +90,7 @@ public class DBSink extends BaseDB implements Sink {
 		if ((row == Py.None) || (row.__len__() == 0)) {
 
 			// if there are no columns, what's the point?
-			throw zxJDBC.newError(zxJDBC.getString("noColInfo"));
+			throw zxJDBC.makeException(zxJDBC.getString("noColInfo"));
 		}
 
 		int index = 0, len = row.__len__();

@@ -88,7 +88,7 @@ public class Lookup extends PyObject {
 
 				fieldname = (String)field.get(Context.class);
 			} catch (IllegalAccessException e) {
-				throw zxJDBC.makeException(zxJDBC.ProgrammingError, e.getMessage());
+				throw zxJDBC.makeException(zxJDBC.ProgrammingError, e);
 			} catch (NoSuchFieldException e) {
 				fieldname = keyword;
 			}
@@ -102,7 +102,7 @@ public class Lookup extends PyObject {
 			context = new InitialContext(env);
 			ref = context.lookup((String)jndiName);
 		} catch (NamingException e) {
-			throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+			throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 		} finally {
 			if (context != null) {
 				try {
@@ -126,7 +126,7 @@ public class Lookup extends PyObject {
 				connection = ((ConnectionPoolDataSource)ref).getPooledConnection().getConnection();
 			}
 		} catch (SQLException e) {
-			throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+			throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 		}
 
 		try {
@@ -136,7 +136,7 @@ public class Lookup extends PyObject {
 
 			return new PyConnection(connection);
 		} catch (SQLException e) {
-			throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+			throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 		}
 	}
 

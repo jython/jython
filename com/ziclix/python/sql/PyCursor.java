@@ -407,7 +407,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		} catch (PyException e) {
 			throw e;
 		} catch (Exception e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -506,7 +506,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		} catch (PyException e) {
 			throw e;
 		} catch (Exception e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 

@@ -131,7 +131,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 					this.connection.setAutoCommit(value.__nonzero__());
 				}
 			} catch (SQLException e) {
-				throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 			}
 
 			return;
@@ -152,31 +152,31 @@ public class PyConnection extends PyObject implements ClassDictInit {
 			try {
 				return connection.getAutoCommit() ? Py.One : Py.Zero;
 			} catch (SQLException e) {
-				throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 			}
 		} else if ("dbname".equals(name)) {
 			try {
 				return Py.newString(this.connection.getMetaData().getDatabaseProductName());
 			} catch (SQLException e) {
-				throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 			}
 		} else if ("dbversion".equals(name)) {
 			try {
 				return Py.newString(this.connection.getMetaData().getDatabaseProductVersion());
 			} catch (SQLException e) {
-				throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 			}
 		} else if ("driverversion".equals(name)) {
 			try {
 				return Py.newString(this.connection.getMetaData().getDriverVersion());
 			} catch (SQLException e) {
-				throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 			}
 		} else if ("url".equals(name)) {
 			try {
 				return Py.newString(this.connection.getMetaData().getURL());
 			} catch (SQLException e) {
-				throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 			}
 		} else if ("__connection__".equals(name)) {
 			return Py.java2py(this.connection);
@@ -204,7 +204,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 			// close the cursors too?
 			this.connection.close();
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -226,7 +226,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		try {
 			this.connection.commit();
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -249,7 +249,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		try {
 			this.connection.rollback();
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -273,7 +273,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		try {
 			return Py.newString(this.connection.nativeSQL(nativeSQL.__str__().toString()));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 

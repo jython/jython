@@ -480,7 +480,7 @@ public class DataHandler {
 				results[read++] = (byte)b;
 			}
 		} catch (IOException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 
 		byte[] tmp = results;
@@ -507,7 +507,7 @@ public class DataHandler {
 				buffer.append((char)c);
 			}
 		} catch (IOException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 
 		return buffer.toString();

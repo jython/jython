@@ -52,7 +52,7 @@ public class Pipe {
 		} catch (InterruptedException e) {
 			queue.close();
 
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 
 		try {
@@ -60,7 +60,7 @@ public class Pipe {
 		} catch (InterruptedException e) {
 			queue.close();
 
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 
 		/*
@@ -73,11 +73,11 @@ public class Pipe {
 		 * running?  Anyways, if anyone knows what to do I would love to hear about it.
 		 */
 		if (sourceRunner.threwException()) {
-			throw zxJDBC.newError(sourceRunner.getException().toString());
+			throw zxJDBC.makeException(sourceRunner.getException().toString());
 		}
 
 		if (sinkRunner.threwException()) {
-			throw zxJDBC.newError(sinkRunner.getException().toString());
+			throw zxJDBC.makeException(sinkRunner.getException().toString());
 		}
 
 		// if the source count is -1, no rows were queried

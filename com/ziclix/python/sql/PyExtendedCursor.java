@@ -179,7 +179,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getTables(q, o, t, y));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -203,7 +203,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getColumns(q, o, t, c));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -225,7 +225,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getProcedures(q, o, p));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -249,7 +249,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getProcedureColumns(q, o, p, c));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -272,7 +272,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getPrimaryKeys(q, o, t));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -305,7 +305,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getCrossReference(pq, po, pt, fq, fo, ft));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -336,7 +336,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getIndexInfo(q, o, t, u, a), skipCols);
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -357,7 +357,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getTypeInfo(), skipCols);
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 
 		// if the type is non-null, then trim the result list down to that type only
@@ -385,7 +385,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getTableTypes());
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -410,7 +410,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getBestRowIdentifier(c, s, t, p, n));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -433,7 +433,7 @@ public class PyExtendedCursor extends PyCursor {
 		try {
 			this.fetch.add(getMetaData().getVersionColumns(q, o, t));
 		} catch (SQLException e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 

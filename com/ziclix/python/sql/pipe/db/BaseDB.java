@@ -73,7 +73,7 @@ public abstract class BaseDB {
 			if (cons == null) {
 				String msg = zxJDBC.getString("invalidCons", new Object[]{ this.dataHandler.getName() });
 
-				throw zxJDBC.newError(msg);
+				throw zxJDBC.makeException(msg);
 			}
 
 			try {

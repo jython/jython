@@ -469,7 +469,7 @@ class StaticFetch extends Fetch {
 		} catch (PyException e) {
 			throw e;
 		} catch (Exception e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		} finally {
 			try {
 				resultSet.close();
@@ -503,7 +503,7 @@ class StaticFetch extends Fetch {
 		} catch (PyException e) {
 			throw e;
 		} catch (Exception e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -642,7 +642,7 @@ class DynamicFetch extends Fetch {
 	public void add(ResultSet resultSet, Set skipCols) {
 
 		if (this.resultSet != null) {
-			throw zxJDBC.newError(zxJDBC.getString("onlyOneResultSet"));
+			throw zxJDBC.makeException(zxJDBC.getString("onlyOneResultSet"));
 		}
 
 		try {
@@ -657,7 +657,7 @@ class DynamicFetch extends Fetch {
 		} catch (PyException e) {
 			throw e;
 		} catch (Exception e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 	}
 
@@ -715,7 +715,7 @@ class DynamicFetch extends Fetch {
 		} catch (PyException e) {
 			throw e;
 		} catch (Exception e) {
-			throw zxJDBC.newError(e);
+			throw zxJDBC.makeException(e);
 		}
 
 		return (res.__len__() == 0) ? Py.None : res;

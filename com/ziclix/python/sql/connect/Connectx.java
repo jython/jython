@@ -106,7 +106,7 @@ public class Connectx extends PyObject {
 				c = ((ConnectionPoolDataSource)datasource).getPooledConnection().getConnection();
 			}
 		} catch (SQLException e) {
-			throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+			throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 		}
 
 		try {
@@ -116,7 +116,7 @@ public class Connectx extends PyObject {
 
 			pc = new PyConnection(c);
 		} catch (SQLException e) {
-			throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+			throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 		}
 
 		return pc;
@@ -151,14 +151,14 @@ public class Connectx extends PyObject {
 			method = getMethod(src.getClass(), methodName, value.getClass());
 
 			if (method == null) {
-				throw zxJDBC.newError("no such " + exceptionMsg);
+				throw zxJDBC.makeException("no such " + exceptionMsg);
 			}
 
 			method.invoke(src, new Object[]{ value });
 		} catch (IllegalAccessException e) {
-			throw zxJDBC.newError("illegal access for " + exceptionMsg);
+			throw zxJDBC.makeException("illegal access for " + exceptionMsg);
 		} catch (InvocationTargetException e) {
-			throw zxJDBC.newError("invocation target exception for " + exceptionMsg);
+			throw zxJDBC.makeException("invocation target exception for " + exceptionMsg);
 		}
 
 		return;

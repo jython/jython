@@ -88,14 +88,14 @@ public class Connect extends PyObject {
 
 			try {
 				Class.forName(driver);
-			} catch (ClassNotFoundException e) {
-				throw zxJDBC.makeException(zxJDBC.DatabaseError, "driver not found");
+			} catch (Throwable e) {
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, "driver [" + driver + "] not found");
 			}
 
 			try {
 				c = DriverManager.getConnection(url, props);
 			} catch (SQLException e) {
-				throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+				throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 			}
 		} else {
 			c = (Connection)arg;
@@ -108,7 +108,7 @@ public class Connect extends PyObject {
 
 			return new PyConnection(c);
 		} catch (SQLException e) {
-			throw zxJDBC.makeException(zxJDBC.DatabaseError, e.getMessage());
+			throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
 		}
 	}
 

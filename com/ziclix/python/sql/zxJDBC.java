@@ -103,7 +103,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		dict.__setitem__("_empty__init__", null);
 		dict.__setitem__("buildClass", null);
 		dict.__setitem__("createExceptionMessage", null);
-		dict.__setitem__("newError", null);
 		dict.__setitem__("resourceBundle", null);
 		dict.__setitem__("getString", null);
 		dict.__setitem__("makeException", null);
@@ -149,7 +148,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 				sqltype.__setitem__(value, name);
 			}
 		} catch (Throwable t) {
-			throw newError(t);
+			throw makeException(t);
 		}
 
 		return;
@@ -283,23 +282,30 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	}
 
 	/**
-	 * Return a newly instantiated PyException.
+	 * Return a newly instantiated PyException of the type Error.
+	 */
+	public static PyException makeException(String msg) {
+		return makeException(Error, msg);
+	}
+
+	/**
+	 * Return a newly instantiated PyException of the given type.
 	 */
 	public static PyException makeException(PyObject type, String msg) {
 		return Py.makeException(type, Py.newString((msg == null) ? "" : msg));
 	}
 
 	/**
-	 * Return a newly instantiated Error.
+	 * Return a newly instantiated PyException of the type Error.
 	 */
-	public static PyException newError(String msg) {
-		return zxJDBC.makeException(Error, msg);
+	public static PyException makeException(Throwable throwable) {
+		return makeException(Error, throwable);
 	}
 
 	/**
-	 * Return a newly instantiated Error.
+	 * Return a newly instantiated PyException of the given type.
 	 */
-	public static PyException newError(Throwable t) {
+	public static PyException makeException(PyObject type, Throwable t) {
 
 		if (Options.showJavaExceptions) {
 			java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
@@ -337,9 +343,9 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 				}
 			} while (sqlException != null);
 
-			return newError(buffer.toString());
+			return makeException(type, buffer.toString());
 		} else {
-			return newError(t.getMessage());
+			return makeException(type, t.getMessage());
 		}
 	}
 
