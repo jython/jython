@@ -510,13 +510,18 @@ public final class Py {
                 return Class.forName(name);
             else
                 return classLoader.loadClass(name);
-        } catch (ClassNotFoundException exc) {
+        }
+	catch (ClassNotFoundException e) {
             //exc.printStackTrace();
             return null;
-        } catch (IllegalArgumentException exc1) {
+        }
+	catch (IllegalArgumentException e) {
             //exc1.printStackTrace();
             return null;
         }
+	catch (NoClassDefFoundError e) {
+	    return null;
+	}
     }
 
     private static void setArgv(String arg0, String[] args) {
@@ -1263,18 +1268,15 @@ public final class Py {
     {
 	try {
 	    ByteArrayOutputStream ostream = new ByteArrayOutputStream();
-	    //System.err.println("compiling");
 	    org.python.compiler.Module.compile(node, ostream, name, filename,
 					       linenumbers, printResults,
 					       false);
-	    //System.err.println("compiled: "+(nameindex-1));
-
-	    /*  Useful for debugging interactive use *
-		FileOutputStream s = new FileOutputStream("c:\\jpython\\JavaCode\\org\\python\\pycode\\"+"_pyx"+(nameindex-1)+".class");
-		s.write(ostream.toByteArray());
-		s.close();
-	    **/
-	    //BytecodeLoader.byteloader=null;
+	    // Useful for debugging interactive use
+// 	    System.err.println("compiled: "+(nameindex-1));
+// 	    FileOutputStream s = new FileOutputStream(
+// 		"/tmp/org/python/pycode/_pyx"+(nameindex-1)+".class");
+// 	    s.write(ostream.toByteArray());
+// 	    s.close();
 	    return BytecodeLoader.makeCode(name, ostream.toByteArray());
 	} catch (Throwable t) {
 	    throw parser.fixParseError(null, t, filename);
