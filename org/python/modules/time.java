@@ -45,17 +45,36 @@ public class time implements InitModule
 
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
-        tzname = new PyTuple(
-            new PyObject[] {
-                new PyString(tz.getDisplayName(false, TimeZone.SHORT)),
-                new PyString(tz.getDisplayName(true, TimeZone.SHORT))
-            });
-
+        try {
+            tzname = new PyTuple(
+                new PyObject[] {
+                    new PyString(tz.getDisplayName(false, TimeZone.SHORT)),
+                    new PyString(tz.getDisplayName(true, TimeZone.SHORT))
+                });
+        }
+        catch (NoSuchMethodError e) {
+            // getDisplayName() is only available in Java 1.2.  This is the
+            // next best thing, but it isn't really correct, or what the
+            // Python time module spec wants.
+            tzname = new PyTuple(
+                new PyObject[] {
+                    new PyString(tz.getID()),
+                    new PyString(tz.getID())
+                });
+        }
         daylight = tz.useDaylightTime() ? 1 : 0;
 
         timezone = -tz.getRawOffset() / 1000;
         if (tz instanceof SimpleTimeZone)
-            altzone = timezone - ((SimpleTimeZone)tz).getDSTSavings() / 1000;
+            try {
+                // Java 1.2
+                SimpleTimeZone stz = (SimpleTimeZone)tz;
+                altzone = timezone - stz.getDSTSavings() / 1000;
+            }
+            catch (NoSuchMethodError e) {
+                // best we can do for Java 1.1.  This is wrong though.
+                altzone = timezone;
+            }
     }
                 
     public static double time$() {
@@ -441,12 +460,18 @@ public class time implements InitModule
                 // timezone name
                 if (cal == null)
                     cal = _tupletocal(tup);
-                s = s + cal.getTimeZone().getDisplayName(
-                    // in daylight savings time?  true if == 1
-                    // -1 means the information was not available; treat
-                    // this as if not in dst
-                    item(tup, 8) > 0,
-                    TimeZone.SHORT);
+                try {
+                    s = s + cal.getTimeZone().getDisplayName(
+                        // in daylight savings time?  true if == 1
+                        // -1 means the information was not available;
+                        // treat this as if not in dst
+                        item(tup, 8) > 0,
+                        TimeZone.SHORT);
+                }
+                catch (NoSuchMethodError e) {
+                    // See note in initModule() above
+                    s = s + cal.getTimeZone().getID();
+                }
                 break;
             case '%':
                 // %
