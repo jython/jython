@@ -16,11 +16,22 @@ def aget(dict, key, default):
 		return ret
 
 #Utility functions for converting between java and python types
+def typeName(cls):
+    if Class.isArray(cls):
+        return typeName(Class.getComponentType(cls))+"[]"
+    else:
+        return cls.__name__
+
 def nullReturn(ret):
 	if ret == Void.TYPE:
-		return jast.SimpleComment("void")
+		return jast.Return()
 		
-	if ret.isPrimitive():
+	if Class.isPrimitive(ret):
+		if ret.__name__ == 'boolean':
+			value = jast.False
+		elif ret.__name__ == 'char':
+			value = jast.CharacterConstant('x')
+		else:
 		value = jast.IntegerConstant(0)
 	else:
 		value = jast.Null
@@ -30,11 +41,11 @@ def makeReturn(code, ret):
 	if ret == Void.TYPE:
 		return code
 	
-	if ret.isPrimitive():
+	if Class.isPrimitive(ret):
 		r = jast.InvokeStatic("Py", "py2"+ret.__name__, [code])
 	else:
 		r = jast.InvokeStatic("Py", "tojava", [code, jast.StringConstant(ret.__name__)])
-		r = jast.Cast(ret.__name__, r)
+		r = jast.Cast(typeName(cls), r)
 		
 	return jast.Return(r)
 
@@ -50,6 +61,29 @@ def makeObject(code, c):
 	else:
 		return code
 	return jast.InvokeStatic("Py", mname, [code])
+
+def filterThrows(throws):
+	ret = []
+	for throwc in throws:
+		#might want to remove subclasses of Error and RuntimeException here
+		ret.append(throwc.__name__)
+	return ret
+
+def wrapThrows(stmt, throws, retType):
+	if len(throws) == 0: return stmt
+	catches = []
+	for i in range(len(throws)):
+		throw = throws[i]
+		exctype = throw
+		excname = jast.Identifier("exc%d" % i)
+		body = jast.Block([jast.Throw(excname)])
+		catches.append( (exctype, excname, body) )
+
+	body = jast.Block([jast.Invoke(jast.Identifier("inst"), "_jthrow", [jast.Identifier("t")]),
+			   nullReturn(retType)])
+	catches.append( ("java.lang.Throwable", jast.Identifier("t"), body) )
+	return jast.TryCatches(jast.Block([stmt]), catches)
+
 
 class JavaProxy:
 	def __init__(self, name, bases, methods, module=None):
@@ -71,8 +105,8 @@ class JavaProxy:
 			self.properties = module.getProperties()
 			self.specialClasses = module.getSpecialClasses()
 			self.modname = module.name
-			#if module.package is not None:
-			#	self.modname = module.package+'.'+self.modname
+			if module.package is not None:
+				self.modname = module.package+'.'+self.modname
 
 		self.isAdapter = 0
 		self.frozen = 1
@@ -118,26 +152,26 @@ class JavaProxy:
 					continue
 					
 				#print sigs
-				for access, ret, sig in sigs:
-					self.callMethod(name, access, ret, sig, 0)
+				for access, ret, sig, throws in sigs:
+					self.callMethod(name, access, ret, sig, throws, 0)
 				continue
 				
 			if not self.jmethods.has_key(name): continue
 			
-			for sig, (access, ret) in self.jmethods[name].items():
+			for sig, (access, ret, throws) in self.jmethods[name].items():
 				#print sig, access, ret
-				self.callMethod(name, access, ret, sig, 1)
+				self.callMethod(name, access, ret, sig, throws, 1)
 				
 			sigs = self.jmethods[name]
 
 	def dumpConstructors(self):
 		if self.initsigs is not None:
 			#print self.initsigs
-			for access, ret, sig in self.initsigs:
-				self.callConstructor(access, sig, 0)
+			for access, ret, sig, throws in self.initsigs:
+				self.callConstructor(access, sig, throws, 0)
 		else:
-			for access, sig in self.jconstructors:
-				self.callConstructor(access, sig, 1)
+			for access, sig, throws in self.jconstructors:
+				self.callConstructor(access, sig, throws, 1)
 
 
 	def cleanMethods(self):
@@ -173,7 +207,8 @@ class JavaProxy:
 			elif isFinal(access):
 				continue
 			
-			mdict[sig] = access, ret
+			throws = method.exceptionTypes
+			mdict[sig] = access, ret, throws
 			
 		sc = c.getSuperclass()
 		if sc is not None:
@@ -190,19 +225,21 @@ class JavaProxy:
 			if isNative(access): access = access & ~NATIVE
 			if isProtected(access): access = access & ~PROTECTED | PUBLIC
 			parameters = tuple(constructor.parameterTypes)
-			self.jconstructors.append( (access, parameters) )
+			throws = constructor.exceptionTypes
+			self.jconstructors.append( (access, parameters, throws) )
 
-	def callMethod(self, name, access, ret, sig, dosuper=1):
-		args = [ret.__name__]
+	def callMethod(self, name, access, ret, sig, throws=[], dosuper=1):
+		args = [typeName(ret)]
 		argids = []
 		objects = []
+		throws = filterThrows(throws)
 		for c in sig:
 			if isinstance(c, TupleType):
 				argname = c[1]
 				c = c[0]
 			else:
 				argname = "arg"+str(len(argids))
-			args.append( (c.__name__, argname) )
+			args.append( (typeName(c), argname) )
 			argid = jast.Identifier(argname)
 			argids.append(argid)
 			objects.append(makeObject(argid, c))
@@ -222,7 +259,11 @@ class JavaProxy:
 			getattr = jast.InvokeStatic("Py", "jfindattr", [this, jast.StringConstant(name)])
 	
 		inst = jast.Identifier("inst")
-		jcall = makeReturn(jast.Invoke(inst, "_jcall", [objects]), ret)
+		if len(throws) == 0: jcall = "_jcall"
+		else: jcall = "_jcallexc"
+		
+		jcall = makeReturn(jast.Invoke(inst, jcall, [objects]), ret)
+		jcall = wrapThrows(jcall, throws, ret)
 		
 		if dosuper:
 			supercall = jast.Invoke(jast.Identifier("super"), name, argids)
@@ -230,7 +271,7 @@ class JavaProxy:
 				supercall = jast.Return(supercall)
 				
 			supermethod = jast.Method("super__"+name, jast.Modifier.ModifierString(access), 
-								args, jast.Block([supercall]))
+								args, jast.Block([supercall]), throws)
 		else:		
 			if self.isAdapter:
 				supercall = nullReturn(ret)
@@ -244,24 +285,26 @@ class JavaProxy:
 		else:
 			test = jast.If(jast.Operation("!=", inst, jast.Null), jcall, supercall)
 		code = jast.Block([jast.Declare("PyObject", inst, getattr), test])
-		meth = jast.Method(name, jast.Modifier.ModifierString(access), args, code)
+		
+		meth = jast.Method(name, jast.Modifier.ModifierString(access), args, code, throws)
 		
 		if supermethod is not None:
 			self.statements.append(supermethod)
 			
 		self.statements.append(meth)
 		
-	def callConstructor(self, access, sig, dosuper=1):
+	def callConstructor(self, access, sig, throws=[], dosuper=1):
 		args = []
 		argids = []
 		objects = []
+		throws = filterThrows(throws)
 		for c in sig:
 			if isinstance(c, TupleType):
 				argname = c[1]
 				c = c[0]
 			else:
 				argname = "arg"+str(len(argids))
-			args.append( (c.__name__, argname) )
+			args.append( (typeName(c), argname) )
 			argid = jast.Identifier(argname)
 			argids.append(argid)
 			objects.append(makeObject(argid, c))
@@ -294,7 +337,7 @@ class JavaProxy:
 		initproxy = jast.InvokeStatic("Py", "initProxy", initargs)
 		
 		code = jast.Block([supercall, initproxy])
-		self.statements.append(jast.Constructor(self.name, jast.Modifier.ModifierString(access), args, code))
+		self.statements.append(jast.Constructor(self.name, jast.Modifier.ModifierString(access), args, code, throws))
 
 	def addPyProxyInterface(self):
 		self.statements.append(jast.Declare('private PyInstance', jast.Identifier('__proxy')))

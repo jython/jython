@@ -51,7 +51,7 @@ def getsig(doc, pargs, constructor=0):
 
 	sigs = []
 	for ndefaults in range(0, len(pargs.defaults)+1):
-		sigs.append( (mods, jret, arglist[:len(arglist)-ndefaults]) )
+		sigs.append( (mods, jret, arglist[:len(arglist)-ndefaults], []) )
 	return sigs
 
 primitives = {'void':Void.TYPE, 'int':Integer.TYPE, 'byte':Byte.TYPE, 
@@ -66,9 +66,23 @@ def insistJavaClass(c):
 		raise ValueError, "can not find class: "+c
 	return jc
 
+
+primNames = {'void':'V', 'int':'I', 'byte':'B', 
+	'short':'S', 'long':'J', 'float':'F', 'double':'D',
+	'boolean':'Z', 'char':'C'}
+
+def makeArrayName(c):
+    if c.endswith("[]"):
+        return "["+makeArrayName(c[:-2])
+    else:
+        if primNames.has_key(c): return primNames[c]
+        else: return "L"+c+";"
+
 def getJavaClass(c):
 	if isinstance(c, StringType):
 		if primitives.has_key(c): return primitives[c]
+		if c.endswith("[]"):
+			return Class.forName(makeArrayName(c))
 		try:
 			return Class.forName(c)
 		except:

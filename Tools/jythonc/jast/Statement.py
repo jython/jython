@@ -27,18 +27,22 @@ class Class(Statement):
 		return "Class(%s, %s, %s, %s, %s)" % (self.name, self.access, self.superclass, self.interfaces, self.body)
 
 class Method(Statement):
-	def __init__(self, name, access, args, body):
+	def __init__(self, name, access, args, body, throws=[]):
 		self.name = name
 		self.access = access
 		self.args = args
 		self.body = body
+		self.throws = throws
 		
 	def writeSource(self, out):
 		argtext = []
 		for type, name in self.args[1:]:
 			argtext.append(type+" "+name)
-		out.write("%s %s %s(%s) ", self.access, self.args[0], self.name,
-			string.join(argtext, ", "))
+		if len(self.throws) == 0: throwstext = ""
+		else: throwstext = " throws "+string.join(self.throws, ", ")
+
+		out.write("%s %s %s(%s)%s ", self.access, self.args[0], self.name,
+			string.join(argtext, ", "), throwstext)
 		self.body.writeSource(out)
 		out.writeln()
 
@@ -47,18 +51,22 @@ class Method(Statement):
 
 
 class Constructor(Statement):
-	def __init__(self, name, access, args, body):
+	def __init__(self, name, access, args, body, throws=[]):
 		self.name = name
 		self.access = access
 		self.args = args
 		self.body = body
+		self.throws = throws
 		
 	def writeSource(self, out):
 		argtext = []
 		for type, name in self.args:
 			argtext.append(type+" "+name)
-		out.write("%s %s(%s) ", self.access, self.name,
-			string.join(argtext, ", "))
+		if len(self.throws) == 0: throwstext = ""
+		else: throwstext = " throws "+string.join(self.throws, ", ")
+		
+		out.write("%s %s(%s)%s ", self.access, self.name,
+			string.join(argtext, ", "), throwstext)
 		self.body.writeSource(out)
 		out.writeln()
 
@@ -220,6 +228,21 @@ class TryCatch(Statement):
 		self.body.writeSource(out)
 		out.write("catch (%s %s) ", self.exctype, self.excname.sourceString())
 		self.catchbody.writeSource(out)
+
+	def exits(self):
+		return self.body.exits() and self.catchbody.exits()
+		
+class TryCatches(Statement):
+	def __init__(self, body, catches):
+		self.body = body
+		self.catches = catches
+		
+	def writeSource(self, out):
+		out.write("try ")
+		self.body.writeSource(out)
+		for exctype, excname, catchbody in self.catches:
+			out.write("catch (%s %s) ", exctype, excname.sourceString())
+			catchbody.writeSource(out)
 
 	def exits(self):
 		return self.body.exits() and self.catchbody.exits()

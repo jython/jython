@@ -231,7 +231,7 @@ class PythonModule:
 
 		self.pyinner = PythonInner(self)
 
-		if frozen:
+		#if frozen:
 			self.innerClasses.append(self.pyinner)
 
 		self.frozen = frozen	
@@ -307,6 +307,19 @@ class PythonModule:
 	def dumpFields(self):
 		return [self.dumpProperties(), self.dumpPackages(), self.dumpSpecialClasses()]
 
+	def dumpInitModule(self):
+		meths = []
+
+		dict = jast.Identifier("dict")
+		sargs = [jast.StringConstant("__name__"), jast.New("PyString", [jast.StringConstant(self.name)])]
+		rargs = [jast.Invoke(jast.New("_PyInner", []), "getMain", []), dict, dict]
+		code = jast.Block(
+			[jast.Invoke(dict, "__setitem__", sargs),
+			 jast.InvokeStatic("Py", "runCode", rargs)])
+		meths.append(jast.Method("initModule", "public", 
+					["void", ("PyObject", "dict")], code))
+		return meths
+
 	#Define a Java main to run directly
 	def dumpMain(self):
 		meths = []
@@ -333,7 +346,7 @@ class PythonModule:
 		
 	def dumpAll(self):
 		return [self.dumpFields(),
-				jast.Blank, self.dumpInnerClasses(), self.dumpMain()]
+				jast.Blank, self.dumpInnerClasses(), self.dumpInitModule(), self.dumpMain()]
 
 	def makeClass(self):
 		mycode = self.dumpAll()
