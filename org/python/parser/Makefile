@@ -29,5 +29,5 @@ PythonGrammar.java: python.jj
 python.jj: python.jjt
 	$(JJTREE) python.jjt
 
-realclean: clean
+realclean:: clean
 	-rm $(GENFILES)
