@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Hashtable;
 import org.python.core.PyObject;
+import org.python.core.PyProxy;
 
 public class JavaMaker extends ProxyMaker
 {
@@ -130,7 +131,7 @@ public class JavaMaker extends ProxyMaker
                                Class ret, String sig, int access)
         throws Exception
     {
-        if (!superclass.startsWith("org/python/proxies")) {
+        if (!PyProxy.class.isAssignableFrom(this.superclass)) {
             super.addSuperMethod(methodName,superName,superclass,parameters,ret,sig,access);
         }
     }
