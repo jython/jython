@@ -1,6 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 import java.util.Hashtable;
+import java.util.StringTokenizer;
 import java.io.Serializable;
 
 /**
@@ -601,6 +602,10 @@ public class PyInstance extends PyObject
     }
 
     public PyObject __iter__() {
+        PyObject iter = getCollectionIter();
+        if (iter != null) {
+            return iter;
+        }
         PyObject func = __findattr__("__iter__");
         if (func != null)
             return func.__call__();
@@ -622,6 +627,40 @@ public class PyInstance extends PyObject
             }
         }
         throw Py.TypeError("instance has no next() method");
+    }
+
+    private static CollectionIter[] iterFactories = null;
+
+    private PyObject getCollectionIter() {
+        if (iterFactories == null)
+            initializeIterators();
+        for (int i = 0; iterFactories[i] != null; i++) {
+            PyObject iter = iterFactories[i].findCollection(javaProxy);
+            if (iter != null)
+                return iter;
+        }
+        return null;
+    }
+
+    private static synchronized void initializeIterators() {
+        if (iterFactories != null)
+            return;
+        String factories = "org.python.core.CollectionIter," +
+                           "org.python.core.CollectionIter2," +
+                           Py.getSystemState().registry.getProperty(
+                                "python.collections", "");
+        int i = 0;
+        StringTokenizer st = new StringTokenizer(factories, ",");
+        iterFactories = new CollectionIter[st.countTokens() + 1];
+        while (st.hasMoreTokens()) {
+            String s = st.nextToken();
+            try {
+                Class factoryClass = Class.forName(s);
+                CollectionIter factory =
+                        (CollectionIter)factoryClass.newInstance();
+                iterFactories[i++] = factory;
+            } catch (Throwable t) { }
+        }
     }
 
     public boolean __contains__(PyObject o) {
