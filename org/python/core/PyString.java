@@ -2148,7 +2148,7 @@ final class StringFormatter
                     string = formatLong(arg.__oct__(), c, altFlag);
                 else {
                     string = formatInteger(arg, 8, true);
-                    if (altFlag) {
+                    if (altFlag && string.charAt(0) != '0') {
                         string = "0" + string;
                     }
                 }
