@@ -363,7 +363,7 @@ class PythonVisitor(Visitor):
     def abs_1op(self, node): return self.unop(node, 'abs')
     def pos_1op(self, node): return self.unop(node, 'pos')
     def not_1op(self, node): return self.unop(node, 'not')
-    def str_1op(self, node): return self.unop(node, 'str')
+    def str_1op(self, node): return self.unop(node, 'repr')
 
     def getString(self, node):
         if node.id == JJTSTRING:
