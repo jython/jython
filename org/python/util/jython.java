@@ -134,6 +134,8 @@ public class jpython
                     interp.execfile(opts.filename);
                 } catch (Throwable t) {
                     Py.printException(t);
+                    if (!opts.interactive)
+                        System.exit(-1);
                 }
             }
         }
