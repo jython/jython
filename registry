@@ -37,6 +37,7 @@ python.deprecated.keywordMangling = false
 # Setting this to the name of different console class, new console
 # features can be enabled. Readline support is such an example
 #python.console=org.python.util.ReadlineConsole
+#python.console.readlinelib=JavaReadline
 
 # Setting this to true will cause the console to poll standard in
 # This might be helpful on systems without system-level threads
