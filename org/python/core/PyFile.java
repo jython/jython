@@ -2,7 +2,6 @@
 package org.python.core;
 
 // To do:
-// - readlines(sizehint)
 // - readinto(array)
 // - modes w, a should disallow reading
 // - what to do about buffer size?
