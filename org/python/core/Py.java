@@ -95,7 +95,6 @@ public final class Py {
     }
     public static PyException IOError(String message) {
         //System.err.println("sioe: "+message);
-            
         return new PyException(Py.IOError, message);
     }
 
@@ -201,7 +200,7 @@ public final class Py {
 
     public static PyObject JavaError;
     public static PyException JavaError(Throwable t) {
-        //System.err.println("t: "+t);
+//         System.err.println("t: "+t);
         if (t instanceof PyException) {
             return (PyException)t;
         }
@@ -209,11 +208,11 @@ public final class Py {
             return JavaError(
                 ((InvocationTargetException)t).getTargetException());
         }
-        /* Remove this automatic coercion, people want to see the real
-         * exceptions!
-             else if (t instanceof java.io.IOException) {
-             return IOError((java.io.IOException)t);
-             } */
+        // Remove this automatic coercion, people want to see the real
+        // exceptions!
+//         else if (t instanceof java.io.IOException) {
+//             return IOError((java.io.IOException)t);
+//         }
         else if (t instanceof OutOfMemoryError) {
             MemoryError((OutOfMemoryError)t);
             return null;
@@ -541,6 +540,9 @@ public final class Py {
             Py.frozen = true;
             if (frozenPackage.length() > 0)
                 Py.frozenPackage = frozenPackage;
+            else
+                // for later
+                frozenPackage = null;
         }
             
         java.util.Properties sprops;
@@ -551,7 +553,7 @@ public final class Py {
         }
 
         if (props != null) {
-            for(int i=0; i<props.length; i+=2) {
+            for (int i=0; i<props.length; i+=2) {
                 sprops.put(props[i], props[i+1]);
             }
         }
@@ -562,17 +564,19 @@ public final class Py {
         PySystemState.initialize(sprops, null, args);
         
         if (packages != null) {
-            for(int i=0; i<packages.length; i+=2) {
+            for (int i=0; i<packages.length; i+=2) {
                 PySystemState.add_package(packages[i], packages[i+1]);
             }
         }
         
         if (specs != null) {
-            if (specialClasses == null) {
+            if (specialClasses == null)
                 specialClasses = new java.util.Hashtable();
-            }
-            for(int i=0; i<specs.length; i+=2) {
-                specialClasses.put(specs[i], Py.findClass(specs[i+1]));
+            for (int i=0; i<specs.length; i+=2) {
+                String key = specs[i];
+                if (frozenPackage != null)
+                    key = frozenPackage + "." + specs[i];
+                specialClasses.put(key, Py.findClass(specs[i+1]));
             }
         }
     }
@@ -591,8 +595,8 @@ public final class Py {
                                  String[] props,
                                  String[] specs, String frozenPackage)
     {
-        //System.out.println("initProxy");
-        //frozen = false;               
+//         System.out.println("initProxy");
+//         frozen = false;               
         initProperties(null, packages, props, specs, frozenPackage);
                 
         ThreadState ts = getThreadState();
@@ -842,39 +846,7 @@ public final class Py {
         return pye;
     }
 
-    private static boolean dementedJITworkaround = false;
     public static boolean matchException(PyException pye, PyObject e) {
-        // This is a truly demented friggin' workaround for a truly awful
-        // Sun JIT bug.  It seems that with JVMs at least as recent as
-        // 1.2.1, turning on the JIT causes exception matching to fail.
-        //
-        // There are a number of ways to flex this, including calling
-        // int("foo") and trying to catch the resulting ValueError (won't
-        // work), or hitting C-d at the interactive interpreter in Unix
-        // (causes the resulting EOFError to not be caught).
-        //
-        // This little bit of sick code was discovered by trial-and-error
-        // to avoid the bug in *most* but not *all* situations (e.g. not
-        // catching the ValueError above will sometimes cause the
-        // interpreter to exit).
-        //
-        // I have no idea why this works, but I only seem to need to do
-        // this once.  Also, this doesn't mean that running JPython on a
-        // Sun JVM with the JIT enabled won't cause other problems.  When
-        // you're getting weird bugs, the first thing to do is TURN OFF THE 
-        // JIT!
-        //
-        // Note: this looks funny because the java.compiler property can be
-        // null, e.g. in Hotspot
-        if (!dementedJITworkaround &&
-            "sunwjit".equals(System.getProperty("java.compiler")))
-        {
-            ByteArrayOutputStream bs = new ByteArrayOutputStream();
-            PrintStream err = new PrintStream(bs);
-            err.println("pye: " + pye.type);
-            err.println("  e: " + e);
-            dementedJITworkaround = true;
-        }
         pye.instantiate();
         // A special case for IOError's to allow them to also match
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
@@ -1251,6 +1223,7 @@ public final class Py {
     public static PyObject java2py(Object o) {
         if (o instanceof PyObject)
             return (PyObject)o;
+
         if (o instanceof PyProxy)
             return ((PyProxy)o)._getPyInstance();
                 
@@ -1314,15 +1287,17 @@ public final class Py {
         PyClass pyclass = new PyClass();
 
         if (specialClasses != null) {
+//             System.err.println("specialClasses: "+specialClasses);
+//             System.err.println("name: "+name);
             String nm = name;
             PyObject mod = globals.__finditem__("__name__");
             if (mod != null && mod instanceof PyString) {
                 nm = ((PyString)mod).toString()+"."+nm;
             }
+//             System.err.println("nm: "+nm);
 
-            //System.out.println("specialClasses: "+nm);
             Class jc = (Class)specialClasses.get(nm);
-            //System.out.println("got: "+jc);
+//             System.err.println("got: "+jc);
             if (jc != null) {
                 pyclass.proxyClass = jc;
             }
