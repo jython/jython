@@ -34,23 +34,22 @@ when working under JPython.  There are a few things to keep in mind.
 
 <H4>Importing</H4>
 
+With JPython 1.1, importing Java packages has gotten much easier.  For
+example, &quot;from package import *&quot; with Java packages now
+works.  Also you no longer need to use "sys.add_package()" to make
+JPython aware of new packages at runtime:
 
-<P>You can import from any Java package, just like you would from a
-Python package.  However, you are not allowed to do &quot;from package
-import *&quot; with Java packages.  i.e. &quot;from java.lang import
-*&quot; is illegal.</P>
-
-<P>In order to use a Java package under JPython, you must make JPython
-aware of the package.  This can be done in one of two ways.  You can
-modify the JPython registry entry to include the package under the
-&quot;java.packages&quot; key (see the previous section for more
-details on this).  Or you can call the function
-&quot;sys.add_package(package_name)&quot; at runtime to make JPython
-aware of any arbitrary package.  The previous example assumed that
-JPython was aware of the &quot;java.util&quot; package (which it is by
-default).  If it wasn't aware of this package, a new line would need
-to be added to the top of the example which read, &quot;import sys;
-sys.add_package('java.util')&quot;
+<p>
+<pre>
+JPython 1.1beta1 on java1.2.1
+Copyright (C) 1997-1999 Corporation for
+&gt;&gt;&gt; from java.util import *
+&gt;&gt;&gt; Random
+&lt;jclass java.util.Random at 31702169&gt;
+&gt;&gt;&gt; Hashtable
+&lt;jclass java.util.Hashtable at 7538094&gt;
+&gt;&gt;&gt; 
+</pre>
 
 <H4>Creating Class Instances</H4>
 
@@ -70,12 +69,13 @@ user, you should rarely need to be concerned with this difference.</P>
 Python counterparts.  There is some automatic type coercion that goes
 on both for the types being passed in and for the value returned by
 the method.  The following table shows how Python objects are coerced
-to Java objects when passed as arguments in a function call.  The Java
-Types show the expected java type for the argument, and the Allowed
-Python Types shows what Python objects can be converted to the given
-Java type.  Notice the special behavior of String's when a
-java.lang.Object is expected.  This behavior might change if I am
-shown that it causes problems.
+to Java objects when passed as arguments in a function call.  The
+<em>Java Types</em> show the expected Java type for the argument,
+and the <em>Allowed Python Types</em>
+shows what Python objects can be converted to the given
+Java type.  Notice the special behavior of <tt>String</tt>'s when a
+<tt>java.lang.Object</tt> is expected.  This behavior might change if
+it is shown to cause problems.
   
 <p><TABLE BORDER="1" WIDTH="100%">
     <TR>
@@ -105,7 +105,8 @@ shown that it causes problems.
     <TR>
 	<TD>java.lang.Class</TD>
 	<TD>Class or JavaClass (only if class subclasses from exactly
-	    one Java class)</TD>
+	    one Java class; mutiple inheritance from more than one
+	    Java class is now illegal)</TD>
     </TR>
     <TR>
 	<TD>Foo[]</TD>
@@ -158,7 +159,7 @@ shows those coercions.
     </TR>
     <TR>
 	<TD>java.lang.Class</TD>
-	<TD>JavaClass which represents given Java Class</TD>
+	<TD>JavaClass which represents given Java class</TD>
     </TR>
     <TR>
 	<TD>Foo[]</TD>
@@ -184,9 +185,8 @@ the method.</P>
 
 <P>When the difference is instead in the types of the arguments, more
 work is required.  The possible signatures are sorted in a consistent
-order that should ensure the appropriate method is chosen first.  More
-information on exactly how this sorting is performed will be provided
-when I have the time.</P>
+order that should ensure the appropriate method is chosen first.
+<b>TBD: documentation this order!</b>
 
 <P>If you need to call a Java method with a particular signature and
 this is not happening in the easy way, you can use the following
@@ -205,14 +205,18 @@ following:</P>
 
 <P>Because Java has a different set of keywords than Python, there are
 many Java classes that have method and function names that conflict
-with Python's keyword set.  The most frequent offenders seem to be
-&quot;print&quot;, &quot;in&quot;, &quot;exec&quot;, and
-&quot;from&quot;.  Any Java name that conflicts with a Python reserved
-word is modified by adding a &quot;_&quot; to the end of it.  Thus,
-you would write:</P>
+with Python's keyword set.  Where the intent can be unambiguously
+determined, no identifier mangling is necessary, such as when keywords 
+are used as attributes on objects.  Thus you can naturally write:
 
-<P>java.lang.System.out.print_(&quot;hi&quot;)</P>
+<p><tt>java.lang.System.out.print("hi")</tt>
 
-<P>or</P>
+<p>or
 
-<P>java.lang.Runtime.getRuntime().exec_(&quot;foo&quot;)
+<p><tt>java.lang.Runtime.getRuntime().exec(cmd)</tt>
+
+<p>In the rare case where the conflict can't be resolved due to Python's
+grammar, you should modify the reserved word by appended an underscore 
+to the end of it, e.g. <tt>print_</tt>
+
+<p>With JPython 1.1, this should rarely be needed.
