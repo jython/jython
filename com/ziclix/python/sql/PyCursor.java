@@ -9,11 +9,23 @@
  */
 package com.ziclix.python.sql;
 
-import java.sql.*;
-import java.util.*;
+import com.ziclix.python.sql.util.PyArgParser;
+import org.python.core.ClassDictInit;
+import org.python.core.Py;
+import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyClass;
+import org.python.core.PyDictionary;
+import org.python.core.PyException;
+import org.python.core.PyList;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
 
-import org.python.core.*;
-import com.ziclix.python.sql.util.*;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
+import java.util.List;
 
 /**
  * These objects represent a database cursor, which is used to manage the
@@ -417,7 +429,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       }
     } catch (PyException e) {
       throw e;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       throw zxJDBC.makeException(e);
     }
 
@@ -573,7 +585,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       }
     } catch (PyException e) {
       throw e;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       throw zxJDBC.makeException(e);
     } finally {
       if (this.statement != null) {
@@ -610,7 +622,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       this.datahandler.postExecute(stmt);
     } catch (PyException e) {
       throw e;
-    } catch (Exception e) {
+    } catch (Throwable e) {
       throw zxJDBC.makeException(e);
     }
   }
@@ -768,7 +780,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 
     try {
       this.fetch.close();
-    } catch (Exception e) {}
+    } catch (Throwable e) {}
     finally {
       this.fetch = Fetch.newFetch(this.datahandler, this.dynamicFetch);
 

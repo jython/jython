@@ -9,10 +9,22 @@
  */
 package com.ziclix.python.sql;
 
-import java.sql.*;
-import java.util.*;
-import org.python.core.*;
 import com.ziclix.python.sql.util.PyArgParser;
+import org.python.core.ClassDictInit;
+import org.python.core.Py;
+import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyClass;
+import org.python.core.PyInteger;
+import org.python.core.PyList;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * A connection to the database.

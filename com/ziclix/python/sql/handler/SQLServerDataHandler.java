@@ -9,12 +9,17 @@
  */
 package com.ziclix.python.sql.handler;
 
-import java.io.*;
-import java.sql.*;
-import java.math.*;
-import org.python.core.*;
-import com.ziclix.python.sql.*;
-import com.ziclix.python.sql.procedure.*;
+import com.ziclix.python.sql.DataHandler;
+import com.ziclix.python.sql.FilterDataHandler;
+import com.ziclix.python.sql.Procedure;
+import com.ziclix.python.sql.PyCursor;
+import com.ziclix.python.sql.procedure.SQLServerProcedure;
+import org.python.core.Py;
+import org.python.core.PyObject;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 
 /**
  * SQLServer specific data handling.

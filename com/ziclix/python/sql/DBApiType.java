@@ -9,7 +9,8 @@
  */
 package com.ziclix.python.sql;
 
-import org.python.core.*;
+import org.python.core.PyClass;
+import org.python.core.PyInteger;
 
 /**
  * This class wraps the types from java.sql.Type in order for

@@ -9,12 +9,28 @@
  */
 package com.ziclix.python.sql;
 
-import java.io.*;
-import java.sql.*;
-import java.math.*;
-import java.lang.reflect.Constructor;
+import org.python.core.Py;
+import org.python.core.PyFile;
+import org.python.core.PyLong;
+import org.python.core.PyObject;
 
-import org.python.core.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.lang.reflect.Constructor;
+import java.math.BigDecimal;
+import java.sql.CallableStatement;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
 
 /**
  * The DataHandler is responsible mapping the JDBC data type to
@@ -59,7 +75,15 @@ public class DataHandler {
 		return ((name == Py.None) ? null : name.__str__().toString());
 	}
 
-	public Procedure getProcedure(PyCursor cursor, PyObject name) throws SQLException {
+	/**
+   * A factory method for determing the correct procedure class to use
+   * per the cursor type.
+   * @param cursor
+   * @param name
+   * @return
+   * @throws SQLException
+   */
+  public Procedure getProcedure(PyCursor cursor, PyObject name) throws SQLException {
 		return new Procedure(cursor, name);
 	}
 

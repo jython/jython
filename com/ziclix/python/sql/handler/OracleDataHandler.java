@@ -9,17 +9,23 @@
  */
 package com.ziclix.python.sql.handler;
 
-import java.io.*;
-import java.sql.*;
-import java.math.BigDecimal;
-import org.python.core.*;
-import oracle.sql.BLOB;
-import oracle.sql.ROWID;
-import oracle.jdbc.driver.OracleTypes;
-import oracle.jdbc.driver.OracleResultSet;
 import com.ziclix.python.sql.DataHandler;
 import com.ziclix.python.sql.FilterDataHandler;
 import com.ziclix.python.sql.zxJDBC;
+import oracle.jdbc.driver.OracleResultSet;
+import oracle.jdbc.driver.OracleTypes;
+import oracle.sql.BLOB;
+import oracle.sql.ROWID;
+import org.python.core.Py;
+import org.python.core.PyObject;
+
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 
 /**
  * Oracle specific data handling.

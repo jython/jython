@@ -9,12 +9,26 @@
  */
 package com.ziclix.python.sql;
 
-import java.io.*;
-import java.sql.*;
-import java.util.*;
-import java.text.*;
-import java.lang.reflect.*;
-import org.python.core.*;
+import org.python.core.ClassDictInit;
+import org.python.core.Options;
+import org.python.core.Py;
+import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyClass;
+import org.python.core.PyDictionary;
+import org.python.core.PyException;
+import org.python.core.PyInteger;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyStringMap;
+
+import java.lang.reflect.Field;
+import java.sql.SQLException;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Properties;
+import java.util.ResourceBundle;
 
 /**
  * Creates database connections.
@@ -63,8 +77,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/** The ResourceBundle with error messages and doc strings */
 	private static ResourceBundle resourceBundle = null;
 
-  /** Instance used to create date-like objects as per the API */
-  public static DateFactory datefactory = new JavaDateFactory();
+    /** Instance used to create date-like objects as per the API */
+    public static DateFactory datefactory = new JavaDateFactory();
 
 	static {
 		try {
@@ -191,7 +205,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 		while (names.hasMoreElements()) {
 			String name = ((String)names.nextElement()).trim();
-			String className = ((String)props.getProperty(name)).trim();
+			String className = props.getProperty(name).trim();
 
 			try {
 				connector = (PyObject)Class.forName(className).newInstance();

@@ -9,8 +9,12 @@
  */
 package com.ziclix.python.sql;
 
-import java.sql.*;
-import org.python.core.*;
+import org.python.core.PyObject;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * A FilterDataHandler contains some other DataHandler, which it uses

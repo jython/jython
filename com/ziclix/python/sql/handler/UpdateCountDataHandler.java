@@ -9,9 +9,13 @@
  */
 package com.ziclix.python.sql.handler;
 
-import java.sql.*;
-import org.python.core.*;
-import com.ziclix.python.sql.*;
+import com.ziclix.python.sql.DataHandler;
+import com.ziclix.python.sql.FilterDataHandler;
+import com.ziclix.python.sql.zxJDBC;
+import org.python.core.Py;
+
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * A data handler that keeps track of the update count for each execution of a

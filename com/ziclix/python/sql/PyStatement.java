@@ -9,11 +9,17 @@
  */
 package com.ziclix.python.sql;
 
-import java.sql.Statement;
-import java.sql.SQLException;
-import java.sql.PreparedStatement;
+import org.python.core.Py;
+import org.python.core.PyClass;
+import org.python.core.PyException;
+import org.python.core.PyList;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+
 import java.sql.CallableStatement;
-import org.python.core.*;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * Class PyStatement

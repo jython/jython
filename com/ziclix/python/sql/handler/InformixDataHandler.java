@@ -9,11 +9,20 @@
  */
 package com.ziclix.python.sql.handler;
 
-import java.io.*;
-import java.sql.*;
-import java.math.*;
-import org.python.core.*;
-import com.ziclix.python.sql.*;
+import com.ziclix.python.sql.DataHandler;
+import com.ziclix.python.sql.FilterDataHandler;
+import org.python.core.Py;
+import org.python.core.PyFile;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+
+import java.io.InputStream;
+import java.sql.Blob;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 
 /**
  * Informix specific data handling.

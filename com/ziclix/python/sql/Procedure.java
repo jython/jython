@@ -9,9 +9,16 @@
  */
 package com.ziclix.python.sql;
 
-import java.sql.*;
+import org.python.core.Py;
+import org.python.core.PyInteger;
+import org.python.core.PyList;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+
+import java.sql.CallableStatement;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
 import java.util.BitSet;
-import org.python.core.*;
 
 /**
  * This class provides the necessary functionality to call stored
@@ -187,8 +194,6 @@ public class Procedure extends Object {
 
 					if (bindings.__finditem__(key) == null) {
 						int dataType = column.__getitem__(DATA_TYPE).__int__().getValue();
-						String name = column.__getitem__(NAME).toString();
-
 						bindings.__setitem__(key, Py.newInteger(dataType));
 					}
 
