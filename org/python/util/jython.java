@@ -81,13 +81,22 @@ class CommandLineOptions {
                 jar = true;
                 if (!fixInteractive) interactive = false;
             } else if (arg.startsWith("-D")) {
+                String key = null; 
+                String value = null;
                 int equals = arg.indexOf("=");
                 if (equals == -1) {
-                    System.err.println("-D option with no '=': "+args[index]);
-                    return false;
+                    String arg2 = args[++index];
+                    
+                    /*if (!arg2.startsWith("=")) {
+                        System.err.println("-D option with no '=': "+args[index-1]+"::"+arg2);
+                        return false;
+                    }*/
+                    key = arg.substring(2, arg.length());
+                    value = arg2; //.substring(1, arg2.length());
+                } else {
+                    key = arg.substring(2, equals);
+                    value = arg.substring(equals+1, arg.length());
                 }
-                String key = arg.substring(2, equals);
-                String value = arg.substring(equals+1, arg.length());
                 setProperty(key, value);
             } else {
                 System.err.println("Unknown option: "+args[index]);
