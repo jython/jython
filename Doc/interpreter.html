@@ -1,13 +1,15 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:42 1999 -->
+<!-- Fri Nov 17 14:50:50 2000 -->
+<!-- USING HT2HTML 1.1 -->
+<!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
-Title: Invoking the JPython Interpreter
+Title: Invoking the Jython Interpreter
 
 -->
 
 <HEAD>
-<TITLE>Invoking the JPython Interpreter</TITLE>
+<TITLE>Invoking the Jython Interpreter</TITLE>
 
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000"
@@ -22,8 +24,8 @@ Title: Invoking the JPython Interpreter
 <TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
 <center>
-    <a href="http://www.jpython.org/">
-    <img border=0 src="./images/jpython-new-small.gif"></a></center> </TD>
+    <a href="http://jython.sourceforge.net/">
+    <img border=0 src="./images/jython-new-small.gif"></a></center> </TD>
 <TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
 <!-- end of corner cells -->
 <!-- start of banner -->
@@ -34,14 +36,14 @@ CELLSPACING=0 CELLPADDING=2
        COLS=2 ROWS=2 BGCOLOR="#ffffff">
 <TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/">Home</a>
+<a href="http://jython.sourceforge.net/">Home</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="http://www.python.org/">www.python.org</a>
     </TD>
 </TR><TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/download.html">Download</a>
+<a href="http://jython.sourceforge.net/download.html">Download</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="./index.html">Documentation</a>
@@ -67,16 +69,16 @@ Documentation
 <A HREF="whatis.html">Executive Summary</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<b>Invoking JPython</b>
+<b>Invoking Jython</b>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="registry.html">JPython Registry</A>
+<A HREF="registry.html">Jython Registry</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="embedding.html">Embedding</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="compile.html">Compiling JPython from source</A>
+<A HREF="compile.html">Compiling Jython from source</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -95,7 +97,7 @@ Working with Java
 <A HREF="subclassing.html">Subclassing</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+<A HREF="jythonc.html">Building applets, servlets, beans...</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -112,13 +114,13 @@ Python Docs (exits)
 Other
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="differences.html">JPython vs. CPython</A>
+<A HREF="differences.html">Jython vs. CPython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="faq.html">JPython FAQ</A>
+<A HREF="faq.html">Jython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
+<A HREF="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
@@ -128,7 +130,7 @@ Other
 Email Us
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
@@ -139,6 +141,9 @@ Email Us
     <img border=0 src="./images/PythonPoweredSmall.gif"></center>
 </A>
 </TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
 </TABLE><!-- end of sidebar table -->
 
 </TD>
@@ -146,12 +151,12 @@ Email Us
 <!-- end of sidebar cell -->
 <!-- start of body cell -->
 <TD VALIGN=TOP WIDTH="90%"><BR>
-<h3>Invoking the JPython Interpreter</h3>
+<h3>Invoking the Jython Interpreter</h3>
 
-<P>JPython can be invoked from the shell using the following command:</P>
+<P>Jython can be invoked from the shell using the following command:</P>
 
 <pre>
-jpython [options] [-jar jar | -c cmd | file | -] [args]
+jython [options] [-jar jar | -c cmd | file | -] [args]
 </pre>
 
 Options and arguments:
@@ -164,11 +169,8 @@ Options and arguments:
     <td><b>-S</b></td>
     <td>don't imply <em>import site</em> on initialization
 </tr><tr>
-    <td><b>-X</b></td>
-    <td>disable class based standard exceptions
-</tr><tr>
     <td><b>-D<em>prop</em>=<em>value</em></b></td>
-    <td>Set the Java property <em>prop</em> to <em>value</em></td>
+    <td>Set the jython property <em>prop</em> to <em>value</em></td>
 </tr><tr>
     <td><b>-jar <em>jar</em></b></td>
     <td>program to run is read from the <tt>__run__.py</tt> file in
@@ -184,14 +186,14 @@ Options and arguments:
     <td><b>-</b></td>
     <td>program is read from standard-in (default; interactive mode is 
     used if on a tty).  This flag allows you to pipe a file into
-    JPython and have it be treated correctly.  This would be useful
-    in a case like: <tt>filter&nbsp;file&nbsp;|&nbsp;jpython&nbsp;-</tt>
+    Jython and have it be treated correctly.  This would be useful
+    in a case like: <tt>filter&nbsp;file&nbsp;|&nbsp;jython&nbsp;-</tt>
 </tr><tr>
     <td><b>--help</b></td>
     <td>print a usage message and exit
 </tr><tr>
     <td><b>--version</b></td>
-    <td>print JPython version number and exit
+    <td>print Jython version number and exit
 </tr><tr>
     <td><b><em>args</em></b></td>
     <td>arguments passed to the program in <tt>sys.argv[1:]</tt>
@@ -200,25 +202,25 @@ Options and arguments:
 
 <H3>Details</H3>
 
-<P><tt>jpython</tt> is a short script that invokes your local JVM,
+<P><tt>jython</tt> is a short script that invokes your local JVM,
 sets the Java property <tt>install.path</tt> to an appropriate value,
 and then runs the Java classfile
-<tt>org.python.util.jpython</tt>.</P>
+<tt>org.python.util.jython</tt>.</P>
 
-<H3>Making JPython Scripts Executable</H3>
+<H3>Making Jython Scripts Executable</H3>
 
-<P>To make a jpython &quot;.py&quot; file executable on a Unix system
+<P>To make a jython &quot;.py&quot; file executable on a Unix system
 you can add the following line to the top of the file:
 
-<PRE><B>#! /usr/bin/env jpython</B></PRE>
+<PRE><B>#! /usr/bin/env jython</B></PRE>
 
-<P>For this magic to work, you must have <tt>jpython</tt> somewhere on your
+<P>For this magic to work, you must have <tt>jython</tt> somewhere on your
 standard PATH.  You also must also make the &quot;.py&quot; file
 executable.  Typically this is done with the command:
 <TT>chmod +x foo.py</TT>.
 
-<p><I>Note: &quot;#! &lt;...&gt;/jpython&quot; will probably not work to
-make your script executable.  This is because &quot;jpython&quot; is
+<p><I>Note: &quot;#! &lt;...&gt;/jython&quot; will probably not work to
+make your script executable.  This is because &quot;jython&quot; is
 itself a script, and the #! magic requires that the file to execute is
 a binary executable on most Unix variants.  Using
 &quot;/usr/bin/env&quot; will get around this problem - and make your

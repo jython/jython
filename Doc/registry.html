@@ -1,15 +1,15 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- Wed Sep 22 16:33:00 1999 -->
-<!-- USING HT2HTML 1.0 -->
+<!-- Fri Nov 17 14:50:51 2000 -->
+<!-- USING HT2HTML 1.1 -->
 <!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
-Title: The JPython Registry
+Title: The Jython Registry
 
 -->
 
 <HEAD>
-<TITLE>The JPython Registry</TITLE>
+<TITLE>The Jython Registry</TITLE>
 
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000"
@@ -24,8 +24,8 @@ Title: The JPython Registry
 <TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
 <center>
-    <a href="http://www.jpython.org/">
-    <img border=0 src="./images/jpython-new-small.gif"></a></center> </TD>
+    <a href="http://jython.sourceforge.net/">
+    <img border=0 src="./images/jython-new-small.gif"></a></center> </TD>
 <TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
 <!-- end of corner cells -->
 <!-- start of banner -->
@@ -36,14 +36,14 @@ CELLSPACING=0 CELLPADDING=2
        COLS=2 ROWS=2 BGCOLOR="#ffffff">
 <TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/">Home</a>
+<a href="http://jython.sourceforge.net/">Home</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="http://www.python.org/">www.python.org</a>
     </TD>
 </TR><TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/download.html">Download</a>
+<a href="http://jython.sourceforge.net/download.html">Download</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="./index.html">Documentation</a>
@@ -69,16 +69,16 @@ Documentation
 <A HREF="whatis.html">Executive Summary</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="interpreter.html">Invoking JPython</A>
+<A HREF="interpreter.html">Invoking Jython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<b>JPython Registry</b>
+<b>Jython Registry</b>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="embedding.html">Embedding</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="compile.html">Compiling JPython from source</A>
+<A HREF="compile.html">Compiling Jython from source</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -97,7 +97,7 @@ Working with Java
 <A HREF="subclassing.html">Subclassing</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+<A HREF="jythonc.html">Building applets, servlets, beans...</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -114,13 +114,13 @@ Python Docs (exits)
 Other
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="differences.html">JPython vs. CPython</A>
+<A HREF="differences.html">Jython vs. CPython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="faq.html">JPython FAQ</A>
+<A HREF="faq.html">Jython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
+<A HREF="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
@@ -130,7 +130,7 @@ Other
 Email Us
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
@@ -141,6 +141,9 @@ Email Us
     <img border=0 src="./images/PythonPoweredSmall.gif"></center>
 </A>
 </TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
 </TABLE><!-- end of sidebar table -->
 
 </TD>
@@ -148,32 +151,35 @@ Email Us
 <!-- end of sidebar cell -->
 <!-- start of body cell -->
 <TD VALIGN=TOP WIDTH="90%"><BR>
-<h3>The JPython Registry</h3>
+<h3>The Jython Registry</h3>
 
 Because there is no good platform independent equivalent of the Windows
 Registry (or Unix envrionment variables) Java has it's own environment
-variable namespace.  JPython aquires it's namespace from the following
+variable namespace.  Jython aquires it's namespace from the following
 three sources (later sources override defaults found in earlier
 places).
 
 <UL>
     <LI>The Java system properties: typically passed in on the command
-	line.  See the <a href="interpreter.html">-D option to the
-	interpreter</a>.
+	line as options to the java interpreter.
 
-    <p><li>The JPython &quot;registry&quot; file, which contains
+    <p><li>The Jython &quot;registry&quot; file, which contains
 	<b><em>prop</em>=<em>value</em></b> pairs.
 	<a href="#finding">See below</a> for the
-	algorithm JPython uses to find the registry file.
+	algorithm Jython uses to find the registry file.
 
     <p><li>The user's personal registry file, which contains
 	similarly formated prop/value pairs.  The user's registry file 
-	is at &quot;<tt>user.home</tt>&quot;+&quot;/.jpython&quot;
+	is at &quot;<tt>user.home</tt>&quot;+&quot;/.jython&quot;
+
+    <p><LI>Jython properties: Specified on the command line as options
+        to the jython class. See the <a href="interpreter.html">-D 
+        option to the interpreter</a>.
 </ul>
 
 <h3>Registry Properties</h3>
 
-The following properties are recognized by JPython.  There may be
+The following properties are recognized by Jython.  There may be
 others that aren't documented here; consult the comments in registry
 file for details.
 
@@ -193,29 +199,29 @@ file for details.
     "error", "warning", "message", "comment", "debug"
 
     <dt><b>python.security.respectJavaAccessibility</b>
-    <dd>Normally, JPython can only provide access to public members of 
+    <dd>Normally, Jython can only provide access to public members of 
     classes.  However if this property is set to <tt>false</tt> and
-    <em>you are using Java 1.2</em> then JPython can access non-public 
+    <em>you are using Java 1.2</em> then Jython can access non-public 
     fields, methods, and constructors.
 
-    <dt><b>python.jpythonc.compiler</b>
-    <dd>The Java compiler to use with the <tt>jpythonc</tt> tool,
+    <dt><b>python.jythonc.compiler</b>
+    <dd>The Java compiler to use with the <tt>jythonc</tt> tool,
     which now generates Java source code.  This should be the absolute 
     path to a Java compiler, or the name of a compiler on your
     standard PATH.
 
-    <dt><b>python.jpythonc.classpath</b>
+    <dt><b>python.jythonc.classpath</b>
     <dd>Extensions to the standard <tt>java.class.path</tt> property
-    for use with jpythonc.  This is useful if you use Jikes as your
+    for use with jythonc.  This is useful if you use Jikes as your
     compiler.
 
-    <dt><b>python.jpythonc.compileropts</b>
-    <dd>Options to pass to the Java compiler when using jpythonc.
+    <dt><b>python.jythonc.compileropts</b>
+    <dd>Options to pass to the Java compiler when using jythonc.
 </dl>
 
 <h3><a name="finding">Finding the Registry File</a></h3>
 
-The following steps are used to find the JPython registry file, and
+The following steps are used to find the Jython registry file, and
 also to set the Python values for <tt>sys.prefix</tt>.  First a
 <em>root</em> directory is calculated:
 
@@ -226,11 +232,11 @@ also to set the Python values for <tt>sys.prefix</tt>.  First a
     <p><li>Otherwise, the property <tt>install.root</tt> is used if it 
     exists.
 
-    <p><li>If neither of those properties exist, then JPython searches 
-    for the file "jpython.jar" on the Java classpath, as defined in
+    <p><li>If neither of those properties exist, then Jython searches 
+    for the file "jython.jar" on the Java classpath, as defined in
     the system property <tt>java.class.path</tt>.  The actual file
     system isn't searched, only the paths defined on the classpath
-    (one of them must literally include "jpython.jar").
+    (one of them must literally include "jython.jar").
 </ul>
 
 Once the root directory is found, <tt>sys.prefix</tt> and

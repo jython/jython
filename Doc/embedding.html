@@ -1,13 +1,15 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:40 1999 -->
+<!-- Fri Nov 17 14:50:49 2000 -->
+<!-- USING HT2HTML 1.1 -->
+<!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
-Title: Embedding JPython
+Title: Embedding Jython
 
 -->
 
 <HEAD>
-<TITLE>Embedding JPython</TITLE>
+<TITLE>Embedding Jython</TITLE>
 
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000"
@@ -22,8 +24,8 @@ Title: Embedding JPython
 <TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
 <center>
-    <a href="http://www.jpython.org/">
-    <img border=0 src="./images/jpython-new-small.gif"></a></center> </TD>
+    <a href="http://jython.sourceforge.net/">
+    <img border=0 src="./images/jython-new-small.gif"></a></center> </TD>
 <TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
 <!-- end of corner cells -->
 <!-- start of banner -->
@@ -34,14 +36,14 @@ CELLSPACING=0 CELLPADDING=2
        COLS=2 ROWS=2 BGCOLOR="#ffffff">
 <TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/">Home</a>
+<a href="http://jython.sourceforge.net/">Home</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="http://www.python.org/">www.python.org</a>
     </TD>
 </TR><TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/download.html">Download</a>
+<a href="http://jython.sourceforge.net/download.html">Download</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="./index.html">Documentation</a>
@@ -67,16 +69,16 @@ Documentation
 <A HREF="whatis.html">Executive Summary</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="interpreter.html">Invoking JPython</A>
+<A HREF="interpreter.html">Invoking Jython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="registry.html">JPython Registry</A>
+<A HREF="registry.html">Jython Registry</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <b>Embedding</b>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="compile.html">Compiling JPython from source</A>
+<A HREF="compile.html">Compiling Jython from source</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -95,7 +97,7 @@ Working with Java
 <A HREF="subclassing.html">Subclassing</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+<A HREF="jythonc.html">Building applets, servlets, beans...</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -112,13 +114,13 @@ Python Docs (exits)
 Other
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="differences.html">JPython vs. CPython</A>
+<A HREF="differences.html">Jython vs. CPython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="faq.html">JPython FAQ</A>
+<A HREF="faq.html">Jython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
+<A HREF="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
@@ -128,7 +130,7 @@ Other
 Email Us
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
@@ -139,6 +141,9 @@ Email Us
     <img border=0 src="./images/PythonPoweredSmall.gif"></center>
 </A>
 </TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
 </TABLE><!-- end of sidebar table -->
 
 </TD>
@@ -146,12 +151,12 @@ Email Us
 <!-- end of sidebar cell -->
 <!-- start of body cell -->
 <TD VALIGN=TOP WIDTH="90%"><BR>
-<h3>Embedding JPython</h3>
+<h3>Embedding Jython</h3>
 
-<P>There are several options for embedding JPython in a Java
+<P>There are several options for embedding Jython in a Java
 application.  Sometimes the nicest approach is to make a real Java
 class out of a Python class and then just use that Python class from
-Java code.  The simplest approach to embedding JPython is to use the
+Java code.  The simplest approach to embedding Jython is to use the
 PythonInterpreter object.</P>
 
 <P>JavaDoc documentation for 

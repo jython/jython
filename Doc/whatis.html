@@ -1,13 +1,15 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:46 1999 -->
+<!-- Fri Nov 17 14:50:52 2000 -->
+<!-- USING HT2HTML 1.1 -->
+<!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
-Title: What is JPython?
+Title: What is Jython?
 
 -->
 
 <HEAD>
-<TITLE>What is JPython?</TITLE>
+<TITLE>What is Jython?</TITLE>
 
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000"
@@ -22,8 +24,8 @@ Title: What is JPython?
 <TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
 <center>
-    <a href="http://www.jpython.org/">
-    <img border=0 src="./images/jpython-new-small.gif"></a></center> </TD>
+    <a href="http://jython.sourceforge.net/">
+    <img border=0 src="./images/jython-new-small.gif"></a></center> </TD>
 <TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
 <!-- end of corner cells -->
 <!-- start of banner -->
@@ -34,14 +36,14 @@ CELLSPACING=0 CELLPADDING=2
        COLS=2 ROWS=2 BGCOLOR="#ffffff">
 <TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/">Home</a>
+<a href="http://jython.sourceforge.net/">Home</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="http://www.python.org/">www.python.org</a>
     </TD>
 </TR><TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/download.html">Download</a>
+<a href="http://jython.sourceforge.net/download.html">Download</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="./index.html">Documentation</a>
@@ -67,16 +69,16 @@ Documentation
 <b>Executive Summary</b>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="interpreter.html">Invoking JPython</A>
+<A HREF="interpreter.html">Invoking Jython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="registry.html">JPython Registry</A>
+<A HREF="registry.html">Jython Registry</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="embedding.html">Embedding</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="compile.html">Compiling JPython from source</A>
+<A HREF="compile.html">Compiling Jython from source</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -95,7 +97,7 @@ Working with Java
 <A HREF="subclassing.html">Subclassing</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+<A HREF="jythonc.html">Building applets, servlets, beans...</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -112,13 +114,13 @@ Python Docs (exits)
 Other
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="differences.html">JPython vs. CPython</A>
+<A HREF="differences.html">Jython vs. CPython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="faq.html">JPython FAQ</A>
+<A HREF="faq.html">Jython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
+<A HREF="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
@@ -128,7 +130,7 @@ Other
 Email Us
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
@@ -139,6 +141,9 @@ Email Us
     <img border=0 src="./images/PythonPoweredSmall.gif"></center>
 </A>
 </TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
 </TABLE><!-- end of sidebar table -->
 
 </TD>
@@ -146,32 +151,30 @@ Email Us
 <!-- end of sidebar cell -->
 <!-- start of body cell -->
 <TD VALIGN=TOP WIDTH="90%"><BR>
-<h3>What is JPython?</h3>
+<h3>What is Jython?</h3>
 
-<P>JPython is an implementation of the high-level, dynamic,
+<P>Jython is an implementation of the high-level, dynamic,
 object-oriented language <A HREF="http://www.python.org">Python</A>
 seamlessly integrated with the
-<A HREF="http://www.javasoft.com">Java</A> platform and certified as
+<A HREF="http://www.javasoft.com">Java</A> platform. 
+The predecessor to Jython, JPython, is certified as
 <A HREF="http://www.javasoft.com/100percent/">100% Pure Java</A>.
-JPython
-is freely available for both commercial and non-commercial use and is
-distributed with source code. JPython is complementary to Java and is
-especially suited for the following tasks:</P>
+
+Jython is freely available for both commercial and non-commercial 
+use and is distributed with source code. Jython is complementary 
+to Java and is especially suited for the following tasks:</P>
 
 <UL>
     <LI><B>Embedded scripting</B> - Java programmers can add the
-        JPython libraries to their system to allow end users
+        Jython libraries to their system to allow end users
 	to write simple or complicated scripts that add functionality
-	to the application. Since JPython is certified
-	<A HREF="http://www.javasoft.com/100percent/">100% Pure Java</A>,
-	it can be added to an application without fear of compromising
-	its ability to run on all Java platforms.
+	to the application.
 
-    <LI><B>Interactive experimentation</B> - JPython provides an
+    <LI><B>Interactive experimentation</B> - Jython provides an
 	interactive interpreter that can be used to interact with Java
 	packages or with running Java applications. This allows
 	programmers to experiment and debug any Java system using
-	JPython.
+	Jython.
 
     <LI><B>Rapid application development</B> - Python
 	programs are typically 2-10X shorter than the equivalent Java
@@ -185,20 +188,17 @@ especially suited for the following tasks:</P>
 <A HREF="http://grunge.cs.tu-berlin.de/~tolk/vmlanguages.html">
 alternative languages</A>
 implemented for the Java VM. The following features help to separate
-JPython from the rest:</P>
+Jython from the rest:</P>
 
 <UL>
     <LI><B>Dynamic compilation to Java bytecodes</B> - leads to
     highest possible performance without sacrificing interactivity.
 
-    <LI><B>Ability to extend existing Java classes in JPython</B> -
+    <LI><B>Ability to extend existing Java classes in Jython</B> -
     allows effective use of abstract classes.
 
     <LI><B>Optional static compilation</B> - allows creation of
 	applets, servlets, beans, ...
-
-    <LI><B>100% Pure Java Certification</B> - provides assurance that
-	JPython won't compromise the portability of your application.
 
     <LI><B>Bean Properties</B> - make use of Java packages much easier.
 

@@ -1,6 +1,8 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:43 1999 -->
+<!-- Fri Nov 17 14:50:51 2000 -->
+<!-- USING HT2HTML 1.1 -->
+<!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
 Title: Properties
 
@@ -22,8 +24,8 @@ Title: Properties
 <TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
 <center>
-    <a href="http://www.jpython.org/">
-    <img border=0 src="./images/jpython-new-small.gif"></a></center> </TD>
+    <a href="http://jython.sourceforge.net/">
+    <img border=0 src="./images/jython-new-small.gif"></a></center> </TD>
 <TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
 <!-- end of corner cells -->
 <!-- start of banner -->
@@ -34,14 +36,14 @@ CELLSPACING=0 CELLPADDING=2
        COLS=2 ROWS=2 BGCOLOR="#ffffff">
 <TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/">Home</a>
+<a href="http://jython.sourceforge.net/">Home</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="http://www.python.org/">www.python.org</a>
     </TD>
 </TR><TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/download.html">Download</a>
+<a href="http://jython.sourceforge.net/download.html">Download</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="./index.html">Documentation</a>
@@ -67,16 +69,16 @@ Documentation
 <A HREF="whatis.html">Executive Summary</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="interpreter.html">Invoking JPython</A>
+<A HREF="interpreter.html">Invoking Jython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="registry.html">JPython Registry</A>
+<A HREF="registry.html">Jython Registry</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="embedding.html">Embedding</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="compile.html">Compiling JPython from source</A>
+<A HREF="compile.html">Compiling Jython from source</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -95,7 +97,7 @@ Working with Java
 <A HREF="subclassing.html">Subclassing</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+<A HREF="jythonc.html">Building applets, servlets, beans...</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -112,13 +114,13 @@ Python Docs (exits)
 Other
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="differences.html">JPython vs. CPython</A>
+<A HREF="differences.html">Jython vs. CPython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="faq.html">JPython FAQ</A>
+<A HREF="faq.html">Jython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
+<A HREF="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
@@ -128,7 +130,7 @@ Other
 Email Us
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
@@ -139,6 +141,9 @@ Email Us
     <img border=0 src="./images/PythonPoweredSmall.gif"></center>
 </A>
 </TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
 </TABLE><!-- end of sidebar table -->
 
 </TD>
@@ -148,7 +153,7 @@ Email Us
 <TD VALIGN=TOP WIDTH="90%"><BR>
 <h3>Properties</h3>
 
-JPython uses JavaBean properties to make it easier to interact with
+Jython uses JavaBean properties to make it easier to interact with
 most Java classes.  These properties can be used as normal object
 attributes, and can also be specified to the class constructor as
 keyword arguments (this idea is stolen from TkInter where it seems to
@@ -163,24 +168,24 @@ button that is disabled.
 
 <P>The first example shows how you would do this in the typical Java fashion:
 
-<pre>
+<blockquote><pre>
 b = awt.Button()
 b.setEnabled(0)
-</pre>
+</pre></blockquote>
 
 The second example shows how enabled can be set as a property:
 
-<pre>
+<blockquote><pre>
 b = awt.Button()
 b.enabled = 0
-</pre>
+</pre></blockquote>
 
 The final example sets this property at instantiation time using a keyword
 argument:
 
-<pre>
+<blockquote><pre>
 b = awt.Button(enabled=0)
-</pre>
+</pre></blockquote>
 
 <h3>Tuples</h3>
 
@@ -189,13 +194,15 @@ will be created by applying the constructor for the type of the
 property to the tuple.  This is particularly handy for specifying
 sizes:
 
-<pre>
+<blockquote><pre>
 frame = awt.Frame(size=(500,100))
-</pre>
+</pre></blockquote>
 
 It can also be handy for specifying color as an RGB triple:
 
-<pre>frame.background = 255,255,0</pre>
+<blockquote><pre>
+frame.background = 255,255,0
+</pre></blockquote>
 
 will set the background color of the frame to yellow.
 
@@ -204,7 +211,7 @@ will set the background color of the frame to yellow.
 In standard Java, the event handlers for a widget are specified by
 passing in an instance of a class that implements the appropriate
 interface.  This is the only reasonable approach to take in a language
-that doesn't have first-class functions.  In JPython, for every event
+that doesn't have first-class functions.  In Jython, for every event
 listener supported by a class, there will be a property added to the
 class for each method supplied by the event listener class.  These
 properties can be set to give a function to be called when the
@@ -212,25 +219,43 @@ appropriate event occurs.
 
 <P>The standard Java style for setting an event listener is shown below:
 
-<pre>
+<blockquote><pre>
 class action(awt.event.ActionListener):
     def actionPerformed(self,event):
         java.lang.System.exit(0)
 
 button = awt.Button("Close Me!")
 button.addActionListener(action())
-</pre>
+</pre></blockquote>
 
 This can be written in a more Pythonesque (and compact) style by using
 event properties as follows:
 
-<pre>
+<blockquote><pre>
 def exit(event):
     java.lang.System.exit(0)
 
 button = awt.Button("Close Me!", actionPerformed=exit)
-</pre>
+</pre></blockquote>
 
+<h3>Methods, Properties and Event Properties</h3>
+
+Jython have only one namespace for these three class attributes. 
+Java can be seen as having a unique namespace for each of the three
+types. As a consequense, there can be conflicts between methods,
+properties and event properties. 
+These conflicts are resolved so that:
+
+<blockquote>
+  properties < event-properties < fields < methods
+</blockquote>
+
+This means that a method will override a field with the same name. 
+Some carefull handling of properties and static fields allow for 
+the existence of, and access to, both an instance property and a 
+static field with the same name.
+
+<p>
 </TD><!-- end of body cell -->
 </TR><!-- end of sidebar/body row -->
 </TABLE><!-- end of page table -->

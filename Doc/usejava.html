@@ -1,13 +1,15 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:45 1999 -->
+<!-- Fri Nov 17 14:50:52 2000 -->
+<!-- USING HT2HTML 1.1 -->
+<!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
-Title: Accessing Java from JPython
+Title: Accessing Java from Jython
 
 -->
 
 <HEAD>
-<TITLE>Accessing Java from JPython</TITLE>
+<TITLE>Accessing Java from Jython</TITLE>
 
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000"
@@ -22,8 +24,8 @@ Title: Accessing Java from JPython
 <TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
 <center>
-    <a href="http://www.jpython.org/">
-    <img border=0 src="./images/jpython-new-small.gif"></a></center> </TD>
+    <a href="http://jython.sourceforge.net/">
+    <img border=0 src="./images/jython-new-small.gif"></a></center> </TD>
 <TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
 <!-- end of corner cells -->
 <!-- start of banner -->
@@ -34,14 +36,14 @@ CELLSPACING=0 CELLPADDING=2
        COLS=2 ROWS=2 BGCOLOR="#ffffff">
 <TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/">Home</a>
+<a href="http://jython.sourceforge.net/">Home</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="http://www.python.org/">www.python.org</a>
     </TD>
 </TR><TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/download.html">Download</a>
+<a href="http://jython.sourceforge.net/download.html">Download</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="./index.html">Documentation</a>
@@ -67,16 +69,16 @@ Documentation
 <A HREF="whatis.html">Executive Summary</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="interpreter.html">Invoking JPython</A>
+<A HREF="interpreter.html">Invoking Jython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="registry.html">JPython Registry</A>
+<A HREF="registry.html">Jython Registry</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="embedding.html">Embedding</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="compile.html">Compiling JPython from source</A>
+<A HREF="compile.html">Compiling Jython from source</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -95,7 +97,7 @@ Working with Java
 <A HREF="subclassing.html">Subclassing</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+<A HREF="jythonc.html">Building applets, servlets, beans...</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -112,13 +114,13 @@ Python Docs (exits)
 Other
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="differences.html">JPython vs. CPython</A>
+<A HREF="differences.html">Jython vs. CPython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="faq.html">JPython FAQ</A>
+<A HREF="faq.html">Jython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
+<A HREF="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
@@ -128,7 +130,7 @@ Other
 Email Us
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
@@ -139,6 +141,9 @@ Email Us
     <img border=0 src="./images/PythonPoweredSmall.gif"></center>
 </A>
 </TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
 </TABLE><!-- end of sidebar table -->
 
 </TD>
@@ -146,18 +151,21 @@ Email Us
 <!-- end of sidebar cell -->
 <!-- start of body cell -->
 <TD VALIGN=TOP WIDTH="90%"><BR>
-<h3>Accessing Java from JPython</h3>
+<h3>Accessing Java from Jython</h3>
 
-<P>One of the goals of JPython is to make it as simple as possible to
+<P>One of the goals of Jython is to make it as simple as possible to
 use existing Java libraries from Python.
 
 <H3>Example</H3>
 
-<P>The following example of an interactive session with JPython shows
+<P>The following example of an interactive session with Jython shows
 how a user could create an instance of the Java random number class
 (found in java.util.Random) and then interact with that instance.</P>
 
-<PRE>C:\jpython&gt;jpython
+<blockquote><PRE>
+C:\jython&gt;jython
+Jython 2.0 on java1.2.1
+Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from java.util import Random
 &gt;&gt;&gt; r = Random()
 &gt;&gt;&gt; r.nextInt()
@@ -170,32 +178,28 @@ how a user could create an instance of the Java random number class
 0.3647833839988137
 0.3384865260567278
 0.5514469740469587
-&gt;&gt;&gt;</PRE>
+&gt;&gt;&gt;
+</PRE></blockquote>
 
 <H3>More Details</H3>
 
 <P>Hopefully, this example should make it clear that there are very
 few differences between using Java packages and using Python packages
-when working under JPython.  There are a few things to keep in mind.
+when working under Jython.  There are a few things to keep in mind.
 
 <H4>Importing</H4>
 
-With JPython 1.1, importing Java packages has gotten much easier.  For
-example, &quot;from package import *&quot; with Java packages now
-works.  Also you no longer need to use "sys.add_package()" to make
-JPython aware of new packages at runtime:
-
 <p>
-<pre>
-JPython 1.1beta1 on java1.2.1
-Copyright (C) 1997-1999 Corporation for
+<blockquote><pre>
+Jython 2.0 on java1.2.1
+Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from java.util import *
 &gt;&gt;&gt; Random
 &lt;jclass java.util.Random at 31702169&gt;
 &gt;&gt;&gt; Hashtable
 &lt;jclass java.util.Hashtable at 7538094&gt;
 &gt;&gt;&gt; 
-</pre>
+</pre></blockquote>
 
 <H4>Creating Class Instances</H4>
 
@@ -238,7 +242,7 @@ it is shown to cause problems.
     </TR>
     <TR>
 	<TD>byte, short, int, long</TD>
-	<TD>Integer or Float</TD>
+	<TD>Integer</TD>
     </TR>
     <TR>
 	<TD>float, double</TD>
@@ -342,8 +346,10 @@ workaround:</P>
 foo(byte x);&quot;.  To call the second method you could write the
 following:</P>
 
-<PRE>from java.lang import Byte</PRE>
-<PRE>foo(Byte(10))</PRE>
+<blockquote><PRE>
+from java.lang import Byte
+foo(Byte(10))
+</PRE></blockquote>
 
 <P>I'm not convinced that any better solution to this problem is possible.
 
@@ -355,18 +361,21 @@ with Python's keyword set.  Where the intent can be unambiguously
 determined, no identifier mangling is necessary, such as when keywords 
 are used as attributes on objects.  Thus you can naturally write:
 
-<p><tt>java.lang.System.out.print("hi")</tt>
+<blockquote><PRE>
+java.lang.System.out.print("hi")
+</PRE></blockquote>
 
-<p>or
+or
 
-<p><tt>java.lang.Runtime.getRuntime().exec(cmd)</tt>
+<blockquote><PRE>
+java.lang.Runtime.getRuntime().exec(cmd)</tt>
+</PRE></blockquote>
 
 <p>In the rare case where the conflict can't be resolved due to Python's
 grammar, you should modify the reserved word by appended an underscore 
 to the end of it, e.g. <tt>print_</tt>
 
-<p>With JPython 1.1, this should rarely be needed.
-
+<p>
 </TD><!-- end of body cell -->
 </TR><!-- end of sidebar/body row -->
 </TABLE><!-- end of page table -->

@@ -1,15 +1,15 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- Wed Sep 22 16:32:59 1999 -->
-<!-- USING HT2HTML 1.0 -->
+<!-- Fri Nov 17 14:50:48 2000 -->
+<!-- USING HT2HTML 1.1 -->
 <!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
-Title: Compiling JPython
+Title: Compiling Jython
 
 -->
 
 <HEAD>
-<TITLE>Compiling JPython</TITLE>
+<TITLE>Compiling Jython</TITLE>
 
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000"
@@ -24,8 +24,8 @@ Title: Compiling JPython
 <TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
 <center>
-    <a href="http://www.jpython.org/">
-    <img border=0 src="./images/jpython-new-small.gif"></a></center> </TD>
+    <a href="http://jython.sourceforge.net/">
+    <img border=0 src="./images/jython-new-small.gif"></a></center> </TD>
 <TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
 <!-- end of corner cells -->
 <!-- start of banner -->
@@ -36,14 +36,14 @@ CELLSPACING=0 CELLPADDING=2
        COLS=2 ROWS=2 BGCOLOR="#ffffff">
 <TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/">Home</a>
+<a href="http://jython.sourceforge.net/">Home</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="http://www.python.org/">www.python.org</a>
     </TD>
 </TR><TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/download.html">Download</a>
+<a href="http://jython.sourceforge.net/download.html">Download</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="./index.html">Documentation</a>
@@ -69,16 +69,16 @@ Documentation
 <A HREF="whatis.html">Executive Summary</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="interpreter.html">Invoking JPython</A>
+<A HREF="interpreter.html">Invoking Jython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="registry.html">JPython Registry</A>
+<A HREF="registry.html">Jython Registry</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="embedding.html">Embedding</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<b>Compiling JPython from source</b>
+<b>Compiling Jython from source</b>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -97,7 +97,7 @@ Working with Java
 <A HREF="subclassing.html">Subclassing</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+<A HREF="jythonc.html">Building applets, servlets, beans...</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -114,13 +114,13 @@ Python Docs (exits)
 Other
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="differences.html">JPython vs. CPython</A>
+<A HREF="differences.html">Jython vs. CPython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="faq.html">JPython FAQ</A>
+<A HREF="faq.html">Jython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
+<A HREF="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
@@ -130,7 +130,7 @@ Other
 Email Us
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
@@ -141,6 +141,9 @@ Email Us
     <img border=0 src="./images/PythonPoweredSmall.gif"></center>
 </A>
 </TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
 </TABLE><!-- end of sidebar table -->
 
 </TD>
@@ -148,52 +151,39 @@ Email Us
 <!-- end of sidebar cell -->
 <!-- start of body cell -->
 <TD VALIGN=TOP WIDTH="90%"><BR>
-<h3>Compiling JPython</h3>
+<h3>Compiling Jython</h3>
 
-<P>Most users of JPython will never be required to look at the
-contents of the src directory, or try and recompile any of the files
+<P>Most users of Jython will never be required to look at the
+contents of the source directories, or try and recompile any of the files
 in the org.python package. All of these files have been precompiled in
-jpython.jar.</P>
+jython.jar.</P>
 
-<P>For those people who do want to rebuild JPython from the source,
+<P>For those people who do want to rebuild Jython from the source,
 for whatever reason, the following offers a few tips to keep in
 mind.</P>
 
-<P>The source to many of the classes in the org.python.parser package
-are not distributed with JPython. These classes are produced from the
-file &quot;python.jjt&quot; using the
-<A HREF="http://www.metamata.com/javacc/">JavaCC</A> parser generator
-tool. When rebuilding JPython from source you have two options for
-generating these classes:
+<P>Some of the sources in the org.python.parser package are generated 
+from python.jtt file by the JavaCC parser generator. If you need to 
+make changes to the grammar file you will need to download this 
+<A HREF="http://www.metamata.com/javacc/">JavaCC</A> too. The generated
+files are also in the distribution, so usually this is not necessary.
 
-<OL>
-    <LI>Copy all of the .class files from jpython.jar into src. Then
-	only rebuild those files in packages other than
-	org.python.parser. This is the recommended choice unless you
-	explicitly want to experiment with the JPython
-	grammar/parser.
-	
-    <LI>Get <A HREF="http://www.metamata.com/javacc/">JavaCC</A>
-	<sup>1</sup>.
-	Run jjtree on python.jjt, and then run javacc on the resulting
-	python.jj. This should produce all of the required source
-	files to build the org.python.parser package.
-</OL>
+<P>To regenerate the parser from the grammar, run jjtree on python.jjt, 
+and then run javacc on the resulting python.jj. This should produce all
+of the required source files to build the org.python.parser package.
 
-<P></P>
+<P>If you have further interest in the Jython source and Jython's 
+continued development, you can read the archives for the 
+<a href="http://www.geocrawler.com/lists/3/SourceForge/7018/0/">
+Jython-dev mailing list</a> or you can 
+<a href="http://lists.sourceforge.net/mailman/listinfo/jython-dev">join</a>
+the list.
 
-<P>The file in src/installer/MakeScriptAction.java is only used by the
-JPython installer.  You should have no need to recompile this file
-unless you plan to build a new installer for JPython. This file
-depends on packages from 
-<A HREF="http://www.installshield.com/java">InstallShield Java
-Edition</A>, and you must have this software installed and in your
-CLASSPATH before you can rebuild this file.
+<P>
 
 <hr>
-<sup>1</sup>JavaCC version 0.7.1 is required.  Specifically, newer
-versions of JavaCC are known to be incompatible with JPython's grammar 
-file.  This will be fixed in a later release.
+<sup>1</sup>JavaCC version 2.0 is used to create the generated sources
+included with the distribution.
 
 </TD><!-- end of body cell -->
 </TR><!-- end of sidebar/body row -->

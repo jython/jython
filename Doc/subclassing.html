@@ -1,13 +1,15 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:44 1999 -->
+<!-- Fri Nov 17 14:50:51 2000 -->
+<!-- USING HT2HTML 1.1 -->
+<!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
-Title: Subclassing Java Classes in JPython
+Title: Subclassing Java Classes in Jython
 
 -->
 
 <HEAD>
-<TITLE>Subclassing Java Classes in JPython</TITLE>
+<TITLE>Subclassing Java Classes in Jython</TITLE>
 
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000"
@@ -22,8 +24,8 @@ Title: Subclassing Java Classes in JPython
 <TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
 <center>
-    <a href="http://www.jpython.org/">
-    <img border=0 src="./images/jpython-new-small.gif"></a></center> </TD>
+    <a href="http://jython.sourceforge.net/">
+    <img border=0 src="./images/jython-new-small.gif"></a></center> </TD>
 <TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
 <!-- end of corner cells -->
 <!-- start of banner -->
@@ -34,14 +36,14 @@ CELLSPACING=0 CELLPADDING=2
        COLS=2 ROWS=2 BGCOLOR="#ffffff">
 <TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/">Home</a>
+<a href="http://jython.sourceforge.net/">Home</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="http://www.python.org/">www.python.org</a>
     </TD>
 </TR><TR>
     <TD BGCOLOR="#cdb7b5">
-<a href="http://www.jpython.org/download.html">Download</a>
+<a href="http://jython.sourceforge.net/download.html">Download</a>
     </TD>
     <TD BGCOLOR="#cdb7b5">
 <a href="./index.html">Documentation</a>
@@ -67,16 +69,16 @@ Documentation
 <A HREF="whatis.html">Executive Summary</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="interpreter.html">Invoking JPython</A>
+<A HREF="interpreter.html">Invoking Jython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="registry.html">JPython Registry</A>
+<A HREF="registry.html">Jython Registry</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="embedding.html">Embedding</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="compile.html">Compiling JPython from source</A>
+<A HREF="compile.html">Compiling Jython from source</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -95,7 +97,7 @@ Working with Java
 <b>Subclassing</b>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+<A HREF="jythonc.html">Building applets, servlets, beans...</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -112,13 +114,13 @@ Python Docs (exits)
 Other
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="differences.html">JPython vs. CPython</A>
+<A HREF="differences.html">Jython vs. CPython</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="faq.html">JPython FAQ</A>
+<A HREF="faq.html">Jython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
+<A HREF="http://www.geocrawler.com/archives/3/7017/2000/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
@@ -128,7 +130,7 @@ Other
 Email Us
 </FONT></B></TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+<A HREF="mailto:jython-dev@lists.sourceforge.net">jython-dev@lists.sourceforge.net</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
@@ -139,6 +141,9 @@ Email Us
     <img border=0 src="./images/PythonPoweredSmall.gif"></center>
 </A>
 </TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
 </TABLE><!-- end of sidebar table -->
 
 </TD>
@@ -146,7 +151,7 @@ Email Us
 <!-- end of sidebar cell -->
 <!-- start of body cell -->
 <TD VALIGN=TOP WIDTH="90%"><BR>
-<h3>Subclassing Java Classes in JPython</h3>
+<h3>Subclassing Java Classes in Jython</h3>
 
 <h3>A Short Example</h3>
 
@@ -160,7 +165,7 @@ a Java method is being called that
 requires an instance of the Java class ActionListener. By providing a
 Python subclass of this Java class, everybody is happy.
 
-<PRE>
+<blockquote><PRE>
 from java import awt
 
 class SpamListener(awt.event.ActionListener):
@@ -176,7 +181,7 @@ b.addActionListener(SpamListener())
 f.add(b, "Center")
 f.pack()
 f.setVisible(1)
-</PRE>
+</PRE></blockquote>
 
 Note: This example can be accomplished much more elegantly by using
 <A HREF="properties.html">JavaBeans properties 
@@ -187,11 +192,13 @@ Note: This example can be accomplished much more elegantly by using
 In Python, if I want to call the foo method in my superclass, I use
 the form:
 
-<PRE>SuperClass.foo(self)</PRE>
+<blockquote><PRE>
+SuperClass.foo(self)
+</PRE></blockquote>
 
-With JPython 1.1, the same thing works even if the superclass is a
-Java class.  You no longer need to use the "super__foo()" style call
-chain that was required with earlier versions of JPython.
+This works with the majority of methods, but protected methods cannot be
+called from subclasses in this way. 
+Instead you have to use the "self.super_foo()" call style.
 
 <h3>Example</h3>
 
@@ -214,7 +221,7 @@ overrides the "read" method, a Python method must be implemented that
 handles all three possible cases.  The example below shows the easiest
 way to acheive this:
 
-<PRE>
+<blockquote><PRE>
 from java.io import InputStream
 
 class InfiniteOnes(InputStream):
@@ -230,7 +237,7 @@ io = InfiniteOnes()
 for i in range(10):
     print io.read(),
 print
-</PRE>
+</PRE></blockquote>
 
 <h3>Example Continued</h3>
 
@@ -238,7 +245,7 @@ To continue the example above, this new instance of
 java.io.InputStream can be passed to any Java method that expects an
 InputStream as shown below:
 
-<PRE>
+<blockquote><PRE>
 from java.io import DataInputStream
 
 dp = DataInputStream(io)
@@ -246,7 +253,7 @@ dp.skipBytes(1000)
 print dp.readByte()
 print dp.readShort()
 print dp.readInt()
-</PRE>
+</PRE></blockquote>
 
 <h3>Invoking Your Superclass's Constructor</h3>
 
@@ -265,7 +272,7 @@ before accessing any methods in your superclass.
 
 <h3>Example</h3>
 
-<PRE>
+<blockquote><PRE>
 from java.util import Random
 
 class rand(Random):
@@ -283,49 +290,12 @@ r = rand(100, 23)
 
 for i in range(10):
     print r.nextDouble()
-</PRE>
+</PRE></blockquote>
 
 This example shows how the superclass's constructor can be effectively
 called in order to explictly choose a non-empty version.
 
-<h3>Caching Proxy Classes (Efficiency)</h3>
-
-<b>Note:</b> This section may be out of date, w.r.t. JPython
-1.1betaX.  It will be updated before the final release of 1.1.</b>
-
-<p>In order to subclass from a Java class, a Java proxy class must be
-created by JPython.  This proxy class is a true Java subclass of the
-class you wish to subclass from in Python.  If you do nothing special,
-these proxy classes will be created on the fly whenever one is needed.
-If you find that the time required for generating these proxies is a
-problem, you have two options for convincing JPython to use a cache
-instead of recreating them every time.
-
-<P>You can set the "python.proxy.savedir" variable in your registry
-file.  You must set this to point to a directory in your Java
-Classpath.  I strongly reccommend setting it to &lt;JPYTHON>/JavaCode
-where JPython is the directory into which the distribution was
-installed.  This will cause JPython to cache copies of any new proxy
-classes that it creates.
-
-<P>You can also explicitly create proxy classes with the following
-command:
-
-<PRE>java org.python.compiler.ProxyMaker &lt;directory> &lt;classname></PRE>
-
-This will create the proxy class for a given Java class and install it
-in the given directory (which must be on your Java Classpath - see
-above).
-
-<P>The danger of these caching mechanisms is that JPython currently
-has no way to invalidate this cache.  So if you install an improved
-version of JPython that produces different proxy files, or if you
-modify one of the classes to which you've previously created a proxy,
-the change won't be properly handled.  So, only use proxy class
-caching if you feel comfortable with JPython already, and if you start
-running into problems with proxy classes, my first suggestion is to
-disable proxy class caching and to delete your cache directory
-(&lt;directory>/org/python/proxies).
+<p>
 </TD><!-- end of body cell -->
 </TR><!-- end of sidebar/body row -->
 </TABLE><!-- end of page table -->
