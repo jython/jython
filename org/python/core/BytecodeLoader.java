@@ -35,29 +35,17 @@ public class BytecodeLoader extends ClassLoader
         return ((PyRunnable)c.newInstance()).getMain();
     }
 
-    private static BytecodeLoader byteloader = null;
-
     public static Class makeClass(String name, byte[] data) {
-        if (byteloader == null) {
-            byteloader = new BytecodeLoader();
-        }
-        return byteloader.loadClass(name, data);
+        return new BytecodeLoader().loadClass(name, data);
     }
 
     public static PyCode makeCode(String name, byte[] data)
-        throws PyException
     {
-        if (byteloader == null) {
-            byteloader = new BytecodeLoader();
-        }
         try {
-            return byteloader.loadBytes(name, data);
-        } catch (Exception e) {
+            return new BytecodeLoader().loadBytes(name, data);
+        }
+        catch (Exception e) {
             throw Py.JavaError(e);
         }
-    }
-
-    public static void clearLoader() {
-        byteloader = null;
     }
 }
