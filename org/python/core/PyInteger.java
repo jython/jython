@@ -256,9 +256,10 @@ public class PyInteger extends PyObject
         if (value < 0) {
             return new PyString(
                 "0"+Long.toString(0x100000000l+(long)value, 8));
-        } else {
+        } else if (value > 0) {
             return new PyString("0"+Integer.toString(value, 8));
-        }
+        } else
+            return new PyString("0");
     }
 
     public PyString __hex__() {
