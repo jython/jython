@@ -1,5 +1,5 @@
 #Python Registry
-python.path=.;c:\\jpython\\Lib;c:\\jpython\\PythonCode\\test;c:\\Python-1.5b1\\Demo\\classes
+python.path=.
 
 java.packages.java		=	lang,io,util,net,applet,lang.reflect,math,text,util.zip, \
                             awt, awt.datatransfer, awt.event, awt.image
@@ -8,4 +8,5 @@ java.packages.com.sun.java.swing = basic, border, event, plaf, table, target, te
 
 java.packages.org.python	=	core,parser,modules,compiler
 
-python.proxy.savedir = c:\\jpython\\JavaCode
+#Only enable this if you're SURE you want it
+#python.proxy.savedir = c:\\jpython\\JavaCode
