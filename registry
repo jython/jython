@@ -1,0 +1,11 @@
+#Python Registry
+python.path=.;c:\\jpython\\Lib;c:\\jpython\\PythonCode\\test
+
+java.packages.java		=	lang,io,util,net,applet,lang.reflect,math,text,util.zip, \
+                            awt, awt.datatransfer, awt.event, awt.image
+
+java.packages.com.sun.java.swing = basic, border, event, plaf, table, target, text, tree, undo
+
+java.packages.org.python	=	core,parser,modules,compiler
+
+python.proxy.savedir = c:\\jpython\\JavaCode
