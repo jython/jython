@@ -278,6 +278,7 @@ class CommandLineOptions
             else if (arg.equals("-c")) {
                 command = args[++index];
                 if (!fixInteractive) interactive = false;
+                index++;
                 break;
             }
             else if (arg.equals("-W")) {
@@ -327,7 +328,10 @@ class CommandLineOptions
         //new String[args.length-index+1];
         if (filename != null)
             argv[0] = filename;
-        else argv[0] = "";
+        else if (command != null)
+            argv[0] = "-c";
+        else
+            argv[0] = "";
 
         for(int i=1; i<n; i++, index++) {
             argv[i] = args[index];
