@@ -416,6 +416,10 @@ public class __builtin__ implements ClassDictInit
         return o.__int__();
     }
 
+    public static PyObject object() {
+        return new PyObject();
+    }
+
     private static PyStringMap internedStrings;
     public static PyString intern(PyString s) {
         if (internedStrings == null) {
