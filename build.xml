@@ -4,6 +4,7 @@
     <target name="init">
         <property name="sourceDir" value="." />
         <property name="outputDir" value="build" />
+        <property name="apidocDir" value="Doc/api" />
         <property name="debug" value="off" />
 
         <available classname="java.util.List" property="java2" />
@@ -79,7 +80,9 @@
             srcdir="${sourceDir}/" 
             includes="org/**"
             destdir="${outputDir}/" 
-            excludes="org/python/parser/python.java,${excludejava2files},${excludeservletfiles}"
+            excludes="org/python/parser/python.java,
+                      ${excludejava2files},
+                      ${excludeservletfiles}"
             debug="${debug}"
         />
 
@@ -98,6 +101,21 @@
         <jar jarfile="jython.jar" 
              basedir="${outputDir}" 
              includes="**/*.class,**/ucnhash.dat" />
+    </target>
+
+    <target name="javadoc" depends="compile">
+        <mkdir dir="${apidocDir}" />
+        <javadoc sourcepath="${sourceDir}"
+                 destdir="${apidocDir}"
+                 Public="Yes"
+                 packagenames="org.python.core,
+                               org.python.modules,
+                               org.python.modules.sre,
+                               org.python.util,
+                               org.python.rmi"
+                 Windowtitle="Jython API documentation"
+                 bottom="&lt;a href='http://www.jython.org'>Jython homepage&lt;/a>"
+        />
     </target>
 
     <target name="all" depends="init,clean,prepare,parser,compile,jar">
