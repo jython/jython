@@ -85,8 +85,10 @@ public class PyClass extends PyObject
                 }
             }
             if (baseClass != null || interfaces.size() != 0) {
-                String proxyName = dict.__finditem__("__module__").toString() +
-                                       "$" + __name__;
+                String proxyName = __name__;
+                PyObject module = dict.__finditem__("__module__");
+                if (module != null)
+                    proxyName = module.toString() + "$" + __name__;
                 proxyClass = MakeProxies.makeProxy(baseClass, interfaces,
                                                    proxyName, __dict__);
             }
