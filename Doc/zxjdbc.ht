@@ -152,6 +152,18 @@ DatabaseMetaData.getDatabaseProductName</a></dd>
 href="http://java.sun.com/j2se/1.3/docs/api/java/sql/DatabaseMetaData.html#getDatabaseProductVersion()">
 DatabaseMetaData.getDatabaseProductVersion</a></dd>
 
+<dt><p><code class="methodname">cursor.updatecount</code></p></dt>
+
+<dd>The value obtained from calling <a
+href="http://java.sun.com/j2se/1.3/docs/api/java/sql/Statement.html#getUpdateCount()">
+Statement.getUpdateCount</a></dd>
+
+<dt><p><code class="methodname">cursor.rowid</code></p></dt>
+
+<dd>The value obtained from calling <a
+href="javadoc/com/ziclix/python/sql/DataHandler.html#getRowId(java.sql.Statement)">
+DataHandler.getRowId</a></dd>
+
 <dt><p><code class="methodname">cursor.tables(qualifier,owner,table,type)</code></p></dt>
 
 <dd>Same as <a
@@ -206,36 +218,64 @@ a number of discrepancies in how different JDBC drivers handled
 database types, in particular the additional types available in
 later JDBC versions.</p>
 
+<br/><i><b>life cycle</b></i>
 <dl>
-<dt><p><code class="methodname">public PyObject
-getPyObject(ResultSet set, int col, int type);</code></p></dt>
+<dt><p><code class="methodname">public void preExecute(Statement stmt)
+throws SQLException;</code></p></dt>
+<dd>A callback prior to each execution of the statement.  If the statement
+is a PreparedStatement (created when parameters are sent to the
+<code>execute</code> method), all the parameters will have been set.</dd>
+<dt><p><code class="methodname">public void postExecute(Statement stmt)
+throws SQLException;</code></p></dt>
+<dd>A callback after successfully executing the statement.  This is particularly
+useful for cases such as auto-incrementing columns where the statement knows the
+inserted value.</dd>
+</dl>
 
-<dd>This method is called upon fetching data from the database.
-Given the JDBC type, return the appropriate PyObject subclass from
-the Java object at column col in the ResultSet set.</dd>
+<i><b>developer support</b></i>
+<dl>
+<dt><p><code class="methodname">public String getMetaDataName(String name);</code></p></dt>
+<dd>A callback for determining the proper case of a name used in a DatabaseMetaData
+method, such as getTables().  This is particularly useful for Oracle which expects
+all names to be upper case.</dd>
+<dt><p><code class="methodname">public PyObject getRowId(Statement stmt) throws SQLException;</code></p></dt>
+<dd>A callback for returning the row id of the last insert statement.</dd>
+</dl>
 
+<i><b>binding prepared statements</b></i>
+<dl>
 <dt><p><code class="methodname">public Object getJDBCObject(PyObject
 object, int type);</code></p></dt>
-
 <dd>This method is called when a PreparedStatement is created
 through use of the <code>execute</code> method. When the parameters
 are being bound to the statement, the DataHandler gets a callback
 to map the type. This is only called if type bindings are present.</dd>
-
 <dt><p><code class="methodname">public Object getJDBCObject(PyObject
 object);</code></p></dt>
-
 <dd>This method is called when no type bindings are present during
 the execution of a PreparedStatement.</dd>
+</dl>
 
-<dt><p><code class="methodname">public void preExecute(Statement stmt) throws SQLException;</code></p></dt>
+<i><b>building results</b></i>
+<dl>
+<dt><p><code class="methodname">public PyObject
+getPyObject(ResultSet set, int col, int type);</code></p></dt>
+<dd>This method is called upon fetching data from the database.
+Given the JDBC type, return the appropriate PyObject subclass from
+the Java object at column col in the ResultSet set.</dd>
+</dl>
 
-<dd>A callback prior to each execution of the statement.  If the statement is a PreparedStatement (created when parameters are sent to the <code>execute</code> method), all the parameters will have been set.</dd>
-
-<dt><p><code class="methodname">public void postExecute(Statement stmt) throws SQLException;</code></p></dt>
-
-<dd>A callback after successfully executing the statement.  This is particularly useful for cases such as auto-incrementing columns where the statement knows the inserted value.</dd>
-
+<i><b>callable statement support</b></i>
+<dl>
+<dt><p><code class="methodname">public PyObject getPyObject(CallableStatement stmt, int col,
+int type) throws SQLException;</code></p></dt>
+<dd>This method is called upon fetching data from the database after calling a
+stored procedure or function.  Given the JDBC type, return the appropriate PyObject
+subclass from the Java object at column col in the CallableStatement.</dd>
+<dt><p><code class="methodname">public void registerOut(CallableStatement statement,
+int index, int colType, int dataType) throws SQLException;</code></p></dt>
+<dd>This method is called when a stored procedure or function is executed and OUT parameters
+need to be registered with the statement.</dd>
 </dl>
 
 <p>It is simple to use these callbacks to achieve the desired
@@ -302,16 +342,16 @@ handling prepared statement
 &gt;&gt;&gt;
 </pre>
 
-	<h3>dbexts</h3>
+<h3>dbexts</h3>
 
-	<p>
-	dbexts is a wrapper around DB API 2.0 compliant database modules.  It currently supports zxJDBC and mxODBC but could easily be modified to support others.  It allows developers to write scripts without knowledge of the implementation language of Python (either C or Java).  It also greatly eases the burden of database coding as much of the functionality of the Python API is exposed through easier to use methods.
-	</p>
+<p>
+dbexts is a wrapper around DB API 2.0 compliant database modules.  It currently supports zxJDBC and mxODBC but could easily be modified to support others.  It allows developers to write scripts without knowledge of the implementation language of Python (either C or Java).  It also greatly eases the burden of database coding as much of the functionality of the Python API is exposed through easier to use methods.
+</p>
 
-	<h3>Configuration file</h3>
-	<p>
-	dbexts needs a configuration file in order to create a connection.  The configuration file has the following format:
-	<pre>
+<h3>Configuration file</h3>
+<p>
+dbexts needs a configuration file in order to create a connection.  The configuration file has the following format:
+<pre>
 [default]
 name=mysql_ziclix
 
@@ -332,32 +372,44 @@ driver=oracle.jdbc.driver.OracleDriver
 datahandler=com.ziclix.python.sql.handler.OracleDataHandler
 </pre>
 
-	<h3>API</h3>
-	dbexts will default to looking for a file named 'dbexts.ini' in the same directory as dbexts.py but can optionally be passed a filename to the <code>cfg</code> attribute.
-	</p>
-	<dl>
-		<dt><p><code class="methodname">__init__(self, dbname=None, cfg=None, resultformatter=format_resultset, autocommit=1)</code></p></dt>
+<h3>API</h3>
+dbexts will default to looking for a file named 'dbexts.ini' in the same
+directory as dbexts.py but can optionally be passed a filename to the
+<code>cfg</code> attribute.
+</p>
+<dl>
+<dt><p><code class="methodname">__init__(self, dbname=None, cfg=None,
+resultformatter=format_resultset, autocommit=1)</code></p></dt>
 
-		<dd>
-		The initialization method for the dbexts class.  If <code>dbname</code> is None, the default connection, as specified in the <code>cfg</code> file will be used.
-		</dd>
+<dd>
+The initialization method for the dbexts class.  If <code>dbname</code>
+is None, the default connection, as specified in the <code>cfg</code> file
+will be used.
+</dd>
 
-		<dt><p><code class="methodname">isql(self, sql, params=None, bindings=None, maxrows=None)</code></p></dt>
+<dt><p><code class="methodname">isql(self, sql, params=None, bindings=None,
+maxrows=None)</code></p></dt>
 
-		<dd>
-			Interactively execute sql statement.  If <i>self.verbose</i> is true, then the results (if any) are displayed using the result formatting method.  If <code>maxrows</code> is specified, only <i>maxrows</i> are displayed.
-		</dd>
+<dd>
+Interactively execute sql statement.  If <i>self.verbose</i> is true, then the
+results (if any) are displayed using the result formatting method.  If
+<code>maxrows</code> is specified, only <i>maxrows</i> are displayed.
+</dd>
 
-		<dt><p><code class="methodname">raw(self, sql, params=None, bindings=None, delim=None, comments=comments)</code></p></dt>
+<dt><p><code class="methodname">raw(self, sql, params=None, bindings=None,
+delim=None, comments=comments)</code></p></dt>
 
-		<dd>
-			Executes the sql statement with params and bindings as necessary.  Returns a tuple consisting of (headers, results).
-		</dd>
+<dd>
+Executes the sql statement with params and bindings as necessary.  Returns a
+tuple consisting of (headers, results).
+</dd>
 
-		<dt><p><code class="methodname">schema(table, full=0, sort=1)</code></p></dt>
+<dt><p><code class="methodname">schema(table, full=0, sort=1)</code></p></dt>
 
-		<dd>
-			Displays the schema (indicies, foreign keys, primary keys and columns) for the table parameter.  If <code>full</code> is true, also compute the exported (or referenced) keys.  If <code>sort</code> is true (the default), sort the column names.
+<dd>
+Displays the schema (indicies, foreign keys, primary keys and columns) for the
+table parameter.  If <code>full</code> is true, also compute the exported (or
+referenced) keys.  If <code>sort</code> is true (the default), sort the column names.
 <pre>
 >>> d.schema("store")
 Table
