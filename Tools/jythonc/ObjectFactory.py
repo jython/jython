@@ -104,12 +104,13 @@ class ObjectFactory:
             [items[0].asAny(), items[1].asAny(), items[2].asAny()])
         return Object(code, Generic)
 
-    def getCompiler(self, parent_compiler, frameCtr, scope):
+    def getCompiler(self, parent_compiler, frameCtr, scope, className):
         return SimpleCompiler.SimpleCompiler(self.parent.module, self,
                                              parent = parent_compiler,
                                              frameCtr = frameCtr,
                                              scope = scope,
-                                             options = self.parent.options)
+                                             options = self.parent.options,
+                                             className = className)
 
 
 class FixedObject(PyObject):
@@ -150,7 +151,7 @@ class PyFunction(FixedObject):
         # Add args to funcframe
         ac = self.scope.ac
         # Parse the body
-        comp = self.factory.getCompiler(self.def_compiler,SimpleCompiler.FunctionFrame,self.scope)
+        comp = self.factory.getCompiler(self.def_compiler,SimpleCompiler.FunctionFrame,self.scope, self.def_compiler.className)
         for argname in ac.names:
             comp.frame.setname(argname, self.factory.makePyObject(None))
 
@@ -265,7 +266,8 @@ class PyClass(FixedObject):
 
     def makeCode(self):
         comp = self.factory.getCompiler(self.def_compiler,
-                                        SimpleCompiler.ClassFrame, self.scope)
+                                        SimpleCompiler.ClassFrame, self.scope,
+                                        self.name)
         code = jast.Block([comp.parse(self.body),
                            jast.Return(jast.Invoke(comp.frame.frame,
                                                    "getf_locals", []))])

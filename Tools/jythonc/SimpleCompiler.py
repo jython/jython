@@ -235,7 +235,7 @@ class FunctionFrame(LocalFrame):
 
 class SimpleCompiler(BaseEvaluator, CompilationContext):
     def __init__(self, module, factory, parent=None, frameCtr=None, scope=None,
-                 options=None):
+                 options=None, className=None):
         BaseEvaluator.__init__(self)
 
         if parent is None:
@@ -252,6 +252,7 @@ class SimpleCompiler(BaseEvaluator, CompilationContext):
         self.nthrowables = 0
         self.factory = factory
         self.options = options
+        self.className = className
         self.listComprehensionStack = []
 
         self.free_decls = []
