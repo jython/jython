@@ -188,7 +188,12 @@ public class PyList extends PySequence implements InitModule {
 		}
 	}
 
-	public PyString __repr__() {
+	public String toString() {
+	    ThreadState ts = Py.getThreadState();
+	    if (!ts.enterRepr(this)) {
+	        return "[...]";
+	    }
+	    
 		StringBuffer buf = new StringBuffer("[");
 		for(int i=0; i<length-1; i++) {
 			buf.append(((PyObject)list[i]).__repr__().toString());
@@ -197,7 +202,8 @@ public class PyList extends PySequence implements InitModule {
 		if (length > 0) buf.append(((PyObject)list[length-1]).__repr__().toString());
 		buf.append("]");
 
-		return new PyString(buf.toString());
+        ts.exitRepr(this);
+		return buf.toString();
 	}
 
     protected void resize(int n) {

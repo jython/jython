@@ -9,6 +9,7 @@ public class ThreadState {
     public PyException exception;
     public Thread thread;
     public boolean tracing;
+    public PyList reprStack = null;
 
     public ThreadState(Thread t, PySystemState systemState) {
         thread = t;
@@ -20,5 +21,29 @@ public class ThreadState {
         //interp = Py.interp;
         tracing = false;
         //System.out.println("new thread state");
+    }
+    
+    public boolean enterRepr(PyObject obj) {
+        //if (reprStack == null) System.err.println("reprStack: null");
+        //else System.err.println("reprStack: "+reprStack.__len__());
+        if (reprStack == null) {
+            reprStack = new PyList(new PyObject[] {obj});
+            return true;
+        }
+        for(int i=reprStack.length-1; i>=0; i--) {
+            if (obj == reprStack.get(i)) return false;
+        }
+        reprStack.append(obj);
+        return true;
+    }
+    
+    public void exitRepr(PyObject obj) {
+        if (reprStack == null) return;
+
+		for(int i = reprStack.length-1; i>=0; i--) {
+			if (reprStack.get(i) == obj) {
+			    reprStack.delRange(i, reprStack.length, 1);
+			}
+		}
     }
 }
