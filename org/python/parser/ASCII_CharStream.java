@@ -22,15 +22,15 @@ public final class ASCII_CharStream
   private boolean prevCharIsCR = false;
   private boolean prevCharIsLF = false;
 
-  private java.io.InputStream inputStream;
+  private java.io.Reader inputStream;
 
-  private byte[] buffer;
+  private char[] buffer;
   private int maxNextCharInd = 0;
   private int inBuf = 0;
 
   private final void ExpandBuff(boolean wrapAround)
   {
-     byte[] newbuffer = new byte[bufsize + 2048];
+     char[] newbuffer = new char[bufsize + 2048];
      int newbufline[] = new int[bufsize + 2048];
      int newbufcolumn[] = new int[bufsize + 2048];
 
@@ -230,7 +230,7 @@ public final class ASCII_CharStream
        bufpos += bufsize;
   }
 
-  public ASCII_CharStream(java.io.InputStream dstream, int startline,
+  public ASCII_CharStream(java.io.Reader dstream, int startline,
   int startcolumn, int buffersize)
   {
     inputStream = dstream;
@@ -238,17 +238,17 @@ public final class ASCII_CharStream
     column = startcolumn - 1;
 
     available = bufsize = buffersize;
-    buffer = new byte[buffersize];
+    buffer = new char[buffersize];
     bufline = new int[buffersize];
     bufcolumn = new int[buffersize];
   }
 
-  public ASCII_CharStream(java.io.InputStream dstream, int startline,
+  public ASCII_CharStream(java.io.Reader dstream, int startline,
                                                            int startcolumn)
   {
      this(dstream, startline, startcolumn, 4096);
   }
-  public void ReInit(java.io.InputStream dstream, int startline,
+  public void ReInit(java.io.Reader dstream, int startline,
   int startcolumn, int buffersize)
   {
     inputStream = dstream;
@@ -258,7 +258,7 @@ public final class ASCII_CharStream
     if (buffer == null || buffersize != buffer.length)
     {
       available = bufsize = buffersize;
-      buffer = new byte[buffersize];
+      buffer = new char[buffersize];
       bufline = new int[buffersize];
       bufcolumn = new int[buffersize];
     }
@@ -267,24 +267,45 @@ public final class ASCII_CharStream
     bufpos = -1;
   }
 
+  public void ReInit(java.io.Reader dstream, int startline,
+                                                           int startcolumn)
+  {
+     ReInit(dstream, startline, startcolumn, 4096);
+  }
+  public ASCII_CharStream(java.io.InputStream dstream, int startline,
+  int startcolumn, int buffersize)
+  {
+     this(new java.io.InputStreamReader(dstream), startline, startcolumn, 4096);
+  }
+
+  public ASCII_CharStream(java.io.InputStream dstream, int startline,
+                                                           int startcolumn)
+  {
+     this(dstream, startline, startcolumn, 4096);
+  }
+
+  public void ReInit(java.io.InputStream dstream, int startline,
+  int startcolumn, int buffersize)
+  {
+     ReInit(new java.io.InputStreamReader(dstream), startline, startcolumn, 4096);
+  }
   public void ReInit(java.io.InputStream dstream, int startline,
                                                            int startcolumn)
   {
      ReInit(dstream, startline, startcolumn, 4096);
   }
-
   public final String GetImage()
   {
      if (bufpos >= tokenBegin)
-        return new String(buffer, 0, tokenBegin, bufpos - tokenBegin + 1);
+        return new String(buffer, tokenBegin, bufpos - tokenBegin + 1);
      else
-        return new String(buffer, 0, tokenBegin, bufsize - tokenBegin) +
-                              new String(buffer, 0, 0, bufpos + 1);
+        return new String(buffer, tokenBegin, bufsize - tokenBegin) +
+                              new String(buffer, 0, bufpos + 1);
   }
 
-  public final byte[] GetSuffix(int len)
+  public final char[] GetSuffix(int len)
   {
-     byte[] ret = new byte[len];
+     char[] ret = new char[len];
 
      if ((bufpos + 1) >= len)
         System.arraycopy(buffer, bufpos - len + 1, ret, 0, len);
