@@ -546,7 +546,11 @@ public class PyInstance extends PyObject
     public PyObject __getitem__(PyObject key) {
         CollectionProxy proxy = getCollection();
         if (proxy != CollectionProxy.NoProxy) {
-            return proxy.__finditem__(key);
+            PyObject ret = proxy.__finditem__(key);
+            if (ret == null) {
+                throw Py.KeyError(key.toString());
+            }
+            return ret;
         }
 
         PyObject ret = trySlice(key, "__getslice__", null);
