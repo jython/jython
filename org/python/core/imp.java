@@ -444,8 +444,18 @@ public class imp
         return importName(name, top);
     }
 
+    /**
+     * Called from jpython generated code when a statement like "import spam" 
+     * is executed.
+     */
     public static void importOne(String mod, PyFrame frame) {
-        PyObject module = importName(mod, true, frame.f_globals);
+        //System.out.println("importOne(" + mod + ")");
+        PyObject module = getImportFunc(frame).__call__(new PyObject[] {
+                Py.newString(mod),
+                frame.f_globals,
+                frame.f_locals,
+                Py.EmptyTuple } );
+
         int dot = mod.indexOf('.');
         if (dot != -1) {
             mod = mod.substring(0, dot).intern();
@@ -454,19 +464,48 @@ public class imp
         frame.setlocal(mod, module);
     }
         
+    /**
+     * Called from jpython generated code when a stamenet like 
+     * "from spam.eggs import foo, bar" is executed.
+     */
     public static void importFrom(String mod, String[] names, PyFrame frame) {
-        PyObject module = importName(mod, false, frame.f_globals);
+        //StringBuffer sb = new StringBuffer();
+        //for(int i=0; i<names.length; i++)
+        //    sb.append(names[i] + " ");
+        //System.out.println("importFrom(" + mod + ", [" + sb + "]");
+
+        PyObject[] pynames = new PyObject[names.length];
+        for(int i=0; i<names.length; i++)
+            pynames[i] = Py.newString(names[i]);
+
+        PyObject module = getImportFunc(frame).__call__(new PyObject[] {
+                Py.newString(mod),
+                frame.f_globals,
+                frame.f_locals,
+                new PyTuple(pynames) });
         for(int i=0; i<names.length; i++) {
             frame.setlocal(names[i], module.__getattr__(names[i]));
         }
-    }   
+    }
 
+    private static PyTuple all = new PyTuple(new PyString[] 
+           { Py.newString('*') });
+
+    /**
+     * Called from jpython generated code when a stamenet like 
+     * "from spam.eggs import *" is executed.
+     */
     public static void importAll(String mod, PyFrame frame) {
-        PyObject module = importName(mod, false, frame.f_globals);
-        PyObject locals = frame.getf_locals();
+        //System.out.println("importAll(" + mod + ")");
+        PyObject module = getImportFunc(frame).__call__(new PyObject[] {
+                Py.newString(mod),
+                frame.f_globals,
+                frame.f_locals,
+                all } );
 
         loadNames(module.__dir__(), module, frame.getf_locals());
     }
+
 
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals)
@@ -539,5 +578,16 @@ public class imp
         PyObject ret = loadFromPath(name, modName, path);
         modules.__setitem__(modName, ret);
         return ret;
+    }
+
+
+    private static PyObject __import__ = Py.newString("__import__");
+
+    private static PyObject getImportFunc(PyFrame frame) {
+        // Set up f_builtins if not already set
+	PyObject builtins = frame.f_builtins;
+        if (builtins == null)
+            builtins = Py.getSystemState().builtins;
+        return builtins.__getitem__(__import__);
     }
 }
