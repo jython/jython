@@ -647,155 +647,12 @@ public class _codecs {
 
 
     public static PyTuple unicode_escape_encode(String str, String errors) {
-        return codec_tuple(PyString.unicodeescape(str, false), str.length());
+        return codec_tuple(PyString.encode_UnicodeEscape(str, false), str.length());
     }
-
-
-
-
 
     public static PyTuple unicode_escape_decode(String str, String errors) {
-        return codec_tuple(decodeUnicodeEscape(str, errors), str.length());
-    }
-
-
-
-    private static ucnhashAPI pucnHash = null;
-
-    private static String decodeUnicodeEscape(String str, String errors) {
-        int size = str.length();
-        StringBuffer v = new StringBuffer(size);
-
-        for (int s = 0; s < size; ) {
-            char ch = str.charAt(s);
-
-            /* Non-escape characters are interpreted as Unicode ordinals */
-            if (ch != '\\') {
-                v.append(ch);
-                s++;
-	        continue;
-            }
-
-    
-            /* \ - Escapes */
-            s++;
-            ch = str.charAt(s++);
-            switch (ch) {
-
-            /* \x escapes */
-            case '\n': break;
-            case '\\': v.append('\\'); break;
-            case '\'': v.append('\''); break;
-            case '\"': v.append('\"'); break;
-            case 'b': v.append('\b'); break;
-            case 'f': v.append('\014'); break; /* FF */
-            case 't': v.append('\t'); break;
-            case 'n': v.append('\n'); break;
-            case 'r': v.append('\r'); break;
-            case 'v': v.append('\013'); break; /* VT */
-            case 'a': v.append('\007'); break; /* BEL, not classic C */
-
-            /* \OOO (octal) escapes */
-            case '0': case '1': case '2': case '3':
-            case '4': case '5': case '6': case '7':
-
-                int x = Character.digit(ch, 8);
-                ch = str.charAt(s++);
-                if ('0' <= ch && ch <= '7') {
-                    x = (x<<3) + Character.digit(ch, 8);
-                    ch = str.charAt(s++);
-                    if ('0' <= ch && ch <= '7') {
-                        x = (x<<3) + Character.digit(ch, 8);
-                    }
-                }
-                v.append((char) x);
-                break;
-
-            /* \ uXXXX with 4 hex digits */
-            case 'u':
-                int i;
-                for (x = 0, i = 0; i < 4; i++) {
-                    ch = str.charAt(s + i);
-                    int d  = Character.digit(ch, 16);
-                    if (d == -1) {
-                        codecs.decoding_error("unicode escape", v, errors,
-                                              "truncated \\uXXXX");
-                        break;
-                    }
-                    x = ((x<<4) & ~0xF) + d;
-                }
-                s += i;
-                v.append((char) x);
-                break;
-
-            case 'N':
-                /* Ok, we need to deal with Unicode Character Names now,
-                 * make sure we've imported the hash table data...
-                 */
-                if (pucnHash == null) {
-                     PyObject mod = imp.importName("ucnhash", true);
-                     pucnHash = (ucnhashAPI) mod.__tojava__(ucnhashAPI.class);
-                }
-
-                if (str.charAt(s) == '{') {
-                    int start = s + 1;
-                    int endBrace = start;
-
-                    /* look for either the closing brace, or we
-                     * exceed the maximum length of the unicode character names
-                     */
-                    int maxLen = pucnHash.getCchMax();
-                    while (str.charAt(endBrace) != '}' 
-                           && (endBrace - start) <= maxLen
-                           && endBrace < size) {
-                        endBrace++;
-                    }
-                    if (endBrace != size && str.charAt(endBrace) == '}') {
-                         int value = pucnHash.getValue(str, start, endBrace);
-                         if (value < 0) {
-                             codecs.decoding_error("unicode escape", v, errors, 
-                                 "Invalid Unicode Character Name");
-                             v.append('\\');
-                             v.append(str.charAt(s-1));
-                             break;
-                         }
-
-                         if (value < 1<<16) {
-                             /* In UCS-2 range, easy solution.. */
-                             v.append(value);
-                         } else {
-                             /* Oops, its in UCS-4 space, */
-                             /*  compute and append the two surrogates: */
-                             /*  translate from 10000..10FFFF to 0..FFFFF */
-                             value -= 0x10000;
-
-                             /* high surrogate = top 10 bits added to D800 */
-                             v.append((char) (0xD800 + (value >> 10)));
-
-                             /* low surrogate  = bottom 10 bits added to DC00*/
-                             v.append((char) (0xDC00 + (value & ~0xFC00)));
-                        }
-                        s = endBrace + 1;
-                    } else {
-                         codecs.decoding_error("unicode escape", v, errors, 
-                              "Unicode name missing closing brace");
-                         v.append('\\');
-                         v.append(str.charAt(s-1));
-                         break;
-                    }
-                    break;
-                }
-                codecs.decoding_error("unicode escape", v, errors, 
-                     "Missing opening brace for Unicode Character Name escape");
- 
-                /* fall through on purpose */
-           default:
-               v.append('\\');
-               v.append(str.charAt(s-1));
-               break;
-           }
-       }
-       return v.toString();
+        int n = str.length();
+        return codec_tuple(PyString.decode_UnicodeEscape(str, 0, n, errors, true), n);
     }
 
 
@@ -806,8 +663,6 @@ public class _codecs {
     public static PyTuple unicode_internal_encode(String str, String errors) {
         return codec_tuple(str, str.length());
     }
-
-
 
     public static PyTuple unicode_internal_decode(String str, String errors) {
         return codec_tuple(str, str.length());

@@ -278,7 +278,8 @@ public class PyString extends PySequence implements ClassDictInit
         dict.__setitem__("atof", null);
         dict.__setitem__("atoi", null);
         dict.__setitem__("atol", null);
-        dict.__setitem__("unicodeescape", null);
+        dict.__setitem__("encode_UnicodeEscape", null);
+        dict.__setitem__("decode_UnicodeEscape", null);
     }
 
     protected String safeRepr() {
@@ -308,12 +309,12 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public PyString __repr__() {
-        return new PyString(unicodeescape(string, true));
+        return new PyString(encode_UnicodeEscape(string, true));
     }
 
     private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
 
-    public static String unicodeescape(String str, boolean use_quotes) {
+    public static String encode_UnicodeEscape(String str, boolean use_quotes) {
         int size = str.length();
         StringBuffer v = new StringBuffer(str.length());
 
@@ -365,6 +366,176 @@ public class PyString extends PySequence implements ClassDictInit
         if (use_quotes)
             v.append(quote);
         return v.toString();
+    }
+
+    private static ucnhashAPI pucnHash = null;
+
+    public static String decode_UnicodeEscape(String str, int start, int end, 
+                                              String errors, boolean unicode)
+    {
+        StringBuffer v = new StringBuffer(end-start);
+        for (int s = start; s < end; ) {
+            char ch = str.charAt(s);
+
+            /* Non-escape characters are interpreted as Unicode ordinals */
+            if (ch != '\\') {
+                v.append(ch);
+                s++;
+	        continue;
+            }
+    
+            /* \ - Escapes */
+            s++;
+            ch = str.charAt(s++);
+            switch (ch) {
+
+            /* \x escapes */
+            case '\n': break;
+            case '\\': v.append('\\'); break;
+            case '\'': v.append('\''); break;
+            case '\"': v.append('\"'); break;
+            case 'b': v.append('\b'); break;
+            case 'f': v.append('\014'); break; /* FF */
+            case 't': v.append('\t'); break;
+            case 'n': v.append('\n'); break;
+            case 'r': v.append('\r'); break;
+            case 'v': v.append('\013'); break; /* VT */
+            case 'a': v.append('\007'); break; /* BEL, not classic C */
+
+            /* \OOO (octal) escapes */
+            case '0': case '1': case '2': case '3':
+            case '4': case '5': case '6': case '7':
+
+                int x = Character.digit(ch, 8);
+                for (int j = 0; j < 2 && s < end; j++) {
+                    ch = str.charAt(s++);
+                    if (ch < '0' || ch > '7')
+                        break;
+                    x = (x<<3) + Character.digit(ch, 8);
+                }
+                v.append((char) x);
+                break;
+
+            case 'x':
+                int i;
+                for (x = 0, i = 0; i < 2 && s < end; i++) {
+                    ch = str.charAt(s + i);
+                    int d = Character.digit(ch, 16);
+                    if (d == -1) {
+                        codecs.decoding_error("unicode escape", v, errors,
+                                                     "truncated \\xXX");
+                        i++;
+                        break;
+                    }
+
+                    x = ((x<<4) & ~0xF) + d;
+                }
+                s += i;
+                v.append((char) x);
+                break;
+
+            /* \ uXXXX with 4 hex digits */
+            case 'u':
+                if (!unicode) {
+                    v.append('\\');
+                    v.append('u');
+                    break;
+                }
+                if (s+4 > end) {
+                    codecs.decoding_error("unicode escape", v, errors,
+                                              "truncated \\uXXXX");
+                    break;
+                }
+                for (x = 0, i = 0; i < 4; i++) {
+                    ch = str.charAt(s + i);
+                    int d  = Character.digit(ch, 16);
+                    if (d == -1) {
+                        codecs.decoding_error("unicode escape", v, errors,
+                                              "truncated \\uXXXX");
+                        break;
+                    }
+                    x = ((x<<4) & ~0xF) + d;
+                }
+                s += i;
+                v.append((char) x);
+                break;
+
+            case 'N':
+                if (!unicode) {
+                    v.append('\\');
+                    v.append('N');
+                    break;
+                }
+                /* Ok, we need to deal with Unicode Character Names now,
+                 * make sure we've imported the hash table data...
+                 */
+                if (pucnHash == null) {
+                     PyObject mod = imp.importName("ucnhash", true);
+                     mod = mod.__call__();
+                     pucnHash = (ucnhashAPI) mod.__tojava__(Object.class);
+                     if (pucnHash.getCchMax() < 0)
+                         codecs.decoding_error("unicode escape", v, errors, 
+                                 "Unicode names not loaded");
+                }
+
+                if (str.charAt(s) == '{') {
+                    int startName = s + 1;
+                    int endBrace = startName;
+
+                    /* look for either the closing brace, or we
+                     * exceed the maximum length of the unicode character names
+                     */
+                    int maxLen = pucnHash.getCchMax();
+                    while (endBrace < end && str.charAt(endBrace) != '}' 
+                           && (endBrace - startName) <= maxLen) {
+                        endBrace++;
+                    }
+                    if (endBrace != end && str.charAt(endBrace) == '}') {
+                         int value = pucnHash.getValue(str, startName, endBrace);
+                         if (value < 0) {
+                             codecs.decoding_error("unicode escape", v, errors, 
+                                 "Invalid Unicode Character Name");
+                             v.append('\\');
+                             v.append(str.charAt(s-1));
+                             break;
+                         }
+
+                         if (value < 1<<16) {
+                             /* In UCS-2 range, easy solution.. */
+                             v.append((char) value);
+                         } else {
+                             /* Oops, its in UCS-4 space, */
+                             /*  compute and append the two surrogates: */
+                             /*  translate from 10000..10FFFF to 0..FFFFF */
+                             value -= 0x10000;
+
+                             /* high surrogate = top 10 bits added to D800 */
+                             v.append((char) (0xD800 + (value >> 10)));
+
+                             /* low surrogate  = bottom 10 bits added to DC00*/
+                             v.append((char) (0xDC00 + (value & ~0xFC00)));
+                        }
+                        s = endBrace + 1;
+                    } else {
+                         codecs.decoding_error("unicode escape", v, errors, 
+                              "Unicode name missing closing brace");
+                         v.append('\\');
+                         v.append(str.charAt(s-1));
+                         break;
+                    }
+                    break;
+                }
+                codecs.decoding_error("unicode escape", v, errors, 
+                     "Missing opening brace for Unicode Character Name escape");
+ 
+                /* fall through on purpose */
+           default:
+               v.append('\\');
+               v.append(str.charAt(s-1));
+               break;
+           }
+       }
+       return v.toString();
     }
 
     public boolean equals(Object other) {
