@@ -1,22 +1,23 @@
-
 /*
- * Jython Database Specification API 2.0
- *
- * $Id$
- *
- * Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
- *
- */
+* Jython Database Specification API 2.0
+*
+* $Id$
+*
+* Copyright (c) 2001 brian zimmer <bzimmer@ziclix.com>
+*
+*/
 package com.ziclix.python.sql.handler;
 
-import java.sql.ResultSet;
-import java.sql.Types;
-import java.sql.SQLException;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
+import com.ziclix.python.sql.DataHandler;
+import org.python.core.Py;
+import org.python.core.PyFile;
+import org.python.core.PyObject;
+
 import java.math.BigDecimal;
-import org.python.core.*;
-import com.ziclix.python.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 
 /**
  * Postgresql specific data handling.
@@ -25,114 +26,99 @@ import com.ziclix.python.sql.*;
  * @author last revised by $Author$
  * @version $Revision$
  */
-public class PostgresqlDataHandler extends FilterDataHandler {
+public class PostgresqlDataHandler extends RowIdHandler {
 
-	/**
-	 * Decorator for handling Postgresql specific issues.
-	 *
-	 * @param datahandler the delegate DataHandler
-	 */
-	public PostgresqlDataHandler(DataHandler datahandler) {
-		super(datahandler);
-	}
+  /**
+   * Decorator for handling Postgresql specific issues.
+   *
+   * @param datahandler the delegate DataHandler
+   */
+  public PostgresqlDataHandler(DataHandler datahandler) {
+    super(datahandler);
+  }
 
-	/**
-	 * Returns the last insert OID for the statement.
-	 *
-	 * @param Statement stmt
-	 *
-	 * @return PyObject
-	 *
-	 * @throws SQLException
-	 *
-	 */
-	public PyObject getRowId(Statement stmt) throws SQLException {
+  protected String getRowIdMethodName() {
+    return "getLastOID";
+  }
 
-		if (stmt instanceof org.postgresql.Statement) {
-			return Py.newInteger(((org.postgresql.Statement)stmt).getInsertedOID());
-		}
+  /**
+   * Override to handle Postgresql related issues.
+   *
+   * @param set the result set
+   * @param col the column number
+   * @param type the SQL type
+   * @return the mapped Python object
+   * @throws SQLException thrown for a sql exception
+   */
+  public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
 
-		return super.getRowId(stmt);
-	}
+    PyObject obj = Py.None;
 
-	/**
-	 * Override to handle Postgresql related issues.
-	 *
-	 * @param set the result set
-	 * @param col the column number
-	 * @param type the SQL type
-	 * @return the mapped Python object
-	 * @throws SQLException thrown for a sql exception
-	 */
-	public PyObject getPyObject(ResultSet set, int col, int type) throws SQLException {
+    switch (type) {
 
-		PyObject obj = Py.None;
+      case Types.NUMERIC:
+      case Types.DECIMAL:
 
-		switch (type) {
+        // in JDBC 2.0, use of a scale is deprecated
+        // The big fix here is a problem with numeric types.  It seems the ResultSet
+        // tries to fix a JBuilder bug (as commented in the source) by including a
+        // scale of 0.  Well this blows up BigDecimal if the number is, say, 4.22.
+        // It appears the workaround is to call the deprecated method with a scale of
+        // -1 which forces the return of the BD without setting the scale.
+        BigDecimal bd = set.getBigDecimal(col, -1);
 
-			case Types.NUMERIC :
-			case Types.DECIMAL :
+        obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
+        break;
 
-				// in JDBC 2.0, use of a scale is deprecated
-				// The big fix here is a problem with numeric types.  It seems the ResultSet
-				// tries to fix a JBuilder bug (as commented in the source) by including a
-				// scale of 0.  Well this blows up BigDecimal if the number is, say, 4.22.
-				// It appears the workaround is to call the deprecated method with a scale of
-				// -1 which forces the return of the BD without setting the scale.
-				BigDecimal bd = set.getBigDecimal(col, -1);
+      case Types.OTHER:
 
-				obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
-				break;
+        // it seems pg doesn't like to handle OTHER types as anything but strings
+        // but we'll try first anyways just to see what happens
+        try {
+          obj = super.getPyObject(set, col, type);
+        } catch (SQLException e) {
+          obj = super.getPyObject(set, col, Types.VARCHAR);
+        }
+        break;
 
-			case Types.OTHER :
+      default :
+        obj = super.getPyObject(set, col, type);
+    }
 
-				// it seems pg doesn't like to handle OTHER types as anything but strings
-				// but we'll try first anyways just to see what happens
-				try {
-					obj = super.getPyObject(set, col, type);
-				} catch (SQLException e) {
-					obj = super.getPyObject(set, col, Types.VARCHAR);
-				}
-				break;
+    return (set.wasNull() || (obj == null)) ? Py.None : obj;
+  }
 
-			default :
-				obj = super.getPyObject(set, col, type);
-		}
+  /**
+   * Provide fixes for Postgresql driver.
+   *
+   * @param stmt
+   * @param index
+   * @param object
+   * @param type
+   * @throws SQLException
+   */
+  public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
 
-		return (set.wasNull() || (obj == null)) ? Py.None : obj;
-	}
+    if (DataHandler.checkNull(stmt, index, object, type)) {
+      return;
+    }
 
-	/**
-	 * Provide fixes for Postgresql driver.
-	 *
-	 * @param stmt
-	 * @param index
-	 * @param object
-	 * @param type
-	 * @throws SQLException
-	 */
-	public void setJDBCObject(PreparedStatement stmt, int index, PyObject object, int type) throws SQLException {
+    switch (type) {
 
-		if (DataHandler.checkNull(stmt, index, object, type)) {
-			return;
-		}
+      case Types.LONGVARCHAR:
 
-		switch (type) {
+        // Postgresql driver can't handle the setCharacterStream() method so use setObject() instead
+        if (object instanceof PyFile) {
+          object = ((PyFile) object).read();
+        }
 
-			case Types.LONGVARCHAR :
+        String varchar = (String) object.__tojava__(String.class);
 
-				// Postgresql driver can't handle the setCharacterStream() method so use setObject() instead
-				if (object instanceof PyFile) {
-					object = ((PyFile)object).read();
-				}
+        stmt.setObject(index, varchar, type);
+        break;
 
-				String varchar = (String)object.__tojava__(String.class);
-
-				stmt.setObject(index, varchar, type);
-				break;
-
-			default :
-				super.setJDBCObject(stmt, index, object, type);
-		}
-	}
+      default :
+        super.setJDBCObject(stmt, index, object, type);
+    }
+  }
 }
