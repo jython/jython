@@ -124,10 +124,7 @@ def join(words, sep = ' '):
     (joinfields and join are synonymous)
 
     """
-    res = ''
-    for w in words:
-	res = res + (sep + w)
-    return res[len(sep):]
+    return sep.join(words)
 joinfields = join
 
 # for a little bit of speed
@@ -412,33 +409,13 @@ def replace(s, old, new, maxsplit=0):
     return s.replace(old, new, maxsplit)
 
 
-# Java string methods
-def startswith(s, prefix, offset=0):
-    """startsWith (prefix[, offset]) -> int
-
-    Return 1 if S starts with the specified prefix, otherwise return 0.
-    With optional offset, test S beginning at that position.
-
-    """
-    return s.startswith(prefix, offset)
-
-def endswith(s, suffix):
-    """endsWith(suffix) -> int
-
-    Return 1 if S ends with the specified suffix, otherwise return 0.
-
-    """
-    return s.endswith(suffix)
-
-
 # Try importing optional built-in module "strop" -- if it exists,
 # it redefines some string operations that are 100-1000 times faster.
 # It also defines values for whitespace, lowercase and uppercase
 # that match <ctype.h>'s definitions.
 
 try:
-    from strop import maketrans, join, joinfields, \
-	 lowercase, uppercase, whitespace
+    from strop import maketrans, lowercase, uppercase, whitespace
     letters = lowercase + uppercase
 except ImportError:
     pass					  # Use the original versions
