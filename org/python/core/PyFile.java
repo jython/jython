@@ -386,6 +386,16 @@ public class PyFile extends PyObject
         this(_setup(name, mode, bufsize), name, mode);
     }
 
+    public void __setattr__(String name, PyObject value) {
+        // softspace is the only writeable file object attribute
+        if (name == "softspace")
+            softspace = value.__nonzero__();
+        else if (name == "mode" || name == "closed" || name == "name")
+            throw Py.TypeError("readonly attribute: " + name);
+        else
+            throw Py.AttributeError(name);
+    }
+
     private static FileWrapper _setup(String name, String mode, int bufsize) {
         char c1 = ' ';
         char c2 = ' ';
