@@ -229,7 +229,8 @@ def system( cmd ):
     # this uses some Popen3 internals, and thus belongs in popen3
     # javaos.system should also be this function
     p = Popen3( cmd, 1, bufsize)
-
+    p.tochild.close()
+    
     # read stderr in separate thread
     errReader = _makeReaderThread(
         p._childerr,
