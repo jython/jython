@@ -335,7 +335,7 @@ public class PySystemState extends PyObject
     }
 
     private static boolean initialized = false;
-    public static void initialize() {
+    public static synchronized void initialize() {
         if (initialized)
             return;
         initialize(System.getProperties(), null, new String[] {""});
