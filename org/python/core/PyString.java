@@ -188,7 +188,10 @@ public class PyString extends PySequence
             Integer i = Integer.valueOf(stripPlus(string));
             return new PyInteger(i.intValue());
         }
-        catch (NumberFormatException exc) {
+        catch (NumberFormatException e) {
+            throw Py.ValueError("invalid literal for __int__: "+string);
+        }
+        catch (StringIndexOutOfBoundsException e) {
             throw Py.ValueError("invalid literal for __int__: "+string);
         }
     }
@@ -198,6 +201,9 @@ public class PyString extends PySequence
             return new PyLong(new java.math.BigInteger(stripPlus(string)));
         }
         catch (NumberFormatException exc) {
+            throw Py.ValueError("invalid literal for __long__: "+string);
+        }
+        catch (StringIndexOutOfBoundsException e) {
             throw Py.ValueError("invalid literal for __long__: "+string);
         }
     }
