@@ -294,19 +294,23 @@ public class PyInstance extends PyObject
         
         
     public void __setattr__(String name, PyObject value) {
+        if (name == "__class__") {
+            if (value instanceof PyClass) {
+                __class__ = (PyClass)value;
+            } else {
+                throw Py.TypeError("__class__ must be set to a class");
+            }
+            return;
+        } else if (name == "__dict__") {
+            __dict__ = value;
+            return;
+        }
+
         PyObject setter = __class__.__setattr__;
         if (setter != null) {
             setter.__call__(this, new PyString(name), value);
         } else {
-            if (name == "__class__") {
-                if (value instanceof PyClass) {
-                    __class__ = (PyClass)value;
-                } else {
-                    throw Py.TypeError("__class__ must be set to a class");
-                }
-            } else if (name == "__dict__") {
-                __dict__ = value;
-            } else if (__class__.proxyClass != null) {
+            if (__class__.proxyClass != null) {
                 PyObject field = __class__.lookup(name, false);
                 if (field == null) {
                     noField(name, value);
