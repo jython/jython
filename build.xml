@@ -239,9 +239,10 @@
             <fileset dir="Doc" includes="*.ht, **/*.gif" />
         </copy>
         <!-- Create .html files in Doc -->
-        <execon executable="${python.exe}" dir="${distDir}/Doc">
+        <execon executable="${python.exe}" dir="Doc">
+	    <env key="PYTHONPATH" path="${basedir}/Misc/htgen"/>
             <arg line="${ht2html.dir}/ht2html.py"/>
-            <arg line="-s JPyLocalGenerator"/>
+            <arg line="-s JyLocalGenerator"/>
             <fileset dir="${distDir}/Doc">
                 <include name="*.ht" />
             </fileset>
