@@ -1008,7 +1008,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         SimpleNode name = node.getChild(index);
         SimpleNode suite = node.getChild(index+1);
 
-        setline(name);
+        //setline(name);
         Label end_of_self = code.getLabel();
 
         if (name.getNumChildren() > 0) {
