@@ -17,6 +17,7 @@ public class CollectionProxy {
             checkedJava2 = true;
             try {
                 Class c = Class.forName("org.python.core.CollectionProxy2");
+                Class.forName("java.util.Collection");
                 java2Proxy = (CollectionProxy)c.newInstance();
             } catch (Throwable t) { }
         }
