@@ -49,41 +49,48 @@ class LongAsScaledDoubleValueTests(unittest.TestCase):
         self.v = v = 2**53-1 # full mag bits of a double value
         self.v8 = v * 8      # fills up 7 bytes
         self.e = jarray.zeros(1,'i')
+        iarr = java.lang.Object.getClass(self.e)
+        sdv = java.lang.Class.getMethod(long, 'scaledDoubleValue', [iarr])
+        import org.python.core.PyReflectedFunction as ReflFunc
+        self.sdv = ReflFunc(sdv)
 
     def test_basic_roundtrip(self):
         e = self.e
-        assert long(0L .scaledDoubleValue(e)) == 0
+        sdv = self.sdv
+        assert long(sdv(0L, e)) == 0
         assert e[0] == 0
-        assert long(1L .scaledDoubleValue(e)) == 1
+        assert long(sdv(1L, e)) == 1
         assert e[0] == 0
-        assert long(-1L .scaledDoubleValue(e)) == -1
+        assert long(sdv(-1L, e)) == -1
         assert e[0] == 0
-        assert long(self.v.scaledDoubleValue(e)) == self.v
+        assert long(sdv(self.v, e)) == self.v
         assert e[0] == 0
 
     def test_scale_3_v(self):
         e = self.e
         v = self.v8
-        assert long(v.scaledDoubleValue(e)) == v
+        sdv = self.sdv
+        assert long(sdv(v, e)) == v
         assert e[0] == 0
-        assert long((v+1).scaledDoubleValue(e)) - v == 0
+        assert long(sdv(v+1, e)) - v == 0
         assert e[0] == 0
 
     def test_no_worse_than_doubleValue(self):
         e = self.e
         v = self.v8
+        sdv = self.sdv
         for d in range(8):
-            assert float(v+d) == (v+d).scaledDoubleValue(e)
+            assert float(v+d) == sdv(v+d, e)
             assert e[0] == 0
 
         for d in range(8):
             for y in [0,255]:
-                assert float((v+d)*256+y) == ((v+d)*256+y).scaledDoubleValue(e)
+                assert float((v+d)*256+y) == sdv((v+d)*256+y, e)
                 assert e[0] == 0
 
         for d in range(8):
           for y in [0,255]:
-            assert float((v+d)*256+y) == (((v+d)*256+y)*256).scaledDoubleValue(e)
+            assert float((v+d)*256+y) == sdv(((v+d)*256+y)*256, e)
             assert e[0] == 1        
 
 class ExtraMathTests(unittest.TestCase):
