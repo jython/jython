@@ -25,7 +25,7 @@ use Sun's standard <tt>javac</tt> compiler, or IBM's excellent
 <tt>jikes</tt> compiler.  Specifically, the Microsoft SDK <tt>jvc</tt> 
 compiler is not recommended.
 
-<P>Invoke jpython like this:
+<P>Invoke jpythonc like this:
 
 <P><B>jpythonc [options] [module]*</b>
 
