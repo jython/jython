@@ -2,6 +2,7 @@
 package org.python.parser;
 
 import org.python.core.Py;
+import org.python.core.PyString;
 
 public class SimpleNode implements Node
 {
@@ -97,94 +98,7 @@ public class SimpleNode implements Node
             int i=quotes+start;
             int last_i=i;
 
-            while (i<n) {
-                if (ca[i] == '\r') {
-                    sb.append(ca, last_i, i-last_i);
-                    sb.append('\n');
-                    i++;
-                    if (ca[i] == '\n') i++;
-                    last_i = i;
-                    continue;
-                }
-                if (ca[i++] != '\\' || i >= n) continue;
-                sb.append(ca, last_i, i-last_i-1);
-                switch(ca[i++]) {
-                case '\r':
-                    if (ca[i] == '\n') i++;
-                case '\n': break;
-                case 'b': sb.append('\b'); break;
-                case 't': sb.append('\t'); break;
-                case 'n': sb.append('\n'); break;
-                case 'f': sb.append('\f'); break;
-                case 'r': sb.append('\r'); break;
-                case '\"':
-                case '\'':
-                    sb.append(ca[i-1]);
-                    break;
-                case '\\': sb.append('\\'); break;
-                    //Special Python escapes
-                case 'a': sb.append('\007'); break;
-                case 'v': sb.append('\013'); break;
-
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                    int c = ca[i-1]-'0';
-                    if (i<n && '0' <= ca[i] && ca[i] <= '7') {
-                        c = (c<<3) + (ca[i++] -'0');
-                        if (i<n && '0' <= ca[i] && ca[i] <= '7') {
-                            c = (c<<3) + (ca[i++] -'0');
-                        }
-                    }
-                    sb.append((char)c);
-                    break;
-                case 'u':
-                    if (!ustring) {
-                        sb.append('u');
-                        break;
-                    }
-                    if (i+4 > n)
-                        throw new TokenMgrError(
-                               "Unicode-Escape decoding error: "+
-                               "truncated \\uXXXX", beginLine, beginColumn);
-                    char u=0;
-                    for (int j = 0; j < 4; j++) {
-                        int digit = Character.digit(ca[i++], 16);
-                        if (digit == -1)
-                            throw new TokenMgrError(
-                                 "Unicode-Escape decoding error: "+
-                                 "truncated \\uXXXX", beginLine, beginColumn);
-                        u = (char)(u*16 + digit);
-                    }
-                    sb.append(u);
-                    break;
-                case 'x':
-                    if (Character.digit(ca[i], 16) != -1) {
-                        int digit;
-                        char x=0;
-                        while (i<n &&
-                               (digit = Character.digit(ca[i++], 16)) != -1)
-                        {
-                            x = (char)(x*16 + digit);
-                        }
-                        if (i<n) i-=1;
-                        sb.append(x);
-                        break;
-                    }
-                    // If illegal hex digit, just fall through
-                default:
-                    sb.append('\\');
-                    sb.append(ca[i-1]);
-                }
-                last_i = i;
-            }
-            sb.append(ca, last_i, i-last_i);
-            return sb.toString();
+            return PyString.decode_UnicodeEscape(s, i, n, "strict", ustring);
         }
     }
 
