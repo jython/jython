@@ -549,7 +549,7 @@ public class PyJavaClass extends PyClass
                     myType = ret;
                 } else {
                     if (name.startsWith("set")) {
-                        if (args.length != 1 || ret != Void.TYPE)
+                        if (args.length != 1)
                             continue;
                         setter = method;
                         pname = decapitalize(name.substring(3));
@@ -574,7 +574,9 @@ public class PyJavaClass extends PyClass
                 } else {
                     //System.out.println("p: "+prop.myType+", "+myType);
                     if (getter != null) prop.getMethod = getter;
-                    if (setter != null) prop.setMethod = setter;
+                    if (setter != null && (ret == Void.TYPE || prop.setMethod==null))
+                        prop.setMethod = setter;
+
                 }
             }
         }
