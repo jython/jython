@@ -44,7 +44,14 @@ def powtest(type):
          for j in range(jl,jh+1):
              for k in range(kl, kh+1):
                  if (k!=0):
-                     assert compare(pow(type(i),j,k), type(i)**j % type(k)) == 0, '%s, %s, %s' % (i,j,k)
+                     try:
+                         assert compare(pow(type(i),j,k), type(i)**j % type(k)) == 0, '%s, %s, %s' % (i,j,k)
+                     except TypeError:
+                         if type==float:
+                             # Python 2.2 only allows 3rd arg if first 2 are integers
+                             pass
+                         else:
+                             raise
 
 print_test("integers", 3)
 powtest(int)
@@ -69,12 +76,19 @@ assert -3L**3%8 == pow(-3L,3,8) == 5L
 assert -3L**3%-8 == pow(-3,3L,-8) == -3L
 assert 5L**2%-8 == pow(5,2,-8L) == -7L
 
-assert 3.**3%8 == pow(3.,3,8) == 3.
-assert 3.**3%-8 == pow(3,3.,-8) == -5.
-assert 3.**2%-2 == pow(3,2,-2.) == -1.
-assert -3.**3%8 == pow(-3.,3,8) == 5.
-assert -3.**3%-8 == pow(-3,3.,-8) == -3.
-assert 5.**2%-8 == pow(5,2,-8.) == -7.
+# Python 2.2 only allows 3rd arg if first 2 are integers
+assert 3.**3%8 == pow(3.,3) % 8 == 3.
+assert 3.**3%-8 == pow(3,3.) % -8 == -5.
+assert 3.**2%-2 == pow(3,2) %-2. == -1.
+assert -3.**3%8 == pow(-3.,3) % 8 == 5.
+assert -3.**3%-8 == pow(-3,3.) % -8 == -3.
+assert 5.**2%-8 == pow(5,2) % -8. == -7.
+
+print_test( "Validate that TypeError is thrown with 3 args if first two args aren't integers" )
+import unittest
+tc = unittest.TestCase( "fail" ) # get failUnlessRaises method
+tc.failUnlessRaises( TypeError, pow, 3., 3, 8 )
+tc.failUnlessRaises( TypeError, pow, 3, 3., 8 )
 
 if sys.platform.startswith('java1.1'):
     print_test("miscellaneous... skipping due to JVM bugs", 3)
@@ -91,7 +105,3 @@ else:
                     o=pow(long(i),j) % k
                     n=pow(long(i),j,k)
                     assert o == n, 'Long mismatch: %s, %s, %s' % (i,j,k)
-                if (i>=0 and k<>0):
-                    o=pow(float(i),j) % k
-                    n=pow(float(i),j,k)
-                    assert o == n, 'Float mismatch: %g, %g, %g' % (i,j,k)
