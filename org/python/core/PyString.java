@@ -618,6 +618,44 @@ public class PyString extends PySequence implements InitModule
         return list;
     }
 
+    public PyList splitlines() {
+        return splitlines(false);
+    }
+
+    public PyList splitlines(boolean keepends) {
+        PyList list = new PyList();
+
+        char[] chars = string.toCharArray();
+        int n=chars.length;
+
+        int j = 0;
+        for (int i = 0; i < n; ) {
+            /* Find a line and append it */
+            while (i < n && (Character.getType(chars[i]) &
+                                   Character.LINE_SEPARATOR) == 0)
+                i++;
+
+            /* Skip the line break reading CRLF as one line break */
+            int eol = i;
+            if (i < n) {
+                if (chars[i] == '\r' && i + 1 < n && chars[i+1] == '\n')
+                    i += 2;
+                else
+                    i++;
+                if (keepends)
+                    eol = i;
+            }
+            list.append(new PyString(string.substring(j, eol)));
+            j = i;
+        }
+        if (j < n) {
+            list.append(new PyString(string.substring(j, n)));
+        }
+        return list;
+    }
+
+
+
     public int index(String sub) {
         return index(sub, 0, string.length());
     }
