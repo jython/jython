@@ -178,7 +178,7 @@ public class PyServlet extends HttpServlet {
             start = 0;
         else
             start++;
-        int end = path.lastIndexOf(".py");
+        int end = path.lastIndexOf('.');
         if ((end < 0) || (end <= start))
             end = path.length();
         String name = path.substring(start, end);
