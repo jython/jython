@@ -141,7 +141,7 @@ public class PySystemState extends PyObject
     public PySystemState() {
         initialize();
         modules = new PyStringMap();
-        
+
         argv = (PyList)defaultArgv.repeat(1);
         path = (PyList)defaultPath.repeat(1);
 
@@ -308,16 +308,10 @@ public class PySystemState extends PyObject
             
         // Initialize the path (and add system defaults)
         defaultPath = initPath(registry);
+        defaultArgv = initArgv(argv);
 
         // Set up the known Java packages
         initPackages(registry);
-
-        //System.err.println("ss2");
-        defaultArgv = new PyList();
-        //defaultArgv.append(new PyString(""));
-        for (int i=0; i<argv.length; i++) {
-            defaultArgv.append(new PyString(argv[i]));
-        }
         
         // Finish up standard Python initialization...
         Py.defaultSystemState = new PySystemState();
@@ -376,6 +370,16 @@ public class PySystemState extends PyObject
             pkgdir = null;
         }
         packageManager = new SysPackageManager(pkgdir, props);
+    }
+
+    private static PyList initArgv(String[] args) {
+        PyList argv = new PyList();
+        if (args != null) {
+            for (int i=0; i<args.length; i++) {
+                argv.append(new PyString(args[i]));
+            }
+        }
+        return argv;
     }
 
     private static Hashtable builtinNames;
