@@ -74,6 +74,14 @@ class DynamicStringReference(Reference):
         return jast.Invoke(self.iframe, "setlocal",
                            (self.ivalue, value.asAny()))
 
+class DynamicStringReference2(DynamicStringReference):
+    def setCode(self, value):
+        return jast.Invoke(self.iframe, "setglobal",
+                           (self.ivalue, value.asAny()))
+
+    def noValue(self):
+        # Reference to builtin
+        return self.frame.parent.factory.makePyObject(self.getCode())
 
 
 class DynamicGlobalStringReference(Reference):
@@ -99,7 +107,14 @@ class DynamicGlobalStringReference(Reference):
 class LocalFrame:
     def __init__(self, parent, newReference=DynamicIntReference):
         self.frame = jast.Identifier("frame")
-        self.globalNamespace = parent.globalNamespace
+
+        # This should only use SlowGlobals if the function uses
+        # ImportAll or ExecStmt. If not it should use 
+        # parent.globalNamespace.
+
+        self.globalNamespace = SlowGlobals(parent)
+        #self.globalNamespace = parent.globalNamespace
+
         self.parent = parent
         self.newReference = newReference
 
@@ -200,6 +215,7 @@ class LocalFrame:
 class GlobalFrame(LocalFrame):
     def __init__(self, parent):
         LocalFrame.__init__(self, parent)
+        self.globalNamespace = parent.globalNamespace
 
     def getReference(self, name):
         return self.globalNamespace.getReference(self, name)
@@ -230,6 +246,12 @@ class BasicGlobals:
         ret = self.newReference(frame, name)
         self.names[name] = ret
         return ret
+
+class SlowGlobals(BasicGlobals):
+    def __init__(self, parent, newReference=DynamicStringReference2):
+        self.names = {}
+        self.newReference = newReference
+        self.parent = parent
 
 
 
