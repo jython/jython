@@ -38,12 +38,6 @@ r(NameError)
 try: x = undefined_variable
 except NameError: pass
 
-r(OverflowError)
-x = 1
-try:
-        while 1: x = x+x
-except OverflowError: pass
-
 r(SyntaxError)
 try: exec '/\n'
 except SyntaxError: pass
