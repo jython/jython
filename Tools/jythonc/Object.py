@@ -1,8 +1,9 @@
 # Copyright © Corporation for National Research Initiatives
 import jast
 import org, java
-import string
 
+
+
 def makeAnys(args):
     ret = []
     for arg in args:
@@ -57,8 +58,9 @@ class Object:
     def __getattr__(self, name):
         return DelegateMethod(getattr(self.value, name), self.code)
 
-primitives = {java.lang.Integer.TYPE:'py2int',
-              java.lang.Character.TYPE:'py2char'
+
+primitives = {java.lang.Integer.TYPE  : 'py2int',
+              java.lang.Character.TYPE: 'py2char',
               }
 
 import JavaCall
@@ -140,6 +142,17 @@ class PyObject:
 
     def print_continued(self, code):
         return jast.InvokeStatic("Py", "printComma", [self.asAny(code)])
+
+    def print_line_to(self, file, code=None):
+        if code is None:
+            return jast.InvokeStatic("Py", "printlnv", [self.asAny(file)])
+        else:
+            return jast.InvokeStatic("Py", "println", [self.asAny(file),
+                                                       self.asAny(code)])
+
+    def print_continued_to(self, file, code):
+        return jast.InvokeStatic("Py", "printComma", [self.asAny(file),
+                                                      self.asAny(code)])
 
     def domethod(self, code, name, *args):
         meth = getattr(org.python.core.PyObject, name)
@@ -298,10 +311,12 @@ def findType(type):
     types[type] = ret
     return ret
 
+
 
 Generic = findType(org.python.core.PyObject)
 IntType = findType(java.lang.Integer.TYPE)
 StringType = findType(java.lang.String)
+
 
 
 if __name__ == '__main__':
