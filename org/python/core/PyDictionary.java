@@ -1,22 +1,73 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyDictionary extends PyObject {
-    java.util.Hashtable table;
+import java.util.Hashtable;
 
-    public static PyClass __class__;
-    public PyDictionary(java.util.Hashtable t) {
-        super(__class__);
+
+
+class DictFunctions extends PyBuiltinFunctionSet 
+{
+    DictFunctions(String name, int index, int argcount) {
+        super(name, index, argcount, argcount, true, null);
+    }
+
+    public PyObject __call__() {
+        PyDictionary dict = (PyDictionary)__self__;
+        switch (index) {
+        default:
+            throw argCountError(0);
+        }
+    }
+
+    public PyObject __call__(PyObject arg) {
+        PyDictionary dict = (PyDictionary)__self__;
+        switch (index) {
+        default:
+            throw argCountError(1);
+        }
+    }
+
+    public PyObject __call__(PyObject arg1, PyObject arg2) {
+        PyDictionary dict = (PyDictionary)__self__;
+        switch (index) {
+        default:
+            throw argCountError(2);
+        }
+    }
+}
+
+
+
+
+public class PyDictionary extends PyObject implements InitModule
+{
+    protected Hashtable table;
+    protected static PyObject __methods__;
+
+    static {
+        PyList list = new PyList();
+        String[] methods = {
+            "clear", "copy", "get", "has_key", "items",
+            "keys", "update", "values"};
+        for (int i = 0; i < methods.length; i++)
+            list.append(new PyString(methods[i]));
+        __methods__ = list;
+    }
+
+    public void initModule(PyObject dict) {
+    }
+
+    public PyDictionary(Hashtable t) {
         table = t;
     }
 
     public PyDictionary() {
-        this(new java.util.Hashtable()); //3, 0.9f);
+        this(new Hashtable());
     }
 
     public PyDictionary(PyObject elements[]) {
         this();
-        for (int i=0;i<elements.length;i+=2) {
+        for (int i = 0; i < elements.length; i+=2) {
             table.put(elements[i], elements[i+1]);
         }
     }
@@ -25,11 +76,22 @@ public class PyDictionary extends PyObject {
         return "'dict' object";
     }
     
+    public PyObject __findattr__(String name) {
+        if (name.equals("__methods__")) {
+            PyList mlist = (PyList)__methods__;
+            PyString methods[] = new PyString[mlist.length];
+            for (int i = 0; i < mlist.length; i++)
+                methods[i] = (PyString)mlist.list[i];
+            return new PyList(methods);
+        }
+        return super.__findattr__(name);
+    }
+
     public int __len__() {
         return table.size();
     }
 
-    public boolean __nonzero__() throws PyException {
+    public boolean __nonzero__() {
         return table.size() != 0;
     }
 
@@ -120,7 +182,7 @@ public class PyDictionary extends PyObject {
     }
 
     public PyDictionary copy() {
-        return new PyDictionary((java.util.Hashtable)table.clone());
+        return new PyDictionary((Hashtable)table.clone());
     }
 
     public void clear() {
@@ -128,7 +190,7 @@ public class PyDictionary extends PyObject {
     }
 
     public void update(PyDictionary d) {
-        java.util.Hashtable otable = d.table;
+        Hashtable otable = d.table;
 
         java.util.Enumeration ek = otable.keys();
         java.util.Enumeration ev = otable.elements();
