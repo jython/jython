@@ -144,7 +144,7 @@ public class PyInteger extends PyObject
     // This convention makes sense when you consider it in tandem with modulo
     private static int divide(int x, int y) {
         if (y == 0)
-            throw Py.ZeroDivisionError("integer division or modulo");
+            throw Py.ZeroDivisionError("integer division or modulo by zero");
 
         if (y == -1 && x < 0 && x == -x) {
             throw Py.OverflowError("integer division: "+x+" + "+y);
