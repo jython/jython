@@ -170,4 +170,8 @@ public class PyDictionary extends PyObject {
             l.addElement(e.nextElement());
         return new PyList(l);
     }
+
+    public int hashCode() {
+        throw Py.TypeError("unhashable type");
+    }
 }
