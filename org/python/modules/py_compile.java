@@ -5,6 +5,11 @@ import org.python.core.*;
 import java.io.File;
 
 public class py_compile {
+    public static PyList __all__ = new PyList(new PyString[] {
+        new PyString("compile")
+    });
+
+
     public static void compile(String filename, String cfile) {
         compile(filename, cfile, null);
     }

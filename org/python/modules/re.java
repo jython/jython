@@ -6,6 +6,12 @@ import org.apache.oro.text.regex.*;
 
 public class re implements ClassDictInit
 {
+    public static String[] __all__ = new String[] {
+        "match","search","sub","subn","split","findall","escape","compile",
+        "I","L","M","S","X","IGNORECASE","LOCALE","MULTILINE","DOTALL",
+        "VERBOSE","error"
+    };
+
     public static PyObject error = new PyString("re.error");
 
     public static PyException ReError(String message) {
