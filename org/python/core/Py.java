@@ -373,9 +373,14 @@ public final class Py
                                funcs, func_id);
     }
 
+    // This is just to save a reference, so the weak implementation
+    // of internal tables does not remove it shortly after initialization.
+    private static PyJavaClass __builtin__class;
+
     public static void setBuiltinExceptions() {
-        PyObject dict = PyJavaClass.lookup(
-            org.python.core.__builtin__.class).__getattr__("__dict__");
+        __builtin__class = 
+                     PyJavaClass.lookup(org.python.core.__builtin__.class);
+        PyObject dict = __builtin__class.__getattr__("__dict__");
         dict.__setitem__("Exception", Py.Exception);
         dict.__setitem__("TypeError", Py.TypeError);
         dict.__setitem__("LookupError", Py.LookupError);
