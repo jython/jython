@@ -11,7 +11,8 @@ class SynchronizedCallable extends PyObject
     }
 
     public PyObject _doget(PyObject container) {
-        return new PyMethod(container, this);
+        // TBD: third arg == null?  Hmm...
+        return new PyMethod(container, this, null);
     }
     public PyObject __call__() {
         throw Py.TypeError("synchronized callable called with 0 args");
