@@ -90,21 +90,10 @@ public class __builtin__ implements InitModule {
         return o.__findattr__("__call__") != null;
     }
 
-	private static PyString[] letters=null;
 
-	public static PyString chr(int i) {
+	public static char chr(int i) {
 		if (i < 0 || i > 65535) throw Py.ValueError("chr() arg not in range(65535)");
-		if (i > 255) {
-		    return new PyString(new String(new char[] {(char)i}));
-		}
-		// Cache the 8-bit characters for performance
-		if (letters == null) {
-			letters = new PyString[256];
-			for(int j=0; j<256; j++) {
-				letters[j] = new PyString(new String(new char[] {(char)j}));
-			}
-		}
-		return letters[i];
+		return (char)i;
 	}
 
 	public static int cmp(PyObject x, PyObject y) {
@@ -251,7 +240,7 @@ public class __builtin__ implements InitModule {
 		int j;
 		int n = chars.length;
 		for(i=0, j=0; i<n; i++) {
-		    args[0] = chr(chars[i]);
+		    args[0] = Py.makeCharacter(new Character(chars[i]));
 		    if (!f.__call__(args).__nonzero__()) continue;
 		    chars[j++] = chars[i];
 		}
@@ -449,9 +438,8 @@ public class __builtin__ implements InitModule {
         return new PyFile(name, mode, bufsize);
     }
 
-	public static int ord(String s) {
-		if (s.length() != 1) throw Py.TypeError("expected 1-length string");
-		return (int)(s.charAt(0));
+	public static final int ord(char c) {
+		return (int)(c);
 	}
 
 	public static PyObject pow(PyObject x, PyObject y) {
