@@ -1,4 +1,5 @@
 package org.python.core;
+import java.util.Hashtable;
 
 public class PyInstance extends PyObject {
 	//This field is only used by Python subclasses of Java classes
@@ -59,12 +60,31 @@ public class PyInstance extends PyObject {
 
 	public PyInstance() { ; }
 
+    private Hashtable primitiveMap;
+
 	public Object __tojava__(Class c) {
 	    if (c == Object.class && javaProxies != null && 
 	            javaProxies.length > 0 && javaProxies[0] != null) {
 	        return javaProxies[0];
 	    }
 		if (c.isInstance(this)) return this;
+		
+		if (c.isPrimitive()) {
+		    if (primitiveMap == null) {
+		        primitiveMap = new Hashtable();
+		        primitiveMap.put(Character.TYPE, Character.class);
+		        primitiveMap.put(Boolean.TYPE, Boolean.class);
+		        primitiveMap.put(Byte.TYPE, Byte.class);
+		        primitiveMap.put(Short.TYPE, Short.class);
+		        primitiveMap.put(Integer.TYPE, Integer.class);
+		        primitiveMap.put(Long.TYPE, Long.class);
+		        primitiveMap.put(Float.TYPE, Float.class);
+		        primitiveMap.put(Double.TYPE, Double.class);
+		    }
+		    Class tmp = (Class)primitiveMap.get(c);
+		    if (tmp != null) c = tmp;
+		}
+		
 		if (javaProxies != null) {
 		    //System.err.println("class: "+c);
 		    Class[] jClasses = __class__.proxyClasses;
