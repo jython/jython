@@ -3,47 +3,46 @@ package org.python.core;
 
 public class PyBuiltinFunctionSet extends PyObject
 {
-    public String name;
-    public int index;
-    public int minargs, maxargs;
-    public boolean isMethod;
+    // part of the public interface for built-in functions
+    public PyObject __name__;
+    public PyObject __doc__;
+    public PyObject __self__;
+    public static PyObject __members__;
+    
+    // internal implementation
+    protected String name;
+    protected int minargs, maxargs;
+    protected boolean isMethod;
+    // used as an index into a big switch statement in the various derived
+    // class's __call__() methods.
+    protected int index;
 
-    public PyBuiltinFunctionSet() {; }
-
-    public PyBuiltinFunctionSet(String name, int index,
-                                int minargs, int maxargs)
-    {
-        this.name = name;
-        this.index = index;
-        this.minargs = minargs;
-        this.maxargs = maxargs;
-        this.isMethod = false;
+    static {
+        PyString[] members = new PyString[3];
+        members[0] = new PyString("__doc__");
+        members[1] = new PyString("__name__");
+        members[2] = new PyString("__self__");
+        __members__ = new PyList(members);
     }
 
-    public PyBuiltinFunctionSet init(String name, int index, int nargs) {
-        return init(name, index, nargs, nargs, false);
-    }
-    public PyBuiltinFunctionSet init(String name, int index, int nargs,
-                                     boolean isMethod)
-    {
-        return init(name, index, nargs, nargs, isMethod);
-    }
-    public PyBuiltinFunctionSet init(String name, int index, int minargs,
-                                     int maxargs)
-    {
-        return init(name, index, minargs, maxargs, false);
-    }
-    public PyBuiltinFunctionSet init(String name, int index, int minargs,
-                                     int maxargs, boolean isMethod)
+    // full-blown constructor, specifying everything
+    public PyBuiltinFunctionSet(String name, int index, int minargs,
+                                int maxargs, boolean isMethod, String doc)
     {
         this.name = name;
         this.index = index;
         this.minargs = minargs;
         this.maxargs = maxargs;
         this.isMethod = isMethod;
-        return this;
+
+        __name__ = new PyString(name);
+        if (doc == null)
+            __doc__ = Py.None;
+        else
+            __doc__ = new PyString(doc);
+        __self__ = Py.None;
     }
-    
+
     public PyObject _doget(PyObject container) {
         return _doget(container, null);
     }
