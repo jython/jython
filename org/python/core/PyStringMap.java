@@ -1,7 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyStringMap extends PyObject {
+public class PyStringMap extends PyObject
+{
     //Table of primes to cycle through
     private static final int[] primes = {
         7, 13, 31, 61, 127, 251, 509, 1021, 2017, 4093,
@@ -75,58 +76,6 @@ public class PyStringMap extends PyObject {
         }
     }
         
-    /*public int debug(PyString pkey) {
-      String key = pkey.internedString(); 
-            
-      String[] table = keys;
-      int maxindex = table.length;
-      int index = (System.identityHashCode(key) & 0x7FFFFFFF) % maxindex;
-
-      for(int i=0; i<maxindex; i++) {
-      String k = table[i];
-      if (k != null && k.equals(key)) {
-      System.err.println("found at: "+i+", "+System.identityHashCode(k)+", "+System.identityHashCode(key));
-      }
-      }
-
-      // Fairly aribtrary choice for stepsize...
-      int stepsize = maxindex / 5;
-            
-      // Cycle through possible positions for the key;
-      System.err.println("key: "+key+", "+index+", "+stepsize+", "+maxindex);
-      int iters = 0;
-      while (iters++ < maxindex) {
-      String tkey = table[index];
-      System.err.println("tkey: "+tkey+", "+index);
-      if (tkey == key || tkey == null) return index;
-      index = (index+stepsize) % maxindex;
-      }
-            
-      index = (System.identityHashCode(key) & 0x7FFFFFFF) % maxindex;
-      throw new PyValueError("Internal Error in StringMap :"+maxindex+", "+size+", "+stepsize+", "+index);
-      }*/    
-        
-
-    /*private final int lookup(String key) {
-      String[] table = keys;
-      int maxindex = table.length;
-      int index = (System.identityHashCode(key) & 0x7FFFFFFF) % maxindex;
-
-      // Fairly aribtrary choice for stepsize...
-      int stepsize = maxindex / 5;
-
-      // Cycle through possible positions for the key;
-      int iters = 0;
-      while (iters++ < maxindex) {
-      String tkey = table[index];
-      if (tkey == key || tkey == null) return index;
-      index = (index+stepsize) % maxindex;
-      }
-            
-      index = (System.identityHashCode(key) & 0x7FFFFFFF) % maxindex;
-      throw new PyValueError("Internal Error in StringMap :"+maxindex+", "+size+", "+stepsize+", "+index);
-      }*/
-
     public synchronized int __len__() {
         return size;
     }
@@ -257,13 +206,8 @@ public class PyStringMap extends PyObject {
 
         // Cycle through possible positions for the key;
         while (true) {
-            //System.err.println("key: "+key+", "+index+", "+table[index]);
             String tkey = table[index];
             if (tkey == null) {
-                //System.err.println("key: "+key+", "+System.identityHashCode(key));
-                //for(int i=0; i<keys.length; i++) {
-                //System.err.println("k: "+keys[i]+", "+values[i]+", "+System.identityHashCode(keys[i]));
-                //}
                 throw Py.KeyError(key);
             }
             if (tkey == key) {
