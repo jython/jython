@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- Tue Oct 26 18:40:52 1999 -->
+<!-- Thu Nov 18 16:48:43 1999 -->
 <!-- USING HT2HTML 1.0 -->
 <!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
@@ -164,27 +164,28 @@ Email Us
 <p><li><b>Is JPython the same language as Python?</b>
     <P>We will always strive to ensure that JPython remains as
     compatible with CPython as possible.  Nevertheless, there are a
-    number of differences between the two implementations that are
-    unlikely to go away.  These range from the trival - JPython's code
-    objects don't have a co_code attribute because they don't have any
-    Python bytecodes; to the significant - JPython uses Java's true
-    garbage collection rather than Python's reference counting
-    scheme.
+    number of
+    <a href="differences.html">differences</a>
+    between the two implementations that are
+    unlikely to go away.  These range from the trivial - JPython's
+    code objects don't have a co_code attribute because they don't
+    have any Python bytecodes; to the significant - JPython uses
+    Java's true garbage collection rather than Python's reference
+    counting scheme.
 
     <P>Python has never really had much of a language definition
-    beyond it's C-based implementation.  The existence of
-    JPython changed that for the first time and will hopefully lead to
-    a much clearer sense of what Python the language is; independent
-    of any specific implementation.
+    beyond it's C-based implementation.  The existence of JPython
+    changed that for the first time and will hopefully lead to a much
+    clearer sense of what Python the language is; independent of any
+    specific implementation.
 
-    <P>We will be preparing a
-    version of Python's regression test that would be appropriate for
-    new implementations of the language.  This is a good first step
-    towards defining what parts of Python are essential and which are
-    incidental.
+    <P>We will be preparing a version of Python's regression test that
+    would be appropriate for new implementations of the language.
+    This is a good first step towards defining what parts of Python
+    are essential and which are incidental.
 
 <p><li><b>What is the current status of JPython?</b>
-    <p>As of this writing (22-Sep-1999) JPython 1.1 is currently in
+    <p>As of this writing (28-Oct-1999) JPython 1.1 is currently in
     beta status.  Check the
     <a href="http://www.jpython.org">www.jpython.org</a> site for the
     most current release.
@@ -196,6 +197,19 @@ Email Us
     other CNRI folks, and the many contributors on the
     <a href="http://www.python.org/mailman/listinfo/jpython-interest">
     JPython-Interest</a> mailing list.
+
+<p><li><b>JPython and Y2K</b>
+
+    <p>The standard response to queries about JPython's Y2K compliance 
+    points you to the
+    <a href="http://www.python.org/cgi-bin/faqw.py?querytype=anykeywords&casefold=yes&req=search&query=y2k">
+    Python FAQ entry on the subject</a>, with the additional caveat
+    that JPython is of course dependent on any Y2K issues associated
+    with the underlying JVM and Java class libraries you're using.
+    However, you can essentially apply the Python Y2K stance to
+    JPython by, e.g. substituting the word "Java" for "C" in FAQ
+    question 4.65 (<em>ignore the clip from the Python copyright
+    notice</em>).
 
 <p><li><b><A NAME="Supported Modules"></A>What parts of the Python
     library are supported?</b>
@@ -224,33 +238,52 @@ Email Us
 
 <p><li><b>How fast is JPython?</b>
 
-    <P>At IPC-6 JimH reported speeds equal to CPython 1.4 on the
-    pystone benchmark.  The current release doesn't include two of the
-    optimizations that he used in his own version of the system so it
-    will be about 15% slower than CPython 1.4.  These optimizations
-    may be added back into the distribution when there's been time to
-    test them more carefully.  When JimH ran his tests, CPython 1.5
-    had just been released, which Guido succeeded in making about 2x
-    faster than the 1.4 release.  Therefore, JPython is currently
-    about 2.5x slower than CPython 1.5.  <b>The benchmark tests have
-    not be re-run since CPython 1.5.2 or JPython 1.1beta2 were
-    released.  I'll be updating the results before the JPython 1.1
-    final release is made.</b></P>
+    <p>At <a href="http://www.python.org/workshops/1997-10/">IPC-6</a>
+    JimH reported speeds equal to CPython 1.4 on the pystone
+    benchmark.  When Guido released CPython 1.5 he succeeded in making
+    it about 2x faster than the 1.4 release.  The current release of
+    CPython is 1.5.2 which might be only slightly faster than 1.5.
+    JimH re-ran his benchmark tests against CPython 1.5 and his then
+    current release of JPython, finding that JPython was about 2.5x
+    slower than CPython 1.5.  I have recently run a few informal
+    benchmarks and found some interesting numbers: using Sun's JDK
+    1.2.1 with JIT on a Solaris 2.6 Sparc Ultra 2, I found JPython
+    1.1beta3 to produce pystone numbers equal to (or very slightly
+    better than) CPython 1.5.2+.
+
+    <p>The problem, of course, is that JITs are still not reliable
+    enough for JPython.  Turning off the JIT on the above platform,
+    can slow JPython down by a factor of 10.
 
     <P>The speed of JPython is tied very tightly to the speed of the
     underlying JVM.  The benchmark results that JimH reported were all
     using Microsoft's JVM from Internet Explorer 4.0.  The next
-    fastest JVM that he used is almost a factor of 2 slower than this.
-    At some point I'll want to collect a set of scores comparing
-    PyStone performance on a wider variety of JVM's.</P>
+    fastest JVM that he used was almost a factor of 2 slower than
+    this.  Since the performance of JVMs changes nearly every day, at
+    some point I'll need to collect a set of scores comparing pystone
+    performance on a wider variety of JVM's.</P>
 
     <P>Finally, pystone is not the last word in benchmarking.  At the
-    moment I'm much more concerned with making JPython complete and
-    correct than with performance.  We will continually be revisiting
+    moment I'm more concerned with making JPython complete and correct
+    than with performance.  We will continually be revisiting
     performance issues both to examine better benchmark's for
     comparing JPython and CPython (as well as other scripting
     languages for the JVM) and work at optimizing JPython's
     performance.
+
+<p><li><b>Why do weird things sometimes happen in JPython?</b>
+
+    <p>More likely than not, the problem is with the JIT
+    (Just-in-time) compiler your JVM is using.  JPython acts
+    like a bizarre Java compiler, taking Python source code and
+    emitting Java bytecode.  It's bizarre because the emitted bytecode
+    doesn't look quite like the way bytecode would come out of a Java
+    compiler.  JITs can sometimes get confused by this and will often
+    do incorrect and inexplicable things.  If you're seeing strange
+    stuff happen, or weird bugs, the first thing to do is to turn off
+    your JIT and try again.  If the bug still exists with the JIT
+    turned off then consider <a href="http://www.python.org/jpython-bugs">
+    submitting a bug report</a>.
 
 <p><li><b>Why did I get an OutOfMemoryError?</b>
 
@@ -335,19 +368,6 @@ Email Us
     dictionary, so dir(someJavaObject.__class__) would return a list
     of the method names (although only for the direct class, not for
     any base classes).
-
-<p><li><b>JPython and Y2K</b>
-
-    <p>The standard response to queries about JPython's Y2K compliance 
-    points you to the
-    <a href="http://www.python.org/cgi-bin/faqw.py?querytype=anykeywords&casefold=yes&req=search&query=y2k">
-    Python FAQ entry on the subject</a>, with the additional caveat
-    that JPython is of course dependent on any Y2K issues associated
-    with the underlying JVM and Java class libraries you're using.
-    However, you can essentially apply the Python Y2K stance to
-    JPython by, e.g. substituting the word "Java" for "C" in FAQ
-    question 4.65 (<em>ignore the clip from the Python copyright
-    notice).
 
 </ol>
 
