@@ -272,7 +272,7 @@ public class PyFile extends PyObject
 
         public String read(int n) throws java.io.IOException {
             if (n < 0) {
-                n = (int)(file.length() - file.getFilePointer());
+                n = (int)(file.length() - filePosition);
                 if (n < 0)
                     n = 0;
             }
