@@ -644,8 +644,6 @@ class SimpleCompiler(BaseEvaluator):
             t = jast.InvokeStatic("Py", "matchException",
                                   [exctmp, exc[0].asAny()])
             newbody = []
-            if elseClause is not None:
-                newbody.append(jast.Set(elseBool, jast.False))
 
             if len(exc) == 2:
                 exceptionValue = self.factory.makePyObject(
@@ -668,7 +666,12 @@ class SimpleCompiler(BaseEvaluator):
         else:
             catchBody = jast.MultiIf(tests, ifelse)
 
-        catchBody = jast.Block([setexc, catchBody])
+        catchBody = [setexc, catchBody]
+   
+        if elseClause is not None:
+            catchBody = [jast.Set(elseBool, jast.False), catchBody]
+
+        catchBody = jast.Block([catchBody])
 
         self.frame.freetemp(exctmp)
 
