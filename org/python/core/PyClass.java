@@ -76,6 +76,16 @@ public class PyClass extends PyObject {
             dict.__setitem__("__doc__", Py.None);
         }
 
+        findModule(dict);
+
+        // Setup cached references to methods where performance really counts
+		__getattr__ = lookup("__getattr__", false);
+		__setattr__ = lookup("__setattr__", false);
+		__delattr__ = lookup("__delattr__", false);
+		__tojava__ = lookup("__tojava__", false);
+	}
+	
+	protected void findModule(PyObject dict) {
         if (dict.__finditem__("__module__") == null) {
             //System.out.println("in PyClass getFrame: "+__name__.string);
             PyFrame f = Py.getFrame();
@@ -85,14 +95,9 @@ public class PyClass extends PyObject {
                     dict.__setitem__("__module__", nm);
             }
         }
+    }
+	    
 
-        // Setup cached references to methods where performance really counts
-		__getattr__ = lookup("__getattr__", false);
-		__setattr__ = lookup("__setattr__", false);
-		__delattr__ = lookup("__delattr__", false);
-		__tojava__ = lookup("__tojava__", false);
-	}
-	
 	public Object __tojava__(Class c) {
 		if (c == Class.class && proxyClasses != null) {
 			if (proxyClasses.length == 1) {
@@ -181,8 +186,7 @@ public class PyClass extends PyObject {
 			    throw Py.JavaError(exc);
 			}
 			pc = BytecodeLoader.makeClass(name, bytes.toByteArray());
-			String dir = sys.registry.getProperty(proxyDirectoryKey);
-			//System.out.println("making proxy: "+dir);
+			String dir = Options.proxyCacheDirectory;
 			if (dir != null) {
 				try {
 					OutputStream file = ProxyMaker.getFile(dir, name);

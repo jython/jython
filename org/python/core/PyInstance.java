@@ -62,6 +62,13 @@ public class PyInstance extends PyObject {
 
     private Hashtable primitiveMap;
 
+
+    protected void setProxy(Object proxy, int index) {
+        proxy._setPyInstance(this);
+        proxy._setPySystemState(Py.getSystemState());
+        javaProxies[index] = proxy;
+    }
+
 	public Object __tojava__(Class c) {
 	    if (c == Object.class && javaProxies != null && 
 	            javaProxies.length > 0 && javaProxies[0] != null) {
@@ -100,8 +107,7 @@ public class PyInstance extends PyObject {
                     } catch (Exception exc) {
                         throw Py.JavaError(exc);
     	            }
-                    proxy._setPyInstance(this);
-                    javaProxies[i] = proxy;
+    	            setProxy(proxy, i);
                     return proxy;
                 }
 			}
@@ -135,8 +141,7 @@ public class PyInstance extends PyObject {
 	                } catch (Exception exc) {
 	                    throw Py.ValueError("Can't instantiate interface: "+c.getName());
 	                }
-	                proxy._setPyInstance(this);
-	                javaProxies[i] = proxy;
+                    setProxy(proxy, i);
 	                //System.out.println("inited interface: "+c.getName());
 	            }
 	        }
@@ -178,8 +183,7 @@ public class PyInstance extends PyObject {
                 } catch (Exception exc) {
                     throw Py.JavaError(exc);
 	            }
-                proxy._setPyInstance(this);
-                javaProxies[i] = proxy;
+                setProxy(proxy, i);
 	        }
 	    }
 	}

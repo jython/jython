@@ -1390,11 +1390,8 @@ public class PyObject implements java.io.Serializable {
 		        if (ts.frame == null) {
 		            Py.maybeSystemExit(e);
 		        }
-		            
-		        //System.err.println("frame: "+ts.frame); //+", "+ts.frame.f_back);
-                PyObject obj = ts.interp.sysdict.__finditem__("printJCallExceptions");
-                if (obj != null && obj.__nonzero__()) {
-                    Py.stderr.println("Caught python exception in jcall:");
+		        if (Options.showPythonProxyExceptions) {
+		            Py.stderr.println("Exception in Python proxy returning to Java:");
                     Py.printException(e);
                 }
             }

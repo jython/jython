@@ -93,14 +93,6 @@ public class PyJavaClass extends PyClass {
             }
             
             initDone = true;
-            ThreadState ts = Py.getThreadState();
-            
-            if (ts.interp.builtins == null) {
-                ts.interp.builtins = PyJavaClass.lookup(__builtin__.class).__dict__;
-            }
-            if (ts.interp.sysdict == null) {
-                ts.interp.sysdict = PyJavaClass.lookup(sys.class).__dict__;
-            }
         }
         //System.out.println("JavaClass 1");
 
@@ -146,6 +138,8 @@ public class PyJavaClass extends PyClass {
 	    this();
 	    init(c);
 	}
+	
+	protected void findModule(PyObject dict) {}	
 
 	private void init(Class c)  {
 	    //System.err.println("initing jclass: "+c.getName());

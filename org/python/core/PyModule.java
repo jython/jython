@@ -21,7 +21,7 @@ public class PyModule extends PyObject {
     		        String name = pyname.__str__().toString();
     		        
     		        if (path == Py.None) {
-    		            ret = imp.loadFromClassLoader((name+'.'+attr).intern(), sys.getClassLoader());
+    		            ret = imp.loadFromClassLoader((name+'.'+attr).intern(), Py.getSystemState().getClassLoader());
     		        } else if (path instanceof PyList) {
     		            ret = imp.loadFromPath(attr, (name+'.'+attr).intern(), (PyList)path);
     		        } else {

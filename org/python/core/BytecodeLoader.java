@@ -3,7 +3,7 @@ import java.util.Hashtable;
 
 public class BytecodeLoader extends ClassLoader {
 	protected Class loadClass(String s, boolean b) throws ClassNotFoundException {
-	    ClassLoader classLoader = sys.getClassLoader();
+	    ClassLoader classLoader = Py.getSystemState().getClassLoader();
 		if (classLoader != null) return classLoader.loadClass(s);
 		return findSystemClass(s);
 	}

@@ -46,14 +46,14 @@ public class PyJavaPackage extends PyObject {
         //System.err.println("finding path for: "+__name__);
         
         if (__name__.length() == 0) {
-            __path__ = sys.path;
+            __path__ = Py.getSystemState().path;
             return __path__;
         }
         
         PyJavaPackage parent = __parent__;
         PyList rootPath;
         if (parent == null) {
-            rootPath = sys.path;
+            rootPath = Py.getSystemState().path;
         } else {
             PyObject tmp = __parent__.getPath();
             if (tmp == Py.None) {

@@ -9,7 +9,7 @@ public class PyFrame extends PyObject {
 	public PyObject f_builtins;
 	public PyObject[] f_fastlocals;
 	
-	TraceFunction tracefunc;
+	public TraceFunction tracefunc;
 
     public static PyClass __class__;
 	public PyFrame(PyTableCode code, PyObject locals, PyObject globals, PyObject builtins) {
@@ -19,12 +19,16 @@ public class PyFrame extends PyObject {
 		f_globals = globals;
 		f_builtins = builtins;
 		// This needs work to be efficient with multiple interpreter states
-		if (f_builtins == null) f_builtins = Py.interp.builtins;
+		
 		if (locals == null && code != null && code.co_varnames.length > 0) {
 		    f_fastlocals = new PyObject[code.co_varnames.length];
 		}
 	}
-
+	
+	public PyFrame(PyTableCode code, PyObject globals) {
+		this(code, null, globals, null);
+	}	
+	
     public String toString() {
         if (f_code == null) {
             return "<frame (unknown code) at line "+f_lineno+">";
@@ -52,10 +56,6 @@ public class PyFrame extends PyObject {
 		return f_locals;
 	}
 
-	public PyFrame(PyTableCode code, PyObject globals) {
-		this(code, null, globals, null);
-	}
-
 	public void setline(int line) {
 	    f_lineno = line;
 	    if (tracefunc != null) {
@@ -72,17 +72,17 @@ public class PyFrame extends PyObject {
 		if (f_fastlocals != null) {
 			PyObject ret = f_fastlocals[index];
 			if (ret != null) return ret;
-			System.err.println("no local: "+index+", "+f_code.co_varnames[index]);
+			//System.err.println("no local: "+index+", "+f_code.co_varnames[index]);
 		}
 		return getlocal(f_code.co_varnames[index]);
 	}
 
 	public PyObject getlocal(String index) {
 		if (f_locals == null) getf_locals();
-		//if (f_locals != null) {
 		PyObject ret = f_locals.__finditem__(index);
 		if (ret != null) return ret;
-		//}
+
+		//throw Py.NameError("local: '"+index+"'");
 		return getglobal(index);
 	}
 
@@ -91,10 +91,16 @@ public class PyFrame extends PyObject {
 		if (ret != null) {
 			return ret;
 		}
+		
+		// Set up f_builtins if not already set
+		if (f_builtins == null) {
+		    System.err.println("Ooops, forced to set f_builtins in PyFrame: "+this+", "+index);
+		    f_builtins = Py.getSystemState().builtins;
+		}
 		ret = f_builtins.__finditem__(index);
 		if (ret != null) return ret;
 
-		throw new PyException(Py.NameError, new PyString(index));
+		throw Py.NameError(index);
 	}
 
 	public void setlocal(int index, PyObject value) {

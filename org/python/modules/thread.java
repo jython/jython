@@ -5,14 +5,17 @@ import org.python.core.*;
 class FunctionThread extends Thread {
     PyObject func;
     PyObject[] args;
+    PySystemState systemState;
 
     public FunctionThread(PyObject func, PyObject[] args) {
         super();
         this.func = func;
         this.args = args;
+        this.systemState = Py.getSystemState();
     }
 
     public void run() {
+        Py.setSystemState(systemState);
         try {
             func.__call__(args);
         } catch (PyException exc) {

@@ -585,6 +585,28 @@ public class ProxyMaker {
 		code.aload(0);
 		code.getfield(field);
 		code.areturn();
+		
+		//implement PyProxy interface
+		classfile.addField("__systemState", "Lorg/python/core/PySystemState;", ClassFile.PROTECTED);
+
+
+        // setProxy method
+		code = classfile.addMethod("_setPySystemState", "(Lorg/python/core/PySystemState;)V",
+			ClassFile.PUBLIC);
+
+        field = code.pool.Fieldref(classfile.name, "__systemState", "Lorg/python/core/PySystemState;");
+
+		code.aload(0);
+		code.aload(1);
+		code.putfield(field);
+		code.return_();
+
+        // getProxy method
+		code = classfile.addMethod("_getPySystemState", "()Lorg/python/core/PySystemState;",
+			ClassFile.PUBLIC);
+		code.aload(0);
+		code.getfield(field);
+		code.areturn();		
 	}
 
     public void build(Class superclass, Class[] interfaces) throws Exception {

@@ -209,7 +209,7 @@ public final class Py {
     private Py() { ; } 
 
     /** @deprecated **/
-    public static InterpreterState interp;
+    //public static InterpreterState interp;
 
     /**
     Convert a given <code>PyObject</code> to an instance of a Java class.
@@ -242,7 +242,12 @@ public final class Py {
     public static PyObject jfindattr(PyProxy proxy, String name) {
         PyInstance o = proxy._getPyInstance();
         if (o == null) return null;
-        return o.__jfindattr__(name);
+        PyObject ret = o.__jfindattr__(name);
+        if (ret == null) return null;
+        
+        // Set the current system state to match proxy -- usually this is a waste of time :-(
+        Py.setSystemState(proxy._getPySystemState());
+        return ret;
     }
     /** @deprecated **/
     public static PyObject jgetattr(PyProxy proxy, String name) {
@@ -252,6 +257,9 @@ public final class Py {
             ret = o.__jfindattr__(name);
         }
         if (ret == null) throw Py.AttributeError("abstract method \""+name+"\" not implemented");
+        
+        // Set the current system state to match proxy -- usually this is a waste of time :-(        
+        Py.setSystemState(proxy._getPySystemState());
         return ret;
     }
 
@@ -305,37 +313,7 @@ public final class Py {
 			filename, name, firstlineno, args, keywords, funcs, func_id);
 	}
 
-
-	// This is a hack to get initializations to work in proper order
-	static synchronized boolean initPython() {
-	    if (!initialized) {
-	        initialized = true;
-	        //System.out.println("initializing Py");
-	        //initialized = true;
-    	    None = new PyNone();
-    	    NoKeywords = new String[0];
-    	    EmptyObjects = new PyObject[0];
-
-            //System.out.println("initializing Py 1");
-
-    	    EmptyTuple = new PyTuple(EmptyObjects);
-
-        	NoConversion = new PySingleton("Error");
-            //System.out.println("initializing Py 2");
-        	
-        	Ellipsis = new PyEllipsis();
-            //System.out.println("initializing Py 2.5");
-        	
-        	Zero = new PyInteger(0);
-        	One = new PyInteger(1);
-
-            EmptyString = new PyString("");
-        	Newline = new PyString("\n");
-        	Space = new PyString(" ");
-
-            //System.out.println("initializing Py 3");
-
-
+    static void initExceptions() {
 			KeyboardInterrupt = new PyString("KeyboardInterrupt");
 			ImportError = new PyString("ImportError");
 			SystemError = new PyString("SystemError");
@@ -369,8 +347,45 @@ public final class Py {
 		        {Py.SystemExit, Py.StandardError});
 
             JavaError = new PyString("JavaError");
+    }
 
-    	    interp = InterpreterState.getInterpreterState();
+    public static PySystemState defaultSystemState;
+	// This is a hack to get initializations to work in proper order
+	public static synchronized boolean initPython() {
+	    if (!initialized) {
+	        initialized = true;
+	        //System.out.println("initializing Py");
+	        //initialized = true;
+    	    None = new PyNone();
+    	    NoKeywords = new String[0];
+    	    EmptyObjects = new PyObject[0];
+
+            //System.out.println("initializing Py 1");
+
+    	    EmptyTuple = new PyTuple(EmptyObjects);
+
+        	NoConversion = new PySingleton("Error");
+            //System.out.println("initializing Py 2");
+        	
+        	Ellipsis = new PyEllipsis();
+            //System.out.println("initializing Py 2.5");
+        	
+        	Zero = new PyInteger(0);
+        	One = new PyInteger(1);
+
+            EmptyString = new PyString("");
+        	Newline = new PyString("\n");
+        	Space = new PyString(" ");
+
+            initExceptions();
+
+            //System.out.println("initializing Py 3");
+            defaultSystemState = new PySystemState(System.getProperties(), new String[0]);
+    	    //interp = InterpreterState.getInterpreterState();
+    	    Py.setSystemState(defaultSystemState);
+
+            // Make sure that Exception classes have been loaded
+    		PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");
 
     	    //System.out.println("inited Python");
     	}
@@ -380,7 +395,7 @@ public final class Py {
 
     public static Class findClass(String name) {
         try {
-            ClassLoader classLoader = sys.getClassLoader();
+            ClassLoader classLoader = Py.getSystemState().getClassLoader();
             if (classLoader == null) return Class.forName(name);
             else return classLoader.loadClass(name);
         } catch (ClassNotFoundException exc) {
@@ -394,7 +409,7 @@ public final class Py {
 		PyObject argv[] = new PyObject[args.length+1];
 		argv[0] = new PyString(arg0);
 		for(int i=1; i<argv.length; i++) argv[i] = new PyString(args[i-1]);
-		sys.argv = new PyList(argv);
+		Py.getSystemState().argv = new PyList(argv);
 	}
 
 	private static void initProperties(String[] packages, String[] props) {
@@ -412,7 +427,7 @@ public final class Py {
 	        sys.initRegistry(sprops);
         }
 
-	    if (sys.registry == null) sys.registry = sys.initRegistry();
+	    //if (sys.registry == null) sys.registry = sys.initRegistry();
 
 	    if (packages != null) {
 	        for(int i=0; i<packages.length; i++) {
@@ -431,11 +446,11 @@ public final class Py {
         if (frozen) Py.frozen = true;
         ClassLoader classLoader = proxy.getClass().getClassLoader();
         if (classLoader != null) {
-            sys.setClassLoader(classLoader);
+            Py.getSystemState().setClassLoader(classLoader);
         }
 
-	    ThreadState ts = getThreadState();
-	    if (ts.interp == null) ts.interp = interp;
+	    /*ThreadState ts = getThreadState();
+	    if (ts.interp == null) ts.interp = interp;*/
 
         //props = new String[0];
         initProperties(packages, props);
@@ -486,12 +501,12 @@ public final class Py {
 
         ClassLoader classLoader = mainClass.getClassLoader();
         if (classLoader != null) {
-            sys.setClassLoader(classLoader);
+            Py.getSystemState().setClassLoader(classLoader);
         }
 
 		try {
-		    ThreadState ts = getThreadState();
-		    if (ts.interp == null) ts.interp = interp;
+		    /*ThreadState ts = getThreadState();
+		    if (ts.interp == null) ts.interp = interp;*/
 
             initProperties(packages, props);
 
@@ -573,22 +588,17 @@ public final class Py {
 		}
 
 		setException(exc, f);
-		// Set last_value, ...
-		PyObject d = Py.interp.sysdict;
-
-		d.__setitem__("last_value", exc.value);
-		d.__setitem__("last_type", exc.type);
-		d.__setitem__("last_traceback", exc.traceback);
-
-		d.__delitem__("exc_value");
-		d.__delitem__("exc_type");
-		d.__delitem__("exc_traceback");
 
     	ThreadState ts = getThreadState();
 
-    	ts.exc_type = Py.None;
-    	ts.exc_value = Py.None;
-    	ts.exc_traceback = Py.None;
+        ts.systemState.last_value = exc.value;
+        ts.systemState.last_type = exc.type;
+        ts.systemState.last_traceback = exc.traceback;
+
+    	ts.exception = null;
+    	/*_type = null;
+    	ts.exc_value = null;
+    	ts.exc_traceback = null;*/
 
 		stderr.print(exc.traceback.dumpStack());
 
@@ -646,16 +656,12 @@ public final class Py {
 		PyException pye = Py.JavaError(t);
 		pye.instantiate();
 
-        PyObject d = Py.interp.sysdict;
-	    d.__setitem__("exc_value", pye.value);
-    	d.__setitem__("exc_type", pye.type);
-    	d.__setitem__("exc_traceback", pye.traceback);
-
     	ThreadState ts = getThreadState();
 
-    	ts.exc_type = pye.type;
+    	ts.exception = pye;
+    	/*.type;
     	ts.exc_value = pye.value;
-    	ts.exc_traceback = pye.traceback;
+    	ts.exc_traceback = pye.traceback;*/
 
 		return pye;
 	}
@@ -687,10 +693,10 @@ public final class Py {
     // reraise the current exception
     public static PyException makeException() {
         ThreadState ts = getThreadState();
-        if (ts.exc_traceback == Py.None) {
+        if (ts.exception == null) {
             throw Py.ValueError("no exception to reraise");
         }
-		return new PyException(ts.exc_type, ts.exc_value, (PyTraceback)ts.exc_traceback);
+		return ts.exception;
     }
     
 	public static PyException makeException(PyObject type) {
@@ -730,7 +736,7 @@ public final class Py {
 
 			PyTableCode tc=null;
 			if (code instanceof PyTableCode) tc = (PyTableCode)code;
-			f = new PyFrame(tc, locals, globals, Py.getThreadState().interp.builtins);
+			f = new PyFrame(tc, locals, globals, Py.getThreadState().systemState.builtins);
 		//}
 		return code.call(f);
 	}
@@ -756,6 +762,10 @@ public final class Py {
     private static java.util.Hashtable threads;
     private static ThreadState cachedThreadState;
     public static final ThreadState getThreadState() {
+        return getThreadState(null);
+    }
+    
+    public static final ThreadState getThreadState(PySystemState newSystemState) {
         Thread t = Thread.currentThread();
         ThreadState ts = cachedThreadState;
         if (ts != null && ts.thread == t) {
@@ -765,11 +775,31 @@ public final class Py {
         if (threads == null) threads = new java.util.Hashtable();
         ts = (ThreadState)threads.get(t);
         if (ts == null) {
-            ts = new ThreadState(t);
+            if (newSystemState == null) {
+                System.err.println("Ooops, no current thread state: "+defaultSystemState);
+                t.dumpStack();
+                newSystemState = defaultSystemState;
+            }
+            ts = new ThreadState(t, newSystemState);
             threads.put(t, ts);
         }
         cachedThreadState = ts;
         return ts;
+    }
+    
+    public static final PySystemState setSystemState(PySystemState newSystemState) {
+        ThreadState ts = getThreadState(newSystemState);
+        PySystemState oldSystemState = ts.systemState;
+        if (oldSystemState != newSystemState) {
+            System.err.println("Warning: changing systemState for same thread!");
+            ts.systemState = newSystemState;
+        }
+        return oldSystemState;
+    }
+    
+    public static final PySystemState getSystemState() {
+        return getThreadState().systemState;
+        //defaultSystemState;
     }
 
     /* Get and set the current frame */
@@ -805,7 +835,7 @@ public final class Py {
 
     /* A collection of functions for implementing the print statement */
 
-	static StdoutWrapper stderr;
+	public static StdoutWrapper stderr;
 	static StdoutWrapper stdout;
 	//public static StdinWrapper stdin;
 
@@ -1085,9 +1115,9 @@ public final class Py {
 
 	public static void printResult(PyObject ret) {
 		if (ret != Py.None) {
-		    Py.interp.builtins.__setitem__("_", Py.None);
+		    Py.getSystemState().builtins.__setitem__("_", Py.None);
 			Py.println(ret.__repr__());
-			Py.interp.builtins.__setitem__("_", ret);
+			Py.getSystemState().builtins.__setitem__("_", ret);
 		}
 	}
 

@@ -34,21 +34,26 @@ public class PyTableCode extends PyCode {
 	public PyObject call(PyFrame frame) throws PyException {
 	    //System.out.println("tablecode call: "+co_name);
 	    ThreadState ts = Py.getThreadState();
+
+	    // Cache previously defined exception
+	    PyException previous_exception = ts.exception;
 	    
         // Push frame
 	    frame.f_back = ts.frame;
-		if (frame.f_builtins == null) frame.f_builtins = frame.f_back.f_builtins;
+		if (frame.f_builtins == null && frame.f_back != null) {
+		    frame.f_builtins = frame.f_back.f_builtins;
+		}
 		ts.frame = frame;
 
 	    // Handle trace function for debugging
-        InterpreterState interp = ts.interp;
-        if (interp.tracefunc != null) {
-            frame.tracefunc = interp.tracefunc.traceCall(frame);
+        PySystemState ss = ts.systemState;
+        if (ss.tracefunc != null) {
+            frame.tracefunc = ss.tracefunc.traceCall(frame);
         }
         
         // Handle trace function for profiling
-        if (interp.profilefunc != null) {
-            interp.profilefunc.traceCall(frame);
+        if (ss.profilefunc != null) {
+            ss.profilefunc.traceCall(frame);
         }
 
 		PyObject ret;
@@ -69,11 +74,12 @@ public class PyTableCode extends PyCode {
 			if (frame.tracefunc != null) {
 			    frame.tracefunc.traceException(frame, e);
             }
-            if (interp.profilefunc != null) {
-			    interp.profilefunc.traceException(frame, e);
+            if (ss.profilefunc != null) {
+			    ss.profilefunc.traceException(frame, e);
             }
             
 			//Rethrow the exception to the next stack frame
+			ts.exception = previous_exception;
 	        ts.frame = ts.frame.f_back;
 			throw e;
 		}
@@ -82,9 +88,12 @@ public class PyTableCode extends PyCode {
 			frame.tracefunc.traceReturn(frame, ret);
         }
         // Handle trace function for profiling
-        if (interp.profilefunc != null) {
-            interp.profilefunc.traceReturn(frame, ret);
+        if (ss.profilefunc != null) {
+            ss.profilefunc.traceReturn(frame, ret);
         }
+
+        // Restore previously defined exception
+        ts.exception = previous_exception;
 
 	    ts.frame = ts.frame.f_back;
 		return ret;

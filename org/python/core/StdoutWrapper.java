@@ -10,7 +10,7 @@ public class StdoutWrapper extends OutputStream {
     }
 
     protected PyObject myFile() {
-        PyObject obj = Py.getThreadState().interp.sysdict.__finditem__(name);
+        PyObject obj = Py.getThreadState().systemState.stdout;
         if (obj == null) {
             throw Py.AttributeError("missing sys."+name);
         }
@@ -30,7 +30,7 @@ public class StdoutWrapper extends OutputStream {
             }
             
             if (f != null) {
-                Py.getThreadState().interp.sysdict.__setitem__(name, f);
+                Py.getThreadState().systemState.stdout = f;
                 return f;
             }
         }

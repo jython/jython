@@ -13,12 +13,13 @@ public class imp {
     public static final int APIVersion = 5;
     
     static PyModule addModule(String name) {
-		PyModule module = (PyModule)sys.modules.__finditem__(name);
+        PyObject modules = Py.getSystemState().modules;
+		PyModule module = (PyModule)modules.__finditem__(name);
 		if (module != null) {
 		    return module;
 		}
 		module = new PyModule(name, null);
-		sys.modules.__setitem__(name, module);
+		modules.__setitem__(name, module);
 		return module;
     }
     
@@ -184,6 +185,9 @@ public class imp {
     }
 
 	private static PyObject loadBuiltin(String name, PyList path) {
+	    if (name == "sys") {
+	        return Py.java2py(Py.getSystemState());
+	    }
 	    String mod = getBuiltin(name);
 	    if (mod != null) {
             Class c = Py.findClass(mod);
@@ -298,7 +302,7 @@ public class imp {
 		if (ret != null) return ret;
 
         ClassLoader classLoader=null;
-        if (!Py.frozen) classLoader = sys.getClassLoader();
+        if (!Py.frozen) classLoader = Py.getSystemState().getClassLoader();
 	    //System.out.println("load1: "+classLoader);
 
         if (classLoader != null) {
@@ -322,21 +326,23 @@ public class imp {
 	}
 
 	public static PyObject load(String name) {
-		PyObject ret = sys.modules.__finditem__(name);
+	    PyObject modules = Py.getSystemState().modules;
+		PyObject ret = modules.__finditem__(name);
 		if (ret != null) return ret;
 
-		ret = load(name, sys.path);
-		sys.modules.__setitem__(name, ret);
+		ret = load(name, Py.getSystemState().path);
+		modules.__setitem__(name, ret);
 		return ret;
 	}
 
 	public static PyObject importName(String name, boolean top) {
 		// Is this really needed any more?
-		if (sys.registry == null) sys.registry = sys.initRegistry();
-		
+		/*if (sys.registry == null) sys.registry = sys.initRegistry();*/
+
 		int dot = name.indexOf('.');
 		if (dot != -1) {
-			PyObject mod = sys.modules.__finditem__(name);
+		    PyObject modules = Py.getSystemState().modules;		
+			PyObject mod = modules.__finditem__(name);
 			if (mod != null && !top) return mod;
 
 			int last_dot = dot;
@@ -357,7 +363,7 @@ public class imp {
 					last_dot = dot;
 				}
 			}
-			sys.modules.__setitem__(name, mod);
+			modules.__setitem__(name, mod);
 			if (top) return pkg;
 			else return mod;
 		} else {
@@ -386,18 +392,19 @@ public class imp {
 	    PyObject ret;
 
 	    if (pkgName != null) {
+	        PyObject modules = Py.getSystemState().modules;		
 	        String newName = (pkgName+'.'+name).intern();
-	        ret = sys.modules.__finditem__(newName);
+	        ret = modules.__finditem__(newName);
 	        if (ret != null) return ret;
 
-	        PyObject pkg = sys.modules.__finditem__(pkgName);
+	        PyObject pkg = modules.__finditem__(pkgName);
 	        if (pkg != null) {
 	            ret = pkg.__findattr__(name);
 	            if (ret != null) return ret;
 	        }
 
 	        ret = importName(name, top);
-	        sys.modules.__setitem__(newName, ret);
+	        modules.__setitem__(newName, ret);
 	        return ret;
 	    }
 	    //System.err.println("done importName: "+name);
@@ -462,12 +469,13 @@ public class imp {
 
 
     static PyObject reload(PyJavaClass c) {
-        sys.modules.__delitem__(c.__name__);
+        PyObject modules = Py.getSystemState().modules;		
+        modules.__delitem__(c.__name__);
         // Should delete from package if in one
         String name = c.__name__;
         int dot = name.lastIndexOf('.');
         if (dot != -1) {
-            PyObject pkg = sys.modules.__finditem__(name.substring(0, dot).intern());
+            PyObject pkg = modules.__finditem__(name.substring(0, dot).intern());
             if (pkg == null) {
                 throw Py.ImportError("reload(): parent not in sys.modules");
             }
@@ -482,17 +490,18 @@ public class imp {
     static PyObject reload(PyModule m) {
         String name = m.__getattr__("__name__").toString().intern();
 
-        PyModule nm = (PyModule)sys.modules.__finditem__(name);
+        PyObject modules = Py.getSystemState().modules;		
+        PyModule nm = (PyModule)modules.__finditem__(name);
 
         if (!nm.__getattr__("__name__").toString().equals(name)) {
             throw Py.ImportError("reload(): module "+name+" not in sys.modules");
         }
 
-        PyList path = sys.path;
+        PyList path = Py.getSystemState().path;
         String modName = name;
         int dot = name.lastIndexOf('.');
         if (dot != -1) {
-            PyObject pkg = sys.modules.__finditem__(name.substring(0, dot).intern());
+            PyObject pkg = modules.__finditem__(name.substring(0, dot).intern());
             if (pkg == null) {
                 throw Py.ImportError("reload(): parent not in sys.modules");
             }
@@ -508,7 +517,7 @@ public class imp {
 
  		PyObject ret = loadFromPath(name, modName, path);
 
-		sys.modules.__setitem__(name, ret);
+		modules.__setitem__(name, ret);
 		return ret;
     }
 }
