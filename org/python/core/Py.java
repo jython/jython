@@ -926,10 +926,6 @@ public final class Py
 
         maybeSystemExit(exc);
 
-        if (f != null && exc.traceback.tb_frame != f) {
-            exc.traceback = new PyTraceback(exc.traceback);
-        }
-
         setException(exc, f);
 
         ThreadState ts = getThreadState();
@@ -1039,12 +1035,15 @@ public final class Py
         PyException pye = Py.JavaError(t);
         pye.instantiate();
 
+        // attach catching frame
+        if (frame != null && pye.traceback.tb_frame != frame) {
+            pye.traceback = new PyTraceback(pye.traceback);
+        }
+       
         ThreadState ts = getThreadState();
 
         ts.exception = pye;
-        /*.type;
-          ts.exc_value = pye.value;
-          ts.exc_traceback = pye.traceback;*/
+
         return pye;
     }
 
