@@ -3,8 +3,11 @@ from math import *
 from jarray import array
 
 class Graph(awt.Canvas):
-	def __init__(self):
+	def __init__(self, initialExpression=None):
+		"@sig public Graph(java.lang.String initialExpression)"
 		self.function = None
+		if initialExpression is not None:
+			self.setExpression(initialExpression)
 
 	def paint(self, g):
 		if self.function is None:
@@ -36,6 +39,7 @@ class Graph(awt.Canvas):
 		g.drawString("Invalid Expression", x, y)
 	
 	def setExpression(self, e):
+		"@sig public void setExpression(java.lang.String e)"		
 		try:
 			self.function = eval('lambda x: '+e)
 		except:

@@ -36,6 +36,7 @@ class Graph(awt.Canvas):
 		g.drawString("Invalid Expression", x, y)
 	
 	def setExpression(self, e):
+		"@sig public void setExpression(java.lang.String e)"	
 		try:
 			self.function = eval('lambda x: '+e)
 		except:
