@@ -46,6 +46,10 @@ public class Visitor {
         throw new ParseException("Unhandled Node: "+n);
     }
 
+    public Object print_ext(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
     public Object del_stmt(SimpleNode n) throws Exception {
         throw new ParseException("Unhandled Node: "+n);
     }
