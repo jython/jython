@@ -158,7 +158,9 @@ public class PyClass extends PyObject {
             
         if (result == null)
             return super.__findattr__(name);
-        return result._doget(this);
+        PyObject gotten = result._doget(null);
+        gotten._setClass(this);
+        return gotten;
     }
 
     public void __setattr__(String name, PyObject value) {
