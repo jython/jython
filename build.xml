@@ -36,6 +36,9 @@
         <property name="optimize" value="on" />
         <property name="release" value="22a0" />
 
+        <property name="python.lib" value="${python.home}/Lib" />
+        <property name="python.exe" value="${python.home}/python" />
+
         <available property="java2collection.present"
             classname="java.util.List"
         />
@@ -236,7 +239,7 @@
             <fileset dir="Doc" includes="*.ht, **/*.gif" />
         </copy>
         <!-- Create .html files in Doc -->
-        <execon executable="${python.home}/python" dir="${distDir}/Doc">
+        <execon executable="${python.exe}" dir="${distDir}/Doc">
             <arg line="${ht2html.dir}/ht2html.py"/>
             <arg line="-s JPyLocalGenerator"/>
             <fileset dir="${distDir}/Doc">
@@ -263,7 +266,28 @@
         />
     </target>
 
-    <target name="copy-dist" depends="dist-prepare,jar">
+    <target name="copy-xml" depends="dist-prepare" if="PyXmlHome">
+        <!-- The xml files -->
+        <copy todir="${distDir}/Lib/xml">
+            <fileset dir="${python.lib}/xml" includes="__init__.py"/>
+            <fileset dir="${PyXmlHome}/xml" includes="
+                ns.py,
+                sax/*.py,
+                sax/drivers2/drv_xmlproc.py,
+                sax/drivers2/__init__.py,
+                utils/*.py,
+                dom/*.py,
+                dom/html/*.py,
+                dom/ext/*.py,
+                dom/ext/reader/__init__.py,
+                dom/ext/reader/Sax*.py,
+                parsers/__init__.py,
+                parsers/xmlproc/*.py,
+                "/>
+        </copy>
+    </target>
+
+    <target name="copy-dist" depends="dist-prepare,jar,copy-xml">
         <!-- Misc files -->
         <copy todir="${distDir}">
             <fileset dir="${sourceDir}" includes="
@@ -298,7 +322,7 @@
 
         <copy todir="${distDir}/Lib">
             <!-- Copy the CPython standard library files -->
-            <fileset dir="${python.home}/Lib" includes="
+            <fileset dir="${python.lib}" includes="
                 ../LICENSE,
                 __future__.py,
                 BaseHTTPServer.py,
@@ -428,27 +452,8 @@
                                **/jreload/_xample/Version.class"
                      excludes="**/jpywork/**"/>
         </copy>
-
-
-        <!-- The xml files -->
-        <copy todir="${distDir}/Lib/xml">
-            <fileset dir="${python.home}/Lib/xml" includes="__init__.py"/>
-            <fileset dir="${PyXmlHome}/xml" includes="
-                ns.py,
-                sax/*.py,
-                sax/drivers2/drv_xmlproc.py,
-                sax/drivers2/__init__.py,
-                utils/*.py,
-                dom/*.py,
-                dom/html/*.py,
-                dom/ext/*.py,
-                dom/ext/reader/__init__.py,
-                dom/ext/reader/Sax*.py,
-                parsers/__init__.py,
-                parsers/xmlproc/*.py,
-                "/>
-        </copy>
     </target>
+
 
     <target name="dist" depends="copy-dist, doc, javadoc">
         <!--
