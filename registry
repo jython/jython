@@ -34,6 +34,10 @@ python.options.compileClass = false
 # This isn't needed any more due to improvements in the parser
 python.deprecated.keywordMangling = false
 
+# Setting this to the name of different console class, new console
+# features can be enabled. Readline support is such an example
+#python.console=org.python.util.ReadlineConsole
+
 # Setting this to true will cause the console to poll standard in
 # This might be helpful on systems without system-level threads
 python.console.poll = false
