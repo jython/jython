@@ -12,12 +12,13 @@ import org.python.modules.Setup;
  * The "sys" module.
  */
 
+// xxx this should really be a module!
 public class PySystemState extends PyObject
 {
     /**
      * The current version of JPython.
      */
-    public static String version = "2.2a0";
+    public static String version = "2.2aNewstyle";
 
     private static int PY_MAJOR_VERSION = 2;
     private static int PY_MINOR_VERSION = 2;
@@ -140,6 +141,7 @@ public class PySystemState extends PyObject
     public PyObject last_type = Py.None;
     public PyObject last_traceback = Py.None;
 
+    // xxx fix this accessors
     public PyObject __findattr__(String name) {
         if (name == "exc_value") {
             PyException exc = Py.getThreadState().exception;
@@ -170,11 +172,12 @@ public class PySystemState extends PyObject
 
     public PyObject __dict__;
     public void __setattr__(String name, PyObject value) {
-        if (__class__ == null)
+        PyType selftype = getType();
+        if (selftype == null)
             return;
-        PyObject ret = __class__.lookup(name, false);
+        PyObject ret = selftype.lookup(name); // xxx fix fix fix
         if (ret != null) {
-            ret._doset(this, value);
+            ret.jtryset(this, value);
             return;
         }
         if (__dict__ == null) {
@@ -192,6 +195,10 @@ public class PySystemState extends PyObject
         throw Py.AttributeError("del '"+name+"'");
     }
 
+    // xxx
+    public void __rawdir__(PyDictionary accum) {
+        accum.update(__dict__);
+    }
 
     public String safeRepr() throws PyIgnoreMethodTag {
         return "module 'sys'";
@@ -211,6 +218,8 @@ public class PySystemState extends PyObject
         this.recursionlimit = recursionlimit;
     }
 
+
+    // xxx fix and polish this
     public PySystemState() {
         initialize();
         modules = new PyStringMap();
@@ -230,9 +239,9 @@ public class PySystemState extends PyObject
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
 
-        if (__class__ != null) {
+        if (getType() != null) {
             __dict__ = new PyStringMap();
-            __dict__.invoke("update", __class__.__getattr__("__dict__"));
+            __dict__.invoke("update", getType().getDict());
             __dict__.__setitem__("displayhook", __displayhook__);
             __dict__.__setitem__("excepthook", __excepthook__);
         }
@@ -421,6 +430,7 @@ public class PySystemState extends PyObject
         Py.EmptyString = new PyString("");
         Py.Newline = new PyString("\n");
         Py.Space = new PyString(" ");
+        // xxx what to do about modules
         __builtin__class = PyJavaClass.lookup(__builtin__.class);
 
         // Setup standard wrappers for stdout and stderr...

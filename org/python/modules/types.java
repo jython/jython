@@ -11,49 +11,50 @@ public class types implements ClassDictInit {
                 "are not listed.\n"
     );
 
+    // xxx change some of these
     public static void classDictInit(PyObject dict) {
-        dict.__setitem__("ArrayType", PyJavaClass.lookup(PyArray.class));
+        dict.__setitem__("ArrayType", PyType.fromClass(PyArray.class));
         dict.__setitem__("BuiltinFunctionType",
-                         PyJavaClass.lookup(PyReflectedFunction.class));
+                         PyType.fromClass(PyReflectedFunction.class));
         dict.__setitem__("BuiltinMethodType",
-                         PyJavaClass.lookup(PyMethod.class));
-        dict.__setitem__("ClassType", PyJavaClass.lookup(PyClass.class));
-        dict.__setitem__("CodeType", PyJavaClass.lookup(PyCode.class));
-        dict.__setitem__("ComplexType", PyJavaClass.lookup(PyComplex.class));
-        dict.__setitem__("DictType", PyJavaClass.lookup(PyDictionary.class));
+                         PyType.fromClass(PyMethod.class));
+        dict.__setitem__("ClassType", PyType.fromClass(PyClass.class));
+        dict.__setitem__("CodeType", PyType.fromClass(PyCode.class));
+        dict.__setitem__("ComplexType", PyType.fromClass(PyComplex.class));
+        dict.__setitem__("DictType", PyType.fromClass(PyDictionary.class));
         dict.__setitem__("DictionaryType",
-                         PyJavaClass.lookup(PyDictionary.class));
+                         PyType.fromClass(PyDictionary.class));
         dict.__setitem__("EllipsisType",
-                         PyJavaClass.lookup(PyEllipsis.class));
-        dict.__setitem__("FileType", PyJavaClass.lookup(PyFile.class));
-        dict.__setitem__("FloatType", PyJavaClass.lookup(PyFloat.class));
-        dict.__setitem__("FrameType", PyJavaClass.lookup(PyFrame.class));
+                         PyType.fromClass(PyEllipsis.class));
+        dict.__setitem__("FileType", PyType.fromClass(PyFile.class));
+        dict.__setitem__("FloatType", PyType.fromClass(PyFloat.class));
+        dict.__setitem__("FrameType", PyType.fromClass(PyFrame.class));
         dict.__setitem__("FunctionType",
-                         PyJavaClass.lookup(PyFunction.class));
+                         PyType.fromClass(PyFunction.class));
         dict.__setitem__("GeneratorType",
-                         PyJavaClass.lookup(PyGenerator.class));
+                         PyType.fromClass(PyGenerator.class));
         dict.__setitem__("InstanceType",
-                         PyJavaClass.lookup(PyInstance.class));
-        dict.__setitem__("IntType", PyJavaClass.lookup(PyInteger.class));
-        dict.__setitem__("LambdaType", PyJavaClass.lookup(PyFunction.class));
-        dict.__setitem__("ListType", PyJavaClass.lookup(PyList.class));
-        dict.__setitem__("LongType", PyJavaClass.lookup(PyLong.class));
-        dict.__setitem__("MethodType", PyJavaClass.lookup(PyMethod.class));
-        dict.__setitem__("ModuleType", PyJavaClass.lookup(PyModule.class));
-        dict.__setitem__("NoneType", PyJavaClass.lookup(PyNone.class));
-        dict.__setitem__("SliceType", PyJavaClass.lookup(PySlice.class));
-        dict.__setitem__("StringType", PyJavaClass.lookup(PyString.class));
+                         PyType.fromClass(PyInstance.class));
+        dict.__setitem__("IntType", PyType.fromClass(PyInteger.class));
+        dict.__setitem__("LambdaType", PyType.fromClass(PyFunction.class));
+        dict.__setitem__("ListType", PyType.fromClass(PyList.class));
+        dict.__setitem__("LongType", PyType.fromClass(PyLong.class));
+        dict.__setitem__("MethodType", PyType.fromClass(PyMethod.class));
+        dict.__setitem__("ModuleType", PyType.fromClass(PyModule.class));
+        dict.__setitem__("NoneType", PyType.fromClass(PyNone.class));
+        dict.__setitem__("SliceType", PyType.fromClass(PySlice.class));
+        dict.__setitem__("StringType", PyType.fromClass(PyString.class));
         dict.__setitem__("TracebackType",
-                         PyJavaClass.lookup(PyTraceback.class));
-        dict.__setitem__("TupleType", PyJavaClass.lookup(PyTuple.class));
-        dict.__setitem__("TypeType", PyJavaClass.lookup(PyJavaClass.class));
+                         PyType.fromClass(PyTraceback.class));
+        dict.__setitem__("TupleType", PyType.fromClass(PyTuple.class));
+        dict.__setitem__("TypeType", PyType.fromClass(PyJavaClass.class));
         dict.__setitem__("UnboundMethodType",
-                         PyJavaClass.lookup(PyMethod.class));
-        dict.__setitem__("UnicodeType", PyJavaClass.lookup(PyString.class));
-        dict.__setitem__("XRangeType", PyJavaClass.lookup(PyXRange.class));
+                         PyType.fromClass(PyMethod.class));
+        dict.__setitem__("UnicodeType", PyType.fromClass(PyString.class));
+        dict.__setitem__("XRangeType", PyType.fromClass(PyXRange.class));
 
         dict.__setitem__("StringTypes", new PyTuple(new PyObject[] {
-                PyJavaClass.lookup(PyString.class)
+                PyType.fromClass(PyString.class)
         }));
     }
 }

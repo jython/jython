@@ -77,6 +77,10 @@ public class PyModule extends PyObject
         __dict__.__delitem__(attr);
     }
 
+    public PyObject __dir__() {
+        return __dict__.invoke("keys");
+    }
+    
     public String toString()  {
         return "<module "+__dict__.__finditem__("__name__")+" "+
             Py.idstr(this)+">";
@@ -97,6 +101,15 @@ public class PyModule extends PyObject
             }
             throw e;
         }
+    }
+
+    /**
+     * @see org.python.core.PyObject#safeRepr()
+     */
+    public String safeRepr() throws PyIgnoreMethodTag {
+        PyObject name = __dict__.__finditem__("__name__");
+        if (name == null) return "unnamed module";
+        return "module '"+name+"'";
     }
 
 }

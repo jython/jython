@@ -5,120 +5,500 @@
 package org.python.core;
 import java.util.Vector;
 
-
-
-class ListFunctions extends PyBuiltinFunctionSet
-{
-    ListFunctions(String name, int index, int argcount) {
-        super(name, index, argcount, argcount, true, null);
-    }
-
-    ListFunctions(String name, int index, int minargs, int maxargs) {
-        super(name, index, minargs, maxargs, true, null);
-    }
-
-    public PyObject __call__() {
-        PyList list = (PyList)__self__;
-        switch (index) {
-        case 1:
-            list.reverse();
-            return Py.None;
-        case 2:
-            list.sort(null);
-            return Py.None;
-        case 3:
-            return new PyInteger(list.__len__());
-        default:
-            throw argCountError(0);
-        }
-    }
-
-    public PyObject __call__(PyObject arg) {
-        PyList list = (PyList)__self__;
-        switch (index) {
-        case 2:
-            list.sort(arg);
-            return Py.None;
-        case 10:
-            list.append(arg);
-            return Py.None;
-        case 11:
-            return new PyInteger(list.count(arg));
-        case 12:
-            return new PyInteger(list.index(arg));
-        case 13:
-            list.remove(arg);
-            return Py.None;
-        case 14:
-            list.extend(arg);
-            return Py.None;
-        case 15:
-            return list.__add__(arg);
-        default:
-            throw argCountError(1);
-        }
-    }
-
-    public PyObject __call__(PyObject arg1, PyObject arg2) {
-        PyList list = (PyList)__self__;
-        switch (index) {
-        case 20:
-            if (!(arg1 instanceof PyInteger)) {
-                throw Py.TypeError(
-                    "illegal argument type for built-in operation");
-            }
-            int index = ((PyInteger)arg1).getValue();
-            list.insert(index, arg2);
-            return Py.None;
-        default:
-            throw argCountError(2);
-        }
-    }
-}
-
-
-
 /**
  * A builtin python list.
  */
 
-public class PyList extends PySequence implements ClassDictInit
-{
-    protected PyObject[] list;
+public class PyList extends PySequence {
     protected int length;
-    protected static PyObject __methods__;
+    protected PyObject[] list;
 
-    static {
-        PyList list = new PyList();
-        String[] methods = {
-            "append", "count", "extend", "index", "insert", "pop",
-            "remove", "reverse", "sort"};
-        for (int i = 0; i < methods.length; i++)
-            list.append(new PyString(methods[i]));
-        __methods__ = list;
-    }
+    public static void classDictInit(PyObject dict) throws PyIgnoreMethodTag {}
 
-    /** <i>Internal use only. Do not call this method explicit.</i> */
-    public static void classDictInit(PyObject dict) {
-        PySequence.classDictInit(dict);
-        dict.__setitem__("reverse", new ListFunctions("reverse", 1, 0));
-        dict.__setitem__("sort", new ListFunctions("sort", 2, 0, 1));
-        dict.__setitem__("__len__", new ListFunctions("__len__", 3, 0));
-        dict.__setitem__("append", new ListFunctions("append", 10, 1));
-        dict.__setitem__("count", new ListFunctions("count", 11, 1));
-        dict.__setitem__("index", new ListFunctions("index", 12, 1));
-        dict.__setitem__("remove", new ListFunctions("remove", 13, 1));
-        dict.__setitem__("extend", new ListFunctions("extend", 14, 1));
-        dict.__setitem__("__add__", new ListFunctions("__add__", 15, 1));
-        dict.__setitem__("insert", new ListFunctions("insert", 20, 2));
-        // hide these from Python!
-        dict.__setitem__("initModule", null);
-        dict.__setitem__("toString", null);
-        dict.__setitem__("hashCode", null);
+    /* type info */
+
+    public static final String exposed_name="list";
+
+    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
+        class exposed_append extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_append(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_append((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                self.list_append(arg0);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                self.list_append(arg0);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("append",new PyMethodDescr("append",PyList.class,1,1,new exposed_append(null,null)));
+        class exposed_count extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_count(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_count((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return Py.newInteger(self.list_count(arg0));
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                return Py.newInteger(self.list_count(arg0));
+            }
+
+        }
+        dict.__setitem__("count",new PyMethodDescr("count",PyList.class,1,1,new exposed_count(null,null)));
+        class exposed_extend extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_extend(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_extend((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                self.list_extend(arg0);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                self.list_extend(arg0);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("extend",new PyMethodDescr("extend",PyList.class,1,1,new exposed_extend(null,null)));
+        class exposed_index extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_index(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_index((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return Py.newInteger(self.list_index(arg0));
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                return Py.newInteger(self.list_index(arg0));
+            }
+
+        }
+        dict.__setitem__("index",new PyMethodDescr("index",PyList.class,1,1,new exposed_index(null,null)));
+        class exposed_insert extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_insert(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_insert((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    self.list_insert(arg0.asInt(0),arg1);
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyList self=(PyList)gself;
+                try {
+                    self.list_insert(arg0.asInt(0),arg1);
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("insert",new PyMethodDescr("insert",PyList.class,2,2,new exposed_insert(null,null)));
+        class exposed_pop extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_pop(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_pop((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return self.list_pop(arg0.asInt(0));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                try {
+                    return self.list_pop(arg0.asInt(0));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return self.list_pop();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyList self=(PyList)gself;
+                return self.list_pop();
+            }
+
+        }
+        dict.__setitem__("pop",new PyMethodDescr("pop",PyList.class,0,1,new exposed_pop(null,null)));
+        class exposed_remove extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_remove(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_remove((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                self.list_remove(arg0);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                self.list_remove(arg0);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("remove",new PyMethodDescr("remove",PyList.class,1,1,new exposed_remove(null,null)));
+        class exposed_reverse extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_reverse(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_reverse((PyList)self,info);
+            }
+
+            public PyObject __call__() {
+                self.list_reverse();
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyList self=(PyList)gself;
+                self.list_reverse();
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("reverse",new PyMethodDescr("reverse",PyList.class,0,0,new exposed_reverse(null,null)));
+        class exposed_sort extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_sort(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_sort((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                self.list_sort(arg0);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                self.list_sort(arg0);
+                return Py.None;
+            }
+
+            public PyObject __call__() {
+                self.list_sort();
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyList self=(PyList)gself;
+                self.list_sort();
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("sort",new PyMethodDescr("sort",PyList.class,0,1,new exposed_sort(null,null)));
+        class exposed___len__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___len__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___len__((PyList)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newInteger(self.list___len__());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyList self=(PyList)gself;
+                return Py.newInteger(self.list___len__());
+            }
+
+        }
+        dict.__setitem__("__len__",new PyMethodDescr("__len__",PyList.class,0,0,new exposed___len__(null,null)));
+        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___hash__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___hash__((PyList)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newInteger(self.list_hashCode());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyList self=(PyList)gself;
+                return Py.newInteger(self.list_hashCode());
+            }
+
+        }
+        dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyList.class,0,0,new exposed___hash__(null,null)));
+        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___repr__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___repr__((PyList)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.list_toString());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyList self=(PyList)gself;
+                return new PyString(self.list_toString());
+            }
+
+        }
+        dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyList.class,0,0,new exposed___repr__(null,null)));
+        class exposed___init__ extends PyBuiltinFunctionWide {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___init__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___init__((PyList)self,info);
+            }
+
+            public PyObject inst_call(PyObject self,PyObject[]args) {
+                return inst_call(self,args,Py.NoKeywords);
+            }
+
+            public PyObject __call__(PyObject[]args) {
+                return __call__(args,Py.NoKeywords);
+            }
+
+            public PyObject __call__(PyObject[]args,String[]keywords) {
+                self.list_init(args,keywords);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
+                PyList self=(PyList)gself;
+                self.list_init(args,keywords);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("__init__",new PyMethodDescr("__init__",PyList.class,-1,-1,new exposed___init__(null,null)));
+        dict.__setitem__("__new__", new PyNewWrapper(PyList.class, "__new__", -1, -1) {
+
+            public PyObject new_impl(boolean init, PyType subtype, PyObject[] args, String[] keywords) {
+                PyList newobj;
+                if (for_type == subtype) {
+                    newobj = new PyList();
+                    if (init)
+                        newobj.list_init(args, keywords);
+                } else {
+                    newobj = new PyListDerived(subtype);
+                }
+                return newobj;
+            }
+
+        });
     }
 
     public PyList() {
         this(Py.EmptyObjects);
+    }
+
+    public PyList(PyType type) {
+        super(type);
+        length = 0;
+        list = Py.EmptyObjects;
     }
 
     public PyList(Vector ilist) {
@@ -141,23 +521,44 @@ public class PyList extends PySequence implements ClassDictInit
         }
     }
 
+    final void list_init(PyObject[] args,String[] kwds) {
+        int nargs = args.length - kwds.length;
+        if (nargs > 1) {
+            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs,false,exposed_name,0,1);
+        }
+        if (nargs == 0) {
+            return;
+        }
+
+        PyObject o = args[0];
+        if (o instanceof PyList) {
+            PyList p = (PyList) o.__getslice__(Py.None, Py.None, Py.One);
+            this.list = p.list;
+            this.length = p.length;
+        } else if (o instanceof PyTuple) {
+            PyTuple t = (PyTuple)o;
+            PyObject[] a = new PyObject[t.__len__()];
+            System.arraycopy(t.list, 0, a, 0, a.length);
+            this.list = a;
+            this.length = a.length;
+        } else {
+            PyObject iter = o.__iter__();
+            for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+                append(item);
+            }
+        }
+    }
+
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'list' object";
     }
 
     public int __len__() {
-        return length;
+        return list___len__();
     }
 
-    public PyObject __findattr__(String name) {
-        if (name.equals("__methods__")) {
-            PyList mlist = (PyList)__methods__;
-            PyString methods[] = new PyString[mlist.length];
-            for (int i = 0; i < mlist.length; i++)
-                methods[i] = (PyString)mlist.list[i];
-            return new PyList(methods);
-        }
-        return super.__findattr__(name);
+    final int list___len__() {
+        return length;
     }
 
     protected PyObject get(int i) {
@@ -298,6 +699,10 @@ public class PyList extends PySequence implements ClassDictInit
     }
 
     public String toString() {
+        return list_toString();
+    }
+
+    final String list_toString() {
         ThreadState ts = Py.getThreadState();
         if (!ts.enterRepr(this)) {
             return "[...]";
@@ -331,6 +736,10 @@ public class PyList extends PySequence implements ClassDictInit
      * @param o the element to add.
      */
     public void append(PyObject o) {
+        list_append(o);
+    }
+
+    final void list_append(PyObject o) {
         resize(length+1);
         list[length-1] = o;
     }
@@ -342,6 +751,10 @@ public class PyList extends PySequence implements ClassDictInit
      *          the <code>==</code> operator.
      */
     public int count(PyObject o) {
+        return list_count(o);
+    }
+
+    final int list_count(PyObject o) {
         int count = 0;
         int n = length;
         PyObject[] list = this.list;
@@ -360,6 +773,10 @@ public class PyList extends PySequence implements ClassDictInit
      *          the <code>==</code> operator.
      */
     public int index(PyObject o) {
+        return list_index(o);
+    }
+
+    final int list_index(PyObject o) {
         return _index(o, "list.index(x): x not in list");
     }
 
@@ -386,6 +803,10 @@ public class PyList extends PySequence implements ClassDictInit
      * @param o     the element to insert.
      */
     public void insert(int index, PyObject o) {
+        list_insert(index, o);
+    }
+
+    final void list_insert(int index, PyObject o) {
         if (index < 0)
             index = 0;
         if (index > length)
@@ -401,9 +822,13 @@ public class PyList extends PySequence implements ClassDictInit
      * <br>
      * Same as <code>del s[s.index(x)]</code>
      *
-     * @param o     the element to search for and remove.
+     * @param o the element to search for and remove.
      */
     public void remove(PyObject o) {
+        list_remove(o);
+    }
+
+    final void list_remove(PyObject o) {
         del(_index(o, "list.remove(x): x not in list"));
     }
 
@@ -414,6 +839,10 @@ public class PyList extends PySequence implements ClassDictInit
      * reversed list to remind you of this side effect.
      */
     public void reverse() {
+        list_reverse();
+    }
+
+    final void list_reverse() {
         PyObject tmp;
         int n = length;
         PyObject[] list = this.list;
@@ -429,6 +858,10 @@ public class PyList extends PySequence implements ClassDictInit
      * Removes and return the last element in the list.
      */
     public PyObject pop() {
+        return list_pop();
+    }
+
+    final PyObject list_pop() {
         return pop(-1);
     }
 
@@ -439,6 +872,10 @@ public class PyList extends PySequence implements ClassDictInit
      * @param n the index of the element to remove and return.
      */
     public PyObject pop(int n) {
+        return list_pop(n);
+    }
+
+    final PyObject list_pop(int n) {
         if (length==0) {
             throw Py.IndexError("pop from empty list");
         }
@@ -452,7 +889,6 @@ public class PyList extends PySequence implements ClassDictInit
         return v;
     }
 
-
     /**
      * Append the elements in the argument sequence to the end of the list.
      * <br>
@@ -461,213 +897,16 @@ public class PyList extends PySequence implements ClassDictInit
      * @param o the sequence of items to append to the list.
      */
     public void extend(PyObject o) {
+        list_extend(o);
+    }
+
+    final void list_extend(PyObject o) {
         setslice(length, length, 1, o);
     }
 
     public PyObject __iadd__(PyObject o) {
         extend(fastSequence(o, "argument to += must be a sequence"));
         return this;
-    }
-
-    /* Implementation is taken from Python 1.5 as written by Guido van
-     * Rossum Port to Java is by Jim Hugunin.  This function will almost
-     * certainly go away with the builtin sorting provided by JDK 1.2
-     */
-
-    /* New quicksort implementation for arrays of object pointers.  Thanks
-     * to discussions with Tim Peters.
-     */
-
-    /* Comparison function.  Takes care of calling a user-supplied
-     * comparison function (any callable Python object).  Calls the
-     * standard comparison function, cmpobject(), if the user-supplied
-     * function is NULL.
-     */
-    private static int docompare(PyObject x, PyObject y,
-                                 PyObject compare, String cmpop) {
-        if (compare == null) {
-            /* NOTE: we rely on the fact here that the sorting algorithm
-               only ever checks whether k<0, i.e., whether x<y.  So we
-               invoke the rich comparison function with _lt ('<'), and
-               return -1 when it returns true and 0 when it returns
-               false. */
-            if (cmpop == "<")
-                return x._lt(y).__nonzero__() ? -1 : 0;
-            if (cmpop == "<=")
-                return x._le(y).__nonzero__() ? -1 : 1;
-        }
-
-        PyObject ret = compare.__call__(new PyObject[] {x, y});
-
-        if (ret instanceof PyInteger) {
-            int v = ((PyInteger)ret).getValue();
-            return v < 0 ? -1 : v > 0 ? 1 : 0;
-        }
-        throw Py.TypeError("comparision function must return int");
-    }
-
-    /* Straight insertion sort.  More efficient for sorting small arrays. */
-    private static void insertionsort(PyObject[] array, int off, int size,
-                                      PyObject compare)
-    {
-        int end = off+size;
-        for (int i=off+1; i<end; i++) {
-            PyObject key = array[i];
-            int j = i;
-            while (--j >= off) {
-                PyObject q = array[j];
-                if (docompare(q, key, compare, "<=") <= 0)
-                    break;
-                array[j+1] = q;
-                array[j] = key;
-            }
-        }
-    }
-
-    /* MINSIZE is the smallest array we care to partition; smaller arrays
-     * are sorted using a straight insertion sort (above).  It must be at
-     * least 2 for the quicksort implementation to work.  Assuming that
-     * comparisons are more expensive than everything else (and this is a
-     * good assumption for Python), it should be 10, which is the cutoff
-     * point: quicksort requires more comparisons than insertion sort for
-     * smaller arrays.
-     */
-    private static final int MINSIZE = 10;
-
-    /* STACKSIZE is the size of our work stack.  A rough estimate is that
-     * this allows us to sort arrays of MINSIZE * 2**STACKSIZE, or large
-     * enough.  (Because of the way we push the biggest partition first,
-     * the worst case occurs when all subarrays are always partitioned
-     * exactly in two.)
-     */
-    private static final int STACKSIZE = 64;
-
-    /* Quicksort algorithm.  If an exception occurred; in this
-     * case we leave the array partly sorted but otherwise in good health
-     * (i.e. no items have been removed or duplicated).
-     */
-    private static void quicksort(PyObject[] array, int off, int size,
-                                  PyObject compare)
-    {
-        PyObject tmp, pivot, left, right;
-        int lo, hi, l, r;
-        int top, k, n, n2;
-        int[] lostack = new int[STACKSIZE];
-        int[] histack = new int[STACKSIZE];
-
-        /* Start out with the whole array on the work stack */
-        lostack[0] = off;
-        histack[0] = off+size;
-        top = 1;
-
-        /* Repeat until the work stack is empty */
-        while (--top >= 0) {
-            lo = lostack[top];
-            hi = histack[top];
-
-            /* If it's a small one, use straight insertion sort */
-            n = hi - lo;
-            if (n < MINSIZE) {
-                /*
-                 * skip it.  The insertion sort at the end will catch these
-                 */
-                continue;
-            }
-
-            /* Choose median of first, middle and last item as pivot */
-            l = lo + (n>>1);                 /* Middle */
-            r = hi - 1;                      /* Last */
-
-            left = array[l]; right = array[lo];
-            if (docompare(left, right, compare, "<") < 0) {
-                array[lo] = left; array[l] = right;
-            }
-
-            left = array[r]; right = array[l];
-            if (docompare(left, right, compare, "<") < 0) {
-                array[r] = left; array[l] = right;
-            }
-
-            left = array[l]; right = array[lo];
-            if (docompare(left, right, compare, "<") < 0) {
-                array[lo] = left; array[l] = right;
-            }
-            pivot = array[l];
-
-            /* Partition the array */
-            l = lo+1;
-            r = hi-2;
-            for (;;) {
-                /* Move left index to element > pivot */
-                while (l < hi) {
-                    if (docompare(array[l], pivot, compare, "<") >= 0)
-                        break;
-                    l++;
-                }
-                /* Move right index to element < pivot */
-                while (r >= lo) {
-                    if (docompare(pivot, array[r], compare, "<") >= 0)
-                        break;
-                    r--;
-                }
-
-                /* If they met, we're through */
-                if (l < r) {
-                    /* Swap elements and continue */
-                    tmp = array[l]; array[l] = array[r]; array[r] = tmp;
-                    l++; r--;
-                }
-                else if (l == r) {
-                    l++; r--;
-                    break;
-                }
-
-                if (l > r)
-                    break;
-            }
-
-            /* We have now reached the following conditions:
-               lo <= r < l <= hi
-               all x in [lo,r) are <= pivot
-               all x in [r,l)  are == pivot
-               all x in [l,hi) are >= pivot
-               The partitions are [lo,r) and [l,hi)
-            */
-
-            /* Push biggest partition first */
-            n = r - lo;
-            n2 = hi - l;
-            if (n > n2) {
-                /* First one is bigger */
-                if (n > MINSIZE) {
-                    lostack[top] = lo;
-                    histack[top++] = r;
-                    if (n2 > MINSIZE) {
-                        lostack[top] = l;
-                        histack[top++] = hi;
-                    }
-                }
-            } else {
-                /* Second one is bigger */
-                if (n2 > MINSIZE) {
-                    lostack[top] = l;
-                    histack[top++] = hi;
-                    if (n > MINSIZE) {
-                        lostack[top] = lo;
-                        histack[top++] = r;
-                    }
-                }
-            }
-            /* Should assert top < STACKSIZE-1 */
-        }
-
-        /* Ouch - even if I screwed up the quicksort above, the
-         * insertionsort below will cover up the problem - just a
-         * performance hit would be noticable.
-         */
-
-        /* insertionsort is pretty fast on the partially sorted list */
-        insertionsort(array, off, size, compare);
     }
 
     /**
@@ -684,6 +923,10 @@ public class PyList extends PySequence implements ClassDictInit
      * @param compare the comparison function.
      */
     public synchronized void sort(PyObject compare) {
+        list_sort(compare);
+    }
+
+    final void list_sort(PyObject compare) {
         MergeState ms = new MergeState(list, length, compare);
         ms.sort();
     }
@@ -693,17 +936,18 @@ public class PyList extends PySequence implements ClassDictInit
      * normal relative comparison operators.
      */
     public void sort() {
+        list_sort();
+    }
+
+    final void list_sort() {
         sort(null);
     }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-
-    protected PyClass getPyClass() {
-        return __class__;
+    public int hashCode() {
+        return list_hashCode();
     }
 
-    public int hashCode() {
+    final int list_hashCode() {
         throw Py.TypeError("unhashable type");
     }
 }

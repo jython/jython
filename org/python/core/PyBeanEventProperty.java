@@ -12,11 +12,9 @@ public class PyBeanEventProperty extends PyReflectedField
     public Class eventClass;
     public String __name__;
 
-    public static PyClass __class__;
     public PyBeanEventProperty(String eventName, Class eventClass,
                                Method addMethod, Method eventMethod)
     {
-        super(__class__);
         __name__ = eventMethod.getName().intern();
         this.addMethod = addMethod;
         this.eventName = eventName;

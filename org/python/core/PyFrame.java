@@ -24,8 +24,6 @@ public class PyFrame extends PyObject
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
 
-    public static PyClass __class__;
-
     private static final String[] __members__ = {
         "f_back", "f_code", "f_locals", "f_globals", "f_lineno",
         "f_builtins", "f_trace"
@@ -34,7 +32,6 @@ public class PyFrame extends PyObject
     public PyFrame(PyTableCode code, PyObject locals, PyObject globals,
                    PyObject builtins)
     {
-        super(__class__);
         f_code = code;
         f_locals = locals;
         f_globals = globals;

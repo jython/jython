@@ -15,9 +15,7 @@ public class PyArray extends PySequence {
     Object data;
     Class type;
 
-    public static PyClass __class__;
     public PyArray(Class type, Object data) {
-        super(__class__);
         this.type = type;
         this.data = data;
     }

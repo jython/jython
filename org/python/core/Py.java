@@ -340,8 +340,8 @@ public final class Py
         else if (t instanceof OutOfMemoryError) {
             memory_error((OutOfMemoryError)t);
         }
-        PyObject exc = Py.java2py(t);
-        return new PyException(exc.__class__, exc);
+        PyJavaInstance exc = (PyJavaInstance)Py.java2py(t);
+        return new PyException(exc.instclass, exc);
 
     }
 
@@ -1111,7 +1111,7 @@ public final class Py
 
     public static PyException makeException(PyObject type) {
         if (type instanceof PyInstance) {
-            return new PyException(type.__class__, type);
+            return new PyException(type.fastGetClass(), type);
         } else {
             return makeException(type, Py.None);
         }
@@ -1123,7 +1123,7 @@ public final class Py
                 throw TypeError("instance exceptions may not have " +
                                 "a separate value");
             } else {
-                return new PyException(type.__class__, type);
+                return new PyException(type.fastGetClass(), type);
             }
         }
         PyException exc = new PyException(type, value);
@@ -1139,7 +1139,7 @@ public final class Py
                 throw TypeError("instance exceptions may not have " +
                                 "a separate value");
             } else {
-                type = type.__class__;
+                type = type.fastGetClass();
                 //return new PyException(type.__class__, type);
             }
         }
@@ -1463,7 +1463,13 @@ public final class Py
         if (o == null) return Py.None;
         if (o instanceof String) return new PyString((String)o);
         if (o instanceof Character) return makeCharacter((Character)o);
-        if (o instanceof Class) return PyJavaClass.lookup((Class)o);
+        if (o instanceof Class) {
+            Class cls = (Class)o;
+            if (PyObject.class.isAssignableFrom(cls)) {
+                return PyType.fromClass(cls);
+            }
+            return PyJavaClass.lookup(cls);
+        } 
 
         Class c = o.getClass();
         if (c.isArray()) {
@@ -1497,6 +1503,9 @@ public final class Py
         String.class, PyTuple.class, PyObject.class, Class.class
     };
 
+    static private final PyType CLASS_TYPE = PyType.fromClass(PyClass.class);
+    
+
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,
                                      Class proxyClass,
@@ -1511,36 +1520,53 @@ public final class Py
         if (doc != null)
             dict.__setitem__("__doc__", doc);
 
-        for (int i=0; i<bases.length; i++) {
-            if (!(bases[i] instanceof PyClass)) {
-                PyObject c = bases[i].__class__;
-                // Only try the meta-class trick on __class__'s that are
-                // PyInstance's.  This will improve error messages for
-                // casual mistakes while not really reducing the power of
-                // this approach (I think)
-                if (c instanceof PyJavaClass) {
-                    throw Py.TypeError("base is not a class object: "+
-                                       bases[i].safeRepr());
+        PyObject metaclass;
+        
+        metaclass = dict.__finditem__("__metaclass__");
+        
+        if (metaclass == null) {
+            if (bases.length != 0) {
+                PyObject base = bases[0];
+                
+                if (base instanceof PyMetaClass) {
+                    // jython-only, experimental PyMetaClass hook
+                    // xxx keep?
+                    try {
+                        java.lang.reflect.Constructor ctor =
+                            base.getClass().getConstructor(pyClassCtrSignature);
+                        return (PyObject) ctor.newInstance(
+                            new Object[] {
+                                name,
+                                new PyTuple(bases),
+                                dict,
+                                proxyClass });
+                    } catch (Exception e) {
+                        throw Py.TypeError(
+                            "meta-class fails to supply proper "
+                                + "ctr: "
+                                + base.safeRepr());
+                    }
+                }             
+                metaclass = base.__findattr__("__class__");
+                if (metaclass == null) {
+                    metaclass = base.getType();
                 }
-                return c.__call__(new PyString(name),
-                                  new PyTuple(bases),
-                                  dict);
-            } else if (bases[i] instanceof PyMetaClass) {
-                // experimental PyMetaClass hook
-                try {
-                    java.lang.reflect.Constructor ctor = bases[i].getClass().
-                                    getConstructor(pyClassCtrSignature);
-                    return (PyObject) ctor.newInstance(new Object[] {
-                            name, new PyTuple(bases), dict, proxyClass });
-                } catch(Exception e) {
-                    throw Py.TypeError("meta-class fails to supply proper " +
-                                       "ctr: " + bases[i].safeRepr());
-                }
+            } else {
+                if (globals != null)
+                    metaclass = globals.__finditem__("__metaclass__");                     
             }
-
         }
 
-        return new PyClass(name, new PyTuple(bases), dict, proxyClass);
+        if (metaclass == null || metaclass == CLASS_TYPE ||
+             (metaclass instanceof PyJavaClass && ((PyJavaClass)metaclass).proxyClass == Class.class) ) {
+            return new PyClass(name, new PyTuple(bases), dict, proxyClass);
+        }
+        
+        if (proxyClass != null) {
+            throw Py.TypeError("the meta-class cannot handle java subclassing");
+        }
+ 
+        return metaclass.__call__(new PyString(name),new PyTuple(bases),dict);
     }
 
     private static int nameindex=0;
@@ -1645,7 +1671,7 @@ public final class Py
         return Py.compile_flags(node, Py.getName(), filename, true, true,
                                 cflags);
     }
-
+    
     public static PyObject[] unpackSequence(PyObject o, int length) {
         if (o instanceof PyTuple) {
             PyTuple tup = (PyTuple)o;
@@ -1764,6 +1790,112 @@ public final class Py
         return makeFilename(name.substring(index+1, name.length()),
                             new File(dir, name.substring(0, index)));
     }
+    
+    private static boolean abstract_issubclass(PyObject derived,PyObject cls) {
+        if (derived == cls)
+            return true;
+        PyObject bases = derived.__findattr__("__bases__");
+        if (bases == null)
+            return false;
+        for (int i = 0; i < bases.__len__(); i++) {
+            if (abstract_issubclass(bases.__getitem__(i),cls))
+                return true;
+        }
+        return false;
+    }
+        
+    public static boolean isInstance(PyObject obj, PyObject cls) {
+        if (cls instanceof PyType) {
+            PyType objtype = obj.getType();
+            if (objtype == cls)
+                return true;
+            return objtype.isSubType((PyType) cls);
+        } else if (cls instanceof PyClass) {
+            if (!(obj instanceof PyInstance))
+                return false;
+            return ((PyClass) obj.fastGetClass()).isSubClass((PyClass) cls);
+        } else if (cls.getClass() == PyTuple.class) {
+            for (int i = 0; i < cls.__len__(); i++) {
+                if (isInstance(obj, cls.__getitem__(i)))
+                    return true;
+            }
+            return false;
+        } else {
+            if (cls.__findattr__("__bases__") == null)
+                throw Py.TypeError(
+                    "isinstance() arg 2 must be a class, type,"
+                        + " or tuple of classes and types");
+            PyObject ocls = obj.__findattr__("__class__");
+            if (ocls == null)
+                return false;
+            return abstract_issubclass(ocls, cls);
+        }
+    }
+    
+    public static boolean isSubClass(PyObject derived,PyObject cls) {
+        if (derived instanceof PyType && cls instanceof PyType) {
+            if (derived == cls) return true;
+            return ((PyType)derived).isSubType((PyType)cls);
+        } else if (cls instanceof PyClass && derived instanceof PyClass) {
+            return ((PyClass)derived).isSubClass((PyClass)cls);            
+        } else if (cls.getClass() == PyTuple.class) {
+            for (int i = 0; i < cls.__len__(); i++) {
+                if (isSubClass(derived, cls.__getitem__(i)))
+                    return true;
+            }
+            return false;
+        } else {
+            if (derived.__findattr__("__bases__") == null)
+                throw Py.TypeError(
+                    "issubclass() arg 1 must be a class");            
+            if (cls.__findattr__("__bases__") == null)
+                throw Py.TypeError(
+                    "issubclass() arg 2 must be a class, type,"
+                        + " or tuple of classes and types");
+            return abstract_issubclass(derived,cls);
+        }    
+    }
+
+    static PyObject[] make_array(PyObject o) {
+        if (o instanceof PyTuple)
+            return ((PyTuple)o).list;
+    
+        PyObject iter = o.__iter__();
+    
+        // Guess result size and allocate space.
+        int n = 10;
+        try {
+            n = o.__len__();
+        } catch (PyException exc) { }
+    
+        PyObject[] objs= new PyObject[n];
+    
+        int i;
+        for (i = 0; ; i++) {
+            PyObject item = iter.__iternext__();
+            if (item == null)
+                break;
+            if (i >= n) {
+                if (n < 500) {
+                    n += 10;
+                } else {
+                    n += 100;
+                }
+                PyObject[] newobjs = new PyObject[n];
+                System.arraycopy(objs, 0, newobjs, 0, objs.length);
+                objs = newobjs;
+            }
+            objs[i] = item;
+        }
+    
+        // Cut back if guess was too large.
+        if (i < n) {
+            PyObject[] newobjs = new PyObject[i];
+            System.arraycopy(objs, 0, newobjs, 0, i);
+            objs = newobjs;
+        }
+        return objs;
+    }    
     
 }
 

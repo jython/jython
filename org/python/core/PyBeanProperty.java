@@ -7,11 +7,9 @@ public class PyBeanProperty extends PyReflectedField {
     public Class myType;
     String __name__;
 
-    public static PyClass __class__;
     public PyBeanProperty(String name, Class myType,
                           Method getMethod, Method setMethod)
     {
-        super(__class__);
         __name__ = name;
         this.getMethod = getMethod;
         this.setMethod = setMethod;
@@ -61,7 +59,7 @@ public class PyBeanProperty extends PyReflectedField {
         if (value instanceof PyTuple) {
             try {
                 PyTuple vtup = (PyTuple)value;
-                value = PyJavaClass.lookup(myType).__call__(vtup.list);
+                value = PyJavaClass.lookup(myType).__call__(vtup.list); // xxx PyObject subclasses
             } catch (Throwable t) {
                 // If something goes wrong ignore it?
             }

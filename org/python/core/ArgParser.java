@@ -31,6 +31,8 @@ public class ArgParser {
     // A marker.
     private static Object required = new Object();
     private static String[] emptyKws = new String[0];
+    
+    private PyBuiltinFunction.Info info;
 
     private ArgParser(String funcname, PyObject[] args, String[] kws) {
         this.funcname = funcname;
@@ -105,10 +107,20 @@ public class ArgParser {
         check();
     }
 
+    public ArgParser(String funcname, PyObject[] args, String[] kws,
+            String[] paramnames, int minargs) {
+        this(funcname, args, kws);
+        this.params = paramnames;
+        check();
+        if (!PyBuiltinFunction.DefaultInfo.check(args.length,minargs,this.params.length))
+            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(args.length, false, funcname,
+                    minargs, this.params.length);
+    }
+
 
     /**
      * Return a required argument as a String.
-     * @param pos    The position of the argument. First argument is
+     * @param pos    The position of the .. First argument is
      *               numbered 0.
      */
     public String getString(int pos) {

@@ -292,10 +292,9 @@ def writeResults(comp, opts):
 #            ja.addEntry(depend.getFile(jc))
 
     ja.dump(jarfile)
-        
 
-
 def main():
     opts = getOptions()
     comp = doCompile(opts)
-    writeResults(comp, opts)
+    if opts.compiler != "NONE":
+      writeResults(comp, opts)

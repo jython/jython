@@ -28,7 +28,9 @@ public class PyJavaClass extends PyClass
 
     public static final PyJavaClass lookup(String name,PackageManager mgr) {
         if (tbl.queryCanonical(name)) {
-            return lookup(mgr.findClass(null,name,"forced java class"));
+            Class c = mgr.findClass(null,name,"forced java class");
+            check_lazy_allowed(c); // xxx
+            return lookup(c);
         }
         PyJavaClass ret = new PyJavaClass(name, mgr);
         tbl.putLazyCanonical(name, ret);
@@ -61,19 +63,15 @@ public class PyJavaClass extends PyClass
         return ret;
     }
 
-    public static PyClass __class__;
-
     private PyJavaClass(boolean fakeArg) {
         super(true);
     }
 
     protected PyJavaClass(Class c) {
-        super(__class__);
         init(c);
     }
 
     protected PyJavaClass(String name,PackageManager mgr) {
-        super(__class__);
         __name__ = name;
         this.__mgr__ = mgr;
     }
@@ -85,8 +83,19 @@ public class PyJavaClass extends PyClass
         return proxyClass;
     }
 
+    // for the moment trying to lazily load a PyObject subclass
+    // is not allowed, (because of the PyJavaClass vs PyType class mismatch)
+    // pending PyJavaClass becoming likely a subclass of PyType  
+    private static final void check_lazy_allowed(Class c) {
+        if (PyObject.class.isAssignableFrom(c)) { // xxx
+            throw Py.TypeError("cannot lazy load PyObject subclass");
+        }        
+    }
+
     private static final void initLazy(PyJavaClass jc) {
-        jc.init(jc.__mgr__.findClass(null,jc.__name__,"lazy java class"));
+        Class c = jc.__mgr__.findClass(null,jc.__name__,"lazy java class");
+        check_lazy_allowed(c); // xxx
+        jc.init(c);
         tbl.putCanonical(jc.proxyClass,jc);
         jc.__mgr__ = null;
     }
@@ -152,6 +161,7 @@ public class PyJavaClass extends PyClass
     }
 
     private synchronized void init__class__(Class c) {
+        /* xxx disable opt, will need similar opt for types
         if (!PyObject.class.isAssignableFrom(c))
             return;
         try {
@@ -164,7 +174,7 @@ public class PyJavaClass extends PyClass
             }
         }
         catch (NoSuchFieldException exc) {}
-        catch (IllegalAccessException exc1) {}
+        catch (IllegalAccessException exc1) {} */
     }
 
     private synchronized void init__bases__(Class c) {
@@ -767,7 +777,7 @@ public class PyJavaClass extends PyClass
 
         PyObject result = lookup(name, false);
         if (result != null)
-            return result._doget(null);
+            return result.__get__(null, null); // xxx messy
 
         // A cache of missing attributes to short-circuit later tests
         if (missingAttributes != null &&
@@ -810,7 +820,7 @@ public class PyJavaClass extends PyClass
         Class innerClass = Py.relFindClass(p, p.getName()+"$"+name);
         if (innerClass == null) return null;
 
-        PyJavaClass jinner = lookup(innerClass);
+        PyObject jinner = Py.java2py(innerClass); // xxx lookup(innerClass);
         __dict__.__setitem__(name, jinner);
         return jinner;
     }
@@ -818,7 +828,7 @@ public class PyJavaClass extends PyClass
     public void __setattr__(String name, PyObject value) {
         PyObject field = lookup(name, false);
         if (field != null) {
-            if (field._doset(null, value))
+            if (field.jtryset(null, value))
                 return;
         }
         __dict__.__setitem__(name, value);
@@ -830,25 +840,38 @@ public class PyJavaClass extends PyClass
             throw Py.NameError("attribute not found: "+name);
         }
 
-        if (!field._dodel(null)) {
+        if (!field.jdontdel()) {
             __dict__.__delitem__(name);
-            //throw Py.TypeError("attr not deletable: "+name);
         }
     }
 
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if (!constructorsInitialized)
             initConstructors();
+        
+        // xxx instantiation of PyObject subclass, still needed?
+        if (PyObject.class.isAssignableFrom(proxyClass)) {
+            if (Modifier.isAbstract(proxyClass.getModifiers())) {
+                            throw Py.TypeError("can't instantiate abstract class ("+
+                                               __name__+")");
+            }
+            if (__init__ == null) {
+                throw Py.TypeError("no public constructors for "+
+                                   __name__);
+            }
+            return __init__.make(args,keywords);
+        }
+            
         PyInstance inst = new PyJavaInstance(this);
         inst.__init__(args, keywords);
 
-        if (proxyClass != null &&
+        /*if (proxyClass != null &&
                     PyObject.class.isAssignableFrom(proxyClass)) {
             // It would be better if we didn't have to create a PyInstance
             // in the first place.
             ((PyObject)inst.javaProxy).__class__ = this;
             return (PyObject)inst.javaProxy;
-        }
+        }*/
 
         return inst;
     }

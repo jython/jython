@@ -13,10 +13,7 @@ public class PyMethod extends PyObject
     public String __name__;
     public PyObject __doc__;
 
-    public static PyClass __class__;
-
     public PyMethod(PyObject self, PyObject f, PyObject wherefound) {
-        super(__class__);
         im_func = f;
         im_self = self;
         im_class = wherefound;
@@ -77,7 +74,7 @@ public class PyMethod extends PyObject
         /* Only if classes are compatible */
         if (container == null)
             return this;
-        if (__builtin__.issubclass(container.__class__, (PyClass)im_class))
+        if (__builtin__.issubclass(container.fastGetClass(), im_class))
              if (im_func instanceof PyFunction)
                  return new PyMethod(container, (PyFunction)im_func,
                                      im_class);
@@ -107,14 +104,17 @@ public class PyMethod extends PyObject
             ;
         else if (args.length < 1)
             badcall = true;
-        else
+        else // xxx can be faster?
             // first argument must be an instance who's class is im_class
             // or a subclass of im_class
-            badcall = ! __builtin__.issubclass(args[0].__class__,
-                                               (PyClass)im_class);
+            badcall = ! __builtin__.issubclass(args[0].fastGetClass(),im_class);
         if (badcall) {
+            String got ="nothing";
+            if (args.length>=1)
+                got = class_name(args[0].fastGetClass())+" instance";
             throw Py.TypeError("unbound method " + __name__ + "() must be " +
-                               "called with instance as first argument");
+                               "called with "+class_name(im_class)+ " instance as first argument"+
+                               " (got "+got+" instead)");
         }
         else
             return im_func.__call__(args, keywords);
@@ -137,17 +137,25 @@ public class PyMethod extends PyObject
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'method' object";
     }
+    
+    private String class_name(PyObject cls) {
+        if (cls instanceof PyClass)
+           return ((PyClass)cls).__name__;
+        if (cls instanceof PyType)
+            return ((PyType)cls).fastGetName();
+        return "?";
+    }
 
     public String toString() {
         String classname = "?";
-        if (im_class != null && im_class instanceof PyClass)
-            classname = ((PyClass)im_class).__name__;
+        if (im_class != null)
+            classname = class_name(im_class);
         if (im_self == null)
             // this is an unbound method
             return "<unbound method " + classname + "." + __name__ + ">";
         else
             return "<method " + classname + "." +
-                __name__ + " of " + im_self.__class__.__name__ +
+                __name__ + " of " + class_name(im_self.fastGetClass()) +
                 " instance " + Py.idstr(im_self) + ">";
     }
 }

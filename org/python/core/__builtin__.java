@@ -1,7 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.parser.SimpleNode;
 import java.util.Hashtable;
 import java.math.BigInteger;
 
@@ -40,8 +39,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
                 Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
         case 5:
             return __builtin__.hash(arg1);
-        case 7:
-            return __builtin__.list(arg1);
         case 8:
             return __builtin__.tuple(arg1);
         case 11:
@@ -112,6 +109,21 @@ public class __builtin__ implements ClassDictInit
 {
     /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
+        /* newstyle */
+
+        dict.__setitem__("object",PyType.fromClass(PyObject.class));
+        dict.__setitem__("type",PyType.fromClass(PyType.class));
+        dict.__setitem__("int",PyType.fromClass(PyInteger.class));
+        dict.__setitem__("dict",PyType.fromClass(PyDictionary.class));
+        dict.__setitem__("list",PyType.fromClass(PyList.class));
+
+        dict.__setitem__("property",PyType.fromClass(PyProperty.class));
+        dict.__setitem__("staticmethod",PyType.fromClass(PyStaticMethod.class));
+        dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
+        dict.__setitem__("super",PyType.fromClass(PySuper.class));
+
+        /* - */
+
         dict.__setitem__("None", Py.None);
         dict.__setitem__("NotImplemented", Py.NotImplemented);
         dict.__setitem__("Ellipsis", Py.Ellipsis);
@@ -129,7 +141,6 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("globals", new BuiltinFunctions("globals", 4, 0));
         dict.__setitem__("hash", new BuiltinFunctions("hash", 5, 1));
         dict.__setitem__("cmp", new BuiltinFunctions("cmp", 6, 2));
-        dict.__setitem__("list", new BuiltinFunctions("list", 7, 1));
         dict.__setitem__("tuple", new BuiltinFunctions("tuple", 8, 1));
         dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
         dict.__setitem__("isinstance",
@@ -148,7 +159,7 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject apply(PyObject o, PyObject args) {
-        return o.__call__(make_array(args));
+        return o.__call__(Py.make_array(args));
     }
 
     public static PyObject apply(PyObject o, PyObject args,
@@ -161,7 +172,7 @@ public class __builtin__ implements ClassDictInit
             java.util.Enumeration ev = table.elements();
             int n = table.size();
             kw = new String[n];
-            PyObject[] aargs = make_array(args);
+            PyObject[] aargs = Py.make_array(args);
             a = new PyObject[n+aargs.length];
             System.arraycopy(aargs, 0, a, 0, aargs.length);
             int offset = aargs.length;
@@ -199,27 +210,9 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyTuple coerce(PyObject o1, PyObject o2) {
-        Object ctmp;
-        PyTuple ret;
-        if (o1.__class__ == o2.__class__) {
-            return new PyTuple(new PyObject[] {o1, o2});
-        }
-        ctmp = o1.__coerce_ex__(o2);
-        if (ctmp != null && ctmp != Py.None) {
-            if (ctmp instanceof PyObject[]) {
-                return new PyTuple((PyObject[])ctmp);
-            } else {
-                return new PyTuple(new PyObject[] {o1, (PyObject)ctmp});
-            }
-        }
-        ctmp = o2.__coerce_ex__(o1);
-        if (ctmp != null && ctmp != Py.None) {
-            if (ctmp instanceof PyObject[]) {
-                return new PyTuple((PyObject[])ctmp);
-            } else {
-                return new PyTuple(new PyObject[] {(PyObject)ctmp, o2});
-            }
-        }
+        PyObject[] result = o1._coerce(o2);
+        if (result != null)
+            return new PyTuple(result);
         throw Py.TypeError("number coercion failed");
     }
 
@@ -431,16 +424,18 @@ public class __builtin__ implements ClassDictInit
         return input(new PyString(""));
     }
 
+    /** not used anymore
+     * @deprecated
+     */
     public static PyInteger int$(PyString o, int base) {
         return Py.newInteger(o.__str__().atoi(base));
     }
 
+    /** not used anymore
+     * @deprecated
+     */
     public static PyInteger int$(PyObject o) {
         return o.__int__();
-    }
-
-    public static PyObject object() {
-        return new PyObject();
     }
 
     private static PyStringMap internedStrings;
@@ -458,40 +453,14 @@ public class __builtin__ implements ClassDictInit
         return s;
     }
 
+    //  xxx find where used, modify with more appropriate if necessary
     public static boolean isinstance(PyObject obj, PyObject cls) {
-        if (cls instanceof PyClass) {
-            return issubclass(obj.__class__, (PyClass) cls);
-        } if (cls.getClass() == PyTuple.class) {
-            for (int i = 0; i < cls.__len__(); i++) {
-                if (isinstance(obj, cls.__getitem__(i)))
-                    return true;
-            }
-            return false;
-        } else {
-            throw Py.TypeError("isinstance(): 2nd arg is not a class");
-        }
+        return Py.isInstance(obj,cls);
     }
 
-
-    public static boolean issubclass(PyClass subClass, PyClass superClass) {
-        if (subClass == null || superClass == null)
-            throw Py.TypeError("arguments must be classes");
-        if (subClass == superClass)
-            return true;
-        if (subClass.proxyClass != null && superClass.proxyClass != null) {
-            if (superClass.proxyClass.isAssignableFrom(subClass.proxyClass))
-                return true;
-        }
-        if (subClass.__bases__ == null || superClass.__bases__ == null)
-            return false;
-        PyObject[] bases = subClass.__bases__.list;
-        int n = bases.length;
-        for(int i=0; i<n; i++) {
-            PyClass c = (PyClass)bases[i];
-            if (issubclass(c, superClass))
-                return true;
-        }
-        return false;
+    //  xxx find where used, modify with more appropriate if necessary
+    public static boolean issubclass(PyObject derived, PyObject cls) {
+        return Py.isSubClass(derived,cls);
     }
 
 
@@ -514,21 +483,6 @@ public class __builtin__ implements ClassDictInit
             else
                 throw e;
         }
-    }
-
-    public static PyList list(PyObject o) {
-        if (o instanceof PyList)
-            return (PyList) o.__getslice__(Py.None, Py.None, Py.One);
-        if (o instanceof PyTuple) {
-            // always make a copy, otherwise the list will share the
-            // underlying data structure with the tuple object, which
-            // renders the tuple mutable!
-            PyTuple t = (PyTuple)o;
-            PyObject[] a = new PyObject[t.__len__()];
-            System.arraycopy(t.list, 0, a, 0, a.length);
-            return new PyList(a);
-        }
-        return new PyList(o);
     }
 
     public static PyObject locals() {
@@ -711,32 +665,20 @@ public class __builtin__ implements ClassDictInit
     private static boolean coerce(PyObject[] objs) {
         PyObject x = objs[0];
         PyObject y = objs[1];
-        if (x.__class__ == y.__class__)
+        PyObject[] result;
+        result = x._coerce(y);
+        if (result != null) {
+            objs[0] = result[0];
+            objs[1] = result[1];
             return true;
-        Object ctmp = x.__coerce_ex__(y);
-        if (ctmp != null && ctmp != Py.None) {
-            if (ctmp instanceof PyObject[]) {
-                x = ((PyObject[])ctmp)[0];
-                y = ((PyObject[])ctmp)[1];
-            } else {
-                y = (PyObject)ctmp;
-            }
         }
-        objs[0] = x; objs[1] = y;
-        if (x.__class__ == y.__class__)
+        result = y._coerce(x);
+        if (result != null) {
+            objs[0] = result[1];
+            objs[1] = result[0];
             return true;
-        ctmp = y.__coerce_ex__(x);
-        if (ctmp != null && ctmp != Py.None) {
-            if (ctmp instanceof PyObject[]) {
-                y = ((PyObject[])ctmp)[0];
-                x = ((PyObject[])ctmp)[1];
-            } else {
-                x = (PyObject)ctmp;
-            }
         }
-        objs[0] = x; objs[1] = y;
-        //System.out.println(""+x.__class__+" : "+y.__class__);
-        return x.__class__ == y.__class__;
+        return false;
     }
 
     public static PyObject pow(PyObject xi, PyObject yi, PyObject zi) {
@@ -782,7 +724,7 @@ public class __builtin__ implements ClassDictInit
             }
         }
 
-        if (x.__class__ == y.__class__ && x.__class__ == z.__class__) {
+        if (x.getType() == y.getType() && x.getType() == z.getType()) {
             x = x.__pow__(y, z);
             if (x != null)
                 return x;
@@ -970,17 +912,11 @@ public class __builtin__ implements ClassDictInit
             System.arraycopy(l.list, 0, a, 0, a.length);
             return new PyTuple(a);
         }
-        return new PyTuple(make_array(o));
+        return new PyTuple(Py.make_array(o));
     }
 
-    public static PyClass type(PyObject o) {
-        if (o instanceof PyInstance) {
-            // was just PyInstance.class, goes with experimental
-            // PyMetaClass hook
-            return PyJavaClass.lookup(o.getClass());
-        } else {
-            return o.__class__;
-        }
+    public static PyType type(PyObject o) {
+        return o.getType();
     }
 
     public static PyObject vars(PyObject o) {
@@ -1089,46 +1025,6 @@ public class __builtin__ implements ClassDictInit
         return module;
     }
 
-    private static PyObject[] make_array(PyObject o) {
-        if (o instanceof PyTuple)
-            return ((PyTuple)o).list;
-
-        PyObject iter = o.__iter__();
-
-        // Guess result size and allocate space.
-        int n = 10;
-        try {
-            n = o.__len__();
-        } catch (PyException exc) { }
-
-        PyObject[] objs= new PyObject[n];
-
-        int i;
-        for (i = 0; ; i++) {
-            PyObject item = iter.__iternext__();
-            if (item == null)
-                break;
-            if (i >= n) {
-                if (n < 500) {
-                    n += 10;
-                } else {
-                    n += 100;
-                }
-                PyObject[] newobjs = new PyObject[n];
-                System.arraycopy(objs, 0, newobjs, 0, objs.length);
-                objs = newobjs;
-            }
-            objs[i] = item;
-        }
-
-        // Cut back if guess was too large.
-        if (i < n) {
-            PyObject[] newobjs = new PyObject[i];
-            System.arraycopy(objs, 0, newobjs, 0, i);
-            objs = newobjs;
-        }
-        return objs;
-    }
 }
 
 

@@ -55,12 +55,5 @@ public class xreadlines {
             return "<xreadlines object " + Py.idstr(this) + ">";
         }
 
-        // __class__ boilerplate -- see PyObject for details
-        public static PyClass __class__;
-
-        protected PyClass getPyClass() {
-            return __class__;
-        }
-
     }
 }

@@ -78,7 +78,9 @@ public class PyFloat extends PyObject
     }
 
     public int __cmp__(PyObject other) {
-        double v = ((PyFloat)other).value;
+        if (!canCoerce(other))
+             return -2;
+        double v = coerce(other);
         return value < v ? -1 : value > v ? 1 : 0;
     }
 
@@ -333,13 +335,7 @@ public class PyFloat extends PyObject
         return new PyComplex(value, 0.);
     }
 
-    public boolean isMappingType() { return false; }
-    public boolean isSequenceType() { return false; }
+    public boolean isMappingType() throws PyIgnoreMethodTag { return false; }
+    public boolean isSequenceType() throws PyIgnoreMethodTag { return false; }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-
-    protected PyClass getPyClass() {
-        return __class__;
-    }
 }

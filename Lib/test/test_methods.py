@@ -26,7 +26,7 @@ assert A.one.im_func == a.one.im_func
 assert a.one.im_self == a
 assert a.one.im_class == A
 assert b.one.im_self == b
-assert b.one.im_class == A
+assert b.one.im_class == B
 
 print_test('unbound method invocation w/ explicit self', 2)
 assert A.one(b) == 'one'
@@ -37,7 +37,11 @@ assert A.one(c) == 'one'
 assert C.one(c) == 'another one'
 
 assert A.one(a) == 'one'
-assert B.one(a) == 'one'
+try:
+    B.one(a)
+    assert 0
+except TypeError:
+    pass
 try:
     C.one(a)
     assert 0

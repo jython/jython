@@ -67,8 +67,11 @@ public class PyComplex extends PyObject {
       }*/
 
     public int __cmp__(PyObject other) {
-        double oreal = ((PyComplex)other).real;
-        double oimag = ((PyComplex)other).imag;
+        if (!canCoerce(other))
+            return -2;
+        PyComplex c = coerce(other);
+        double oreal = c.real;
+        double oimag = c.imag;
         if (real == oreal && imag == oimag)
             return 0;
         if (real != oreal) {
@@ -77,6 +80,49 @@ public class PyComplex extends PyObject {
             return imag < oimag ? -1 : 1;
         }
     }
+
+    /*
+     * @see org.python.core.PyObject#__eq__(org.python.core.PyObject)
+     */
+    public PyObject __eq__(PyObject other) {
+        if (!canCoerce(other))
+            return null;
+        PyComplex c = coerce(other);
+        return Py.newBoolean(real == c.real && imag == c.imag);
+    }
+
+    /*
+     * @see org.python.core.PyObject#__ne__(org.python.core.PyObject)
+     */
+    public PyObject __ne__(PyObject other) {
+        if (!canCoerce(other))
+            return null;
+        PyComplex c = coerce(other);
+        return Py.newBoolean(real != c.real || imag != c.imag);
+    }
+
+    private PyObject unsupported_comparison(PyObject other) {
+        if (!canCoerce(other))
+            return null;
+        throw Py.TypeError("cannot compare complex numbers using <, <=, >, >=");        
+    }
+
+    public PyObject __ge__(PyObject other) {
+        return unsupported_comparison(other);
+    }
+
+    public PyObject __gt__(PyObject other) {
+        return unsupported_comparison(other);
+    }
+
+    public PyObject __le__(PyObject other) {
+        return unsupported_comparison(other);        
+    }
+
+    public PyObject __lt__(PyObject other) {
+        return unsupported_comparison(other);        
+    }
+
 
     public Object __coerce_ex__(PyObject other) {
         if (other instanceof PyComplex)
@@ -376,10 +422,6 @@ public class PyComplex extends PyObject {
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
 
-    protected PyClass getPyClass() {
-        return __class__;
-    }
+
 }

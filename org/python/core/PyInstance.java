@@ -10,6 +10,14 @@ import java.io.Serializable;
 
 public class PyInstance extends PyObject
 {
+    // xxx doc, final name
+    public transient PyClass instclass;
+    
+    // xxx
+    public PyObject fastGetClass() {
+        return instclass;
+    }
+    
     //This field is only used by Python subclasses of Java classes
     Object javaProxy;
 
@@ -23,6 +31,7 @@ public class PyInstance extends PyObject
         throws java.io.IOException, ClassNotFoundException
     {
         in.defaultReadObject();
+        
         String module = in.readUTF();
         String name = in.readUTF();
 
@@ -31,7 +40,7 @@ public class PyInstance extends PyObject
         PyObject mod = imp.importName(module.intern(), false);
         PyClass pyc = (PyClass)mod.__getattr__(name.intern());
 
-        __class__ = pyc;
+        instclass = pyc;
         if (javaProxy != null)
             ((PyProxy) javaProxy)._setPySystemState(Py.getSystemState());
     }
@@ -41,13 +50,13 @@ public class PyInstance extends PyObject
     {
         //System.out.println("writing: "+getClass().getName());
         out.defaultWriteObject();
-        PyObject name = __class__.__findattr__("__module__");
+        PyObject name = instclass.__findattr__("__module__");
         if (!(name instanceof PyString) || name == Py.None || name == null) {
             throw Py.ValueError("Can't find module for class: "+
-                                __class__.__name__);
+                                instclass.__name__);
         }
         out.writeUTF(name.toString());
-        name = __class__.__findattr__("__name__");
+        name = instclass.__findattr__("__name__");
         if (!(name instanceof PyString) || name == Py.None || name == null) {
             throw Py.ValueError("Can't find module for class with no name");
         }
@@ -61,7 +70,7 @@ public class PyInstance extends PyObject
     **/
 
     public PyInstance(PyClass iclass, PyObject dict) {
-        super(iclass);
+        instclass = iclass;
         __dict__ = dict;
     }
 
@@ -74,7 +83,7 @@ public class PyInstance extends PyObject
     private static Hashtable primitiveMap;
 
     protected void makeProxy() {
-        Class c = __class__.proxyClass;
+        Class c = instclass.proxyClass;
         PyProxy proxy;
         ThreadState ts = Py.getThreadState();
         try {
@@ -134,16 +143,16 @@ public class PyInstance extends PyObject
                 c = tmp;
         }
 
-        if (javaProxy == null && __class__.proxyClass != null) {
+        if (javaProxy == null && instclass.proxyClass != null) {
             makeProxy();
         }
         if (c.isInstance(javaProxy))
             return javaProxy;
 
-        if (__class__.__tojava__ != null) {
+        if (instclass.__tojava__ != null) {
             //try {
             PyObject ret =
-                __class__.__tojava__.__call__(this, PyJavaClass.lookup(c));
+                instclass.__tojava__.__call__(this, PyJavaClass.lookup(c));
 
             if (ret == Py.None)
                 return Py.NoConversion;
@@ -159,14 +168,14 @@ public class PyInstance extends PyObject
 
     public void __init__(PyObject[] args, String[] keywords) {
         // Invoke our own init function
-        PyObject init = __class__.lookup("__init__", true);
+        PyObject init = instclass.lookup("__init__", true);
         PyObject ret = null;
         if (init != null) {
             ret = init.__call__(this, args, keywords);
         }
         if (ret == null) {
             if (args.length != 0) {
-                init = __class__.lookup("__init__", false);
+                init = instclass.lookup("__init__", false);
                 if (init != null) {
                     ret = init.__call__(this, args, keywords);
                 } else {
@@ -178,7 +187,7 @@ public class PyInstance extends PyObject
             throw Py.TypeError("constructor has no return value");
         }
         // Now init all superclasses that haven't already been initialized
-        if (javaProxy == null && __class__.proxyClass != null) {
+        if (javaProxy == null && instclass.proxyClass != null) {
             makeProxy();
         }
     }
@@ -197,26 +206,28 @@ public class PyInstance extends PyObject
         if (result != null)
             return result;
         // it wasn't found in the instance, try the class
-        PyObject[] result2 = __class__.lookupGivingClass(name, stopAtJava);
+        PyObject[] result2 = instclass.lookupGivingClass(name, stopAtJava);
         if (result2[0] != null)
-            return result2[0]._doget(this, result2[1]);
+            // xxx do we need to use result2[1] (wherefound) for java cases for backw comp?
+            return result2[0].__get__(this, instclass); 
+            // xxx do we need to use 
         return ifindfunction(name);
     }
 
     protected PyObject ifindlocal(String name) {
         if (name == "__dict__") return __dict__;
-        if (name == "__class__") return __class__;
+        if (name == "__class__") return instclass;
         if (__dict__ == null) return null;
 
         return __dict__.__finditem__(name);
     }
 
     protected PyObject ifindclass(String name, boolean stopAtJava) {
-        return __class__.lookup(name, stopAtJava);
+        return instclass.lookup(name, stopAtJava);
     }
 
     protected PyObject ifindfunction(String name) {
-        PyObject getter = __class__.__getattr__;
+        PyObject getter = instclass.__getattr__;
         if (getter == null)
             return null;
 
@@ -236,7 +247,7 @@ public class PyInstance extends PyObject
                 if (f instanceof PyFunction) {
                     return f.__call__(this);
                 } else {
-                    f = f._doget(this);
+                    f = f.__get__(this, instclass);
                 }
             }
         }
@@ -253,7 +264,7 @@ public class PyInstance extends PyObject
                 if (f instanceof PyFunction) {
                     return f.__call__(this, arg1);
                 } else {
-                    f = f._doget(this);
+                    f = f.__get__(this, instclass);
                 }
             }
         }
@@ -270,7 +281,7 @@ public class PyInstance extends PyObject
                 if (f instanceof PyFunction) {
                     return f.__call__(this, arg1, arg2);
                 } else {
-                    f = f._doget(this);
+                    f = f.__get__(this, instclass);
                 }
             }
         }
@@ -283,7 +294,7 @@ public class PyInstance extends PyObject
     public void __setattr__(String name, PyObject value) {
         if (name == "__class__") {
             if (value instanceof PyClass) {
-                __class__ = (PyClass)value;
+                instclass = (PyClass)value;
             } else {
                 throw Py.TypeError("__class__ must be set to a class");
             }
@@ -293,15 +304,15 @@ public class PyInstance extends PyObject
             return;
         }
 
-        PyObject setter = __class__.__setattr__;
+        PyObject setter = instclass.__setattr__;
         if (setter != null) {
             setter.__call__(this, new PyString(name), value);
         } else {
-            if (__class__.getProxyClass() != null) {
-                PyObject field = __class__.lookup(name, false);
+            if (instclass.getProxyClass() != null) {
+                PyObject field = instclass.lookup(name, false);
                 if (field == null) {
                     noField(name, value);
-                } else if (!field._doset(this, value)) {
+                } else if (!field.jtryset(this, value)) {
                     unassignableField(name, value);
                 }
             } else {
@@ -319,8 +330,7 @@ public class PyInstance extends PyObject
     }
 
     public void __delattr__(String name) {
-        // Need code to handle _dodel
-        PyObject deller = __class__.__delattr__;
+        PyObject deller = instclass.__delattr__;
         if (deller != null) {
             deller.__call__(this, new PyString(name));
         } else {
@@ -328,7 +338,7 @@ public class PyInstance extends PyObject
                 __dict__.__delitem__(name);
             } catch (PyException exc) {
                 if (Py.matchException(exc, Py.KeyError))
-                    throw Py.AttributeError("class " + __class__.__name__ +
+                    throw Py.AttributeError("class " + instclass.__name__ +
                                         " has no attribute '" + name + "'");
             };
         }
@@ -375,7 +385,7 @@ public class PyInstance extends PyObject
     public PyString __repr__() {
         PyObject ret = invoke_ex("__repr__");
         if (ret == null) {
-            PyObject mod = __class__.__dict__.__finditem__("__module__");
+            PyObject mod = instclass.__dict__.__finditem__("__module__");
             String smod;
             if (mod == Py.None) smod = "";
             else {
@@ -384,7 +394,7 @@ public class PyInstance extends PyObject
                 else
                     smod = ((PyString)mod).toString()+'.';
             }
-            return new PyString("<"+smod+__class__.__name__+
+            return new PyString("<"+smod+instclass.__name__+
                                 " instance "+Py.idstr(this)+">");
         }
 
@@ -421,15 +431,44 @@ public class PyInstance extends PyObject
         throw Py.TypeError("__hash__() must return int");
     }
 
-    public int __cmp__(PyObject o) {
-        PyObject ret = invoke_ex("__cmp__", o);
-        if (ret == null)
-            return -2;
-        if (ret instanceof PyInteger) {
-            int v = ((PyInteger)ret).getValue();
-            return v < 0 ? -1 : v > 0 ? 1 : 0;
+    // special case: does all the work
+    public int __cmp__(PyObject other) {
+        PyObject[] coerced = this._coerce(other);
+        PyObject v;
+        PyObject w;
+        PyObject ret = null;
+        if (coerced != null) {
+            v = coerced[0];
+            w = coerced[1];
+            if (!(v instanceof PyInstance) && 
+                !(w instanceof PyInstance)) 
+                return v._cmp(w);
+        } else {
+            v = this;
+            w = other;
         }
-        throw Py.TypeError("__cmp__() must return int");
+        if (v instanceof PyInstance) {
+            ret = ((PyInstance)v).invoke_ex("__cmp__",w);
+            if (ret != null) {
+                if (ret instanceof PyInteger) {
+                    int result = ((PyInteger)ret).getValue();
+                    return result < 0 ? -1 : result > 0 ? 1 : 0;
+                }
+                throw Py.TypeError("__cmp__() must return int");                
+            }           
+        }
+        if (w instanceof PyInstance) {
+            ret = ((PyInstance)w).invoke_ex("__cmp__",v);
+            if (ret != null) {
+                if (ret instanceof PyInteger) {
+                    int result = ((PyInteger)ret).getValue();
+                    return -(result < 0 ? -1 : result > 0 ? 1 : 0);
+                }
+                throw Py.TypeError("__cmp__() must return int");                
+            }           
+            
+        }
+        return -2;
     }
 
     private PyObject invoke_ex_richcmp(String name, PyObject o) {

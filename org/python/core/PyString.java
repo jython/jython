@@ -3,7 +3,6 @@ package org.python.core;
 
 import java.io.Serializable;
 
-
 class StringFuncs extends PyBuiltinFunctionSet
 {
     StringFuncs(String name, int index, int argcount) {
@@ -660,9 +659,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public Object __tojava__(Class c) {
-        //This is a hack to make almost all Java calls happy
-        if (c == String.class || c == Object.class || c == Serializable.class)
+        if (c.isAssignableFrom(String.class)) {
             return string;
+        }
+
         if (c == Character.TYPE || c == Character.class)
             if (string.length() == 1)
                 return new Character(string.charAt(0));
@@ -797,7 +797,7 @@ public class PyString extends PySequence implements ClassDictInit
                 got_im = true;
                 done = got_re;
                 sign = 1;
-                s++; // eat the J or j 
+                s++; // eat the J or j
                 break;
 
             case ' ':
@@ -1065,7 +1065,7 @@ public class PyString extends PySequence implements ClassDictInit
         int j = 0;
         for (int i = 0; i < n; ) {
             /* Find a line and append it */
-            while (i < n && chars[i] != '\n' && chars[i] != '\r' && 
+            while (i < n && chars[i] != '\n' && chars[i] != '\r' &&
                     Character.getType(chars[i]) != Character.LINE_SEPARATOR)
                 i++;
 
@@ -1836,7 +1836,7 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public PyString decode() {
-        return encode(null, null);
+        return encode(null, null); // xxx
     }
 
     public PyString decode(String encoding) {
@@ -1846,10 +1846,19 @@ public class PyString extends PySequence implements ClassDictInit
     public PyString decode(String encoding, String errors) {
         return codecs.decode(this, encoding, errors);
     }
+
+    /* arguments' conversion helper */
+
+    public String asString(int index) throws PyObject.ConversionException {
+        return string;
+    }
+
+    public String asName(int index) throws PyObject.ConversionException {
+        return internedString();
+    }
+
 }
 
-
-
 final class StringFormatter
 {
     int index;
@@ -2346,4 +2355,5 @@ final class StringFormatter
         }
         return buffer.toString();
     }
+
 }

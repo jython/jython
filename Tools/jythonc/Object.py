@@ -108,6 +108,10 @@ class JavaString(JavaObject):
 
 
 
+
+PyObject_as_java_class = org.python.core.PyJavaClass.lookup(org.python.core.PyObject) # xxx temporary fix
+
+
 class PyObject:
     #I hate static fields for dynamic info!
     attributes = {}
@@ -154,7 +158,7 @@ class PyObject:
                                                       self.asAny(code)])
 
     def domethod(self, code, name, *args):
-        meth = getattr(org.python.core.PyObject, name)
+        meth = getattr(PyObject_as_java_class, name) # xxx temporary fix
         code, type = JavaCall.call(meth, Object(code, self), args)
         return Object(code, findType(type))
 

@@ -11,8 +11,6 @@ public class PyJavaInstance
     implements java.io.Externalizable
 {
     public PyJavaInstance() {
-        super();
-        //javaProxies = new Object[1];
     }
 
     public PyJavaInstance(PyJavaClass iclass) {
@@ -35,7 +33,7 @@ public class PyJavaInstance
     {
         Object o = in.readObject();
         javaProxy = o;
-        __class__ = PyJavaClass.lookup(o.getClass());
+        instclass = PyJavaClass.lookup(o.getClass());
     }
 
     /**
@@ -54,23 +52,23 @@ public class PyJavaInstance
     public void __init__(PyObject[] args, String[] keywords) {
         //javaProxies = new Object[1];
 
-        Class pc = __class__.proxyClass;
+        Class pc = instclass.proxyClass;
         if (pc != null) {
             int mods = pc.getModifiers();
             if (Modifier.isInterface(mods)) {
                 throw Py.TypeError("can't instantiate interface ("+
-                                   __class__.__name__+")");
+                                   instclass.__name__+")");
             }
             else if (Modifier.isAbstract(mods)) {
                 throw Py.TypeError("can't instantiate abstract class ("+
-                                   __class__.__name__+")");
+                                   instclass.__name__+")");
             }
         }
 
-        PyReflectedConstructor init = ((PyJavaClass)__class__).__init__;
+        PyReflectedConstructor init = ((PyJavaClass)instclass).__init__;
         if (init == null) {
             throw Py.TypeError("no public constructors for "+
-                               __class__.__name__);
+                               instclass.__name__);
         }
         init.__call__(this, args, keywords);
     }

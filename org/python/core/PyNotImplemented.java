@@ -25,11 +25,5 @@ public class PyNotImplemented extends PySingleton {
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-
-    protected PyClass getPyClass() {
-        return __class__;
-    }
 }
 

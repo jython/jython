@@ -1,9 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-
-class SeqFuncs extends PyBuiltinFunctionSet
-{
+class SeqFuncs extends PyBuiltinFunctionSet {
     SeqFuncs(String name, int index, int argcount) {
         super(name, index, argcount, argcount, true, null);
     }
@@ -75,8 +73,6 @@ class SeqFuncs extends PyBuiltinFunctionSet
     }
 }
 
-
-
 /**
  * The abstract superclass of PyObjects that implements a Sequence.
  * Minimize the work in creating such objects.
@@ -98,22 +94,18 @@ class SeqFuncs extends PyBuiltinFunctionSet
 // PyJavaClass.init() would try to instantiate it.  That fails because this
 // class is abstract.  TBD: is there a way to test for whether a class is
 // abstract?
-abstract public class PySequence extends PyObject
-{
+abstract public class PySequence extends PyObject {
     /**
      * This constructor is used by PyJavaClass.init()
      */
     public PySequence() {}
 
-    /**
-     * This constructor is used to pass on an __class__ attribute.
-     */
-    public PySequence(PyClass c) {
-        super(c);
+    protected PySequence(PyType type) {
+        super(type);
     }
 
     /** <i>Internal use only. Do not call this method explicit.</i> */
-    public static void classDictInit(PyObject dict) {
+    public static void classDictInit(PyObject dict) throws PyIgnoreMethodTag {
         dict.__setitem__("__nonzero__", new SeqFuncs("__nonzero__", 1, 0));
         dict.__setitem__("__getitem__", new SeqFuncs("__getitem__", 11, 1));
         dict.__setitem__("__delitem__", new SeqFuncs("__delitem__", 12, 1));
@@ -190,7 +182,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __eq__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int tl = __len__();
         int ol = o.__len__();
@@ -201,7 +193,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __ne__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int tl = __len__();
         int ol = o.__len__();
@@ -212,7 +204,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __lt__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int i = cmp(this, -1, o, -1);
         if (i < 0)
@@ -221,7 +213,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __le__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int i = cmp(this, -1, o, -1);
         if (i < 0)
@@ -230,7 +222,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __gt__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int i = cmp(this, -1, o, -1);
         if (i < 0)
@@ -239,7 +231,7 @@ abstract public class PySequence extends PyObject
     }
 
     public synchronized PyObject __ge__(PyObject o) {
-        if (o.__class__ != __class__)
+        if (o.getType() != getType())
             return null;
         int i = cmp(this, -1, o, -1);
         if (i < 0)
@@ -272,9 +264,6 @@ abstract public class PySequence extends PyObject
     protected static PyObject fastSequence(PyObject seq, String msg) {
         if (seq instanceof PyList || seq instanceof PyTuple)
             return seq;
-
-        if (!seq.isSequenceType())
-             throw Py.TypeError(msg);
 
         PyList list = new PyList();
         PyObject iter = Py.iter(seq, msg);
@@ -354,8 +343,8 @@ abstract public class PySequence extends PyObject
         return ret;
     }
 
-    public boolean isMappingType() { return false; }
-    public boolean isNumberType() { return false; }
+    public boolean isMappingType() throws PyIgnoreMethodTag { return false; }
+    public boolean isNumberType() throws PyIgnoreMethodTag { return false; }
 
     protected static final int getStep(PyObject s_step) {
         int step = getIndex(s_step, 1);
@@ -479,7 +468,7 @@ abstract public class PySequence extends PyObject
         }
     }
 
-    public synchronized Object __tojava__(Class c) {
+    public synchronized Object __tojava__(Class c) throws PyIgnoreMethodTag {
         if (c.isArray()) {
             Class component = c.getComponentType();
             //System.out.println("getting: "+component);

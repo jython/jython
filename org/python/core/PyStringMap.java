@@ -61,11 +61,7 @@ public class PyStringMap extends PyObject
             insertkey(key, (PyObject)in.readObject());
         }
     }
-
-    public static PyClass __class__;
-
     public PyStringMap(int capacity) {
-        super(__class__);
         prime = 0;
         keys = null;
         values = null;
@@ -290,7 +286,7 @@ public class PyStringMap extends PyObject
         ts.exitRepr(this);
         return buf.toString();
     }
-
+  
     public synchronized int __cmp__(PyObject other) {
         if (!(other instanceof PyStringMap ||
                   other instanceof PyDictionary)) {
@@ -573,9 +569,6 @@ class PyStringMapIter extends PyIterator {
         return null;
     }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-    protected PyClass getPyClass() { return __class__; }
 }
 
 

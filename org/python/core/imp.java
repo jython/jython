@@ -208,7 +208,7 @@ public class imp
                 }
             }
         }
-        return PyJavaClass.lookup(c);
+        return PyJavaClass.lookup(c); // xxx?
     }
 
     private static PyObject loadBuiltin(String name, PyList path) {
@@ -224,6 +224,9 @@ public class imp
                 Py.writeComment("import", "'" + name + "' as " + mod +
                                 " in builtin modules");
                 try {
+                    if (PyObject.class.isAssignableFrom(c)) { // xxx ok?
+                        return PyType.fromClass(c);
+                    }
                     return createFromClass(name, c);
                 }
                 catch (NoClassDefFoundError e) {

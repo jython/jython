@@ -7,9 +7,7 @@ public class PyBeanEvent extends PyObject {
     public Class eventClass;
     public String __name__;
 
-    public static PyClass __class__;
     public PyBeanEvent(String name, Class eventClass, Method addMethod) {
-        super(__class__);
         __name__ = name.intern();
         this.addMethod = addMethod;
         this.eventClass = eventClass;
@@ -19,7 +17,7 @@ public class PyBeanEvent extends PyObject {
         throw Py.TypeError("write only attribute");
     }
 
-    public boolean _dodel(PyObject container) {
+    boolean _jdontdel() {
         throw Py.TypeError("can't delete this attribute");
     }
 

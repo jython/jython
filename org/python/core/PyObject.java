@@ -6,34 +6,368 @@ package org.python.core;
  * by an instance of the class <code>PyObject</code> or one of
  * its subclasses.
  *
- * @author Jim Hugunin - hugunin@python.org
- * @version 1.1, 1/5/98
- * @since JPython 0.0
  **/
 
-
-
 public class PyObject implements java.io.Serializable {
-    /**
-     * The Python class of this object.
-     * Unlike in CPython, all types have this attribute, even builtins.
-     * This should only be set in the constructor, never modified otherwise.
-     **/
-    public transient PyClass __class__;
+    /* type info */
+
+    public static final String exposed_name = "object";
+
+    public static void typeSetup(PyObject dict, PyType.Newstyle marker) {
+        dict.__setitem__("__class__", new PyGetSetDescr("__class__",
+                PyObject.class, "getType", null));
+        class exposed___str__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___str__(PyObject self, PyBuiltinFunction.Info info) {
+                super(info);
+                this.self = self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___str__((PyObject) self, info);
+            }
+
+            public PyObject __call__() {
+                return self.__repr__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyObject self = (PyObject) gself;
+                return self.__repr__();
+            }
+
+        }
+        dict.__setitem__("__str__", new PyMethodDescr("__str__",
+                PyObject.class, 0, 0, new exposed___str__(null, null)));
+        class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getattribute__(PyObject self, PyBuiltinFunction.Info info) {
+                super(info);
+                this.self = self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getattribute__((PyObject) self, info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    String name = (arg0.asName(0));
+                    PyObject ret = self.object___findattr__(name);
+                    if (ret == null)
+                        self.noAttributeError(name);
+                    return ret;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg = "attribute name must be string";
+                        break;
+                    default:
+                        msg = "xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself, PyObject arg0) {
+                PyObject self = (PyObject) gself;
+                try {
+                    String name = (arg0.asName(0));
+                    PyObject ret = self.object___findattr__(name);
+                    if (ret == null)
+                        self.noAttributeError(name);
+                    return ret;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg = "attribute name must be string";
+                        break;
+                    default:
+                        msg = "xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("__getattribute__", new PyMethodDescr(
+                "__getattribute__", PyObject.class, 1, 1,
+                new exposed___getattribute__(null, null)));
+        class exposed___setattr__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___setattr__(PyObject self, PyBuiltinFunction.Info info) {
+                super(info);
+                this.self = self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___setattr__((PyObject) self, info);
+            }
+
+            public PyObject __call__(PyObject arg0, PyObject arg1) {
+                try {
+                    self.object___setattr__(arg0.asName(0), arg1);
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg = "attribute name must be string";
+                        break;
+                    default:
+                        msg = "xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself, PyObject arg0,
+                    PyObject arg1) {
+                PyObject self = (PyObject) gself;
+                try {
+                    self.object___setattr__(arg0.asName(0), arg1);
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg = "attribute name must be string";
+                        break;
+                    default:
+                        msg = "xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("__setattr__", new PyMethodDescr("__setattr__",
+                PyObject.class, 2, 2, new exposed___setattr__(null, null)));
+        class exposed___delattr__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___delattr__(PyObject self, PyBuiltinFunction.Info info) {
+                super(info);
+                this.self = self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___delattr__((PyObject) self, info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    self.object___delattr__(arg0.asName(0));
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg = "attribute name must be string";
+                        break;
+                    default:
+                        msg = "xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself, PyObject arg0) {
+                PyObject self = (PyObject) gself;
+                try {
+                    self.object___delattr__(arg0.asName(0));
+                    return Py.None;
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg = "attribute name must be string";
+                        break;
+                    default:
+                        msg = "xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("__delattr__", new PyMethodDescr("__delattr__",
+                PyObject.class, 1, 1, new exposed___delattr__(null, null)));
+        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___hash__(PyObject self, PyBuiltinFunction.Info info) {
+                super(info);
+                this.self = self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___hash__((PyObject) self, info);
+            }
+
+            public PyObject __call__() {
+                return new PyInteger(self.object_hashCode());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyObject self = (PyObject) gself;
+                return new PyInteger(self.object_hashCode());
+            }
+
+        }
+        dict.__setitem__("__hash__", new PyMethodDescr("__hash__",
+                PyObject.class, 0, 0, new exposed___hash__(null, null)));
+        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___repr__(PyObject self, PyBuiltinFunction.Info info) {
+                super(info);
+                this.self = self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___repr__((PyObject) self, info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.object_toString());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyObject self = (PyObject) gself;
+                return new PyString(self.object_toString());
+            }
+
+        }
+        dict.__setitem__("__repr__", new PyMethodDescr("__repr__",
+                PyObject.class, 0, 0, new exposed___repr__(null, null)));
+        class exposed___init__ extends PyBuiltinFunctionWide {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___init__(PyObject self, PyBuiltinFunction.Info info) {
+                super(info);
+                this.self = self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___init__((PyObject) self, info);
+            }
+
+            public PyObject inst_call(PyObject self, PyObject[] args) {
+                return inst_call(self, args, Py.NoKeywords);
+            }
+
+            public PyObject __call__(PyObject[] args) {
+                return __call__(args, Py.NoKeywords);
+            }
+
+            public PyObject __call__(PyObject[] args, String[] keywords) {
+                self.object_init(args, keywords);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself, PyObject[] args,
+                    String[] keywords) {
+                PyObject self = (PyObject) gself;
+                self.object_init(args, keywords);
+                return Py.None;
+            }
+
+        }
+        dict.__setitem__("__init__", new PyMethodDescr("__init__",
+                PyObject.class, -1, -1, new exposed___init__(null, null)));
+        dict.__setitem__("__new__", new PyNewWrapper(PyObject.class, "__new__",
+                -1, -1) {
+
+            public PyObject new_impl(boolean init, PyType subtype,
+                    PyObject[] args, String[] keywords) {
+                PyObject newobj;
+                if (for_type == subtype) {
+                    newobj = new PyObject();
+                    if (init)
+                        newobj.object_init(args, keywords);
+                } else {
+                    newobj = new PyObjectDerived(subtype);
+                }
+                return newobj;
+            }
+
+        });
+    }
+
+    final void object_init(PyObject[] args, String[] keywords) {
+        // xxx
+    }
+
+    // xxx this is likely not the final name/approach,
+    // getType may become not necessary
+    private transient PyType objtype;
+
+    public PyType getType() {
+        return objtype;
+    }
+
+    // xxx
+    public PyObject fastGetClass() {
+        return objtype;
+    }
 
     /* must instantiate __class__ when de-serializing */
     private void readObject(java.io.ObjectInputStream in)
-        throws java.io.IOException, ClassNotFoundException
-    {
+        throws java.io.IOException, ClassNotFoundException {
         in.defaultReadObject();
-        __class__ = PyJavaClass.lookup(getClass());
+        objtype = PyType.fromClass(getClass());
+    }
+
+    public PyObject(PyType objtype) {
+        this.objtype = objtype;
     }
 
     // A package private constructor used by PyJavaClass
-    PyObject(boolean fakeArgument) {
-        __class__ = (PyClass)this;
+    // xxx will need variants for PyType of PyType and still PyJavaClass of PyJavaClass
+    PyObject(boolean dummy) {
+        objtype = (PyType) this;
     }
-
 
     /**
      * The standard constructor for a <code>PyObject</code>.  It will set
@@ -41,13 +375,14 @@ public class PyObject implements java.io.Serializable {
      * subclass of <code>PyObject</code> being instantiated.
      **/
     public PyObject() {
-        PyClass c = getPyClass();
-        if (c == null)
-            c = PyJavaClass.lookup(getClass());
-        __class__ = c;
+        // xxx for now no such caching
+        // PyClass c = getPyClass();
+        // if (c == null)
+        //    c = PyJavaClass.lookup(getClass());
+        objtype = PyType.fromClass(getClass());
     }
 
-    /**
+    /* xxx will be replaced.
      * This method is provided to efficiently initialize the __class__
      * attribute.  If the following boilerplate is added to a subclass of
      * PyObject, the instantiation time for the object will be greatly
@@ -62,37 +397,17 @@ public class PyObject implements java.io.Serializable {
      * With PyIntegers this leads to a 50% faster instantiation time.
      * This replaces the PyObject(PyClass c) constructor which is now
      * deprecated.
-     **/
+     *
     protected PyClass getPyClass() {
         return null;
-    }
+    } */
 
     /**
-     * #### This method is now deprecated and will go away in the future ####.
-     * <p>
-     * A more sophisticated constructor for a <code>PyObject</code>.
-     * Can be more efficient as it allows the subclass of PyObject to
-     * cache its known <code>__class__</code>.
-     * <p>
-     * The common idiom for using this constructor is shown as used for the
-     * PyInteger class:
-     * <blockquote><pre>
-     * public static PyClass __class__;
-     * public PyInteger(int v) {
-     * super(__class__);
-     * ...
-     * </pre></blockquote>
-     *
-     * @param c a <code>PyClass</code> instance giving the
-     *          <code>__class__</code> of the new <code>PyObject</code>
-     * @deprecated see get PyClass for details
-     **/
-    protected PyObject(PyClass c) {
-        if (c == null) {
-            c = PyJavaClass.lookup(getClass());
-        }
-        __class__ = c;
+     * Dispatch __init__ behavior
+     */
+    public void dispatch__init__(PyType type,PyObject[] args,String[] keywords) {
     }
+
 
     /**
      * Equivalent to the standard Python __repr__ method.  This method
@@ -104,40 +419,32 @@ public class PyObject implements java.io.Serializable {
         return new PyString(toString());
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        if (__class__ == null) {
+    public String toString() {
+        return object_toString();
+    }
+
+    final String object_toString() {
+        if (getType() == null) {
             return "unknown object";
         }
-        String name = __class__.__name__;
-        PyObject tmp;
+
+        String name = getType().getFullName();
         if (name == null)
             return "unknown object";
 
-        if ((name.equals("org.python.core.PyClass") ||
-             name.equals("org.python.core.PyJavaClass")) &&
-            (this instanceof PyClass))
-        {
-            name = ((PyClass)this).__name__;
-            if (name == null)
-                return "unknown class";
-            return "class '"+name+"'";
+        return "<"+name+" object "+Py.idstr(this)+">";
+    }
+
+    public String safeRepr() throws PyIgnoreMethodTag {
+        if (getType() == null) {
+            return "unknown object";
         }
 
-        if (name.equals("org.python.core.PyModule")) {
-            tmp = this.__findattr__("__name__");
-            if (tmp == null)
-                return "unnamed module";
-            return "module '"+tmp+"'";
-        }
-        if (name.equals("org.python.core.PyJavaPackage") &&
-            (this instanceof PyJavaPackage))
-        {
-            name = ((PyJavaPackage)this).__name__;
-            if (name == null)
-                return "unnamed java package";
-            return "java package '"+name+"'";
-        }
-        return "instance of '"+name+"'";
+        String name = getType().getFullName();
+        if (name == null)
+            return "unknown object";
+
+        return "'" + name + "' object";
     }
 
     /**
@@ -161,6 +468,10 @@ public class PyObject implements java.io.Serializable {
     }
 
     public int hashCode() {
+        return object_hashCode();
+    }
+
+    final int object_hashCode() {
         return System.identityHashCode(this);
     }
 
@@ -170,8 +481,8 @@ public class PyObject implements java.io.Serializable {
      * <code>a.equals(b) == true</code> iff <code>cmp(a,b) == 0</code>
      **/
     public boolean equals(Object ob_other) {
-        return (ob_other instanceof PyObject) &&
-            _eq((PyObject)ob_other).__nonzero__();
+        return (ob_other instanceof PyObject)
+            && _eq((PyObject) ob_other).__nonzero__();
     }
 
     /**
@@ -227,10 +538,11 @@ public class PyObject implements java.io.Serializable {
      *                 keyword arguments).
      * @param keywords the keywords used for all keyword arguments.
      **/
-    public PyObject __call__(PyObject arg1, PyObject args[],
-                             String keywords[])
-    {
-        PyObject[] newArgs = new PyObject[args.length+1];
+    public PyObject __call__(
+        PyObject arg1,
+        PyObject args[],
+        String keywords[]) {
+        PyObject[] newArgs = new PyObject[args.length + 1];
         System.arraycopy(args, 0, newArgs, 1, args.length);
         newArgs[0] = arg1;
         return __call__(newArgs, keywords);
@@ -267,7 +579,7 @@ public class PyObject implements java.io.Serializable {
      * @param arg0     the single argument to the function.
      **/
     public PyObject __call__(PyObject arg0) {
-        return __call__(new PyObject[] {arg0}, Py.NoKeywords);
+        return __call__(new PyObject[] { arg0 }, Py.NoKeywords);
     }
 
     /**
@@ -280,7 +592,7 @@ public class PyObject implements java.io.Serializable {
      * @param arg1     the second argument to the function.
      **/
     public PyObject __call__(PyObject arg0, PyObject arg1) {
-        return __call__(new PyObject[] {arg0, arg1}, Py.NoKeywords);
+        return __call__(new PyObject[] { arg0, arg1 }, Py.NoKeywords);
     }
 
     /**
@@ -294,7 +606,7 @@ public class PyObject implements java.io.Serializable {
      * @param arg2     the third argument to the function.
      **/
     public PyObject __call__(PyObject arg0, PyObject arg1, PyObject arg2) {
-        return __call__(new PyObject[] {arg0, arg1, arg2}, Py.NoKeywords);
+        return __call__(new PyObject[] { arg0, arg1, arg2 }, Py.NoKeywords);
     }
 
     /**
@@ -308,92 +620,115 @@ public class PyObject implements java.io.Serializable {
      * @param arg2     the third argument to the function.
      * @param arg3     the fourth argument to the function.
      **/
-    public PyObject __call__(PyObject arg0, PyObject arg1,
-                             PyObject arg2, PyObject arg3)
-    {
-        return __call__(new PyObject[] {arg0, arg1, arg2, arg3},
-                        Py.NoKeywords);
+    public PyObject __call__(
+        PyObject arg0,
+        PyObject arg1,
+        PyObject arg2,
+        PyObject arg3) {
+        return __call__(
+            new PyObject[] { arg0, arg1, arg2, arg3 },
+            Py.NoKeywords);
     }
 
     /** @deprecated **/
-    public PyObject _callextra(PyObject[] args, String[] keywords,
-            PyObject starargs, PyObject kwargs) {
+    public PyObject _callextra( // xxx fix, should work with iterators too
+        PyObject[] args,
+        String[] keywords,
+        PyObject starargs,
+        PyObject kwargs) {
 
-       int argslen = args.length;
-       int nstar = 0;
+        int argslen = args.length;
+        int nstar = 0;
 
-       String name = "";
-       if (this instanceof PyFunction)
-           name = ((PyFunction) this).__name__ + "() ";
+        String name = "";
+        if (this instanceof PyFunction)
+            name = ((PyFunction) this).__name__ + "() ";
 
-       if (kwargs != null) {
-           PyObject keys = kwargs.__findattr__("keys");
-           if (keys == null)
-               throw Py.TypeError(name + "argument after ** must be " +
-                                  "a dictionary");
-           for (int i = 0; i < keywords.length; i++)
-               if (kwargs.__finditem__(keywords[i]) != null)
-                   throw Py.TypeError(name + "got multiple values for " +
-                                      "keyword argument '" + keywords[i] +
-                                      "'");
-           argslen += kwargs.__len__();
-       }
-       if (starargs != null) {
-           if (!(starargs instanceof PySequence ||
-                       starargs instanceof PyInstance))
-               throw Py.TypeError(name + "argument after * must " +
-                                  "be a sequence");
-           nstar = starargs.__len__();
-           argslen += nstar;
-       }
+        if (kwargs != null) {
+            PyObject keys = kwargs.__findattr__("keys");
+            if (keys == null)
+                throw Py.TypeError(
+                    name + "argument after ** must be " + "a dictionary");
+            for (int i = 0; i < keywords.length; i++)
+                if (kwargs.__finditem__(keywords[i]) != null)
+                    throw Py.TypeError(
+                        name
+                            + "got multiple values for "
+                            + "keyword argument '"
+                            + keywords[i]
+                            + "'");
+            argslen += kwargs.__len__();
+        }
+        if (starargs != null) {
+            if (!(starargs instanceof PySequence
+                || starargs instanceof PyInstance)) // xxx
+                throw Py.TypeError(
+                    name + "argument after * must " + "be a sequence");
+            nstar = starargs.__len__();
+            argslen += nstar;
+        }
 
-       PyObject[] newargs = new PyObject[argslen];
-       int argidx = args.length - keywords.length;
-       System.arraycopy(args, 0, newargs, 0, argidx);
+        PyObject[] newargs = new PyObject[argslen];
+        int argidx = args.length - keywords.length;
+        System.arraycopy(args, 0, newargs, 0, argidx);
 
-       if (starargs != null) {
-           PyObject a;
-           for (int i = 0; (a = starargs.__finditem__(i)) != null &&
-                                              i < nstar; i++) {
-               newargs[argidx++] = a;
-           }
-       }
-       System.arraycopy(args, args.length - keywords.length,
-                        newargs, argidx, keywords.length);
-       argidx += keywords.length;
+        if (starargs != null) {
+            PyObject a;
+            for (int i = 0;
+                (a = starargs.__finditem__(i)) != null && i < nstar;
+                i++) {
+                newargs[argidx++] = a;
+            }
+        }
+        System.arraycopy(
+            args,
+            args.length - keywords.length,
+            newargs,
+            argidx,
+            keywords.length);
+        argidx += keywords.length;
 
-       if (kwargs != null) {
-           String[] newkeywords =
-                       new String[keywords.length + kwargs.__len__()];
-           System.arraycopy(keywords, 0, newkeywords, 0, keywords.length);
+        if (kwargs != null) {
+            String[] newkeywords =
+                new String[keywords.length + kwargs.__len__()];
+            System.arraycopy(keywords, 0, newkeywords, 0, keywords.length);
 
-           PyObject keys = kwargs.invoke("keys");
-           PyObject key;
-           for (int i = 0; (key = keys.__finditem__(i)) != null; i++) {
-               if (!(key instanceof PyString))
-                   throw Py.TypeError(name +
-                       "keywords must be strings");
-               newkeywords[keywords.length + i] =
-                          ((PyString) key).internedString();
-               newargs[argidx++] = kwargs.__finditem__(key);
-           }
-           keywords = newkeywords;
-       }
+            PyObject keys = kwargs.invoke("keys");
+            PyObject key;
+            for (int i = 0;(key = keys.__finditem__(i)) != null; i++) {
+                if (!(key instanceof PyString))
+                    throw Py.TypeError(name + "keywords must be strings");
+                newkeywords[keywords.length + i] =
+                    ((PyString) key).internedString();
+                newargs[argidx++] = kwargs.__finditem__(key);
+            }
+            keywords = newkeywords;
+        }
 
-       if (newargs.length != argidx) {
-          args = new PyObject[argidx];
-          System.arraycopy(newargs, 0, args, 0, argidx);
-       } else
-          args = newargs;
-       return __call__(args, keywords);
+        if (newargs.length != argidx) {
+            args = new PyObject[argidx];
+            System.arraycopy(newargs, 0, args, 0, argidx);
+        } else
+            args = newargs;
+        return __call__(args, keywords);
     }
 
+    /* xxx fix these around */
 
+    public boolean isCallable() {
+        return __findattr__("__call__") != null;
+    }
+    public boolean isMappingType() {
+        return true;
+    }
+    public boolean isNumberType() {
+        return true;
+    }
+    public boolean isSequenceType() {
+        return true;
+    }
 
-    public boolean isCallable() { return __findattr__("__call__") != null; }
-    public boolean isMappingType() { return true; }
-    public boolean isNumberType() { return true; }
-    public boolean isSequenceType() { return true; }
+    /* . */
 
     /* The basic functions to implement a mapping */
 
@@ -465,14 +800,14 @@ public class PyObject implements java.io.Serializable {
      *
      * @param key the key to lookup in this container.
      * @return the value corresponding to that key.
-     * @exception PyKeyError if the key is not found.
+     * @exception Py.KeyError if the key is not found.
      *
      * @see #__finditem__(int)
      **/
     public PyObject __getitem__(int key) {
         PyObject ret = __finditem__(key);
         if (ret == null)
-            throw Py.KeyError(""+key);
+            throw Py.KeyError("" + key);
         return ret;
     }
 
@@ -483,7 +818,7 @@ public class PyObject implements java.io.Serializable {
      *
      * @param key the key to lookup in this container.
      * @return the value corresponding to that key.
-     * @exception PyKeyError if the key is not found.
+     * @exception Py.KeyError if the key is not found.
      *
      * @see #__finditem__(PyObject)
      **/
@@ -543,7 +878,7 @@ public class PyObject implements java.io.Serializable {
      * Equivalent to the standard Python __delitem__ method.
      *
      * @param key the key to be removed from the container
-     * @exception PyKeyError if the key is not found in the container
+     * @exception Py.KeyError if the key is not found in the container
      **/
     public void __delitem__(PyObject key) {
         throw Py.AttributeError("__delitem__");
@@ -559,7 +894,7 @@ public class PyObject implements java.io.Serializable {
      *
      * @param key the key who will be removed -
      *            <b> must be an interned string </b>.
-     * @exception PyKeyError if the key is not found in the container
+     * @exception Py.KeyError if the key is not found in the container
      *
      * @see #__delitem__(PyObject)
      **/
@@ -567,24 +902,27 @@ public class PyObject implements java.io.Serializable {
         __delitem__(new PyString(key));
     }
 
-
-    public PyObject __getslice__(PyObject s_start, PyObject s_stop,
-                                 PyObject s_step)
-    {
+    public PyObject __getslice__(
+        PyObject s_start,
+        PyObject s_stop,
+        PyObject s_step) {
         PySlice s = new PySlice(s_start, s_stop, s_step);
         return __getitem__(s);
     }
 
-    public void __setslice__(PyObject s_start, PyObject s_stop,
-                             PyObject s_step, PyObject value)
-    {
+    public void __setslice__(
+        PyObject s_start,
+        PyObject s_stop,
+        PyObject s_step,
+        PyObject value) {
         PySlice s = new PySlice(s_start, s_stop, s_step);
         __setitem__(s, value);
     }
 
-    public void __delslice__(PyObject s_start, PyObject s_stop,
-                             PyObject s_step)
-    {
+    public void __delslice__(
+        PyObject s_start,
+        PyObject s_stop,
+        PyObject s_step) {
         PySlice s = new PySlice(s_start, s_stop, s_step);
         __delitem__(s);
     }
@@ -602,7 +940,6 @@ public class PyObject implements java.io.Serializable {
     }
 
     /*The basic functions to implement an iterator */
-
 
     /**
      * Return an iterator that is used to iterate the element of this
@@ -659,8 +996,10 @@ public class PyObject implements java.io.Serializable {
      *
      * @return the value corresponding to name or null if name is not found
      **/
-    public PyObject __findattr__(PyString name) {
-        if(name == null) { return null; }
+    public final PyObject __findattr__(PyString name) {
+        if (name == null) {
+            return null;
+        }
         return __findattr__(name.internedString());
     }
 
@@ -680,15 +1019,17 @@ public class PyObject implements java.io.Serializable {
      *
      * @see #__findattr__(PyString)
      **/
-    public PyObject __findattr__(String name) {
-        if (__class__ == null)
+    public PyObject __findattr__(String name) { // xxx accelerators/ expose
+        /*if (getType() == null)
             return null;
         if (name == "__class__")
-            return __class__;
-        PyObject ret = __class__.lookup(name, false);
+            return getType();*/
+        /*PyObject ret = getType().lookup(name, false);
         if (ret != null)
             return ret._doget(this);
-        return null;
+        return null;*/
+
+        return object___findattr__(name);
     }
 
     /**
@@ -698,15 +1039,14 @@ public class PyObject implements java.io.Serializable {
      *
      * @param name the name to lookup in this namespace
      * @return the value corresponding to name
-     * @exception PyAttributeError if the name is not found.
+     * @exception Py.AttributeError if the name is not found.
      *
      * @see #__findattr__(PyString)
      **/
     public final PyObject __getattr__(PyString name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
-            throw Py.AttributeError(safeRepr() + " has no attribute '" +
-                                    name + "'");
+            noAttributeError(name.toString());
         return ret;
     }
 
@@ -721,16 +1061,25 @@ public class PyObject implements java.io.Serializable {
      * @param name the name to lookup in this namespace
      *             <b> must be an interned string </b>.
      * @return the value corresponding to name
-     * @exception PyAttributeError if the name is not found.
+     * @exception Py.AttributeError if the name is not found.
      *
      * @see #__findattr__(java.lang.String)
      **/
     public final PyObject __getattr__(String name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
-            throw Py.AttributeError(safeRepr() + " has no attribute '" +
-                                    name + "'");
+            noAttributeError(name);
         return ret;
+    }
+
+    public void noAttributeError(String name) {
+        throw Py.AttributeError(
+            safeRepr() + " has no attribute '" + name + "'");
+    }
+
+    public void readonlyAttributeError(String name) {
+        throw Py.AttributeError(
+            safeRepr() + " attribute '" + name + "' is read-only");
     }
 
     /**
@@ -738,8 +1087,7 @@ public class PyObject implements java.io.Serializable {
      * This method can not be overridden.
      *
      * @param name the name to lookup in this namespace
-     * @return the value corresponding to name
-     * @exception PyAttributeError if the name is not found.
+     * @exception Py.AttributeError if the name is not found.
      *
      * @see #__setattr__(java.lang.String, PyObject)
      **/
@@ -758,16 +1106,15 @@ public class PyObject implements java.io.Serializable {
      * @see #__setattr__(PyString, PyObject)
     **/
     public void __setattr__(String name, PyObject value) {
-        throw Py.TypeError("readonly class or attribute: " + name);
+        object___setattr__(name, value);
     }
-
 
     /**
      * Equivalent to the standard Python __delattr__ method.
      * This method can not be overridden.
      *
      * @param name the name to which will be removed
-     * @exception PyAttributeError if the name doesn't exist
+     * @exception Py.AttributeError if the name doesn't exist
      *
      * @see #__delattr__(java.lang.String)
      **/
@@ -785,36 +1132,38 @@ public class PyObject implements java.io.Serializable {
      *
      * @param name the name which will be removed -
      *             <b> must be an interned string </b>.
-     * @exception PyAttributeError if the name doesn't exist
+     * @exception Py.AttributeError if the name doesn't exist
      *
      * @see #__delattr__(PyString)
      **/
     public void __delattr__(String name) {
-        throw Py.TypeError("readonly class");
+        object___delattr__(name);
     }
-
 
     // Used by import logic.
     protected PyObject impAttr(String name) {
         return __findattr__(name);
     }
 
-
-    protected void addKeys(PyList ret, String attr) {
+    protected void addKeys(PyDictionary accum, String attr) {
         PyObject obj = __findattr__(attr);
         if (obj == null)
             return;
-        if (obj instanceof PyDictionary) {
-            ret.setslice(ret.__len__(), ret.__len__(), 1,
-                         ((PyDictionary)obj).keys());
+        if (obj instanceof PyList) {
+            PyObject lst_iter = obj.__iter__();
+            PyObject name;
+            for (; (name = lst_iter.__iternext__())!= null; ) {
+                accum.__setitem__(name, Py.None);
+            }
         }
-        else if (obj instanceof PyStringMap) {
-            ret.setslice(ret.__len__(), ret.__len__(), 1,
-                         ((PyStringMap)obj).keys());
-        }
-        else if (obj instanceof PyList) {
-            ret.setslice(ret.__len__(), ret.__len__(), 1, (PyList)obj);
-        }
+        accum.update(obj);
+    }
+
+    protected void __rawdir__(PyDictionary accum) {
+        addKeys(accum, "__dict__");
+        addKeys(accum, "__methods__");
+        addKeys(accum, "__members__");
+        fastGetClass().__rawdir__(accum);
     }
 
     /**
@@ -823,16 +1172,12 @@ public class PyObject implements java.io.Serializable {
      * @return a list of names defined by this object.
      **/
     public PyObject __dir__() {
-        PyList ret = new PyList();
-
-        addKeys(ret, "__dict__");
-        addKeys(ret, "__methods__");
-        addKeys(ret, "__members__");
-
+        PyDictionary accum = new PyDictionary();
+        __rawdir__(accum);
+        PyList ret = accum.keys();
         ret.sort();
         return ret;
     }
-
 
     public PyObject _doget(PyObject container) {
         return this;
@@ -846,7 +1191,11 @@ public class PyObject implements java.io.Serializable {
         return false;
     }
 
-    public boolean _dodel(PyObject container) {
+    boolean jtryset(PyObject container, PyObject value) {
+        return _doset(container, value);
+    }
+
+    boolean jdontdel() {
         return false;
     }
 
@@ -865,6 +1214,37 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
+     * Implements coerce(this,other), result as PyObject[]
+     * @param other
+     * @return PyObject[]
+     */
+    PyObject[] _coerce(PyObject other) {
+        Object result;
+        if (this.getType() == other.getType() &&
+            !(this instanceof PyInstance)) {
+            return new PyObject[] {this, other};
+        }
+        result = this.__coerce_ex__(other);
+        if (result != null && result != Py.None) {
+            if (result instanceof PyObject[]) {
+                return (PyObject[])result;
+            } else {
+                return new PyObject[] {this, (PyObject)result};
+            }
+        }
+        result = other.__coerce_ex__(this);
+        if (result != null && result != Py.None) {
+            if (result instanceof PyObject[]) {
+                return (PyObject[])result;
+            } else {
+                return new PyObject[] {(PyObject)result, other};
+            }
+        }
+        return null;
+
+    }
+
+    /**
      * Equivalent to the standard Python __coerce__ method.
      *
      * This method can not be overridden.
@@ -880,12 +1260,14 @@ public class PyObject implements java.io.Serializable {
         if (o == null)
             throw Py.AttributeError("__coerce__");
         if (o == Py.None)
-            return (PyObject)o;
+            return (PyObject) o;
         if (o instanceof PyObject[])
-            return new PyTuple((PyObject[])o);
+            return new PyTuple((PyObject[]) o);
         else
-            return new PyTuple(new PyObject[] {this, (PyObject)o});
+            return new PyTuple(new PyObject[] { this, (PyObject) o });
     }
+
+
 
     /* The basic comparision operations */
 
@@ -900,14 +1282,15 @@ public class PyObject implements java.io.Serializable {
         return -2;
     }
 
-
     /**
      * Equivalent to the standard Python __eq__ method.
      *
      * @param other the object to compare this with.
      * @return the result of the comparison.
      **/
-    public PyObject __eq__(PyObject other) { return null; }
+    public PyObject __eq__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __ne__ method.
@@ -915,7 +1298,9 @@ public class PyObject implements java.io.Serializable {
      * @param other the object to compare this with.
      * @return the result of the comparison.
      **/
-    public PyObject __ne__(PyObject other) { return null; }
+    public PyObject __ne__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __le__ method.
@@ -923,7 +1308,9 @@ public class PyObject implements java.io.Serializable {
      * @param other the object to compare this with.
      * @return the result of the comparison.
      **/
-    public PyObject __le__(PyObject other) { return null; }
+    public PyObject __le__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __lt__ method.
@@ -931,7 +1318,9 @@ public class PyObject implements java.io.Serializable {
      * @param other the object to compare this with.
      * @return the result of the comparison.
      **/
-    public PyObject __lt__(PyObject other) { return null; }
+    public PyObject __lt__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __ge__ method.
@@ -939,7 +1328,9 @@ public class PyObject implements java.io.Serializable {
      * @param other the object to compare this with.
      * @return the result of the comparison.
      **/
-    public PyObject __ge__(PyObject other) { return null; }
+    public PyObject __ge__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __gt__ method.
@@ -947,13 +1338,14 @@ public class PyObject implements java.io.Serializable {
      * @param other the object to compare this with.
      * @return the result of the comparison.
      **/
-    public PyObject __gt__(PyObject other) { return null; }
-
+    public PyObject __gt__(PyObject other) {
+        return null;
+    }
 
     /**
      * Implements cmp(this, other)
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return -1 if this < 0; 0 if this == o; +1 if this > o
      **/
     public final int _cmp(PyObject o) {
@@ -994,7 +1386,6 @@ public class PyObject implements java.io.Serializable {
         }
     }
 
-
     private PyObject make_pair(PyObject o) {
         if (System.identityHashCode(this) < System.identityHashCode(o))
             return new PyIdentityTuple(new PyObject[] { this, o });
@@ -1002,73 +1393,77 @@ public class PyObject implements java.io.Serializable {
             return new PyIdentityTuple(new PyObject[] { o, this });
     }
 
-    private final int _cmp_unsafe(PyObject o2_in) {
-        // Shortcut for equal objects
-        if (this == o2_in)
-            return 0;
-
-        PyObject o2 = o2_in;
-        PyObject o1 = this;
-        int itmp;
-        Object ctmp;
-        if (o1.__class__ != o2.__class__) {
-            ctmp = o1.__coerce_ex__(o2);
-            if (ctmp != null) {
-                if (ctmp instanceof PyObject[]) {
-                    o1 = ((PyObject[])ctmp)[0];
-                    o2 = ((PyObject[])ctmp)[1];
-                }
-                else {
-                    o2 = (PyObject)ctmp;
-                }
-            }
-        }
-        else ctmp = null;
-        if (ctmp != Py.None && (itmp = o1.__cmp__(o2)) != -2)
-            return itmp;
-
-        o1 = this;
-        o2 = o2_in;
-        if (o1.__class__ != o2.__class__) {
-            ctmp = o2.__coerce_ex__(o1);
-            if (ctmp != null) {
-                if (ctmp instanceof PyObject[]) {
-                    o2 = ((PyObject[])ctmp)[0];
-                    o1 = ((PyObject[])ctmp)[1];
-                }
-                else {
-                    o1 = (PyObject)ctmp;
-                }
-            }
-        }
-        if (ctmp != Py.None && (itmp = o2.__cmp__(o1)) != -2)
-            return -itmp;
-
-        if (this == o2_in)
+    private final int _default_cmp(PyObject other) {
+        int result;
+        if (this._is(other).__nonzero__())
             return 0;
 
         /* None is smaller than anything */
         if (this == Py.None)
             return -1;
-        if (o2_in == Py.None)
+        if (other == Py.None)
             return 1;
 
         // No rational way to compare these, so ask their classes to compare
-        itmp = this.__class__.__cmp__(o2_in.__class__);
+        PyType this_type = this.getType();
+        PyType other_type = other.getType();
+        if (this_type == other_type) {
+            return Py.id(this) < Py.id(other)? -1: 1;
+        }
+        result = this_type.fastGetName().compareTo(other_type.fastGetName());
+        if (result == 0)
+            return Py.id(this_type)<Py.id(other_type)? -1: 1;
+        return result < 0? -1: 1;
+    }
 
-        if (itmp == 0)
-            return System.identityHashCode(this) < 
-                   System.identityHashCode(o2_in) ? -1 : 1;
-        if (itmp != -2)
-            return itmp;
-        return System.identityHashCode(this.__class__) < 
-               System.identityHashCode(o2_in.__class__) ? -1 : 1;
+    private final int _cmp_unsafe(PyObject other) {
+        // Shortcut for equal objects
+        if (this == other)
+            return 0;
+
+        int result;
+        result = this.__cmp__(other);
+        if (result != -2)
+            return result;
+
+        if (!(this instanceof PyInstance)) {
+            result = other.__cmp__(this);
+            if (result != -2)
+                return -result;
+        }
+
+        return this._default_cmp(other);
+    }
+
+    /*
+     *  Like _cmp_unsafe but limited to ==/!= as 0/!=0,
+     *  avoids to invoke Py.id
+     */
+    private final int _cmpeq_unsafe(PyObject other) {
+        // Shortcut for equal objects
+        if (this == other)
+            return 0;
+
+        int result;
+        result = this.__cmp__(other);
+        if (result != -2)
+            return result;
+
+        if (!(this instanceof PyInstance)) {
+            result = other.__cmp__(this);
+            if (result != -2)
+                return -result;
+        }
+
+        return this._is(other).__nonzero__()?0:1;
     }
 
 
-    private final static PyObject check_recursion(ThreadState ts,
-                                                  PyObject o1, PyObject o2)
-    {
+
+    private final static PyObject check_recursion(
+        ThreadState ts,
+        PyObject o1,
+        PyObject o2) {
         PyDictionary stateDict = ts.getCompareStateDict();
 
         PyObject pair = o1.make_pair(o2);
@@ -1088,11 +1483,10 @@ public class PyObject implements java.io.Serializable {
         stateDict.__delitem__(token);
     }
 
-
     /**
      * Implements the Python expression <code>this == other</code>.
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return the result of the comparison
      **/
     public final PyObject _eq(PyObject o) {
@@ -1110,7 +1504,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__eq__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) == 0 ? Py.One : Py.Zero;
+            return _cmpeq_unsafe(o) == 0 ? Py.One : Py.Zero;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1120,7 +1514,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements the Python expression <code>this != other</code>.
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return the result of the comparison
      **/
     public final PyObject _ne(PyObject o) {
@@ -1138,7 +1532,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__ne__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) != 0 ? Py.One : Py.Zero;
+            return _cmpeq_unsafe(o) != 0 ? Py.One : Py.Zero;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1148,7 +1542,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements the Python expression <code>this &lt;= other</code>.
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return the result of the comparison
      **/
     public final PyObject _le(PyObject o) {
@@ -1176,7 +1570,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements the Python expression <code>this &lt; other</code>.
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return the result of the comparison
      **/
     public final PyObject _lt(PyObject o) {
@@ -1204,7 +1598,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements the Python expression <code>this &gt;= other</code>.
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return the result of the comparison
      **/
     public final PyObject _ge(PyObject o) {
@@ -1232,7 +1626,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements the Python expression <code>this &gt; other</code>.
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return the result of the comparison
      **/
     public final PyObject _gt(PyObject o) {
@@ -1261,7 +1655,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements <code>is</code> operator.
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return the result of the comparison
      **/
     public PyObject _is(PyObject o) {
@@ -1271,7 +1665,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements <code>is not</code> operator.
      *
-     * @param other the object to compare this with.
+     * @param o the object to compare this with.
      * @return the result of the comparison
      **/
     public PyObject _isnot(PyObject o) {
@@ -1281,7 +1675,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements <code>in</code> operator.
      *
-     * @param other the container to search for this element.
+     * @param o the container to search for this element.
      * @return the result of the search.
      **/
     public final PyObject _in(PyObject o) {
@@ -1291,7 +1685,7 @@ public class PyObject implements java.io.Serializable {
     /**
      * Implements <code>not in</code> operator.
      *
-     * @param other the container to search for this element.
+     * @param o the container to search for this element.
      * @return the result of the search.
      **/
     public final PyObject _notin(PyObject o) {
@@ -1306,7 +1700,7 @@ public class PyObject implements java.io.Serializable {
      **/
     public boolean __contains__(PyObject o) {
         PyObject iter = __iter__();
-        for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+        for (PyObject item = null;(item = iter.__iternext__()) != null;) {
             if (o._eq(item).__nonzero__())
                 return true;
         }
@@ -1434,9 +1828,9 @@ public class PyObject implements java.io.Serializable {
      *           modulo is to be used
      * @return this object raised to the given power in the given modulus
      **/
-    public PyObject __pow__(PyObject o2, PyObject o3) { return null; }
-
-
+    public PyObject __pow__(PyObject o2, PyObject o3) {
+        return null;
+    }
 
     // Generated by make_binops.py (Begin)
 
@@ -1447,7 +1841,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the add, or null if this operation
      *            is not defined
      **/
-    public PyObject __add__(PyObject other) { return null; }
+    public PyObject __add__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __radd__ method
@@ -1456,7 +1852,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the add, or null if this operation
      *            is not defined.
      **/
-    public PyObject __radd__(PyObject other) { return null; }
+    public PyObject __radd__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __iadd__ method
@@ -1465,13 +1863,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the add, or null if this operation
      *            is not defined
      **/
-    public PyObject __iadd__(PyObject other) { return _add(other); }
+    public PyObject __iadd__(PyObject other) {
+        return _add(other);
+    }
 
     /**
      * Implements the Python expression <code>this + other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the add.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _add(PyObject o2) {
@@ -1481,8 +1881,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__radd__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__add__ nor __radd__ defined for these operands");
+        throw Py.TypeError("__add__ nor __radd__ defined for these operands");
     }
 
     /**
@@ -1492,7 +1891,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the sub, or null if this operation
      *            is not defined
      **/
-    public PyObject __sub__(PyObject other) { return null; }
+    public PyObject __sub__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rsub__ method
@@ -1501,7 +1902,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the sub, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rsub__(PyObject other) { return null; }
+    public PyObject __rsub__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __isub__ method
@@ -1510,13 +1913,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the sub, or null if this operation
      *            is not defined
      **/
-    public PyObject __isub__(PyObject other) { return _sub(other); }
+    public PyObject __isub__(PyObject other) {
+        return _sub(other);
+    }
 
     /**
      * Implements the Python expression <code>this - other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the sub.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _sub(PyObject o2) {
@@ -1526,8 +1931,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rsub__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__sub__ nor __rsub__ defined for these operands");
+        throw Py.TypeError("__sub__ nor __rsub__ defined for these operands");
     }
 
     /**
@@ -1537,7 +1941,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the mul, or null if this operation
      *            is not defined
      **/
-    public PyObject __mul__(PyObject other) { return null; }
+    public PyObject __mul__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rmul__ method
@@ -1546,7 +1952,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the mul, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rmul__(PyObject other) { return null; }
+    public PyObject __rmul__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __imul__ method
@@ -1555,13 +1963,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the mul, or null if this operation
      *            is not defined
      **/
-    public PyObject __imul__(PyObject other) { return _mul(other); }
+    public PyObject __imul__(PyObject other) {
+        return _mul(other);
+    }
 
     /**
      * Implements the Python expression <code>this * other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the mul.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _mul(PyObject o2) {
@@ -1571,8 +1981,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rmul__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__mul__ nor __rmul__ defined for these operands");
+        throw Py.TypeError("__mul__ nor __rmul__ defined for these operands");
     }
 
     /**
@@ -1582,7 +1991,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the div, or null if this operation
      *            is not defined
      **/
-    public PyObject __div__(PyObject other) { return null; }
+    public PyObject __div__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rdiv__ method
@@ -1591,7 +2002,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the div, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rdiv__(PyObject other) { return null; }
+    public PyObject __rdiv__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __idiv__ method
@@ -1600,13 +2013,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the div, or null if this operation
      *            is not defined
      **/
-    public PyObject __idiv__(PyObject other) { return _div(other); }
+    public PyObject __idiv__(PyObject other) {
+        return _div(other);
+    }
 
     /**
      * Implements the Python expression <code>this / other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the div.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _div(PyObject o2) {
@@ -1618,8 +2033,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rdiv__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__div__ nor __rdiv__ defined for these operands");
+        throw Py.TypeError("__div__ nor __rdiv__ defined for these operands");
     }
 
     /**
@@ -1629,7 +2043,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the floordiv, or null if this operation
      *            is not defined
      **/
-    public PyObject __floordiv__(PyObject other) { return null; }
+    public PyObject __floordiv__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rfloordiv__ method
@@ -1638,7 +2054,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the floordiv, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rfloordiv__(PyObject other) { return null; }
+    public PyObject __rfloordiv__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __ifloordiv__ method
@@ -1647,13 +2065,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the floordiv, or null if this operation
      *            is not defined
      **/
-    public PyObject __ifloordiv__(PyObject other) { return _floordiv(other); }
+    public PyObject __ifloordiv__(PyObject other) {
+        return _floordiv(other);
+    }
 
     /**
      * Implements the Python expression <code>this // other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the floordiv.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _floordiv(PyObject o2) {
@@ -1664,7 +2084,7 @@ public class PyObject implements java.io.Serializable {
         if (x != null)
             return x;
         throw Py.TypeError(
-                 "__floordiv__ nor __rfloordiv__ defined for these operands");
+            "__floordiv__ nor __rfloordiv__ defined for these operands");
     }
 
     /**
@@ -1674,7 +2094,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the truediv, or null if this operation
      *            is not defined
      **/
-    public PyObject __truediv__(PyObject other) { return null; }
+    public PyObject __truediv__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rtruediv__ method
@@ -1683,7 +2105,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the truediv, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rtruediv__(PyObject other) { return null; }
+    public PyObject __rtruediv__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __itruediv__ method
@@ -1692,13 +2116,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the truediv, or null if this operation
      *            is not defined
      **/
-    public PyObject __itruediv__(PyObject other) { return _truediv(other); }
+    public PyObject __itruediv__(PyObject other) {
+        return _truediv(other);
+    }
 
     /**
      * Implements the Python expression <code>this / other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the truediv.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _truediv(PyObject o2) {
@@ -1709,7 +2135,7 @@ public class PyObject implements java.io.Serializable {
         if (x != null)
             return x;
         throw Py.TypeError(
-                 "__truediv__ nor __rtruediv__ defined for these operands");
+            "__truediv__ nor __rtruediv__ defined for these operands");
     }
 
     /**
@@ -1719,7 +2145,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the mod, or null if this operation
      *            is not defined
      **/
-    public PyObject __mod__(PyObject other) { return null; }
+    public PyObject __mod__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rmod__ method
@@ -1728,7 +2156,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the mod, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rmod__(PyObject other) { return null; }
+    public PyObject __rmod__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __imod__ method
@@ -1737,13 +2167,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the mod, or null if this operation
      *            is not defined
      **/
-    public PyObject __imod__(PyObject other) { return _mod(other); }
+    public PyObject __imod__(PyObject other) {
+        return _mod(other);
+    }
 
     /**
      * Implements the Python expression <code>this % other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the mod.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _mod(PyObject o2) {
@@ -1753,8 +2185,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rmod__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__mod__ nor __rmod__ defined for these operands");
+        throw Py.TypeError("__mod__ nor __rmod__ defined for these operands");
     }
 
     /**
@@ -1764,7 +2195,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the divmod, or null if this operation
      *            is not defined
      **/
-    public PyObject __divmod__(PyObject other) { return null; }
+    public PyObject __divmod__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rdivmod__ method
@@ -1773,7 +2206,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the divmod, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rdivmod__(PyObject other) { return null; }
+    public PyObject __rdivmod__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __idivmod__ method
@@ -1782,13 +2217,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the divmod, or null if this operation
      *            is not defined
      **/
-    public PyObject __idivmod__(PyObject other) { return _divmod(other); }
+    public PyObject __idivmod__(PyObject other) {
+        return _divmod(other);
+    }
 
     /**
      * Implements the Python expression <code>this divmod other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the divmod.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _divmod(PyObject o2) {
@@ -1799,7 +2236,7 @@ public class PyObject implements java.io.Serializable {
         if (x != null)
             return x;
         throw Py.TypeError(
-                 "__divmod__ nor __rdivmod__ defined for these operands");
+            "__divmod__ nor __rdivmod__ defined for these operands");
     }
 
     /**
@@ -1809,7 +2246,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the pow, or null if this operation
      *            is not defined
      **/
-    public PyObject __pow__(PyObject other) { return __pow__(other, null); }
+    public PyObject __pow__(PyObject other) {
+        return __pow__(other, null);
+    }
 
     /**
      * Equivalent to the standard Python __rpow__ method
@@ -1818,7 +2257,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the pow, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rpow__(PyObject other) { return null; }
+    public PyObject __rpow__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __ipow__ method
@@ -1827,13 +2268,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the pow, or null if this operation
      *            is not defined
      **/
-    public PyObject __ipow__(PyObject other) { return _pow(other); }
+    public PyObject __ipow__(PyObject other) {
+        return _pow(other);
+    }
 
     /**
      * Implements the Python expression <code>this ** other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the pow.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _pow(PyObject o2) {
@@ -1843,8 +2286,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rpow__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__pow__ nor __rpow__ defined for these operands");
+        throw Py.TypeError("__pow__ nor __rpow__ defined for these operands");
     }
 
     /**
@@ -1854,7 +2296,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the lshift, or null if this operation
      *            is not defined
      **/
-    public PyObject __lshift__(PyObject other) { return null; }
+    public PyObject __lshift__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rlshift__ method
@@ -1863,7 +2307,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the lshift, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rlshift__(PyObject other) { return null; }
+    public PyObject __rlshift__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __ilshift__ method
@@ -1872,13 +2318,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the lshift, or null if this operation
      *            is not defined
      **/
-    public PyObject __ilshift__(PyObject other) { return _lshift(other); }
+    public PyObject __ilshift__(PyObject other) {
+        return _lshift(other);
+    }
 
     /**
      * Implements the Python expression <code>this << other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the lshift.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _lshift(PyObject o2) {
@@ -1889,7 +2337,7 @@ public class PyObject implements java.io.Serializable {
         if (x != null)
             return x;
         throw Py.TypeError(
-                 "__lshift__ nor __rlshift__ defined for these operands");
+            "__lshift__ nor __rlshift__ defined for these operands");
     }
 
     /**
@@ -1899,7 +2347,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the rshift, or null if this operation
      *            is not defined
      **/
-    public PyObject __rshift__(PyObject other) { return null; }
+    public PyObject __rshift__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rrshift__ method
@@ -1908,7 +2358,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the rshift, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rrshift__(PyObject other) { return null; }
+    public PyObject __rrshift__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __irshift__ method
@@ -1917,13 +2369,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the rshift, or null if this operation
      *            is not defined
      **/
-    public PyObject __irshift__(PyObject other) { return _rshift(other); }
+    public PyObject __irshift__(PyObject other) {
+        return _rshift(other);
+    }
 
     /**
      * Implements the Python expression <code>this >> other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the rshift.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _rshift(PyObject o2) {
@@ -1934,7 +2388,7 @@ public class PyObject implements java.io.Serializable {
         if (x != null)
             return x;
         throw Py.TypeError(
-                 "__rshift__ nor __rrshift__ defined for these operands");
+            "__rshift__ nor __rrshift__ defined for these operands");
     }
 
     /**
@@ -1944,7 +2398,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the and, or null if this operation
      *            is not defined
      **/
-    public PyObject __and__(PyObject other) { return null; }
+    public PyObject __and__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rand__ method
@@ -1953,7 +2409,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the and, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rand__(PyObject other) { return null; }
+    public PyObject __rand__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __iand__ method
@@ -1962,13 +2420,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the and, or null if this operation
      *            is not defined
      **/
-    public PyObject __iand__(PyObject other) { return _and(other); }
+    public PyObject __iand__(PyObject other) {
+        return _and(other);
+    }
 
     /**
      * Implements the Python expression <code>this & other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the and.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _and(PyObject o2) {
@@ -1978,8 +2438,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rand__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__and__ nor __rand__ defined for these operands");
+        throw Py.TypeError("__and__ nor __rand__ defined for these operands");
     }
 
     /**
@@ -1989,7 +2448,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the or, or null if this operation
      *            is not defined
      **/
-    public PyObject __or__(PyObject other) { return null; }
+    public PyObject __or__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __ror__ method
@@ -1998,7 +2459,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the or, or null if this operation
      *            is not defined.
      **/
-    public PyObject __ror__(PyObject other) { return null; }
+    public PyObject __ror__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __ior__ method
@@ -2007,13 +2470,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the or, or null if this operation
      *            is not defined
      **/
-    public PyObject __ior__(PyObject other) { return _or(other); }
+    public PyObject __ior__(PyObject other) {
+        return _or(other);
+    }
 
     /**
      * Implements the Python expression <code>this | other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the or.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _or(PyObject o2) {
@@ -2023,8 +2488,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__ror__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__or__ nor __ror__ defined for these operands");
+        throw Py.TypeError("__or__ nor __ror__ defined for these operands");
     }
 
     /**
@@ -2034,7 +2498,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the xor, or null if this operation
      *            is not defined
      **/
-    public PyObject __xor__(PyObject other) { return null; }
+    public PyObject __xor__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __rxor__ method
@@ -2043,7 +2509,9 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the xor, or null if this operation
      *            is not defined.
      **/
-    public PyObject __rxor__(PyObject other) { return null; }
+    public PyObject __rxor__(PyObject other) {
+        return null;
+    }
 
     /**
      * Equivalent to the standard Python __ixor__ method
@@ -2052,13 +2520,15 @@ public class PyObject implements java.io.Serializable {
      * @return    the result of the xor, or null if this operation
      *            is not defined
      **/
-    public PyObject __ixor__(PyObject other) { return _xor(other); }
+    public PyObject __ixor__(PyObject other) {
+        return _xor(other);
+    }
 
     /**
      * Implements the Python expression <code>this ^ other</code>
-     * @param     other the object to perform this binary operation with.
+     * @param     o2 the object to perform this binary operation with.
      * @return    the result of the xor.
-     * @exception PyTypeError if this operation can't be performed
+     * @exception Py.TypeError if this operation can't be performed
      *            with these operands.
      **/
     public final PyObject _xor(PyObject o2) {
@@ -2068,13 +2538,10 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rxor__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-                 "__xor__ nor __rxor__ defined for these operands");
+        throw Py.TypeError("__xor__ nor __rxor__ defined for these operands");
     }
 
     // Generated by make_binops.py (End)
-
-
 
     /* A convenience function for PyProxy's */
     // Possibly add _jcall(), _jcall(Object, ...) as future optimization
@@ -2087,14 +2554,14 @@ public class PyObject implements java.io.Serializable {
         PyObject[] pargs = new PyObject[args.length];
         try {
             int n = args.length;
-            for (int i=0; i<n; i++)
+            for (int i = 0; i < n; i++)
                 pargs[i] = Py.java2py(args[i]);
             return __call__(pargs);
         } catch (PyException e) {
             if (e.value instanceof PyJavaInstance) {
                 Object t = e.value.__tojava__(Throwable.class);
                 if (t != null && t != Py.NoConversion) {
-                    throw (Throwable)t;
+                    throw (Throwable) t;
                 }
             } else {
                 ThreadState ts = Py.getThreadState();
@@ -2113,9 +2580,9 @@ public class PyObject implements java.io.Serializable {
 
     public void _jthrow(Throwable t) {
         if (t instanceof RuntimeException)
-            throw (RuntimeException)t;
+            throw (RuntimeException) t;
         if (t instanceof Error)
-            throw (Error)t;
+            throw (Error) t;
         throw Py.JavaError(t);
     }
 
@@ -2188,9 +2655,170 @@ public class PyObject implements java.io.Serializable {
         PyObject f = __getattr__(name);
         return f.__call__(arg1, arg2);
     }
+
+    /* descriptors and lookup protocols */
+
+    /** xxx implements where meaningful
+     * @return internal object per instance dict or null
+     */
+    public PyObject fastGetDict() {
+        return null;
+    }
+
+    /** xxx implements where meaningful
+     * @return internal object __dict__ or null
+     */
+    public PyObject getDict() {
+        return null;
+    }
+
+
+    public boolean implementsDescrSet() {
+        return objtype.has_set;
+    }
+
+    public boolean implementsDescrDelete() {
+        return objtype.has_delete;
+    }
+
+    public boolean isDataDescr() { // implements either __set__ or __delete__
+        return objtype.has_set || objtype.has_delete;
+    }
+
+    // doc & xxx ok this way?
+    // can return null meaning set-only or throw exception
+
+    // backward comp impls.
+    public PyObject __get__(PyObject obj, PyObject type) {
+        return _doget(obj, type);
+    }
+
+    public void __set__(PyObject obj, PyObject value) {
+        throw Py.RuntimeError("object internal __set__ impl is abstract");
+    }
+
+    public void __delete__(PyObject obj) {
+        throw Py.RuntimeError("object internal __delete__ impl is abstract");
+    }
+
+    // name must be interned
+    final PyObject object___findattr__(String name) {
+
+        PyObject descr = objtype.lookup(name);
+        PyObject res;
+
+        if (descr != null) {
+            if (descr.isDataDescr()) {
+                res = descr.__get__(this, objtype);
+                if (res != null)
+                    return res;
+            }
+        }
+
+        PyObject obj_dict = fastGetDict();
+        if (obj_dict != null) {
+            res = obj_dict.__finditem__(name);
+            if (res != null)
+                return res;
+        }
+
+        if (descr != null) {
+            return descr.__get__(this, objtype);
+        }
+
+        return null;
+    }
+
+    final void object___setattr__(String name, PyObject value) {
+        PyObject descr = objtype.lookup(name);
+
+        boolean set = false;
+
+        if (descr != null) {
+            set = descr.implementsDescrSet();
+            if (set && descr.isDataDescr()) {
+                descr.__set__(this, value);
+                return;
+            }
+        }
+
+        PyObject obj_dict = fastGetDict();
+        if (obj_dict != null) {
+            obj_dict.__setitem__(name, value);
+            return;
+        }
+
+        if (set) {
+            descr.__set__(this, value);
+        }
+
+        if (descr != null)
+            readonlyAttributeError(name);
+
+        noAttributeError(name);
+    }
+
+    final void object___delattr__(String name) {
+        PyObject descr = objtype.lookup(name);
+
+        boolean delete = false;
+
+        if (descr != null) {
+            delete = descr.implementsDescrDelete();
+            if (delete && descr.isDataDescr()) {
+                descr.__delete__(this);
+                return;
+            }
+        }
+
+        PyObject obj_dict = fastGetDict();
+        if (obj_dict != null) {
+            try {
+                obj_dict.__delitem__(name);
+            } catch (PyException exc) {
+                if (Py.matchException(exc, Py.KeyError))
+                    noAttributeError(name);
+                else
+                    throw exc;
+            }
+            return;
+        }
+
+        if (delete) {
+            descr.__delete__(this);
+        }
+
+        if (descr != null)
+            readonlyAttributeError(name);
+
+        noAttributeError(name);
+    }
+
+    /* arguments' conversion helpers */
+
+    public static class ConversionException extends Exception {
+
+        public int index;
+
+        public ConversionException(int index) {
+            this.index = index;
+        }
+
+    }
+
+    public String asString(int index) throws ConversionException {
+        throw new ConversionException(index);
+    }
+
+    public String asName(int index) throws ConversionException {
+        throw new ConversionException(index);
+    }
+
+    public int asInt(int index) throws ConversionException {
+        throw new ConversionException(index);
+    }
+
 }
-
-
 
 /*
  * A very specialized tuple-like class used when detecting cycles during
@@ -2211,7 +2839,7 @@ class PyIdentityTuple extends PyObject {
         int len = list.length;
         x = 0x345678;
 
-        for (len--; len>=0; len--) {
+        for (len--; len >= 0; len--) {
             y = System.identityHashCode(list[len]);
             x = (x + x + x) ^ y;
         }
@@ -2222,7 +2850,7 @@ class PyIdentityTuple extends PyObject {
     public boolean equals(Object o) {
         if (!(o instanceof PyIdentityTuple))
             return false;
-        PyIdentityTuple that = (PyIdentityTuple)o;
+        PyIdentityTuple that = (PyIdentityTuple) o;
         if (list.length != that.list.length)
             return false;
         for (int i = 0; i < list.length; i++) {
@@ -2232,7 +2860,4 @@ class PyIdentityTuple extends PyObject {
         return true;
     }
 
-    // __class__ boilerplate -- see PyObject for details
-    public static PyClass __class__;
-    protected PyClass getPyClass() { return __class__; }
 }
