@@ -68,7 +68,7 @@ public class AdapterMaker extends ProxyMaker
         code.dup();
         Label returnNull = code.getLabel();
         code.ifnull(returnNull);
-        callMethod(code, name, parameters, ret);
+        callMethod(code, name, parameters, ret, method.getExceptionTypes());
         returnNull.setPosition();
         doNullReturn(code, ret);
     }
