@@ -11,6 +11,7 @@ def test(panel, size=None):
 	if size is not None:
 		f.size = size
 	f.visible = 1
+	return f
 
 class GridBag:
 	def __init__(self, frame, **defaults):
