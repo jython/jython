@@ -461,7 +461,138 @@ public class PyString extends PySequence implements InitModule
     public PyFloat __float__() {
         return new PyFloat(atof());
     }
-        
+
+    public PyComplex __complex__() {
+        boolean got_re = false;
+        boolean got_im = false;
+        boolean done = false;
+        boolean sw_error = false;
+
+        int s = 0;
+        int n = string.length();
+        while (s < n && Character.isSpaceChar(string.charAt(s)))
+            s++;
+
+        if (s == n) {
+            throw Py.ValueError("empty string for complex()");
+        }
+
+        double z = -1.0;
+        double x = 0.0;
+        double y = 0.0;
+
+        int sign = 1;
+        do {
+            char c = string.charAt(s);
+            switch (c) {
+            case '\0':
+                if (s != n)
+                    throw Py.ValueError("null byte in argument for complex()");
+		if (!done)
+                    sw_error = true;
+                break;
+
+            case '-':
+                sign = -1;
+                /* Fallthrough */
+            case '+':
+                if (done)
+                    sw_error = true;
+                s++;
+                c = string.charAt(s);
+                if  (c == '\0' || c == '+' || c == '-' ||
+                           Character.isSpaceChar(c))
+                    sw_error = true;
+                break;
+
+            case 'J':
+            case 'j':
+                if (got_im || done) {
+                    sw_error = true;
+                    break;
+                }
+                if  (z < 0.0) {
+                    y = sign;
+                } else {
+                    y = sign * z;
+                }
+                got_im = true;
+                s++;
+                c = string.charAt(s);
+     
+                if  (c != '+' && c != '-')
+                    done = true;
+                break;
+
+            default:
+                if (Character.isSpaceChar(c)) {
+                    while (s < n && Character.isSpaceChar(string.charAt(s)))
+                        s++;
+                    if (s != n)
+                        sw_error = true;
+                    else
+                        done = true;
+                    break;
+                }
+                c = string.charAt(s);
+                boolean digit_or_dot = (c == '.' || Character.isDigit(c));
+                if (done || !digit_or_dot) {
+                    sw_error = true;
+                    break;
+                }
+                int end = endDouble(string, s);
+                z = Double.valueOf(string.substring(s, end)).doubleValue();
+                s=end;
+                c = string.charAt(s);
+                if  (c == 'J' || c == 'j') {
+                    break;
+                }
+                if  (got_re) {
+                   sw_error = true;
+                   break;
+                }
+
+                /* accept a real part */
+                x = sign * z;
+                got_re = true;
+                if (got_im) 
+                    done = true;
+                z = -1.0;
+                sign = 1;
+                break;
+					
+             }  /* end of switch  */
+
+        } while (s < n && !sw_error);
+
+        if (sw_error) {
+            throw Py.ValueError("malformed string for complex() " +
+                                string.substring(s));
+        }
+
+        return new PyComplex(x,y);
+    }
+ 
+    private int endDouble(String string, int s) {
+        int n = string.length();
+        while (s < n) {
+            char c = string.charAt(s++);
+            if (Character.isDigit(c))
+                continue;
+            if (c == '.')
+                continue;
+            if (c == 'e' || c == 'E') {
+                if (s < n) {
+                    c = string.charAt(s++);
+                    if (c == '+' || c == '-')
+                        continue;
+                }
+            }
+            break;
+        }
+        return s-1;
+    }
+ 
     // Add in methods from string module
     public String lower() {
         return string.toLowerCase();
