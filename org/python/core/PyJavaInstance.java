@@ -63,6 +63,17 @@ public class PyJavaInstance extends PyInstance implements java.io.Externalizable
         }
     }
     
+	public PyObject _is(PyObject o) {
+	    if (o instanceof PyJavaInstance) {
+	        return javaProxies[0] == ((PyJavaInstance)o).javaProxies[0] ? Py.One : Py.Zero;
+	    }
+		return Py.Zero;
+	}
+	
+	public PyObject _isnot(PyObject o) {
+	    return _is(o).__not__();
+	}
+    
     public int __cmp__(PyObject o) {
         if (!(o instanceof PyJavaInstance)) return -2;
         PyJavaInstance i = (PyJavaInstance)o;

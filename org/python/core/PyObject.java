@@ -669,10 +669,10 @@ public class PyObject implements java.io.Serializable {
 		return _cmp(o) > 0 ? Py.One : Py.Zero;
 	}
 
-	public final PyObject _is(PyObject o) {
+	public PyObject _is(PyObject o) {
 		return this == o ? Py.One : Py.Zero;
 	}
-	public final PyObject _isnot(PyObject o) {
+	public PyObject _isnot(PyObject o) {
 		return this != o ? Py.One : Py.Zero;
 	}
 
