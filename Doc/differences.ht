@@ -224,11 +224,8 @@ CPython 1.5.2</i>
 	    supported in a 100% Pure Java implementation.
 
 	    <p>Finn Bock has created
-	    a JNI/C++ implementation for the posix module.  See
-	    <a href="http://pip.dknet.dk/~pip1848/jpython/modules.html">
-	    Finn Bock's JPython modules page</a> for details.
-	    Note that his cPickle, cStringIO, binascii, and struct 
-	    modules have all been integrated into JPython 1.1.
+	    a <a href="http://jnios.sourceforge.net/">JNI/C++
+	    implementation for the posix module</a>
     </UL>
 
     <p><LI>The socket module is limited.
