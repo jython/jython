@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 17:23:38 1999 -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:44 1999 -->
 <!-- User-specified headers:
 Title: Subclassing Java Classes in JPython
 
@@ -118,10 +118,10 @@ Other
 <A HREF="faq.html">JPython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -189,15 +189,9 @@ the form:
 
 <PRE>SuperClass.foo(self)</PRE>
 
-If SuperClass is a Java class instead of a Python one, I must instead
-use the form:
-
-<PRE>self.super__foo()</PRE>
-
-For every method in SuperClass, one of the magic "super__" methods
-will be created that can be used to call it.  This difference is
-required by the different method lookup semantics in Python and Java
-and I think the current solution is the best that can be found.
+With JPython 1.1, the same thing works even if the superclass is a
+Java class.  You no longer need to use the "super__foo()" style call
+chain that was required with earlier versions of JPython.
 
 <h3>Example</h3>
 
@@ -226,7 +220,9 @@ from java.io import InputStream
 class InfiniteOnes(InputStream):
     def read(self, *args):
         if len(args) > 0:
-            return apply(self.super__read, args)
+	    # int read(byte[])
+	    # int read(byte[], int, int)
+            return apply(InputStream.read, (self,)+args)
         return 1
 
 io = InfiniteOnes()
@@ -281,13 +277,12 @@ class rand(Random):
             Random.__init__(self, seed)
 
     def nextDouble(self):
-        return self.super__nextDouble()*self.multiplier
+        return Random.nextDouble(self) * self.multiplier
 
 r = rand(100, 23)
 
 for i in range(10):
-    print r.nextDouble(),
-print
+    print r.nextDouble()
 </PRE>
 
 This example shows how the superclass's constructor can be effectively
@@ -295,11 +290,14 @@ called in order to explictly choose a non-empty version.
 
 <h3>Caching Proxy Classes (Efficiency)</h3>
 
-In order to subclass from a Java class, a Java proxy class must be
+<b>Note:</b> This section may be out of date, w.r.t. JPython
+1.1betaX.  It will be updated before the final release of 1.1.</b>
+
+<p>In order to subclass from a Java class, a Java proxy class must be
 created by JPython.  This proxy class is a true Java subclass of the
 class you wish to subclass from in Python.  If you do nothing special,
 these proxy classes will be created on the fly whenever one is needed.
-I you find that the time required for generating these proxies is a
+If you find that the time required for generating these proxies is a
 problem, you have two options for convincing JPython to use a cache
 instead of recreating them every time.
 

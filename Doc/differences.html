@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 18:59:46 1999 -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:39 1999 -->
 <!-- User-specified headers:
 Title: Differences between CPython and JPython
 
@@ -118,10 +118,10 @@ Other
 <A HREF="faq.html">JPython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -158,6 +158,11 @@ JPython prints &quot;1.0E20&quot; where CPython prints
 &quot;1e+020&quot; -- to the dramatic -- everything in JPython is an
 instance of a class.  At some point more effort should be made to
 separate the interesting differences from the mundane.
+
+<p>Any other differences not listed here can probably be considered a
+bug in JPython.  Understand of course that CPython and JPython advance 
+at different paces.  All efforts are made to keep the two
+implementations in sync, but that's not always possible.
 
 <p><i>This list
 has been updated to describe the differences between JPython 1.1 and
@@ -326,24 +331,26 @@ CPython 1.5.2</i>
 	    <p><LI>Incomplete implementation of __import__ -- only one
 	    argument is allowed and replacing this with a user-defined 
 	    function has no effect. <I>JPython might be fixed in a
-	    future release.</I>
+	    future release, but CPython will probably adopt a new
+	    import mechanism in the near future, so JPython may not
+	    change until the new mechanism is defined.</I>
 	</UL>
 
 	<p><LI>os module
 	<UL>
-		<LI>popen and system are missing. <I>JPython should be
+		<LI>popen() and system() are missing. <I>JPython should be
 		fixed, patches would be graciously accepted.</I>
 
-		<p><LI>path.normcase exists but may not be correctly
+		<p><LI>os.path.normcase() exists but may not be correctly
 		implemented. This one is extremely
 		frustrating as there seems no portable way to
 		implement in Java.
 
-		<p><LI>chmod, chown, getpid, fork, ... are missing,
-		stat exists but is implemented incompletely. These
-		functions are all very Unix specific and it is
-		unlikely they will ever be properly supported in a
-		100% Pure Java implementation.
+		<p><LI>chmod(), chown(), getpid(), fork(), ... are
+		missing, stat exists but is implemented
+		incompletely. These functions are all very Unix
+		specific and it is unlikely they will ever be properly
+		supported in a 100% Pure Java implementation.
 
 		<p>Finn Bock has created
 		a JNI/C++ implementation for the posix module.  See
@@ -363,12 +370,6 @@ CPython 1.5.2</i>
 	    <p><LI>Also missing executable, getrefcount,
 	    setcheckinterval which don't make much sense for JPython.
 	    
-	    <p><LI>JPython has sys.add_package() to deal with Java
-	    packages. CPython will probably never have this
-	    function. <b>With JPython 1.1, sys.add_package() is
-	    usually unnecessary, but is retained for backwards
-	    compatibility, and as a fallback.</b>
-
 	</UL>
 
 	<p><LI>thread module
@@ -392,7 +393,8 @@ CPython 1.5.2</i>
 	$PYTHONSTARTUP, which specifies a script to run at the start
 	of interactive mode only.
 	
-	<p><LI>JPython supports different command line options than
+	<p><LI>JPython supports
+	<a href="interpreter.html">different command line options</a> than
 	CPython, e.g. &quot;-jar&quot; and &quot;-D&quot;.  It
 	also has a different convention for indicating non-interactive
 	standard input (the Java runtime needs help).

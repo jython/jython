@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 17:23:34 1999 -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 16:26:50 1999 -->
 <!-- User-specified headers:
 Title: JPython FAQ
 
@@ -118,10 +118,10 @@ Other
 <b>JPython FAQ</b>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -152,7 +152,7 @@ Email Us
 <li><b>What is JPython?</b>
 
     <p>JPython is a new implementation of the Python programming
-    language which is designed to run on SUN's Java(tm) Platform.  It
+    language which is designed to run on the Java(tm) Platform.  It
     consists of a compiler to compile Python source code down to Java
     bytecodes which can run directly on a JVM, a set of support
     libraries which are used by the compiled Java bytecodes, and extra
@@ -160,71 +160,92 @@ Email Us
     JPython.
 
 <p><li><b>Is JPython the same language as Python?</b>
-    <P>I'm eager to ensure that JPython remains as compatible with
-    CPython (the current implementation) as possible.  Nevertheless,
-    there are a number of differences between the two implementations
-    that are unlikely to go away.  These range from the trival -
-    JPython's code objects don't have a co_code attribute because they
-    don't have any Python bytecodes; to the significant - JPython uses
-    Java's true garbage collection rather than Python's reference
-    counting scheme.</P>
+    <P>We will always strive to ensure that JPython remains as
+    compatible with CPython as possible.  Nevertheless, there are a
+    number of differences between the two implementations that are
+    unlikely to go away.  These range from the trival - JPython's code
+    objects don't have a co_code attribute because they don't have any
+    Python bytecodes; to the significant - JPython uses Java's true
+    garbage collection rather than Python's reference counting
+    scheme.
 
     <P>Python has never really had much of a language definition
-    beyond it's current C-based implementation.  The existence of
-    JPython changes that for the first time and will hopefully lead to
+    beyond it's C-based implementation.  The existence of
+    JPython changed that for the first time and will hopefully lead to
     a much clearer sense of what Python the language is; independent
-    of any specific implementation.  Stay tuned for more
-    details...</P>
+    of any specific implementation.
 
-    <P>I've started working (with Guido's input) on preparing a
+    <P>We will be preparing a
     version of Python's regression test that would be appropriate for
     new implementations of the language.  This is a good first step
     towards defining what parts of Python are essential and which are
     incidental.
 
+<p><li><b>What is the current status of JPython?</b>
+    <p>As of this writing (17-Jun-1999) JPython 1.1beta2 has been
+    released.  Jim Hugunin, JPython's author, has moved out to sunny
+    California to work on Xerox PARC's
+    <a href="http://www.parc.xerox.com/spl/projects/aop/">AspectJ</a>
+    language.  JPython continues to be maintained by Barry Warsaw at
+    CNRI, with help and input from Python's author Guido van Rossum,
+    other CNRI folks, and the many contributors on the
+    <a href="http://www.python.org/mailman/listinfo/jpython-interest">
+    JPython-Interest</a> mailing list.
+
 <p><li><b><A NAME="Supported Modules"></A>What parts of the Python
     library are supported?</b>
 
-    <P>The good news is that the 1.0 beta 1 release of JPython
-    supports the large majority of the standard Python library.  The
-    bad news is that this has moved so rapidly I've been unable to
-    keep up with the documentation.</P>
+    <P>The good news is that JPython now supports the large majority
+    of the standard Python library.  The bad news is that this has
+    moved so rapidly, it's hard to keep the documentation up to
+    date.
+
+    <p>Built-in modules (e.g. those that are written in C for CPython) 
+    are a differnet story.  These would have to be ported to Java, or
+    implemented with a JNI bridge in order to be used by JPython.
+    Some built-in modules have been ported to JPython, most notably
+    cStringIO, cPickle, struct, and binascii (donated by Finn Bock).
+    It is unlikely that JNI modules will be included in JPython proper 
+    though.</P>
 
     <P>If you want to use a standard Python module, just try importing
     it.  If it that works you're probably all set.  You can also do a
-    dir on the modules to check the list of functions it
+    dir() on the modules to check the list of functions it
     implements.</P>
 
     <P>If there is some standard Python module that you have a real
-    need for that doesn't work with JPython yet, please send me mail
-    and I'll see what I can do about it.
+    need for that doesn't work with JPython yet, please
+    <a href="mailto:jpython@python.org">send us mail</a>.
 
 <p><li><b>How fast is JPython?</b>
 
-    <P>At IPC-6 I reported that I had speed equal to CPython 1.4 on
-    the pystone benchmark.  The current release doesn't include two of
-    the optimizations that I use in my own version of the system so it
+    <P>At IPC-6 JimH reported speeds equal to CPython 1.4 on the
+    pystone benchmark.  The current release doesn't include two of the
+    optimizations that he used in his own version of the system so it
     will be about 15% slower than CPython 1.4.  These optimizations
-    will be added back into the distribution when I have time to test
-    them more carefully.  Finally, the 1.5 release of CPython is now
-    available.  Guido has succeeded in making this release about 2x
+    may be added back into the distribution when there's been time to
+    test them more carefully.  When JimH ran his tests, CPython 1.5
+    had just been released, which Guido succeeded in making about 2x
     faster than the 1.4 release.  Therefore, JPython is currently
-    about 2.5x slower than CPython 1.5.</P>
+    about 2.5x slower than CPython 1.5.  <b>The benchmark tests have
+    not be re-run since CPython 1.5.2 or JPython 1.1beta2 were
+    released.  I'll be updating the results before the JPython 1.1
+    final release is made.</b></P>
 
     <P>The speed of JPython is tied very tightly to the speed of the
-    underlying JVM.  The benchmark results that I report are all using
-    Microsoft's JVM from Internet Explorer 4.0.  The next fastest JVM
-    that I have used is almost a factor of 2 slower than this.  At
-    some point I'll want to collect a set of scores comparing PyStone
-    performance on a wider variety of JVM's.</P>
+    underlying JVM.  The benchmark results that JimH reported were all
+    using Microsoft's JVM from Internet Explorer 4.0.  The next
+    fastest JVM that he used is almost a factor of 2 slower than this.
+    At some point I'll want to collect a set of scores comparing
+    PyStone performance on a wider variety of JVM's.</P>
 
     <P>Finally, pystone is not the last word in benchmarking.  At the
     moment I'm much more concerned with making JPython complete and
-    correct than with performance.  After the 1.0 final release goes
-    out (early 1998) I will revisit performance issues both to examine
-    better benchmark's for comparing JPython and CPython (as well as
-    other scripting languages for the JVM) and work at optimizing
-    JPython's performance.
+    correct than with performance.  We will continually be revisiting
+    performance issues both to examine better benchmark's for
+    comparing JPython and CPython (as well as other scripting
+    languages for the JVM) and work at optimizing JPython's
+    performance.
 
 <p><li><b>Why did I get an OutOfMemoryError?</b>
 
@@ -250,47 +271,44 @@ Email Us
     <P>There are several several differences between JPython and
     CPython that wil probably never go away.  These differences are
     primarily related to underlying differences between the C and Java
-    programming languages/environments.
+    programming languages/environments.  See <a
+    href="differences.html">a more detailed list</a> of these
+    differences.  In brief though, here are two of the more obvious
+    differences you'll notice:
 
-<p><UL>
-    <LI><em>JPython has true garbage collection - CPython uses
-    reference counting</em>
+    <p><UL>
+	<LI><em>JPython has true garbage collection - CPython uses
+	reference counting.</em>
 
-    <br>This means that in JPython users don't need to worry about
-	creating circular references as these are guarnteed to be
-	collected properly.  On the other hand, users of JPython have
-	no guarantees of when an object will be finalized (short of
-	calling System.gc() to force garbage collection).
-	Theoretically, this might cause problems for users who were
-	depending on CPython's finalization timing to free limited
-	system resources.
+	<br>This means that in JPython users don't need to worry about
+	    creating circular references as these are guarnteed to be
+	    collected properly.  On the other hand, users of JPython have
+	    no guarantees of when an object will be finalized (short of
+	    calling System.gc() to force garbage collection).
+	    Theoretically, this might cause problems for users who were
+	    depending on CPython's finalization timing to free limited
+	    system resources.  Also, because of the severe performance 
+	    hit when providing non-trivial Java <tt>finalize()</tt>
+	    methods, no Python object's <tt>__del__()</tt> method is
+	    ever called.
 
-    <LI><em>Control-C can not be caught by JPython, but will exit the
-    shell completely</em>
-</UL>
-
-<p><li><b>What Parts of Python-1.5.1 Are Missing in JPython-1.0?</b>
-
-    <p><b>Core Features</b>
-
-    <UL>
-	<LI>It is not possible to reassign sys.stdin. This
-	will not be fixed until JPython-1.1.
-
-	<LI>Built-in exceptions are string-based and not class-based.
-	This corresponds to Python-1.4.  JPython-1.1 will implement
-	class-based exceptions for built-in exceptions.
+	<p><LI><em>Control-C can not be caught by JPython, but will exit the
+	    shell completely</em>
     </UL>
 
-    <p><b>Standard Modules</b>
+<p><li><b>JPython and Y2K</b>
 
-    <UL>
-	<li>Many of the standard modules are not implemented yet.
-	Many of those that are implemented are incomplete and/or
-	inefficient.  See <A HREF="#Supported Modules">What parts of
-	the Python library are supported?</A> for more
-	info.
-    </UL>
+    <p>The standard response to queries about JPython's Y2K compliance 
+    points you to the
+    <a href="http://grail.cnri.reston.va.us/cgi-bin/faqw.py?querytype=anykeywords&casefold=yes&req=search&query=y2k">
+    Python FAQ entry on the subject</a>, with the additional caveat
+    that JPython is of course dependent on any Y2K issues associated
+    with the underlying JVM and Java class libraries you're using.
+    However, you can essentially apply the Python Y2K stance to
+    JPython by, e.g. substituting the word "Java" for "C" in FAQ
+    question 4.65 (<em>ignore the clip from the Python copyright
+    notice).
+
 </ol>
 
 </TD><!-- end of body cell -->

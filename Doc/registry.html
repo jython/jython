@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 17:23:37 1999 -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:44 1999 -->
 <!-- User-specified headers:
 Title: The JPython Registry
 
@@ -118,10 +118,10 @@ Other
 <A HREF="faq.html">JPython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -148,7 +148,7 @@ Email Us
 <TD VALIGN=TOP WIDTH="90%"><BR>
 <h3>The JPython Registry</h3>
 
-Because there is no good system independent equivalent of the Windows
+Because there is no good platform independent equivalent of the Windows
 Registry (or Unix envrionment variables) Java has it's own environment
 variable namespace.  JPython aquires it's namespace from the following
 three sources (later sources override defaults found in earlier
@@ -156,54 +156,79 @@ places).
 
 <UL>
     <LI>The Java system properties: typically passed in on the command
-	line</LI>
+	line.  See the <a href="interpreter.html">-D option to the
+	interpreter</a>.
 
-    <LI>The file pointed to by the Java system property
-	"install.root"/registry</LI>
+    <p><li>The JPython &quot;registry&quot; file, which contains
+	<b><em>prop</em>=<em>value</em></b> pairs.
+	<a href="#finding">See below</a> for the
+	algorithm JPython uses to find the registry file.
 
-    <UL>
-	<LI>If there is no "install.root" property, JPython tries to
-	    set it by looking for jpython in the classpath</LI>
+    <p><li>The user's personal registry file, which contains
+	similarly formated prop/value pairs.  The user's registry file 
+	is at &quot;<tt>user.home</tt>&quot;+&quot;/.jpython&quot;
+</ul>
 
-	<LI>Whatever value for install.root is found, sys.prefix is
-	    set to this, and sys.path has "install.root"/Lib
-	    appended</LI>
-    </UL>
+<h3>Registry Properties</h3>
 
-    <LI>The file contained in "user.home"+".jpython"</LI>
-</UL>
+The following properties are recognized by JPython.  There may be
+others that aren't documented here; consult the comments in registry
+file for details.
 
-Currently there are three important variables contained in this namespace:
-<UL>
-    <LI>python.path</LI>
+<dl>
+    <dt><b>python.path</b>
+    <dd>Equivalent to CPython's <tt>PYTHONPATH</tt> environment variable
 
-    <UL>
-	<LI>Equivalent to the current PYTHONPATH environment variable</LI>
+    <dt><b>python.cachedir</b>
+    <dd>The directory to use for caches - currently just package
+    information.  This directory must be writable by the user.  If the 
+    directory is an absolute path, it is used as given, otherwise it
+    is interpreted as relative to <tt>sys.prefix</tt>.
 
-	<LI>Future versions will allow this to be hierarchical as is
-	    done for java.packages</LI>
-    </UL>
+    <dt><b>python.verbose</b>
+    <dd>Sets the verbosity level for varying degrees of informative
+    messages.  Valid values in order of increasing verbosity are
+    "error", "warning", "message", "comment", "debug"
 
-    <LI>java.packages</LI>
+    <dt><b>python.jpythonc.compiler</b>
+    <dd>The Java compiler to use with the <tt>jpythonc</tt> tool,
+    which now generates Java source code.  This should be the absolute 
+    path to a Java compiler, or the name of a compiler on your
+    standard PATH.
 
-    <UL>
-	<LI>Contains a list of all java packages installed on your
-	    system that JPython wants easy access to</LI>
+    <dt><b>python.jpythonc.classpath</b>
+    <dd>Extensions to the standard <tt>java.class.path</tt> property
+    for use with jpythonc.  This is useful if you use Jikes as your
+    compiler.
 
-	<LI>This can be used hierarchically, see the default
-	    "registry" file for an example</LI>
-    </UL>
+    <dt><b>python.jpythonc.compileropts</b>
+    <dd>Options to pass to the Java compiler when using jpythonc.
+</dl>
 
-    <LI>python.proxy.savedir</LI>
+<h3><a name="finding">Finding the Registry File</a></h3>
 
-    <UL>
-	<LI>This variable should typically be left undefined.  It
-	    is used for caching proxy class definitions.</LI>
+The following steps are used to find the JPython registry file, and
+also to set the Python values for <tt>sys.prefix</tt>.  First a
+<em>root</em> directory is calculated:
 
-	<BR>See the section on Subclassing Java Classes for more
-	information.
-    </UL>
-</UL>
+<ul>
+    <li>If there is a property called
+    <tt>python.home</tt>, this is used as the root directory.
+
+    <p><li>Otherwise, the property <tt>install.root</tt> is used if it 
+    exists.
+
+    <p><li>If neither of those properties exist, then JPython searches 
+    for the file "jpython.jar" on the Java classpath, as defined in
+    the system property <tt>java.class.path</tt>.  The actual file
+    system isn't searched, only the paths defined on the classpath
+    (one of them must literally include "jpython.jar").
+</ul>
+
+Once the root directory is found, <tt>sys.prefix</tt> and
+<tt>sys.exec_prefix</tt> are set to this, and <tt>sys.path</tt> has
+<em>rootdir</em>/Lib appended to it.  The registry file used is then
+<em>rootdir</em>/registry.
 
 </TD><!-- end of body cell -->
 </TR><!-- end of sidebar/body row -->

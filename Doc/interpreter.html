@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 17:23:35 1999 -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:42 1999 -->
 <!-- User-specified headers:
 Title: Invoking the JPython Interpreter
 
@@ -118,10 +118,10 @@ Other
 <A HREF="faq.html">JPython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -151,24 +151,59 @@ Email Us
 <P>JPython can be invoked from the shell using the following command:</P>
 
 <pre>
-jpython [-i] [-showjavaexc] [file | -] [arg]*
+jpython [options] [-jar jar | -c cmd | file | -] [args]
 </pre>
 
-<P><B>-i </B>: inspect interactively after running script</P>
+Options and arguments:
 
-<P>-<B>showjavaexc</B>: display the actual Java exception which was
-raised (useful for mixed Java/Python debugging)</P>
-
-<P><B>-</B> : Treat stdin as a file.  This flag allows you to use
-pipe file into jpython and have them treated correctly.  This would be
-useful in a case like: &quot;filter file | jpython -&quot;.
+<p><table border="1">
+<tr><td><b>-i</b></td>
+    <td>inspect interactively after running script, and force prompts, 
+    even if stdin does not appear to be a terminal
+</tr><tr>
+    <td><b>-S</b></td>
+    <td>don't imply <em>import site</em> on initialization
+</tr><tr>
+    <td><b>-X</b></td>
+    <td>disable class based standard exceptions
+</tr><tr>
+    <td><b>-D<em>prop</em>=<em>value</em></b></td>
+    <td>Set the Java property <em>prop</em> to <em>value</em></td>
+</tr><tr>
+    <td><b>-jar <em>jar</em></b></td>
+    <td>program to run is read from the <tt>__run__.py</tt> file in
+    the specified <em>jar</em> file
+</tr><tr>
+    <td><b>-c <em>cmd</em></b></td>
+    <td>program to run is passed in as the <em>cmd</em> string.  This
+    option terminates the options list
+</tr><tr>
+    <td><b><em>file</em></b></td>
+    <td>run <em>file</em> as the program script
+</tr><tr>
+    <td><b>-</b></td>
+    <td>program is read from standard-in (default; interactive mode is 
+    used if on a tty).  This flag allows you to pipe a file into
+    JPython and have it be treated correctly.  This would be useful
+    in a case like: <tt>filter&nbsp;file&nbsp;|&nbsp;jpython&nbsp;-</tt>
+</tr><tr>
+    <td><b>--help</b></td>
+    <td>print a usage message and exit
+</tr><tr>
+    <td><b>--version</b></td>
+    <td>print JPython version number and exit
+</tr><tr>
+    <td><b><em>args</em></b></td>
+    <td>arguments passed to the program in <tt>sys.argv[1:]</tt>
+</tr>
+</table>
 
 <H3>Details</H3>
 
-<P>&quot;jpython&quot; is a short script that invokes your local JVM,
-sets the java property &quot;install.path&quot; to an appropriate
-value, and then runs the Java classfile
-&quot;org.python.core.jpython&quot;.</P>
+<P><tt>jpython</tt> is a short script that invokes your local JVM,
+sets the Java property <tt>install.path</tt> to an appropriate value,
+and then runs the Java classfile
+<tt>org.python.util.jpython</tt>.</P>
 
 <H3>Making JPython Scripts Executable</H3>
 
@@ -177,14 +212,12 @@ you can add the following line to the top of the file:
 
 <PRE><B>#! /usr/bin/env jpython</B></PRE>
 
-<P>For this magic to work, you must have jpython somewhere on your
+<P>For this magic to work, you must have <tt>jpython</tt> somewhere on your
 standard PATH.  You also must also make the &quot;.py&quot; file
-executable.  Typically this is done with the command: &quot;
-<TT>chmod +x foo.py</TT>&quot;.<BR>
+executable.  Typically this is done with the command:
+<TT>chmod +x foo.py</TT>.
 
-<BR>
-
-<I>Note: &quot;#! &lt;...&gt;/jpython&quot; will probably not work to
+<p><I>Note: &quot;#! &lt;...&gt;/jpython&quot; will probably not work to
 make your script executable.  This is because &quot;jpython&quot; is
 itself a script, and the #! magic requires that the file to execute is
 a binary executable on most Unix variants.  Using

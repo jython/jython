@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 17:23:36 1999 -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun 17 15:59:43 1999 -->
 <!-- User-specified headers:
 Title: Compiling Python Source to Real Java Classes
 
@@ -118,10 +118,10 @@ Other
 <A HREF="faq.html">JPython FAQ</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">&nbsp;
 <TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
@@ -158,78 +158,118 @@ can be used exactly like their Java equivalents.  It is also very
 valuable for users who wish to subclass Python classes in Java.</P>
 
 <P>In order to build a real java class from a Python class, you will
-use the jpythonc tool.  A script to access jpythonc should have been
-installed in the JPython installation directory when you installed the
-package.  If it was not, it can be invoked as follows: 
+use the <tt>jpythonc</tt> tool.  A script called "jpythonc" should
+have been installed in the JPython installation directory when you
+installed the package.  If it was not, it can be invoked as follows:
 "jpython&nbsp;Tools\jpythonc\jpythonc.py".</P>
 
-<P>This script accepts the following arguments:</P>
+<p>JPython 1.1 has a new version of the jpythonc tool, which generates 
+actual Java source code, and then invokes a Java compiler over this
+source code to create the .class files.  Thus, you will need access to 
+a Java compiler in order to use jpythonc.
 
-<P><B>jpythonc</B> [<B>-jar</B> jarfile] [<B>-cab</B> cabfile] 
-[<B>-dir</B> directory] <I>[-main]<B> </B></I>
-[<B>-core</B> | -<B>all</B>] [<B>-deep</B>] [<B>-lib</B> libraries] 
-[-<B>skip</B> modules] [module]* <BR>
+<P>Invoke jpython like this:
+
+<P><B>jpythonc [options] [module]*</b>
+
+<p>Options are given in the table below.  Note that jpythonc now uses
+the standard Python <tt>getopt</tt> module, meaning that both long and 
+short forms of the options are available.  The old option names still
+work, and are described below, but noted as
+<font size=-1 color="blue">deprecated</font> and will be removed in a
+future version.
 
 <p><TABLE BORDER="1">
 <TR>
-    <TD><B>-jar</B> jarfile</TD>
+    <td><b>--package</b> <em>package</em>
+	<br><b>-p</b> <em>package</em>
+	<br><font size=-1 color="blue"><b>-package</b> <em>package</em></font>
+    </td>
+    <td>Put all compiled code into the named Java package.
+</tr><tr>
+    <TD><B>--jar</B> <em>jarfile</em>
+	<br><b>-j</b> <em>jarfile</em>
+	<br><font size=-1 color="blue"><b>-jar</b> <em>jarfile</em></font>
+    </td>
     <TD>Specifies a .jar file to create and put the results of the
-	freeze into.
-	<br>Not really useful for "shallow" freezes</TD>
+	freeze into.  Implies the <b>--deep</b> option.
+</tr><tr>
+    <TD><B>--deep</B>
+	<br><b>-d</b>
+	<br><font size=-1 color="blue"><b>-deep</b></font>
+    </td>
+    <TD>Compile all Python dependencies of the module. This is used
+	for creating applets.</TD>
 </TR><TR>
-    <TD><B>-cab</B> cabfile</TD>
-    <TD>Specifies a .cab file to create and put the files into.
-        <BR>This only works with Microsoft's JVM (.cab is a MS format)</TD>
+    <TD><B>--core</B>
+	<br><b>-c</b>
+	<br><font size=-1 color="blue"><b>-core</b></font>
+    </td><TD>Include the core JPython libraries (about 130K).  Needed for
+	applets since Netscape doesn't yet support multiple archives.
+	Implies the <b>--deep</b> option.
 </TR><TR>
-    <TD><B>-dir</B> directory</TD>
-    <TD>Specifies that the files should be put into the given directory.  
-        <BR>If none of the first three options are specified, -dir '.'
-        is assumed</TD>
+    <TD><b>--all</B>
+	<br><b>-a</b>
+	<br><font size=-1 color="blue"><b>-all</b></font>
+    </td><TD>Include all of the JPython libraries (everything in core +
+	compiler and parser).  Implies the <b>--deep</b> option.
 </TR><TR>
-    <TD><I>-main</I></TD>
-    <TD><I>Might be added to create a main method in generated class</I>
-	<BR><I>Will only be added if someone convinces me it's
-	necessary</I></TD>
+    <TD><b>--bean</b> <em>jarfile</em>
+	<br><b>-b</b> <em>jarfile</em>
+	<br><font size=-1 color="blue"><b>-bean</b> <em>jarfile</em></font>
+    </td><TD>Compile into <em>jarfile</em>, including the correct manifest for
+	the bean.
 </TR><TR>
-    <TD><B>-core</B></TD>
-    <TD>Include the core JPython libraries (about 130K)
-	<BR>Needed for applets since Netscape doesn't yet support
-	multiple archives</TD>
+    <td><b>--addpackages&nbsp;<em>pkgs</em>
+	<br>-A <em>pkgs</em>
+	<br><font size=-1 color="blue"><b>-addpackages</b>
+	    <em>pkgs</em></font>
+    </td><td>Include Java dependencies from this list of packages.
+	Default is <tt>org.python.modules</tt> and
+	<tt>com.oroinc.text.regex</tt>.
 </TR><TR>
-    <TD>-<B>all</B></TD>
-    <TD>Include all of the JPython libraries (everything in core +
-	compiler and parser)</TD>
+    <TD><B>--workdir</B> <em>directory</em>
+	<br><B>-w</B> <em>directory</em>
+	<br><font size=-1 color="blue"><b>-workdir</b>
+	    <em>directory</em></font>
+    </td><TD>Specify the working directory where the generated Java
+	source code is placed.  Default is "./jpywork"
+</tr><tr>
+    <td><b>--skip</b> <em>modules</em>
+	<br><b>-s</b> <em>modules</em>
+	<br><font size=-1 color="blue"><b>-skip</b> <em>modules</em></font>
+    </td><td>Don't include any of these modules in compilation.  This
+	is a comma-separated list of modules.
+</tr><tr>
+    <td><b>--compiler</b> <em>path</em>
+	<br><b>-C</b> <em>path</em>
+	<br><font size=-1 color="blue"><b>-compiler</b> <em>path</em></font>
+    </td><td>Use a different compiler than `standard' javac.  If this
+	is set to "NONE" then compile ends with the generation of the
+	Java source file.  Alternatively, you can set the property
+	<tt>python.jpythonc.compiler</tt> in the
+	<a href="registry.html">registry</a>.
+</tr><tr>
+    <td><b>--compileropts</b> <em>options</em>
+	<br><b>-J</b> <em>options</em>
+    </td><td>Options passed directly to the Java compiler.
+	Alternatively, you can set the property
+	<tt>python.jpythonc.compileropts</tt> in the
+	<a href="registry.html">registry</a>.
+</tr><tr>
+    <td><b>--falsenames</b> <em>names</em>
+	<br><b>-f</b> <em>names</em>
+	<br><font size=-1 color="blue"><b>-falsenames</b> <em>names</em></font>
+    </td><td>A comma-separated list of names that are always false.  Can
+	be used to short-circuit if clauses.
+</tr><tr>
+    <td><b>--help</b>
+	<br><b>-h</b>
+    </td><td>Print a usage message and exit.
 </TR><TR>
-    <TD><B>-deep</B></TD>
-    <TD>Compile both this one class and all dependencies.
-	<BR>This is used for creating applets</TD>
-</TR><TR>
-    <TD>-<B>bean </B>jarfile</TD>
-    <TD>Creates a .jar file containing a bean
-	<BR>The correct manifest file will be generated and included</TD>
-</TR><TR>
-    <TD><B>-lib</B> libraries</TD>
-    <TD>Specifies a set of libraries (delimited by the platform's path
-	separator character)
-	<BR>Dependencies in these libraries will not be included in
-	the result of the freeze.
-	<BR>This option only makes sense when combined with <B>-deep</B></TD>
-</TR><TR>
-    <TD>-<B>skip </B>modules</TD>
-    <TD>Specifies a comma-separated list of modules not to freeze, or
-	include in archive</TD>
-</TR><TR>
-    <TD><B>-useproxy</B></TD>
-    <TD><B>For Expert Users Only!</B>
-	<BR>The generated proxy class will be a shell around the
-	standard JPython proxy class
-	<BR>You must have a cached copy of the appropriate proxy class
-	to use this flag</TD> 
-</TR><TR>
-    <TD>module*</TD>
-    <TD>A list of Python modules to freeze
-	<BR>Can be either modules names that are on the python.path or
-	.py files</TD>
+    <TD>[module]*</TD>
+    <TD>A list of Python modules to freeze.  Can be either modules
+	names that are on the <tt>python.path</tt> or .py files</TD>
 </TR>
 </TABLE>
 
