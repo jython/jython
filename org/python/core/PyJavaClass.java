@@ -584,12 +584,12 @@ public class PyJavaClass extends PyClass
         }
     }
     private boolean constructorsInitialized=false;
-    void initConstructors() {
+    synchronized void initConstructors() {
         if (constructorsInitialized)
             return;
-        constructorsInitialized = true;
         initialize();
         setConstructors(proxyClass);
+        constructorsInitialized = true;
     }
       
     /*
