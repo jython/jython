@@ -220,161 +220,161 @@ public class SimpleNode implements Node
 
     public Object visit(Visitor visitor) throws Exception {
         switch(id) {
-        case 0:
+        case PythonGrammarTreeConstants.JJTSINGLE_INPUT:
             return visitor.single_input(this);
-        case 1:
+        case PythonGrammarTreeConstants.JJTFILE_INPUT:
             return visitor.file_input(this);
-        case 2:
+        case PythonGrammarTreeConstants.JJTEVAL_INPUT:
             return visitor.eval_input(this);
-        case 3:
+        case PythonGrammarTreeConstants.JJTFUNCDEF:
             return visitor.funcdef(this);
-        case 5:
+        case PythonGrammarTreeConstants.JJTVARARGSLIST:
             return visitor.varargslist(this);
-        case 6:
+        case PythonGrammarTreeConstants.JJTEXTRAARGLIST:
             return visitor.ExtraArgList(this);
-        case 7:
+        case PythonGrammarTreeConstants.JJTEXTRAKEYWORDLIST:
             return visitor.ExtraKeywordList(this);
-        case 8:
+        case PythonGrammarTreeConstants.JJTDEFAULTARG:
             return visitor.defaultarg(this);
-        case 9:
+        case PythonGrammarTreeConstants.JJTFPLIST:
             return visitor.fplist(this);
-        case 10:
+        case PythonGrammarTreeConstants.JJTEXPR_STMT:
             return visitor.expr_stmt(this);
-        case 11:
+        case PythonGrammarTreeConstants.JJTPRINT_STMT:
             return visitor.print_stmt(this);
-        case 12:
+        case PythonGrammarTreeConstants.JJTDEL_STMT:
             return visitor.del_stmt(this);
-        case 13:
+        case PythonGrammarTreeConstants.JJTPASS_STMT:
             return visitor.pass_stmt(this);
-        case 14:
+        case PythonGrammarTreeConstants.JJTBREAK_STMT:
             return visitor.break_stmt(this);
-        case 15:
+        case PythonGrammarTreeConstants.JJTCONTINUE_STMT:
             return visitor.continue_stmt(this);
-        case 16:
+        case PythonGrammarTreeConstants.JJTRETURN_STMT:
             return visitor.return_stmt(this);
-        case 17:
+        case PythonGrammarTreeConstants.JJTRAISE_STMT:
             return visitor.raise_stmt(this);
-        case 18:
+        case PythonGrammarTreeConstants.JJTIMPORT:
             return visitor.Import(this);
-        case 19:
+        case PythonGrammarTreeConstants.JJTIMPORTFROM:
             return visitor.ImportFrom(this);
-        case 20:
+        case PythonGrammarTreeConstants.JJTDOTTED_NAME:
             return visitor.dotted_name(this);
-        case 21:
+        case PythonGrammarTreeConstants.JJTGLOBAL_STMT:
             return visitor.global_stmt(this);
-        case 22:
+        case PythonGrammarTreeConstants.JJTEXEC_STMT:
             return visitor.exec_stmt(this);
-        case 23:
+        case PythonGrammarTreeConstants.JJTASSERT_STMT:
             return visitor.assert_stmt(this);
-        case 24:
+        case PythonGrammarTreeConstants.JJTIF_STMT:
             return visitor.if_stmt(this);
-        case 25:
+        case PythonGrammarTreeConstants.JJTWHILE_STMT:
             return visitor.while_stmt(this);
-        case 26:
+        case PythonGrammarTreeConstants.JJTFOR_STMT:
             return visitor.for_stmt(this);
-        case 27:
+        case PythonGrammarTreeConstants.JJTTRY_STMT:
             return visitor.try_stmt(this);
-        case 28:
+        case PythonGrammarTreeConstants.JJTEXCEPT_CLAUSE:
             return visitor.except_clause(this);
-        case 29:
+        case PythonGrammarTreeConstants.JJTSUITE:
             return visitor.suite(this);
-        case 30:
+        case PythonGrammarTreeConstants.JJTOR_BOOLEAN:
             return visitor.or_boolean(this);
-        case 31:
+        case PythonGrammarTreeConstants.JJTAND_BOOLEAN:
             return visitor.and_boolean(this);
-        case 32:
+        case PythonGrammarTreeConstants.JJTNOT_1OP:
             return visitor.not_1op(this);
-        case 33:
+        case PythonGrammarTreeConstants.JJTCOMPARISION:
             return visitor.comparision(this);
-        case 34:
+        case PythonGrammarTreeConstants.JJTLESS_CMP:
             return visitor.less_cmp(this);
-        case 35:
+        case PythonGrammarTreeConstants.JJTGREATER_CMP:
             return visitor.greater_cmp(this);
-        case 36:
+        case PythonGrammarTreeConstants.JJTEQUAL_CMP:
             return visitor.equal_cmp(this);
-        case 37:
+        case PythonGrammarTreeConstants.JJTGREATER_EQUAL_CMP:
             return visitor.greater_equal_cmp(this);
-        case 38:
+        case PythonGrammarTreeConstants.JJTLESS_EQUAL_CMP:
             return visitor.less_equal_cmp(this);
-        case 39:
+        case PythonGrammarTreeConstants.JJTNOTEQUAL_CMP:
             return visitor.notequal_cmp(this);
-        case 40:
+        case PythonGrammarTreeConstants.JJTIN_CMP:
             return visitor.in_cmp(this);
-        case 41:
+        case PythonGrammarTreeConstants.JJTNOT_IN_CMP:
             return visitor.not_in_cmp(this);
-        case 42:
+        case PythonGrammarTreeConstants.JJTIS_NOT_CMP:
             return visitor.is_not_cmp(this);
-        case 43:
+        case PythonGrammarTreeConstants.JJTIS_CMP:
             return visitor.is_cmp(this);
-        case 44:
+        case PythonGrammarTreeConstants.JJTOR_2OP:
             return visitor.or_2op(this);
-        case 45:
+        case PythonGrammarTreeConstants.JJTXOR_2OP:
             return visitor.xor_2op(this);
-        case 46:
+        case PythonGrammarTreeConstants.JJTAND_2OP:
             return visitor.and_2op(this);
-        case 47:
+        case PythonGrammarTreeConstants.JJTLSHIFT_2OP:
             return visitor.lshift_2op(this);
-        case 48:
+        case PythonGrammarTreeConstants.JJTRSHIFT_2OP:
             return visitor.rshift_2op(this);
-        case 49:
+        case PythonGrammarTreeConstants.JJTADD_2OP:
             return visitor.add_2op(this);
-        case 50:
+        case PythonGrammarTreeConstants.JJTSUB_2OP:
             return visitor.sub_2op(this);
-        case 51:
+        case PythonGrammarTreeConstants.JJTMUL_2OP:
             return visitor.mul_2op(this);
-        case 52:
+        case PythonGrammarTreeConstants.JJTDIV_2OP:
             return visitor.div_2op(this);
-        case 53:
+        case PythonGrammarTreeConstants.JJTMOD_2OP:
             return visitor.mod_2op(this);
-        case 54:
+        case PythonGrammarTreeConstants.JJTPOS_1OP:
             return visitor.pos_1op(this);
-        case 55:
+        case PythonGrammarTreeConstants.JJTNEG_1OP:
             return visitor.neg_1op(this);
-        case 56:
+        case PythonGrammarTreeConstants.JJTINVERT_1OP:
             return visitor.invert_1op(this);
-        case 57:
+        case PythonGrammarTreeConstants.JJTPOW_2OP:
             return visitor.pow_2op(this);
-        case 58:
+        case PythonGrammarTreeConstants.JJTCALL_OP:
             return visitor.Call_Op(this);
-        case 59:
+        case PythonGrammarTreeConstants.JJTINDEX_OP:
             return visitor.Index_Op(this);
-        case 60:
+        case PythonGrammarTreeConstants.JJTDOT_OP:
             return visitor.Dot_Op(this);
-        case 61:
+        case PythonGrammarTreeConstants.JJTTUPLE:
             return visitor.tuple(this);
-        case 62:
+        case PythonGrammarTreeConstants.JJTLIST:
             return visitor.list(this);
-        case 63:
+        case PythonGrammarTreeConstants.JJTDICTIONARY:
             return visitor.dictionary(this);
-        case 64:
+        case PythonGrammarTreeConstants.JJTSTR_1OP:
             return visitor.str_1op(this);
-        case 65:
+        case PythonGrammarTreeConstants.JJTSTRJOIN:
             return visitor.strjoin(this);
-        case 66:
+        case PythonGrammarTreeConstants.JJTLAMBDEF:
             return visitor.lambdef(this);
-        case 67:
+        case PythonGrammarTreeConstants.JJTELLIPSES:
             return visitor.Ellipses(this);
-        case 68:
+        case PythonGrammarTreeConstants.JJTSLICE:
             return visitor.Slice(this);
-        case 69:
+        case PythonGrammarTreeConstants.JJTCOLON:
             return visitor.Colon(this);
-        case 70:
+        case PythonGrammarTreeConstants.JJTCOMMA:
             return visitor.Comma(this);
-        case 71:
+        case PythonGrammarTreeConstants.JJTCLASSDEF:
             return visitor.classdef(this);
-        case 72:
+        case PythonGrammarTreeConstants.JJTARGLIST:
             return visitor.arglist(this);
-        case 73:
+        case PythonGrammarTreeConstants.JJTKEYWORD:
             return visitor.Keyword(this);
-        case 74:
+        case PythonGrammarTreeConstants.JJTINT:
             return visitor.Int(this);
-        case 75:
+        case PythonGrammarTreeConstants.JJTFLOAT:
             return visitor.Float(this);
-        case 76:
+        case PythonGrammarTreeConstants.JJTCOMPLEX:
             return visitor.Complex(this);
-        case 77:
+        case PythonGrammarTreeConstants.JJTNAME:
             return visitor.Name(this);
-        case 78:
+        case PythonGrammarTreeConstants.JJTSTRING:
             return visitor.String(this);
         default:
             return null;
