@@ -41,7 +41,8 @@ def compile(files, javac=None, cpathopt="-classpath",
     #   2. python.jpythonc.compileropts property
     if options is None:
         options = sys.registry.getProperty("python.jpythonc.compileropts")
-        options = options.split()
+        if options:
+            options = options.split()
     if options is None:
         options = []
     cmd.extend(options)
