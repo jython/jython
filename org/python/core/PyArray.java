@@ -7,8 +7,8 @@ import java.lang.reflect.Array;
  *
  * Instances of PyArray are created either by java functions or
  * directly by the jarray module.
- *
- * @see org.python.modules.jarray
+ * <p>
+ * See also the jarray module.
  */
 
 public class PyArray extends PySequence {

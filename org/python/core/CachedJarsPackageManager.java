@@ -421,7 +421,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     // hooks for changing cache storage
 
     /** To pass a cachefile id by ref. And for internal use.
-     * @see outCreateCacheFile
+     * See outCreateCacheFile
      */
     public static class JarXEntry extends Object {
         /** cachefile id */
