@@ -169,8 +169,8 @@ public class operator implements InitModule
         
         while ((tmp = seq.__finditem__(i++)) != null) {
             if (item._eq(tmp).__nonzero__())
-                return i;
+                return i - 1;
         }
-        return -1;
+        throw Py.ValueError("sequence.index(x): x not in list");
     }
 }
