@@ -337,9 +337,11 @@ public class imp
         return null;
     }
     
-    private static boolean isSyspathArchive(PyObject entry) {
+    private static boolean isSyspathArchive(PyObject entry, boolean isDir) {
         if (entry instanceof SyspathArchive)
             return true;
+        if (isDir)
+            return false;
         String dir = entry.toString();
         int idx = dir.indexOf('!');
         if (idx > 0) {
@@ -371,7 +373,19 @@ public class imp
             PyObject entry = path.__getitem__(i);
             String dirName = entry.toString();
 
-            if (isSyspathArchive(entry)) {
+            // The empty string translates into the current working
+            // directory, which is usually provided on the system property
+            // "user.dir".  Don't rely on File's constructor to provide
+            // this correctly.
+            if (dirName.length() == 0) {
+                dirName = null;
+            }
+
+            // First check for packages
+            File dir = new File(dirName, name);
+            boolean isDir = dir.isDirectory();
+
+            if (isSyspathArchive(entry, isDir)) {
                 Py.writeDebug("import", "trying " + modName +
                               " in jar/zip file " + dirName);
                 if (!(entry instanceof SyspathArchive)) {
@@ -392,17 +406,7 @@ public class imp
                 }
             }
 
-            // The empty string translates into the current working
-            // directory, which is usually provided on the system property
-            // "user.dir".  Don't rely on File's constructor to provide
-            // this correctly.
-            if (dirName.length() == 0) {
-                dirName = null;
-            }
-
-            // First check for packages
-            File dir = new File(dirName, name);
-            if (dir.isDirectory() && caseok(dir, name, nlen) &&
+            if (isDir && caseok(dir, name, nlen) &&
                 (new File(dir, "__init__.py").isFile() ||
                  new File(dir, "__init__$py.class").isFile()))
             {
