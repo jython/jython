@@ -72,12 +72,13 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
     }
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
-  final public modType single_input() throws ParseException {
-                         /*@bgen(jjtree) single_input */
-                         SimpleNode jjtn000 = (SimpleNode)SimpleNode.jjtCreate(this, JJTSINGLE_INPUT);
-                         boolean jjtc000 = true;
-                         jjtree.openNodeScope(jjtn000);
-                         jjtreeOpenNodeScope(jjtn000);token_source.single_input=true;
+  final public modType single_input(boolean interactive) throws ParseException {
+                                            /*@bgen(jjtree) single_input */
+    SimpleNode jjtn000 = (SimpleNode)SimpleNode.jjtCreate(this, JJTSINGLE_INPUT);
+    boolean jjtc000 = true;
+    jjtree.openNodeScope(jjtn000);
+    jjtreeOpenNodeScope(jjtn000);token_source.single_input=true;
+    token_source.interactive = interactive;
     try {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case NEWLINE:
@@ -5620,12 +5621,6 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
     return retval;
   }
 
-  final private boolean jj_3R_130() {
-    if (jj_3R_138()) return true;
-    if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
-    return false;
-  }
-
   final private boolean jj_3R_117() {
     if (jj_3R_130()) return true;
     if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
@@ -6785,6 +6780,12 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
     if (jj_scan_token(POWER)) return true;
     if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
     if (jj_3R_43()) return true;
+    if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
+    return false;
+  }
+
+  final private boolean jj_3R_130() {
+    if (jj_3R_138()) return true;
     if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
     return false;
   }

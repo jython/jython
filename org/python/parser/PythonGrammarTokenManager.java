@@ -13,6 +13,7 @@ public class PythonGrammarTokenManager implements PythonGrammarConstants
     int indent;
     boolean seen_eof = false;
     boolean single_input = false;
+    boolean interactive = false;
     boolean compound = false;
     public boolean forcedNewline = false;
 
@@ -33,7 +34,7 @@ public class PythonGrammarTokenManager implements PythonGrammarConstants
     void CommonTokenAction(Token t) {
         if (t.kind == EOF) {
             //System.out.println("EOF: "+single_input+", "+curLexState);
-            if (!single_input) {
+            if (!interactive) {
                 if (curLexState == DEFAULT) {
                     t.kind = NEWLINE;
                 }
@@ -44,8 +45,13 @@ public class PythonGrammarTokenManager implements PythonGrammarConstants
                 while (level-- >= 0)
                     t = addDedent(t);
                 //t = addDedent(t);
-                t.kind = EOF;
-                t.image = "<EOF>";
+                if (!single_input) {
+                    t.kind = EOF;
+                    t.image = "<EOF>";
+                } else {
+                    t.kind = NEWLINE;
+                    t.image = "<FORCENL>";
+                }
             }
         }
     }
@@ -2852,8 +2858,12 @@ final void SkipLexicalActions(Token matchedToken)
                 //System.out.println("force newline");
                 //backup a character!
                 forcedNewline = true;
-                input_stream.backup(1);
-                SwitchTo(FORCE_NEWLINE);
+                if (interactive) {
+                    input_stream.backup(1);
+                    SwitchTo(FORCE_NEWLINE);
+                } else {
+                    SwitchTo(INDENTING);
+                }
             }
             else {
                 //doPrompt();
