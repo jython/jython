@@ -637,6 +637,87 @@ public class struct {
         }
     }
 
+    static class LEUnsignedLongFormatDef extends FormatDef {
+        void pack(ByteStream buf, PyObject value) {
+            long lvalue  = get_ulong( value );
+            if (lvalue < 0) {
+                throw StructError("can't convert negative long to unsigned");
+            }
+            int high    = (int) ( (lvalue & 0xFFFFFFFF00000000L)>>32 );
+            int low     = (int) ( lvalue & 0x00000000FFFFFFFFL );
+            LEwriteInt( buf, low );
+            LEwriteInt( buf, high );
+        }
+
+        Object unpack(ByteStream buf) {
+            long low       = ( LEreadInt( buf ) & 0X00000000FFFFFFFFL );
+            long high      = ( LEreadInt( buf ) & 0X00000000FFFFFFFFL );
+            java.math.BigInteger result=java.math.BigInteger.valueOf(high);
+            result=result.multiply(java.math.BigInteger.valueOf(0x100000000L));
+            result=result.add(java.math.BigInteger.valueOf(low));
+            return new PyLong(result);
+        }
+    }
+
+
+    static class BEUnsignedLongFormatDef extends FormatDef {
+        void pack(ByteStream buf, PyObject value) {
+            long lvalue  = get_ulong( value );
+            if (lvalue < 0) {
+                throw StructError("can't convert negative long to unsigned");
+            }
+            int high    = (int) ( (lvalue & 0xFFFFFFFF00000000L)>>32 );
+            int low     = (int) ( lvalue & 0x00000000FFFFFFFFL );
+            BEwriteInt( buf, high );
+            BEwriteInt( buf, low );
+        }
+
+        Object unpack(ByteStream buf) {
+            long high      = ( BEreadInt( buf ) & 0X00000000FFFFFFFFL );
+            long low       = ( BEreadInt( buf ) & 0X00000000FFFFFFFFL );
+            java.math.BigInteger result=java.math.BigInteger.valueOf(high);
+            result=result.multiply(java.math.BigInteger.valueOf(0x100000000L));
+            result=result.add(java.math.BigInteger.valueOf(low));
+            return new PyLong(result);
+        }
+    }
+
+
+    static class LELongFormatDef extends FormatDef {
+        void pack(ByteStream buf, PyObject value) {
+            long lvalue  = get_ulong( value );
+            int high    = (int) ( (lvalue & 0xFFFFFFFF00000000L)>>32 );
+            int low     = (int) ( lvalue & 0x00000000FFFFFFFFL );
+            LEwriteInt( buf, low );
+            LEwriteInt( buf, high );
+        }
+
+        Object unpack(ByteStream buf) {
+            long low= ( LEreadInt( buf )&(0x00000000FFFFFFFFL) );
+            long high= ( (LEreadInt( buf )<<32)&(0xFFFFFFFF00000000L) );
+            long result=(high|low);
+            return new PyLong(result);
+        }
+    }
+
+
+    static class BELongFormatDef extends FormatDef {
+        void pack(ByteStream buf, PyObject value) {
+            long lvalue  = get_ulong( value );
+            int high    = (int) ( (lvalue & 0xFFFFFFFF00000000L)>>32 );
+            int low     = (int) ( lvalue & 0x00000000FFFFFFFFL );
+            BEwriteInt( buf, high );
+            BEwriteInt( buf, low );
+        }
+
+        Object unpack(ByteStream buf) {
+            long high= ( (BEreadInt( buf )<<32)&(0xFFFFFFFF00000000L) );
+            long low= ( BEreadInt( buf )&(0x00000000FFFFFFFFL) );
+            long result=(high|low);
+            return new PyLong(result);
+        }
+    }
+
 
     static class LEFloatFormatDef extends FormatDef {
         void pack(ByteStream buf, PyObject value) {
@@ -705,6 +786,8 @@ public class struct {
         new LEUnsignedIntFormatDef()    .init('I', 4, 0),
         new LEIntFormatDef()            .init('l', 4, 0),
         new LEUnsignedIntFormatDef()    .init('L', 4, 0),
+        new LELongFormatDef()           .init('q', 8, 8),
+        new LEUnsignedLongFormatDef()   .init('Q', 8, 8),
         new LEFloatFormatDef()          .init('f', 4, 0),
         new LEDoubleFormatDef()         .init('d', 8, 0),
     };
@@ -722,6 +805,8 @@ public class struct {
         new BEUnsignedIntFormatDef()    .init('I', 4, 0),
         new BEIntFormatDef()            .init('l', 4, 0),
         new BEUnsignedIntFormatDef()    .init('L', 4, 0),
+        new BELongFormatDef()           .init('q', 8, 8),
+        new BEUnsignedLongFormatDef()   .init('Q', 8, 8),
         new BEFloatFormatDef()          .init('f', 4, 0),
         new BEDoubleFormatDef()         .init('d', 8, 0),
     };
@@ -737,11 +822,10 @@ public class struct {
         new BEUnsignedShortFormatDef()  .init('H', 2, 2),
         new BEIntFormatDef()            .init('i', 4, 4),
         new BEUnsignedIntFormatDef()    .init('I', 4, 4),
-        // XXX Hack
         new BEIntFormatDef()            .init('l', 4, 4),
         new BEUnsignedIntFormatDef()    .init('L', 4, 4),
-        //new BELongFormatDef()         .init('l', 8, 8),
-        //new BEUnsignedLongFormatDef() .init('L', 8, 8),
+        new BELongFormatDef()           .init('q', 8, 8),
+        new BEUnsignedLongFormatDef()   .init('Q', 8, 8),
         new BEFloatFormatDef()          .init('f', 4, 4),
         new BEDoubleFormatDef()         .init('d', 8, 8),
     };
