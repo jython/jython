@@ -236,6 +236,16 @@ public class imp {
                 continue;
             }
 
+	    // The empty string translates into the current working
+	    // directory, which is usually provided on the system property
+	    // "user.dir".  Don't rely on File's constructor to provide
+	    // this correctly.
+	    if (dirName.length() == 0) {
+		String userdir = System.getProperty("user.dir");
+		if (userdir != null)
+		    dirName = userdir;
+	    }
+
             // First check for packages
             File dir = new File(dirName, name);
             if (dir.isDirectory() && 
