@@ -3,47 +3,49 @@ package org.python.parser;
 
 public class PythonGrammarTokenManager implements PythonGrammarConstants
 {
-   int indentation[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-   int level = 0;
-   int dedents = 0;
-   int parens=0;
-   int indent;
-   boolean seen_eof=false;
-   boolean single_input=false;
-   boolean compound=false;
-   public boolean forcedNewline = false;
+    int indentation[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    int level = 0;
+    int dedents = 0;
+    int parens = 0;
+    int indent;
+    boolean seen_eof = false;
+    boolean single_input = false;
+    boolean compound = false;
+    public boolean forcedNewline = false;
 
-        static Token addDedent(Token previous) {
-                Token t = new Token();
-                t.kind = DEDENT;
-                t.beginLine = previous.beginLine;
-                t.endLine = previous.endLine;
-                t.beginColumn = previous.beginColumn;
-                t.endColumn = previous.endColumn;
-                t.image = "<DEDENT>";
-                t.specialToken = null;
-                t.next = null;
-                previous.next = t;
-                return t;
-        }
+    static Token addDedent(Token previous) {
+        Token t = new Token();
+        t.kind = DEDENT;
+        t.beginLine = previous.beginLine;
+        t.endLine = previous.endLine;
+        t.beginColumn = previous.beginColumn;
+        t.endColumn = previous.endColumn;
+        t.image = "<DEDENT>";
+        t.specialToken = null;
+        t.next = null;
+        previous.next = t;
+        return t;
+    }
 
-        void CommonTokenAction(Token t) {
-                if (t.kind == EOF) {
-                        //System.out.println("EOF: "+single_input+", "+curLexState);
-                        if (!single_input) {
-                                if (curLexState == DEFAULT) {
-                                        t.kind = NEWLINE;
-                                } else {
-                                        t.kind = DEDENT;
-                                        level -= 1;
-                                }
-                                while (level-- >= 0) t = addDedent(t);
-                                //t = addDedent(t);
-                                t.kind = EOF;
-                                t.image = "<EOF>";
-                        }
+    void CommonTokenAction(Token t) {
+        if (t.kind == EOF) {
+            //System.out.println("EOF: "+single_input+", "+curLexState);
+            if (!single_input) {
+                if (curLexState == DEFAULT) {
+                    t.kind = NEWLINE;
                 }
+                else {
+                    t.kind = DEDENT;
+                    level -= 1;
+                }
+                while (level-- >= 0)
+                    t = addDedent(t);
+                //t = addDedent(t);
+                t.kind = EOF;
+                t.image = "<EOF>";
+            }
         }
+    }
 private final int jjStopStringLiteralDfa_10(int pos, long active0, long active1)
 {
    switch (pos)
@@ -2600,68 +2602,75 @@ final void SkipLexicalActions(Token matchedToken)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
-                //System.out.println("newline, "+parens+", "+indent+", "+single_input);
-                //System.out.println("token: "+matchedToken);
-                //doPrompt();
-                if (parens == 0) {
-                        indent = 0;
-                        input_stream.backup(1);
-                        if (level == 0) SwitchTo(FORCE_NEWLINE1);
-                        else SwitchTo(FORCE_NEWLINE2);
-                }
+            if (parens == 0) {
+                indent = 0;
+                input_stream.backup(1);
+                if (level == 0)
+                    SwitchTo(FORCE_NEWLINE1);
+                else
+                    SwitchTo(FORCE_NEWLINE2);
+            }
          break;
       case 9 :
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
-          indent = (indent/8+1)*8;
-                if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
-                else SwitchTo(INDENTING);
+            indent = (indent/8+1)*8;
+            if (indent == indentation[level])
+                SwitchTo(INDENTATION_UNCHANGED);
+            else
+                SwitchTo(INDENTING);
          break;
       case 10 :
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
-          indent += 1;
-                if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
-                else SwitchTo(INDENTING);
+            indent += 1;
+            if (indent == indentation[level])
+                SwitchTo(INDENTATION_UNCHANGED);
+            else
+                SwitchTo(INDENTING);
          break;
       case 11 :
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
-      indent = 0;
-                if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
-                else SwitchTo(INDENTING);
+            indent = 0;
+            if (indent == indentation[level])
+                SwitchTo(INDENTATION_UNCHANGED);
+            else
+                SwitchTo(INDENTING);
          break;
       case 12 :
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
-                //System.out.println("indenting newline: "+parens+", "+indent+", "+single_input);
-                if (parens == 0 && single_input && indent==0) {
-                        //System.out.println("force newline");
-                        //backup a character!
-                        forcedNewline = true;
-                        input_stream.backup(1);
-                        SwitchTo(FORCE_NEWLINE);
-                } else {
-                        //doPrompt();
-                        indent = 0;
-                        if (indent == indentation[level]) SwitchTo(INDENTATION_UNCHANGED);
-                        else SwitchTo(INDENTING);
-                }
+            if (parens == 0 && single_input && indent==0) {
+                //System.out.println("force newline");
+                //backup a character!
+                forcedNewline = true;
+                input_stream.backup(1);
+                SwitchTo(FORCE_NEWLINE);
+            }
+            else {
+                //doPrompt();
+                indent = 0;
+                if (indent == indentation[level])
+                    SwitchTo(INDENTATION_UNCHANGED);
+                else
+                    SwitchTo(INDENTING);
+            }
          break;
       case 16 :
          if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
-                                                 indent = 0;
+                                                   indent = 0;
          break;
       default :
          break;
@@ -2683,77 +2692,79 @@ final void TokenLexicalActions(Token matchedToken)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
-                Token t1 = matchedToken;
-                //System.out.println("final_newline: "+level);
-                t1.kind = DEDENT;
-                while (level-- > 0) t1 = addDedent(t1);
-                t1.kind = NEWLINE;
+            Token t1 = matchedToken;
+            //System.out.println("final_newline: "+level);
+            t1.kind = DEDENT;
+            while (level-- > 0)
+                t1 = addDedent(t1);
+            t1.kind = NEWLINE;
          break;
       case 14 :
         if (image == null)
             image = new StringBuffer(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
          else
             image.append(new String(input_stream.GetSuffix(jjimageLen + (lengthOfMatch = jjmatchedPos + 1))));
-                if (indent > indentation[level]) {
-                        level++;
-                        indentation[level] = indent;
-                        matchedToken.kind=INDENT;
-                        matchedToken.image = "<INDENT>";
-                } else {
-                        Token t = matchedToken;
-                        level -= 1;
-                        while (level > 0 && indent < indentation[level]) {
-                                level--;
-                                t = addDedent(t);
-                        }
-                        if (indent != indentation[level]) {
-                            throw new TokenMgrError("inconsistent dedent",
-                                                    t.endLine, t.endColumn);
-                        }
-                        t.next = null;
+            if (indent > indentation[level]) {
+                level++;
+                indentation[level] = indent;
+                matchedToken.kind=INDENT;
+                matchedToken.image = "<INDENT>";
+            }
+            else {
+                Token t = matchedToken;
+                level -= 1;
+                while (level > 0 && indent < indentation[level]) {
+                    level--;
+                    t = addDedent(t);
                 }
+                if (indent != indentation[level]) {
+                    throw new TokenMgrError("inconsistent dedent",
+                                            t.endLine, t.endColumn);
+                }
+                t.next = null;
+            }
          break;
       case 17 :
         if (image == null)
             image = new StringBuffer(jjstrLiteralImages[17]);
          else
             image.append(jjstrLiteralImages[17]);
-                   parens++;
+                     parens++;
          break;
       case 18 :
         if (image == null)
             image = new StringBuffer(jjstrLiteralImages[18]);
          else
             image.append(jjstrLiteralImages[18]);
-                   parens--;
+                     parens--;
          break;
       case 19 :
         if (image == null)
             image = new StringBuffer(jjstrLiteralImages[19]);
          else
             image.append(jjstrLiteralImages[19]);
-                   parens++;
+                     parens++;
          break;
       case 20 :
         if (image == null)
             image = new StringBuffer(jjstrLiteralImages[20]);
          else
             image.append(jjstrLiteralImages[20]);
-                   parens--;
+                     parens--;
          break;
       case 21 :
         if (image == null)
             image = new StringBuffer(jjstrLiteralImages[21]);
          else
             image.append(jjstrLiteralImages[21]);
-                     parens++;
+                       parens++;
          break;
       case 22 :
         if (image == null)
             image = new StringBuffer(jjstrLiteralImages[22]);
          else
             image.append(jjstrLiteralImages[22]);
-                     parens--;
+                       parens--;
          break;
       default : 
          break;
