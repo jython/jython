@@ -4,12 +4,15 @@ package jxxload_help;
 
 public class PackageManager extends org.python.core.PathPackageManager {
     
-    private ClassLoader parent;
+    private JavaLoaderFactory factory;
     private ClassLoader loader;
-    public PathVFS vfs;
     
     public synchronized ClassLoader getLoader() {
-        if (loader == null) loader = new PathVFSJavaLoader(vfs,parent);
+        if (loader == null) loader = factory.makeLoader();
+        return loader;
+    }
+    
+    public synchronized  ClassLoader checkLoader() {
         return loader;
     }
     
@@ -18,9 +21,8 @@ public class PackageManager extends org.python.core.PathPackageManager {
     }
     
     // ??pending add cache support?
-    public PackageManager(org.python.core.PyList path,ClassLoader parent) { 
-        vfs = new PathVFS();
-        this.parent = parent;
+    public PackageManager(org.python.core.PyList path,JavaLoaderFactory factory) { 
+        this.factory = factory;
         
         for (int i = 0; i < path.__len__(); i++) {
             String entry = path.__finditem__(i).toString();
@@ -30,7 +32,6 @@ public class PackageManager extends org.python.core.PathPackageManager {
                 java.io.File dir = new java.io.File(entry);
                 if (entry.length() == 0 || dir.isDirectory()) addDirectory(dir);
             }
-            vfs.addVFS(entry);
         }
     }
 
