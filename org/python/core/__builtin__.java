@@ -216,6 +216,11 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyComplex complex(PyObject real, PyObject imag) {
+        if (real instanceof PyString)
+            throw Py.TypeError("complex() can't take second arg" + 
+                               " if first is a string");
+        if (imag instanceof PyString)
+            throw Py.TypeError("complex() second arg can't be a string");
         return (PyComplex)real.__complex__().__add__(
             imag.__complex__().__mul__(PyComplex.J));
     }
