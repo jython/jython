@@ -21,8 +21,8 @@ class MakeProxies
         if (secondary != null) {
             if (referent != null) {
                 secondary.insertElementAt(referent,0);
-                referents = secondary;
             }
+            referents = secondary;
         } else {
             if (referent != null) {
                 referents = new Vector();
