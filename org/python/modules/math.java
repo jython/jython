@@ -55,7 +55,17 @@ public class math implements ClassDictInit {
         return check(Math.floor(v));
     }
 
-    public static double log(double v) {
+    public static double log(PyObject v) {
+        if (v instanceof PyLong) {
+            int e[] = new int[1];
+            double x = ((PyLong)v).scaledDoubleValue(e);
+            if (x <= 0.0) throw Py.ValueError("math domain error");
+            return log(x) + (e[0]*8.0)*log(2.0);
+        }
+        return log(v.__float__().getValue());
+    }
+
+    private static double log(double v) {
         return check(Math.log(v));
     }
 
@@ -85,13 +95,15 @@ public class math implements ClassDictInit {
 
     public static double log10(PyObject v) {
         if (v instanceof PyLong) {
-            // XXX: This shouldn't fail for really large longs.
-            return log10(v.__float__().getValue());
+            int e[] = new int[1];
+            double x = ((PyLong)v).scaledDoubleValue(e);
+            if (x <= 0.0) throw Py.ValueError("math domain error");
+            return log10(x) + (e[0]*8.0)*log10(2.0);
         }
         return log10(v.__float__().getValue());
     }
 
-    public static double log10(double v) {
+    private static double log10(double v) {
         return check(ExtraMath.log10(v));
     }
 

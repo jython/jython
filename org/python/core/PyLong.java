@@ -56,7 +56,42 @@ public class PyLong extends PyObject
         }
         return v;
     }
-
+    
+    private static final double scaledDoubleValue(BigInteger val, int[] exp){
+            double x = 0;
+            int signum = val.signum();
+            byte[] digits;
+        
+            if (signum >= 0) {
+                digits = val.toByteArray();
+            } else {
+                digits = val.negate().toByteArray(); 
+            }
+        
+            int count = 8;
+            int i = 0;
+        
+            if (digits[0] == 0) {
+                i++;
+                count++;            
+            }
+            count = count <= digits.length?count:digits.length;
+        
+            while (i < count) {
+                x = x * 256 + (digits[i] & 0xff);
+                i++;
+            }
+            exp[0] = digits.length - i;
+            return signum*x;
+        }
+        
+    
+        
+    public double scaledDoubleValue(int[] exp){
+        return scaledDoubleValue(value,exp);
+    }
+    
+    
     private long getLong(long min, long max) {
         if (value.compareTo(maxLong) <= 0 && value.compareTo(minLong) >= 0) {
             long v = value.longValue();
@@ -213,16 +248,44 @@ public class PyLong extends PyObject
         return new PyLong(divide(coerce(left), value));
     }
 
+    private static final PyFloat true_divide(BigInteger a,BigInteger b) {
+        int[] ae = new int[1];
+        int[] be = new int[1];
+        double ad,bd;
+        
+        ad = scaledDoubleValue(a,ae);
+        bd = scaledDoubleValue(b,be);
+        
+        if (bd == 0 ) throw Py.ZeroDivisionError("long division or modulo");
+        
+        ad /= bd;
+        int aexp = ae[0]-be[0];
+        
+        if (aexp > Integer.MAX_VALUE/8) {
+            throw Py.OverflowError("long/long too large for a float");
+        } else if ( aexp < -(Integer.MAX_VALUE/8)) {
+            return new PyFloat(0.0);
+        }
+        
+        ad = ad * Math.pow(2.0, aexp*8);
+        
+        if (Double.isInfinite(ad)) {
+            throw Py.OverflowError("long/long too large for a float");
+        }
+               
+        return new PyFloat(ad);        
+    }
+
     public PyObject __truediv__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyFloat(doubleValue() / coerce(right).doubleValue());
+        return true_divide(this.value,coerce(right));
     }
 
     public PyObject __rtruediv__(PyObject left) {
         if (!canCoerce(left))
             return null;
-        return new PyFloat(coerce(left).doubleValue() / doubleValue());
+        return true_divide(coerce(left),this.value);
     }
 
     private BigInteger modulo(BigInteger x, BigInteger y, BigInteger xdivy) {
