@@ -179,7 +179,6 @@ class dbexts:
 		self.autocommit = autocommit
 		self.formatter = formatter
 		self.out = out
-		self.metaDataCase = lambda x: x
 
 		if not jndiname:
 			if cfg == None: cfg = os.path.join(os.path.split(__file__)[0], "dbexts.ini")
@@ -202,9 +201,7 @@ class dbexts:
 						self.datahandler = __import__(t['datahandler'], globals(), locals(), datahandlerclass)
 					except:
 						pass
-				if t.has_key("metaDataCase"):
-					self.metaDataCase = getattr(string, t['metaDataCase'])
-				keys = filter(lambda x: x not in ['url', 'user', 'pwd', 'driver', 'datahandler', 'name', 'metaDataCase'], t.keys())
+				keys = filter(lambda x: x not in ['url', 'user', 'pwd', 'driver', 'datahandler', 'name'], t.keys())
 				props = {}
 				for a in keys:
 					props[a] = t[a]
@@ -322,7 +319,7 @@ class dbexts:
 	def pk(self, table, owner=None, schema=None):
 		""" display the table's primary keys """
 		cur = self.begin()
-		cur.primarykeys(schema, owner, self.metaDataCase(table))
+		cur.primarykeys(schema, owner, table)
 		self.commit(cur)
 		self.display()
 
@@ -330,11 +327,11 @@ class dbexts:
 		""" display the table's foreign keys """
 		cur = self.begin()
 		if primary_table and foreign_table:
-			cur.foreignkeys(schema, owner, self.metaDataCase(primary_table), schema, owner, self.metaDataCase(foreign_table))
+			cur.foreignkeys(schema, owner, primary_table, schema, owner, foreign_table)
 		elif primary_table:
-			cur.foreignkeys(schema, owner, self.metaDataCase(primary_table), schema, owner, None)
+			cur.foreignkeys(schema, owner, primary_table, schema, owner, None)
 		elif foreign_table:
-			cur.foreignkeys(schema, owner, None, schema, owner, self.metaDataCase(foreign_table))
+			cur.foreignkeys(schema, owner, None, schema, owner, foreign_table)
 		self.commit(cur)
 		self.display()
 
@@ -343,7 +340,7 @@ class dbexts:
 		displays the columns of the given table."""
 		cur = self.begin()
 		if table:
-			cur.columns(schema, owner, self.metaDataCase(table), None)
+			cur.columns(schema, owner, table, None)
 		else:
 			cur.tables(schema, owner, None, types)
 		self.commit(cur)
@@ -363,7 +360,7 @@ class dbexts:
 	def stat(self, table, qualifier=None, owner=None, unique=0, accuracy=0):
 		""" display the table's indicies """
 		cur = self.begin()
-		cur.statistics(qualifier, owner, self.metaDataCase(table), unique, accuracy)
+		cur.statistics(qualifier, owner, table, unique, accuracy)
 		self.commit(cur)
 		self.display()
 

@@ -256,10 +256,16 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * Prepare a callable statement (stored procedure).
 	 *
 	 * @param sqlString
+	 * @param maxRows max number of rows to be returned
 	 * @throws SQLException
 	 */
-	protected void callableStatement(String sqlString) throws SQLException {
+	protected void callableStatement(String sqlString, PyObject maxRows) throws SQLException {
+
 		this.sqlStatement = this.connection.prepareCall(sqlString);
+
+		if (maxRows != Py.None) {
+			this.sqlStatement.setMaxRows(maxRows.__int__().getValue());
+		}
 	}
 
 	/**
@@ -271,15 +277,11 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 */
 	protected void prepareStatement(String sqlString, PyObject maxRows) throws SQLException {
 
-		int maxrows = 0;
-
-		if (!maxRows.equals(Py.None)) {
-			maxrows = ((Integer)maxRows.__tojava__(Integer.class)).intValue();
-		}
-
 		this.sqlStatement = this.connection.prepareStatement(sqlString);
 
-		this.sqlStatement.setMaxRows(maxrows);
+		if (maxRows != Py.None) {
+			this.sqlStatement.setMaxRows(maxRows.__int__().getValue());
+		}
 	}
 
 	/**
@@ -293,14 +295,14 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 * The procedure may also provide a result set as output. This must then be made available
 	 * through the standard fetchXXX() methods.
 	 */
-	public void callproc(String sqlString, PyObject params) {
+	public void callproc(String sqlString, PyObject params, PyObject bindings, PyObject maxRows) {
 
 		clear();
 
 		try {
 			if (this.connection.getMetaData().supportsStoredProcedures()) {
-				callableStatement(sqlString);
-				execute(params, Py.None);
+				callableStatement(sqlString, maxRows);
+				execute(params, bindings);
 			} else {
 				throw zxJDBC.makeException(zxJDBC.NotSupportedError, zxJDBC.getString("noStoredProc"));
 			}
@@ -322,8 +324,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * Return values are not defined.
 	 */
-	public void executemany(String sqlString, PyObject params, PyObject bindings) {
-		execute(sqlString, params, bindings, Py.Zero);
+	public void executemany(String sqlString, PyObject params, PyObject bindings, PyObject maxRows) {
+		execute(sqlString, params, bindings, maxRows);
 	}
 
 	/**
@@ -707,10 +709,10 @@ class CursorFunc extends PyBuiltinFunctionSet {
 		switch (index) {
 
 			case 0 :
-				return cursor.fetchmany(((PyInteger)arg).getValue());
+				return cursor.fetchmany(arg.__int__().getValue());
 
 			case 5 :
-				cursor.execute((String)arg.__tojava__(String.class), Py.None, Py.None, Py.None);
+				cursor.execute(arg.__str__().toString(), Py.None, Py.None, Py.None);
 
 				return Py.None;
 
@@ -719,12 +721,12 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return Py.None;
 
 			case 8 :
-				cursor.callproc((String)arg.__tojava__(String.class), Py.None);
+				cursor.callproc(arg.__str__().toString(), Py.None, Py.None, Py.None);
 
 				return Py.None;
 
 			case 9 :
-				cursor.executemany((String)arg.__tojava__(String.class), Py.None, Py.None);
+				cursor.executemany(arg.__str__().toString(), Py.None, Py.None, Py.None);
 
 				return Py.None;
 
@@ -749,7 +751,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 		switch (index) {
 
 			case 5 :
-				cursor.execute((String)arga.__tojava__(String.class), argb, Py.None, Py.None);
+				cursor.execute(arga.__str__().toString(), argb, Py.None, Py.None);
 
 				return Py.None;
 
@@ -757,12 +759,12 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return Py.None;
 
 			case 8 :
-				cursor.callproc((String)arga.__tojava__(String.class), argb);
+				cursor.callproc(arga.__str__().toString(), argb, Py.None, Py.None);
 
 				return Py.None;
 
 			case 9 :
-				cursor.executemany((String)arga.__tojava__(String.class), argb, Py.None);
+				cursor.executemany(arga.__str__().toString(), argb, Py.None, Py.None);
 
 				return Py.None;
 
@@ -788,12 +790,17 @@ class CursorFunc extends PyBuiltinFunctionSet {
 		switch (index) {
 
 			case 5 :
-				cursor.execute((String)arga.__tojava__(String.class), argb, argc, Py.None);
+				cursor.execute(arga.__str__().toString(), argb, argc, Py.None);
+
+				return Py.None;
+
+			case 8 :
+				cursor.callproc(arga.__str__().toString(), argb, argc, Py.None);
 
 				return Py.None;
 
 			case 9 :
-				cursor.executemany((String)arga.__tojava__(String.class), argb, argc);
+				cursor.executemany(arga.__str__().toString(), argb, argc, Py.None);
 
 				return Py.None;
 
@@ -814,21 +821,30 @@ class CursorFunc extends PyBuiltinFunctionSet {
 	public PyObject __call__(PyObject[] args, String[] keywords) {
 
 		PyCursor cursor = (PyCursor)__self__;
+		PyArgParser parser = new PyArgParser(args, keywords);
+		String sql = parser.arg(0).__str__().toString();
+		PyObject params = parser.kw("params", Py.None);
+		PyObject bindings = parser.kw("bindings", Py.None);
+		PyObject maxrows = parser.kw("maxrows", Py.None);
+
+		params = (parser.numArg() >= 2) ? parser.arg(1) : params;
+		bindings = (parser.numArg() >= 3) ? parser.arg(2) : bindings;
+		maxrows = (parser.numArg() >= 4) ? parser.arg(3) : maxrows;
 
 		switch (index) {
 
 			case 5 :
-				PyArgParser parser = new PyArgParser(args, keywords);
-				String sql = (String)parser.arg(0).__tojava__(String.class);
-				PyObject params = parser.kw("params", Py.None);
-				PyObject bindings = parser.kw("bindings", Py.None);
-				PyObject maxrows = parser.kw("maxrows", Py.None);
-
-				params = (parser.numArg() >= 2) ? parser.arg(1) : params;
-				bindings = (parser.numArg() >= 3) ? parser.arg(2) : bindings;
-				maxrows = (parser.numArg() >= 4) ? parser.arg(3) : maxrows;
-
 				cursor.execute(sql, params, bindings, maxrows);
+
+				return Py.None;
+
+			case 8 :
+				cursor.callproc(sql, params, bindings, maxrows);
+
+				return Py.None;
+
+			case 9 :
+				cursor.executemany(sql, params, bindings, maxrows);
 
 				return Py.None;
 
