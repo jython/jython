@@ -32,6 +32,7 @@ def Modifier(base=0, **kw):
 	return base
 	
 def ModifierString(modifier):
+	if type(modifier) == type(""): return modifier
 	text = []
 	base = 1
 	while base <= modifier:
@@ -39,10 +40,7 @@ def ModifierString(modifier):
 			text.append(names[base])
 		base = base * 2
 
-	ret = string.join(text, ' ')
-	if len(ret) > 0:
-		return ret+" "
-	return ""	
+	return string.join(text, ' ')
 	
 if __name__ == '__main__':
 	m0 = Modifier(0)
