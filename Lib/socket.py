@@ -14,9 +14,10 @@ import org.python.core
 import jarray
 import string
 
-__all__ = ['AF_INET', 'SOCK_DGRAM', 'SOCK_RAW', 'SOCK_RDM', 'SOCK_SEQPACKET',
-           'SOCK_STREAM', 'SocketType', 'error', 'getfqdn', 'gethostbyaddr',
-           'gethostbyname', 'gethostname', 'socket', 'getaddrinfo']
+__all__ = [ 'AF_INET', 'SO_REUSEADDR', 'SOCK_DGRAM', 'SOCK_RAW',
+	    'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
+	    'SocketType', 'error', 'getfqdn', 'gethostbyaddr',
+	    'gethostbyname', 'gethostname', 'socket', 'getaddrinfo']
 
 error = IOError
 
