@@ -917,26 +917,40 @@ public class PyObject implements java.io.Serializable {
      * @param other the object to compare this with.
      * @return -1 if this < 0; 0 if this == o; +1 if this > o
      **/
-    public final int _cmp(PyObject o2_in) {
+    public final int _cmp(PyObject o) {
+        PyObject token = null;
         ThreadState ts = Py.getThreadState();
         try {
             if (++ts.compareStateNesting > 500) {
-                PyDictionary stateDict = ts.getCompareStateDict();
-
-                PyObject pair = make_pair(o2_in);
-
-                if (stateDict.__finditem__(pair) != null) {
-                    // already comparing these objects.  assume
-                    // they're equal until shown otherwise */
+                if ((token = check_recursion(ts, this, o)) == null)
                     return 0;
-                }
-                stateDict.__setitem__(pair, pair);
-                int res = _cmp_unsafe(o2_in);
-                stateDict.__delitem__(pair);
-                return res;
             }
-            return _cmp_unsafe(o2_in);
+
+            PyObject r;
+            r = __eq__(o);
+            if (r != null && r.__nonzero__())
+                return 0;
+            r = o.__eq__(this);
+            if (r != null && r.__nonzero__())
+                return 0;
+
+            r = __lt__(o);
+            if (r != null && r.__nonzero__())
+                return -1;
+            r = o.__gt__(this);
+            if (r != null && r.__nonzero__())
+                return -1;
+
+            r = __gt__(o);
+            if (r != null && r.__nonzero__())
+                return 1;
+            r = o.__lt__(this);
+            if (r != null && r.__nonzero__())
+                return 1;
+
+            return _cmp_unsafe(o);
         } finally {
+            delete_token(ts, token);
             ts.compareStateNesting--;
         }
     }
@@ -971,7 +985,6 @@ public class PyObject implements java.io.Serializable {
             }
         }
         else ctmp = null;
-
         if (ctmp != Py.None && (itmp = o1.__cmp__(o2)) != -2)
             return itmp;
 
@@ -994,6 +1007,12 @@ public class PyObject implements java.io.Serializable {
 
         if (this == o2_in)
             return 0;
+
+        /* None is smaller than anything */
+        if (this == Py.None)
+            return -1;
+        if (o2_in == Py.None)
+            return 1;
 
         // No rational way to compare these, so ask their classes to compare
         itmp = this.__class__.__cmp__(o2_in.__class__);
