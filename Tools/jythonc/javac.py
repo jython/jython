@@ -15,7 +15,7 @@ def findDefaultJavac():
     if jhome is None:
         return None
     root, dir = os.path.split(jhome)
-    if dir == "jre":
+    if dir.lower() == "jre":
         jhome = root
     javac = os.path.join(os.path.join(jhome, "bin"), "javac")
     return javac
@@ -52,11 +52,11 @@ def compile(files, javac=None, cpathopt="-classpath", cpath=None, options=[]):
 
     try:
         proc = runtime.exec(cmd)
-    except IOError:
-        msg = '''No java compiler found: %s
+    except IOError, e:
+        msg = '''%s
 
 Consider using the -C/--compiler command line switch, or setting
-the property python.jpythonc.compiler in the registry.''' % javac
+the property python.jpythonc.compiler in the registry.''' % e
         return 1, '', msg
     done = None
     while not done:
