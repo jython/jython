@@ -482,9 +482,9 @@ public class imp {
 
     static PyObject reload(PyJavaClass c) {
         PyObject modules = Py.getSystemState().modules;         
-        modules.__delitem__(c.__name__);
-        // Should delete from package if in one
         String name = c.__name__;
+        // Should delete from package if in one
+        modules.__delitem__(name.intern());
         int dot = name.lastIndexOf('.');
         if (dot != -1) {
             String iname = name.substring(0, dot).intern();
@@ -496,7 +496,7 @@ public class imp {
             pkg.__delattr__(name);
         }        
         BytecodeLoader.clearLoader();
-        PyObject nc = importName(c.__name__, false, null);
+        PyObject nc = importName(c.__name__, false);
         return nc;
     }
 
