@@ -281,7 +281,7 @@ public final class Py {
     }
     
     public static PyString newString(char c) {
-        return new PyString(c);
+        return makeCharacter(new Character(c));
     }    
     
     public static PyString newString(String s) {
@@ -903,6 +903,24 @@ public final class Py {
 	        throw Py.TypeError("None required for void return");
 	    }
 	}
+	
+	private static PyString[] letters=null;
+
+    static final PyString makeCharacter(Character o) {
+        char c = o.charValue();
+        
+        if (c > 255) {
+            return new PyString(o.toString());
+        }
+        
+		if (letters == null) {
+			letters = new PyString[256];
+			for(char j=0; j<256; j++) {
+				letters[j] = new PyString(new Character(j).toString());
+			}
+		}
+		return letters[c];
+    }
 
 	// Needs rewriting for efficiency and extensibility
 	public static PyObject java2py(Object o) {
@@ -923,7 +941,7 @@ public final class Py {
 		}
 		if (o == null) return Py.None;
 		if (o instanceof String) return new PyString((String)o);
-		if (o instanceof Character) return new PyString(o.toString());
+		if (o instanceof Character) return makeCharacter((Character)o);
 		if (o instanceof Class) return PyJavaClass.lookup((Class)o);
 
 		Class c = o.getClass();
@@ -965,10 +983,18 @@ public final class Py {
             //System.out.println("specialClasses: "+nm);
 		    Class jc = (Class)specialClasses.get(nm);
 		    //System.out.println("got: "+jc);
-		    if (jc != null) {
-		        pyclass.proxyClasses = new Class[] {jc};
-		    }
-		}
+            if (jc != null) {
+                pyclass.proxyClasses = new Class[] {jc};
+                
+                PyObject oldDict = PyJavaClass.lookup(jc).__dict__;
+                // This code will add in the needed super__ methods to the class
+                if (oldDict instanceof PyStringMap && dict instanceof PyStringMap) {
+                    PyStringMap oldMap = ((PyStringMap)oldDict).copy();
+                    oldMap.update((PyStringMap)dict);
+                    dict = oldMap;
+                }
+            }
+        }
 
 		pyclass.init(name, new PyTuple(bases), dict);
 
