@@ -161,6 +161,20 @@ Title: JPython FAQ
 	    shell completely</em>
     </UL>
 
+<p><li><b>Why can't I multiply inherit from two Java classes?</b>
+
+    <P>In an earlier version of JPython, you actually could.  This was
+    deliberately disabled in 1.1 for a variety of good reasons. For a
+    detailed discussion on this issue see the following archive
+    messages:
+
+    <p><a
+    href="http://www.python.org/pipermail/jpython-interest/1998-April/000213.html">http://www.python.org/pipermail/jpython-interest/1998-April/000213.html</a><br>
+    <a href="http://www.python.org/pipermail/jpython-interest/1999-January/001162.html">http://www.python.org/pipermail/jpython-interest/1999-January/001162.html</a>
+
+    <p>Note that you can still multiply inherit from any number of
+    Python classes.
+
 <p><li><b>JPython and Y2K</b>
 
     <p>The standard response to queries about JPython's Y2K compliance 
