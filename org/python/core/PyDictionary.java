@@ -257,6 +257,12 @@ public class PyDictionary extends PyObject implements InitModule
             table.put(ek.nextElement(), ev.nextElement());
     }
 
+    public void update(PyStringMap d) {
+        PyObject keys = d.keys();
+        PyObject key;
+        for (int i = 0; (key = keys.__finditem__(i)) != null; i++)
+            __setitem__(key, d.__getitem__(key));
+    }
 
     public PyObject setdefault(PyObject key) {
         return setdefault(key, Py.None);
