@@ -13,7 +13,7 @@ octdigits = '01234567'
 
 #from strop import *
 import sys
-sys.add_package("org.python.core")
+#sys.add_package("org.python.core")
 from org.python.core.PyString import *
 
 
