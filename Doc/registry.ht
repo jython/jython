@@ -66,6 +66,13 @@ file for details.
 
     <dt><b>python.jythonc.compileropts</b>
     <dd>Options to pass to the Java compiler when using jythonc.
+
+    <dt><b>python.console</b>
+    <dd>The name of a console class. An alternative console class
+    that supports <a href="http://www.bablokb.de/java/readline.html">
+    GNU readline</a>
+    can be installed with this property.
+
 </dl>
 
 <h3><a name="finding">Finding the Registry File</a></h3>
