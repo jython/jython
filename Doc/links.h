@@ -18,5 +18,5 @@
 <h3>Other</h3>
 <li><a href="differences.html">JPython vs. CPython</a>
 <li><a href="faq.html">JPython FAQ</a>
-<li><a href="http://www.python.org/pipermail/jpython-interest/">List Archives</a>
-<LI><A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+<li><a href="http://www.python.org/pipermail/jpython-interest/">List Archives</a> (exit)
+<LI><A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A> (exit)
