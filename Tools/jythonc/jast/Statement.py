@@ -215,14 +215,19 @@ class FreeBlock(Statement):
         for stmt in self.code:
             #print stmt
             stmt.writeSource(out)
+            if stmt.exits():
+                break
 
     def exits(self):
-        last = self.code[-1]
-        if not hasattr(last, 'exits'):
-            print last, self.code
-            print 'oops'
-        else:
-            return last.exits()
+        for i in range(len(self.code)):
+            if not hasattr(self.code[i], 'exits'):
+                print self.code[i]
+                print 'oops'
+                continue
+            if self.code[i].exits():
+                 del self.code[i+1:]
+                 return 1
+        return 0
 
     def __repr__(self):
         return "FreeBlock(%s)" % (self.code)
