@@ -128,12 +128,15 @@ public class PyJavaClass extends PyClass {
     }
 
     private boolean initialized=false;
+
     private void initialize() {
-        if (initialized) return;
-        initialized = true;
-        if (proxyClass == null) init(Py.findClass(__name__));
+        if (initialized)
+            return;
+        if (proxyClass == null)
+            init(Py.findClass(__name__));
         init__bases__(proxyClass);
         init__dict__();
+        initialized = true;
     }
 
     private void init__class__(Class c) {
@@ -771,6 +774,10 @@ public class PyJavaClass extends PyClass {
         return inst;
     }
 
+    public Object __tojava__(Class c) {
+        initialize();
+        return super.__tojava__(c);
+    }
 
     public String toString()  {
         return "<jclass "+__name__+" at "+Py.id(this)+">";
