@@ -7,8 +7,7 @@ import support
 def foo(pickle): 
     assert pickle == 1
     import pickle 
-    if pickle == 1:
-        raise support.TestWarning("An import should override a local")
+    assert pickle != 1
     
 foo(1) 
 
