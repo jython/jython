@@ -28,9 +28,9 @@ class FunctionThread extends Thread
 public class thread implements InitModule
 {
     public void initModule(PyObject dict) {
-	dict.__setitem__("LockType", PyJavaClass.lookup(PyLock.class));
+        dict.__setitem__("LockType", PyJavaClass.lookup(PyLock.class));
     }
-	
+        
     public static PyObject error = new PyString("thread.error");
 
     public static void start_new_thread(PyObject func, PyTuple args) {

@@ -6,5 +6,5 @@ public abstract class TraceFunction {
     public abstract TraceFunction traceReturn(PyFrame frame, PyObject ret);
     public abstract TraceFunction traceLine(PyFrame frame, int line);
     public abstract TraceFunction traceException(PyFrame frame,
-						 PyException exc);
+                                                 PyException exc);
 }

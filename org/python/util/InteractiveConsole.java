@@ -8,7 +8,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
     public String filename;
 
     public InteractiveConsole() {
-	this(null, "<console>");
+        this(null, "<console>");
     }
     public InteractiveConsole(PyObject locals) {
         this(locals, "<console>");
@@ -32,8 +32,8 @@ public class InteractiveConsole extends InteractiveInterpreter {
     }
 
     public static String getDefaultBanner() {
-	return "JPython "+PySystemState.version+" on "+
-	    PySystemState.platform+"\n"+PySystemState.copyright;
+        return "JPython "+PySystemState.version+" on "+
+            PySystemState.platform+"\n"+PySystemState.copyright;
     }
 
     public void interact(String banner) {
@@ -41,8 +41,8 @@ public class InteractiveConsole extends InteractiveInterpreter {
             write(banner);
             write("\n");
         }
-    	// Dummy exec in order to speed up response on first command
-    	exec("2");
+        // Dummy exec in order to speed up response on first command
+        exec("2");
         //System.err.println("interp2");
         boolean more = false;
         while (true) {
@@ -52,7 +52,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
                 line = raw_input(prompt);
             } catch (PyException exc) {
                 if (!Py.matchException(exc, Py.EOFError))
-		    throw exc;
+                    throw exc;
                 write("\n");
                 break;
             }
@@ -75,11 +75,11 @@ public class InteractiveConsole extends InteractiveInterpreter {
 
     public boolean push(String line) {
         if (buffer.length() > 0)
-	    buffer.append("\n");
+            buffer.append("\n");
         buffer.append(line);
         boolean more = runsource(buffer.toString(), filename);
         if (!more)
-	    resetbuffer();
+            resetbuffer();
         return more;
     }
 

@@ -18,7 +18,7 @@ public class PyXRange extends PySequence {
     
     public PyXRange(int start, int stop, int step) {
         if (step == 0)
-	    throw Py.ValueError("zero step for xrange()");
+            throw Py.ValueError("zero step for xrange()");
         this.start = start;
         this.stop = stop;
         this.step = step;
@@ -47,14 +47,14 @@ public class PyXRange extends PySequence {
     }
 
     protected PyObject getslice(int start, int stop, int step) {
-	if (copies != 1) {
+        if (copies != 1) {
             throw Py.TypeError("cannot slice a replicated range");
-	}
-	int len = sliceLength(start, stop, step);
-	int xslice_start = getInt(start);
-	int xslice_step = this.step * step;
-	int xslice_stop = xslice_start + xslice_step * len;
-	return new PyXRange(xslice_start, xslice_stop, xslice_step);
+        }
+        int len = sliceLength(start, stop, step);
+        int xslice_start = getInt(start);
+        int xslice_step = this.step * step;
+        int xslice_stop = xslice_start + xslice_step * len;
+        return new PyXRange(xslice_start, xslice_stop, xslice_step);
     }
 
 
@@ -82,9 +82,9 @@ public class PyXRange extends PySequence {
             buf.append(", ");
         }
         if (count > 0)
-	    buf.append(get(count-1).__repr__().toString());
+            buf.append(get(count-1).__repr__().toString());
         if (count == 1)
-	    buf.append(",");
+            buf.append(",");
         buf.append(")");
 
         return buf.toString();

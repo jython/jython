@@ -17,22 +17,22 @@ public class Setup
     // python.modules.builtin for details.
 
     public static String[] builtinModules = {
-	"jarray",
-	"math",
-	"thread",
-	"operator",
-	"time",
-	"os",
-	"types",
-	"py_compile",
-	"codeop",
-	"re",
-	"code",
-	"synchronize",
-	"cPickle",
-	"cStringIO",
-	"struct",
-	"binascii",
-	"__builtin__:org.python.core"
+        "jarray",
+        "math",
+        "thread",
+        "operator",
+        "time",
+        "os",
+        "types",
+        "py_compile",
+        "codeop",
+        "re",
+        "code",
+        "synchronize",
+        "cPickle",
+        "cStringIO",
+        "struct",
+        "binascii",
+        "__builtin__:org.python.core"
     };
 }

@@ -28,7 +28,7 @@ public class PythonInterpreter {
      * Create a new interpreter with the given dictionary to use as its
      * namespace
      *
-     * @param dict	the dictionary to use
+     * @param dict      the dictionary to use
      */
 
     // Optional dictionary willl be used for locals namespace
@@ -39,9 +39,9 @@ public class PythonInterpreter {
     public PythonInterpreter(PyObject dict, PySystemState systemState) {
         PySystemState.initialize();
         if (dict == null)
-	    dict = new PyStringMap();
+            dict = new PyStringMap();
         if (systemState == null)
-	    systemState = new PySystemState();
+            systemState = new PySystemState();
         module = new PyModule("main", dict);
         this.systemState = systemState;
         locals = module.__dict__;
@@ -95,7 +95,7 @@ public class PythonInterpreter {
     /**
      * Evaluate a string as Python source and return the result
      *
-     * @param s	the string to evaluate
+     * @param s the string to evaluate
      */
     public PyObject eval(String s) {
         setState();
@@ -105,7 +105,7 @@ public class PythonInterpreter {
     /**
      * Execute a string of Python source in the local namespace
      *
-     * @param s	the string to execute
+     * @param s the string to execute
      */
     public void exec(String s) {
         setState();
@@ -125,7 +125,7 @@ public class PythonInterpreter {
     /**
      * Execute a file of Python source in the local namespace
      *
-     * @param s	the name of the file to execute
+     * @param s the name of the file to execute
      */
     public void execfile(String s) {
         setState();
@@ -153,7 +153,7 @@ public class PythonInterpreter {
     /**
      * Set a variable in the local namespace
      *
-     * @param name	the name of the variable
+     * @param name      the name of the variable
      * @param value the value to set the variable to.  
      Will be automatically converted to an appropriate Python object.
     */
@@ -164,7 +164,7 @@ public class PythonInterpreter {
     /**
      * Set a variable in the local namespace
      *
-     * @param name	the name of the variable
+     * @param name      the name of the variable
      * @param value the value to set the variable to
      */
     public void set(String name, PyObject value) {
@@ -175,7 +175,7 @@ public class PythonInterpreter {
     /**
      * Get the value of a variable in the local namespace
      *
-     * @param name	the name of the variable
+     * @param name      the name of the variable
      */
     public PyObject get(String name) {
         return locals.__finditem__(name.intern());
@@ -187,7 +187,7 @@ public class PythonInterpreter {
      * <code>interp.get("foo", Object.class)</code> will return the most
      * appropriate generic Java object.
      *
-     * @param name	the name of the variable
+     * @param name      the name of the variable
      * @param javaclass the class of object to return
      */ 
     public Object get(String name, Class javaclass) {

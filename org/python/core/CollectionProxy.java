@@ -87,7 +87,7 @@ class EnumerationProxy extends CollectionProxy {
     public PyObject __finditem__(int key) {
         if (key != counter) {
             throw Py.ValueError(
-		"enumeration indices must be consecutive ints starting at 0");
+                "enumeration indices must be consecutive ints starting at 0");
         }
         counter++;
         if (proxy.hasMoreElements()) {
@@ -168,7 +168,7 @@ class DictionaryProxy extends CollectionProxy {
         
     public void __setitem__(PyObject key, PyObject value) {
         proxy.put(Py.tojava(key, Object.class),
-		  Py.tojava(value, Object.class));
+                  Py.tojava(value, Object.class));
     }
         
     public void __delitem__(PyObject key) {

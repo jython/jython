@@ -10,8 +10,8 @@ import java.io.*;
 
 public class AdapterMaker extends ProxyMaker {
     public AdapterMaker(String classname) {
-	super(classname+"$Adapter");
-	this.classname = classname;
+        super(classname+"$Adapter");
+        this.classname = classname;
     }
 
     public void build(Class listener) throws Exception {
@@ -29,46 +29,46 @@ public class AdapterMaker extends ProxyMaker {
     }
 
     public void build() throws Exception {
-	build(Class.forName(classname));
+        build(Class.forName(classname));
     }
 
     public static String makeAdapter(String classname, OutputStream ostream)
-	throws Exception
+        throws Exception
     {
-	AdapterMaker pm = new AdapterMaker(classname);
-	pm.build();
-	pm.classfile.write(ostream);
-	return pm.myClass;
+        AdapterMaker pm = new AdapterMaker(classname);
+        pm.build();
+        pm.classfile.write(ostream);
+        return pm.myClass;
     }
 
     public void doConstants() throws Exception {
-	for (Enumeration e=names.keys(); e.hasMoreElements();)  {
-	    String name = (String)e.nextElement();
-	    classfile.addField(name, "Lorg/python/core/PyObject;",
-			       ClassFile.PUBLIC);
-	}
+        for (Enumeration e=names.keys(); e.hasMoreElements();)  {
+            String name = (String)e.nextElement();
+            classfile.addField(name, "Lorg/python/core/PyObject;",
+                               ClassFile.PUBLIC);
+        }
     }
-	
+        
     public void addMethod(Method method, int access) throws Exception {
-	Class[] parameters = method.getParameterTypes();
-	Class ret = method.getReturnType();
-	String sig = makeSignature(parameters, ret);
+        Class[] parameters = method.getParameterTypes();
+        Class ret = method.getReturnType();
+        String sig = makeSignature(parameters, ret);
 
-	String name = method.getName();
-	//System.out.println(name+": "+sig);
-	names.put(name, name);
+        String name = method.getName();
+        //System.out.println(name+": "+sig);
+        names.put(name, name);
 
-	Code code = classfile.addMethod(name, sig, ClassFile.PUBLIC);
+        Code code = classfile.addMethod(name, sig, ClassFile.PUBLIC);
 
-	code.aload(0);
-	int pyfunc = code.pool.Fieldref(classfile.name, name,
-		                        "Lorg/python/core/PyObject;");
-	code.getfield(pyfunc);
-	code.dup();
-	Label returnNull = code.getLabel();
-	code.ifnull(returnNull);
-	callMethod(code, name, parameters, ret);
-	returnNull.setPosition();
-	doNullReturn(code, ret);
+        code.aload(0);
+        int pyfunc = code.pool.Fieldref(classfile.name, name,
+                                        "Lorg/python/core/PyObject;");
+        code.getfield(pyfunc);
+        code.dup();
+        Label returnNull = code.getLabel();
+        code.ifnull(returnNull);
+        callMethod(code, name, parameters, ret);
+        returnNull.setPosition();
+        doNullReturn(code, ret);
     }
 }

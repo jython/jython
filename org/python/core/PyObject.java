@@ -23,7 +23,7 @@ public class PyObject implements java.io.Serializable {
         
     /* must instantiate __class__ when de-serializing */
     private void readObject(java.io.ObjectInputStream in)
-	throws java.io.IOException, ClassNotFoundException
+        throws java.io.IOException, ClassNotFoundException
     {
         in.defaultReadObject();
         __class__ = PyJavaClass.lookup(getClass());
@@ -43,7 +43,7 @@ public class PyObject implements java.io.Serializable {
     public PyObject() {
         PyClass c = getPyClass();
         if (c == null)
-	    c = PyJavaClass.lookup(getClass());
+            c = PyJavaClass.lookup(getClass());
         __class__ = c;
     }
 
@@ -52,11 +52,11 @@ public class PyObject implements java.io.Serializable {
         PyObject, the instantiation time for the object will be greatly
         reduced.
         
-	<blockquote><pre>
-	// __class__ boilerplate -- see PyObject for details
-	public static PyClass __class__;
-	protected PyClass getPyClass() { return __class__; }
-	</pre></blockquote>
+        <blockquote><pre>
+        // __class__ boilerplate -- see PyObject for details
+        public static PyClass __class__;
+        protected PyClass getPyClass() { return __class__; }
+        </pre></blockquote>
 
         With PyIntegers this leads to a 50% faster instantiation time.
         This replaces the PyObject(PyClass c) constructor which is now
@@ -64,7 +64,7 @@ public class PyObject implements java.io.Serializable {
     **/
 
     protected PyClass getPyClass() {
-	return null;
+        return null;
     }
 
     /**
@@ -103,37 +103,37 @@ public class PyObject implements java.io.Serializable {
         return new PyString(toString());
     }
         
-    String safeRepr() {
+    protected String safeRepr() {
         if (__class__ == null) {
             return "unknown object";
         }
         String name = __class__.__name__;
         PyObject tmp;
         if (name == null)
-	    return "unknown object";
+            return "unknown object";
             
         if ((name.equals("org.python.core.PyClass") ||
-	     name.equals("org.python.core.PyJavaClass")) &&
+             name.equals("org.python.core.PyJavaClass")) &&
             (this instanceof PyClass))
-	{
+        {
             name = ((PyClass)this).__name__;
             if (name == null)
-		return "unknown class";
+                return "unknown class";
             return "class '"+name+"'";
         }
             
         if (name.equals("org.python.core.PyModule")) {
             tmp = this.__findattr__("__name__");
             if (tmp == null)
-		return "unnamed module";
+                return "unnamed module";
             return "module '"+tmp+"'";
         }
         if (name.equals("org.python.core.PyJavaPackage") &&
-	    (this instanceof PyJavaPackage))
-	{
+            (this instanceof PyJavaPackage))
+        {
             name = ((PyJavaPackage)this).__name__;
             if (name == null)
-		return "unnamed java package";
+                return "unnamed java package";
             return "java package '"+name+"'";
         }  
         return "instance of '"+name+"'";
@@ -170,7 +170,7 @@ public class PyObject implements java.io.Serializable {
     **/
     public boolean equals(Object ob_other) {
         return (ob_other instanceof PyObject) &&
-	    _cmp((PyObject)ob_other) == 0;
+            _cmp((PyObject)ob_other) == 0;
     }
 
     /**
@@ -192,7 +192,7 @@ public class PyObject implements java.io.Serializable {
     **/
     public Object __tojava__(Class c) {
         if (c.isInstance(this))
-	    return this;
+            return this;
         return Py.NoConversion;
     }
 
@@ -226,7 +226,7 @@ public class PyObject implements java.io.Serializable {
        @param keywords the keywords used for all keyword arguments.    
     **/
     public PyObject __call__(PyObject arg1, PyObject args[],
-			     String keywords[])
+                             String keywords[])
     {
         PyObject[] newArgs = new PyObject[args.length+1];
         System.arraycopy(args, 0, newArgs, 1, args.length);
@@ -307,10 +307,10 @@ public class PyObject implements java.io.Serializable {
        @param arg3     the fourth argument to the function.
     **/
     public PyObject __call__(PyObject arg0, PyObject arg1,
-			     PyObject arg2, PyObject arg3)
+                             PyObject arg2, PyObject arg3)
     {
         return __call__(new PyObject[] {arg0, arg1, arg2, arg3},
-			Py.NoKeywords);
+                        Py.NoKeywords);
     }
         
     public boolean isCallable() { return __findattr__("__call__") != null; }
@@ -385,7 +385,7 @@ public class PyObject implements java.io.Serializable {
     public PyObject __getitem__(int key) {
         PyObject ret = __finditem__(key);
         if (ret == null)
-	    throw Py.KeyError(""+key);
+            throw Py.KeyError(""+key);
         return ret;
     }
         
@@ -395,7 +395,7 @@ public class PyObject implements java.io.Serializable {
     }
     
     public void __setslice__(PyObject start, PyObject stop, PyObject step,
-			     PyObject value)
+                             PyObject value)
     {
         throw Py.AttributeError("__setslice__");
     }
@@ -429,7 +429,7 @@ public class PyObject implements java.io.Serializable {
     public PyObject __getitem__(PyObject key) {
         PyObject ret = __finditem__(key);
         if (ret == null)
-	    throw Py.KeyError(key.toString());
+            throw Py.KeyError(key.toString());
         return ret;
     }
 
@@ -543,7 +543,7 @@ public class PyObject implements java.io.Serializable {
         if (name == "__class__") return __class__;
         PyObject ret = __class__.lookup(name, false);
         if (ret != null)
-	    return ret._doget(this);
+            return ret._doget(this);
         return null;
     }
         
@@ -561,7 +561,7 @@ public class PyObject implements java.io.Serializable {
     public final PyObject __getattr__(PyString name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
-	    throw Py.AttributeError(safeRepr()+" has no attribute '"+name+"'");
+            throw Py.AttributeError(safeRepr()+" has no attribute '"+name+"'");
         return ret;
     }
         
@@ -583,7 +583,7 @@ public class PyObject implements java.io.Serializable {
     public final PyObject __getattr__(String name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
-	    throw Py.AttributeError(safeRepr()+" has no attribute '"+name+"'");
+            throw Py.AttributeError(safeRepr()+" has no attribute '"+name+"'");
         return ret;
     }
         
@@ -643,16 +643,16 @@ public class PyObject implements java.io.Serializable {
     protected void addKeys(PyList ret, String attr) {
         PyObject obj = __findattr__(attr);
         if (obj == null)
-	    return;
+            return;
         if (obj instanceof PyDictionary) {
             ret.setslice(ret.__len__(), ret.__len__(), 1,
-			 ((PyDictionary)obj).keys());
+                         ((PyDictionary)obj).keys());
         }
-	else if (obj instanceof PyStringMap) {
+        else if (obj instanceof PyStringMap) {
             ret.setslice(ret.__len__(), ret.__len__(), 1,
-			 ((PyStringMap)obj).keys());
+                         ((PyStringMap)obj).keys());
         }
-	else if (obj instanceof PyList) {
+        else if (obj instanceof PyList) {
             ret.setslice(ret.__len__(), ret.__len__(), 1, (PyList)obj);
         }
     }
@@ -708,13 +708,13 @@ public class PyObject implements java.io.Serializable {
     public final PyObject __coerce__(PyObject pyo) {
         Object o = __coerce_ex__(pyo);
         if (o == null)
-	    throw Py.AttributeError("__coerce__");
+            throw Py.AttributeError("__coerce__");
         if (o == Py.None)
-	    return (PyObject)o;
+            return (PyObject)o;
         if (o instanceof PyObject[])
-	    return new PyTuple((PyObject[])o);
+            return new PyTuple((PyObject[])o);
         else
-	    return new PyTuple(new PyObject[] {this, (PyObject)o});
+            return new PyTuple(new PyObject[] {this, (PyObject)o});
     }
 
     /* The basic comparision operations */
@@ -738,7 +738,7 @@ public class PyObject implements java.io.Serializable {
     public final int _cmp(PyObject o2_in) {
         // Shortcut for equal objects
         if (this == o2_in)
-	    return 0;
+            return 0;
             
         PyObject o2 = o2_in;
         PyObject o1 = this;
@@ -748,18 +748,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (itmp = o1.__cmp__(o2)) != -2)
-	    return itmp;
+            return itmp;
 
         o1 = this;
         o2 = o2_in;
@@ -767,29 +767,29 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None && (itmp = o2.__cmp__(o1)) != -2)
-	    return -itmp;
+            return -itmp;
                 
         if (this == o2_in)
-	    return 0;
+            return 0;
                 
         // No rational way to compare these, so ask their classes to compare
         itmp = this.__class__.__cmp__(o2_in.__class__);
                 
         if (itmp == 0)
-	    return Py.id(this) < Py.id(o2_in) ? -1 : 1;
+            return Py.id(this) < Py.id(o2_in) ? -1 : 1;
         if (itmp != -2)
-	    return itmp;
+            return itmp;
         return
-	    Py.id(this.__class__) < Py.id(o2_in.__class__) ? -1 : 1;
+            Py.id(this.__class__) < Py.id(o2_in.__class__) ? -1 : 1;
     }
 
     public final PyObject _eq(PyObject o) {
@@ -828,7 +828,7 @@ public class PyObject implements java.io.Serializable {
 
         while ((tmp = __finditem__(i++)) != null) {
             if (o._eq(tmp).__nonzero__())
-		return true;
+                return true;
         }
         return false;
     }
@@ -988,18 +988,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__add__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1007,21 +1007,21 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__add__(o2);
+                o1 = o1.__add__(o2);
             else
-		o1 = o2.__radd__(o1);
+                o1 = o2.__radd__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__add__ nor __radd__ defined for these operands");
     }
@@ -1054,18 +1054,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__sub__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1073,21 +1073,21 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__sub__(o2);
+                o1 = o1.__sub__(o2);
             else
-		o1 = o2.__rsub__(o1);
+                o1 = o2.__rsub__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__sub__ nor __rsub__ defined for these operands");
     }
@@ -1120,40 +1120,40 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__mul__(o2)) != null)
-	    return o1;
-	
+            return o1;
+        
         o1 = this;
         o2 = o2_in;
         if (o1.__class__ != o2.__class__) {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__mul__(o2);
+                o1 = o1.__mul__(o2);
             else
-		o1 = o2.__rmul__(o1);
+                o1 = o2.__rmul__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__mul__ nor __rmul__ defined for these operands");
     }
@@ -1186,18 +1186,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__div__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1205,21 +1205,21 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__div__(o2);
+                o1 = o1.__div__(o2);
             else
-		o1 = o2.__rdiv__(o1);
+                o1 = o2.__rdiv__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__div__ nor __rdiv__ defined for these operands");
     }
@@ -1252,16 +1252,16 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else { o2 = (PyObject)ctmp; }
+                else { o2 = (PyObject)ctmp; }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__mod__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1269,21 +1269,21 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__mod__(o2);
+                o1 = o1.__mod__(o2);
             else
-		o1 = o2.__rmod__(o1);
+                o1 = o2.__rmod__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__mod__ nor __rmod__ defined for these operands");
     }
@@ -1318,18 +1318,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__divmod__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1337,24 +1337,24 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__divmod__(o2);
+                o1 = o1.__divmod__(o2);
             else
-		o1 = o2.__rdivmod__(o1);
+                o1 = o2.__rdivmod__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError(
-	    "__divmod__ nor __rdivmod__ defined for these operands");
+            "__divmod__ nor __rdivmod__ defined for these operands");
     }
 
     /**Equivalent to the standard Python __pow__ method
@@ -1385,18 +1385,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__pow__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1404,19 +1404,19 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else { o1 = (PyObject)ctmp; }
+                else { o1 = (PyObject)ctmp; }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__pow__(o2);
+                o1 = o1.__pow__(o2);
             else
-		o1 = o2.__rpow__(o1);
+                o1 = o2.__rpow__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__pow__ nor __rpow__ defined for these operands");
     }
@@ -1451,18 +1451,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__lshift__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1470,24 +1470,24 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__lshift__(o2);
+                o1 = o1.__lshift__(o2);
             else
-		o1 = o2.__rlshift__(o1);
+                o1 = o2.__rlshift__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError(
-	    "__lshift__ nor __rlshift__ defined for these operands");
+            "__lshift__ nor __rlshift__ defined for these operands");
     }
 
     /**Equivalent to the standard Python __rshift__ method
@@ -1520,18 +1520,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__rshift__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1539,24 +1539,24 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__rshift__(o2);
+                o1 = o1.__rshift__(o2);
             else
-		o1 = o2.__rrshift__(o1);
+                o1 = o2.__rrshift__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError(
-	    "__rshift__ nor __rrshift__ defined for these operands");
+            "__rshift__ nor __rrshift__ defined for these operands");
     }
 
     /**Equivalent to the standard Python __and__ method
@@ -1587,18 +1587,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__and__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1606,21 +1606,21 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__and__(o2);
+                o1 = o1.__and__(o2);
             else
-		o1 = o2.__rand__(o1);
+                o1 = o2.__rand__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__and__ nor __rand__ defined for these operands");
     }
@@ -1653,18 +1653,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__or__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1672,21 +1672,21 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__or__(o2);
+                o1 = o1.__or__(o2);
             else
-		o1 = o2.__ror__(o1);
+                o1 = o2.__ror__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__or__ nor __ror__ defined for these operands");
     }
@@ -1719,18 +1719,18 @@ public class PyObject implements java.io.Serializable {
             ctmp = o1.__coerce_ex__(o2);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o1 = ((PyObject[])ctmp)[0];
-		    o2 = ((PyObject[])ctmp)[1];
+                    o1 = ((PyObject[])ctmp)[0];
+                    o2 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o2 = (PyObject)ctmp;
-		}
+                else {
+                    o2 = (PyObject)ctmp;
+                }
             }
         }
-	else ctmp = null;
+        else ctmp = null;
 
         if (ctmp != Py.None && (o1 = o1.__xor__(o2)) != null)
-	    return o1;
+            return o1;
 
         o1 = this;
         o2 = o2_in;
@@ -1738,21 +1738,21 @@ public class PyObject implements java.io.Serializable {
             ctmp = o2.__coerce_ex__(o1);
             if (ctmp != null) {
                 if (ctmp instanceof PyObject[]) {
-		    o2 = ((PyObject[])ctmp)[0];
-		    o1 = ((PyObject[])ctmp)[1];
+                    o2 = ((PyObject[])ctmp)[0];
+                    o1 = ((PyObject[])ctmp)[1];
                 }
-		else {
-		    o1 = (PyObject)ctmp;
-		}
+                else {
+                    o1 = (PyObject)ctmp;
+                }
             }
         }
         if (ctmp != Py.None) {
             if (o1.__class__ == o2.__class__)
-		o1 = o1.__xor__(o2);
+                o1 = o1.__xor__(o2);
             else
-		o1 = o2.__rxor__(o1);
+                o1 = o2.__rxor__(o1);
             if (o1 != null)
-		return o1;
+                return o1;
         }
         throw Py.TypeError("__xor__ nor __rxor__ defined for these operands");
     }
@@ -1764,24 +1764,24 @@ public class PyObject implements java.io.Serializable {
         try {
             int n = args.length;
             for (int i=0; i<n; i++)
-		pargs[i] = Py.java2py(args[i]);
+                pargs[i] = Py.java2py(args[i]);
             return __call__(pargs);
         } catch (PyException e) {
             /*if (e.value instanceof PyJavaInstance) {
-	      Throwable t = (Throwable)e.value.__tojava__(Throwable.class);
-	      if (t != null) {
-	      throw t;
-	      }
-	      } else {*/
-	    ThreadState ts = Py.getThreadState();
-	    if (ts.frame == null) {
-		Py.maybeSystemExit(e);
-	    }
-	    if (Options.showPythonProxyExceptions) {
-		Py.stderr.println(
-		    "Exception in Python proxy returning to Java:");
-		Py.printException(e);
-	    }
+              Throwable t = (Throwable)e.value.__tojava__(Throwable.class);
+              if (t != null) {
+              throw t;
+              }
+              } else {*/
+            ThreadState ts = Py.getThreadState();
+            if (ts.frame == null) {
+                Py.maybeSystemExit(e);
+            }
+            if (Options.showPythonProxyExceptions) {
+                Py.stderr.println(
+                    "Exception in Python proxy returning to Java:");
+                Py.printException(e);
+            }
             //}
             throw e;
         }

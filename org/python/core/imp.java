@@ -42,7 +42,7 @@ public class imp {
     }
 
     private static PyObject createFromPyClass(String name, InputStream fp,
-					      boolean testing)
+                                              boolean testing)
     {
         byte[] data = readBytes(fp);
         int n = data.length;
@@ -53,7 +53,7 @@ public class imp {
                 return null;
             } else { 
                 throw Py.ImportError("invalid api version("+api+" != "+
-				     APIVersion+") in: "+name);
+                                     APIVersion+") in: "+name);
             }
         }
         //System.err.println("APIVersion: "+api);
@@ -73,7 +73,7 @@ public class imp {
     }
     
     public static byte[] compileSource(String name, File file, String filename,
-				       String outFilename)
+                                       String outFilename)
     {
         if (filename == null) {
             filename = file.toString();
@@ -81,7 +81,7 @@ public class imp {
         
         if (outFilename == null) {
             outFilename = filename.substring(0,filename.length()-3)+
-		"$py.class";
+                "$py.class";
         }
         
         return compileSource(name, makeStream(file), filename, outFilename);
@@ -91,19 +91,19 @@ public class imp {
         String outFilename = null;
         if (filename != null) {
             outFilename = filename.substring(0,filename.length()-3)+
-		"$py.class";
+                "$py.class";
         }
         return compileSource(name, fp, filename, outFilename);
     }
     
     static byte[] compileSource(String name, InputStream fp, String filename,
-				String outFilename)
+                                String outFilename)
     {
         try {
             ByteArrayOutputStream ofp = new ByteArrayOutputStream();
     
             if (filename == null)
-		filename = "<unknown>";
+                filename = "<unknown>";
             org.python.parser.SimpleNode node;
             try {
                 node = parser.parse(fp, "exec", filename);
@@ -131,7 +131,7 @@ public class imp {
     }
 
     private static PyObject createFromSource(String name, InputStream fp,
-					     String filename)
+                                             String filename)
     {
         byte[] bytes = compileSource(name, fp, filename);
         PyCode code = BytecodeLoader.makeCode(name+"$py", bytes);
@@ -152,7 +152,7 @@ public class imp {
 
     private static PyObject createFromClass(String name, InputStream fp) {
         return createFromClass(name,
-			       BytecodeLoader.makeClass(name, readBytes(fp)));
+                               BytecodeLoader.makeClass(name, readBytes(fp)));
     }
 
     private static PyObject createFromClass(String name, Class c) {
@@ -164,7 +164,7 @@ public class imp {
                 //System.err.println("is runnable");
                 try {
                     PyObject o = createFromCode(
-			name, ((PyRunnable)c.newInstance()).getMain());
+                        name, ((PyRunnable)c.newInstance()).getMain());
                     return o;
                 } catch (InstantiationException e) {
                     throw Py.JavaError(e);
@@ -177,9 +177,8 @@ public class imp {
     }
 
     private static PyObject loadBuiltin(String name, PyList path) {
-        if (name == "sys") {
+        if (name == "sys")
             return Py.java2py(Py.getSystemState());
-        }
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
             Class c = Py.findClass(mod);
@@ -198,7 +197,7 @@ public class imp {
     }
 
     private static PyObject loadPrecompiled(String name, String modName,
-					    PyList path)
+                                            PyList path)
     {
         //System.out.println("precomp: "+name+", "+modName);
         Class c = findPyClass(modName);
@@ -220,7 +219,7 @@ public class imp {
 
     static PyObject loadFromPath(String name, String modName, PyList path) {
         if (Py.frozen)
-	    return loadPrecompiled(name, modName, path);
+            return loadPrecompiled(name, modName, path);
 
         String pyName = name+".py";
         String className = name+"$py.class";
@@ -236,15 +235,15 @@ public class imp {
                 continue;
             }
 
-	    // The empty string translates into the current working
-	    // directory, which is usually provided on the system property
-	    // "user.dir".  Don't rely on File's constructor to provide
-	    // this correctly.
-	    if (dirName.length() == 0) {
-		String userdir = System.getProperty("user.dir");
-		if (userdir != null)
-		    dirName = userdir;
-	    }
+            // The empty string translates into the current working
+            // directory, which is usually provided on the system property
+            // "user.dir".  Don't rely on File's constructor to provide
+            // this correctly.
+            if (dirName.length() == 0) {
+                String userdir = System.getProperty("user.dir");
+                if (userdir != null)
+                    dirName = userdir;
+            }
 
             // First check for packages
             File dir = new File(dirName, name);
@@ -270,19 +269,19 @@ public class imp {
                     long classTime = classFile.lastModified();
                     if (classTime >= pyTime) {
                         PyObject ret = createFromPyClass(
-			    modName, makeStream(classFile), true);
+                            modName, makeStream(classFile), true);
                         if (ret != null)
-			    return ret;
+                            return ret;
                     }
                 }
                 return createFromSource(modName, makeStream(pyFile),
-					pyFile.getAbsolutePath());
+                                        pyFile.getAbsolutePath());
             }
 
             // If no source, try loading precompiled
             if (classFile.isFile()) {
                 return createFromPyClass(modName, makeStream(classFile),
-					 false);
+                                         false);
             }
                         
             File javaFile = new File(dirName, javaName);
@@ -291,7 +290,7 @@ public class imp {
                     return createFromClass(modName, makeStream(javaFile));
                 } catch (ClassFormatError exc) {
                     throw Py.ImportError("bad java class file in: "+
-					 javaFile.toString());
+                                         javaFile.toString());
                 }
             }                       
 
@@ -328,18 +327,18 @@ public class imp {
         if (ret != null) return ret;
 
         /* I don't think this is needed any more
-	   ClassLoader classLoader=null;
-	   if (!Py.frozen) classLoader = Py.getSystemState().getClassLoader();
-	   //System.out.println("load1: "+classLoader);
+           ClassLoader classLoader=null;
+           if (!Py.frozen) classLoader = Py.getSystemState().getClassLoader();
+           //System.out.println("load1: "+classLoader);
 
-	   if (classLoader != null) {
-	   try {
-	   ret = loadFromClassLoader(name, classLoader);
-	   if (ret != null) return ret;
-	   } catch (Throwable t) {
-	   t.printStackTrace(System.err);
-	   }
-	   }
+           if (classLoader != null) {
+           try {
+           ret = loadFromClassLoader(name, classLoader);
+           if (ret != null) return ret;
+           } catch (Throwable t) {
+           t.printStackTrace(System.err);
+           }
+           }
         */
         //System.out.println("load2: ");
 
@@ -373,13 +372,13 @@ public class imp {
 
     public static PyObject importName(String name, boolean top) {
         int dot = name.indexOf('.');
-	if (name.length() == 0)
-	    throw Py.ValueError("Empty module name");
-	else if (dot != -1) {
+        if (name.length() == 0)
+            throw Py.ValueError("Empty module name");
+        else if (dot != -1) {
             PyObject modules = Py.getSystemState().modules;             
             PyObject mod = modules.__finditem__(name);
             if (mod != null && !top)
-		return mod;
+                return mod;
 
             int last_dot = dot;
             String firstName = name.substring(0,dot).intern();
@@ -392,21 +391,21 @@ public class imp {
                     dot = name.indexOf('.', last_dot+1);
                     if (dot == -1) {
                         tmpName = name.substring(last_dot+1,
-						 name.length()).intern();
+                                                 name.length()).intern();
                     } else {
                         tmpName = name.substring(last_dot+1, dot).intern();
-		    }
+                    }
                     mod = mod.__getattr__(tmpName);
                     last_dot = dot;
                 }
             }
             modules.__setitem__(name, mod);
             if (top)
-		return pkg;
+                return pkg;
             else
-		return mod;
+                return mod;
         }
-	else return load(name);
+        else return load(name);
     }
 
     private static String getParent(PyObject dict) {
@@ -425,7 +424,7 @@ public class imp {
     }
 
     public synchronized static PyObject importName(String name, boolean top,
-						   PyObject modDict)
+                                                   PyObject modDict)
     {
         //System.err.println("importName: "+name);
         String pkgName = getParent(modDict);
@@ -469,7 +468,7 @@ public class imp {
     }   
 
     private static void loadNames(PyObject names, PyObject module,
-				  PyObject locals)
+                                  PyObject locals)
     {
         int i=0;
         PyObject name;
@@ -525,7 +524,7 @@ public class imp {
 
         if (!nm.__getattr__("__name__").toString().equals(name)) {
             throw Py.ImportError("reload(): module "+name+
-				 " not in sys.modules");
+                                 " not in sys.modules");
         }
 
         PyList path = Py.getSystemState().path;

@@ -40,8 +40,8 @@ public class ThreadState {
         thread = t;
         // Fake multiple interpreter states for now
         /*if (Py.interp == null) {
-	  Py.interp = InterpreterState.getInterpreterState();
-	  }*/
+          Py.interp = InterpreterState.getInterpreterState();
+          }*/
         this.systemState = systemState;
         //interp = Py.interp;
         tracing = false;
@@ -57,7 +57,7 @@ public class ThreadState {
         }
         for(int i=reprStack.length-1; i>=0; i--) {
             if (obj == reprStack.get(i))
-		return false;
+                return false;
         }
         reprStack.append(obj);
         return true;
@@ -65,12 +65,12 @@ public class ThreadState {
     
     public void exitRepr(PyObject obj) {
         if (reprStack == null)
-	    return;
+            return;
 
-	for (int i = reprStack.length-1; i>=0; i--) {
-	    if (reprStack.get(i) == obj) {
-		reprStack.delRange(i, reprStack.length, 1);
-	    }
-	}
+        for (int i = reprStack.length-1; i>=0; i--) {
+            if (reprStack.get(i) == obj) {
+                reprStack.delRange(i, reprStack.length, 1);
+            }
+        }
     }
 }

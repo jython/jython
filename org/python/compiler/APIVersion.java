@@ -13,8 +13,8 @@ public class APIVersion extends Attribute {
     }
 
     public void write(DataOutputStream stream) throws IOException {
-	stream.writeShort(attName);
-	stream.writeInt(4);
-	stream.writeInt(version);
+        stream.writeShort(attName);
+        stream.writeInt(4);
+        stream.writeInt(version);
     }
 }

@@ -10,7 +10,7 @@ public class PyBuiltinFunctionSet extends PyObject {
     public PyBuiltinFunctionSet() {; }
 
     public PyBuiltinFunctionSet(String name, int index,
-				int minargs, int maxargs)
+                                int minargs, int maxargs)
     {
         this.name = name;
         this.index = index;
@@ -23,17 +23,17 @@ public class PyBuiltinFunctionSet extends PyObject {
         return init(name, index, nargs, nargs, false);
     }
     public PyBuiltinFunctionSet init(String name, int index, int nargs,
-				     boolean isMethod)
+                                     boolean isMethod)
     {
         return init(name, index, nargs, nargs, isMethod);
     }
     public PyBuiltinFunctionSet init(String name, int index, int minargs,
-				     int maxargs)
+                                     int maxargs)
     {
         return init(name, index, minargs, maxargs, false);
     }
     public PyBuiltinFunctionSet init(String name, int index, int minargs,
-				     int maxargs, boolean isMethod)
+                                     int maxargs, boolean isMethod)
     {
         this.name = name;
         this.index = index;
@@ -45,11 +45,11 @@ public class PyBuiltinFunctionSet extends PyObject {
     
     public PyObject _doget(PyObject container) {
         if (isMethod)
-	    return new PyMethod(container, this);
+            return new PyMethod(container, this);
         else
-	    return this;
+            return this;
     }
-	
+        
     public String toString() {
         if (isMethod) {
             return "<builtin method '"+name+"'>";            
@@ -61,10 +61,10 @@ public class PyBuiltinFunctionSet extends PyObject {
     public PyException argCountError(int nargs) {
         if (minargs == maxargs) {
             return Py.TypeError(name+"(): expected "+minargs+" args; got "+
-				nargs);
+                                nargs);
         } else {
             return Py.TypeError(name+"(): expected "+minargs+"-"+maxargs+
-				" args; got "+nargs);
+                                " args; got "+nargs);
         }
     }
 
@@ -78,18 +78,18 @@ public class PyBuiltinFunctionSet extends PyObject {
             throw argCountError(nargs);
         }
         switch (nargs) {
-	case 0:
-	    return __call__();
-	case 1:
-	    return __call__(args[0]);
-	case 2:
-	    return __call__(args[0], args[1]);
-	case 3:
-	    return __call__(args[0], args[1], args[2]);
-	case 4:
-	    return __call__(args[0], args[1], args[2], args[3]);
-	default:
-	    return fancyCall(args);
+        case 0:
+            return __call__();
+        case 1:
+            return __call__(args[0]);
+        case 2:
+            return __call__(args[0], args[1]);
+        case 3:
+            return __call__(args[0], args[1], args[2]);
+        case 4:
+            return __call__(args[0], args[1], args[2], args[3]);
+        default:
+            return fancyCall(args);
         }
     }
 
@@ -110,7 +110,7 @@ public class PyBuiltinFunctionSet extends PyObject {
     }    
     
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3,
-			     PyObject arg4)
+                             PyObject arg4)
     {
         throw argCountError(4);
     }

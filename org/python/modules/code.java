@@ -13,7 +13,7 @@ public class code {
     }
     
     public static PyObject compile_command(String string, String filename,
-					   String kind)
+                                           String kind)
     {
         return codeop.compile_command(string, filename, kind);
     }

@@ -37,11 +37,11 @@ public class PyJavaDirPackage extends PyObject {
 
         PyObject ret = __dict__.__finditem__(name);
         if (ret != null)
-	    return ret;
+            return ret;
 
         String attrName = name;
         if (__name__.length() > 0)
-	    attrName = __name__+'.'+name;
+            attrName = __name__+'.'+name;
 
         // Search the searchPath for this name
         PyObject item;
@@ -52,7 +52,7 @@ public class PyJavaDirPackage extends PyObject {
             //System.err.println("test: "+testdir+", "+testdir.is);
             if (testdir.isDirectory()) {
                 if (subPath == null)
-		    subPath = new PyList();
+                    subPath = new PyList();
                 subPath.append(new PyString(testdir.getPath()));
             }
             // Maybe check for name.class here?            

@@ -12,16 +12,16 @@ public class PyJavaInstance
     }
 
     public PyJavaInstance(PyJavaClass iclass) {
-	super(iclass, null);
+        super(iclass, null);
     }
-	
+        
     public PyJavaInstance(Object proxy) {
-	super(PyJavaClass.lookup(proxy.getClass()), null);
-	javaProxy = proxy;
+        super(PyJavaClass.lookup(proxy.getClass()), null);
+        javaProxy = proxy;
     }
 
     public void readExternal(java.io.ObjectInput in)
-	throws java.io.IOException, ClassNotFoundException
+        throws java.io.IOException, ClassNotFoundException
     {
         Object o = in.readObject();
         javaProxy = o;
@@ -30,7 +30,7 @@ public class PyJavaInstance
 
 
     public void writeExternal(java.io.ObjectOutput out)
-	throws java.io.IOException
+        throws java.io.IOException
     {
         //System.out.println("writing java instance");
         out.writeObject(javaProxy);
@@ -38,35 +38,35 @@ public class PyJavaInstance
 
 
     public void __init__(PyObject[] args, String[] keywords) {
-	PyReflectedConstructor init = ((PyJavaClass)__class__).__init__;
-	//javaProxies = new Object[1];
-	if (init == null) {
-	    Class pc = __class__.proxyClass;
-	    if (pc != null) {
-		int mods = pc.getModifiers();
-		if (Modifier.isInterface(mods)) {
-		    throw Py.TypeError("can't instantiate interface ("+
-				       __class__.__name__+")");
-		}
-		else if (Modifier.isAbstract(mods)) {
-		    throw Py.TypeError("can't instantiate abstract class ("+
-				       __class__.__name__+")");
-		} 
-	    }
-	    throw Py.TypeError("no public constructors for "+
-			       __class__.__name__);
-	}
-	init.__call__(this, args, keywords);
+        PyReflectedConstructor init = ((PyJavaClass)__class__).__init__;
+        //javaProxies = new Object[1];
+        if (init == null) {
+            Class pc = __class__.proxyClass;
+            if (pc != null) {
+                int mods = pc.getModifiers();
+                if (Modifier.isInterface(mods)) {
+                    throw Py.TypeError("can't instantiate interface ("+
+                                       __class__.__name__+")");
+                }
+                else if (Modifier.isAbstract(mods)) {
+                    throw Py.TypeError("can't instantiate abstract class ("+
+                                       __class__.__name__+")");
+                } 
+            }
+            throw Py.TypeError("no public constructors for "+
+                               __class__.__name__);
+        }
+        init.__call__(this, args, keywords);
     }
 
     protected void noField(String name, PyObject value) {
-	throw Py.TypeError("can't set arbitrary attribute in java instance: "+
-			   name);
+        throw Py.TypeError("can't set arbitrary attribute in java instance: "+
+                           name);
     }
     
     protected void unassignableField(String name, PyObject value) {
-	throw Py.TypeError("can't assign to this attribute in java instance: "+
-			   name);
+        throw Py.TypeError("can't assign to this attribute in java instance: "+
+                           name);
     }
 
     public int hashCode() {
@@ -78,23 +78,23 @@ public class PyJavaInstance
     }
     
     public PyObject _is(PyObject o) {
-	if (o instanceof PyJavaInstance) {
-	    return javaProxy == ((PyJavaInstance)o).javaProxy
-		? Py.One : Py.Zero;
-	}
-	return Py.Zero;
+        if (o instanceof PyJavaInstance) {
+            return javaProxy == ((PyJavaInstance)o).javaProxy
+                ? Py.One : Py.Zero;
+        }
+        return Py.Zero;
     }
-	
+        
     public PyObject _isnot(PyObject o) {
-	return _is(o).__not__();
+        return _is(o).__not__();
     }
     
     public int __cmp__(PyObject o) {
         if (!(o instanceof PyJavaInstance))
-	    return -2;
+            return -2;
         PyJavaInstance i = (PyJavaInstance)o;
         if (javaProxy.equals(i.javaProxy))
-	    return 0;
+            return 0;
         return -2;
     }
 
@@ -107,6 +107,6 @@ public class PyJavaInstance
     }
 
     public void __delattr__(String attr) {
-	throw Py.TypeError("can't delete attr from java instance: "+attr);
+        throw Py.TypeError("can't delete attr from java instance: "+attr);
     }
 }

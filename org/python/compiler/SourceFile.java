@@ -13,8 +13,8 @@ public class SourceFile extends Attribute {
     }
 
     public void write(DataOutputStream stream) throws IOException {
-	stream.writeShort(attName);
-	stream.writeInt(2);
-	stream.writeShort(filename);
+        stream.writeShort(attName);
+        stream.writeInt(2);
+        stream.writeShort(filename);
     }
 }

@@ -103,13 +103,13 @@ public class StdoutWrapper extends OutputStream {
             PyFile file = (PyFile)obj;
             String s = string.toString();
             if (newline)
-		s = s+"\n";
+                s = s+"\n";
             if (file.softspace)
-		s = " "+s;
+                s = " "+s;
             file.write(s);
             file.flush();
             if (space && s.endsWith("\n"))
-		space = false;
+                space = false;
             file.softspace = space;
         } else {
             PyObject ss = obj.__findattr__("softspace");
@@ -118,11 +118,11 @@ public class StdoutWrapper extends OutputStream {
             }
             obj.invoke("write", string);
             if (newline)
-		obj.invoke("write", Py.Newline);
-// 	    obj.invoke("flush");
+                obj.invoke("write", Py.Newline);
+//          obj.invoke("flush");
 
             if (space && string.toString().endsWith("\n"))
-		space = false;
+                space = false;
             obj.__setattr__("softspace", space ? Py.One : Py.Zero);
         }
     }

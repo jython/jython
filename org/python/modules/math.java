@@ -11,9 +11,9 @@ public class math {
 
     private static double check(double v) {
         if (Double.isNaN(v))
-	    throw Py.ValueError("math domain error");
+            throw Py.ValueError("math domain error");
         if (Double.isInfinite(v))
-	    throw Py.OverflowError("math range error");
+            throw Py.OverflowError("math range error");
         return v;
     }
 

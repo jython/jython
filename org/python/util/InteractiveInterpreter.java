@@ -6,7 +6,7 @@ import org.python.core.*;
 
 public class InteractiveInterpreter extends PythonInterpreter {
     public InteractiveInterpreter() {
-	super();
+        super();
     }
     public InteractiveInterpreter(PyObject locals) {
         super(locals);
@@ -46,7 +46,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
         PyObject code;
         try {
             code = org.python.modules.codeop.compile_command(
-		source, filename, symbol);
+                source, filename, symbol);
         } catch (PyException exc) {
             if (Py.matchException(exc, Py.SyntaxError)) {
                 // Case 1
@@ -58,7 +58,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
         }
         // Case 2
         if (code == Py.None)
-	    return true;
+            return true;
         // Case 3
         runcode(code);
         return false;
@@ -125,22 +125,22 @@ class BreakTraceFunction extends TraceFunction {
     }
 
     public TraceFunction traceCall(PyFrame frame) {
-	doBreak();
-	return null;
+        doBreak();
+        return null;
     }
 
     public TraceFunction traceReturn(PyFrame frame, PyObject ret) {
-	doBreak();
-	return null;
+        doBreak();
+        return null;
     }
 
     public TraceFunction traceLine(PyFrame frame, int line) {
-	doBreak();
-	return null;
+        doBreak();
+        return null;
     }
 
     public TraceFunction traceException(PyFrame frame, PyException exc) {
-	doBreak();
-	return null;
+        doBreak();
+        return null;
     }
 }

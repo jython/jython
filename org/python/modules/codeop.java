@@ -13,13 +13,13 @@ public class codeop {
     }
 
     public static PyObject compile_command(String string, String filename,
-					   String kind)
+                                           String kind)
     {
         org.python.parser.SimpleNode node =
-	    parser.partialParse(string+"\n", kind, filename);
+            parser.partialParse(string+"\n", kind, filename);
 
         if (node == null)
-	    return Py.None;
+            return Py.None;
         return Py.compile(node, Py.getName(), filename, true, true);
     }
 }

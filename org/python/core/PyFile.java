@@ -55,16 +55,16 @@ public class PyFile extends PyObject
             byte buf[] = new byte[n];
             n = istream.read(buf);
             if (n < 0)
-		n = 0;
+                n = 0;
             return new String(buf, 0, 0, n);
         }
 
         public int read() throws java.io.IOException {
-	    return istream.read();
+            return istream.read();
         }
 
         public int available() throws java.io.IOException {
-	    return istream.available();
+            return istream.available();
         }
 
         public void unread(int c) throws java.io.IOException {
@@ -168,7 +168,7 @@ public class PyFile extends PyObject
             byte[] buf = new byte[n];
             n = file.read(buf);
             if (n < 0)
-		n = 0;
+                n = 0;
             return new String(buf, 0, 0, n);
         }
 
@@ -420,7 +420,7 @@ public class PyFile extends PyObject
             java.io.RandomAccessFile rfile =
                 new java.io.RandomAccessFile(f, jmode);
             if (c1 == 'a')
-		rfile.seek(rfile.length());
+                rfile.seek(rfile.length());
             RFileWrapper iofile = new RFileWrapper(rfile);
             return iofile;
         } catch (java.io.IOException e) {
