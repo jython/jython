@@ -53,6 +53,9 @@ public class PyFile extends PyObject
         }
         public void close() throws java.io.IOException {
         }
+        public void truncate(long position) throws java.io.IOException {
+            throw new java.io.IOException("file doens't support truncate");
+        }
 
         public Object __tojava__(Class cls) throws IOException {
             return null;
@@ -471,6 +474,11 @@ public class PyFile extends PyObject
             file.close();
         }
 
+        public void truncate(long position) throws java.io.IOException {
+            flush();
+            file.setLength(position);
+        }
+
         public Object __tojava__(Class cls) throws IOException {
             if (OutputStream.class.isAssignableFrom(cls) && writing)
                 return new FileOutputStream(file.getFD());
@@ -562,6 +570,10 @@ public class PyFile extends PyObject
 
         public void close() throws java.io.IOException {
             file.close();
+        }
+
+        public void truncate(long position) throws java.io.IOException {
+            file.truncate(position);
         }
 
         public Object __tojava__(Class cls) throws IOException {
@@ -867,6 +879,23 @@ public class PyFile extends PyObject
         closed = true;
         file = new FileWrapper();
     }
+
+     public void truncate() {
+          try {
+              file.truncate(file.tell());
+          } catch (java.io.IOException e) {
+              throw Py.IOError(e);
+          }
+     }
+
+     public void truncate(long position) {
+         try {
+              file.truncate(position);
+         } catch (java.io.IOException e) {
+              throw Py.IOError(e);
+         }
+     }
+
 
     // TBD: should this be removed?  I think it's better to raise an
     // AttributeError than an IOError here.
