@@ -305,6 +305,7 @@ def _getOsType( os=None ):
         ( "nt", r"(nt)|(Windows NT)|(Windows NT 4.0)|(WindowsNT)|"
                 r"(Windows 2000)|(Windows XP)|(Windows CE)" ),
         ( "dos", r"(dos)|(Windows 95)|(Windows 98)|(Windows ME)" ),
+        ( "os2", r"(OS/2)" ),
         ( "mac", r"(mac)|(MacOS.*)|(Darwin)" ),
         ( "None", r"(None)" ),
         ( "posix", r"(.*)" ), # default - posix seems to vary mast widely
@@ -332,7 +333,7 @@ _envCmd = None
 _envTransform = None
 
 # override defaults based on _osType
-if _osType == "nt":
+if (_osType == "nt") or (_osType == "os2"):
     _shellCmd = ["cmd", "/c"]
     _envCmd = "set"
     _envTransform = string.upper
@@ -369,6 +370,7 @@ def _testGetOsType():
         "MacOS": "mac",
         "Solaris": "posix",
         "Linux": "posix",
+        "OS/2": "os2",
         "None": "None"
         }
 
