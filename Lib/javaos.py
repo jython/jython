@@ -62,5 +62,5 @@ def stat(path):
     # is zero sized or does not exist.
     if size == 0 and not f.exists():
         raise OSError(0, 'No such file or directory', path)
-    mtime = f.lastModified()
+    mtime = f.lastModified() / 1000.0
     return (0, 0, 0, 0, 0, 0, size, mtime, mtime, 0)
