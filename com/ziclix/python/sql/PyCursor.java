@@ -427,6 +427,8 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       if (maxRows != Py.None) {
         stmt.statement.setMaxRows(maxRows.__int__().getValue());
       }
+    } catch (AbstractMethodError e) {
+      throw zxJDBC.makeException(zxJDBC.NotSupportedError, zxJDBC.getString("nodynamiccursors"));
     } catch (PyException e) {
       throw e;
     } catch (Throwable e) {
