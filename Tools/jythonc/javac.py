@@ -24,7 +24,8 @@ def getClasspath():
     cpath = System.getProperty("java.class.path")
     return cpath
 
-def compile(files, javac=None, cpathopt="-classpath", cpath=None, options=[]):
+def compile(files, javac=None, cpathopt="-classpath",
+            cpath=None, options=None):
     cmd = []
     # Search order for a Java compiler:
     #   1. -C/--compiler command line option
@@ -32,21 +33,26 @@ def compile(files, javac=None, cpathopt="-classpath", cpath=None, options=[]):
     #   3. guess a path to javac
     if javac is None:
         javac = sys.registry.getProperty("python.jpythonc.compiler")
-        # in case there are arguments on the property
-        if javac:
-            cmd.extend(javac.split())
     if javac is None:
         javac = findDefaultJavac()
-        cmd.append(javac)
+    cmd.append(javac)
+    # Extra options
+    #   1. -J/--compileropts command line option (passed in options)
+    #   2. python.jpythonc.compileropts property
+    if options is None:
+        options = sys.registry.getProperty("python.jpythonc.compileropts")
+        options = options.split()
+    if options is None:
+        options = []
+    cmd.extend(options)
     # Classpath:
-    #   1. python.jpythonc.classpath property (see registry)
+    #   1. python.jpythonc.classpath property
     #   2. java.class.path property
     if cpath is None:
         cpath = sys.registry.getProperty("python.jpythonc.classpath")
     if cpath is None:
         cpath = getClasspath()
     cmd.extend([cpathopt, cpath])
-    cmd.extend(options)
     cmd.extend(files)
     print 'Compiling with args:', cmd
 
