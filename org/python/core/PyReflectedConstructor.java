@@ -114,17 +114,28 @@ public class PyReflectedConstructor extends PyReflectedFunction {
 
         // Do the actual constructor call
 	Object jself;
+	ThreadState ts = Py.getThreadState();
 	try {
-	    ThreadState ts = Py.getThreadState();
+	    ts.pushInitializingProxy(iself);
+	    Constructor ctor = (Constructor)method;
 	    try {
-		ts.pushInitializingProxy(iself);
-		jself = ((Constructor)method).newInstance(callData.getArgsArray());
-	    } finally {
-		ts.popInitializingProxy();
+		jself = ctor.newInstance(callData.getArgsArray());
 	    }
-	} catch (Throwable t) {
-	    throw Py.JavaError(t);
+	    catch (InvocationTargetException e) {
+		Class sup = iself.__class__.proxyClass.getSuperclass();
+		String msg = "Constructor failed for Java superclass";
+		if (sup != null)
+		    msg += " " + sup.getName();
+		throw Py.TypeError(msg);
+	    }
+	    catch (Throwable t) {
+		throw Py.JavaError(t);
+	    }
 	}
+	finally {
+	    ts.popInitializingProxy();
+	}
+
 	iself.javaProxy = jself;
 
 	// Do setattr's for keyword args
