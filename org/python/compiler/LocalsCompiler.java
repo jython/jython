@@ -74,6 +74,10 @@ public class LocalsCompiler extends Visitor
         return null;
     }
 
+    public Object print_ext(SimpleNode node) throws Exception {
+        return null;
+    }
+
     public Object print_stmt(SimpleNode node) throws Exception {
         return null;
     }
