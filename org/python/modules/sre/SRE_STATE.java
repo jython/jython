@@ -308,6 +308,7 @@ public class SRE_STATE {
             switch (set[setidx++]) {
 
             case SRE_OP_LITERAL:
+                //TRACE(setidx, ch, "CHARSET LITERAL " + (int) set[setidx]);
                 /* <LITERAL> <code> */
                 if (ch == set[setidx])
                     return ok;
@@ -316,12 +317,14 @@ public class SRE_STATE {
 
             case SRE_OP_RANGE:
                 /* <RANGE> <lower> <upper> */
+                //TRACE(setidx, ch, "CHARSET RANGE " + (int) set[setidx] + " " + (int) set[setidx+1]);
                 if (set[setidx] <= ch && ch <= set[setidx+1])
                     return ok;
                 setidx += 2;
                 break;
 
             case SRE_OP_CHARSET:
+                //TRACE(setidx, ch, "CHARSET CHARSET ");
                 /* <CHARSET> <bitmap> (16 bits per code word) */
                 if (ch < 256 &&
                             (set[setidx + (ch >> 4)] & (1 << (ch & 15))) != 0)
@@ -331,8 +334,10 @@ public class SRE_STATE {
 
             case SRE_OP_BIGCHARSET:
                 /* <BIGCHARSET> <blockcount> <256 blockindices> <blocks> */
+                //TRACE(setidx, ch, "CHARSET BIGCHARSET ");
                 int count = set[setidx++];
-                int block = set[ch >> 8];
+                int shift = ((ch >> 8) & 1) == 0 ? 8 : 0;
+                int block = (set[setidx + (ch >> 8) / 2] >> shift) & 0xFF;
                 setidx += 128;
                 int idx = block*16 + ((ch & 255)>>4);
                 if ((set[setidx + idx] & (1 << (ch & 15))) != 0)
@@ -342,16 +347,19 @@ public class SRE_STATE {
 
             case SRE_OP_CATEGORY:
                 /* <CATEGORY> <code> */
+                //TRACE(setidx, ch, "CHARSET CHARSET " + (int) set[setidx]);
                 if (sre_category(set[setidx], ch))
                     return ok;
                 setidx++;
                 break;
 
             case SRE_OP_NEGATE:
+                //TRACE(setidx, ch, "CHARSET NEGATE");
                 ok = !ok;
                 break;
 
             case SRE_OP_FAILURE:
+                //TRACE(setidx, ch, "CHARSET FAILURE");
                 return !ok;
 
             default:
