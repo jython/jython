@@ -2224,7 +2224,10 @@ final class StringFormatter
                 break;
 
             default:
-                throw Py.ValueError("unsupported format character '"+c+"'");
+                throw Py.ValueError("unsupported format character '" +
+                         codecs.encode(Py.newString(c), null, "replace") +
+                         "' (0x" + Integer.toHexString(c) + ") at index " +
+                         (index-1));
             }
             int length = string.length();
             int skip = 0;
