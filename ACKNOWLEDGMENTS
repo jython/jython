@@ -12,8 +12,7 @@ Copyright © Corporation for National Research Initiatives
     jython-users@lists.sourceforge.net.
 
     Finn Bock has been a frequent and valuable contributor to the
-    JPython-interest@python.org mailing list, and has provided bug
-    fixes and these important modules:
+    Jython, and has provided bug fixes and these important modules:
 
         cPickle.java
         cStringIO.java
@@ -25,11 +24,12 @@ Copyright © Corporation for National Research Initiatives
     The SHA1 implementation is taken from cryptix.
 
     Samuele Pedroni have designed and implemented the improved 
-    PackageManagers and fixed a lot of bugs.
+    PackageManagers and java reload support and also fixed a lot 
+    of bugs.
 
-    A huge thanks goes to all the members of the jpython-interest
-    mailing list.  Other folks who have contributed to JPython in ways
-    large and small, in no particular order:
+    A huge thanks goes to all the members of the jpython/jython
+    mailing lists.  Other folks who have contributed to JPython and 
+    Jython in ways large and small, in no particular order:
 
     Greg Ward
     Tony Plate
@@ -41,6 +41,8 @@ Copyright © Corporation for National Research Initiatives
     Tim Hochberg
     Bernhard Bablok
     Dj Walker-Morgan
+    Brian Zimmer
+    Ivan Kougaenko
 
 
 Local Variables:
