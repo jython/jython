@@ -51,10 +51,12 @@ class DictFuncs extends PyBuiltinFunctionSet
             return dict.get(arg);
         case 14:
             if (arg instanceof PyDictionary) {
-                dict.update((PyDictionary)arg);
+                dict.update((PyDictionary) arg);
                 return Py.None;
-            }
-            else
+            } else if (arg instanceof PyStringMap) {
+                dict.update((PyStringMap) arg);
+                return Py.None;
+            } else
                 throw Py.TypeError("dictionary expected, got " +
                                    arg.safeRepr());
         default:
