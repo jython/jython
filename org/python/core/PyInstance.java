@@ -204,12 +204,10 @@ public class PyInstance extends PyObject {
         PyObject result = ifindlocal(name);
         if (result != null)
             return result;
-        result = ifindclass(name, stopAtJava);
-        if (result != null) {
-            PyObject gotten = result._doget(this);
-            gotten._setClass(__class__);
-            return gotten;
-        }
+        // it wasn't found in the instance, try the class
+        PyObject[] result2 = __class__.lookupGivingClass(name, stopAtJava);
+        if (result2[0] != null)
+            return result2[0]._doget(this, result2[1]);
         return ifindfunction(name);
     }
     
