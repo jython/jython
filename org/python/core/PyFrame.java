@@ -25,6 +25,14 @@ public class PyFrame extends PyObject {
 		}
 	}
 
+    public String toString() {
+        if (f_code == null) {
+            return "<frame (unknown code) at line "+f_lineno+">";
+        } else {
+            return "<frame in \""+f_code.co_name+"\" at line "+f_lineno+">";
+        }
+    }
+
 	public PyObject __findattr__(String name) {
         if (name == "f_locals") return getf_locals();
 		return super.__findattr__(name);
