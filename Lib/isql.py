@@ -9,6 +9,8 @@ for database work.
 
 __version__ = "$Revision$"[11:-2]
 
+class IsqlExit(Exception): pass
+
 class Prompt:
 	"""
 	This class fixes a problem with the cmd.Cmd class since it uses an ivar 'prompt'
@@ -62,17 +64,17 @@ class IsqlCmd(cmd.Cmd):
 	def do_table(self, arg):
 		"""\nPrints table meta-data.  If no table name, prints all tables.\n"""
 		if len(arg.strip()):
-			apply(self.db.table, (arg,), self.kw)
+			self.db.table(arg, **self.kw)
 		else:
-			apply(self.db.table, (None,), self.kw)
+			self.db.table(None, **self.kw)
 		return None
 
 	def do_proc(self, arg):
 		"""\nPrints store procedure meta-data.\n"""
 		if len(arg.strip()):
-			apply(self.db.proc, (arg,), self.kw)
+			self.db.proc(arg, **self.kw)
 		else:
-			apply(self.db.proc, (None,), self.kw)
+			self.db.proc(None, **self.kw)
 		return None
 
 	def do_schema(self, arg):
@@ -94,6 +96,15 @@ class IsqlCmd(cmd.Cmd):
 
 	def do_set(self, arg):
 		"""\nSet a parameter. Some examples:\n set owner = 'informix'\n set types = ['VIEW', 'TABLE']\nThe right hand side is evaluated using `eval()`\n"""
+		if len(arg.strip()) == 0:
+			items = self.kw.items()
+			if len(items):
+				print
+				# format the results but don't include how many rows affected
+				for a in dbexts.console(items, ("key", "value"))[:-1]:
+					print a
+				print
+			return None
 		d = filter(lambda x: len(x) > 0, map(lambda x: x.strip(), arg.split("=")))
 		if len(d) == 1:
 			if self.kw.has_key(d[0]):
@@ -111,8 +122,15 @@ class IsqlCmd(cmd.Cmd):
 					# now add all up to the delimiter
 					self.sqlbuffer.append(token[:-1 * len(self.delimiter)])
 					if self.sqlbuffer:
-						self.db.isql(" ".join(self.sqlbuffer))
+						self.db.isql(" ".join(self.sqlbuffer), **self.kw)
 						self.sqlbuffer = []
+						if self.db.updatecount:
+							print
+							if self.db.updatecount == 1:
+								print "1 row affected"
+							else:
+								print "%d rows affected" % (self.db.updatecount)
+							print
 						return None
 			if token:
 				self.sqlbuffer.append(token)
@@ -123,6 +141,9 @@ class IsqlCmd(cmd.Cmd):
 
 	def emptyline(self):
 		return None
+
+	def postloop(self):
+		raise IsqlExit()
 
 if __name__ == '__main__':
 	import getopt
@@ -142,4 +163,14 @@ if __name__ == '__main__':
 
 	intro = "\nisql - interactive sql (%s)\n" % (__version__)
 
-	IsqlCmd(dbname).cmdloop(intro)
+	isql = IsqlCmd(dbname)
+	while 1:
+		try:
+			isql.cmdloop(intro)
+		except IsqlExit, e:
+			break
+		except Exception, e:
+			print
+			print e
+			print
+		intro = ""
