@@ -61,6 +61,8 @@ class JavaProxy:
 		self.modname = "foo"
 
 		self.modifier = "public"
+		self.initsigs = None
+		
 
 		self.package = None
 		self.module = module
@@ -69,8 +71,8 @@ class JavaProxy:
 			self.properties = module.getProperties()
 			self.specialClasses = module.getSpecialClasses()
 			self.modname = module.name
-			if module.package is not None:
-				self.modname = module.package+'.'+self.modname
+			#if module.package is not None:
+			#	self.modname = module.package+'.'+self.modname
 
 		self.isAdapter = 0
 		self.frozen = 1
@@ -108,10 +110,16 @@ class JavaProxy:
 		names = self.jmethods.keys()
 		names.sort()
 		#print 'adding methods', self.name, names
-		for name, args, sig in self.methods:
+		for name, args, sigs in self.methods:
 			#print name, args, sig
-			if sig is not None:
-				self.callMethod(name, sig[0], sig[1], sig[2], 0)
+			if sigs is not None:
+				if name == "__init__":
+					self.initsigs = sigs
+					continue
+					
+				#print sigs
+				for access, ret, sig in sigs:
+					self.callMethod(name, access, ret, sig, 0)
 				continue
 				
 			if not self.jmethods.has_key(name): continue
@@ -123,8 +131,13 @@ class JavaProxy:
 			sigs = self.jmethods[name]
 
 	def dumpConstructors(self):
-		for access, sig in self.jconstructors:
-			self.callConstructor(access, sig)
+		if self.initsigs is not None:
+			#print self.initsigs
+			for access, ret, sig in self.initsigs:
+				self.callConstructor(access, sig, 0)
+		else:
+			for access, sig in self.jconstructors:
+				self.callConstructor(access, sig, 1)
 
 
 	def cleanMethods(self):
@@ -238,12 +251,16 @@ class JavaProxy:
 			
 		self.statements.append(meth)
 		
-	def callConstructor(self, access, sig):
+	def callConstructor(self, access, sig, dosuper=1):
 		args = []
 		argids = []
 		objects = []
 		for c in sig:
-			argname = "arg"+str(len(argids))
+			if isinstance(c, TupleType):
+				argname = c[1]
+				c = c[0]
+			else:
+				argname = "arg"+str(len(argids))
 			args.append( (c.__name__, argname) )
 			argid = jast.Identifier(argname)
 			argids.append(argid)
@@ -254,7 +271,15 @@ class JavaProxy:
 		stmts = []
 		this = jast.Identifier("this")
 	
-		supercall = jast.InvokeLocal("super", argids)
+		if dosuper:
+			supercall = jast.InvokeLocal("super", argids)
+		else:
+			for saccess, ssig in self.jconstructors:
+				if len(ssig) == len(sig):
+					supercall = jast.InvokeLocal("super", argids)
+					break
+			else:
+				supercall = jast.InvokeLocal("super", [])
 
 		#specialClasses = jast.StringArray(self.specialClasses)
 		frozen = self.module.getFrozen()

@@ -190,15 +190,18 @@ defaultProps = {
 
 
 class PythonModule:
-	def addjavaclass(self, name):
+	def getclassname(self, name):
 		if self.package is not None:
-			name = self.package + '.' + name
-		self.javaclasses.append(name)
+			return self.package + '.' + name
+		return name
+				
+	def addjavaclass(self, name):
+		self.javaclasses.append(self.getclassname(name))
 
 	def addinnerclass(self, name):
 		self.addjavaclass(self.name+'$'+name)
 
-	def __init__(self, name, filename="<unknown>", packages = [], properties=defaultProps):
+	def __init__(self, name, filename="<unknown>", packages = [], properties=defaultProps, frozen=1):
 		package = None
 		dot = name.rfind('.')
 		if dot != -1:
@@ -227,17 +230,24 @@ class PythonModule:
 		self.modifier = "public"
 
 		self.pyinner = PythonInner(self)
+
+		if frozen:
+			self.innerClasses.append(self.pyinner)
+
+		self.frozen = frozen	
 		self.javaproxy = None
-		self.frozen = 1
 		
 		self.javaclasses = []
 		self.addjavaclass(self.name)
 		
 	def getFrozen(self):
 		if self.frozen:
-			return jast.True
+			if self.package is None:
+				return jast.StringConstant("")
+			else:
+				return jast.StringConstant(self.package)
 		else:
-			return jast.False
+			return jast.Null
 
 
 	def addAttribute(self, name, value):
@@ -301,9 +311,10 @@ class PythonModule:
 	def dumpMain(self):
 		meths = []
 		if self.javamain:
-			args = [jast.StringConstant(self.name+'$'+self.pyinner.name), 
+			args = [jast.StringConstant(self.getclassname(self.name+'$'+self.pyinner.name)), 
 					jast.Identifier('args'), 
-					self.getPackages(), self.getProperties(), self.getFrozen()]
+					self.getPackages(), self.getProperties(), 
+					self.getSpecialClasses(), self.getFrozen()]
 			maincode = jast.Block([jast.InvokeStatic("Py", "runMain", args)])
 			meths.append(jast.Method("main", "public static", 
 							["void", ("String[]", "args")], maincode))
@@ -314,9 +325,7 @@ class PythonModule:
 		#	["void", ("PyObject", "dict")], initcode))
 
 	def dumpInnerClasses(self):
-		ret = [self.pyinner.makeClass()]
-		self.addinnerclass(self.pyinner.name)
-		
+		ret = []		
 		for inner in self.innerClasses:
 			self.addinnerclass(inner.name)
 			ret.append(inner.makeClass())

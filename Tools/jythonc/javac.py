@@ -23,7 +23,7 @@ def getClasspath():
 	return cpath
 
 def compile(files, javac=None, cpathopt="-classpath", cpath=None, options=[]):
-	if javac is None: javac = findJavac()
+	if javac is None: javac = findDefaultJavac()
 	if cpath is None: cpath = getClasspath()
 	args = [javac, cpathopt, cpath]+options+files
 	print args

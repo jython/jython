@@ -19,9 +19,9 @@ def getdata(filename):
 	fp.close()
 	return data
 
-def getsig(doc):
+def getsig(doc, pargs, constructor=0):
 	if doc is None: return None
-	print doc
+	#print doc
 	
 	lines = doc.split("\n")
 	txt = None
@@ -32,23 +32,39 @@ def getsig(doc):
 			break
 	if txt is None: return None
 	front, back = txt.split("(")
-	back = back[:-1]
+	back = back[:-1].strip()
 	front = front.split()
-	ret = front[-2]
-	mods = string.join(front[:-2], ' ')
+	if constructor:
+		ret = jret = None
+		mods = string.join(front[:-1], ' ')
+	else:
+		ret = front[-2]
+		mods = string.join(front[:-2], ' ')
+		jret = insistJavaClass(ret)
 	
 	arglist = []
-	args = back.split(',')
-	for arg in args:
-		c, name = arg.split()
-		jc = getJavaClass(c)
-		arglist.append( (jc, name) )
-	
-	return [mods, getJavaClass(ret), arglist]
+	if len(back) > 0:
+		for arg in back.split(','):
+			c, name = arg.split()
+			jc = insistJavaClass(c)
+			arglist.append( (jc, name) )
+
+	sigs = []
+	for ndefaults in range(0, len(pargs.defaults)+1):
+		sigs.append( (mods, jret, arglist[:len(arglist)-ndefaults]) )
+	return sigs
 
 primitives = {'void':Void.TYPE, 'int':Integer.TYPE, 'byte':Byte.TYPE, 
 	'short':Short.TYPE, 'long':Long.TYPE, 'float':Float.TYPE, 'double':Double.TYPE,
 	'boolean':Boolean.TYPE, 'char':Character.TYPE}
+
+def insistJavaClass(c):
+	jc = getJavaClass(c)
+	if jc is None and isinstance(c, StringType):
+		jc = getJavaClass("java.lang."+c)
+	if jc is None:
+		raise ValueError, "can not find class: "+c
+	return jc
 
 def getJavaClass(c):
 	if isinstance(c, StringType):
@@ -75,7 +91,10 @@ def makeJavaProxy(module, pyc):
 			args = v.args
 		sig = None
 		if hasattr(v, 'doc'):
-			sig = getsig(v.doc)
+			if name == "__init__":
+				sig = getsig(v.doc, args, constructor=1)
+			else:
+				sig = getsig(v.doc, args, constructor=0)
 		methods.append( (name, args, sig) )
 
 	bases = []
@@ -156,7 +175,7 @@ class Compiler:
 			
 		data = "__file__=%s\n"%repr(filename)+data+"\n\n"
 
-		mod = PythonModule(name, filename)
+		mod = PythonModule(name, filename, frozen=self.deep)
 		fact = ObjectFactory()
 		pi = SimpleCompiler(mod, fact, options=self.options)
 		fact.parent = pi
@@ -266,7 +285,9 @@ class Compiler:
 
 		mod.specialClasses = specialClasses
 		
-		self.javasources.append(mod.dump(outdir))		
+		self.javasources.append(mod.dump(outdir))
+		if self.options.bean is not None:
+			mod.javaclasses[0] = mod.javaclasses[0], {'Java-Bean':'True'}	
 		self.javaclasses.extend(mod.javaclasses)
 		
 	def displayPackages(self):

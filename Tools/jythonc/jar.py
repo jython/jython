@@ -17,18 +17,36 @@ class JavaArchive:
 		self.classes = []
 		self.entries = []
 		self.packages = packages
+		self.manifest = []
 		
 	def addFile(self, rootdir, filename):
 		self.files.append( (rootdir, filename) )
 		
-	def addClass(self, rootdir, classname):
-		filename = apply(os.path.join, classname.split('.'))
-		self.addFile(rootdir, filename+'.class')
+	def addClass(self, rootdir, classname, properties=None):
+		filename = apply(os.path.join, classname.split('.'))+'.class'
+		self.addFile(rootdir, filename)
+		if properties is not None:
+			self.manifest.append("Name: "+string.join(classname.split('.'), '/'))
+			self.addToManifest(properties)
+
 		
 	def addEntry(self, entry):
 		self.entries.append(entry)
 
-	def addManifest(self, lines): pass
+	def addToManifest(self, properties=None, **kw):
+		if properties is None: properties = {}
+		properties.update(kw)
+		for name, value in properties.items():
+			self.manifest.append(name+": "+value)
+		self.manifest.append("")
+		
+	def dumpManifest(self):
+		if len(self.manifest) == 0: return
+		
+		outfile = "META-INF/MANIFEST.MF"
+		self.zipfile.putNextEntry(ZipEntry(outfile))
+		self.zipfile.write(string.join(self.manifest, "\n"))
+		
 
 	def dumpFiles(self):
 		for rootdir, filename in self.files:
@@ -48,6 +66,8 @@ class JavaArchive:
 			
 		for package, skiplist in self.packages:
 			self.addPackage(package, skiplist)
+			
+		self.dumpManifest()
 			
 	def dump(self, filename):
 		self.zipfile = ZipOutputStream(FileOutputStream(filename))
