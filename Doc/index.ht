@@ -28,6 +28,11 @@ The following documentation is specific to Jython:
     <li>The <a href="embedding.html">embedding</a> document describes
 	how to call Jython from a Java application.
 
+    <li>The generated JavaDoc documentation of the API is available 
+	as <a href="api/index.html">frame</a>
+        and as <a href="api/overview-summary.html">
+        non-frame</a> versions.
+
     <li>You might also be interested in <a
 	href="compile.html">building Jython from the source code</a>.
 </ul>
