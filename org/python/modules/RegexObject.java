@@ -2,15 +2,18 @@
 package org.python.modules;
 
 import org.python.core.*;
-import com.oroinc.text.regex.*;
+import org.apache.oro.text.regex.*;
 
-public class RegexObject extends PyObject {
+
+public class RegexObject extends PyObject 
+{
     private static Perl5Compiler compiler = new Perl5Compiler();
 
     private static synchronized Pattern compile(String pattern, int flags) {
         try {
             return compiler.compile(pattern, flags);
-        } catch (MalformedPatternException e) {
+        }
+        catch (MalformedPatternException e) {
             throw re.ReError(e.getMessage());
         }
     }
@@ -62,7 +65,8 @@ public class RegexObject extends PyObject {
         if (input instanceof String) {
             if (!matcher.matchesPrefix((String)input, code))
                 return null;
-        } else {
+        }
+        else {
             if (!matcher.matchesPrefix((PatternMatcherInput)input, code))
                 return null;
         }
@@ -99,7 +103,8 @@ public class RegexObject extends PyObject {
         if (input instanceof String) {
             if (!matcher.contains((String)input, code))
                 return null;
-        } else {
+        }
+        else {
             if (!matcher.contains((PatternMatcherInput)input, code))
                 return null;
         }
@@ -155,7 +160,8 @@ public class RegexObject extends PyObject {
                                                 matcher.getMatch());
                 PyObject ret = repl.__call__(m);
                 buf.append(ret.toString());
-            } else {
+            }
+            else {
                 if (expand)
                     buf.append(expandMatch(matcher.getMatch(), srepl));
                 else
@@ -209,18 +215,18 @@ public class RegexObject extends PyObject {
             MatchResult m = matcher.getMatch();
             int ngroups = m.groups();
             if (ngroups > 1) {
-                for(int j=1; j<ngroups; j++) {
+                for (int j=1; j<ngroups; j++) {
                     String tmp = m.group(j);
                     if (tmp == null) {
                         results.append(Py.None);
-                    } else {
+                    }
+                    else {
                         results.append(new PyString(tmp));
                     }
                 }
             }
             lastmatch = end;
         }
-        
         results.append(
             new PyString(match.substring(lastmatch, match.getEndOffset())));
         return results;
@@ -231,12 +237,36 @@ public class RegexObject extends PyObject {
         if (v == null) {
             try {
                 v = s.__int__();
-            } catch (PyException exc) {
-                throw Py.IndexError("group "+s.__repr__()+" is undefined");
+            }
+            catch (PyException exc) {
+                if (!isname(s.toString()))
+                    throw re.ReError("illegal character in group name");
+                else
+                    throw Py.IndexError("group "+s.__repr__()+" is undefined");
             }
         }
         return v.getValue();
     }    
+
+    private boolean isdigit(char c) {
+        return '0' <= c && c <= '9';
+    }
+
+    private boolean isident(char c) {
+        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c == '_');
+    }
+
+    private boolean isname(String name) {
+        int n = name.length();
+        if (n <= 0 || !isident(name.charAt(0)))
+            return false;
+        for (int i = 1; i < n; i++) {
+            char c = name.charAt(i);
+            if (!isident(c) && !isdigit(c))
+                return false;
+        }
+        return true;
+    }
 
     private String fixPattern(String pattern) {
         char[] chars = pattern.toCharArray();
@@ -269,6 +299,10 @@ public class RegexObject extends PyObject {
                                 throw re.ReError("unmatched <");
                             String name =
                                 new String(chars, start, index-start);
+                            // name must be a valid Python identifier
+                            if (!isname(name))
+                                throw re.ReError("illegal character in " +
+                                                 "group name");
                             groupindex.__setitem__(new PyString(name),
                                                    new PyInteger(group));
                             buf.append(chars, lasti, start-3-lasti);
@@ -285,7 +319,8 @@ public class RegexObject extends PyObject {
                                         c != '$')
                                     {
                                         index++;
-                                    } else {
+                                    }
+                                    else {
                                         throw re.ReError(
                                             "illegal character in symbol");
                                     }
@@ -306,17 +341,20 @@ public class RegexObject extends PyObject {
                                 buf.append(getindex(pname));
                                 index++;
                                 lasti=index;
-                            } else {
+                            }
+                            else {
                                 throw re.ReError("invalid ?P grouping");
                             }
                         }
-                    } else {
+                    }
+                    else {
                         if (chars[index] == ':')
                             continue;
                         while (index < n && chars[index] != ')')
                             index++;
                     }
-                } else {
+                }
+                else {
                     group++;
                 }
             }
@@ -325,7 +363,8 @@ public class RegexObject extends PyObject {
             buf.append(chars, lasti, n-lasti);
             //System.err.println("pat: "+buf.toString());
             return buf.toString();
-        } else {
+        }
+        else {
             //System.err.println("untouched: "+pattern);
             return pattern;
         }
@@ -378,7 +417,8 @@ public class RegexObject extends PyObject {
                                 "missing < in symbolic reference");
                         }
                         int start = index;
-                        while (index < n && chars[index] != '>') index++;
+                        while (index < n && chars[index] != '>')
+                            index++;
                         if (index == n) {
                             throw re.ReError("unfinished symbolic reference");
                         }
@@ -442,14 +482,44 @@ public class RegexObject extends PyObject {
                     lasti=index;
                 }
             }
-        } catch (ArrayIndexOutOfBoundsException exc) {
+        }
+        catch (ArrayIndexOutOfBoundsException exc) {
             throw re.ReError("invalid expression");
         }
         if (lasti > 0) {
             buf.append(chars, lasti, n-lasti);
             return buf.toString();
-        } else {
+        }
+        else {
             return repl;
         }
-    }    
+    }
+
+    public PyList findall(String string) {
+        Perl5Matcher matcher = getMatcher();
+        PatternMatcherInput match = new PatternMatcherInput(string);
+        PyList ret = new PyList();
+
+        while (matcher.contains(match, code)) {
+            MatchResult result = matcher.getMatch();
+            int groups = result.groups();
+
+            if (groups == 1)
+                // no parenthetical subgroups
+                ret.append(new PyString(result.group(0)));
+            else if (groups == 2)
+                // one parenthetical subgroup, but we only return a list of
+                // the first matching subgroup.
+                ret.append(new PyString(result.group(1)));
+            else {
+                // two or more subgroups, so ignore the whole match
+                PyString[] submatches = new PyString[groups-1];
+                for (int g = 1; g < groups; g++)
+                    submatches[g-1] = new PyString(result.group(g));
+                PyTuple tup = new PyTuple(submatches);
+                ret.append(tup);
+            }
+        }
+        return ret;
+    }
 }
