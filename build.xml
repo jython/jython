@@ -30,9 +30,11 @@
 
         <property name="sourceDir" value="${basedir}" />
         <property name="outputDir" value="${basedir}/build" />
-        <property name="apidocDir" value="${basedir}/Doc/javadoc" />
+        <property name="distDir" value="${basedir}/dist" />
+        <property name="apidocDir" value="${distDir}/Doc/javadoc" />
         <property name="debug" value="off" />
         <property name="optimize" value="on" />
+        <property name="release" value="22a0" />
 
         <available property="java2collection.present"
             classname="java.util.List"
@@ -222,21 +224,30 @@
         <delete file="${outputDir}/mainClass.mf"/>
     </target>
 
-    <target name="doc" depends="init">
-        <delete>
-            <fileset dir="Doc" includes="*.html" />
-        </delete>
+    <target name="dist-prepare" depends="init">
+        <mkdir dir="${distDir}" />
+    </target>
+    
+    <target name="doc" depends="dist-prepare">
+        <delete dir="${distDir}/Doc" />
+        <mkdir dir="${distDir}/Doc" />
+        <copy todir="${distDir}/Doc">
+            <fileset dir="Doc" includes="*.ht, **/*.gif" />
+        </copy>
         <!-- Create .html files in Doc -->
-        <execon executable="${python.home}/python" dir="Doc">
+        <execon executable="${python.home}/python" dir="${distDir}/Doc">
             <arg line="${ht2html.dir}/ht2html.py"/>
             <arg line="-s JPyLocalGenerator"/>
-            <fileset dir="Doc">
+            <fileset dir="${distDir}/Doc">
                 <include name="*.ht" />
             </fileset>
         </execon>
+        <delete>
+            <fileset dir="${distDir}/Doc" includes="*.ht" />
+        </delete>
     </target>
 
-    <target name="javadoc" depends="compile">
+    <target name="javadoc" depends="compile, dist-prepare">
         <delete dir="${apidocDir}" />
         <mkdir dir="${apidocDir}" />
         <javadoc sourcepath="${sourceDir}"
@@ -251,10 +262,172 @@
         />
     </target>
 
-    <target name="installXML" depends="init">
-        <!-- Set the configuration variables python.home and PyXmlHome
-             in your ant.properties file -->
-        <copy todir="${sourceDir}/Lib/xml">
+    <target name="copy-dist" depends="dist-prepare,compile">
+        <!-- Misc files -->
+        <copy todir="${distDir}">
+            <fileset dir="${sourceDir}" includes="
+                ACKNOWLEDGMENTS,
+                NEWS,
+                LICENSE.txt,
+                README.txt,
+                registry,
+                jython.jar,
+                build.xml,
+                "/>
+        </copy>
+
+        <!-- Sources -->
+        <copy todir="${distDir}">
+            <fileset dir="${sourceDir}" includes="
+                    org/**/*.java, org/**/Makefile,
+                    com/**/*.java, com/**/Makefile,
+                    Lib/jxxload_help/*.java, Lib/jxxload_help/Makefile,
+                    org/**/ucnhash.dat,
+                    com/**/*.properties,"
+                excludes="org/python/parser/python.java"/>
+        </copy>
+
+        <!-- Jythonc -->
+        <copy todir="${distDir}">
+            <fileset dir="${sourceDir}" includes="Tools/**/*.py"/>
+        </copy>
+
+        <copy todir="${distDir}/Lib">
+            <!-- Copy the CPython standard library files -->
+            <fileset dir="${python.home}/Lib" includes="
+                ../LICENSE,
+                __future__.py,
+                BaseHTTPServer.py,
+                CGIHTTPServer.py,
+                ConfigParser.py,
+                Cookie.py,
+                MimeWriter.py,
+                Queue.py,
+                SimpleHTTPServer.py,
+                SocketServer.py,
+                StringIO.py,
+                UserDict.py,
+                UserList.py,
+                anydbm.py,
+                base64.py,
+                bdb.py,
+                binhex.py,
+                bisect.py,
+                calendar.py,
+                cgi.py,
+                cmd.py,
+                cmp.py,
+                cmpcache.py,
+                colorsys.py,
+                commands.py,
+                compileall.py,
+                copy.py,
+                copy_reg.py,
+                difflib.py,
+                dircache.py,
+                dircmp.py,
+                doctest.py,
+                dospath.py,
+                dumbdbm.py,
+                exceptions.py,
+                fileinput.py,
+                fnmatch.py,
+                formatter.py,
+                fpformat.py,
+                ftplib.py,
+                getopt.py,
+                glob.py,
+                gopherlib.py,
+                gzip.py,
+                htmlentitydefs.py,
+                htmllib.py,
+                httplib.py,
+                imaplib.py,
+                imghdr.py,
+                keyword.py,
+                linecache.py,
+                macpath.py,
+                macurl2path.py,
+                mailbox.py,
+                mailcap.py,
+                mhlib.py,
+                mimetools.py,
+                mimetypes.py,
+                mimify.py,
+                multifile.py,
+                mutex.py,
+                nntplib.py,
+                ntpath.py,
+                nturl2path.py,
+                pdb.py,
+                pickle.py,
+                pipes.py,
+                popen2.py,
+                poplib.py,
+                posixfile.py,
+                posixpath.py,
+                pprint.py,
+                profile.py,
+                pyclbr.py,
+                quopri.py,
+                random.py,
+                reconvert.py,
+                repr.py,
+                rfc822.py,
+                sched.py,
+                sgmllib.py,
+                site.py,
+                shelve.py,
+                shutil.py,
+                smtplib.py,
+                sndhdr.py,
+                stat.py,
+                symbol.py,
+                telnetlib.py,
+                tempfile.py,
+                token.py,
+                tokenize.py,
+                traceback.py,
+                tzparse.py,
+                unittest.py,
+                urllib.py,
+                urlparse.py,
+                user.py,
+                weakref.py,
+                whichdb.py,
+                whrandom.py,
+                xdrlib.py,
+                xmllib.py,
+                zipfile.py
+                pstats.py,
+                code.py,
+                codecs.py,
+                sre*.py,
+                threading.py,
+                atexit.py,
+                UserString.py,
+                warnings.py,
+                encodings/*.py,
+                test/pystone.py,
+            "/>
+
+            <!-- The jython .py modules -->
+            <fileset dir="${sourceDir}/Lib" includes="*.py, pawt/*.py"/>
+        </copy>
+
+        <!-- The demo files -->
+        <copy todir="${distDir}/Demo">
+            <fileset dir="${sourceDir}/Demo"
+                     includes="**/*.java, **/*.html, **/*.py,
+                               **/*.txt, **/Makefile, **/*.xml,
+                               **/jreload/example.jar,
+                               **/jreload/_xample/Version.class"
+                     excludes="**/jpywork/**"/>
+        </copy>
+
+
+        <!-- The xml files -->
+        <copy todir="${distDir}/Lib/xml">
             <fileset dir="${python.home}/Lib/xml" includes="__init__.py"/>
             <fileset dir="${PyXmlHome}/xml" includes="
                 ns.py,
@@ -273,6 +446,18 @@
         </copy>
     </target>
 
+    <target name="dist" depends="copy-dist, doc, javadoc">
+        <!--
+            Some windows systems need the ${line.separator} or will report a
+            "Failed to load Main-Class manifest attribute" error
+        -->
+        <tar tarfile="jython-${release}.tar"
+             basedir="${distDir}"
+             excludes="jython.jar, cachedir"/>
+        <gzip zipfile="jython-${release}.tgz" src="jython-${release}.tar" />
+    </target>
+        
+        
     <target name="all" depends="init,clean,prepare,parser,compile,jar"/>
 </project>
 
