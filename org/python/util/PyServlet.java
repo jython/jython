@@ -78,6 +78,21 @@ public class PyServlet extends HttpServlet {
             props.setProperty("python.home", rootPath + File.separator +
                                              "WEB-INF" + File.separator +
                                              "lib");
+
+            props.setProperty("python.packages.directories",
+                              "java.ext.dirs,pyservlet.lib");
+            props.setProperty("pyservlet.lib",
+                              rootPath + File.separator +
+                              "WEB-INF" + File.separator +
+                              "lib");
+
+            props.setProperty("python.packages.paths",
+                              "java.class.path,sun.boot.class.path,"+
+                              "pyservlet.classes");
+            props.setProperty("pyservlet.classes",
+                              rootPath + File.separator +
+                              "WEB-INF" + File.separator +
+                              "classes");
         }
         PythonInterpreter.initialize(System.getProperties(), props, new String[0]);
         reset();
@@ -148,11 +163,6 @@ public class PyServlet extends HttpServlet {
         if ((end < 0) || (end <= start))
             end = path.length();
         String name = path.substring(start, end);
-
-//        PyString dir = new PyString(file.getParent());
-//        PySystemState sys = Py.getSystemState();
-//        if (!sys.path.__contains__(dir))
-//           sys.path.append(dir);
 
         try {
             interp.execfile(path);
