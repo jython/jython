@@ -139,6 +139,7 @@ public final class Py {
       return new PyException(Py.SystemExit, message);
       }*/
     static void maybeSystemExit(PyException exc) {
+	//System.err.println("maybeSystemExit: " + exc.type.toString());
 	if (Py.matchException(exc, Py.SystemExit)) {
 	    PyObject value = exc.value;
 	    //System.err.println("exiting: "+value.getClass().getName());
@@ -826,6 +827,8 @@ public final class Py {
 	// A special case for IOError's to allow them to also match
 	// java.io.IOExceptions.  This is a hack for 1.0.x until I can do
 	// it right in 1.1
+// 	System.err.println("pye: " + pye.type);
+// 	System.err.println("  e: " + e);
 	pye.instantiate();
 	if (e == Py.IOError) {
 	    if (__builtin__.isinstance(
@@ -837,13 +840,14 @@ public final class Py {
 	}
 	if (e instanceof PyClass) {
 	    return __builtin__.isinstance(pye.value, (PyClass)e);
-	} else {
+	}
+	else {
 	    if (e == pye.type)
 		return true;
 	        
 	    if (e instanceof PyTuple) {
 		PyObject[] l = ((PyTuple)e).list;
-		for(int i=0; i<l.length; i++) {
+		for (int i=0; i<l.length; i++) {
 		    if (matchException(pye, l[i]))
 			return true;
 		}
