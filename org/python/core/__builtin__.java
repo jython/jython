@@ -920,19 +920,16 @@ public class __builtin__ implements ClassDictInit
             throw Py.TypeError("zip requires at least one sequence");
 
         // Type check the arguments; they must be sequences.  Might as well
-        // cache the __getitem__() methods.
-        PyObject[] getitems = new PyObject[itemsize];
+        // cache the __iter__() methods.
+        PyObject[] iters = new PyObject[itemsize];
 
         for (int j=0; j < itemsize; j++) {
-            PyObject getitem = argstar[j].__findattr__("__getitem__");
-            if (getitem == null) {
-                // Get the same error as CPython for instances.  This
-                // should throw an AttributeError.
-                if (argstar[j] instanceof PyInstance)
-                    argstar[j].__getattr__("__getitem__");
-                throw Py.TypeError("unindexable object");
+            PyObject iter = argstar[j].__iter__();
+            if (iter == null) {
+                throw Py.TypeError("zip argument #" + (j + 1) +
+                                   " must support iteration");
             }
-            getitems[j] = getitem;
+            iters[j] = iter;
         }
 
         PyList ret = new PyList();
@@ -944,13 +941,15 @@ public class __builtin__ implements ClassDictInit
 
             for (int j=0; j < itemsize; j++) {
                 try {
-                    item = getitems[j].__call__(index);
+                    item = iters[j].__iternext__();
                 }
                 catch (PyException e) {
-                    if (Py.matchException(e, Py.IndexError))
+                    if (Py.matchException(e, Py.StopIteration))
                         return ret;
                     throw e;
                 }
+                if (item == null)
+                    return null;
                 next[j] = item;
             }
             ret.append(new PyTuple(next));
