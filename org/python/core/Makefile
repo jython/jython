@@ -17,3 +17,5 @@ all: $(CLASSES)
 
 clean:
 	rm *.class
+
+realclean: clean
