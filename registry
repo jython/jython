@@ -1,5 +1,5 @@
 #Python Registry
-python.path=.;c:\\jpython\\Lib;c:\\jpython\\PythonCode\\test
+python.path=.;c:\\jpython\\Lib;c:\\jpython\\PythonCode\\test;c:\\Python-1.5b1\\Demo\\classes
 
 java.packages.java		=	lang,io,util,net,applet,lang.reflect,math,text,util.zip, \
                             awt, awt.datatransfer, awt.event, awt.image
