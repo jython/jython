@@ -5,7 +5,7 @@ from xml.sax import saxutils
 from xml.sax import make_parser
 from xml.sax.handler import feature_namespaces
 
-def jythonc():
+def dummy_jythonc():
     import xml.sax.drivers2.drv_xmlproc
     import encodings.utf_16_be
     import dumbdbm
