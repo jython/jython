@@ -76,7 +76,7 @@ def compile(files, javac=None, cpathopt="-classpath",
         if sourcedir:
             cpath.append(sourcedir)
         cpath.extend(sys.path)
-        cpath = sep.join(cpath)
+        cpath = '"%s"' % sep.join(cpath)
     cmd.extend([cpathopt, cpath])
     cmd.extend(files)
     print 'Compiling with args:', cmd
