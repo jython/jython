@@ -153,7 +153,7 @@ public class PyObject implements java.io.Serializable {
        <code>a.equals(b) == true</code> iff <code>cmp(a,b) == 0</code>
     **/
     public boolean equals(Object ob_other) {
-	return _cmp((PyObject)ob_other) == 0;
+        return (ob_other instanceof PyObject) && _cmp((PyObject)ob_other) == 0;        
     }
 	
 
