@@ -1014,7 +1014,7 @@ public class PyString extends PySequence implements InitModule
                 }
                 continue;
             } 
-            if (c == '\n') {
+            if (c == '\n' || c == '\r') {
                 position = -1;
             }
             buf.append(c);
