@@ -76,19 +76,12 @@ public class PyString extends PySequence {
 	}
 
 	public boolean equals(Object other) {
-		if (!interned) {
-			string = string.intern();
-			interned = true;
-		}
-		if (other instanceof PyString) {
-			PyString o = (PyString)other;
-			if (!o.interned) {
-				o.string = o.string.intern();
-				o.interned = true;
-			}
-			return string == o.string; //string.equals( ((PyString)other).string);
-		}
-		else return false;
+	    if (!(other instanceof PyString)) return false;
+	    
+	    PyString o = (PyString)other;
+	    if (interned && o.interned) return string == o.string;
+	    
+	    return string.equals(o.string);
 	}
 
 	public int __cmp__(PyObject other) {
