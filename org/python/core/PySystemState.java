@@ -17,13 +17,13 @@ public class PySystemState extends PyObject
     /**
      * The current version of JPython.
      */
-    public static String version = "2.1b2";
+    public static String version = "2.1";
 
     private static int PY_MAJOR_VERSION = 2;
     private static int PY_MINOR_VERSION = 1;
     private static int PY_MICRO_VERSION = 0;
-    private static int PY_RELEASE_LEVEL = 0xB;
-    private static int PY_RELEASE_SERIAL = 2;
+    private static int PY_RELEASE_LEVEL = 0xF;
+    private static int PY_RELEASE_SERIAL = 0;
 
     public static int hexversion = ((PY_MAJOR_VERSION << 24) |
                                     (PY_MINOR_VERSION << 16) |
@@ -421,7 +421,7 @@ public class PySystemState extends PyObject
             s = "beta";
         else if (PY_RELEASE_LEVEL == 0x0C)
             s = "candidate";
-        else if (PY_RELEASE_LEVEL == 0x0C)
+        else if (PY_RELEASE_LEVEL == 0x0F)
             s = "final";
         version_info = new PyTuple(new PyObject[] {
                             Py.newInteger(PY_MAJOR_VERSION),
