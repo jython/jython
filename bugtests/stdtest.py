@@ -101,7 +101,6 @@ failures = [
     'test_pickle',
     'test_pkgimport',
     'test_popen2',
-    'test_pprint',
     'test_profile',
     'test_profilehooks',
     'test_pyclbr',
