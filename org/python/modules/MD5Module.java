@@ -67,6 +67,7 @@ public class MD5Module implements ClassDictInit
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("new", new MD5Functions("new", 0, 0, 1));
         dict.__setitem__("md5", new MD5Functions("md5", 0, 0, 1));
+		dict.__setitem__("digest_size", Py.newInteger(16));
         dict.__setitem__("classDictInit", null);
     }
 }

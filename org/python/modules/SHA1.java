@@ -193,6 +193,9 @@ public final class SHA1 {
         digest = (int[])md.digest.clone();
         tmp = (byte[])md.tmp.clone();
         w = (int[])md.w.clone();
+        buffer = (byte[])md.buffer.clone();
+        buffered = md.buffered;
+        count = md.count;
     }
 
     /**

@@ -7,6 +7,7 @@ import org.python.core.*;
 public class sha {
     public int blocksize = 1;
     public int digestsize = 20;
+    public int digest_size = digestsize;
 
     public static String __doc__ =
         "* Cryptix General License\n" +
