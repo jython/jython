@@ -343,7 +343,7 @@ class PythonModule:
         code = jast.Block(
             [jast.Invoke(dict, "__setitem__", sargs),
              jast.InvokeStatic("Py", "runCode", rargs)])
-        meths.append(jast.Method("classDictInit", "public static", 
+        meths.append(jast.Method("moduleDictInit", "public static", 
                                  ["void", ("PyObject", "dict")], code))
         return meths
 
@@ -403,7 +403,7 @@ class PythonModule:
             self.interfaces = self.interfaces+self.javaproxy.interfaces
             supername = self.javaproxy.supername
 
-        self.interfaces += [org.python.core.ClassDictInit]
+        self.interfaces += [org.python.core.ModuleDictInit]
         body = jast.Block(mycode)
         return jast.Class(self.name, self.modifier, supername,
                           map(lambda i: i.__name__, self.interfaces), body)
