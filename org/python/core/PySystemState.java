@@ -57,6 +57,8 @@ public class PySystemState extends PyObject
     public static int maxint = Integer.MAX_VALUE;
     public static int minint = Integer.MIN_VALUE;
 
+    public PyObject executable = Py.None;
+
     private ClassLoader classLoader = null;
     public ClassLoader getClassLoader() {
         return classLoader;
