@@ -17,8 +17,8 @@ public class DiscardHelp extends Object {
             s = s.getSuperclass();
         } while (s != null);
         
-        for(java.util.Enumeration enum=interfaces.elements(); enum.hasMoreElements();) {
-            Class intf = (Class)enum.nextElement();
+        for(java.util.Enumeration enumm=interfaces.elements(); enumm.hasMoreElements();) {
+            Class intf = (Class)enumm.nextElement();
             if (intf.isAssignableFrom(c)) return true;
         }
         

@@ -87,8 +87,8 @@ public class PathVFS extends Object {
     }
     
     public InputStream open(String id) {
-        for(Enumeration enum = vfs.elements(); enum.hasMoreElements();) {
-            VFS v = (VFS)enum.nextElement();
+        for(Enumeration enumm = vfs.elements(); enumm.hasMoreElements();) {
+            VFS v = (VFS)enumm.nextElement();
             InputStream stream = v.open(id);
             if (stream != null) return stream;
         }
