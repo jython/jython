@@ -61,9 +61,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
         case 9:
             return __builtin__.apply(arg1, arg2);
         case 10:
-            if (!(arg2 instanceof PyClass))
-              throw Py.TypeError("isinstance(): 2nd arg is not a class");
-            return Py.newBoolean(__builtin__.isinstance(arg1,(PyClass) arg2));
+            return Py.newBoolean(__builtin__.isinstance(arg1, arg2));
         default:
             throw argCountError(2);
         }
@@ -437,8 +435,18 @@ public class __builtin__ implements ClassDictInit
         return s;
     }
 
-    public static boolean isinstance(PyObject obj, PyClass myClass) {
-        return issubclass(obj.__class__, myClass);
+    public static boolean isinstance(PyObject obj, PyObject cls) {
+        if (cls instanceof PyClass) {
+            return issubclass(obj.__class__, (PyClass) cls);
+        } if (cls.getClass() == PyTuple.class) {
+            for (int i = 0; i < cls.__len__(); i++) {
+                if (isinstance(obj, cls.__getitem__(i)))
+                    return true;
+            }
+            return false;
+        } else {
+            throw Py.TypeError("isinstance(): 2nd arg is not a class");
+        }
     }
 
 
