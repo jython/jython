@@ -617,18 +617,16 @@ public class imp
         loadNames(names, module, frame.getf_locals());
     }
 
-    // if __all__ is present, things work properly under the assumption
-    // that names is sorted (__*__ names come first)
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals)
     {
+        PyObject __all__ = module.__findattr__("__all__");
+        if (__all__ != null) names = __all__;        
         int i=0;
         PyObject name;
         while ((name=names.__finditem__(i++)) != null) {
             String sname = ((PyString)name).internedString();
-            if (sname == "__all__") {
-                loadNames(module.__findattr__("__all__"), module, locals);
-            } else if (sname.startsWith("__")) {
+            if (sname.startsWith("__")) {
                 continue;
             } else {
                 try {
