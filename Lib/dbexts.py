@@ -260,7 +260,7 @@ class dbexts:
 			c = mxODBCProxy(c)
 		return c
 
-	def commit(self, cursor=None):
+	def commit(self, cursor=None, close=1):
 		""" commit the cursor and create the result set """
 		if cursor and cursor.description:
 			self.headers = cursor.description
@@ -275,8 +275,10 @@ class dbexts:
 			self.lastrowid = cursor.lastrowid
 		if hasattr(cursor, "updatecount"):
 			self.updatecount = cursor.updatecount
-		if not self.autocommit or cursor is None: self.db.commit()
-		if cursor: cursor.close()
+		if not self.autocommit or cursor is None:
+			if not self.db.autocommit:
+				self.db.commit()
+		if cursor and close: cursor.close()
 
 	def rollback(self):
 		""" rollback the cursor """
@@ -311,7 +313,7 @@ class dbexts:
 			else:
 				cur.execute(sql, maxrows=maxrows)
 		finally:
-			self.commit(cur)
+			self.commit(cur, close=isinstance(sql, StringType))
 
 	def isql(self, sql, params=None, bindings=None, maxrows=None):
 		""" execute and display the sql """

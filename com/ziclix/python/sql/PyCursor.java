@@ -65,9 +65,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	/** Field statement */
 	protected PyStatement statement;
 
-	/** A set of statements which this cursor prepared and distributed. */
-	protected Set preparedStatements;
-
 	// they are stateless instances, so we only need to instantiate it once
 	private static DataHandler DATAHANDLER = null;
 
@@ -106,7 +103,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		this.connection = connection;
 		this.datahandler = DATAHANDLER;
 		this.dynamicFetch = dynamicFetch;
-		this.preparedStatements = new HashSet(3);
 
 		// constructs the appropriate Fetch among other things
 		this.clear();
@@ -280,7 +276,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("getPyClass", null);
 		dict.__setitem__("rsConcur", null);
 		dict.__setitem__("rsType", null);
-		dict.__setitem__("preparedStatements", null);
 	}
 
 	/**
@@ -302,15 +297,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 		try {
 			this.clear();
-
-			for (Iterator i = this.preparedStatements.iterator(); i.hasNext(); ) {
-				try {
-					((PyStatement)i.next()).close();
-				} catch (Throwable t) {}
-			}
-
-			this.preparedStatements.clear();
-			this.connection.unregister(this);
+			this.connection.remove(this);
 		} finally {
 			this.closed = true;
 		}
@@ -493,8 +480,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 				this.statement = new PyStatement(stmt, procedure, params);
 
 				// prepare the statement
-				prepare(params, callableBindings, procedure);
-				this.statement.execute(this);
+				this.statement.prepare(this, params, callableBindings);
+				this.execute();
 			} else {
 				throw zxJDBC.makeException(zxJDBC.NotSupportedError, zxJDBC.getString("noStoredProc"));
 			}
@@ -566,7 +553,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		this.clear();
 
 		boolean hasParams = hasParams(params);
-		PyStatement stmt = prepareStatement(sql, maxRows, hasParams);
+		PyStatement stmt = this.prepareStatement(sql, maxRows, hasParams);
 
 		if (stmt == null) {
 			return;
@@ -575,26 +562,28 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		this.statement = stmt;
 
 		try {
-			if (hasParams) {
+			synchronized (this.statement) {
+				if (hasParams) {
 
-				// if we have a sequence of sequences, let's run through them and finish
-				if (isSeqSeq(params)) {
+					// if we have a sequence of sequences, let's run through them and finish
+					if (isSeqSeq(params)) {
 
-					// [(3, 4)] or [(3, 4), (5, 6)]
-					for (int i = 0, len = params.__len__(); i < len; i++) {
-						PyObject param = params.__getitem__(i);
+						// [(3, 4)] or [(3, 4), (5, 6)]
+						for (int i = 0, len = params.__len__(); i < len; i++) {
+							PyObject param = params.__getitem__(i);
 
-						prepare(param, bindings, null);
-						execute();
+							this.statement.prepare(this, param, bindings);
+							this.execute();
+						}
+					} else {
+						this.statement.prepare(this, params, bindings);
+						this.execute();
 					}
 				} else {
-					prepare(params, bindings, null);
+
+					// execute the sql string straight up
 					execute();
 				}
-			} else {
-
-				// execute the sql string straight up
-				execute();
 			}
 		} catch (PyException e) {
 			throw e;
@@ -638,70 +627,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		} catch (Exception e) {
 			throw zxJDBC.makeException(e);
 		}
-	}
-
-	/**
-	 * Properly prepare the parameters of a prepared statement.
-	 *
-	 * @param params
-	 * @param bindings
-	 * @param procedure
-	 *
-	 * @throws SQLException
-	 *
-	 */
-	protected void prepare(PyObject params, final PyObject bindings, final Procedure procedure) throws SQLException {
-
-		if (params == Py.None) {
-			return;
-		}
-
-		// [3, 4] or (3, 4)
-		final PreparedStatement preparedStatement = (PreparedStatement)this.statement.statement;
-		int columns = 0, column = 0, index = params.__len__();
-
-		if (procedure == null) {
-			columns = params.__len__();
-
-			// clear the statement so all new bindings take affect only if not a callproc
-			// this is because Procedure already registered the OUT parameters and we
-			// don't want to lose those
-			preparedStatement.clearParameters();
-		} else {
-			columns = (procedure.columns == Py.None) ? 0 : procedure.columns.__len__();
-		}
-
-		// count backwards through all the columns
-		while (columns-- > 0) {
-			column = columns + 1;
-
-			if ((procedure != null) && (!procedure.isInput(column))) {
-				continue;
-			}
-
-			// working from right to left
-			PyObject param = params.__getitem__(--index);
-
-			if (bindings != Py.None) {
-				PyObject binding = bindings.__finditem__(Py.newInteger(index));
-
-				if (binding != null) {
-					try {
-						int bindingValue = binding.__int__().getValue();
-
-						this.datahandler.setJDBCObject(preparedStatement, column, param, bindingValue);
-					} catch (PyException e) {
-						throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("bindingValue"));
-					}
-
-					continue;
-				}
-			}
-
-			this.datahandler.setJDBCObject(preparedStatement, column, param);
-		}
-
-		return;
 	}
 
 	/**
@@ -779,7 +704,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		PyStatement s = this.prepareStatement(sql, Py.None, true);
 
 		// add to the set of statements which are leaving our control
-		this.preparedStatements.add(s);
+		this.connection.add(s);
 
 		return s;
 	}
@@ -874,7 +799,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 			// but if this is a previously prepared statement we don't want to close
 			// it underneath someone; we can check this by looking in the set
 			try {
-				if (this.dynamicFetch && (!this.preparedStatements.contains(this.statement))) {
+				if (this.dynamicFetch && (!this.connection.contains(this.statement))) {
 					this.statement.close();
 				}
 			} finally {

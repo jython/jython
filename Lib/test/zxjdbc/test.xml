@@ -78,20 +78,24 @@
 				<argument name="pwd" value="jython"/>
 				<argument name="driver" value="org.gjt.mm.mysql.Driver"/>
 			</factory>
-			<testcase from="zxtest" import="zxAPITestCase"/>
+			<testcase from="zxtest" import="zxAPITestCase">
+				<ignore name="testBestRow"/>
+			</testcase>
 			<testcase from="zxtest" import="BCPTestCase"/>
 			<testcase from="dbextstest" import="dbextsTestCase"/>
 		</test>
 		<test name="datasource" os="java">
 			<factory class="com.ziclix.python.sql.zxJDBC" method="connectx">
-				<argument name="datasource" value="org.gjt.mm.mysql.MysqlDataSource"/>
+				<argument name="datasource" value="org.gjt.mm.mysql.jdbc2.optional.MysqlDataSource"/>
 				<keyword name="serverName" value="192.168.1.102"/>
 				<keyword name="databaseName" value="ziclix"/>
 				<keyword name="user" value="jython"/>
 				<keyword name="password" value="jython"/>
 				<keyword name="port" value="3306" type="int"/>
 			</factory>
-			<testcase from="zxtest" import="zxAPITestCase"/>
+			<testcase from="zxtest" import="zxAPITestCase">
+				<ignore name="testBestRow"/>
+			</testcase>
 			<testcase from="zxtest" import="BCPTestCase"/>
 		</test>
 		<!--

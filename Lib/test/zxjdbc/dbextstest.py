@@ -254,3 +254,11 @@ class dbextsTestCase(runner.SQLTestCase):
 				except Exception, e:
 					self.fail("failed autocommit query with u=[%d], v=[%d]" % (u, v))
 
+	def testPrepare(self):
+		"""testing the handling of a prepared statement"""
+		self._insertInto("one", 10)
+		p = self.db.prepare("select * from one")
+		self.db.isql(p)
+		self.db.isql(p)
+		p.close()
+		assert p.closed

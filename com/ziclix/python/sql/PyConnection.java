@@ -33,7 +33,10 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	protected boolean supportsTransactions;
 
 	/** Field cursors */
-	protected List cursors;
+	private Set cursors;
+
+	/** Field statements */
+	private Set statements;
 
 	/** Field __class__ */
 	public static PyClass __class__;
@@ -63,7 +66,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		m[3] = new PyString("rollback");
 		m[4] = new PyString("nativesql");
 		__methods__ = new PyList(m);
-		m = new PyObject[8];
+		m = new PyObject[9];
 		m[0] = new PyString("autocommit");
 		m[1] = new PyString("dbname");
 		m[2] = new PyString("dbversion");
@@ -71,7 +74,8 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		m[4] = new PyString("url");
 		m[5] = new PyString("__connection__");
 		m[6] = new PyString("__cursors__");
-		m[7] = new PyString("closed");
+		m[7] = new PyString("__statements__");
+		m[8] = new PyString("closed");
 		__members__ = new PyList(m);
 	}
 
@@ -85,8 +89,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	public PyConnection(Connection connection) throws SQLException {
 
 		this.closed = false;
+		this.cursors = new HashSet();
 		this.connection = connection;
-		this.cursors = new LinkedList();
+		this.statements = new HashSet();
 		this.supportsTransactions = this.connection.getMetaData().supportsTransactions();
 
 		if (this.supportsTransactions) {
@@ -199,7 +204,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
 		} else if ("__connection__".equals(name)) {
 			return Py.java2py(this.connection);
 		} else if ("__cursors__".equals(name)) {
-			return Py.java2py(Collections.unmodifiableList(this.cursors));
+			return Py.java2py(Collections.unmodifiableSet(this.cursors));
+		} else if ("__statements__".equals(name)) {
+			return Py.java2py(Collections.unmodifiableSet(this.statements));
 		} else if ("__methods__".equals(name)) {
 			return __methods__;
 		} else if ("__members__".equals(name)) {
@@ -225,22 +232,35 @@ public class PyConnection extends PyObject implements ClassDictInit {
 			return;
 		}
 
+		// mark ourselves closed now so that any callbacks we
+		// get from closing down cursors and statements to not
+		// try and modify our internal sets
+		this.closed = true;
+
 		synchronized (this.cursors) {
 
 			// close the cursors
-			for (int i = this.cursors.size() - 1; i >= 0; i--) {
-				((PyCursor)this.cursors.get(i)).close();
+			for (Iterator i = this.cursors.iterator(); i.hasNext(); ) {
+				((PyCursor)i.next()).close();
 			}
 
 			this.cursors.clear();
+		}
+
+		synchronized (this.statements) {
+
+			// close the cursors
+			for (Iterator i = this.statements.iterator(); i.hasNext(); ) {
+				((PyStatement)i.next()).close();
+			}
+
+			this.statements.clear();
 		}
 
 		try {
 			this.connection.close();
 		} catch (SQLException e) {
 			throw zxJDBC.makeException(e);
-		} finally {
-			this.closed = true;
 		}
 	}
 
@@ -369,20 +389,56 @@ public class PyConnection extends PyObject implements ClassDictInit {
 
 		PyCursor cursor = new PyExtendedCursor(this, dynamicFetch, rsType, rsConcur);
 
-		cursors.add(cursor);
+		this.cursors.add(cursor);
 
 		return cursor;
 	}
 
 	/**
-	 * Unregister an open PyCursor.
-	 *
+	 * Remove an open PyCursor.
 	 *
 	 * @param cursor
 	 *
 	 */
-	void unregister(PyCursor cursor) {
+	void remove(PyCursor cursor) {
+
+		if (closed) {
+			return;
+		}
+
 		this.cursors.remove(cursor);
+	}
+
+	/**
+	 * Method register
+	 *
+	 * @param PyStatement statement
+	 *
+	 */
+	void add(PyStatement statement) {
+
+		if (closed) {
+			return;
+		}
+
+		this.statements.add(statement);
+	}
+
+	/**
+	 * Method contains
+	 *
+	 * @param PyStatement statement
+	 *
+	 * @return boolean
+	 *
+	 */
+	boolean contains(PyStatement statement) {
+
+		if (closed) {
+			return false;
+		}
+
+		return this.statements.contains(statement);
 	}
 }
 

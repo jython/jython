@@ -257,6 +257,72 @@ public class PyStatement extends PyObject {
 	}
 
 	/**
+	 * Method prepare
+	 *
+	 * @param PyCursor cursor
+	 * @param PyObject params
+	 * @param PyObject bindings
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	void prepare(PyCursor cursor, PyObject params, PyObject bindings) throws SQLException {
+
+		if ((params == Py.None) || (this.style == STATEMENT_STATIC)) {
+			return;
+		}
+
+		// [3, 4] or (3, 4)
+		final DataHandler datahandler = cursor.datahandler;
+		int columns = 0, column = 0, index = params.__len__();
+		final PreparedStatement preparedStatement = (PreparedStatement)statement;
+		final Procedure procedure = (this.style == STATEMENT_CALLABLE) ? (Procedure)this.sql : null;
+
+		if (this.style != STATEMENT_CALLABLE) {
+			columns = params.__len__();
+
+			// clear the statement so all new bindings take affect only if not a callproc
+			// this is because Procedure already registered the OUT parameters and we
+			// don't want to lose those
+			preparedStatement.clearParameters();
+		} else {
+			columns = (procedure.columns == Py.None) ? 0 : procedure.columns.__len__();
+		}
+
+		// count backwards through all the columns
+		while (columns-- > 0) {
+			column = columns + 1;
+
+			if ((procedure != null) && (!procedure.isInput(column))) {
+				continue;
+			}
+
+			// working from right to left
+			PyObject param = params.__getitem__(--index);
+
+			if (bindings != Py.None) {
+				PyObject binding = bindings.__finditem__(Py.newInteger(index));
+
+				if (binding != null) {
+					try {
+						int bindingValue = binding.__int__().getValue();
+
+						datahandler.setJDBCObject(preparedStatement, column, param, bindingValue);
+					} catch (PyException e) {
+						throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("bindingValue"));
+					}
+
+					continue;
+				}
+			}
+
+			datahandler.setJDBCObject(preparedStatement, column, param);
+		}
+
+		return;
+	}
+
+	/**
 	 * Method close
 	 *
 	 */
