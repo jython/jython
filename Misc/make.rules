@@ -7,11 +7,13 @@ JAVA = java
 OPT = -g:lines,vars,source
 
 CLASSPATH = "MUST OVERRIDE"
+#JDKCLASSPATH = "/depot/java/plat/jdk1.2/jre/lib/rt.jar"
+CLASSPATHSWITCH = $(CLASSPATH)
 
 .SUFFIXES= .java .class
 
 %.class: %.java
-	$(JAVAC) $(OPT) -classpath "$(CLASSPATH)" $?
+	$(JAVAC) $(OPT) -classpath "$(CLASSPATHSWITCH)" $?
 
 SOURCES = $(wildcard *.java)
 CLASSES= $(SOURCES:%.java=%.class)
