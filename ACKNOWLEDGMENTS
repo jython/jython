@@ -11,7 +11,7 @@ Copyright © Corporation for National Research Initiatives
     jython-dev@lists.sourceforge.net, or the Jython community at
     jython-users@lists.sourceforge.net.
 
-    Finn Bock has been a frequent and valuable contributor to the
+    Finn Bock has been a frequent and valuable contributor to 
     Jython, and has provided bug fixes and these important modules:
 
         cPickle.java
@@ -23,7 +23,7 @@ Copyright © Corporation for National Research Initiatives
 
     The SHA1 implementation is taken from cryptix.
 
-    Samuele Pedroni have designed and implemented the improved 
+    Samuele Pedroni has designed and implemented the improved 
     PackageManagers and java reload support and also fixed a lot 
     of bugs.
 
