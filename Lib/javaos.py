@@ -20,6 +20,8 @@ and opendir), and leave all pathname manipulation to os.path
 (e.g., split and join).
 """
 
+from __future__ import division
+
 __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
            "defpath", "name"]
 
