@@ -5,9 +5,9 @@ package org.python.core;
 import java.lang.ref.*;
 import java.util.*;
 
-public class WeakInternalTables extends AutoInternalTables {
+public class SoftIInternalTables extends AutoInternalTables {
     
-    private class Ref extends WeakReference {
+    private class Ref extends SoftReference {
         Object key;
         short type;
         

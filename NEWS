@@ -5,6 +5,14 @@ XX-Dec-2000 Jython 2.0 alpha 2
   New features.
     - Added -v (verbose) option to jython command. It will trace
       import statements. Use three -v's for maximum information.
+    - (new internal tables design: PyJavaClass canonical map, adapters/adapterClasses caches)
+      Added new registry option python.options.internalTablesImpl:
+       List of choices for internal tables impl (PyJavaClasses canonical map etc.),
+       these are separated through ':' and tryed from left to right.
+       For long running applications under java2, needing classes unloading,
+       in order to have jython runtime automatically discarding 
+       no longer needed info and avoding memory leakage, this can be set 
+       to weak or soft (=> an impl. using weak-refs or soft-refs will be used).
 
   CPython-2.0 compatibility
     - Added support for formatting of long values in "%d %x %X %o".
@@ -20,7 +28,7 @@ XX-Dec-2000 Jython 2.0 alpha 2
       being inserted at position 1 in sys.path.
 
   Bug fixes.
-    - Package relative import work, at least when the dotted package name
+    - Package relative import works in jythonc, at least when the dotted package name
       match the directory structure.
     - Fixed oct(0) to return "0"
     - Added a os.__file__ attribute. CPython's site.py expects that.
@@ -29,6 +37,7 @@ XX-Dec-2000 Jython 2.0 alpha 2
     - Avoided a duplicate call to Class.getMethods(). This will improve 
       performance.
     - Allow from import * to modify the locals in a function (bug 122834).
+    - Classes with the same name do no longer clash (bug 122820).
 
 
 26-Nov-2000 Jython 2.0 alpha 1
@@ -220,7 +229,8 @@ XX-Dec-2000 Jython 2.0 alpha 2
     - bug fixes
 
 	
-
+
+
 Local Variables:
 mode: indented-text
 indent-tabs-mode: nil

@@ -53,7 +53,7 @@ public abstract class InternalTables {
         }
         return null; // never reached
     }
-
+    
     protected abstract boolean queryCanonical(String name);
     protected abstract PyJavaClass getCanonical(Class c);
     protected abstract PyJavaClass getLazyCanonical(String name);
@@ -66,6 +66,8 @@ public abstract class InternalTables {
 
     protected abstract Object getAdapter(Object o,String evc);
     protected abstract void putAdapter(Object o,String evc,Object ad);
+    
+    public boolean _doesSomeAutoUnload() { return false; }
 
     public abstract void _beginCanonical();
     public abstract void _beginLazyCanonical();

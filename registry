@@ -42,6 +42,15 @@ python.console.poll = false
 # non-public fields, methods, and constructors of Java objects.
 python.security.respectJavaAccessibility = true
 
+# List of choices for internal tables impl (PyJavaClasses canonical map etc.),
+# these are separated through ':' and tryed from left to right.
+# For long running applications under java2, needing classes unloading,
+# in order to have jython runtime automatically discarding 
+# no longer needed info and avoding memory leakage, this can be set 
+# to weak or soft (=> an impl. using weak-refs or soft-refs will be used).
+#python.options.internalTablesImpl = soft
+#python.options.internalTablesImpl = weak
+
 # Use this registry entry to control the list of builtin modules; you
 # can add, remove, or override builtin modules.  The value for this
 # registry key is a comma separated list of module entries, each entry 
