@@ -663,6 +663,8 @@ public class PyJavaClass extends PyClass
         }
         if (name == "__init__") {
             initConstructors();
+            if (__init__ == null)
+                return super.lookupGivingClass(name, false)[0];
             return __init__;
         }
     
