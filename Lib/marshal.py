@@ -6,6 +6,7 @@ Performance or careful error checking is not an issue.
 """
 
 import StringIO
+import string
 from types import *
 try:
     import new
@@ -193,7 +194,7 @@ class Unmarshaller:
 	d = ord(read(1))
 	x = a | (b<<8) | (c<<16) | (d<<24)
 	if x & 0x80000000 and x > 0:
-	    x = int(x - 0x100000000L)
+	    x = string.atoi(x - 0x100000000L)
 	return x
 
     def r_long64(self):
@@ -231,13 +232,13 @@ class Unmarshaller:
 	for i in range(size):
 	    d = self.r_short()
 	    x = x | (d<<(i*15L))
-	return x
+	return x * sign
     dispatch[TYPE_LONG] = load_long
 
     def load_float(self):
 	n = ord(self.f.read(1))
 	s = self.f.read(n)
-	return float(s)
+	return string.atof(s)
     dispatch[TYPE_FLOAT] = load_float
 
     def load_complex(self):
