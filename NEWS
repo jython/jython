@@ -1,5 +1,12 @@
 Jython NEWS
 
+xx-xxx-2002 Jython 2.2 alpha1
+
+  New features
+   - Iterators (pep-234).
+
+  Bug fixes.
+ 
 31-dec-2001 Jython 2.1 final
 
   Bug fixes.
