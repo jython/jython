@@ -285,33 +285,14 @@ public class PyJavaClass extends PyClass {
         
     /* Produce a good Python name for a Java method
        If the Java method ends in '$', strip it (this handles resvered Java keywords)
-       If the new name conflicts with a Python keyword, add an '_'
-       Finally, ensure that the returned string is intern'd
-       to make life easier for using code.
-    */
-    private static java.util.Hashtable keywords=null;
+       Don't make any changes to keywords since this is now handled by parser
+       */
+
     private String getName(String name) {
         if (name.endsWith("$")) name = name.substring(0, name.length()-1);
-                
-        if (keywords == null) {
-            keywords = new java.util.Hashtable();
-            String[] words = new String[]
-            {"or", "and", "not", "is", "in", "lambda", "if", "else", "elif",
-             "while", "for", "try", "except", "def", "class", "finally", "print",
-             "pass", "break", "continue", "return", "import", "from", "del",
-             "raise", "global", "exec", "assert"};
-            for (int i=0; i<words.length; i++) {
-                keywords.put(words[i], (words[i]+"_").intern());
-            }
-        }
-        String newName = (String)keywords.get(name);
-        if (newName != null) {
-            return newName;
-        } else {
-            return name.intern();
-        }
+        return name.intern();
     }
-        
+    
     private void addMethod(Method meth) {
         String name = getName(meth.getName());
             
@@ -647,14 +628,31 @@ public class PyJavaClass extends PyClass {
         initialize();
         setConstructors(proxyClass);
     }
-
-    /*private boolean beanInfoInitialized=false;
-      private void initBeanInfo() {
-      if (beanInfoInitialized) return;
-      beanInfoInitialized = true;
-      setBeanInfo(proxyClass, null);
-      }*/
-        
+      
+    /*
+       If the new name conflicts with a Python keyword, add an '_'
+    */
+    private static java.util.Hashtable keywords=null;
+    private static String unmangleKeyword(String name) {
+        if (keywords == null) {
+            keywords = new java.util.Hashtable();
+            String[] words = new String[]
+            {"or", "and", "not", "is", "in", "lambda", "if", "else", "elif",
+             "while", "for", "try", "except", "def", "class", "finally", "print",
+             "pass", "break", "continue", "return", "import", "from", "del",
+             "raise", "global", "exec", "assert"};
+            for (int i=0; i<words.length; i++) {
+                keywords.put(words[i]+"_", words[i].intern());
+            }
+        }
+        String newName = (String)keywords.get(name);
+        if (newName != null) {
+            return newName;
+        } else {
+            return null;
+        }
+    }
+    
     PyObject lookup(String name, boolean stop_at_java) {
         if (stop_at_java) return null;
         if (!initialized) initialize();
@@ -662,23 +660,15 @@ public class PyJavaClass extends PyClass {
             initConstructors();
             return __init__;
         }
+        
+        // For backwards compatibilty, support keyword_ as a substitute for keyword
+        // An improved parser makes this no longer necessary
+        if (Options.deprecatedKeywordMangling && name.endsWith("_")) {
+            String newName = unmangleKeyword(name);
+            if (newName != null) name = newName;
+        }
+        
         return super.lookup(name, stop_at_java);
-            
-        //if (!methodsInitialized) initMethods();
-        /*initialize();
-          PyObject result = __dict__.__finditem__(name);
-          if (result != null) return result;            */
-                
-        /*if (!fieldsInitialized) initFields();
-          result = __dict__.__finditem__(name);
-          if (result != null) return result;
-                
-          // Still need support for various bean properties here...
-          if (!beanInfoInitialized) initBeanInfo();
-          result = __dict__.__finditem__(name);
-          if (result != null) return result;*/
-
-        //return null;
     }
 
     public PyObject __dir__() {

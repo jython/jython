@@ -10,4 +10,6 @@ public class Options {
     public static boolean classBasedExceptions=true;
     public static boolean importSite=true;
     public static int verbose=Py.MESSAGE;
+    
+    public static boolean deprecatedKeywordMangling=true;
 }

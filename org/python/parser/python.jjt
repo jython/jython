@@ -346,7 +346,7 @@ SimpleNode eval_input(): {token_source.single_input=false;}
 
 //funcdef: 'def' NAME parameters ':' suite
 void funcdef(): {}
-{<DEF> Name() parameters() <COLON> suite()}
+{<DEF> AnyName() parameters() <COLON> suite()}
 
 //parameters: '(' [varargslist] ')'
 void parameters() #void: {}
@@ -427,7 +427,7 @@ void ImportFrom(): {}
 
 //dotted_name: NAME ('.' NAME)*
 void dotted_name(): {}
-{Name() (<DOT> Name())* }
+{AnyName() (<DOT> AnyName())* }
 
 //global_stmt: 'global' NAME (',' NAME)*
 void global_stmt(): {}
@@ -548,7 +548,7 @@ void power() #void: {}
 void atomtrailer() #void: {}
 {atom() ( (LOOKAHEAD(2) <LPAREN> <RPAREN> #Call_Op(1) | <LPAREN> arglist() <RPAREN> #Call_Op(2))
 			| <LBRACKET> subscriptlist() <RBRACKET> #Index_Op(2)
-			| <DOT> Name() #Dot_Op(2) )*}
+			| <DOT> AnyName() #Dot_Op(2) )*}
 
 
 //atom: '(' [testlist] ')' | '[' [testlist] ']' | '{' [dictmaker] '}' | '`' testlist '`' | NAME | NUMBER | STRING+
@@ -610,7 +610,7 @@ void arglist(): {}
 
 //argument: [test '='] test	# Really [keyword '='] test
 void argument() #void: {}
-{ ([LOOKAHEAD(2) Name() <EQUAL>] test()) #Keyword(>1)}
+{ ([LOOKAHEAD(2) AnyName() <EQUAL>] test()) #Keyword(>1)}
 
 
 void Number() #void :
@@ -655,3 +655,37 @@ void String() #void :
 
 }
 
+void AnyName() #void:
+{
+   Token t;
+}
+{	( t= <NAME> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <OR_BOOL> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <AND_BOOL> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <NOT_BOOL> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <IS> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <IN> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <LAMBDA> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <IF> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <ELSE> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <ELIF> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <WHILE> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <FOR> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <TRY> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <EXCEPT> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <DEF> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <CLASS> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <FINALLY> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <PRINT> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <PASS> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <BREAK> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <CONTINUE> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <RETURN> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <IMPORT> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <FROM> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <DEL> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <RAISE> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <GLOBAL> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <EXEC> { jjtThis.setInfo(t.image); } )#Name
+  | ( t = <ASSERT> { jjtThis.setInfo(t.image); } )#Name
+}
