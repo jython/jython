@@ -1,4 +1,6 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
+
 import java.util.*;
 import java.io.*;
 
@@ -187,7 +189,8 @@ public class PySystemState extends PyObject {
     }
     public PyObject __dict__;
     public void __setattr__(String name, PyObject value) {
-	if (__class__ == null) return;
+	if (__class__ == null)
+	    return;
 	PyObject ret = __class__.lookup(name, false);
 	if (ret != null) {
 	    ret._doset(this, value);
@@ -428,7 +431,9 @@ public class PySystemState extends PyObject {
     public static String[] builtin_module_names = null;
 
     private static final String builtinDefaults = "jarray, math, thread, operator, time, os, types, py_compile, codeop, re, code, synchronize, cPickle, cStringIO, __builtin__:org.python.core";
+
     private static Hashtable builtinNames;
+
     private static void initBuiltins(Properties props) {
         builtinNames = new Hashtable();
 	String builtinprop = props.getProperty("python.modules.builtin", "");
@@ -532,7 +537,8 @@ class PollingInputStream extends FilterInputStream {
                 Thread.currentThread().sleep(100);
             }
         } catch (InterruptedException e) {
-            throw new PyException(Py.KeyboardInterrupt, "interrupt waiting on <stdin>");            
+            throw new PyException(Py.KeyboardInterrupt,
+				  "interrupt waiting on <stdin>");            
         }
     }
     
@@ -554,11 +560,15 @@ class PythonTraceFunction extends TraceFunction {
         this.tracefunc = tracefunc;
     }
 
-    private synchronized TraceFunction safeCall(PyFrame frame, String label, PyObject arg) {
+    private synchronized TraceFunction safeCall(PyFrame frame, String label,
+						PyObject arg)
+    {
         ThreadState ts = Py.getThreadState();
-        if (ts.tracing) return null;
+        if (ts.tracing)
+	    return null;
 
-        if (tracefunc == null) return null;
+        if (tracefunc == null)
+	    return null;
 
         //System.err.println("trace - "+label+" - "+frame.f_code.co_name+" - "+frame.f_lineno+" - "+this);
         ts.tracing = true;
@@ -584,6 +594,8 @@ class PythonTraceFunction extends TraceFunction {
 
     public TraceFunction traceException(PyFrame frame, PyException exc) {
         return safeCall(frame, "exception",
-                new PyTuple(new PyObject[] {exc.type, exc.value, exc.traceback}));
+                new PyTuple(new PyObject[] {exc.type, exc.value,
+					    exc.traceback
+		}));
     }
 }

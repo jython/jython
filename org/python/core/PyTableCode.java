@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
 public class PyTableCode extends PyCode {
@@ -25,9 +26,11 @@ public class PyTableCode extends PyCode {
 	co_firstlineno = firstlineno;
 	this.args = args;
 	co_name = name;
-	if (args) co_argcount -= 1;
+	if (args)
+	    co_argcount -= 1;
 	this.keywords = keywords;
-	if (keywords) co_argcount -= 1;
+	if (keywords)
+	    co_argcount -= 1;
 	this.funcs = funcs;
 	this.func_id = func_id;
     }
@@ -202,7 +205,7 @@ public class PyTableCode extends PyCode {
 	    if (keywords)
 		extra_keywords = new PyDictionary();
 
-	    for(i=0; i<call_keywords.length; i++) {
+	    for (i=0; i<call_keywords.length; i++) {
 		int index=0;
 		while (index<co_argcount) {
 		    if (co_varnames[index].equals(call_keywords[i]))
@@ -217,7 +220,8 @@ public class PyTableCode extends PyCode {
 		    }
 		    actual_args[index] =
 			call_args[i+(call_args.length-call_keywords.length)];
-		} else {
+		}
+		else {
 		    if (extra_keywords == null) {
 			throw Py.TypeError(prefix()+
 					   "unexpected keyword argument: "+
@@ -243,7 +247,7 @@ public class PyTableCode extends PyCode {
 		    extra_args[i] = call_args[i+co_argcount];
 		}
 	    }
-	    for(i=plain_args; i<co_argcount; i++) {
+	    for (i=plain_args; i<co_argcount; i++) {
 		if (actual_args[i] == null) {
 		    if (co_argcount-i > defaults.length) {
 			//System.out.println("nea: "+nargs+", "+i+", "+defaults.length+", "+plain_args);
