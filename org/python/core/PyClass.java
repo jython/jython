@@ -130,15 +130,16 @@ public class PyClass extends PyObject
             PyObject superDict =
                 PyJavaClass.lookup(proxyClass).__findattr__("__dict__");
             // This code will add in the needed super__ methods to the class
-            if (superDict instanceof PyStringMap &&
-                dict instanceof PyStringMap)
-            {
-                PyStringMap superMap = ((PyStringMap)superDict).copy();
-                superMap.update((PyStringMap)dict);
-                dict = superMap;
-                __dict__ = dict;
+            PyObject snames = superDict.__finditem__("__supernames__");
+            if (snames != null) {
+                PyObject sname;
+                for (int i = 0; (sname = snames.__finditem__(i)) != null; i++) {
+                    if (__dict__.__finditem__(sname) == null)
+                        __dict__.__setitem__(sname, superDict.__getitem__(sname));
+                }
             }
         }
+
         //System.out.println("proxyClasses: "+proxyClasses+", "+
         //                   proxyClasses[0]);
         if (dict.__finditem__("__doc__") == null) {
