@@ -362,7 +362,14 @@ public class PyInstance extends PyObject
     }
 
     public PyObject __call__(PyObject args[], String keywords[]) {
-        return invoke("__call__", args, keywords);
+        ThreadState ts = Py.getThreadState();
+        if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+            throw Py.RuntimeError("maximum __call__ recursion depth exceeded");
+        try {
+            return invoke("__call__", args, keywords);
+        } finally {
+            --ts.recursion_depth;
+        }
     }
 
     public PyString __repr__() {

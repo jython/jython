@@ -18,6 +18,8 @@ public class ThreadState {
     public int compareStateNesting = 0;
     private PyDictionary compareStateDict;
 
+    public int recursion_depth = 0;
+
     public PyInstance getInitializingProxy() {
         if (initializingProxies == null || initializingProxies.empty()) {
             return null;

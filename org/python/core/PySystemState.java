@@ -199,6 +199,16 @@ public class PySystemState extends PyObject
         return "sys module";
     }
 
+    private int recursionlimit = 1000;
+
+    public int getrecursionlimit() {
+        return recursionlimit;
+    }
+
+    public void setrecursionlimit(int recursionlimit) {
+        this.recursionlimit = recursionlimit;
+    }
+
     public PySystemState() {
         initialize();
         modules = new PyStringMap();
