@@ -27,7 +27,7 @@ def getClasspath():
     return cpath
 
 def compile(files, javac=None, cpathopt="-classpath",
-            cpath=None, options=None):
+            cpath=None, options=None, sourcedir=None):
     cmd = []
     # Search order for a Java compiler:
     #   1. -C/--compiler command line option
@@ -55,6 +55,8 @@ def compile(files, javac=None, cpathopt="-classpath",
         cpath = sys.registry.getProperty("python.jpythonc.classpath")
     if cpath is None:
         cpath = getClasspath()
+    if sourcedir:
+        cpath = cpath + java.io.File.pathSeparator + sourcedir
     cmd.extend([cpathopt, cpath])
     cmd.extend(files)
     print 'Compiling with args:', cmd
