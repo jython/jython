@@ -78,6 +78,7 @@ public class PyObject implements java.io.Serializable {
 	        return "unknown object";
 	    }
 	    String name = __class__.__name__;
+	    PyObject tmp;
 	    if (name == null) return "unknown object";
 	    
 	    if ((name.equals("org.python.core.PyClass") || name.equals("org.python.core.PyJavaClass"))
@@ -87,6 +88,16 @@ public class PyObject implements java.io.Serializable {
 	        return "class '"+name+"'";
 	    }
 	    
+	    if (name.equals("org.python.core.PyModule")) {
+	        tmp = this.__findattr__("__name__");
+	        if (tmp == null) return "unnamed module";
+	        return "module '"+tmp+"'";
+	    }
+	    if (name.equals("org.python.core.PyJavaPackage") && (this instanceof PyJavaPackage)) {
+	        name = ((PyJavaPackage)this).__name__;
+	        if (name == null) return "unnamed java package";
+	        return "java package '"+name+"'";
+	    }  
 	    return "instance of '"+name+"'";
 	}
 	
