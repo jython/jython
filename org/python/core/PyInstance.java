@@ -1,6 +1,7 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 import java.util.Hashtable;
+import java.io.Serializable;
 
 public class PyInstance extends PyObject
 {
@@ -107,7 +108,8 @@ public class PyInstance extends PyObject
       }*/
 
     public Object __tojava__(Class c) {
-        if (c == Object.class && javaProxy != null) {
+        if ((c == Object.class || c == Serializable.class) &&
+                                                    javaProxy != null) {
             return javaProxy;
         }
         if (c.isInstance(this))
@@ -396,8 +398,12 @@ public class PyInstance extends PyObject
         PyObject ret;
         ret = invoke_ex("__hash__");
 
-        if (ret == null)
+        if (ret == null) {
+            if (__findattr__("__eq__") != null ||
+                __findattr__("__cmp__") != null)
+                throw Py.TypeError("unhashable instance");
             return super.hashCode();
+        }
         if (ret instanceof PyInteger) {
             return ((PyInteger)ret).getValue();
         }

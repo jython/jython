@@ -1,6 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.Serializable;
+
 public class PyInteger extends PyObject
 {
     private int value;
@@ -31,7 +33,8 @@ public class PyInteger extends PyObject
 
     public Object __tojava__(Class c) {
         if (c == Integer.TYPE || c == Number.class ||
-            c == Object.class || c == Integer.class)
+            c == Object.class || c == Integer.class ||
+            c == Serializable.class)
         {
             return new Integer(value);
         }

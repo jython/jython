@@ -136,7 +136,8 @@ public class PyClass extends PyObject
     }
 
     public Object __tojava__(Class c) {
-        if ((c == Object.class || c == Class.class) && proxyClass != null) {
+        if ((c == Object.class || c == Class.class || c == Serializable.class)
+                                      && proxyClass != null) {
             return proxyClass;
         }
         return super.__tojava__(c);

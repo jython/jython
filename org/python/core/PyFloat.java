@@ -1,6 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.Serializable;
+
 public class PyFloat extends PyObject
 {
     private double value;
@@ -60,7 +62,7 @@ public class PyFloat extends PyObject
 
     public Object __tojava__(Class c) {
         if (c == Double.TYPE || c == Number.class ||
-            c == Double.class || c == Object.class)
+            c == Double.class || c == Object.class || c == Serializable.class)
         {
             return new Double(value);
         }

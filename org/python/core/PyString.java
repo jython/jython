@@ -1,6 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.Serializable;
+
 
 class StringFuncs extends PyBuiltinFunctionSet
 {
@@ -625,7 +627,7 @@ public class PyString extends PySequence implements ClassDictInit
 
     public Object __tojava__(Class c) {
         //This is a hack to make almost all Java calls happy
-        if (c == String.class || c == Object.class)
+        if (c == String.class || c == Object.class || c == Serializable.class)
             return string;
         if (c == Character.TYPE)
             if (string.length() == 1)

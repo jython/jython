@@ -2,7 +2,7 @@
 package org.python.core;
 
 import java.math.BigInteger;
-
+import java.io.Serializable;
 
 public class PyLong extends PyObject
 {
@@ -85,7 +85,7 @@ public class PyLong extends PyObject
                 return __float__().__tojava__(c);
             }
             if (c == BigInteger.class || c == Number.class ||
-                c == Object.class)
+                c == Object.class || c == Serializable.class)
             {
                 return value;
             }
