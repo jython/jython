@@ -24,6 +24,11 @@ python.packages.directories = java.ext.dirs
 # Setting this to true will cause jdk1.2rc1 to core dump on Windows
 python.options.compileClass = false
 
+# Allow JPython's classloader to find and load .class files on
+# sys.path.  This only happens for anonymous inner classes, but may
+# have unintended side-effects.  This option is temporary.
+python.options.extendedClassLoader = true
+
 # Set verbosity to error, warning, message, comment, or debug
 # for varying levels of informative messages from JPython
 python.verbose = message
