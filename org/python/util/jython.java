@@ -217,6 +217,9 @@ public class jython
             }
         }
         interp.cleanup();
+        if (opts.interactive) {
+            System.exit(0);
+        }
     }
 }
 
