@@ -1,7 +1,7 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- Thu Nov 18 16:48:42 1999 -->
-<!-- USING HT2HTML 1.0 -->
+<!-- Fri Jan 21 20:05:33 2000 -->
+<!-- USING HT2HTML 1.1 -->
 <!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
 Title: Differences between CPython and JPython
@@ -337,7 +337,9 @@ CPython 1.5.2</i>
 	a dbm/gdbm/bsddb style module, Numeric. 
 
 	<p><LI>The following are highly unlikely any time soon --
-	Tkinter.
+	Tkinter.  However, Finn Bock has a JNI implementation called
+	<a href="http://jTkinter.sourceforge.net/">jTkinter</a> which
+	supports the full _tkinter API.  Very cool stuff!
 
 	<p><LI>Let me know if something should be added to this
 	list.
@@ -396,10 +398,8 @@ CPython 1.5.2</i>
 	obsolete and won't be supported by JPython.</I>
     </UL>
 
-    <p><li>A wrapper for an md5 module has been added, but in
-	order to use it you must download and install some extra
-	Java code.  See the file
-	<tt>org/python/modules/MD5Module.java</tt> for details.
+    <p><li>Harry Mantakos has contributed the underlying md5
+    implementation, so now the md5 module works out of the box.
 
     <p><li>The time module may produce some different values than with
 	CPython.  This is due to Java 1.1 compatibility, and this
