@@ -7,13 +7,15 @@ import java.util.Hashtable;
 import java.util.Enumeration;
 
 
-public class PyReflectedFunction extends PyObject {
+public class PyReflectedFunction extends PyObject
+{
     public String __name__;
     public PyObject __doc__ = Py.None;
     public ReflectedArgs[] argslist;
     public int nargs;
 
     public static PyClass __class__;
+
     public PyReflectedFunction(String name, PyClass c) {
         super(c);
         __name__ = name;
@@ -78,8 +80,8 @@ public class PyReflectedFunction extends PyObject {
 
     public void addMethod(Method m) {
         int mods = m.getModifiers();
-        // Only add public methods
-        if (!Modifier.isPublic(mods))
+        // Only add public methods unless we're overriding
+        if (!Modifier.isPublic(mods) && !JavaAccessibility.accessIsMutable())
             return;
         addArgs(makeArgs(m));
     }
@@ -193,7 +195,7 @@ public class PyReflectedFunction extends PyObject {
         
         ReflectedArgs[] argsl = argslist;
         int n = nargs;
-        for(int i=0; i<n; i++) {
+        for (int i=0; i<n; i++) {
             ReflectedArgs rargs = argsl[i];
             
             int l = rargs.args.length;
@@ -202,13 +204,15 @@ public class PyReflectedFunction extends PyObject {
             }
             
             legalArgs[l] = true;
-            if (l > maxArgs) maxArgs = l;
-            if (l < minArgs) minArgs = l;
+            if (l > maxArgs)
+                maxArgs = l;
+            if (l < minArgs)
+                minArgs = l;
         }
         
         StringBuffer buf = new StringBuffer();
         
-        int startRange=minArgs;
+        int startRange = minArgs;
         int a = minArgs+1;
         while (a < maxArgs) {
             if (legalArgs[a]) {
