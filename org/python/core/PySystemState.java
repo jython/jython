@@ -164,6 +164,7 @@ public class PySystemState extends PyObject {
             if (exc == null) return null;
             return exc.traceback;
         }
+
         if (__dict__ != null) {
             PyObject ret = __dict__.__finditem__(name);
             if (ret != null) return ret;
@@ -398,6 +399,8 @@ public class PySystemState extends PyObject {
 	    packageManager = new PackageManager(pkgdir, props);
 	}
 
+    public static String[] builtin_module_names = null;
+
     private static final String builtinDefaults = "jarray, math, thread, operator, time, os, types, py_compile, codeop, re, code, synchronize, cPickle, cStringIO, __builtin__:org.python.core";
     private static Hashtable builtinNames;
     private static void initBuiltins(Properties props) {
@@ -405,6 +408,13 @@ public class PySystemState extends PyObject {
 		String builtinprop = props.getProperty("python.modules.builtin", "");
 		addBuiltins(builtinDefaults);
 		addBuiltins(builtinprop);
+		
+		int n = builtinNames.size();
+		builtin_module_names = new String[n];
+		Enumeration keys = builtinNames.keys();
+		for(int i=0; i<n; i++) {
+		    builtin_module_names[i] = (String)keys.nextElement();
+		}
 	}
 	
 	private static void addBuiltins(String names) {
