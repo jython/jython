@@ -16,9 +16,13 @@ class A:
 
     __c = 1
 
+def simpledir(obj):
+    l = obj.__dict__.keys()
+    l.sort()
+    return l
 
-if dir(A) != ['_A__c', '_A__stop', '__doc__', '__init__', '__module__']:
+if simpledir(A) != ['_A__c', '_A__stop', '__doc__', '__init__', '__module__']:
     raise support.TestError("bug in private class var mangling %s" % dir(A))
-if dir(A()) != ['_A__y']:
+if simpledir(A()) != ['_A__y']:
     raise support.TestError("bug in private var mangling %s" % dir(A()))
 

@@ -10,7 +10,7 @@ class foo:
 try:
     foo.bar()
 except TypeError, e:
-    support.compare(e, "with instance")
+    support.compare(e, "with \w* ?instance")
 else:
     raise support.TestError("Should raise TypeError")
 
