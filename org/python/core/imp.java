@@ -525,7 +525,7 @@ public class imp
                 Py.newString(mod),
                 frame.f_globals,
                 frame.f_locals,
-                all
+                getStarArg()
             });
 
         frame.setlocal(asname, module);
@@ -569,10 +569,13 @@ public class imp
         }
     }
 
-    private static PyTuple all = new PyTuple(
-        new PyString[] {
-            Py.newString('*')
-        });
+    private static PyTuple all = null;
+
+    private synchronized static PyTuple getStarArg() {
+        if (all == null)
+            all = new PyTuple(new PyString[] { Py.newString('*') });
+        return all;
+    }
 
     /**
      * Called from jpython generated code when a statement like 
@@ -584,7 +587,7 @@ public class imp
                 Py.newString(mod),
                 frame.f_globals,
                 frame.f_locals,
-                all } );
+                getStarArg() } );
         PyObject names;
         if (module instanceof PyJavaPackage) names = ((PyJavaPackage)module).fillDir();
         else names = module.__dir__();
@@ -654,9 +657,11 @@ public class imp
         return ret;
     }
 
-    private static PyObject __import__ = Py.newString("__import__");
+    private static PyObject __import__ = null;
 
     private static PyObject getImportFunc(PyFrame frame) {
+        if (__import__ == null)
+            __import__ = Py.newString("__import__");
         // Set up f_builtins if not already set
         PyObject builtins = frame.f_builtins;
         if (builtins == null)
