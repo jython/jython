@@ -59,21 +59,6 @@ public class PyJavaClass extends PyClass
         
     protected void findModule(PyObject dict) {} 
     
-    private void init__dict__() {
-        if (__dict__ != null)
-            return;
-        PyStringMap d = new PyStringMap();
-//         d.__setitem__("__module__", Py.None);
-        __dict__ = d;
-        try {
-            setBeanInfoCustom(proxyClass);
-            setFields(proxyClass);
-            setMethods(proxyClass);
-        } catch (SecurityException se) {
-            ;
-        }
-    }
-
     protected Class getProxyClass() {
         initialize();
         return proxyClass;
@@ -81,7 +66,7 @@ public class PyJavaClass extends PyClass
 
     private boolean initialized=false;
 
-    private void initialize() {
+    private synchronized void initialize() {
         if (initialized)
             return;
         if (proxyClass == null)
@@ -91,7 +76,20 @@ public class PyJavaClass extends PyClass
         initialized = true;
     }
 
-    private void init__class__(Class c) {
+    private synchronized void init__dict__() {
+        if (__dict__ != null)
+            return;
+        PyStringMap d = new PyStringMap();
+//         d.__setitem__("__module__", Py.None);
+        __dict__ = d;
+        try {
+            setBeanInfoCustom(proxyClass);
+            setFields(proxyClass);
+            setMethods(proxyClass);
+        } catch (SecurityException se) {}
+    }
+
+    private synchronized void init__class__(Class c) {
         if (!PyObject.class.isAssignableFrom(c))
             return;
 
@@ -119,7 +117,7 @@ public class PyJavaClass extends PyClass
         catch (IllegalAccessException exc1) {}
     }
     
-    private void init__bases__(Class c) {
+    private synchronized void init__bases__(Class c) {
         if (__bases__ != null) return;
         
         Class interfaces[] = c.getInterfaces();
@@ -159,7 +157,7 @@ public class PyJavaClass extends PyClass
         __bases__ = new PyTuple(bases);
     }        
 
-    void init(Class c)  {
+    synchronized void init(Class c)  {
         init__class__(c);
         proxyClass = c;
         __name__ = c.getName();
