@@ -18,7 +18,7 @@ warnings = ('-w',"") in opts
 
 if warnings: print "LOUD warnings"
 
-for i in range(382):
+for i in range(383):
     m = None
     n = "test%3.3d" % i
     try:
