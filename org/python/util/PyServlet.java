@@ -78,22 +78,23 @@ public class PyServlet extends HttpServlet {
             props.setProperty("python.home", rootPath + File.separator +
                                              "WEB-INF" + File.separator +
                                              "lib");
-
-            props.setProperty("python.packages.directories",
-                              "java.ext.dirs,pyservlet.lib");
-            props.setProperty("pyservlet.lib",
-                              rootPath + File.separator +
-                              "WEB-INF" + File.separator +
-                              "lib");
-
-            props.setProperty("python.packages.paths",
-                              "java.class.path,sun.boot.class.path,"+
-                              "pyservlet.classes");
-            props.setProperty("pyservlet.classes",
-                              rootPath + File.separator +
-                              "WEB-INF" + File.separator +
-                              "classes");
         }
+
+        props.setProperty("python.packages.directories",
+                          "java.ext.dirs,pyservlet.lib");
+        props.setProperty("pyservlet.lib",
+                          rootPath + File.separator +
+                          "WEB-INF" + File.separator +
+                          "lib");
+
+        props.setProperty("python.packages.paths",
+                          "java.class.path,sun.boot.class.path,"+
+                          "pyservlet.classes");
+        props.setProperty("pyservlet.classes",
+                          rootPath + File.separator +
+                          "WEB-INF" + File.separator +
+                          "classes");
+ 
         PythonInterpreter.initialize(System.getProperties(), props, new String[0]);
         reset();
 
