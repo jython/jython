@@ -137,6 +137,11 @@ public class PySystemState extends PyObject
             if (exc == null) return null;
             return exc.traceback;
         }
+        if (name == "warnoptions") {
+            if (warnoptions == null)
+                warnoptions = new PyList();
+            return warnoptions;
+        }
 
         PyObject ret = super.__findattr__(name);
         if (ret != null) return ret;
@@ -378,10 +383,7 @@ public class PySystemState extends PyObject
         Py.EmptyString = new PyString("");
         Py.Newline = new PyString("\n");
         Py.Space = new PyString(" ");
-
         __builtin__class = PyJavaClass.lookup(__builtin__.class);
-
-        warnoptions = new PyList();
 
         // Setup standard wrappers for stdout and stderr...
         Py.stderr = new StderrWrapper();
