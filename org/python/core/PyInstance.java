@@ -430,15 +430,44 @@ public class PyInstance extends PyObject
         throw Py.TypeError("__hash__() must return int");
     }
 
-    public int __cmp__(PyObject o) {
-        PyObject ret = invoke_ex("__cmp__", o);
-        if (ret == null)
-            return -2;
-        if (ret instanceof PyInteger) {
-            int v = ((PyInteger)ret).getValue();
-            return v < 0 ? -1 : v > 0 ? 1 : 0;
+    // special case: does all the work
+    public int __cmp__(PyObject other) {
+        PyObject[] coerced = this._coerce(other);
+        PyObject v;
+        PyObject w;
+        PyObject ret = null;
+        if (coerced != null) {
+            v = coerced[0];
+            w = coerced[1];
+            if (!(v instanceof PyInstance) && 
+                !(w instanceof PyInstance)) 
+                return v._cmp(w);
+        } else {
+            v = this;
+            w = other;
         }
-        throw Py.TypeError("__cmp__() must return int");
+        if (v instanceof PyInstance) {
+            ret = ((PyInstance)v).invoke_ex("__cmp__",w);
+            if (ret != null) {
+                if (ret instanceof PyInteger) {
+                    int result = ((PyInteger)ret).getValue();
+                    return result < 0 ? -1 : result > 0 ? 1 : 0;
+                }
+                throw Py.TypeError("__cmp__() must return int");                
+            }           
+        }
+        if (w instanceof PyInstance) {
+            ret = ((PyInstance)w).invoke_ex("__cmp__",v);
+            if (ret != null) {
+                if (ret instanceof PyInteger) {
+                    int result = ((PyInteger)ret).getValue();
+                    return -(result < 0 ? -1 : result > 0 ? 1 : 0);
+                }
+                throw Py.TypeError("__cmp__() must return int");                
+            }           
+            
+        }
+        return -2;
     }
 
     private PyObject invoke_ex_richcmp(String name, PyObject o) {

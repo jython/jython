@@ -220,6 +220,35 @@ public class PyDictionary extends PyObject implements ClassDictInit
         return buf.toString();
     }
 
+    public PyObject __eq__(PyObject ob_other) {
+        if (ob_other.getType() != getType())
+            return null;
+
+        PyDictionary other = (PyDictionary)ob_other;
+        int an = table.size();
+        int bn = other.table.size();
+        if (an != bn)
+            return Py.Zero;
+            
+        PyList akeys = keys();               
+        for (int i=0; i<an; i++) {
+            PyObject akey = akeys.get(i);
+            PyObject bvalue = other.__finditem__(akey);
+            if (bvalue == null)
+                return Py.Zero;
+            PyObject avalue = __finditem__(akey);
+            if (!avalue._eq(bvalue).__nonzero__())
+                return Py.Zero;
+        }
+        return Py.One;
+    }
+    
+    public PyObject __ne__(PyObject ob_other) {
+        PyObject eq_result = __eq__(ob_other);
+        if (eq_result == null) return null;
+        return  eq_result == Py.One?Py.Zero:Py.One;
+    }
+
     public int __cmp__(PyObject ob_other) {
         if (ob_other.getType() != getType())
             return -2;

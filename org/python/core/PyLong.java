@@ -136,7 +136,9 @@ public class PyLong extends PyObject
     }
 
     public int __cmp__(PyObject other) {
-        return value.compareTo(((PyLong)other).value);
+        if (!canCoerce(other))
+            return -2;
+        return value.compareTo(coerce(other));
     }
 
     public Object __coerce_ex__(PyObject other) {

@@ -909,6 +909,37 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
+     * Implements coerce(this,other), result as PyObject[]
+     * @param oher
+     * @return PyObject[]
+     */
+    PyObject[] _coerce(PyObject other) {
+        Object result;
+        if (this.getType() == other.getType() &&
+            !(this instanceof PyInstance)) {
+            return new PyObject[] {this, other};
+        }
+        result = this.__coerce_ex__(other);
+        if (result != null && result != Py.None) {
+            if (result instanceof PyObject[]) {
+                return (PyObject[])result;
+            } else {
+                return new PyObject[] {this, (PyObject)result};
+            }
+        }
+        result = other.__coerce_ex__(this);
+        if (result != null && result != Py.None) {
+            if (result instanceof PyObject[]) {
+                return (PyObject[])result;
+            } else {
+                return new PyObject[] {(PyObject)result, other};
+            }
+        }
+        return null;
+          
+    }
+
+    /**
      * Equivalent to the standard Python __coerce__ method.
      *
      * This method can not be overridden.
@@ -930,6 +961,8 @@ public class PyObject implements java.io.Serializable {
         else
             return new PyTuple(new PyObject[] { this, (PyObject) o });
     }
+
+
 
     /* The basic comparision operations */
 
@@ -1055,70 +1088,72 @@ public class PyObject implements java.io.Serializable {
             return new PyIdentityTuple(new PyObject[] { o, this });
     }
 
-    private final int _cmp_unsafe(PyObject o2_in) {
-        // Shortcut for equal objects
-        if (this == o2_in)
+    private final int _default_cmp(PyObject other) {
+        int result;
+        if (this._is(other).__nonzero__())
             return 0;
-
-        PyObject o2 = o2_in;
-        PyObject o1 = this;
-        int itmp;
-        Object ctmp;
-        if (o1.getType() != o2.getType()) {
-            ctmp = o1.__coerce_ex__(o2);
-            if (ctmp != null) {
-                if (ctmp instanceof PyObject[]) {
-                    o1 = ((PyObject[]) ctmp)[0];
-                    o2 = ((PyObject[]) ctmp)[1];
-                } else {
-                    o2 = (PyObject) ctmp;
-                }
-            }
-        } else
-            ctmp = null;
-        if (ctmp != Py.None && (itmp = o1.__cmp__(o2)) != -2)
-            return itmp;
-
-        o1 = this;
-        o2 = o2_in;
-        if (o1.getType() != o2.getType()) {
-            ctmp = o2.__coerce_ex__(o1);
-            if (ctmp != null) {
-                if (ctmp instanceof PyObject[]) {
-                    o2 = ((PyObject[]) ctmp)[0];
-                    o1 = ((PyObject[]) ctmp)[1];
-                } else {
-                    o1 = (PyObject) ctmp;
-                }
-            }
-        }
-        if (ctmp != Py.None && (itmp = o2.__cmp__(o1)) != -2)
-            return -itmp;
-
-        if (this == o2_in)
-            return 0;
-
+        
         /* None is smaller than anything */
         if (this == Py.None)
             return -1;
-        if (o2_in == Py.None)
+        if (other == Py.None)
             return 1;
 
         // No rational way to compare these, so ask their classes to compare
-        itmp = this.getType().__cmp__(o2_in.getType());
-
-        if (itmp == 0)
-            return System.identityHashCode(this)
-                < System.identityHashCode(o2_in)
-                ? -1
-                : 1;
-        if (itmp != -2)
-            return itmp;
-        return System.identityHashCode(this.getType())
-            < System.identityHashCode(o2_in.getType())
-            ? -1
-            : 1;
+        PyType this_type = this.getType();
+        PyType other_type = other.getType();
+        if (this_type == other_type) {
+            return Py.id(this) < Py.id(other)? -1: 1;
+        }
+        result = this_type.fastGetName().compareTo(other_type.fastGetName());
+        if (result == 0)
+            return Py.id(this_type)<Py.id(other_type)? -1: 1;  
+        return result < 0? -1: 1;              
     }
+
+    private final int _cmp_unsafe(PyObject other) {
+        // Shortcut for equal objects
+        if (this == other)
+            return 0;
+
+        int result;
+        result = this.__cmp__(other);
+        if (result != -2)
+            return result;
+        
+        if (!(this instanceof PyInstance)) {
+            result = other.__cmp__(this);
+            if (result != -2)
+                return -result;                
+        }
+
+        return this._default_cmp(other);
+    }
+
+    /*
+     *  Like _cmp_unsafe but limited to ==/!= as 0/!=0,
+     *  avoids to invoke Py.id
+     */
+    private final int _cmpeq_unsafe(PyObject other) {
+        // Shortcut for equal objects
+        if (this == other)
+            return 0;
+
+        int result;
+        result = this.__cmp__(other);
+        if (result != -2)
+            return result;
+
+        if (!(this instanceof PyInstance)) {            
+            result = other.__cmp__(this);
+            if (result != -2)
+                return -result;
+        }
+
+        return this._is(other).__nonzero__()?0:1;
+    }
+
+
 
     private final static PyObject check_recursion(
         ThreadState ts,
@@ -1164,7 +1199,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__eq__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) == 0 ? Py.One : Py.Zero;
+            return _cmpeq_unsafe(o) == 0 ? Py.One : Py.Zero;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1192,7 +1227,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__ne__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) != 0 ? Py.One : Py.Zero;
+            return _cmpeq_unsafe(o) != 0 ? Py.One : Py.Zero;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;

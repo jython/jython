@@ -78,7 +78,9 @@ public class PyFloat extends PyObject
     }
 
     public int __cmp__(PyObject other) {
-        double v = ((PyFloat)other).value;
+        if (!canCoerce(other))
+             return -2;
+        double v = coerce(other);
         return value < v ? -1 : value > v ? 1 : 0;
     }
 

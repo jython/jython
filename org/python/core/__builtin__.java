@@ -1,7 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.parser.SimpleNode;
 import java.util.Hashtable;
 import java.math.BigInteger;
 
@@ -197,27 +196,9 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyTuple coerce(PyObject o1, PyObject o2) {
-        Object ctmp;
-        PyTuple ret;
-        if (o1.getType() == o2.getType()) {
-            return new PyTuple(new PyObject[] {o1, o2});
-        }
-        ctmp = o1.__coerce_ex__(o2);
-        if (ctmp != null && ctmp != Py.None) {
-            if (ctmp instanceof PyObject[]) {
-                return new PyTuple((PyObject[])ctmp);
-            } else {
-                return new PyTuple(new PyObject[] {o1, (PyObject)ctmp});
-            }
-        }
-        ctmp = o2.__coerce_ex__(o1);
-        if (ctmp != null && ctmp != Py.None) {
-            if (ctmp instanceof PyObject[]) {
-                return new PyTuple((PyObject[])ctmp);
-            } else {
-                return new PyTuple(new PyObject[] {(PyObject)ctmp, o2});
-            }
-        }
+        PyObject[] result = o1._coerce(o2);
+        if (result != null)
+            return new PyTuple(result);
         throw Py.TypeError("number coercion failed");
     }
 
@@ -675,32 +656,20 @@ public class __builtin__ implements ClassDictInit
     private static boolean coerce(PyObject[] objs) {
         PyObject x = objs[0];
         PyObject y = objs[1];
-        if (x.getType() == y.getType())
+        PyObject[] result;
+        result = x._coerce(y);
+        if (result != null) {
+            objs[0] = result[0];
+            objs[1] = result[1];
             return true;
-        Object ctmp = x.__coerce_ex__(y);
-        if (ctmp != null && ctmp != Py.None) {
-            if (ctmp instanceof PyObject[]) {
-                x = ((PyObject[])ctmp)[0];
-                y = ((PyObject[])ctmp)[1];
-            } else {
-                y = (PyObject)ctmp;
-            }
         }
-        objs[0] = x; objs[1] = y;
-        if (x.getType() == y.getType())
+        result = y._coerce(x);
+        if (result != null) {
+            objs[0] = result[1];
+            objs[1] = result[0];
             return true;
-        ctmp = y.__coerce_ex__(x);
-        if (ctmp != null && ctmp != Py.None) {
-            if (ctmp instanceof PyObject[]) {
-                y = ((PyObject[])ctmp)[0];
-                x = ((PyObject[])ctmp)[1];
-            } else {
-                x = (PyObject)ctmp;
-            }
         }
-        objs[0] = x; objs[1] = y;
-        //System.out.println(""+x.__class__+" : "+y.__class__);
-        return x.getType() == y.getType();
+        return false;
     }
 
     public static PyObject pow(PyObject xi, PyObject yi, PyObject zi) {

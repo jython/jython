@@ -69,7 +69,9 @@ public class PyInteger extends PyObject
     }
 
     public int __cmp__(PyObject other) {
-        int v = ((PyInteger)other).value;
+        if (!canCoerce(other))
+             return -2;
+        int v = coerce(other);
         return value < v ? -1 : value > v ? 1 : 0;
     }
 
