@@ -497,16 +497,25 @@ public class PyFile extends PyObject
         return readline(-1);
     }
 
-    // Also readlines(sizehint)
-    public PyObject readlines() {
+    public PyObject readlines(int sizehint) {
         PyList list = new PyList();
+        int bytesread = 0;
         for (;;) {
             PyString s = readline();
-            if (s.__len__() == 0)
+            int len = s.__len__();
+            if (len == 0)
+                // EOF
                 break;
+            bytesread += len;
             list.append(s);
+            if (sizehint > 0 && bytesread > sizehint)
+                break;
         }
         return list;
+    }
+
+    public PyObject readlines() {
+        return readlines(0);
     }
 
     public void write(String s) {
