@@ -179,21 +179,6 @@ public class PyInstance extends PyObject
         }
     }
 
-    /*private PyProxy createProxy(Class c) {
-      try {
-      return (PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
-      } catch (Exception exc) {
-      throw Py.JavaError(exc);
-      }
-      }*/
-
-    /*public PyObject __jgetattr__(String name) {
-      System.err.println("jgetting: "+name);
-      PyObject ret = __findattr__(name, true);
-      if (ret != null) return ret;
-      throw Py.AttributeError(name);
-      }*/
-
     public PyObject __jfindattr__(String name) {
         //System.err.println("jfinding: "+name);
         return __findattr__(name, true);

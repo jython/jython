@@ -31,7 +31,8 @@ public class SyspathJavaLoader extends ClassLoader
             String dir = path.get(i).__str__().toString();
             if (dir.length() == 0) dir = null;
             try {
-                return new BufferedInputStream(new FileInputStream(new File(dir,res)));
+                return new BufferedInputStream(
+                       new FileInputStream(new File(dir,res)));
             }
             catch (IOException e) {
                 continue;

@@ -99,7 +99,8 @@ public class PyStringMap extends PyObject
             String tkey = table[index];
             if (tkey == key) {
                 //if (collisions > 0) {
-                //    System.err.println("key: "+key+", "+collisions+", "+maxindex+", "+System.identityHashCode(key));
+                //    System.err.println("key: "+key+", "+collisions+", "+
+                //               maxindex+", "+System.identityHashCode(key));
                 //}
                 return values[index];
             }
@@ -159,7 +160,8 @@ public class PyStringMap extends PyObject
         if (primes[p] < capacity) {
             throw Py.ValueError("can't make hashtable of size: "+capacity);
         }
-        //System.err.println("resize: "+(keys != null ? keys.length : -1)+", "+primes[p]);
+        //System.err.println("resize: "+(keys != null ? keys.length : -1)+
+        //                   ", "+primes[p]);
         capacity = primes[p];
         prime = p;
 
@@ -274,7 +276,8 @@ public class PyStringMap extends PyObject
     }
 
     public synchronized int __cmp__(PyObject other) {
-        if (!(other instanceof PyStringMap || other instanceof PyDictionary)) {
+        if (!(other instanceof PyStringMap ||
+                  other instanceof PyDictionary)) {
             return -2;
         }
         int an = __len__();

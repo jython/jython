@@ -47,7 +47,8 @@ public class parser {
 
             int col = e.errorColumn;
             int line = e.errorLine;
-            //System.err.println("eof seen: "+eofSeen+", "+e.curChar+", "+col+", "+line);
+            //System.err.println("eof seen: "+eofSeen+", "+e.curChar+", "+col+
+            //                   ", "+line);
             String text = getLine(reader, line);
             if (eofSeen)
                 col -= 1;
@@ -100,7 +101,8 @@ public class parser {
                 node = g.single_input();
             }
             else {
-               throw Py.ValueError("parse kind must be eval, exec, or single");
+               throw Py.ValueError("parse kind must be eval, exec, " +
+                                   "or single");
             }
         }
         catch (Throwable t) {
@@ -128,13 +130,15 @@ public class parser {
             node = parse(new StringBufferInputStream(string), kind, filename);
         }
         catch (PySyntaxError e) {
-            //System.out.println("e: "+e.lineno+", "+e.column+", "+e.forceNewline);
+            //System.out.println("e: "+e.lineno+", "+e.column+", "+
+            //                   e.forceNewline);
             try {
                 node = parse(new StringBufferInputStream(string+"\n"),
                              kind, filename);
             }
             catch (PySyntaxError e1) {
-                //System.out.println("e1: "+e1.lineno+", "+e1.column+", "+e1.forceNewline);
+                //System.out.println("e1: "+e1.lineno+", "+e1.column+
+                //                   ", "+e1.forceNewline);
                 if (e.forceNewline || !e1.forceNewline) throw e;
             }
             return null;

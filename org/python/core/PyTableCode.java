@@ -235,19 +235,6 @@ public class PyTableCode extends PyCode
         return call(frame);
     }
 
-//     public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
-//                          PyObject[] defaults)
-//     {
-//         if (co_argcount != 2)
-//             return call(new PyObject[] {arg1, arg2}, Py.NoKeywords, globals,
-//             defaults);
-//         }
-//         PyFrame frame = new PyFrame(this, globals);
-//         frame.f_fastlocals[0] = arg1;
-//         frame.f_fastlocals[1] = arg2;
-//         return call(frame);
-//     }
-
     public PyObject call(PyObject self, PyObject call_args[],
                          String call_keywords[], PyObject globals,
                          PyObject[] defaults)
@@ -296,7 +283,8 @@ public class PyTableCode extends PyCode
                 if (index < co_argcount) {
                     if (actual_args[index] != null) {
                         throw Py.TypeError(prefix()+
-                                           "got multiple values for keyword argument '"+
+                                           "got multiple values for " +
+                                           "keyword argument '"+
                                            call_keywords[i] + "'");
                     }
                     actual_args[index] =
@@ -305,8 +293,9 @@ public class PyTableCode extends PyCode
                 else {
                     if (extra_keywords == null) {
                         throw Py.TypeError(prefix()+
-                                           "got an unexpected keyword argument '"+
-                                           call_keywords[i] + "'");
+                                           "got an unexpected keyword " +
+                                           "argument '"+ call_keywords[i] +
+                                           "'");
                     }
                     extra_keywords.__setitem__(
                         call_keywords[i],
@@ -339,7 +328,8 @@ public class PyTableCode extends PyCode
                             (call_args.length-call_keywords.length)+
                             " given)");
                     }
-                    actual_args[i] = defaults[defaults.length-(co_argcount-i)];
+                    actual_args[i] =
+                          defaults[defaults.length-(co_argcount-i)];
                 }
             }
             if (args) {

@@ -70,8 +70,8 @@ public class PyObject implements java.io.Serializable {
     /**
        #### This method is now deprecated and will go away in the future ####
        A more sophisticated constructor for a <code>PyObject</code>.
-       Can be more efficient as it allows the subclass of PyObject to cache its
-       known <code>__class__</code>.
+       Can be more efficient as it allows the subclass of PyObject to
+       cache its known <code>__class__</code>.
 
        The common idiom for using this constructor is shown as used for the
        PyInteger class:
@@ -179,7 +179,8 @@ public class PyObject implements java.io.Serializable {
 
     /**
        Equivalent to the standard Python __nonzero__ method.
-       Returns whether of not a given <code>PyObject</code> is considered true.
+       Returns whether of not a given <code>PyObject</code> is
+       considered true.
     **/
     public boolean __nonzero__() {
         return true;
@@ -331,17 +332,20 @@ public class PyObject implements java.io.Serializable {
        if (kwargs != null) {
            PyObject keys = kwargs.__findattr__("keys");
            if (keys == null)
-               throw Py.TypeError(name + "argument after ** must be a dictionary");
+               throw Py.TypeError(name + "argument after ** must be " +
+                                  "a dictionary");
            for (int i = 0; i < keywords.length; i++)
                if (kwargs.__finditem__(keywords[i]) != null)
-                   throw Py.TypeError(name +
-                          "got multiple values for keyword argument '" + keywords[i] + "'");
+                   throw Py.TypeError(name + "got multiple values for " +
+                                      "keyword argument '" + keywords[i] +
+                                      "'");
            argslen += kwargs.__len__();
        }
        if (starargs != null) {
            if (!(starargs instanceof PySequence ||
                        starargs instanceof PyInstance))
-               throw Py.TypeError(name + "argument after * must be a sequence");
+               throw Py.TypeError(name + "argument after * must " +
+                                  "be a sequence");
            nstar = starargs.__len__();
            argslen += nstar;
        }
@@ -651,7 +655,8 @@ public class PyObject implements java.io.Serializable {
     public final PyObject __getattr__(PyString name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
-            throw Py.AttributeError(safeRepr()+" has no attribute '"+name+"'");
+            throw Py.AttributeError(safeRepr() + " has no attribute '" +
+                                    name + "'");
         return ret;
     }
 
@@ -673,7 +678,8 @@ public class PyObject implements java.io.Serializable {
     public final PyObject __getattr__(String name) {
         PyObject ret = __findattr__(name);
         if (ret == null)
-            throw Py.AttributeError(safeRepr()+" has no attribute '"+name+"'");
+            throw Py.AttributeError(safeRepr() + " has no attribute '" +
+                                    name + "'");
         return ret;
     }
 
@@ -933,7 +939,9 @@ public class PyObject implements java.io.Serializable {
     }
 
 
-    private final static PyObject check_recursion(ThreadState ts, PyObject o1, PyObject o2) {
+    private final static PyObject check_recursion(ThreadState ts,
+                                                  PyObject o1, PyObject o2)
+    {
         PyDictionary stateDict = ts.getCompareStateDict();
 
         PyObject pair = o1.make_pair(o2);
@@ -1236,7 +1244,7 @@ public class PyObject implements java.io.Serializable {
        modulo is to be used
        @return this object raised to the given power in the given modulus
     **/
-    public PyObject __pow__(PyObject o2, PyObject o3) throws PyException { return null; }
+    public PyObject __pow__(PyObject o2, PyObject o3) { return null; }
 
 
 

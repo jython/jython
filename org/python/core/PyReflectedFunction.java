@@ -117,7 +117,8 @@ public class PyReflectedFunction extends PyObject
         nargs = nn;
     }
 
-    public PyObject __call__(PyObject self, PyObject[] args, String[] keywords)
+    public PyObject __call__(PyObject self, PyObject[] args,
+                             String[] keywords)
     {
         ReflectedCallData callData = new ReflectedCallData();
         Object method = null;
@@ -271,7 +272,8 @@ public class PyReflectedFunction extends PyObject
               len = len-1;
               }*/
             // This check works almost all the time.
-            // I'm still a little worried about non-static methods called with an explict self...
+            // I'm still a little worried about non-static methods
+            // called with an explict self...
             if (len == nArgs) {
                 if (errArg == -1) {
                     table.put(rargs.declaringClass, rargs.declaringClass);

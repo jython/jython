@@ -223,9 +223,11 @@ public class PyInteger extends PyObject
 
         if (pow < 0) {
             if (value != 0)
-                throw Py.ValueError("cannot raise integer to a negative power");
+                throw Py.ValueError("cannot raise integer to a " +
+                                    "negative power");
             else
-                throw Py.ZeroDivisionError("cannot raise 0 to a negative power");
+                throw Py.ZeroDivisionError("cannot raise 0 to a " +
+                                           "negative power");
         }
 
         if (modulo != null) {

@@ -33,8 +33,8 @@ class ReflectedArgs {
         }
     }
 
-    public boolean matches(PyObject self, PyObject[] pyArgs, String[] keywords,
-                           ReflectedCallData callData)
+    public boolean matches(PyObject self, PyObject[] pyArgs,
+                            String[] keywords, ReflectedCallData callData)
     {
         if (flags != PyArgsKeywordsCall) {
             if (keywords != null && keywords.length != 0)

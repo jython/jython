@@ -21,7 +21,8 @@ public abstract class PackageManager extends Object {
 
     public void notifyPackageImport(String pkg,String name) {}
 
-    /** Dynamically check if pkg.name exists as java pkg in the controlled hierarchy.
+    /** Dynamically check if pkg.name exists as java pkg in the
+     * controlled hierarchy.
      * Should be overriden.
      * @param pkg parent pkg name
      * @param name candidate name
@@ -30,18 +31,24 @@ public abstract class PackageManager extends Object {
     public abstract boolean packageExists(String pkg,String name);
 
     /** Reports the specified package content names. Should be overriden.
-     * Used by {@link PyJavaPackage#__dir__} and {@link PyJavaPackage#fillDir}.
+     * Used by {@link PyJavaPackage#__dir__} and
+     * {@link PyJavaPackage#fillDir}.
      * @return resulting list of names (PyList of PyString)
-     * @param jpkg queried package
-     * @param instantiate if true then instatiate reported names in package dict
-     * @param exclpkgs exclude packages (just when instantiate is false)
+     * @param jpkg        queried package
+     * @param instantiate if true then instatiate reported names in
+     *                    package dict
+     * @param exclpkgs    exclude packages (just when instantiate is false)
      */
-    public abstract PyList doDir(PyJavaPackage jpkg,boolean instantiate,boolean exclpkgs);
+    public abstract PyList doDir(PyJavaPackage jpkg, boolean instantiate,
+                                 boolean exclpkgs);
 
     /** Basic helper implementation of {@link #doDir}.
-     * It merges information from jpkg {@link PyJavaPackage#clsSet} and {@link PyJavaPackage#__dict__}.
+     * It merges information from jpkg {@link PyJavaPackage#clsSet}
+     * and {@link PyJavaPackage#__dict__}.
      */
-    protected PyList basicDoDir(PyJavaPackage jpkg,boolean instantiate,boolean exclpkgs) {
+    protected PyList basicDoDir(PyJavaPackage jpkg, boolean instantiate,
+                                boolean exclpkgs)
+    {
         PyStringMap dict =  jpkg.__dict__;
         PyStringMap cls = jpkg.clsSet;
 
@@ -53,7 +60,8 @@ public abstract class PackageManager extends Object {
             for(int i=0; i < dictKeys.__len__(); i++) {
                 PyObject name = dictKeys.get(i);
                 if (!cls.has_key(name)) {
-                    if (exclpkgs && dict.get(name) instanceof PyJavaPackage) continue;
+                    if (exclpkgs && dict.get(name) instanceof PyJavaPackage)
+                        continue;
                     ret.append(name);
                 }
             }
@@ -102,14 +110,17 @@ public abstract class PackageManager extends Object {
     }
 
     /** Creates package/updates statically known classes info.
-     * Uses {@link PyJavaPackage#addPackage(java.lang.String, java.lang.String) }, {@link PyJavaPackage#addPlaceholders}.
+     * Uses {@link PyJavaPackage#addPackage(java.lang.String,
+     * java.lang.String) }, {@link PyJavaPackage#addPlaceholders}.
      *
      * @param name package name
      * @param classes comma-separated string
      * @param jarfile involved jarfile; can be null
      * @return created/updated package
      */
-    public PyJavaPackage makeJavaPackage(String name,String classes,String jarfile) {
+    public PyJavaPackage makeJavaPackage(String name, String classes,
+                                         String jarfile)
+    {
         PyJavaPackage p = topLevelPackage;
         if(name.length() != 0) p=p.addPackage(name,jarfile);
 
@@ -123,7 +134,9 @@ public abstract class PackageManager extends Object {
     /** Check that a given stream is a valid Java .class file.
      * And return its access permissions as an int.
      */
-    static protected int checkAccess(java.io.InputStream cstream) throws java.io.IOException {
+    static protected int checkAccess(java.io.InputStream cstream)
+        throws java.io.IOException
+    {
         java.io.DataInputStream istream=new java.io.DataInputStream(cstream);
 
         int magic = istream.readInt();
@@ -157,8 +170,10 @@ public abstract class PackageManager extends Object {
                 istream.skipBytes(slength);
                 break;
                 default:
-                //System.err.println("unexpected cid: "+cid+", "+i+", "+nconstants);
-                //for (int j=0; j<10; j++) { System.err.print(", "+istream.readByte()); }
+                //System.err.println("unexpected cid: "+cid+", "+i+", "+
+                //                   nconstants);
+                //for (int j=0; j<10; j++)
+                //    System.err.print(", "+istream.readByte());
                 //System.err.println();
                 return -1;
             }

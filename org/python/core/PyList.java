@@ -177,7 +177,8 @@ public class PyList extends PySequence implements ClassDictInit
 
     protected void delRange(int start, int stop, int step) {
         if (step != 1)
-            throw Py.ValueError("step size must be 1 for deleting list slice");
+            throw Py.ValueError("step size must be 1 for deleting "+
+                                "list slice");
 
         System.arraycopy(list, stop, list, start, length-stop);
         int newLength = length-(stop-start);

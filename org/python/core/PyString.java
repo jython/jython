@@ -254,7 +254,8 @@ public class PyString extends PySequence implements ClassDictInit
         dict.__setitem__("replace", new StringFuncs("replace", 116, 2, 3));
         dict.__setitem__("startswith",
                          new StringFuncs("startswith", 117, 1, 3));
-        dict.__setitem__("translate", new StringFuncs("translate", 118, 1, 2));
+        dict.__setitem__("translate",
+                         new StringFuncs("translate", 118, 1, 2));
         // TBD: CPython currently doesn't have these as string methods, but
         // they'd be easy to add for JPython.  For now, compatibility says
         // to access these only through the string module
@@ -314,7 +315,9 @@ public class PyString extends PySequence implements ClassDictInit
 
     private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
 
-    public static String encode_UnicodeEscape(String str, boolean use_quotes) {
+    public static String encode_UnicodeEscape(String str,
+                                              boolean use_quotes)
+    {
         int size = str.length();
         StringBuffer v = new StringBuffer(str.length());
 
@@ -483,7 +486,8 @@ public class PyString extends PySequence implements ClassDictInit
                     int endBrace = startName;
 
                     /* look for either the closing brace, or we
-                     * exceed the maximum length of the unicode character names
+                     * exceed the maximum length of the unicode
+                     * character names
                      */
                     int maxLen = pucnHash.getCchMax();
                     while (endBrace < end && str.charAt(endBrace) != '}'
@@ -491,10 +495,11 @@ public class PyString extends PySequence implements ClassDictInit
                         endBrace++;
                     }
                     if (endBrace != end && str.charAt(endBrace) == '}') {
-                         int value = pucnHash.getValue(str, startName, endBrace);
+                         int value = pucnHash.getValue(str, startName,
+                                                       endBrace);
                          if (value < 0) {
-                             codecs.decoding_error("unicode escape", v, errors,
-                                 "Invalid Unicode Character Name");
+                             codecs.decoding_error("unicode escape", v,
+                                  errors, "Invalid Unicode Character Name");
                              v.append('\\');
                              v.append(str.charAt(s-1));
                              break;
@@ -512,7 +517,7 @@ public class PyString extends PySequence implements ClassDictInit
                              /* high surrogate = top 10 bits added to D800 */
                              v.append((char) (0xD800 + (value >> 10)));
 
-                             /* low surrogate  = bottom 10 bits added to DC00*/
+                             /* low surrogate = bottom 10 bits added to DC00*/
                              v.append((char) (0xDC00 + (value & ~0xFC00)));
                         }
                         s = endBrace + 1;
@@ -526,7 +531,8 @@ public class PyString extends PySequence implements ClassDictInit
                     break;
                 }
                 codecs.decoding_error("unicode escape", v, errors,
-                     "Missing opening brace for Unicode Character Name escape");
+                                      "Missing opening brace for Unicode " +
+                                      "Character Name escape");
 
                 /* fall through on purpose */
            default:
@@ -725,7 +731,8 @@ public class PyString extends PySequence implements ClassDictInit
             switch (c) {
             case '\0':
                 if (s != n)
-                    throw Py.ValueError("null byte in argument for complex()");
+                    throw Py.ValueError("null byte in argument for " +
+                                        "complex()");
                 if (!done)
                     sw_error = true;
                 break;
@@ -1173,7 +1180,8 @@ public class PyString extends PySequence implements ClassDictInit
             if (Character.isDigit(ch)) {
                 if (s == null)
                     s = new StringBuffer(string);
-                s.setCharAt(i, Character.forDigit(Character.digit(ch, 10), 10));
+                int val = Character.digit(ch, 10);
+                s.setCharAt(i, Character.forDigit(val, 10));
             }
         }
         String sval = string;
@@ -1396,7 +1404,7 @@ public class PyString extends PySequence implements ClassDictInit
         if (string.length() == 0)
             return string;
         String first = string.substring(0,1).toUpperCase();
-        return first.concat(string.substring(1,string.length()).toLowerCase());
+        return first.concat(string.substring(1).toLowerCase());
     }
 
     public String replace(String oldPiece, String newPiece) {
@@ -1523,7 +1531,8 @@ public class PyString extends PySequence implements ClassDictInit
             else {
                 /* wrong return value */
                 throw Py.TypeError(
-                     "character mapping must return integer, None or unicode");
+                     "character mapping must return integer, " +
+                     "None or unicode");
             }
         }
         return v.toString();
@@ -1828,7 +1837,8 @@ final class StringFormatter
                 while (Character.isDigit(c = pop()))
                     ;
                 index -= 1;
-                Integer i = Integer.valueOf(format.substring(numStart, index));
+                Integer i = Integer.valueOf(
+                                    format.substring(numStart, index));
                 return i.intValue();
             }
             index -= 1;
@@ -2049,9 +2059,11 @@ final class StringFormatter
                 precision = getNumber();
                 if (precision == -1)
                     precision = 0;
-                if (precision > 250) // A magic number. Larger than in CPython.
+                if (precision > 250) {
+                    // A magic number. Larger than in CPython.
                     throw Py.OverflowError(
                          "formatted float is too long (precision too long?)");
+                }
 
                 c = pop();
             }
@@ -2196,7 +2208,6 @@ final class StringFormatter
                 }
             }
 
-//System.out.println(length + " " + width + " " + signString + " fill:" + fill + " " + string);
             if (width < length)
                 width = length;
             if (signString != null) {

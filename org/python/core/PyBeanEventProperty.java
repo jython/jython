@@ -61,7 +61,9 @@ public class PyBeanEventProperty extends PyReflectedField
             return (Class)o;
         Class pc = Py.findClass("org.python.proxies."+c.getName()+"$Adapter");
         if (pc == null) {
-            //System.err.println("adapter not found for: "+"org.python.proxies."+c.getName()+"$Adapter");
+            //System.err.println("adapter not found for: "+
+            //                   "org.python.proxies."+
+            //                   c.getName()+"$Adapter");
             pc = MakeProxies.makeAdapter(c);
         }
         tbl.putAdapterClass(c, pc);

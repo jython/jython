@@ -47,7 +47,8 @@ public class BytecodeLoader {
                 String version = System.getProperty("java.version");
                 if (version.compareTo("1.2") >= 0) {
                     try {
-                        loaderClass = Class.forName("org.python.core.BytecodeLoader2");
+                        loaderClass =
+                            Class.forName("org.python.core.BytecodeLoader2");
                     } catch (Throwable e) {
                         loaderClass = BytecodeLoader1.class;
                     }
@@ -62,13 +63,16 @@ public class BytecodeLoader {
         }
     }
 
-    public static Class makeClass(String name, Vector referents, byte[] data) {
+    public static Class makeClass(String name, Vector referents,
+                                  byte[] data)
+    {
         Loader loader = makeLoader();
 
         if (referents != null) {
             for (int i = 0; i < referents.size(); i++) {
                 try {
-                    ClassLoader cur = ((Class)referents.elementAt(i)).getClassLoader();
+                    Class cls = (Class)referents.elementAt(i);
+                    ClassLoader cur = cls.getClassLoader();
                     if (cur != null)
                          loader.addParent(cur);
                 } catch(SecurityException e) { }

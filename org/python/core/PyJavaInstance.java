@@ -67,8 +67,8 @@ public class PyJavaInstance
     }
 
     protected void unassignableField(String name, PyObject value) {
-        throw Py.TypeError("can't assign to this attribute in java instance: "+
-                           name);
+        throw Py.TypeError("can't assign to this attribute in java " +
+                           "instance: " + name);
     }
 
     public int hashCode() {

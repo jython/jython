@@ -18,7 +18,7 @@ public final class Py
     /** The singleton None Python object **/
     public static PyObject None;
 
-    /** The singleton Ellipsis Python object - written as ... when indexing **/
+    /** The singleton Ellipsis Python object - written as ... when indexing */
     public static PyObject Ellipsis;
 
     /** A zero-length array of Strings to pass to functions that
@@ -262,7 +262,8 @@ public final class Py
         return obj;
     }
 
-    // ??pending: was @deprecated but is actually used by proxie code. Can get rid of it?
+    // ??pending: was @deprecated but is actually used by proxie code.
+    // Can get rid of it?
     public static Object tojava(PyObject o, String s) {
         Class c = findClass(s);
         if (c == null) throw Py.TypeError("can't convert to: "+s);
@@ -280,7 +281,8 @@ public final class Py
         if (ret == null)
             return null;
 
-        // Set the current system state to match proxy -- usually this is a waste of time :-(
+        // Set the current system state to match proxy -- usually
+        // this is a waste of time :-(
         Py.setSystemState(proxy._getPySystemState());
         return ret;
     }
@@ -592,7 +594,8 @@ public final class Py
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
             if (classLoader != null) {
-                writeDebug("import", "trying " + name + " as " + reason + " in classLoader");
+                writeDebug("import", "trying " + name + " as " + reason +
+                           " in classLoader");
                 return classLoader.loadClass(name);
             }
 
@@ -603,11 +606,13 @@ public final class Py
                 catch(SecurityException e) {
                     secEnv=true;
                 }
-                writeDebug("import", "trying " + name + " as " + reason + " in syspath loader");
+                writeDebug("import", "trying " + name + " as " + reason +
+                           " in syspath loader");
                 return classLoader.loadClass(name);
             }
 
-            writeDebug("import", "trying " + name + " as " + reason + " in Class.forName");
+            writeDebug("import", "trying " + name + " as " + reason +
+                       " in Class.forName");
             return Class.forName(name);
         }
         catch (ClassNotFoundException e) {
@@ -719,7 +724,8 @@ public final class Py
         //System.out.println("path: "+sys.path.__str__());
 
         PyObject mod;
-        Class modClass = Py.findClass(module+"$_PyInner"); // ??pending: findClass or should avoid sys.path loading?
+        // ??pending: findClass or should avoid sys.path loading?
+        Class modClass = Py.findClass(module+"$_PyInner");
         if (modClass != null) {
             //System.err.println("found as class: "+modClass);
             PyCode code=null;
@@ -754,7 +760,8 @@ public final class Py
     public static void initRunnable(String module, PyObject dict) {
         Class mainClass=null;
         try {
-            mainClass = Class.forName(module); // ??pending: should use Py.findClass?
+            // ??pending: should use Py.findClass?
+            mainClass = Class.forName(module);
         } catch (ClassNotFoundException exc) {
             System.err.println("Error running main.  Can't find: "+module);
             System.exit(-1);
@@ -769,7 +776,8 @@ public final class Py
         Py.runCode(code, dict, dict);
     }
 
-    public static void runMain(String module, String[] args, String[] packages,
+    public static void runMain(String module, String[] args,
+                               String[] packages,
                                String[] props,
                                String frozenPackage,
                                String[] modules)
@@ -778,7 +786,8 @@ public final class Py
 
         Class mainClass=null;
         try {
-            mainClass = Class.forName(module); // ??pending: should use Py.findClass?
+            // ??pending: should use Py.findClass?
+            mainClass = Class.forName(module);
         } catch (ClassNotFoundException exc) {
             System.err.println("Error running main.  Can't find: "+module);
             System.exit(-1);
@@ -1100,7 +1109,8 @@ public final class Py
         ThreadState ts = getThreadState(newSystemState);
         PySystemState oldSystemState = ts.systemState;
         if (oldSystemState != newSystemState) {
-            //System.err.println("Warning: changing systemState for same thread!");
+            //System.err.println("Warning: changing systemState "+
+            //                   "for same thread!");
             ts.systemState = newSystemState;
         }
         return oldSystemState;
@@ -1397,13 +1407,16 @@ public final class Py
         return compile(node, getName(), filename);
     }
 
-    public static PyCode compile(SimpleNode node, String name, String filename)
+    public static PyCode compile(SimpleNode node, String name,
+                                 String filename)
     {
         return compile(node, name, filename, true, false);
     }
 
-    public static PyCode compile(SimpleNode node, String name, String filename,
-                                 boolean linenumbers, boolean printResults)
+    public static PyCode compile(SimpleNode node, String name,
+                                 String filename,
+                                 boolean linenumbers,
+                                 boolean printResults)
     {
         try {
             ByteArrayOutputStream ostream = new ByteArrayOutputStream();

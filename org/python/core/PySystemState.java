@@ -29,10 +29,12 @@ public class PySystemState extends PyObject
         "Copyright (c) 2000 The Apache Software Foundation.  All rights\n" +
         "reserved.\n\n" +
 
-        "Copyright (c) 1995-2000 Corporation for National Research Initiatives.\n" +
+        "Copyright (c) 1995-2000 Corporation for National Research "+
+        "Initiatives.\n" +
         "All Rights Reserved.\n\n" +
 
-        "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.\n" +
+        "Copyright (c) 1991-1995 Stichting Mathematisch Centrum, " +
+        "Amsterdam.\n" +
         "All Rights Reserved.\n\n";
 
     /**
@@ -164,7 +166,8 @@ public class PySystemState extends PyObject
         __stdin__ = stdin = new PyFile(getSystemIn(), "<stdin>");
 
         // This isn't quite right...
-        builtins = PyJavaClass.lookup(__builtin__.class).__getattr__("__dict__");
+        builtins = PyJavaClass.lookup(__builtin__.class).
+                                  __getattr__("__dict__");
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
 

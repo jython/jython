@@ -81,9 +81,11 @@ public class PyMethod extends PyObject
             return this;
         if (__builtin__.issubclass(container.__class__, (PyClass)im_class))
              if (im_func instanceof PyFunction)
-                 return new PyMethod(container, (PyFunction)im_func, im_class);
+                 return new PyMethod(container, (PyFunction)im_func,
+                                     im_class);
              else if (im_func instanceof PyReflectedFunction)
-                 return new PyMethod(container, (PyReflectedFunction)im_func, im_class);
+                 return new PyMethod(container, (PyReflectedFunction)im_func,
+                                     im_class);
              else
                  return new PyMethod(container, im_func, im_class);
         return this;
@@ -113,8 +115,8 @@ public class PyMethod extends PyObject
             badcall = ! __builtin__.issubclass(args[0].__class__,
                                                (PyClass)im_class);
         if (badcall) {
-            throw Py.TypeError(
-             "unbound method " + __name__ + "() must be called with instance as first argument");
+            throw Py.TypeError("unbound method " + __name__ + "() must be " +
+                               "called with instance as first argument");
         }
         else
             return im_func.__call__(args, keywords);

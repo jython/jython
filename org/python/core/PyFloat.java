@@ -44,11 +44,10 @@ public class PyFloat extends PyObject
         double fractPart = value-intPart;
 
         if (fractPart == 0) {
-            if (intPart <= Integer.MAX_VALUE && intPart >= Integer.MIN_VALUE) {
+            if (intPart <= Integer.MAX_VALUE && intPart >= Integer.MIN_VALUE)
                 return (int)value;
-            } else {
+            else
                 return __long__().hashCode();
-            }
         } else {
             long v = Double.doubleToLongBits(value);
             return (int)v ^ (int)(v >> 32);
@@ -238,7 +237,8 @@ public class PyFloat extends PyObject
         }
         if (value == 0.0) {
             if (iw < 0.0)
-                throw Py.ZeroDivisionError("0.0 cannot be raised to a negative power");
+                throw Py.ZeroDivisionError("0.0 cannot be raised to a " +
+                                           "negative power");
             return new PyFloat(0);
         }
 

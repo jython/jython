@@ -10,7 +10,8 @@ public class ThreadStateMapping {
             String version = System.getProperty("java.version");
             if (version.compareTo("1.2") >= 0) {
                 try {
-                    Class c = Class.forName("org.python.core.ThreadStateMapping2");
+                    Class c = Class.forName(
+                                  "org.python.core.ThreadStateMapping2");
                     return (ThreadStateMapping) c.newInstance();
                 } catch (Throwable t) { }
             }

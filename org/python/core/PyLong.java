@@ -64,7 +64,8 @@ public class PyLong extends PyObject
     public Object __tojava__(Class c) {
         try {
             if (c == Byte.TYPE || c == Byte.class) {
-                return new Byte((byte)getLong(Byte.MIN_VALUE, Byte.MAX_VALUE));
+                return new Byte((byte)getLong(Byte.MIN_VALUE,
+                                              Byte.MAX_VALUE));
             }
             if (c == Short.TYPE || c == Short.class) {
                 return new Short((short)getLong(Short.MIN_VALUE,
@@ -75,7 +76,8 @@ public class PyLong extends PyObject
                                                 Integer.MAX_VALUE));
             }
             if (c == Long.TYPE || c == Long.class) {
-                return new Long(getLong(Long.MIN_VALUE, Long.MAX_VALUE));
+                return new Long(getLong(Long.MIN_VALUE,
+                                        Long.MAX_VALUE));
             }
             if (c == Float.TYPE || c == Double.TYPE || c == Float.class ||
                 c == Double.class)
@@ -116,7 +118,8 @@ public class PyLong extends PyObject
         if (other instanceof PyLong)
             return ((PyLong) other).value;
         else if (other instanceof PyInteger)
-            return java.math.BigInteger.valueOf(((PyInteger) other).getValue());
+            return java.math.BigInteger.valueOf(
+                   ((PyInteger) other).getValue());
         else
             throw Py.TypeError("xxx");
     }
@@ -168,7 +171,8 @@ public class PyLong extends PyObject
 
         if (y.compareTo(zero) < 0) {
             if (x.compareTo(zero) > 0)
-                return (x.subtract(y).subtract(BigInteger.valueOf(1))).divide(y);
+                return (x.subtract(y).subtract(
+                                      BigInteger.valueOf(1))).divide(y);
         } else {
             if (x.compareTo(zero) < 0)
                 return (x.subtract(y).add(BigInteger.valueOf(1))).divide(y);
@@ -245,7 +249,9 @@ public class PyLong extends PyObject
         return _pow(coerce(left), value, null);
     }
 
-    public static PyLong _pow(BigInteger value, BigInteger y, PyObject modulo) {
+    public static PyLong _pow(BigInteger value, BigInteger y,
+                              PyObject modulo)
+    {
         if (y.compareTo(BigInteger.valueOf(0)) < 0) {
             if (value.compareTo(BigInteger.valueOf(0)) != 0)
                 throw Py.ValueError("long integer to a negative power");
@@ -255,8 +261,8 @@ public class PyLong extends PyObject
         if (modulo == null)
             return new PyLong(value.pow(y.intValue()));
         else {
-            // This whole thing can be trivially rewritten after bugs in modPow
-            // are fixed by SUN
+            // This whole thing can be trivially rewritten after bugs
+            // in modPow are fixed by SUN
 
             BigInteger z = coerce(modulo);
             int zi = z.intValue();
@@ -289,7 +295,8 @@ public class PyLong extends PyObject
 
     private static final int coerceInt(PyObject other) {
         if (other instanceof PyLong)
-            return (int) ((PyLong) other).getLong(Integer.MIN_VALUE, Integer.MAX_VALUE);
+            return (int) ((PyLong) other).getLong(
+                          Integer.MIN_VALUE, Integer.MAX_VALUE);
         else if (other instanceof PyInteger)
             return ((PyInteger) other).getValue();
         else

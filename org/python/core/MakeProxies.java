@@ -13,8 +13,8 @@ import org.python.compiler.ProxyMaker;
 
 class MakeProxies
 {
-    private static Class makeClass(Class referent, Vector secondary,String name,
-                                   ByteArrayOutputStream bytes)
+    private static Class makeClass(Class referent, Vector secondary,
+                                   String name, ByteArrayOutputStream bytes)
     {
         Vector referents = null;
 

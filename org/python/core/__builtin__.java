@@ -11,7 +11,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
         super(name, index, argcount, argcount, false, null);
     }
 
-    public BuiltinFunctions(String name, int index, int minargs, int maxargs) {
+    public BuiltinFunctions(String name, int index, int minargs, int maxargs){
         super(name, index, minargs, maxargs, false, null);
     }
 
@@ -122,7 +122,8 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("list", new BuiltinFunctions("list", 7, 1));
         dict.__setitem__("tuple", new BuiltinFunctions("tuple", 8, 1));
         dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
-        dict.__setitem__("isinstance", new BuiltinFunctions("isinstance", 10, 2)); // ?? for jreload
+        dict.__setitem__("isinstance",
+                                  new BuiltinFunctions("isinstance", 10, 2));
         dict.__setitem__("id", new BuiltinFunctions("id", 11, 1));
         dict.__setitem__("__import__", new ImportFunction());
     }
@@ -135,7 +136,8 @@ public class __builtin__ implements ClassDictInit
         return o.__call__(make_array(args));
     }
 
-    public static PyObject apply(PyObject o, PyObject args, PyDictionary kws) {
+    public static PyObject apply(PyObject o, PyObject args,
+                                 PyDictionary kws) {
         PyObject[] a;
         String[] kw;
         Hashtable table = kws.table;
@@ -269,7 +271,8 @@ public class __builtin__ implements ClassDictInit
         return eval(o, null, null);
     }
 
-    public static void execfile(String name, PyObject globals, PyObject locals)
+    public static void execfile(String name, PyObject globals,
+                                PyObject locals)
     {
         java.io.FileInputStream file;
         try {
@@ -770,7 +773,9 @@ public class __builtin__ implements ClassDictInit
         o.__setattr__(n, v);
     }
 
-    public static PySlice slice(PyObject start, PyObject stop, PyObject step) {
+    public static PySlice slice(PyObject start, PyObject stop,
+                                PyObject step)
+    {
         return new PySlice(start, stop, step);
     }
 
@@ -795,7 +800,9 @@ public class __builtin__ implements ClassDictInit
         return unicode(v, encoding, null);
     }
 
-    public static PyString unicode(PyString v, String encoding, String errors) {
+    public static PyString unicode(PyString v, String encoding,
+                                  String errors)
+    {
         return codecs.decode(v, encoding, errors);
     }
 
@@ -846,8 +853,8 @@ public class __builtin__ implements ClassDictInit
       "zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n"+
       "\n"+
       "Return a list of tuples, where each tuple contains the i-th element\n"+
-      "from each of the argument sequences.  The returned list is truncated\n"+
-      "in length to the length of the shortest argument sequence."
+      "from each of the argument sequences.  The returned list is\n"+
+      "truncated in length to the length of the shortest argument sequence."
     );
 
     public static PyObject zip(PyObject[] argstar) {
@@ -965,7 +972,8 @@ class ImportFunction extends PyObject {
     }
 
     private PyObject load(String module,
-                          PyObject globals, PyObject locals, PyObject fromlist)
+                          PyObject globals, PyObject locals,
+                          PyObject fromlist)
     {
         PyObject mod = imp.importName(module.intern(),
                                       fromlist.__len__() == 0,

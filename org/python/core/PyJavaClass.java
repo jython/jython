@@ -108,7 +108,8 @@ public class PyJavaClass extends PyClass
                 m.invoke(null, new Object[] { __dict__ });
             }
             catch (Exception exc) {
-                // System.err.println("Got exception: " + exc + " " + proxyClass);
+                // System.err.println("Got exception: " + exc + " " +
+                //                    proxyClass);
                 throw Py.JavaError(exc);
             }
         }
@@ -145,19 +146,6 @@ public class PyJavaClass extends PyClass
     private synchronized void init__class__(Class c) {
         if (!PyObject.class.isAssignableFrom(c))
             return;
-
-//         // Handle the special static __class__ fields on PyObject instances
-//         if (name == "__class__" &&  isstatic &&
-//             PyObject.class.isAssignableFrom(field.getDeclaringClass()) &&
-//             field.getType().isAssignableFrom(PyJavaClass.class)) {
-//             try {
-//                 field.set(null, this);
-//                 continue;
-//             } catch (Throwable t) {
-//                 System.err.println("invalid __class__ field on: "+c.getName());
-//             }
-//         }
-
         try {
             Field field = c.getField("__class__");
             if (Modifier.isStatic(field.getModifiers()) &&
@@ -785,7 +773,8 @@ public class PyJavaClass extends PyClass
         PyInstance inst = new PyJavaInstance(this);
         inst.__init__(args, keywords);
 
-        if (proxyClass != null && PyObject.class.isAssignableFrom(proxyClass)) {
+        if (proxyClass != null &&
+                    PyObject.class.isAssignableFrom(proxyClass)) {
             // It would be better if we didn't have to create a PyInstance
             // in the first place.
             ((PyObject)inst.javaProxy).__class__ = this;

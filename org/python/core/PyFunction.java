@@ -146,7 +146,8 @@ public class PyFunction extends PyObject
     public PyObject __call__(PyObject[] args, String[] keywords) {
         return func_code.call(args, keywords, func_globals, func_defaults);
     }
-    public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords)
+    public PyObject __call__(PyObject arg1, PyObject[] args,
+                             String[] keywords)
     {
         return func_code.call(arg1, args, keywords, func_globals,
                               func_defaults);

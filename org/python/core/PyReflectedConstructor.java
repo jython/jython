@@ -36,7 +36,8 @@ public class PyReflectedConstructor extends PyReflectedFunction
         addArgs(makeArgs(m));
     }
 
-    public PyObject __call__(PyObject self, PyObject[] args, String[] keywords)
+    public PyObject __call__(PyObject self, PyObject[] args,
+                             String[] keywords)
     {
         ReflectedArgs[] argsl = argslist;
 
@@ -125,7 +126,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
                 jself = ctor.newInstance(callData.getArgsArray());
             }
             catch (InvocationTargetException e) {
-                if (e.getTargetException() instanceof InstantiationException) {
+                if (e.getTargetException() instanceof InstantiationException){
                     Class sup = iself.__class__.proxyClass.getSuperclass();
                     String msg = "Constructor failed for Java superclass";
                     if (sup != null)

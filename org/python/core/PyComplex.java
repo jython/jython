@@ -208,7 +208,8 @@ public class PyComplex extends PyObject {
         z.real = Math.floor(z.real);
         z.imag = 0.0;
 
-        return new PyTuple(new PyObject[] {z, value.__sub__(z.__mul__(right))});
+        return new PyTuple(new PyObject[]
+               { z, value.__sub__(z.__mul__(right))});
     }
 
 

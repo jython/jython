@@ -42,9 +42,10 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /** Filter class/pkg by name helper method - hook.
-     * The default impl. is used by {@link #addJarToPackages} in order to filter out classes
-     * whose name contains '$' (e.g. inner classes,...).
-     * Should be used or overriden by derived classes too. Also to be used in {@link #doDir}.
+     * The default impl. is used by {@link #addJarToPackages} in order
+     * to filter out classes whose name contains '$' (e.g. inner classes,...).
+     * Should be used or overriden by derived classes too.
+     * Also to be used in {@link #doDir}.
      * @param name class/pkg name
      * @param pkg if true, name refers to a pkg
      * @return true if name must be filtered out
@@ -54,8 +55,10 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /** Filter class by access perms helper method - hook.
-     * The default impl. is used by {@link #addJarToPackages} in order to filter out non-public classes.
-     * Should be used or overriden by derived classes too. Also to be used in {@link #doDir}.
+     * The default impl. is used by {@link #addJarToPackages} in order
+     * to filter out non-public classes.
+     * Should be used or overriden by derived classes too.
+     * Also to be used in {@link #doDir}.
      * Access perms can be read with {@link #checkAccess}.
      * @param name class name
      * @param acc class access permissions as int
@@ -80,7 +83,9 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     // Add a single class from zipFile to zipPackages
     // Only add valid, public classes
-    private void addZipEntry(Hashtable zipPackages, ZipEntry entry,ZipInputStream zip) throws IOException
+    private void addZipEntry(Hashtable zipPackages,
+                             ZipEntry entry,
+                             ZipInputStream zip) throws IOException
     {
         String name = entry.getName();
         //System.err.println("entry: "+name);
@@ -142,7 +147,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     /** Gathers classes info from jar specified by jarurl URL.
      * Eventually just using previously cached info.
      * Eventually updated info is not cached.
-     * Persistent cache storage access goes through {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
+     * Persistent cache storage access goes through
+     * {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
      */
     public void addJarToPackages(java.net.URL jarurl) {
         addJarToPackages(jarurl,null,false);
@@ -151,7 +157,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     /** Gathers classes info from jar specified by jarurl URL.
      * Eventually just using previously cached info.
      * Eventually updated info is (re-)cached if param cache is true.
-     * Persistent cache storage access goes through {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
+     * Persistent cache storage access goes through
+     * {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
      */
     public void addJarToPackages(URL jarurl,boolean cache) {
         addJarToPackages(jarurl,null,cache);
@@ -160,7 +167,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     /** Gathers classes info from jar specified by File jarfile.
      * Eventually just using previously cached info.
      * Eventually updated info is not cached.
-     * Persistent cache storage access goes through {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
+     * Persistent cache storage access goes through
+     * {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
      */
     public void addJarToPackages(File jarfile) {
         addJarToPackages(null,jarfile,false);
@@ -169,7 +177,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     /** Gathers classes info from jar specified by File jarfile.
      * Eventually just using previously cached info.
      * Eventually updated info is (re-)cached if param cache is true.
-     * Persistent cache storage access goes through {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
+     * Persistent cache storage access goes through
+     * {@link #inOpenCacheFile}, {@link #outCreateCacheFile}.
      */
     public void addJarToPackages(File jarfile,boolean cache) {
         addJarToPackages(null,jarfile,cache);
@@ -186,11 +195,14 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 jarconn = jarurl.openConnection();
                 // This is necessary because 'file:' url-connections
                 // return always 0 through getLastModified (bug?).
-                // And in order to handle localfiles (from urls too) uniformly.
+                // And in order to handle localfiles (from urls too)
+                // uniformly.
                 if(jarconn.getURL().getProtocol().equals("file")) {
                     // ??pending: need to use java2 URLDecoder.decode?
                     // but under 1.1 this is absent and should be simulated.
-                    jarfile = new File(jarurl.getFile().replace('/',File.separatorChar));
+                    String jarfilename = jarurl.getFile();
+                    jarfilename = jarfilename.replace('/',File.separatorChar);
+                    jarfile = new File(jarfilename);
                 }
                 else localfile = false;
             }
@@ -257,19 +269,26 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 }
 
                 InputStream jarin;
-                if (jarconn == null) jarin = new BufferedInputStream(new FileInputStream(jarfile));
-                else jarin = jarconn.getInputStream();
+                if (jarconn == null)
+                    jarin = new BufferedInputStream(
+                            new FileInputStream(jarfile));
+                else
+                    jarin = jarconn.getInputStream();
 
                 zipPackages = getZipPackages(jarin);
 
-                if(caching) writeCacheFile(entry, jarcanon, zipPackages, brandNew); // Write the cache file
+                if (caching)
+                    writeCacheFile(entry, jarcanon, zipPackages, brandNew);
             }
 
             addPackages(zipPackages, jarcanon);
         } catch (IOException ioe) {
             // silently skip any bad directories
             warning("skipping bad jar, '" +
-            (jarfile!=null?jarfile.toString():jarurl.toString()) + "'"); // ?? solve bug
+                    (jarfile != null ?
+                          jarfile.toString() :
+                          jarurl.toString()) +
+                    "'");
         }
 
     }
@@ -424,7 +443,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
     /** Open cache index for reading from persistent storage - hook.
      * Must Return null if this is absent.
-     * This default impl is part of the off-the-shelf local file-system cache impl.
+     * This default impl is part of the off-the-shelf local
+     * file-system cache impl.
      * Can be overriden.
      */
     protected DataInputStream inOpenIndex() throws IOException {
@@ -439,7 +459,8 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /** Open cache index for writing back to persistent storage - hook.
-     * This default impl is part of the off-the-shelf local file-system cache impl.
+     * This default impl is part of the off-the-shelf local
+     * file-system cache impl.
      * Can be overriden.
      */
     protected DataOutputStream outOpenIndex() throws IOException {
@@ -450,31 +471,42 @@ public abstract class CachedJarsPackageManager extends PackageManager {
     }
 
     /** Open cache file for reading from persistent storage - hook.
-     * This default impl is part of the off-the-shelf local file-system cache impl.
+     * This default impl is part of the off-the-shelf local
+     * file-system cache impl.
      * Can be overriden.
      */
-    protected DataInputStream inOpenCacheFile(String cachefile) throws IOException {
-        return new DataInputStream(new BufferedInputStream(new FileInputStream(cachefile)));
+    protected DataInputStream inOpenCacheFile(String cachefile)
+        throws IOException
+    {
+        return new DataInputStream(
+               new BufferedInputStream(
+               new FileInputStream(cachefile)));
     }
 
     /** Delete (invalidated) cache file from persistent storage - hook.
-     * This default impl is part of the off-the-shelf local file-system cache impl.
+     * This default impl is part of the off-the-shelf local
+     * file-system cache impl.
      * Can be overriden.
      */
     protected void deleteCacheFile(String cachefile) {
         new File(cachefile).delete();
     }
 
-    /** Create/open cache file for rewriting back to persistent storage - hook.
+    /**
+     * Create/open cache file for rewriting back to persistent storage - hook.
      * If create is false, cache file is supposed to exist and must be opened
      * for rewriting, entry.cachefile is a valid cachefile id.
-     * If create is true, cache file must be created. entry.cachefile is a flat
-     * jarname to be used to produce a valid cachefile id (to be put back in entry.cachefile
-     * on exit).
-     * This default impl is part of the off-the-shelf local file-system cache impl.
+     * If create is true, cache file must be created. entry.cachefile is a
+     * flat jarname to be used to produce a valid cachefile id (to be put
+     * back in entry.cachefile on exit).
+     * This default impl is part of the off-the-shelf local file-system
+     * cache impl.
      * Can be overriden.
      */
-    protected DataOutputStream outCreateCacheFile(JarXEntry entry, boolean create) throws IOException {
+    protected DataOutputStream outCreateCacheFile(JarXEntry entry,
+                                                  boolean create)
+        throws IOException
+    {
         File cachefile = null;
 
         if(create) {
@@ -491,7 +523,9 @@ public abstract class CachedJarsPackageManager extends PackageManager {
             entry.cachefile = cachefile.getCanonicalPath();
         } else cachefile = new File(entry.cachefile);
 
-        return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(cachefile)));
+        return new DataOutputStream(
+               new BufferedOutputStream(
+               new FileOutputStream(cachefile)));
     }
 
     // for default cache (local fs based) impl

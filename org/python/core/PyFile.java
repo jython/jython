@@ -301,24 +301,28 @@ public class PyFile extends PyObject
             if (copyLength < len) {
                 int extraCopy = len - copyLength;
 
-                // If the amount remaining is more than a buffer's length, read it
-                // directly from the file.
+                // If the amount remaining is more than a buffer's
+                // length, read it directly from the file.
                 if (extraCopy > buffer.length) {
                     file.seek(filePosition);
-                    extraCopy = file.read( b, off + copyLength, len - copyLength );
+                    extraCopy = file.read(b, off + copyLength,
+                                          len - copyLength);
                 } else {
-                    // ...or read a new buffer full, and copy as much as possible...
+                    // ...or read a new buffer full, and copy as much
+                    // as possible...
                     seek(filePosition, 0);
                     if (!endOfFile) {
-                        extraCopy = (extraCopy > dataSize) ? dataSize : extraCopy;
-                        System.arraycopy(buffer, 0, b, off + copyLength, extraCopy);
+                        extraCopy = (extraCopy > dataSize) ?
+                                        dataSize : extraCopy;
+                        System.arraycopy(buffer, 0, b, off + copyLength,
+                                         extraCopy);
                     } else {
                         extraCopy = -1;
                     }
                 }
 
-                // If we did manage to copy any more, update the file position and
-                // return the amount copied.
+                // If we did manage to copy any more, update the file
+                // position and return the amount copied.
                 if (extraCopy > 0) {
                     filePosition += extraCopy;
                     return copyLength + extraCopy;
@@ -333,14 +337,13 @@ public class PyFile extends PyObject
         public int read() throws java.io.IOException {
             // If the file position is within the data, return the byte...
             if (filePosition < dataEnd) {
-                return (int)(buffer[(int)(filePosition++ - bufferStart)] & 0xff);
-
-            // ...or should we indicate EOF...
+                return (int)(buffer[(int)(filePosition++ - bufferStart)]
+                                   & 0xff);
             } else if (endOfFile) {
+               // ...or should we indicate EOF...
                 return -1;
-
-            // ...or seek to fill the buffer, and try again.
             } else {
+                // ...or seek to fill the buffer, and try again.
                 seek(filePosition, 0);
                 return read();
             }
@@ -364,12 +367,15 @@ public class PyFile extends PyObject
                 int spaceInBuffer = 0;
                 int copyLength = 0;
                 if (filePosition >= bufferStart)
-                    spaceInBuffer = (int)((bufferStart + buffer.length) - filePosition);
+                    spaceInBuffer = (int)((bufferStart + buffer.length) -
+                                          filePosition);
                 if (spaceInBuffer > 0) {
                     // Copy as much as possible to the buffer.
-                    copyLength = (spaceInBuffer > len) ? len : spaceInBuffer;
+                    copyLength = (spaceInBuffer > len) ?
+                                       len : spaceInBuffer;
                     System.arraycopy(b, 0, buffer,
-                                      (int)(filePosition - bufferStart), copyLength );
+                                     (int)(filePosition - bufferStart),
+                                     copyLength );
                     bufferModified = true;
                     long myDataEnd = filePosition + copyLength;
                     dataEnd = myDataEnd > dataEnd ? myDataEnd : dataEnd;
@@ -377,8 +383,8 @@ public class PyFile extends PyObject
                     filePosition += copyLength;
                 }
 
-                // If there is any data remaining, move to the new position and copy to
-                // the new buffer.
+                // If there is any data remaining, move to the
+                // new position and copy to the new buffer.
                 if (copyLength < len) {
                     seek(filePosition, 0);
                     System.arraycopy(b, copyLength, buffer,
@@ -806,7 +812,8 @@ public class PyFile extends PyObject
         PyObject item = null;
         for (int i = 0; (item = a.__finditem__(i)) != null; i++) {
             if (!(item instanceof PyString))
-                throw Py.TypeError("writelines() argument must be a sequence of strings");
+                throw Py.TypeError("writelines() argument must be a " +
+                                   "sequence of strings");
             write(item.toString());
         }
     }
@@ -862,7 +869,8 @@ public class PyFile extends PyObject
     }
 
     public String toString() {
-        return "<file " + name + ", mode " + mode + " at " + Py.id(this) + ">";
+        return "<file " + name + ", mode " + mode + " at " +
+               Py.id(this) + ">";
     }
 
     private void err_closed() {

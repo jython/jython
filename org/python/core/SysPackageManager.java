@@ -12,10 +12,21 @@ import java.io.*;
  */
 public class SysPackageManager extends PathPackageManager {
 
-protected void message(String msg) { Py.writeMessage("*sys-package-mgr*",msg); }
-protected void warning(String warn) { Py.writeWarning("*sys-package-mgr*",warn); }
-protected void comment(String msg) { Py.writeComment("*sys-package-mgr*",msg); }
-protected void debug(String msg) {Py.writeDebug("*sys-package-mgr*",msg); }
+    protected void message(String msg) {
+        Py.writeMessage("*sys-package-mgr*",msg);
+    }
+
+    protected void warning(String warn) {
+        Py.writeWarning("*sys-package-mgr*",warn);
+    }
+
+    protected void comment(String msg) {
+        Py.writeComment("*sys-package-mgr*",msg);
+    }
+
+    protected void debug(String msg) {
+        Py.writeDebug("*sys-package-mgr*",msg);
+    }
 
     public SysPackageManager(File cachedir, Properties registry) {
         if(useCacheDir(cachedir)) {
@@ -49,12 +60,13 @@ protected void debug(String msg) {Py.writeDebug("*sys-package-mgr*",msg); }
 
     private void findAllPackages(Properties registry) {
         String paths = registry.getProperty(
-        "python.packages.paths",
-        "java.class.path,sun.boot.class.path");
+                              "python.packages.paths",
+                              "java.class.path,sun.boot.class.path");
         String directories = registry.getProperty(
-        "python.packages.directories",
-        "java.ext.dirs");
-        String fakepath = registry.getProperty("python.packages.fakepath", null);
+                              "python.packages.directories",
+                              "java.ext.dirs");
+        String fakepath = registry.getProperty(
+                              "python.packages.fakepath", null);
         StringTokenizer tok = new StringTokenizer(paths, ",");
         while  (tok.hasMoreTokens())  {
             String entry = tok.nextToken().trim();
@@ -74,7 +86,7 @@ protected void debug(String msg) {Py.writeDebug("*sys-package-mgr*",msg); }
         if (fakepath != null) addClassPath(fakepath);
     }
 
-    public void notifyPackageImport(String pkg,String name) {
+    public void notifyPackageImport(String pkg, String name) {
         if (pkg != null && pkg.length()>0) name = pkg + '.' + name;
         Py.writeComment("import","'"+name+"' as java package");
     }
@@ -82,34 +94,38 @@ protected void debug(String msg) {Py.writeDebug("*sys-package-mgr*",msg); }
     public Class findClass(String pkg,String name) {
         Class c = super.findClass(pkg,name);
         if (c != null)
-          Py.writeComment("import","'"+name+"' as java class");
+            Py.writeComment("import","'"+name+"' as java class");
         return c;
     }
 
-    public Class findClass(String pkg,String name,String reason) {
+    public Class findClass(String pkg, String name, String reason) {
         if (pkg != null && pkg.length()>0) name = pkg + '.' + name;
         return Py.findClassEx(name,reason);
     }
 
-    public PyList doDir(PyJavaPackage jpkg,boolean instantiate,boolean exclpkgs) {
-        PyList basic = basicDoDir(jpkg,instantiate,exclpkgs);
+    public PyList doDir(PyJavaPackage jpkg, boolean instantiate,
+                        boolean exclpkgs)
+    {
+        PyList basic = basicDoDir(jpkg, instantiate, exclpkgs);
         PyList ret = new PyList();
 
-        doDir(searchPath,ret,jpkg,instantiate,exclpkgs);
+        doDir(searchPath, ret, jpkg, instantiate, exclpkgs);
 
         PySystemState system = Py.getSystemState();
 
-        if (system.getClassLoader() == null) doDir(system.path,ret,jpkg,instantiate,exclpkgs);
+        if (system.getClassLoader() == null)
+            doDir(system.path, ret, jpkg, instantiate, exclpkgs);
 
         return merge(basic,ret);
     }
 
-    public boolean packageExists(String pkg,String name) {
-        if (packageExists(searchPath,pkg,name)) return true;
+    public boolean packageExists(String pkg, String name) {
+        if (packageExists(searchPath, pkg, name)) return true;
 
         PySystemState system = Py.getSystemState();
 
-        if (system.getClassLoader() == null &&  packageExists(Py.getSystemState().path,pkg,name)) {
+        if (system.getClassLoader() == null &&
+                 packageExists(Py.getSystemState().path,pkg,name)) {
             return true;
         }
 

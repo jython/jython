@@ -2,6 +2,8 @@
 
 package org.python.core;
 
+import java.util.StringTokenizer;
+
 public abstract class InternalTables {
 
     // x__ --> org.python.core.X__InternalTables
@@ -31,7 +33,7 @@ public abstract class InternalTables {
                     id = buf.toString();
                 }
             }
-            // System.err.println("*InternalTables*-create-try: "+id); // ??dbg
+            // System.err.println("*InternalTables*-create-try: "+id);
             return (InternalTables)Class.forName(id).newInstance();
         }
         catch(Throwable e) {
@@ -41,12 +43,13 @@ public abstract class InternalTables {
     }
 
     static InternalTables createInternalTables() {
-        String cands = PySystemState.registry.getProperty("python.options.internalTablesImpl");
+        String cands = PySystemState.registry.getProperty(
+                                    "python.options.internalTablesImpl");
         if (cands == null)
             cands = ">2:>1";
         else
             cands = cands + ":>2:>1";
-        java.util.StringTokenizer candEnum = new java.util.StringTokenizer(cands,":");
+        StringTokenizer candEnum = new StringTokenizer(cands,":");
         while (candEnum.hasMoreTokens()) {
             InternalTables tbl = tryImpl(candEnum.nextToken().trim());
             if (tbl != null) return tbl;
@@ -58,8 +61,9 @@ public abstract class InternalTables {
     protected abstract PyJavaClass getCanonical(Class c);
     protected abstract PyJavaClass getLazyCanonical(String name);
 
-    protected abstract void putCanonical(Class c,PyJavaClass canonical);
-    protected abstract void putLazyCanonical(String name,PyJavaClass canonical);
+    protected abstract void putCanonical(Class c, PyJavaClass canonical);
+    protected abstract void putLazyCanonical(String name,
+                                             PyJavaClass canonical);
 
     protected abstract Class getAdapterClass(Class c);
     protected abstract void putAdapterClass(Class c,Class ac);

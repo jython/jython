@@ -89,7 +89,8 @@ public class PyModule extends PyObject
 
     private static PyObject impHook(String name) {
         if (silly_list == null) {
-            silly_list = new PyTuple(new PyString[] { Py.newString("__doc__"),});
+            silly_list = new PyTuple(new PyString[] {
+                                     Py.newString("__doc__"),});
         }
         try {
             return __builtin__.__import__(name, null, null, silly_list);

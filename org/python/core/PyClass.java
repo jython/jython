@@ -68,19 +68,19 @@ public class PyClass extends PyObject
             Vector interfaces = new Vector();
             Class baseClass = null;
             for (int i=0; i<bases.list.length; i++) {
-                Class previousProxy = ((PyClass)bases.list[i]).getProxyClass();
-                if (previousProxy != null) {
-                    if (previousProxy.isInterface()) {
-                        interfaces.addElement(previousProxy);
+                Class proxy = ((PyClass)bases.list[i]).getProxyClass();
+                if (proxy != null) {
+                    if (proxy.isInterface()) {
+                        interfaces.addElement(proxy);
                     } else {
                         if (baseClass != null) {
                             throw Py.TypeError("no multiple inheritance "+
                                                "for Java classes: "+
-                                               previousProxy.getName()+
+                                               proxy.getName()+
                                                " and "+
                                                baseClass.getName());
                         }
-                        baseClass = previousProxy;
+                        baseClass = proxy;
                     }
                 }
             }
@@ -107,7 +107,8 @@ public class PyClass extends PyObject
                 __dict__ = dict;
             }
         }
-        //System.out.println("proxyClasses: "+proxyClasses+", "+proxyClasses[0]);
+        //System.out.println("proxyClasses: "+proxyClasses+", "+
+        //                   proxyClasses[0]);
         if (dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", Py.None);
         }
@@ -150,7 +151,7 @@ public class PyClass extends PyObject
             for (int i=0; i<n; i++) {
                 resolvedClass = (PyClass)(__bases__.__getitem__(i));
                 PyObject[] res = resolvedClass.lookupGivingClass(name,
-                                                                 stop_at_java);
+                                                               stop_at_java);
                 result = res[0];
                 resolvedClass = (PyClass)(res[1]);
                 if (result != null)
@@ -199,7 +200,8 @@ public class PyClass extends PyObject
 
         inst.__init__(args, keywords);
 
-        if (proxyClass != null && PyObject.class.isAssignableFrom(proxyClass)) {
+        if (proxyClass != null &&
+                   PyObject.class.isAssignableFrom(proxyClass)) {
             // It would be better if we didn't have to create a PyInstance
             // in the first place.
             ((PyObject)inst.javaProxy).__class__ = this;

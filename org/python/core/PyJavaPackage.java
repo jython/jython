@@ -69,10 +69,15 @@ public class PyJavaPackage extends PyObject {
         firstName = firstName.intern();
         PyJavaPackage p = (PyJavaPackage)__dict__.__finditem__(firstName);
         if (p == null) {
-            p = new PyJavaPackage(__name__.length()==0?firstName:__name__+'.'+firstName, __mgr__, jarfile);
+            String pname = __name__.length() == 0 ?
+                           firstName : __name__+'.'+firstName;
+            p = new PyJavaPackage(pname, __mgr__, jarfile);
             __dict__.__setitem__(firstName, p);
-        } else { // this code is ok here, because this is not needed for a top level package
-            if (jarfile == null || !jarfile.equals(p.__file__)) p.__file__ = null;
+        } else {
+            // this code is ok here, because this is not needed for
+            // a top level package
+            if (jarfile == null || !jarfile.equals(p.__file__))
+                p.__file__ = null;
         }
         if (lastName != null) return p.addPackage(lastName, jarfile);
         else return p;
@@ -98,7 +103,8 @@ public class PyJavaPackage extends PyObject {
         while  (tok.hasMoreTokens())  {
             String p = tok.nextToken();
             String name = p.trim().intern();
-            if ( clsSet.__finditem__(name) == null) clsSet.__setitem__(name, Py.One);
+            if (clsSet.__finditem__(name) == null)
+                clsSet.__setitem__(name, Py.One);
         }
     }
 
@@ -106,10 +112,12 @@ public class PyJavaPackage extends PyObject {
         return __mgr__.doDir(this,false,false);
     }
 
-    /** Used for 'from xyz import *', dynamically dir pkg filling up __dict__.
-     * It uses {@link PackageManager#doDir} implementation furnished by the control
-     * package manager with instatiate true. The package manager should lazily load
-     * classes with {@link #addLazyClass} in the package.
+    /**
+     * Used for 'from xyz import *', dynamically dir pkg filling up __dict__.
+     * It uses {@link PackageManager#doDir} implementation furnished by
+     * the control package manager with instatiate true. The package
+     * manager should lazily load classes with {@link #addLazyClass} in
+     * the package.
      *
      * @return list of member names
      */
@@ -148,7 +156,8 @@ public class PyJavaPackage extends PyObject {
 
     public void __setattr__(String attr, PyObject value) throws PyException {
         if (attr == "__mgr__") {
-            PackageManager newMgr = (PackageManager)Py.tojava(value,PackageManager.class);
+            PackageManager newMgr = (PackageManager)Py.tojava(value,
+                                                       PackageManager.class);
             if (newMgr == null) {
                 throw Py.TypeError("cannot set java package __mgr__ to None");
             }

@@ -9,7 +9,8 @@ public abstract class AutoInternalTables extends InternalTables2 {
 
     protected ReferenceQueue queue = new ReferenceQueue();
 
-    protected abstract Reference newAutoRef(short type,Object key, Object obj);
+    protected abstract Reference newAutoRef(short type, Object key,
+                                            Object obj);
     protected abstract short getAutoRefType(Reference ref);
     protected abstract Object getAutoRefKey(Reference ref);
 
@@ -132,7 +133,8 @@ public abstract class AutoInternalTables extends InternalTables2 {
                     return new _LazyRep(lazy.__name__,lazy.__mgr__);
                 case ADAPTER_CLASS:
                     Map.Entry entry = (Map.Entry)cur;
-                    if (((Reference)entry.getValue()).get() == null ) continue;
+                    if (((Reference)entry.getValue()).get() == null )
+                        continue;
                     return entry.getKey();
                 }
             }

@@ -362,7 +362,8 @@ abstract public class PySequence extends PyObject
         return step;
     }
 
-    protected static final int getStart(PyObject s_start, int step, int length)
+    protected static final int getStart(PyObject s_start, int step,
+                                        int length)
     {
         int start;
         if (step < 0)

@@ -44,11 +44,12 @@ public class imp
     }
 
     private static PyObject createFromPyClass(String name, InputStream fp,
-                                              boolean testing, String fileName)
+                                              boolean testing,
+                                              String fileName)
     {
         byte[] data = readBytes(fp);
         int n = data.length;
-        //System.err.println("data: "+data[n-1]+", "+data[n-2]+", "+data[n-3]+", "+data[n-4]);
+
         int api = (data[n-4]<<24)+(data[n-3]<<16)+(data[n-2]<<8)+data[n-1];
         if (api != APIVersion) {
             if (testing) {
@@ -78,8 +79,8 @@ public class imp
         return compileSource(name, file, null, null);
     }
 
-    public static byte[] compileSource(String name, File file, String filename,
-                                       String outFilename)
+    public static byte[] compileSource(String name, File file,
+                                       String filename, String outFilename)
     {
         if (filename == null) {
             filename = file.toString();
@@ -93,7 +94,9 @@ public class imp
         return compileSource(name, makeStream(file), filename, outFilename);
     }
 
-    static byte[] compileSource(String name, InputStream fp, String filename) {
+    static byte[] compileSource(String name, InputStream fp,
+                                String filename)
+    {
         String outFilename = null;
         if (filename != null) {
             outFilename = filename.substring(0,filename.length()-3)+
@@ -190,14 +193,16 @@ public class imp
 
     private static PyObject loadBuiltin(String name, PyList path) {
         if (name == "sys") {
-            Py.writeComment("import", "'" + name + "' as sys in builtin modules");
+            Py.writeComment("import", "'" + name + "' as sys in " +
+                            "builtin modules");
             return Py.java2py(Py.getSystemState());
         }
         String mod = PySystemState.getBuiltin(name);
         if (mod != null) {
             Class c = Py.findClassEx(mod, "builtin modules");
             if (c != null) {
-                Py.writeComment("import", "'" + name + "' as " + mod + " in builtin modules");
+                Py.writeComment("import", "'" + name + "' as " + mod +
+                                " in builtin modules");
                 try {
                     return createFromClass(name, c);
                 }
@@ -229,7 +234,8 @@ public class imp
                 //System.err.println("trying: "+modName+".__init__$_PyInner");
                 c = findPyClass(modName+".__init__");
                 if (c == null) return null;
-                Py.writeComment("import", "'" + modName + "' as precompiled package");
+                Py.writeComment("import", "'" + modName + "' as " +
+                                "precompiled package");
 
                 //System.err.println("found: "+modName+".__init__$_PyInner");
                 PyModule m = addModule(modName);
@@ -238,7 +244,8 @@ public class imp
             else if (Py.frozenModules.get(modName) != null) {
                 c = findPyClass(modName);
                 if (c == null) return null;
-                Py.writeComment("import", "'" + modName + "' as precompiled module");
+                Py.writeComment("import", "'" + modName + "' as " +
+                                "precompiled module");
             }
             else return null;
 
@@ -253,7 +260,7 @@ public class imp
     }
 
     static PyObject loadFromPath(String name, String modName, PyList path) {
-        //System.err.println("load-from-path:"+name+" "+modName+" "+path); // ?? dbg
+        //System.err.println("load-from-path:"+name+" "+modName+" "+path);
         PyObject o = loadPrecompiled(name, modName, path);
         if (o != null) return o;
 
@@ -303,12 +310,14 @@ public class imp
 
             if (pyFile.isFile()) {
                 if (classFile.isFile()) {
-                    Py.writeDebug("import", "trying precompiled " + classFile.getPath());
+                    Py.writeDebug("import", "trying precompiled " +
+                                  classFile.getPath());
                     long pyTime = pyFile.lastModified();
                     long classTime = classFile.lastModified();
                     if (classTime >= pyTime) {
                         PyObject ret = createFromPyClass(
-                            modName, makeStream(classFile), true, classFile.getPath());
+                               modName, makeStream(classFile), true,
+                               classFile.getPath());
                         if (ret != null)
                             return ret;
                     }
@@ -327,7 +336,9 @@ public class imp
         return null;
     }
 
-    static PyObject loadFromClassLoader(String name, ClassLoader classLoader) {
+    static PyObject loadFromClassLoader(String name,
+                                        ClassLoader classLoader)
+    {
         PyObject ret;
         String path = name.replace('.', '/');
         InputStream istream;
@@ -449,10 +460,11 @@ public class imp
 
     // This version should deal properly with package relative imports.
     // Assumption (runtime enforced):
-    // x.y.z key in sys.modules => any subseq (e.g x, x.y) is a present key too.
+    // x.y.z key in sys.modules => any subseq (e.g x, x.y) is a present
+    // key too.
     // ??pending: check if result is really a module/jpkg/jclass?
     public synchronized static PyObject importName(String name, boolean top,
-    PyObject modDict)
+                                                   PyObject modDict)
     {
         //System.err.println("importName: "+name);
         String pkgName = getParent(modDict);
@@ -487,11 +499,13 @@ public class imp
                     topMod = pkg.impAttr(firstName.intern());
                     if (topMod != null ) {
                         if (dot == -1 ) {
-                            //System.err.println("found-1-top: "+topMod); // ?? dbg
+                            //System.err.println("found-1-top: "+
+                            //                   topMod); // ?? dbg
                             return topMod;
                         }
 
-                        //System.err.println(".-find: "+topMod+","+name.substring(dot+1)); // ?? dbg
+                        //System.err.println(".-find: "+topMod+","+
+                        //                   name.substring(dot+1)); // ?? dbg
                         mod = dottedFind(topMod,name.substring(dot+1));
 
                         if(top) return topMod;
@@ -552,8 +566,9 @@ public class imp
      * Called from jpython generated code when a stamenet like
      * "from spam.eggs import foo as spam" is executed.
      */
-    public static void importFromAs(String mod, String[] names, String[] asnames,
-                         PyFrame frame) {
+    public static void importFromAs(String mod, String[] names,
+                                    String[] asnames, PyFrame frame)
+    {
         //StringBuffer sb = new StringBuffer();
         //for(int i=0; i<names.length; i++)
         //    sb.append(names[i] + " ");
@@ -594,8 +609,10 @@ public class imp
                                                  frame.f_locals,
                                                  getStarArg());
         PyObject names;
-        if (module instanceof PyJavaPackage) names = ((PyJavaPackage)module).fillDir();
-        else names = module.__dir__();
+        if (module instanceof PyJavaPackage)
+            names = ((PyJavaPackage)module).fillDir();
+        else
+            names = module.__dir__();
 
         loadNames(names, module, frame.getf_locals());
     }
@@ -636,7 +653,8 @@ public class imp
         PyObject modules = Py.getSystemState().modules;
         PyModule nm = (PyModule)modules.__finditem__(name);
 
-        if (nm == null || !nm.__getattr__("__name__").toString().equals(name)) {
+        if (nm == null || !nm.__getattr__("__name__").toString()
+                                                     .equals(name)) {
             throw Py.ImportError("reload(): module "+name+
                                  " not in sys.modules");
         }
