@@ -103,7 +103,7 @@ public class PyJavaPackage extends PyObject {
      * @param classes their names as comma-separated string
      */
     public void addPlaceholders(String classes) {
-        StringTokenizer tok = new StringTokenizer(classes, ",");
+        StringTokenizer tok = new StringTokenizer(classes, ",@");
         while  (tok.hasMoreTokens())  {
             String p = tok.nextToken();
             String name = p.trim().intern();

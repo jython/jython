@@ -109,17 +109,17 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
         if (filterByName(className,false)) return;
 
-        // An extra careful test, maybe should be ignored????
-        int access = checkAccess(zip);
-
-        if ((access == -1) || filterByAccess(name,access)) return;
-
-        Vector vec = (Vector)zipPackages.get(packageName);
+        Vector[] vec = (Vector[])zipPackages.get(packageName);
         if (vec == null) {
-            vec = new Vector();
+            vec = new Vector[] { new Vector(), new Vector() };
             zipPackages.put(packageName, vec);
         }
-        vec.addElement(className);
+        int access = checkAccess(zip);
+        if ((access != -1) && !filterByAccess(name,access)) {
+            vec[0].addElement(className);
+        } else {
+            vec[1].addElement(className);
+        }
     }
 
     // Extract all of the packages in a single jarfile
@@ -137,8 +137,12 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         // Turn each vector into a comma-separated String
         for (Enumeration e = zipPackages.keys() ; e.hasMoreElements() ;) {
             Object key = e.nextElement();
-            Vector vec = (Vector)zipPackages.get(key);
-            zipPackages.put(key, vectorToString(vec));
+            Vector[] vec = (Vector[])zipPackages.get(key);
+            String classes = vectorToString(vec[0]);
+            if (vec[1].size() > 0) {
+                classes += '@' + vectorToString(vec[1]);
+            }
+            zipPackages.put(key, classes);
         }
 
         return zipPackages;
@@ -297,6 +301,11 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         for (Enumeration e = zipPackages.keys() ; e.hasMoreElements() ;) {
             String pkg = (String)e.nextElement();
             String classes = (String)zipPackages.get(pkg);
+
+            int idx = classes.indexOf('@');
+            if (idx >= 0 && Options.respectJavaAccessibility) {
+                classes = classes.substring(0, idx);
+            }
 
             makeJavaPackage(pkg, classes, jarfile);
         }
