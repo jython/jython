@@ -112,6 +112,8 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("None", Py.None);
         dict.__setitem__("NotImplemented", Py.NotImplemented);
         dict.__setitem__("Ellipsis", Py.Ellipsis);
+        dict.__setitem__("True", Py.One);
+        dict.__setitem__("False", Py.Zero);
 
         // Work in debug mode by default
         // Hopefully add -O option in the future to change this
