@@ -118,7 +118,9 @@ class _tcpsocket:
 
     def send(self, s):
 	assert self.sock
-	return self.ostream.write(s)
+	n = len(s)
+	self.ostream.write(s)
+	return n
 
     def getsockname(self):
 	if not self.sock:
