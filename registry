@@ -1,12 +1,20 @@
 #Python Registry
-python.path=.
 
-java.packages.java		=	lang,io,util,net,applet,lang.reflect,math,text,util.zip, \
-                            awt, awt.datatransfer, awt.event, awt.image
+#This is how I set my path on Windows
+python.path=.;c:\\Python-1.5.1\\Lib
+#python.path=.
 
+java.packages.java		=	beans,lang,io,util,net,applet,lang.reflect,math,text,util.zip, \
+                            awt, awt.datatransfer, awt.event, awt.image, \
+                            rmi, rmi.server, rmi.dgc, rmi.registry
+
+#Where to find swing in JDK 1.1
 java.packages.com.sun.java.swing = basic, border, event, plaf, table, target, text, tree, undo
 
-java.packages.org.python	=	core,parser,modules,compiler
+#Where to find swing in JDK 1.2
+java.packages.java.awt.swing = basic, border, event, plaf, table, target, text, tree, undo
+
+java.packages.org.python	=	core,parser,modules,compiler,rmi
 
 #Only enable this if you're SURE you want it
-#python.proxy.savedir = c:\\jpython\\JavaCode
+#python.proxy.savedir = c:\\jpython
