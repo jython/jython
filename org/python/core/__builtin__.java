@@ -43,6 +43,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
             return __builtin__.list(arg1);
         case 8:
             return __builtin__.tuple(arg1);
+        case 11:
+            return Py.newInteger(__builtin__.id(arg1));
         default:
             throw argCountError(1);
         }
@@ -121,6 +123,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("tuple", new BuiltinFunctions("tuple", 8, 1));
         dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
         dict.__setitem__("isinstance", new BuiltinFunctions("isinstance", 10, 2)); // ?? for jreload
+        dict.__setitem__("id", new BuiltinFunctions("id", 11, 1));
         dict.__setitem__("__import__", new ImportFunction());
     } 
 
