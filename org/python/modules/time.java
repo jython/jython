@@ -172,7 +172,15 @@ public class time implements InitModule
     }
 
     public static double mktime(PyTuple tup) {
-        GregorianCalendar cal = _tupletocal(tup);
+        GregorianCalendar cal;
+        try {
+            cal = _tupletocal(tup);
+        }
+        catch (PyException e) {
+            // CPython's mktime raises OverflowErrors... yuck!
+            e.type = Py.OverflowError;
+            throw e;
+        }
         return (double)cal.getTime().getTime()/1000.0;
     }
 
