@@ -14,6 +14,7 @@ public class jython
         "           prompts, even if stdin does not appear to be a terminal\n"+
         "-S       : don't imply `import site' on initialization\n"+
         "-X       : disable class based standard exceptions\n"+
+        "-v       : verbose (trace import statements)\n"+
         "-Dprop=v : Set the property `prop' to value `v'\n"+
         "-jar jar : program read from __run__.py in jar file\n"+
         "-c cmd   : program passed in as string (terminates option list)\n"+
@@ -240,6 +241,15 @@ class CommandLineOptions
             }
             else if (arg.equals("-X")) {
                 Options.classBasedExceptions = false;
+            }
+            else if (arg.equals("-v")) {
+                Options.verbose++;
+            }
+            else if (arg.equals("-vv")) {
+                Options.verbose += 2;
+            }
+            else if (arg.equals("-vvv")) {
+                Options.verbose +=3 ;
             }
             else if (arg.equals("-S")) {
                 Options.importSite = false;
