@@ -263,6 +263,8 @@ public class SimpleNode implements Node
             return visitor.expr_stmt(this);
         case PythonGrammarTreeConstants.JJTPRINT_STMT:
             return visitor.print_stmt(this);
+        case PythonGrammarTreeConstants.JJTPRINT_EXT:
+            return visitor.print_ext(this);
         case PythonGrammarTreeConstants.JJTDEL_STMT:
             return visitor.del_stmt(this);
         case PythonGrammarTreeConstants.JJTPASS_STMT:
@@ -420,7 +422,7 @@ public class SimpleNode implements Node
         case PythonGrammarTreeConstants.JJTAUG_POWER:
             return visitor.aug_power(this);
         default:
-            return null;
+            throw new ParseException("Unexpected node: "+this);
         }
 
     }
