@@ -22,4 +22,3 @@ public class PyJavaInnerClass extends PyJavaClass
         return parent.lookup(name, stop_at_java);
     }
 }
-
