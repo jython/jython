@@ -1686,6 +1686,16 @@ public class PyString extends PySequence implements ClassDictInit
         return true;
     }
 
+    public boolean isunicode() {
+        int n = string.length();
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+            if (ch > 255)
+                return true;
+        }
+        return false;
+    }
+
     public PyString encode() {
         return encode(null, null);
     }
