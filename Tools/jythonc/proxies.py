@@ -274,12 +274,15 @@ class JavaProxy:
 		if dosuper:
 			supercall = jast.InvokeLocal("super", argids)
 		else:
+			supercall = jast.InvokeLocal("super", [])
+			"""
 			for saccess, ssig in self.jconstructors:
 				if len(ssig) == len(sig):
 					supercall = jast.InvokeLocal("super", argids)
 					break
 			else:
 				supercall = jast.InvokeLocal("super", [])
+			"""
 
 		#specialClasses = jast.StringArray(self.specialClasses)
 		frozen = self.module.getFrozen()

@@ -85,7 +85,7 @@ class JavaArchive:
 		raise ValueError, "can't find package: "+repr(package)
 
 	def addZipPackage(self, package, zipfile, skiplist):
-		zf = ZipFile(FileInputStream(zipfile))
+		zf = ZipFile(zipfile)
 		for entry in zf.entries():
 			filename = entry.name
 			if filename[-6:] != '.class': continue
