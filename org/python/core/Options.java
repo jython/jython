@@ -12,4 +12,6 @@ public class Options {
     public static int verbose=Py.MESSAGE;
     
     public static boolean deprecatedKeywordMangling=true;
+    
+    public static boolean parserVerboseExceptions=false;
 }
