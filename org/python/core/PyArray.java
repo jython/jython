@@ -5,7 +5,6 @@ import java.lang.reflect.Array;
 public class PyArray extends PySequence {
     Object data;
     Class type;
-    public char typecode;
 
     public static PyClass __class__;
     public PyArray(Class type, Object data) {
