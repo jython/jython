@@ -16,11 +16,8 @@ import org.python.core.*;
  * Class Procedure
  *
  * @author brian zimmer
- * @date $today.date$
  * @author last modified by $Author$
- * @date last modified on $Date$
  * @version $Revision$
- * @copyright 2001 brian zimmer
  */
 public class Procedure extends Object {
 

@@ -17,11 +17,8 @@ import org.python.core.*;
  * a SQL datatype value.
  *
  * @author brian zimmer
- * @date $today.date$
  * @author last modified by $Author$
- * @date last modified on $Date$
  * @version $Revision$
- * @copyright 2001 brian zimmer
  */
 public final class DBApiType extends PyInteger {
 
