@@ -11,3 +11,7 @@ Other backward incompatible changes include:
 - The case of module names are now important, even on case ignoring
   filesystems like windows. This matches CPython behaviour.
 
+- The way .zip and .jar files is added to sys.path is changed from 2.1a3.
+  Use the form: sys.path.append("/path/to/file.zip/Lib") to search for 
+  modules with the zipped named of "Lib/module.py"
+
