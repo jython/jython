@@ -20,12 +20,29 @@ The build.xml file will search for a properties file called
 <code>ant.properties</code> which can contain values to control paths
 and local options. My <code>ant.properties</code> file look like this:
 <blockquote><pre>
-javaccHome = i:\\java\\Javacc2.0\\bin\\lib
+# javaccHome2 is needed when making modification to the grammar.
+javaccHome2 = d:\\java\\Javacc2.0\\bin\\lib
+
+# PyXmlHome is needed when running the installXML ant task to
+# copy PyXML files to jython.
+PyXmlHome = d:\\python\\PyXML-0.6.6
+
 #build.compiler = classic
 build.compiler = jikes
 debug=on
-</pre></blockquote>
 
+# python.home is needed when building the documentation and installing
+# PyXML sources.
+python.home=d:\\python\\python211
+
+# Needed when building documentation.
+ht2html.dir=d:\\jython\\ht2html-1.1
+jython.home=d:\\jython\\CVS
+
+# Needed when installing documentation.
+scp.command=scp
+scp.user=bckfnn
+</pre></blockquote>
 <p>
 
 <li>Some of the sources in the org.python.parser package are generated 
@@ -64,8 +81,13 @@ creating a file ".jython" in your home directory and including a line like
 this:
 <blockquote><pre>
 python.path=d:\\python\\Python-2.1\\Lib
-</pre><blockquote>
+</pre></blockquote>
 
+<li>The PyXML sources (the content of ./Lib/xml) is not included in the
+CVS repository. This is mainly because PyXML is developed and released in its 
+own time cycle. To install PyXML support in a CVS version, the ant properties
+<code>PyXmlHome</code> and <code>python.home</code> must be configured and
+the ant task <code>installXML</code> must be executed.
 </ul>
 
 <P>If you have further interest in the Jython source and Jython's 
