@@ -527,11 +527,11 @@ public class PyString extends PySequence implements InitModule
 
 
     public PyList split() {
-        return split(null, 0);
+        return split(null, -1);
     }
 
     public PyList split(String sep) {
-        return split(sep, 0);
+        return split(sep, -1);
     }
 
     public PyList split(String sep, int maxsplit) {
@@ -543,7 +543,7 @@ public class PyString extends PySequence implements InitModule
         char[] chars = string.toCharArray();
         int n=chars.length;
 
-        if (maxsplit <= 0)
+        if (maxsplit < 0)
             maxsplit = n;
 
         int splits=0;
@@ -576,7 +576,7 @@ public class PyString extends PySequence implements InitModule
         PyList list = new PyList();
         
         int length = string.length();
-        if (maxsplit <= 0)
+        if (maxsplit < 0)
             maxsplit = length;
 
         int lastbreak = 0;

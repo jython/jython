@@ -99,13 +99,13 @@ def rstrip(s):
 
 # Split a string into a list of space/tab-separated words
 # NB: split(s) is NOT the same as splitfields(s, ' ')!
-def split(s, sep=None, maxsplit=0):
+def split(s, sep=None, maxsplit=-1):
     """split(str [,sep [,maxsplit]]) -> list of strings
 
     Return a list of the words in the string s, using sep as the
     delimiter string.  If maxsplit is nonzero, splits into at most
     maxsplit words If sep is not specified, any whitespace string
-    is a separator.  Maxsplit defaults to 0.
+    is a separator.  Maxsplit defaults to -1.
 
     (split and splitfields are synonymous)
 
@@ -398,7 +398,7 @@ def maketrans(fromstr, tostr):
     return joinfields(L, "")
 
 # Substring replacement (global)
-def replace(s, old, new, maxsplit=0):
+def replace(s, old, new, maxsplit=-1):
     """replace (str, old, new[, maxsplit]) -> string
 
     Return a copy of string str with all occurrences of substring
