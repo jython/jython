@@ -513,7 +513,7 @@ public class PySystemState extends PyObject
      * package found ion the directory available. This call is mostly
      * usefull if jython is embedded in an application that deals with
      * its own classloaders. A servlet container is a very good example.
-     * Calling add_classpath("<context>/WEB-INF/classes") makes the java 
+     * Calling add_classdir("<context>/WEB-INF/classes") makes the java 
      * packages in WEB-INF classes available to jython import. However the
      * actual classloading is completely handled by the servlet container's
      * context classloader.
@@ -529,9 +529,9 @@ public class PySystemState extends PyObject
      * <p>
      * <b>Note</b>. Classes in .jar and .zip files found in the directory
      * are not made available to jython by this call. See the note for
-     * add_classpath(dir) for more details.
+     * add_classdir(dir) for more details.
      *
-     * @see add_classpath
+     * @see #add_classdir
      */
     public static void add_extdir(String directoryPath) {
         packageManager.addJarDir(directoryPath);
