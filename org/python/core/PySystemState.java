@@ -83,6 +83,7 @@ public class PySystemState extends PyObject
     public PyObject builtins;
 
     public static String platform = "java";
+    public static String byteorder = "big";
 
     public PyObject ps1 = new PyString(">>> ");
     public PyObject ps2 = new PyString("... ");
