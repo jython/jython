@@ -344,6 +344,13 @@ public class __builtin__ implements ClassDictInit
         return o.__getattr__(n);
     }
 
+    public static PyObject getattr(PyObject o, PyString n, PyObject def) {
+        PyObject val = o.__findattr__(n);
+        if (val != null)
+             return val;
+        return def;
+    }
+
     public static PyObject globals() {
         return Py.getFrame().f_globals;
     }
