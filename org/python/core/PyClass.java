@@ -39,8 +39,8 @@ public class PyClass extends PyObject
 
     public static PyClass __class__;
 
-    PyClass(boolean fakeArg) {
-        super(fakeArg);
+    PyClass(boolean fakeArg) { // xxx check
+        super();
         proxyClass = null;
     }
 
@@ -135,7 +135,7 @@ public class PyClass extends PyObject
         if (proxyClass != null) {
             // xxx more efficient way without going through a PyJavaClass?
             PyObject superDict =
-                PyJavaClass.lookup(proxyClass).__findattr__("__dict__");
+                PyJavaClass.lookup(proxyClass).__findattr__("__dict__"); // xxx getDict perhaps?
             // This code will add in the needed super__ methods to the class
             PyObject snames = superDict.__finditem__("__supernames__");
             if (snames != null) {
@@ -220,7 +220,7 @@ public class PyClass extends PyObject
         PyClass resolvedClass = this;
         if (result == null && __bases__ != null) {
             int n = __bases__.__len__();
-            for (int i=0; i<n; i++) {
+            for (int i=0; i<n; i++) {              
                 resolvedClass = (PyClass)(__bases__.__getitem__(i));
                 PyObject[] res = resolvedClass.lookupGivingClass(name,
                                                                stop_at_java);
@@ -330,4 +330,31 @@ public class PyClass extends PyObject
             smod = ((PyString)mod).toString();
         return "<class "+smod+"."+__name__+" "+Py.idstr(this)+">";
     }
+    
+    public boolean isSubClass(PyClass superclass) {
+        if (this == superclass)
+            return true;
+        if (this.proxyClass != null && superclass.proxyClass != null) {
+            if (superclass.proxyClass.isAssignableFrom(this.proxyClass))
+                return true;
+        }
+        if (this.__bases__ == null || superclass.__bases__ == null)
+            return false;
+        PyObject[] bases = this.__bases__.list;
+        int n = bases.length;
+        for(int i=0; i<n; i++) {
+            PyClass c = (PyClass)bases[i];
+            if (c.isSubClass(superclass))
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     * @see org.python.core.PyObject#safeRepr()
+     */
+    public String safeRepr() throws PyIgnoreMethodTag {
+        return "class '"+__name__+"'";
+    }
+
 }

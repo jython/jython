@@ -403,36 +403,36 @@ public class cPickle implements ClassDictInit {
     private static PyDictionary safe_constructors = null;
 
 
-    private static PyClass BuiltinFunctionType =
-                            PyJavaClass.lookup(PyReflectedFunction.class);
-    private static PyClass BuiltinMethodType =
-                            PyJavaClass.lookup(PyMethod.class);
-    private static PyClass ClassType =
-                            PyJavaClass.lookup(PyClass.class);
-    private static PyClass DictionaryType =
-                            PyJavaClass.lookup(PyDictionary.class);
-    private static PyClass StringMapType =
-                            PyJavaClass.lookup(PyStringMap.class);
-    private static PyClass FloatType =
-                            PyJavaClass.lookup(PyFloat.class);
-    private static PyClass FunctionType =
-                            PyJavaClass.lookup(PyFunction.class);
-    private static PyClass InstanceType =
-                            PyJavaClass.lookup(PyInstance.class);
-    private static PyClass IntType =
-                            PyJavaClass.lookup(PyInteger.class);
-    private static PyClass ListType =
-                            PyJavaClass.lookup(PyList.class);
-    private static PyClass LongType =
-                            PyJavaClass.lookup(PyLong.class);
-    private static PyClass NoneType =
-                            PyJavaClass.lookup(PyNone.class);
-    private static PyClass StringType =
-                            PyJavaClass.lookup(PyString.class);
-    private static PyClass TupleType =
-                            PyJavaClass.lookup(PyTuple.class);
-    private static PyClass FileType =
-                            PyJavaClass.lookup(PyFile.class);
+    private static PyType BuiltinFunctionType =
+                            PyType.fromClass(PyReflectedFunction.class);
+    private static PyType BuiltinMethodType =
+                            PyType.fromClass(PyMethod.class);
+    private static PyType ClassType =
+                            PyType.fromClass(PyClass.class);
+    private static PyType DictionaryType =
+                            PyType.fromClass(PyDictionary.class);
+    private static PyType StringMapType =
+                            PyType.fromClass(PyStringMap.class);
+    private static PyType FloatType =
+                            PyType.fromClass(PyFloat.class);
+    private static PyType FunctionType =
+                            PyType.fromClass(PyFunction.class);
+    private static PyType InstanceType =
+                            PyType.fromClass(PyInstance.class);
+    private static PyType IntType =
+                            PyType.fromClass(PyInteger.class);
+    private static PyType ListType =
+                            PyType.fromClass(PyList.class);
+    private static PyType LongType =
+                            PyType.fromClass(PyLong.class);
+    private static PyType NoneType =
+                            PyType.fromClass(PyNone.class);
+    private static PyType StringType =
+                            PyType.fromClass(PyString.class);
+    private static PyType TupleType =
+                            PyType.fromClass(PyTuple.class);
+    private static PyType FileType =
+                            PyType.fromClass(PyFile.class);
 
 
     private static PyObject dict;
@@ -890,7 +890,7 @@ public class cPickle implements ClassDictInit {
 
             int d = get_id(object);
 
-            PyClass t = __builtin__.type(object);
+            PyType t = object.getType();
 
             if (t == TupleType && object.__len__() == 0) {
                 if (bin)
@@ -987,31 +987,31 @@ public class cPickle implements ClassDictInit {
 
 
 
-        final private boolean save_type(PyObject object, PyClass cls) {
+        final private boolean save_type(PyObject object, PyType type) {
             //System.out.println("save_type " + object + " " + cls);
-            if (cls == NoneType)
+            if (type == NoneType)
                 save_none(object);
-            else if (cls == StringType)
+            else if (type == StringType)
                 save_string(object);
-            else if (cls == IntType)
+            else if (type == IntType)
                 save_int(object);
-            else if (cls == LongType)
+            else if (type == LongType)
                 save_long(object);
-            else if (cls == FloatType)
+            else if (type == FloatType)
                 save_float(object);
-            else if (cls == TupleType)
+            else if (type == TupleType)
                 save_tuple(object);
-            else if (cls == ListType)
+            else if (type == ListType)
                 save_list(object);
-            else if (cls == DictionaryType || cls == StringMapType)
+            else if (type == DictionaryType || type == StringMapType)
                 save_dict(object);
-            else if (cls == InstanceType)
+            else if (type == InstanceType)
                 save_inst((PyInstance)object);
-            else if (cls == ClassType)
+            else if (type == ClassType)
                 save_global(object);
-            else if (cls == FunctionType)
+            else if (type == FunctionType)
                 save_global(object);
-            else if (cls == BuiltinFunctionType)
+            else if (type == BuiltinFunctionType)
                 save_global(object);
             else
                 return false;

@@ -140,6 +140,7 @@ public class PySystemState extends PyObject
     public PyObject last_type = Py.None;
     public PyObject last_traceback = Py.None;
 
+    // xxx fix this accessors
     public PyObject __findattr__(String name) {
         if (name == "exc_value") {
             PyException exc = Py.getThreadState().exception;
@@ -170,10 +171,10 @@ public class PySystemState extends PyObject
 
     public PyObject __dict__;
     public void __setattr__(String name, PyObject value) {
-        PyClass selftype = getType();
+        PyType selftype = getType();
         if (selftype == null)
             return;
-        PyObject ret = selftype.lookup(name, false);
+        PyObject ret = selftype.lookup(name); // xxx fix fix fix
         if (ret != null) {
             ret._doset(this, value);
             return;
@@ -212,6 +213,8 @@ public class PySystemState extends PyObject
         this.recursionlimit = recursionlimit;
     }
 
+
+    // xxx fix and polish this
     public PySystemState() {
         initialize();
         modules = new PyStringMap();
@@ -233,7 +236,7 @@ public class PySystemState extends PyObject
 
         if (getType() != null) {
             __dict__ = new PyStringMap();
-            __dict__.invoke("update", getType().__getattr__("__dict__"));
+            __dict__.invoke("update", getType().getDict());
             __dict__.__setitem__("displayhook", __displayhook__);
             __dict__.__setitem__("excepthook", __excepthook__);
         }
@@ -422,6 +425,7 @@ public class PySystemState extends PyObject
         Py.EmptyString = new PyString("");
         Py.Newline = new PyString("\n");
         Py.Space = new PyString(" ");
+        // xxx what to do about modules
         __builtin__class = PyJavaClass.lookup(__builtin__.class);
 
         // Setup standard wrappers for stdout and stderr...

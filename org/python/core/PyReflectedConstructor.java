@@ -36,38 +36,61 @@ public class PyReflectedConstructor extends PyReflectedFunction
     }
 
     // xxx temporary solution, type ctr will go through __new__ ...
-    PyObject make(PyObject[] args) {
+    PyObject make(PyObject[] args,String[] keywords) {
         ReflectedArgs[] argsl = argslist;
                 
         ReflectedCallData callData = new ReflectedCallData();
         Object method=null;
-
-         // Check for a matching constructor to call
+        boolean consumes_keywords = false;
         int n = nargs;
-        for (int i=0; i<n; i++) {
-            ReflectedArgs rargs = argsl[i];
-            if (rargs.matches(null, args, Py.NoKeywords, callData)) {
-                method = rargs.data;
-                break;
+        int nkeywords = keywords.length;
+        PyObject[] allArgs = null;
+        
+        // Check for a matching constructor to call
+        if (n > 0) { // PyArgsKeywordsCall signature, if present, is the first 
+            if (argsl[0].matches(null, args, keywords, callData)) {
+                method = argsl[0].data;
+                consumes_keywords = argsl[0].flags == ReflectedArgs.PyArgsKeywordsCall;
+            } else {
+                allArgs = args;
+                int i = 1;
+                if (nkeywords > 0) {
+                    args = new PyObject[allArgs.length-nkeywords];
+                    System.arraycopy(allArgs, 0, args, 0, args.length);
+                    i = 0;
+                }
+                for (; i < n; i++) {
+                    ReflectedArgs rargs = argsl[i];
+                        if (rargs
+                            .matches(null, args, Py.NoKeywords, callData)) {
+                        method = rargs.data; break; }
+                }
             }
         }
 
         // Throw an error if no valid set of arguments
         if (method == null) {
-            throwError(callData.errArg, args.length, true /*xxx?*/, false);
+            throwError(callData.errArg, args.length, true /*xxx?*/,false);
         }
 
         // Do the actual constructor call
-        Object obj = null;
+        PyObject obj = null;
         Constructor ctor = (Constructor)method;
         try {
-            obj = ctor.newInstance(callData.getArgsArray());
+            obj = (PyObject)ctor.newInstance(callData.getArgsArray());
         }
         catch (Throwable t) {
             throw Py.JavaError(t);
         }
+        
+        if (!consumes_keywords) {
+            int offset = args.length;
+            for (int i=0; i<nkeywords; i++) {
+                obj.__setattr__(keywords[i], allArgs[i+offset]);
+            }            
+        }
     
-        return (PyObject)obj;
+        return obj;
     }
 
     public PyObject __call__(PyObject self, PyObject[] args,
@@ -102,7 +125,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
                     throw Py.TypeError("invalid self argument");
                 }
 
-                PyJavaClass jc = PyJavaClass.lookup(javaClass);
+                PyJavaClass jc = PyJavaClass.lookup(javaClass); // xxx
                 jc.initConstructors();
                 return jc.__init__.__call__(iself, args, keywords);
             }

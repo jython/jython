@@ -1463,7 +1463,13 @@ public final class Py
         if (o == null) return Py.None;
         if (o instanceof String) return new PyString((String)o);
         if (o instanceof Character) return makeCharacter((Character)o);
-        if (o instanceof Class) return PyJavaClass.lookup((Class)o);
+        if (o instanceof Class) {
+            Class cls = (Class)o;
+            if (PyObject.class.isAssignableFrom(cls)) {
+                return PyType.fromClass(cls);
+            }
+            return PyJavaClass.lookup(cls);
+        } 
 
         Class c = o.getClass();
         if (c.isArray()) {
@@ -1765,6 +1771,47 @@ public final class Py
         return makeFilename(name.substring(index+1, name.length()),
                             new File(dir, name.substring(0, index)));
     }
+    
+    // xxx when we have subclassing, in particular, mixed classic new-style 
+    // we need to deal with the mixed cases
+    
+    public static boolean isInstance(PyObject obj,PyObject cls) {
+        if (cls instanceof PyType) {
+            PyType objtype = obj.getType();
+            if (objtype == cls) return true;
+            return objtype.isSubType((PyType)cls);
+        } else if (cls instanceof PyClass) {
+            if (!(obj instanceof PyInstance)) return false;
+            return ((PyClass)obj.fastGetClass()).isSubClass((PyClass) cls);            
+        } else if (cls.getClass() == PyTuple.class) {
+            for (int i = 0; i < cls.__len__(); i++) {
+                if (isInstance(obj, cls.__getitem__(i)))
+                    return true;
+            }
+            return false;
+        } else {
+            // xxx check cls has __bases__ and obj has __class__ => do abstract thing, fix msg
+            throw Py.TypeError("isinstance(): 2nd arg is not a class");
+        }
+    }
+    
+    public static boolean isSubClass(PyObject derived,PyObject cls) {
+        if (derived instanceof PyType && cls instanceof PyType) {
+            if (derived == cls) return true;
+            return ((PyType)derived).isSubType((PyType)cls);
+        } else if (cls instanceof PyClass && derived instanceof PyClass) {
+            return ((PyClass)derived).isSubClass((PyClass)cls);            
+        } else if (cls.getClass() == PyTuple.class) {
+            for (int i = 0; i < cls.__len__(); i++) {
+                if (isSubClass(derived, cls.__getitem__(i)))
+                    return true;
+            }
+            return false;
+        } else {
+            // xxx check cls has __bases__ and derived has __class__ => do abstract thing, fix msg
+            throw Py.TypeError("issubclass(): wrong args");
+        }    
+    }    
     
 }
 

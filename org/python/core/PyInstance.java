@@ -14,7 +14,7 @@ public class PyInstance extends PyObject
     public transient PyClass instclass;
     
     // xxx
-    public PyClass fastGetClass() {
+    public PyObject fastGetClass() {
         return instclass;
     }
     

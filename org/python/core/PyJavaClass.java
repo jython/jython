@@ -28,7 +28,9 @@ public class PyJavaClass extends PyClass
 
     public static final PyJavaClass lookup(String name,PackageManager mgr) {
         if (tbl.queryCanonical(name)) {
-            return lookup(mgr.findClass(null,name,"forced java class"));
+            Class c = mgr.findClass(null,name,"forced java class");
+            check_lazy_allowed(c); // xxx
+            return lookup(c);
         }
         PyJavaClass ret = new PyJavaClass(name, mgr);
         tbl.putLazyCanonical(name, ret);
@@ -81,8 +83,19 @@ public class PyJavaClass extends PyClass
         return proxyClass;
     }
 
+    // for the moment trying to lazily load a PyObject subclass
+    // is not allowed, (because of the PyJavaClass vs PyType class mismatch)
+    // pending PyJavaClass becoming likely a subclass of PyType  
+    private static final void check_lazy_allowed(Class c) {
+        if (PyObject.class.isAssignableFrom(c)) { // xxx
+            throw Py.TypeError("cannot lazy load PyObject subclass");
+        }        
+    }
+
     private static final void initLazy(PyJavaClass jc) {
-        jc.init(jc.__mgr__.findClass(null,jc.__name__,"lazy java class"));
+        Class c = jc.__mgr__.findClass(null,jc.__name__,"lazy java class");
+        check_lazy_allowed(c); // xxx
+        jc.init(c);
         tbl.putCanonical(jc.proxyClass,jc);
         jc.__mgr__ = null;
     }
@@ -807,7 +820,7 @@ public class PyJavaClass extends PyClass
         Class innerClass = Py.relFindClass(p, p.getName()+"$"+name);
         if (innerClass == null) return null;
 
-        PyJavaClass jinner = lookup(innerClass);
+        PyObject jinner = Py.java2py(innerClass); // xxx lookup(innerClass);
         __dict__.__setitem__(name, jinner);
         return jinner;
     }
@@ -837,11 +850,8 @@ public class PyJavaClass extends PyClass
         if (!constructorsInitialized)
             initConstructors();
         
-        // xxx instantiation of PyObject subclass
+        // xxx instantiation of PyObject subclass, still needed?
         if (PyObject.class.isAssignableFrom(proxyClass)) {
-            if (keywords.length != 0) { // xxx enable keywords using catchall sig
-                throw Py.TypeError("keywords not supported"); // xxx better msg
-            }
             if (Modifier.isAbstract(proxyClass.getModifiers())) {
                             throw Py.TypeError("can't instantiate abstract class ("+
                                                __name__+")");
@@ -850,7 +860,7 @@ public class PyJavaClass extends PyClass
                 throw Py.TypeError("no public constructors for "+
                                    __name__);
             }
-            return __init__.make(args);
+            return __init__.make(args,keywords);
         }
             
         PyInstance inst = new PyJavaInstance(this);

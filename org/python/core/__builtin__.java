@@ -108,6 +108,13 @@ public class __builtin__ implements ClassDictInit
 {
     /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
+        /* newstyle */
+        
+        dict.__setitem__("object",PyType.fromClass(PyObject.class));
+        dict.__setitem__("type",PyType.fromClass(PyType.class));
+        
+        /* - */
+        
         dict.__setitem__("None", Py.None);
         dict.__setitem__("NotImplemented", Py.NotImplemented);
         dict.__setitem__("Ellipsis", Py.Ellipsis);
@@ -426,10 +433,6 @@ public class __builtin__ implements ClassDictInit
         return o.__int__();
     }
 
-    public static PyObject object() {
-        return new PyObject();
-    }
-
     private static PyStringMap internedStrings;
     public static PyString intern(PyString s) {
         if (internedStrings == null) {
@@ -445,41 +448,14 @@ public class __builtin__ implements ClassDictInit
         return s;
     }
 
-    // xxx do properly
+    //  xxx find where used, modify with more appropriate if necessary
     public static boolean isinstance(PyObject obj, PyObject cls) {
-        if (cls instanceof PyClass) {
-            return issubclass(obj.fastGetClass(), (PyClass) cls);            
-        } else if (cls.getClass() == PyTuple.class) {
-            for (int i = 0; i < cls.__len__(); i++) {
-                if (isinstance(obj, cls.__getitem__(i)))
-                    return true;
-            }
-            return false;
-        } else {
-            throw Py.TypeError("isinstance(): 2nd arg is not a class");
-        }
+        return Py.isInstance(obj,cls);
     }
 
-    //  xxx do properly
-    public static boolean issubclass(PyClass subClass, PyClass superClass) {
-        if (subClass == null || superClass == null)
-            throw Py.TypeError("arguments must be classes");
-        if (subClass == superClass)
-            return true;
-        if (subClass.proxyClass != null && superClass.proxyClass != null) {
-            if (superClass.proxyClass.isAssignableFrom(subClass.proxyClass))
-                return true;
-        }
-        if (subClass.__bases__ == null || superClass.__bases__ == null)
-            return false;
-        PyObject[] bases = subClass.__bases__.list;
-        int n = bases.length;
-        for(int i=0; i<n; i++) {
-            PyClass c = (PyClass)bases[i];
-            if (issubclass(c, superClass))
-                return true;
-        }
-        return false;
+    //  xxx find where used, modify with more appropriate if necessary
+    public static boolean issubclass(PyObject derived, PyObject cls) {
+        return Py.isSubClass(derived,cls);
     }
 
 
@@ -943,7 +919,7 @@ public class __builtin__ implements ClassDictInit
         return new PyTuple(make_array(o));
     }
 
-    public static PyClass type(PyObject o) {
+    public static PyType type(PyObject o) {
         return o.getType();
     }
 

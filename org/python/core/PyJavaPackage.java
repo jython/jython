@@ -85,12 +85,16 @@ public class PyJavaPackage extends PyObject {
     }
 
     public PyObject addClass(String name,Class c) {
-        PyObject ret = PyJavaClass.lookup(c);
+        // xxx what to do with PyObject subclasses?
+        //PyObject ret = PyJavaClass.lookup(c);  // xxx java2py?
+        // perhaps introduce class2py
+        PyObject ret = Py.java2py(c);
         __dict__.__setitem__(name.intern(), ret);
         return ret;
     }
 
     public PyObject addLazyClass(String name) {
+        // xxx what to do with PyObject subclasses? this now fails on them
         PyObject ret = PyJavaClass.lookup(__name__+'.'+name,__mgr__);
         __dict__.__setitem__(name.intern(), ret);
         return ret;
@@ -173,4 +177,13 @@ public class PyJavaPackage extends PyObject {
     public String toString()  {
         return "<java package "+__name__+" "+Py.idstr(this)+">";
     }
+    
+    
+    /**
+     * @see org.python.core.PyObject#safeRepr()
+     */
+    public String safeRepr() throws PyIgnoreMethodTag {
+        return "java package '"+__name__+"'";       
+    }
+
 }
