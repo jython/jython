@@ -1,6 +1,6 @@
 # Copyright © Corporation for National Research Initiatives
 
-"""Usage: jpythonc [options] module+
+"""Usage: jpythonc [options] [module]*
 
 where options include:
 
@@ -28,9 +28,9 @@ where options include:
   -b jarfile
       Compile into jarfile, include manifest for bean
       
-  --addpackages packs
-  -A packs
-      Include java dependencies from this list of packages.  Default is
+  --addpackages packages
+  -A packages
+      Include Java dependencies from this list of packages.  Default is
       org.python.modules and com.oroinc.text.regex
       
   --workdir directory
@@ -41,9 +41,9 @@ where options include:
   -s modules
       Don't include any of these modules in compilation
       
-  --compiler fullpath
-  -C fullpath
-      Use a different compiler than `standard' javac if.  this is set to
+  --compiler path
+  -C path
+      Use a different compiler than `standard' javac.  If this is set to
       `NONE' then compile ends with .java.  Alternatively, you can set the
       property python.jpythonc.compiler in the registry.
 
@@ -54,8 +54,8 @@ where options include:
 
   --falsenames names
   -f names
-      A comma-separated list of names that are always false can be used to
-      short-circuit if clauses
+      A comma-separated list of names that are always false.  Can be used to
+      short-circuit if clauses.
 
   --help
   -h
