@@ -2589,7 +2589,10 @@ protected Token jjFillToken()
    t.kind = jjmatchedKind;
    if (jjmatchedPos < 0)
    {
-      t.image = "";
+      if (image == null)
+         t.image = "";
+      else
+         t.image = image.toString();
       t.beginLine = t.endLine = input_stream.getBeginLine();
       t.beginColumn = t.endColumn = input_stream.getBeginColumn();
    }
