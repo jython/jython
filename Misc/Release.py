@@ -406,7 +406,6 @@ def main():
         else:
             tagname = args[0]
 
-    print 'Using tag:', tagname
     # very important!!!
     omask = os.umask(0)
     try:

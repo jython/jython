@@ -26,9 +26,9 @@ def getdata(filename):
 
 
 def getsig(doc, pargs, constructor=0):
-    if doc is None: return None
+    if doc is None:
+        return None
     #print doc
-
     lines = doc.split("\n")
     txt = None
     for line in lines:
@@ -36,7 +36,8 @@ def getsig(doc, pargs, constructor=0):
         if line.startswith("@sig "):
             txt = line[5:]
             break
-    if txt is None: return None
+    if txt is None:
+        return None
     front, back = txt.split("(")
     back = back[:-1].strip()
     front = front.split()
@@ -47,14 +48,12 @@ def getsig(doc, pargs, constructor=0):
         ret = front[-2]
         mods = string.join(front[:-2], ' ')
         jret = insistJavaClass(ret)
-
     arglist = []
     if len(back) > 0:
         for arg in back.split(','):
             c, name = arg.split()
             jc = insistJavaClass(c)
             arglist.append( (jc, name) )
-
     sigs = []
     for ndefaults in range(0, len(pargs.defaults)+1):
         sigs.append( (mods, jret, arglist[:len(arglist)-ndefaults], []) )
@@ -139,21 +138,15 @@ def makeJavaProxy(module, pyc):
             else:
                 sig = getsig(v.doc, args, constructor=0)
         methods.append( (name, args, sig) )
-
     bases = []
     for base in pyc.bases:
-        #print 'base', base, base.value
         base = base.value
-
         if hasattr(base, 'name'):
             jc = getJavaClass(base.name)
             if jc is not None:
                 bases.append(jc)
-
-    #print bases
     if len(bases) == 0:
         return None
-
     jp = proxies.JavaProxy(pyc.name, bases, methods, module)
     return jp # jp.makeClass()
 
@@ -305,7 +298,6 @@ class Compiler:
         proxyClasses = []
         mainProxy = None
         for name, pyc in mod.classes.items():
-            #print name, pyc
             proxy = makeJavaProxy(mod, pyc.value)
             if proxy is None:
                 continue
