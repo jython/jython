@@ -1337,7 +1337,8 @@ final class StringFormatter
     }
 
     public String formatFloatDecimal(double v, boolean truncate) {
-        java.text.NumberFormat format = java.text.NumberFormat.getInstance();
+        java.text.NumberFormat format = java.text.NumberFormat.getInstance(
+                                           java.util.Locale.US);
         int prec = precision;
         if (prec == -1)
             prec = 6;
