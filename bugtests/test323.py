@@ -29,7 +29,7 @@ compare("__file__", __file__, "Lib/test323m.py")
 zip.close()
 
 import sys
-sys.path.append("test323.zip!Lib")
+sys.path.append("test323.zip/Lib")
 
 import test323m
 

@@ -34,10 +34,10 @@ def compare(str, v1, v2):
     assert v1 == v2, "%s '%s' '%s'" % (str, v1, v2)
 compare("__name__", __name__, "test307p")
 compare("__file__", __file__, "test307p/__init__.py")
-compare("__path__", __path__, ["test307.zip!test307p"])
+compare("__path__", __path__, ["test307.zip/test307p"])
 import mod
 import submod
-__path__.append("test307.zip!foo/bar")
+__path__.append("test307.zip/foo/bar")
 import foobar
 """)
 
