@@ -40,8 +40,16 @@ Exception(*)
       |    +-- NotImplementedError(*)
       |
       +-- NameError
+      |    |
+      |    +-- UnboundLocalError(*)
+      |
       +-- AttributeError
       +-- SyntaxError
+      |    |
+      |    +-- IndentationError
+      |         |
+      |         +-- TabError
+      |
       +-- TypeError
       +-- AssertionError
       +-- LookupError(*)
@@ -56,6 +64,9 @@ Exception(*)
       |    +-- FloatingPointError
       |
       +-- ValueError
+      |    |
+      |    +-- UnicodeError
+      |
       +-- SystemError
       +-- MemoryError
 """
@@ -96,6 +107,14 @@ class SyntaxError(StandardError):
                 pass
     def __str__(self):
         return str(self.msg)
+
+class IndentationError(SyntaxError):
+    """Improper indentation"""
+    pass
+
+class TabError(IndentationError):
+    """Improper mixture of spaces and tabs."""
+    pass
 
 class EnvironmentError(StandardError):
     """Base class for I/O related errors."""
@@ -167,6 +186,10 @@ class ValueError(StandardError):
     """Inappropriate argument value (of correct type)."""
     pass
 
+class UnicodeError(ValueError):
+    """Unicode related error."""
+    pass
+
 class KeyboardInterrupt(StandardError):
     """Program interrupted by user."""
     pass
@@ -208,7 +231,11 @@ class AttributeError(StandardError):
     pass
 
 class NameError(StandardError):
-    """Name not found locally or globally."""
+    """Name not found globally."""
+    pass
+
+class UnboundLocalError(NameError):
+    """Local name referenced but not bound to a value."""
     pass
 
 class MemoryError(StandardError):

@@ -78,6 +78,9 @@ public final class Py {
         return new PyException(Py.SyntaxError, message);
     }
 
+    public static PyObject IndentationError;
+    public static PyObject TabError;
+
     public static PyObject AttributeError;
     public static PyException AttributeError(String message) {
         return new PyException(Py.AttributeError, message);
@@ -133,6 +136,11 @@ public final class Py {
         return new PyException(Py.NameError, message);
     }
 
+    public static PyObject UnboundLocalError;
+    public static PyException UnboundLocalError(String message) {
+        return new PyException(Py.UnboundLocalError, message);
+    }
+
     public static PyObject SystemExit;
     /*public static PyException SystemExit(String message) {
       return new PyException(Py.SystemExit, message);
@@ -171,6 +179,11 @@ public final class Py {
     public static PyObject ValueError;
     public static PyException ValueError(String message) {
         return new PyException(Py.ValueError, message);
+    }
+
+    public static PyObject UnicodeError;
+    public static PyException UnicodeError(String message) {
+        return new PyException(Py.UnicodeError, message);
     }
 
     public static PyObject EOFError;
@@ -370,7 +383,9 @@ public final class Py {
         dict.__setitem__("AssertionError", Py.AssertionError);
         dict.__setitem__("FloatingPointError", Py.FloatingPointError);
         dict.__setitem__("ValueError", Py.ValueError);
+        dict.__setitem__("UnicodeError", Py.UnicodeError);
         dict.__setitem__("NameError", Py.NameError);
+        dict.__setitem__("UnboundLocalError", Py.UnboundLocalError);
         dict.__setitem__("EOFError", Py.EOFError);
         dict.__setitem__("KeyError", Py.KeyError);
         dict.__setitem__("MemoryError", Py.MemoryError);
@@ -384,6 +399,8 @@ public final class Py {
         dict.__setitem__("EnvironmentError", Py.EnvironmentError);
         dict.__setitem__("AttributeError", Py.AttributeError);
         dict.__setitem__("SyntaxError", Py.SyntaxError);
+        dict.__setitem__("IndentationError", Py.IndentationError);
+        dict.__setitem__("TabError", Py.TabError);
     }
 
 
@@ -396,7 +413,9 @@ public final class Py {
         AssertionError = new PyString("AssertionError");
         FloatingPointError = new PyString("FloatingPointError");
         ValueError = new PyString("ValueError");
+        UnicodeError = new PyString("UnicodeError");
         NameError = new PyString("NameError");
+        UnboundLocalError = new PyString("UnboundLocalError");
         EOFError = new PyString("EOFError");
         KeyError = new PyString("KeyError");
         MemoryError = new PyString("MemoryError");
@@ -426,7 +445,8 @@ public final class Py {
              Py.AssertionError, Py.LookupError, Py.SyntaxError,
              Py.SystemError, Py.KeyboardInterrupt, Py.AttributeError,
              Py.MemoryError, Py.EnvironmentError, Py.RuntimeError,
-             Py.ImportError, Py.ArithmeticError, Py.EOFError
+             Py.ImportError, Py.ArithmeticError, Py.EOFError,
+             Py.UnicodeError, Py.UnboundLocalError,
             });
         
         Exception = new PyTuple(new PyObject[]
@@ -464,8 +484,12 @@ public final class Py {
         if (tmp != null) FloatingPointError = tmp;
         tmp = exceptions.__findattr__("ValueError");
         if (tmp != null) ValueError = tmp;
+        tmp = exceptions.__findattr__("UnicodeError");
+        if (tmp != null) UnicodeError = tmp;
         tmp = exceptions.__findattr__("NameError");
         if (tmp != null) NameError = tmp;
+        tmp = exceptions.__findattr__("UnboundLocalError");
+        if (tmp != null) UnboundLocalError = tmp;
         tmp = exceptions.__findattr__("EOFError");
         if (tmp != null) EOFError = tmp;
         tmp = exceptions.__findattr__("KeyError");
@@ -492,6 +516,10 @@ public final class Py {
         if (tmp != null) AttributeError = tmp;
         tmp = exceptions.__findattr__("SyntaxError");
         if (tmp != null) SyntaxError = tmp;        
+        tmp = exceptions.__findattr__("IndentationError");
+        if (tmp != null) IndentationError = tmp;        
+        tmp = exceptions.__findattr__("TabError");
+        if (tmp != null) TabError = tmp;        
         setBuiltinExceptions();
     }
 
