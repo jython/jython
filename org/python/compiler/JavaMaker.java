@@ -125,6 +125,16 @@ public class JavaMaker extends ProxyMaker
     }
 
 
+    public void addSuperMethod(String methodName, String superName,
+                               String superclass, Class[] parameters,
+                               Class ret, String sig, int access)
+        throws Exception
+    {
+        if (!superclass.startsWith("org/python/proxies")) {
+            super.addSuperMethod(methodName,superName,superclass,parameters,ret,sig,access);
+        }
+    }
+  
     public void addMain() throws Exception {
         Code code = classfile.addMethod("main", "([Ljava/lang/String;)V",
                                         ClassFile.PUBLIC | ClassFile.STATIC);
