@@ -268,19 +268,19 @@ implicit first argument that is the *class* for which they are invoked.
     ...     foo = classmethod(foo)
 
     >>> C.foo(1)
-    classmethod test.test_descrtut.C 1
+    classmethod test_descrtut.C 1
     >>> c = C()
     >>> c.foo(1)
-    classmethod test.test_descrtut.C 1
+    classmethod test_descrtut.C 1
 
     >>> class D(C):
     ...     pass
 
     >>> D.foo(1)
-    classmethod test.test_descrtut.D 1
+    classmethod test_descrtut.D 1
     >>> d = D()
     >>> d.foo(1)
-    classmethod test.test_descrtut.D 1
+    classmethod test_descrtut.D 1
 
 This prints "classmethod __main__.D 1" both times; in other words, the
 class passed as the first argument of foo() is the class involved in the
@@ -296,11 +296,11 @@ But notice this:
 
     >>> E.foo(1)
     E.foo() called
-    classmethod test.test_descrtut.C 1
+    classmethod test_descrtut.C 1
     >>> e = E()
     >>> e.foo(1)
     E.foo() called
-    classmethod test.test_descrtut.C 1
+    classmethod test_descrtut.C 1
 
 In this example, the call to C.foo() from E.foo() will see class C as its
 first argument, not class E. This is to be expected, since the call
