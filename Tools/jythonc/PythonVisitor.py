@@ -1,5 +1,6 @@
 from org.python.parser import Visitor, SimpleNode
 from org.python.parser.PythonGrammarTreeConstants import *
+from org.python.parser import SimpleNode
 
 comp_ops = {JJTLESS_CMP:'lt', JJTEQUAL_CMP:'eq', JJTGREATER_CMP:'gt', 
 	JJTGREATER_EQUAL_CMP:'ge', JJTLESS_EQUAL_CMP:'le', JJTNOTEQUAL_CMP:'ne',
@@ -17,37 +18,51 @@ def nodeToStrings(node, start=0):
 		names.append(node.getChild(i).getInfo())
 	return names
 
-"""
+
 class Arguments(Visitor):
-	def __init__(self, argslist):
+	def __init__(self, parent, argslist=None):
 		self.arglist = 0
 		self.keyworddict = 0
 		self.names = []
 		self.defaults = []
 		
-		for label, default in args:
-			self.names.append(label)
-			if default is not None:
-				self.defaults.append(default)
+		self.parent = parent
+		
+		if argslist is not None:
+			argslist.visit(self)
 				
+	def varargslist(self, node):
+		for i in range(node.numChildren):
+			node.getChild(i).visit(self)
 
 	def ExtraArgList(self, node):
 		self.arglist = 1
-		names.append(node.getChild(0).visit(self)
+		self.names.append(node.getChild(0).visit(self))
 		
 	def ExtraKeywordList(self, node):
 		self.keyworddict = 1
-		names.append(node.getChild(0).visit(self)
+		self.names.append(node.getChild(0).visit(self))
 		
+	def defaultarg(self, node):
+		name = node.getChild(0).visit(self)
+		self.names.append(name)
+		if node.numChildren > 1:
+			self.defaults.append(node.getChild(1).visit(self.parent))
 
-
-	def fplist(self, node):
-		???
+	#def fplist(self, node):
+	#	???
 
 	def Name(self, node):
 		return node.getInfo()
-"""
 	
+
+def getDocString(suite):
+	if suite.numChildren > 0:
+		n = suite.getChild(0)
+		if n.id == JJTEXPR_STMT and n.getChild(0).id == JJTSTRING:
+			return n.getChild(0).getInfo()
+	return None
+
 
 class PythonVisitor(Visitor):
 	def __init__(self, walker):
@@ -84,12 +99,14 @@ class PythonVisitor(Visitor):
 			return self.walker.return_stmt(NoneNode)
 		else:
 			return self.walker.return_stmt(node.getChild(0))
-		
+				
 	def global_stmt(self, node):
 		self.startnode(node)
 		return self.walker.global_stmt(nodeToStrings(node))
 		
-	#def raise_stmt(self, node):
+	def raise_stmt(self, node):
+		self.startnode(node)
+		return self.walker.raise_stmt(nodeToList(node))
 		
 	def Import(self, node):
 		self.startnode(node)
@@ -182,13 +199,37 @@ class PythonVisitor(Visitor):
 		self.startnode(node)
 		return self.walker.string_const(node.getInfo())
 		
+	def getSlice(self, node):
+		s = [None, None, None]
+		n = node.numChildren
+		index = 0
+		for i in range(n):
+			child = node.getChild(i)
+			if child.id == JJTCOLON: index = index+1
+			else: s[index] = child
+		return s
+		
+	def Slice(self, node):
+		self.startnode(node)
+		s = self.getSlice(node)
+		return self.walker.slice_op(s[0], s[1], s[2])
+
+	def makeSeqArgs(self, node):
+		values = nodeToList(node)
+		ret = []
+		for value in values:
+			if value.id == JJTCOMMA: continue
+			ret.append(value)
+		return ret
+
+
 	def list(self, node):
 		self.startnode(node)
-		return self.walker.list_op(nodeToList(node))
+		return self.walker.list_op(self.makeSeqArgs(node))
 		
 	def tuple(self, node):
 		self.startnode(node)
-		return self.walker.tuple_op(nodeToList(node))
+		return self.walker.tuple_op(self.makeSeqArgs(node))
 
 	def dictionary(self, node):
 		self.startnode(node)
@@ -260,6 +301,7 @@ class PythonVisitor(Visitor):
 	def neg_1op(self, node): return self.unop(node, 'neg')
 	def abs_1op(self, node): return self.unop(node, 'abs')
 	def pos_1op(self, node): return self.unop(node, 'pos')
+	def not_1op(self, node): return self.unop(node, 'not')
 	
 	def comparision(self, node):
 		self.startnode(node)
@@ -271,39 +313,73 @@ class PythonVisitor(Visitor):
 			tests.append( (op, obj) )
 		return self.walker.compare_op(start, tests)
 		
-	def parseArgs(self, Args):
-		args = []
 
-		for i in range(Args.numChildren):
-			node = Args.getChild(i)
-			name = node.getChild(0).getInfo()
-			
-			if node.numChildren > 1:
-				default = node.getChild(1).visit(self)
+	def and_boolean(self, node):
+		return self.walker.and_op(node.getChild(0), node.getChild(1))
+		
+	def or_boolean(self, node):
+		return self.walker.or_op(node.getChild(0), node.getChild(1))
+		
+
+	def try_stmt(self, node):
+		n = node.numChildren
+		if n == 2:
+			return self.walker.tryfinally(node.getChild(0), node.getChild(1))
+		
+		body = node.getChild(0)
+		exceptions = []
+
+		for i in range(1, n-1, 2):
+			exc = node.getChild(i)
+			if exc.numChildren == 0:
+				exc = None
+			elif exc.numChildren == 1:
+				exc = [exc.getChild(0).visit(self)]
 			else:
-				default = None
-			args.append( (name, default) )
-		return args
+				exc = [exc.getChild(0).visit(self), exc.getChild(1)]
+			exceptions.append( (exc, node.getChild(i+1)) )
+
+		if n%2 == 0:
+			elseClause = node.getChild(n-1)
+		else:
+			elseClause = None
+			
+		return self.walker.tryexcept(body, exceptions, elseClause)
 
 	def funcdef(self, node):
 		funcname = node.getChild(0).getInfo()
 		
 		Body = node.getChild(node.numChildren-1)
 		
+		doc = getDocString(Body)
 		if node.numChildren > 2:
-			args = self.parseArgs(node.getChild(1))
+			args = Arguments(self, node.getChild(1))
 		else:
-			args = []
+			args = Arguments(self)
 			
-		return self.walker.funcdef(funcname, args, Body)
+		return self.walker.funcdef(funcname, args, Body, doc)
+		
+	def lambdef(self, node):
+		Body = node.getChild(node.numChildren-1)
+		
+		if node.numChildren > 1:
+			args = Arguments(self, node.getChild(0))
+		else:
+			args = Arguments(self)
+		
+		retBody = SimpleNode(JJTRETURN_STMT)
+		retBody.jjtAddChild(Body, 0)
+
+		return self.walker.lambdef(args, retBody)
 		
 	def classdef(self, node):
 		name = node.getChild(0).getInfo()
 
 		n = node.numChildren
 		suite = node.getChild(n-1)
+		doc = getDocString(suite)
 		bases = []
 		for i in range(1, n-1):
 			bases.append(node.getChild(i).visit(self))
 		
-		return self.walker.classdef(name, bases, suite)
+		return self.walker.classdef(name, bases, suite, doc)

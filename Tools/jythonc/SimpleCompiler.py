@@ -1,24 +1,13 @@
 from BaseEvaluator import BaseEvaluator
+from PythonVisitor import Arguments
 import string
 import jast
 
 def clean(node):
+	if not hasattr(node, 'exits'): print node
 	if node.exits(): return node
 	
 	return jast.Block([node, jast.Return(jast.GetStaticAttribute('Py', 'None'))])
-
-
-class Arguments:
-	def __init__(self, argslist):
-		self.arglist = 0
-		self.keyworddict = 0
-		self.names = []
-		self.defaults = []
-		
-		for label, default in argslist:
-			self.names.append(label)
-			if default is not None:
-				self.defaults.append(default)
 
 def mkStrings(values):
 	lst = []
@@ -31,14 +20,26 @@ def mkStrings(values):
 		lst.append(jv)
 	return jast.FilledArray("String", lst)
 
+
+from java.lang.Character import isJavaIdentifierPart
+def legalJavaName(name):
+	letters = []
+	for c in name:
+		if isJavaIdentifierPart(c): letters.append(c)
+	if len(letters) == 0: return "x"
+	elif len(letters) == len(name): return name
+	else: return string.join(letters, '')
+
+
 class BasicModule:
-	def __init__(self, name, filename="<unknown>"):
+	def __init__(self, name, filename="<unknown>", packages = []):
 		self.name = name
 		self.filename = filename
 		self.superclass = "Object"
-		self.interfaces = []
+		self.interfaces = ["InitModule"]
 		self.strings = {}
 		self.integers = {}
+		self.floats = {}
 		self.temps = []
 		self.codes = []
 		
@@ -51,6 +52,16 @@ class BasicModule:
 		self.package = None
 		
 		self.javamain = 1
+
+		self.attributes = {}
+		self.classes = {}
+		self.imports = {}
+		
+		self.packages = packages
+		self.modifiers = "public"
+
+	def addAttribute(self, name, value):
+		self.attributes[name] = value
 
 	def getIntegerConstant(self, value):
 		if self.integers.has_key(value):
@@ -65,9 +76,16 @@ class BasicModule:
 		ret = jast.Identifier("s$%d" % len(self.strings))
 		self.strings[value] = ret
 		return ret
+			
+	def getFloatConstant(self, value):
+		if self.floats.has_key(value):
+			return self.floats[value]
+		ret = jast.Identifier("f$%d" % len(self.floats))
+		self.floats[value] = ret
+		return ret
 
 	def getCodeConstant(self, name, args, locals, code):
-		label = "c$%d_%s" % (len(self.codes), name)
+		label = "c$%d_%s" % (len(self.codes), legalJavaName(name))
 		ret = jast.Identifier(label)
 		self.codes.append( (label, name, args, locals, code) )
 		return ret
@@ -83,6 +101,12 @@ class BasicModule:
 		items.sort()
 		for value, label in items:
 			self.addConstant("PyObject", label, jast.InvokeStatic("Py", "newString", [jast.StringConstant(value)]))
+		
+	def dumpFloats(self):
+		items = self.floats.items()
+		items.sort()
+		for value, label in items:
+			self.addConstant("PyObject", label, jast.InvokeStatic("Py", "newFloat", [jast.FloatConstant(value)]))
 		
 	def dumpCodes(self):
 		self.constants.append(["PyFunctionTable", self.getFunctionTable(), jast.New(self.name, [])])
@@ -140,6 +164,7 @@ class BasicModule:
 		
 	def dumpConstants(self):
 		self.dumpIntegers()
+		self.dumpFloats()
 		self.dumpStrings()
 		self.dumpCodes()
 		
@@ -160,7 +185,7 @@ class BasicModule:
 		return jast.Identifier("funcTable")
 		
 	def addFunctionCode(self, name, code):
-		self.funccodes.append( (name, len(self.funccodes), code) )
+		self.funccodes.append( (legalJavaName(name), len(self.funccodes), code) )
 		return len(self.funccodes)-1
 
 	def addMain(self, code, cc):
@@ -185,22 +210,29 @@ class BasicModule:
 			maincode = jast.Block([jast.InvokeStatic("Py", "runMain", args)])
 			meths.append(jast.Method("main", "public static", 
 							["void", ("String[]", "args")], maincode))
-			
+		
+		args = [jast.StringConstant(self.name), jast.Identifier('dict')]
+		initcode = jast.Block([jast.InvokeStatic("Py", "initRunnable", args)])
+		meths.append(jast.Method("initModule", "public", 
+			["void", ("PyObject", "dict")], initcode))		
+	
 		return meths
 
 	def getProperties(self):
 		props = [
 			"python.packages.paths", "",
 			"python.packages.directories", "",
-			#"python.options.classExceptions", "false",
-			"python.path", "c:\\jpython\\lib",
-			#"python.home", "c:\\jpython"
+			"python.options.classExceptions", "false",
+			"python.options.showJavaExceptions", "true",
 		]
 		
 		return mkStrings(props)
 		
 	def getPackages(self):
-		packs = ["java.awt", None, "java.applet", None]
+		packs = []
+		for p in self.packages:
+			packs.append(p)
+			packs.append(None)
 		return mkStrings(packs)
 
 	def dumpAll(self):
@@ -209,7 +241,7 @@ class BasicModule:
 
 	def makeClass(self):
 		body = jast.Block(self.dumpAll())
-		return jast.Class(self.name, "public", self.superclass, self.interfaces, body)
+		return jast.Class(self.name, self.modifiers, self.superclass, self.interfaces, body)
 
 	def makeClassFile(self):
 		header = []
@@ -228,42 +260,69 @@ class BasicModule:
 		sf.dump(directory) 
 		return cf
 		
-class DynamicIntReference:
+
+class Reference:
 	def __init__(self, frame, name):
-		self.ivalue = jast.IntegerConstant(len(frame.locals))
-		self.name = name
 		self.frame = frame.frame
-				
-	def getValue(self):
-		return PyObject(jast.Invoke(self.frame, "getlocal", (self.ivalue,)), None)
+		self.locals = frame.locals
+		self.name = name
+		self.value = None
+		self.init()
 		
+	def init(self): pass
+		
+	def noValue(self):
+		raise NameError, 'try to get %s before set' % repr(self.name)
+
+	def getValue(self):
+		if self.value is None:
+			return self.noValue()	
+		return self.value
+	
 	def setValue(self, value):
+		if self.value is None:
+			self.value = value.makeReference(self.getCode())
+		else:
+			# Might want to try and merge types here...
+			self.value = self.value.mergeWith(value)
+			#PyObject(self.getCode(), None)
+		return self.setCode(value)
+
+
+class DynamicIntReference(Reference):
+	def init(self):
+		self.ivalue = jast.IntegerConstant(len(self.locals))
+		
+	def getCode(self):
+		return jast.Invoke(self.frame, "getlocal", (self.ivalue,))
+		
+	def setCode(self, value):
 		return jast.Invoke(self.frame, "setlocal", (self.ivalue, value.asAny()))
 
-class DynamicStringReference:
-	def __init__(self, frame, name):
-		self.ivalue = jast.StringConstant(name)
-		self.name = name
-		self.frame = frame.frame
-				
-	def getValue(self):
-		return PyObject(jast.Invoke(self.frame, "getname", (self.ivalue,)), None)
+class DynamicStringReference(Reference):
+	def init(self):
+		self.ivalue = jast.StringConstant(self.name)
 		
-	def setValue(self, value):
+	def getCode(self):
+		return jast.Invoke(self.frame, "getname", (self.ivalue,))
+		
+	def setCode(self, value):
 		return jast.Invoke(self.frame, "setlocal", (self.ivalue, value.asAny()))
 
-class DynamicGlobalStringReference:
-	def __init__(self, frame, name):
-		self.ivalue = jast.StringConstant(name)
-		self.name = name
-		self.frame = frame.frame
+
+class DynamicGlobalStringReference(Reference):
+	def init(self):
+		self.ivalue = jast.StringConstant(self.name)
 		
-	def getValue(self):
-		return PyObject(jast.Invoke(self.frame, "getglobal", (self.ivalue,)), None)
+	def getCode(self):
+		return jast.Invoke(self.frame, "getglobal", (self.ivalue,))
 		
-	def setValue(self, value):
+	def setCode(self, value):
 		return jast.Invoke(self.frame, "setglobal", (self.ivalue, value.asAny()))
 
+	def noValue(self):
+		# Reference to builtin
+		return PyObject(self.getCode())
 
 class LocalFrame:
 	def __init__(self, globalNamespace, newReference=DynamicIntReference):
@@ -298,7 +357,7 @@ class LocalFrame:
 		tname = "t$%d$%s" % (index, type)
 		temp = jast.Identifier(tname)
 		temps[index] = temp
-		print 'get temp', index, type, temps
+		#print 'get temp', index, type, temps
 		return temp
 		
 	def freetemp(self, temp):
@@ -306,7 +365,7 @@ class LocalFrame:
 		type = string.split(temp.name, '$')[2]
 		temps = self.gettemps(type)
 		
-		print 'free temp', index, type, temps
+		#print 'free temp', index, type, temps
 
 		if temps[index] is None:
 			raise ValueError, 'temp already freed'
@@ -354,6 +413,12 @@ class LocalFrame:
 		decs.append(jast.Blank)
 		return decs 
 
+class GlobalFrame(LocalFrame):
+	def __init__(self, globals):
+		LocalFrame.__init__(self, globals)
+
+	def getReference(self, name):
+		return self.globalNamespace.getReference(self, name)
 
 
 class BasicGlobals:
@@ -376,8 +441,7 @@ class BasicGlobals:
 		self.names[name] = ret
 		return ret
 
-GenericGlobalFrame = LocalFrame(BasicGlobals(), DynamicStringReference)
-
+GenericGlobalFrame = GlobalFrame(BasicGlobals())
 
 class SimpleCompiler(BaseEvaluator):
 	def __init__(self, module, frame=None):
@@ -387,9 +451,11 @@ class SimpleCompiler(BaseEvaluator):
 			frame = GenericGlobalFrame
 		self.frame = frame
 		self.module = module
+		self.nthrowables = 0
 
 	def parse(self, node):
 		ret = BaseEvaluator.parse(self, node)
+		#print 'parse', ret
 		decs = self.frame.getDeclarations()
 		if len(decs) != 0:
 			return [decs, jast.SimpleComment('Code'), ret]
@@ -399,20 +465,20 @@ class SimpleCompiler(BaseEvaluator):
 	def makeTemp(self, value):
 		tmp = self.frame.gettemp('PyObject')
 		setit = jast.Set(tmp, value.asAny())
-		return PyObject(tmp, self.module), setit
+		return PyObject(tmp, self), setit
 		
 	def freeTemp(self, tmp):
 		self.frame.freetemp(tmp.asAny())
 
 	#primitive values
 	def int_const(self, value):
-		return PyInteger(value, self.module)
+		return PyInteger(value, self)
 		
 	def float_const(self, value):
-		return PyFloat(value, self.module)
+		return PyFloat(value, self)
 		
 	def string_const(self, value):
-		return PyString(value, self.module)
+		return PyString(value, self)
 	
 	# builtin types
 	def make_seq(self, name, values):
@@ -420,13 +486,13 @@ class SimpleCompiler(BaseEvaluator):
 		for value in values:
 			ret.append(self.visit(value))
 		lst = jast.New(name, [mkArray(ret)])
-		return PyObject(lst, self.module)
+		return PyObject(lst, self)
 
 	def list_op(self, values):
-		return self.make_seq('PyList', value)
+		return self.make_seq('PyList', values)
 		
 	def tuple_op(self, values):
-		return self.make_seq('PyTuple', value)
+		return self.make_seq('PyTuple', values)
 		
 	def dictionary_op(self, items):
 		lst = []
@@ -446,14 +512,33 @@ class SimpleCompiler(BaseEvaluator):
 		for name in names:
 			self.frame.addglobal(name)
 
-
-	def get_module(self, names):
-		top = PyObject(jast.InvokeStatic("imp", "load", [jast.StringConstant(names[0])]), self.module)
+	def get_module(self, names, top=0):
+		ret = PyModule(names[0], self)
+		top = ret
 		
 		for part in names[1:]:
 			top = top.getattr(part)
-		return top
+		if top: return top
+		else: return ret
 
+	def getSlice(self, index):
+		indices = self.visitor.getSlice(index)
+		ret = []
+		for index in indices:
+			if index is None:
+				ret.append(PyObject(jast.Null, self))
+			else:
+				ret.append(self.visit(index))
+		return ret
+
+
+	def and_op(self, x, y):
+		tmp = self.frame.gettemp("PyObject")
+		test = jast.Invoke(jast.Set(tmp, self.visit(x).asAny()), "__nonzero__", [])
+		op = PyObject(jast.TriTest(test, tmp, self.visit(y).asAny()), self)
+		self.frame.freetemp(tmp)
+		return op
+		
 
 	#flow control
 	def compare_op(self, start, compares):
@@ -466,7 +551,7 @@ class SimpleCompiler(BaseEvaluator):
 			
 			if tmp:
 				tmp = self.frame.gettemp(PyObject.type)
-				gety = PyObject(jast.Set(tmp, y.asAny()), self.module)
+				gety = PyObject(jast.Set(tmp, y.asAny()), self)
 			else:
 				gety = y
 			
@@ -474,17 +559,19 @@ class SimpleCompiler(BaseEvaluator):
 			if test is None:
 				test = thistest
 			else:
-				test = PyObject(jast.TriTest(test.nonzero(), thistest.asAny(), x.asAny()), self.module)
+				test = PyObject(jast.TriTest(test.nonzero(), thistest.asAny(), x.asAny()), self)
 			if tmp:
 				if not firsttime:
 					self.frame.freetemp(x.asAny())
-				x = PyObject(tmp, self.module)
+				x = PyObject(tmp, self)
 			firsttime = 0
 		if tmp:
 			self.frame.freetemp(tmp)
 		return test
 
-	def pass_stmt(self): pass
+	def pass_stmt(self):
+		return jast.SimpleComment("pass")
+
 	def continue_stmt(self):
 		return jast.Continue()
 		
@@ -493,6 +580,10 @@ class SimpleCompiler(BaseEvaluator):
 		
 	def return_stmt(self, value):
 		return jast.Return(self.visit(value).asAny())
+		
+	def raise_stmt(self, values):
+		args = mkAnys(self.visitall(values))
+		return jast.Throw(jast.InvokeStatic("Py", "makeException", args))
 
 	def while_stmt(self, test, body, else_body=None):
 		stest = self.visit(test).nonzero()
@@ -521,9 +612,56 @@ class SimpleCompiler(BaseEvaluator):
 		else:
 			return jast.MultiIf(jtests, else_body)
 		
+	def tryfinally(self, body, finalbody):
+		return jast.TryFinally(jast.Block(self.visit(body)), jast.Block(self.visit(finalbody)))
+
+	def tryexcept(self, body, exceptions, elseClause=None):
+		if elseClause is not None:
+			raise ValueError, "else not supported for try/except"
+		
+		jbody = jast.Block(self.visit(body))
+		tests = []
+		ifelse = None
+		
+		tname = jast.Identifier("x$%d" % self.nthrowables)
+		self.nthrowables = self.nthrowables + 1
+		
+		exctmp = self.frame.gettemp("PyException")
+		setexc = jast.Set(exctmp, jast.InvokeStatic("Py", "setException", [tname, self.frame.frame]))
+		
+		for exc, ebody in exceptions:
+			if exc is None:
+				ifelse = jast.Block(self.visit(ebody))
+				continue
+
+			t = jast.InvokeStatic("Py", "matchException", [exctmp, exc[0].asAny()])
+			newbody = []
+			if len(exc) == 2:
+				newbody.append(self.set(exc[1], exceptionValue))
+				
+			newbody.append(self.visit(ebody))
+			
+			tests.append( (t, jast.Block(newbody)) )
+
+
+		if ifelse is None:
+			ifelse = jast.Throw(exctmp)
+			
+		if len(tests) == 0:
+			catchBody = ifelse
+		else:
+			catchBody = jast.MultiIf(tests, ifelse)
+
+		catchBody = jast.Block([setexc, catchBody])
+		
+		self.frame.freetemp(exctmp)
+
+		return jast.TryCatch(jbody, "Throwable", tname, catchBody)
+
+
 	def for_stmt(self, index, sequence, body, else_body=None):			
 		counter = self.frame.gettemp('int')
-		item = PyObject(self.frame.gettemp(PyObject.type), self.module)
+		item = PyObject(self.frame.gettemp(PyObject.type), self)
 		seq = self.frame.gettemp(PyObject.type)
 		
 		init = []
@@ -532,7 +670,7 @@ class SimpleCompiler(BaseEvaluator):
 		
 		counter_inc = jast.PostOperation(counter, '++')
 		
-		test = jast.Set(item.asAny(), jast.Invoke(seq, "__getitem__", [counter_inc]))
+		test = jast.Set(item.asAny(), jast.Invoke(seq, "__finditem__", [counter_inc]))
 		test = jast.Operation('!=', test, jast.Identifier('null'))
 
 		suite = []
@@ -545,17 +683,30 @@ class SimpleCompiler(BaseEvaluator):
 			wtmp = self.frame.gettemp('boolean')
 			ret = [init, jast.WhileElse(test, suite, else_body, wtmp)]
 			self.frame.freetemp(wtmp)
-			return ret			
+			return ret
 		else:
 			return [init, jast.While(test, suite)]
 
-	def funcdef(self, name, args, body):
-		func = PyFunction(name, args, body, self.module, self.frame)
+	def funcdef(self, name, args, body, doc=None):
+		func = PyFunction(name, args, body, self, doc)
 		return self.set_name(name, func)
+		
+	def lambdef(self, args, body):
+		func = PyFunction("<lambda>", args, body, self)
+		return func
 
-	def classdef(self, name, bases, body):
+	def classdef(self, name, bases, body, doc=None):
 		c = PyClass(name, bases, body, self)
+		self.module.classes[c.name] = c
 		return self.set_name(name, c)
+		
+	def addModule(self, mod):
+		print 'add module', mod.name, mod
+		self.module.imports[mod.name] = mod
+	
+	def addSetAttribute(self, obj, name, value):
+		self.module.addAttribute(name, value)
+		
 
 
 def mkAnys(args):
@@ -574,8 +725,7 @@ class PyObject:
 		return self.value
 				
 	def makeTemp(self, frame):
-		return PyObject(jast.Set(frame.gettemp(self.type), self.asAny()), self.module)
-		
+		return PyObject(jast.Set(frame.gettemp(self.type), self.asAny()), self.parent)
 	def freeTemp(self, frame):
 		frame.freetemp(self.value)
 
@@ -587,8 +737,8 @@ class PyObject:
 		#print self.value,	
 		return jast.InvokeStatic("Py", "printComma", [self.asAny()])
 
-	def __init__(self, value, module):
-		self.module = module
+	def __init__(self, value, parent=None):
+		self.parent = parent
 		self.makeValue(value)
 		
 	def makeValue(self, value):
@@ -598,11 +748,10 @@ class PyObject:
 		return self.domethod("__nonzero__").value
 		
 	def unop(self, op):
-		test = getattr(org.python.core.PyObject, '__'+op+'__')(self.value)
-		return PyObject(test)
+		return self.domethod('__'+op+'__')
 		
 	def domethod(self, name, *args):
-		return PyObject(jast.Invoke(self.asAny(), name, args), self.module)
+		return PyObject(jast.Invoke(self.asAny(), name, args), self.parent)
 
 	def compop(self, op, y):
 		#print 'comp', self.value, op, y.value
@@ -610,16 +759,30 @@ class PyObject:
 		
 	binop = compop
 	
+	def igetitem(self, index):
+		return self.domethod("__getitem__", jast.IntegerConstant(index))
+
+	def getslice(self, start, stop, step):
+		print start, stop, step
+		return self.domethod("__getslice__", start.asAny(), stop.asAny(), step.asAny())
+		
+	def setslice(self, start, stop, step, value):
+		return self.domethod("__setslice__", start.asAny(), stop.asAny(), step.asAny(), value)
+
 	def getitem(self, index):
 		return self.domethod("__getitem__", index.asAny())
 		
 	def setitem(self, index, value):
-		return self.domethod("__getitem__", index.asAny(), value.asAny()).value
+		return self.domethod("__setitem__", index.asAny(), value.asAny()).value
 				
 	def getattr(self, name):
 		return self.domethod("__getattr__", jast.StringConstant(name))
 		
 	def setattr(self, name, value):
+		if self.parent is not None:
+			self.parent.addSetAttribute(self, name, value)
+		else:
+			print 'missing parent for', self, name, value
 		return self.domethod("__setattr__", jast.StringConstant(name), value.asAny()).value
 
 	def call(self, args, keyargs=None):
@@ -636,6 +799,8 @@ class PyObject:
 		else:
 			keynames = []
 			for name, value in keyargs:
+				if self.parent is not None:
+					self.parent.addSetAttribute(self, name, value)
 				keynames.append(name)
 				args.append(value)
 				
@@ -661,49 +826,105 @@ class PyObject:
 	def makeStatement(self):
 		return self.value
 
+	def makeReference(self, code):
+		return PyObject(code, self.parent)
+		
+	def mergeWith(self, other):
+		# In simplest world, all types can be merged with each other
+		return self
+
 class PyInteger(PyObject):
 	def makeValue(self, value):
-		self.value = self.module.getIntegerConstant(value)
+		self.value = self.parent.module.getIntegerConstant(value)
 		
-class PyFloat(PyObject): pass
+class PyFloat(PyObject):
+	def makeValue(self, value):
+		self.value = self.parent.module.getFloatConstant(value)
 
 class PyString(PyObject):
 	def makeValue(self, value):
-		self.value = self.module.getStringConstant(value)
+		self.value = self.parent.module.getStringConstant(value)
 		self.string = value
 		
 	def makeStatement(self):
 		return jast.Comment(self.string)
 
+class ShadowReference(PyObject):
+	def __init__(self, code, parent, reference):
+		self.value = code
+		self.parent = parent
+		self.reference = reference
+		
+	def getattr(self, name):
+		return ShadowReference(PyObject.getattr(self, name).value, self.parent, 
+				self.reference.getattr(name))
 
+	def invoke(self, name, args, keyargs):
+		return self.getattr(name).call(args, keyargs)
 
+from ImportName import lookupName
+class PyModule(PyObject):
+	def __init__(self, name, parent, code=None, mod=None):
+		self.parent = parent
+		self.name = name
+		
+		if code is None: 
+			code = jast.InvokeStatic("imp", "load", [jast.StringConstant(name)])
+		self.value = code
+		if mod is None:
+			mod = lookupName(name)
+		self.mod = mod
+		
+		parent.addModule(self)
+		
+	def makeReference(self, code):
+		return ShadowReference(code, self.parent, self)
+
+	def __repr__(self):
+		return "<mod %s>" % self.name
+		
+	def getattr(self, name):
+		ret = PyObject.getattr(self, name)
+		newmod = PyModule(self.name+'.'+name, self.parent, ret.value)
+		return newmod
 
 class PyFunction(PyObject):
-	def __init__(self, name, args, body, module, frame):
+	def __init__(self, name, args, body, parent, doc=None):
 		# Figure out arglist
-		arguments = Arguments(args)
+		arguments = args
+		#print 'func', name, args, doc
 		
 		# Don't handle a,b style args yet
 		init_code = []
 
+		self.parent = parent
+		frame = parent.frame
 		# Add args to funcframe
 		funcframe = LocalFrame(frame.globalNamespace)
 		for argname in arguments.names:
-			funcframe.addlocal(argname)
+			funcframe.setname(argname, PyObject(None, parent))
+			#funcframe.addlocal(argname)
+
 
 		# Parse the body
-		comp = SimpleCompiler(module, funcframe)
+		comp = SimpleCompiler(parent.module, funcframe)
 		code = jast.Block([comp.parse(body)])
 		
 		#globals = frame.frame
 		# Set up a code object
-		pycode = module.getCodeConstant(name, arguments, funcframe.getlocals(), code)
+		pycode = parent.module.getCodeConstant(name, arguments, funcframe.getlocals(), code)
 		
-		globals = jast.GetInstanceAttribute(frame.frame, "f_globals")
+		globals = jast.GetInstanceAttribute(parent.frame.frame, "f_globals")
+
+		self.frame = funcframe
+		self.doc = doc
+		self.args = arguments
 
 		# make a new function object (instantiating defaults now)
 		self.value = jast.New("PyFunction", [globals, mkArray(arguments.defaults), pycode])
 
+	def makeReference(self, code):
+		return ShadowReference(code, self.parent, self)
 
 class PyClass(PyObject):
 	def __init__(self, name, bases, body, parent):
@@ -712,93 +933,12 @@ class PyClass(PyObject):
 		code = jast.Block([comp.parse(body), jast.Return(jast.Invoke(classframe.frame, "getf_locals", []))])
 		
 		pycode = parent.module.getCodeConstant(name, Arguments([]), classframe.getlocals(), code)
-		
+		self.parent = parent
+		self.name = name
+		self.bases = bases
+		self.classframe = classframe
 		self.value = jast.InvokeStatic("Py", "makeClass", 
 		    [jast.StringConstant(name), mkArray(bases), pycode, jast.Null])
 
-data = """
-print 2, 2+2
-
-print 1<2
-print 1<2<3
-print 3<2
-print 1<3<2
-
-print 2*8-9, 6/3
-
-print 'testing 1, 2, 3'
-
-while 1:
-	print 2+2
-	print 'done'
-else:
-	print 'finished loop'
-	
-if 1:
-	print 'true'
-else:
-	print 'false'
-
-x = 99
-print x
-y = x+9
-print x, y
-
-i = 0
-while i < 5:
-	print i
-	i = i+1
-	
-while i < 10:
-	print i
-	i = i+1
-	if i == 8: break
-	
-for i in range(9):
-	print i
-else:
-	print 'bye'
-"""
-"""
-print len
-print [1,2,3]
-print len([1,2,3])
-print len(1,2,3,4)
-
-import string
-print string.join(["a", "b"])
-
-#from string import split
-print string.split, string.split("a b c d e")
-"""
-data1 = """
-def foo(x=99):
-	return x*2
-
-#print foo(5)
-"""
-data1 = """
-class Bar:
-	print 2+2
-	def foo(self): return 99
-"""
-data = """
-d = {'a':1, 'b':2}
-print d
-"""
-
-def getdata(filename):
-	fp = open(filename, "r")
-	data = fp.read()
-	fp.close()
-	return data
-	
-data = getdata("c:\\jpython\\tools\\jpythonc2\\test\\ButtonDemo.py")
-#data = getdata("c:\\jpython\\demo\\applet\\ButtonDemo.py")
-
-mod = BasicModule("foo")
-pi = SimpleCompiler(mod)
-code = jast.Block(pi.execstring(data))
-mod.addMain(code, pi)
-
-mod.dump("c:\\jpython\\Tools\\jpythonc2\\test")
+	def makeReference(self, code):
+		return ShadowReference(code, self.parent, self)

@@ -1,4 +1,4 @@
-from PythonVisitor import PythonVisitor
+from PythonVisitor import PythonVisitor, nodeToList
 from org.python.parser.PythonGrammarTreeConstants import *
 import string
 
@@ -35,7 +35,7 @@ class BaseEvaluator:
 		elif node.id == JJTLIST or node.id == JJTTUPLE:
 			return self.set_list(nodeToList(node), value)
 		elif node.id == JJTINDEX_OP:
-			return self.set_item(self.node.getChild(0), 
+			return self.set_item(node.getChild(0), 
 					node.getChild(1), value)
 		elif node.id == JJTDOT_OP:
 			return self.set_attribute(node.getChild(0),
@@ -43,13 +43,31 @@ class BaseEvaluator:
 		else:
 			raise TypeError, 'help, fancy lhs: %s' % node
 
+
+
+	def set_list(self, seq, value):
+		n = len(seq)
+		tmp, code = self.makeTemp(value)
+		stmts = [code]
+		
+		for i in range(n):
+			stmts.append(self.set(seq[i], tmp.igetitem(i)))
+		self.freeTemp(tmp)
+		return stmts
+
 	def set_item(self, obj, index, value):
+		if index.id == JJTSLICE:
+			start, stop, step = self.getSlice(index)
+			return self.visit(obj).setslice(start, stop, step, value)
 		return self.visit(obj).setitem(self.visit(index), value)
 		
 	def set_attribute(self, obj, name, value):
 		return self.visit(obj).setattr(name, value)
 
 	def get_item(self, obj, index):
+		if index.id == JJTSLICE:
+			start, stop, step = self.getSlice(index)
+			return self.visit(obj).getslice(start, stop, step)
 		return self.visit(obj).getitem(self.visit(index))
 		
 	def get_attribute(self, obj, name):
@@ -122,7 +140,7 @@ class BaseEvaluator:
 		return ret
 		
 	def importfrom_stmt(self, top, names):
-		module = self.get_module(top)
+		module = self.get_module(top, 1)
 		if names == '*':
 			names = module.dir()
 		ret = []

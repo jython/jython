@@ -39,6 +39,23 @@ class Method(Statement):
 		self.body.writeSource(out)
 		out.writeln()
 
+class Constructor(Statement):
+	def __init__(self, name, access, args, body):
+		self.name = name
+		self.access = access
+		self.args = args
+		self.body = body
+		
+	def writeSource(self, out):
+		argtext = []
+		for type, name in self.args:
+			argtext.append(type+" "+name)
+		out.write("%s %s(%s) ", self.access, self.name,
+			string.join(argtext, ", "))
+		self.body.writeSource(out)
+		out.writeln()
+
+
 class BlankLine(Statement):
 	def writeSource(self, out):
 		out.writeln()
@@ -64,6 +81,7 @@ class Comment(Statement):
 		lines = string.split(self.text, '\n')
 		if len(lines) == 1:
 			out.writeln("/* %s */", self.text)
+			return
 
 		out.writeln("/* %s", lines[0])
 		for line in lines[1:-1]:
@@ -128,14 +146,48 @@ class FreeBlock(Statement):
 			stmt.writeSource(out)
 
 	def exits(self):
-		print 'exits', self.code[-1]
-		return self.code[-1].exits()
+		last = self.code[-1]
+		if not hasattr(last, 'exits'):
+			print last, self.code
+			print 'oops'
+		else:
+			return last.exits()
 
 class Block(FreeBlock):
 	def writeSource(self, out):
 		out.beginBlock()
 		FreeBlock.writeSource(self, out)
 		out.endBlock()
+
+class TryCatch(Statement):
+	def __init__(self, body, exctype, excname, catchbody):
+		self.body = body
+		self.exctype = exctype
+		self.excname = excname
+		self.catchbody = catchbody
+		
+	def writeSource(self, out):
+		out.write("try ")
+		self.body.writeSource(out)
+		out.write("catch (%s %s) ", self.exctype, self.excname.sourceString())
+		self.catchbody.writeSource(out)
+
+	def exits(self):
+		return self.body.exits() and self.catchbody.exits()
+		
+class TryFinally(Statement):
+	def __init__(self, body, finalbody):
+		self.body = body
+		self.finalbody = finalbody
+		
+	def writeSource(self, out):
+		out.write("try ")
+		self.body.writeSource(out)
+		out.write("finally ")
+		self.finalbody.writeSource(out)
+
+	def exits(self):
+		return self.body.exits() or self.finalbody.exits()
 
 
 class If(Statement):
@@ -234,6 +286,17 @@ class Return(Statement):
 
 	def exits(self):
 		return 1
+		
+class Throw(Statement):
+	def __init__(self, value):
+		self.value = value
+		
+	def writeSource(self, out):
+		out.writeln("throw %s;", self.value.sourceString())
+
+	def exits(self):
+		# Interesting question...
+		return 1
 
 class Break(Statement):
 	def writeSource(self, out):
@@ -288,6 +351,9 @@ class Constant(Expression):
 class IntegerConstant(Constant):
 	pass
 	
+class FloatConstant(Constant):
+	pass
+	
 class CharacterConstant(Constant):
 	pass
 
@@ -329,6 +395,14 @@ class PostOperation(UnsafeExpression):
 	def sourceString(self):
 		return "%s%s" % (self.x.safeSourceString(), self.op)
 
+class InvokeLocal(Expression):
+	def __init__(self, name, args):
+		self.name = name
+		self.args = args
+		
+	def sourceString(self):
+		args = string.join(map(lambda arg:arg.sourceString(), self.args), ', ')
+		return "%s(%s)" % (self.name, args)
 
 class Invoke(Expression):
 	def __init__(self, this, name, args):
@@ -399,7 +473,7 @@ class New(Expression):
 		self.args = args
 		
 	def sourceString(self):
-		print 'new', self.args
+		#print 'new', self.args
 		args = string.join(map(lambda arg: arg.sourceString(), self.args), ', ')
 		return "new %s(%s)" % (self.name, args)
 
