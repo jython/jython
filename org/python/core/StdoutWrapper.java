@@ -3,14 +3,22 @@ import java.io.OutputStream;
 import java.io.Writer;
 
 public class StdoutWrapper extends OutputStream {
-    private String name;
+    protected String name;
     
-    public StdoutWrapper(String name) {
-        this.name = name.intern();
+    public StdoutWrapper() {
+        name = "stdout";
+    }
+
+    protected PyObject getObject(PySystemState ss) {
+        return ss.stdout;
+    }
+    protected void setObject(PySystemState ss, PyObject obj) {
+        ss.stdout = obj;
     }
 
     protected PyObject myFile() {
-        PyObject obj = Py.getThreadState().systemState.stdout;
+        PySystemState ss = Py.getSystemState();
+        PyObject obj = getObject(ss);
         if (obj == null) {
             throw Py.AttributeError("missing sys."+name);
         }
@@ -30,7 +38,7 @@ public class StdoutWrapper extends OutputStream {
             }
             
             if (f != null) {
-                Py.getThreadState().systemState.stdout = f;
+                setObject(ss, f);
                 return f;
             }
         }

@@ -323,8 +323,8 @@ public class PySystemState extends PyObject {
         Py.initStringExceptions();
 
         // Setup standard wrappers for stdout and stderr...
-        Py.stderr = new StdoutWrapper("stderr");
-        Py.stdout = new StdoutWrapper("stdout");
+        Py.stderr = new StderrWrapper();
+        Py.stdout = new StdoutWrapper();
     }
 	
 	

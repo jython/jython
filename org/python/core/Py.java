@@ -1273,7 +1273,7 @@ public final class Py {
 class FixedFileWrapper extends StdoutWrapper {
     private PyObject file;
     public FixedFileWrapper(PyObject file) {
-        super("fixed file");
+        name = "fixed file";
         this.file = file;
     }
     
