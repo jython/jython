@@ -21,6 +21,9 @@ Options and arguments:
     <td><b>-X</b></td>
     <td>disable class based standard exceptions
 </tr><tr>
+    <td><b>-D<em>prop</em>=<em>value</em></b></td>
+    <td>Set the Java property <em>prop</em> to <em>value</em></td>
+</tr><tr>
     <td><b>-jar <em>jar</em></b></td>
     <td>program to run is read from the <tt>__run__.py</tt> file in
     the specified <em>jar</em> file
