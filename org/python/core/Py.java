@@ -1435,6 +1435,7 @@ public final class Py
                                   new PyTuple(bases),
                                   dict);
             } else if (bases[i] instanceof org.python.util.PyMetaClass) {
+                // experimental PyMetaClass hook
                 try {
                     return (PyObject)bases[i].getClass().getConstructor(pyClassCtrSignature).newInstance(
                             new Object[] { name, new PyTuple(bases), dict, proxyClass });
