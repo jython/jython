@@ -4,7 +4,6 @@ package org.python.modules;
 
 import org.python.core.*;
 
-
 public class sha {
     public int blocksize = 1;
     public int digestsize = 20;
