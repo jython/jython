@@ -477,6 +477,14 @@ public class PySystemState extends PyObject
             return System.in;
         }
     }
+
+    public String getdefaultencoding() {
+        return codecs.getDefaultEncoding();
+    }
+
+    public void setdefaultencoding(String encoding) {
+        codecs.setDefaultEncoding(encoding);
+    }
 }
 
 

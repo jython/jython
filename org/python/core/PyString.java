@@ -278,6 +278,7 @@ public class PyString extends PySequence implements InitModule
         dict.__setitem__("atof", null);
         dict.__setitem__("atoi", null);
         dict.__setitem__("atol", null);
+        dict.__setitem__("unicodeescape", null);
     }
 
     protected String safeRepr() {
@@ -306,55 +307,64 @@ public class PyString extends PySequence implements InitModule
         }
     }
 
-    // Do I need to do more for Unicode?
     public PyString __repr__() {
-        char quote = '"';
-        if (string.indexOf('\'') == -1 || string.indexOf('"') != -1)
-            quote = '\'';
+        return new PyString(unicodeescape(string, true));
+    }
 
-        StringBuffer buf = new StringBuffer(string.length()+5);
-        buf.append(quote);
-        boolean didhex = false;
+    private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
 
-        for (int i=0; i<string.length(); i++) {
-            char c = string.charAt(i);
-            if (didhex && Character.digit(c, 16) != -1) {
-                buf.append("\\x");
-                buf.append(Integer.toString(c, 16));
-                continue;
-            }
-            didhex = false;
-            if (c == quote || c == '\\') {
-                buf.append('\\');
-                buf.append(c);
-            }
-            else {
-                if (c >= ' ' && c <= 0177) {
-                    buf.append(c);
-                } 
-                else if (c == '\n') buf.append("\\n");
-                else if (c == '\t') buf.append("\\t");
-                else if (c == '\b') buf.append("\\b");
-                else if (c == '\f') buf.append("\\f");
-                else if (c == '\r') buf.append("\\r");
-                else if (c < 0xff00) {
-                    // the character is only 8 bits wide, so use \0<octal>
-                    // escape which is close to what CPython does
-                    buf.append("\\");
-                    String oct = Integer.toString(c, 8);
-                    for (int j = oct.length(); j < 3; j++)
-                        buf.append("0");
-                    buf.append(oct);
-                }
-                else {
-                    buf.append("\\x");
-                    buf.append(Integer.toString(c, 16));
-                    didhex = true;
-                }
-            }
+    public static String unicodeescape(String str, boolean use_quotes) {
+        int size = str.length();
+        StringBuffer v = new StringBuffer(str.length());
+
+        char quote = 0;
+        boolean unicode = false;
+
+        if (use_quotes) {
+            quote = str.indexOf('\'') >= 0 && 
+                             str.indexOf('"') == -1 ? '"' : '\'';
+            v.append(quote);
         }
-        buf.append(quote);
-        return new PyString(buf.toString());
+
+        for (int i = 0; size-- > 0; ) {
+            int ch = str.charAt(i++);
+            /* Escape quotes */
+            if (use_quotes && (ch == quote || ch == '\\')) {
+                v.append('\\');
+                v.append((char) ch);
+            }
+            /* Map 16-bit characters to '\\uxxxx' */
+            else if (ch >= 256) {
+                if (use_quotes && !unicode) {
+                   v.insert(0, 'u');
+                   unicode = true;
+                }
+                v.append('\\');
+                v.append('u');
+                v.append(hexdigit[(ch >> 12) & 0xf]);
+                v.append(hexdigit[(ch >> 8) & 0xf]);
+                v.append(hexdigit[(ch >> 4) & 0xf]);
+                v.append(hexdigit[ch & 15]);
+            }
+            /* Map non-printable US ASCII to '\ooo' */
+            else if (use_quotes && ch == '\n') v.append("\\n");
+            else if (use_quotes && ch == '\t') v.append("\\t");
+            else if (use_quotes && ch == '\b') v.append("\\b");
+            else if (use_quotes && ch == '\f') v.append("\\f");
+            else if (use_quotes && ch == '\r') v.append("\\r");
+            else if (ch < ' ' || ch >= 128) {
+                v.append('\\');
+                v.append(hexdigit[(ch >> 6) & 7]);
+                v.append(hexdigit[(ch >> 3) & 7]);
+                v.append(hexdigit[ch & 7]);
+            }
+            /* Copy everything else as-is */
+            else
+                v.append((char) ch);
+        }
+        if (use_quotes)
+            v.append(quote);
+        return v.toString();
     }
 
     public boolean equals(Object other) {
@@ -1399,6 +1409,18 @@ public class PyString extends PySequence implements InitModule
                 previous_is_cased = false;
         }
         return cased;
+    }
+
+    public PyString encode() {
+        return encode(null, null);
+    }
+    
+    public PyString encode(String encoding) {
+        return encode(encoding, null);
+    }
+
+    public PyString encode(String encoding, String errors) {
+        return codecs.encode(this, encoding, errors);
     }
 }
 

@@ -779,6 +779,18 @@ public class __builtin__ implements InitModule
         return o.__str__();
     }
 
+    public static PyString unicode(PyObject v) {
+        return unicode(v.__str__(), null, null);
+    }
+
+    public static PyString unicode(PyString v, String encoding) {
+        return unicode(v, encoding, null);
+    }
+
+    public static PyString unicode(PyString v, String encoding, String errors) {
+        return codecs.decode(v, encoding, errors);
+    }
+
     public static PyTuple tuple(PyObject o) {
         if (o instanceof PyTuple)
             return (PyTuple)o;

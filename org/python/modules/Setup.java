@@ -41,6 +41,7 @@ public class Setup
         "cStringIO",
         "struct",
         "binascii",
-        "md5:org.python.modules.MD5Module"
+        "md5:org.python.modules.MD5Module",
+        "_codecs",
     };
 }
