@@ -208,12 +208,12 @@ final class StringFormatter{
     PyObject getarg() {
         PyObject ret = null;
         switch(argIndex) {
-            case -3:
-                break;
+            // special index indicating a single item that has already been used
             case -2:
-                return args;
+                break;
+            // special index indicating a single item that has not yet been used
             case -1:
-                argIndex=-3;
+                argIndex=-2;
                 return args;
             default:
                 ret = args.__finditem__(argIndex++);
@@ -248,7 +248,7 @@ final class StringFormatter{
 
     public String formatInteger(long v, int radix, boolean unsigned) {
         if (unsigned) {
-            if (v < 0) v = v & 0x7fffffff;
+            if (v < 0) v = 0x100000000l + v;
         } else {
             if (v < 0) { negative = true; v = -v; }
         }
@@ -325,12 +325,12 @@ final class StringFormatter{
         if (args instanceof PyTuple) {
             argIndex = 0;
         } else {
+            // special index indicating a single item rather than a tuple
             argIndex = -1;
             if (args instanceof PyDictionary ||
                     args instanceof PyStringMap ||
                     args.__findattr__("__getitem__") != null) {
                 dict = args;
-                argIndex = -2;
             }
         }
 
@@ -362,6 +362,7 @@ final class StringFormatter{
 		            else if (c == '(') parens++;
 		        }
 		        this.args = dict.__getitem__(new PyString(format.substring(keyStart, index-1)));
+		        this.argIndex = -1;
 		        //System.out.println("args: "+args+", "+argIndex);
 			} else {
 			    push();
