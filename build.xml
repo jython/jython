@@ -56,7 +56,14 @@
     -->
     <target name="checkjavaversion" unless="java2">
         <property name="excludejava2files" 
-            value="CollectionProxy2.java,Java2Accessibility.java" />
+            value="**/CollectionProxy2.java,
+                   **/Java2Accessibility.java,
+                   **/InternalTables2.java,
+                   **/ThreadStateMapping2.java,
+                   **/WeakInternalTables.java,
+                   **/AutoInternalTables.java,
+                   **/SoftIInternalTables.java
+            "/>
     </target>
 
     <target name="compile" depends="prepare,parser,checkjavaversion">
@@ -64,7 +71,7 @@
             srcdir="${sourceDir}/" 
             includes="org/**"
             destdir="${outputDir}/" 
-            excludes="org/python/parser/python.java,${exludejava2files}"
+            excludes="org/python/parser/python.java,${excludejava2files}"
         />
 
        <copy file="org/python/modules/ucnhash.dat" 
