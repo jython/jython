@@ -36,7 +36,7 @@ public class InteractiveConsole extends InteractiveInterpreter {
         
         return "JPython " + PySystemState.version + " on " +
             PySystemState.platform + " (JIT: " +
-            ((compiler == null) ? "unknown" : compiler) +  ")" + 
+            ((compiler == null) ? "null" : compiler) +  ")" + 
             "\n" + PySystemState.copyright;
     }
 
