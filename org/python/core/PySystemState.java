@@ -90,6 +90,22 @@ public class PySystemState extends PyObject
                                            exc.traceback});
     }
 
+    public static PyFrame _getframe() {
+        return _getframe(-1);
+    }
+
+    public static PyFrame _getframe(int depth) {
+        PyFrame f = Py.getFrame();
+
+        while (depth > 0 && f != null) {
+            f = f.f_back;
+            --depth;
+        }
+        if (f == null)
+             throw Py.ValueError("call stack is not deep enough");
+        return f;
+    }
+
     public PyObject stdout, stderr, stdin;
     public PyObject __stdout__, __stderr__, __stdin__;
 
