@@ -1,4 +1,8 @@
-#! /usr/bin/env python
+#! /home/bwarsaw/projects/python/python
+#
+# REQUIRES Python 1.5.2+
+#
+##! /usr/bin/env python
 
 """Manage releases of JPython.
 
@@ -20,8 +24,12 @@ Where `options' are:
         Prep the release for running the Jshield installer
 
     --build
-    -b
+    -B
         Do the build by running the Jshield installer
+
+    --bump
+    -b
+        Bump the revision number to tagname
 
     --clean
     -c
@@ -32,7 +40,7 @@ Where `options' are:
         Print this help message.
 
     tagname is used in the various commands above.  It should essentially be
-    the version number for the release, and is required.
+    the version number for the release, and is required.  E.g. `1.1beta4'
 
 """
 
@@ -54,6 +62,7 @@ def usage(status, msg=''):
         print msg
     sys.exit(status)
 
+
 
 # CVS related commands and other utils
 
@@ -70,7 +79,7 @@ def tag_release(tagname, retag):
     # watch out for dots in the name
     table = string.maketrans('.', '_')
     # To be done from writeable repository
-    relname = '"Release_' + string.translate(tagname, table) + '"'
+    relname = '"Release_' + tagname.translate(table) + '"'
     print 'Tagging release with', relname, '...'
     option = ''
     if retag:
@@ -129,7 +138,7 @@ def make_jpython_jar(withoro=1, jarname='jpython.jar'):
         jarcmd.append('nondist/ORO/com/oroinc/text/regex/*.class')
     #
     # invoke to build jpython.jar
-    cmd = string.join(jarcmd)
+    cmd = ' '.join(jarcmd)
     os.system(cmd)
 
 
@@ -174,7 +183,7 @@ def make_pylib_jar():
              'poplib.py', 'smtplib.py', 'imaplib.py',
              'bdb.py', 'pdb.py', 'profile.py', 'anydbm.py',
              ]
-    src = '/home/bwarsaw/projects/python/pristine'
+    src = '/home/bwarsaw/projects/python'
     libsrc = os.path.join(src, 'Lib')
     print 'updating in', libsrc
     cvsdo('-q up -P -d', libsrc)
@@ -198,7 +207,7 @@ def make_pylib_jar():
         else:
             print '    skipping', file
     jarcmd.append(os.path.join(libsrc, 'test', 'pystone.py'))
-    cmd = string.join(jarcmd)
+    cmd = ' '.join(jarcmd)
     os.system(cmd)
 
 
@@ -221,7 +230,7 @@ def prep_distro(tagname):
     # watch out for dots in the name
     table = string.maketrans('.', '_')
     # To be done from writeable repository
-    relname = '"Release_' + string.translate(tagname, table) + '"'
+    relname = '"Release_' + tagname.translate(table) + '"'
     cvsdo('export -k kv -r %s -d export jpython/dist' % relname)
     #
     print 'preparing distribution...'
@@ -246,9 +255,73 @@ def prep_distro(tagname):
 
 
 
+def bump_isj(tagname):
+    infile = 'dist/jpython.isj'
+    outfile = infile + '.new'
+    infp = open(infile)
+    outfp = open(outfile, 'w')
+    while 1:
+        line = infp.readline()
+        if not line:
+            break
+        parts = line.split('=')
+        if parts[0] == 'OutputFile':
+            outfp.write('OutputFile=/home/bwarsaw/projects/jpython/JPython')
+            table = string.maketrans('', '')
+            outfp.write(tagname.translate(table, '.'))
+            outfp.write('.class\n')
+        elif parts[0] == 'BuildNumber':
+            outfp.write('BuildNumber='+tagname+'\n')
+        elif parts[0] == 'ApplicationName':
+            outfp.write('ApplicationName=JPython '+tagname+'\n')
+        elif parts[0] == 'DefaultDir':
+            outfp.write('DefaultDir=~/JPython-'+tagname+'\n')
+        else:
+            outfp.write(line)
+    infp.close()
+    outfp.close()
+    os.rename(outfile, infile)
+
+
+def bump_sysversion(tagname):
+    infile = 'dist/org/python/core/PySystemState.java'
+    outfile = infile + '.new'
+    infp = open(infile)
+    outfp = open(outfile, 'w')
+    while 1:
+        line = infp.readline()
+        if not line:
+            break
+        parts = line.split()
+        if parts[0:4] == ['public', 'static', 'String', 'version']:
+            outfp.write('    public static String version = "')
+            outfp.write(tagname + '";\n')
+        else:
+            outfp.write(line)
+    infp.close()
+    outfp.close()
+    os.rename(outfile, infile)
+
+
+def do_bump(tagname):
+    bump_isj(tagname)
+    bump_sysversion(tagname)
+    print 'YOU MUST DO:'
+    todo = ['update docs/differences.ht',
+            'update NEWS',
+            'update faq.ht',
+            'update ACKNOWLEDGMENTS',
+            'run make',
+            ]
+    i = 1
+    for d in todo:
+        print '    %2d.', d
+
+
+
 def do_build(tagname):
-    trans = string.maketrans('', '')
-    tagname = string.translate(tagname, trans, '.')
+    table = string.maketrans('', '')
+    tagname = tagname.translate(table, '.')
     print 'tagname:', tagname
     # make full distribution
     unlink_ex('export/LICENSE.txt')
@@ -291,8 +364,8 @@ def do_clean():
 def main():
     try:
 	opts, args = getopt.getopt(
-            sys.argv[1:], 'htTpbc',
-            ['help', 'tag', 'TAG', 'prep', 'build', 'clean'])
+            sys.argv[1:], 'htTpBcb',
+            ['help', 'tag', 'TAG', 'prep', 'build', 'clean', 'bump'])
     except getopt.error, msg:
 	usage(1, msg)
 
@@ -307,6 +380,7 @@ def main():
     prep = 0
     build = 0
     clean = 0
+    bump = 0
 
     for opt, arg in opts:
 	if opt in ('-h', '--help'):
@@ -318,21 +392,27 @@ def main():
 	    retag = 1
         elif opt in ('-p', '--prep'):
             prep = 1
-        elif opt in ('-b', '--build'):
+        elif opt in ('-B', '--build'):
             build = 1
+        elif opt in ('-b', '--bump'):
+            bump = 1
         elif opt in ('-c', '--clean'):
             clean = 1
 
     # required minor rev number
-    if tag or prep or build:
+    if tag or prep or build or bump:
         if len(args) <> 1:
             usage(1, 'tagname argument is required')
         else:
             tagname = args[0]
 
+    print 'Using tag:', tagname
     # very important!!!
     omask = os.umask(0)
     try:
+        if bump:
+            do_bump(tagname)
+
         if tag:
             tag_release(tagname, retag)
 
