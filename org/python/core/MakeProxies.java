@@ -6,7 +6,9 @@ import java.lang.reflect.*;
 import java.util.Vector;
 import java.util.Hashtable;
 import java.io.*;
-import org.python.compiler.*;
+import org.python.compiler.JavaMaker;
+import org.python.compiler.AdapterMaker;
+import org.python.compiler.ProxyMaker;
 
 
 class MakeProxies 
