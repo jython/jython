@@ -48,13 +48,28 @@ public class PyFile extends PyObject
         }
 
         public String read(int n) throws java.io.IOException {
-            if (n < 0)
-                n = istream.available();
+            if (n == 0)
+                // nothing to do
+                return "";
+            if (n < 0) {
+                // read until we hit EOF
+                byte buf[] = new byte[1024];
+                StringBuffer sbuf = new StringBuffer();
+                for (int read=0; read >= 0; read=istream.read(buf))
+                    sbuf.append(new String(buf, 0, 0, read));
+                return sbuf.toString();
+            }
+            // read the next chunk available, but make sure it's at least
+            // one byte so as not to trip the `empty string' return value
+            // test done by the caller
+            int avail = istream.available();
+            n = (n > avail) ? n : avail;
             byte buf[] = new byte[n];
-            n = istream.read(buf);
-            if (n < 0)
-                n = 0;
-            return new String(buf, 0, 0, n);
+            int read = istream.read(buf);
+            if (read < 0)
+                // EOF encountered
+                return "";
+            return new String(buf, 0, 0, read);
         }
 
         public int read() throws java.io.IOException {
@@ -149,7 +164,6 @@ public class PyFile extends PyObject
         }
     }    
     
-
     private static class RFileWrapper extends FileWrapper {
         java.io.RandomAccessFile file;
 
@@ -548,6 +562,8 @@ public class PyFile extends PyObject
         file = new FileWrapper();
     }
 
+    // TBD: should this be removed?  I think it's better to raise an
+    // AttributeError than an IOError here.
     public PyObject fileno() {
         throw Py.IOError("fileno() is not supported in jpython");
     }
