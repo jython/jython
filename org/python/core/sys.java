@@ -204,6 +204,11 @@ public class sys {
             PyJavaClass.withinner = true;
         }
         
+        String compileClass = registry.getProperty("python.options.compileClass");
+        if (compileClass != null && compileClass.equalsIgnoreCase("true")) {
+            Py.compileClass = true;
+        }        
+        
         // Make sure that Exception classes have been loaded
 		PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");
         
