@@ -4,8 +4,11 @@ package org.python.compiler;
 import java.util.*;
 import java.io.*;
 
-class Bytes {
+
+class Bytes
+{
     public byte[] data;
+
     Bytes(ByteArrayOutputStream data) {
 	this.data = data.toByteArray();
     }
@@ -26,17 +29,18 @@ class Bytes {
     }
 
     public int hashCode() {
-	int h=0xa538;
+	int h = 0xa538;
 	int n = data.length;
-	for(int i=0; i<n; i++) {
+	for (int i=0; i<n; i++)
 	    h = h ^ data[i];
-	}
 	return h;
     }
 }
 
 
-public class ConstantPool {
+
+public class ConstantPool
+{
     Hashtable constants;
     int index;
     DataOutputStream tdata;
@@ -230,7 +234,7 @@ public class ConstantPool {
 	System.out.println("c: "+cp.Class("org/python/core/PyString"));
 	System.out.println("c: "+cp.Class("org/python/core/PyString"));
 
-	for(int i=0; i<args.length; i++)
+	for (int i=0; i<args.length; i++)
 	    System.out.println(args[i]+": "+sigSize(args[i], true));
     }
 }
