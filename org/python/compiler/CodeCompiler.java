@@ -1705,7 +1705,9 @@ public class CodeCompiler extends Visitor {
     int setglobal, setlocal1, setlocal2;
     int delglobal, dellocal1, dellocal2;
     public Object Name(SimpleNode node) throws Exception {
-        String name = getName(node);
+        String name;
+        if (fast_locals) name = (String)node.getInfo();
+        else name = getName(node);
 
         switch (mode) {
         case GET:
