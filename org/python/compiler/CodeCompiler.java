@@ -974,6 +974,7 @@ public class CodeCompiler extends Visitor
         }
     }
 
+    public int add_traceback;
     public Object tryFinally(SimpleNode trySuite, SimpleNode finallySuite)
         throws Exception
     {
@@ -1008,6 +1009,17 @@ public class CodeCompiler extends Visitor
         code.stack = 1;
         int excLocal = code.getLocal();
         code.astore(excLocal);
+
+        code.aload(excLocal);
+        loadFrame();
+
+        if (mrefs.add_traceback == 0) {
+            mrefs.add_traceback = code.pool.Methodref(
+                "org/python/core/Py", "addTraceback",
+                "(Ljava/lang/Throwable;Lorg/python/core/PyFrame;)V");
+        }
+        code.invokestatic(mrefs.add_traceback);
+
         code.jsr(finallyStart);
         code.aload(excLocal);
         code.athrow();

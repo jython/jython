@@ -924,6 +924,16 @@ public final class Py
         assert(test, Py.None);
     }
 
+    /* Helpers to implement finally clauses */
+    public static void addTraceback(Throwable t, PyFrame frame) {
+        PyException e = Py.JavaError(t);
+
+        //Add another traceback object to the exception if needed
+        if (e.traceback.tb_frame != frame) {
+            e.traceback = new PyTraceback(e.traceback);
+        }
+    }
+
     /* Helpers to implement except clauses */
     public static PyException setException(Throwable t, PyFrame frame) {
         //System.out.println("Py.setException");
