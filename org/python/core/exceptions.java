@@ -109,7 +109,7 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "StandardError", "Exception", "empty__init__",
                    "Base class for all standard Python exceptions.");
 
-        buildClass(dict, "SyntaxError", "StandardError", "empty__init__",
+        buildClass(dict, "SyntaxError", "StandardError", "SyntaxError",
                    "Invalid syntax");
 
         buildClass(dict, "IndentationError", "SyntaxError", "empty__init__",
@@ -296,15 +296,35 @@ public class exceptions implements ClassDictInit {
                 self.__setattr__("filename", tmp[0]);
                 self.__setattr__("lineno", tmp[1]);
                 self.__setattr__("offset", tmp[2]);
-                self.__setattr__("texe", tmp[3]);
+                self.__setattr__("text", tmp[3]);
             } catch (PyException exc) { ; }
         }
     }
 
-    public static PyString SyntaxError__str__(PyObject self) {
-        return self.__getattr__("msg").__str__();
+    public static PyString SyntaxError__str__(PyObject[] arg, String[] kws) {
+        ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
+        PyObject self = ap.getPyObject(0);
+        PyString str = self.__getattr__("msg").__str__();
+        PyObject filename = basename(self.__findattr__("filename"));
+        PyObject lineno = self.__findattr__("lineno");
+        if (filename instanceof PyString && lineno instanceof PyInteger)
+            return new PyString(str + " (" + filename + ", line " + lineno + ")");
+        else if (filename instanceof PyString)
+            return new PyString(str + " (" + filename + ")");
+        else if (lineno instanceof PyInteger)
+            return new PyString(str + " (line " + lineno + ")");
+        return str;
     }
 
+    private static PyObject basename(PyObject filename) {
+        if (filename instanceof PyString) {
+             int i = ((PyString) filename).rfind(java.io.File.separator);
+             if (i >= 0)
+                  return filename.__getslice__(
+                       new PyInteger(i+1), new PyInteger(Integer.MAX_VALUE));
+        }
+        return filename;
+    }
 
     public static PyObject EnvironmentError(PyObject[] arg, String[] kws) {
         PyObject dict = empty__init__(arg, kws);
