@@ -285,8 +285,8 @@ public class PySystemState extends PyObject {
 
     private static boolean initialized = false;
     public static void initialize() {
-        if (initialized) return;
-        
+        if (initialized)
+	    return;
         initialize(System.getProperties(), null, new String[] {""});
     }
     
@@ -352,18 +352,21 @@ public class PySystemState extends PyObject {
     public static void setOptionsFromRegistry() {
 	// Set the more unusual options
 	Options.showJavaExceptions = 
-	    getBooleanOption("options.showJavaExceptions", Options.showJavaExceptions);
+	    getBooleanOption("options.showJavaExceptions",
+			     Options.showJavaExceptions);
 	Options.showPythonProxyExceptions = 
-	    getBooleanOption("options.showPythonProxyExceptions", Options.showPythonProxyExceptions);	        
+	    getBooleanOption("options.showPythonProxyExceptions",
+			     Options.showPythonProxyExceptions);
 	Options.skipCompile = 
 	    getBooleanOption("options.skipCompile", Options.skipCompile);
 	Options.deprecatedKeywordMangling = 
-	    getBooleanOption("deprecated.keywordMangling", Options.deprecatedKeywordMangling);
+	    getBooleanOption("deprecated.keywordMangling",
+			     Options.deprecatedKeywordMangling);
 	Options.pollStandardIn =
 	    getBooleanOption("console.poll", Options.pollStandardIn);
-	        
 	Options.classBasedExceptions =
-	    getBooleanOption("options.classExceptions", Options.classBasedExceptions);
+	    getBooleanOption("options.classExceptions",
+			     Options.classBasedExceptions);
 	      
 	// verbosity is more complicated:
 	String prop = registry.getProperty("python.verbose");
@@ -379,7 +382,8 @@ public class PySystemState extends PyObject {
             } else if (prop.equalsIgnoreCase("debug")) {
                 Options.verbose = Py.DEBUG;
             } else {
-                throw Py.ValueError("Illegal verbose option setting: '"+prop+"'");
+                throw Py.ValueError("Illegal verbose option setting: '"+
+				    prop+"'");
             }
         }
 
@@ -389,7 +393,8 @@ public class PySystemState extends PyObject {
 	// Initialize the path (and add system defaults)
 	defaultPath = initPath(registry);
 	if (prefix != null) {
-	    defaultPath.append(new PyString(new File(prefix, "Lib").toString()));
+	    String libpath = new File(prefix, "Lib").toString();
+	    defaultPath.append(new PyString(libpath));
 	}
 
         // Set up the known Java packages
@@ -486,9 +491,7 @@ public class PySystemState extends PyObject {
     public TraceFunction profilefunc = null;
 
     public void settrace(PyObject tracefunc) {
-
 	//InterpreterState interp = Py.getThreadState().interp;
-
 	if (tracefunc == Py.None) {
 	    this.tracefunc = null;
 	} else {
