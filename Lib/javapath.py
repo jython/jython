@@ -13,7 +13,6 @@ module as os.path.
 
 # Missing:
 # expandvars -- can't be bothered right now
-# normpath -- How?  getCanonicalPath() does too much...
 # sameopenfile -- Java doesn't have fstat nor file descriptors?
 # samestat -- How?
 
@@ -213,3 +212,7 @@ def normpath(path):
     if not comps and not slashes:
         comps.append(curdir)
     return slashes + string.joinfields(comps, sep)
+
+# Return an absolute path.
+def abspath(path):
+    return File(path).getAbsolutePath()
