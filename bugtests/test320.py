@@ -24,5 +24,5 @@ except:
     tb = sys.exc_info()[2]
     #print tb.tb_lineno
     #traceback.print_tb(tb)
-    assert tb.tb_lineno == 15
+    assert tb.tb_next.tb_lineno == 15
 
