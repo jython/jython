@@ -1603,6 +1603,59 @@ final class StringFormatter
         }
     }
 
+    public String formatLong(PyString arg, char type, boolean altFlag) {
+        String s = arg.toString();
+        int end = s.length();
+        int ptr = 0;
+
+	int numnondigits = 0;
+        if (type == 'x' || type == 'X')
+            numnondigits = 2;
+
+        if (s.endsWith("L"))
+            end--;
+
+        negative = s.charAt(0) == '-';
+        if (negative) {
+            ptr++;
+        }
+
+	int numdigits = end - numnondigits - ptr;
+        if (!altFlag) {
+            switch (type) {
+            case 'o' : 
+                if (numdigits > 1) {
+                     ++ptr;
+                     --numdigits;
+                }
+                break;
+            case 'x' : 
+            case 'X' : 
+                ptr += 2;
+                numnondigits -= 2;
+                break;
+            }
+        }
+	if (precision > numdigits) {
+            StringBuffer buf = new StringBuffer();
+            for (int i = 0; i < numnondigits; ++i)
+                buf.append(s.charAt(ptr++));
+            for (int i = 0; i < precision - numdigits; i++)
+                buf.append('0');
+            for (int i = 0; i < numdigits; i++)
+                buf.append(s.charAt(ptr++));
+            s = buf.toString();
+	} else if (end < s.length() || ptr > 0)
+            s = s.substring(ptr, end);
+
+        switch (type) {
+        case 'x' : 
+            s = s.toLowerCase();
+            break;
+        }
+        return s;
+    }
+
     public String formatInteger(PyObject arg, int radix, boolean unsigned) {
         return formatInteger(arg.__int__().getValue(), radix, unsigned);
     }
@@ -1800,29 +1853,49 @@ final class StringFormatter
                 break;
             case 'i':
             case 'd':
-                string = formatInteger(arg, 10, false);
+                if (arg instanceof PyLong)
+                    string = formatLong(arg.__str__(), c, altFlag);
+                else
+                    string = formatInteger(arg, 10, false);
                 break;
             case 'u':
-                string = formatInteger(arg, 10, true);
+                if (arg instanceof PyLong)
+                    string = formatLong(arg.__str__(), c, altFlag);
+                else
+                    string = formatInteger(arg, 10, true);
                 break;
             case 'o':
-                string = formatInteger(arg, 8, true);
-                if (altFlag) {
-                    string = "0" + string;
+                if (arg instanceof PyLong)
+                    string = formatLong(arg.__oct__(), c, altFlag);
+                else {
+                    string = formatInteger(arg, 8, true);
+                    if (altFlag) {
+                        string = "0" + string;
+                    }
                 }
                 break;
             case 'x':
-                string = formatInteger(arg, 16, true);
-                if (altFlag) {
-                    string = "0x" + string;
+                if (arg instanceof PyLong) 
+                    string = formatLong(arg.__hex__(), c, altFlag);
+                else { 
+                    string = formatInteger(arg, 16, true);
+                    string = string.toLowerCase();
+                    if (altFlag) {
+                        string = "0x" + string;
+                    }
                 }
                 break;
             case 'X':
-                string = formatInteger(arg, 16, true);
-                //Do substitution of caps for lowercase here
-                if (altFlag) {
-                    string = "0X" + string;
+                if (arg instanceof PyLong)
+                    string = formatLong(arg.__hex__(), c, altFlag);
+                else {
+                    string = formatInteger(arg, 16, true);
+                    string = string.toUpperCase();
+                    if (altFlag) {
+                        string = "0X" + string;
+                   }
                 }
+
                 break;
             case 'e':
             case 'E':
@@ -1877,7 +1950,9 @@ final class StringFormatter
             default:
                 throw Py.ValueError("unsupported format character '"+c+"'");
             }
-            String signString = "";
+            int length = string.length();
+            int skip = 0;
+            String signString = null;
             if (negative) {
                 signString = "-";
             } else {
@@ -1888,24 +1963,47 @@ final class StringFormatter
                 }
             }
 
-            int length = string.length() + signString.length();
+//System.out.println(length + " " + width + " " + signString + " fill:" + fill + " " + string);
             if (width < length)
                 width = length;
-            if (ljustFlag && fill==' ') {
-                buffer.append(signString);
-                buffer.append(string);
-                while (width-- > length)
-                    buffer.append(fill);
-            } else {
+            if (signString != null) {
+                if (fill != ' ')
+                    buffer.append(signString);
+                if (width > length)
+                    width--;
+            }
+            if (altFlag && (c == 'x' || c == 'X')) {
                 if (fill != ' ') {
-                    buffer.append(signString);
+                    buffer.append('0');
+                    buffer.append(c);
+                    skip += 2;
                 }
-                while (width-- > length)
+                width -= 2;
+                if (width < 0)
+                    width = 0;
+                length -= 2;
+            }
+            if (width > length && !ljustFlag) {
+                do {
                     buffer.append(fill);
-                if (fill == ' ') {
+                } while (--width > length);
+            }
+            if (fill == ' ') {
+                if (signString != null)
                     buffer.append(signString);
+                if (altFlag && (c == 'x' || c == 'X')) {
+                    buffer.append('0');
+                    buffer.append(c);
+                    skip += 2;
                 }
+            }
+            if (skip > 0)
+                buffer.append(string.substring(skip));
+            else
                 buffer.append(string);
+
+            while (--width >= length) {
+                buffer.append(' ');
             }
         }
         if (argIndex == -1 ||
