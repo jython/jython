@@ -136,6 +136,7 @@ public class cStringIO {
 	 * @returns	A string containing the data read.
 	 */
 	public String read(int size) {
+            opencheck();
 	    int newpos = (size < 0) ? count : Math.min(pos+size, count);
 	    String r = null;
 	    if (size == 1) {
@@ -178,6 +179,7 @@ public class cStringIO {
 	 * @returns data from the file up to and including the newline.
 	 */
 	public String readline(int length) {
+            opencheck();
 	    int i = indexOf('\n', pos);
 	    int newpos = (i < 0) ? count : i+1;
 	    if (length != -1 && pos + length < newpos)
@@ -203,20 +205,54 @@ public class cStringIO {
 	}
 
 
+
 	/**
 	 * Read until EOF using readline() and return a list containing 
 	 * the lines thus read.
 	 * @return 	a list of the lines.
 	 */
 	public PyObject readlines() {
+            return readlines(0);
+        }
+
+
+	/**
+	 * Read until EOF using readline() and return a list containing 
+	 * the lines thus read.
+	 * @return 	a list of the lines.
+	 */
+	public PyObject readlines(int sizehint) {
+            opencheck();
+            int total = 0;
 	    PyList lines = new PyList();
 	    String line = readline();
 	    while (line.length() > 0) {
 		lines.append(new PyString(line));
+                total += line.length();
+                if (0 < sizehint  && sizehint <= total)
+                    break;
 		line = readline();
 	    }
 	    return lines;
 	}
+
+        /**
+         * truncate the file at the current position.
+         */
+        public void truncate() {
+            truncate(-1);
+        }
+
+        /**
+         * truncate the file at the position pos.
+         */
+        public void truncate(int pos) {
+            opencheck();
+            if (pos < 0)
+                pos = this.pos;
+            if (count > pos) 
+                count = pos;
+        }
 
 
 	private void expandCapacity(int newLength) {
@@ -237,6 +273,7 @@ public class cStringIO {
 	 * @param s	The data to write.
 	 */
 	public void write(String s) {
+            opencheck();
 	    int newpos = pos + s.length();
 
 	    if (newpos >= buf.length)
@@ -275,7 +312,9 @@ public class cStringIO {
 	/**
 	 * Flush the internal buffer. Does nothing.
 	 */
-	public void flush() { }
+	public void flush() {
+            opencheck();
+        }
 
 
 	/**
@@ -284,8 +323,15 @@ public class cStringIO {
 	 * @return	the contents of the StringIO.
 	 */
 	public String getvalue() {
+            opencheck();
 	    return new String(buf, 0, count);
 	}
+
+
+        private final void opencheck() {
+            if (buf == null)
+                throw Py.ValueError("I/O operation on closed file");
+        }
     }
 
 
