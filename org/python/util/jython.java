@@ -25,6 +25,14 @@ public class jpython {
         "arg ...  : arguments passed to program in sys.argv[1:]";
 
     public static void runJar(String filename) {
+        // TBD: this is kind of gross because a local called `zipfile' just
+        // magically shows up in the module's globals.  Either `zipfile'
+        // should be called `__zipfile__' or (preferrably, IMO), __run__.py 
+        // should be imported and a main() function extracted.  This
+        // function should be called passing zipfile in as an argument.
+        //
+        // Probably have to keep this code around for backwards
+        // compatibility (?)
         try {
             ZipFile zip = new ZipFile(filename);
 
