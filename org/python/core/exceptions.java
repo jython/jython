@@ -217,6 +217,7 @@ public class exceptions implements ClassDictInit {
 
         buildClass(dict, "RuntimeWarning", "Warning", "empty__init__",
                    "Base class for warnings about dubious runtime behavior.");
+        ts.frame = ts.frame.f_back;
     }
 
 
