@@ -33,6 +33,8 @@ class DictFuncs extends PyBuiltinFunctionSet
             return dict.keys();
         case 7:
             return dict.values();
+        case 8:
+            return dict.popitem();
         default:
             throw argCountError(0);
         }
@@ -114,11 +116,12 @@ public class PyDictionary extends PyObject implements ClassDictInit
         dict.__setitem__("items", new DictFuncs("items", 5, 0));
         dict.__setitem__("keys", new DictFuncs("keys", 6, 0));
         dict.__setitem__("values", new DictFuncs("values", 7, 0));
+        dict.__setitem__("popitem", new DictFuncs("popitem", 8, 0));
         dict.__setitem__("__cmp__", new DictFuncs("__cmp__", 11, 1));
         dict.__setitem__("has_key", new DictFuncs("has_key", 12, 1));
         dict.__setitem__("get", new DictFuncs("get", 13, 1, 2));
         dict.__setitem__("update", new DictFuncs("update", 14, 1));
-        // Hide thse from Python
+        // Hide these from Python
         dict.__setitem__("__finditem__", null);
         dict.__setitem__("__setitem__", null);
         dict.__setitem__("__delitem__", null);
@@ -275,6 +278,16 @@ public class PyDictionary extends PyObject implements ClassDictInit
         if (o == null)
             __setitem__(key, o = failobj);
         return o;
+    }
+
+    public PyObject popitem() {
+        java.util.Enumeration keys = table.keys();
+        if (!keys.hasMoreElements())
+            throw Py.KeyError("popitem(): dictionary is empty");
+        PyObject key = (PyObject) keys.nextElement();
+        PyObject val = (PyObject) table.get(key);
+        table.remove(key);
+        return new PyTuple(new PyObject[] { key, val });
     }
 
     public PyList items() {

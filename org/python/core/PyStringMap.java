@@ -16,6 +16,7 @@ public class PyStringMap extends PyObject
     private int size;
     private transient int filled;
     private transient int prime;
+    private transient int popfinger;
 
     /* Override serialization behavior */
     private void writeObject(java.io.ObjectOutputStream out)
@@ -375,6 +376,37 @@ public class PyStringMap extends PyObject
         if (o == null)
             __setitem__(key, o = failobj);
         return o;
+    }
+
+
+    public synchronized PyObject popitem() {
+        if (size == 0)
+            throw Py.KeyError("popitem(): dictionary is empty");
+
+        String[] table = keys;
+        int maxindex = table.length;
+        int index = popfinger;
+
+        if (index >= maxindex || index < 0)
+            index = 1;
+        while (true) {
+            String tKey = table[index];
+            if (tKey != null && tKey != "<deleted key>")
+                break;
+            index++;
+            if (index >= maxindex)
+               index = 0;
+        }
+
+        popfinger = index + 1;
+        PyObject key = Py.newString(table[index]);
+        PyObject val = (PyObject) values[index];
+
+        table[index] = "<deleted key>";
+        values[index] = null;
+        size--;
+
+        return new PyTuple(new PyObject[] { key, val });
     }
 
     public synchronized PyList items() {
