@@ -100,10 +100,10 @@ public class Connectx extends PyObject {
 		}
 
 		try {
-			if (datasource instanceof DataSource) {
-				c = ((DataSource)datasource).getConnection();
-			} else if (datasource instanceof ConnectionPoolDataSource) {
+			if (datasource instanceof ConnectionPoolDataSource) {
 				c = ((ConnectionPoolDataSource)datasource).getPooledConnection().getConnection();
+			} else if (datasource instanceof DataSource) {
+				c = ((DataSource)datasource).getConnection();
 			}
 		} catch (SQLException e) {
 			throw zxJDBC.makeException(zxJDBC.DatabaseError, e);
