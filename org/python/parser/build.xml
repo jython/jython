@@ -1,0 +1,38 @@
+<project name="jython-parser" default="parser" basedir="." >
+
+    <property name="javaccHome"  value="/usr/local/javacc" />
+    
+    <target name="pre">
+        <uptodate property="parser.regen.notreq" targetfile="${basedir}/PythonGrammarConstants.java">
+            <srcfiles dir="${basedir}" includes="python.jjt" />
+        </uptodate>
+    </target>
+    
+    <target name="clean" unless="parser.regen.notreq">
+        <delete file="${basedir}/PythonGrammar.java" />
+        <delete file="${basedir}/PythonGrammarTreeConstants.java" />
+        <delete file="${basedir}/PythonGrammarTokenManager.java" />
+        <delete file="${basedir}/PythonGrammarConstants.java" />
+        <delete file="${basedir}/CharStream.java" />
+    </target>
+    
+    <target name="tree" unless="parser.regen.notreq">
+        <java classname="jjtree" classpath="${javaccHome}/bin/lib/javacc.jar" fork="yes" >
+            <arg value="-OUTPUT_DIRECTORY=${basedir}" />
+            <arg file="${basedir}/python.jjt" />
+        </java>
+    </target>
+    
+    <target name="gen" unless="parser.regen.notreq" depends="tree" >
+        <java classname="javacc" classpath="${javaccHome}/bin/lib/javacc.jar" fork="yes" >
+            <arg value="-OUTPUT_DIRECTORY=${basedir}" />
+            <arg file="${basedir}/python.jj" />            
+        </java>
+        <delete file="${basedir}/python.jj" />
+    </target>    
+    
+    <target name="parser" depends="pre,clean,gen" >
+        <echo >parser gen (dir: ${basedir})</echo>
+    </target>
+
+</project>
