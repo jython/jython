@@ -1006,17 +1006,15 @@ class ImportFunction extends PyObject {
         String module = args[0].__str__().toString();
 
         PyObject globals = (argc > 1 && args[1] != null)
-            ? args[1] : __builtin__.globals();
-        PyObject locals = (argc > 2 && args[2] != null)
-            ? args[2] : __builtin__.locals();
+            ? args[1] : null;
         PyObject fromlist = (argc > 3 && args[3] != null)
             ? args[3] : Py.EmptyTuple;
 
-        return load(module, globals, locals, fromlist);
+        return load(module, globals, fromlist);
     }
 
     private PyObject load(String module,
-                          PyObject globals, PyObject locals,
+                          PyObject globals,
                           PyObject fromlist)
     {
         PyObject mod = imp.importName(module.intern(),
