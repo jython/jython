@@ -77,8 +77,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	/** The ResourceBundle with error messages and doc strings */
 	private static ResourceBundle resourceBundle = null;
 
-  /** Instance used to create date-like objects as per the API */
-  public static DateFactory datefactory = new JavaDateFactory();
+	/** Instance used to create date-like objects as per the API */
+	public static DateFactory datefactory = new JavaDateFactory();
 
 	static {
 		try {
@@ -215,7 +215,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 			try {
 				connector = (PyObject)Class.forName(className).newInstance();
-
 				dict.__setitem__(name, connector);
 				Py.writeComment("zxJDBC", "loaded connector [" + className + "] as [" + name + "]");
 			} catch (Throwable t) {
@@ -245,22 +244,9 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		NotSupportedError = buildClass("NotSupportedError", DatabaseError, "_empty__init__");
 	}
 
-	/**
-	 * Method _empty__init__
-	 *
-	 *
-	 * @param arg
-	 * @param kws
-	 *
-	 * @return PyObject
-	 *
-	 */
 	public static PyObject _empty__init__(PyObject[] arg, String[] kws) {
-
 		PyObject dict = new PyStringMap();
-
 		dict.__setitem__("__module__", new PyString("zxJDBC"));
-
 		return dict;
 	}
 
@@ -276,25 +262,20 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	 * @return String
 	 */
 	public static String getString(String key) {
-
 		int i = 0;
 		List lines = null;
 		String resource = null;
-
 		while (true) {
 			try {
 				resource = resourceBundle.getString(key + "." + (i++));
-
 				if (lines == null) {
 					lines = new ArrayList();
 				}
-
 				lines.add(resource);
 			} catch (MissingResourceException e) {
 				break;
 			}
 		}
-
 		if ((lines == null) || (lines.size() == 0)) {
 			try {
 				resource = resourceBundle.getString(key);
@@ -304,16 +285,12 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		} else {
 			String sep = System.getProperty("line.separator");
 			StringBuffer sb = new StringBuffer();
-
 			for (i = 0; i < lines.size() - 1; i++) {
 				sb.append(lines.get(i)).append(sep);
 			}
-
 			sb.append(lines.get(lines.size() - 1));
-
 			resource = sb.toString();
 		}
-
 		return resource;
 	}
 
@@ -327,9 +304,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	 * @return String
 	 */
 	public static String getString(String key, Object[] values) {
-
 		String format = getString(key);
-
 		return MessageFormat.format(format, values);
 	}
 
@@ -380,15 +355,12 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		if (Options.showJavaExceptions) {
 			java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
 			java.io.PrintWriter writer = new java.io.PrintWriter(buf);
-
 			writer.println("Java Traceback:");
-
 			if (t instanceof PyException) {
 				((PyException)t).super__printStackTrace(writer);
 			} else {
 				t.printStackTrace(writer);
 			}
-
 			Py.stderr.print(buf.toString());
 		}
 
@@ -397,17 +369,13 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		} else if (t instanceof SQLException) {
 			SQLException sqlException = (SQLException)t;
 			StringBuffer buffer = new StringBuffer();
-
 			do {
 				buffer.append(sqlException.getMessage());
 				buffer.append(" [SQLCode: " + sqlException.getErrorCode() + "]");
-
 				if (sqlException.getSQLState() != null) {
 					buffer.append(", [SQLState: " + sqlException.getSQLState() + "]");
 				}
-
 				sqlException = sqlException.getNextException();
-
 				if (sqlException != null) {
 					buffer.append(System.getProperty("line.separator"));
 				}
@@ -431,124 +399,57 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 	 *
 	 */
 	protected static PyObject buildClass(String classname, PyObject superclass, String classCodeName) {
-
 		PyObject[] parents = (superclass == null) ? Py.EmptyObjects : new PyObject[]{ superclass };
 		PyString doc = Py.newString(getString(classname));
 		PyObject cls = Py.makeClass(classname, parents, Py.newJavaCode(zxJDBC.class, classCodeName), doc);
-
 		return cls;
 	}
 }
 
-/**
- * Class zxJDBCFunc
- *
- * @date $today.date$
- * @author last modified by $Author$
- * @date last modified on $Date$
- * @version $Revision$
- * @copyright 2001 brian zimmer
- */
 class zxJDBCFunc extends PyBuiltinFunctionSet {
 
-	/**
-	 * Constructor zxJDBCFunc
-	 *
-	 *
-	 * @param name
-	 * @param index
-	 * @param minargs
-	 * @param maxargs
-	 * @param func
-	 * @param doc
-	 *
-	 */
 	zxJDBCFunc(String name, int index, int minargs, int maxargs, boolean func, String doc) {
 		super(name, index, minargs, maxargs, func, doc);
 	}
 
-	/**
-	 * Method __call__
-	 *
-	 *
-	 * @param arg
-	 *
-	 * @return PyObject
-	 *
-	 */
 	public PyObject __call__(PyObject arg) {
-
 		long ticks;
-
 		switch (index) {
-
 			case 4 :
 				ticks = ((Number)arg.__tojava__(Number.class)).longValue();
 				return zxJDBC.datefactory.DateFromTicks(ticks);
-
 			case 5 :
 				ticks = ((Number)arg.__tojava__(Number.class)).longValue();
 				return zxJDBC.datefactory.TimeFromTicks(ticks);
-
 			case 6 :
 				ticks = ((Number)arg.__tojava__(Number.class)).longValue();
 				return zxJDBC.datefactory.TimestampFromTicks(ticks);
-
 			case 7 :
 				return arg;
-
 			default :
 				throw argCountError(1);
 		}
 	}
 
-	/**
-	 * Method __call__
-	 *
-	 *
-	 * @param arga
-	 * @param argb
-	 * @param argc
-	 *
-	 * @return PyObject
-	 *
-	 */
 	public PyObject __call__(PyObject arga, PyObject argb, PyObject argc) {
-
 		switch (index) {
-
 			case 1 :
 				int year = ((Number)arga.__tojava__(Number.class)).intValue();
 				int month = ((Number)argb.__tojava__(Number.class)).intValue();
 				int day = ((Number)argc.__tojava__(Number.class)).intValue();
-
 				return zxJDBC.datefactory.Date(year, month, day);
-
 			case 2 :
 				int hour = ((Number)arga.__tojava__(Number.class)).intValue();
 				int minute = ((Number)argb.__tojava__(Number.class)).intValue();
 				int second = ((Number)argc.__tojava__(Number.class)).intValue();
-
 				return zxJDBC.datefactory.Time(hour, minute, second);
-
 			default :
 				throw argCountError(3);
 		}
 	}
 
-	/**
-	 * Method fancyCall
-	 *
-	 *
-	 * @param args
-	 *
-	 * @return PyObject
-	 *
-	 */
 	public PyObject fancyCall(PyObject[] args) {
-
 		switch (index) {
-
 			case 3 :
 				int year = ((Number)args[0].__tojava__(Number.class)).intValue();
 				int month = ((Number)args[1].__tojava__(Number.class)).intValue();
@@ -556,11 +457,10 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
 				int hour = ((Number)args[3].__tojava__(Number.class)).intValue();
 				int minute = ((Number)args[4].__tojava__(Number.class)).intValue();
 				int second = ((Number)args[5].__tojava__(Number.class)).intValue();
-
 				return zxJDBC.datefactory.Timestamp(year, month, day, hour, minute, second);
-
 			default :
 				throw argCountError(args.length);
 		}
 	}
 }
+
