@@ -3,6 +3,9 @@ PySequence.slice_indices() returns results that will be confusing to people tryi
 """
 
 import support
+
+raise support.TestWarning("mixing base classes between Jython and Java is not supported")
+
 import org
 
 class SeqTest(org.python.core.PySequence):

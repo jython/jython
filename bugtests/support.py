@@ -23,7 +23,7 @@ def compare(s, pattern):
     raise TestError("string compare error\n   '" + str(s) + "'\n   '" + pattern + "'")
 
 def execCmd(cmd):
-  print cmd
+  #print cmd
   import java
   r = java.lang.Runtime.getRuntime()
   e = getattr(r, "exec")

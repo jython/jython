@@ -4,6 +4,7 @@
 
 import support
 
+raise support.TestWarning("mixing base classes between Jython and Java is not supported")
 
 import java.util 
 import org.python.core 
