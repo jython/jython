@@ -74,6 +74,10 @@ public class PatternObject extends PyObject {
     }
 
 
+    public PyObject sub(PyObject template, String string) {
+        return sub(template, string, 0);
+    }
+
     public PyObject sub(PyObject template, String string, int count) {
         return call("_sub", new PyObject[] { 
              Py.java2py(this), 
@@ -81,6 +85,10 @@ public class PatternObject extends PyObject {
              Py.newInteger(count) });
     }
 
+
+    public PyObject subn(PyObject template, String string) {
+        return subn(template, string, 0);
+    }
 
     public PyObject subn(PyObject template, String string, int count) {
         return call("_subn", new PyObject[] { 
@@ -91,6 +99,9 @@ public class PatternObject extends PyObject {
     }
 
 
+    public PyObject split(String string) {
+        return split(string, 0);
+    }
 
     public PyObject split(String string, int count) {
         return call("_split", new PyObject[] { 
