@@ -77,87 +77,6 @@ public class PySystemState extends PyObject {
                                            exc.traceback});
     }
 
-    private static String findRoot(Properties preProperties,
-                                   Properties postProperties)
-    {
-        String root = null;
-        try {
-            if (postProperties != null)
-                root = postProperties.getProperty("python.home");
-            if (root == null)
-                root = preProperties.getProperty("python.home");
-            if (root == null)
-                root = preProperties.getProperty("install.root");
-            
-            String version = preProperties.getProperty("java.version");
-            String lversion = version.toLowerCase();
-            if (lversion.startsWith("java"))
-                version = version.substring(4, version.length());
-
-            if (lversion.startsWith("jdk") || lversion.startsWith("jre")) {
-                version = version.substring(3, version.length());
-            }
-            if (version.equals("11"))
-                version = "1.1";
-            if (version.equals("12"))
-                version = "1.2";
-            if (version != null)
-                platform = "java"+version;
-        } catch (Exception exc) {
-            return null;
-        }
-        //System.err.println("root: "+root);
-        if (root != null)
-            return root;
-
-        // If install.root is undefined find jpython.jar in class.path
-        String classpath = preProperties.getProperty("java.class.path");
-        if (classpath == null)
-            return null;
-
-        int jpy = classpath.toLowerCase().indexOf("jpython.jar");
-        if (jpy == -1) {
-            return null;
-        }
-        int start = classpath.lastIndexOf(java.io.File.pathSeparator, jpy)+1;
-        return classpath.substring(start, jpy);
-    }
-
-    private static void addRegistryFile(File file) {
-        if (file.exists()) {
-            registry = new Properties(registry);
-            try {
-                FileInputStream fp = new FileInputStream(file);
-                try {
-                    registry.load(fp);
-                } finally {
-                    fp.close();
-                }
-            } catch (IOException e) {
-                System.err.println("couldn't open registry file: " +
-                                   file.toString());
-            }
-        }
-    }
-
-    /*public static Properties initRegistry() {
-      //System.out.println("basic init going on");
-      return initRegistry(System.getProperties());
-      }*/
-
-    private static boolean getBooleanOption(String name, boolean defaultValue) {
-        String prop = registry.getProperty("python."+name);
-        if (prop == null) return defaultValue;
-        return prop.equalsIgnoreCase("true") || prop.equalsIgnoreCase("yes");
-    }
-    
-  
-    private static String getStringOption(String name, String defaultValue) {
-        String prop = registry.getProperty("python."+name);
-        if (prop == null) return defaultValue;
-        return prop;
-    }  
-
     public PyObject stdout, stderr, stdin;
     public PyObject __stdout__, __stderr__, __stdin__;
 
@@ -254,6 +173,71 @@ public class PySystemState extends PyObject {
     public static String prefix;
     public static String exec_prefix="";
     
+//     public static Properties initRegistry() {
+//         System.out.println("basic init going on");
+//         return initRegistry(System.getProperties());
+//     }
+
+    private static String findRoot(Properties preProperties,
+                                   Properties postProperties)
+    {
+        String root = null;
+        try {
+            if (postProperties != null)
+                root = postProperties.getProperty("python.home");
+            if (root == null)
+                root = preProperties.getProperty("python.home");
+            if (root == null)
+                root = preProperties.getProperty("install.root");
+            
+            String version = preProperties.getProperty("java.version");
+            String lversion = version.toLowerCase();
+            if (lversion.startsWith("java"))
+                version = version.substring(4, version.length());
+
+            if (lversion.startsWith("jdk") || lversion.startsWith("jre")) {
+                version = version.substring(3, version.length());
+            }
+            if (version.equals("11"))
+                version = "1.1";
+            if (version.equals("12"))
+                version = "1.2";
+            if (version != null)
+                platform = "java"+version;
+        } catch (Exception exc) {
+            return null;
+        }
+        //System.err.println("root: "+root);
+        if (root != null)
+            return root;
+
+        // If install.root is undefined find jpython.jar in class.path
+        String classpath = preProperties.getProperty("java.class.path");
+        if (classpath == null)
+            return null;
+
+        int jpy = classpath.toLowerCase().indexOf("jpython.jar");
+        if (jpy == -1) {
+            return null;
+        }
+        int start = classpath.lastIndexOf(java.io.File.pathSeparator, jpy)+1;
+        return classpath.substring(start, jpy);
+    }
+
+    private static boolean getBooleanOption(String name, boolean defaultValue)
+    {
+        String prop = registry.getProperty("python."+name);
+        if (prop == null) return defaultValue;
+        return prop.equalsIgnoreCase("true") || prop.equalsIgnoreCase("yes");
+    }
+    
+  
+    private static String getStringOption(String name, String defaultValue) {
+        String prop = registry.getProperty("python."+name);
+        if (prop == null) return defaultValue;
+        return prop;
+    }  
+
     private static void initRegistry(Properties preProperties,
                                      Properties postProperties)
     {
@@ -286,6 +270,23 @@ public class PySystemState extends PyObject {
         }
         // Set up options from registry
         setOptionsFromRegistry();
+    }
+
+    private static void addRegistryFile(File file) {
+        if (file.exists()) {
+            registry = new Properties(registry);
+            try {
+                FileInputStream fp = new FileInputStream(file);
+                try {
+                    registry.load(fp);
+                } finally {
+                    fp.close();
+                }
+            } catch (IOException e) {
+                System.err.println("couldn't open registry file: " +
+                                   file.toString());
+            }
+        }
     }
 
     private static boolean initialized = false;
