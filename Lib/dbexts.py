@@ -202,13 +202,10 @@ class dbexts:
 				self.dburl, dbuser, dbpwd, jdbcdriver = t['url'], t['user'], t['pwd'], t['driver']
 				if t.has_key('datahandler'):
 					self.datahandler = []
-					try:
-						for dh in t['datahandler'].split(';'):
-							classname = dh.split(".")[-1]
-							datahandlerclass = __import__(dh, globals(), locals(), classname)
-							self.datahandler.append(datahandlerclass)
-					except:
-						pass
+					for dh in t['datahandler'].split(','):
+						classname = dh.split(".")[-1]
+						datahandlerclass = __import__(dh, globals(), locals(), classname)
+						self.datahandler.append(datahandlerclass)
 				keys = [x for x in t.keys() if x not in ['url', 'user', 'pwd', 'driver', 'datahandler', 'name']]
 				props = {}
 				for a in keys:
@@ -236,6 +233,13 @@ class dbexts:
 		self.dbname = dbname
 		for a in database.sqltype.keys():
 			setattr(self, database.sqltype[a], a)
+		for a in dir(database):
+			p = getattr(database, a)
+			try:
+				if issubclass(p, Exception):
+					setattr(self, a, p)
+			except:
+				continue
 		del database
 
 	def __str__(self):
