@@ -41,6 +41,10 @@ public class SysPackageManager extends PathPackageManager {
     }
 
     public void addJarDir(String jdir) {
+        addJarDir(jdir, true);
+    }
+
+    public void addJarDir(String jdir, boolean save) {
         File file = new File(jdir);
         if (!file.isDirectory()) return;
         String[] files = file.list();
@@ -50,6 +54,8 @@ public class SysPackageManager extends PathPackageManager {
                 addJarToPackages(new File(jdir,entry),true);
             }
         }
+        if (save)
+            saveCache();
     }
 
     private void addJarPath(String path) {
@@ -58,7 +64,7 @@ public class SysPackageManager extends PathPackageManager {
         while  (tok.hasMoreTokens())  {
             // ??pending: do jvms trim? how is interpreted entry=""?
             String entry = tok.nextToken();
-            addJarDir(entry);
+            addJarDir(entry, false);
         }
     }
 
