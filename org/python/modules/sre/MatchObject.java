@@ -205,6 +205,12 @@ public class MatchObject extends PyObject {
             return pattern.groupindex;
         if (key == "re")
             return pattern;
+        if (key == "pos")
+            return Py.newInteger(pos);
+        if (key == "endpos")
+            return Py.newInteger(endpos);
+        if (key == "lastindex")
+            return lastindex == -1 ? Py.None : Py.newInteger(lastindex);
         return super.__findattr__(key);
     }
 }
