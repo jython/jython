@@ -22,7 +22,12 @@ def powtest(type):
         for i in range(0,31):
             assert 2**i == pow2
             if i!=30: pow2=pow2*2
-
+    # modPow() has known assertion failures in all Sun 1.1 JDKs after 1.1.5.
+    # Apparently, Sun is not going to fix this for 1.1 since the bug still
+    # exists in 1.1.8 and the bug ID 4098742 is closed.
+    if sys.platform.startswith('java1.1') and type == long:
+        print_test('modpow... skipping due to JVM bugs', 4)
+        return
     print_test("modpow", 4)
     il, ih = -20, 20
     jl, jh = -5,   5
@@ -71,20 +76,22 @@ assert -3.**3%8 == pow(-3.,3,8) == 5.
 assert -3.**3%-8 == pow(-3,3.,-8) == -3.
 assert 5.**2%-8 == pow(5,2,-8.) == -7.
 
-print_test("miscellaneous", 3)
-
-for i in range(-10, 11):
- for j in range(0, 6):
-  for k in range(-7, 11):
-   if (j>=0 and k!=0):
-    o=pow(i,j) % k
-    n=pow(i,j,k)
-    assert o == n, 'Integer mismatch: %d, %d, %d' % (i,j,k)
-   if (j>=0 and k<>0):
-    o=pow(long(i),j) % k
-    n=pow(long(i),j,k)
-    assert o == n, 'Long mismatch: %s, %s, %s' % (i,j,k)
-   if (i>=0 and k<>0):
-     o=pow(float(i),j) % k
-     n=pow(float(i),j,k)
-     assert o == n, 'Float mismatch: %g, %g, %g' % (i,j,k)
+if sys.platform.startswith('java1.1'):
+    print_test("miscellaneous... skipping due to JVM bugs", 3)
+else:    
+    print_test("miscellaneous", 3)
+    for i in range(-10, 11):
+        for j in range(0, 6):
+            for k in range(-7, 11):
+                if (j>=0 and k!=0):
+                    o=pow(i,j) % k
+                    n=pow(i,j,k)
+                    assert o == n, 'Integer mismatch: %d, %d, %d' % (i,j,k)
+                if (j>=0 and k<>0):
+                    o=pow(long(i),j) % k
+                    n=pow(long(i),j,k)
+                    assert o == n, 'Long mismatch: %s, %s, %s' % (i,j,k)
+                if (i>=0 and k<>0):
+                    o=pow(float(i),j) % k
+                    n=pow(float(i),j,k)
+                    assert o == n, 'Float mismatch: %g, %g, %g' % (i,j,k)
