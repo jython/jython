@@ -205,6 +205,9 @@ public class LocalsCompiler extends Visitor
     }
 
     public Object for_stmt(SimpleNode node) throws Exception {
+        if (mode == SET)
+            super.for_stmt(node);
+
         // The for_stmt node is handled in checkForStmt
         return null;
     }
