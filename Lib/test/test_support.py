@@ -39,7 +39,7 @@ def fcmp(x, y): # fuzzy comparison function
 		return cmp(len(x), len(y))
 	return cmp(x, y)
 
-TESTFN = '@test' # Filename used for testing
+TESTFN = '$test' # Filename used for testing
 from os import unlink
 import string
 
