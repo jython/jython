@@ -804,6 +804,7 @@ void Name() #Name:
 }
 {
     t = <NAME> { jjtThis.setInfo(t.image); }
+|   t = <AS> { jjtThis.setInfo(t.image); }
 }
 
 void String() #void :
