@@ -63,6 +63,9 @@ class ListFunctions extends PyBuiltinFunctionSet
         PyList list = (PyList)__self__;
         switch (index) {
         case 20:
+            if (!(arg1 instanceof PyInteger)) {
+                throw Py.TypeError("illegal argument type for built-in " +                                          "operation");
+            }
             int index = ((PyInteger)arg1).getValue();
             list.insert(index, arg2);
             return Py.None;
@@ -309,6 +312,10 @@ public class PyList extends PySequence implements InitModule
     }
 
     public void insert(int index, PyObject o) {
+        if (index < 0)
+            index = 0;
+        if (index > length)
+            index = length;
         resize(length+1);
         System.arraycopy(list, index, list, index+1, length-index-1);
         list[index] = o;
