@@ -60,6 +60,8 @@ public class PyClass extends PyObject
         __name__ = name;
         __bases__ = bases;
         __dict__ = dict;
+
+        findModule(dict);
                 
         if (proxyClass == null) {
             Vector interfaces = new Vector();
@@ -104,8 +106,6 @@ public class PyClass extends PyObject
         if (dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", Py.None);
         }
-
-        findModule(dict);
 
         // Setup cached references to methods where performance really counts
         __getattr__ = lookup("__getattr__", false);
