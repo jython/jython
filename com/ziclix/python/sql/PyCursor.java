@@ -26,14 +26,17 @@ import com.ziclix.python.sql.util.*;
  */
 public class PyCursor extends PyObject implements ClassDictInit {
 
-	/** Field closed */
-	private boolean closed;
-
 	/** Field fetch */
 	protected Fetch fetch;
 
+	/** Field closed */
+	private boolean closed;
+
 	/** Field arraysize */
 	protected int arraysize;
+
+	/** Field softspace */
+	protected int softspace;
 
 	/** Field warnings */
 	protected PyObject warnings;
@@ -82,6 +85,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	PyCursor(PyConnection connection, boolean dynamicFetch) {
 
 		this.arraysize = 1;
+		this.softspace = 0;
 		this.closed = false;
 		this.connection = connection;
 		this.datahandler = DATAHANDLER;
@@ -111,7 +115,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	protected static PyList __members__;
 
 	static {
-		PyObject[] m = new PyObject[8];
+		PyObject[] m = new PyObject[9];
 
 		m[0] = new PyString("close");
 		m[1] = new PyString("execute");
@@ -121,8 +125,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		m[5] = new PyString("fetchmany");
 		m[6] = new PyString("callproc");
 		m[7] = new PyString("next");
+		m[8] = new PyString("write");
 		__methods__ = new PyList(m);
-		m = new PyObject[8];
+		m = new PyObject[9];
 		m[0] = new PyString("arraysize");
 		m[1] = new PyString("rowcount");
 		m[2] = new PyString("rownumber");
@@ -131,6 +136,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		m[5] = new PyString("warnings");
 		m[6] = new PyString("lastrowid");
 		m[7] = new PyString("updatecount");
+		m[8] = new PyString("softspace");
 		__members__ = new PyList(m);
 	}
 
@@ -152,7 +158,9 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	public void __setattr__(String name, PyObject value) {
 
 		if ("arraysize".equals(name)) {
-			arraysize = value.__int__().getValue();
+			this.arraysize = value.__int__().getValue();
+		} else if ("softspace".equals(name)) {
+			this.softspace = value.__int__().getValue();
 		} else if ("datahandler".equals(name)) {
 			this.datahandler = (DataHandler)value.__tojava__(DataHandler.class);
 		} else {
@@ -170,6 +178,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 
 		if ("arraysize".equals(name)) {
 			return Py.newInteger(arraysize);
+		} else if ("softspace".equals(name)) {
+			return Py.newInteger(softspace);
 		} else if ("__methods__".equals(name)) {
 			return __methods__;
 		} else if ("__members__".equals(name)) {
@@ -218,6 +228,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("callproc", new CursorFunc("callproc", 8, 1, 4, "executes a stored procedure"));
 		dict.__setitem__("executemany", new CursorFunc("executemany", 9, 1, 3, "execute sql with the parameter list"));
 		dict.__setitem__("scroll", new CursorFunc("scroll", 10, 1, 2, "scroll the cursor in the result set to a new position according to mode"));
+		dict.__setitem__("write", new CursorFunc("write", 11, 1, "execute the sql written to this file-like object"));
 
 		// hide from python
 		dict.__setitem__("classDictInit", null);
@@ -429,8 +440,8 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * Return values are not defined.
 	 */
-	public void executemany(String sqlString, PyObject params, PyObject bindings, PyObject maxRows) {
-		execute(sqlString, params, bindings, maxRows);
+	public void executemany(PyObject sql, PyObject params, PyObject bindings, PyObject maxRows) {
+		execute(sql, params, bindings, maxRows);
 	}
 
 	/**
@@ -458,12 +469,22 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	 *
 	 * Return values are not defined.
 	 *
-	 * @param sqlString sql string
+	 * @param sql sql string
 	 * @param params params for a prepared statement
 	 * @param bindings dictionary of (param index : SQLType binding)
 	 * @param maxRows integer value of max rows
 	 */
-	public void execute(final String sqlString, PyObject params, PyObject bindings, PyObject maxRows) {
+	public void execute(final PyObject sql, PyObject params, PyObject bindings, PyObject maxRows) {
+
+		if (sql == Py.None) {
+			return;
+		}
+
+		final String sqlString = sql.__str__().toString();
+
+		if (sqlString.trim().length() == 0) {
+			return;
+		}
 
 		clear();
 
@@ -917,7 +938,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return cursor.fetchmany(arg.__int__().getValue());
 
 			case 5 :
-				cursor.execute(arg.__str__().toString(), Py.None, Py.None, Py.None);
+				cursor.execute(arg, Py.None, Py.None, Py.None);
 
 				return Py.None;
 
@@ -931,12 +952,17 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return Py.None;
 
 			case 9 :
-				cursor.executemany(arg.__str__().toString(), Py.None, Py.None, Py.None);
+				cursor.executemany(arg, Py.None, Py.None, Py.None);
 
 				return Py.None;
 
 			case 10 :
 				cursor.scroll(arg.__int__().getValue(), "relative");
+
+				return Py.None;
+
+			case 11 :
+				cursor.execute(arg, Py.None, Py.None, Py.None);
 
 				return Py.None;
 
@@ -961,7 +987,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 		switch (index) {
 
 			case 5 :
-				cursor.execute(arga.__str__().toString(), argb, Py.None, Py.None);
+				cursor.execute(arga, argb, Py.None, Py.None);
 
 				return Py.None;
 
@@ -974,7 +1000,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return Py.None;
 
 			case 9 :
-				cursor.executemany(arga.__str__().toString(), argb, Py.None, Py.None);
+				cursor.executemany(arga, argb, Py.None, Py.None);
 
 				return Py.None;
 
@@ -1005,7 +1031,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 		switch (index) {
 
 			case 5 :
-				cursor.execute(arga.__str__().toString(), argb, argc, Py.None);
+				cursor.execute(arga, argb, argc, Py.None);
 
 				return Py.None;
 
@@ -1015,7 +1041,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return Py.None;
 
 			case 9 :
-				cursor.executemany(arga.__str__().toString(), argb, argc, Py.None);
+				cursor.executemany(arga, argb, argc, Py.None);
 
 				return Py.None;
 
@@ -1049,7 +1075,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 		switch (index) {
 
 			case 5 :
-				cursor.execute(sql.__str__().toString(), params, bindings, maxrows);
+				cursor.execute(sql, params, bindings, maxrows);
 
 				return Py.None;
 
@@ -1059,7 +1085,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
 				return Py.None;
 
 			case 9 :
-				cursor.executemany(sql.__str__().toString(), params, bindings, maxrows);
+				cursor.executemany(sql, params, bindings, maxrows);
 
 				return Py.None;
 

@@ -24,7 +24,7 @@ import com.ziclix.python.sql.handler.*;
 public class DBSink extends BaseDB implements Sink {
 
 	/** Field sql */
-	protected String sql;
+	protected PyObject sql;
 
 	/** Field exclude */
 	protected Set exclude;
@@ -55,7 +55,7 @@ public class DBSink extends BaseDB implements Sink {
 
 		super(connection, dataHandler, tableName);
 
-		this.sql = null;
+		this.sql = Py.None;
 		this.rows = new PyList();
 		this.bindings = bindings;
 		this.batchsize = batchsize;
@@ -153,7 +153,7 @@ public class DBSink extends BaseDB implements Sink {
 			throw zxJDBC.makeException(zxJDBC.ProgrammingError, zxJDBC.getString("excludedAllCols"));
 		}
 
-		this.sql = sb.toString();
+		this.sql = Py.newString(sb.toString());
 	}
 
 	/**
@@ -161,7 +161,7 @@ public class DBSink extends BaseDB implements Sink {
 	 */
 	public void row(PyObject row) {
 
-		if (this.sql != null) {
+		if (this.sql != Py.None) {
 			if (this.batchsize <= 0) {
 
 				// no batching, just go ahead each time

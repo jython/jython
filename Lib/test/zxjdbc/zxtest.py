@@ -101,6 +101,33 @@ class zxAPITestCase(zxJDBCTestCase):
 		finally:
 			c.close()
 
+	def testNoneQuery(self):
+		"""testing that executing None doesn't fail"""
+		c = self.cursor()
+		try:
+			c.execute(None)
+		finally:
+			c.close()
+
+	def testFileLikeCursor(self):
+		"""testing the cursor as a file-like object"""
+		c = self.cursor()
+		try:
+			print >> c, "insert into zxtesting (id, name, state) values (100, 'test100', 'wa')"
+			print >> c, "insert into zxtesting (id, name, state) values (101, 'test101', 'co')"
+			print >> c, "insert into zxtesting (id, name, state) values (102, 'test102', 'or')"
+			self.db.commit()
+		finally:
+			c.close()
+
+		c = self.cursor()
+		try:
+			c.execute("select * from zxtesting where id in (100, 101, 102)")
+			f = c.fetchall()
+			self.assertEquals(3, len(f))
+		finally:
+			c.close()
+
 	def testIteration(self):
 		"""testing the iteration protocol"""
 		c = self.cursor()

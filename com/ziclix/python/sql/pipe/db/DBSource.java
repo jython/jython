@@ -87,7 +87,7 @@ public class DBSource extends BaseDB implements Source {
 			// Py.None will be sent when all done, so this will close down the queue
 			return this.cursor.fetchone();
 		} else {
-			this.cursor.execute(this.sql, this.params, Py.None, Py.None);
+			this.cursor.execute(Py.newString(this.sql), this.params, Py.None, Py.None);
 
 			PyObject description = this.cursor.__findattr__("description");
 
