@@ -217,12 +217,11 @@ public interface PythonGrammarConstants {
     "<token of kind 104>",
     "<token of kind 105>",
     "<token of kind 106>",
-    "\"\\\\\\\'\\\'\\\'\"",
-    "\"\\\\\\\"\\\"\\\"\"",
     "\"\\r\\n\"",
     "\"\\n\"",
     "\"\\r\"",
-    "<token of kind 112>",
+    "<token of kind 110>",
+    "<token of kind 111>",
     "\"`\"",
   };
 
