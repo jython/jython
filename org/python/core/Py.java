@@ -842,13 +842,40 @@ public final class Py {
         return pye;
     }
 
+    private static boolean dementedJITworkaround = false;
     public static boolean matchException(PyException pye, PyObject e) {
+        // This is a truly demented friggin' workaround for a truly awful
+        // Sun JIT bug.  It seems that with JVMs at least as recent as
+        // 1.2.1, turning on the JIT causes exception matching to fail.
+        //
+        // There are a number of ways to flex this, including calling
+        // int("foo") and trying to catch the resulting ValueError (won't
+        // work), or hitting C-d at the interactive interpreter in Unix
+        // (causes the resulting EOFError to not be caught).
+        //
+        // This little bit of sick code was discovered by trial-and-error
+        // to avoid the bug in *most* but not *all* situations (e.g. not
+        // catching the ValueError above will sometimes cause the
+        // interpreter to exit).
+        //
+        // I have no idea why this works, but I only seem to need to do
+        // this once.  Also, this doesn't mean that running JPython on a
+        // Sun JVM with the JIT enabled won't cause other problems.  When
+        // you're getting weird bugs, the first thing to do is TURN OFF THE 
+        // JIT!
+        if (!dementedJITworkaround &&
+            System.getProperty("java.compiler").equals("sunwjit"))
+        {
+            ByteArrayOutputStream bs = new ByteArrayOutputStream();
+            PrintStream err = new PrintStream(bs);
+            err.println("pye: " + pye.type);
+            err.println("  e: " + e);
+            dementedJITworkaround = true;
+        }
+        pye.instantiate();
         // A special case for IOError's to allow them to also match
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
         // it right in 1.1
-//      System.err.println("pye: " + pye.type);
-//      System.err.println("  e: " + e);
-        pye.instantiate();
         if (e == Py.IOError) {
             if (__builtin__.isinstance(
                 pye.value,
@@ -1286,11 +1313,12 @@ public final class Py {
                                                linenumbers, printResults,
                                                false);
             // Useful for debugging interactive use
-//          System.err.println("compiled: "+(nameindex-1));
-//          FileOutputStream s = new FileOutputStream(
-//              "/tmp/org/python/pycode/_pyx"+(nameindex-1)+".class");
-//          s.write(ostream.toByteArray());
-//          s.close();
+//             System.err.println("compiled: "+(nameindex-1));
+//             FileOutputStream s = new FileOutputStream(
+//                 "/tmp/org/python/pycode/_pyx"+(nameindex-1)+".class");
+//             s.write(ostream.toByteArray());
+//             s.close();
+            // end debugging
             return BytecodeLoader.makeCode(name, ostream.toByteArray());
         } catch (Throwable t) {
             throw parser.fixParseError(null, t, filename);
