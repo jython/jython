@@ -4,6 +4,8 @@ from org.python.parser import Visitor, SimpleNode
 from org.python.parser.PythonGrammarTreeConstants import *
 from org.python.parser import SimpleNode
 
+from org.python.compiler import Future
+
 
 comp_ops = {JJTLESS_CMP         : 'lt',
             JJTEQUAL_CMP        : 'eq',
@@ -30,45 +32,6 @@ def nodeToStrings(node, start=0):
     for i in range(start, node.numChildren):
         names.append(node.getChild(i).getInfo())
     return names
-
-
-
-class Arguments(Visitor):
-    def __init__(self, parent, argslist=None):
-        self.arglist = 0
-        self.keyworddict = 0
-        self.names = []
-        self.defaults = []
-
-        self.parent = parent
-
-        if argslist is not None:
-            argslist.visit(self)
-
-    def varargslist(self, node):
-        for i in range(node.numChildren):
-            node.getChild(i).visit(self)
-
-    def ExtraArgList(self, node):
-        self.arglist = 1
-        self.names.append(node.getChild(0).visit(self))
-
-    def ExtraKeywordList(self, node):
-        self.keyworddict = 1
-        self.names.append(node.getChild(0).visit(self))
-
-    def defaultarg(self, node):
-        name = node.getChild(0).visit(self)
-        self.names.append(name)
-        if node.numChildren > 1:
-            self.defaults.append(node.getChild(1).visit(self.parent))
-
-    def fplist(self, node):
-        return 'ugh'
-        pass # ???
-
-    def Name(self, node):
-        return node.getInfo()
 
 
 
@@ -164,6 +127,7 @@ class PythonVisitor(Visitor):
         return self.walker.import_stmt(names)
 
     def ImportFrom(self, node):
+        Future.checkFromFuture(node) # future stmt support
         self.startnode(node)
         if node.numChildren > 1:
             names = self.import_as_name(node, 1)
@@ -519,25 +483,16 @@ class PythonVisitor(Visitor):
         Body = node.getChild(node.numChildren-1)
 
         doc = getDocString(Body)
-        if node.numChildren > 2:
-            args = Arguments(self, node.getChild(1))
-        else:
-            args = Arguments(self)
 
-        return self.walker.funcdef(funcname, args, Body, doc)
+        return self.walker.funcdef(funcname, node.scope, Body, doc)
 
     def lambdef(self, node):
         Body = node.getChild(node.numChildren-1)
 
-        if node.numChildren > 1:
-            args = Arguments(self, node.getChild(0))
-        else:
-            args = Arguments(self)
-
         retBody = SimpleNode(JJTRETURN_STMT)
         retBody.jjtAddChild(Body, 0)
 
-        return self.walker.lambdef(args, retBody)
+        return self.walker.lambdef(node.scope, retBody)
 
     def classdef(self, node):
         self.startnode(node)
@@ -550,4 +505,4 @@ class PythonVisitor(Visitor):
         for i in range(1, n-1):
             bases.append(node.getChild(i).visit(self))
 
-        return self.walker.classdef(name, bases, suite, doc)
+        return self.walker.classdef(name, bases, node.scope, suite, doc)

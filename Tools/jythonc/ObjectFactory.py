@@ -30,12 +30,12 @@ class ObjectFactory:
         ns = PyNamespace(self.parent, name)
         return Object(ns.getNew(), ns)
 
-    def makeFunction(self, name, args, body, doc=None):
-        func = PyFunction(self.parent, self, name, args, body, doc)
+    def makeFunction(self, name, def_compiler, scope, body, doc=None):
+        func = PyFunction(self, name, def_compiler, scope, body, doc)
         return Object(func.getNew(), func)
 
-    def makeClass(self, name, bases, body, doc=None):
-        cls =  PyClass(self.parent, self, name, bases, body, doc)
+    def makeClass(self, name, bases, def_compiler, scope, body, doc=None):
+        cls =  PyClass(self, name, bases, def_compiler, scope, body, doc)
         # Yuck! We can't call getNew() before all modules have been analyzed.
         class DelayGen:
             def __init__(self, cls):
@@ -104,16 +104,12 @@ class ObjectFactory:
             [items[0].asAny(), items[1].asAny(), items[2].asAny()])
         return Object(code, Generic)
 
-    def makeFunctionFrame(self):
-        return SimpleCompiler.LocalFrame(self.parent)
-
-    def makeClassFrame(self):
-        return SimpleCompiler.LocalFrame(self.parent, 
-                                         SimpleCompiler.DynamicStringReference)
-
-    def getCompiler(self, frame):
-        return SimpleCompiler.SimpleCompiler(self.parent.module, self, frame,
-                                             self.parent.options)
+    def getCompiler(self, parent_compiler, frameCtr, scope):
+        return SimpleCompiler.SimpleCompiler(self.parent.module, self,
+                                             parent = parent_compiler,
+                                             frameCtr = frameCtr,
+                                             scope = scope,
+                                             options = self.parent.options)
 
 
 class FixedObject(PyObject):
@@ -131,47 +127,53 @@ class PyConstant(FixedObject):
 
 
 class PyFunction(FixedObject):
-    def __init__(self, parent, factory, name, args, body, doc=None):
+    def __init__(self, factory, name, def_compiler,scope, body, doc=None):
         self.name = name
         self.factory = factory
-        self.parent = parent
-        self.args = args
+        self.def_compiler = def_compiler
+        self.scope = scope
         self.body = body
         self.doc = doc
 
     def getNew(self):
-        globals = jast.GetInstanceAttribute(self.parent.frame.frame,
+        globals = jast.GetInstanceAttribute(self.def_compiler.frame.frame,
                                             "f_globals")
         pycode = self.makeCode()
-        return jast.New("PyFunction",
-                        [globals, PyObjectArray(self.args.defaults), pycode])
+        defaults = [ d.visit(self.def_compiler.visitor) for d in self.scope.ac.defaults ]
+        clos = self.def_compiler.frame.makeClosure(self.scope)
+        ctrargs = [globals, PyObjectArray(defaults), pycode]
+        if clos:
+            ctrargs.append(PyObjectArray(clos))
+        return jast.New("PyFunction", ctrargs)
 
-    def makeCode(self):
-        # Don't handle a,b style args yet       
-        init_code = []
-        frame = self.parent.frame
+    def makeCode(self): # now handles a,b style args too
         # Add args to funcframe
-        funcframe = self.factory.makeFunctionFrame()
-        for argname in self.args.names:
-            funcframe.setname(argname, self.factory.makePyObject(None))
-            #funcframe.addlocal(argname)
+        ac = self.scope.ac
         # Parse the body
-        comp = self.factory.getCompiler(funcframe)
-        code = jast.Block([comp.parse(self.body)])
+        comp = self.factory.getCompiler(self.def_compiler,SimpleCompiler.FunctionFrame,self.scope)
+        for argname in ac.names:
+            comp.frame.setname(argname, self.factory.makePyObject(None))
+
+        tree = self.body
+        if ac.init_code.numChildren > 0:
+            ac.init_code.jjtAddChild(tree, ac.init_code.numChildren)
+            tree = ac.init_code
+        code = jast.Block([comp.parse(tree)])
         # Set up a code object
-        self.pycode = self.parent.module.getCodeConstant(
-            self.name, self.args, funcframe.getlocals(), code)
-        self.frame = funcframe
+        self.pycode = self.def_compiler.top_compiler.module.getCodeConstant(
+            self.name, code, comp.frame)
+        self.frame = comp.frame
         return self.pycode
 
 
 
 class PyClass(FixedObject):
-    def __init__(self, parent, factory, name, bases, body, doc=None):
+    def __init__(self, factory, name, bases, def_compiler, scope, body, doc=None):
         self.name = name
-        self.parent = parent
         self.factory = factory
         self.bases = bases
+        self.def_compiler = def_compiler
+        self.scope = scope
         self.body = body
         self.doc = doc
 
@@ -182,6 +184,10 @@ class PyClass(FixedObject):
 
         if self.isSuperclassJava():
             args.append(jast.Identifier("%s.class" % self.proxyname))
+
+        clos = self.def_compiler.frame.makeClosure(self.scope)
+        if clos:
+            args.append(PyObjectArray(clos))
 
         return jast.InvokeStatic("Py", "makeClass", args)
 
@@ -240,15 +246,14 @@ class PyClass(FixedObject):
 
 
     def makeCode(self):
-        classframe = self.factory.makeClassFrame()
-        comp = self.factory.getCompiler(classframe)
+        comp = self.factory.getCompiler(self.def_compiler,
+                                        SimpleCompiler.ClassFrame, self.scope)
         code = jast.Block([comp.parse(self.body),
-                           jast.Return(jast.Invoke(classframe.frame,
+                           jast.Return(jast.Invoke(comp.frame.frame,
                                                    "getf_locals", []))])
-        self.frame = classframe
-        self.pycode = self.parent.module.getCodeConstant(
-            self.name, None,
-            classframe.getlocals(), code)
+        self.frame = comp.frame
+        self.pycode = self.def_compiler.top_compiler.module.getCodeConstant(
+            self.name, code, comp.frame)
         return self.pycode
 
 class PyNamespace(FixedObject):

@@ -135,10 +135,10 @@ def makeJavaProxy(module, pyc):
     frame = pyc.frame
     methods = []
     for name, func in frame.names.items():
-        v = func.value.value
+        v = func.value
         args = None
-        if hasattr(v, 'args'):
-            args = v.args
+        if hasattr(v, 'frame'):
+            args = v.frame.scope.ac
         sig = None
         if hasattr(v, 'doc'):
             if name == "__init__":
@@ -220,13 +220,19 @@ class Compiler:
         if self.javapackage is not None:
             name = self.javapackage+'.'+name
 
-        data = "__file__=%s\n" % repr(filename) + data + '\n\n'
-
+        data = data + '\n\n'
+        
         mod = PythonModule(name, filename, frozen=self.deep)
         fact = ObjectFactory()
         pi = SimpleCompiler(mod, fact, options=self.options)
         fact.parent = pi
-        code = jast.Block(pi.execstring(data))
+        code = pi.execstring(data)
+        # __file__ 
+        code.insert(0,jast.Invoke(jast.Identifier('frame'),"setglobal",
+                                  [jast.StringConstant('__file__'),
+                                   mod.getStringConstant(filename)]))
+        code.insert(1,jast.BlankLine())
+        code = jast.Block(code)
         mod.addMain(code, pi)
         self.addDependencies(mod)
         return mod

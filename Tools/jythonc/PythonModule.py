@@ -4,10 +4,11 @@ import os
 
 import jast
 import java, org
-from PythonVisitor import Arguments
 
 EMPTYSTRING = ''
 
+
+from org.python.core.PyTableCode import CO_OPTIMIZED,CO_NESTED
 
 
 """
@@ -43,6 +44,13 @@ def legalJavaName(name):
 
 
 
+
+def StringArrayOrNull(strs):
+    if strs:
+        return jast.StringArray(strs)
+    else:
+        return jast.Null
+
 class PythonInner:
     def __init__(self, parent):
         self.constantValues = {}
@@ -94,12 +102,10 @@ class PythonInner:
                                  [jast.StringConstant(value)])
         return self.getConstant(value, code, "s")
 
-    def getCodeConstant(self, name, args, locals, code):
-        if args is None:
-            args = Arguments([])
+    def getCodeConstant(self, name, code, frame):
         label = "c$%d_%s" % (len(self.codes), legalJavaName(name))
         ret = jast.Identifier(label)
-        self.codes.append( (label, name, args, locals, code) )
+        self.codes.append( (label, name, code, frame) )
         return ret
 
     def dumpConstants(self):
@@ -119,25 +125,34 @@ class PythonInner:
         self.constants.append(["PyFunctionTable", self.getFunctionTable(),
                                jast.New(self.name, [])])
 
-        for label, name, args, locals, code in self.codes:
+        for label, name, code, frame in self.codes:
+            code = frame.toCellPrepend(code)
+
             funcid = self.addFunctionCode(name, code)
 
             arglist = keyworddict = jast.False
-            if args.arglist:
+            if frame.args_arglist():
                 arglist = jast.True
-            if args.keyworddict:
+            if frame.args_keyworddict():
                 keyworddict = jast.True
 
-            names = jast.StringArray(locals)
+            names = jast.StringArray(frame.getnames())
+            cellnames = StringArrayOrNull(frame.getcellnames())
+            freenames = StringArrayOrNull(frame.getfreenames())
+            npurecell = frame.get_npurecell()
 
-            cargs = [jast.IntegerConstant(len(args.names)),
+            cargs = [jast.IntegerConstant(frame.args_count()),
                      names,
                      jast.StringConstant(self.filename),
                      jast.StringConstant(name),
                      arglist,
                      keyworddict,
                      self.getFunctionTable(),
-                     jast.IntegerConstant(funcid)]
+                     jast.IntegerConstant(funcid),
+                     cellnames,
+                     freenames,
+                     jast.IntegerConstant(npurecell),
+                     jast.IntegerConstant((frame.opt_globals and CO_OPTIMIZED) | (frame.scope.nested_scopes and CO_NESTED))]
             newcode = jast.InvokeStatic("Py", "newCode", cargs)
             self.constants.append(("PyCode", jast.Identifier(label), newcode))
 
@@ -183,8 +198,7 @@ class PythonInner:
         return len(self.funccodes)-1
 
     def addMain(self, code, cc):
-        self.mainCode = self.getCodeConstant("main", Arguments([]),
-                                             cc.frame.getlocals(), code)
+        self.mainCode = self.getCodeConstant("main", code, cc.frame)
 
     def dumpMain(self):
         if not hasattr(self, 'mainCode'):
@@ -301,8 +315,8 @@ class PythonModule:
     def getStringConstant(self, value):
         return self.pyinner.getStringConstant(value)
 
-    def getCodeConstant(self, name, args, locals, code):        
-        return self.pyinner.getCodeConstant(name, args, locals, code)
+    def getCodeConstant(self, name, code, frame):
+        return self.pyinner.getCodeConstant(name, code, frame)
 
     def addFunctionCode(self, name, code):
         return self.pyinner.addFunctionCode(name, code)

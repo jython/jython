@@ -1,128 +1,82 @@
 # Copyright © Corporation for National Research Initiatives
 
 from BaseEvaluator import BaseEvaluator
-from PythonVisitor import Arguments
 import jast
 import ImportName
 
 COMMASPACE = ', '
 
+from org.python.compiler import ScopesCompiler, Future, CompilationContext
+from org.python.compiler.ScopeConstants import *
 
-
-class Reference:
-    def __init__(self, frame, name):
-        self.iframe = frame.frame
-        self.frame = frame
-        self.locals = frame.locals
-        self.name = name
-        self.value = None
-        self.init()
-
-    def init(self): pass
-
-    def noValue(self):
-        raise NameError, 'try to get %s before set' % repr(self.name)
-
-    def getValue(self):
-        if self.value is None:
-            return self.noValue()       
-        return self.value
-
-    def setValue(self, value):
-        if self.value is None:
-            self.value = value.makeReference(self.getCode())
-        else:
-            # Might want to try and merge types here...
-            self.value = self.value.mergeWith(value)
-            self.value.code = self.getCode()
-            #PyObject(self.getCode(), None)
-        return self.setCode(value)
-
-    def delValue(self):
-        #self.value = None
-        return self.delCode()
-
-
-
-class DynamicIntReference(Reference):
-    def init(self):
-        self.ivalue = jast.IntegerConstant(len(self.locals))
-
-    def getCode(self):
-        return jast.Invoke(self.iframe, "getlocal", (self.ivalue,))
-
-    def setCode(self, value):
-        return jast.Invoke(self.iframe, "setlocal",
-                           (self.ivalue, value.asAny()))
-
-    def delCode(self):
-        return jast.Invoke(self.iframe, "dellocal", (self.ivalue,))
-
-
-
-class DynamicStringReference(Reference):
-    def init(self):
-        self.ivalue = jast.StringConstant(self.name)
-
-    def getCode(self):
-        return jast.Invoke(self.iframe, "getname", (self.ivalue,))
-
-    def delCode(self):
-        return jast.Invoke(self.iframe, "delname", (self.ivalue,))
-
-    def setCode(self, value):
-        return jast.Invoke(self.iframe, "setlocal",
-                           (self.ivalue, value.asAny()))
-
-class DynamicStringReference2(DynamicStringReference):
-    def setCode(self, value):
-        return jast.Invoke(self.iframe, "setglobal",
-                           (self.ivalue, value.asAny()))
-
-    def noValue(self):
-        # Reference to builtin
-        return self.frame.parent.factory.makePyObject(self.getCode())
-
-
-class DynamicGlobalStringReference(Reference):
-    def init(self):
-        self.ivalue = jast.StringConstant(self.name)
-
-    def getCode(self):
-        return jast.Invoke(self.iframe, "getglobal", (self.ivalue,))
-
-    def delCode(self):
-        return jast.Invoke(self.iframe, "delglobal", (self.ivalue,))
-
-    def setCode(self, value):
-        return jast.Invoke(self.iframe, "setglobal",
-                           (self.ivalue, value.asAny()))
-
-    def noValue(self):
-        # Reference to builtin
-        return self.frame.parent.factory.makePyObject(self.getCode())
-
+import warnings
+from org.python.parser import ParseException
 
 
 class LocalFrame:
-    def __init__(self, parent, newReference=DynamicIntReference):
+    def __init__(self, compiler, scope=None):
+        
         self.frame = jast.Identifier("frame")
 
-        # This should only use SlowGlobals if the function uses
-        # ImportAll or ExecStmt. If not it should use 
-        # parent.globalNamespace.
+        self.compiler = compiler
 
-        #self.globalNamespace = SlowGlobals(parent)
-        self.globalNamespace = parent.globalNamespace
-
-        self.parent = parent
-        self.newReference = newReference
-
-        self.names = {}
-        self.globals = {}
-        self.locals = []
+	self.names = {}
 
         self.temporaries = {}
+
+        self.scope = scope
+
+        self.fast_locals = 0
+        self.opt_globals = 0
+
+    def setupClosure(self,nested_scope):
+        nested_scope.setup_closure(self.scope)
+
+    def makeClosure(self,nested_scope):
+        freenames = nested_scope.freevars
+        if len(freenames) == 0: return None
+        clos = []
+        factory = self.compiler.factory
+        for free in freenames:
+            i = self.scope.tbl.get(free).env_index
+            code = jast.Invoke(self.frame, "getclosure", [jast.IntegerConstant(i)])
+            clos.append(factory.makePyObject(code))
+        return clos
+
+    def getnames(self):
+        return self.scope.names
+
+    def args_count(self):
+        if self.scope.ac:
+            return len(self.scope.ac.names)
+        return 0
+    
+    def args_arglist(self):
+        return self.scope.ac and self.scope.ac.arglist
+
+    def args_keyworddict(self):
+        return self.scope.ac and self.scope.ac.keywordlist
+
+    def getfreenames(self):
+        return self.scope.freevars
+
+    def getcellnames(self):
+        return self.scope.cellvars
+
+    def get_npurecell(self):
+        return self.scope.jy_npurecell
+
+    def toCellPrepend(self,code):
+        scope = self.scope
+        pre = []
+        for parmcell in scope.jy_paramcells:
+            syminf = scope.tbl.get(parmcell)
+            args = [jast.IntegerConstant(syminf.locals_index),
+                    jast.IntegerConstant(syminf.env_index)]
+            pre.append(jast.Invoke(self.frame, "to_cell", args))
+        if not pre: return code
+        pre.append(jast.BlankLine())
+        return jast.Block(jast.flatten([pre,code]))
 
     def gettemps(self, type):
         try:
@@ -161,41 +115,90 @@ class LocalFrame:
             raise ValueError, 'temp already freed'
         temps[index] = None
 
+    def get_local_value(self,name):
+        if self.names.has_key(name): return self.names[name]
+        return None # ?? better to fail? when?
+        
+    def get_closure_value(self,name,up=0):
+        if not up:
+            syminf = self.scope.tbl.get(name)
+            if syminf and syminf.flags&CELL: return self.get_local_value(name)
+        return self.compiler.parent_compiler.frame.get_closure_value(name)
+
+    def get_global_value(self,name):
+        return self.compiler.top_compiler.frame.get_local_value(name)
+
+    def get_name_value(self,name):
+        if self.names.has_key(name): return self.names[name]
+        return self.get_global_value(name)
+
+    def set_global_value(self,name,value):
+        self.compiler.top_compiler.frame.set_value(name,value)
+
+    def set_value(self,name,value):
+        if self.names.has_key(name):
+            self.names[name] = self.names[name].mergeWith(value)
+            return
+        self.names[name] = value
+
+    def delCode(self,method,ref):
+        if type(ref) is type(""):
+            ref = (jast.StringConstant(ref),)
+        else:
+            ref = (jast.IntegerConstant(ref),)
+        return jast.Invoke(self.frame,method,ref)
+        
+    def getReference(self,value,method,ref):
+        code = self.delCode(method,ref)
+        if value: return value.makeReference(code)
+        return self.compiler.factory.makePyObject(code)
+ 
+    def setCode(self,method,ref,value):
+        if type(ref) is type(""):
+            args = (jast.StringConstant(ref),value.asAny())
+        else:
+            args = (jast.IntegerConstant(ref),value.asAny())
+        return jast.Invoke(self.frame,method,args)
+
+    def getglobal(self,name):
+        return self.getReference(self.get_global_value(name),'getglobal',name)
+
     def getname(self, name):
-        if not self.names.has_key(name):
-            return self.globalNamespace.getname(self, name)
-        ref = self.getReference(name)
-        return ref.getValue()
+        syminf = self.scope.tbl.get(name)
+        if syminf: 
+            flags = syminf.flags
+            if not self.scope.nested_scopes: flags &= ~FREE
+            if flags&GLOBAL or self.opt_globals and not (flags&(BOUND|CELL|FREE)):
+                return self.getglobal(name)
+            if self.fast_locals:
+                if flags&CELL: return self.getReference(
+                    self.get_closure_value(name),'getderef',syminf.env_index)
+                if flags&BOUND: return self.getReference(
+                    self.get_local_value(name),'getlocal',syminf.locals_index)
+            if flags&FREE and not flags&BOUND: return self.getReference(
+                self.get_closure_value(name,up=1),'getderef',syminf.env_index)
+        return self.getReference(self.get_name_value(name),'getname',name)
+            
 
     def delname(self, name):
-        if self.globals.has_key(name):
-            return self.globalNamespace.delname(self, name)
-        ref = self.getReference(name)
-        return ref.delValue()
+        syminf = self.scope.tbl.get(name)
+        if syminf and syminf.flags&GLOBAL: return self.delCode('delglobal',name)
+        if not self.fast_locals: return self.delCode('dellocal',name)
+        if syminf.flags&CELL: raise NameError,"can not delete variable '%s' referenced in nested scope" % name
+        return self.delCode('dellocal',syminf.locals_index)
 
     def setname(self, name, value):
-        if self.globals.has_key(name):
-            return self.globalNamespace.setname(self, name, value)
-        ref = self.getReference(name)
-        return ref.setValue(value)
+        syminf = self.scope.tbl.get(name)
+        if syminf and syminf.flags&GLOBAL:
+            self.set_global_value(name,value)
+            return self.setCode('setglobal',name,value) 
 
-    def addglobal(self, name):
-        self.globals[name] = 1
+        self.set_value(name,value)
 
-    def addlocal(self, name):
-        self.getReference(name)
-
-    def getlocals(self):
-        return self.locals
-
-    def getReference(self, name):
-        if self.names.has_key(name):
-            return self.names[name]
-        ret = self.newReference(self, name)
-        self.names[name] = ret
-        self.locals.append(name)
-        return ret
-
+        if not self.fast_locals: return self.setCode('setlocal',name,value)
+        if syminf and syminf.flags&CELL: return self.setCode('setderef',syminf.env_index,value)
+        return self.setCode('setlocal',syminf.locals_index,value)
+        
     def getDeclarations(self):
         if len(self.temporaries) == 0:
             return []
@@ -213,54 +216,36 @@ class LocalFrame:
 
 
 class GlobalFrame(LocalFrame):
-    def __init__(self, parent):
-        LocalFrame.__init__(self, parent)
-        self.globalNamespace = parent.globalNamespace
+    def __init__(self, compiler):
+        LocalFrame.__init__(self, compiler)
 
-    def getReference(self, name):
-        return self.globalNamespace.getReference(self, name)
+    def setScope(self,scope): self.scope = scope
 
+class ClassFrame(LocalFrame):
+    def getnames(self):
+        return []
 
-
-class BasicGlobals:
-    def __init__(self, parent, newReference=DynamicGlobalStringReference):
-        self.names = {}
-        self.newReference = newReference
-        self.parent = parent
-
-    def delname(self, frame, name):
-        ref = self.getReference(frame, name)
-        return ref.delValue()           
-
-    def getname(self, frame, name):
-        ref = self.getReference(frame, name)
-        return ref.getValue()
-
-    def setname(self, frame, name, value):
-        ref = self.getReference(frame, name)
-        return ref.setValue(value)
-
-    def getReference(self, frame, name):
-        if self.names.has_key(name):
-            return self.names[name]
-        ret = self.newReference(frame, name)
-        self.names[name] = ret
-        return ret
-
-class SlowGlobals(BasicGlobals):
-    def __init__(self, parent, newReference=DynamicStringReference2):
-        self.names = {}
-        self.newReference = newReference
-        self.parent = parent
-
+class FunctionFrame(LocalFrame):
+    def __init__(self,compiler,scope):
+        LocalFrame.__init__(self,compiler,scope=scope)
+        self.fast_locals = 1
+        self.opt_globals = not scope.exec and not scope.from_import_star
 
 
-class SimpleCompiler(BaseEvaluator):
-    def __init__(self, module, factory, frame=None, options=None):
+class SimpleCompiler(BaseEvaluator, CompilationContext):
+    def __init__(self, module, factory, parent=None, frameCtr=None, scope=None,
+                 options=None):
         BaseEvaluator.__init__(self)
-        self.globalNamespace = BasicGlobals(self)
-        if frame is None:
+
+        if parent is None:
             frame = GlobalFrame(self)
+            self.parent_compiler = None
+            self.top_compiler = self
+        else:
+            frame = frameCtr(self, scope=scope)
+            self.parent_compiler = parent
+            self.top_compiler = parent.top_compiler
+
         self.frame = frame
         self.module = module
         self.nthrowables = 0
@@ -273,7 +258,27 @@ class SimpleCompiler(BaseEvaluator):
             return 0
         return name in self.options.falsenames
 
+    def getFutures(self):
+        return self._futures
+
+    def getFilename(self):
+        return self.module.filename
+
+    def error(self,msg,err,node):
+        if not err:
+            try:
+                warnings.warn_explicit(msg,SyntaxWarning,self.getFilename(),node.beginLine)
+                return
+            except Exception,e:
+                if not isinstance(e,SyntaxWarning): raise e
+        raise ParseException(msg,node)
+
     def parse(self, node):
+        if isinstance(self.frame,GlobalFrame):
+            futures = self._futures = Future()
+            futures.preprocessFutures(node,None)
+            ScopesCompiler(self).parse(node)
+            self.frame.setScope(node.scope)
         ret = BaseEvaluator.parse(self, node)
         #print 'parse', ret
         decs = self.frame.getDeclarations()
@@ -388,8 +393,6 @@ class SimpleCompiler(BaseEvaluator):
         return self.frame.getname(name)
 
     def global_stmt(self, names):
-        for name in names:
-            self.frame.addglobal(name)
         return jast.SimpleComment('global ' + COMMASPACE.join(names))
 
     def get_module(self, names, topmost=0):
@@ -567,7 +570,7 @@ class SimpleCompiler(BaseEvaluator):
         if message is not None:
             args.append(message.asAny())
 
-        return jast.If(self.name_const("__debug__").nonzero(),
+        return jast.If(self.frame.getglobal("__debug__").nonzero(),
                        jast.InvokeStatic("Py", "assert", args))
 
     def return_stmt(self, value=None):
@@ -714,16 +717,19 @@ class SimpleCompiler(BaseEvaluator):
         else:
             return [init, jast.While(test, suite)]
 
-    def funcdef(self, name, args, body, doc=None):
-        func = self.factory.makeFunction(name, args, body, doc)
+    def funcdef(self, name, scope, body, doc=None):
+        self.frame.setupClosure(scope)
+        func = self.factory.makeFunction(name, self, scope, body, doc)
         return self.set_name(name, func)
 
-    def lambdef(self, args, body):
-        func = self.factory.makeFunction("<lambda>", args, body)
+    def lambdef(self, scope, body):
+        self.frame.setupClosure(scope)
+        func = self.factory.makeFunction("<lambda>", self, scope, body)
         return func
 
-    def classdef(self, name, bases, body, doc=None):
-        c = self.factory.makeClass(name, bases, body, doc)
+    def classdef(self, name, bases, scope, body, doc=None):
+        self.frame.setupClosure(scope)
+        c = self.factory.makeClass(name, bases, self, scope, body, doc)
         self.module.classes[name] = c
         return self.set_name(name, c)
 

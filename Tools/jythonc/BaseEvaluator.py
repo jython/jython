@@ -88,7 +88,7 @@ class BaseEvaluator:
     def set(self, node, value):
         if node.id == JJTNAME:
             return self.set_name(node.getInfo(), value)
-        elif node.id == JJTLIST or node.id == JJTTUPLE:
+        elif node.id == JJTLIST or node.id == JJTFPLIST or node.id == JJTTUPLE:
             return self.set_list(nodeToList(node), value)
         elif node.id == JJTINDEX_OP:
             return self.set_item(node.getChild(0), 
