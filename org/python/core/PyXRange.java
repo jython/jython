@@ -27,6 +27,7 @@ public class PyXRange extends PySequence {
         if (cycleLength < 0) {
             cycleLength = 0;
         }
+        this.stop = start + cycleLength*step;
         copies = 1;
     }
 
@@ -47,6 +48,8 @@ public class PyXRange extends PySequence {
     }
 
     protected PyObject getslice(int start, int stop, int step) {
+        Py.DeprecationWarning("xrange object slicing is deprecated; " +
+	                      "convert to list instead");
         if (copies != 1) {
             throw Py.TypeError("cannot slice a replicated range");
         }
@@ -59,6 +62,8 @@ public class PyXRange extends PySequence {
 
 
     protected PyObject repeat(int howmany) {
+        Py.DeprecationWarning("xrange object multiplication is deprecated; " +
+	                      "convert to list instead");
         PyXRange x = new PyXRange(start, stop, step);
         x.copies = copies*howmany;
         return x;
@@ -66,6 +71,23 @@ public class PyXRange extends PySequence {
 
     public PyObject __add__(PyObject generic_other) {
         throw Py.TypeError("cannot concatenate xrange objects");
+    }
+
+    public PyObject __findattr__(String name) {
+        String msg = "xrange object's 'start', 'stop' and 'step' " +
+		     "attributes are deprecated";
+        if (name == "start") {
+            Py.DeprecationWarning(msg);
+            return Py.newInteger(start);
+        } else if (name == "stop") {
+            Py.DeprecationWarning(msg);
+            return Py.newInteger(stop);
+        } else if (name == "step") {
+            Py.DeprecationWarning(msg);
+            return Py.newInteger(step);
+        } else {
+            return super.__findattr__(name);
+        }
     }
 
     public int hashCode() {
@@ -91,6 +113,8 @@ public class PyXRange extends PySequence {
     }
 
     public PyList tolist() {
+        Py.DeprecationWarning("xrange.tolist() is deprecated; " +
+                              "use list(xrange) instead");
         PyList list = new PyList();
         int count = __len__();
         for (int i=0; i<count; i++) {
