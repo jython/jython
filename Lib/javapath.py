@@ -12,7 +12,6 @@ module as os.path.
 # normcase -- How?
 
 # Missing:
-# expandvars -- can't be bothered right now
 # sameopenfile -- Java doesn't have fstat nor file descriptors?
 # samestat -- How?
 
@@ -238,4 +237,72 @@ def getatime(path):
     # matches the behaviour in os.stat().
     f = File(path)
     return f.lastModified() / 1000.0
+
+
+# expandvars is stolen from CPython-2.1.1's Lib/ntpath.py:
+
+# Expand paths containing shell variable substitutions.
+# The following rules apply:
+#       - no expansion within single quotes
+#       - no escape character, except for '$$' which is translated into '$'
+#       - ${varname} is accepted.
+#       - varnames can be made out of letters, digits and the character '_'
+# XXX With COMMAND.COM you can use any characters in a variable name,
+# XXX except '^|<>='.
+
+def expandvars(path):
+    """Expand shell variables of form $var and ${var}.
+
+    Unknown variables are left unchanged."""
+    if '$' not in path:
+        return path
+    import string
+    varchars = string.letters + string.digits + '_-'
+    res = ''
+    index = 0
+    pathlen = len(path)
+    while index < pathlen:
+        c = path[index]
+        if c == '\'':   # no expansion within single quotes
+            path = path[index + 1:]
+            pathlen = len(path)
+            try:
+                index = path.index('\'')
+                res = res + '\'' + path[:index + 1]
+            except ValueError:
+                res = res + path
+                index = pathlen - 1
+        elif c == '$':  # variable or '$$'
+            if path[index + 1:index + 2] == '$':
+                res = res + c
+                index = index + 1
+            elif path[index + 1:index + 2] == '{':
+                path = path[index+2:]
+                pathlen = len(path)
+                try:
+                    index = path.index('}')
+                    var = path[:index]
+                    if os.environ.has_key(var):
+                        res = res + os.environ[var]
+                except ValueError:
+                    res = res + path
+                    index = pathlen - 1
+            else:
+                var = ''
+                index = index + 1
+                c = path[index:index + 1]
+                while c != '' and c in varchars:
+                    var = var + c
+                    index = index + 1
+                    c = path[index:index + 1]
+                if os.environ.has_key(var):
+                    res = res + os.environ[var]
+                if c != '':
+                    res = res + c
+        else:
+            res = res + c
+        index = index + 1
+    return res
+
+
 
