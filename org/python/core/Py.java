@@ -560,36 +560,41 @@ public final class Py {
         Py.getSystemState().argv = new PyList(argv);
     }
 
-    private static void initProperties(String[] args, String[] packages,
-                                       String[] props, 
-                                       String frozenPackage)
+    private static boolean propertiesInitialized = false;
+    private static synchronized void initProperties(String[] args, 
+                                                    String[] packages,
+                                                    String[] props, 
+                                                    String frozenPackage,
+                                                    ClassLoader classLoader)
     {
-        if (frozenPackage != null) {
-            Py.frozen = true;
-            if (frozenPackage.length() > 0)
-                Py.frozenPackage = frozenPackage;
-            else
-                // for later
-                frozenPackage = null;
-        }
+        if (!propertiesInitialized) {
+            propertiesInitialized = true;
+
+            if (frozenPackage != null) {
+                Py.frozen = true;
+                if (frozenPackage.length() > 0)
+                    Py.frozenPackage = frozenPackage;
+            }
             
-        java.util.Properties sprops;
-        try {
-            sprops = new java.util.Properties(System.getProperties());
-        } catch (Throwable t) {
-            sprops = new java.util.Properties();
+            java.util.Properties sprops;
+            try {
+                sprops = new java.util.Properties(System.getProperties());
+            } catch (Throwable t) {
+                sprops = new java.util.Properties();
+            }
+
+            if (props != null) {
+                for (int i=0; i<props.length; i+=2) {
+                    sprops.put(props[i], props[i+1]);
+                }
+            }
+            //System.err.println("sprops: "+sprops);
+        
+            if (args == null)
+                args = new String[0];
+            PySystemState.initialize(sprops, null, args, classLoader);
         }
 
-        if (props != null) {
-            for (int i=0; i<props.length; i+=2) {
-                sprops.put(props[i], props[i+1]);
-            }
-        }
-        //System.err.println("sprops: "+sprops);
-        
-        if (args == null)
-            args = new String[0];
-        PySystemState.initialize(sprops, null, args);
         
         if (packages != null) {
             for (int i=0; i<packages.length; i+=2) {
@@ -612,7 +617,8 @@ public final class Py {
     {
 //         System.out.println("initProxy");
 //         frozen = false;               
-        initProperties(null, packages, props, frozenPackage);
+        initProperties(null, packages, props, frozenPackage,
+                    proxy.getClass().getClassLoader());
                 
         ThreadState ts = getThreadState();
         if (ts.getInitializingProxy() != null) {
@@ -621,11 +627,6 @@ public final class Py {
             return;
         }
                 
-        ClassLoader classLoader = proxy.getClass().getClassLoader();
-        if (classLoader != null) {
-            Py.getSystemState().setClassLoader(classLoader);
-        }
-
         //System.out.println("path: "+sys.path.__str__());
 
         PyObject mod;
@@ -648,6 +649,7 @@ public final class Py {
         PyInstance instance = new PyInstance(pyc);
         instance.javaProxy = proxy;
         proxy._setPyInstance((PyInstance)instance);
+        proxy._setPySystemState(ts.systemState);
 
         PyObject[] pargs; 
         if (args == null || args.length == 0) {
@@ -683,8 +685,7 @@ public final class Py {
                                String frozenPackage)
     {
         //System.err.println("main: "+module);
-        initProperties(args, packages, props, frozenPackage);
-        
+       
         Class mainClass=null;
         try {
             mainClass = Class.forName(module);
@@ -693,10 +694,8 @@ public final class Py {
             System.exit(-1);
         }
 
-        ClassLoader classLoader = mainClass.getClassLoader();
-        if (classLoader != null) {
-            Py.getSystemState().setClassLoader(classLoader);
-        }
+        initProperties(args, packages, props, frozenPackage,
+                       mainClass.getClassLoader());
 
         try {
             PyCode code=null;

@@ -276,6 +276,15 @@ public class PySystemState extends PyObject
                                                Properties postProperties,
                                                String[] argv)
     {
+        initialize(preProperties, postProperties, argv, null);
+    }
+    
+    public static synchronized void initialize(Properties preProperties, 
+                                               Properties postProperties,
+                                               String[] argv,
+                                               ClassLoader classLoader)
+    {
+
         //System.err.println("initializing system state");
         //Thread.currentThread().dumpStack();
             
@@ -315,17 +324,10 @@ public class PySystemState extends PyObject
         // Finish up standard Python initialization...
         Py.defaultSystemState = new PySystemState();
         Py.setSystemState(Py.defaultSystemState);
-        try {
-            if (Options.classBasedExceptions)
-                Py.initClassExceptions();
-        }
-        catch (PyException e) {
-            System.err.println("'import exceptions' failed; " +
-                               "using string-based exceptions");
-            // TBD: see CPython's bltinmodule.c for compatibility.  We
-            // should print the traceback if the verbose flag is set, or
-            // indicate "use -v for traceback"
-        }
+
+        if (classLoader != null)
+            Py.defaultSystemState.setClassLoader(classLoader);
+        Py.initClassExceptions();
         // Make sure that Exception classes have been loaded
         PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");        
     }
