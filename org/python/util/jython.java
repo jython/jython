@@ -165,8 +165,10 @@ public class jython
                     interp.execfile(opts.filename);
                 } catch (Throwable t) {
                     Py.printException(t);
-                    if (!opts.interactive)
+                    if (!opts.interactive) {
+                        interp.cleanup();
                         System.exit(-1);
+                    }
                 }
             }
         }
@@ -193,6 +195,7 @@ public class jython
                 Py.printException(t);
             }
         }
+        interp.cleanup();
     }
 }
 

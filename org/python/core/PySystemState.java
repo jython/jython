@@ -628,6 +628,20 @@ public class PySystemState extends PyObject
         Py.stdout.println(o.__repr__());
         sys.builtins.__setitem__("_", o);
     }
+
+    public void callExitFunc() throws PyIgnoreMethodTag {
+        PyObject exitfunc = __findattr__("exitfunc");
+        if (exitfunc != null) {
+            try {
+                exitfunc.__call__();
+            } catch (PyException exc) {
+                if (!Py.matchException(exc, Py.SystemExit)) {
+                    Py.println(stderr, Py.newString("Error in sys.exitfunc:"));
+                }
+                Py.printException(exc);
+            }
+        }
+    }
 }
 
 

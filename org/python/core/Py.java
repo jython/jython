@@ -159,6 +159,7 @@ public final class Py
                 if (tmp != null)
                     value = tmp;
             }
+            Py.getSystemState().callExitFunc();
             if (value instanceof PyInteger) {
                 System.exit(((PyInteger)value).getValue());
             } else {
@@ -822,8 +823,10 @@ public final class Py
             PyObject mod = imp.createFromCode("__main__", code);
         } catch (PyException e) {
             Py.printException(e);
+            Py.getSystemState().callExitFunc();
             System.exit(-1);
         }
+        Py.getSystemState().callExitFunc();
     }
 
     private static String getStackTrace(Throwable javaError) {

@@ -218,4 +218,8 @@ public class PythonInterpreter {
     public Object get(String name, Class javaclass) {
         return Py.tojava(locals.__finditem__(name.intern()), javaclass);
     }
+
+    public void cleanup() {
+        systemState.callExitFunc();
+    }
 }
