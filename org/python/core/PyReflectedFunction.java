@@ -141,7 +141,8 @@ public class PyReflectedFunction extends PyObject
         Object cself = callData.self;
         // Check to see if we should be using a super__ method instead
         // This is probably a bit inefficient...
-        if (self == null && cself != null && cself instanceof PyProxy) {
+        if (self == null && cself != null && cself instanceof PyProxy &&
+                   !__name__.startsWith("super__")) {
             PyInstance iself = ((PyProxy)cself)._getPyInstance();
             if (argslist[0].declaringClass != iself.__class__.proxyClass) {
                 PyJavaClass jc =
