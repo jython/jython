@@ -11,7 +11,7 @@ pardir = '..' #This might not be right...
 #curdir, pardir??
 sep = java.io.File.separator
 pathsep = java.io.File.pathSeparator
-#defpath?
+defpath = '.'
 
 #I can do better than this...
 environ = {}
