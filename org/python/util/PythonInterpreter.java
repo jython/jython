@@ -2,9 +2,8 @@ package org.python.util;
 import org.python.core.*;
 
 /**
- *
- * The PythonInterpreter class is a standard wrapper for a JPython interpreter
- * for use embedding in a Java application.
+ * The PythonInterpreter class is a standard wrapper for a JPython
+ * interpreter for use embedding in a Java application.
  *
  * @author  Jim Hugunin
  * @version 1.0, 02/23/97
@@ -16,7 +15,8 @@ public class PythonInterpreter {
     PyObject locals;
 
     // Initialize from a possibly precompiled Python module
-   /**
+
+    /**
      * Create a new Interpreter with an empty dictionary
      */
     public PythonInterpreter() {
@@ -24,10 +24,12 @@ public class PythonInterpreter {
     }
 
     /**
-     * Create a new interpreter with the given dictionary to use as its namespace
+     * Create a new interpreter with the given dictionary to use as its
+     * namespace
      *
      * @param dict	the dictionary to use
      */
+
     // Optional dictionary willl be used for locals namespace
     public PythonInterpreter(PyObject dict) {
         this(dict, null);
@@ -35,8 +37,10 @@ public class PythonInterpreter {
     
     public PythonInterpreter(PyObject dict, PySystemState systemState) {
         PySystemState.initialize();
-        if (dict == null) dict = new PyStringMap();
-        if (systemState == null) systemState = new PySystemState();
+        if (dict == null)
+	    dict = new PyStringMap();
+        if (systemState == null)
+	    systemState = new PySystemState();
         module = new PyModule("main", dict);
         this.systemState = systemState;
         locals = module.__dict__;
@@ -150,8 +154,8 @@ public class PythonInterpreter {
      *
      * @param name	the name of the variable
      * @param value the value to set the variable to.  
-        Will be automatically converted to an appropriate Python object.
-     */
+     Will be automatically converted to an appropriate Python object.
+    */
     public void set(String name, Object value) {
         locals.__setitem__(name.intern(), Py.java2py(value));
     }
@@ -177,10 +181,10 @@ public class PythonInterpreter {
     }
     
     /**
-     * Get the value of a variable in the local namespace
-     * Value will be returned as an instance of the given Java class.
-     * <code>interp.get("foo", Object.class)</code> will return the most appropriate
-     * generic Java object.
+     * Get the value of a variable in the local namespace Value will be
+     * returned as an instance of the given Java class.
+     * <code>interp.get("foo", Object.class)</code> will return the most
+     * appropriate generic Java object.
      *
      * @param name	the name of the variable
      * @param javaclass the class of object to return
