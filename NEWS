@@ -1,12 +1,44 @@
 Jython NEWS
 
-xx-nov-2001 Jython 2.1 beta 1
+03-dec-2001 Jython 2.1 beta 1
 
   New features.
    - The weakref module is now available.
    - The sys.exitfunc hook is called on exit and the sys.excepthook
      is called when an exception occur.
    - A CPython compatible xreadlines module.
+   - Support for os.environ and os.system() on common platforms.
+   - Includes zxJDBC for Python DB API 2.0 compatibility.
+
+  Bug fixes.
+   - [ #438297 ] SimpleHTTPServer does not work
+   - [ #440660 ] using nested java cls @ level >2 fails
+   - [ #448485 ] Tuple unpacking raises KeyError
+   - [ #448523 ] Support "ASCII" as builtin codec.
+   - [ #449316 ] ArrayList()[0] should raise IndexError
+   - [ #449956 ] jythonc 2.1a3 --package problem
+   - [ #450938 ] time module requires JDK 1.4
+   - [ #451746 ] jythonc --deep pjy$packages problem
+   - [ #452526 ] traceback lineno is the except line
+   - [ #452947 ] Class of innerclass inst <> innerclas
+   - [ #453301 ] jythonc --compileropts on Windows
+   - [ #457614 ] pls change &copyright; to (c) in sources
+   - [ #458945 ] Missing 'lastindex' on match objects
+   - [ #462280 ] builtin method as a class variable
+   - [ #467826 ] SHA digest() method doesn't work
+   - [ #473676 ] cStringIO bug
+   - [ #475445 ] incompatibility with python
+   - [ #475666 ] __nonzero__ exceptions must be ignored
+   - [ #476580 ] 'del obj.non_member' : wrong exception
+   - [ #476772 ] shutdowns in jython / atexit
+   - [ #477608 ] os.path.getmtime() missing
+   - [ #477768 ] ord([123]) 21a3
+   - [ #477793 ] os.utime() is missing.
+   - [ #480373 ] Can't find _PyInner with classloader.
+   - [ #480390 ] main() does not throw exceptions
+   - [ #484181 ] command line args in dos
+   - [ #485558 ] Synchronization bug in sys.initialize.
+   - [ #485968 ] cStringIO.softspace is not assignable.
 
 29-jul-2001 Jython 2.1 alpha 3
 
