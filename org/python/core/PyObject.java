@@ -624,7 +624,7 @@ public class PyObject implements java.io.Serializable {
        org.python.core.PyObject)
     **/ 
     public void __setattr__(String name, PyObject value) {
-        throw Py.TypeError("readonly class");
+        throw Py.TypeError("readonly class or attribute: " + name);
     }
         
     /**
