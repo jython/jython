@@ -14,12 +14,6 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     private ScopeInfo cur = null;
     private Hashtable nodeScopes;
 
-    private int mode;
-    private static final int GET=0;
-    private static final int SET=1;
-    private static final int DEL=2;
-    private static final int AUGSET=4;
-
     private int level      = 0;
     private int func_level = 0;
 
@@ -29,7 +23,6 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         this.code_compiler = code_compiler;
         this.nodeScopes = nodeScopes;
         scopes = new Stack();
-        mode = GET;
     }
 
     public void beginScope(String name, int kind, SimpleNode node,
