@@ -2,6 +2,7 @@
 package org.python.core;
 
 import org.python.parser.*;
+import org.python.parser.ast.modType;
 import java.io.*;
 
 /**
@@ -17,7 +18,7 @@ public class parser {
             return "";
         try {
             String text=null;
-            for(int i=0; i      <line; i++) {
+            for(int i=0; i < line; i++) {
                 text = reader.readLine();
             }
             return text;
@@ -73,7 +74,7 @@ public class parser {
     }
 
 
-    public static SimpleNode parse(InputStream istream, String kind,
+    public static modType parse(InputStream istream, String kind,
                                    String filename, CompilerFlags cflags)
     {
         int nbytes;
@@ -108,7 +109,7 @@ public class parser {
         } catch (IOException exc) { }
 
         PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader));
-        SimpleNode node = null;
+        modType node = null;
         try {
             if (kind.equals("eval")) {
                 node = g.eval_input();
@@ -140,11 +141,11 @@ public class parser {
         return node;
     }
 
-    public static SimpleNode partialParse(String string, String kind,
+    public static modType partialParse(String string, String kind,
                                           String filename,
                                           CompilerFlags cflags)
     {
-        SimpleNode node = null;
+        modType node = null;
         //System.err.println(new PyString(string).__repr__().toString());
         try {
             node = parse(new StringBufferInputStream(string),

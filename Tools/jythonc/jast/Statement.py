@@ -140,7 +140,7 @@ class Comment(Statement):
 
         out.writeln("/* %s", lines[0])
         for line in lines[1:-1]:
-            out.writeln(line)
+            out.writeln(line.replace("\\", "\\\\"))
         out.writeln("%s */", lines[-1])
 
     def __repr__(self):

@@ -10,7 +10,7 @@ public class CompilerFlags extends Object {
             nested_scopes = true;
     }
 
-    public boolean nested_scopes;
+    public boolean nested_scopes = true;
     public boolean division;
 
     public String encoding;

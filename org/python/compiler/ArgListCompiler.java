@@ -3,105 +3,97 @@
 package org.python.compiler;
 
 import org.python.parser.*;
+import org.python.parser.ast.*;
 import java.io.IOException;
 import java.util.Vector;
 import java.util.Enumeration;
 
-public class ArgListCompiler extends org.python.parser.Visitor
+public class ArgListCompiler extends Visitor
     implements PythonGrammarTreeConstants
 {
     public boolean arglist, keywordlist;
-    public Vector defaults;
+    public exprType[] defaults;
     public Vector names;
-    public SimpleNode init_code;
+    public Vector fpnames;
+    public Vector init_code;
 
     public ArgListCompiler() {
         arglist = keywordlist = false;
-        defaults = new Vector();
+        defaults = null;
         names = new Vector();
-        init_code = new SimpleNode(JJTSUITE);
+        fpnames = new Vector();
+        init_code = new Vector();
     }
 
     public void reset() {
         arglist = keywordlist = false;
-        defaults.removeAllElements();
+        defaults = null;
         names.removeAllElements();
-        //init_code.removeAllElements();
+        init_code.removeAllElements();
     }
 
-    public SimpleNode[] getDefaults() {
-        SimpleNode[] children = new SimpleNode[defaults.size()];
-        for (int i=0; i<children.length; i++) {
-            children[i] = (SimpleNode)defaults.elementAt(i);
+    public void appendInitCode(Suite node) {
+        int n = node.body.length;
+        stmtType[] newtree = new stmtType[init_code.size() + n];
+        init_code.copyInto(newtree);
+        System.arraycopy(node.body, 0, newtree, init_code.size(), n);
+        node.body = newtree;
+    }
+
+    public exprType[] getDefaults() {
+        return defaults;
+    }
+
+    public void visitArgs(argumentsType args) throws Exception {
+        for (int i = 0; i < args.args.length; i++) {
+            String name = (String) visit(args.args[i]);
+            names.addElement(name);
+            if (args.args[i] instanceof Tuple) {
+                Assign ass = new Assign(
+                    new exprType[] { args.args[i] },
+                    new Name(name, Name.Load, args.args[i]), args.args[i]);
+                init_code.addElement(ass);
+            }
         }
-        return children;
-    }
-
-    public Object varargslist(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++) {
-            node.getChild(i).visit(this);
+        if (args.vararg != null) {
+            arglist = true;
+            names.addElement(args.vararg);
         }
-        return null;
-    }
-
-    public Object ExtraArgList(SimpleNode node) throws Exception {
-        arglist = true;
-        names.addElement(node.getChild(0).visit(this));
-        return null;
-    }
-
-    public Object ExtraKeywordList(SimpleNode node) throws Exception {
-        keywordlist = true;
-        names.addElement(node.getChild(0).visit(this));
-        return null;
-    }
-
-    public Object defaultarg(SimpleNode node) throws Exception {
-        Object name = node.getChild(0).visit(this);
-        // make sure the named argument isn't already in the list of arguments
-        for (Enumeration e=names.elements(); e.hasMoreElements();) {
-            String objname = (String)e.nextElement();
-            if (objname.equals(name))
-                throw new ParseException("duplicate argument name found: " +
-                                         name, node);
+        if (args.kwarg != null) {
+            keywordlist = true;
+            names.addElement(args.kwarg);
         }
-        names.addElement(name);
-
-        //Handle tuple arguments properly
-        if (node.getChild(0).id == JJTFPLIST) {
-            SimpleNode expr = new SimpleNode(JJTEXPR_STMT);
-            // Set the right line number for this expr
-            expr.beginLine = node.beginLine;
-            expr.jjtAddChild(node.getChild(0), 0);
-            SimpleNode nm = new SimpleNode(JJTNAME);
-            nm.setInfo(name);
-            expr.jjtAddChild(nm, 1);
-            init_code.jjtAddChild(expr, init_code.getNumChildren());
-        }
-
-        // Handle default args if specified
-        if (node.getNumChildren() > 1) {
-            defaults.addElement(node.getChild(1));
-        } else {
-            if (defaults.size() > 0)
+        
+        defaults = args.defaults;
+        for (int i = 0; i < defaults.length; i++) {
+            if (defaults[i] == null)
                 throw new ParseException(
-                    "non-default argument follows default argument");
+                    "non-default argument follows default argument",
+                    args.args[args.args.length - defaults.length + i]);
         }
-        return null;
     }
 
-    public Object fplist(SimpleNode node) throws Exception {
-        String name = "(";
-        int n = node.getNumChildren();
-        for (int i=0; i<n-1; i++) {
-            name = name+node.getChild(i).visit(this)+", ";
+    public Object visitName(Name node) throws Exception {
+        if (node.ctx != Name.Store) 
+            return null;
+        
+        if (fpnames.contains(node.id)) {
+            throw new ParseException("duplicate argument name found: " +
+                                     node.id, node);
         }
-        name = name+node.getChild(n-1).visit(this)+")";
-        return name;
+        fpnames.addElement(node.id);
+        return node.id;
     }
 
-    public Object Name(SimpleNode node) throws ParseException, IOException {
-        return node.getInfo();
+    public Object visitTuple(Tuple node) throws Exception {
+        StringBuffer name = new StringBuffer("(");
+        int n = node.elts.length;
+        for (int i = 0; i < n-1; i++) {
+            name.append(visit(node.elts[i]));
+            name.append(", ");
+        }
+        name.append(visit(node.elts[n - 1]));
+        name.append(")");
+        return name.toString();
     }
 }

@@ -3,16 +3,16 @@
 package org.python.compiler;
 
 import org.python.parser.*;
+import org.python.parser.ast.*;
 import java.util.*;
 
 public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     private CompilationContext code_compiler;
 
-    private boolean nested_scopes = false;
-
     private Stack scopes;
     private ScopeInfo cur = null;
+    private Hashtable nodeScopes;
 
     private int mode;
     private static final int GET=0;
@@ -23,32 +23,13 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     private int level      = 0;
     private int func_level = 0;
 
-    public ScopesCompiler(CompilationContext code_compiler) {
+    public ScopesCompiler(CompilationContext code_compiler,
+                          Hashtable nodeScopes)
+    {
         this.code_compiler = code_compiler;
+        this.nodeScopes = nodeScopes;
         scopes = new Stack();
         mode = GET;
-        nested_scopes = code_compiler.getFutures().areNestedScopesOn();
-        // System.err.println("nested-scopes: "+nested_scopes);
-    }
-
-    public Object set(SimpleNode node) throws Exception {
-        return modal(node,SET);
-    }
-
-    public Object del(SimpleNode node) throws Exception {
-        return modal(node,DEL);
-    }
-
-
-    public Object augset(SimpleNode node) throws Exception {
-        return modal(node,AUGSET);
-    }
-
-    public Object modal(SimpleNode node, int newmode)throws Exception {
-        mode = newmode;
-        node.visit(this);
-        mode = GET;
-        return null;
     }
 
     public void beginScope(String name, int kind, SimpleNode node,
@@ -58,8 +39,9 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             scopes.push(cur);
         }
         if (kind == FUNCSCOPE) func_level++;
-        node.scope = cur = new ScopeInfo(name, node, level++, kind,
-                                         func_level, ac, nested_scopes);
+        cur = new ScopeInfo(name, node, level++, kind,
+                                         func_level, ac);
+        nodeScopes.put(node, cur);
     }
 
     public void endScope() throws Exception {
@@ -73,171 +55,129 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
 
     public void parse(SimpleNode node) throws Exception {
         try {
-            node.visit(this);
+            visit(node);
         } catch(Throwable t) {
             throw org.python.core.parser.fixParseError(null, t,
                     code_compiler.getFilename());
         }
     }
 
-    public Object single_input(SimpleNode node) throws Exception {
-        beginScope("<single-top>",TOPSCOPE,node,null);
-        suite(node);
+    public Object visitInteractive(Interactive node) throws Exception {
+        beginScope("<single-top>", TOPSCOPE, node, null);
+        visit(node.body);
         endScope();
         return null;
     }
 
-    public Object file_input(SimpleNode node) throws Exception {
-        beginScope("<file-top>",TOPSCOPE,node,null);
-        suite(node);
+    public Object visitModule(org.python.parser.ast.Module node)
+        throws Exception
+    {
+        beginScope("<file-top>", TOPSCOPE, node, null);
+        suite(node.body);
         endScope();
         return null;
     }
 
-    public Object eval_input(SimpleNode node) throws Exception {
-        beginScope("<eval-top>",TOPSCOPE,node,null);
-        return_stmt(node);
+    public Object visitExpression(Expression node) throws Exception {
+        beginScope("<eval-top>", TOPSCOPE, node, null);
+        visit(new Return(node.body));
         endScope();
         return null;
     }
 
-    private String def(SimpleNode node) {
-        String name = (String)node.getChild(0).getInfo();
+    private void def(String name) {
         cur.addBound(name);
-        return name;
     }
 
-    public Object funcdef(SimpleNode node) throws Exception {
-        String my_name = def(node);
+    public Object visitFunctionDef(FunctionDef node) throws Exception {
+        def(node.name);
         ArgListCompiler ac = new ArgListCompiler();
-        SimpleNode suite;
-        if (node.getNumChildren() == 3) {
-            suite = node.getChild(2);
-            //Parse arguments
-            node.getChild(1).visit(ac);
-        } else {
-            suite = node.getChild(1);
-        }
-        SimpleNode[] defaults = ac.getDefaults();
+        ac.visitArgs(node.args);
+
+        exprType[] defaults = ac.getDefaults();
         int defc = defaults.length;
-        for(int i=0; i<defc; i++) {
-            defaults[i].visit(this);
+        for (int i = 0; i < defc; i++) {
+            visit(defaults[i]);
         }
-        beginScope(my_name,FUNCSCOPE,node,ac);
+
+        beginScope(node.name, FUNCSCOPE, node, ac);
         int n = ac.names.size();
-        for (int i=0; i<n; i++) {
+        for (int i = 0; i < n; i++) {
             cur.addParam((String)ac.names.elementAt(i));
         }
-        ac.init_code.visit(this);
+        for (int i = 0; i < ac.init_code.size(); i++) {
+            visit((stmtType) ac.init_code.elementAt(i));
+        }
         cur.markFromParam();
-        suite.visit(this);
+        suite(node.body);
         endScope();
         return null;
     }
 
-    public Object expr_stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        node.getChild(n-1).visit(this);
-        for (int i=0; i<n-1; i++) {
-            set(node.getChild(i));
+    public Object visitLambda(Lambda node) throws Exception {
+        ArgListCompiler ac = new ArgListCompiler();
+        ac.visitArgs(node.args);
+
+        SimpleNode[] defaults = ac.getDefaults();
+        int defc = defaults.length;
+        for (int i = 0; i < defc; i++) {
+            visit(defaults[i]);
         }
-        return null;
-    }
 
-    public Object print_ext(SimpleNode node) throws Exception {
-        node.getChild(0).visit(this);
-        return null;
-    }
-
-    public Object print_stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        if ( n > 0 ) {
-            for (int i=0; i<n-1; i++) {
-                node.getChild(i).visit(this);
-            }
-            if(node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA)
-                node.getChild(n-1).visit(this);
+        beginScope("<lambda>", FUNCSCOPE, node, ac);
+        int n = ac.names.size();
+        for (int i = 0; i < n; i++) {
+            cur.addParam((String)ac.names.elementAt(i));
         }
+        for (int i = 0; i < ac.init_code.size(); i++) 
+            visit((stmtType) ac.init_code.elementAt(i));
+        cur.markFromParam();
+        visit(node.body);
+        endScope();
         return null;
     }
 
-    public Object del_stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++) {
-            del(node.getChild(i));
-        }
-        return null;
+    public void suite(stmtType[] stmts) throws Exception {
+        int n = stmts.length;
+        for (int i = 0; i < n; i++)
+            visit(stmts[i]);
     }
 
-    public Object pass_stmt(SimpleNode n) throws Exception {
-        return null;
-    }
-
-    public Object break_stmt(SimpleNode n) throws Exception {
-        return null;
-    }
-
-    public Object continue_stmt(SimpleNode n) throws Exception {
-        return null;
-    }
-
-    public Object return_stmt(SimpleNode node) throws Exception {
-        if (node.getNumChildren() == 1) node.getChild(0).visit(this);
-        return null;
-    }
-
-    public void stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++) node.getChild(i).visit(this);
-    }
-
-    public Object raise_stmt(SimpleNode node) throws Exception {
-        stmt(node);
-        return null;
-    }
-
-    public Object Import(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for(int i = 0; i < n; i++) {
-            SimpleNode imp = node.getChild(i);
-            switch(imp.id) {
-            case PythonGrammarTreeConstants.JJTDOTTED_NAME:
-                cur.addBound((String)imp.getChild(0).getInfo());
-                break;
-            case PythonGrammarTreeConstants.JJTDOTTED_AS_NAME:
-                cur.addBound((String)imp.getChild(1).getInfo());
-                break;
+    public Object visitImport(Import node) throws Exception {
+        int n = node.names.length;
+        for (int i = 0; i < n; i++) {
+            if (node.names[i].asname != null)
+                cur.addBound(node.names[i].asname);
+            else {
+                String name = node.names[i].name;
+                if (name.indexOf('.') > 0)
+                    name = name.substring(0, name.indexOf('.'));
+                cur.addBound(name);
             }
         }
         return null;
     }
 
-    public Object ImportFrom(SimpleNode node) throws Exception {
+    public Object visitImportFrom(ImportFrom node) throws Exception {
         Future.checkFromFuture(node); // future stmt support
-        int n = node.getNumChildren();
-        if (n == 1) {
+        int n = node.names.length;
+        if (n == 0) {
             cur.from_import_star = true;
             return null;
         }
-        for (int i = 1; i < n; i++) {
-            SimpleNode imp = node.getChild(i);
-            switch(imp.id) {
-            case PythonGrammarTreeConstants.JJTNAME:
-                cur.addBound((String)imp.getInfo());
-                break;
-            case PythonGrammarTreeConstants.JJTIMPORT_AS_NAME:
-                cur.addBound((String)imp.getChild(1).getInfo());
-                break;
-            }
+        for (int i = 0; i < n; i++) {
+            if (node.names[i].asname != null)
+                cur.addBound(node.names[i].asname);
+            else
+                cur.addBound(node.names[i].name);
         }
-
         return null;
     }
 
-    public Object global_stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for(int i = 0; i < n; i++) {
-            String name = (String)node.getChild(i).getInfo();
+    public Object visitGlobal(Global node) throws Exception {
+        int n = node.names.length;
+        for (int i = 0; i < n; i++) {
+            String name = node.names[i];
             int prev = cur.addGlobal(name);
             if (prev >= 0) {
                 if ((prev&FROM_PARAM) != 0)
@@ -253,60 +193,15 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
-    public Object exec_stmt(SimpleNode node) throws Exception {
+    public Object visitExec(Exec node) throws Exception {
         cur.exec = true;
-        int n = node.getNumChildren();
-        if (n == 1) cur.unqual_exec = true;
-        for (int i = 0; i < n; i++) node.getChild(i).visit(this);
+        if (node.globals == null && node.locals == null)
+            cur.unqual_exec = true;
+        traverse(node);
         return null;
     }
 
-    public Object assert_stmt(SimpleNode node) throws Exception {
-        stmt(node);
-        return null;
-    }
-
-    public Object if_stmt(SimpleNode node) throws Exception {
-        stmt(node);
-        return null;
-    }
-
-    public Object while_stmt(SimpleNode node) throws Exception {
-        stmt(node);
-        return null;
-    }
-
-    public Object for_stmt(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        set(node.getChild(0));
-        node.getChild(1).visit(this);
-        node.getChild(2).visit(this);
-        if (node.getNumChildren()>3) node.getChild(3).visit(this);
-        return null;
-    }
-
-    public Object try_stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++) {
-            if (i%2 == 1 && i != n-1) {
-                switch(node.getChild(i).getNumChildren()) {
-                case 2:
-                    set(node.getChild(i).getChild(1));
-                case 1:
-                    node.getChild(i).getChild(0).visit(this);
-                }
-                continue;
-            }
-            node.getChild(i).visit(this);
-        }
-        return null;
-    }
-
-    public Object suite(SimpleNode node) throws Exception {
-        stmt(node);
-        return null;
-    }
-
+/*
     private static void illassign(SimpleNode node) throws Exception {
         String target = "operator";
         if (node.id == PythonGrammarTreeConstants.JJTCALL_OP) {
@@ -316,360 +211,34 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         }
         throw new ParseException("can't assign to "+target,node);
     }
+*/
 
-    public void binaryop(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        node.getChild(0).visit(this);
-        node.getChild(1).visit(this);
-    }
-
-    public void unaryop(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        node.getChild(0).visit(this);
-    }
-
-
-    public Object or_boolean(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object and_boolean(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object not_1op(SimpleNode node) throws Exception {
-        unaryop(node);
-        return null;
-    }
-
-    public Object comparision(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++) {
-            if (i%2 == 0) node.getChild(i).visit(this);
-        }
-        return null;
-    }
-
-    public Object or_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object xor_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object and_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object lshift_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object rshift_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object add_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object sub_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object mul_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object div_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object floordiv_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object mod_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object pos_1op(SimpleNode node) throws Exception {
-        unaryop(node);
-        return null;
-    }
-
-    public Object neg_1op(SimpleNode node) throws Exception {
-        unaryop(node);
-        return null;
-    }
-
-    public Object invert_1op(SimpleNode node) throws Exception {
-        unaryop(node);
-        return null;
-    }
-
-    public Object pow_2op(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object str_1op(SimpleNode node) throws Exception {
-        unaryop(node);
-        return null;
-    }
-
-    public Object strjoin(SimpleNode node) throws Exception {
-        binaryop(node);
-        return null;
-    }
-
-    public Object Call_Op(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        node.getChild(0).visit(this);
-        if (node.getNumChildren()>1) {
-            SimpleNode args=node.getChild(1);
-            int n = args.getNumChildren();
-            for (int i=0; i<n; i++) {
-                SimpleNode arg = args.getChild(i);
-                switch(arg.id) {
-                case PythonGrammarTreeConstants.JJTKEYWORD:
-                    arg.getChild(1).visit(this);
-                    break;
-                case PythonGrammarTreeConstants.JJTEXTRAARGVALUELIST:
-                case PythonGrammarTreeConstants.JJTEXTRAKEYWORDVALUELIST:
-                    arg.getChild(0).visit(this);
-                    break;
-                default:
-                    arg.visit(this);
-                }
-            }
-        }
-        return null;
-    }
-
-    public Object Index_Op(SimpleNode node) throws Exception {
-        int prevmode= mode;
-        mode = GET;
-        node.getChild(0).visit(this);
-        node.getChild(1).visit(this);
-        mode = prevmode;
-        return null;
-    }
-
-    public Object Dot_Op(SimpleNode node) throws Exception {
-        int prevmode = mode;
-        mode = GET;
-        node.getChild(0).visit(this);
-        mode = prevmode;
-        return null;
-    }
-
-    public Object tuple(SimpleNode node) throws Exception {
-        if (mode ==AUGSET) {
-            throw new ParseException(
-            "augmented assign to tuple not possible", node);
-        }
-        int n = node.getNumChildren();
-        if (n > 0) {
-            for (int i=0; i<n-1; i++) node.getChild(i).visit(this);
-            if (node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA)
-                node.getChild(n-1).visit(this);
-        }
-        return null;
-    }
-
-    public Object fplist(SimpleNode node) throws Exception {
-        return list(node);
-    }
-
-    public Object list(SimpleNode node) throws Exception {
-        if (mode ==AUGSET) {
-            throw new ParseException(
-            "augmented assign to list not possible", node);
-        }
-        int n = node.getNumChildren();
-        if (n > 0) {
-            for (int i=0; i<n-1; i++) node.getChild(i).visit(this);
-            if (node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA)
-                node.getChild(n-1).visit(this);
-        }
-        return null;
-    }
-
-    public Object list_iter(SimpleNode node) throws Exception {
-        if (node.getNumChildren() == 1) node.getChild(0).visit(this);
-        return null;
-    }
-
-    public Object dictionary(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        stmt(node);
-        return null;
-    }
-
-    public Object lambdef(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        ArgListCompiler ac = new ArgListCompiler();
-        SimpleNode expr;
-        if (node.getNumChildren() == 2) {
-            expr = node.getChild(1);
-            //Parse arguments
-            node.getChild(0).visit(ac);
-        } else {
-            expr = node.getChild(0);
-        }
-        SimpleNode[] defaults = ac.getDefaults();
-        int defc = defaults.length;
-        for(int i=0; i<defc; i++) {
-            defaults[i].visit(this);
-        }
-        beginScope("<lambda>",FUNCSCOPE,node,ac);
-        int n = ac.names.size();
-        for (int i=0; i<n; i++) {
-            cur.addParam((String)ac.names.elementAt(i));
-        }
-        ac.init_code.visit(this);
-        cur.markFromParam();
-        expr.visit(this);
+    public Object visitClassDef(ClassDef node) throws Exception {
+        def(node.name);
+        int n = node.bases.length;
+        for (int i = 0; i < n; i++)
+            visit(node.bases[i]);
+        beginScope(node.name, CLASSSCOPE, node, null);
+        suite(node.body);
         endScope();
         return null;
     }
 
-    public Object Ellipses(SimpleNode n) throws Exception {
-        return null;
-    }
-
-    public Object Slice(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++) {
-            SimpleNode snode = node.getChild(i);
-            if (snode.id != PythonGrammarTreeConstants.JJTCOLON) {
-                snode.visit(this);
-            }
-        }
-        return null;
-    }
-
-    public Object classdef(SimpleNode node) throws Exception {
-        String cl_name = def(node);
-        int n = node.getNumChildren();
-        SimpleNode suite = node.getChild(n-1);
-        for (int i=1; i<n-1; i++) node.getChild(i).visit(this);
-        beginScope(cl_name,CLASSSCOPE,node,null);
-        suite.visit(this);
-        endScope();
-        return null;
-    }
-
-    public Object Int(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        return null;
-    }
-
-    public Object Float(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        return null;
-    }
-
-    public Object Complex(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
-        return null;
-    }
-
-    public Object Name(SimpleNode node) throws Exception {
-        String name = (String)node.getInfo();
-        if ( mode != GET) {
+    public Object visitName(Name node) throws Exception {
+        String name = node.id;
+        if (node.ctx != expr_contextType.Load) {
             if (name.equals("__debug__"))
-                code_compiler.error("can not assign to __debug__",false,node);
+                code_compiler.error("can not assign to __debug__", true,node);
             cur.addBound(name);
         }
         else cur.addUsed(name);
         return null;
     }
 
-    public Object String(SimpleNode node) throws Exception {
-        if (mode != GET) illassign(node);
+    public Object visitListComp(ListComp node) throws Exception {
+        String tmp = "_[" + (++cur.list_comprehension_count) + "]";
+        cur.addBound(tmp);
+        traverse(node);
         return null;
     }
-
-    public void aug_assign(SimpleNode node) throws Exception {
-        augset(node.getChild(0));
-        node.getChild(1).visit(this);
-    }
-
-    public Object aug_plus(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_minus(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_multiply(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_divide(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_floordivide(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_modulo(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_and(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_or(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_xor(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_lshift(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_rshift(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
-    public Object aug_power(SimpleNode node) throws Exception {
-        aug_assign(node);
-        return null;
-    }
-
 }

@@ -119,7 +119,7 @@ public class imp
 
             if (filename == null)
                 filename = "<unknown>";
-            org.python.parser.SimpleNode node = null; //*Forte*
+            org.python.parser.ast.modType node = null; //*Forte*
             try {
                 node = parser.parse(fp, "exec", filename, null);
             } finally {

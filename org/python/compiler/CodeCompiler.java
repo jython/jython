@@ -3,8 +3,14 @@
 package org.python.compiler;
 
 import org.python.parser.*;
+import org.python.parser.ast.*;
+import org.python.parser.ast.Attribute;
 import org.python.core.Py;
 import org.python.core.PyObject;
+import org.python.core.PyInteger;
+import org.python.core.PyFloat;
+import org.python.core.PyLong;
+import org.python.core.PyComplex;
 import org.python.core.PyException;
 import org.python.core.CompilerFlags;
 import java.io.IOException;
@@ -13,7 +19,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 public class CodeCompiler extends Visitor
-    implements CompilationContext, ClassConstants, PythonGrammarTreeConstants
+    implements ClassConstants //, PythonGrammarTreeConstants
 {
 
     public static final Object Exit=new Integer(1);
@@ -32,24 +38,23 @@ public class CodeCompiler extends Visitor
     public ConstantPool pool;
     public CodeCompiler mrefs;
 
-    int mode;
     int temporary;
+    int augmode;
+    int augtmp1;
+    int augtmp2;
+    int augtmp3;
+    int augtmp4;
 
     public boolean fast_locals, print_results;
 
     public Hashtable tbl;
     public ScopeInfo my_scope;
 
-    public Future getFutures() { return module.futures; }
-    public String getFilename() { return module.sfilename; }
-
-
     boolean optimizeGlobals = true;
     public Vector names;
     public String className;
 
     public Stack continueLabels, breakLabels, finallyLabels;
-    public Stack listComprehensionExprs, listComprehensionAppends;
 
     public CodeCompiler(Module module, boolean print_results) {
         this.module = module;
@@ -59,8 +64,6 @@ public class CodeCompiler extends Visitor
         continueLabels = new Stack();
         breakLabels = new Stack();
         finallyLabels = new Stack();
-        listComprehensionExprs = new Stack();
-        listComprehensionAppends = new Stack();
         this.print_results = print_results;
     }
 
@@ -111,87 +114,63 @@ public class CodeCompiler extends Visitor
     }
 
 
+    boolean inSet = false;
     public void set(SimpleNode node, int tmp) throws Exception {
         //System.out.println("tmp: "+tmp);
-        if (mode == SET) {
-            //System.out.println("recurse set: "+tmp+", "+temporary+", "+
-            //                   code.getLocal()+", "+code.getLocal());
-            int old_tmp = temporary;
-            temporary = tmp;
-            node.visit(this);
-            temporary = old_tmp;
-        } else {
-            temporary = tmp;
-            mode = SET;
-            node.visit(this);
-            mode = GET;
+        if (inSet) {
+            System.out.println("recurse set: "+tmp+", "+temporary+", "+
+                               code.getLocal()+", "+code.getLocal());
         }
+        temporary = tmp;
+        visit(node);
     }
 
 
     private void saveAugTmps(SimpleNode node, int count) throws Exception {
         if (count >= 4) {
-            node.aug_tmp4 = code.getLocal();
-            code.astore(node.aug_tmp4);
+            augtmp4 = code.getLocal();
+            code.astore(augtmp4);
         }
         if (count >= 3) {
-            node.aug_tmp3 = code.getLocal();
-            code.astore(node.aug_tmp3);
+            augtmp3 = code.getLocal();
+            code.astore(augtmp3);
         }
         if (count >= 2) {
-            node.aug_tmp2 = code.getLocal();
-            code.astore(node.aug_tmp2);
+            augtmp2 = code.getLocal();
+            code.astore(augtmp2);
         }
-        node.aug_tmp1 = code.getLocal();
-        code.astore(node.aug_tmp1);
+        augtmp1 = code.getLocal();
+        code.astore(augtmp1);
 
-        code.aload(node.aug_tmp1);
+        code.aload(augtmp1);
         if (count >= 2)
-            code.aload(node.aug_tmp2);
+            code.aload(augtmp2);
         if (count >= 3)
-            code.aload(node.aug_tmp3);
+            code.aload(augtmp3);
         if (count >= 4)
-            code.aload(node.aug_tmp4);
+            code.aload(augtmp4);
     }
 
 
     private void restoreAugTmps(SimpleNode node, int count) throws Exception {
-       code.aload(node.aug_tmp1);
-       code.freeLocal(node.aug_tmp1);
+       code.aload(augtmp1);
+       code.freeLocal(augtmp1);
        if (count == 1)
            return;
-       code.aload(node.aug_tmp2);
-       code.freeLocal(node.aug_tmp2);
+       code.aload(augtmp2);
+       code.freeLocal(augtmp2);
        if (count == 2)
            return;
-       code.aload(node.aug_tmp3);
-       code.freeLocal(node.aug_tmp3);
+       code.aload(augtmp3);
+       code.freeLocal(augtmp3);
        if (count == 3)
            return;
-       code.aload(node.aug_tmp4);
-       code.freeLocal(node.aug_tmp4);
-       if (count == 4)
-           return;
+       code.aload(augtmp4);
+       code.freeLocal(augtmp4);
    }
 
 
-    public void error(String msg,boolean err,SimpleNode node)
-        throws Exception
-    {
-        if (!err) {
-            try {
-                Py.warning(Py.SyntaxWarning,msg,
-                           (module.sfilename!=null)?module.sfilename:"?",
-                           node.beginLine,null,Py.None);
-                return;
-            } catch(PyException e) {
-                if (!Py.matchException(e,Py.SyntaxWarning)) throw e;
-            }
-        }
-        throw new ParseException(msg,node);
-    }
-
-    public void parse(SimpleNode node, Code code,
+    public void parse(modType node, Code code,
                       boolean fast_locals, String className,
                       boolean classBody, ScopeInfo scope,CompilerFlags cflags)
         throws Exception
@@ -200,19 +179,13 @@ public class CodeCompiler extends Visitor
         this.className = className;
         this.code = code;
 
-        if (scope == null) {
-            new ScopesCompiler(this).parse(node);
-            scope = node.scope;
-        }
-
         my_scope = scope;
         names = scope.names;
 
         tbl = scope.tbl;
         optimizeGlobals = fast_locals&&!scope.exec&&!scope.from_import_star;
 
-        mode = GET;
-        Object exit = node.visit(this);
+        Object exit = visit(node);
         //System.out.println("exit: "+exit+", "+(exit==null));
 
         if (classBody) {
@@ -229,36 +202,26 @@ public class CodeCompiler extends Visitor
         }
     }
 
-    public Object single_input(SimpleNode node) throws Exception {
-        return suite(node);
-        /*
-          if (node.getNumChildren() == 1 &&
-          node.getChild(0).id == PythonGrammarTreeConstants.JJTEXPR_STMT &&
-          node.getChild(0).getNumChildren() == 1) {
-          //System.out.println("returning: "+node.getChild(0).getChild(0));
-          return return_stmt(node.getChild(0));
-          } else {
-          //System.out.println("suite");
-          return suite(node);
-          }
-        */
+    public Object visitInteractive(Interactive node) throws Exception {
+        return visit(node.body);
     }
 
-    public Object file_input(SimpleNode suite) throws Exception {
+    public Object visitModule(org.python.parser.ast.Module suite)
+        throws Exception
+    {
         if (mrefs.setglobal == 0) {
             mrefs.setglobal = code.pool.Methodref(
                 "org/python/core/PyFrame", "setglobal",
                 "(" +$str + $pyObj + ")V");
         }
 
-        if (suite.getNumChildren() > 0 &&
-            suite.getChild(0).id == JJTEXPR_STMT &&
-            suite.getChild(0).getChild(0).id == JJTSTRING)
+        if (suite.body.length > 0 &&
+            suite.body[0] instanceof Expr &&
+            ((Expr)suite.body[0]).value instanceof Str)
         {
             loadFrame();
             code.ldc("__doc__");
-            suite.getChild(0).getChild(0).visit(this);
-
+            visit(((Expr) suite.body[0]).value);
             code.invokevirtual(mrefs.setglobal);
         }
         if (module.setFile) {
@@ -267,11 +230,12 @@ public class CodeCompiler extends Visitor
             module.filename.get(code);
             code.invokevirtual(mrefs.setglobal);
         }
-        return suite(suite);
+        traverse(suite);
+        return null;
     }
 
-    public Object eval_input(SimpleNode node) throws Exception {
-        return return_stmt(node, true);
+    public Object visitExpression(Expression node) throws Exception {
+        return visitReturn(new Return(node.body, node), true);
     }
 
     public int EmptyObjects;
@@ -282,10 +246,6 @@ public class CodeCompiler extends Visitor
             n = 0;
         else
             n = nodes.length;
-
-        if (n > 0 && nodes[n-1].id == JJTCOMMA) {
-            n -= 1;
-        }
 
         if (n == 0) {
             if (mrefs.EmptyObjects == 0) {
@@ -302,7 +262,7 @@ public class CodeCompiler extends Visitor
             for(int i=0; i<n; i++) {
                 code.aload(tmp);
                 code.iconst(i);
-                nodes[i].visit(this);
+                visit(nodes[i]);
                 code.aastore();
             }
             code.aload(tmp);
@@ -310,13 +270,12 @@ public class CodeCompiler extends Visitor
         }
     }
 
-    public void getDocString(SimpleNode suite) throws Exception {
+    public void getDocString(stmtType[] suite) throws Exception {
         //System.out.println("doc: "+suite.getChild(0));
-        if (suite.getNumChildren() > 0 &&
-            suite.getChild(0).id == JJTEXPR_STMT &&
-            suite.getChild(0).getChild(0).id == JJTSTRING)
+        if (suite.length > 0 && suite[0] instanceof Expr &&
+            ((Expr) suite[0]).value instanceof Str)
         {
-            suite.getChild(0).getChild(0).visit(this);
+            visit(((Expr) suite[0]).value);
         } else {
             code.aconst_null();
         }
@@ -358,15 +317,8 @@ public class CodeCompiler extends Visitor
 
     int f_globals, PyFunction_init, PyFunction_closure_init;
 
-    public Object funcdef(SimpleNode node) throws Exception {
-        String name = getName(node.getChild(0));
-        SimpleNode suite;
-        if (node.getNumChildren() == 3) {
-            suite = node.getChild(2);
-            //Parse arguments
-        } else {
-            suite = node.getChild(1);
-        }
+    public Object visitFunctionDef(FunctionDef node) throws Exception {
+        String name = getName(node.name);
 
         setline(node);
 
@@ -379,16 +331,18 @@ public class CodeCompiler extends Visitor
         }
         code.getfield(mrefs.f_globals);
 
-        makeArray(node.scope.ac.getDefaults());
+        ScopeInfo scope = module.getScopeInfo(node);
 
-        node.scope.setup_closure(my_scope);
-        node.scope.dump();
-        module.PyCode(suite, name, true, className, false, false,
-                      node.beginLine, node.scope).get(code);
-        Vector freenames = node.scope.freevars;
-        node.scope = null; // release scope info
+        makeArray(scope.ac.getDefaults());
 
-        getDocString(suite);
+        scope.setup_closure(my_scope);
+        scope.dump();
+        module.PyCode(new Suite(node.body, node), name, true,
+                      className, false, false,
+                      node.beginLine, scope).get(code);
+        Vector freenames = scope.freevars;
+
+        getDocString(node.body);
 
         if (!makeClosure(freenames)) {
             if (mrefs.PyFunction_init == 0) {
@@ -408,43 +362,39 @@ public class CodeCompiler extends Visitor
 
         }
 
-        set(node.getChild(0));
+        set(new Name(node.name, Name.Store, node));
         return null;
     }
 
     public int printResult;
 
-    public Object expr_stmt(SimpleNode node) throws Exception {
+    public Object visitExpr(Expr node) throws Exception {
         setline(node);
-        int n = node.getNumChildren();
-        if (n == 1 &&
-              node.getChild(0).id >= JJTAUG_PLUS &&
-              node.getChild(0).id <= JJTAUG_POWER) {
-           node.getChild(0).visit(this);
-           return null;
-        }
+        visit(node.value);
 
-        node.getChild(n-1).visit(this);
-        if (n == 1) {
-            if (print_results) {
-                if (mrefs.printResult == 0) {
-                    mrefs.printResult = code.pool.Methodref(
-                        "org/python/core/Py",
-                        "printResult", "(" + $pyObj + ")V");
-                }
-                code.invokestatic(mrefs.printResult);
-            } else {
-                code.pop();
+        if (print_results) {
+            if (mrefs.printResult == 0) {
+                mrefs.printResult = code.pool.Methodref(
+                    "org/python/core/Py",
+                    "printResult", "(" + $pyObj + ")V");
             }
-            return null;
+            code.invokestatic(mrefs.printResult);
+        } else {
+            code.pop();
         }
-        if (n == 2) {
-            set(node.getChild(0));
+        return null;
+    }
+
+    public Object visitAssign(Assign node) throws Exception  {
+        setline(node);
+        visit(node.value);
+        if (node.targets.length == 1) {
+            set(node.targets[0]);
             return null;
         }
         int tmp = storeTop();
-        for (int i=n-2; i>=0; i--) {
-            set(node.getChild(i), tmp);
+        for (int i=node.targets.length-1; i>=0; i--) {
+            set(node.targets[i], tmp);
         }
         code.freeLocal(tmp);
         return null;
@@ -452,30 +402,14 @@ public class CodeCompiler extends Visitor
 
     public int print1, print2, print3, print4, print5, print6;
 
-    public Object print_ext(SimpleNode node) throws Exception {
-        // There better be exactly one child
-        node.getChild(0).visit(this);
-        return null;
-    }
-
-    public Object print_stmt(SimpleNode node) throws Exception {
+    public Object visitPrint(Print node) throws Exception {
         setline(node);
-        int n = node.getNumChildren();
-        // Extended print statement assumes there's at least one child
-        // node, otherwise a syntax error should have been raised.
         int tmp = -1;
         int printcomma, printlnv, println;
-        int i = 0, nochildren = 0;
-        boolean printext = false;
 
-        if (node.getNumChildren() > 0 &&
-            node.getChild(0).id == JJTPRINT_EXT)
-        {
-            printext = true;
-            node.getChild(0).visit(this);
+        if (node.dest != null) {
+            visit(node.dest);
             tmp = storeTop();
-            i = 1;
-            nochildren = 1;
             if (mrefs.print4 == 0) {
                 mrefs.print4 = pool.Methodref(
                     "org/python/core/Py", "printComma",
@@ -515,44 +449,40 @@ public class CodeCompiler extends Visitor
             }
             printlnv = mrefs.print3;
         }
-        for (; i < n-1; i++) {
-            if (printext)
-                code.aload(tmp);
-            node.getChild(i).visit(this);
-            code.invokestatic(printcomma);
-        }
-        if (node.getNumChildren() == nochildren) {
-            if (printext)
+
+        if (node.value == null || node.value.length == 0) {
+            if (node.dest != null)
                 code.aload(tmp);
             code.invokestatic(printlnv);
-        }
-        else {
-            if (node.getChild(n-1).id != JJTCOMMA) {
-                if (printext)
+        } else {
+            for (int i = 0; i < node.value.length; i++) {
+                if (node.dest != null)
                     code.aload(tmp);
-                node.getChild(n-1).visit(this);
-                code.invokestatic(println);
+                visit(node.value[i]);
+                if (node.nl && i == node.value.length - 1) {
+                    code.invokestatic(println);
+                } else {
+                    code.invokestatic(printcomma);
+                }
             }
         }
-        if (printext)
+        if (node.dest != null)
             code.freeLocal(tmp);
         return null;
     }
 
-    public Object del_stmt(SimpleNode node) throws Exception {
+    public Object visitDelete(Delete node) throws Exception {
         setline(node);
-        mode = DEL;
-        node.getChild(0).visit(this);
-        mode = GET;
+        traverse(node);
         return null;
     }
 
-    public Object pass_stmt(SimpleNode node) throws Exception {
+    public Object visitPass(Pass node) throws Exception {
         setline(node);
         return null;
     }
 
-    public Object break_stmt(SimpleNode node) throws Exception {
+    public Object visitBreak(Break node) throws Exception {
         //setline(node); Not needed here...
         if (breakLabels.empty()) {
             throw new ParseException("'break' outside loop", node);
@@ -570,7 +500,7 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public Object continue_stmt(SimpleNode node) throws Exception {
+    public Object visitContinue(Continue node) throws Exception {
         //setline(node); Not needed here...
         if (continueLabels.empty()) {
             throw new ParseException("'continue' not properly in loop", node);
@@ -588,19 +518,23 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public Object return_stmt(SimpleNode node) throws Exception {
-        return return_stmt(node, false);
+    public Object visitYield(Yield node) throws Exception {
+        return null;
     }
 
-    public Object return_stmt(SimpleNode node, boolean inEval)
+    public Object visitReturn(Return node) throws Exception {
+        return visitReturn(node, false);
+    }
+
+    public Object visitReturn(Return node, boolean inEval)
         throws Exception
     {
         setline(node);
         if (!inEval && !fast_locals) {
             throw new ParseException("'return' outside function", node);
         }
-        if (node.getNumChildren() == 1) {
-            node.getChild(0).visit(this);
+        if (node.value != null) {
+            visit(node.value);
         } else {
             getNone();
         }
@@ -616,44 +550,37 @@ public class CodeCompiler extends Visitor
 
     public int makeException0, makeException1, makeException2, makeException3;
 
-    public Object raise_stmt(SimpleNode node) throws Exception {
+    public Object visitRaise(Raise node) throws Exception {
         setline(node);
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++)
-            node.getChild(i).visit(this);
-        switch(n) {
-        case 0:
+        traverse(node);
+        if (node.type == null) {
             if (mrefs.makeException0 == 0) {
                 mrefs.makeException0 = code.pool.Methodref(
                     "org/python/core/Py", "makeException",
                     "()" + $pyExc);
             }
             code.invokestatic(mrefs.makeException0);
-            break;
-        case 1:
+        } else if (node.inst == null) {
             if (mrefs.makeException1 == 0) {
                 mrefs.makeException1 = code.pool.Methodref(
                     "org/python/core/Py", "makeException",
                     "(" + $pyObj + ")" + $pyExc);
             }
             code.invokestatic(mrefs.makeException1);
-            break;
-        case 2:
+        } else if (node.tback == null) {
             if (mrefs.makeException2 == 0) {
                 mrefs.makeException2 = code.pool.Methodref(
                     "org/python/core/Py", "makeException",
                     "(" + $pyObj + $pyObj + ")" + $pyExc);
             }
             code.invokestatic(mrefs.makeException2);
-            break;
-        case 3:
+        } else {
             if (mrefs.makeException3 == 0) {
                 mrefs.makeException3 = code.pool.Methodref(
                     "org/python/core/Py", "makeException",
                     "(" + $pyObj + $pyObj + $pyObj + ")" + $pyExc);
             }
             code.invokestatic(mrefs.makeException3);
-            break;
         }
         code.athrow();
         return Exit;
@@ -661,15 +588,13 @@ public class CodeCompiler extends Visitor
 
     public int importOne, importOneAs;
 
-    public Object Import(SimpleNode node) throws Exception {
+    public Object visitImport(Import node) throws Exception {
         setline(node);
-        int n = node.getNumChildren();
-        for (int i=0; i<n; i++) {
-            SimpleNode cnode = node.getChild(i);
-            SimpleNode asnameNode;
-            if (cnode.id == JJTDOTTED_AS_NAME) {
-                String name = (String)cnode.getChild(0).visit(this);
-                asnameNode = cnode.getChild(1);
+        for (int i = 0; i < node.names.length; i++) {
+            String asname = null;
+            if (node.names[i].asname != null) {
+                String name = node.names[i].name;
+                asname = node.names[i].asname;
                 code.ldc(name);
                 loadFrame();
                 if (mrefs.importOneAs == 0) {
@@ -679,8 +604,10 @@ public class CodeCompiler extends Visitor
                 }
                 code.invokestatic(mrefs.importOneAs);
             } else {
-                String name = (String)cnode.visit(this);
-                asnameNode = cnode.getChild(0);
+                String name = node.names[i].name;
+                asname = name;
+                if (asname.indexOf('.') > 0)
+                    asname = asname.substring(0, asname.indexOf('.'));
                 code.ldc(name);
                 loadFrame();
                 if (mrefs.importOne == 0) {
@@ -690,9 +617,7 @@ public class CodeCompiler extends Visitor
                 }
                 code.invokestatic(mrefs.importOne);
             }
-
-            set(asnameNode);
-
+            set(new Name(asname, Name.Store, node));
         }
         return null;
     }
@@ -700,24 +625,18 @@ public class CodeCompiler extends Visitor
 
     public int importAll, importFrom;
 
-    public Object ImportFrom(SimpleNode node) throws Exception {
+    public Object visitImportFrom(ImportFrom node) throws Exception {
         Future.checkFromFuture(node); // future stmt support
         setline(node);
-        String name = (String)node.getChild(0).visit(this);
-        code.ldc(name);
-        int n = node.getNumChildren();
-        if (n > 1) {
-            String[] names = new String[n-1];
-            SimpleNode[] asnameNodes = new SimpleNode[n-1];
-            for (int i=0; i<n-1; i++) {
-                SimpleNode cnode = node.getChild(i+1);
-                if (cnode.id == JJTIMPORT_AS_NAME) {
-                    names[i] = (String)cnode.getChild(0).getInfo();
-                    asnameNodes[i] = cnode.getChild(1);
-                } else {
-                    names[i] = (String)cnode.getInfo();
-                    asnameNodes[i] = cnode;
-                }
+        code.ldc(node.module);
+        if (node.names.length > 0) {
+            String[] names = new String[node.names.length];
+            String[] asnames = new String[node.names.length];
+            for (int i = 0; i < node.names.length; i++) {
+                names[i] = node.names[i].name;
+                asnames[i] = node.names[i].asname;
+                if (asnames[i] == null)
+                    asnames[i] = names[i];
             }
             makeStrings(code, names, names.length);
 
@@ -729,11 +648,11 @@ public class CodeCompiler extends Visitor
             }
             code.invokestatic(mrefs.importFrom);
             int tmp = storeTop();
-            for (int i=0; i<n-1; i++) {
+            for (int i = 0; i < node.names.length; i++) {
                 code.aload(tmp);
                 code.iconst(i);
                 code.aaload();
-                set(asnameNodes[i]);
+                set(new Name(asnames[i], Name.Store, node));
             }
             code.freeLocal(tmp);
         } else {
@@ -748,35 +667,23 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public Object dotted_name(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        String name = (String)node.getChild(0).getInfo();
-        for (int i=1; i<n; i++) {
-            name = name+"."+(String)node.getChild(i).getInfo();
-        }
-        return name;
-    }
-
-    public Object global_stmt(SimpleNode node) throws Exception {
+    public Object visitGlobal(Global node) throws Exception {
         return null;
     }
 
     public int exec;
-    public Object exec_stmt(SimpleNode node) throws Exception {
+    public Object visitExec(Exec node) throws Exception {
         setline(node);
-        //do expression
-        node.getChild(0).visit(this);
+        visit(node.body);
 
-        //get globals if provided
-        if (node.getNumChildren() > 1) {
-            node.getChild(1).visit(this);
+        if (node.globals != null) {
+            visit(node.globals);
         } else {
             code.aconst_null();
         }
 
-        //get locals if provided
-        if (node.getNumChildren() > 2) {
-            node.getChild(2).visit(this);
+        if (node.locals != null) {
+            visit(node.locals);
         } else {
             code.aconst_null();
         }
@@ -792,7 +699,7 @@ public class CodeCompiler extends Visitor
     }
 
     public int assert1, assert2;
-    public Object assert_stmt(SimpleNode node) throws Exception {
+    public Object visitAssert(Assert node) throws Exception {
         setline(node);
         Label end_of_assert = code.getLabel();
 
@@ -809,9 +716,9 @@ public class CodeCompiler extends Visitor
         code.ifeq(end_of_assert);
 
         /* Now do the body of the assert */
-        node.getChild(0).visit(this);
-        if (node.getNumChildren() == 2) {
-            node.getChild(1).visit(this);
+        visit(node.test);
+        if (node.msg != null) {
+            visit(node.msg);
             if (mrefs.assert2 == 0) {
                 mrefs.assert2 = code.pool.Methodref(
                     "org/python/core/Py", "assert",
@@ -834,15 +741,13 @@ public class CodeCompiler extends Visitor
     }
 
     public int nonzero;
-    public Object doTest(Label end_of_if, SimpleNode node, int index)
+    public Object doTest(Label end_of_if, If node, int index)
         throws Exception
     {
-        SimpleNode test = node.getChild(index);
-        SimpleNode suite = node.getChild(index+1);
         Label end_of_suite = code.getLabel();
 
-        setline(test);
-        test.visit(this);
+        setline(node.test);
+        visit(node.test);
         if (mrefs.nonzero == 0) {
             mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
                                                 "__nonzero__", "()Z");
@@ -850,30 +755,23 @@ public class CodeCompiler extends Visitor
         code.invokevirtual(mrefs.nonzero);
         code.ifeq(end_of_suite);
 
-        Object exit = suite.visit(this);
+        Object exit = suite(node.body);
 
         if (end_of_if != null && exit == null)
             code.goto_(end_of_if);
 
         end_of_suite.setPosition();
 
-        int remaining = node.getNumChildren()-index-2;
-        if (remaining > 1) {
-            return doTest(end_of_if, node, index+2) != null ? exit : null;
+        if (node.orelse != null) {
+            return suite(node.orelse) != null ? exit : null;
         } else {
-            if (remaining == 1) {
-                return node.getChild(index+2).visit(this) != null
-                    ? exit : null;
-            } else {
-                return null;
-            }
+            return null;
         }
     }
 
-    public Object if_stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
+    public Object visitIf(If node) throws Exception {
         Label end_of_if = null;
-        if (n > 2)
+        if (node.orelse != null)
             end_of_if = code.getLabel();
 
         Object exit = doTest(end_of_if, node, 0);
@@ -893,7 +791,7 @@ public class CodeCompiler extends Visitor
     }
 
 
-    public Object while_stmt(SimpleNode node) throws Exception {
+    public Object visitWhile(While node) throws Exception {
         beginLoop();
         Label continue_loop = (Label)continueLabels.peek();
         Label break_loop = (Label)breakLabels.peek();
@@ -904,13 +802,13 @@ public class CodeCompiler extends Visitor
         start_loop.setPosition();
 
         //Do suite
-        node.getChild(1).visit(this);
+        suite(node.body);
 
         continue_loop.setPosition();
         setline(node);
 
         //Do test
-        node.getChild(0).visit(this);
+        visit(node.test);
         if (mrefs.nonzero == 0) {
             mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
                                                 "__nonzero__", "()Z");
@@ -920,9 +818,9 @@ public class CodeCompiler extends Visitor
 
         finishLoop();
 
-        if (node.getNumChildren() == 3) {
+        if (node.orelse != null) {
             //Do else
-            node.getChild(2).visit(this);
+            suite(node.orelse);
         }
         break_loop.setPosition();
 
@@ -933,7 +831,7 @@ public class CodeCompiler extends Visitor
     public int iter=0;
     public int iternext=0;
 
-    public Object for_stmt(SimpleNode node) throws Exception {
+    public Object visitFor(For node) throws Exception {
         beginLoop();
         Label continue_loop = (Label)continueLabels.peek();
         Label break_loop = (Label)breakLabels.peek();
@@ -947,7 +845,7 @@ public class CodeCompiler extends Visitor
         setline(node);
 
         //parse the list
-        node.getChild(1).visit(this);
+        visit(node.iter);
         code.astore(list_tmp);
 
         //set up the loop iterator
@@ -966,10 +864,10 @@ public class CodeCompiler extends Visitor
 
         start_loop.setPosition();
         //set iter variable to current entry in list
-        set(node.getChild(0), expr_tmp);
+        set(node.target, expr_tmp);
 
         //evaluate for body
-        node.getChild(2).visit(this);
+        suite(node.body);
 
         continue_loop.setPosition();
 
@@ -990,9 +888,9 @@ public class CodeCompiler extends Visitor
 
         finishLoop();
 
-        if (node.getNumChildren() > 3) {
+        if (node.orelse != null) {
             //Do else clause if provided
-            node.getChild(3).visit(this);
+            suite(node.orelse);
         }
 
         break_loop.setPosition();
@@ -1008,57 +906,52 @@ public class CodeCompiler extends Visitor
     public int match_exception;
 
     public void exceptionTest(int exc, Label end_of_exceptions,
-                              SimpleNode node, int index)
+                              TryExcept node, int index)
         throws Exception
     {
-        SimpleNode name = node.getChild(index);
-        SimpleNode suite = node.getChild(index+1);
+        for (int i = 0; i < node.handlers.length; i++) {
+            excepthandlerType handler = node.handlers[i];
 
-        //setline(name);
-        Label end_of_self = code.getLabel();
+            //setline(name);
+            Label end_of_self = code.getLabel();
 
-        if (name.getNumChildren() > 0) {
-            code.aload(exc);
-            //get specific exception
-            name.getChild(0).visit(this);
-            if (mrefs.match_exception == 0) {
-                mrefs.match_exception = code.pool.Methodref(
-                    "org/python/core/Py", "matchException",
-                    "(" + $pyExc + $pyObj + ")Z");
+            if (handler.type != null) {
+                code.aload(exc);
+                //get specific exception
+                visit(handler.type);
+                if (mrefs.match_exception == 0) {
+                    mrefs.match_exception = code.pool.Methodref(
+                        "org/python/core/Py", "matchException",
+                        "(" + $pyExc + $pyObj + ")Z");
+                }
+                code.invokestatic(mrefs.match_exception);
+                code.ifeq(end_of_self);
+            } else {
+                if (i != node.handlers.length-1) {
+                    throw new ParseException(
+                        "bare except must be last except clause", handler.type);
+                }
             }
-            code.invokestatic(mrefs.match_exception);
-            code.ifeq(end_of_self);
-        } else {
-            if (node.getNumChildren() > index+3) {
-                throw new ParseException(
-                    "bare except must be last except clause", name);
+
+            if (handler.name != null) {
+                code.aload(exc);
+                code.getfield(code.pool.Fieldref("org/python/core/PyException",
+                                                "value",
+                                                "Lorg/python/core/PyObject;"));
+                set(handler.name);
             }
-        }
 
-        if (name.getNumChildren() > 1) {
-            code.aload(exc);
-            code.getfield(code.pool.Fieldref("org/python/core/PyException",
-                                             "value",
-                                             "Lorg/python/core/PyObject;"));
-            set(name.getChild(1));
+            //do exception body
+            suite(handler.body);
+            code.goto_(end_of_exceptions);
+            end_of_self.setPosition();
         }
-
-        //do exception body
-        suite.visit(this);
-        code.goto_(end_of_exceptions);
-        end_of_self.setPosition();
-
-        if (node.getNumChildren() > index+3) {
-            exceptionTest(exc, end_of_exceptions, node, index+2);
-        } else {
-            code.aload(exc);
-            code.athrow();
-        }
+        code.aload(exc);
+        code.athrow();
     }
 
     public int add_traceback;
-    public Object tryFinally(SimpleNode trySuite, SimpleNode finallySuite)
-        throws Exception
+    public Object visitTryFinally(TryFinally node) throws Exception
     {
         Label start = code.getLabel();
         Label end = code.getLabel();
@@ -1075,7 +968,7 @@ public class CodeCompiler extends Visitor
         finallyLabels.push(finallyStart);
 
         start.setPosition();
-        ret = trySuite.visit(this);
+        ret = suite(node.body);
         end.setPosition();
         if (ret == null) {
             code.jsr(finallyStart);
@@ -1118,7 +1011,7 @@ public class CodeCompiler extends Visitor
         code.ifeq(skipSuite);
 
         // The actual finally suite is always executed (since 1 != 0)
-        ret = finallySuite.visit(this);
+        ret = suite(node.finalbody);
 
         // Fake jump to here to pretend this could always happen
         skipSuite.setPosition();
@@ -1136,12 +1029,7 @@ public class CodeCompiler extends Visitor
     }
 
     public int set_exception;
-    public Object try_stmt(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        if (n == 2) {
-            return tryFinally(node.getChild(0), node.getChild(1));
-        }
-
+    public Object visitTryExcept(TryExcept node) throws Exception {
         Label start = code.getLabel();
         Label end = code.getLabel();
         Label handler_start = code.getLabel();
@@ -1149,8 +1037,8 @@ public class CodeCompiler extends Visitor
 
         start.setPosition();
         //Do suite
-        Object exit = node.getChild(0).visit(this);
-        //System.out.println("exit: "+exit+", "+n+", "+(exit != null));
+        Object exit = suite(node.body);
+        //System.out.println("exit: "+exit+", "+(exit != null));
         end.setPosition();
         if (exit == null)
             code.goto_(handler_end);
@@ -1170,7 +1058,7 @@ public class CodeCompiler extends Visitor
 
         int exc = storeTop();
 
-        if (n % 2 != 0) {
+        if (node.orelse == null) {
             //No else clause to worry about
             exceptionTest(exc, handler_end, node, 1);
             handler_end.setPosition();
@@ -1181,7 +1069,7 @@ public class CodeCompiler extends Visitor
             handler_end.setPosition();
 
             //do else clause
-            node.getChild(n-1).visit(this);
+            suite(node.orelse);
             else_end.setPosition();
         }
 
@@ -1191,14 +1079,14 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public Object except_clause(SimpleNode node) throws Exception {
-        throw new ParseException("Unhandled Node: "+node, node);
+    public Object visitSuite(Suite node) throws Exception {
+        return suite(node.body);
     }
 
-    public Object suite(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        for(int i=0; i<n; i++) {
-            Object exit = node.getChild(i).visit(this);
+    public Object suite(stmtType[] stmts) throws Exception {
+        int n = stmts.length;
+        for(int i = 0; i < n; i++) {
+            Object exit = visit(stmts[i]);
             //System.out.println("exit: "+exit+", "+n+", "+(exit != null));
             if (exit != null)
                 return Exit;
@@ -1206,46 +1094,36 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public Object or_boolean(SimpleNode node) throws Exception {
+    public Object visitBoolOp(BoolOp node) throws Exception {
         Label end = code.getLabel();
-        node.getChild(0).visit(this);
-        code.dup();
-        if (mrefs.nonzero == 0) {
-            mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
-                                                "__nonzero__", "()Z");
+        visit(node.values[0]);
+        for (int i = 1; i < node.values.length; i++) {
+            code.dup();
+            if (mrefs.nonzero == 0) {
+                mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
+                                                    "__nonzero__", "()Z");
+            }
+            code.invokevirtual(mrefs.nonzero);
+            switch (node.op) {
+            case BoolOp.Or : 
+                code.ifne(end);
+                break;
+            case BoolOp.And : 
+                code.ifeq(end);
+                break;
+            }
+            code.pop();
+            visit(node.values[i]);
         }
-        code.invokevirtual(mrefs.nonzero);
-        code.ifne(end);
-        code.pop();
-        node.getChild(1).visit(this);
         end.setPosition();
         return null;
     }
 
-    public Object and_boolean(SimpleNode node) throws Exception {
-        Label end = code.getLabel();
-        node.getChild(0).visit(this);
-        code.dup();
-        if (mrefs.nonzero == 0) {
-            mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
-                                                "__nonzero__", "()Z");
-        }
-        code.invokevirtual(mrefs.nonzero);
-        code.ifeq(end);
-        code.pop();
-        node.getChild(1).visit(this);
-        end.setPosition();
-        return null;
-    }
 
-    public Object not_1op(SimpleNode node) throws Exception {
-        return unaryop(node, "__not__");
-    }
-
-    public Object comparision(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
+    public Object visitCompare(Compare node) throws Exception {
         int tmp1 = code.getLocal();
         int tmp2 = code.getLocal();
+        int op;
 
         if (mrefs.nonzero == 0) {
             mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
@@ -1254,14 +1132,14 @@ public class CodeCompiler extends Visitor
 
         Label end = code.getLabel();
 
-        node.getChild(0).visit(this);
+        visit(node.left);
 
-        for(int i=1; i<n-2; i+=2) {
-            node.getChild(i+1).visit(this);
+        int n = node.ops.length;
+        for(int i = 0; i < n - 1; i++) {
+            visit(node.comparators[i]);
             code.dup();
             code.astore(tmp1);
-            code.invokevirtual(
-                    ((Integer)node.getChild(i).visit(this)).intValue());
+            code.invokevirtual(make_cmpop(node.ops[i]));
             code.dup();
             code.astore(tmp2);
             code.invokevirtual(mrefs.nonzero);
@@ -1269,12 +1147,10 @@ public class CodeCompiler extends Visitor
             code.aload(tmp1);
         }
 
-        node.getChild(n-1).visit(this);
-        //System.out.println("node: "+node.getChild(n-2));
-        code.invokevirtual(
-                ((Integer)node.getChild(n-2).visit(this)).intValue());
+        visit(node.comparators[n-1]);
+        code.invokevirtual(make_cmpop(node.ops[n-1]));
 
-        if (n > 3) {
+        if (n > 1) {
             code.astore(tmp2);
             end.setPosition();
             code.aload(tmp2);
@@ -1284,234 +1160,139 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public int make_binop(String name) throws Exception {
-        return code.pool.Methodref(
-            "org/python/core/PyObject", name,
-            "(" + $pyObj + ")" + $pyObj);
+    int[] compare_ops = new int[11];
+    public int make_cmpop(int op) throws Exception {
+        if (compare_ops[op] == 0) {
+            String name = null;
+            switch (op) {
+            case Compare.Eq:    name = "_eq"; break;
+            case Compare.NotEq: name = "_ne"; break;
+            case Compare.Lt:    name = "_lt"; break;
+            case Compare.LtE:   name = "_le"; break;
+            case Compare.Gt:    name = "_gt"; break;
+            case Compare.GtE:   name = "_ge"; break;
+            case Compare.Is:    name = "_is"; break;
+            case Compare.IsNot: name = "_isnot"; break;
+            case Compare.In:    name = "_in"; break;
+            case Compare.NotIn: name = "_notin"; break;
+            }
+            compare_ops[op] = code.pool.Methodref(
+                "org/python/core/PyObject", name,
+                "(" + $pyObj + ")" + $pyObj);
+        }
+        return compare_ops[op];
     }
 
-    public Integer less;
-    public Object less_cmp(SimpleNode node) throws Exception {
-        if (mrefs.less == null) less = new Integer(make_binop("_lt"));
-        return mrefs.less;
+    static String[] bin_methods = new String[] {
+        null,
+        "_add",
+        "_sub",
+        "_mul",
+        "_div",
+        "_mod",
+        "_pow",
+        "_lshift",
+        "_rshift",
+        "_or",
+        "_xor",
+        "_and",
+        "_floordiv",
+    };
+
+    int[] bin_ops = new int[13];
+    public int make_binop(int op) throws Exception {
+        if (bin_ops[op] == 0) {
+            String name = bin_methods[op];
+            if (op == BinOp.Div && module.getFutures().areDivisionOn()) {
+                name = "_truediv";
+            }
+            bin_ops[op] = code.pool.Methodref(
+                "org/python/core/PyObject", name,
+                "(" + $pyObj + ")" + $pyObj);
+        }
+        return bin_ops[op];
     }
 
-    public Integer greater;
-    public Object greater_cmp(SimpleNode node) throws Exception {
-        if (mrefs.greater == null) greater = new Integer(make_binop("_gt"));
-        return mrefs.greater;
-    }
-
-    public Integer equal;
-    public Object equal_cmp(SimpleNode node) throws Exception {
-        if (mrefs.equal == null) equal = new Integer(make_binop("_eq"));
-        return mrefs.equal;
-    }
-
-    public Integer less_equal;
-    public Object less_equal_cmp(SimpleNode node) throws Exception {
-        if (mrefs.less_equal == null)
-            less_equal = new Integer(make_binop("_le"));
-        return mrefs.less_equal;
-    }
-
-    public Integer greater_equal;
-    public Object greater_equal_cmp(SimpleNode node) throws Exception {
-        if (mrefs.greater_equal == null)
-            greater_equal = new Integer(make_binop("_ge"));
-        return mrefs.greater_equal;
-    }
-
-    public Integer notequal;
-    public Object notequal_cmp(SimpleNode node) throws Exception {
-        if (mrefs.notequal == null) notequal = new Integer(make_binop("_ne"));
-        return mrefs.notequal;
-    }
-
-    public Integer in;
-    public Object in_cmp(SimpleNode node) throws Exception {
-        if (mrefs.in == null) in = new Integer(make_binop("_in"));
-        return mrefs.in;
-    }
-
-    public Integer not_in;
-    public Object not_in_cmp(SimpleNode node) throws Exception {
-        if (mrefs.not_in == null) not_in = new Integer(make_binop("_notin"));
-        return mrefs.not_in;
-    }
-
-    public Integer is;
-    public Object is_cmp(SimpleNode node) throws Exception {
-        if (mrefs.is == null) is = new Integer(make_binop("_is"));
-        return mrefs.is;
-    }
-
-    public Integer is_not;
-    public Object is_not_cmp(SimpleNode node) throws Exception {
-        if (mrefs.is_not == null) is_not = new Integer(make_binop("_isnot"));
-        return mrefs.is_not;
-    }
-
-    //Must handle caching of methods better here...
-    public Object binaryop(SimpleNode node, String name) throws Exception {
-        node.getChild(0).visit(this);
-        node.getChild(1).visit(this);
-        code.invokevirtual("org/python/core/PyObject", name,
-                           "(" + $pyObj + ")" + $pyObj);
+    public Object visitBinOp(BinOp node) throws Exception {
+        visit(node.left);
+        visit(node.right);
+        code.invokevirtual(make_binop(node.op));
         return null;
     }
 
-    public Object unaryop(SimpleNode node, String name) throws Exception {
-        node.getChild(0).visit(this);
-        code.invokevirtual("org/python/core/PyObject", name,
-                           "()" + $pyObj);
+    
+    static String[] unary_methods = new String[] {
+        null,
+        "__invert__",
+        "__not__",
+        "__pos__",
+        "__neg__",
+    };
+
+    int[] unary_ops = new int[unary_methods.length];
+    public int make_unaryop(int op) throws Exception {
+        if (unary_ops[op] == 0) {
+            String name = unary_methods[op];
+            unary_ops[op] = code.pool.Methodref(
+                "org/python/core/PyObject", name, "()" + $pyObj);
+        }
+        return unary_ops[op];
+    }
+
+    public Object visitUnaryOp(UnaryOp node) throws Exception {
+        visit(node.operand);
+        code.invokevirtual(make_unaryop(node.op));
         return null;
     }
 
-    public Object or_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_or");
+
+    static String[] aug_methods = new String[] {
+        null,
+        "__iadd__",
+        "__isub__",
+        "__imul__",
+        "__idiv__",
+        "__imod__",
+        "__ipow__",
+        "__ilshift__",
+        "__irshift__",
+        "__ior__",
+        "__ixor__",
+        "__iand__",
+        "__ifloordiv__",
+    };
+
+    int[] augbin_ops = new int[aug_methods.length];
+    public int make_augbinop(int op) throws Exception {
+        if (augbin_ops[op] == 0) {
+            String name = aug_methods[op];
+            if (op == BinOp.Div && module.getFutures().areDivisionOn()) {
+                name = "__itruediv__";
+            }
+            augbin_ops[op] = code.pool.Methodref(
+                "org/python/core/PyObject", name,
+                "(" + $pyObj + ")" + $pyObj);
+        }
+        return augbin_ops[op];
     }
 
-    public Object xor_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_xor");
-    }
-
-    public Object and_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_and");
-    }
-
-    public Object lshift_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_lshift");
-    }
-
-    public Object rshift_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_rshift");
-    }
-
-    public Object add_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_add");
-    }
-
-    public Object strjoin(SimpleNode node) throws Exception {
-        return binaryop(node, "__add__");
-    }
-
-    public Object sub_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_sub");
-    }
-
-    public Object mul_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_mul");
-    }
-
-    public Object div_2op(SimpleNode node) throws Exception {
-        if (getFutures().areDivisionOn())
-            return binaryop(node, "_truediv");
-        else
-            return binaryop(node, "_div");
-    }
-
-    public Object floordiv_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_floordiv");
-    }
-
-    public Object mod_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_mod");
-    }
-
-    public Object pos_1op(SimpleNode node) throws Exception {
-        return unaryop(node, "__pos__");
-    }
-
-    public Object neg_1op(SimpleNode node) throws Exception {
-        return unaryop(node, "__neg__");
-    }
-
-    public Object invert_1op(SimpleNode node) throws Exception {
-        return unaryop(node, "__invert__");
-    }
-
-    public Object pow_2op(SimpleNode node) throws Exception {
-        return binaryop(node, "_pow");
-    }
-
-
-    public Object aug_binaryop(SimpleNode node, String name)
-        throws Exception
-    {
-        //node.dump("aug_binaryop:");
-        node.getChild(1).visit(this);
+    public Object visitAugAssign(AugAssign node) throws Exception {
+        visit(node.value);
         int tmp = storeTop();
 
-        mode = AUGGET;
-        node.getChild(0).visit(this);
+        augmode = expr_contextType.Load;
+        visit(node.target);
 
         code.aload(tmp);
-
-        code.invokevirtual("org/python/core/PyObject", name,
-                 "(" + $pyObj + ")" + $pyObj);
+        code.invokevirtual(make_augbinop(node.op));
         code.freeLocal(tmp);
 
         temporary = storeTop();
-        mode = AUGSET;
-        node.getChild(0).visit(this);
-        mode = GET;
+        augmode = expr_contextType.Store;
+        visit(node.target);
 
         return null;
     }
-
-    public Object aug_plus(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__iadd__");
-    }
-
-    public Object aug_minus(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__isub__");
-    }
-
-    public Object aug_multiply(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__imul__");
-    }
-
-    public Object aug_divide(SimpleNode node) throws Exception {
-        if (getFutures().areDivisionOn())
-            return aug_binaryop(node, "__itruediv__");
-        else
-            return aug_binaryop(node, "__idiv__");
-    }
-
-    public Object aug_floordivide(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__ifloordiv__");
-    }
-
-    public Object aug_modulo(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__imod__");
-    }
-
-    public Object aug_and(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__iand__");
-    }
-
-    public Object aug_or(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__ior__");
-    }
-
-    public Object aug_xor(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__ixor__");
-    }
-
-    public Object aug_lshift(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__ilshift__");
-    }
-
-    public Object aug_rshift(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__irshift__");
-    }
-
-    public Object aug_power(SimpleNode node) throws Exception {
-        return aug_binaryop(node, "__ipow__");
-    }
-
-
 
 
     public static void makeStrings(Code c, String[] names, int n)
@@ -1533,12 +1314,11 @@ public class CodeCompiler extends Visitor
 
     public int invokea0, invokea1, invokea2;
     public int invoke2;
-    public Object Invoke(SimpleNode inst, SimpleNode nname,
-                         SimpleNode[] values)
+    public Object Invoke(Attribute node, SimpleNode[] values)
         throws Exception
     {
-        String name = getName(nname);
-        inst.visit(this);
+        String name = getName(node.attr);
+        visit(node.value);
         code.ldc(name);
 
         //System.out.println("invoke: "+name+": "+values.length);
@@ -1558,7 +1338,7 @@ public class CodeCompiler extends Visitor
                     "org/python/core/PyObject", "invoke",
                     "(" + $str + $pyObj + ")" + $pyObj);
             }
-            values[0].visit(this);
+            visit(values[0]);
             code.invokevirtual(mrefs.invokea1);
             break;
         case 2:
@@ -1567,8 +1347,8 @@ public class CodeCompiler extends Visitor
                     "org/python/core/PyObject", "invoke",
                     "(" + $str + $pyObj + $pyObj + ")" + $pyObj);
             }
-            values[0].visit(this);
-            values[1].visit(this);
+            visit(values[0]);
+            visit(values[1]);
             code.invokevirtual(mrefs.invokea2);
             break;
         default:
@@ -1583,82 +1363,43 @@ public class CodeCompiler extends Visitor
         }
 
         return null;
-
     }
 
 
     public int callextra;
     public int call1, call2;
     public int calla0, calla1, calla2, calla3, calla4;
-    public Object Call_Op(SimpleNode node) throws Exception {
-        //do name
-        SimpleNode callee = node.getChild(0);
-
-        //get arguments and keywords
-        SimpleNode args=null;
-        if (node.getNumChildren() > 1)
-            args = node.getChild(1);
-        SimpleNode[] values;
-        String[] keys=null;
-        int nKeywords=0;
-        SimpleNode starargs = null;
-        SimpleNode kwargs = null;
-
-        if (args != null) {
-            int n = args.getNumChildren();
-
-            SimpleNode lastarg = args.getChild(n-1);
-            if (lastarg.id == JJTEXTRAKEYWORDVALUELIST) {
-                n--;
-                kwargs = lastarg;
-            }
-            if (n > 0) {
-                lastarg = args.getChild(n-1);
-                if (lastarg.id == JJTEXTRAARGVALUELIST) {
-                    n--;
-                    starargs = lastarg;
-                }
-            }
-
-            values = new SimpleNode[n];
-            keys = new String[n];
-
-            for (int i=0; i<n; i++) {
-                SimpleNode arg = args.getChild(i);
-                if (arg.id != JJTKEYWORD) {
-                    values[i] = arg;
-                    if (nKeywords > 0)
-                        throw new ParseException(
-                            "non-keyword argument following keyword", node);
-                } else {
-                    values[i] = arg.getChild(1);
-                    keys[nKeywords++] = (String)arg.getChild(0).getInfo();
-                }
-            }
-        } else {
-            values = new SimpleNode[0];
+    public Object visitCall(Call node) throws Exception {
+        String[] keys = new String[node.keywords.length];
+        exprType[] values = new exprType[node.args.length + keys.length];
+        for (int i = 0; i < node.args.length; i++) {
+            values[i] = node.args[i];
+        }
+        for (int i = 0; i < node.keywords.length; i++) {
+            keys[i] = node.keywords[i].arg;
+            values[node.args.length + i] = node.keywords[i].value;
         }
 
         // Detect a method invocation with no keywords
-        if (nKeywords == 0 && starargs == null && kwargs == null &&
-            callee.id == JJTDOT_OP)
+        if (node.keywords == null && node.starargs == null &&
+            node.kwargs == null && node.func instanceof Attribute)
         {
-            return Invoke(callee.getChild(0), callee.getChild(1), values);
+            return Invoke((Attribute) node.func, values);
         }
 
-        callee.visit(this);
+        visit(node.func);
 
-        if (starargs != null || kwargs != null) {
+        if (node.starargs != null || node.kwargs != null) {
             makeArray(values);
-            makeStrings(code, keys, nKeywords);
-            if (starargs == null)
+            makeStrings(code, keys, keys.length);
+            if (node.starargs == null)
                 code.aconst_null();
             else
-                starargs.getChild(0).visit(this);
-            if (kwargs == null)
+                visit(node.starargs);
+            if (node.kwargs == null)
                 code.aconst_null();
             else
-                kwargs.getChild(0).visit(this);
+                visit(node.kwargs);
 
             if (mrefs.callextra == 0) {
                 mrefs.callextra = code.pool.Methodref(
@@ -1667,9 +1408,9 @@ public class CodeCompiler extends Visitor
                     $pyObj);
             }
             code.invokevirtual(mrefs.callextra);
-        } else if (nKeywords > 0) {
+        } else if (keys.length > 0) {
             makeArray(values);
-            makeStrings(code, keys, nKeywords);
+            makeStrings(code, keys, keys.length);
 
             if (mrefs.call1 == 0) {
                 mrefs.call1 = code.pool.Methodref(
@@ -1693,7 +1434,7 @@ public class CodeCompiler extends Visitor
                         "org/python/core/PyObject", "__call__",
                         "(" + $pyObj + ")" + $pyObj);
                 }
-                values[0].visit(this);
+                visit(values[0]);
                 code.invokevirtual(mrefs.calla1);
                 break;
             case 2:
@@ -1702,8 +1443,8 @@ public class CodeCompiler extends Visitor
                         "org/python/core/PyObject", "__call__",
                         "(" + $pyObj + $pyObj + ")" + $pyObj);
                 }
-                values[0].visit(this);
-                values[1].visit(this);
+                visit(values[0]);
+                visit(values[1]);
                 code.invokevirtual(mrefs.calla2);
                 break;
             case 3:
@@ -1712,9 +1453,9 @@ public class CodeCompiler extends Visitor
                         "org/python/core/PyObject", "__call__",
                         "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
                 }
-                values[0].visit(this);
-                values[1].visit(this);
-                values[2].visit(this);
+                visit(values[0]);
+                visit(values[1]);
+                visit(values[2]);
                 code.invokevirtual(mrefs.calla3);
                 break;
             case 4:
@@ -1724,10 +1465,10 @@ public class CodeCompiler extends Visitor
                         "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")" +
                             $pyObj);
                 }
-                values[0].visit(this);
-                values[1].visit(this);
-                values[2].visit(this);
-                values[3].visit(this);
+                visit(values[0]);
+                visit(values[1]);
+                visit(values[2]);
+                visit(values[3]);
                 code.invokevirtual(mrefs.calla4);
                 break;
             default:
@@ -1746,42 +1487,34 @@ public class CodeCompiler extends Visitor
 
 
     public int getslice, setslice, delslice;
-    public Object Slice_Op(SimpleNode seq, SimpleNode node) throws Exception {
-        if (mode == AUGSET) {
+    public Object Slice(Subscript node, Slice slice) throws Exception {
+        int ctx = node.ctx;
+        if (ctx == node.AugStore && augmode == node.Store) {
             restoreAugTmps(node, 4);
-            mode = SET;
+            ctx = node.Store;
         } else {
-            int old_mode = mode;
-            mode = GET;
-            seq.visit(this);
+            visit(node.value);
+            if (slice.lower != null)
+                visit(slice.lower);
+            else
+                code.aconst_null();
+            if (slice.upper != null)
+                visit(slice.upper);
+            else
+                code.aconst_null();
+            if (slice.step != null)
+                visit(slice.step);
+            else
+                code.aconst_null();
 
-            SimpleNode[] slice = new SimpleNode[3];
-            int n = node.getNumChildren();
-            int i=0;
-            for (int j=0; j<n; j++) {
-                SimpleNode child = node.getChild(j);
-                if (child.id == JJTCOLON)
-                    i++;
-                else
-                    slice[i] = child;
-            }
-            for (i=0; i<3; i++) {
-                if (slice[i] == null) {
-                    code.aconst_null();
-                } else {
-                    slice[i].visit(this);
-                }
-            }
-            mode = old_mode;
-
-            if (mode == AUGGET) {
+            if (node.ctx == node.AugStore && augmode == node.Load) {
                 saveAugTmps(node, 4);
-                mode = GET;
+                ctx = node.Load;
             }
         }
 
-        switch(mode) {
-        case DEL:
+        switch (ctx) {
+        case Subscript.Del:
             if (mrefs.delslice == 0) {
                 mrefs.delslice = code.pool.Methodref(
                     "org/python/core/PyObject", "__delslice__",
@@ -1789,7 +1522,7 @@ public class CodeCompiler extends Visitor
             }
             code.invokevirtual(mrefs.delslice);
             return null;
-        case GET:
+        case Subscript.Load:
             if (mrefs.getslice == 0) {
                 mrefs.getslice = code.pool.Methodref(
                     "org/python/core/PyObject", "__getslice__",
@@ -1797,7 +1530,7 @@ public class CodeCompiler extends Visitor
             }
             code.invokevirtual(mrefs.getslice);
             return null;
-        case SET:
+        case Subscript.Store:
             code.aload(temporary);
             if (mrefs.setslice == 0) {
                 mrefs.setslice = code.pool.Methodref(
@@ -1812,30 +1545,27 @@ public class CodeCompiler extends Visitor
     }
 
     public int getitem, delitem, setitem;
-    public Object Index_Op(SimpleNode node) throws Exception {
-        SimpleNode seq = node.getChild(0);
-        SimpleNode index = node.getChild(1);
-        if (index.id == JJTSLICE)
-            return Slice_Op(seq, index);
+    public Object visitSubscript(Subscript node) throws Exception {
+        if (node.slice instanceof Slice) {
+            return Slice(node, (Slice) node.slice);
+        }
 
-        if (mode == AUGSET) {
+        int ctx = node.ctx;
+        if (node.ctx == node.AugStore && augmode == node.Store) {
             restoreAugTmps(node, 2);
-            mode = SET;
+            ctx = node.Store;
         } else {
-            int old_mode = mode;
-            mode = GET;
-            seq.visit(this);
-            index.visit(this);
-            mode = old_mode;
+            visit(node.value);
+            visit(node.slice);
 
-            if (mode == AUGGET) {
+            if (node.ctx == node.AugStore && augmode == node.Load) {
                 saveAugTmps(node, 2);
-                mode = GET;
+                ctx = node.Load;
             }
         }
 
-        switch(mode) {
-        case DEL:
+        switch (ctx) {
+        case Subscript.Del:
             if (mrefs.delitem == 0) {
                 mrefs.delitem = code.pool.Methodref(
                     "org/python/core/PyObject", "__delitem__",
@@ -1843,7 +1573,7 @@ public class CodeCompiler extends Visitor
             }
             code.invokevirtual(mrefs.delitem);
             return null;
-        case GET:
+        case Subscript.Load:
             if (mrefs.getitem == 0) {
                 mrefs.getitem = code.pool.Methodref(
                     "org/python/core/PyObject", "__getitem__",
@@ -1851,7 +1581,7 @@ public class CodeCompiler extends Visitor
             }
             code.invokevirtual(mrefs.getitem);
             return null;
-        case SET:
+        case Subscript.Store:
             code.aload(temporary);
             if (mrefs.setitem == 0) {
                 mrefs.setitem = code.pool.Methodref(
@@ -1864,28 +1594,43 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
+    public Object visitIndex(Index node) throws Exception {
+        traverse(node);
+        return null;
+    }
+
+    public Object visitExtSlice(ExtSlice node) throws Exception {
+        code.new_(code.pool.Class("org/python/core/PyTuple"));
+        code.dup();
+        makeArray(node.dims);
+        if (mrefs.PyTuple_init == 0) {
+            mrefs.PyTuple_init = code.pool.Methodref(
+                "org/python/core/PyTuple", "<init>",
+                "(" + $pyObjArr + ")V");
+        }
+        code.invokespecial(mrefs.PyTuple_init);
+        return null;
+    }
+
     public int getattr, delattr, setattr;
-    public Object Dot_Op(SimpleNode node) throws Exception {
+    public Object visitAttribute(Attribute node) throws Exception {
 
-        if (mode == AUGSET) {
+        int ctx = node.ctx;
+        if (node.ctx == node.AugStore && augmode == node.Store) {
             restoreAugTmps(node, 2);
-            mode = SET;
+            ctx = node.Store;
         } else {
-            String name = getName(node.getChild(1));
-            int old_mode = mode;
-            mode = GET;
-            node.getChild(0).visit(this);
-            mode = old_mode;
-            code.ldc(name);
+            visit(node.value);
+            code.ldc(getName(node.attr));
 
-            if (mode == AUGGET) {
+            if (node.ctx == node.AugStore && augmode == node.Load) {
                 saveAugTmps(node, 2);
-                mode = GET;
+                ctx = node.Load;
             }
         }
 
-        switch(mode) {
-        case DEL:
+        switch (ctx) {
+        case Attribute.Del:
             if (mrefs.delattr == 0) {
                 mrefs.delattr = code.pool.Methodref(
                     "org/python/core/PyObject", "__delattr__",
@@ -1893,7 +1638,7 @@ public class CodeCompiler extends Visitor
             }
             code.invokevirtual(mrefs.delattr);
             return null;
-        case GET:
+        case Attribute.Load:
             if (mrefs.getattr == 0) {
                 mrefs.getattr = code.pool.Methodref(
                     "org/python/core/PyObject", "__getattr__",
@@ -1901,7 +1646,7 @@ public class CodeCompiler extends Visitor
             }
             code.invokevirtual(mrefs.getattr);
             return null;
-        case SET:
+        case Attribute.Store:
             code.aload(temporary);
             if (mrefs.setattr == 0) {
                 mrefs.setattr = code.pool.Methodref(
@@ -1915,74 +1660,50 @@ public class CodeCompiler extends Visitor
     }
 
     public int getitem2, unpackSequence;
-    public Object seqSet(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        if (n > 0 && node.getChild(n-1).id == JJTCOMMA) {
-            n -= 1;
-        }
-
+    public Object seqSet(exprType[] nodes) throws Exception {
         if (mrefs.unpackSequence == 0) {
             mrefs.unpackSequence = code.pool.Methodref(
                 "org/python/core/Py",
                 "unpackSequence",
                 "(" + $pyObj + "I)" + $pyObjArr);
         }
-        /*if (mrefs.checkSequence == 0) {
-          mrefs.checkSequence = code.pool.Methodref("org/python/core/Py",
-          "checkSequence", "(Lorg/python/core/PyObject;I)V");
-          }*/
 
         code.aload(temporary);
-        code.iconst(n);
+        code.iconst(nodes.length);
         code.invokestatic(mrefs.unpackSequence);
 
         int tmp = code.getLocal();
         code.astore(tmp);
 
-        for (int i=0; i<n; i++) {
+        for (int i = 0; i < nodes.length; i++) {
             code.aload(tmp);
             code.iconst(i);
             code.aaload();
-            set(node.getChild(i));
+            set(nodes[i]);
         }
         code.freeLocal(tmp);
 
-        /*if (mrefs.getitem2 == 0) {
-          mrefs.getitem2 = code.pool.Methodref("org/python/core/PyObject",
-                "__getitem__", "(I)Lorg/python/core/PyObject;");
-          }
-          for(int i=0; i<n; i++) {
-          code.aload(temporary);
-          code.iconst(i);
-          code.invokevirtual(mrefs.getitem2);
-          set(node.getChild(i));
-          }*/
         return null;
     }
 
-    public Object seqDel(SimpleNode node) throws Exception {
-        int n = node.getNumChildren();
-        if (n > 0 && node.getChild(n-1).id == JJTCOMMA) {
-            n -= 1;
-        }
-
-        for (int i=0; i<n; i++) {
-            node.getChild(i).visit(this);
+    public Object seqDel(exprType[] nodes) throws Exception {
+        for (int i = 0; i < nodes.length; i++) {
+            visit(nodes[i]);
         }
         return null;
     }
 
     public int PyTuple_init, PyList_init, PyDictionary_init;
-    public Object tuple(SimpleNode node) throws Exception {
+    public Object visitTuple(Tuple node) throws Exception {
         /* if (mode ==AUGSET)
             throw new ParseException(
                       "augmented assign to tuple not possible", node); */
-        if (mode == SET) return seqSet(node);
-        if (mode == DEL) return seqDel(node);
+        if (node.ctx == node.Store) return seqSet(node.elts);
+        if (node.ctx == node.Del) return seqDel(node.elts);
 
         code.new_(code.pool.Class("org/python/core/PyTuple"));
         code.dup();
-        makeArray(node.children);
+        makeArray(node.elts);
         if (mrefs.PyTuple_init == 0) {
             mrefs.PyTuple_init = code.pool.Methodref(
                 "org/python/core/PyTuple", "<init>",
@@ -1992,25 +1713,24 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
+/*
     public Object fplist(SimpleNode node) throws Exception {
         if (mode == SET) return seqSet(node);
         throw new ParseException("in fplist node", node);
     }
+*/
 
-    public Object list(SimpleNode node) throws Exception {
+    public Object visitList(List node) throws Exception {
         /* if (mode ==AUGSET)
             throw new ParseException(
                       "augmented assign to list not possible", node); */
 
-        if (node.getNumChildren() > 1 && node.getChild(1).id == JJTFOR_STMT)
-             return list_comprehension(node);
-
-        if (mode == SET) return seqSet(node);
-        if (mode == DEL) return seqDel(node);
+        if (node.ctx == node.Store) return seqSet(node.elts);
+        if (node.ctx == node.Del) return seqDel(node.elts);
 
         code.new_(code.pool.Class("org/python/core/PyList"));
         code.dup();
-        makeArray(node.children);
+        makeArray(node.elts);
         if (mrefs.PyList_init == 0) {
             mrefs.PyList_init = code.pool.Methodref(
                 "org/python/core/PyList", "<init>",
@@ -2020,8 +1740,10 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
+    int list_comprehension_count = 0;
+
     public int PyList_init2;
-    public Object list_comprehension(SimpleNode node) throws Exception {
+    public Object visitListComp(ListComp node) throws Exception {
         code.new_(code.pool.Class("org/python/core/PyList"));
         code.dup();
         if (mrefs.PyList_init2 == 0) {
@@ -2042,50 +1764,37 @@ public class CodeCompiler extends Visitor
                 "(" + $str + ")" + $pyObj);
         }
         code.invokevirtual(mrefs.getattr);
-        int tmp_append = storeTop();
+        String tmp_append = "_[" + (++list_comprehension_count) + "]";
 
-        listComprehensionExprs.push(node.getChild(0));
-        listComprehensionAppends.push(new Integer(tmp_append));
+        set(new Name(tmp_append, Name.Store, node));
 
-        node.getChild(1).visit(this);
+        stmtType n = new Expr(new Call(new Name(tmp_append, Name.Load, node), 
+                                       new exprType[] { node.target },
+                                       new keywordType[0], null, null, node),
+                                            node);
 
-        listComprehensionAppends.pop();
-        listComprehensionExprs.pop();
+        for (int i = node.generators.length - 1; i >= 0; i--) {
+            listcompType lc = node.generators[i];
+            for (int j = lc.ifs.length - 1; j >= 0; j--) {
+                n = new If(lc.ifs[j], new stmtType[] { n }, null, lc.ifs[j]);
+            }
+            n = new For(lc.target, lc.iter, new stmtType[] { n }, null, lc);
+        }
+        visit(n);
+        visit(new Delete(new exprType[] { new Name(tmp_append, Name.Del) }));
 
         return null;
     }
 
-
-    public Object list_iter(SimpleNode node) throws Exception {
-        if (node.getNumChildren() == 0) {
-            int tmp_append =
-                 ((Integer) listComprehensionAppends.peek()).intValue();
-            SimpleNode exprNode = (SimpleNode) listComprehensionExprs.peek();
-
-            code.aload(tmp_append);
-            exprNode.visit(this);
-
-            if (mrefs.calla1 == 0) {
-                mrefs.calla1 = code.pool.Methodref(
-                    "org/python/core/PyObject", "__call__",
-                    "(" + $pyObj + ")" + $pyObj);
-            }
-            code.invokevirtual(mrefs.calla1);
-
-            code.pop();
-
-            return null;
-        }
-
-        return node.getChild(0).visit(this);
-    }
-
-
-
-    public Object dictionary(SimpleNode node) throws Exception {
+    public Object visitDict(Dict node) throws Exception {
         code.new_(code.pool.Class("org/python/core/PyDictionary"));
         code.dup();
-        makeArray(node.children);
+        SimpleNode[] elts = new SimpleNode[node.keys.length * 2];
+        for (int i = 0; i < node.keys.length; i++) {
+            elts[i * 2] = node.keys[i];
+            elts[i * 2 + 1] = node.values[i];
+        }
+        makeArray(elts);
         if (mrefs.PyDictionary_init == 0) {
             mrefs.PyDictionary_init = code.pool.Methodref(
                 "org/python/core/PyDictionary", "<init>",
@@ -2095,26 +1804,20 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public Object str_1op(SimpleNode node) throws Exception {
-        node.getChild(0).visit(this);
+    public Object visitRepr(Repr node) throws Exception {
+        visit(node.value);
         code.invokevirtual("org/python/core/PyObject", "__repr__",
                            "()" + $pyStr);
         return null;
     }
 
     public int PyFunction_init1,PyFunction_closure_init1;
-    public Object lambdef(SimpleNode node) throws Exception {
+    public Object visitLambda(Lambda node) throws Exception {
         String name = "<lambda>";
-        SimpleNode suite;
-        if (node.getNumChildren() == 2) {
-            suite = node.getChild(1);
-        } else {
-            suite = node.getChild(0);
-        }
 
         //Add a return node onto the outside of suite;
-        SimpleNode retSuite = new SimpleNode(JJTRETURN_STMT);
-        retSuite.jjtAddChild(suite, 0);
+        modType retSuite = new Suite(new stmtType[] {
+            new Return(node.body, node) }, node);
 
         setline(node);
 
@@ -2127,14 +1830,15 @@ public class CodeCompiler extends Visitor
         }
         code.getfield(mrefs.f_globals);
 
-        makeArray(node.scope.ac.getDefaults());
+        ScopeInfo scope = module.getScopeInfo(node);
 
-        node.scope.setup_closure(my_scope);
-        node.scope.dump();
+        makeArray(scope.ac.getDefaults());
+
+        scope.setup_closure(my_scope);
+        scope.dump();
         module.PyCode(retSuite, name, true, className,
-                      false, false, node.beginLine, node.scope).get(code);
-        Vector freenames = node.scope.freevars;
-        node.scope = null; // release scope info
+                      false, false, node.beginLine, scope).get(code);
+        Vector freenames = scope.freevars;
 
         if (!makeClosure(freenames)) {
             if (mrefs.PyFunction_init1 == 0) {
@@ -2157,7 +1861,7 @@ public class CodeCompiler extends Visitor
 
 
     public int Ellipsis;
-    public Object Ellipses(SimpleNode node) throws Exception {
+    public Object visitEllipsis(Ellipsis node) throws Exception {
         if (mrefs.Ellipsis == 0) {
             mrefs.Ellipsis = code.pool.Fieldref(
                 "org/python/core/Py", "Ellipsis",
@@ -2168,27 +1872,12 @@ public class CodeCompiler extends Visitor
     }
 
     public int PySlice_init;
-    public Object Slice(SimpleNode node) throws Exception {
-        SimpleNode[] slice = new SimpleNode[3];
-        int n = node.getNumChildren();
-        int i=0;
-        for (int j=0; j<n; j++) {
-            SimpleNode child = node.getChild(j);
-            if (child.id == JJTCOLON)
-                i++;
-            else
-                slice[i] = child;
-        }
-
+    public Object visitSlice(Slice node) throws Exception {
         code.new_(code.pool.Class("org/python/core/PySlice"));
         code.dup();
-        for (i=0; i<3; i++) {
-            if (slice[i] == null) {
-                getNone();
-            } else {
-                slice[i].visit(this);
-            }
-        }
+        if (node.lower == null) getNone(); else visit(node.lower);
+        if (node.upper == null) getNone(); else visit(node.upper);
+        if (node.step == null) getNone(); else visit(node.step);
         if (mrefs.PySlice_init == 0) {
             mrefs.PySlice_init = code.pool.Methodref(
                 "org/python/core/PySlice", "<init>",
@@ -2199,31 +1888,27 @@ public class CodeCompiler extends Visitor
     }
 
     public int makeClass,makeClass_closure;
-    public Object classdef(SimpleNode node) throws Exception {
+    public Object visitClassDef(ClassDef node) throws Exception {
         setline(node);
 
         //Get class name
-        String name = getName(node.getChild(0));
+        String name = getName(node.name);
         //System.out.println("name: "+name);
         code.ldc(name);
 
-        //Get class bases
-        int n = node.getNumChildren();
-        SimpleNode[] bases = new SimpleNode[n-2];
-        for (int i=0; i<n-2; i++)
-            bases[i] = node.getChild(i+1);
-        makeArray(bases);
+        makeArray(node.bases);
 
-        node.scope.setup_closure(my_scope);
-        node.scope.dump();
+        ScopeInfo scope = module.getScopeInfo(node);
+
+        scope.setup_closure(my_scope);
+        scope.dump();
         //Make code object out of suite
-        module.PyCode(node.getChild(n-1), name, false, name, true, false,
-                      node.beginLine, node.scope).get(code);
-        Vector freenames = node.scope.freevars;
-        node.scope = null; // release scope info
+        module.PyCode(new Suite(node.body, node), name, false, name,
+                      true, false, node.beginLine, scope).get(code);
+        Vector freenames = scope.freevars;
 
         //Get doc string (if there)
-        getDocString(node.getChild(n-1));
+        getDocString(node.body);
 
         //Make class out of name, bases, and code
         if (!makeClosure(freenames)) {
@@ -2244,33 +1929,24 @@ public class CodeCompiler extends Visitor
         }
 
         //Assign this new class to the given name
-        set(node.getChild(0));
+        set(new Name(node.name, Name.Store, node));
         return null;
     }
 
-    public Object Int(SimpleNode node) throws Exception {
-        Object n = node.getInfo();
-        if (n instanceof Integer) {
-            int i = ((Integer)n).intValue();
-            module.PyInteger(i).get(code);
-        } else {
-            module.PyLong((String)n).get(code);
+    public Object visitNum(Num node) throws Exception {
+        if (node.n instanceof PyInteger) {
+            module.PyInteger(((PyInteger) node.n).getValue()).get(code);
+        } else if (node.n instanceof PyLong) {
+            module.PyLong(node.n.__str__().toString()).get(code);
+        } else if (node.n instanceof PyFloat) {
+            module.PyFloat(((PyFloat) node.n).getValue()).get(code);
+        } else if (node.n instanceof PyComplex) {
+            module.PyComplex(((PyComplex) node.n).imag).get(code);
         }
         return null;
     }
 
-    public Object Float(SimpleNode node) throws Exception {
-        module.PyFloat(((Double)node.getInfo()).doubleValue()).get(code);
-        return null;
-    }
-
-    public Object Complex(SimpleNode node) throws Exception {
-        module.PyComplex(((Double)node.getInfo()).doubleValue()).get(code);
-        return null;
-    }
-
-    private String getName(SimpleNode node) {
-        String name = (String)node.getInfo();
+    private String getName(String name) {
         if (className != null && name.startsWith("__") &&
             !name.endsWith("__"))
         {
@@ -2294,26 +1970,25 @@ public class CodeCompiler extends Visitor
         code.invokevirtual(mrefs.getglobal);
     }
 
-    public Object Name(SimpleNode node) throws Exception {
+    public Object visitName(Name node) throws Exception {
         String name;
         if (fast_locals)
-            name = (String)node.getInfo();
+            name = node.id;
         else
-            name = getName(node);
-
-        if (mode == AUGGET)
-            mode = GET;
-        else if (mode == AUGSET)
-            mode = SET;
+            name = getName(node.id);
 
         SymInfo syminf = (SymInfo)tbl.get(name);
 
-        switch (mode) {
-        case GET:
+        int ctx = node.ctx;
+        if (ctx == node.AugStore) {
+            ctx = augmode;
+        }        
+
+        switch (ctx) {
+        case Name.Load:
             loadFrame();
             if (syminf != null) {
                 int flags = syminf.flags;
-                if (!my_scope.nested_scopes) flags &= ~ScopeInfo.FREE;
                 if ((flags&ScopeInfo.GLOBAL) !=0 || optimizeGlobals&&
                         (flags&(ScopeInfo.BOUND|ScopeInfo.CELL|
                                                         ScopeInfo.FREE))==0) {
@@ -2363,7 +2038,7 @@ public class CodeCompiler extends Visitor
             code.invokevirtual(mrefs.getlocal1);
             return null;
 
-        case SET:
+        case Name.Store:
             loadFrame();
             if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
                 code.ldc(name);
@@ -2410,7 +2085,7 @@ public class CodeCompiler extends Visitor
                 }
             }
             return null;
-        case DEL: {
+        case Name.Del: {
             loadFrame();
             if (syminf != null && (syminf.flags&ScopeInfo.GLOBAL) != 0) {
                 code.ldc(name);
@@ -2434,7 +2109,7 @@ public class CodeCompiler extends Visitor
                         System.err.println("internal compiler error: "+node);
                     }
                     if ((syminf.flags&ScopeInfo.CELL) != 0) {
-                        error("can not delete variable '"+name+
+                        module.error("can not delete variable '"+name+
                               "' referenced in nested scope",true,node);
                     }
                     code.iconst(syminf.locals_index);
@@ -2451,8 +2126,8 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public Object String(SimpleNode node) throws Exception {
-        String s = (String)node.getInfo();
+    public Object visitStr(Str node) throws Exception {
+        String s = node.s;
         if (s.length() > 32767) {
             throw new ParseException(
                 "string constant too large (more than 32767 characters)",
@@ -2462,4 +2137,7 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
+    protected Object unhandled_node(SimpleNode node) throws Exception {
+        throw new Exception("Unhandled node " + node);
+    }
 }

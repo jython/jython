@@ -3,39 +3,27 @@
 package org.python.compiler;
 
 import org.python.parser.*;
+import org.python.parser.ast.*;
+import org.python.parser.ast.Module;
 
 public class Future extends Object implements PythonGrammarTreeConstants {
 
-    private boolean nested_scopes;
     private boolean division;
 
     private static final String FUTURE = "__future__";
 
-    private boolean check(SimpleNode cand) throws Exception {
-        SimpleNode dotted_name = cand.getChild(0);
-        if (dotted_name.getNumChildren() != 1 ||
-                !((String)dotted_name.getChild(0).getInfo()).equals(FUTURE))
+    private boolean check(ImportFrom cand) throws Exception {
+        if (!cand.module.equals(FUTURE))
             return false;
-        int n = cand.getNumChildren();
-        if (n == 1) {
+        int n = cand.names.length;
+        if (n == 0) {
             throw new ParseException(
                     "future statement does not support import *",cand);
         }
-        for (int i = 1; i < n; i++) {
-            SimpleNode imp = cand.getChild(i);
-            String feature;
-            switch(imp.id) {
-            default:
-            case JJTNAME:
-                feature = (String)imp.getInfo();
-                break;
-            case JJTIMPORT_AS_NAME:
-                feature = (String)imp.getChild(0).getInfo();
-                break;
-            }
+        for (int i = 0; i < n; i++) {
+            String feature = cand.names[i].name;
             // *known* features
             if (feature.equals("nested_scopes")) {
-                nested_scopes = true;
                 continue;
             }
             if (feature.equals("division")) {
@@ -48,51 +36,50 @@ public class Future extends Object implements PythonGrammarTreeConstants {
         return true;
     }
 
-    public void preprocessFutures(SimpleNode node,
+    public void preprocessFutures(modType node,
                                   org.python.core.CompilerFlags cflags)
         throws Exception
     {
         if (cflags != null) {
-            nested_scopes = cflags.nested_scopes;
             division = cflags.division;
         }
-        if ( node.id != JJTFILE_INPUT && node.id != JJTSINGLE_INPUT)
-            return;
-        int n = node.getNumChildren();
-        if (n == 0) return;
-
         int beg = 0;
-        if (node.id == JJTFILE_INPUT &&
-            node.getChild(0).id == JJTEXPR_STMT &&
-            node.getChild(0).getChild(0).id == JJTSTRING) beg++;
+        stmtType[] suite = null;
+        if (node instanceof Module) {
+            suite = ((Module) node).body;
+            if (suite.length > 0 && suite[0] instanceof Expr &&
+                            ((Expr) suite[0]).value instanceof Str) {
+                beg++;
+            }
+        } else if (node instanceof Interactive) {
+            suite = new stmtType[] { ((Interactive) node).body };
+        } else {
+            return;
+        }
 
-        for (int i = beg; i < n; i++) {
-            SimpleNode stmt = node.getChild(i);
-            if (stmt.id != JJTIMPORTFROM) break;
+        for (int i = beg; i < suite.length; i++) {
+            stmtType stmt = suite[i];
+            if (!(stmt instanceof ImportFrom))
+                break;
             stmt.from_future_checked = true;
-            if (!check(stmt)) break;
+            if (!check((ImportFrom) stmt))
+                break;
         }
 
         if (cflags != null) {
-            cflags.nested_scopes = cflags.nested_scopes ||  nested_scopes;
             cflags.division      = cflags.division      ||  division;
         }
     }
 
 
-    public static void checkFromFuture(SimpleNode node) throws Exception {
-        if (node.from_future_checked) return;
-        SimpleNode dotted_name = node.getChild(0);
-        if (dotted_name.getNumChildren() == 1 &&
-                ((String)dotted_name.getChild(0).getInfo()).equals(FUTURE)) {
+    public static void checkFromFuture(ImportFrom node) throws Exception {
+        if (node.from_future_checked)
+            return;
+        if (node.module.equals(FUTURE)) {
             throw new ParseException("from __future__ imports must occur " +
                                      "at the beginning of the file",node);
         }
         node.from_future_checked = true;
-    }
-
-    public boolean areNestedScopesOn() {
-        return nested_scopes;
     }
 
     public boolean areDivisionOn() {

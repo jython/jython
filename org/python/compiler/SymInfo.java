@@ -16,4 +16,9 @@ public class SymInfo extends Object {
     public int locals_index;
     public int env_index;
 
+
+    public String toString() {
+        return "SymInfo[" + flags + " " + locals_index + " " +
+                        env_index + "]";
+    }
 }

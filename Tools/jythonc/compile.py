@@ -4,7 +4,7 @@ import sys
 import os
 from types import StringType
 
-from SimpleCompiler import SimpleCompiler
+from SrcGenCompiler import SrcGenCompiler
 from PythonModule import PythonModule
 from ObjectFactory import ObjectFactory
 from Object import PyObject
@@ -204,7 +204,7 @@ class Compiler:
         
         mod = PythonModule(name, filename, frozen=self.deep)
         fact = ObjectFactory()
-        pi = SimpleCompiler(mod, fact, options=self.options)
+        pi = SrcGenCompiler(mod, fact, options=self.options)
         fact.parent = pi
         code = pi.execstring(data)
         # __file__ 

@@ -35,7 +35,7 @@ public class codeop implements ClassDictInit {
     public static PyObject compile_command_flags(String string,
                     String filename, String kind, CompilerFlags cflags)
     {
-        org.python.parser.SimpleNode node =
+        org.python.parser.ast.modType node =
             parser.partialParse(string+"\n", kind, filename, cflags);
 
         if (node == null)

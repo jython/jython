@@ -23,7 +23,6 @@ def makeStringArray(args):
         jast.StringArray(args),
         findType(java.lang.Class.forName("[Ljava.lang.String;")))
 
-
 
 class DelegateMethod:
     def __init__(self, method, code):
@@ -163,14 +162,14 @@ class PyObject:
         return self.domethod(code, "__nonzero__").asa(java.lang.Boolean.TYPE)
 
     def unop(self, code, op):
-        return self.domethod(code, '__'+op+'__')
+        return self.domethod(code, op)
 
     def compop(self, code, op, y):
-        return self.domethod(code, "_"+op, y)
+        return self.domethod(code, op, y)
 
     binop = compop
 
-    def aug_binop(self, code, op, y):
+    def augbinop(self, code, op, y):
         return self.domethod(code, op, y)
 
     def igetitem(self, code, index):

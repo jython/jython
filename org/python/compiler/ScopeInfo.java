@@ -11,6 +11,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public String scope_name;
     public int level;
     public int func_level;
+    public int list_comprehension_count;
 
     public void dump() { // for debugging
         if (org.python.core.Options.verbose < org.python.core.Py.DEBUG)
@@ -38,19 +39,16 @@ public class ScopeInfo extends Object implements ScopeConstants {
     }
 
     public ScopeInfo(String name, SimpleNode node, int level, int kind,
-                     int func_level, ArgListCompiler ac,
-                     boolean nested_scopes) {
+                     int func_level, ArgListCompiler ac) {
         scope_name = name;
         scope_node = node;
         this.level = level;
         this.kind = kind;
         this.func_level = func_level;
         this.ac = ac;
-        this.nested_scopes = nested_scopes;
     }
 
     public int kind;
-    public boolean nested_scopes;
 
     public boolean unqual_exec;
     public boolean exec;
@@ -77,6 +75,7 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public int local = 0;
 
     public void addParam(String name) {
+//System.out.println("addParam " + name);
         tbl.put(name, new SymInfo(PARAM|BOUND,local++));
         names.addElement(name);
     }
@@ -119,7 +118,6 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public void cook(ScopeInfo up,CompilationContext ctxt) throws Exception {
         if (up == null) return; // top level => nop
 
-        boolean nested_scopes = this.nested_scopes;
         boolean func = kind == FUNCSCOPE;
         Vector purecells = new Vector();
         cell = 0;
@@ -136,18 +134,13 @@ public class ScopeInfo extends Object implements ScopeConstants {
             if (func) {
                 // not func global and bound ?
                 if ((flags&NGLOBAL) == 0 && (flags&BOUND) != 0) {
-                    if (nested_scopes) {
-                        info.flags |= CELL;
-                        if ((info.flags&PARAM) != 0)
-                            jy_paramcells.addElement(name);
-                        cellvars.addElement(name);
-                        info.env_index = cell++;
-                        if ((flags&PARAM) == 0) purecells.addElement(name);
-                        continue;
-                    }
-                    ctxt.error("local name '"+name+"' in '"+scope_name+
-                               "' shadows use as global in nested scopes",
-                               false, scope_node);
+                    info.flags |= CELL;
+                    if ((info.flags&PARAM) != 0)
+                        jy_paramcells.addElement(name);
+                    cellvars.addElement(name);
+                    info.env_index = cell++;
+                    if ((flags&PARAM) == 0) purecells.addElement(name);
+                    continue;
                 }
             } else {
                 info.flags |= FREE;
@@ -203,13 +196,12 @@ public class ScopeInfo extends Object implements ScopeConstants {
             why = " because it contains a function with free variables";
         else
             why = " because it contains free variables";
-        ctxt.error(illegal + why, nested_scopes, scope_node);
+        ctxt.error(illegal + why, true, scope_node);
     }
 
     public Vector freevars = new Vector();
 
     public void setup_closure(ScopeInfo up) {
-        if (!nested_scopes) return;
         int free = cell; // env = cell...,free...
         Hashtable up_tbl = up.tbl;
         boolean nested = up.kind != TOPSCOPE;

@@ -2,7 +2,7 @@
 import jast
 import org, java
 from Object import Object, PyObject, Generic
-
+from org.python.parser import ast
 
 
 def makeAnys(args):
@@ -17,7 +17,7 @@ def PyObjectArray(args):
     aargs = makeAnys(args)
     return jast.FilledArray("PyObject", aargs)
 
-import SimpleCompiler
+import SrcGenCompiler
 
 
 
@@ -99,13 +99,16 @@ class ObjectFactory:
     def makeNull(self):
         return Object(jast.Null, Generic)
 
+    def makePyNone(self):
+        return Object(jast.GetStaticAttribute("Py", "None"), Generic)
+
     def makeSlice(self, items):
         code = jast.New("PySlice", 
             [items[0].asAny(), items[1].asAny(), items[2].asAny()])
         return Object(code, Generic)
 
     def getCompiler(self, parent_compiler, frameCtr, scope, className):
-        return SimpleCompiler.SimpleCompiler(self.parent.module, self,
+        return SrcGenCompiler.SrcGenCompiler(self.parent.module, self,
                                              parent = parent_compiler,
                                              frameCtr = frameCtr,
                                              scope = scope,
@@ -140,7 +143,7 @@ class PyFunction(FixedObject):
         globals = jast.GetInstanceAttribute(self.def_compiler.frame.frame,
                                             "f_globals")
         pycode = self.makeCode()
-        defaults = [ d.visit(self.def_compiler.visitor) for d in self.scope.ac.defaults ]
+        defaults = [ self.def_compiler.visit(d) for d in self.scope.ac.defaults ]
         clos = self.def_compiler.frame.makeClosure(self.scope)
         ctrargs = [globals, PyObjectArray(defaults), pycode]
         if clos:
@@ -151,14 +154,14 @@ class PyFunction(FixedObject):
         # Add args to funcframe
         ac = self.scope.ac
         # Parse the body
-        comp = self.factory.getCompiler(self.def_compiler,SimpleCompiler.FunctionFrame,self.scope, self.def_compiler.className)
+        comp = self.factory.getCompiler(self.def_compiler,
+                    SrcGenCompiler.FunctionFrame, self.scope,
+                    self.def_compiler.className)
         for argname in ac.names:
             comp.frame.setname(argname, self.factory.makePyObject(None))
 
-        tree = self.body
-        if ac.init_code.numChildren > 0:
-            ac.init_code.jjtAddChild(tree, ac.init_code.numChildren)
-            tree = ac.init_code
+        tree = ast.Suite(self.body)
+        ac.appendInitCode(tree)
         code = jast.Block([comp.parse(tree)])
         # Set up a code object
         self.pycode = self.def_compiler.top_compiler.module.getCodeConstant(
@@ -266,9 +269,9 @@ class PyClass(FixedObject):
 
     def makeCode(self):
         comp = self.factory.getCompiler(self.def_compiler,
-                                        SimpleCompiler.ClassFrame, self.scope,
+                                        SrcGenCompiler.ClassFrame, self.scope,
                                         self.name)
-        code = jast.Block([comp.parse(self.body),
+        code = jast.Block([comp.parse(ast.Suite(self.body)),
                            jast.Return(jast.Invoke(comp.frame.frame,
                                                    "getf_locals", []))])
         self.frame = comp.frame
@@ -321,9 +324,9 @@ print b.eggs(1,2,3)
 """
 
 if __name__ == '__main__':
-    mod = SimpleCompiler.BasicModule("foo")
+    mod = SrcGenCompiler.BasicModule("foo")
     fact = ObjectFactory()
-    pi = SimpleCompiler.SimpleCompiler(mod, fact)
+    pi = SrcGenCompiler.SrcGenCompiler(mod, fact)
     fact.parent = pi
     code = jast.Block(pi.execstring(data))
     mod.addMain(code, pi)

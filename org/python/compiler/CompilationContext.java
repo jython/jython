@@ -11,4 +11,6 @@ public interface CompilationContext {
 
     public String getFilename();
 
+
+    public ScopeInfo getScopeInfo(SimpleNode node);
 }

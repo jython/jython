@@ -5,6 +5,9 @@ package org.python.compiler;
 import java.io.*;
 import java.util.*;
 import org.python.parser.*;
+import org.python.parser.ast.*;
+import org.python.core.Py;
+import org.python.core.PyException;
 
 class PyIntegerConstant extends Constant implements ClassConstants
 {
@@ -254,7 +257,7 @@ class PyCodeConstant extends Constant implements ClassConstants
     }
 }
 
-public class Module implements ClassConstants
+public class Module implements ClassConstants, CompilationContext
 {
     ClassFile classfile;
     Constant filename;
@@ -263,6 +266,7 @@ public class Module implements ClassConstants
     public boolean linenumbers;
     public boolean setFile=true;
     Future futures;
+    Hashtable scopes;
 
     public Module(String name, String filename, boolean linenumbers) {
         this.linenumbers = linenumbers;
@@ -276,6 +280,7 @@ public class Module implements ClassConstants
             this.filename = null;
         codes = new Vector();
         futures = new Future();
+        scopes = new Hashtable();
     }
 
     public Module(String name) {
@@ -366,7 +371,7 @@ public class Module implements ClassConstants
 
     private int to_cell;
 
-    public PyCodeConstant PyCode(SimpleNode tree, String name,
+    public PyCodeConstant PyCode(modType tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults,
                                  int firstlineno, ScopeInfo scope)
@@ -377,10 +382,11 @@ public class Module implements ClassConstants
     }
 
 
-    public PyCodeConstant PyCode(SimpleNode tree, String name,
+    public PyCodeConstant PyCode(modType tree, String name,
                                  boolean fast_locals, String className,
                                  boolean classBody, boolean printResults,
-                                 int firstlineno, ScopeInfo scope,
+                                 int firstlineno,
+                                 ScopeInfo scope,
                                  org.python.core.CompilerFlags cflags)
         throws Exception
     {
@@ -413,9 +419,8 @@ public class Module implements ClassConstants
         //Do something to add init_code to tree
         CodeCompiler compiler = new CodeCompiler(this, printResults);
 
-        if (ac != null && ac.init_code.getNumChildren() > 0) {
-            ac.init_code.jjtAddChild(tree, ac.init_code.getNumChildren());
-            tree = ac.init_code;
+        if (ac != null && ac.init_code.size() > 0) {
+            ac.appendInitCode((Suite) tree);
         }
 
         if (scope != null) {
@@ -438,7 +443,7 @@ public class Module implements ClassConstants
         }
 
         compiler.parse(tree, c, fast_locals, className, classBody,
-                       scope,cflags);
+                       scope, cflags);
 
         // !classdef only
         if (!classBody) code.names = toNameAr(compiler.names,false);
@@ -451,9 +456,6 @@ public class Module implements ClassConstants
 
         if (compiler.optimizeGlobals) {
             code.moreflags |= org.python.core.PyTableCode.CO_OPTIMIZED;
-        }
-        if (compiler.my_scope.nested_scopes) {
-            code.moreflags |= org.python.core.PyTableCode.CO_NESTED;
         }
 
         code.module = this;
@@ -574,7 +576,33 @@ public class Module implements ClassConstants
         classfile.write(stream);
     }
 
-    public static void compile(SimpleNode node, OutputStream ostream,
+    // Implementation of CompilationContext
+    public Future getFutures() { return futures; }
+
+    public String getFilename() { return sfilename; }
+
+    public ScopeInfo getScopeInfo(SimpleNode node) {
+        return (ScopeInfo) scopes.get(node);
+    }
+
+    public void error(String msg,boolean err,SimpleNode node)
+        throws Exception
+    {
+        if (!err) {
+            try {
+                Py.warning(Py.SyntaxWarning, msg,
+                           (sfilename != null) ? sfilename : "?",
+                           node.beginLine ,null, Py.None);
+                return;
+            } catch(PyException e) {
+                if (!Py.matchException(e, Py.SyntaxWarning))
+                    throw e;
+            }
+        }
+        throw new ParseException(msg,node);
+    }
+
+    public static void compile(modType node, OutputStream ostream,
                                String name, String filename,
                                boolean linenumbers, boolean printResults,
                                boolean setFile,
@@ -584,11 +612,15 @@ public class Module implements ClassConstants
         Module module = new Module(name, filename, linenumbers);
         module.setFile = setFile;
         module.futures.preprocessFutures(node, cflags);
+        new ScopesCompiler(module, module.scopes).parse(node);
+
         //Add __doc__ if it exists
         //Add __file__ for filename (if it exists?)
 
         Constant main = module.PyCode(node, "?", false, null, false,
-                                      printResults, 0, null, cflags);
+                                      printResults, 0,
+                                      module.getScopeInfo(node),
+                                      cflags);
         module.mainCode = main;
         module.write(ostream);
     }

@@ -1,7 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.parser.SimpleNode;
+import org.python.parser.ast.modType;
 import java.lang.reflect.InvocationTargetException;
 import java.io.*;
 
@@ -1536,17 +1536,17 @@ public final class Py
 
     // w/o compiler-flags
 
-    public static PyCode compile(SimpleNode node, String filename) {
+    public static PyCode compile(modType node, String filename) {
         return compile(node, getName(), filename);
     }
 
-    public static PyCode compile(SimpleNode node, String name,
+    public static PyCode compile(modType node, String name,
                                  String filename)
     {
         return compile(node, name, filename, true, false);
     }
 
-    public static PyCode compile(SimpleNode node, String name,
+    public static PyCode compile(modType node, String name,
                                  String filename,
                                  boolean linenumbers,
                                  boolean printResults)
@@ -1563,7 +1563,7 @@ public final class Py
 
     // with compiler-flags
 
-    public static PyCode compile_flags(SimpleNode node, String name,
+    public static PyCode compile_flags(modType node, String name,
                                  String filename,
                                  boolean linenumbers,
                                  boolean printResults,CompilerFlags cflags)
@@ -1585,7 +1585,7 @@ public final class Py
     public static PyCode compile_flags(InputStream istream, String filename,
                                  String type,CompilerFlags cflags)
     {
-        SimpleNode node = parser.parse(istream, type, filename, cflags);
+        modType node = parser.parse(istream, type, filename, cflags);
         boolean printResults = false;
         if (type.equals("single"))
             printResults = true;
@@ -1688,7 +1688,7 @@ public final class Py
     }
 
 
-    static void saveClassFile(String name, ByteArrayOutputStream bytestream) {
+    public static void saveClassFile(String name, ByteArrayOutputStream bytestream) {
         String dirname = Options.proxyDebugDirectory;
         if (dirname == null)
             return;
@@ -1701,7 +1701,7 @@ public final class Py
             FileOutputStream o = new FileOutputStream(file);
             o.write(bytes);
             o.close();
-        } catch (Throwable t) { }
+        } catch (Throwable t) { t.printStackTrace(); }
     }
 
     private static File makeFilename(String name, File dir) {

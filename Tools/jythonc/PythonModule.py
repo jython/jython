@@ -153,7 +153,7 @@ class PythonInner:
                      cellnames,
                      freenames,
                      jast.IntegerConstant(npurecell),
-                     jast.IntegerConstant((frame.opt_globals and CO_OPTIMIZED) | (frame.scope.nested_scopes and CO_NESTED))]
+                     jast.IntegerConstant((frame.opt_globals and CO_OPTIMIZED) | CO_NESTED)]
             newcode = jast.InvokeStatic("Py", "newCode", cargs)
             self.constants.append(("PyCode", jast.Identifier(label), newcode))
 
