@@ -75,6 +75,12 @@
             excludes="org/python/parser/python.java,${excludejava2files}"
         />
 
+        <javac 
+            srcdir="${sourceDir}/Lib" 
+            includes="jxxload_help/**"
+            destdir="${outputDir}/" 
+        />
+
        <copy file="org/python/modules/ucnhash.dat" 
              todir="${outputDir}/org/python/modules" />
     </target>
