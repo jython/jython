@@ -180,7 +180,7 @@ class JavaClass(Namespace):
 if __name__ == '__main__':
     import sys
     print sys.path
-    print importName("pawt.colors"), importName("SimpleCompiler"), \
+    print importName("pawt.colors"), importName("SrcGenCompiler"), \
           importName("pawt")
     print importName("os.path")
     print sys.modules
