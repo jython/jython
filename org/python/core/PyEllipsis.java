@@ -1,8 +1,12 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A class representing the singleton Ellipsis <code>...</code>
+ * object.
+ */
 public class PyEllipsis extends PySingleton {
-    public PyEllipsis() {
+    PyEllipsis() {
         super("Ellipsis");
     }
 }

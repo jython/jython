@@ -1,9 +1,12 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A class representing the singleton None object,
+ */
 public class PyNone extends PySingleton
 {
-    public PyNone() {
+    PyNone() {
         super("None");
     }
 
