@@ -20,12 +20,16 @@ Copyright © Corporation for National Research Initiatives
         struct.java
         binascii.java
 
+    Harry Mantakos contributed the underlying md5 implementation.
+
     A huge thanks goes to all the members of the jpython-interest
     mailing list.  Other folks who have contributed to JPython in ways
     large and small, in no particular order:
 
     Greg Ward
     Tony Plate
+    Jim Althoff
+    Drew Morrissey
 
 
 Local Variables:
