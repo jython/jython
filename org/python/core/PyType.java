@@ -830,7 +830,7 @@ public class PyType extends PyObject {
         } else {
             int lastdot = name.lastIndexOf('.');
             if (lastdot != -1) {
-                name = name.substring(lastdot);
+                name = name.substring(lastdot+1);
             }
         }
 
