@@ -56,11 +56,10 @@ class MakeProxies
                                                String name,
                                                PyObject dict)
     {
-        String[] interfaces = new String[vinterfaces.size()];
+        Class[] interfaces = new Class[vinterfaces.size()];
 
         for (int i=0; i<vinterfaces.size(); i++) {
-            interfaces[i] = ((Class)vinterfaces.elementAt(i)).getName();
-//             System.err.println("interface: " + interfaces[i]);
+            interfaces[i] = (Class)vinterfaces.elementAt(i);
         }
         String proxyName = proxyPrefix + name + "$" + proxyNumber++;
         String pythonModuleName;

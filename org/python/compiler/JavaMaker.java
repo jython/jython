@@ -14,10 +14,10 @@ public class JavaMaker extends ProxyMaker
     //Hashtable methods;
     PyObject methods;
     public boolean frozen, main;
-    public String[] interfaces;
+    public Class[] interfaces;
     public Class superclass;
     
-    public JavaMaker(Class superclass, String[] interfaces,
+    public JavaMaker(Class superclass, Class[] interfaces,
                      String pythonClass, String pythonModule, String myClass,
                      PyObject methods)
     {
@@ -25,7 +25,7 @@ public class JavaMaker extends ProxyMaker
              null, null, methods, false, false);
     }
                             
-    public JavaMaker(Class superclass, String[] interfaces,
+    public JavaMaker(Class superclass, Class[] interfaces,
                      String pythonClass, String pythonModule, String myClass,
                      String[] packages, String[] properties,
                      PyObject methods, //String[] methods,
@@ -127,11 +127,7 @@ public class JavaMaker extends ProxyMaker
 
     public void build() throws Exception {
         //Class superclass = Class.forName(classname);
-        Class[] ints = new Class[interfaces.length];
-        for (int i=0; i<interfaces.length; i++) {
-            ints[i] = Class.forName(interfaces[i]);
-        }
-        build(superclass, ints);
+        build(superclass, interfaces);
     }
 
     public void addMain() throws Exception {
