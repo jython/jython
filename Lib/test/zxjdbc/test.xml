@@ -184,4 +184,44 @@
 			create table b_clobtable (a int, b clob)
 		</table>
 	</vendor>
+	<vendor name="cloudscape"
+		datahandler="com.ziclix.python.sql.JDBC20DataHandler">
+		<test name="driver" os="java">
+			<factory class="com.ziclix.python.sql.zxJDBC" method="connect">
+				<argument name="url" value="jdbc:cloudscape:ziclix;create=true"/>
+				<argument name="usr" value=""/>
+				<argument name="pwd" value=""/>
+				<argument name="driver" value="COM.cloudscape.core.JDBCDriver"/>
+			</factory>
+			<testcase from="zxtest" import="zxCoreTest">
+				<ignore name="testRowid"/>
+			</testcase>
+			<testcase from="zxtest" import="BCPTest"/>
+			<testcase from="dbextstest" import="dbextsTestCase"/>
+		</test>
+		<table ref="texttable" name="c_texttable">
+			create table c_texttable (a int not null, primary key(a), b long varchar not null)
+		</table>
+		<table ref="floattable" name="c_floattable">
+			create table c_floattable (a int, b numeric(5,2))
+		</table>
+		<table ref="datetable" name="c_datetable">
+			create table c_datetable (a int, b date)
+		</table>
+		<table ref="timetable" name="c_timetable">
+			create table c_timetable (a int, b time)
+		</table>
+		<table ref="timestamptable" name="c_timestamptable">
+			create table c_timestamptable (a int, b timestamp)
+		</table>
+		<table ref="blobtable" name="b_blobtable">
+			create table b_blobtable (a int, b blob)
+		</table>
+		<table ref="pktable" name="b_pktable">
+			create table b_pktable (a int not null, b int, primary key(a))
+		</table>
+		<table ref="autoincrementtable" name="aitable">
+			create table aitable (a int with default autoincrement not null, b int, primary key(a))
+		</table>
+	</vendor>
 </tests>
