@@ -93,7 +93,7 @@ public class PyInteger extends PyObject {
 		int x = a + b;
 		if ((x^a) < 0 && (x^b) < 0)
 			throw Py.OverflowError("integer addition: "+this+" + "+right);
-		return new PyInteger(x);
+		return Py.newInteger(x); //new PyInteger(x);
 	}
 
 	public PyObject __sub__(PyObject right) {
@@ -102,7 +102,7 @@ public class PyInteger extends PyObject {
 		int x = a - b;
 		if ((x^a) < 0 && (x^~b) < 0)
 			throw Py.OverflowError("integer subtraction: "+this+" - "+right);
-		return new PyInteger(x);
+		return Py.newInteger(x);
 	}
 
 	public PyObject __mul__(PyObject right) {
@@ -113,7 +113,7 @@ public class PyInteger extends PyObject {
 		
 		if (x > Integer.MAX_VALUE || x < Integer.MIN_VALUE)
 			throw Py.OverflowError("integer multiplication: "+this+" * "+right);
-		return new PyInteger((int)x);
+		return Py.newInteger((int)x);
 	}
 
     // Getting signs correct for integer division
@@ -132,7 +132,7 @@ public class PyInteger extends PyObject {
 	}
 
 	public PyObject __div__(PyObject right) {
-		return new PyInteger(divide(value, ((PyInteger)right).value));
+		return Py.newInteger(divide(value, ((PyInteger)right).value));
 	}
 
 	private int modulo(int x, int y, int xdivy) {
@@ -141,7 +141,7 @@ public class PyInteger extends PyObject {
 
 	public PyObject __mod__(PyObject right) {
 		int x = ((PyInteger)right).value;
-		return new PyInteger(modulo(value, x, divide(value, x)));
+		return Py.newInteger(modulo(value, x, divide(value, x)));
 	}
 
 	public PyObject __divmod__(PyObject right) {
@@ -207,36 +207,36 @@ public class PyInteger extends PyObject {
 	    if (mod != 0) {
 	        ret = modulo(ret, mod, divide(ret, mod));
 	    }
-	    return new PyInteger(ret);
+	    return Py.newInteger(ret);
 	}
 
 	public PyObject __lshift__(PyObject right) {
         int shift = ((PyInteger)right).value;
         if (shift > 31) return new PyInteger(0);
-		return new PyInteger(value << shift);
+		return Py.newInteger(value << shift);
 	}
 
 	public PyObject __rshift__(PyObject right) {
-		return new PyInteger(value >>> ((PyInteger)right).value);
+		return Py.newInteger(value >>> ((PyInteger)right).value);
 	}
 
 	public PyObject __and__(PyObject right) {
-		return new PyInteger(value & ((PyInteger)right).value);
+		return Py.newInteger(value & ((PyInteger)right).value);
 	}
 
 	public PyObject __xor__(PyObject right) {
-		return new PyInteger(value ^ ((PyInteger)right).value);
+		return Py.newInteger(value ^ ((PyInteger)right).value);
 	}
 
 	public PyObject __or__(PyObject right) {
-		return new PyInteger(value | ((PyInteger)right).value);
+		return Py.newInteger(value | ((PyInteger)right).value);
 	}
 
 	public PyObject __neg__() {
 		int x = -value;
 		if (value < 0 && x < 0)
 			throw Py.OverflowError("integer negation");
-		return new PyInteger(x);
+		return Py.newInteger(x);
 	}
 
 	public PyObject __pos__() {
@@ -251,7 +251,7 @@ public class PyInteger extends PyObject {
 	}
 
 	public PyObject __invert__() {
-		return new PyInteger(~value);
+		return Py.newInteger(~value);
 	}
 
 	public PyInteger __int__() {

@@ -166,7 +166,7 @@ public final class Py {
 
 	public static PyObject MemoryError;
 	public static void MemoryError(OutOfMemoryError t) {
-	    if (showjavaexc) {
+	    if (Options.showJavaExceptions) {
 	        t.printStackTrace();
 	    }
 	    System.err.println("Out of Memory");
@@ -262,8 +262,21 @@ public final class Py {
     }
 
     /* Convenience methods to create new constants without using "new" */
-    public static PyInteger newInteger(int i) {
-        return new PyInteger(i);
+    private static PyInteger[] integerCache = null;
+    
+    
+    public static final PyInteger newInteger(int i) {
+        if (integerCache == null) {
+            integerCache = new PyInteger[1000];
+            for(int j=-100; j<900; j++) {
+                integerCache[j+100] = new PyInteger(j);
+            }
+        }
+        if (i>=-100 && i < 900) {
+            return integerCache[i+100];
+        } else {
+            return new PyInteger(i);
+        }
     }
     // Very bad behavior...
     public static PyInteger newInteger(long i) {
@@ -557,7 +570,6 @@ public final class Py {
 		printException(t, f, null);
 	}
 
-    public static boolean showjavaexc=false;
 	public static synchronized void printException(Throwable t, PyFrame f, PyObject file) {
 	    //System.err.println("printingException: "+t+", "+file);
 	    StdoutWrapper stderr = Py.stderr;
@@ -566,7 +578,7 @@ public final class Py {
 	        stderr = new FixedFileWrapper(file);
 	    }
 	    
-	    if (showjavaexc) {
+	    if (Options.showJavaExceptions) {
 	        stderr.println("Java Traceback:");
 	        java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
 	        if (t instanceof PyException) {
@@ -910,11 +922,15 @@ public final class Py {
 		if (i == null) throw Py.TypeError("float required");
 		return i.doubleValue();
 	}
-
+	
 	public static char py2char(PyObject o) {
+	    return py2char(o, "char required");
+	}	
+
+	public static char py2char(PyObject o, String msg) {
 		if (o instanceof PyString) {
 			PyString s = (PyString)o;
-			if (s.__len__() != 1) throw Py.TypeError("char expected");
+			if (s.__len__() != 1) throw Py.TypeError(msg);
 			return s.toString().charAt(0);
 		}
 		if (o instanceof PyInteger) {
@@ -922,7 +938,7 @@ public final class Py {
 		}
 
 		Character i = (Character)o.__tojava__(Character.TYPE);
-		if (i == null) throw Py.TypeError("character required");
+		if (i == null) throw Py.TypeError(msg);
 		return i.charValue();
 	}
 	
@@ -1075,7 +1091,7 @@ public final class Py {
     public static PyObject[] unpackSequence(PyObject o, int length) {
         if (o instanceof PyTuple) {
             PyTuple tup = (PyTuple)o;
-            int l = tup.__len__();
+            //System.err.println("unpack tuple");
             if (tup.__len__() == length) return tup.list;
             throw Py.ValueError("unpack tuple of wrong size");
         }
