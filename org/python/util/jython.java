@@ -18,6 +18,7 @@ public class jython
         "-Dprop=v : Set the property `prop' to value `v'\n"+
         "-jar jar : program read from __run__.py in jar file\n"+
         "-c cmd   : program passed in as string (terminates option list)\n"+
+        "-W arg   : warning control (arg is action:message:category:module:lineno)\n"+
         "file     : program read from script file\n"+
         "-        : program read from stdin (default; interactive mode if a "+
         "tty)\n"+
@@ -95,6 +96,11 @@ public class jython
         PyModule mod = imp.addModule("__main__");
         interp.setLocals(mod.__dict__);
         //System.err.println("imp");
+
+        for (int i = 0; i < opts.warnoptions.size(); i++) {
+            String wopt = (String) opts.warnoptions.elementAt(i);
+            PySystemState.warnoptions.append(new PyString(wopt));
+        }
 
         String msg = "";
         if (Options.importSite) {
@@ -194,6 +200,7 @@ class CommandLineOptions
     public String[] argv;
     public java.util.Properties properties;
     public String command;
+    public java.util.Vector warnoptions = new java.util.Vector();
 
     public CommandLineOptions() {
         filename = null;
@@ -257,6 +264,10 @@ class CommandLineOptions
             else if (arg.equals("-c")) {
                 command = args[++index];
                 if (!fixInteractive) interactive = false;              
+                break;
+            }
+            else if (arg.equals("-W")) {
+                warnoptions.addElement(args[++index]);
                 break;
             }
             else if (arg.startsWith("-D")) {
