@@ -1471,6 +1471,10 @@ final class StringFormatter
                 precision = getNumber();
                 if (precision == -1)
                     precision = 0;
+                if (precision > 250) // A magic number. Larger than in CPython.
+                    throw Py.OverflowError(
+                         "formatted float is too long (precision too long?)");
+
                 c = pop();
             }
             if (c == 'h' || c == 'l' || c == 'L') {
