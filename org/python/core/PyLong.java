@@ -80,7 +80,7 @@ public class PyLong extends PyObject
             if (c == Float.TYPE || c == Double.TYPE || c == Float.class ||
                 c == Double.class)
             {
-                __float__().__tojava__(c);
+                return __float__().__tojava__(c);
             }
             if (c == BigInteger.class || c == Number.class ||
                 c == Object.class)
