@@ -88,6 +88,9 @@
             classname="javax.sql.DataSource"
             classpath="${jdbc.jar}"
         />
+        <available property="jdbc30.present"
+            classname="java.sql.ParameterMetaData"
+        />
 
         <echo>--- Build environment for ${ant.project.name} ---</echo>
         <echo>--- Flags (Note: If the {property name} is displayed,</echo>
@@ -103,6 +106,7 @@
         <echo>postgresql  = ${postgresql.present}</echo>
         <echo>jndi        = ${jndi.present}</echo>
         <echo>jdbc        = ${javax.sql.present}</echo>
+        <echo>jdbc3.0     = ${jdbc30.present}</echo>
 
     </target>
 
@@ -192,6 +196,7 @@
             <exclude name="**/connect/Lookup.java" unless="javax.sql.present"/>
             <exclude name="**/connect/Connectx.java"
                      unless="javax.sql.present"/>
+            <exclude name="**/JDBC30DataHandler.java" unless="jdbc30.present"/>
             <classpath refid="main.classpath"/>
         </javac>
 
@@ -231,7 +236,7 @@
     <target name="dist-prepare" depends="init">
         <mkdir dir="${distDir}" />
     </target>
-    
+
     <target name="doc" depends="dist-prepare">
         <delete dir="${distDir}/Doc" />
         <mkdir dir="${distDir}/Doc" />
@@ -476,8 +481,8 @@
              excludes="jython.jar, cachedir"/>
         <gzip zipfile="jython-${release}.tgz" src="jython-${release}.tar" />
     </target>
-        
-        
+
+
     <target name="all" depends="init,clean,prepare,parser,compile,jar"/>
 </project>
 
