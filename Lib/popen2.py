@@ -223,9 +223,10 @@ def system( cmd ):
     This is in popen2 only because its Jython implementation is similar to
     that of the popen functions.
     """
+    bufsize = 4096
     # this uses some Popen3 internals, and thus belongs in popen3
     # javaos.system should also be this function
-    p = Popen3( cmd, 1, bufsize=4096 )
+    p = Popen3( cmd, 1, bufsize)
 
     # read stderr in separate thread
     errReader = _makeReaderThread(
