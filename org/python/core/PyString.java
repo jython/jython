@@ -161,7 +161,7 @@ public class PyString extends PySequence {
  	    try {
     		return new PyLong(new java.math.BigInteger(string));
 		} catch (NumberFormatException exc) {
-		    throw Py.ValueError("invalid literal for __int__: "+string);
+		    throw Py.ValueError("invalid literal for __long__: "+string);
 		}
 	}
 
@@ -169,7 +169,7 @@ public class PyString extends PySequence {
  	    try {
     		return new PyFloat(Double.valueOf(string).doubleValue());
 		} catch (NumberFormatException exc) {
-		    throw Py.ValueError("invalid literal for __int__: "+string);
+		    throw Py.ValueError("invalid literal for __float__: "+string);
 		}
 	}
 }
@@ -269,29 +269,52 @@ final class StringFormatter{
         java.text.NumberFormat format = java.text.NumberFormat.getInstance();
         int prec = precision;
         if (prec == -1) prec = 6;
+        if (v < 0) {
+            v = -v;
+            negative = true;
+        }
         format.setMaximumFractionDigits(prec);
         format.setMinimumFractionDigits(truncate ? 0 : prec);
         format.setGroupingUsed(false);
 
-        return format.format(v);
+        //System.err.println("formatFloat: "+v+", "+prec);
+        String ret = format.format(v);
+        if (ret.indexOf('.') == -1) {
+            return ret+'.';
+        }
+        return ret;
     }
 
     public String formatFloatExponential(PyObject arg, char e, boolean truncate) {
         StringBuffer buf = new StringBuffer();
         double v = arg.__float__().getValue();
-        double power = Math.floor(Math.log(v)/Math.log(10));
-
+        boolean isNegative = false;
+        if (v < 0) {
+            v = -v;
+            isNegative = true;
+        }
+        double power = 0.0;
+        if (v > 0) power = Math.floor(Math.log(v)/Math.log(10));
+        //System.err.println("formatExp: "+v+", "+power);
+        int savePrecision = precision;
+        
+        if (truncate) precision = -1;
+        else precision = 3;
+        
+        String exp = formatInteger((long)power, 10, false);
+        if (negative) { negative = false; exp = '-'+exp; }
+        else {
+            if (!truncate) exp = '+'+exp;
+        }
+        
+        precision = savePrecision;
+        
         double base = v/Math.pow(10, power);
         buf.append(formatFloatDecimal(base, truncate));
         buf.append(e);
-        if (truncate) precision = -1;
-        else precision = 3;
-        String exp = formatInteger((long)power, 10, false);
-        if (negative) { negative = false; buf.append('-'); }
-        else {
-            if (!truncate) buf.append('+');
-        }
+
         buf.append(exp);
+        negative = isNegative;
 
         return buf.toString();
     }
