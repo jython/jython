@@ -76,7 +76,10 @@ def compile(files, javac=None, cpathopt="-classpath",
         if sourcedir:
             cpath.append(sourcedir)
         cpath.extend(sys.path)
-        cpath = '"%s"' % sep.join(cpath)
+        cpath = sep.join(cpath)
+        if System.getProperty("os.name")[:7] == 'Windows' and \
+                        System.getProperty("java.version") < "1.2":
+            cpath = '"%s"' % cpath
     cmd.extend([cpathopt, cpath])
     cmd.extend(files)
     print 'Compiling with args:', cmd
