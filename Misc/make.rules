@@ -4,6 +4,12 @@
 # Generic Makefile rules for building JPython.  Assumes GNU make.
 # Configure your build of JPython by modifying macros in this file.
 
+# You will need to get Sun's JavaCC (Java Compiler Compiler) to build
+# the JPython parser.  JavaCC can be downloaded from
+# http://www.sun.com/suntest/products/JavaCC/index.html
+# I have tested JPython with JavaCC 0.7.1, but had some problems with
+# 0.8pre2 so I don't currently recommend getting that version.
+
 # Uncomment these 3 lines to use the Jikes compiler.  Jikes is a Java
 # compiler available from IBM's alphaWorks.  It is much faster than
 # Sun's javac.  I have tested JPython with Jikes 0.47 on Solaris.  You 
