@@ -81,12 +81,14 @@ public class PyFunction extends PyObject
     }
 
     public void __delattr__(String name) {
-        // TBD: should __doc__ be del'able?
         if (name == "__dict__" || name == "func_dict") {
             __dict__ = null;
             return;
         } else if (name == "func_defaults") {
             func_defaults = Py.EmptyObjects;
+            return;
+        } else if (name == "func_doc" || name == "__doc__") {
+            __doc__ = Py.None;
             return;
         }
         if (__dict__ == null)
