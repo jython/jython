@@ -45,4 +45,4 @@ def translate(s, table, deletions=""):
         if not char in deletions:
             ns=ns+table[ord(char)]
 
-    return ns       
+    return ns
