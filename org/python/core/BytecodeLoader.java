@@ -1,7 +1,10 @@
+// Copyright © Corporation for National Research Initiatives
+
 package org.python.core;
 import java.util.Hashtable;
 
-public class BytecodeLoader extends ClassLoader {
+public class BytecodeLoader extends ClassLoader
+{
     protected Class loadClass(String s, boolean b)
 	throws ClassNotFoundException
     {
