@@ -1496,8 +1496,12 @@ final class StringFormatter
 
             switch(c) {
             case 's':
+            case 'r':
                 fill = ' ';
-                string = arg.__str__().toString();
+                if (c == 's')
+                    string = arg.__str__().toString();
+                else
+                    string = arg.__repr__().toString();
                 if (precision >= 0 && string.length() > precision) {
                     string = string.substring(0, precision);
                 }
