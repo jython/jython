@@ -3626,7 +3626,7 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
     }
   }
 
-//argument: [test '='] test	# Really [keyword '='] test
+//argument: [test '='] test     # Really [keyword '='] test
   final public void argument() throws ParseException {
     SimpleNode jjtn001 = new SimpleNode(JJTKEYWORD);
     boolean jjtc001 = true;
@@ -3811,7 +3811,7 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
                                jjtree.closeNodeScope(jjtn002, true);
                                jjtc002 = false;
                                jjtreeCloseNodeScope(jjtn002);
-                         jjtn002.setString(t.image, 1);
+                               jjtn002.setString(t.image, 1);
       } finally {
           if (jjtc002) {
             jjtree.closeNodeScope(jjtn002, true);
@@ -3829,7 +3829,7 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
                               jjtree.closeNodeScope(jjtn003, true);
                               jjtc003 = false;
                               jjtreeCloseNodeScope(jjtn003);
-                        jjtn003.setString(t.image, 3);
+                              jjtn003.setString(t.image, 3);
       } finally {
           if (jjtc003) {
             jjtree.closeNodeScope(jjtn003, true);
@@ -3847,7 +3847,7 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
                                jjtree.closeNodeScope(jjtn004, true);
                                jjtc004 = false;
                                jjtreeCloseNodeScope(jjtn004);
-                         jjtn004.setString(t.image, 3);
+                               jjtn004.setString(t.image, 3);
       } finally {
           if (jjtc004) {
             jjtree.closeNodeScope(jjtn004, true);
@@ -3875,7 +3875,7 @@ public class PythonGrammar/*@bgen(jjtree)*/implements PythonGrammarTreeConstants
                       jjtree.closeNodeScope(jjtn001, true);
                       jjtc001 = false;
                       jjtreeCloseNodeScope(jjtn001);
-                jjtn001.setInfo(t.image);
+                      jjtn001.setInfo(t.image);
       } finally {
           if (jjtc001) {
             jjtree.closeNodeScope(jjtn001, true);
