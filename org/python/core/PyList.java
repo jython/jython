@@ -349,11 +349,21 @@ public class PyList extends PySequence implements InitModule
     }
 
     public PyObject pop() {
+        return pop(-1);
+    }
+
+    public PyObject pop(int n) {
         if (length==0) {
             throw Py.IndexError("pop from empty list");
         }
-        length -= 1;
-        return list[length];
+        if (n < 0)
+            n += length;
+        if (n < 0 || n >= length)
+            throw Py.IndexError("pop index out of range");
+        PyObject v = list[n];
+
+        setslice(n, n+1, 1, Py.EmptyTuple);
+        return v;
     }
     
     public void extend(PyObject o) {
