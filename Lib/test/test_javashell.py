@@ -163,9 +163,9 @@ class JavaShellTest(unittest.TestCase):
             newValue, value
             ))
 
+def test_main():
+    test_support.run_unittest(JavaShellTest)
+
 if __name__ == "__main__":
-    try:
-        unittest.main()
-    except SystemExit:
-        pass
+    test_main()
 
