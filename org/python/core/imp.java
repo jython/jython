@@ -355,11 +355,26 @@ public class imp {
         return ret;
     }
 
+    private static String getParent(PyObject dict) {
+        PyObject tmp = dict.__finditem__("__name__");
+        if (tmp == null) return null;
+        String name = tmp.toString();
+        
+        tmp = dict.__finditem__("__path__");
+        if (tmp != null && tmp instanceof PyList) {
+            return name.intern();
+        } else {
+            int dot = name.lastIndexOf('.');
+            if (dot == -1) return null;
+            return name.substring(0, dot).intern();
+        }
+    }
+
     public static PyObject importName(String name, boolean top) {
-        int dot = name.indexOf('.');
         if (name.length() == 0)
             throw Py.ValueError("Empty module name");
-        else if (dot != -1) {
+        int dot = name.indexOf('.');
+        if (dot != -1) {
             PyObject modules = Py.getSystemState().modules;             
             PyObject mod = modules.__finditem__(name);
             if (mod != null && !top)
@@ -391,21 +406,6 @@ public class imp {
                 return mod;
         }
         else return load(name);
-    }
-
-    private static String getParent(PyObject dict) {
-        PyObject tmp = dict.__finditem__("__name__");
-        if (tmp == null) return null;
-        String name = tmp.toString();
-        
-        tmp = dict.__finditem__("__path__");
-        if (tmp != null && tmp instanceof PyList) {
-            return name.intern();
-        } else {
-            int dot = name.lastIndexOf('.');
-            if (dot == -1) return null;
-            return name.substring(0, dot).intern();
-        }
     }
 
     public synchronized static PyObject importName(String name, boolean top,
@@ -452,6 +452,13 @@ public class imp {
         }
     }   
 
+    public static void importAll(String mod, PyFrame frame) {
+        PyObject module = importName(mod, false, frame.f_globals);
+        PyObject locals = frame.getf_locals();
+
+        loadNames(module.__dir__(), module, frame.getf_locals());
+    }
+
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals)
     {
@@ -472,15 +479,6 @@ public class imp {
             }
         }
     }
-                
-
-    public static void importAll(String mod, PyFrame frame) {
-        PyObject module = importName(mod, false, frame.f_globals);
-        PyObject locals = frame.getf_locals();
-
-        loadNames(module.__dir__(), module, frame.getf_locals());
-    }
-
 
     static PyObject reload(PyJavaClass c) {
         PyObject modules = Py.getSystemState().modules;         
@@ -489,7 +487,8 @@ public class imp {
         String name = c.__name__;
         int dot = name.lastIndexOf('.');
         if (dot != -1) {
-            PyObject pkg = modules.__finditem__(name.substring(0, dot).intern());
+            String iname = name.substring(0, dot).intern();
+            PyObject pkg = modules.__finditem__(iname);
             if (pkg == null) {
                 throw Py.ImportError("reload(): parent not in sys.modules");
             }
@@ -516,7 +515,8 @@ public class imp {
         String modName = name;
         int dot = name.lastIndexOf('.');
         if (dot != -1) {
-            PyObject pkg = modules.__finditem__(name.substring(0, dot).intern());
+            String iname = name.substring(0, dot).intern();
+            PyObject pkg = modules.__finditem__(iname);
             if (pkg == null) {
                 throw Py.ImportError("reload(): parent not in sys.modules");
             }
