@@ -25,4 +25,4 @@ class ChoiceDemo(applet.Applet):
 
 if __name__ == '__main__':
     import pawt
-	pawt.test(ChoiceDemo())
+    pawt.test(ChoiceDemo())
