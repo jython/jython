@@ -8,15 +8,24 @@ public class os implements ClassDictInit {
 
     // An ugly hack, but it keeps the site.py from CPython2.0 happy
 
-    public static String __file__;
-
     public static void classDictInit(PyObject dict) {
-        String prefix = Py.getSystemState().prefix;
-        if (prefix != null)
-            __file__ = prefix + "/Lib/javaos.py";
 
         // Fake from javaos import *
-        PyFrame frame = new PyFrame(null, dict, dict, null);
-        org.python.core.imp.importAll("javaos", frame);
+
+        PyTuple all = new PyTuple(new PyString[] { Py.newString('*') });
+        PyObject module = __builtin__.__import__("javaos", null, null, all);
+
+        PyObject names = module.__dir__();
+        PyObject name;
+        for (int i = 0; (name=names.__finditem__(i)) != null; i++) {
+            String sname = name.toString().intern();
+            dict.__setitem__(name, module.__getattr__(sname));
+        }
+
+        String prefix = Py.getSystemState().prefix;
+        if (prefix != null) {
+            String libdir = prefix + "/Lib/javaos.py";
+            dict.__setitem__("__file__", new PyString(libdir));
+        }
     }
 }
