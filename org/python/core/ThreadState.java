@@ -1,4 +1,5 @@
 package org.python.core;
+import java.util.Stack;
 
 public class ThreadState {
     //public InterpreterState interp;
@@ -10,7 +11,29 @@ public class ThreadState {
     public Thread thread;
     public boolean tracing;
     public PyList reprStack = null;
-    public PyInstance initializingProxy = null;
+    //public PyInstance initializingProxy = null;
+    private Stack initializingProxies = null;
+
+    public PyInstance getInitializingProxy() {
+        if (initializingProxies == null || initializingProxies.empty()) {
+            return null;
+        }
+        return (PyInstance)initializingProxies.peek();
+    }
+    
+    public void pushInitializingProxy(PyInstance proxy) {
+        if (initializingProxies == null) {
+            initializingProxies = new Stack();
+        }
+        initializingProxies.push(proxy);
+    }
+    
+    public void popInitializingProxy() {
+        if (initializingProxies == null || initializingProxies.empty()) {
+            throw Py.RuntimeError("invalid initializing proxies state");
+        }
+        initializingProxies.pop();
+    }
 
     public ThreadState(Thread t, PySystemState systemState) {
         thread = t;

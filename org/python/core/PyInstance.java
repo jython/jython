@@ -70,7 +70,7 @@ public class PyInstance extends PyObject {
         PyProxy proxy;
         ThreadState ts = Py.getThreadState();
         try {
-            ts.initializingProxy = this;
+            ts.pushInitializingProxy(this);
             try {
                 proxy = (PyProxy)c.newInstance(); //(PyProxy)c.getConstructor(new Class[] {PyInstance.class}).newInstance(new Object[] {this});
             } catch (NoSuchMethodError nsme) {
@@ -79,7 +79,7 @@ public class PyInstance extends PyObject {
                 throw Py.JavaError(exc);
             }
         } finally {
-            ts.initializingProxy = null;
+            ts.popInitializingProxy();
         }
         //proxy._setPyInstance(this);
         //proxy._setPySystemState(Py.getSystemState());

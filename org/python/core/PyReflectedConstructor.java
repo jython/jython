@@ -105,16 +105,16 @@ public class PyReflectedConstructor extends PyReflectedFunction {
 		Object jself;
 		try {
 		    ThreadState ts = Py.getThreadState();
-		    ts.initializingProxy = iself;
-		    jself = ((Constructor)method).newInstance(callData.getArgsArray());
-		    ts.initializingProxy = null;
+		    try {
+    		    ts.pushInitializingProxy(iself);
+    		    jself = ((Constructor)method).newInstance(callData.getArgsArray());
+    		} finally {
+		        ts.popInitializingProxy();
+		    }
 		} catch (Throwable t) {
 			throw Py.JavaError(t);
 		}
 		iself.javaProxy = jself;
-		/*if (jself instanceof PyProxy) {
-		    ((PyProxy)jself)._setPyInstance(iself);
-		}*/
 
 		// Do setattr's for keyword args
 		int offset = args.length;

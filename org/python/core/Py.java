@@ -317,6 +317,10 @@ public final class Py {
         return new PyString(s);
     }
     
+    public static PyInteger newBoolean(boolean t) {
+        return t ? Py.One : Py.Zero;
+    }
+    
     public static PyCode newCode(int argcount, String varnames[],
 			String filename, String name,
 			boolean args, boolean keywords,
@@ -529,8 +533,8 @@ public final class Py {
 		//System.out.println("initProxy");
 		//frozen = false;
 		ThreadState ts = getThreadState();
-		if (ts.initializingProxy != null) {
-		    proxy._setPyInstance(ts.initializingProxy);
+		if (ts.getInitializingProxy() != null) {
+		    proxy._setPyInstance(ts.getInitializingProxy());
 		    proxy._setPySystemState(ts.systemState);
 		    return;
 		}
