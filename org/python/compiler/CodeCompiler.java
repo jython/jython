@@ -179,7 +179,7 @@ public class CodeCompiler extends Visitor {
     }
 
     public Object eval_input(SimpleNode node) throws Exception {
-        return return_stmt(node);
+        return return_stmt(node, true);
     }
 
     public int EmptyObjects;
@@ -375,8 +375,12 @@ public class CodeCompiler extends Visitor {
     }
 
     public Object return_stmt(SimpleNode node) throws Exception {
+        return return_stmt(node, false);
+    }
+    
+    public Object return_stmt(SimpleNode node, boolean inEval) throws Exception {
         setline(node);
-        if (!fast_locals) {
+        if (!inEval && !fast_locals) {
             throw new ParseException("'return' outside function", node);
         }
         
