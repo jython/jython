@@ -284,6 +284,9 @@ class SimpleCompiler(BaseEvaluator):
     def string_const(self, value):
         return self.factory.makeString(value)
 
+    def ellipsis_const(self):
+        return self.factory.makeEllipsis()
+
     # builtin types
     def visitall(self, values):
         ret = []
@@ -372,7 +375,7 @@ class SimpleCompiler(BaseEvaluator):
         top = ret
 
         for part in names[1:]:
-            top = top.getattr(part)
+            ret = ret.getattr(part)
         if topmost:
             return top
         else:
@@ -388,7 +391,7 @@ class SimpleCompiler(BaseEvaluator):
 
 
     def _getnames(self, module):
-       #print module.value, module.value.__class__
+        #print module.value, module.value.__class__
         mod = ImportName.lookupName(module.value.name)
         if mod:
             return dir(mod.mod)
@@ -398,7 +401,7 @@ class SimpleCompiler(BaseEvaluator):
     def _loadNames(self, names, module):
         for name in names:
             if name == "__all__":
-               loadNames(module.getattr(name).value, module)
+                loadNames(module.getattr(name).value, module)
             elif name[:2] == "__":
                 continue;
             else:

@@ -260,7 +260,7 @@ class BaseEvaluator:
         pass
 
     def importfrom_stmt(self, top, names):                      
-        module = self.get_module(top, 1)
+        module = self.get_module(top, 0)
         if names == '*':
             return self.importall_stmt(module)
             #print 'import * from', module
