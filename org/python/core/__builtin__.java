@@ -384,6 +384,8 @@ public class __builtin__ implements InitModule
 
 
     public static boolean issubclass(PyClass subClass, PyClass superClass) {
+        if (subClass == null || superClass == null)
+            throw Py.TypeError("arguments must be classes");
         if (subClass == superClass)
             return true;
         if (subClass.proxyClass != null && superClass.proxyClass != null) {
