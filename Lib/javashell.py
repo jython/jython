@@ -41,8 +41,10 @@ class LazyDict( UserDict ):
 
     def __populate( self ):
         if not self._populated:
+            # race condition - test, populate, set
+            # make sure you don't set _populated until __populateFunc completes...
             self.data = self.__populateFunc()
-            self._populated = 1 # race condition
+            self._populated = 1 
 
     ########## extend methods from UserDict by pre-populating
     def __repr__(self):
@@ -195,23 +197,28 @@ def _getOsType( os=None ):
     os: explicitly select desired OS. os=None to autodetect, os='None' to
     disable 
     """
-    os = os or sys.registry.getProperty( "python.os" ) or \
-               System.getProperty( "os.name" )
+    os = str(os or sys.registry.getProperty( "python.os" ) or \
+               System.getProperty( "os.name" ))
         
     _osTypeMap = (
         ( "nt", ( 'nt', 'Windows NT', 'Windows NT 4.0', 'WindowsNT',
-                  'Windows 2000', 'Windows XP', 'Windows CE' ),
-        ( "dos", ( 'dos', 'Windows 95', 'Windows 98', 'Windows ME' ),
-        ( "mac", ( 'mac', 'MacOS', 'Darwin' ),
-        ( "None", ( 'None', ),
+                  'Windows 2000', 'Windows XP', 'Windows CE' )),
+        ( "dos", ( 'dos', 'Windows 95', 'Windows 98', 'Windows ME' )),
+        ( "mac", ( 'mac', 'MacOS', 'Darwin' )),
+        ( "None", ( 'None', )),
         )
-    for osType, pattern in _osTypeMap:
-        if os.startswith( pattern )
+    foundType = None
+    for osType, patterns in _osTypeMap:
+        for pattern in patterns:
+            if os.startswith( pattern ):
+                foundType = osType
+                break
+        if foundType:
             break
-    else: # found no match
-        osType = "posix" # default - posix seems to vary most widely
+    if not foundType:
+        foundType = "posix" # default - posix seems to vary most widely
 
-    return osType
+    return foundType
 
 def _getShellEnv():
     # default to None/empty for shell and environment behavior
