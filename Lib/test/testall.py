@@ -13,6 +13,7 @@ import test_pow
 import test_builtin
 import test_exceptions
 import test_types
+import test_methods
 
 print_test('Standard Extension Modules', 0)
 
@@ -28,5 +29,6 @@ import test_jbasic
 import test_jsubclass
 import test_jser
 import test_jarray
+import test_janoninner
 
 print 'All tests completed successfully!'
