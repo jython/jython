@@ -891,6 +891,11 @@ public final class Py {
     public static PyException makeException(PyObject type, PyObject value,
                                             PyObject traceback)
     {
+        if (traceback == None)
+            return new PyException(type, value);
+        if (!(traceback instanceof PyTraceback))
+            throw TypeError("raise 3rd arg must be traceback or None");
+
         return new PyException(type, value, (PyTraceback)traceback);
     }
 
