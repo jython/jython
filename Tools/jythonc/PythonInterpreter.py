@@ -1,6 +1,9 @@
 # Copyright © Corporation for National Research Initiatives
+
+import operator
+import org
 from BaseEvaluator import BaseEvaluator
-import string, operator, org
+
 
 
 class FlowControlException(Exception):

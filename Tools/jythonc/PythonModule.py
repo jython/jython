@@ -1,9 +1,15 @@
 # Copyright © Corporation for National Research Initiatives
+
+import os
+
 import jast
 import java
 from PythonVisitor import Arguments
-import string, os
 
+EMPTYSTRING = ''
+
+
+
 """
 class foo
     class py -- what gets imported by jpython
@@ -33,7 +39,7 @@ def legalJavaName(name):
     elif len(letters) == len(name):
         return name
     else:
-        return string.join(letters, '')
+        return EMPTYSTRING.join(letters)
 
 
 
@@ -419,7 +425,7 @@ class PythonModule:
         try:
             cf.writeSource(sf)
         except:
-            print string.join(sf.text, '')
+            print EMPTYSTRING.join(sf.text)
             raise
         sf.dump(directory)
         return os.path.join(directory, self.name+'.java')

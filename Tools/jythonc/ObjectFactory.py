@@ -1,8 +1,8 @@
 # Copyright © Corporation for National Research Initiatives
 import jast
 import org, java
-import string
 from Object import Object, PyObject, Generic
+
 
 
 def makeAnys(args):
@@ -155,7 +155,8 @@ class PyFunction(FixedObject):
         comp = self.factory.getCompiler(funcframe)
         code = jast.Block([comp.parse(self.body)])
         # Set up a code object
-        self.pycode = self.parent.module.getCodeConstant(self.name, self.args, funcframe.getlocals(), code)
+        self.pycode = self.parent.module.getCodeConstant(
+            self.name, self.args, funcframe.getlocals(), code)
         self.frame = funcframe
         return self.pycode
 

@@ -1,7 +1,8 @@
 # Copyright © Corporation for National Research Initiatives
+
 import java, org.python.core
 import jast
-import string
+
 
 
 funcs = {}
@@ -64,7 +65,9 @@ class Signature:
         r = []
         for arg in self.inTypes:
             r.append(arg.name)
-        return '('+string.join(r, ', ')+')->'+self.retType.name
+        COMMASPACE = ', '
+        return '(%s)->%s' % (COMMASPACE.join(r), self.retType.name)
+
 
 
 class JavaFunction:

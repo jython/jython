@@ -13,8 +13,6 @@ names = {
       64: 'volatile'
     }
 
-import string
-
 numbers = {}
 for number, name in names.items():
     numbers[name] = number
@@ -38,7 +36,9 @@ def ModifierString(modifier):
         if modifier & base:
             text.append(names[base])
         base = base * 2
-    return string.join(text, ' ')
+    SPACE = ' '
+    return SPACE.join(text)
+
 
 
 if __name__ == '__main__':

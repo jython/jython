@@ -1,10 +1,15 @@
 # Copyright © Corporation for National Research Initiatives
-import string, sys, os
+
+import sys
+import os
+
 from org.python.core import PyModule, PyJavaClass, PyClass, \
      PyJavaPackage, PyBeanEventProperty, PyJavaDirPackage
+
 from util import lookup
 
 
+
 def wrapJava(mod):
     if isinstance(mod, PyModule):
         return Module(mod)
@@ -31,7 +36,7 @@ def topImport(name):
 
 def importName(name):
     try:
-        names = string.split(name, '.')
+        names = name.split('.')
         top = topImport(names[0])
         for name in names[1:]:
             top = top.getattr(name)

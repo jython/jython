@@ -2,9 +2,10 @@
 
 from PythonVisitor import PythonVisitor, nodeToList
 from org.python.parser.PythonGrammarTreeConstants import *
-import string
 import jast
 
+
+
 class BaseEvaluator:
     def __init__(self):
         self.globalnames = {}
@@ -18,7 +19,7 @@ class BaseEvaluator:
         except:
             print 'Parsing line: %d' % self.lineno
             if hasattr(self, 'data') and self.lineno > 0:
-                print string.split(self.data, '\n')[self.lineno-1]
+                print self.data.split('\n')[self.lineno-1]
             raise
 
     def setline(self, lineno):
@@ -45,7 +46,6 @@ class BaseEvaluator:
             ret.append(tmp)
         self.augtemps[node] = ret
         return ret
-
 
     def suite(self, nodes):
         ret = []
@@ -276,12 +276,15 @@ class BaseEvaluator:
             modnames.append(modname)
 
         topmodname = jast.StringConstant(".".join(top))
-        modnames = jast.FilledArray("String",
-                                map(lambda x: jast.StringConstant(x), modnames))
-        asnames = jast.FilledArray("String",
-                                map(lambda x: jast.StringConstant(x), asnames))
-        return jast.InvokeStatic("org.python.core.imp", "importFromAs",
-                                [topmodname, modnames, asnames, self.frame.frame])
+        modnames = jast.FilledArray(
+            "String",
+            map(lambda x: jast.StringConstant(x), modnames))
+        asnames = jast.FilledArray(
+            "String",
+            map(lambda x: jast.StringConstant(x), asnames))
+        return jast.InvokeStatic(
+            "org.python.core.imp", "importFromAs",
+            [topmodname, modnames, asnames, self.frame.frame])
 
     #external interfaces
     def execstring(self, data):

@@ -1,6 +1,7 @@
 # Copyright © Corporation for National Research Initiatives
-import string, os
+import os
 from Modifier import ModifierString
+
 
 
 class SourceFile:
@@ -19,7 +20,8 @@ class SourceFile:
 	fp.close()
 
     def __repr__(self):
-	return string.join(self.text, '')
+        EMPTYSTRING = ''
+	return EMPTYSTRING.join(self.text)
 
     def writeModifiers(self, modifiers):
 	self.write(ModifierString(modifiers))
@@ -57,6 +59,7 @@ class SourceFile:
     def endBlock(self):
 	self.indentation = self.indentation-1
 	self.writeln('}')
+
 
 
 if __name__ == '__main__':
