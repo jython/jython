@@ -26,6 +26,7 @@ import org.python.core.*;
  *
  * e.g. http://localhost:8080/test/hello.py
  *
+ * from javax.servlet.http import HttpServlet
  * class hello(HttpServlet):
  *     def doGet(self,req, res):
  *         res.setContentType("text/html");
