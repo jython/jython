@@ -31,8 +31,6 @@ public class CodeCompiler extends Visitor
     public static final int AUGGET=3;
     public static final int AUGSET=4;
 
-    public static final Object DoFinally=new Integer(2);
-
     public Module module;
     public Code code;
     public ConstantPool pool;
@@ -55,6 +53,16 @@ public class CodeCompiler extends Visitor
     public String className;
 
     public Stack continueLabels, breakLabels, finallyLabels;
+
+    /* break/continue finally's level.
+     * This is the lowest level in finallyLabels which should
+     * be executed at break or continue.
+     * It is saved/updated/restored when compiling loops.
+     * A similar level for returns is not needed because a new CodeCompiler
+     * is used for each PyCode, ie. each 'function'.
+     * When returning through finally's all finallyLabels are executed.
+     */
+    public int bcfLevel = 0;
 
     public CodeCompiler(Module module, boolean print_results) {
         this.module = module;
@@ -489,15 +497,11 @@ public class CodeCompiler extends Visitor
             throw new ParseException("'break' outside loop", node);
         }
 
-        Object obj = breakLabels.peek();
-        if (obj == DoFinally) {
-            code.jsr((Label)finallyLabels.peek());
-            Object tmp = obj;
-            breakLabels.pop();
-            obj = breakLabels.peek();
-            breakLabels.push(tmp);
+        for (int i = finallyLabels.size() - 1; i >= bcfLevel; i--) {
+            code.jsr((Label)finallyLabels.elementAt(i));
         }
-        code.goto_((Label)obj);
+
+        code.goto_((Label)breakLabels.peek());
         return null;
     }
 
@@ -507,15 +511,11 @@ public class CodeCompiler extends Visitor
             throw new ParseException("'continue' not properly in loop", node);
         }
 
-        Object obj = continueLabels.peek();
-        if (obj == DoFinally) {
-            code.jsr((Label)finallyLabels.peek());
-            Object tmp = obj;
-            continueLabels.pop();
-            obj = continueLabels.peek();
-            continueLabels.push(tmp);
+        for (int i = finallyLabels.size() - 1; i >= bcfLevel; i--) {
+            code.jsr((Label)finallyLabels.elementAt(i));
         }
-        code.goto_((Label)obj);
+
+        code.goto_((Label)continueLabels.peek());
         return null;
     }
 
@@ -541,8 +541,8 @@ public class CodeCompiler extends Visitor
         }
         int tmp = code.getLocal();
         code.astore(tmp);
-        if (!finallyLabels.empty()) {
-            code.jsr((Label)finallyLabels.peek());
+        for (int i = finallyLabels.size() - 1; i >= 0; i--) {
+            code.jsr((Label)finallyLabels.elementAt(i));
         }
         code.aload(tmp);
         code.areturn();
@@ -781,19 +781,23 @@ public class CodeCompiler extends Visitor
         return exit;
     }
 
-    public void beginLoop() {
+    public int beginLoop() {
         continueLabels.push(code.getLabel());
         breakLabels.push(code.getLabel());
+        int savebcf = bcfLevel;
+        bcfLevel = finallyLabels.size();
+        return savebcf;
     }
 
-    public void finishLoop() {
+    public void finishLoop(int savebcf) {
         continueLabels.pop();
         breakLabels.pop();
+        bcfLevel = savebcf;
     }
 
 
     public Object visitWhile(While node) throws Exception {
-        beginLoop();
+        int savebcf = beginLoop();
         Label continue_loop = (Label)continueLabels.peek();
         Label break_loop = (Label)breakLabels.peek();
 
@@ -817,7 +821,7 @@ public class CodeCompiler extends Visitor
         code.invokevirtual(mrefs.nonzero);
         code.ifne(start_loop);
 
-        finishLoop();
+        finishLoop(savebcf);
 
         if (node.orelse != null) {
             //Do else
@@ -833,7 +837,7 @@ public class CodeCompiler extends Visitor
     public int iternext=0;
 
     public Object visitFor(For node) throws Exception {
-        beginLoop();
+        int savebcf = beginLoop();
         Label continue_loop = (Label)continueLabels.peek();
         Label break_loop = (Label)breakLabels.peek();
         Label start_loop = code.getLabel();
@@ -887,7 +891,7 @@ public class CodeCompiler extends Visitor
         //if no more elements then fall through
         code.ifnonnull(start_loop);
 
-        finishLoop();
+        finishLoop(savebcf);
 
         if (node.orelse != null) {
             //Do else clause if provided
@@ -964,8 +968,6 @@ public class CodeCompiler extends Visitor
         Object ret;
 
         // Do protected suite
-        continueLabels.push(DoFinally);
-        breakLabels.push(DoFinally);
         finallyLabels.push(finallyStart);
 
         start.setPosition();
@@ -976,8 +978,6 @@ public class CodeCompiler extends Visitor
             code.goto_(finallyEnd);
         }
 
-        continueLabels.pop();
-        breakLabels.pop();
         finallyLabels.pop();
 
         // Handle any exceptions that get thrown in suite
