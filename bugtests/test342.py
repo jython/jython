@@ -8,4 +8,4 @@ from test342p import doimp
 
 #support.compare(doimp.kind,"absolute")
 if doimp.kind != "absolute":
-    raise support.TestWarning("Should be absolute")
+    raise support.TestError("Should be absolute")
