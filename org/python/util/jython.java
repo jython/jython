@@ -1,4 +1,6 @@
+// Copyright © 1999 Corporation for National Research Initiatives
 package org.python.util;
+
 import org.python.core.*;
 import java.util.zip.*;
 import java.io.*;
