@@ -107,7 +107,7 @@ class JavaProxy:
         self.name = name
         self.methods = methods
 
-        self.packages = self.properties = self.specialClasses = jast.Null
+        self.packages = self.properties = jast.Null
         self.modname = "foo"
 
         self.modifier = "public"
@@ -118,7 +118,6 @@ class JavaProxy:
         if module is not None:
             self.packages = module.getPackages()
             self.properties = module.getProperties()
-            self.specialClasses = module.getSpecialClasses()
             self.modname = module.name
             if module.package is not None:
                 self.modname = module.package+'.'+self.modname
@@ -351,13 +350,12 @@ class JavaProxy:
 ##          else:
 ##              supercall = jast.InvokeLocal("super", [])
 
-        #specialClasses = jast.StringArray(self.specialClasses)
         frozen = self.module.getFrozen()
 
         initargs = [this, jast.StringConstant(self.modname),
                     jast.StringConstant(self.name),
                     objects, self.packages, self.properties,
-                    self.specialClasses, frozen]
+                    frozen]
 
         initproxy = jast.InvokeStatic("Py", "initProxy", initargs)
 

@@ -534,7 +534,7 @@ public final class Py {
 
     private static void initProperties(String[] args, String[] packages,
                                        String[] props, 
-                                       String[] specs, String frozenPackage)
+                                       String frozenPackage)
     {
         if (frozenPackage != null) {
             Py.frozen = true;
@@ -568,36 +568,23 @@ public final class Py {
                 PySystemState.add_package(packages[i], packages[i+1]);
             }
         }
-        
-        if (specs != null) {
-            if (specialClasses == null)
-                specialClasses = new java.util.Hashtable();
-            for (int i=0; i<specs.length; i+=2) {
-                String key = specs[i];
-                if (frozenPackage != null)
-                    key = frozenPackage + "." + specs[i];
-                specialClasses.put(key, Py.findClass(specs[i+1]));
-            }
-        }
     }
-
-    private static java.util.Hashtable specialClasses = null;
 
     public static void initProxy(PyProxy proxy, String module, String pyclass,
                                  Object[] args, String[] packages,
                                  String[] props, boolean frozen)
     {
-        initProxy(proxy, module, pyclass, args, packages, props, null, null);
+        initProxy(proxy, module, pyclass, args, packages, props, null);
     }
                                                                             
     public static void initProxy(PyProxy proxy, String module, String pyclass,
                                  Object[] args, String[] packages,
                                  String[] props,
-                                 String[] specs, String frozenPackage)
+                                 String frozenPackage)
     {
 //         System.out.println("initProxy");
 //         frozen = false;               
-        initProperties(null, packages, props, specs, frozenPackage);
+        initProperties(null, packages, props, frozenPackage);
                 
         ThreadState ts = getThreadState();
         if (ts.getInitializingProxy() != null) {
@@ -664,11 +651,11 @@ public final class Py {
     }
 
     public static void runMain(String module, String[] args, String[] packages,
-                               String[] props, String[] specs,
+                               String[] props,
                                String frozenPackage)
     {
         //System.err.println("main: "+module);
-        initProperties(args, packages, props, specs, frozenPackage);
+        initProperties(args, packages, props, frozenPackage);
         
         Class mainClass=null;
         try {
@@ -1259,6 +1246,13 @@ public final class Py {
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc)
     {
+        return makeClass(name, bases, code, doc, null);
+    }
+
+    public static PyObject makeClass(String name, PyObject[] bases,
+                                     PyCode code, PyObject doc,
+                                     Class proxyClass)
+    {
         PyFrame frame = getFrame();
         PyObject globals = frame.f_globals;
 
@@ -1285,23 +1279,8 @@ public final class Py {
         }
 
         PyClass pyclass = new PyClass();
-
-        if (specialClasses != null) {
-//             System.err.println("specialClasses: "+specialClasses);
-//             System.err.println("name: "+name);
-            String nm = name;
-            PyObject mod = globals.__finditem__("__name__");
-            if (mod != null && mod instanceof PyString) {
-                nm = ((PyString)mod).toString()+"."+nm;
-            }
-//             System.err.println("nm: "+nm);
-
-            Class jc = (Class)specialClasses.get(nm);
-//             System.err.println("got: "+jc);
-            if (jc != null) {
-                pyclass.proxyClass = jc;
-            }
-        }
+        if (proxyClass != null)
+            pyclass.proxyClass = proxyClass;
 
         pyclass.init(name, new PyTuple(bases), dict);
         return pyclass;

@@ -36,7 +36,14 @@ class ObjectFactory:
 
     def makeClass(self, name, bases, body, doc=None):
         cls =  PyClass(self.parent, self, name, bases, body, doc)
-        return Object(cls.getNew(), cls)
+        # Yuck! We can't call getNew() before all modules have been analyzed.
+        class DelayGen:
+            def __init__(self, cls):
+                self.cls = cls
+                self.cls.makeCode()
+            def sourceString(self):
+                return self.cls.getNew().sourceString()
+        return Object(DelayGen(cls), cls)
 
     def makeList(self, items):
         code = jast.New("PyList", [PyObjectArray(items)])
@@ -159,11 +166,50 @@ class PyClass(FixedObject):
         self.doc = doc
 
     def getNew(self):
-        pycode = self.makeCode()
-        return jast.InvokeStatic("Py", "makeClass", 
-                                 [jast.StringConstant(self.name),
-                                  PyObjectArray(self.bases), pycode,
-                                  jast.Null])
+        args = [jast.StringConstant(self.name),
+                PyObjectArray(self.bases), self.pycode,
+                jast.Null]
+
+        if self.isSuperclassJava():
+            args.append(jast.Identifier("%s.class" % self.proxyname))
+
+        return jast.InvokeStatic("Py", "makeClass", args)
+
+    def isSuperclassJava(self):
+        if hasattr(self, 'javaclasses'):
+            return len(self.javaclasses)
+
+        self.javaclasses = []
+        self.proxyname = None
+        self.supername = None
+        import compile
+        for base in self.bases:
+            if hasattr(base, "javaclass"):
+                self.javaclasses.append(base.javaclass)
+                self.proxyname = self.name
+                self.supername = base.javaclass.__name__
+                continue
+            base = base.value
+            if hasattr(base, "name"):
+                jc = compile.getJavaClass(base.name)
+                if jc is not None:
+                    self.javaclasses.append(jc)
+                    self.proxyname = self.name
+                    if not jc.isInterface():
+                        self.supername = jc.__name__
+                    continue
+            if isinstance(base, PyClass):
+                if base.isSuperclassJava():
+                    self.javaclasses.extend(base.javaclasses)
+                    self.proxyname = self.name
+                    self.supername = base.name
+                    continue
+
+        if len(self.javaclasses) and self.supername == None:
+            self.supername = "java.lang.Object"
+            self.proxyname = self.name
+        return self.supername != None
+
 
     def makeCode(self):
         classframe = self.factory.makeClassFrame()

@@ -248,7 +248,6 @@ class PythonModule:
 
         self.packages = packages                
         self.properties = properties
-        self.specialClasses = {}
         self.innerClasses = []
 
         self.modifier = "public"
@@ -307,9 +306,6 @@ class PythonModule:
     def getPackages(self):
         return jast.Identifier("jpy$packages")
 
-    def getSpecialClasses(self):
-        return jast.Identifier("jpy$specialClasses")    
-
     def dumpDictionary(self, dict, field):
         props = []
         for name, value in dict.items():
@@ -320,16 +316,11 @@ class PythonModule:
     def dumpProperties(self):
         return self.dumpDictionary(self.properties, self.getProperties())
 
-    def dumpSpecialClasses(self):
-        return self.dumpDictionary(self.specialClasses,
-                                   self.getSpecialClasses())
-
     def dumpPackages(self):
         return self.dumpDictionary(self.packages, self.getPackages())
 
     def dumpFields(self):
-        return [self.dumpProperties(), self.dumpPackages(),
-                self.dumpSpecialClasses()]
+        return [self.dumpProperties(), self.dumpPackages()]
 
     def dumpInitModule(self):
         meths = []
@@ -353,7 +344,7 @@ class PythonModule:
             args = [jast.StringConstant(self.getclassname(self.name+'$'+self.pyinner.name)),
                     jast.Identifier('args'), 
                     self.getPackages(), self.getProperties(), 
-                    self.getSpecialClasses(), self.getFrozen()]
+                    self.getFrozen()]
             maincode = jast.Block([jast.InvokeStatic("Py", "runMain", args)])
             meths.append(jast.Method("main", "public static", 
                                      ["void", ("String[]", "args")], maincode))
