@@ -24,7 +24,8 @@
 
 JAVAC = jikes +E +D
 OPT = -g
-BOOTSTRAPCLASSES = /usr/java1.2/jre/lib/rt.jar
+JIKESPATH = /opt/IBMJava2-13/jre/lib/rt.jar
+BOOTSTRAPCLASSES = $(JIKESPATH)
 
 # Uncomment these 3 lines to use Sun's 1.2 javac compiler
 
@@ -41,21 +42,6 @@ BOOTSTRAPCLASSES = /usr/java1.2/jre/lib/rt.jar
 
 # This is the Java intepreter to use
 JAVA = java
-
-# JPython uses the OROMatcher regular expression library from ORO,
-# Inc. to provide its Perl5 compatible regular expression support.  We
-# cannot distribute OROMatcher as source or separate class files, so
-# you will have to either download OROMatcher yourself, or disable
-# regular expressions in JPython.
-
-# OROMatcher is available from www.oroinc.com.  If you download it
-# yourself, change the definition of OROMATCHERROOT to point to the
-# directory where you installed it.
-#
-# If you do not have the OROMatcher regular expression library,
-# read the comments in the file org/python/modules/Makefile.
-
-OROMATCHERROOT = ../../../../nondist/ORO
 
 # Unix and Linux users should use this CLASSPATH separator
 SEP = :
