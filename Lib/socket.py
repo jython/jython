@@ -51,10 +51,11 @@ def socket(family, type, flags=0):
 
 class _tcpsocket:
 
-    def __init__(self):
-	self.sock = None
-	self.addr = None
-	self.server = 0
+    sock = None
+    istream = None
+    ostream = None
+    addr = None
+    server = 0
 
     def bind(self, addr, port=None):
 	if port is not None:
@@ -136,23 +137,40 @@ class _tcpsocket:
 	return (host, port)
 
     def makefile(self, mode="r", bufsize=-1):
-	return org.python.core.PyFile(self.istream, self.ostream,
-				      "<socket>", mode)
+	if self.istream:
+	    if self.ostream:
+		return org.python.core.PyFile(self.istream, self.ostream,
+					      "<socket>", mode)
+	    else:
+		return org.python.core.PyFile(self.istream, "<socket>", mode)
+	elif self.ostream:
+	    return org.python.core.PyFile(self.ostream, "<socket>", mode)
+	else:
+	    raise IOError, "both istream and ostream have been shut down"
 
     def __del__(self):
 	self.close()
 
+    def shutdown(self, how):
+	assert how in (0, 1, 2)
+	assert self.sock
+	if how in (0, 2):
+	    self.istream = None
+	if how in (1, 2):
+	    self.ostream = None
+
     def close(self):
 	sock = self.sock
+	istream = self.istream
+	ostream = self.ostream
 	self.sock = 0
-	if sock:
-	    istream = self.istream
-	    ostream = self.ostream
 	self.istream = 0
 	self.ostream = 0
-	if sock:
+	if istream:
 	    istream.close()
+	if ostream:
 	    ostream.close()
+	if sock:
 	    sock.close()
 
 
