@@ -127,6 +127,28 @@
         />
     </target>
 
+    <target name="installXML" depends="init">
+        <!-- Set the configuration variables python.home and PyXmlHome
+             in your ant.properties file -->
+        <copy todir="${sourceDir}/Lib/xml">
+            <fileset dir="${python.home}/Lib/xml" includes="__init__.py"/>
+            <fileset dir="${PyXmlHome}/xml" includes="
+                ns.py,
+                sax/*.py,
+                sax/**/drv_xmlproc.py,
+                sax/**/__init__.py,
+                utils/*.py,
+                dom/*.py,
+                dom/html/*.py,
+                dom/ext/*.py,
+                dom/ext/reader/__init__.py,
+                dom/ext/reader/Sax*.py,
+                parsers/__init__.py,
+                parsers/xmlproc/*.py,
+                "/>
+        </copy>
+    </target>
+
     <target name="all" depends="init,clean,prepare,parser,compile,jar">
     </target>
 </project>
