@@ -29,8 +29,13 @@ public class PyFunction extends PyObject {
     }
         
     public PyObject _doget(PyObject container) {
-        return new PyMethod(container, this);
+        return _doget(container, null);
     }
+
+    public PyObject _doget(PyObject container, PyObject wherefound) {
+        return new PyMethod(container, this, wherefound);
+    }
+
     public PyObject __call__() {
         return func_code.call(func_globals, func_defaults);
     }   

@@ -31,8 +31,13 @@ public class PyReflectedFunction extends PyObject {
     }
         
     public PyObject _doget(PyObject container) {
-        if (container == null) return this;
-        return new PyMethod(container, this);
+        return _doget(container, null);
+    }
+
+    public PyObject _doget(PyObject container, PyObject wherefound) {
+        if (container == null)
+            return this;
+        return new PyMethod(container, this, wherefound);
     }
         
     public boolean _doset(PyObject container) {

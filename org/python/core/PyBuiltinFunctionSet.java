@@ -44,8 +44,12 @@ public class PyBuiltinFunctionSet extends PyObject {
     }
     
     public PyObject _doget(PyObject container) {
+        return _doget(container, null);
+    }
+
+    public PyObject _doget(PyObject container, PyObject wherefound) {
         if (isMethod)
-            return new PyMethod(container, this);
+            return new PyMethod(container, this, wherefound);
         else
             return this;
     }
