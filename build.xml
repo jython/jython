@@ -135,8 +135,8 @@
             <fileset dir="${PyXmlHome}/xml" includes="
                 ns.py,
                 sax/*.py,
-                sax/**/drv_xmlproc.py,
-                sax/**/__init__.py,
+                sax/drivers2/drv_xmlproc.py,
+                sax/drivers2/__init__.py,
                 utils/*.py,
                 dom/*.py,
                 dom/html/*.py,
