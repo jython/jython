@@ -1406,6 +1406,8 @@ public final class Py
     }
 
 
+    private static Class[] pyClassCtrSignature = {String.class,PyTuple.class,PyObject.class,Class.class};
+    
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,
                                      Class proxyClass,PyObject[] closure_cells)
@@ -1432,7 +1434,15 @@ public final class Py
                 return c.__call__(new PyString(name),
                                   new PyTuple(bases),
                                   dict);
+            } else if (bases[i] instanceof org.python.util.PyMetaClass) {
+                try {
+                    return (PyObject)bases[i].getClass().getConstructor(pyClassCtrSignature).newInstance(
+                            new Object[] { name, new PyTuple(bases), dict, proxyClass });
+                } catch(Exception e) {
+                    throw Py.TypeError("meta-class fails to supply proper ctr: "+bases[i].safeRepr());
+                }
             }
+ 
         }
 
         return new PyClass(name, new PyTuple(bases), dict, proxyClass);

@@ -395,21 +395,13 @@ public class imp
             return ret;
         }
 
-        Py.writeComment("import", "'" + name + "' not found (ImportError)");
-        throw Py.ImportError("no module named "+name);
+        Py.writeComment("import", "'" + name + "' not found (=> ImportError)");
+        return null;
+        
     }
 
     public static PyObject load(String name) {
-        PyObject modules = Py.getSystemState().modules;
-        PyObject ret = modules.__finditem__(name);
-        if (ret != null) return ret;
-
-        ret = load(name, Py.getSystemState().path);
-        if (modules.__finditem__(name) == null)
-            modules.__setitem__(name, ret);
-        else
-            ret = modules.__finditem__(name);
-        return ret;
+        return import_first(name,new StringBuffer(""));
     }
 
     private static String getParent(PyObject dict) {
@@ -427,122 +419,94 @@ public class imp
         }
     }
 
-    // Hierarchy-recursivly search for dotted name in mod.
-    private static PyObject dottedFind(PyObject mod, String name) {
-      int dot = 0;
-      int last_dot= 0;
-
-      do {
-        String tmpName;
-        dot = name.indexOf('.', last_dot);
-        if (dot == -1) {
-          tmpName = name.substring(last_dot).intern();
+    // can return null, None
+    private static PyObject import_next(PyObject mod, StringBuffer parentNameBuffer, String name) {
+        if (parentNameBuffer.length()>0) parentNameBuffer.append('.');
+        parentNameBuffer.append(name);
+        String fullName = parentNameBuffer.toString().intern();
+        PyObject modules = Py.getSystemState().modules;
+        PyObject ret = modules.__finditem__(fullName);
+        if (ret != null) return ret;        
+        if (mod == null) {
+            ret = load(name.intern(),  Py.getSystemState().path); // ?? intern superfluous?
         } else {
-          tmpName = name.substring(last_dot, dot).intern();
+            ret = mod.impAttr(name.intern());
         }
-        mod = mod.impAttr(tmpName);
-        if (mod == null)
-          throw Py.ImportError("No module named " + tmpName);
-        last_dot = dot + 1;
-      } while (dot != -1);
-      return mod;
+        if (ret == null || ret == Py.None) return ret;
+        if (modules.__finditem__(fullName) == null) modules.__setitem__(fullName, ret);
+        else ret = modules.__finditem__(fullName);
+        return ret;        
+    }
+
+    // never returns null or None
+    private static PyObject import_first(String name, StringBuffer parentNameBuffer) {
+        PyObject ret = import_next(null,parentNameBuffer,name);
+        if (ret == null || ret == Py.None) throw Py.ImportError("no module named "+name);
+        return ret;        
+    }
+    
+    // Hierarchy-recursively search for dotted name in mod; never returns null or None
+    // ??pending: check if result is really a module/jpkg/jclass?        
+    private static PyObject import_logic(PyObject mod, StringBuffer parentNameBuffer, String dottedName) {
+        int dot = 0;
+        int last_dot= 0;
+
+        do {
+            String name;
+            dot = dottedName.indexOf('.', last_dot);
+            if (dot == -1) {
+                name = dottedName.substring(last_dot);
+            } else {
+                name = dottedName.substring(last_dot, dot);
+            }
+            mod = import_next(mod,parentNameBuffer,name);
+            if (mod == null || mod == Py.None)
+            throw Py.ImportError("No module named " + name);
+            last_dot = dot + 1;
+        } while (dot != -1);
+
+        return mod;
+    }
+
+    public static PyObject import_name(String name,boolean top,PyObject modDict) {
+        if (name.length() == 0)
+        throw Py.ValueError("Empty module name");
+        PyObject modules = Py.getSystemState().modules;
+        PyObject pkgMod = null;
+        String pkgName = null;
+        if (modDict != null) {
+            pkgName = getParent(modDict);
+            pkgMod = modules.__finditem__(pkgName);
+            if (pkgMod != null && !(pkgMod instanceof PyModule)) pkgMod = null;
+        }
+        int dot = name.indexOf('.');
+        String firstName;
+        if (dot == -1) firstName = name;
+        else firstName = name.substring(0,dot);
+        StringBuffer parentNameBuffer = new StringBuffer(pkgMod != null?pkgName:"");
+        PyObject topMod = import_next(pkgMod,parentNameBuffer,firstName); // None or null or module-like
+        if (topMod == Py.None || topMod == null) {
+            if (topMod == null) {
+                modules.__setitem__(parentNameBuffer.toString().intern(),Py.None);
+            }
+            parentNameBuffer = new StringBuffer("");
+            topMod = import_first(firstName,parentNameBuffer); // could throw ImportError            
+        }
+        PyObject mod = topMod;
+        if (dot != -1) mod = import_logic(topMod,parentNameBuffer,name.substring(dot+1)); // could throw ImportError
+        if (top) return topMod;
+        else return mod;
     }
 
     public static PyObject importName(String name, boolean top) {
-        if (name.length() == 0)
-            throw Py.ValueError("Empty module name");
-        int dot = name.indexOf('.');
-        if (dot != -1) {
-            PyObject modules = Py.getSystemState().modules;
-            PyObject mod = modules.__finditem__(name);
-            if (mod == Py.None) mod = null;
-            else if (mod != null && !top) return mod;
-
-            int last_dot = dot;
-            String firstName = name.substring(0,dot).intern();
-            PyObject pkg = load(firstName);
-
-            if (mod == null) {
-                mod = pkg;
-                if (dot != -1) mod = dottedFind(mod, name.substring(dot+1));
-            }
-            if (modules.__finditem__(name) == null)
-                modules.__setitem__(name, mod);
-            else
-                mod = modules.__finditem__(name);
-            if (top)
-                return pkg;
-            else
-                return mod;
-        }
-        else return load(name);
+        return import_name(name,top,null);
     }
 
-    // This version should deal properly with package relative imports.
-    // Assumption (runtime enforced):
-    // x.y.z key in sys.modules => any subseq (e.g x, x.y) is a present
-    // key too.
-    // ??pending: check if result is really a module/jpkg/jclass?
     public synchronized static PyObject importName(String name, boolean top,
-                                                   PyObject modDict)
-    {
-        //System.err.println("importName: "+name);
-        String pkgName = getParent(modDict);
-        PyObject mod;
-
-        if (pkgName != null) {
-            PyObject modules = Py.getSystemState().modules;
-            int dot = name.indexOf('.');
-            String firstName;
-            if (dot == -1) firstName = name;
-            else firstName = name.substring(0,dot);
-
-            String topNewName = (pkgName+'.'+firstName).intern();
-
-            PyObject topMod = modules.__finditem__(topNewName);
-
-            if (topMod != Py.None) {
-                if (dot == -1 && topMod != null) {
-                    //System.err.println("refound-1-top: "+topMod); // ?? dbg
-                    return topMod;
-                }
-                String newName = (pkgName+'.'+name).intern();
-                mod = modules.__finditem__(newName);
-                if (mod != null && mod != Py.None) {
-                    //System.err.println("refound: "+name); // ?? dbg
-                    if (!top) return mod;
-                    else return topMod;
-                }
-
-                PyObject pkg = modules.__finditem__(pkgName);
-                if (pkg != null) {
-                    topMod = pkg.impAttr(firstName.intern());
-                    if (topMod != null ) {
-                        if (dot == -1 ) {
-                            //System.err.println("found-1-top: "+
-                            //                   topMod); // ?? dbg
-                            return topMod;
-                        }
-
-                        //System.err.println(".-find: "+topMod+","+
-                        //                   name.substring(dot+1)); // ?? dbg
-                        mod = dottedFind(topMod,name.substring(dot+1));
-
-                        if(top) return topMod;
-                        else return mod;
-
-                    }
-
-                }
-
-                //System.err.println("mark: "+topNewName); // ?? dbg
-                modules.__setitem__(topNewName,Py.None);
-            }
-        }
-
-        return importName(name, top);
-}
-
+                                                   PyObject modDict) {
+        return import_name(name,top,modDict);
+    }
+    
     /**
      * Called from jpython generated code when a statement like "import spam"
      * is executed.
