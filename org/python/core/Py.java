@@ -1129,15 +1129,7 @@ public final class Py {
 		    Class jc = (Class)specialClasses.get(nm);
 		    //System.out.println("got: "+jc);
             if (jc != null) {
-                pyclass.proxyClass = jc; //new Class[] {jc};
-                
-                PyObject oldDict = PyJavaClass.lookup(jc).__dict__;
-                // This code will add in the needed super__ methods to the class
-                if (oldDict instanceof PyStringMap && dict instanceof PyStringMap) {
-                    PyStringMap oldMap = ((PyStringMap)oldDict).copy();
-                    oldMap.update((PyStringMap)dict);
-                    dict = oldMap;
-                }
+                pyclass.proxyClass = jc;
             }
         }
 
