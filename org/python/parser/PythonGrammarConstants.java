@@ -29,74 +29,76 @@ public interface PythonGrammarConstants {
   int MINUS = 29;
   int MULTIPLY = 30;
   int DIVIDE = 31;
-  int POWER = 32;
-  int LSHIFT = 33;
-  int RSHIFT = 34;
-  int MODULO = 35;
-  int NOT = 36;
-  int XOR = 37;
-  int OR = 38;
-  int AND = 39;
-  int EQUAL = 40;
-  int GREATER = 41;
-  int LESS = 42;
-  int EQEQUAL = 43;
-  int EQLESS = 44;
-  int EQGREATER = 45;
-  int LESSGREATER = 46;
-  int NOTEQUAL = 47;
-  int PLUSEQ = 48;
-  int MINUSEQ = 49;
-  int MULTIPLYEQ = 50;
-  int DIVIDEEQ = 51;
-  int MODULOEQ = 52;
-  int ANDEQ = 53;
-  int OREQ = 54;
-  int XOREQ = 55;
-  int LSHIFTEQ = 56;
-  int RSHIFTEQ = 57;
-  int POWEREQ = 58;
-  int OR_BOOL = 59;
-  int AND_BOOL = 60;
-  int NOT_BOOL = 61;
-  int IS = 62;
-  int IN = 63;
-  int LAMBDA = 64;
-  int IF = 65;
-  int ELSE = 66;
-  int ELIF = 67;
-  int WHILE = 68;
-  int FOR = 69;
-  int TRY = 70;
-  int EXCEPT = 71;
-  int DEF = 72;
-  int CLASS = 73;
-  int FINALLY = 74;
-  int PRINT = 75;
-  int PASS = 76;
-  int BREAK = 77;
-  int CONTINUE = 78;
-  int RETURN = 79;
-  int IMPORT = 80;
-  int FROM = 81;
-  int DEL = 82;
-  int RAISE = 83;
-  int GLOBAL = 84;
-  int EXEC = 85;
-  int ASSERT = 86;
-  int AS = 87;
-  int NAME = 88;
-  int LETTER = 89;
-  int DECNUMBER = 90;
-  int HEXNUMBER = 91;
-  int OCTNUMBER = 92;
-  int FLOAT = 93;
-  int EXPONENT = 94;
-  int DIGIT = 95;
-  int SINGLE_STRING = 100;
-  int SINGLE_STRING2 = 101;
-  int TRIPLE_STRING = 102;
-  int TRIPLE_STRING2 = 103;
+  int FLOORDIVIDE = 32;
+  int POWER = 33;
+  int LSHIFT = 34;
+  int RSHIFT = 35;
+  int MODULO = 36;
+  int NOT = 37;
+  int XOR = 38;
+  int OR = 39;
+  int AND = 40;
+  int EQUAL = 41;
+  int GREATER = 42;
+  int LESS = 43;
+  int EQEQUAL = 44;
+  int EQLESS = 45;
+  int EQGREATER = 46;
+  int LESSGREATER = 47;
+  int NOTEQUAL = 48;
+  int PLUSEQ = 49;
+  int MINUSEQ = 50;
+  int MULTIPLYEQ = 51;
+  int DIVIDEEQ = 52;
+  int FLOORDIVIDEEQ = 53;
+  int MODULOEQ = 54;
+  int ANDEQ = 55;
+  int OREQ = 56;
+  int XOREQ = 57;
+  int LSHIFTEQ = 58;
+  int RSHIFTEQ = 59;
+  int POWEREQ = 60;
+  int OR_BOOL = 61;
+  int AND_BOOL = 62;
+  int NOT_BOOL = 63;
+  int IS = 64;
+  int IN = 65;
+  int LAMBDA = 66;
+  int IF = 67;
+  int ELSE = 68;
+  int ELIF = 69;
+  int WHILE = 70;
+  int FOR = 71;
+  int TRY = 72;
+  int EXCEPT = 73;
+  int DEF = 74;
+  int CLASS = 75;
+  int FINALLY = 76;
+  int PRINT = 77;
+  int PASS = 78;
+  int BREAK = 79;
+  int CONTINUE = 80;
+  int RETURN = 81;
+  int IMPORT = 82;
+  int FROM = 83;
+  int DEL = 84;
+  int RAISE = 85;
+  int GLOBAL = 86;
+  int EXEC = 87;
+  int ASSERT = 88;
+  int AS = 89;
+  int NAME = 90;
+  int LETTER = 91;
+  int DECNUMBER = 92;
+  int HEXNUMBER = 93;
+  int OCTNUMBER = 94;
+  int FLOAT = 95;
+  int EXPONENT = 96;
+  int DIGIT = 97;
+  int SINGLE_STRING = 102;
+  int SINGLE_STRING2 = 103;
+  int TRIPLE_STRING = 104;
+  int TRIPLE_STRING2 = 105;
 
   int DEFAULT = 0;
   int FORCE_NEWLINE1 = 1;
@@ -143,6 +145,7 @@ public interface PythonGrammarConstants {
     "\"-\"",
     "\"*\"",
     "\"/\"",
+    "\"//\"",
     "\"**\"",
     "\"<<\"",
     "\">>\"",
@@ -163,6 +166,7 @@ public interface PythonGrammarConstants {
     "\"-=\"",
     "\"*=\"",
     "\"/=\"",
+    "\"//=\"",
     "\"%=\"",
     "\"&=\"",
     "\"|=\"",
@@ -207,23 +211,23 @@ public interface PythonGrammarConstants {
     "<FLOAT>",
     "<EXPONENT>",
     "<DIGIT>",
-    "<token of kind 96>",
-    "<token of kind 97>",
     "<token of kind 98>",
     "<token of kind 99>",
+    "<token of kind 100>",
+    "<token of kind 101>",
     "\"\\\'\"",
     "\"\\\"\"",
     "\"\\\'\\\'\\\'\"",
     "\"\\\"\\\"\\\"\"",
     "\"\\\\\\r\\n\"",
-    "<token of kind 105>",
-    "<token of kind 106>",
     "<token of kind 107>",
+    "<token of kind 108>",
+    "<token of kind 109>",
     "\"\\r\\n\"",
     "\"\\n\"",
     "\"\\r\"",
-    "<token of kind 111>",
-    "<token of kind 112>",
+    "<token of kind 113>",
+    "<token of kind 114>",
     "\"`\"",
   };
 
