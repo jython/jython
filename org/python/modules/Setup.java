@@ -33,7 +33,6 @@ public class Setup
         "os",
         "types",
         "py_compile",
-        "codeop",
         "pre:org.python.modules.re",
         "_sre",
         "synchronize",
