@@ -78,7 +78,7 @@ abstract public class PySequence extends PyObject {
         return __len__() != 0;
     }
 
-    public int __cmp__(PyObject ob_other) {
+    public synchronized int __cmp__(PyObject ob_other) {
         if (ob_other.__class__ != __class__)
             return -2;
                 
@@ -97,11 +97,14 @@ abstract public class PySequence extends PyObject {
 
     protected static final int sliceLength(int start, int stop, int step) {
         //System.err.println("slice: "+start+", "+stop+", "+step);
+        int ret;
         if (step > 0) {
-            return (stop-start+step-1)/step;
+            ret = (stop-start+step-1)/step;
         } else {
-            return (stop-start+step+1)/step;
+            ret = (stop-start+step+1)/step;
         }
+        if (ret < 0) return 0;
+        return ret;
     }
 
     private static final int getIndex(PyObject index, int defaultValue) {
@@ -110,46 +113,6 @@ abstract public class PySequence extends PyObject {
         if (!(index instanceof PyInteger))
             throw Py.TypeError("slice index must be int");
         return ((PyInteger)index).getValue();
-    }
-
-    private static final int[] slice_indices(PySlice s, int length) {
-        int start, stop, step;
-
-        step = getIndex(s.step, 1);
-        if (step == 0)
-            throw Py.TypeError("slice step of zero not allowed");
-        
-        if (step > 0) {
-            start = getIndex(s.start, 0);
-            stop = getIndex(s.stop, length);
-        } else {
-            start = getIndex(s.stop, 0);
-            stop = getIndex(s.start, length);
-        }
-                
-        if (start < 0) {
-            start = length+start;
-            if (start < 0)
-                start = 0;
-        } else if (start > length) {
-            start = length;
-        }
-        if (stop < 0) {
-            stop = length+stop;
-            if (stop < 0)
-                stop = 0;
-        } else if (stop > length) {
-            stop = length;
-        }
-                
-        if (stop < start)
-            stop = start;
-                
-        if (step > 0) {
-            return new int[] {start, stop, step};
-        } else {
-            return new int[] {stop, start, step};
-        }
     }
 
     protected int fixindex(int index) {
@@ -163,7 +126,7 @@ abstract public class PySequence extends PyObject {
     }
 
 
-    public PyObject __finditem__(int index) {
+    public synchronized PyObject __finditem__(int index) {
         index = fixindex(index);
         if (index == -1)
             return null;
@@ -176,8 +139,8 @@ abstract public class PySequence extends PyObject {
             return __finditem__(((PyInteger)index).getValue());
         } else {
             if (index instanceof PySlice) {
-                int[] s = slice_indices((PySlice)index, __len__());
-                return getslice(s[0], s[1], s[2]);
+                PySlice s = (PySlice)index;
+                return __getslice__(s.start, s.stop, s.step);
             } else {
                 throw Py.TypeError(
                     "sequence subscript must be integer or slice");
@@ -192,137 +155,82 @@ abstract public class PySequence extends PyObject {
         }
         return ret;
     }
-        
-    public PyObject __getslice__(PyObject s_start, PyObject s_stop,
-                                 PyObject s_step)
-    {
-        int start, stop, step;
-        int length = __len__();
-        step = getIndex(s_step, 1);
-        if (step == 0)
+
+    protected static final int getStep(PyObject s_step) {
+        int step = getIndex(s_step, 1);
+        if (step == 0) {
             throw Py.TypeError("slice step of zero not allowed");
-        
-        if (step > 0) {
-            start = getIndex(s_start, 0);
-            stop = getIndex(s_stop, length);
+        }
+        return step;
+    }
+
+    protected static final int getStart(PyObject s_start, int step, int length)
+    {
+        int start;
+        if (step < 0) {
+            start = getIndex(s_start, length-1);
         } else {
-            start = getIndex(s_stop, 0);
-            stop = getIndex(s_start, length);
+            start = getIndex(s_start, 0);
         }
-                
-        if (start < 0) {
-            start = length+start;
-            if (start < 0)
-                start = 0;
-        } else if (start > length) {
-            start = length;
+        if (start < 0) start = length+start;
+        if (start > length) start = length;
+
+        return start;
+    }
+
+    protected static final int getStop(PyObject s_stop, int start, int step,
+                                       int length)
+    {
+        int stop;
+        if (step < 0) {
+            stop = getIndex(s_stop, -1);
+            if (stop < -1) stop = length+stop;
+            if (stop < -1) stop = -1;
+        } else {
+            stop = getIndex(s_stop, length);
+            if (stop < 0) stop = length+stop;
+            if (stop < 0) stop = 0;
         }
-        if (stop < 0) {
-            stop = length+stop;
-            if (stop < 0)
-                stop = 0;
-        } else if (stop > length) {
-            stop = length;
-        }
-                
-        if (stop < start)
-            stop = start;
-                
-        if (step <= 0) {
-            int tmp = start;
-            start = stop;
-            stop = tmp;
-        }
+        if (stop > length) stop = length;
+
+        return stop;
+    }
+
+
+
+
+    public synchronized PyObject __getslice__(PyObject s_start,
+                                              PyObject s_stop,
+                                              PyObject s_step)
+    {
+        int length = __len__();
+        int step = getStep(s_step);
+        int start = getStart(s_start, step, length);
+        int stop = getStop(s_stop, start, step, length);
         return getslice(start, stop, step);
     }
     
-    public void __setslice__(PyObject s_start, PyObject s_stop,
-                             PyObject s_step, PyObject value)
+    public synchronized void __setslice__(PyObject s_start, PyObject s_stop,
+                                          PyObject s_step, PyObject value)
     {
-        int start, stop, step;
         int length = __len__();
-        step = getIndex(s_step, 1);
-        if (step == 0)
-            throw Py.TypeError("slice step of zero not allowed");
-        
-        if (step > 0) {
-            start = getIndex(s_start, 0);
-            stop = getIndex(s_stop, length);
-        } else {
-            start = getIndex(s_stop, 0);
-            stop = getIndex(s_start, length);
-        }
-                
-        if (start < 0) {
-            start = length+start;
-            if (start < 0)
-                start = 0;
-        } else if (start > length) {
-            start = length;
-        }
-        if (stop < 0) {
-            stop = length+stop;
-            if (stop < 0)
-                stop = 0;
-        } else if (stop > length) {
-            stop = length;
-        }
-                
-        if (stop < start)
-            stop = start;
-                
-        if (step <= 0) {
-            int tmp = start;
-            start = stop;
-            stop = tmp;
-        }
+        int step = getStep(s_step);
+        int start = getStart(s_start, step, length);
+        int stop = getStop(s_stop, start, step, length);
         setslice(start, stop, step, value);
     }
     
-    public void __delslice__(PyObject s_start, PyObject s_stop,
-                             PyObject s_step)
+    public synchronized void __delslice__(PyObject s_start, PyObject s_stop,
+                                          PyObject s_step)
     {
-        int start, stop, step;
         int length = __len__();
-        step = getIndex(s_step, 1);
-        if (step == 0)
-            throw Py.TypeError("slice step of zero not allowed");
-        
-        if (step > 0) {
-            start = getIndex(s_start, 0);
-            stop = getIndex(s_stop, length);
-        } else {
-            start = getIndex(s_stop, 0);
-            stop = getIndex(s_start, length);
-        }
-                
-        if (start < 0) {
-            start = length+start;
-            if (start < 0)
-                start = 0;
-        } else if (start > length) {
-            start = length;
-        }
-        if (stop < 0) {
-            stop = length+stop;
-            if (stop < 0)
-                stop = 0;
-        } else if (stop > length) {
-            stop = length;
-        }
-                
-        if (stop < start)
-            stop = start;
-                
-        if (step <= 0) {
-            int tmp = start;
-            start = stop;
-            stop = tmp;
-        }
+        int step = getStep(s_step);
+        int start = getStart(s_start, step, length);
+        int stop = getStop(s_stop, start, step, length);
         delRange(start, stop, step);
-    }           
+    }
 
-    public void __setitem__(int index, PyObject value) {
+    public synchronized void __setitem__(int index, PyObject value) {
         int i = fixindex(index);
         if (i == -1)
             throw Py.IndexError("index out of range: "+i);
@@ -335,8 +243,8 @@ abstract public class PySequence extends PyObject {
 
         } else {
             if (index instanceof PySlice) {
-                int[] s = slice_indices((PySlice)index, __len__());
-                setslice(s[0], s[1], s[2], value);
+                PySlice s = (PySlice)index;
+                __setslice__(s.start, s.stop, s.step, value);
             } else {
                 throw Py.TypeError(
                     "sequence subscript must be integer or slice");
@@ -344,7 +252,7 @@ abstract public class PySequence extends PyObject {
         }
     }
 
-    public void __delitem__(PyObject index) {
+    public synchronized void __delitem__(PyObject index) {
         if (index instanceof PyInteger) {
             int i = fixindex(((PyInteger)index).getValue());
             if (i == -1)
@@ -352,8 +260,8 @@ abstract public class PySequence extends PyObject {
             del(i);
         } else {
             if (index instanceof PySlice) {
-                int[] s = slice_indices((PySlice)index, __len__());
-                delRange(s[0], s[1], s[2]);
+                PySlice s = (PySlice)index;
+                __delslice__(s.start, s.stop, s.step);
             } else {
                 throw Py.TypeError(
                     "sequence subscript must be integer or slice");
@@ -370,7 +278,7 @@ abstract public class PySequence extends PyObject {
         return __mul__(count);
     }
 
-    public Object __tojava__(Class c) {
+    public synchronized Object __tojava__(Class c) {
         if (c.isArray()) {
             Class component = c.getComponentType();
             //System.out.println("getting: "+component);
