@@ -50,5 +50,6 @@ public class Setup
         "_jython",
         "new:org.python.modules.newmodule",
         "_weakref",
+        "xreadlines",
     };
 }
