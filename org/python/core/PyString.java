@@ -76,6 +76,15 @@ public class PyString extends PySequence
                 else if (c == '\b') buf.append("\\b");
                 else if (c == '\f') buf.append("\\f");
                 else if (c == '\r') buf.append("\\r");
+                else if (c < 0xff00) {
+                    // the character is only 8 bits wide, so use \0<octal>
+                    // escape which is close to what CPython does
+                    buf.append("\\");
+                    String oct = Integer.toString(c, 8);
+                    for (int j = oct.length(); j < 3; j++)
+                        buf.append("0");
+                    buf.append(oct);
+                }
                 else {
                     buf.append("\\x");
                     buf.append(Integer.toString(c, 16));
