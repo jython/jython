@@ -625,16 +625,15 @@ public class imp
                                                  frame.f_locals,
                                                  getStarArg());
         PyObject names;
-        boolean filter = false;
+        boolean filter = true;
         if (module instanceof PyJavaPackage)
             names = ((PyJavaPackage)module).fillDir();
         else {
             PyObject __all__ = module.__findattr__("__all__");
-            if (__all__ != null) names = __all__;
-            else {
-                names =  module.__dir__();
-                filter = true;
-            }
+            if (__all__ != null) {
+                names = __all__;
+                filter = false;
+            } else names =  module.__dir__();
         }
 
         loadNames(names, module, frame.getf_locals(), filter);
