@@ -390,6 +390,29 @@ public class PyInstance extends PyObject {
 	    return __finditem__(new PyInteger(key));
 	}
 	
+	private PyObject trySlice(PyObject key, String name, PyObject extraArg) {
+	    if (!(key instanceof PySlice)) return null;
+	    
+	    PySlice slice = (PySlice)key;
+	    
+	    if (slice.step != Py.None) return null;
+	
+	    PyObject func = __findattr__(name);
+	    if (func == null) return null;
+	    
+	    PyObject start = slice.start;
+	    PyObject stop = slice.stop;
+	    
+	    if (start == Py.None) start = Py.Zero;
+	    if (stop == Py.None) stop = new PyInteger(sys.maxint);
+	    
+        if (extraArg == null) {
+            return func.__call__(start, stop);
+        } else {
+            return func.__call__(start, stop, extraArg);
+	    }
+    }
+	
 	public PyObject __finditem__(PyObject key) {
 	    CollectionProxy proxy = getCollection();
 	    if (proxy != CollectionProxy.NoProxy) {
@@ -397,6 +420,9 @@ public class PyInstance extends PyObject {
 	    }
 	    
 		try {
+	        PyObject ret = trySlice(key, "__getslice__", null);
+		    if (ret != null) return ret;
+		    
 			return invoke("__getitem__", key);
 		} catch (PyException e) {
 			if (Py.matchException(e, Py.IndexError)) return null;
@@ -411,6 +437,8 @@ public class PyInstance extends PyObject {
 	        return;
 	    }
 	    
+	    if (trySlice(key, "__setslice__", value) != null) return;
+	    
 		invoke("__setitem__", key, value);
 	}
 
@@ -421,6 +449,7 @@ public class PyInstance extends PyObject {
 	        return;
 	    }
 	    
+	    if (trySlice(key, "__delslice__", null) != null) return;
 		invoke("__delitem__", key);
 	}
 
