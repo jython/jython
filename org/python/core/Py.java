@@ -901,12 +901,10 @@ public final class Py {
 		if (o instanceof Number) {
 			if (o instanceof Double || o instanceof Float) {
 				return new PyFloat(((Number)o).doubleValue());
-			} else {
-			    if (o instanceof Long) {
-			        return new PyLong(((Number)o).longValue());
-			    } else {
-				    return new PyInteger(((Number)o).intValue());
-				}
+			} else if (o instanceof Long) {
+			    return new PyLong(((Number)o).longValue());
+			} else if (o instanceof Integer || o instanceof Byte || o instanceof Short) {
+				return new PyInteger(((Number)o).intValue());
 			}
 		}
 		if (o instanceof Boolean) {
