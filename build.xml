@@ -271,18 +271,14 @@
         <copy todir="${distDir}/Lib/xml">
             <fileset dir="${python.lib}/xml" includes="__init__.py"/>
             <fileset dir="${PyXmlHome}/xml" includes="
-                ns.py,
                 sax/*.py,
-                sax/drivers2/drv_xmlproc.py,
-                sax/drivers2/__init__.py,
-                utils/*.py,
                 dom/*.py,
-                dom/html/*.py,
-                dom/ext/*.py,
-                dom/ext/reader/__init__.py,
-                dom/ext/reader/Sax*.py,
-                parsers/__init__.py,
-                parsers/xmlproc/*.py,
+                parsers/*.py,
+                "/>
+        </copy>
+        <copy todir="${distDir}/Lib/site-packages/_xmlplus">
+            <fileset dir="${PyXmlHome}/site-packages/_xmlplus" includes="
+                **/*.py,
                 "/>
         </copy>
     </target>
