@@ -95,7 +95,7 @@ public class PyFile extends PyObject
             // one byte so as not to trip the `empty string' return value
             // test done by the caller
             int avail = istream.available();
-            n = (n > avail) ? n : avail;
+            //n = (n > avail) ? n : avail;
             byte buf[] = new byte[n];
             int read = istream.read(buf);
             if (read < 0)
