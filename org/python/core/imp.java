@@ -152,9 +152,16 @@ public class imp
         return module;
     }
 
+    private static BytecodeLoader syspathJavaLoader = null;
+
+    public static BytecodeLoader getSyspathJavaLoader() {
+        if (syspathJavaLoader == null)
+            syspathJavaLoader = new BytecodeLoader();
+        return syspathJavaLoader;
+    }
 
     private static PyObject createFromClass(String name, InputStream fp) {
-        BytecodeLoader bcl = new BytecodeLoader();
+        BytecodeLoader bcl = getSyspathJavaLoader();
         return createFromClass(name, bcl.makeClass(name, readBytes(fp)));
     }
 
@@ -572,22 +579,10 @@ public class imp
     }
 
     static PyObject reload(PyJavaClass c) {
-        PyObject modules = Py.getSystemState().modules;         
-        String name = c.__name__.intern();
-        // Should delete from package if in one
-        modules.__delitem__(name);
-        int dot = name.lastIndexOf('.');
-        if (dot != -1) {
-            String iname = name.substring(0, dot).intern();
-            PyObject pkg = modules.__finditem__(iname);
-            if (pkg == null) {
-                throw Py.ImportError("reload(): parent not in sys.modules");
-            }
-            name = name.substring(dot+1, name.length()).intern();
-            pkg.__delattr__(name);
-        }        
-        PyObject nc = importName(name, false);
-        return nc;
+        // This is a dummy placeholder for the feature that allow
+        // reloading of java classes. But this feature does not yet
+        // work.
+        return c;
     }
 
     static PyObject reload(PyModule m) {

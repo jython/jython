@@ -28,7 +28,7 @@ class MakeProxies
             bcl = (BytecodeLoader)cl;
         }
         else
-            bcl = new BytecodeLoader();
+            bcl = imp.getSyspathJavaLoader();
         return bcl.makeClass(name, bytes.toByteArray());
     }
 
