@@ -261,10 +261,10 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 
     dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
     dict.__setitem__("fetchmany", new CursorFunc("fetchmany", 0, 1, 2, "fetch specified number of rows"));
-    dict.__setitem__("close", new CursorFunc("close", 1, 1, "close the cursor"));
-    dict.__setitem__("fetchall", new CursorFunc("fetchall", 2, 1, "fetch all results"));
-    dict.__setitem__("fetchone", new CursorFunc("fetchone", 3, 1, "fetch the next result"));
-    dict.__setitem__("nextset", new CursorFunc("nextset", 4, 1, "return next set or None"));
+    dict.__setitem__("close", new CursorFunc("close", 1, 0, "close the cursor"));
+    dict.__setitem__("fetchall", new CursorFunc("fetchall", 2, 0, "fetch all results"));
+    dict.__setitem__("fetchone", new CursorFunc("fetchone", 3, 0, "fetch the next result"));
+    dict.__setitem__("nextset", new CursorFunc("nextset", 4, 0, "return next set or None"));
     dict.__setitem__("execute", new CursorFunc("execute", 5, 1, 4, "execute the sql expression"));
     dict.__setitem__("setinputsizes", new CursorFunc("setinputsizes", 6, 1, "not implemented"));
     dict.__setitem__("setoutputsize", new CursorFunc("setoutputsize", 7, 1, 2, "not implemented"));
@@ -883,226 +883,102 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
   }
 }
 
-/**
- * Class CursorFunc
- *
- * @date $today.date$
- * @author last modified by $Author$
- * @date last modified on $Date$
- * @version $Revision$
- * @copyright 2001 brian zimmer
- */
 class CursorFunc extends PyBuiltinFunctionSet {
-
-  /**
-   * Constructor CursorFunc
-   *
-   *
-   * @param name
-   * @param index
-   * @param argcount
-   * @param doc
-   *
-   */
   CursorFunc(String name, int index, int argcount, String doc) {
     super(name, index, argcount, argcount, true, doc);
   }
-
-  /**
-   * Constructor CursorFunc
-   *
-   *
-   * @param name
-   * @param index
-   * @param minargs
-   * @param maxargs
-   * @param doc
-   *
-   */
   CursorFunc(String name, int index, int minargs, int maxargs, String doc) {
     super(name, index, minargs, maxargs, true, doc);
   }
 
-  /**
-   * Method __call__
-   *
-   * @return PyObject
-   *
-   */
   public PyObject __call__() {
-
     PyCursor cursor = (PyCursor)__self__;
-
     switch (index) {
-
       case 0 :
         return cursor.fetchmany(cursor.arraysize);
-
       case 1 :
         cursor.close();
-
         return Py.None;
-
       case 2 :
         return cursor.fetchall();
-
       case 3 :
         return cursor.fetchone();
-
       case 4 :
         return cursor.nextset();
-
       default :
         throw argCountError(0);
     }
   }
 
-  /**
-   * Method __call__
-   *
-   *
-   * @param arg
-   *
-   * @return PyObject
-   *
-   */
   public PyObject __call__(PyObject arg) {
-
     PyCursor cursor = (PyCursor)__self__;
-
     switch (index) {
-
       case 0 :
         return cursor.fetchmany(arg.__int__().getValue());
-
       case 5 :
         cursor.execute(arg, Py.None, Py.None, Py.None);
-
         return Py.None;
-
       case 6 :
       case 7 :
         return Py.None;
-
       case 8 :
         cursor.callproc(arg, Py.None, Py.None, Py.None);
-
         return Py.None;
-
       case 9 :
         cursor.executemany(arg, Py.None, Py.None, Py.None);
-
         return Py.None;
-
       case 10 :
         cursor.scroll(arg.__int__().getValue(), "relative");
-
         return Py.None;
-
       case 11 :
         cursor.execute(arg, Py.None, Py.None, Py.None);
-
         return Py.None;
-
       case 12 :
         return cursor.prepare(arg);
-
       default :
         throw argCountError(1);
     }
   }
 
-  /**
-   * Method __call__
-   *
-   *
-   * @param arga
-   * @param argb
-   *
-   * @return PyObject
-   *
-   */
   public PyObject __call__(PyObject arga, PyObject argb) {
-
     PyCursor cursor = (PyCursor)__self__;
-
     switch (index) {
-
       case 5 :
         cursor.execute(arga, argb, Py.None, Py.None);
-
         return Py.None;
-
       case 7 :
         return Py.None;
-
       case 8 :
         cursor.callproc(arga, argb, Py.None, Py.None);
-
         return Py.None;
-
       case 9 :
         cursor.executemany(arga, argb, Py.None, Py.None);
-
         return Py.None;
-
       case 10 :
         cursor.scroll(arga.__int__().getValue(), argb.toString());
-
         return Py.None;
-
       default :
         throw argCountError(2);
     }
   }
 
-  /**
-   * Method __call__
-   *
-   *
-   * @param arga
-   * @param argb
-   * @param argc
-   *
-   * @return PyObject
-   *
-   */
   public PyObject __call__(PyObject arga, PyObject argb, PyObject argc) {
-
     PyCursor cursor = (PyCursor)__self__;
-
     switch (index) {
-
       case 5 :
         cursor.execute(arga, argb, argc, Py.None);
-
         return Py.None;
-
       case 8 :
         cursor.callproc(arga, argb, argc, Py.None);
-
         return Py.None;
-
       case 9 :
         cursor.executemany(arga, argb, argc, Py.None);
-
         return Py.None;
-
       default :
         throw argCountError(3);
     }
   }
 
-  /**
-   * Method __call__
-   *
-   *
-   * @param args
-   * @param keywords
-   *
-   * @return PyObject
-   *
-   */
   public PyObject __call__(PyObject[] args, String[] keywords) {
 
     PyCursor cursor = (PyCursor)__self__;
@@ -1117,22 +993,15 @@ class CursorFunc extends PyBuiltinFunctionSet {
     maxrows = (parser.numArg() >= 4) ? parser.arg(3) : maxrows;
 
     switch (index) {
-
       case 5 :
         cursor.execute(sql, params, bindings, maxrows);
-
         return Py.None;
-
       case 8 :
         cursor.callproc(sql, params, bindings, maxrows);
-
         return Py.None;
-
       case 9 :
         cursor.executemany(sql, params, bindings, maxrows);
-
         return Py.None;
-
       default :
         throw argCountError(args.length);
     }

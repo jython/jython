@@ -247,7 +247,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	public void close() {
 
 		if (closed) {
-			return;
+            throw zxJDBC.makeException(zxJDBC.ProgrammingError, "connection is closed");
 		}
 
 		// mark ourselves closed now so that any callbacks we
@@ -460,158 +460,56 @@ public class PyConnection extends PyObject implements ClassDictInit {
 	}
 }
 
-/**
- * Class ConnectionFunc
- *
- * @date $today.date$
- * @author last modified by $Author$
- * @date last modified on $Date$
- * @version $Revision$
- * @copyright 2001 brian zimmer
- */
 class ConnectionFunc extends PyBuiltinFunctionSet {
-
-	/**
-	 * Constructor ConnectionFunc
-	 *
-	 *
-	 * @param name
-	 * @param index
-	 * @param minargs
-	 * @param maxargs
-	 * @param doc
-	 *
-	 */
 	ConnectionFunc(String name, int index, int minargs, int maxargs, String doc) {
 		super(name, index, minargs, maxargs, true, doc);
 	}
 
-	/**
-	 * Method __call__
-	 *
-	 * @return PyObject
-	 *
-	 */
 	public PyObject __call__() {
-
 		PyConnection c = (PyConnection)__self__;
-
 		switch (index) {
-
 			case 0 :
 				c.close();
-
 				return Py.None;
-
 			case 1 :
 				c.commit();
-
 				return Py.None;
-
 			case 2 :
 				return c.cursor();
-
 			case 3 :
 				c.rollback();
-
 				return Py.None;
-
 			default :
 				throw argCountError(0);
 		}
 	}
 
-	/**
-	 * Method __call__
-	 *
-	 *
-	 * @param arg
-	 *
-	 * @return PyObject
-	 *
-	 */
 	public PyObject __call__(PyObject arg) {
-
 		PyConnection c = (PyConnection)__self__;
-
 		switch (index) {
-
 			case 2 :
 				return c.cursor(arg.__nonzero__());
-
 			case 4 :
 				return c.nativesql(arg);
-
 			default :
 				throw argCountError(1);
 		}
 	}
 
-	/**
-	 * Method __call__
-	 *
-	 *
-	 * @param arg1
-	 * @param arg2
-	 *
-	 * @return PyObject
-	 *
-	 */
-	public PyObject __call__(PyObject arg1, PyObject arg2) {
-
-		PyConnection c = (PyConnection)__self__;
-
-		switch (index) {
-
-			case 2 :
-				throw Py.TypeError(name + "() takes exactly 0, 1 or 3 arguments (2 given)");
-			default :
-				throw argCountError(2);
-		}
-	}
-
-	/**
-	 * Method __call__
-	 *
-	 *
-	 * @param arg1
-	 * @param arg2
-	 * @param arg3
-	 *
-	 * @return PyObject
-	 *
-	 */
 	public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-
 		PyConnection c = (PyConnection)__self__;
-
 		switch (index) {
-
 			case 2 :
 				return c.cursor(arg1.__nonzero__(), arg2, arg3);
-
 			default :
 				throw argCountError(3);
 		}
 	}
 
-	/**
-	 * Method __call__
-	 *
-	 *
-	 * @param args
-	 * @param keywords
-	 *
-	 * @return PyObject
-	 *
-	 */
 	public PyObject __call__(PyObject[] args, String[] keywords) {
-
 		PyConnection c = (PyConnection)__self__;
 		PyArgParser parser = new PyArgParser(args, keywords);
-
 		switch (index) {
-
 			case 2 :
 				PyObject dynamic = parser.kw("dynamic", Py.None);
 				PyObject rstype = parser.kw("rstype", Py.None);
