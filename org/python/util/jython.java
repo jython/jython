@@ -79,7 +79,17 @@ public class jpython
         }
         
         // Now create an interpreter
-        InteractiveConsole interp = new InteractiveConsole();
+        InteractiveConsole interp = null;
+        try {
+            String interpClass = PySystemState.registry.getProperty(
+                                    "python.console",
+                                    "org.python.util.InteractiveConsole");
+            interp = (InteractiveConsole)
+                             Class.forName(interpClass).newInstance();
+        } catch (Exception e) {
+            interp = new InteractiveConsole();
+        }
+
         //System.err.println("interp");
         PyModule mod = imp.addModule("__main__");
         interp.setLocals(mod.__dict__);
