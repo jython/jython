@@ -1,6 +1,6 @@
 Jython NEWS
 
-xx-Nov-2000 Jython 2.0 alpha 1
+26-Nov-2000 Jython 2.0 alpha 1
 
   New features.
     - Integrate the free ORO regular expression matcher from the apache
@@ -24,6 +24,8 @@ xx-Nov-2000 Jython 2.0 alpha 1
     - The precedence of java loading have changed. Now the sys.path
       is searched for python modules before the CLASSPATH and sys.path
       is searched for java class and java packages.
+    - The builtin exceptions are always classbased. -X is disable.
+      User exception can still be strings.
 
   Bug fixes.
     - Many, including the errata.
