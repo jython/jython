@@ -1,5 +1,11 @@
 Jython NEWS
 
+XX-Dec-2000 Jython 2.0 alpha 3
+
+  Bug fixes.
+    - Fixed a bug that caused Infinite recursion in subpackage 
+      import
+
 17-Dec-2000 Jython 2.0 alpha 2
 
   New features.
