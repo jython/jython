@@ -1,50 +1,46 @@
 // Copyright © Corporation for National Research Initiatives
+
+// This class implements the standard Python sys module.
+
 package org.python.core;
 
 import java.util.*;
 import java.io.*;
 import org.python.modules.Setup;
 
-/**
-Implements the standard Python sys module.
-
-@author Jim Hugunin - hugunin@python.org
-@version 1.0, 3/24/98
-@since JPython 0.0
-**/
-
-public class PySystemState extends PyObject {
+public class PySystemState extends PyObject
+{
     /**
-       The current version of JPython.
-    **/
+     * The current version of JPython.
+     */
     public static String version = "1.1beta2+";
 
     /**
-       The copyright notice for this release.
-    **/
+     * The copyright notice for this release.
+     */
     // TBD: should we use \u00a9 Unicode c-inside-circle?
     public static String copyright =
     "Copyright (C) 1997-1999 Corporation for National Research Initiatives";
 
     /**
-       The arguments passed to this program on the command line.
-    **/
+     * The arguments passed to this program on the command line.
+     */
     public PyList argv = new PyList();
 
     /**
-       Exit a Python program with the given status.
-
-       @param status the value to exit with
-       @exception PySystemExit always throws this exception.
-       When caught at top level the program will exit.
-    **/
+     * Exit a Python program with the given status.
+     *
+     * @param status the value to exit with
+     * @exception PySystemExit always throws this exception.
+     * When caught at top level the program will exit.
+     */
     public static void exit(PyObject status) {
         throw new PyException(Py.SystemExit, status);
     }
 
     /**
-       Exit a Python program with the status 0.
-    **/
+     * Exit a Python program with the status 0.
+     */
     public static void exit() {
         exit(Py.None);
     }
@@ -108,6 +104,7 @@ public class PySystemState extends PyObject {
 
         return super.__findattr__(name);
     }
+
     public PyObject __dict__;
     public void __setattr__(String name, PyObject value) {
         if (__class__ == null)
@@ -173,11 +170,6 @@ public class PySystemState extends PyObject {
     public static String prefix;
     public static String exec_prefix="";
     
-//     public static Properties initRegistry() {
-//         System.out.println("basic init going on");
-//         return initRegistry(System.getProperties());
-//     }
-
     private static String findRoot(Properties preProperties,
                                    Properties postProperties)
     {
@@ -224,20 +216,6 @@ public class PySystemState extends PyObject {
         return classpath.substring(start, jpy);
     }
 
-    private static boolean getBooleanOption(String name, boolean defaultValue)
-    {
-        String prop = registry.getProperty("python."+name);
-        if (prop == null) return defaultValue;
-        return prop.equalsIgnoreCase("true") || prop.equalsIgnoreCase("yes");
-    }
-    
-  
-    private static String getStringOption(String name, String defaultValue) {
-        String prop = registry.getProperty("python."+name);
-        if (prop == null) return defaultValue;
-        return prop;
-    }  
-
     private static void initRegistry(Properties preProperties,
                                      Properties postProperties)
     {
@@ -269,7 +247,7 @@ public class PySystemState extends PyObject {
             }
         }
         // Set up options from registry
-        setOptionsFromRegistry();
+        Options.setFromRegistry();
     }
 
     private static void addRegistryFile(File file) {
@@ -312,8 +290,23 @@ public class PySystemState extends PyObject {
         }
         initialized = true;
             
-        //System.err.println("ss1");
+        // initialize the JPython registry
         initRegistry(preProperties, postProperties);
+
+        // other initializations
+        initBuiltins(registry);
+        initStaticFields();
+            
+        // Initialize the path (and add system defaults)
+        defaultPath = initPath(registry);
+        if (prefix != null) {
+            String libpath = new File(prefix, "Lib").toString();
+            defaultPath.append(new PyString(libpath));
+        }
+
+        // Set up the known Java packages
+        initPackages(registry);
+
         //System.err.println("ss2");
         defaultArgv = new PyList();
         //defaultArgv.append(new PyString(""));
@@ -362,58 +355,6 @@ public class PySystemState extends PyObject {
         Py.stdout = new StdoutWrapper();
     }
         
-        
-    public static void setOptionsFromRegistry() {
-        // Set the more unusual options
-        Options.showJavaExceptions = 
-            getBooleanOption("options.showJavaExceptions",
-                             Options.showJavaExceptions);
-        Options.showPythonProxyExceptions = 
-            getBooleanOption("options.showPythonProxyExceptions",
-                             Options.showPythonProxyExceptions);
-        Options.skipCompile = 
-            getBooleanOption("options.skipCompile", Options.skipCompile);
-        Options.deprecatedKeywordMangling = 
-            getBooleanOption("deprecated.keywordMangling",
-                             Options.deprecatedKeywordMangling);
-        Options.pollStandardIn =
-            getBooleanOption("console.poll", Options.pollStandardIn);
-        Options.classBasedExceptions =
-            getBooleanOption("options.classExceptions",
-                             Options.classBasedExceptions);
-              
-        // verbosity is more complicated:
-        String prop = registry.getProperty("python.verbose");
-        if (prop != null) {
-            if (prop.equalsIgnoreCase("error")) {
-                Options.verbose = Py.ERROR;
-            } else if (prop.equalsIgnoreCase("warning")) {
-                Options.verbose = Py.WARNING;
-            } else if (prop.equalsIgnoreCase("message")) {
-                Options.verbose = Py.MESSAGE;
-            } else if (prop.equalsIgnoreCase("comment")) {
-                Options.verbose = Py.COMMENT;
-            } else if (prop.equalsIgnoreCase("debug")) {
-                Options.verbose = Py.DEBUG;
-            } else {
-                throw Py.ValueError("Illegal verbose option setting: '"+
-                                    prop+"'");
-            }
-        }
-
-        initBuiltins(registry);
-        initStaticFields();
-            
-        // Initialize the path (and add system defaults)
-        defaultPath = initPath(registry);
-        if (prefix != null) {
-            String libpath = new File(prefix, "Lib").toString();
-            defaultPath.append(new PyString(libpath));
-        }
-
-        // Set up the known Java packages
-        initPackages(registry);
-    }
     public static PackageManager packageManager;
     public static File cachedir;
 
