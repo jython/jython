@@ -107,18 +107,19 @@ public class __builtin__ implements ClassDictInit
     public static void classDictInit(PyObject dict) {
         /* newstyle */
 
-        dict.__setitem__("object",PyType.fromClass(PyObject.class));
-        dict.__setitem__("type",PyType.fromClass(PyType.class));
-        dict.__setitem__("int",PyType.fromClass(PyInteger.class));
-        dict.__setitem__("float",PyType.fromClass(PyFloat.class));
+        dict.__setitem__("object", PyType.fromClass(PyObject.class));
+        dict.__setitem__("type", PyType.fromClass(PyType.class));
+        dict.__setitem__("int", PyType.fromClass(PyInteger.class));
+        dict.__setitem__("float", PyType.fromClass(PyFloat.class));
         dict.__setitem__("long", PyType.fromClass(PyLong.class));
-        dict.__setitem__("dict",PyType.fromClass(PyDictionary.class));
-        dict.__setitem__("list",PyType.fromClass(PyList.class));
+        dict.__setitem__("complex", PyType.fromClass(PyComplex.class));
+        dict.__setitem__("dict", PyType.fromClass(PyDictionary.class));
+        dict.__setitem__("list", PyType.fromClass(PyList.class));
 
-        dict.__setitem__("property",PyType.fromClass(PyProperty.class));
-        dict.__setitem__("staticmethod",PyType.fromClass(PyStaticMethod.class));
+        dict.__setitem__("property", PyType.fromClass(PyProperty.class));
+        dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
         dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
-        dict.__setitem__("super",PyType.fromClass(PySuper.class));
+        dict.__setitem__("super", PyType.fromClass(PySuper.class));
 
         /* - */
 
@@ -224,21 +225,6 @@ public class __builtin__ implements ClassDictInit
             throw Py.ValueError("compile(): unrecognised flags");
         return  Py.compile_flags(data,filename,type,Py.getCompilerFlags(flags,dont_inherit));
     }
-
-    public static PyComplex complex(PyObject real, PyObject imag) {
-        if (real instanceof PyString)
-            throw Py.TypeError("complex() can't take second arg" +
-                               " if first is a string");
-        if (imag instanceof PyString)
-            throw Py.TypeError("complex() second arg can't be a string");
-        return (PyComplex)real.__complex__().__add__(
-            imag.__complex__().__mul__(PyComplex.J));
-    }
-
-    public static PyComplex complex(PyObject real) {
-        return real.__complex__();
-    }
-
 
     public static void delattr(PyObject o, PyString n) {
         o.__delattr__(n);

@@ -169,7 +169,7 @@ public class ArgParser {
     }
 
     /**
-     * Return an optiona argument as a PyObject.
+     * Return an optional argument as a PyObject.
      * @param pos    The position of the argument. First argument is
      *               numbered 0.
      */
@@ -197,14 +197,20 @@ public class ArgParser {
 
 
     private void check() {
+        int nargs = args.length - kws.length;
         l1:
         for (int i = 0; i < kws.length; i++) {
             for (int j = 0; j < params.length; j++) {
-                if (kws[i].equals(params[j]))
+                if (kws[i].equals(params[j])) {
+                    if (j < nargs) {
+                        throw Py.TypeError("keyword parameter '" + params[j] + 
+                                "' was given by position and by name");
+                    }
                     continue l1;
+                }
             }
-            throw Py.TypeError(kws[i] + " is an invalid keyword argument " +
-                               "for this function");
+            throw Py.TypeError("'" + kws[i] + "' is an invalid keyword " + 
+                               "argument for this function");
         }
     }
 
