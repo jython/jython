@@ -35,19 +35,16 @@ public class PyStatement extends PyObject {
 	public static final int STATEMENT_CALLABLE = 8;
 
 	/** Field style */
-	protected int style;
+	private int style;
 
 	/** Field sql */
-	protected Object sql;
+	private Object sql;
 
 	/** Field closed */
-	boolean closed;
-
-	/** Field params */
-	protected PyObject params;
+	private boolean closed;
 
 	/** Field statement */
-	protected Statement statement;
+	Statement statement;
 
 	/**
 	 * Constructor PyStatement
@@ -70,14 +67,10 @@ public class PyStatement extends PyObject {
 	 *
 	 * @param statement
 	 * @param procedure
-	 * @param params
 	 *
 	 */
-	public PyStatement(Statement statement, Procedure procedure, PyObject params) {
-
+	public PyStatement(Statement statement, Procedure procedure) {
 		this(statement, procedure, STATEMENT_CALLABLE);
-
-		this.params = params;
 	}
 
 	/** Field __class__ */
@@ -194,8 +187,8 @@ public class PyStatement extends PyObject {
 		// hide from python
 		dict.__setitem__("classDictInit", null);
 		dict.__setitem__("statement", null);
-		dict.__setitem__("params", null);
 		dict.__setitem__("execute", null);
+		dict.__setitem__("prepare", null);
 		dict.__setitem__("STATEMENT_STATIC", null);
 		dict.__setitem__("STATEMENT_PREPARED", null);
 		dict.__setitem__("STATEMENT_CALLABLE", null);
@@ -212,16 +205,20 @@ public class PyStatement extends PyObject {
 	/**
 	 * Method execute
 	 *
-	 * @param cursor
-	 *
+	 * @param PyCursor cursor
+	 * @param PyObject params
+	 * @param PyObject bindings
 	 *
 	 * @throws SQLException
+	 *
 	 */
-	void execute(PyCursor cursor) throws SQLException {
+	public void execute(PyCursor cursor, PyObject params, PyObject bindings) throws SQLException {
 
-		if (closed) {
+		if (this.closed) {
 			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "statement is closed");
 		}
+
+		this.prepare(cursor, params, bindings);
 
 		Fetch fetch = cursor.fetch;
 
@@ -266,7 +263,7 @@ public class PyStatement extends PyObject {
 	 * @throws SQLException
 	 *
 	 */
-	void prepare(PyCursor cursor, PyObject params, PyObject bindings) throws SQLException {
+	private void prepare(PyCursor cursor, PyObject params, PyObject bindings) throws SQLException {
 
 		if ((params == Py.None) || (this.style == STATEMENT_STATIC)) {
 			return;

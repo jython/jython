@@ -390,10 +390,6 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 		try {
 			if (sql instanceof PyStatement) {
 				stmt = (PyStatement)sql;
-
-				if (stmt.closed) {
-					throw zxJDBC.makeException(zxJDBC.ProgrammingError, "statement is closed");
-				}
 			} else {
 				Statement sqlStatement = null;
 				String sqlString = sql.__str__().toString();
@@ -481,11 +477,9 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 					callableBindings.update((PyDictionary)bindings);
 				}
 
-				this.statement = new PyStatement(stmt, procedure, params);
+				this.statement = new PyStatement(stmt, procedure);
 
-				// prepare the statement
-				this.statement.prepare(this, params, callableBindings);
-				this.execute();
+				this.execute(params, callableBindings);
 			} else {
 				throw zxJDBC.makeException(zxJDBC.NotSupportedError, zxJDBC.getString("noStoredProc"));
 			}
@@ -576,17 +570,15 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 						for (int i = 0, len = params.__len__(); i < len; i++) {
 							PyObject param = params.__getitem__(i);
 
-							this.statement.prepare(this, param, bindings);
-							this.execute();
+							this.execute(param, bindings);
 						}
 					} else {
-						this.statement.prepare(this, params, bindings);
-						this.execute();
+						this.execute(params, bindings);
 					}
 				} else {
 
 					// execute the sql string straight up
-					execute();
+					this.execute(Py.None, Py.None);
 				}
 			}
 		} catch (PyException e) {
@@ -608,7 +600,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 	 * Execute the current sql statement.  Some generic functionality such
 	 * as updating the lastrowid and updatecount occur as well.
 	 */
-	protected void execute() {
+	protected void execute(PyObject params, PyObject bindings) {
 
 		try {
 			Statement stmt = this.statement.statement;
@@ -616,7 +608,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 			this.datahandler.preExecute(stmt);
 
 			// this performs the SQL execution and fetch per the Statement type
-			this.statement.execute(this);
+			this.statement.execute(this, params, bindings);
 
 			this.lastrowid = this.datahandler.getRowId(stmt);
 

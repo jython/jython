@@ -93,7 +93,7 @@ abstract public class Fetch {
 	}
 
 	/**
-	 *        The number of rows in the current result set.
+	 * The number of rows in the current result set.
 	 */
 	public int getRowCount() {
 		return this.rowcount;
