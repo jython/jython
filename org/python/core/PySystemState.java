@@ -175,7 +175,6 @@ public class PySystemState extends PyObject
         if (__dict__ == null) {
             __dict__ = new PyStringMap();
         }
-System.out.println("__setattr__#1 " + name + " "  + value);
         __dict__.__setitem__(name, value);
         //throw Py.AttributeError(name);
     }
