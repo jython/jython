@@ -2567,7 +2567,8 @@ final void TokenLexicalActions(Token matchedToken)
                                 t = addDedent(t);
                         }
                         if (indent != indentation[level]) {
-                            throw new TokenMgrError("inconsistent dedent", t.endLine, t.endColumn);
+                            throw new TokenMgrError("inconsistent dedent",
+                                                    t.endLine, t.endColumn);
                         }
                         t.next = null;
                 }
