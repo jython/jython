@@ -266,12 +266,21 @@ class _ShellEnv:
 
     def _getEnvironment( self ):
         """Get the environment variables by spawning a subshell.
+        This allows multi-line variables as long as subsequent lines do
+        not have '=' signs.
         """
         p = self.execute( self.getEnv )
         env = {}
+        key = 'firstLine' # in case first line had no '='
         for line in self._readLines( p.getInputStream() ):
-            i = line.index( '=' )
-            env[ self._keyTransform(line[:i])] = line[i+1:]
+            try:
+                i = line.index( '=' )
+                key = self._keyTransform(line[:i])
+                value = line[i+1:]
+            except ValueError:
+                # found no '=', so this line is part of previous value
+                value = '%s\n%s' % ( value, line )
+            env[ key ] = value
         return env
 
 def _getOsType( os=None ):
