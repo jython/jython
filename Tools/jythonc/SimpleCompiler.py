@@ -695,18 +695,14 @@ class SimpleCompiler(BaseEvaluator, CompilationContext):
         return ret
 
     def for_stmt(self, index, sequence, body, else_body=None):
-        counter = self.frame.gettemp('int')
+        iter = self.frame.gettemp('PyObject')
         item = self.factory.makePyObject(self.frame.gettemp("PyObject"))
-        seq = self.frame.gettemp("PyObject")
+        seq = self.visit(sequence).asAny() 
 
         init = []
-        init.append( jast.Set(counter, jast.IntegerConstant(0)) )
-        init.append( jast.Set(seq, self.visit(sequence).asAny()) )
+        init.append(jast.Set(iter, jast.Invoke(seq, "__iter__", [])))
 
-        counter_inc = jast.PostOperation(counter, '++')
-
-        test = jast.Set(item.asAny(), jast.Invoke(seq, "__finditem__",
-                                                  [counter_inc]))
+        test = jast.Set(item.asAny(), jast.Invoke(iter, "__iternext__", []))
         test = jast.Operation('!=', test, jast.Identifier('null'))
 
         suite = []
