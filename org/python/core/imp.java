@@ -175,12 +175,19 @@ public class imp {
         return null;
     }
 
+    private static Class findPyClass(String modName) {
+        if (Py.frozenPackage != null) {
+            modName = Py.frozenPackage+"."+modName;
+        }
+        return Py.findClass(modName+"$_PyInner");
+    }
+
     private static PyObject loadPrecompiled(String name, String modName, PyList path) {
         //System.out.println("precomp: "+name+", "+modName);
-        Class c = Py.findClass(modName+"$_PyInner");
+        Class c = findPyClass(modName);
         if (c == null) {
             //System.err.println("trying: "+modName+".__init__$_PyInner");
-            c = Py.findClass(modName+".__init__$_PyInner");
+            c = findPyClass(modName+".__init__");
             if (c == null) return null;
             //System.err.println("found: "+modName+".__init__$_PyInner");
             PyModule m = addModule(modName);

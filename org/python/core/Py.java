@@ -5,6 +5,7 @@ import java.io.*;
 
 public final class Py {
     static boolean frozen;
+    static String frozenPackage=null;
 	static boolean initialized;
 	
 	/* Holds the singleton None and Ellipsis objects */
@@ -504,8 +505,12 @@ public final class Py {
 		Py.getSystemState().argv = new PyList(argv);
 	}
 
-	private static void initProperties(String[] args, String[] packages, String[] props, String[] specs, boolean frozen) {
-	    if (frozen) Py.frozen = true;
+	private static void initProperties(String[] args, String[] packages, String[] props, 
+	String[] specs, String frozenPackage) {
+	    if (frozenPackage != null) {
+	        Py.frozen = true;
+	        if (frozenPackage.length() > 0) Py.frozenPackage = frozenPackage;
+	    }
 	    
 	    java.util.Properties sprops;
         try {
@@ -545,15 +550,15 @@ public final class Py {
 	public static void initProxy(PyProxy proxy, String module, String pyclass,
 									Object[] args, String[] packages, String[] props,
 									boolean frozen) {
-		initProxy(proxy, module, pyclass, args, packages, props, null, frozen);
+		initProxy(proxy, module, pyclass, args, packages, props, null, null);
 	}
 									    
     public static void initProxy(PyProxy proxy, String module, String pyclass,
 									Object[] args, String[] packages, String[] props,
-									String[] specs, boolean frozen) {
+									String[] specs, String frozenPackage) {
 		//System.out.println("initProxy");
 		//frozen = false;		
-		initProperties(null, packages, props, specs, frozen);
+		initProperties(null, packages, props, specs, frozenPackage);
 		
 		
 		ThreadState ts = getThreadState();
@@ -606,9 +611,9 @@ public final class Py {
     }
 
 	public static void runMain(String module, String[] args, String[] packages,
-	String[] props, boolean frozen) {
+	String[] props, String[] specs, String frozenPackage) {
 	    //System.err.println("main: "+module);
-        initProperties(args, packages, props, null, frozen);
+        initProperties(args, packages, props, specs, frozenPackage);
         
         Class mainClass=null;
         try {
