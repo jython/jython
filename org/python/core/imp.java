@@ -482,9 +482,11 @@ public class imp {
 
     static PyObject reload(PyJavaClass c) {
         PyObject modules = Py.getSystemState().modules;         
-        String name = c.__name__;
+        String name = c.__name__.intern();
+        System.err.println("reloading: " + c);
         // Should delete from package if in one
-        modules.__delitem__(name.intern());
+        modules.__delitem__(name);
+        System.err.println("just deleted: " + c);
         int dot = name.lastIndexOf('.');
         if (dot != -1) {
             String iname = name.substring(0, dot).intern();
@@ -496,7 +498,7 @@ public class imp {
             pkg.__delattr__(name);
         }        
         BytecodeLoader.clearLoader();
-        PyObject nc = importName(c.__name__, false);
+        PyObject nc = importName(name, false);
         return nc;
     }
 
