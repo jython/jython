@@ -64,7 +64,6 @@ class Popen3:
         The default is false.  If the 'bufsize' parameter is specified, it
         specifies the size of the I/O buffers to/from the child process.
         """
-        import os
         self.process = shellexecute( cmd )
         self._tochild = self.process.getOutputStream()
         self._fromchild = self.process.getInputStream()

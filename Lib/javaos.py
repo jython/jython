@@ -29,6 +29,7 @@ __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
 import java
 from java.io import File
 import javapath as path
+from LazyDict import LazyDict
 
 error = OSError
 
@@ -100,11 +101,31 @@ def utime(path, times):
     if times and hasattr(File, "setLastModified"):
         File(path).setLastModified(long(times[1] * 1000.0))
 
-# provide environ, popen*, and system objects
-from javashell import environ, putenv, getenv
-from popen2 import popen, system
+# Provide lazy environ, popen*, and system objects
+# Do these lazily, as most jython programs don't need them,
+# and they are very expensive to initialize
 
-# os versions have different return value order than popen2 functions
+def _getEnvironment():
+    import javashell
+    return javashell._shellEnv.environment
+
+environ = LazyDict( populate=_getEnvironment )
+putenv = environ.__setitem__
+getenv = environ.__getitem__
+
+def system( *args, **kwargs ):
+    # allow lazy import of popen2 and javashell
+    import popen2
+    return popen2.system( *args, **kwargs )
+
+def popen( *args, **kwargs ):
+    # allow lazy import of popen2 and javashell
+    import popen2
+    return popen2.popen( *args, **kwargs )
+
+# os module versions of the popen# methods have different return value
+# order than popen2 functions
+
 def popen2(cmd, mode="t", bufsize=-1):
     import popen2
     stdout, stdin = popen2.popen2(cmd, bufsize)
