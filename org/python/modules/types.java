@@ -36,6 +36,7 @@ public class types implements InitModule {
         dict.__setitem__("TypeType", PyJavaClass.lookup(PyJavaClass.class));
         dict.__setitem__("UnboundMethodType",
                          PyJavaClass.lookup(PyMethod.class));
+        dict.__setitem__("UnicodeType", PyJavaClass.lookup(PyString.class));
         dict.__setitem__("XRangeType", PyJavaClass.lookup(PyXRange.class));
     }
 }
