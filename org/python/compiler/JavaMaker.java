@@ -142,8 +142,13 @@ public class JavaMaker extends ProxyMaker
         Code code = classfile.addMethod("main", "([Ljava/lang/String;)V",
                                         ClassFile.PUBLIC | ClassFile.STATIC);
 
-        // Load the name of the Python module to run
+        // Load the class of the Python module to run
+        int forname = code.pool.Methodref(
+               "java/lang/Class","forName",
+               "(Ljava/lang/String;)Ljava/lang/Class;");
         code.ldc(pythonModule);
+        code.invokestatic(forname);
+
         // Load in any command line arguments
         code.aload(0);
         makeStrings(code, packages);
@@ -152,7 +157,7 @@ public class JavaMaker extends ProxyMaker
 
         int runMain = code.pool.Methodref(
             "org/python/core/Py", "runMain",
-            "(Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Z)V");
+            "(Ljava/lang/Class;[Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Z)V");
         code.invokestatic(runMain);
         code.return_();
     }
