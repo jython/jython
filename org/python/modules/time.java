@@ -1,14 +1,33 @@
 package org.python.modules;
 import org.python.core.*;
 
-public class time {
+class TimeFunctions extends PyBuiltinFunctionSet {
+    public PyObject __call__() {
+        switch(index) {
+            case 0:
+                return Py.newFloat(time.time$());
+            default:
+                throw argCountError(0);
+        }
+    }
+}
+
+
+
+
+public class time implements InitModule {
+    public void initModule(PyObject dict) {
+		dict.__setitem__("time", new TimeFunctions().init("time", 0, 0) );
+		dict.__setitem__("clock", new TimeFunctions().init("clock", 0, 0) );
+	}
+		
     public static double time$() {
         return System.currentTimeMillis()/1000.0;
     }
 
-    public static double clock() {
+    /*public static double clock() {
         return System.currentTimeMillis()/1000.0;
-    }
+    }*/
 
     public static double mktime(PyTuple tup) {
         java.util.GregorianCalendar cal = new java.util.GregorianCalendar(
