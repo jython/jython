@@ -424,7 +424,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 				final Procedure procedure = new Procedure(this, name);
 				PyDictionary callableBindings = new PyDictionary();
 
-				this.sqlStatement = procedure.prepareCall();
+				this.sqlStatement = procedure.prepareCall(this.rsType, this.rsConcur);
 
 				if (maxRows != Py.None) {
 					this.sqlStatement.setMaxRows(maxRows.__int__().getValue());

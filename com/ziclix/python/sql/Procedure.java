@@ -110,16 +110,39 @@ public class Procedure extends Object {
 	 *
 	 */
 	public CallableStatement prepareCall() throws SQLException {
+		return prepareCall(Py.None, Py.None);
+	}
+
+	/**
+	 * Prepares the statement and registers the OUT/INOUT parameters (if any).
+	 *
+	 * @param rsType the value of to be created ResultSet type
+	 * @param rsConcur the value of the to be created ResultSet concurrency
+	 *
+	 * @return CallableStatement
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	public CallableStatement prepareCall(PyObject rsType, PyObject rsConcur) throws SQLException {
 
 		// prepare the statement
 		CallableStatement statement = null;
+		boolean normal = ((rsType == Py.None) && (rsConcur == Py.None));
 
 		try {
 
 			// build the full call syntax
 			String sqlString = toSql();
 
-			statement = cursor.connection.connection.prepareCall(sqlString);
+			if (normal) {
+				statement = cursor.connection.connection.prepareCall(sqlString);
+			} else {
+				int t = rsType.__int__().getValue();
+				int c = rsConcur.__int__().getValue();
+
+				statement = cursor.connection.connection.prepareCall(sqlString, t, c);
+			}
 
 			// prepare the OUT parameters
 			registerOutParameters(statement);
