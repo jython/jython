@@ -25,7 +25,7 @@ public class PySystemState extends PyObject {
     /**
     The arguments passed to this program on the command line.
     **/
-	public PyList argv = new PyList(new PyObject[0]);
+	public PyList argv = new PyList();
 
     /**
     Exit a Python program with the given status.
@@ -220,7 +220,7 @@ public class PySystemState extends PyObject {
         // Set up the initial standard ins and outs
         __stdout__ = stdout = new PyFile(System.out, "<stdout>");
         __stderr__ = stderr = new PyFile(System.err, "<stderr>");
-        __stdin__ = stdin = new PyFile(System.in, "<stdin>");
+        __stdin__ = stdin = new PyFile(getSystemIn(), "<stdin>");
 
         // Should move these to Py
         Py.stderr = new StdoutWrapper("stderr");
@@ -252,36 +252,20 @@ public class PySystemState extends PyObject {
 	    Options.verbosePackageCache = 
 	        getBooleanOption("verbosePackageCache", Options.verbosePackageCache);
 	}
-	    
+    public static PackageManager packageManager;
+    public static File cachedir;
 
-	/*private PyJavaPackage addPackage(String name) {
-	    //System.out.println("add package: "+name);
-		int dot = name.indexOf('.');
-		String first_name=name;
-		String last_name=null;
-		if (dot != -1) {
-			first_name = name.substring(0,dot);
-			last_name = name.substring(dot+1, name.length());
-		}
-
-		first_name = first_name.intern();
-		PyJavaPackage p = (PyJavaPackage)modules.__finditem__(first_name);
-		if (p == null) {
-			p = new PyJavaPackage(first_name);
-		}
-		modules.__setitem__(first_name, p);
-		if (last_name != null) return p.addPackage(last_name);
-		else return p;
-	}
-
-	private static String default_java_packages =
-		"lang,io,util";
-    */
-    public static PackageCache packageCache;
+    private void initCacheDirectory(Properties props) {
+        cachedir = new File(props.getProperty("python.cachedir", "cachedir"));
+        if (!cachedir.isAbsolute()) {
+            cachedir = new File(PySystemState.prefix, cachedir.getPath());
+        }
+    }
 
 	private void initPackages(Properties props) {
-	    packageCache = new PackageCache();
-	    packageCache.addSysPackages();
+	    initCacheDirectory(props);
+	    File pkgdir = new File(cachedir, "packages");
+	    packageManager = new PackageManager(pkgdir, props);
 	}
 
 	private PyList initPath(Properties props) {
@@ -296,7 +280,7 @@ public class PySystemState extends PyObject {
 	}
 
 	public PyJavaPackage add_package(String n) {
-		return packageCache.doAddPackage(n, null);
+		return packageManager.makeJavaPackage(n, null);
 	}
 
     public TraceFunction tracefunc = null;
@@ -322,6 +306,42 @@ public class PySystemState extends PyObject {
 	        this.profilefunc = new PythonTraceFunction(profilefunc);
 	    }
 	}
+	
+	private InputStream getSystemIn() {
+	    if (Options.pollStandardIn) {
+	        return new PollingInputStream(System.in);
+	    } else {
+	        return System.in;
+	    }
+	}
+}
+
+// This class is based on a suggestion from Yunho Jeon
+class PollingInputStream extends FilterInputStream {
+    public PollingInputStream(InputStream s) {
+        super(s);
+    }
+    
+    private void waitForBytes() throws IOException {
+        try {
+            while(available()==0) {
+                //System.err.println("waiting...");
+                Thread.currentThread().sleep(100);
+            }
+        } catch (InterruptedException e) {
+            throw new PyException(Py.KeyboardInterrupt, "interrupt waiting on <stdin>");            
+        }
+    }
+    
+    public int read() throws IOException {
+        waitForBytes();
+        return super.read();
+    }
+    
+    public int read(byte b[], int off, int len) throws IOException {
+        waitForBytes();
+        return super.read(b, off, len);
+    }
 }
 
 class PythonTraceFunction extends TraceFunction {
