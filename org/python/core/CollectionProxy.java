@@ -95,7 +95,11 @@ class VectorProxy extends CollectionProxy {
     
     
     public PyObject __finditem__(int key) {
-        return Py.java2py(proxy.elementAt(key));
+        try {
+            return Py.java2py(proxy.elementAt(key));
+        } catch (ArrayIndexOutOfBoundsException exc) {
+            return null;
+        }
     }
     
 	public PyObject __finditem__(PyObject key) {
