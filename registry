@@ -1,8 +1,8 @@
 #Python Registry
 
 #This is how I set my path on Windows
-python.path=.;c:\\Python-1.5.1\\Lib
-#python.path=.
+#python.path=.;c:\\Python-1.5.1\\Lib
+python.path=.
 
 java.packages.java		=	beans,lang,io,util,net,applet,lang.reflect,math,text,util.zip, \
                             awt, awt.datatransfer, awt.event, awt.image, \
@@ -15,6 +15,9 @@ java.packages.com.sun.java.swing = basic, border, event, plaf, table, target, te
 java.packages.java.awt.swing = basic, border, event, plaf, table, target, text, tree, undo
 
 java.packages.org.python	=	core,parser,modules,compiler,rmi
+
+#To enable experimental inner class support set this to true
+python.options.innerclasses = false
 
 #Only enable this if you're SURE you want it
 #python.proxy.savedir = c:\\jpython
