@@ -1,12 +1,14 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyTableCode extends PyCode {
+public class PyTableCode extends PyCode
+{
     public int co_argcount;
     int nargs;
     public int co_firstlineno = -1;
     public String co_varnames[];
     public String co_filename;
+    public int co_flags;
     public boolean args, keywords;
     PyFunctionTable funcs;
     int func_id;
@@ -26,11 +28,15 @@ public class PyTableCode extends PyCode {
         co_firstlineno = firstlineno;
         this.args = args;
         co_name = name;
-        if (args)
+        if (args) {
             co_argcount -= 1;
+            co_flags |= 0x04;
+        }
         this.keywords = keywords;
-        if (keywords)
+        if (keywords) {
             co_argcount -= 1;
+            co_flags |= 0x08;
+        }
         this.funcs = funcs;
         this.func_id = func_id;
     }
