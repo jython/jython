@@ -30,15 +30,13 @@ class zxCoreTestCase(runner.SQLTestCase):
 	def cursor(self, dynamic=0):
 		c = self.db.cursor(dynamic)
 		if hasattr(self, "datahandler"):
-			c.datahandler = self.datahandler(c.datahandler)
+			c.datahandler.__class__ = self.datahandler(c.datahandler.__class__)
 		return c
 
 class zxJDBCTestCase(zxCoreTestCase):
 
 	def setUp(self):
 		zxCoreTestCase.setUp(self)
-		self.db = self.connect()
-		self.db.autocommit = 0
 
 		c = self.cursor()
 
@@ -727,7 +725,7 @@ class BCPTestCase(zxJDBCTestCase):
 				self.db.rollback()
 				c.close()
 
-			dbSource = DBSource(src, self.datahandler, "zxtesting", None, None, None)
+			dbSource = DBSource(src, c.datahandler.__class__, "zxtesting", None, None, None)
 
 			cnt = Pipe().pipe(dbSource, csvSink) - 1 # ignore the header row
 
@@ -749,7 +747,7 @@ class BCPTestCase(zxJDBCTestCase):
 			writer = PrintWriter(FileWriter(fn))
 			xmlSink = XMLSink(writer)
 
-			dbSource = DBSource(src, self.datahandler, "zxtesting", None, None, None)
+			dbSource = DBSource(src, c.datahandler.__class__, "zxtesting", None, None, None)
 
 			cnt = Pipe().pipe(dbSource, xmlSink) - 1 # ignore the header row
 
@@ -775,8 +773,8 @@ class BCPTestCase(zxJDBCTestCase):
 			one = c.fetchone()[0]
 			c.close()
 
-			dbSource = DBSource(src, self.datahandler, "zxtesting", None, None, None)
-			dbSink = DBSink(dst, self.datahandler, "zxtestingbcp", None, None, 1)
+			dbSource = DBSource(src, c.datahandler.__class__, "zxtesting", None, None, None)
+			dbSink = DBSink(dst, c.datahandler.__class__, "zxtestingbcp", None, None, 1)
 
 			cnt = Pipe().pipe(dbSource, dbSink) - 1 # ignore the header row
 
@@ -793,15 +791,15 @@ class BCPTestCase(zxJDBCTestCase):
 			# this tests the internal assert in BCP.  we need to handle the case where we exclude
 			# all the rows queried (based on the fact no columns exist) but rows were fetched
 			# also make sure (eg, Oracle) that the column name case is ignored
-			dbSource = DBSource(src, self.datahandler, "zxtesting", None, ["id"], None)
-			dbSink = DBSink(dst, self.datahandler, "zxtestingbcp", ["id"], None, 1)
+			dbSource = DBSource(src, c.datahandler.__class__, "zxtesting", None, ["id"], None)
+			dbSink = DBSink(dst, c.datahandler.__class__, "zxtestingbcp", ["id"], None, 1)
 
 			self.assertRaises(zxJDBC.Error, Pipe().pipe, dbSource, dbSink)
 
 			params = [(4,)]
 
-			dbSource = DBSource(src, self.datahandler, "zxtesting", "id > ?", None, params)
-			dbSink = DBSink(dst, self.datahandler, "zxtestingbcp", None, None, 1)
+			dbSource = DBSource(src, c.datahandler.__class__, "zxtesting", "id > ?", None, params)
+			dbSink = DBSink(dst, c.datahandler.__class__, "zxtestingbcp", None, None, 1)
 
 			cnt = Pipe().pipe(dbSource, dbSink) - 1 # ignore the header row
 
