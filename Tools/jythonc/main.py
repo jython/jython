@@ -116,7 +116,9 @@ def getOptions():
     sysargs = []
     for arg in sys.argv[1:]:
         if arg in oldopts:
-            sysargs.append('-'+arg)
+            newarg = '-'+arg
+            print 'Warning:', arg, 'is deprecated, use', newarg
+            sysargs.append(newarg)
         else:
             sysargs.append(arg)
 
