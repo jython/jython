@@ -94,3 +94,20 @@ python.options.caseok = false
 # python.jythonc.compiler = /depot/java/plat/bin/jikes
 # python.jythonc.classpath = /usr/java1.2/jre/lib/rt.jar:/Jython/dist:.
 # python.jythonc.compileropts = +E +D -g
+
+# python.environment controls the type of environment
+# support provided by the os module. Currently supported are:
+# 
+# shell (default)
+#     Generate the environment by executing shell commands
+#     appropriate to the os environment.
+#
+# None
+#     Do not provide any environment or system() support.
+#python.environment=shell
+
+# python.os controls the commands used to generate the environment.
+# default is to choose commands based on the Java property "os.name".
+# Some generic values are also supported: 'nt', 'dos', 'mac' and 'unix'.
+#python.os=None
+
