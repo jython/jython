@@ -52,6 +52,9 @@ public class Options
     // TBD
     public static boolean parserVerboseExceptions = false;
 
+    // TBD
+    public static String proxyDebugDirectory = null;
+
     //
     // ####### END OF OPTIONS
     //
@@ -102,6 +105,10 @@ public class Options
         Options.extendedClassLoader =
             getBooleanOption("options.extendedClassLoader",
                              Options.extendedClassLoader);
+
+        Options.proxyDebugDirectory =
+            getStringOption("options.proxyDebugDirectory",
+                             Options.proxyDebugDirectory);
 
         // verbosity is more complicated:
         String prop = PySystemState.registry.getProperty("python.verbose");

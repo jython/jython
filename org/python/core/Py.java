@@ -1342,13 +1342,9 @@ public final class Py {
             org.python.compiler.Module.compile(node, ostream, name, filename,
                                                linenumbers, printResults,
                                                false);
-            // Useful for debugging interactive use
-//             System.err.println("compiled: "+(nameindex-1));
-//             FileOutputStream s = new FileOutputStream(
-//                 "/tmp/org/python/pycode/_pyx"+(nameindex-1)+".class");
-//             s.write(ostream.toByteArray());
-//             s.close();
-            // end debugging
+
+            saveClassFile(name, ostream);
+
             return BytecodeLoader.makeCode(name, ostream.toByteArray());
         } catch (Throwable t) {
             throw parser.fixParseError(null, t, filename);
@@ -1441,6 +1437,31 @@ public final class Py {
         maybeWrite(type, msg, DEBUG);
     }
 
+
+    static void saveClassFile(String name, ByteArrayOutputStream bytestream) {
+        String dirname = Options.proxyDebugDirectory;
+        if (dirname == null)
+            return;
+
+        byte[] bytes = bytestream.toByteArray();
+        File dir = new File(dirname);
+        File file = makeFilename(name, dir);
+        file.getParentFile().mkdirs();
+        try {
+            FileOutputStream o = new FileOutputStream(file);
+            o.write(bytes);
+            o.close();
+        } catch (Throwable t) { }
+    }
+
+    private static File makeFilename(String name, File dir) {
+        int index = name.indexOf(".");
+        if (index == -1)
+            return new File(dir, name+".class");
+
+        return makeFilename(name.substring(index+1, name.length()),
+                            new File(dir, name.substring(0, index)));
+    }
 }
 
 /** @deprecated **/

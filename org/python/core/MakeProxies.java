@@ -42,17 +42,9 @@ class MakeProxies
             throw Py.JavaError(exc);
         }
 
-        Class pc = makeClass(c, name, bytes);
-        String dir = Options.proxyCacheDirectory;
+        Py.saveClassFile(name, bytes);
 
-        if (dir != null) {
-            try {
-                OutputStream file = ProxyMaker.getFile(dir, name);
-                bytes.writeTo(file);
-            }
-            // Allow caching to fail silently
-            catch (Throwable t) {}
-        }
+        Class pc = makeClass(c, name, bytes);
         return pc;
     }
 
@@ -84,11 +76,8 @@ class MakeProxies
             jm.build();
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             jm.classfile.write(bytes);
-            // debugging
-//             String filename = "/tmp/jpython/test/"+proxyName+".class";
-//             System.err.println("filename: "+filename);
-//             bytes.writeTo(new java.io.FileOutputStream(filename));
-            // end debugging
+            Py.saveClassFile(proxyName, bytes);
+
             return makeClass(superclass, jm.myClass, bytes);
         }
         catch (Exception exc) {
