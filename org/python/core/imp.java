@@ -7,7 +7,7 @@ import java.util.Properties;
 public class imp {
     private static String[] builtinNames = new String[] {
         "jarray", "math", "thread", "operator", "strop", "time",
-        "os", "types", "py_compile", "codeop", "re",
+        "os", "types", "py_compile", "codeop", "re", "code",
     };
     
     public static final int APIVersion = 5;
@@ -319,8 +319,11 @@ public class imp {
 		if (ret != null) return ret;
 	    //System.out.println("load3: ");
 
-        Class c = Py.findClass(name);
-        if (c != null) return createFromClass(name, c);
+        ret = PySystemState.packageCache.findName(name);
+        if (ret != null) return ret;
+
+        //Class c = Py.findClass(name);
+        //if (c != null) return createFromClass(name, c);
 
 		throw Py.ImportError("no module named "+name);
 	}
@@ -437,6 +440,10 @@ public class imp {
 		    dict = ((PyModule)module).__dict__;
 		} else if (module instanceof PyJavaClass) {
 		    dict = ((PyJavaClass)module).__dict__;
+		} else if (module instanceof PyJavaPackage) {
+		    PyJavaPackage tmp = (PyJavaPackage)module;
+		    tmp.initAll();
+		    dict = tmp.__dict__;
 		} else {
 		    throw Py.ImportError("can't import * from given module");
 		}

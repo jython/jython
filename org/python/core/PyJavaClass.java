@@ -85,6 +85,11 @@ public class PyJavaClass extends PyClass {
 	    init(c);
 	}
 	
+	public PyJavaClass(String name) {
+	    this();
+	    __name__ = name;
+	}
+	
 	protected void findModule(PyObject dict) {}	
     
     private void init__dict__() {
@@ -102,6 +107,7 @@ public class PyJavaClass extends PyClass {
     private void initialize() {
         if (initialized) return;
         initialized = true;
+        if (proxyClass == null) init(Py.findClass(__name__));
         init__bases__(proxyClass);
         init__dict__();
     }

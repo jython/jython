@@ -71,10 +71,6 @@ public class PySystemState extends PyObject {
         return new PyTuple(new PyObject[] {exc.type, exc.value, exc.traceback});
     }
 
-	public Properties registry; // = init_registry();
-
-    public String prefix;
-
     private static String findRoot() {
         String root;
         try {
@@ -188,11 +184,15 @@ public class PySystemState extends PyObject {
         this(System.getProperties(), new String[0]);
     }
 
-	public PySystemState(Properties defaults, String[] argv) {
+    private static PyList defaultPath;
+	public static Properties registry; // = init_registry();
+    public static String prefix;
+    
+    private void initRegistry(Properties defaults) {
+        if (registry != null) return;
         registry = defaults;
         prefix = findRoot();
-        modules = new PyStringMap();
-
+        
 	    // Load the default registry
 	    if (prefix != null) {
             try {
@@ -203,6 +203,18 @@ public class PySystemState extends PyObject {
         	    ;
         	}
 		}
+        // Set up options from registry
+        setOptionsFromRegistry();
+    }
+
+	public PySystemState(Properties defaults, String[] argv) {
+        //registry = defaults;
+        //prefix = findRoot();
+        modules = new PyStringMap();
+
+        initRegistry(defaults);
+        
+        path = (PyList)defaultPath.repeat(1);
 
         // Set up the initial standard ins and outs
         __stdout__ = stdout = new PyFile(System.out, "<stdout>");
@@ -213,18 +225,15 @@ public class PySystemState extends PyObject {
         Py.stderr = new StdoutWrapper("stderr");
         Py.stdout = new StdoutWrapper("stdout");
 
-        // Set up options from registry
-        setOptionsFromRegistry();
-
 	    // This isn't quite right...
         builtins = PyJavaClass.lookup(__builtin__.class).__dict__;
 	}
 	
 	public void setOptionsFromRegistry() {
 		// Initialize the path (and add system defaults)
-		path = initPath(registry);
+		defaultPath = initPath(registry);
 		if (prefix != null) {
-		    path.append(new PyString(new File(prefix, "Lib").toString()));
+		    defaultPath.append(new PyString(new File(prefix, "Lib").toString()));
 		}
 
         // Set up the known Java packages
@@ -239,10 +248,12 @@ public class PySystemState extends PyObject {
 	        getStringOption("proxyCacheDirectory", Options.proxyCacheDirectory);
 	    Options.showPythonProxyExceptions = 
 	        getBooleanOption("showPythonProxyExceptions", Options.showPythonProxyExceptions);
+	    Options.verbosePackageCache = 
+	        getBooleanOption("verbosePackageCache", Options.verbosePackageCache);
 	}
 	    
 
-	private PyJavaPackage addPackage(String name) {
+	/*private PyJavaPackage addPackage(String name) {
 	    //System.out.println("add package: "+name);
 		int dot = name.indexOf('.');
 		String first_name=name;
@@ -264,32 +275,12 @@ public class PySystemState extends PyObject {
 
 	private static String default_java_packages =
 		"lang,io,util";
+    */
+    public static PackageCache packageCache;
 
 	private void initPackages(Properties props) {
-		//I wish that properties were truly a hierarchical structure, but...
-		if (props.getProperty("java.packages.java") == null) {
-			props.put("java.packages.java", default_java_packages);
-		}
-		Enumeration e = props.propertyNames();
-		while (e.hasMoreElements()) {
-			String s = (String)e.nextElement();
-			if (s.startsWith("java.packages")) {
-				String pack;
-				if (s.length() == 13) pack = null;
-				else pack = s.substring(14);
-				//System.out.println(s+", "+pack);
-				PyJavaPackage top;
-				if (pack == null) top = null;
-				else top = addPackage(pack);
-				String jpacks = props.getProperty(s);
-				StringTokenizer tok = new StringTokenizer(jpacks, " \n\r,");
-				while  (tok.hasMoreTokens())  {
-					if (top == null) addPackage(tok.nextToken());
-					else top.addPackage(tok.nextToken());
-				}
-
-			}
-		}
+	    packageCache = new PackageCache();
+	    packageCache.addSysPackages();
 	}
 
 	private PyList initPath(Properties props) {
@@ -304,7 +295,7 @@ public class PySystemState extends PyObject {
 	}
 
 	public PyJavaPackage add_package(String n) {
-		return addPackage(n);
+		return packageCache.doAddPackage(n, null);
 	}
 
     public TraceFunction tracefunc = null;

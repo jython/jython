@@ -1,11 +1,13 @@
 package org.python.core;
 
-import java.util.Hashtable;
+import java.util.*;
 import java.io.File;
 
 public class PyJavaPackage extends PyObject {
 	public String __name__;
 	public PyObject __dict__;
+	public String _unparsedAll;
+	//public PyList __all__;
 
     public static PyClass __class__;
     public PyJavaPackage(String name) {
@@ -95,9 +97,26 @@ public class PyJavaPackage extends PyObject {
 		return __path__;
     }
  
+    public void initAll() {
+		if (__dict__ == null) __dict__ = new PyStringMap();
+        
+	    if (_unparsedAll != null) {
+	        //__all__ = new PyList();
+    		StringTokenizer tok = new StringTokenizer(_unparsedAll, ",");
+    		while  (tok.hasMoreTokens())  {
+    			String p = tok.nextToken();
+    			String cname = p.trim().intern();
+    			__dict__.__setitem__(cname, new PyJavaClass(__name__+'.'+cname));
+    			//__all__.append(new PyString(p.trim()));
+    		}
+    		_unparsedAll = null;
+    	}
+    }
+ 
 
 	public PyObject __findattr__(String name) {
-		//if (__dict__ == null) __dict__ = new PyDictionary();
+		if (__dict__ == null) __dict__ = new PyStringMap();
+		    
 		PyObject ret = __dict__.__finditem__(name);
 		if (ret != null) return ret;
 	    Class c;
