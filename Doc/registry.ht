@@ -71,7 +71,15 @@ file for details.
     <dd>The name of a console class. An alternative console class
     that supports <a href="http://www.bablokb.de/java/readline.html">
     GNU readline</a>
-    can be installed with this property.
+    can be installed with this property. Jython already include such a 
+    console class and it can be enabled by setting this property to
+    <code>org.python.util.ReadlineConsole</code>
+
+    <dt><b>python.console.readlinelib</b>
+    <dd>Allow a choice of backing implementation for GNU readline support.
+    Can be either <code>GnuReadline</code> or <code>Editline</code>.
+    This property is only used when <b>python.console</b> is set to 
+    <code>org.python.util.ReadlineConsole</code>.
 
 </dl>
 
