@@ -26,7 +26,7 @@ standard Python keyword arguments. You will be returned a
 connection object.</p>
 
 <pre>
-Jython 2.1a3 on java1.3.0 (JIT: null)
+Jython 2.1b1 on java1.4.0-beta3 (JIT: null)
 Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
 &gt;&gt;&gt; d, u, p, v = "jdbc:mysql://localhost/test", None, None, "org.gjt.mm.mysql.Driver"
@@ -43,7 +43,7 @@ of the DataSource, all keywords will use JavaBeans reflection to
 set properties on the DataSource.</p>
 
 <pre>
-Jython 2.1a3 on java1.3.0 (JIT: null)
+Jython 2.1b1 on java1.4.0-beta3 (JIT: null)
 Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
 &gt;&gt;&gt; params = {}
@@ -77,7 +77,7 @@ consult the JNDI implementation you intend to use for the InitialContextFactory 
 as well as the connection URL.</i></p>
 
 <pre>
-Jython 2.1a3 on java1.3.0 (JIT: null)
+Jython 2.1b1 on java1.4.0-beta3 (JIT: null)
 Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
 &gt;&gt;&gt; jndiName = "/temp/jdbc/mysqldb"
@@ -254,7 +254,7 @@ from the example below, without the special DataHandler, the
 boolean type mapping fails.</p>
 
 <pre>
-Jython 2.1a3 on java1.3.0 (JIT: null)
+Jython 2.1b1 on java1.4.0-beta3 (JIT: null)
 Type "copyright", "credits" or "license" for more information.
 &gt;&gt;&gt; from com.ziclix.python.sql import zxJDBC
 &gt;&gt;&gt; zxJDBC.autocommit = 0
@@ -300,4 +300,162 @@ this simple example:</p>
 &gt;&gt;&gt; c.execute("insert into g values (?)", [1])
 handling prepared statement
 &gt;&gt;&gt;
+</pre>
+
+	<h3>dbexts</h3>
+
+	<p>
+	dbexts is a wrapper around DB API 2.0 compliant database modules.  It currently supports zxJDBC and mxODBC but could easily be modified to support others.  It allows developers to write scripts without knowledge of the implementation language of Python (either C or Java).  It also greatly eases the burden of database coding as much of the functionality of the Python API is exposed through easier to use methods.
+	</p>
+
+	<h3>Configuration file</h3>
+	<p>
+	dbexts needs a configuration file in order to create a connection.  The configuration file has the following format:
+	<pre>
+[default]
+name=mysql_ziclix
+
+[jdbc]
+name=mysql_ziclix
+url=jdbc:mysql://localhost/ziclix
+user=
+pwd=
+driver=org.gjt.mm.mysql.Driver
+datahandler=com.ziclix.python.sql.handler.MySQLDataHandler
+
+[jdbc]
+name=ora_ziclix
+url=jdbc:oracle:thin:@localhost:1521:ziclix
+user=ziclix
+pwd=ziclix
+driver=oracle.jdbc.driver.OracleDriver
+datahandler=com.ziclix.python.sql.handler.OracleDataHandler
+</pre>
+
+	<h3>API</h3>
+	dbexts will default to looking for a file named 'dbexts.ini' in the same directory as dbexts.py but can optionally be passed a filename to the <code>cfg</code> attribute.
+	</p>
+	<dl>
+		<dt><p><code class="methodname">__init__(self, dbname=None, cfg=None, resultformatter=format_resultset, autocommit=1)</code></p></dt>
+
+		<dd>
+		The initialization method for the dbexts class.  If <code>dbname</code> is None, the default connection, as specified in the <code>cfg</code> file will be used.
+		</dd>
+
+		<dt><p><code class="methodname">isql(self, sql, params=None, bindings=None, maxrows=None)</code></p></dt>
+
+		<dd>
+			Interactively execute sql statement.  If <i>self.verbose</i> is true, then the results (if any) are displayed using the result formatting method.  If <code>maxrows</code> is specified, only <i>maxrows</i> are displayed.
+		</dd>
+
+		<dt><p><code class="methodname">raw(self, sql, params=None, bindings=None, delim=None, comments=comments)</code></p></dt>
+
+		<dd>
+			Executes the sql statement with params and bindings as necessary.  Returns a tuple consisting of (headers, results).
+		</dd>
+
+		<dt><p><code class="methodname">schema(table, full=0, sort=1)</code></p></dt>
+
+		<dd>
+			Displays the schema (indicies, foreign keys, primary keys and columns) for the table parameter.  If <code>full</code> is true, also compute the exported (or referenced) keys.  If <code>sort</code> is true (the default), sort the column names.
+<pre>
+>>> d.schema("store")
+Table
+  store
+
+Primary Keys
+  store_id {store_3}
+
+Imported (Foreign) Keys
+  location (city.city_id) {store_7}
+
+Exported (Referenced) Keys
+  store_id (site_store.store_id) {site_store_8}
+
+Columns
+  location           int(4), non-nullable
+  store_id           serial(4), non-nullable
+  store_name         varchar(32), non-nullable
+
+Indices
+  unique index {523_8115} on (store_id)
+  unique index {store_ix_1} on (store_name)
+>>>
+</pre>
+
+		</dd>
+
+		<dt><p><code class="methodname">table(table=None, types=("TABLE",), owner=None, schema=None)</code></p></dt>
+
+		<dd>
+			If no table argument, displays a list of all tables.  If a table argument, displays the columns of the given table.
+		</dd>
+
+		<dt><p><code class="methodname">proc(self, proc=None, owner=None, schema=None)</code></p></dt>
+
+		<dd>
+			If no proc argument, displays a list of all procedures.  If a proc argument, displays the parameters of the given procedure.
+		</dd>
+
+		<dt><p><code class="methodname">bcp(src, table, where='(1=1)', parameters=[], selective=[], ignorelist=[], autobatch=0)</code></p></dt>
+
+		<dd>
+			<i>B</i>ulk <i>C</i>o<i>p</i>y from one database/table to another.  The current instance of dbexts is the source database to which the results of the query on the foreign database will be inserted.  An optional <code>where</code> clause can narrow the number of rows to be copied.
+		</dd>
+
+	</dl>
+
+	<p>The following are generally not called since <code>isql</code> and <code>raw</code> can handle almost all cases.</p>
+
+	<dl>
+		<dt><p><code class="methodname">begin(self)</code></p></dt>
+
+		<dd>
+		Creates a new cursor.
+		</dd>
+
+		<dt><p><code class="methodname">rollback(self)</code></p></dt>
+
+		<dd>
+		Rollback all the statements since the creation of the cursor.
+		</dd>
+
+		<dt><p><code class="methodname">commit(self, cursor=None, maxrows=None)</code></p></dt>
+
+		<dd>
+		Commit all the statements since the creation of the cursor.
+		</dd>
+
+		<dt><p><code class="methodname">display(self)</code></p></dt>
+
+		<dd>
+		Display the results using the formatter.
+		</dd>
+
+	</dl>
+
+<h3>Example session</h3>
+
+<pre>
+Jython 2.1b1 on java1.4.0-beta3 (JIT: null)
+Type "copyright", "credits" or "license" for more information.
+>>> from dbexts import dbexts
+>>> d = dbexts()
+>>> d.isql("create table store (store_id int, store_name varchar(32), location int)")
+>>> d.isql("insert into store values (?, ?, ?)", [(1, "amazon.com", 3), (2, "egghead.com", 4)])
+>>> d.isql("insert into store values (?, ?, ?)", [(15, "800.com", 1), (19, "fogdog.com", 3)])
+>>> d.isql("insert into store values (?, ?, ?)", [(5, "nike.com", 4)])
+>>> d.isql("select * from store order by store_name")
+
+STORE_ID | STORE_NAME  | LOCATION
+---------------------------------
+15       | 800.com     | 1
+1        | amazon.com  | 3
+2        | egghead.com | 4
+19       | fogdog.com  | 3
+5        | nike.com    | 4
+
+5 rows affected
+
+>>>
 </pre>
