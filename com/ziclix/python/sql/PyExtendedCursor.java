@@ -359,7 +359,6 @@ public class PyExtendedCursor extends PyCursor {
 /**
  * Class ExtendedCursorFunc
  *
- * @author
  * @date $today.date$
  * @author last modified by $Author$
  * @date last modified on $Date$

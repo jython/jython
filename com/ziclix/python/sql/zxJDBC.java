@@ -462,7 +462,6 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 /**
  * Class zxJDBCFunc
  *
- * @author
  * @date $today.date$
  * @author last modified by $Author$
  * @date last modified on $Date$

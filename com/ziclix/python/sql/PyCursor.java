@@ -611,7 +611,6 @@ public class PyCursor extends PyObject implements ClassDictInit {
 /**
  * Class CursorFunc
  *
- * @author
  * @date $today.date$
  * @author last modified by $Author$
  * @date last modified on $Date$

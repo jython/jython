@@ -250,7 +250,6 @@ public class PyConnection extends PyObject implements ClassDictInit {
 /**
  * Class ConnectionFunc
  *
- * @author
  * @date $today.date$
  * @author last modified by $Author$
  * @date last modified on $Date$
