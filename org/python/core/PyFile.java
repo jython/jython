@@ -277,6 +277,11 @@ public class PyFile extends PyObject
                 index = s.indexOf('\r', start);
             } while (index >= 0);
             buf.append(s.substring(start));
+            if (s.endsWith("\r") && file.available() > 0) {
+                int c = file.read();
+                if (c != -1 && c != '\n')
+                    file.unread(c);
+            }
             return buf.toString();
         }
 
