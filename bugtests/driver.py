@@ -50,7 +50,7 @@ def runTests(seq):
   print t
 
 if __name__ == '__main__':
-  runTests(["test%3.3d" % i for i in range(383)])
+  runTests(["test%3.3d" % i for i in range(384)])
   sys.exit(1)
 
 
