@@ -522,6 +522,21 @@ public class CodeCompiler extends Visitor {
     public int assert1, assert2;
 	public Object assert_stmt(SimpleNode node) throws Exception {
 	    setline(node);
+		Label end_of_assert = code.getLabel();
+ 
+	    /* First do an if __debug__: */
+		SimpleNode debugName = new SimpleNode(PythonGrammarTreeConstants.JJTNAME);
+		debugName.setInfo("__debug__");
+		debugName.visit(this);
+		
+		if (mrefs.nonzero == 0) {
+			mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject", "__nonzero__", "()Z");
+		}
+		code.invokevirtual(mrefs.nonzero);
+
+		code.ifeq(end_of_assert);
+	    
+	    /* Now do the body of the assert */
 	    node.getChild(0).visit(this);
 	    if (node.getNumChildren() == 2) {
 	        node.getChild(1).visit(this);
@@ -537,6 +552,10 @@ public class CodeCompiler extends Visitor {
 	        }
 	        code.invokestatic(mrefs.assert1);
         }
+        
+        /* And finally set the label for the end of it all */
+        end_of_assert.setPosition();
+        
         return null;
 	}
 
