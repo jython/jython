@@ -90,19 +90,21 @@ public class PyInteger extends PyObject
         int a = value;
         int b = rightv;
         int x = a + b;
-        if ((x^a) < 0 && (x^b) < 0)
-            throw Py.OverflowError("integer addition: "+this+" + "+right);
-        return Py.newInteger(x);
+        if ((x^a) >= 0 || (x^b) >= 0)
+            return Py.newInteger(x);
+        Py.OverflowWarning("integer addition");
+        return new PyLong((long) a + (long)b);
     }
     public PyObject __radd__(PyObject left) {
         return __add__(left);
     }
 
-    private static PyInteger _sub(int a, int b) {
+    private static PyObject _sub(int a, int b) {
         int x = a - b;
-        if ((x^a) < 0 && (x^~b) < 0)
-            throw Py.OverflowError("integer subtraction: "+a+" - "+b);
-        return Py.newInteger(x);
+        if ((x^a) >= 0 || (x^~b) >= 0)
+            return Py.newInteger(x);
+        Py.OverflowWarning("integer subtraction");
+        return new PyLong((long) a - (long)b);
     }
 
     public PyObject __sub__(PyObject right) {
@@ -130,10 +132,10 @@ public class PyInteger extends PyObject
         //long x = ((long)value)*((PyInteger)right).value;
         //System.out.println("mul: "+this+" * "+right+" = "+x);
 
-        if (x > Integer.MAX_VALUE || x < Integer.MIN_VALUE)
-            throw Py.OverflowError("integer multiplication: "+this+
-                                   " * "+right);
-        return Py.newInteger((int)x);
+        if (x <= Integer.MAX_VALUE && x >= Integer.MIN_VALUE)
+            return Py.newInteger((int)x);
+        Py.OverflowWarning("integer multiplication");
+        return __long__().__mul__(right);
     }
 
     public PyObject __rmul__(PyObject left) {
