@@ -1150,8 +1150,6 @@ final class StringFormatter
         return s;
     }
 
-
-
     public String formatFloatDecimal(PyObject arg, boolean truncate) {
         return formatFloatDecimal(arg.__float__().getValue(), truncate);
     }
@@ -1169,11 +1167,11 @@ final class StringFormatter
         format.setMinimumFractionDigits(truncate ? 0 : prec);
         format.setGroupingUsed(false);
 
-        //System.err.println("formatFloat: "+v+", "+prec);
         String ret = format.format(v);
-        if (ret.indexOf('.') == -1) {
-            return ret+'.';
-        }
+//         System.err.println("formatFloat: "+v+", prec="+prec+", ret="+ret);
+//         if (ret.indexOf('.') == -1) {
+//             return ret+'.';
+//         }
         return ret;
     }
 
@@ -1370,8 +1368,16 @@ final class StringFormatter
                 } else {
                     string = formatFloatDecimal(arg, true);
                 }
-//                 if (altFlag && string.indexOf('.') == -1)
-//                     string += '.';
+                if (altFlag && string.indexOf('.') == -1) {
+                    int zpad = prec - string.length();
+                    string += '.';
+                    if (zpad > 0) {
+                        char zeros[] = new char[zpad];
+                        for (int ci=0; ci<zpad; zeros[ci++] = '0')
+                            ;
+                        string += new String(zeros);
+                    }
+                }
                 break;
             case 'c':
                 fill = ' ';
