@@ -21,6 +21,8 @@ public class jython
         "-W arg   : warning control (arg is action:message:category:module:"+
                     "lineno)\n"+
         "-E codec : Use a different codec the reading from the console.\n"+
+        "-Q arg   : division options: -Qold (default), -Qwarn, -Qwarnall, " +
+                    "-Qnew\n"+
         "file     : program read from script file\n"+
         "-        : program read from stdin (default; interactive mode if a "+
         "tty)\n"+
@@ -144,6 +146,19 @@ public class jython
             }
         }
 
+        if (opts.division != null) {
+            if ("old".equals(opts.division))
+                Options.divisionWarning = 0;
+            else if ("warn".equals(opts.division))
+                Options.divisionWarning = 1;
+            else if ("warnall".equals(opts.division))
+                Options.divisionWarning = 2;
+            else if ("new".equals(opts.division)) {
+                Options.Qnew = true;
+                interp.cflags.division = true;
+            }
+        }
+            
         if (opts.command != null) {
             try {
                 interp.exec(opts.command);
@@ -218,6 +233,7 @@ class CommandLineOptions
     public String command;
     public java.util.Vector warnoptions = new java.util.Vector();
     public String encoding;
+    public String division;
 
     public CommandLineOptions() {
         filename = null;
@@ -301,6 +317,12 @@ class CommandLineOptions
                     value = arg.substring(equals+1, arg.length());
                 }
                 setProperty(key, value);
+            }
+            else if (arg.startsWith("-Q")) {
+                if (arg.length() > 2)
+                    division = arg.substring(2);
+                else 
+                    division = args[++index];
             }
             else {
                 String opt = args[index];
