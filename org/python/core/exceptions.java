@@ -2,7 +2,7 @@ package org.python.core;
 
 import org.python.core.*;
 
-public class exceptions extends java.lang.Object implements InitModule {
+public class exceptions extends java.lang.Object implements org.python.core.ClassDictInit {
     static String[] jpy$properties = new String[] {"python.modules.builtin", "exceptions:org.python.core.exceptions", "python.options.showJavaExceptions", "true", "python.packages.paths", "", "python.packages.directories", ""};
     static String[] jpy$packages = new String[] {};
     
@@ -87,7 +87,7 @@ public class exceptions extends java.lang.Object implements InitModule {
         private static PyCode c$37_SystemExit;
         private static PyCode c$38_main;
         private static void initConstants() {
-            s$0 = Py.newString("I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py");
+            s$0 = Py.newString("I:\\java\\jython.CVS\\Lib\\exceptions.py");
             s$1 = Py.newString("Class based built-in exception hierarchy.\012\012New with Python 1.5, all standard built-in exceptions are now class objects by\012default.  This gives Python's exception handling mechanism a more\012object-oriented feel.  Traditionally they were string objects.  Python will\012fallback to string based exceptions if the interpreter is invoked with the -X\012option, or if some failure occurs during class exception initialization (in\012this case a warning will be printed).\012\012Most existing code should continue to work with class based exceptions.  Some\012tricky uses of IOError may break, but the most common uses should work.\012\012Here is a rundown of the class hierarchy.  You can change this by editing this\012file, but it isn't recommended because the old string based exceptions won't\012be kept in sync.  The class names described here are expected to be found by\012the bltinmodule.c file.  If you add classes here, you must modify\012bltinmodule.c or the exceptions won't be available in the __builtin__ module,\012nor will they be accessible from C.\012\012The classes with a `*' are new since Python 1.5.  They are defined as tuples\012containing the derived exceptions when string-based exceptions are used.  If\012you define your own class based exceptions, they should be derived from\012Exception.\012\012Exception(*)\012 |\012 +-- SystemExit\012 +-- StandardError(*)\012      |\012      +-- KeyboardInterrupt\012      +-- ImportError\012      +-- EnvironmentError(*)\012      |    |\012      |    +-- IOError\012      |    +-- OSError(*)\012      |\012      +-- EOFError\012      +-- RuntimeError\012      |    |\012      |    +-- NotImplementedError(*)\012      |\012      +-- NameError\012      |    |\012      |    +-- UnboundLocalError(*)\012      |\012      +-- AttributeError\012      +-- SyntaxError\012      |    |\012      |    +-- IndentationError\012      |         |\012      |         +-- TabError\012      |\012      +-- TypeError\012      +-- AssertionError\012      +-- LookupError(*)\012      |    |\012      |    +-- IndexError\012      |    +-- KeyError\012      |\012      +-- ArithmeticError(*)\012      |    |\012      |    +-- OverflowError\012      |    +-- ZeroDivisionError\012      |    +-- FloatingPointError\012      |\012      +-- ValueError\012      |    |\012      |    +-- UnicodeError\012      |\012      +-- SystemError\012      +-- MemoryError\012");
             s$2 = Py.newString("Proposed base class for all exceptions.");
             s$3 = Py.newString("");
@@ -127,45 +127,45 @@ public class exceptions extends java.lang.Object implements InitModule {
             s$37 = Py.newString("Out of memory.");
             s$38 = Py.newString("Request to exit from the interpreter.");
             funcTable = new _PyInner();
-            c$0___init__ = Py.newCode(2, new String[] {"self", "args"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "__init__", true, false, funcTable, 0);
-            c$1___str__ = Py.newCode(1, new String[] {"self"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "__str__", false, false, funcTable, 1);
-            c$2___getitem__ = Py.newCode(2, new String[] {"self", "i"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "__getitem__", false, false, funcTable, 2);
-            c$3_Exception = Py.newCode(0, new String[] {"__init__", "__str__", "__getitem__"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "Exception", false, false, funcTable, 3);
-            c$4_StandardError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "StandardError", false, false, funcTable, 4);
-            c$5___init__ = Py.newCode(2, new String[] {"self", "args", "info"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "__init__", true, false, funcTable, 5);
-            c$6___str__ = Py.newCode(1, new String[] {"self"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "__str__", false, false, funcTable, 6);
-            c$7_SyntaxError = Py.newCode(0, new String[] {"filename", "lineno", "offset", "text", "msg", "__init__", "__str__"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "SyntaxError", false, false, funcTable, 7);
-            c$8_IndentationError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "IndentationError", false, false, funcTable, 8);
-            c$9_TabError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "TabError", false, false, funcTable, 9);
-            c$10___init__ = Py.newCode(2, new String[] {"self", "args"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "__init__", true, false, funcTable, 10);
-            c$11___str__ = Py.newCode(1, new String[] {"self"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "__str__", false, false, funcTable, 11);
-            c$12_EnvironmentError = Py.newCode(0, new String[] {"__init__", "__str__"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "EnvironmentError", false, false, funcTable, 12);
-            c$13_IOError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "IOError", false, false, funcTable, 13);
-            c$14_OSError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "OSError", false, false, funcTable, 14);
-            c$15_RuntimeError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "RuntimeError", false, false, funcTable, 15);
-            c$16_NotImplementedError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "NotImplementedError", false, false, funcTable, 16);
-            c$17_SystemError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "SystemError", false, false, funcTable, 17);
-            c$18_EOFError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "EOFError", false, false, funcTable, 18);
-            c$19_ImportError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "ImportError", false, false, funcTable, 19);
-            c$20_TypeError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "TypeError", false, false, funcTable, 20);
-            c$21_ValueError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "ValueError", false, false, funcTable, 21);
-            c$22_UnicodeError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "UnicodeError", false, false, funcTable, 22);
-            c$23_KeyboardInterrupt = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "KeyboardInterrupt", false, false, funcTable, 23);
-            c$24_AssertionError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "AssertionError", false, false, funcTable, 24);
-            c$25_ArithmeticError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "ArithmeticError", false, false, funcTable, 25);
-            c$26_OverflowError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "OverflowError", false, false, funcTable, 26);
-            c$27_FloatingPointError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "FloatingPointError", false, false, funcTable, 27);
-            c$28_ZeroDivisionError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "ZeroDivisionError", false, false, funcTable, 28);
-            c$29_LookupError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "LookupError", false, false, funcTable, 29);
-            c$30_IndexError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "IndexError", false, false, funcTable, 30);
-            c$31_KeyError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "KeyError", false, false, funcTable, 31);
-            c$32_AttributeError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "AttributeError", false, false, funcTable, 32);
-            c$33_NameError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "NameError", false, false, funcTable, 33);
-            c$34_UnboundLocalError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "UnboundLocalError", false, false, funcTable, 34);
-            c$35_MemoryError = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "MemoryError", false, false, funcTable, 35);
-            c$36___init__ = Py.newCode(2, new String[] {"self", "args"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "__init__", true, false, funcTable, 36);
-            c$37_SystemExit = Py.newCode(0, new String[] {"__init__"}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "SystemExit", false, false, funcTable, 37);
-            c$38_main = Py.newCode(0, new String[] {}, "I:\\java\\jpython.CVS\\dist\\Lib\\exceptions.py", "main", false, false, funcTable, 38);
+            c$0___init__ = Py.newCode(2, new String[] {"self", "args"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "__init__", true, false, funcTable, 0);
+            c$1___str__ = Py.newCode(1, new String[] {"self"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "__str__", false, false, funcTable, 1);
+            c$2___getitem__ = Py.newCode(2, new String[] {"self", "i"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "__getitem__", false, false, funcTable, 2);
+            c$3_Exception = Py.newCode(0, new String[] {"__init__", "__str__", "__getitem__"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "Exception", false, false, funcTable, 3);
+            c$4_StandardError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "StandardError", false, false, funcTable, 4);
+            c$5___init__ = Py.newCode(2, new String[] {"self", "args", "info"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "__init__", true, false, funcTable, 5);
+            c$6___str__ = Py.newCode(1, new String[] {"self"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "__str__", false, false, funcTable, 6);
+            c$7_SyntaxError = Py.newCode(0, new String[] {"filename", "lineno", "offset", "text", "msg", "__init__", "__str__"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "SyntaxError", false, false, funcTable, 7);
+            c$8_IndentationError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "IndentationError", false, false, funcTable, 8);
+            c$9_TabError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "TabError", false, false, funcTable, 9);
+            c$10___init__ = Py.newCode(2, new String[] {"self", "args"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "__init__", true, false, funcTable, 10);
+            c$11___str__ = Py.newCode(1, new String[] {"self"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "__str__", false, false, funcTable, 11);
+            c$12_EnvironmentError = Py.newCode(0, new String[] {"__init__", "__str__"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "EnvironmentError", false, false, funcTable, 12);
+            c$13_IOError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "IOError", false, false, funcTable, 13);
+            c$14_OSError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "OSError", false, false, funcTable, 14);
+            c$15_RuntimeError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "RuntimeError", false, false, funcTable, 15);
+            c$16_NotImplementedError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "NotImplementedError", false, false, funcTable, 16);
+            c$17_SystemError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "SystemError", false, false, funcTable, 17);
+            c$18_EOFError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "EOFError", false, false, funcTable, 18);
+            c$19_ImportError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "ImportError", false, false, funcTable, 19);
+            c$20_TypeError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "TypeError", false, false, funcTable, 20);
+            c$21_ValueError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "ValueError", false, false, funcTable, 21);
+            c$22_UnicodeError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "UnicodeError", false, false, funcTable, 22);
+            c$23_KeyboardInterrupt = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "KeyboardInterrupt", false, false, funcTable, 23);
+            c$24_AssertionError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "AssertionError", false, false, funcTable, 24);
+            c$25_ArithmeticError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "ArithmeticError", false, false, funcTable, 25);
+            c$26_OverflowError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "OverflowError", false, false, funcTable, 26);
+            c$27_FloatingPointError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "FloatingPointError", false, false, funcTable, 27);
+            c$28_ZeroDivisionError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "ZeroDivisionError", false, false, funcTable, 28);
+            c$29_LookupError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "LookupError", false, false, funcTable, 29);
+            c$30_IndexError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "IndexError", false, false, funcTable, 30);
+            c$31_KeyError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "KeyError", false, false, funcTable, 31);
+            c$32_AttributeError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "AttributeError", false, false, funcTable, 32);
+            c$33_NameError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "NameError", false, false, funcTable, 33);
+            c$34_UnboundLocalError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "UnboundLocalError", false, false, funcTable, 34);
+            c$35_MemoryError = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "MemoryError", false, false, funcTable, 35);
+            c$36___init__ = Py.newCode(2, new String[] {"self", "args"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "__init__", true, false, funcTable, 36);
+            c$37_SystemExit = Py.newCode(0, new String[] {"__init__"}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "SystemExit", false, false, funcTable, 37);
+            c$38_main = Py.newCode(0, new String[] {}, "I:\\java\\jython.CVS\\Lib\\exceptions.py", "main", false, false, funcTable, 38);
         }
         
         
@@ -670,7 +670,7 @@ public class exceptions extends java.lang.Object implements InitModule {
         }
         
     }
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("__name__", new PyString("exceptions"));
         Py.runCode(new _PyInner().getMain(), dict, dict);
     }
