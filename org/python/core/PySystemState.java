@@ -289,6 +289,9 @@ public class PySystemState extends PyObject
 
         // Load the default registry
         if (prefix != null) {
+            if (prefix.length() == 0) {
+                prefix = exec_prefix = ".";
+            }
             try {
                 addRegistryFile(new File(prefix, "registry"));
                 File homeFile = new File(registry.getProperty("user.home"),
