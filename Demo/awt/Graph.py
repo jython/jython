@@ -46,6 +46,7 @@ class Graph(awt.Canvas):
 if __name__ == '__main__':
 	def enter(e):
 		graph.setExpression(expression.text)
+		expression.caretPosition=0
 		expression.selectAll()
 		
 	p = awt.Panel(layout=awt.BorderLayout())
@@ -58,5 +59,4 @@ if __name__ == '__main__':
 	import pawt	
 	pawt.test(p, size=(300,300))
 	
-	expression.caretPosition=0
-	expression.selectAll()
+	enter(None)
