@@ -22,7 +22,6 @@ child processes to terminate.
 
 import jarray
 from java.lang import System
-import threading
 from java.util import *
 from java.io import *
 from org.python.core import PyFile
@@ -54,7 +53,6 @@ class Popen3:
 
     sts = -1                            # Child not completed yet
     childWaiter = None
-    childWaiterLock = threading.Lock()
     count = 0
     
     def __init__(self, cmd, capturestderr=0, bufsize=-1):
@@ -74,6 +72,8 @@ class Popen3:
             self._childerr = self.process.getErrorStream()
         else:
             self._childerr = None
+        import threading
+        childWaiterLock = threading.Lock()
 
         if bufsize > 0:
             self._tochild = BufferedOutputStream( self._tochild, bufsize )
@@ -94,6 +94,7 @@ class Popen3:
         self.childWaiterLock.acquire()
         try:
             if not self.childWaiter:
+                import threading
                 self.childWaiter = threading.Thread(
                     target=self.wait,
                     name="ChildWaiter %s" % self.process,
@@ -126,6 +127,7 @@ def _makeReaderThread( stream, outfunc, bufsize, name=None, postFunc=None ):
     Popen3.count += 1
     name = name or str( Popen3.count )
     threadName = "StreamReader %s" % name
+    import threading
     reader = threading.Thread(
         target=_readStream,
         name=threadName,
