@@ -15,9 +15,16 @@ class MakeProxies
                                    ByteArrayOutputStream bytes)
     {
         BytecodeLoader bcl;
-        ClassLoader cl = referent.getClassLoader();
-        if (cl != null && cl instanceof BytecodeLoader)
+        ClassLoader cl;
+        // Use the superclass's class loader if it is a BytecodeLoader.
+        // referent might be null if we're deriving from an interface.  In
+        // that case, this may or may not be the RTTD.
+        if (referent != null &&
+            (cl = referent.getClassLoader()) != null &&
+            cl instanceof BytecodeLoader)
+        {
             bcl = (BytecodeLoader)cl;
+        }
         else
             bcl = new BytecodeLoader();
         return bcl.makeClass(name, bytes.toByteArray());
