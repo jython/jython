@@ -227,8 +227,36 @@ public class PyJavaClass extends PyClass
         }
     }
 
+     /**
+      * Return the list of all accessible fields for a class.  This will
+      * only the public fields unless Options.respectJavaAccessibility is
+      * false, in which case all fields are returned.
+      */
+    private static Field[] getAccessibleFields(Class c) {
+ 	if (!JavaAccessibility.accessIsMutable())
+            // returns just the public fields
+ 	    return c.getFields();
+        // from here on out we know we must be using at least Java 1.2
+        java.util.ArrayList fields = new java.util.ArrayList();
+        while (c != null) {
+            // get all declared fields for this class, mutate their
+            // accessibility and pop it into the array for later
+            Field[] declared = c.getDeclaredFields();
+            for (int i=0; i < declared.length; i++) {
+                // TBD: this is a permanent change.  Should we provide a
+                // way to restore the original accessibility flag?
+                JavaAccessibility.setAccessible(declared[i], true);
+                fields.add(declared[i]);
+            }
+            // walk down superclass chain.  no need to deal specially with
+            // interfaces...
+            c = c.getSuperclass();
+        }
+        return (Field[])fields.toArray(new Field[fields.size()]);
+    }
+
     private void setFields(Class c) {
-        Field[] fields = c.getFields();
+        Field[] fields = getAccessibleFields(c);
         for(int i=0; i<fields.length; i++) {
             Field field = fields[i];
             if (field.getDeclaringClass() != c) continue;
@@ -311,15 +339,41 @@ public class PyJavaClass extends PyClass
     }
 
 
+     /**
+      * Return the list of all accessible methods for a class.  This will
+      * only the public methods unless Options.respectJavaAccessibility is
+      * false, in which case all methods are returned.
+      */
+    private static Method[] getAccessibleMethods(Class c) {
+ 	if (!JavaAccessibility.accessIsMutable())
+            // returns just the public methods
+ 	    return c.getMethods();
+        // from here on out we know we must be using at least Java 1.2
+        java.util.ArrayList methods = new java.util.ArrayList();
+        while (c != null) {
+            // get all declared methods for this class, mutate their
+            // accessibility and pop it into the array for later
+            Method[] declared = c.getDeclaredMethods();
+            for (int i=0; i < declared.length; i++) {
+                // TBD: this is a permanent change.  Should we provide a way to
+                // restore the original accessibility flag?
+                JavaAccessibility.setAccessible(declared[i], true);
+                methods.add(declared[i]);
+            }
+            // walk down superclass chain
+            c = c.getSuperclass();
+        }
+        return (Method[])methods.toArray(new Method[methods.size()]);
+    }
+
     /* Add all methods declared by this class */
     private void setMethods(Class c) {
-        Method[] methods = c.getMethods();
+        Method[] methods = getAccessibleMethods(c);
         for (int i=0; i<methods.length; i++) {
             Method method = methods[i];
             Class dc = method.getDeclaringClass();
             if (dc != c)
                 continue;
-                        
             addMethod(method);
         }
     }
@@ -604,15 +658,29 @@ public class PyJavaClass extends PyClass
       }
       }*/
 
+     /**
+      * Return the list of all accessible constructors for a class.  This
+      * will only the public constructors unless
+      * Options.respectJavaAccessibility is false, in which case all
+      * constructors are returned.  Note that constructors are not
+      * inherited like methods or fields.
+      */
+    private static Constructor[] getAccessibleConstructors(Class c) {
+ 	if (!JavaAccessibility.accessIsMutable())
+            // returns just the public fields
+ 	    return c.getConstructors();
+        // return all constructors
+        return c.getDeclaredConstructors();
+    }
+
     private void setConstructors(Class c) {
-        //System.out.println("c: "+c.getName()+" "+Modifier.isAbstract(c.getModifiers()));
         if (Modifier.isInterface(c.getModifiers())) {
             __init__ = null;
         } else {
-            java.lang.reflect.Constructor[] constructors = c.getConstructors();
+            Constructor[] constructors = getAccessibleConstructors(c);
             if (constructors.length > 0) {
                 __init__ = new PyReflectedConstructor(constructors[0]);
-                for (int i=1; i<constructors.length; i++) {
+                for (int i=1; i < constructors.length; i++) {
                     __init__.addConstructor(constructors[i]);
                 }
                 __dict__.__setitem__("__init__", __init__);
