@@ -390,7 +390,12 @@ class PythonVisitor(Visitor):
     def add_2op(self, node): return self.binop(node, 'add')     
     def sub_2op(self, node): return self.binop(node, 'sub')     
     def mul_2op(self, node): return self.binop(node, 'mul')     
-    def div_2op(self, node): return self.binop(node, 'div')     
+    def div_2op(self, node):
+        if self.walker.getFutures().areDivisionOn():
+            return self.binop(node, 'truediv')     
+        else:
+            return self.binop(node, 'div')     
+    def floordiv_2op(self, node): return self.binop(node, 'floordiv')     
     def mod_2op(self, node): return self.binop(node, 'mod')
     def and_2op(self, node): return self.binop(node, 'and')
     def lshift_2op(self, node): return self.binop(node, 'lshift')
@@ -419,7 +424,13 @@ class PythonVisitor(Visitor):
     def aug_plus(self, node): return self.aug_binaryop(node, "__iadd__")
     def aug_minus(self, node): return self.aug_binaryop(node, "__isub__")
     def aug_multiply(self, node): return self.aug_binaryop(node, "__imul__")
-    def aug_divide(self, node): return self.aug_binaryop(node, "__idiv__")
+    def aug_divide(self, node):
+        if self.walker.getFutures().areDivisionOn():
+            return self.aug_binaryop(node, "__itruediv__")
+        else:
+            return self.aug_binaryop(node, "__idiv__")
+    def aug_floordivide(self, node):
+        return self.aug_binaryop(node, "__ifloordiv__")
     def aug_modulo(self, node): return self.aug_binaryop(node, "__imod__")
     def aug_and(self, node): return self.aug_binaryop(node, "__iand__")
     def aug_or(self, node): return self.aug_binaryop(node, "__ior__")
