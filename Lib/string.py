@@ -16,6 +16,8 @@ import sys
 #sys.add_package("org.python.core")
 from org.python.core.PyString import *
 
+splitfields = split
+joinfields = join
 
 def capwords(s, sep=None):
 	if sep is None:
@@ -23,8 +25,24 @@ def capwords(s, sep=None):
 	else:
 		return join(map(capitalize, split(s, sep)), sep)
 		
+#maketrans and translate contributed by Lars Marius Garshold
 def maketrans(fromstr, tostr):
-	raise NameError, 'maketrans not yet implemented in JPython'
-	
+    if len(fromstr)!=len(tostr):
+        raise ValueError, "Arguments of different lengths!"
+
+    table=[" "]*256
+    for ix in range(256):
+        table[ix]=chr(ix)
+
+    for ix in range(len(fromstr)):
+        table[ord(fromstr[ix])]=tostr[ix]
+
+    return table
+        
 def translate(s, table, deletions=""):
-	raise NameError, 'translate not yet implemented in JPython'
+    ns=""
+    for char in s:
+        if not char in deletions:
+            ns=ns+table[ord(char)]
+
+    return ns       
