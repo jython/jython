@@ -106,6 +106,7 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 		dict.__setitem__("newError", null);
 		dict.__setitem__("resourceBundle", null);
 		dict.__setitem__("getString", null);
+		dict.__setitem__("makeException", null);
 	}
 
 	/** Field __class__ */
