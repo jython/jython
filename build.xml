@@ -411,7 +411,7 @@
                 UserString.py,
                 warnings.py,
                 encodings/*.py,
-                test/pystone.py,
+                test/**,
             "/>
 
             <!-- The jython .py modules -->
