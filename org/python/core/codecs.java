@@ -8,14 +8,16 @@
 
 package org.python.core;
 
+/**
+ * Contains the implementation of the builtin codecs.
+ * @since Jython 2.0
+ */
 
 public class codecs {
     private static char Py_UNICODE_REPLACEMENT_CHARACTER = 0xFFFD;
 
     private static PyList searchPath = new PyList();
     private static PyStringMap searchCache = new PyStringMap();
-
-
 
     private static String default_encoding = "ascii";
 
@@ -27,8 +29,6 @@ public class codecs {
         lookup(encoding);
         default_encoding = encoding;
     }
-
-
 
     public static void register(PyObject search_function) {
         if (!search_function.isCallable())
@@ -67,9 +67,6 @@ public class codecs {
         return (PyTuple)result;
     }
 
-
-
-
     private static String normalizestring(String string) {
         return string.toLowerCase().replace(' ', '-');
     }
@@ -88,10 +85,6 @@ public class codecs {
             }
         }
     }
-
-
-
-
 
 
 

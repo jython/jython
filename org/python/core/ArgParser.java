@@ -1,7 +1,7 @@
 package org.python.core;
 
 /**
- * A utilityclass for handling mixed positional and keyword arguments.
+ * A utility class for handling mixed positional and keyword arguments.
  *
  * A typical usage:
  * <pre>
@@ -40,6 +40,13 @@ public class ArgParser {
         this.kws = kws;
     }
 
+    /**
+     * Create an ArgParser with one method argument
+     * @param  funcname   Name of the method. Used in error messages.
+     * @param  args       The actual call arguments supplied in the call.
+     * @param  args       The actual keyword names supplied in the call.
+     * @param  p0         The expected argument in the method definition.
+     */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String p0) {
         this(funcname, args, kws);
@@ -47,6 +54,14 @@ public class ArgParser {
         check();
     }
 
+    /**
+     * Create an ArgParser with two method argument
+     * @param  funcname   Name of the method. Used in error messages.
+     * @param  args       The actual call arguments supplied in the call.
+     * @param  args       The actual keyword names supplied in the call.
+     * @param  p0         The first expected argument in the method definition.
+     * @param  p1         The second expected argument in the method definition.
+     */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String p0, String p1) {
         this(funcname, args, kws);
@@ -54,6 +69,15 @@ public class ArgParser {
         check();
     }
 
+    /**
+     * Create an ArgParser with three method argument
+     * @param  funcname   Name of the method. Used in error messages.
+     * @param  args       The actual call arguments supplied in the call.
+     * @param  args       The actual keyword names supplied in the call.
+     * @param  p0         The first expected argument in the method definition.
+     * @param  p1         The second expected argument in the method definition.
+     * @param  p2         The third expected argument in the method definition.
+     */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String p0, String p1, String p2) {
         this(funcname, args, kws);
@@ -61,6 +85,13 @@ public class ArgParser {
         check();
     }
 
+    /**
+     * Create an ArgParser with three method argument
+     * @param funcname   Name of the method. Used in error messages.
+     * @param args       The actual call arguments supplied in the call.
+     * @param args       The actual keyword names supplied in the call.
+     * @param paramnames The list of expected argument in the method definition.
+     */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
                      String[] paramnames) {
         this(funcname, args, kws);
@@ -69,19 +100,39 @@ public class ArgParser {
     }
 
 
+    /**
+     * Return a required argument as a String.
+     * @param pos    The position of the argument. First argument is
+     *               numbered 0.
+     */
     public String getString(int pos) {
          return (String) getArg(pos, String.class, "string");
     }
 
+    /**
+     * Return an optional argument as a String.
+     * @param pos    The position of the argument. First argument is
+     *               numbered 0.
+     */
     public String getString(int pos, String def) {
          return (String) getArg(pos, String.class, "string", def);
     }
 
 
+    /**
+     * Return a required argument as an int.
+     * @param pos    The position of the argument. First argument is
+     *               numbered 0.
+     */
     public int getInt(int pos) {
          return getRequiredArg(pos).__int__().getValue();
     }
 
+    /**
+     * Return an optional argument as an int.
+     * @param pos    The position of the argument. First argument is
+     *               numbered 0.
+     */
     public int getInt(int pos, int def) {
          PyObject value = getOptionalArg(pos);
          if (value == null)
@@ -90,10 +141,20 @@ public class ArgParser {
     }
 
 
+    /**
+     * Return a required argument as a PyObject.
+     * @param pos    The position of the argument. First argument is
+     *               numbered 0.
+     */
     public PyObject getPyObject(int pos) {
          return getRequiredArg(pos);
     }
 
+    /**
+     * Return an optiona argument as a PyObject.
+     * @param pos    The position of the argument. First argument is
+     *               numbered 0.
+     */
     public PyObject getPyObject(int pos, PyObject def) {
          PyObject value = getOptionalArg(pos);
          if (value == null)
@@ -101,6 +162,11 @@ public class ArgParser {
          return value;
     }
 
+    /**
+     * Return the remaining arguments as a tuple.
+     * @param pos    The position of the argument. First argument is
+     *               numbered 0.
+     */
     public PyObject getList(int pos) {
         int kws_start = args.length - kws.length;
         if (pos < kws_start) {

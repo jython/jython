@@ -3,8 +3,10 @@
 package org.python.core;
 
 /**
- * An empty tagging interface. If a java class implements this
- * interface, it must also have a method like:
+ * An empty tagging interface that can be used if a java class
+ * want control over the class dict initialization.
+ * When a java class implements this interface, it must also have 
+ * a method like:
  * <pre>
  *       public static void classDictInit(PyObject dict) { .. }
  * </pre>

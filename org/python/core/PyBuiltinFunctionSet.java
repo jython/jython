@@ -1,6 +1,14 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A helper class for faster implementations of commonly called
+ * methods.
+ * <p>
+ * Subclasses of PyBuiltinFunctionSet will implement some or all
+ * of the __call__ method with a switch on the index number.
+ *
+ */
 public class PyBuiltinFunctionSet extends PyObject implements Cloneable
 {
     // part of the public interface for built-in functions

@@ -1,6 +1,11 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * An implementation of PyCode where the actual executable content
+ * is stored as a PyFunctionTable instance and an integer index.
+ */
+
 public class PyTableCode extends PyCode
 {
     public int co_argcount;

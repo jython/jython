@@ -3,6 +3,11 @@ package org.python.core;
 
 import java.io.Serializable;
 
+
+/**
+ * A builtin python float.
+ */
+
 public class PyFloat extends PyObject
 {
     private double value;

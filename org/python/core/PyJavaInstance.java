@@ -2,6 +2,10 @@
 package org.python.core;
 import java.lang.reflect.Modifier;
 
+/**
+ * A wrapper around a java instance.
+ */
+
 public class PyJavaInstance
     extends PyInstance
     implements java.io.Externalizable

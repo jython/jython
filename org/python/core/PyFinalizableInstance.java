@@ -5,6 +5,14 @@
 
 package org.python.core;
 
+
+/**
+ * A python class instance with __del__ defined.
+ * <p>
+ * This is a special class due to performance. Defining
+ * finalize() on a class, makes the class a lot slower.
+ */
+
 public class PyFinalizableInstance extends PyInstance
 {
     public PyFinalizableInstance(PyClass iclass) {

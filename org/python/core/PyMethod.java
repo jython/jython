@@ -1,6 +1,10 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A python method.
+ */
+
 public class PyMethod extends PyObject
 {
     public PyObject im_self;

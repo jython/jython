@@ -4,6 +4,10 @@ package org.python.core;
 import java.lang.reflect.*;
 import java.beans.*;
 
+/**
+ * A wrapper around a java class.
+ */
+
 public class PyJavaClass extends PyClass
 {
     public PyReflectedConstructor __init__;

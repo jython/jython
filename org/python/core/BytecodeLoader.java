@@ -6,6 +6,10 @@ import java.util.StringTokenizer;
 import java.util.Hashtable;
 import java.util.Vector;
 
+/**
+ * Utility class for loading of compiled python modules and
+ * java classes defined in python modules.
+ */
 public class BytecodeLoader {
 
     static Vector init() {
@@ -63,6 +67,13 @@ public class BytecodeLoader {
         }
     }
 
+    /**
+     * Turn the java byte code in data into a java class.
+     * @param name      the name of the class
+     * @param referents a list of superclass and interfaces that 
+     *                  the new class will reference.
+     * @param data      the java byte code.
+     */
     public static Class makeClass(String name, Vector referents,
                                   byte[] data)
     {
@@ -81,6 +92,12 @@ public class BytecodeLoader {
         return loader.loadClassFromBytes(name, data);
     }
 
+    /**
+     * Turn the java byte code for a compiled python module into a 
+     * java class.
+     * @param name      the name of the class
+     * @param data      the java byte code.
+     */
     public static PyCode makeCode(String name, byte[] data) {
         try {
             Class c = makeClass(name, null, data);

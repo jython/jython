@@ -1,6 +1,9 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A super class for all python code implementations.
+ */
 public abstract class PyCode extends PyObject
 {
     public String co_name;

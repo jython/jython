@@ -1,6 +1,11 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+
+/**
+ * A python frame object.
+ */
+
 public class PyFrame extends PyObject
 {
     public PyFrame f_back;

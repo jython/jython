@@ -102,6 +102,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
 
 
 
+/**
+ * The builtin module. All builtin functions are defined here
+ */
 public class __builtin__ implements ClassDictInit
 {
     public static void classDictInit(PyObject dict) {

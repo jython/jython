@@ -2,6 +2,15 @@
 package org.python.core;
 import java.lang.reflect.Array;
 
+/**
+ * A wrapper class around native java arrays.
+ *
+ * Instances of PyArray are created either by java functions or
+ * directly by the jarray module.
+ *
+ * @see org.python.modules.jarray
+ */
+
 public class PyArray extends PySequence {
     Object data;
     Class type;

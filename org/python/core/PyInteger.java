@@ -3,6 +3,10 @@ package org.python.core;
 
 import java.io.Serializable;
 
+/**
+ * A builtin python int.
+ */
+
 public class PyInteger extends PyObject
 {
     private int value;

@@ -1,6 +1,11 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+
+/**
+ * A python slice object.
+ */
+
 public class PySlice extends PyObject {
     public PyObject start, stop, step;
 

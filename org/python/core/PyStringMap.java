@@ -1,6 +1,12 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A faster Dictionary where the keys have to be strings.
+ * <p>
+ * This is the default for all __dict__ instances.
+ */
+
 public class PyStringMap extends PyObject
 {
     //Table of primes to cycle through

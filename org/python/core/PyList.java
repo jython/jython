@@ -78,6 +78,10 @@ class ListFunctions extends PyBuiltinFunctionSet
 
 
 
+/**
+ * A builtin python list.
+ */
+
 public class PyList extends PySequence implements ClassDictInit
 {
     protected PyObject[] list;

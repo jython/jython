@@ -4,6 +4,11 @@ package org.python.core;
 import java.math.BigInteger;
 import java.io.Serializable;
 
+/**
+ * A builtin python long. This is implemented as a 
+ * java.math.BigInteger.
+ */
+
 public class PyLong extends PyObject
 {
     private static final BigInteger minLong =

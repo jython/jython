@@ -8,6 +8,10 @@ import java.util.*;
 import java.io.*;
 import org.python.modules.Setup;
 
+/**
+ * The "sys" module.
+ */
+
 public class PySystemState extends PyObject
 {
     /**

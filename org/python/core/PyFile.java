@@ -11,6 +11,10 @@ import java.io.*;
 // - fileno() (defined, but always raises an exception, for urllib)
 // - name, mode, closed should be read-only
 
+/**
+ * A python file wrapper around a java stream, reader/writer or file. 
+ */
+
 public class PyFile extends PyObject
 {
     private static class FileWrapper {

@@ -1,6 +1,11 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+
+/**
+ * A wrapper around a java inner class.
+ */
+
 public class PyJavaInnerClass extends PyJavaClass
 {
     public PyJavaClass parent = null;

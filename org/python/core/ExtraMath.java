@@ -2,6 +2,9 @@
 
 package org.python.core;
 
+/**
+ * A static utility class with two additional math functions.
+ */
 public class ExtraMath {
     static double LOG10 = Math.log(10.0);
 

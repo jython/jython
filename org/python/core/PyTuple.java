@@ -32,6 +32,10 @@ class TupleFunctions extends PyBuiltinFunctionSet
 
 
 
+/**
+ * A builtin python tuple.
+ */
+
 public class PyTuple extends PySequence implements ClassDictInit
 {
     // TBD: this should not be public, but it is required to be public by

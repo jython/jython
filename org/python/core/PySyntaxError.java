@@ -1,6 +1,14 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A convience class for creating Syntax errors. Note that the
+ * syntax error is still taken from Py.SyntaxError.
+ * <p>
+ * Generally subclassing from PyException is not the right way
+ * of creating new exception classes.
+ */
+
 public class PySyntaxError extends PyException {
     int lineno, column;
     String text;

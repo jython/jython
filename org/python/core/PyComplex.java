@@ -1,6 +1,10 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A builtin python comples number
+ */
+
 public class PyComplex extends PyObject {
     public double real, imag;
 

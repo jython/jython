@@ -76,6 +76,10 @@ class DictFuncs extends PyBuiltinFunctionSet
 
 
 
+/**
+ * A builtin python dictionary.
+ */
+
 public class PyDictionary extends PyObject implements ClassDictInit
 {
 

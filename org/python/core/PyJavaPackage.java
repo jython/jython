@@ -6,6 +6,10 @@ package org.python.core;
 import java.util.*;
 import java.io.File;
 
+/**
+ * A representation of java package.
+ */
+
 public class PyJavaPackage extends PyObject {
     public String __name__;
 

@@ -1,6 +1,10 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A python traceback object.
+ */
+
 public class PyTraceback extends PyObject
 {
     public PyObject tb_next;

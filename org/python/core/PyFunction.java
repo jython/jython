@@ -1,6 +1,10 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
+/**
+ * A python function.
+ */
+
 public class PyFunction extends PyObject
 {
     public String __name__;

@@ -3,6 +3,10 @@ package org.python.core;
 import java.util.Hashtable;
 import java.io.Serializable;
 
+/**
+ * A python class instance.
+ */
+
 public class PyInstance extends PyObject
 {
     //This field is only used by Python subclasses of Java classes

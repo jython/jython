@@ -225,6 +225,9 @@ class StringFuncs extends PyBuiltinFunctionSet
 
 
 
+/**
+ * A builtin python string.
+ */
 public class PyString extends PySequence implements ClassDictInit
 {
     private String string;
