@@ -70,11 +70,21 @@ class ReflectedArgs {
             callData.args[0] = pyArgs;
             callData.args[1] = keywords;
             callData.self = self;
+            if (self != null) {
+                Object tmp = self.__tojava__(declaringClass);
+                if (tmp != Py.NoConversion)
+                    callData.self = tmp;
+            }
             return true;
         } else if (flags == PyArgsCall) { // foo(PyObject[])
             callData.setLength(1);
             callData.args[0] = pyArgs;
             callData.self = self;
+            if (self != null) {
+                Object tmp = self.__tojava__(declaringClass);
+                if (tmp != Py.NoConversion)
+                    callData.self = tmp;
+            }
             return true;
         }
 
