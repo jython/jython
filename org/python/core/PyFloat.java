@@ -1,13 +1,12 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyFloat extends PyObject {
+public class PyFloat extends PyObject
+{
     private double value;
 
-    public static PyClass __class__;
-
     public PyFloat(double v) {
-        super(__class__); value = v;
+        value = v;
     }
     public PyFloat(float v) {
         this((double)v);
