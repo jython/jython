@@ -39,7 +39,7 @@ python.console.poll = false
 # Form is name:package -- if package is ommitted, org.python.modules is assumed
 # python.modules.builtin = os:com.foo.jni, binascii
 
-# Use this to specify the command used by jpythonc to compile Java
-# source code.
+# This specifies the command used by jpythonc to compile Java source
+# code, along with the complete classpath to use.
 # python.jpythonc.compiler = /depot/java/plat/bin/jikes +E +D -g
 # python.jpythonc.classpath = /usr/java1.2/jre/lib/rt.jar
