@@ -1,11 +1,12 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.lang.reflect.*;
-import java.io.*;
-import java.util.Hashtable;
-import java.util.Properties;
-import java.util.zip.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Utility functions for "import" support.
@@ -14,9 +15,23 @@ public class imp
 {
     public static final int APIVersion = 12;
 
+    private static Object syspathJavaLoaderLock = new Object();
+    private static ClassLoader syspathJavaLoader = null;
+
+    public static ClassLoader getSyspathJavaLoader() {
+        synchronized (syspathJavaLoaderLock) {
+            if (syspathJavaLoader == null) {
+                syspathJavaLoader = new SyspathJavaLoader();
+            }
+        }
+        return syspathJavaLoader;
+    }
+
     private imp() { ; }
 
     public static PyModule addModule(String name) {
+//        System.err.println("AddModule:" + name);
+        name = name.intern();
         PyObject modules = Py.getSystemState().modules;
         PyModule module = (PyModule)modules.__finditem__(name);
         if (module != null) {
@@ -45,7 +60,7 @@ public class imp
         }
     }
 
-    private static PyObject createFromPyClass(String name, InputStream fp,
+    static PyObject createFromPyClass(String name, InputStream fp,
                                               boolean testing,
                                               String fileName)
     {
@@ -142,7 +157,7 @@ public class imp
         }
     }
 
-    private static PyObject createFromSource(String name, InputStream fp,
+    public static PyObject createFromSource(String name, InputStream fp,
                                              String filename)
     {
         byte[] bytes = compileSource(name, fp, filename);
@@ -153,7 +168,7 @@ public class imp
         return createFromCode(name, code);
     }
 
-    private static PyObject createFromSource(String name, InputStream fp,
+    static PyObject createFromSource(String name, InputStream fp,
                                              String filename,
                                              String outFilename)
     {
@@ -178,19 +193,7 @@ public class imp
         return module;
     }
 
-    private static Object syspathJavaLoaderLock = new Object();
-    private static ClassLoader syspathJavaLoader = null;
-
-    public static ClassLoader getSyspathJavaLoader() {
-        synchronized (syspathJavaLoaderLock) {
-            if (syspathJavaLoader == null) {
-                syspathJavaLoader = new SyspathJavaLoader();
-            }
-        }
-        return syspathJavaLoader;
-    }
-
-    private static PyObject createFromClass(String name, Class c) {
+    static PyObject createFromClass(String name, Class c) {
         //Two choices.  c implements PyRunnable or c is Java package
         //System.err.println("create from class: "+name+", "+c);
         Class interfaces[] = c.getInterfaces();
@@ -211,7 +214,114 @@ public class imp
         return PyJavaClass.lookup(c); // xxx?
     }
 
-    private static PyObject loadBuiltin(String name, PyList path) {
+    static PyObject getPathImporter(PyDictionary cache, PyList hooks, PyObject p) {
+
+        // attempt to get an importer for the path
+        //  use null as default value since Py.None is
+        //  a valid value in the cache for the default
+        //  importer
+        PyObject importer = cache.__finditem__(p);
+        if (importer != null) {
+            return importer;
+        }
+
+        // nothing in the cache, so check all hooks
+        PyObject iter = hooks.__iter__();
+        for(PyObject hook; (hook = iter.__iternext__()) != null;) {
+            try {
+                importer = hook.__call__(p);
+                break;
+            } catch (PyException e) {
+                if(!Py.matchException(e, Py.ImportError)) {
+                    throw e;
+                }
+            }
+        }
+
+        importer = (importer == null ? Py.None : importer);
+
+        cache.__setitem__(p, importer);
+
+        return importer;
+    }
+
+    static PyObject replacePathItem(PyObject path) {
+        if(path instanceof SyspathArchive) {
+            // already an archive
+            return null;
+        }
+
+        String name = path.toString();
+        if(SyspathArchive.getArchiveName(name) == null) {
+            return null;
+        }
+        try {
+            // this has the side affect of adding the jar to the PackageManager
+            //  during the initialization of the SyspathArchive
+            return new SyspathArchive(name);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    static PyObject find_module(String name, String moduleName, PyList path) {
+
+        PyObject loader = Py.None;
+        PySystemState sys = Py.getSystemState();
+        PyObject metaPath = sys.meta_path;
+        PyObject iter = metaPath.__iter__();
+
+        for(PyObject importer; (importer = iter.__iternext__()) != null;) {
+            PyObject findModule = importer.__getattr__("find_module");
+            loader = findModule.__call__(new PyObject[] {
+                new PyString(moduleName), path == null ? Py.None : path
+            });
+            if(loader != Py.None) {
+                return loadFromLoader(loader, moduleName);
+            }
+        }
+
+        PyObject ret = loadPrecompiled(moduleName);
+        if (ret != null) return ret;
+
+        ret = loadBuiltin(moduleName);
+        if (ret != null) return ret;
+
+        path = path == null ? sys.path : path;
+        for(int i=0;i<path.__len__();i++) {
+            PyObject p = path.__getitem__(i);
+            PyObject q = replacePathItem(p);
+            if(q == null) {
+                continue;
+            }
+            sys.path.__setitem__(i, q);
+        }
+
+        for(int i=0;i<path.__len__();i++) {
+            PyObject p = path.__getitem__(i);
+            //System.err.println("find_module (" + name + ", " + moduleName + ") Path: " + path);
+            PyObject importer = getPathImporter(sys.path_importer_cache, sys.path_hooks, p);
+            if (importer != Py.None) {
+                PyObject findModule = importer.__getattr__("find_module");
+                loader = findModule.__call__(new PyObject[] { new PyString(moduleName) });
+                if(loader != Py.None) {
+                    return loadFromLoader(loader, moduleName);
+                }
+            }
+            ret = loadFromSource(name, moduleName, p);
+            if (ret != null) return ret;
+        }
+
+//        JavaImporter java = new JavaImporter();
+//        loader = java.find_module(moduleName);
+//        if(loader != Py.None) {
+//            ret = loadFromLoader(loader, moduleName);
+//        }
+
+        return ret;
+    }
+
+    private static PyObject loadBuiltin(String name) {
         if (name == "sys") {
             Py.writeComment("import", "'" + name + "' as sys in " +
                             "builtin modules");
@@ -246,9 +356,7 @@ public class imp
         return Py.findClassEx(modName+"$_PyInner", "precompiled");
     }
 
-    private static PyObject loadPrecompiled(String name, String modName,
-                                            PyList path)
-    {
+    private static PyObject loadPrecompiled(String modName) {
         if (Py.frozenModules != null) {
             //System.out.println("precomp: "+name+", "+modName);
             Class c;
@@ -278,175 +386,83 @@ public class imp
         return null;
     }
 
-    static PyObject loadFromZipFile(String name, String modName,
-                                    SyspathArchive zipArchive) {
-        PyObject o = null;
-        ZipEntry pkgEntry = null;
-        String entryName = name;
-
-        String pyName = entryName +".py";
-        String className = entryName +"$py.class";
-
-        try {
-            String sourceName = entryName + "/__init__.py";
-            String compledName = entryName + "/__init__$py.class";
-            ZipEntry sourceEntry = zipArchive.getEntry(sourceName);
-            ZipEntry compiledEntry = zipArchive.getEntry(compledName);
-            if (sourceEntry != null || compiledEntry != null) {
-                Py.writeDebug("import", "trying package: " + modName +
-                            " in jar/zip file " + zipArchive);
-                PyModule m = addModule(modName);
-
-                SyspathArchive subArchive = zipArchive.makeSubfolder(name);
-                PyList zipPath = new PyList(new PyObject[] { subArchive });
-                m.__dict__.__setitem__("__path__", zipPath);
-                o = loadFromZipFile("__init__", modName, subArchive);
-                if (o != null) {
-                    return m;
-                }
-            }
-
-            ZipEntry pyEntry = zipArchive.getEntry(pyName);
-            ZipEntry classEntry = zipArchive.getEntry(className);
-            if (pyEntry != null) {
-                Py.writeDebug("import", "trying source entry: " + pyName +
-                              " from jar/zip file " + zipArchive);
-                if (classEntry != null) {
-                    Py.writeDebug("import", "trying precompiled entry " +
-                                  className + " from jar/zip file " +
-                                  zipArchive);
-                    long pyTime = pyEntry.getTime();
-                    long classTime = classEntry.getTime();
-                    if (classTime >= pyTime) {
-                        InputStream is =
-                                    zipArchive.getInputStream(classEntry);
-                        o = createFromPyClass(modName, is, true,
-                                              classEntry.getName());
-                        if (o != null) {
-                            return o;
-                        }
-                    }
-                }
-                InputStream is = zipArchive.getInputStream(pyEntry);
-                return createFromSource(modName, is, pyEntry.getName(), null);
-            }
-        } catch (Exception e) {
-            Py.writeDebug("import", "loadFromZipFile exception: " +
-                          e.toString());
-            e.printStackTrace();
-        }
-        return null;
+    static PyObject loadFromLoader(PyObject importer, String name) {
+        PyObject load_module = importer.__getattr__("load_module");
+        return load_module.__call__(new PyObject[] { new PyString(name) });
     }
 
-    private static boolean isSyspathArchive(PyObject entry, boolean isDir) {
-        if (entry instanceof SyspathArchive)
-            return true;
-        if (isDir)
-            return false;
-        return SyspathArchive.getArchiveName(entry.toString()) != null;
+    public static PyObject loadFromSource(String name, InputStream stream, String filename) {
+        return createFromSource(name, stream, filename);
     }
 
-    static PyObject loadFromPath(String name, PyList path) {
-        return loadFromPath(name, name, path);
+    public static PyObject loadFromCompiled(String name, InputStream stream, String filename) {
+        return createFromPyClass(name, stream, false, filename);
     }
 
-    static PyObject loadFromPath(String name, String modName, PyList path) {
-        //System.err.println("load-from-path:"+name+" "+modName+" "+path);
-        PyObject o = loadPrecompiled(name, modName, path);
-        if (o != null) return o;
+    static PyObject loadFromSource(String name, String modName, PyObject entry) {
+        //System.err.println("load-from-source: "+name+" "+modName+" "+entry);
 
         int nlen = name.length();
-        String pyName = name+".py";
-        String className = name+"$py.class";
+        String sourceName = "__init__.py";
+        String compiledName = "__init__$py.class";
+        String directoryName = entry.toString();
 
-        int n = path.__len__();
+        // The empty string translates into the current working
+        // directory, which is usually provided on the system property
+        // "user.dir".  Don't rely on File's constructor to provide
+        // this correctly.
+        if (directoryName.length() == 0) {
+            directoryName = null;
+        }
 
-        for (int i=0; i<n; i++) {
-            PyObject entry = path.__getitem__(i);
-            String dirName = entry.toString();
+        // First check for packages
+        File dir = new File(directoryName, name);
+        File sourceFile = new File(dir, sourceName);
+        File compiledFile = new File(dir, compiledName);
 
-            // The empty string translates into the current working
-            // directory, which is usually provided on the system property
-            // "user.dir".  Don't rely on File's constructor to provide
-            // this correctly.
-            if (dirName.length() == 0) {
-                dirName = null;
-            }
+        boolean pkg = (dir.isDirectory() && caseok(dir, name, nlen)
+                && (sourceFile.isFile() || compiledFile.isFile()));
 
-            // First check for packages
-            File dir = new File(dirName, name);
-            boolean isDir = dir.isDirectory();
+        if(!pkg) {
+            Py.writeDebug("import", "trying source " + dir.getPath());
+            sourceName = name + ".py";
+            compiledName = name + "$py.class";
+            sourceFile = new File(directoryName, sourceName);
+            compiledFile = new File(directoryName, compiledName);
+        } else {
+            PyModule m = addModule(modName);
+            PyObject filename = new PyString(dir.getPath());
+            m.__dict__.__setitem__("__path__",
+                new PyList(new PyObject[] { filename }));
+            m.__dict__.__setitem__("__file__", filename);
+        }
 
-            if (isSyspathArchive(entry, isDir)) {
-                Py.writeDebug("import", "trying " + modName +
-                              " in jar/zip file " + dirName);
-                if (!(entry instanceof SyspathArchive)) {
-                    try {
-                        entry = new SyspathArchive(dirName);
-                        path.__setitem__(i, entry);
-                    } catch (IOException exc) {
-                        // Silently ignore corrupt and missing .zip files.
-                        continue;
-                    }
+        if (sourceFile.isFile() && caseok(sourceFile, sourceName, nlen)) {
+            if (compiledFile.isFile() && caseok(compiledFile, compiledName, nlen)) {
+                Py.writeDebug("import", "trying precompiled " + compiledFile.getPath());
+                long pyTime = sourceFile.lastModified();
+                long classTime = compiledFile.lastModified();
+                if (classTime >= pyTime) {
+                    PyObject ret = createFromPyClass(modName,
+                        makeStream(compiledFile), true, compiledFile.getPath());
+                    if (ret != null)
+                        return ret;
                 }
-
-                PyObject ret = loadFromZipFile(name, modName,
-                                              (SyspathArchive)entry);
-                // Not found in zip/jar file check next item in path
-                if (ret != null) {
-                    return ret;
-                }
             }
+            return createFromSource(modName, makeStream(sourceFile),
+                sourceFile.getAbsolutePath());
+        }
 
-            if (isDir && caseok(dir, name, nlen) &&
-                (new File(dir, "__init__.py").isFile() ||
-                 new File(dir, "__init__$py.class").isFile()))
-            {
-                PyList pkgPath = new PyList();
-                PyModule m = addModule(modName);
-                pkgPath.append(new PyString(dir.toString()));
-                m.__dict__.__setitem__("__path__", pkgPath);
-                o = loadFromPath("__init__", modName, pkgPath);
-                if (o == null)
-                    continue;
-                return m;
-            }
-
-            // Now check for source
-            File pyFile = new File(dirName, pyName);
-            File classFile = new File(dirName, className);
-            Py.writeDebug("import", "trying source " + pyFile.getPath());
-
-            if (pyFile.isFile() && caseok(pyFile, pyName, nlen)) {
-                if (classFile.isFile() &&
-                                    caseok(classFile, className, nlen)) {
-                    Py.writeDebug("import", "trying precompiled " +
-                                  classFile.getPath());
-                    long pyTime = pyFile.lastModified();
-                    long classTime = classFile.lastModified();
-                    if (classTime >= pyTime) {
-                        PyObject ret = createFromPyClass(
-                               modName, makeStream(classFile), true,
-                               classFile.getPath());
-                        if (ret != null)
-                            return ret;
-                    }
-                }
-                return createFromSource(modName, makeStream(pyFile),
-                                        pyFile.getAbsolutePath());
-            }
-
-            // If no source, try loading precompiled
-            Py.writeDebug("import", "trying " + classFile.getPath());
-            if (classFile.isFile() && caseok(classFile, className, nlen)) {
-                return createFromPyClass(modName, makeStream(classFile),
-                                         false, classFile.getPath());
-            }
+        // If no source, try loading precompiled
+        Py.writeDebug("import", "trying " + compiledFile.getPath());
+        if (compiledFile.isFile() && caseok(compiledFile, compiledName, nlen)) {
+            return createFromPyClass(modName, makeStream(compiledFile),
+                false, compiledFile.getPath());
         }
         return null;
     }
 
-    static boolean caseok(File file, String filename, int namelen) {
+    public static boolean caseok(File file, String filename, int namelen) {
         if (Options.caseok)
             return true;
         try {
@@ -457,54 +473,44 @@ public class imp
         }
     }
 
-    static PyObject loadFromClassLoader(String name,
-                                        ClassLoader classLoader)
-    {
-        PyObject ret;
-        String path = name.replace('.', '/');
-        InputStream istream;
+//    static PyObject loadFromClassLoader(String name,
+//                                        ClassLoader classLoader)
+//    {
+//        String path = name.replace('.', '/');
+//
+//        // First check to see if a package exists (look for name/__init__.py)
+//        InputStream istream = classLoader.getResourceAsStream(path+"/__init__.py");
+//        if (istream != null) {
+//            PyModule m = addModule(name);
+//            m.__dict__.__setitem__("__path__", Py.None);
+//            return createFromSource(name, istream, null);
+//        }
+//
+//        // Finally, try to load from source
+//        istream = classLoader.getResourceAsStream(path+".py");
+//        if (istream != null) return createFromSource(name, istream, null);
+//
+//        return null;
+//    }
 
-        // First check to see if a package exists (look for name/__init__.py)
-        boolean loadCompiled = false;
-        boolean loadSource = false;
-
-        istream = classLoader.getResourceAsStream(path+"/__init__.py");
-        if (istream != null) {
-            PyModule m = addModule(name);
-            m.__dict__.__setitem__("__path__", Py.None);
-            return createFromSource(name, istream, null);
-        }
-
-        // Finally, try to load from source
-        istream = classLoader.getResourceAsStream(path+".py");
-        if (istream != null) return createFromSource(name, istream, null);
-
-        return null;
-    }
-
-    private static PyObject load(String name, PyList path) {
-        PyObject ret = loadBuiltin(name, path);
-        if (ret != null) return ret;
-
-        ret = loadFromPath(name, path);
-        if (ret != null) return ret;
-
-        Py.writeDebug("import", "trying " + name + " in packagemanager");
-        ret = PySystemState.packageManager.lookupName(name);
-        if (ret != null) {
-            Py.writeComment("import", "'" + name + "' as java package");
-            return ret;
-        }
-
-        Py.writeComment("import", "'" + name +
-                        "' not found (=> ImportError)");
-        return null;
-    }
-
+    /**
+     * Load the module by name.  Upon loading the module it will be added
+     * to sys.modules.
+     * @param name the name of the module to load
+     * @return the loaded module
+     */
     public static PyObject load(String name) {
-        return import_first(name,new StringBuffer(""));
+        return import_first(name, new StringBuffer());
     }
 
+    /**
+     * Find the parent module name for a module.  If __name__ does not
+     * exist in the module then the parent is null.  If __name__ does
+     * exist then the __path__ is checked for the parent module.  For
+     * example, the __name__ 'a.b.c' would return 'a.b'.
+     * @param dict the __dict__ of a loaded module
+     * @return the parent name for a module
+     */
     private static String getParent(PyObject dict) {
         PyObject tmp = dict.__finditem__("__name__");
         if (tmp == null) return null;
@@ -520,20 +526,29 @@ public class imp
         }
     }
 
-    // can return null, None
+    /**
+     *
+     * @param mod a previously loaded module
+     * @param parentNameBuffer
+     * @param name the name of the module to load
+     * @return null or None
+     */
     private static PyObject import_next(PyObject mod,
                                         StringBuffer parentNameBuffer,
                                         String name)
     {
-        if (parentNameBuffer.length()>0) parentNameBuffer.append('.');
+        if (parentNameBuffer.length() > 0) {
+            parentNameBuffer.append('.');
+        }
         parentNameBuffer.append(name);
+
         String fullName = parentNameBuffer.toString().intern();
+
         PyObject modules = Py.getSystemState().modules;
         PyObject ret = modules.__finditem__(fullName);
         if (ret != null) return ret;
         if (mod == null) {
-            // ?? intern superfluous?
-            ret = load(name.intern(),  Py.getSystemState().path);
+            ret = find_module(fullName.intern(), name, null);
         } else {
             ret = mod.impAttr(name.intern());
         }
@@ -582,9 +597,16 @@ public class imp
         return mod;
     }
 
-    public static PyObject import_name(String name, boolean top,
-                                       PyObject modDict)
-    {
+    /**
+     * Most similar to import.c:import_module_ex.
+     *
+     * @param name
+     * @param top
+     * @param modDict
+     * @return a module
+     */
+    private static PyObject import_name(String name, boolean top, PyObject modDict) {
+        //System.err.println("import_name " + name);
         if (name.length() == 0)
             throw Py.ValueError("Empty module name");
         PyObject modules = Py.getSystemState().modules;
@@ -593,6 +615,7 @@ public class imp
         if (modDict != null) {
             pkgName = getParent(modDict);
             pkgMod = modules.__finditem__(pkgName);
+            //System.err.println("GetParent: " + pkgName + " => " + pkgMod);
             if (pkgMod != null && !(pkgMod instanceof PyModule))
                 pkgMod = null;
         }
@@ -625,13 +648,27 @@ public class imp
             return mod;
     }
 
+    /**
+     * Import a module by name.
+     * @param name the name of the package to import
+     * @param top if true, return the top module in the name, otherwise the last
+     * @return an imported module (Java or Python)
+     */
     public static PyObject importName(String name, boolean top) {
-        return import_name(name,top,null);
+        return import_name(name, top, null);
     }
 
+    /**
+     * Import a module by name.  This is the default call for
+     * __builtin__.__import__.
+     * @param name the name of the package to import
+     * @param top if true, return the top module in the name, otherwise the last
+     * @param modDict the __dict__ of an already imported module
+     * @return an imported module (Java or Python)
+     */
     public synchronized static PyObject importName(String name, boolean top,
                                                    PyObject modDict) {
-        return import_name(name,top,modDict);
+        return import_name(name, top, modDict);
     }
 
     /**
@@ -715,7 +752,7 @@ public class imp
     }
 
     /**
-     * Called from jpython generated code when a statement like
+     * Called from jython generated code when a statement like
      * "from spam.eggs import *" is executed.
      */
     public static void importAll(String mod, PyFrame frame) {
@@ -739,6 +776,16 @@ public class imp
         loadNames(names, module, frame.getf_locals(), filter);
     }
 
+    /**
+     * From a module, load the attributes found in <code>names</code>
+     * into locals.
+     *
+     * @param filter if true, if the name starts with an underscore '_'
+     *               do not add it to locals
+     * @param locals the namespace into which names will be loaded
+     * @param names  the names to load from the module
+     * @param module the fully imported module
+     */
     private static void loadNames(PyObject names, PyObject module,
                                   PyObject locals, boolean filter)
     {
@@ -757,6 +804,7 @@ public class imp
         }
     }
 
+    /* Reloading */
     static PyObject reload(PyJavaClass c) {
         // This is a dummy placeholder for the feature that allow
         // reloading of java classes. But this feature does not yet
@@ -793,7 +841,7 @@ public class imp
         //((PyStringMap)nm.__dict__).clear();
 
         nm.__setattr__("__name__", new PyString(modName));
-        PyObject ret = loadFromPath(name, modName, path);
+        PyObject ret = find_module(name, modName, path);
         modules.__setitem__(modName, ret);
         return ret;
     }

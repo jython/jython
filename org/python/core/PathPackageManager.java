@@ -3,8 +3,11 @@
 
 package org.python.core;
 
-import java.io.*;
-import java.lang.reflect.Modifier;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 /** Path package manager. Gathering classes info dynamically
  * from a set of directories in path {@link #searchPath}, and
@@ -18,11 +21,11 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         searchPath = new PyList();
     }
 
-    /** Helper for {@link #packageExists(java.lang.String,java.lang.String)}.
+    /**
+     * Helper for {@link #packageExists(java.lang.String,java.lang.String)}.
      * Scans for package pkg.name the directories in path.
-     *
      */
-    protected boolean packageExists(PyList path,String pkg,String name) {
+    protected boolean packageExists(PyList path, String pkg, String name) {
         String child = pkg.replace('.',File.separatorChar) +
                        File.separator + name;
 
@@ -32,13 +35,26 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
             File f = new File(dir,child);
             if (f.isDirectory() && imp.caseok(f, name, name.length())) {
-                return true;
+                /*
+                 This fails if the directory is really a Python package, such as email.
+                 - scan the directory looking for at least one non-jython generated
+                   class file.  For performance, apply the reverse, if there exists a
+                   .py file or $py.class file, it's not a java package.
+                 */
+                File[] files = f.listFiles(new FileFilter() {
+                    public boolean accept(File file) {
+                        String name = file.getName();
+                        return (name.endsWith(".py") || name.endsWith("$py.class"));
+                    }
+                });
+                return files.length == 0;
             }
         }
         return false;
     }
 
-    /** Helper for {@link #doDir(PyJavaPackage,boolean,boolean)}.
+    /**
+     * Helper for {@link #doDir(PyJavaPackage,boolean,boolean)}.
      * Scans for package jpkg content over the directories in path.
      * Add to ret the founded classes/pkgs.
      * Filter out classes using {@link #filterByName},{@link #filterByAccess}.
@@ -117,7 +133,8 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
     }
 
-    /** Add directory dir (if exists) to {@link #searchPath}.
+    /**
+     * Add directory dir (if exists) to {@link #searchPath}.
      */
     public void addDirectory(File dir) {
         try {
@@ -140,7 +157,8 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
     // This code does not avoid duplicates in searchPath.
     // Should cause no problem (?).
 
-    /** Adds "classpath" entry. Calls {@link #addDirectory} if path
+    /**
+     * Adds "classpath" entry. Calls {@link #addDirectory} if path
      * refers to a dir, {@link #addJarToPackages(java.io.File, boolean)}
      * with param cache true if path refers to a jar.
      */
