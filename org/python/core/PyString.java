@@ -450,7 +450,7 @@ final class StringFormatter{
                 }
             }
 
-            int length = string.length();
+            int length = string.length() + signString.length();
             if (width < length) width = length;
             if (ljustFlag && fill==' ') {
                 buffer.append(signString);
