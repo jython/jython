@@ -167,11 +167,15 @@ public class imp
         return module;
     }
 
+    private static Object syspathJavaLoaderLock = new Object();
     private static ClassLoader syspathJavaLoader = null;
 
-    public static synchronized ClassLoader getSyspathJavaLoader() {
-        if (syspathJavaLoader == null)
-            syspathJavaLoader = new SyspathJavaLoader();
+    public static ClassLoader getSyspathJavaLoader() {
+        synchronized (syspathJavaLoaderLock) {
+            if (syspathJavaLoader == null) {
+                syspathJavaLoader = new SyspathJavaLoader();
+            }
+        }
         return syspathJavaLoader;
     }
 
