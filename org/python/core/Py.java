@@ -1446,6 +1446,10 @@ public final class Py
         }
     }
 
+    public static String safeRepr(PyObject o) {
+        return o.safeRepr();
+    }
+
     public static void printResult(PyObject ret) {
         if (ret != Py.None) {
             Py.getSystemState().builtins.__setitem__("_", Py.None);
