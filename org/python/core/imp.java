@@ -319,7 +319,7 @@ public class imp {
 	if (ret != null) return ret;
 	//System.out.println("load3: ");
 
-        ret = PySystemState.packageCache.findName(name);
+        ret = PySystemState.packageManager.findName(name);
         if (ret != null) return ret;
 
         //Class c = Py.findClass(name);
