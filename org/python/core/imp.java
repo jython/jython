@@ -273,6 +273,7 @@ public class imp
         PyObject o = loadPrecompiled(name, modName, path);
         if (o != null) return o;
 
+        int nlen = name.length();
         String pyName = name+".py";
         String className = name+"$py.class";
 
@@ -298,7 +299,7 @@ public class imp
 
             // First check for packages
             File dir = new File(dirName, name);
-            if (dir.isDirectory() && caseok(dir, name) &&
+            if (dir.isDirectory() && caseok(dir, name, nlen) &&
                 (new File(dir, "__init__.py").isFile() ||
                  new File(dir, "__init__$py.class").isFile()))
             {
@@ -317,8 +318,8 @@ public class imp
             File classFile = new File(dirName, className);
             Py.writeDebug("import", "trying source " + pyFile.getPath());
 
-            if (pyFile.isFile() && caseok(pyFile, pyName)) {
-                if (classFile.isFile() && caseok(classFile, className)) {
+            if (pyFile.isFile() && caseok(pyFile, pyName, nlen)) {
+                if (classFile.isFile() && caseok(classFile, className, nlen)) {
                     Py.writeDebug("import", "trying precompiled " +
                                   classFile.getPath());
                     long pyTime = pyFile.lastModified();
@@ -337,7 +338,7 @@ public class imp
 
             // If no source, try loading precompiled
             Py.writeDebug("import", "trying " + classFile.getPath());
-            if (classFile.isFile() && caseok(classFile, className)) {
+            if (classFile.isFile() && caseok(classFile, className, nlen)) {
                 return createFromPyClass(modName, makeStream(classFile),
                                          false, classFile.getPath());
             }
@@ -345,12 +346,12 @@ public class imp
         return null;
     }
 
-    private static boolean caseok(File file, String filename) {
+    private static boolean caseok(File file, String filename, int namelen) {
         if (Options.caseok)
             return true;
         try {
             File canFile = new File(file.getCanonicalPath());
-            return filename.equals(canFile.getName());
+            return filename.regionMatches(0, canFile.getName(), 0, namelen);
         } catch (IOException exc) {
             return false;
         }
