@@ -1058,7 +1058,7 @@ public class PyInteger extends PyObject
             }
 
         }
-        dict.__setitem__("__pow__",new PyMethodDescr("__pow__",PyInteger.class,2,2,new exposed___pow__(null,null)));
+        dict.__setitem__("__pow__",new PyMethodDescr("__pow__",PyInteger.class,1,2,new exposed___pow__(null,null)));
         class exposed___repr__ extends PyBuiltinFunctionNarrow {
 
             private PyInteger self;
