@@ -10,7 +10,7 @@ public class imp {
         "os", "types", "py_compile", "codeop", "re", "code",
     };
     
-    public static final int APIVersion = 5;
+    public static final int APIVersion = 8;
     
     public static PyModule addModule(String name) {
         PyObject modules = Py.getSystemState().modules;
