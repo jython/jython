@@ -25,8 +25,12 @@ public class parser {
 		if (t instanceof ParseException) {
 			ParseException e = (ParseException)t;
 			Token tok = e.currentToken;
-			int col = tok.next.beginColumn;
-			int line = tok.next.beginLine;
+			int col=0;
+			int line=0;
+			if (tok != null && tok.next != null) {
+			    col = tok.next.beginColumn;
+			    line = tok.next.beginLine;
+			}
 			String text=getLine(istream, line);
 			return new PySyntaxError(e.getMessage(), line, col, text, filename, forceNewline);
 		}
