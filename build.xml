@@ -33,9 +33,29 @@
         <property name="optimize" value="on" />
 
         <available classname="java.util.List" property="java2" />
-        <available classname="javax.servlet.Servlet" property="servlet" />
-        <available classname="java.lang.ref.WeakReference" property="weakref" />
-        <available classname="org.gnu.readline.Readline" property="readline" />
+
+        <available property="java2collection.present"
+            classname="java.util.List"
+        />
+        <available property="threadlocal.present"
+            classname="java.lang.ThreadLocal"
+        />
+        <available property="secureclassloader.present"
+            classname="java.security.SecureClassLoader"
+        />
+        <available property="java2accessible.present"
+            classname="java.lang.reflect.AccessibleObject"
+        />
+        <available property="weakref.present"
+            classname="java.lang.ref.WeakReference"
+        />
+        <available property="servlet.present" 
+            classname="javax.servlet.Servlet"
+        />
+
+        <available property="readline.present"
+            classname="org.gnu.readline.Readline"
+        />
 
         <available property="informix.present"
             classname="com.informix.jdbc.IfxDriver"
@@ -67,6 +87,9 @@
         <echo>--- then the component is not present)</echo>
         <echo/>
         <echo>--- Optional Libraries ---</echo>
+        <echo>java2 coll  = ${java2collection.present}</echo>
+        <echo>servlet     = ${servlet.present}</echo>
+        <echo>readline    = ${readline.present}</echo>
         <echo>oracle      = ${oracle.present}</echo>
         <echo>informix    = ${informix.present}</echo>
         <echo>mysql       = ${mysql.present}</echo>
@@ -113,55 +136,42 @@
         <touch file="org/python/parser/python.java" />
     </target>
 
-    <!--
-      Only do this task if our environment is java2.
-    -->
-    <target name="check.javaversion" unless="java2">
-        <property name="exclude.java2.files"
-            value="**/CollectionProxy2.java,
-                   **/Java2Accessibility.java,
-                   **/InternalTables2.java,
-                   **/ThreadStateMapping2.java,
-                   **/WeakInternalTables.java,
-                   **/AutoInternalTables.java,
-                   **/SoftIInternalTables.java
-                   **/BytecodeLoader2.java
-            "/>
-    </target>
-
-    <target name="check.servlet" unless="servlet">
-        <property name="exclude.servlet.files"
-            value="**/PyServlet.java"/>
-    </target>
-
-    <target name="check.weakref" unless="weakref">
-        <property name="exclude.weakref.files"
-            value="**/_weakref.java"/>
-    </target>
-
-    <target name="check.readline" unless="readline">
-        <property name="exclude.readline.files"
-            value="**/ReadlineConsole.java"/>
-    </target>
-
-    <target name="checks" depends="check.javaversion,
-                                   check.servlet,
-                                   check.weakref,
-                                   check.readline" />
-
-    <target name="compile" depends="prepare,parser,checks">
+    <target name="compile" depends="prepare,parser">
         <javac
             srcdir="${sourceDir}/"
             destdir="${outputDir}/"
             debug="${debug}"
             optimize="${optimize}">
             <include name="org/**"/>
-            <include name="com/**"/>
             <exclude name="org/python/parser/python.java"/>
-            <exclude name="${exclude.java2.files}"/>
-            <exclude name="${exclude.servlet.files}"/>
-            <exclude name="${exclude.weakref.files}"/>
-            <exclude name="${exclude.readline.files}"/>
+
+            <include name="com/ziclix/python/sql/**"
+                     if="java2collection.present"/>
+
+            <exclude name="**/CollectionProxy2.java"
+                     unless="java2collection.present"/>
+            <exclude name="**/Java2Accessibility.java"
+                     unless="java2accessible.present"/>
+            <exclude name="**/BytecodeLoader2.java"
+                     unless="secureclassloader.present"/>
+            <exclude name="**/ThreadStateMapping2.java"
+                     unless="threadlocal.present"/>
+
+            <exclude name="**/InternalTables2.java"
+                     unless="weakref.present"/>
+            <exclude name="**/WeakInternalTables.java"
+                     unless="weakref.present"/>
+            <exclude name="**/AutoInternalTables.java"
+                     unless="weakref.present"/>
+            <exclude name="**/SoftIInternalTables.java"
+                     unless="weakref.present"/>
+            <exclude name="**/_weakref.java"
+                     unless="weakref.present"/>
+
+            <exclude name="**/PyServlet.java" unless="servlet.present"/>
+            <exclude name="**/ReadlineConsole.java"
+                     unless="readline.present"/>
+
             <exclude name="**/handler/InformixDataHandler.java" unless="informix.present"/>
             <exclude name="**/handler/MySQLDataHandler.java" unless="mysql.present"/>
             <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present"/>
@@ -185,7 +195,7 @@
 
        <copy todir="${outputDir}/com">
            <fileset dir="${sourceDir}/com">
-              <include name="**/*.properties"/>
+              <include name="**/*.properties" if="java2collection.present"/>
            </fileset>
        </copy>
 
