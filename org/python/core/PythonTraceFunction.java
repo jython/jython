@@ -19,9 +19,18 @@ class PythonTraceFunction extends TraceFunction
         if (tracefunc == null)
             return null;
 
-        ts.tracing = true;
-        PyObject ret = tracefunc.__call__(frame, new PyString(label), arg);
-        ts.tracing = false;
+        PyObject ret = null;
+        try {
+            ts.tracing = true;
+            ret = tracefunc.__call__(frame, new PyString(label), arg);
+        } catch (PyException exc) {
+            frame.tracefunc = null;
+            ts.systemState.tracefunc = null;
+            ts.systemState.profilefunc = null;
+            throw exc;
+        } finally {
+            ts.tracing = false;
+        }
         if (ret == tracefunc)
             return this;
         if (ret == Py.None)

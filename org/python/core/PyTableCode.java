@@ -142,7 +142,7 @@ public class PyTableCode extends PyCode
             //
 //             frame.f_lineno = co_firstlineno;
             frame.tracefunc = ss.tracefunc.traceCall(frame);
-//             frame.setline(co_firstlineno);
+            frame.setline(co_firstlineno);
         }
         
         // Handle trace function for profiling
