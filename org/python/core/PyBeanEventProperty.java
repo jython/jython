@@ -5,7 +5,8 @@ import java.lang.reflect.*;
 import java.util.Hashtable;
 import java.io.*;
 
-public class PyBeanEventProperty extends PyReflectedField {
+public class PyBeanEventProperty extends PyReflectedField
+{
     public Method addMethod;
     public String eventName;
     public Class eventClass;
@@ -23,7 +24,8 @@ public class PyBeanEventProperty extends PyReflectedField {
     }
 
     public PyObject _doget(PyObject self) {
-        if (self == null) return this;
+        if (self == null)
+            return this;
             
         initAdapter();
             
@@ -52,6 +54,7 @@ public class PyBeanEventProperty extends PyReflectedField {
     }
 
     private static Hashtable adapterClasses = new Hashtable();
+
     private static Class getAdapterClass(Class c) {
         //System.err.println("getting adapter for: "+c+", "+c.getName());
         Object o = adapterClasses.get(c);
@@ -66,19 +69,21 @@ public class PyBeanEventProperty extends PyReflectedField {
         return pc;
     }
 
-    /* This creates a cache mapping Java object id's to adapters */
-    /* Lacking appropriate weak references in JDK 1.1, this leads to */
-    /* a possible memory leak. */
-    /* This will be remedied when JPython can use JDK 1.2 */
-    /* Note that objects are referenced by their identityHashCode to */
-    /* minimize the size of the leak (the actual Java objects are collected) */
+    // This creates a cache mapping Java object id's to adapters.  Lacking
+    // appropriate weak references in JDK 1.1, this leads to a possible
+    // memory leak.  This will be remedied when JPython can use JDK 1.2.
+    // Note that objects are referenced by their identityHashCode to
+    // minimize the size of the leak (the actual Java objects are
+    // collected)
     private static Hashtable adapters;
     private Object getAdapter(Object self) {
-        if (adapters == null) adapters = new Hashtable();
+        if (adapters == null)
+            adapters = new Hashtable();
 
         String key = eventClass.getName()+"$"+System.identityHashCode(self);
         Object adapter = adapters.get(key);
-        if (adapter != null) return adapter;
+        if (adapter != null)
+            return adapter;
 
         try {
             adapter = adapterClass.newInstance();
@@ -92,6 +97,7 @@ public class PyBeanEventProperty extends PyReflectedField {
 
     private Field adapterField;
     private Class adapterClass;
+
     private void initAdapter() {
         if (adapterClass == null) {
             adapterClass = getAdapterClass(eventClass);
@@ -132,4 +138,3 @@ public class PyBeanEventProperty extends PyReflectedField {
             eventClass.toString()+" at "+hashCode()+">";
     }
 }
-
