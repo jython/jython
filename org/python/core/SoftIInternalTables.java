@@ -7,11 +7,11 @@ import java.util.*;
 
 public class SoftIInternalTables extends AutoInternalTables {
     
-    private class Ref extends SoftReference {
+    private static class Ref extends SoftReference {
         Object key;
         short type;
         
-        Ref(short type,Object key, Object obj) {
+        Ref(short type,Object key, Object obj, ReferenceQueue queue) {
             super(obj,queue);
             this.type=type;
             this.key=key;
@@ -19,7 +19,7 @@ public class SoftIInternalTables extends AutoInternalTables {
     }
     
     protected Reference newAutoRef(short type,Object key, Object obj) {
-        return new Ref(type,key,obj);
+        return new Ref(type,key,obj,queue);
     }
     
     protected short getAutoRefType(Reference ref) {
