@@ -272,13 +272,20 @@ public class PyJavaClass extends PyClass {
 	    
 	    // If it's being used as a bean property, and it's a "good" bean property
 	    // Then add a "_" after name (we can fix anything if we add enough _'s
-	    if (o != null && o instanceof PyBeanProperty) {
-            PyBeanProperty prop = (PyBeanProperty)o;
-            if (prop.getMethod != null && prop.setMethod != null) {
-                name = (name+"_").intern();
-                o = super.lookup(name, false);
-	        }
-	    }
+	    // Only do this tricky handling for java.awt classes - 
+	    // which have seriously messed up api's
+	    String classname = proxyClasses[0].getName();
+	    
+	    if (classname.startsWith("java.awt.") || 
+	        classname.startsWith("org.python.proxies.java.awt.")) {
+    	    if (o != null && o instanceof PyBeanProperty) {
+                PyBeanProperty prop = (PyBeanProperty)o;
+                if (prop.getMethod != null && prop.setMethod != null) {
+                    name = (name+"_").intern();
+                    o = super.lookup(name, false);
+    	        }
+    	    }
+    	}
 	    
 	    // If it's being used as a function, then things get more interesting...
 	    PyReflectedFunction func;
