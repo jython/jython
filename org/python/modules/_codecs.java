@@ -87,11 +87,6 @@ public class _codecs {
                 codecs.decoding_error("charmap", v,  errors,
                                       "character maps to <undefined>");
             } else if (x instanceof PyString) {
-                if (x.__len__() != 1) {
-                    /* 1-n mapping */
-                    throw new PyException(Py.NotImplementedError,
-                          "1-n mappings are currently not implemented");
-                }
                 v.append(x.toString());
             }
             else {
@@ -135,11 +130,6 @@ public class _codecs {
                 codecs.encoding_error("charmap", v,  errors,
                                       "character maps to <undefined>");
             } else if (x instanceof PyString) {
-                if (x.__len__() != 1) {
-                    /* 1-n mapping */
-                    throw new PyException(Py.NotImplementedError,
-                          "1-n mappings are currently not implemented");
-                }
                 v.append(x.toString());
             }
             else {
