@@ -224,11 +224,12 @@ class PythonInner:
                           self.superclass, self.interfaces, body)
 
 
-defaultProps = {
-## now redundant    
-##    "python.packages.paths": "",
-##    "python.packages.directories": "",
+defaultProxyProps = {
     "python.options.showJavaExceptions": "true",
+    "python.modules.builtin": "exceptions:org.python.core.exceptions",
+    }
+
+defaultMainProps = {
     "python.modules.builtin": "exceptions:org.python.core.exceptions",
     }
 
@@ -247,7 +248,8 @@ class PythonModule:
         self.addjavaclass(self.name+'$'+name)
 
     def __init__(self, name, filename="<unknown>", packages = [],
-                 properties=defaultProps, frozen=1):
+                 proxyProperties=defaultProxyProps,
+                 mainProperties=defaultMainProps, frozen=1):
         package = None
         dot = name.rfind('.')
         if dot != -1:
@@ -269,7 +271,8 @@ class PythonModule:
         self.imports = {}
 
         self.packages = packages                
-        self.properties = properties
+        self.proxyProperties = proxyProperties
+        self.mainProperties = mainProperties
         self.innerClasses = []
 
         self.modifier = "public"
@@ -325,8 +328,11 @@ class PythonModule:
         return self.pyinner.addMain(code, cc)
 
     #Properties and packages for registry
-    def getProperties(self):
-        return jast.Identifier("jpy$properties")
+    def getMainProperties(self):
+        return jast.Identifier("jpy$mainProperties")
+
+    def getProxyProperties(self):
+        return jast.Identifier("jpy$proxyProperties")
 
     def getPackages(self):
         return jast.Identifier("jpy$packages")
@@ -339,7 +345,12 @@ class PythonModule:
         return jast.Declare("static String[]", field, jast.StringArray(props))
 
     def dumpProperties(self):
-        return self.dumpDictionary(self.properties, self.getProperties())
+        return [
+            self.dumpDictionary(self.mainProperties,
+                                   self.getMainProperties()),
+            self.dumpDictionary(self.proxyProperties,
+                                   self.getProxyProperties())
+        ]
 
     def dumpPackages(self):
         return self.dumpDictionary(self.packages, self.getPackages())
@@ -383,13 +394,14 @@ class PythonModule:
             args = [jast.GetStaticAttribute(self.getclassname(
                            self.name+'.'+self.pyinner.name), "class"),
                     jast.Identifier('newargs'), 
-                    self.getPackages(), self.getProperties(), 
+                    self.getPackages(), self.getMainProperties(), 
                     self.getFrozen(), jast.StringArray(self.modules.keys())]
 
             code.append([jast.InvokeStatic("Py", "runMain", args)])
             maincode = jast.Block(code)
             meths.append(jast.Method("main", "public static", 
-                                     ["void", ("String[]", "args")], maincode))
+                                     ["void", ("String[]", "args")], maincode,
+                                     ["java.lang.Exception"]))
 
         return meths
         #args = [jast.StringConstant(self.name), jast.Identifier('dict')]
