@@ -66,14 +66,19 @@ public class PyJavaClass extends PyClass
 
     private boolean initialized=false;
 
+    // Prevent recursive calls to initialize()
+    private boolean initializing=false;
+
     private synchronized void initialize() {
-        if (initialized)
+        if (initialized || initializing)
             return;
+        initializing = true;
         if (proxyClass == null)
             init(Py.findClass(__name__));
         init__bases__(proxyClass);
         init__dict__();
         initialized = true;
+        initializing = false;
     }
 
     private synchronized void init__dict__() {
