@@ -41,5 +41,6 @@ python.console.poll = false
 
 # This specifies the command used by jpythonc to compile Java source
 # code, along with the complete classpath to use.
-# python.jpythonc.compiler = /depot/java/plat/bin/jikes +E +D -g
-# python.jpythonc.classpath = /usr/java1.2/jre/lib/rt.jar
+# python.jpythonc.compiler = /depot/java/plat/bin/jikes
+# python.jpythonc.classpath = /usr/java1.2/jre/lib/rt.jar:/jpython/dist:.
+# python.jpythonc.compileropts = +E +D -g
