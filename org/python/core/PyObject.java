@@ -680,6 +680,10 @@ public class PyObject implements java.io.Serializable {
         return this;
     }
     
+    public PyObject _doget(PyObject container, PyObject wherefound) {
+        return _doget(container);
+    }
+
     public boolean _doset(PyObject container, PyObject value) {
         return false;
     }
@@ -688,9 +692,6 @@ public class PyObject implements java.io.Serializable {
         return false;
     }
 
-    // overridden by PyMethod
-    public void _setClass(PyObject myclass) {}
-    
     /* Numeric coercion */
     /**
        Implements numeric coercion
