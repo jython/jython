@@ -175,6 +175,7 @@ public class PySystemState extends PyObject
         if (__dict__ == null) {
             __dict__ = new PyStringMap();
         }
+System.out.println("__setattr__#1 " + name + " "  + value);
         __dict__.__setitem__(name, value);
         //throw Py.AttributeError(name);
     }
@@ -216,6 +217,8 @@ public class PySystemState extends PyObject
         if (__class__ != null) {
             __dict__ = new PyStringMap();
             __dict__.invoke("update", __class__.__getattr__("__dict__"));
+            __dict__.__setitem__("displayhook", 
+                        new PySystemStateFunctions("displayhook", 10, 1, 1));
         }
     }
 
@@ -606,6 +609,23 @@ public class PySystemState extends PyObject
     public void setdefaultencoding(String encoding) {
         codecs.setDefaultEncoding(encoding);
     }
+
+
+    // Not public by design. We can't rebind the displayhook if
+    // a reflected function is inserted in the class dict.
+
+    static void displayhook(PyObject o) {
+        /* Print value except if None */
+        /* After printing, also assign to '_' */
+        /* Before, set '_' to None to avoid recursion */
+        if (o == Py.None)
+             return;
+
+        PySystemState sys = Py.getThreadState().systemState;
+        sys.builtins.__setitem__("_", Py.None);
+        Py.stdout.println(o.__repr__());
+        sys.builtins.__setitem__("_", o);
+    }
 }
 
 
@@ -635,5 +655,24 @@ class PollingInputStream extends FilterInputStream {
     public int read(byte b[], int off, int len) throws IOException {
         waitForBytes();
         return super.read(b, off, len);
+    }
+}
+
+
+class PySystemStateFunctions extends PyBuiltinFunctionSet
+{
+    PySystemStateFunctions(String name, int index, int minargs, int maxargs) {
+        super(name, index, minargs, maxargs, false, null);
+    }
+
+    public PyObject __call__(PyObject arg) {
+        PySystemState sys = Py.getThreadState().systemState;
+        switch (index) {
+        case 10:
+            sys.displayhook(arg);
+            return Py.None;
+        default:
+            throw argCountError(1);
+        }
     }
 }

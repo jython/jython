@@ -1558,11 +1558,8 @@ public final class Py
     }
 
     public static void printResult(PyObject ret) {
-        if (ret != Py.None) {
-            Py.getSystemState().builtins.__setitem__("_", Py.None);
-            Py.println(ret.__repr__());
-            Py.getSystemState().builtins.__setitem__("_", ret);
-        }
+        Py.getThreadState().systemState.invoke("displayhook", ret);
+        //Py.getThreadState().systemState.__dict__.__finditem__("displayhook").__call__(ret);
     }
 
     public static final int ERROR=-1;
