@@ -2,7 +2,7 @@ Jython NEWS
 
 XX-Dec-2000 Jython 2.0 alpha 2
 
-  CPython2.0 compatibility
+  CPython-2.0 compatibility
     - Added support for formatting of long values in "%d %x %X %o".
       The support does not match CPython2.0 exactly, but matches
       what CPython2.1 will do.
@@ -15,8 +15,13 @@ XX-Dec-2000 Jython 2.0 alpha 2
     - Package relative import work, at least when the dotted package name
       match the directory structure.
     - Fixed oct(0) to return "0"
-    - Add a os.__file__ attribute. CPython's site.py expects that.
-    
+    - Added a os.__file__ attribute. CPython's site.py expects that.
+    - Fixed a exception when calling int("0", 16)
+    - Delay closing a socket until all sock.makefile() files are closed.
+    - Avoided a duplicate call to Class.getMethods(). This will improve 
+      performance.
+
+
 26-Nov-2000 Jython 2.0 alpha 1
 
   New features.
