@@ -146,14 +146,22 @@ public class PyInteger extends PyObject
         if (y == 0)
             throw Py.ZeroDivisionError("integer division or modulo");
 
-        if (y < 0) {
-            if (x > 0)
-                return (x-y-1) / y;
-        } else {
-            if (x < 0)
-                return (x-y+1) / y;
+        if (y == -1 && x < 0 && x == -x) {
+            throw Py.OverflowError("integer division: "+x+" + "+y);
         }
-        return x / y;
+        int xdivy = x / y;
+        int xmody = x - xdivy * y;
+        /* If the signs of x and y differ, and the remainder is non-0,
+         * C89 doesn't define whether xdivy is now the floor or the
+         * ceiling of the infinitely precise quotient.  We want the floor,
+         * and we have it iff the remainder's sign matches y's.
+         */
+        if (xmody != 0 && ((y ^ xmody) < 0) /* i.e. and signs differ */) {
+            xmody += y;
+            --xdivy;
+            //assert(xmody && ((y ^ xmody) >= 0));
+        }
+        return xdivy;
     }
 
     public PyObject __div__(PyObject right) {
@@ -300,7 +308,7 @@ public class PyInteger extends PyObject
         else
              return null;
 
-        return Py.newInteger(value >>> rightv);
+        return Py.newInteger(value >> rightv);
     }
 
     public PyObject __and__(PyObject right) {

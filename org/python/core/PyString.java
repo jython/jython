@@ -1876,7 +1876,7 @@ final class StringFormatter
                 return i.intValue();
             }
             index -= 1;
-            return -1;
+            return 0;
         }
     }
 
@@ -2088,10 +2088,14 @@ final class StringFormatter
             }
             push();
             width = getNumber();
+            if (width < 0) {
+                width = -width;
+                ljustFlag = true;
+            }
             c = pop();
             if (c == '.') {
                 precision = getNumber();
-                if (precision == -1)
+                if (precision < -1)
                     precision = 0;
                 if (precision > 250) {
                     // A magic number. Larger than in CPython.
