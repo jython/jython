@@ -44,46 +44,57 @@ public interface PythonGrammarConstants {
   int EQGREATER = 44;
   int LESSGREATER = 45;
   int NOTEQUAL = 46;
-  int OR_BOOL = 47;
-  int AND_BOOL = 48;
-  int NOT_BOOL = 49;
-  int IS = 50;
-  int IN = 51;
-  int LAMBDA = 52;
-  int IF = 53;
-  int ELSE = 54;
-  int ELIF = 55;
-  int WHILE = 56;
-  int FOR = 57;
-  int TRY = 58;
-  int EXCEPT = 59;
-  int DEF = 60;
-  int CLASS = 61;
-  int FINALLY = 62;
-  int PRINT = 63;
-  int PASS = 64;
-  int BREAK = 65;
-  int CONTINUE = 66;
-  int RETURN = 67;
-  int IMPORT = 68;
-  int FROM = 69;
-  int DEL = 70;
-  int RAISE = 71;
-  int GLOBAL = 72;
-  int EXEC = 73;
-  int ASSERT = 74;
-  int NAME = 75;
-  int LETTER = 76;
-  int DECNUMBER = 77;
-  int HEXNUMBER = 78;
-  int OCTNUMBER = 79;
-  int FLOAT = 80;
-  int EXPONENT = 81;
-  int DIGIT = 82;
-  int SINGLE_STRING = 87;
-  int SINGLE_STRING2 = 88;
-  int TRIPLE_STRING = 89;
-  int TRIPLE_STRING2 = 90;
+  int PLUSEQ = 47;
+  int MINUSEQ = 48;
+  int MULTIPLYEQ = 49;
+  int DIVIDEEQ = 50;
+  int MODULOEQ = 51;
+  int ANDEQ = 52;
+  int OREQ = 53;
+  int XOREQ = 54;
+  int LSHIFTEQ = 55;
+  int RSHIFTEQ = 56;
+  int POWEREQ = 57;
+  int OR_BOOL = 58;
+  int AND_BOOL = 59;
+  int NOT_BOOL = 60;
+  int IS = 61;
+  int IN = 62;
+  int LAMBDA = 63;
+  int IF = 64;
+  int ELSE = 65;
+  int ELIF = 66;
+  int WHILE = 67;
+  int FOR = 68;
+  int TRY = 69;
+  int EXCEPT = 70;
+  int DEF = 71;
+  int CLASS = 72;
+  int FINALLY = 73;
+  int PRINT = 74;
+  int PASS = 75;
+  int BREAK = 76;
+  int CONTINUE = 77;
+  int RETURN = 78;
+  int IMPORT = 79;
+  int FROM = 80;
+  int DEL = 81;
+  int RAISE = 82;
+  int GLOBAL = 83;
+  int EXEC = 84;
+  int ASSERT = 85;
+  int NAME = 86;
+  int LETTER = 87;
+  int DECNUMBER = 88;
+  int HEXNUMBER = 89;
+  int OCTNUMBER = 90;
+  int FLOAT = 91;
+  int EXPONENT = 92;
+  int DIGIT = 93;
+  int SINGLE_STRING = 98;
+  int SINGLE_STRING2 = 99;
+  int TRIPLE_STRING = 100;
+  int TRIPLE_STRING2 = 101;
 
   int DEFAULT = 0;
   int FORCE_NEWLINE1 = 1;
@@ -145,6 +156,17 @@ public interface PythonGrammarConstants {
     "\">=\"",
     "\"<>\"",
     "\"!=\"",
+    "\"+=\"",
+    "\"-=\"",
+    "\"*=\"",
+    "\"/=\"",
+    "\"%=\"",
+    "\"&=\"",
+    "\"|=\"",
+    "\"^=\"",
+    "\"<<=\"",
+    "\">>=\"",
+    "\"**=\"",
     "\"or\"",
     "\"and\"",
     "\"not\"",
@@ -181,20 +203,20 @@ public interface PythonGrammarConstants {
     "<FLOAT>",
     "<EXPONENT>",
     "<DIGIT>",
-    "<token of kind 83>",
-    "<token of kind 84>",
-    "<token of kind 85>",
-    "<token of kind 86>",
+    "<token of kind 94>",
+    "<token of kind 95>",
+    "<token of kind 96>",
+    "<token of kind 97>",
     "\"\\\'\"",
     "\"\\\"\"",
     "\"\\\'\\\'\\\'\"",
     "\"\\\"\\\"\\\"\"",
-    "<token of kind 91>",
-    "<token of kind 92>",
+    "<token of kind 102>",
+    "<token of kind 103>",
     "\"\\\\\\\'\\\'\\\'\"",
     "\"\\\\\\\"\\\"\\\"\"",
-    "<token of kind 95>",
-    "<token of kind 96>",
+    "<token of kind 106>",
+    "<token of kind 107>",
     "\"`\"",
   };
 

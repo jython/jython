@@ -15,76 +15,87 @@ public interface PythonGrammarTreeConstants
   public int JJTDEFAULTARG = 8;
   public int JJTFPLIST = 9;
   public int JJTEXPR_STMT = 10;
-  public int JJTPRINT_STMT = 11;
-  public int JJTDEL_STMT = 12;
-  public int JJTPASS_STMT = 13;
-  public int JJTBREAK_STMT = 14;
-  public int JJTCONTINUE_STMT = 15;
-  public int JJTRETURN_STMT = 16;
-  public int JJTRAISE_STMT = 17;
-  public int JJTIMPORT = 18;
-  public int JJTIMPORTFROM = 19;
-  public int JJTDOTTED_NAME = 20;
-  public int JJTGLOBAL_STMT = 21;
-  public int JJTEXEC_STMT = 22;
-  public int JJTASSERT_STMT = 23;
-  public int JJTIF_STMT = 24;
-  public int JJTWHILE_STMT = 25;
-  public int JJTFOR_STMT = 26;
-  public int JJTTRY_STMT = 27;
-  public int JJTEXCEPT_CLAUSE = 28;
-  public int JJTSUITE = 29;
-  public int JJTOR_BOOLEAN = 30;
-  public int JJTAND_BOOLEAN = 31;
-  public int JJTNOT_1OP = 32;
-  public int JJTCOMPARISION = 33;
-  public int JJTLESS_CMP = 34;
-  public int JJTGREATER_CMP = 35;
-  public int JJTEQUAL_CMP = 36;
-  public int JJTGREATER_EQUAL_CMP = 37;
-  public int JJTLESS_EQUAL_CMP = 38;
-  public int JJTNOTEQUAL_CMP = 39;
-  public int JJTIN_CMP = 40;
-  public int JJTNOT_IN_CMP = 41;
-  public int JJTIS_NOT_CMP = 42;
-  public int JJTIS_CMP = 43;
-  public int JJTOR_2OP = 44;
-  public int JJTXOR_2OP = 45;
-  public int JJTAND_2OP = 46;
-  public int JJTLSHIFT_2OP = 47;
-  public int JJTRSHIFT_2OP = 48;
-  public int JJTADD_2OP = 49;
-  public int JJTSUB_2OP = 50;
-  public int JJTMUL_2OP = 51;
-  public int JJTDIV_2OP = 52;
-  public int JJTMOD_2OP = 53;
-  public int JJTPOS_1OP = 54;
-  public int JJTNEG_1OP = 55;
-  public int JJTINVERT_1OP = 56;
-  public int JJTPOW_2OP = 57;
-  public int JJTCALL_OP = 58;
-  public int JJTINDEX_OP = 59;
-  public int JJTDOT_OP = 60;
-  public int JJTTUPLE = 61;
-  public int JJTLIST = 62;
-  public int JJTDICTIONARY = 63;
-  public int JJTSTR_1OP = 64;
-  public int JJTSTRJOIN = 65;
-  public int JJTLAMBDEF = 66;
-  public int JJTELLIPSES = 67;
-  public int JJTSLICE = 68;
-  public int JJTCOLON = 69;
-  public int JJTCOMMA = 70;
-  public int JJTCLASSDEF = 71;
-  public int JJTARGLIST = 72;
-  public int JJTEXTRAARGVALUELIST = 73;
-  public int JJTEXTRAKEYWORDVALUELIST = 74;
-  public int JJTKEYWORD = 75;
-  public int JJTINT = 76;
-  public int JJTFLOAT = 77;
-  public int JJTCOMPLEX = 78;
-  public int JJTNAME = 79;
-  public int JJTSTRING = 80;
+  public int JJTAUG_PLUS = 11;
+  public int JJTAUG_MINUS = 12;
+  public int JJTAUG_MULTIPLY = 13;
+  public int JJTAUG_DIVIDE = 14;
+  public int JJTAUG_MODULO = 15;
+  public int JJTAUG_AND = 16;
+  public int JJTAUG_OR = 17;
+  public int JJTAUG_XOR = 18;
+  public int JJTAUG_LSHIFT = 19;
+  public int JJTAUG_RSHIFT = 20;
+  public int JJTAUG_POWER = 21;
+  public int JJTPRINT_STMT = 22;
+  public int JJTDEL_STMT = 23;
+  public int JJTPASS_STMT = 24;
+  public int JJTBREAK_STMT = 25;
+  public int JJTCONTINUE_STMT = 26;
+  public int JJTRETURN_STMT = 27;
+  public int JJTRAISE_STMT = 28;
+  public int JJTIMPORT = 29;
+  public int JJTIMPORTFROM = 30;
+  public int JJTDOTTED_NAME = 31;
+  public int JJTGLOBAL_STMT = 32;
+  public int JJTEXEC_STMT = 33;
+  public int JJTASSERT_STMT = 34;
+  public int JJTIF_STMT = 35;
+  public int JJTWHILE_STMT = 36;
+  public int JJTFOR_STMT = 37;
+  public int JJTTRY_STMT = 38;
+  public int JJTEXCEPT_CLAUSE = 39;
+  public int JJTSUITE = 40;
+  public int JJTOR_BOOLEAN = 41;
+  public int JJTAND_BOOLEAN = 42;
+  public int JJTNOT_1OP = 43;
+  public int JJTCOMPARISION = 44;
+  public int JJTLESS_CMP = 45;
+  public int JJTGREATER_CMP = 46;
+  public int JJTEQUAL_CMP = 47;
+  public int JJTGREATER_EQUAL_CMP = 48;
+  public int JJTLESS_EQUAL_CMP = 49;
+  public int JJTNOTEQUAL_CMP = 50;
+  public int JJTIN_CMP = 51;
+  public int JJTNOT_IN_CMP = 52;
+  public int JJTIS_NOT_CMP = 53;
+  public int JJTIS_CMP = 54;
+  public int JJTOR_2OP = 55;
+  public int JJTXOR_2OP = 56;
+  public int JJTAND_2OP = 57;
+  public int JJTLSHIFT_2OP = 58;
+  public int JJTRSHIFT_2OP = 59;
+  public int JJTADD_2OP = 60;
+  public int JJTSUB_2OP = 61;
+  public int JJTMUL_2OP = 62;
+  public int JJTDIV_2OP = 63;
+  public int JJTMOD_2OP = 64;
+  public int JJTPOS_1OP = 65;
+  public int JJTNEG_1OP = 66;
+  public int JJTINVERT_1OP = 67;
+  public int JJTPOW_2OP = 68;
+  public int JJTCALL_OP = 69;
+  public int JJTINDEX_OP = 70;
+  public int JJTDOT_OP = 71;
+  public int JJTTUPLE = 72;
+  public int JJTLIST = 73;
+  public int JJTDICTIONARY = 74;
+  public int JJTSTR_1OP = 75;
+  public int JJTSTRJOIN = 76;
+  public int JJTLAMBDEF = 77;
+  public int JJTELLIPSES = 78;
+  public int JJTSLICE = 79;
+  public int JJTCOLON = 80;
+  public int JJTCOMMA = 81;
+  public int JJTCLASSDEF = 82;
+  public int JJTARGLIST = 83;
+  public int JJTEXTRAARGVALUELIST = 84;
+  public int JJTEXTRAKEYWORDVALUELIST = 85;
+  public int JJTKEYWORD = 86;
+  public int JJTINT = 87;
+  public int JJTFLOAT = 88;
+  public int JJTCOMPLEX = 89;
+  public int JJTNAME = 90;
+  public int JJTSTRING = 91;
 
 
   public String[] jjtNodeName = {
@@ -99,6 +110,17 @@ public interface PythonGrammarTreeConstants
     "defaultarg",
     "fplist",
     "expr_stmt",
+    "aug_plus",
+    "aug_minus",
+    "aug_multiply",
+    "aug_divide",
+    "aug_modulo",
+    "aug_and",
+    "aug_or",
+    "aug_xor",
+    "aug_lshift",
+    "aug_rshift",
+    "aug_power",
     "print_stmt",
     "del_stmt",
     "pass_stmt",
