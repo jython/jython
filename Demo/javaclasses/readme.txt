@@ -10,7 +10,7 @@ translation for Windows.
 
    This is just to make sure the Jython code works on your machine
 
-2. run "jythonc -package pygraph Graph.py" in this directory
+2. run "jythonc --package pygraph Graph.py" in this directory
 
    This should produce the Java class pygraph.Graph.  Because this is
    only a shallow freeze of the code in Graph.py, you can modify the
