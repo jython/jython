@@ -53,6 +53,8 @@ def runJava(cls, **kw):
     cmd = "java "
     if kw.has_key("classpath"):
 	cmd = cmd + "-classpath %s;%%CLASSPATH%% " % kw['classpath']
+    if kw.has_key("cp"):
+	cmd = cmd + "-classpath %s" % kw['cp']
     p = execCmd('cmd /C "%s %s"' % (cmd, cls))
 
     import java
@@ -65,8 +67,9 @@ def runJava(cls, **kw):
     thread.start_new_thread(StreamReader, (p.inputStream, outstream))
     thread.start_new_thread(StreamReader, (p.errorStream, outstream))
     ret = p.waitFor()
-    if ret != 0:
+    if ret != 0 and not kw.has_key("expectError"):
 	raise TestError, "%s failed with %d" % (cmd, ret)
+    return ret
 
 
 def StreamReader(instream, outstream):
@@ -95,6 +98,8 @@ def compileJPythonc(*files, **kw):
 	cmd = cmd + "--all "
     if kw.has_key("package"):
 	cmd = cmd + "--package %s " % kw['package']
+    if kw.has_key("addpackages"):
+	cmd = cmd + "--addpackages %s " % kw['addpackages']
     if kw.has_key("jar"):
 	cmd = cmd + "--jar %s " % kw['jar']
 	if os.path.isfile(kw['jar']):
