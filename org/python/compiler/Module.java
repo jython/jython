@@ -272,6 +272,17 @@ public class Module {
 		                        }
 		                        
 	Vector codes;
+	private boolean isJavaIdentifier(String s) {
+	    char[] chars = s.toCharArray();
+	    if (chars.length == 0) return false;
+	    if (!Character.isJavaIdentifierStart(chars[0])) return false;
+	    
+	    for(int i=1; i<chars.length; i++) {
+	        if (!Character.isJavaIdentifierPart(chars[i])) return false;
+	    }
+	    return true;
+	}
+	
 	public PyCodeConstant PyCode(SimpleNode tree, String name,
 								ArgListCompiler ac,
 								boolean fast_locals, boolean class_body,
@@ -288,7 +299,8 @@ public class Module {
 		code.id = codes.size();
 
 		//Better names in the future?
-		code.fname = "f"+code.id;
+		if (isJavaIdentifier(name)) code.fname = name+"$"+code.id;
+		else code.fname = "f$"+code.id;
 
 		codes.addElement(code);
 
