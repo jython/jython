@@ -471,6 +471,28 @@ public class PyString extends PySequence implements InitModule
         return string.toUpperCase();
     }
 
+    public String title() {
+        char[] chars = string.toCharArray();
+        int n = chars.length;
+
+        boolean previous_is_cased = false;
+        for (int i = 0; i < n; i++) {
+            char ch = chars[i];
+            if (previous_is_cased)
+                chars[i] = Character.toLowerCase(ch);
+            else
+                chars[i] = Character.toTitleCase(ch);
+
+            if (Character.isLowerCase(ch) ||
+                   Character.isUpperCase(ch) ||
+                   Character.isTitleCase(ch))
+                previous_is_cased = true;
+            else
+                previous_is_cased = false;
+        }
+        return new String(chars);
+    }
+
     public String swapcase() {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -1058,6 +1080,113 @@ public class PyString extends PySequence implements InitModule
             }
         }
         return buf.toString();
+    }
+
+    public boolean islower() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1)
+            return Character.isLowerCase(string.charAt(0));
+ 
+        boolean cased = false;
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+
+            if (Character.isUpperCase(ch) || Character.isTitleCase(ch))
+                return false;
+            else if (!cased && Character.isLowerCase(ch))
+                cased = true;
+        }
+        return cased;
+    }
+
+    public boolean isupper() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1)
+            return Character.isUpperCase(string.charAt(0));
+ 
+        boolean cased = false;
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+
+            if (Character.isLowerCase(ch) || Character.isTitleCase(ch))
+                return false;
+            else if (!cased && Character.isUpperCase(ch))
+                cased = true;
+        }
+        return cased;
+    }
+
+    public boolean isalpha() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1)
+            return Character.isLetter(string.charAt(0));
+
+        if (n == 0)
+            return false;
+
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+
+            if (!Character.isLetter(ch))
+                return false;
+        }
+        return true;
+    }
+
+    public boolean isalnum() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1)
+            return Character.isLetterOrDigit(string.charAt(0));
+
+        if (n == 0)
+            return false;
+
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+
+            if (!Character.isLetterOrDigit(ch))
+                return false;
+        }
+        return true;
+    }
+
+    public boolean istitle() {
+        int n = string.length();
+
+        /* Shortcut for single character strings */
+        if (n == 1)
+            return Character.isTitleCase(string.charAt(0)) || 
+                   Character.isUpperCase(string.charAt(0));
+ 
+        boolean cased = false;
+        boolean previous_is_cased = false;
+        for (int i = 0; i < n; i++) {
+            char ch = string.charAt(i);
+
+            if (Character.isUpperCase(ch) || Character.isTitleCase(ch)) {
+                if (previous_is_cased)
+                    return false;
+                previous_is_cased = true;
+                cased = true;
+            }
+            else if (Character.isLowerCase(ch)) {
+                if (!previous_is_cased)
+                    return false;
+                previous_is_cased = true;
+                cased = true;
+            }
+            else
+                previous_is_cased = false;
+        }
+        return cased;
     }
 }
 
