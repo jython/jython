@@ -825,34 +825,35 @@ public class __builtin__ implements InitModule
 
 
 class ImportFunction extends PyObject {
-    public ImportFunction() { }
+    public ImportFunction() {}
 
     public PyObject __call__(PyObject args[], String keywords[]) {
-	if (!(args.length < 1 || args[0] instanceof PyString))
-	    throw Py.TypeError("1'st argument must be a string");
+        if (!(args.length < 1 || args[0] instanceof PyString))
+            throw Py.TypeError("first argument must be a string");
 
-	int argc = args.length;
-	String module = args[0].__str__().toString();
+        int argc = args.length;
+        String module = args[0].__str__().toString();
 
-	PyObject globals = (argc > 1 && args[1] != null) ? 
-               args[1] : __builtin__.globals();
-	PyObject locals = (argc > 2 && args[2] != null) ? 
-               args[2] : __builtin__.locals();
-	PyObject fromlist = (argc > 3 && args[3] != null) ? 
-               args[3] : new PyList();
+        PyObject globals = (argc > 1 && args[1] != null)
+            ? args[1] : __builtin__.globals();
+        PyObject locals = (argc > 2 && args[2] != null)
+            ? args[2] : __builtin__.locals();
+        PyObject fromlist = (argc > 3 && args[3] != null)
+            ? args[3] : new PyList();
 
-	return load(module, globals, locals, fromlist);
+        return load(module, globals, locals, fromlist);
     }
 
-
     private PyObject load(String module, 
-		PyObject globals, PyObject locals, PyObject fromlist) {
+                          PyObject globals, PyObject locals, PyObject fromlist)
+    {
         PyObject mod = imp.importName(module.intern(), 
-                                      fromlist.__len__() == 0, globals);
+                                      fromlist.__len__() == 0,
+                                      globals);
         return mod;
     }
 
     public String toString() {
-	return "<built-in function __import__>";
+        return "<built-in function __import__>";
     }
 }
