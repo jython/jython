@@ -233,6 +233,11 @@ public class time implements ClassDictInit
             e.type = Py.OverflowError;
             throw e;
         }
+        int dst = item(tup, 8);
+        if (dst == 0 || dst == 1) {
+            cal.set(Calendar.DST_OFFSET,
+                    dst * cal.getTimeZone().getDSTSavings());
+        }
         return (double)cal.getTime().getTime()/1000.0;
     }
 
