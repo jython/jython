@@ -28,7 +28,7 @@ public class imp {
         for (int i = 0; (p = path.__finditem__(i)) != null; i++) {
             File fullpath = new File(p.__str__().toString(), name + ".py");
             if (fullpath.isFile()) {
-                String filename = fullpath.getName();
+                String filename = fullpath.getPath();
                 return new PyTuple(new PyObject[] {
                     new PyFile(filename, "r", -1),
                     new PyString(filename),
