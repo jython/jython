@@ -125,6 +125,7 @@ public class PyServlet extends HttpServlet {
     }
 
     public void reset() {
+        destroyCache();
         interp = new PythonInterpreter(null, new PySystemState());
         cache.clear();
         PySystemState sys = Py.getSystemState();
@@ -188,6 +189,19 @@ public class PyServlet extends HttpServlet {
         cache.put(path, entry);
         return servlet;
     }
+
+    public void destroy() {
+        destroyCache();
+    }
+
+
+    private void destroyCache() {
+        for (Enumeration e = cache.elements(); e.hasMoreElements(); ) {
+            CacheEntry entry = (CacheEntry) e.nextElement();
+            entry.servlet.destroy();
+        }
+    }
+
 }
 
 class CacheEntry {
