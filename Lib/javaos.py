@@ -33,6 +33,10 @@ def listdir(path):
 def mkdir(path):
 	if not File(path).mkdir():
 		raise error, "couldn't make directory"
+		
+def makedirs(path):
+	if not File(path).mkdirs():
+		raise error, "couldn't make directories"
 
 def remove(path):
 	if not File(path).delete():
