@@ -1,6 +1,7 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.util;
 import org.python.core.*;
+import java.util.*;
 
 /**
  * The PythonInterpreter class is a standard wrapper for a JPython
@@ -15,7 +16,27 @@ public class PythonInterpreter {
     protected PySystemState systemState;
     PyObject locals;
 
-    // Initialize from a possibly precompiled Python module
+    /**
+     * Initialize the jython runtime. This method should only be 
+     * called once, and should be call before any other python objects
+     * are created (included a PythonInterpreter).
+     *
+     * @param preProperties   A set of properties. Typically
+     *                        System.getProperties() is used.
+     * @param postProperties  An other set of properties. Values like
+     *                        python.home, python.path and all other
+     *                        values from the registry files can be
+     *                        added to this property set. PostProperties
+     *                        will override system properties and
+     *                        registry properties.
+     * @param argv            Command line argument. These values will 
+     *                        assigned to sys.argv.
+     */
+    public static void initialize(Properties preProperties, 
+                                  Properties postProperties,
+                                  String[] argv) {
+        PySystemState.initialize(preProperties, postProperties, argv);
+    }
 
     /**
      * Create a new Interpreter with an empty dictionary
