@@ -93,6 +93,8 @@ public class codecs {
     {
         if (encoding == null)
             encoding = getDefaultEncoding();
+        else
+            encoding = normalizestring(encoding);
         if (errors != null)
             errors = errors.intern();
 
@@ -137,6 +139,8 @@ public class codecs {
     {
         if (encoding == null)
             encoding = getDefaultEncoding();
+        else
+            encoding = normalizestring(encoding);
         if (errors != null)
             errors = errors.intern();
 
