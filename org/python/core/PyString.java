@@ -1029,7 +1029,6 @@ public class PyString extends PySequence implements InitModule
     }
 
     public String translate(String table, String deletechars) {
-        System.err.println("deletechars: " + deletechars);
         if (table.length() != 256)
             throw Py.ValueError(
                 "translation table must be 256 characters long");
