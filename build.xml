@@ -1,11 +1,12 @@
 <!-- Copyright 2000 Dj Walker-Morgan -->
 
-<project name="jython" default="compile" basedir=".">
+<project name="jython" default="jar" basedir=".">
     <target name="init">
         <property name="sourceDir" value="." />
         <property name="outputDir" value="build" />
         <property name="apidocDir" value="Doc/api" />
         <property name="debug" value="off" />
+        <property name="optimize" value="on" />
 
         <available classname="java.util.List" property="java2" />
         <available classname="javax.servlet.Servlet" property="servlet" />
@@ -93,6 +94,7 @@
                       ${exclude.servlet.files},
                       ${exclude.readline.files}"
             debug="${debug}"
+            optimize="${optimize}"
         />
 
         <javac 
@@ -100,6 +102,7 @@
             includes="jxxload_help/**"
             destdir="${outputDir}/" 
             debug="${debug}"
+            optimize="${optimize}"
         />
 
        <copy file="org/python/modules/ucnhash.dat" 
@@ -127,3 +130,4 @@
     <target name="all" depends="init,clean,prepare,parser,compile,jar">
     </target>
 </project>
+
