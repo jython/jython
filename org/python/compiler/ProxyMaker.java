@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Constructor;
 import java.io.*;
+import org.python.core.Py;
 
 public class ProxyMaker {
     public static final int tBoolean=0;
@@ -606,8 +607,9 @@ public class ProxyMaker {
 
         for (int i=0; i<interfaces.length; i++) {
             if (interfaces[i].isAssignableFrom(superclass)) {
-                System.err.println("discarding redundant interface: "+
-                                   interfaces[i].getName());
+                Py.writeWarning("compiler",
+                                "discarding redundant interface: "+
+                                interfaces[i].getName());
                 continue;
             }
             classfile.addInterface(mapClass(interfaces[i].getName()));
