@@ -14,8 +14,6 @@ public class JavaMaker extends ProxyMaker
     //Hashtable methods;
     PyObject methods;
     public boolean frozen, main;
-    public Class[] interfaces;
-    public Class superclass;
     
     public JavaMaker(Class superclass, Class[] interfaces,
                      String pythonClass, String pythonModule, String myClass,
@@ -28,31 +26,18 @@ public class JavaMaker extends ProxyMaker
     public JavaMaker(Class superclass, Class[] interfaces,
                      String pythonClass, String pythonModule, String myClass,
                      String[] packages, String[] properties,
-                     PyObject methods, //String[] methods,
+                     PyObject methods,
                      boolean frozen, boolean main)
     {
-        super("foo");
-        if (superclass == null)
-            superclass = Object.class;
-        this.classname = superclass.getName();
-//         methods != null ? superclass.getName() : "org.python.proxies."+superclass.getName());
-        this.interfaces = interfaces;
+        super(myClass, superclass, interfaces);
 //         System.out.println("props: "+properties+", "+properties.length);
         this.pythonClass = pythonClass;
         this.pythonModule = pythonModule;
-        this.myClass = myClass;
         this.packages = packages;
         this.properties = properties;
         this.frozen = frozen;
         this.main = main;
         this.methods = methods;
-        this.superclass = superclass;
-//         if (methods != null) {
-//             this.methods = new Hashtable();
-//             for (int i=0; i<methods.length; i++) {
-//                 this.methods.put(methods[i], methods[i]);
-//             }
-//         }
     }
 
     private void makeStrings(Code code, String[] list) throws Exception {
@@ -125,10 +110,6 @@ public class JavaMaker extends ProxyMaker
         }
     }
 
-    public void build() throws Exception {
-        //Class superclass = Class.forName(classname);
-        build(superclass, interfaces);
-    }
 
     public void addMain() throws Exception {
         Code code = classfile.addMethod("main", "([Ljava/lang/String;)V",

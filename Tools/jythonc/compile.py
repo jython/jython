@@ -353,12 +353,13 @@ class Compiler:
         self.displayPackages()
         adapters = {}
         for jc, sources in self.events.items():
-            adapters[jc.__name__] = sources.keys()
+            adapters[jc] = sources.keys()
 
         self.write('\nCreating adapters:')
         COMMA = ', '
         for adapter, sources in adapters.items():
-            self.write('  %s used in %s' % (adapter, COMMA.join(sources)))
+            self.write('  %s used in %s' % \
+                           (adapter.__name__, COMMA.join(sources)))
             self.makeAdapter(outdir, adapter)
 
         self.write('\nCreating .java files:')
@@ -384,11 +385,9 @@ class Compiler:
 
     def makeAdapter(self, outdir, proxy):
         os = java.io.ByteArrayOutputStream()
-        org.python.compiler.AdapterMaker.makeAdapter(proxy, os)
-        filename = writeclass(outdir,
-                              'org.python.proxies.'+proxy+'$Adapter',
-                              os)
-        self.javaclasses.append('org.python.proxies.'+proxy+'$Adapter')
+        adaptername = org.python.compiler.AdapterMaker.makeAdapter(proxy, os)
+        filename = writeclass(outdir, adaptername, os)
+        self.javaclasses.append(adaptername)
 
     def trackJavaDependencies(self):
         # TBD: huh?

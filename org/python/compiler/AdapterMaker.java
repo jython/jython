@@ -10,33 +10,29 @@ import java.io.*;
 
 public class AdapterMaker extends ProxyMaker
 {
-    public AdapterMaker(String classname) {
-        super(classname+"$Adapter");
-        this.classname = classname;
+    public AdapterMaker(Class interfac) {
+        super(interfac.getName()+"$Adapter", interfac);
     }
 
-    public void build(Class listener) throws Exception {
+    public void build() throws Exception {
         names = new Hashtable();
 
         //Class superclass = org.python.core.PyAdapter.class;
         int access = ClassFile.PUBLIC | ClassFile.SYNCHRONIZED;
         classfile = new ClassFile(myClass, "java/lang/Object", access);
 
-        classfile.addInterface(mapClass(listener));
+        classfile.addInterface(mapClass(interfaces[0]));
 
-        addMethods(listener, new Hashtable());
+        addMethods(interfaces[0], new Hashtable());
         addConstructors(Object.class);
         doConstants();
     }
 
-    public void build() throws Exception {
-        build(Class.forName(classname));
-    }
 
-    public static String makeAdapter(String classname, OutputStream ostream)
+    public static String makeAdapter(Class interfac, OutputStream ostream)
         throws Exception
     {
-        AdapterMaker pm = new AdapterMaker(classname);
+        AdapterMaker pm = new AdapterMaker(interfac);
         pm.build();
         pm.classfile.write(ostream);
         return pm.myClass;

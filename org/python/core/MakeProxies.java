@@ -36,7 +36,7 @@ class MakeProxies
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         String name;
         try {
-            name = AdapterMaker.makeAdapter(c.getName(), bytes);
+            name = AdapterMaker.makeAdapter(c, bytes);
         }
         catch (Exception exc) {
             throw Py.JavaError(exc);

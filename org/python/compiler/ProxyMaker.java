@@ -46,15 +46,34 @@ public class ProxyMaker
         else return ((Integer)i).intValue();
     }
 
-    String classname;
+    Class superclass;
+    Class[] interfaces;
     Hashtable names;
     public ClassFile classfile;
     public String myClass;
     public boolean isAdapter=false;
 
-    public ProxyMaker(String classname) {
-        this.classname = classname;
+    // Ctor used by makeProxy and AdapterMaker. 
+    public ProxyMaker(String classname, Class superclass) {
         this.myClass = "org.python.proxies."+classname;
+        if (superclass.isInterface()) {
+            this.superclass = Object.class;
+            this.interfaces = new Class[] {superclass};
+        } else {
+            this.superclass = superclass;
+            this.interfaces = new Class[0];
+        }
+    }
+
+    // Ctor used by javamaker.
+    public ProxyMaker(String myClass, Class superclass, Class[] interfaces) {
+        this.myClass = myClass;
+        if (superclass == null)
+            superclass = Object.class;
+        this.superclass = superclass;
+        if (interfaces == null)
+            interfaces = new Class[0];
+        this.interfaces = interfaces;
     }
 
     public static String mapClass(Class c) {
@@ -670,7 +689,7 @@ public class ProxyMaker
         code.areturn();         
     }
 
-    public void build(Class superclass, Class[] interfaces) throws Exception {
+    public void build() throws Exception {
         names = new Hashtable();
         int access = superclass.getModifiers();
         if ((access & Modifier.FINAL) != 0) {
@@ -699,23 +718,11 @@ public class ProxyMaker
     }
 
 
-    public void build() throws Exception {
-        Class superclass = Class.forName(classname);
-        Class interfaces[];
-        if (superclass.isInterface()) {
-            interfaces = new Class[] {superclass};
-            superclass = Object.class;
-        }
-        else {
-            interfaces = new Class[0];
-        }
-        build(superclass, interfaces);
-    }
 
-    public static String makeProxy(String classname, OutputStream ostream)
+    public static String makeProxy(Class superclass, OutputStream ostream)
         throws Exception
     {
-        ProxyMaker pm = new ProxyMaker(classname);
+        ProxyMaker pm = new ProxyMaker(superclass.getName(), superclass);
         pm.build();
         pm.classfile.write(ostream);
         return pm.myClass;
