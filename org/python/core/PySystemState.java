@@ -393,6 +393,7 @@ public class PySystemState extends PyObject
 
     private static void initStaticFields() {
         Py.None = new PyNone();
+        Py.NotImplemented = new PyNotImplemented();
         Py.NoKeywords = new String[0];
         Py.EmptyObjects = new PyObject[0];
 

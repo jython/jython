@@ -21,6 +21,9 @@ public final class Py
     /** The singleton Ellipsis Python object - written as ... when indexing */
     public static PyObject Ellipsis;
 
+    /** The singleton NotImplemented Python object. Used in rich comparison */
+    public static PyObject NotImplemented;
+
     /** A zero-length array of Strings to pass to functions that
         don't have any keyword arguments **/
     public static String[] NoKeywords;

@@ -424,28 +424,35 @@ public class PyInstance extends PyObject
         throw Py.TypeError("__cmp__() must return int");
     }
 
+    private PyObject invoke_ex_richcmp(String name, PyObject o) {
+        PyObject ret = invoke_ex(name, o);
+        if (ret == Py.NotImplemented)
+            return null;
+        return ret;
+    }
+
     public PyObject __lt__(PyObject o) {
-        return invoke_ex("__lt__", o);
+        return invoke_ex_richcmp("__lt__", o);
     }
 
     public PyObject __le__(PyObject o) {
-        return invoke_ex("__le__", o);
+        return invoke_ex_richcmp("__le__", o);
     }
 
     public PyObject __gt__(PyObject o) {
-        return invoke_ex("__gt__", o);
+        return invoke_ex_richcmp("__gt__", o);
     }
 
     public PyObject __ge__(PyObject o) {
-        return invoke_ex("__ge__", o);
+        return invoke_ex_richcmp("__ge__", o);
     }
 
     public PyObject __eq__(PyObject o) {
-        return invoke_ex("__eq__", o);
+        return invoke_ex_richcmp("__eq__", o);
     }
 
     public PyObject __ne__(PyObject o) {
-        return invoke_ex("__ne__", o);
+        return invoke_ex_richcmp("__ne__", o);
     }
 
     public boolean __nonzero__() {
