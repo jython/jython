@@ -354,16 +354,34 @@ public class PyLong extends PyObject
         return new PyLong(value.and(coerce(right)));
     }
 
+    public PyObject __rand__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return new PyLong(coerce(left).and(value));
+    }
+
     public PyObject __xor__(PyObject right) {
         if (!canCoerce(right))
             return null;
         return new PyLong(value.xor(coerce(right)));
     }
 
+    public PyObject __rxor__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return new PyLong(coerce(left).xor(value));
+    }
+
     public PyObject __or__(PyObject right) {
         if (!canCoerce(right))
             return null;
         return new PyLong(value.or(coerce(right)));
+    }
+
+    public PyObject __ror__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        return new PyLong(coerce(left).or(value));
     }
 
     public PyObject __neg__() {
