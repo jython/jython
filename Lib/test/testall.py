@@ -1,5 +1,5 @@
 import sys
-print 'Testing JPython Version', sys.version
+print 'Testing Jython Version', sys.version,'on',sys.platform
 
 from test_support import *
 
@@ -36,7 +36,7 @@ print 'All old-style tests completed successfully!'
 print "Executing unittest tests"
 from test_jreload import *
 from test_javashell import *
-from test_compil import *
+from test_jy_compile import *
 
 import unittest
 unittest.main() # calls SystemExit
