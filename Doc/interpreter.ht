@@ -1,0 +1,46 @@
+Title: Invoking the JPython Interpreter
+
+<h3>Invoking the JPython Interpreter</h3>
+
+<P>JPython can be invoked from the shell using the following command:</P>
+
+<pre>
+jpython [-i] [-showjavaexc] [file | -] [arg]*
+</pre>
+
+<P><B>-i </B>: inspect interactively after running script</P>
+
+<P>-<B>showjavaexc</B>: display the actual Java exception which was
+raised (useful for mixed Java/Python debugging)</P>
+
+<P><B>-</B> : Treat stdin as a file.  This flag allows you to use
+pipe file into jpython and have them treated correctly.  This would be
+useful in a case like: &quot;filter file | jpython -&quot;.
+
+<H3>Details</H3>
+
+<P>&quot;jpython&quot; is a short script that invokes your local JVM,
+sets the java property &quot;install.path&quot; to an appropriate
+value, and then runs the Java classfile
+&quot;org.python.core.jpython&quot;.</P>
+
+<H3>Making JPython Scripts Executable</H3>
+
+<P>To make a jpython &quot;.py&quot; file executable on a Unix system
+you can add the following line to the top of the file:
+
+<PRE><B>#! /usr/bin/env jpython</B></PRE>
+
+<P>For this magic to work, you must have jpython somewhere on your
+standard PATH.  You also must also make the &quot;.py&quot; file
+executable.  Typically this is done with the command: &quot;
+<TT>chmod +x foo.py</TT>&quot;.<BR>
+
+<BR>
+
+<I>Note: &quot;#! &lt;...&gt;/jpython&quot; will probably not work to
+make your script executable.  This is because &quot;jpython&quot; is
+itself a script, and the #! magic requires that the file to execute is
+a binary executable on most Unix variants.  Using
+&quot;/usr/bin/env&quot; will get around this problem - and make your
+scripts more portable in the bargain.</I>

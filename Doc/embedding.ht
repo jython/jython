@@ -1,0 +1,42 @@
+Title: Embedding JPython
+
+<h3>Embedding JPython</h3>
+
+<P>There are several options for embedding JPython in a Java
+application.  Sometimes the nicest approach is to make a real Java
+class out of a Python class and then just use that Python class from
+Java code.  The simplest approach to embedding JPython is to use the
+PythonInterpreter object.</P>
+
+<P>JavaDoc documentation for 
+<A HREF="api/org.python.util.PythonInterpreter.html">
+org.python.util.PythonInterpreter</A>
+<BR>
+The following example is distributed under Demo/embed/SimpleEmbedded.java
+
+<hr>
+<pre>
+import org.python.util.PythonInterpreter; 
+import org.python.core.*; 
+
+public class SimpleEmbedded { 
+    public static void main(String []args)
+	throws PyException
+    { 
+	PythonInterpreter interp =
+	    new PythonInterpreter();
+
+	System.out.println("Hello, brave new world");
+	interp.exec("import sys");
+	interp.exec("print sys");
+
+	interp.set("a", new PyInteger(42));
+	interp.exec("print a");
+	interp.exec("x = 2+2");
+	PyObject x = interp.get("x");
+
+	System.out.println("x: "+x);
+	System.out.println("Goodbye, cruel world");
+    }
+}
+</pre>

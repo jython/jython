@@ -1,0 +1,87 @@
+Title: Java Arrays in JPython
+
+<h3>Java Arrays in JPython - JArray</h3>
+
+Many Java methods require Java array objects as arguments.  The way
+that these arguments are used means that they must correspond to
+fixed-length, mutable sequences, so'metimes of primitive data types.
+The PyArray class is added to support these Java arrays and instances
+of this class will be automatically returned from any Java method call
+that produces an array.  In addition, the "jarray" module is provided
+to allow users of JPython to create these arrays themselves, primarily
+for the purpose of passing them to a Java method.
+
+<P>The jarray module exports two functions:
+
+<pre>
+array(sequence, type)
+zeros(length, type)
+</pre>
+
+<P>array will create a new array of the same length as the input
+sequence and will populate it with the values in sequence.  zeros will
+create a new array of the given length filled with zeros (or null's if
+appropriate).
+
+<P>type can either be a single character typecode (using the same mappings
+as Python's array module) or it can be an instance of a JavaClass object.
+The valid typecodes are shown in the following table:
+
+<p><TABLE BORDER COLS=2 WIDTH="50%">
+<TR>
+    <TH ALIGN=CENTER>Character Typecode</TH>
+    <TH>Corresponding Java Type</TH>
+</TR>
+<TR>
+    <TD>z</TD>
+    <TD>boolean</TD>
+</TR>
+<TR>
+    <TD>c</TD>
+    <TD>char</TD>
+</TR>
+<TR>
+    <TD>b</TD>
+    <TD>byte</TD>
+</TR>
+<TR>
+    <TD>h</TD>
+    <TD>short</TD>
+</TR>
+<TR>
+    <TD>i</TD>
+    <TD>int</TD>
+</TR>
+<TR>
+    <TD>l</TD>
+    <TD>long</TD>
+</TR>
+<TR>
+    <TD>f</TD>
+    <TD>float</TD>
+</TR>
+<TR>
+    <TD>d</TD>
+    <TD>double</TD>
+</TR>
+</TABLE>
+
+<!--table-stop-->
+<h3>Example</h3>
+
+<PRE>
+>>> from jarray import zeros, array
+>>> array([1,2,3], 'd')
+array([1.0, 2.0, 3.0], double)
+>>> zeros(3, 'f')
+array([0.0, 0.0, 0.0], float)
+>>> from java.util import Hashtable
+>>> array([Hashtable(), Hashtable()], Hashtable)
+array([&lt;java.util.Hashtable instance at 2045730>, &lt;java.util.Hashtable instance at 2045714>], java.util.Hashtable)
+>>> zeros(5, Hashtable)
+array([None, None, None, None, None], java.util.Hashtable)
+</PRE>
+
+This example show how to create an array of three specific doubles, a
+length-three array of floats, an array of two specific instance of
+java.util.Hashtable, and an empty array of java.util.Hashtable's.

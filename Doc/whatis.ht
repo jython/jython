@@ -1,0 +1,64 @@
+Title: What is JPython?
+
+<h3>What is JPython?</h3>
+
+<P>JPython is an implementation of the high-level, dynamic,
+object-oriented language <A HREF="http://www.python.org">Python</A>
+seamlessly integrated with the
+<A HREF="http://www.javasoft.com">Java</A> platform and certified as
+<A HREF="http://www.javasoft.com/100percent/">100% Pure Java</A>.
+JPython
+is freely available for both commercial and non-commercial use and is
+distributed with source code. JPython is complementary to Java and is
+especially suited for the following tasks:</P>
+
+<UL>
+    <LI><B>Embedded scripting</B> - Java programmers can add the
+        JPython libraries to their system to allow end users
+	to write simple or complicated scripts that add functionality
+	to the application. Since JPython is certified
+	<A HREF="http://www.javasoft.com/100percent/">100% Pure Java</A>,
+	it can be added to an application without fear of compromising
+	its ability to run on all Java platforms.
+
+    <LI><B>Interactive experimentation</B> - JPython provides an
+	interactive interpreter that can be used to interact with Java
+	packages or with running Java applications. This allows
+	programmers to experiment and debug any Java system using
+	JPython.
+
+    <LI><B>Rapid application development</B> - Python
+	programs are typically 2-10X shorter than the equivalent Java
+	program. This translates directly to increased programmer
+	productivity. The seamless interaction between Python and Java
+	allows developers to freely mix the two languages both during
+	development and in shipping products.
+</UL>
+
+<P>There are numerous
+<A HREF="http://grunge.cs.tu-berlin.de/~tolk/vmlanguages.html">
+alternative languages</A>
+implemented for the Java VM. The following features help to separate
+JPython from the rest:</P>
+
+<UL>
+    <LI><B>Dynamic compilation to Java bytecodes</B> - leads to
+    highest possible performance without sacrificing interactivity.
+
+    <LI><B>Ability to extend existing Java classes in JPython</B> -
+    allows effective use of abstract classes.
+
+    <LI><B>Optional static compilation</B> - allows creation of
+	applets, servlets, beans, ...
+
+    <LI><B>100% Pure Java Certification</B> - provides assurance that
+	JPython won't compromise the portability of your application.
+
+    <LI><B>Bean Properties</B> - make use of Java packages much easier.
+
+    <LI><B><A HREF="http://www.python.org/doc/Summary.html">
+	Python Language</A></B> - combines remarkable power with
+	very clear syntax. It also supports a full object-oriented
+	programming model which makes it a natural fit for Java's OO
+	design.
+</UL>

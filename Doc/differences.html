@@ -1,0 +1,443 @@
+<HTML>
+<!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 16:34:12 1999 -->
+<!-- User-specified headers:
+Title: Differences between CPython and JPython
+
+-->
+
+<HEAD>
+<TITLE>Differences between CPython and JPython</TITLE>
+
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000"
+      TOPMARGIN="0" LEFTMARGIN="0" MARGINWIDTH="0" MARGINHEIGHT="0"
+      LINK="#0000bb"  VLINK="#551a8b"
+      ALINK="#ff0000">
+<!-- start of page table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=0>
+<!-- start of banner row -->
+<TR>
+<!-- start of corner cells -->
+<TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
+
+<center>
+    <a href="../">
+    <img border=0 src="../images/jpython-new-small.gif"></a></center> </TD>
+<TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of corner cells -->
+<!-- start of banner -->
+<TD WIDTH="90%" BGCOLOR="#cdb7b5">
+<!-- start of site links table -->
+<TABLE WIDTH="100%" BORDER=0
+CELLSPACING=0 CELLPADDING=2
+       COLS=2 ROWS=2 BGCOLOR="#ffffff">
+<TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../">Home</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="http://www.python.org/">www.python.org</a>
+    </TD>
+</TR><TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../download.html">Download</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../docs/"><b>Documentation</b></a>
+    </TD>
+</TR>
+</TABLE><!-- end of site links table -->
+
+</TD><!-- end of banner -->
+</TR><!-- end of banner row -->
+<TR><!-- start of sidebar/body row -->
+<!-- start of sidebar cells -->
+<TD WIDTH=150 VALIGN=TOP BGCOLOR="#cdb7b5">
+<!-- start of sidebar table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=3
+       BGCOLOR="#ffffff">
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Documentation
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="./">Overview</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="whatis.html">Executive Summary</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="interpreter.html">Invoking JPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="registry.html">JPython Registry</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="embedding.html">Embedding</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="compile.html">Compiling JPython from source</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Working with Java
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="usejava.html">The Basics</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="properties.html">JavaBean Properties</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jarray.html">Java arrays</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="subclassing.html">Subclassing</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Python Docs (exits)
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/tut/tut.html">Python Tutorial</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/lib/lib.html">Library Reference</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Other
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<b>JPython vs. CPython</b>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="faq.html">JPython FAQ</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Email Us
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/">
+<center>
+    <img border=0 src="../images/PythonPoweredSmall.gif"></center>
+</A>
+</TD></TR>
+</TABLE><!-- end of sidebar table -->
+
+</TD>
+<TD WIDTH=15>&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of sidebar cell -->
+<!-- start of body cell -->
+<TD VALIGN=TOP WIDTH="90%"><BR>
+<h3>Differences between CPython and JPython</h3>
+
+<P>CPython and JPython are two different implementations of the Python
+language. While a <A HREF="http://www.python.org/doc/ref">Language
+Reference</A> exists for the Python language, there are a number of
+features of the language that are incompletely specified.  The
+following lists all known differences between the two implementations
+of the Python language.  These differences range from the trivial --
+JPython prints &quot;1.0E20&quot; where CPython prints
+&quot;1e+020&quot; -- to the dramatic -- everything in JPython is an
+instance of a class.  At some point more effort should be made to
+separate the interesting differences from the mundane. These
+differences are based on JPython-1.0.0 and CPython-1.5.1.</P>
+
+<h3>Syntax</h3>
+
+<UL>
+    <LI>JPython has a different interpretation of floating point
+    literals. CPython doesn't allow 001.1, and does allow 0e and even
+    0e-. <I>CPython should be fixed.</I> 
+
+    <p><LI>JPython supports continue in a try clause. <I>CPython
+    should be fixed - but don't hold your breath.</I>
+
+    <p><LI>JPython doesn't support raise without arguments. <I>JPython
+    should be fixed in v1.1</I>
+</UL>
+
+<h3>Standard types, functions and behavior</h3>
+
+<UL>
+	<LI>JPython string objects support full two-byte Unicode
+	characters and the functions in the string module are
+	Unicode-aware. <I>CPython should add Unicode support in the
+	future, though the details of this are still unclear.</I>
+
+	<p><LI>JPython formats floating point numbers differently,
+	e.g. an upper case 'E' is used, and it switches over to E
+	notation sooner than CPython does. <I>Both behaviors are
+	acceptable.</I>
+
+	<p><LI>In JPython, 0.1**4 is printed as
+	1.0000000000000002E-4. In CPython, it is printed 0.0001, even
+	though it is not actually equal to 0.0001. <I>Both behaviors
+	are acceptable for now -- this is still being discussed.</I>
+
+	<p><LI>JPython supports looping over a dictionary. <I>JPython
+	should be fixed in v1.1</I>
+
+	<p><LI>JPython sequences support three argument
+	slices. i.e. range(3)[::-1] == [2,1,0]. <I>CPython should be
+	fixed.</I>
+
+	<p><LI>Every object in JPython is an instance of a class --
+	there are no types in JPython. i.e. [].__class__ is a sensible
+	thing to write in JPython. <I>CPython should be fixed - but
+	don't hold your breath.</I>
+
+	<p><LI>The .tell() method on JPython file objects returns a
+	Python long, while the .tell() method on CPython file objects
+	returns a Python int.  <I>Whether or not both behaviors are
+	acceptable is still unclear.</I>
+
+	<p><LI>JPython file objects are still missing some
+	functionality -- see todo list in PyFile.java. (Hopefully in
+	the near future this can be changed to read -- JPython file
+	objects include the following extra functionality to properly
+	handle non-ascii files...) <I>JPython should be fixed in
+	v1.1</I>
+
+	<p><LI>In JPython, standard exceptions are still
+	strings. <I>JPython should be fixed in v1.1</I>
+
+	<p><LI>In CPython, range(0.1, 3.2) yields the surprising [0,
+	1, 2]. JPython does the right thing (reject float arguments).
+	-- Many other functions taking int arguments have the same
+	   problem. <I>CPython should be fixed.</I>
+
+	<p><LI>In CPython, the list.append() method takes multiple
+	arguments and forms a tuple. JPython's append() method
+	requires one argument only. <I>CPython should be fixed -- but
+	probably won't be due to backwards compatibility.</I>.
+
+	<p><LI>In JPython, printing a recursive list or dictionary
+	causes a stack overflow. CPython now uses ellipses to indicate
+	recursive items, e.g. ``l = []; l.append(l); print l'' prints
+	``[[...]]''. <I>JPython should be fixed in v1.1</I>
+
+	<p><LI>In JPython, when an AttributeError is raised, it
+	attempts to call repr() on the object in order to produce a
+	nic error message. This can cause the exception to change into
+	java.lang.StackOverflowError because of the previous
+	item. (CPython only puts the *type* in the message here, which
+	is safer.) <I>Proper behavior here is still unclear.</I>
+
+	<p><LI>The __name__ attribute of built-in extension modules
+	(e.g. 'sys') is different. <I>Both behaviors are
+	acceptable.</I>
+
+	<p><LI>In many cases, introspection yields different results;
+	e.g. dir([]) yields an empty list in JPython but a list of
+	list methods in CPython. Arguably, JPython is right, although
+	I find CPython's behavior more convenient. <I>Both behaviors
+	are acceptable.</I>
+
+	<p><LI>In JPython, dir() doesn't return __name__ even if it is
+	supported. <I>JPython should be fixed in v1.1</I>
+
+	<p><LI>JPython doesn't define __debug__. <I>JPython should be
+	fixed. v1.0.1 should define __debug__ = 1 always. v1.1 should
+	implement CPython's -O option.</I>
+
+	<p><LI>The locals() dictionary in JPython is mutable from
+	within a function. After &quot;def foo(x=1): locals()['x'] =
+	2; print x&quot; foo() prints 1 in CPython and 2 in
+	JPython. Jim thinks that JPython's behavior is better here
+	-- but the best answer might be that locals() should be
+	   considered a read-only dictionary.<I> Proper behavior here
+	   is still unclear.</I> 
+
+	<p><LI>JPython doesn't support restricted execution mode and
+	doesn't have the magic __builtins__ in every namespace.
+	<I>JPython will probably never support restricted execution
+	mode -- Java's security model is recommended instead.</I>
+
+	<p><LI>JPython uses different values for the IOError
+	argument. This causes trouble for people who unpack the value
+	into an (errno, message) tuple. <I>Both behaviors are
+	acceptable.</I> <LI>JPython function objects don't have the
+	func_name attribute (an alias for __name__). <I>This attribute
+	is considered obsolete and won't be supported by JPython.</I>
+
+	<p><LI>JPython code objects don't have the co_firstlineno
+	attributes. <I>JPython should be fixed in v1.1</I>
+
+	<p><LI>JPython code objects are missing other attributes --
+	co_code, co_consts, co_flags, co_lnotab, co_names, co_nlocals,
+	co_stacksize. <I>These attributes will probably never be
+	supported in JPython due to its implementation of code objects
+	as compiled Java bytecodes.</I>
+
+	<p><LI>raise SystemExit, &lt;Arbitrary Object&gt; doesn't set
+	the exit code to 1 when the object is not an integer or
+	None. <I>JPython should be fixed in v1.0.1</I>
+
+	<p><LI>JPython has &quot;true&quot; garbage collection whereas
+	CPython uses reference counting. This means that in JPython
+	users don't need to worry about handling circular references
+	as these are guaranteed to be collected properly.&nbsp; On the
+	other hand, users of JPython have no guarantees of when an
+	object will be finalized -- this can cause problems for people
+	who use open(&quot;foo&quot;, 'r').read() excessively. <I>Both
+	behaviors are acceptable -- and highly unlikely to change.</I>
+
+	<p><LI>The dictionaries used by classes, instances, and
+	modules in JPython are not the same as the dictionaries
+	created by {}. They are StringMap's which require all of their
+	keys to be strings. After &quot;class c: pass&quot;,
+	c.__dict__[1] = 2 will work in CPython, but will raise a
+	&quot;TypeError: keys in namespace must be strings&quot; error
+	in JPython.  <I>Both behaviors are acceptable -- CPython might
+	adopt JPython's approach in the future for the performance
+	gains it can provide.</I>
+</UL>
+
+<h3>Extension modules</h3>
+
+<UL>
+	<LI>JPython supports all java packages as extension
+	modules. i.e. from &quot;java.lang import System&quot; will
+	work in any JPython implementation. <I>This functionality
+	might be added as an optional extension to some future version
+	of CPython.</I>
+
+	<p><LI>JPython includes the builtin module jarray -- which
+	allows Python programmers to create and manipulate Java array
+	objects.
+
+	<p><LI>Lots of builtin extension modules don't exist in JPython.
+	<UL>
+	    <LI>The following are likely to be implemented in JPython
+	    v1.1 -- cmath, struct, CPickle, CStringIO, and operator.
+	    
+	    <p><LI>The following are under consideration (working code
+	    would make the decision much easier ;-) -- array, select,
+	    a dbm/gdbm/bsddb style module, Numeric. 
+
+	    <p><LI>The following are highly unlikely any time soon --
+	    Tkinter.
+	    
+	    <p><LI>Let me know if something should be added to this list.
+	</UL>
+
+	<p><LI>__builtin__ module
+	<UL>
+	    <LI>Missing the input function. <I>JPython should be fixed
+	    in v1.0.1</I>
+
+	    <p><LI>Incomplete implementation of __import__ -- only one
+	    argument is allowed and replacing this with a user-defined 
+	    function has no effect. <I>JPython might be fixed in a
+	    future release.</I>
+	</UL>
+
+	<p><LI>os module
+	<UL>
+		<LI>popen and system are missing. <I>JPython should be
+		fixed, patcheds would be graciously accepted.</I>
+
+		<p><LI>path.normcase. This one is extremely
+		frustrating as there seems no portable way to
+		implement in Java.
+
+		<p><LI>chmod, chown, getpid, fork, stat, ... are
+		missing. These functions are all very Unix specific
+		and it is unlikely they will ever be properly
+		supported in a 100% Pure Java implementation. Perhaps
+		somebody should create a JNI/C package for Java called
+		posix which provides this functionality.
+	</UL>
+
+	<p><LI>The socket module is limited.
+
+	<p><LI>sys module
+
+	<UL>
+	    <LI>In JPython, the exception state
+	    (sys.exc_{type,value,traceback} and also what
+	    sys.exc_info() returns) isn't saved and restored across
+	    function calls. <I>JPython should be fixed in v1.1</I>
+		
+	    <p><LI>JPython ignores assignment to sys.stdin. In
+	    CPython, this affects raw_input() and input() but not the
+	    interactive interpreter. <I>JPython should be fixed in
+	    v1.1</I>
+
+	    <p><LI>sys.exit(&lt;Arbitrary Object&gt;) doesn't work in
+	    JPython. In CPython, this prints the str() of the object
+	    and exits with status code 1, except if the object is
+	    None, which is equivalent to sys.exit() or sys.exit(0). In
+	    JPython, this complains about the object's
+	    type. <I>JPython should be fixed in v1.0.1</I>
+		
+	    <p><LI>JPython missing attributes __stderr__, __stdin__,
+	    __stdout__, builtin_module_names, exc_type, exec_prefix,
+	    exitfunc, setprofile, settrace. <I>JPython should be fixed
+	    in v1.1</I>
+
+	    <p><LI>Also missing executable, getrefcount,
+	    setcheckinterval which don't make much sense for JPython.
+	    
+	    <p><LI>JPython adds the function add_package to deal with
+	    Java packages. CPython will probably never have this
+	    function.
+	</UL>
+
+	<p><LI>thread module
+	<UL>
+	    <LI>CPython's thread module defines LockType. <I>JPython
+	    should be fixed in v1.0.1</I>
+
+	    <p><LI>CPython's thread modules defines some aliases that
+	    JPython's doesn't. <I>These aliases are considered
+	    obsolete and won't be supported by JPython.</I>
+	</UL>
+</UL>
+
+<h3>Interpreter and environment</h3>
+
+<UL>
+	<p><LI>JPython doesn't catch interrupts. <I>Only fixable with
+	a GUI console - probably standard in v1.1.</I>
+
+	<p><LI>JPython doesn't have command line editing. <I>Only
+	fixable with a GUI console - probably standard in v1.1.</I>
+
+	<p><LI>JPython doesn't import &quot;site&quot; on
+	startup. This is a standard module that tries to import
+	sitecustomize which a site could use to customize
+	things. Should also have a feature similar to $PYTHONSTARTUP,
+	which specifies a script to run at the start of *interactive*
+	mode only. <I>JPython should be fixed in v1.1</I>
+	
+	<p><LI>JPython supports fewer command line options than
+	CPython, e.g. it doesn't support &quot;-c command&quot;. It
+	also has a different convention for indicating non-interactive
+	standard input (the Java runtime needs help). <I>It is still
+	unclear what set of command line options will be supported in
+	JPython-1.1.</I>
+</UL>
+
+</TD><!-- end of body cell -->
+</TR><!-- end of sidebar/body row -->
+</TABLE><!-- end of page table -->
+</BODY></HTML>

@@ -1,0 +1,42 @@
+Title: Compiling JPython
+
+<h3>Compiling JPython</h3>
+
+<P>Most users of JPython will never be required to look at the
+contents of the src directory, or try and recompile any of the files
+in the org.python package. All of these files have been precompiled in
+jpython.jar.</P>
+
+<P>For those people who do want to rebuild JPython from the source,
+for whatever reason, the following offers a few tips to keep in
+mind.</P>
+
+<P>The source to many of the classes in the org.python.parser package
+are not distributed with JPython. These classes are produced from the
+file &quot;python.jjt&quot; using the excellent
+<A HREF="http://www.metamata.com/javacc/">JavaCC</A> parser generator
+tool. When rebuilding JPython from source you have two options for
+generating these classes:
+
+<OL>
+    <LI>Copy all of the .class files from jpython.jar into src. Then
+	only rebuild those files in packages other than
+	org.python.parser. This is the recommended choice unless you
+	explicitly want to experiment with the JPython
+	grammar/parser.
+	
+    <LI>Get <A HREF="http://www.metamata.com/javacc/">JavaCC</A>v0.7.1. 
+	Run jjtree on python.jjt, and then run javacc on the resulting
+	python.jj. This should produce all of the required source
+	files to build the org.python.parser package.
+</OL>
+
+<P></P>
+
+<P>The file in src/installer/MakeScriptAction.java is only used by the
+JPython installer.  You should have no need to recompile this file
+unless you plan to build a new installer for JPython. This file
+depends on packages from 
+<A HREF="http://www.installshield.com/java">InstallShield Java
+Edition</A>, and you must have this software installed and in your
+CLASSPATH before you can rebuild this file.

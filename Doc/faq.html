@@ -1,0 +1,299 @@
+<HTML>
+<!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 16:34:13 1999 -->
+<!-- User-specified headers:
+Title: JPython FAQ
+
+-->
+
+<HEAD>
+<TITLE>JPython FAQ</TITLE>
+
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000"
+      TOPMARGIN="0" LEFTMARGIN="0" MARGINWIDTH="0" MARGINHEIGHT="0"
+      LINK="#0000bb"  VLINK="#551a8b"
+      ALINK="#ff0000">
+<!-- start of page table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=0>
+<!-- start of banner row -->
+<TR>
+<!-- start of corner cells -->
+<TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
+
+<center>
+    <a href="../">
+    <img border=0 src="../images/jpython-new-small.gif"></a></center> </TD>
+<TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of corner cells -->
+<!-- start of banner -->
+<TD WIDTH="90%" BGCOLOR="#cdb7b5">
+<!-- start of site links table -->
+<TABLE WIDTH="100%" BORDER=0
+CELLSPACING=0 CELLPADDING=2
+       COLS=2 ROWS=2 BGCOLOR="#ffffff">
+<TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../">Home</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="http://www.python.org/">www.python.org</a>
+    </TD>
+</TR><TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../download.html">Download</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../docs/"><b>Documentation</b></a>
+    </TD>
+</TR>
+</TABLE><!-- end of site links table -->
+
+</TD><!-- end of banner -->
+</TR><!-- end of banner row -->
+<TR><!-- start of sidebar/body row -->
+<!-- start of sidebar cells -->
+<TD WIDTH=150 VALIGN=TOP BGCOLOR="#cdb7b5">
+<!-- start of sidebar table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=3
+       BGCOLOR="#ffffff">
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Documentation
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="./">Overview</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="whatis.html">Executive Summary</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="interpreter.html">Invoking JPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="registry.html">JPython Registry</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="embedding.html">Embedding</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="compile.html">Compiling JPython from source</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Working with Java
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="usejava.html">The Basics</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="properties.html">JavaBean Properties</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jarray.html">Java arrays</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="subclassing.html">Subclassing</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Python Docs (exits)
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/tut/tut.html">Python Tutorial</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/lib/lib.html">Library Reference</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Other
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="differences.html">JPython vs. CPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<b>JPython FAQ</b>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Email Us
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/">
+<center>
+    <img border=0 src="../images/PythonPoweredSmall.gif"></center>
+</A>
+</TD></TR>
+</TABLE><!-- end of sidebar table -->
+
+</TD>
+<TD WIDTH=15>&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of sidebar cell -->
+<!-- start of body cell -->
+<TD VALIGN=TOP WIDTH="90%"><BR>
+<h3>The JPython FAQ</h3>
+
+<ol>
+<li><b>What is JPython?</b>
+
+    <p>JPython is a new implementation of the Python programming
+    language which is designed to run on SUN's Java(tm) Platform.  It
+    consists of a compiler to compile Python source code down to Java
+    bytecodes which can run directly on a JVM, a set of support
+    libraries which are used by the compiled Java bytecodes, and extra
+    support to make it trivial to use Java packages from within
+    JPython.
+
+<p><li><b>Is JPython the same language as Python?</b>
+    <P>I'm eager to ensure that JPython remains as compatible with
+    CPython (the current implementation) as possible.  Nevertheless,
+    there are a number of differences between the two implementations
+    that are unlikely to go away.  These range from the trival -
+    JPython's code objects don't have a co_code attribute because they
+    don't have any Python bytecodes; to the significant - JPython uses
+    Java's true garbage collection rather than Python's reference
+    counting scheme.</P>
+
+    <P>Python has never really had much of a language definition
+    beyond it's current C-based implementation.  The existence of
+    JPython changes that for the first time and will hopefully lead to
+    a much clearer sense of what Python the language is; independent
+    of any specific implementation.  Stay tuned for more
+    details...</P>
+
+    <P>I've started working (with Guido's input) on preparing a
+    version of Python's regression test that would be appropriate for
+    new implementations of the language.  This is a good first step
+    towards defining what parts of Python are essential and which are
+    incidental.
+
+<p><li><b><A NAME="Supported Modules"></A>What parts of the Python
+    library are supported?</b>
+
+    <P>The good news is that the 1.0 beta 1 release of JPython
+    supports the large majority of the standard Python library.  The
+    bad news is that this has moved so rapidly I've been unable to
+    keep up with the documentation.</P>
+
+    <P>If you want to use a standard Python module, just try importing
+    it.  If it that works you're probably all set.  You can also do a
+    dir on the modules to check the list of functions it
+    implements.</P>
+
+    <P>If there is some standard Python module that you have a real
+    need for that doesn't work with JPython yet, please send me mail
+    and I'll see what I can do about it.
+
+<p><li><b>How fast is JPython?</b>
+
+    <P>At IPC-6 I reported that I had speed equal to CPython 1.4 on
+    the pystone benchmark.  The current release doesn't include two of
+    the optimizations that I use in my own version of the system so it
+    will be about 15% slower than CPython 1.4.  These optimizations
+    will be added back into the distribution when I have time to test
+    them more carefully.  Finally, the 1.5 release of CPython is now
+    available.  Guido has succeeded in making this release about 2x
+    faster than the 1.4 release.  Therefore, JPython is currently
+    about 2.5x slower than CPython 1.5.</P>
+
+    <P>The speed of JPython is tied very tightly to the speed of the
+    underlying JVM.  The benchmark results that I report are all using
+    Microsoft's JVM from Internet Explorer 4.0.  The next fastest JVM
+    that I have used is almost a factor of 2 slower than this.  At
+    some point I'll want to collect a set of scores comparing PyStone
+    performance on a wider variety of JVM's.</P>
+
+    <P>Finally, pystone is not the last word in benchmarking.  At the
+    moment I'm much more concerned with making JPython complete and
+    correct than with performance.  After the 1.0 final release goes
+    out (early 1998) I will revisit performance issues both to examine
+    better benchmark's for comparing JPython and CPython (as well as
+    other scripting languages for the JVM) and work at optimizing
+    JPython's performance.
+
+<p><li><b>Why did I get an OutOfMemoryError?</b>
+
+    <P>If you are using SUN's Java VM (or a derived VM) the virtual
+    machine sets a default memory limit of 16 MB.  This can be very
+    confusing when you are running on a machine with 128 MB of RAM and
+    you see an OutOfMemoryError after having used only 17 MB.</P>
+
+    <P>You can increase this memory limit by adding the following
+    switch to the call that invokes the Java VM (you need to modify
+    the jpython launch script):</P>
+
+<pre>
+    <B>jre -mx32m &lt;...&gt;</B>
+</pre>
+
+    <P>This will set your upper memory limit to 32 MB.  Obviously,
+    higher limits should be used if required by your program - and
+    supported by your computer..
+
+<p><li><b>Semantic Differences between JPython and CPython</b>
+
+    <P>There are several several differences between JPython and
+    CPython that wil probably never go away.  These differences are
+    primarily related to underlying differences between the C and Java
+    programming languages/environments.
+
+<p><UL>
+    <LI><em>JPython has true garbage collection - CPython uses
+    reference counting</em>
+
+    <br>This means that in JPython users don't need to worry about
+	creating circular references as these are guarnteed to be
+	collected properly.  On the other hand, users of JPython have
+	no guarantees of when an object will be finalized (short of
+	calling System.gc() to force garbage collection).
+	Theoretically, this might cause problems for users who were
+	depending on CPython's finalization timing to free limited
+	system resources.
+
+    <LI><em>Control-C can not be caught by JPython, but will exit the
+    shell completely</em>
+</UL>
+
+<p><li><b>What Parts of Python-1.5.1 Are Missing in JPython-1.0?</b>
+
+    <p><b>Core Features</b>
+
+    <UL>
+	<LI>It is not possible to reassign sys.stdin. This
+	will not be fixed until JPython-1.1.
+
+	<LI>Built-in exceptions are string-based and not class-based.
+	This corresponds to Python-1.4.  JPython-1.1 will implement
+	class-based exceptions for built-in exceptions.
+    </UL>
+
+    <p><b>Standard Modules</b>
+
+    <UL>
+	<li>Many of the standard modules are not implemented yet.
+	Many of those that are implemented are incomplete and/or
+	inefficient.  See <A HREF="#Supported Modules">What parts of
+	the Python library are supported?</A> for more
+	info.
+    </UL>
+</ol>
+
+</TD><!-- end of body cell -->
+</TR><!-- end of sidebar/body row -->
+</TABLE><!-- end of page table -->
+</BODY></HTML>

@@ -1,0 +1,86 @@
+Title: Properties
+
+<h3>Properties</h3>
+
+JPython uses JavaBean properties to make it easier to interact with
+most Java classes.  These properties can be used as normal object
+attributes, and can also be specified to the class constructor as
+keyword arguments (this idea is stolen from TkInter where it seems to
+work extremely well).
+
+<P>These properties are generated automatically using the JavaBean
+Introspector which identifies properties either from common design
+patterns, or from explicitly specified BeanInfo.
+
+<P>As a first example, consider the case where you wish to create a
+button that is disabled.
+
+<P>The first example shows how you would do this in the typical Java fashion:
+
+<pre>
+b = awt.Button()
+b.setEnabled(0)
+</pre>
+
+The second example shows how enabled can be set as a property:
+
+<pre>
+b = awt.Button()
+b.enabled = 0
+</pre>
+
+The final example sets this property at instantiation time using a keyword
+argument:
+
+<pre>
+b = awt.Button(enabled=0)
+</pre>
+
+<h3>Tuples</h3>
+
+If the value of a property is specified as a tuple, then the property
+will be created by applying the constructor for the type of the
+property to the tuple.  This is particularly handy for specifying
+sizes:
+
+<pre>
+frame = awt.Frame(size=(500,100))
+</pre>
+
+It can also be handy for specifying color as an RGB triple:
+
+<pre>frame.background = 255,255,0</pre>
+
+will set the background color of the frame to yellow.
+
+<h3>Event Properties</h3>
+
+In standard Java, the event handlers for a widget are specified by
+passing in an instance of a class that implements the appropriate
+interface.  This is the only reasonable approach to take in a language
+that doesn't have first-class functions.  In JPython, for every event
+listener supported by a class, there will be a property added to the
+class for each method supplied by the event listener class.  These
+properties can be set to give a function to be called when the
+appropriate event occurs.
+
+<P>The standard Java style for setting an event listener is shown below:
+
+<pre>
+class action(awt.event.ActionListener):
+    def actionPerformed(self,event):
+        java.lang.System.exit(0)
+
+button = awt.Button("Close Me!")
+button.addActionListener(action())
+</pre>
+
+This can be written in a more Pythonesque (and compact) style by using
+event properties as follows:
+
+<pre>
+def exit(event):
+    java.lang.System.exit(0)
+
+button = awt.Button("Close Me!", actionPerformed=exit)
+</pre>

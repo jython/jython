@@ -1,13 +1,13 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 16:34:13 1999 -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Apr 15 17:43:36 1999 -->
 <!-- User-specified headers:
-Title: Embedding JPython
+Title: What is JPython?
 
 -->
 
 <HEAD>
-<TITLE>Embedding JPython</TITLE>
+<TITLE>What is JPython?</TITLE>
 
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000"
@@ -64,7 +64,7 @@ Documentation
 <A HREF="./">Overview</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<A HREF="whatis.html">Executive Summary</A>
+<b>Executive Summary</b>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="interpreter.html">Invoking JPython</A>
@@ -73,7 +73,7 @@ Documentation
 <A HREF="registry.html">JPython Registry</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
-<b>Embedding</b>
+<A HREF="embedding.html">Embedding</A>
 </TD></TR>
 <TR><TD BGCOLOR="#cdb7b5">
 <A HREF="compile.html">Compiling JPython from source</A>
@@ -146,46 +146,68 @@ Email Us
 <!-- end of sidebar cell -->
 <!-- start of body cell -->
 <TD VALIGN=TOP WIDTH="90%"><BR>
-<h3>Embedding JPython</h3>
+<h3>What is JPython?</h3>
 
-<P>There are several options for embedding JPython in a Java
-application.  Sometimes the nicest approach is to make a real Java
-class out of a Python class and then just use that Python class from
-Java code.  The simplest approach to embedding JPython is to use the
-PythonInterpreter object.</P>
+<P>JPython is an implementation of the high-level, dynamic,
+object-oriented language <A HREF="http://www.python.org">Python</A>
+seamlessly integrated with the
+<A HREF="http://www.javasoft.com">Java</A> platform and certified as
+<A HREF="http://www.javasoft.com/100percent/">100% Pure Java</A>.
+JPython
+is freely available for both commercial and non-commercial use and is
+distributed with source code. JPython is complementary to Java and is
+especially suited for the following tasks:</P>
 
-<P>JavaDoc documentation for 
-<A HREF="api/org.python.util.PythonInterpreter.html">
-org.python.util.PythonInterpreter</A>
-<BR>
-The following example is distributed under Demo/embed/SimpleEmbedded.java
+<UL>
+    <LI><B>Embedded scripting</B> - Java programmers can add the
+        JPython libraries to their system to allow end users
+	to write simple or complicated scripts that add functionality
+	to the application. Since JPython is certified
+	<A HREF="http://www.javasoft.com/100percent/">100% Pure Java</A>,
+	it can be added to an application without fear of compromising
+	its ability to run on all Java platforms.
 
-<hr>
-<pre>
-import org.python.util.PythonInterpreter; 
-import org.python.core.*; 
+    <LI><B>Interactive experimentation</B> - JPython provides an
+	interactive interpreter that can be used to interact with Java
+	packages or with running Java applications. This allows
+	programmers to experiment and debug any Java system using
+	JPython.
 
-public class SimpleEmbedded { 
-    public static void main(String []args)
-	throws PyException
-    { 
-	PythonInterpreter interp =
-	    new PythonInterpreter();
+    <LI><B>Rapid application development</B> - Python
+	programs are typically 2-10X shorter than the equivalent Java
+	program. This translates directly to increased programmer
+	productivity. The seamless interaction between Python and Java
+	allows developers to freely mix the two languages both during
+	development and in shipping products.
+</UL>
 
-	System.out.println("Hello, brave new world");
-	interp.exec("import sys");
-	interp.exec("print sys");
+<P>There are numerous
+<A HREF="http://grunge.cs.tu-berlin.de/~tolk/vmlanguages.html">
+alternative languages</A>
+implemented for the Java VM. The following features help to separate
+JPython from the rest:</P>
 
-	interp.set("a", new PyInteger(42));
-	interp.exec("print a");
-	interp.exec("x = 2+2");
-	PyObject x = interp.get("x");
+<UL>
+    <LI><B>Dynamic compilation to Java bytecodes</B> - leads to
+    highest possible performance without sacrificing interactivity.
 
-	System.out.println("x: "+x);
-	System.out.println("Goodbye, cruel world");
-    }
-}
-</pre>
+    <LI><B>Ability to extend existing Java classes in JPython</B> -
+    allows effective use of abstract classes.
+
+    <LI><B>Optional static compilation</B> - allows creation of
+	applets, servlets, beans, ...
+
+    <LI><B>100% Pure Java Certification</B> - provides assurance that
+	JPython won't compromise the portability of your application.
+
+    <LI><B>Bean Properties</B> - make use of Java packages much easier.
+
+    <LI><B><A HREF="http://www.python.org/doc/Summary.html">
+	Python Language</A></B> - combines remarkable power with
+	very clear syntax. It also supports a full object-oriented
+	programming model which makes it a natural fit for Java's OO
+	design.
+</UL>
 
 </TD><!-- end of body cell -->
 </TR><!-- end of sidebar/body row -->

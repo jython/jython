@@ -1,69 +1,237 @@
 <HTML>
+<!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Apr 15 17:43:33 1999 -->
+<!-- User-specified headers:
+Title: Properties
+
+-->
+
 <HEAD>
-   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-   <META NAME="Author" CONTENT="Jim Hugunin">
-   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (WinNT; I) [Netscape]">
-   <TITLE>Properties</TITLE>
+<TITLE>Properties</TITLE>
+
 </HEAD>
-<BODY>
+<BODY BGCOLOR="#ffffff" TEXT="#000000"
+      TOPMARGIN="0" LEFTMARGIN="0" MARGINWIDTH="0" MARGINHEIGHT="0"
+      LINK="#0000bb"  VLINK="#551a8b"
+      ALINK="#ff0000">
+<!-- start of page table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=0>
+<!-- start of banner row -->
+<TR>
+<!-- start of corner cells -->
+<TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
-<H1>
-Properties</H1>
-JPython uses JavaBean properties to make it easier to interact with most
-Java classes.&nbsp; These properties can be used as normal object attributes,
-and can also be specified to the class constructor as keyword arguments
-(this idea is stolen from TkInter where it seems to work extremely well).
+<center>
+    <a href="../">
+    <img border=0 src="../images/jpython-new-small.gif"></a></center> </TD>
+<TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of corner cells -->
+<!-- start of banner -->
+<TD WIDTH="90%" BGCOLOR="#cdb7b5">
+<!-- start of site links table -->
+<TABLE WIDTH="100%" BORDER=0
+CELLSPACING=0 CELLPADDING=2
+       COLS=2 ROWS=2 BGCOLOR="#ffffff">
+<TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../">Home</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="http://www.python.org/">www.python.org</a>
+    </TD>
+</TR><TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../download.html">Download</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../docs/"><b>Documentation</b></a>
+    </TD>
+</TR>
+</TABLE><!-- end of site links table -->
 
-<P>These properties are generated automatically using the JavaBean Introspector
-which identifies properties either from common design patterns, or from
-explicitly specified BeanInfo.
+</TD><!-- end of banner -->
+</TR><!-- end of banner row -->
+<TR><!-- start of sidebar/body row -->
+<!-- start of sidebar cells -->
+<TD WIDTH=150 VALIGN=TOP BGCOLOR="#cdb7b5">
+<!-- start of sidebar table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=3
+       BGCOLOR="#ffffff">
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Documentation
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="./">Overview</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="whatis.html">Executive Summary</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="interpreter.html">Invoking JPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="registry.html">JPython Registry</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="embedding.html">Embedding</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="compile.html">Compiling JPython from source</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Working with Java
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="usejava.html">The Basics</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<b>JavaBean Properties</b>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jarray.html">Java arrays</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="subclassing.html">Subclassing</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Python Docs (exits)
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/tut/tut.html">Python Tutorial</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/lib/lib.html">Library Reference</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Other
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="differences.html">JPython vs. CPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="faq.html">JPython FAQ</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Email Us
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/">
+<center>
+    <img border=0 src="../images/PythonPoweredSmall.gif"></center>
+</A>
+</TD></TR>
+</TABLE><!-- end of sidebar table -->
 
-<P>As a first example, consider the case where you wish to create a button
-that is disabled.
+</TD>
+<TD WIDTH=15>&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of sidebar cell -->
+<!-- start of body cell -->
+<TD VALIGN=TOP WIDTH="90%"><BR>
+<h3>Properties</h3>
+
+JPython uses JavaBean properties to make it easier to interact with
+most Java classes.  These properties can be used as normal object
+attributes, and can also be specified to the class constructor as
+keyword arguments (this idea is stolen from TkInter where it seems to
+work extremely well).
+
+<P>These properties are generated automatically using the JavaBean
+Introspector which identifies properties either from common design
+patterns, or from explicitly specified BeanInfo.
+
+<P>As a first example, consider the case where you wish to create a
+button that is disabled.
 
 <P>The first example shows how you would do this in the typical Java fashion:
-<UL><TT>b = awt.Button()</TT>
-<BR><TT>b.setEnabled(0)</TT></UL>
+
+<pre>
+b = awt.Button()
+b.setEnabled(0)
+</pre>
+
 The second example shows how enabled can be set as a property:
-<UL><TT>b = awt.Button()</TT>
-<BR><TT>b.enabled = 0</TT></UL>
+
+<pre>
+b = awt.Button()
+b.enabled = 0
+</pre>
+
 The final example sets this property at instantiation time using a keyword
 argument:
-<UL><TT>b = awt.Button(enabled=0)</TT></UL>
 
-<H2>
-Tuples</H2>
-If the value of a property is specified as a tuple, then the property will
-be created by applying the constructor for the type of the property to
-the tuple.&nbsp; This is particularly handy for specifying sizes:
-<UL><TT>frame = awt.Frame(size=(500,100))</TT></UL>
+<pre>
+b = awt.Button(enabled=0)
+</pre>
+
+<h3>Tuples</h3>
+
+If the value of a property is specified as a tuple, then the property
+will be created by applying the constructor for the type of the
+property to the tuple.  This is particularly handy for specifying
+sizes:
+
+<pre>
+frame = awt.Frame(size=(500,100))
+</pre>
+
 It can also be handy for specifying color as an RGB triple:
-<UL><TT>frame.background = 255,255,0</TT></UL>
+
+<pre>frame.background = 255,255,0</pre>
+
 will set the background color of the frame to yellow.
-<H2>
-Event Properties</H2>
-In standard Java, the event handlers for a widget are specified by passing
-in an instance of a class that implements the appropriate interface.&nbsp;
-This is the only reasonable approach to take in a language that doesn't
-have first-class functions.&nbsp; In JPython, for every event listener
-supported by a class, there will be a property added to the class for each
-method supplied by the event listener class.&nbsp; These properties can
-be set to give a function to be called when the appropriate event occurs.
+
+<h3>Event Properties</h3>
+
+In standard Java, the event handlers for a widget are specified by
+passing in an instance of a class that implements the appropriate
+interface.  This is the only reasonable approach to take in a language
+that doesn't have first-class functions.  In JPython, for every event
+listener supported by a class, there will be a property added to the
+class for each method supplied by the event listener class.  These
+properties can be set to give a function to be called when the
+appropriate event occurs.
 
 <P>The standard Java style for setting an event listener is shown below:
-<BR>&nbsp;
-<UL><TT>class action(awt.event.ActionListener):</TT>
-<BR><TT>&nbsp;&nbsp;&nbsp; def actionPerformed(self,event):</TT>
-<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; java.lang.System.exit(0)</TT><TT></TT>
 
-<P><TT>button = awt.Button("Close Me!")</TT>
-<BR><TT>button.addActionListener(action())</TT></UL>
+<pre>
+class action(awt.event.ActionListener):
+    def actionPerformed(self,event):
+        java.lang.System.exit(0)
+
+button = awt.Button("Close Me!")
+button.addActionListener(action())
+</pre>
+
 This can be written in a more Pythonesque (and compact) style by using
 event properties as follows:
-<UL><TT>def exit(event):</TT>
-<BR><TT>&nbsp;&nbsp;&nbsp; java.lang.System.exit(0)</TT><TT></TT>
 
-<P><TT>button = awt.Button("Close Me!", actionPerformed=exit)</TT></UL>
+<pre>
+def exit(event):
+    java.lang.System.exit(0)
 
-</BODY>
-</HTML>
+button = awt.Button("Close Me!", actionPerformed=exit)
+</pre>
+
+</TD><!-- end of body cell -->
+</TR><!-- end of sidebar/body row -->
+</TABLE><!-- end of page table -->
+</BODY></HTML>

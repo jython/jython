@@ -1,0 +1,70 @@
+Title: JPython Documentation
+Links: links.h doclinks.h moredoclinks.h
+
+<h3>JPython Documentation</h3>
+
+<P>There is a variety of documentation available to help you learn to
+use JPython.</P>
+
+<P>For a one-page introduction to what JPython is and why you should
+care, check out <A HREF="whatis.html"><em>What is
+JPython?</em></A>.</P>
+
+<H3>General Python Documentation</H3>
+
+<BLOCKQUOTE>
+    <P>While JPython has only been publically available for eight
+    months, the Python language has been around for many
+    years. The majority of the
+    <A HREF="http://www.python.org/doc/">standard Python
+    documentation</A> applies to JPython.  A few good places to
+    start are:</P>
+
+    <UL>
+        <LI><A HREF="http://www.python.org/doc/tut/tut.html">Tutorial</A>
+	(<b>start here</b>)
+	<LI><A HREF="http://www.python.org/doc/lib/lib.html">
+	Library Reference</A> (many modules not yet implemented)
+    </UL>
+</BLOCKQUOTE>
+
+<H3>JPython Specific Documentation</H3>
+
+<BLOCKQUOTE>
+    <P>JPython has its own documentation for features that it adds to
+    the base Python language. This documentation covers the JPython
+    tools and Java integration.</P>
+
+    <UL>
+	<LI><A HREF="docs/">JPython Docs</A>
+	<LI><A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">Paper on JPython</A> for IPC-6
+    </UL>
+</BLOCKQUOTE>
+
+<H3>Informal Documentation</H3>
+
+<BLOCKQUOTE>
+    <P>Less formal - but equally valuable - documentation can be found in:</P>
+
+    <UL>
+	<LI><A HREF="differences.html">Differences between JPython and
+	    CPython</A>
+	<LI><A HREF="faq.html">JPython FAQ</A>
+	<LI><A HREF="http://www.python.org/pipermail/jpython-interest.html">Archives of the JPython mailing list</A>
+    </UL>
+</BLOCKQUOTE>
+
+<H3>Peer-to-Peer Help</H3>
+
+<BLOCKQUOTE>
+    <P>If you still have unanswered questions you can usually get help
+    from:</P>
+
+    <UL>
+	<LI><A HREF="http://www.python.org/mailman/listinfo/jpython-interest">
+	    jpython-interest</A> mailing list
+	<LI><A HREF="news:comp.lang.python">comp.lang.python</A> newsgroup
+	<LI>JPython's developers can be reached at
+	    <A HREF="mailto:jpython@python.org">jpython@python.org</A>
+    </UL>
+</BLOCKQUOTE>

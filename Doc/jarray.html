@@ -1,85 +1,241 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <HTML>
+<!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 16:34:15 1999 -->
+<!-- User-specified headers:
+Title: Java Arrays in JPython
+
+-->
 
 <HEAD>
-	<META NAME="GENERATOR" Content="Visual Page 1.0 for Windows">
-	<META HTTP-EQUIV="Content-Type" CONTENT="text/html;CHARSET=iso-8859-1">
-	<TITLE>Java Arrays in JPython</TITLE>
+<TITLE>Java Arrays in JPython</TITLE>
+
 </HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000"
+      TOPMARGIN="0" LEFTMARGIN="0" MARGINWIDTH="0" MARGINHEIGHT="0"
+      LINK="#0000bb"  VLINK="#551a8b"
+      ALINK="#ff0000">
+<!-- start of page table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=0>
+<!-- start of banner row -->
+<TR>
+<!-- start of corner cells -->
+<TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
-<BODY>
+<center>
+    <a href="../">
+    <img border=0 src="../images/jpython-new-small.gif"></a></center> </TD>
+<TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of corner cells -->
+<!-- start of banner -->
+<TD WIDTH="90%" BGCOLOR="#cdb7b5">
+<!-- start of site links table -->
+<TABLE WIDTH="100%" BORDER=0
+CELLSPACING=0 CELLPADDING=2
+       COLS=2 ROWS=2 BGCOLOR="#ffffff">
+<TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../">Home</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="http://www.python.org/">www.python.org</a>
+    </TD>
+</TR><TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../download.html">Download</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../docs/"><b>Documentation</b></a>
+    </TD>
+</TR>
+</TABLE><!-- end of site links table -->
 
-<H2 ALIGN="CENTER">Java Arrays in JPython - JArray</H2>
-<P>Many Java methods require Java array objects as arguments.&nbsp; The way that these arguments are used means
-that they must correspond to fixed-length, mutable sequences, sometimes of primitive data types.&nbsp; The PyArray
-class is added to support these Java arrays and instances of this class will be automatically returned from any
-Java method call that produces an array.&nbsp; In addition, the &quot;jarray&quot; module is provided to allow
-users of JPython to create these arrays themselves, primarily for the purpose of passing them to a Java method.</P>
-
-<P>The jarray module exports two functions:</P>
-<P>array(sequence, type) <BR>
-zeros(length, type)</P>
-<P>array will create a new array of the same length as the input sequence and will populate it with the values
-in sequence.&nbsp; zeros will create a new array of the given length filled with zeros (or null's if appropriate).</P>
-<P>type can either be a single character typecode (using the same mappings as Python's array module) or it can
-be an instance of a JavaClass object.&nbsp; The valid typecodes are shown in the following table: <BR>
-&nbsp; <BR>
+</TD><!-- end of banner -->
+</TR><!-- end of banner row -->
+<TR><!-- start of sidebar/body row -->
+<!-- start of sidebar cells -->
+<TD WIDTH=150 VALIGN=TOP BGCOLOR="#cdb7b5">
+<!-- start of sidebar table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=3
+       BGCOLOR="#ffffff">
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Documentation
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="./">Overview</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="whatis.html">Executive Summary</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="interpreter.html">Invoking JPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="registry.html">JPython Registry</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="embedding.html">Embedding</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="compile.html">Compiling JPython from source</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Working with Java
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="usejava.html">The Basics</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="properties.html">JavaBean Properties</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<b>Java arrays</b>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="subclassing.html">Subclassing</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Python Docs (exits)
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/tut/tut.html">Python Tutorial</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/lib/lib.html">Library Reference</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Other
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="differences.html">JPython vs. CPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="faq.html">JPython FAQ</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Email Us
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
 &nbsp;
-<CENTER>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/">
+<center>
+    <img border=0 src="../images/PythonPoweredSmall.gif"></center>
+</A>
+</TD></TR>
+</TABLE><!-- end of sidebar table -->
 
-<TABLE BORDER="1" WIDTH="50%" COLS="2">
-	<TR>
-		<TH ALIGN="CENTER">Character Typecode</TH>
-		<TH>Corresponding Java Type</TH>
-	</TR>
-	<TR>
-		<TD>z</TD>
-		<TD>boolean</TD>
-	</TR>
-	<TR>
-		<TD>c</TD>
-		<TD>char</TD>
-	</TR>
-	<TR>
-		<TD>b</TD>
-		<TD>byte</TD>
-	</TR>
-	<TR>
-		<TD>h</TD>
-		<TD>short</TD>
-	</TR>
-	<TR>
-		<TD>i</TD>
-		<TD>int</TD>
-	</TR>
-	<TR>
-		<TD>l</TD>
-		<TD>long</TD>
-	</TR>
-	<TR>
-		<TD>f</TD>
-		<TD>float</TD>
-	</TR>
-	<TR>
-		<TD>d</TD>
-		<TD>double</TD>
-	</TR>
+</TD>
+<TD WIDTH=15>&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of sidebar cell -->
+<!-- start of body cell -->
+<TD VALIGN=TOP WIDTH="90%"><BR>
+<h3>Java Arrays in JPython - JArray</h3>
+
+Many Java methods require Java array objects as arguments.  The way
+that these arguments are used means that they must correspond to
+fixed-length, mutable sequences, so'metimes of primitive data types.
+The PyArray class is added to support these Java arrays and instances
+of this class will be automatically returned from any Java method call
+that produces an array.  In addition, the "jarray" module is provided
+to allow users of JPython to create these arrays themselves, primarily
+for the purpose of passing them to a Java method.
+
+<P>The jarray module exports two functions:
+
+<pre>
+array(sequence, type)
+zeros(length, type)
+</pre>
+
+<P>array will create a new array of the same length as the input
+sequence and will populate it with the values in sequence.  zeros will
+create a new array of the given length filled with zeros (or null's if
+appropriate).
+
+<P>type can either be a single character typecode (using the same mappings
+as Python's array module) or it can be an instance of a JavaClass object.
+The valid typecodes are shown in the following table:
+
+<p><TABLE BORDER COLS=2 WIDTH="50%">
+<TR>
+    <TH ALIGN=CENTER>Character Typecode</TH>
+    <TH>Corresponding Java Type</TH>
+</TR>
+<TR>
+    <TD>z</TD>
+    <TD>boolean</TD>
+</TR>
+<TR>
+    <TD>c</TD>
+    <TD>char</TD>
+</TR>
+<TR>
+    <TD>b</TD>
+    <TD>byte</TD>
+</TR>
+<TR>
+    <TD>h</TD>
+    <TD>short</TD>
+</TR>
+<TR>
+    <TD>i</TD>
+    <TD>int</TD>
+</TR>
+<TR>
+    <TD>l</TD>
+    <TD>long</TD>
+</TR>
+<TR>
+    <TD>f</TD>
+    <TD>float</TD>
+</TR>
+<TR>
+    <TD>d</TD>
+    <TD>double</TD>
+</TR>
 </TABLE>
-</CENTER>
-<H3>Example</H3>
-<PRE>&gt;&gt;&gt; from jarray import zeros, array
-&gt;&gt;&gt; array([1,2,3], 'd')
+
+
+</TD><!-- end of body cell -->
+</TR><!-- end of sidebar/body row -->
+</TABLE><!-- end of page table -->
+<!-- start of continued wide-body text -->
+
+<h3>Example</h3>
+
+<PRE>
+>>> from jarray import zeros, array
+>>> array([1,2,3], 'd')
 array([1.0, 2.0, 3.0], double)
-&gt;&gt;&gt; zeros(3, 'f')
+>>> zeros(3, 'f')
 array([0.0, 0.0, 0.0], float)
-&gt;&gt;&gt; from java.util import Hashtable
-&gt;&gt;&gt; array([Hashtable(), Hashtable()], Hashtable)
-array([&lt;java.util.Hashtable instance at 2045730&gt;, &lt;java.util.Hashtable instance at 2045714&gt;], java.util.Hashtable)
-&gt;&gt;&gt; zeros(5, Hashtable)
-array([None, None, None, None, None], java.util.Hashtable)</PRE>
-<P>This example show how to create an array of three specific doubles, a length-three array of floats, an array
-of two specific instance of java.util.Hashtable, and an empty array of java.util.Hashtable's.
+>>> from java.util import Hashtable
+>>> array([Hashtable(), Hashtable()], Hashtable)
+array([&lt;java.util.Hashtable instance at 2045730>, &lt;java.util.Hashtable instance at 2045714>], java.util.Hashtable)
+>>> zeros(5, Hashtable)
+array([None, None, None, None, None], java.util.Hashtable)
+</PRE>
 
-</BODY>
+This example show how to create an array of three specific doubles, a
+length-three array of floats, an array of two specific instance of
+java.util.Hashtable, and an empty array of java.util.Hashtable's.
 
-</HTML>
+<!-- end of continued wide-body text -->
+</BODY></HTML>

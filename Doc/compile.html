@@ -1,38 +1,193 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <HTML>
+<!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
+<!-- USING THE NEW HT2HTML SCRIPT: Thu Jun  3 16:34:11 1999 -->
+<!-- User-specified headers:
+Title: Compiling JPython
+
+-->
 
 <HEAD>
-	<META NAME="GENERATOR" Content="Visual Page 1.0 for Windows">
-	<META HTTP-EQUIV="Content-Type" CONTENT="text/html;CHARSET=iso-8859-1">
-	<TITLE>untitled</TITLE>
+<TITLE>Compiling JPython</TITLE>
+
 </HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000"
+      TOPMARGIN="0" LEFTMARGIN="0" MARGINWIDTH="0" MARGINHEIGHT="0"
+      LINK="#0000bb"  VLINK="#551a8b"
+      ALINK="#ff0000">
+<!-- start of page table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=0>
+<!-- start of banner row -->
+<TR>
+<!-- start of corner cells -->
+<TD WIDTH=150 VALIGN=CENTER BGCOLOR="#cdb7b5">
 
-<BODY>
+<center>
+    <a href="../">
+    <img border=0 src="../images/jpython-new-small.gif"></a></center> </TD>
+<TD WIDTH=15 BGCOLOR="#cdb7b5">&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of corner cells -->
+<!-- start of banner -->
+<TD WIDTH="90%" BGCOLOR="#cdb7b5">
+<!-- start of site links table -->
+<TABLE WIDTH="100%" BORDER=0
+CELLSPACING=0 CELLPADDING=2
+       COLS=2 ROWS=2 BGCOLOR="#ffffff">
+<TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../">Home</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="http://www.python.org/">www.python.org</a>
+    </TD>
+</TR><TR>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../download.html">Download</a>
+    </TD>
+    <TD BGCOLOR="#cdb7b5">
+<a href="../docs/"><b>Documentation</b></a>
+    </TD>
+</TR>
+</TABLE><!-- end of site links table -->
 
-<H2 ALIGN="CENTER">Compiling JPython</H2>
-<P>Most users of JPython will never be required to look at the contents of the src directory, or try and recompile
-any of the files in the org.python package. All of these files have been precompiled in jpython.jar.</P>
-<P>For those people who do want to rebuild JPython from the source, for whatever reason, the following offers a
-few tips to keep in mind.</P>
-<P>The source to many of the classes in the org.python.parser package are not distributed with JPython. These classes
-are produced from the file &quot;python.jjt&quot; using the excellent <A HREF="http://www.metamata.com/javacc/">JavaCC</A>
-parser generator tool. When rebuilding JPython from source you have two options for generating these classes:
+</TD><!-- end of banner -->
+</TR><!-- end of banner row -->
+<TR><!-- start of sidebar/body row -->
+<!-- start of sidebar cells -->
+<TD WIDTH=150 VALIGN=TOP BGCOLOR="#cdb7b5">
+<!-- start of sidebar table -->
+<TABLE WIDTH="100%" BORDER=0 CELLSPACING=0 CELLPADDING=3
+       BGCOLOR="#ffffff">
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Documentation
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="./">Overview</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="whatis.html">Executive Summary</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="interpreter.html">Invoking JPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="registry.html">JPython Registry</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="embedding.html">Embedding</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<b>Compiling JPython from source</b>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Working with Java
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="usejava.html">The Basics</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="properties.html">JavaBean Properties</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jarray.html">Java arrays</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="subclassing.html">Subclassing</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="jpythonc.html">Building applets, servlets, beans...</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Python Docs (exits)
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/tut/tut.html">Python Tutorial</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/doc/lib/lib.html">Library Reference</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Other
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="differences.html">JPython vs. CPython</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="faq.html">JPython FAQ</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/pipermail/jpython-interest/">List Archives</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/workshops/1997-10/proceedings/hugunin.html">JPython paper</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">&nbsp;
+<TR><TD BGCOLOR="#660099"><B><FONT COLOR="#ffffff">
+Email Us
+</FONT></B></TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="mailto:jpython@python.org">jpython@python.org</A>
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+&nbsp;
+</TD></TR>
+<TR><TD BGCOLOR="#cdb7b5">
+<A HREF="http://www.python.org/">
+<center>
+    <img border=0 src="../images/PythonPoweredSmall.gif"></center>
+</A>
+</TD></TR>
+</TABLE><!-- end of sidebar table -->
+
+</TD>
+<TD WIDTH=15>&nbsp;&nbsp;</TD><!--spacer-->
+<!-- end of sidebar cell -->
+<!-- start of body cell -->
+<TD VALIGN=TOP WIDTH="90%"><BR>
+<h3>Compiling JPython</h3>
+
+<P>Most users of JPython will never be required to look at the
+contents of the src directory, or try and recompile any of the files
+in the org.python package. All of these files have been precompiled in
+jpython.jar.</P>
+
+<P>For those people who do want to rebuild JPython from the source,
+for whatever reason, the following offers a few tips to keep in
+mind.</P>
+
+<P>The source to many of the classes in the org.python.parser package
+are not distributed with JPython. These classes are produced from the
+file &quot;python.jjt&quot; using the excellent
+<A HREF="http://www.metamata.com/javacc/">JavaCC</A> parser generator
+tool. When rebuilding JPython from source you have two options for
+generating these classes:
 
 <OL>
-	<LI>Copy all of the .class files from jpython.jar into src. Then only rebuild those files in packages other than
-	org.python.parser. This is the recommended choice unless you explicitly want to experiment with the JPython grammar/parser.
-	<LI>Get <A HREF="http://www.metamata.com/javacc/">JavaCC </A>v0.7.1. Run jjtree on python.jjt, and then run javacc
-	on the resulting python.jj. This should produce all of the required source files to build the org.python.parser
-	package.
+    <LI>Copy all of the .class files from jpython.jar into src. Then
+	only rebuild those files in packages other than
+	org.python.parser. This is the recommended choice unless you
+	explicitly want to experiment with the JPython
+	grammar/parser.
+	
+    <LI>Get <A HREF="http://www.metamata.com/javacc/">JavaCC</A>v0.7.1. 
+	Run jjtree on python.jjt, and then run javacc on the resulting
+	python.jj. This should produce all of the required source
+	files to build the org.python.parser package.
 </OL>
 
 <P></P>
 
-<P>The file in src/installer/MakeScriptAction.java is only used by the JPython installer. You should have no need
-to recompile this file unless you plan to build a new installer for JPython. This file depends on packages from
-<A HREF="http://www.installshield.com/java">InstallShield Java Edition</A>, and you must have this software installed
-and in your CLASSPATH before you can rebuild this file.
+<P>The file in src/installer/MakeScriptAction.java is only used by the
+JPython installer.  You should have no need to recompile this file
+unless you plan to build a new installer for JPython. This file
+depends on packages from 
+<A HREF="http://www.installshield.com/java">InstallShield Java
+Edition</A>, and you must have this software installed and in your
+CLASSPATH before you can rebuild this file.
 
-</BODY>
-
-</HTML>
+</TD><!-- end of body cell -->
+</TR><!-- end of sidebar/body row -->
+</TABLE><!-- end of page table -->
+</BODY></HTML>
