@@ -118,7 +118,7 @@ class JavaProxy:
         self.name = name
         self.supername = supername
         self.methods = methods
-        self.issuperproxy = issuperproxy
+        self.issuperproxy = 0 #issuperproxy
 
         self.packages = self.properties = jast.Null
         self.modname = "foo"
