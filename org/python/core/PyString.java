@@ -759,24 +759,19 @@ public class PyString extends PySequence implements ClassDictInit
         do {
             char c = string.charAt(s);
             switch (c) {
-            case '\0':
-                if (s != n)
-                    throw Py.ValueError("null byte in argument for " +
-                                        "complex()");
-                if (!done)
-                    sw_error = true;
-                break;
-
             case '-':
                 sign = -1;
                 /* Fallthrough */
             case '+':
-                if (done)
+                if (done || s+1 == n) {
                     sw_error = true;
-                s++;
-                c = string.charAt(s);
-                if  (c == '\0' || c == '+' || c == '-' ||
-                           Character.isSpaceChar(c))
+                    break;
+                }
+                //  a character is guaranteed, but it better be a digit
+                //  or J or j
+                c = string.charAt(++s);  //  eat the sign character
+                                         //  and check the next
+                if  (!Character.isDigit(c) && c!='J' && c!='j')
                     sw_error = true;
                 break;
 
@@ -792,35 +787,32 @@ public class PyString extends PySequence implements ClassDictInit
                     y = sign * z;
                 }
                 got_im = true;
-                s++;
-                c = string.charAt(s);
+                done = got_re;
+                sign = 1;
+                s++; // eat the J or j 
+                break;
 
-                if  (c != '+' && c != '-')
-                    done = true;
+            case ' ':
+                while (s < n && Character.isSpaceChar(string.charAt(s)))
+                    s++;
+                if (s != n)
+                    sw_error = true;
                 break;
 
             default:
-                if (Character.isSpaceChar(c)) {
-                    while (s < n && Character.isSpaceChar(string.charAt(s)))
-                        s++;
-                    if (s != n)
-                        sw_error = true;
-                    else
-                        done = true;
-                    break;
-                }
-                c = string.charAt(s);
                 boolean digit_or_dot = (c == '.' || Character.isDigit(c));
-                if (done || !digit_or_dot) {
+                if (!digit_or_dot) {
                     sw_error = true;
                     break;
                 }
                 int end = endDouble(string, s);
                 z = Double.valueOf(string.substring(s, end)).doubleValue();
                 s=end;
-                c = string.charAt(s);
-                if  (c == 'J' || c == 'j') {
-                    break;
+                if (s < n) {
+                    c = string.charAt(s);
+                    if  (c == 'J' || c == 'j') {
+                        break;
+                    }
                 }
                 if  (got_re) {
                    sw_error = true;
@@ -830,8 +822,7 @@ public class PyString extends PySequence implements ClassDictInit
                 /* accept a real part */
                 x = sign * z;
                 got_re = true;
-                if (got_im)
-                    done = true;
+                done = got_im;
                 z = -1.0;
                 sign = 1;
                 break;
@@ -858,14 +849,15 @@ public class PyString extends PySequence implements ClassDictInit
                 continue;
             if (c == 'e' || c == 'E') {
                 if (s < n) {
-                    c = string.charAt(s++);
+                    c = string.charAt(s);
                     if (c == '+' || c == '-')
-                        continue;
+                        s++;
+                    continue;
                 }
             }
-            break;
+            return s-1;
         }
-        return s-1;
+        return s;
     }
 
     // Add in methods from string module
