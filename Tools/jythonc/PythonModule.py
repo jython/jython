@@ -207,7 +207,6 @@ class PythonInner:
 defaultProps = {
     "python.packages.paths": "",
     "python.packages.directories": "",
-    "python.options.classExceptions": "false",
     "python.options.showJavaExceptions": "true",
     }
 
