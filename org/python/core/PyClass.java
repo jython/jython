@@ -70,7 +70,7 @@ public class PyClass extends PyObject {
     			}
     		}
     		if (baseClass != null || interfaces.size() != 0) {
-    		    proxyClass = lookupProxy(baseClass, interfaces);
+    		    proxyClass = MakeProxies.makeProxy(baseClass, interfaces, __name__, __dict__);
     		}
     	}
     	//System.out.println("proxyClasses: "+proxyClasses+", "+proxyClasses[0]);
@@ -170,27 +170,5 @@ public class PyClass extends PyObject {
 	    Used when subclassing from java classes
 	*/
 	//private static Hashtable proxies = new Hashtable();
-	private static final String proxyPrefix = "org.python.proxies.";
-	private static int proxyNumber=0;
-	protected synchronized Class lookupProxy(Class c, Vector vinterfaces) {
-	    String[] interfaces = new String[vinterfaces.size()];
-	    for(int i=0; i<vinterfaces.size(); i++) {
-	        interfaces[i] = ((Class)vinterfaces.elementAt(i)).getName();
-	    }
-	    String proxyName = proxyPrefix+__name__+"$"+proxyNumber++;
-	    
-	    JavaMaker jm = new JavaMaker(c, interfaces, __name__, "foo", proxyName, __dict__);
-	    try {    
-	        jm.build();
-	        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    		jm.classfile.write(bytes);
-    		//String filename = "c:\\jpython\\test\\"+__name__+"$"+(proxyNumber-1)+".class";
-    		//System.out.println("filename: "+filename);
-    	    //bytes.writeTo(new java.io.FileOutputStream("c:\\jpython\\test\\"+proxyName+".class"));
-    		Class pc = BytecodeLoader.makeClass(jm.myClass, bytes.toByteArray());
-	        return pc;
-    	} catch (Exception exc) {
-    	    throw Py.JavaError(exc);
-    	} 
-	}
+
 }

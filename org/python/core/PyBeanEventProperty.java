@@ -49,11 +49,13 @@ public class PyBeanEventProperty extends PyReflectedField {
 
 	private static Hashtable adapterClasses = new Hashtable();
 	private static Class getAdapterClass(Class c) {
+	    //System.err.println("getting adapter for: "+c+", "+c.getName());
 		Object o = adapterClasses.get(c);
 		if (o != null) return (Class)o;
 		Class pc = Py.findClass("org.python.proxies."+c.getName()+"$Adapter");
 		if (pc == null) {
-		    pc = AdapterMaker.makeAdapter(c);
+    		//System.err.println("adapter not found for: "+"org.python.proxies."+c.getName()+"$Adapter");	    
+		    pc = MakeProxies.makeAdapter(c);
         }
         adapterClasses.put(c, pc);
 		return pc;
@@ -124,26 +126,3 @@ public class PyBeanEventProperty extends PyReflectedField {
 	}
 }
 
-class AdapterMaker {
-    public static Class makeAdapter(Class c) {
-    	ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		String name;
-		try {
-	        name = org.python.compiler.AdapterMaker.makeAdapter(c.getName(), bytes);
-	    } catch (Exception exc) {
-	        throw Py.JavaError(exc);
-	    }
-
-		Class pc = BytecodeLoader.makeClass(name, bytes.toByteArray());
-		String dir = Options.proxyCacheDirectory;
-		if (dir != null) {
-		    try {
-		        OutputStream file = org.python.compiler.ProxyMaker.getFile(dir, name);
-			    bytes.writeTo(file);
-			} catch (Throwable t) {
-			    // Allow caching to fail silently
-			}
-		}
-		return pc;
-    }
-}
