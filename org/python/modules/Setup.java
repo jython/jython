@@ -36,7 +36,6 @@ public class Setup
         "codeop",
         "pre:org.python.modules.re",
         "_sre",
-        "code",
         "synchronize",
         "cPickle",
         "cPickle_exceptions",
