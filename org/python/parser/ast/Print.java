@@ -6,18 +6,18 @@ import java.io.IOException;
 
 public class Print extends stmtType {
     public exprType dest;
-    public exprType[] value;
+    public exprType[] values;
     public boolean nl;
 
-    public Print(exprType dest, exprType[] value, boolean nl) {
+    public Print(exprType dest, exprType[] values, boolean nl) {
         this.dest = dest;
-        this.value = value;
+        this.values = values;
         this.nl = nl;
     }
 
-    public Print(exprType dest, exprType[] value, boolean nl, SimpleNode
+    public Print(exprType dest, exprType[] values, boolean nl, SimpleNode
     parent) {
-        this(dest, value, nl);
+        this(dest, values, nl);
         this.beginLine = parent.beginLine;
         this.beginColumn = parent.beginColumn;
     }
@@ -27,8 +27,8 @@ public class Print extends stmtType {
         sb.append("dest=");
         sb.append(dumpThis(this.dest));
         sb.append(", ");
-        sb.append("value=");
-        sb.append(dumpThis(this.value));
+        sb.append("values=");
+        sb.append(dumpThis(this.values));
         sb.append(", ");
         sb.append("nl=");
         sb.append(dumpThis(this.nl));
@@ -39,7 +39,7 @@ public class Print extends stmtType {
     public void pickle(DataOutputStream ostream) throws IOException {
         pickleThis(12, ostream);
         pickleThis(this.dest, ostream);
-        pickleThis(this.value, ostream);
+        pickleThis(this.values, ostream);
         pickleThis(this.nl, ostream);
     }
 
@@ -50,10 +50,10 @@ public class Print extends stmtType {
     public void traverse(VisitorIF visitor) throws Exception {
         if (dest != null)
             dest.accept(visitor);
-        if (value != null) {
-            for (int i = 0; i < value.length; i++) {
-                if (value[i] != null)
-                    value[i].accept(visitor);
+        if (values != null) {
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] != null)
+                    values[i].accept(visitor);
             }
         }
     }

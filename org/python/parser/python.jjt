@@ -18,12 +18,12 @@ options
 
 PARSER_BEGIN(PythonGrammar)
 package org.python.parser;
-import org.python.core.Py;
-import org.python.core.PyString;
 import org.python.parser.ast.modType;
 
 public class PythonGrammar 
 {
+    public IParserHost hostLiteralMkr;
+    
     void jjtreeOpenNodeScope(Node n) {
         Token t = getToken(1);
         jjtree.pushNodePos(t.beginLine, t.beginColumn);
@@ -36,34 +36,34 @@ public class PythonGrammar
     Object makeInt(String s, int radix) {
         if (s.endsWith("L") || s.endsWith("l")) {
             s = s.substring(0, s.length()-1);
-            return Py.newLong(new java.math.BigInteger(s, radix));
+            return hostLiteralMkr.newLong(new java.math.BigInteger(s, radix));
         }
         int ndigits = s.length();
         int i=0;
         while (i < ndigits && s.charAt(i) == '0')
             i++;
         if ((ndigits - i) > 11) {
-            return Py.newLong(new java.math.BigInteger(s, radix));
+            return hostLiteralMkr.newLong(new java.math.BigInteger(s, radix));
         }
 
         long l = Long.valueOf(s, radix).longValue();
         if (l > 0xffffffffl || (radix == 10 && l > Integer.MAX_VALUE)) {
-            return Py.newLong(new java.math.BigInteger(s, radix));
+            return hostLiteralMkr.newLong(new java.math.BigInteger(s, radix));
         }
-        return Py.newInteger((int) l);
+        return hostLiteralMkr.newInteger((int) l);
     }
 
     Object makeFloat(String s) {
-        return Py.newFloat(Double.valueOf(s).doubleValue());
+        return hostLiteralMkr.newFloat(Double.valueOf(s).doubleValue());
     }
 
     Object makeLong(String s) {
-        return new org.python.core.PyLong(s);
+        return hostLiteralMkr.newLong(s);
     }
 
     Object makeComplex(String s) {
         s = s.substring(0, s.length() - 1);
-        return Py.newImaginary(Double.valueOf(s).doubleValue());
+        return hostLiteralMkr.newImaginary(Double.valueOf(s).doubleValue());
     }
 
     String makeString(String s, int quotes) {
@@ -85,7 +85,7 @@ public class PythonGrammar
             int i=quotes+start;
             int last_i=i;
 
-            return PyString.decode_UnicodeEscape(s, i, n, "strict", ustring);
+            return hostLiteralMkr.decode_UnicodeEscape(s, i, n, "strict", ustring);
         }
     }
 
@@ -151,6 +151,20 @@ public class PythonGrammar
             return false;
         }
     }
+   
+   	// constructors taking a IParserHost impl
+   	
+   	public PythonGrammar(CharStream stream,IParserHost host) {
+   	    this(stream);
+   	    hostLiteralMkr = host;
+   	}
+   	
+   	public PythonGrammar(PythonGrammarTokenManager tm,
+   	                     IParserHost host)
+    {
+        this(tm);
+        hostLiteralMkr = host;
+   	}
     
 }
 

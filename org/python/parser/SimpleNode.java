@@ -1,7 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.parser;
 
-import org.python.core.PyObject;
 import org.python.parser.ast.*;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -182,7 +181,7 @@ public class SimpleNode implements Node {
         ostream.writeBoolean(b);
     }
 
-    protected void pickleThis(PyObject n, DataOutputStream ostream)
+    protected void pickleThis(Object n, DataOutputStream ostream)
         throws IOException
     {
         String s = n.toString();

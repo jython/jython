@@ -5,13 +5,13 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class Num extends exprType {
-    public org.python.core.PyObject n;
+    public Object n;
 
-    public Num(org.python.core.PyObject n) {
+    public Num(Object n) {
         this.n = n;
     }
 
-    public Num(org.python.core.PyObject n, SimpleNode parent) {
+    public Num(Object n, SimpleNode parent) {
         this(n);
         this.beginLine = parent.beginLine;
         this.beginColumn = parent.beginColumn;

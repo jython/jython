@@ -5,25 +5,25 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class ListComp extends exprType {
-    public exprType target;
+    public exprType elt;
     public listcompType[] generators;
 
-    public ListComp(exprType target, listcompType[] generators) {
-        this.target = target;
+    public ListComp(exprType elt, listcompType[] generators) {
+        this.elt = elt;
         this.generators = generators;
     }
 
-    public ListComp(exprType target, listcompType[] generators, SimpleNode
+    public ListComp(exprType elt, listcompType[] generators, SimpleNode
     parent) {
-        this(target, generators);
+        this(elt, generators);
         this.beginLine = parent.beginLine;
         this.beginColumn = parent.beginColumn;
     }
 
     public String toString() {
         StringBuffer sb = new StringBuffer("ListComp[");
-        sb.append("target=");
-        sb.append(dumpThis(this.target));
+        sb.append("elt=");
+        sb.append(dumpThis(this.elt));
         sb.append(", ");
         sb.append("generators=");
         sb.append(dumpThis(this.generators));
@@ -33,7 +33,7 @@ public class ListComp extends exprType {
 
     public void pickle(DataOutputStream ostream) throws IOException {
         pickleThis(33, ostream);
-        pickleThis(this.target, ostream);
+        pickleThis(this.elt, ostream);
         pickleThis(this.generators, ostream);
     }
 
@@ -42,8 +42,8 @@ public class ListComp extends exprType {
     }
 
     public void traverse(VisitorIF visitor) throws Exception {
-        if (target != null)
-            target.accept(visitor);
+        if (elt != null)
+            elt.accept(visitor);
         if (generators != null) {
             for (int i = 0; i < generators.length; i++) {
                 if (generators[i] != null)

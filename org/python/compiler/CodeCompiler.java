@@ -480,16 +480,16 @@ public class CodeCompiler extends Visitor
             printlnv = mrefs.print3;
         }
 
-        if (node.value == null || node.value.length == 0) {
+        if (node.values == null || node.values.length == 0) {
             if (node.dest != null)
                 code.aload(tmp);
             code.invokestatic(printlnv);
         } else {
-            for (int i = 0; i < node.value.length; i++) {
+            for (int i = 0; i < node.values.length; i++) {
                 if (node.dest != null)
                     code.aload(tmp);
-                visit(node.value[i]);
-                if (node.nl && i == node.value.length - 1) {
+                visit(node.values[i]);
+                if (node.nl && i == node.values.length - 1) {
                     code.invokestatic(println);
                 } else {
                     code.invokestatic(printcomma);
@@ -1950,7 +1950,7 @@ public class CodeCompiler extends Visitor
         set(new Name(tmp_append, Name.Store, node));
 
         stmtType n = new Expr(new Call(new Name(tmp_append, Name.Load, node), 
-                                       new exprType[] { node.target },
+                                       new exprType[] { node.elt },
                                        new keywordType[0], null, null, node),
                                             node);
 
@@ -2118,7 +2118,7 @@ public class CodeCompiler extends Visitor
         if (node.n instanceof PyInteger) {
             module.PyInteger(((PyInteger) node.n).getValue()).get(code);
         } else if (node.n instanceof PyLong) {
-            module.PyLong(node.n.__str__().toString()).get(code);
+            module.PyLong(((PyObject)node.n).__str__().toString()).get(code);
         } else if (node.n instanceof PyFloat) {
             module.PyFloat(((PyFloat) node.n).getValue()).get(code);
         } else if (node.n instanceof PyComplex) {

@@ -3,6 +3,14 @@ Jython NEWS
 xx-xxx-2003 Jython 2.2 alpha1
 
   New features
+   - Integrated patch (by Aleks Totic) that allows to use the Python parser
+     outside of Jython. PythonGrammar grows two constructors, one of which 
+     _must_ be used:
+        PythonGrammar(CharStream stream,IParserHost host)
+        PythonGrammar(PythonGrammarTokenManager tm, IParserHost host)
+     They both takes an impl of org.python.parser.IParserHost to which 
+     literal building is delegated. org.python.core.parser contains the
+     source of the impl used by Jython.
 
   Bug fixes.
 

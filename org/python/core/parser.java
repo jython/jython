@@ -10,6 +10,8 @@ import java.io.*;
  */
 
 public class parser {
+    
+    private static IParserHost literalMkrForParser = new LiteralMakerForParser();
 
     private parser() { ; }
 
@@ -82,7 +84,8 @@ public class parser {
     {
         BufferedReader bufreader = prepBufreader(istream, cflags);
         
-        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader));
+        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader),
+                                            literalMkrForParser);
 
         modType node = null;
         try {
@@ -103,7 +106,8 @@ public class parser {
         BufferedReader bufreader = prepBufreader(new StringBufferInputStream(string),
                                                  cflags);
         
-        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader));
+        PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader),
+                                            literalMkrForParser);
         
         g.token_source.partial = true;
         g.token_source.stdprompt = stdprompt;
@@ -227,4 +231,33 @@ class FixMacReaderBug extends FilterReader {
             l += off;
         return l;
     }
+}
+
+class LiteralMakerForParser implements IParserHost {
+
+       public Object newLong(String s) {
+               return Py.newLong(s);
+       }
+
+       public Object newLong(java.math.BigInteger i) {
+               return Py.newLong(i);
+       }
+
+       public Object newFloat(double v) {
+               return Py.newFloat(v);
+       }
+
+       public Object newImaginary(double v) {
+               return Py.newImaginary(v);
+       }
+
+       public Object newInteger(int i) {
+               return Py.newInteger(i);
+       }
+
+       public String decode_UnicodeEscape(
+               String str, int start, int end, String errors, boolean unicode) {
+                       return PyString.decode_UnicodeEscape(str, start, end, errors, unicode);
+       }
+
 }
