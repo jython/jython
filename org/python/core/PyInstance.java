@@ -447,18 +447,26 @@ public class PyInstance extends PyObject
     }
 
     public boolean __nonzero__() {
-        PyObject ret = invoke_ex("__nonzero__");
-        if (ret != null) {
-            return ret.__nonzero__();
+        PyObject meth = null;
+        try {
+            meth = __findattr__("__nonzero__");
+        } catch (PyException exc) { }
+
+        if (meth == null) {
+            // Copied form __len__()
+            CollectionProxy proxy = getCollection();
+            if (proxy != CollectionProxy.NoProxy) {
+                return proxy.__len__() != 0 ? true : false;
+            }
+            try {
+                meth = __findattr__("__len__");
+            } catch (PyException exc) { }
+            if (meth == null)
+                return true;
         }
 
-        try {
-            return __len__() == 0 ? false : true;
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError))
-                return true;
-            throw exc;
-        }
+        PyObject ret = meth.__call__();
+        return ret.__nonzero__();
     }
 
     private CollectionProxy collectionProxy=null;
