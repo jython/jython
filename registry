@@ -40,10 +40,25 @@ python.console.poll = false
 # non-public fields, methods, and constructors of Java objects.
 python.security.respectJavaAccessibility = true
 
-# Setting this can either add new modules to builtins or override package names
-# A good example would be to use a jni version of os for more functionality
-# Form is name:package -- if package is ommitted, org.python.modules is assumed
-# python.modules.builtin = os:com.foo.jni, binascii
+# Use this registry entry to control the list of builtin modules; you
+# can add, remove, or override builtin modules.  The value for this
+# registry key is a comma separated list of module entries, each entry 
+# of which has the following allowable forms:
+#
+# name
+#     The module name is `name' and the class name is
+#     org.python.modules.name
+#
+# name:class
+#     The module name is `name' and the class name is `class' where
+#     class must be a fully qualified Java class name
+#
+# name:null
+#     The module `name' is removed from the list of builtin modules
+#
+# A good example would be to use a jni version of os for more
+# functionality by having an entry such as os:com.foo.jni.os
+python.modules.builtin = md5:org.python.modules.MD5Module
 
 # This specifies the command used by jpythonc to compile Java source
 # code, along with the complete classpath to use.
