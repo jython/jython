@@ -70,6 +70,15 @@ public class SimpleNode implements Node
         return (children == null) ? 0 : children.length;
     }
 
+    public int getChildIndex(SimpleNode child) {
+        for (int i = 0; i < getNumChildren(); i++) {
+            if (getChild(i) == child) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public Object getInfo() { return info; }
 
     public void setInfo(Object o) {
