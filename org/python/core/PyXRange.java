@@ -11,7 +11,7 @@ Significant patches contributed by Jason Orendorff - jorendor@cbu.edu
 **/
 
 public class PyXRange extends PySequence {
-    int start, stop, step; // directly from xrange(start, stop, step)
+    public int start, stop, step; // directly from xrange(start, stop, step)
     int cycleLength;       // The length of an uncopied xrange
     int copies;            // The number of copies made (used to implement
                            // xrange(x,y,z)*n)
