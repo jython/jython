@@ -662,10 +662,10 @@ class zxAPITestCase(zxJDBCTestCase):
 		finally:
 			c.close()
 
-	def _test_time(self, (tabname, sql), factory, values, _type, _cmp=cmp):
+	def _test_time(self, (tabname, sql), factory, values, _type, _cmp=cmp, datahandler=None):
 		c = self.cursor()
+		if datahandler: c.datahandler = datahandler(c.datahandler)
 		try:
-
 			c.execute(sql)
 			dates = map(lambda x, f=factory: apply(f, x), values)
 			for a in dates:
@@ -682,8 +682,7 @@ class zxAPITestCase(zxJDBCTestCase):
 
 			c.execute("select * from %s" % (tabname))
 			f = c.fetchall()
-			assert len(f) == len(dates) - 1, "expected length [%d], got [%d]" % (len(dates) - 1, len(f))
-
+			self.assertEquals(len(f), len(dates) - 1)
 		finally:
 			c.execute("drop table %s" % (tabname))
 			c.close()
