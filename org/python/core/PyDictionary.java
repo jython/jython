@@ -83,7 +83,7 @@ public class PyDictionary extends PyObject implements InitModule
         PyList list = new PyList();
         String[] methods = {
             "clear", "copy", "get", "has_key", "items",
-            "keys", "update", "values"};
+            "keys", "update", "values", "setdefault" };
         for (int i = 0; i < methods.length; i++)
             list.append(new PyString(methods[i]));
         __methods__ = list;
@@ -255,6 +255,18 @@ public class PyDictionary extends PyObject implements InitModule
 
         for (int i=0; i<n; i++)
             table.put(ek.nextElement(), ev.nextElement());
+    }
+
+
+    public PyObject setdefault(PyObject key) {
+        return setdefault(key, Py.None);
+    }
+
+    public PyObject setdefault(PyObject key, PyObject failobj) {
+        PyObject o = __finditem__(key);
+        if (o == null)
+            __setitem__(key, o = failobj);
+        return o;
     }
 
     public PyList items() {

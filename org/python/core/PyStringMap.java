@@ -366,6 +366,17 @@ public class PyStringMap extends PyObject
         }
     }
 
+    public PyObject setdefault(PyObject key) {
+        return setdefault(key, Py.None);
+    }
+
+    public PyObject setdefault(PyObject key, PyObject failobj) {
+        PyObject o = __finditem__(key);
+        if (o == null)
+            __setitem__(key, o = failobj);
+        return o;
+    }
+
     public synchronized PyList items() {
         String[] keyTable = keys;
         PyObject[] valueTable = values;
