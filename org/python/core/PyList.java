@@ -1,77 +1,101 @@
 // Copyright © Corporation for National Research Initiatives
-package org.python.core;
 
+// Implementation of the standard Python list objects
+
+package org.python.core;
 import java.util.Vector;
+
 
 
 class ListFunctions extends PyBuiltinFunctionSet
 {
-//     public PyObject __call__() {
-//         switch(index) {
-//         case 4:
-//             return __builtin__.globals();
-//         default:
-//             throw argCountError(0);
-//         }
-//     }
-//     public PyObject __call__(PyObject arg1) {
-//         switch(index) {
-//         case 0:
-//             return Py.newString(__builtin__.chr(
-//                 Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
-//         case 1:
-//             return Py.newInteger(__builtin__.len(arg1));
-//         case 2:
-//             return __builtin__.range(
-//                 Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
-//         case 3:
-//             return Py.newInteger(__builtin__.ord(
-//                 Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
-//         case 5:
-//             return __builtin__.hash(arg1);
-//         case 7:
-//             return __builtin__.list(arg1);
-//         case 8:
-//             return __builtin__.tuple(arg1);
-//         default:
-//             throw argCountError(1);
-//         }
-//     }
+    ListFunctions(String name, int index, int argcount) {
+        super(name, index, argcount, argcount, true, null);
+    }
+
+    ListFunctions(String name, int index, int minargs, int maxargs) {
+        super(name, index, minargs, maxargs, true, null);
+    }
+
+    public PyObject __call__() {
+        PyList list = (PyList)__self__;
+        switch (index) {
+        case 1:
+            list.reverse();
+            return Py.None;
+        case 2:
+            list.sort(null);
+            return Py.None;
+        case 3:
+            return new PyInteger(list.__len__());
+        default:
+            throw argCountError(0);
+        }
+    }
+
+    public PyObject __call__(PyObject arg) {
+        PyList list = (PyList)__self__;
+        switch (index) {
+        case 2:
+            list.sort(arg);
+            return Py.None;
+        case 10:
+            list.append(arg);
+            return Py.None;
+        case 11:
+            return new PyInteger(list.count(arg));
+        case 12:
+            return new PyInteger(list.index(arg));
+        case 13:
+            list.remove(arg);
+            return Py.None;
+        case 14:
+            list.extend(arg);
+            return Py.None;
+        case 15:
+            return list.__add__(arg);
+        default:
+            throw argCountError(1);
+        }
+    }
 
     public PyObject __call__(PyObject arg1, PyObject arg2) {
-        switch(index) {
-        case 0:
-            ((PyList)arg1).append(arg2);
+        PyList list = (PyList)__self__;
+        switch (index) {
+        case 20:
+            int index = ((PyInteger)arg1).getValue();
+            list.insert(index, arg2);
             return Py.None;
         default:
             throw argCountError(2);
         }
     }
-
-//     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-//         switch(index) {
-//         case 2:
-//             return __builtin__.range(
-//                 Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
-//                 Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
-//                 Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
-//         default:
-//             throw argCountError(3);
-//         }
-//     }
 }
 
 
 
 public class PyList extends PySequence implements InitModule
 {
-    public void initModule(PyObject dict) {
-//         dict.__setitem__("append",
-//                          new ListFunctions().init("append", 0, 2, true) );
-    }
-    
     protected PyObject[] list;
     protected int length;
+    
+    public void initModule(PyObject dict) {
+        dict.__setitem__("reverse", new ListFunctions("reverse", 1, 0));
+        dict.__setitem__("sort", new ListFunctions("sort", 2, 0, 1));
+        dict.__setitem__("__len__", new ListFunctions("__len__", 3, 0));
+        dict.__setitem__("append", new ListFunctions("append", 10, 1));
+        dict.__setitem__("count", new ListFunctions("count", 11, 1));
+        dict.__setitem__("index", new ListFunctions("index", 12, 1));
+        dict.__setitem__("remove", new ListFunctions("remove", 13, 1));
+        dict.__setitem__("extend", new ListFunctions("extend", 14, 1));
+        dict.__setitem__("__add__", new ListFunctions("__add__", 15, 1));
+        dict.__setitem__("insert", new ListFunctions("insert", 20, 2));
+        // hide these from Python!
+        dict.__setitem__("initModule", null);
+        dict.__setitem__("repeat", null);
+        dict.__setitem__("toString", null);
+        dict.__setitem__("hashCode", null);
+    }
     
     public PyList() {
         this(Py.EmptyObjects);
@@ -212,7 +236,7 @@ public class PyList extends PySequence implements InitModule
         }
             
         StringBuffer buf = new StringBuffer("[");
-        for(int i=0; i<length-1; i++) {
+        for (int i=0; i<length-1; i++) {
             buf.append(((PyObject)list[i]).__repr__().toString());
             buf.append(", ");
         }
@@ -233,13 +257,13 @@ public class PyList extends PySequence implements InitModule
         length = n;
     }
 
-    public void append(PyObject o) {
+    void append(PyObject o) {
         resize(length+1);
         list[length-1] = o;
     }
 
-    public int count(PyObject o) {
-        int count=0;
+    int count(PyObject o) {
+        int count = 0;
         int n = length;
         PyObject[] list = this.list;
         for (int i=0; i<n; i++) {
@@ -249,7 +273,7 @@ public class PyList extends PySequence implements InitModule
         return count;
     }
 
-    public int index(PyObject o) {
+    int index(PyObject o) {
         int n = length;
         PyObject[] list = this.list;
         int i=0;
@@ -262,17 +286,17 @@ public class PyList extends PySequence implements InitModule
         return i;
     }
 
-    public void insert(int index, PyObject o) {
+    void insert(int index, PyObject o) {
         resize(length+1);
         System.arraycopy(list, index, list, index+1, length-index-1);
         list[index] = o;
     }
 
-    public void remove(PyObject o) {
+    void remove(PyObject o) {
         del(index(o));
     }
 
-    public void reverse() {
+    void reverse() {
         PyObject tmp;
         int n = length;
         PyObject[] list = this.list;
@@ -284,7 +308,7 @@ public class PyList extends PySequence implements InitModule
         }
     }
 
-    public PyObject pop() {
+    PyObject pop() {
         if (length==0) {
             throw Py.IndexError("pop from empty list");
         }
@@ -292,24 +316,25 @@ public class PyList extends PySequence implements InitModule
         return list[length];
     }
     
-    public void extend(PyObject o) {
+    void extend(PyObject o) {
         setslice(length, length, 1, o);
     }
 
 
-    /* Implementation is taken from Python 1.5 as written by Guido van Rossum
-       Port to Java is by Jim Hugunin
-       This function will almost certainly go away with the builtin sorting
-       provided by JDK 1.2 */
+    /* Implementation is taken from Python 1.5 as written by Guido van
+     * Rossum Port to Java is by Jim Hugunin.  This function will almost
+     * certainly go away with the builtin sorting provided by JDK 1.2
+     */
 
-    /* New quicksort implementation for arrays of object pointers.
-       Thanks to discussions with Tim Peters. */
+    /* New quicksort implementation for arrays of object pointers.  Thanks
+     * to discussions with Tim Peters.
+     */
 
     /* Comparison function.  Takes care of calling a user-supplied
-       comparison function (any callable Python object).  Calls the
-       standard comparison function, cmpobject(), if the user-supplied
-       function is NULL. */
-
+     * comparison function (any callable Python object).  Calls the
+     * standard comparison function, cmpobject(), if the user-supplied
+     * function is NULL.
+     */
     private static int docompare(PyObject x, PyObject y, PyObject compare) {
         if (compare == null)
             return x._cmp(y);
@@ -342,25 +367,27 @@ public class PyList extends PySequence implements InitModule
     }
 
     /* MINSIZE is the smallest array we care to partition; smaller arrays
-       are sorted using a straight insertion sort (above).  It must be at
-       least 2 for the quicksort implementation to work.  Assuming that
-       comparisons are more expensive than everything else (and this is a
-       good assumption for Python), it should be 10, which is the cutoff
-       point: quicksort requires more comparisons than insertion sort for
-       smaller arrays. */
+     * are sorted using a straight insertion sort (above).  It must be at
+     * least 2 for the quicksort implementation to work.  Assuming that
+     * comparisons are more expensive than everything else (and this is a
+     * good assumption for Python), it should be 10, which is the cutoff
+     * point: quicksort requires more comparisons than insertion sort for
+     * smaller arrays.
+     */
     private static final int MINSIZE = 10;
 
     /* STACKSIZE is the size of our work stack.  A rough estimate is that
-       this allows us to sort arrays of MINSIZE * 2**STACKSIZE, or large
-       enough.  (Because of the way we push the biggest partition first,
-       the worst case occurs when all subarrays are always partitioned
-       exactly in two.) */
+     * this allows us to sort arrays of MINSIZE * 2**STACKSIZE, or large
+     * enough.  (Because of the way we push the biggest partition first,
+     * the worst case occurs when all subarrays are always partitioned
+     * exactly in two.)
+     */
     private static final int STACKSIZE = 64;
 
     /* Quicksort algorithm.  If an exception occurred; in this
-       case we leave the array partly sorted but otherwise in good health
-       (i.e. no items have been removed or duplicated). */
-
+     * case we leave the array partly sorted but otherwise in good health
+     * (i.e. no items have been removed or duplicated).
+     */
     private static void quicksort(PyObject[] array, int off, int size,
                                   PyObject compare)
     {
@@ -384,16 +411,14 @@ public class PyList extends PySequence implements InitModule
             n = hi - lo;
             if (n < MINSIZE) {
                 /*
-                 * skip it.  The insertion sort at the end will
-                 * catch these
+                 * skip it.  The insertion sort at the end will catch these
                  */
                 continue;
             }
 
             /* Choose median of first, middle and last item as pivot */
-
-            l = lo + (n>>1); /* Middle */
-            r = hi - 1; /* Last */
+            l = lo + (n>>1);                 /* Middle */
+            r = hi - 1;                      /* Last */
 
             left = array[l]; right = array[lo];
             if (docompare(left, right, compare) < 0) {
@@ -443,7 +468,6 @@ public class PyList extends PySequence implements InitModule
                     break;
             }
 
-
             /* We have now reached the following conditions:
                lo <= r < l <= hi
                all x in [lo,r) are <= pivot
@@ -479,8 +503,7 @@ public class PyList extends PySequence implements InitModule
             /* Should assert top < STACKSIZE-1 */
         }
 
-        /*
-         * Ouch - even if I screwed up the quicksort above, the
+        /* Ouch - even if I screwed up the quicksort above, the
          * insertionsort below will cover up the problem - just a
          * performance hit would be noticable.
          */
@@ -489,26 +512,16 @@ public class PyList extends PySequence implements InitModule
         insertionsort(array, off, size, compare);
     }
 
-    // Future PyLists will probably have their own PyObject[]
-    // For now, we must copy one out of and back into the vector
-    public synchronized void sort(PyObject compare) {
-        /*
-          int n = __len__();
-          PyObject[] array = new PyObject[n];
-          int i;
-          for(i=0; i<n; i++)
-          array[i] = (PyObject)list.elementAt(i);
-        */
+    // Future PyLists will probably have their own PyObject[].  For now, we
+    // must copy one out of and back into the vector
+    synchronized void sort(PyObject compare) {
         quicksort(list, 0, length, compare);
-
-        /*for(i=0; i<n; i++)
-          list.setElementAt(array[i], i);*/
     }
 
-    public void sort() {
+    void sort() {
         sort(null);
     }
-        
+
     // __class__ boilerplate -- see PyObject for details
     public static PyClass __class__;
 
