@@ -14,7 +14,7 @@ public class sys {
     /**
     The current version of JPython.
     **/
-    public static String version = "1.0rc2";
+    public static String version = "1.0rc3";
 
     /**
     The copyright notice for this release.
