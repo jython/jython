@@ -300,14 +300,14 @@ class zxCoreTest(zxJDBCTest):
 		"""testing value of BigDecimal"""
 		assert self.has_table("floattable"), "missing attribute floattable"
 		from java.math import BigDecimal
-		values = map(lambda x, b=BigDecimal: b(x), [4.22, 123.44, 292.09, 33.2, 102.00, 445])
+		values = [BigDecimal(x).setScale(2, BigDecimal.ROUND_UP) for x in [4.22, 123.44, 292.09, 33.2, 102.00, 445]]
 		self._test_precision(self.table("floattable"), lambda x, y, b=BigDecimal: b(x).subtract(y).doubleValue(), values, "doubleValue")
 
 	def testBigDecimalConvertedToDouble(self):
 		"""testing value of BigDecimal when converted to double"""
 		assert self.has_table("floattable"), "missing attribute floattable"
 		from java.math import BigDecimal
-		values = map(lambda x, b=BigDecimal: b(x), [4.22, 123.44, 33.2, 102.00, 445, 292.09])
+		values = [BigDecimal(x).setScale(2, BigDecimal.ROUND_UP) for x in [4.22, 123.44, 292.09, 33.2, 102.00, 445]]
 		self._test_precision(self.table("floattable"), lambda x, y: x - y.doubleValue(), values, "doubleValue")
 
 	def testNextset(self):

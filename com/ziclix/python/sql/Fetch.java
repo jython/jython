@@ -14,21 +14,24 @@ import java.util.*;
 import org.python.core.*;
 
 /**
- * <p>The responsibility of a Fetch instance is to manage the iteration of a ResultSet.  Two different
- * alogorithms are available: static or dynamic.</p>
+ * <p>The responsibility of a Fetch instance is to manage the iteration of a
+ * ResultSet.  Two different alogorithms are available: static or dynamic.</p>
  *
- * <p><b>Static</b> The static variety iterates the entire set immediately, creating the necessary Jython
- * objects and storing them.  It is able to immediately close the ResultSet so a call to close() is
- * essentially a no-op from a database resource perspective (it does clear the results list however).
- * This approach also allows for the correct rowcount to be determined since the entire result set
- * has been iterated.</p>
+ * <p><b>Static</b> The static variety iterates the entire set immediately,
+ * creating the necessary Jython objects and storing them.  It is able to
+ * immediately close the ResultSet so a call to close() is essentially a no-op
+ * from a database resource perspective (it does clear the results list however).
+ * This approach also allows for the correct rowcount to be determined since
+ * the entire result set has been iterated.</p>
  *
- * <p><b>Dynamic</b> The dynamic variety iterates the result set only as requested.  This holds a bit truer to
- * the intent of the API as the fetch*() methods actually fetch when instructed.  This is especially
- * useful for managing exeedingly large results, but is unable to determine the rowcount without having
- * worked through the entire result set.  The other disadvantage is the ResultSet remains open throughout
- * the entire iteration.  So the tradeoff is in open database resources versus JVM resources since the
- * application can keep constant space if it doesn't require the entire result set be presented as one.</p>
+ * <p><b>Dynamic</b> The dynamic variety iterates the result set only as requested.
+ * This holds a bit truer to the intent of the API as the fetch*() methods actually
+ * fetch when instructed.  This is especially useful for managing exeedingly large
+ * results, but is unable to determine the rowcount without having worked through
+ * the entire result set.  The other disadvantage is the ResultSet remains open
+ * throughout the entire iteration.  So the tradeoff is in open database resources
+ * versus JVM resources since the application can keep constant space if it doesn't
+ * require the entire result set be presented as one.</p>
  *
  * @author brian zimmer
  * @version $Revision$
@@ -44,6 +47,12 @@ abstract public class Fetch {
 	/** Field description */
 	protected PyObject description;
 
+	/** True if a CallableStatement was added, false otherwise. */
+	protected boolean callable;
+
+	/** Field callableResults */
+	protected PyObject callableResults;
+
 	/**
 	 * Constructor Fetch
 	 *
@@ -55,6 +64,8 @@ abstract public class Fetch {
 		this.cursor = cursor;
 		this.description = Py.None;
 		this.rowcount = -1;
+		this.callable = false;
+		this.callableResults = Py.None;
 	}
 
 	/**
@@ -109,6 +120,45 @@ abstract public class Fetch {
 	 *
 	 */
 	public void add(CallableStatement callableStatement, Procedure procedure) {
+
+		// set this regardless of whether the statement has results
+		this.callable = true;
+
+		try {
+			createDescription(procedure);
+
+			if (description.__len__() == 0) {
+				return;
+			}
+
+			PyObject[] row = new PyObject[description.__len__()];
+
+			for (int i = 0, j = 0, len = procedure.columns.__len__(); i < len; i++) {
+				PyObject column = procedure.columns.__getitem__(i);
+				int colType = column.__getitem__(Procedure.COLUMN_TYPE).__int__().getValue();
+				int dataType = column.__getitem__(Procedure.DATA_TYPE).__int__().getValue();
+
+				switch (colType) {
+
+					case DatabaseMetaData.procedureColumnOut :
+					case DatabaseMetaData.procedureColumnInOut :
+					case DatabaseMetaData.procedureColumnReturn :
+						row[j++] = cursor.getDataHandler().getPyObject(callableStatement, i + 1, dataType);
+						break;
+				}
+			}
+
+			this.callableResults = new PyList();
+
+			((PyList)this.callableResults).append(new PyTuple(row));
+
+			this.rowcount = this.callableResults.__len__();
+		} catch (PyException e) {
+			throw e;
+		} catch (Exception e) {
+			throw zxJDBC.newError(e);
+		}
+
 		return;
 	}
 
@@ -143,7 +193,16 @@ abstract public class Fetch {
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
 	public final PyObject fetchall() {
-		return doFetchall();
+
+		if (callable) {
+			PyObject tmp = this.callableResults;
+
+			this.callableResults = Py.None;
+
+			return tmp;
+		} else {
+			return doFetchall();
+		}
 	}
 
 	/**
@@ -176,7 +235,16 @@ abstract public class Fetch {
 	 * @return a sequence of sequences from the result set, or None when no more data is available
 	 */
 	public final PyObject fetchmany(int size) {
-		return doFetchmany(size);
+
+		if (callable) {
+			PyObject tmp = this.callableResults;
+
+			this.callableResults = Py.None;
+
+			return tmp;
+		} else {
+			return doFetchmany(size);
+		}
 	}
 
 	/**
@@ -195,7 +263,9 @@ abstract public class Fetch {
 	 * @return true if more sets exist, else None
 	 */
 	public final PyObject nextset() {
-		return doNextset();
+
+		// no support for result sets within callable statements
+		return callable ? Py.None : doNextset();
 	}
 
 	/**
@@ -209,7 +279,20 @@ abstract public class Fetch {
 	/**
 	 * Cleanup any resources.
 	 */
-	abstract public void close() throws SQLException;
+	public final void close() throws SQLException {
+
+		doClose();
+
+		this.callableResults = Py.None;
+	}
+
+	/**
+	 * Method doClose
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	abstract public void doClose() throws SQLException;
 
 	/**
 	 * Builds a tuple containing the meta-information about each column.
@@ -225,9 +308,9 @@ abstract public class Fetch {
 		for (int i = 1; i <= meta.getColumnCount(); i++) {
 			PyObject[] a = new PyObject[7];
 
-			a[0] = new PyString(meta.getColumnName(i));
-			a[1] = new PyInteger(meta.getColumnType(i));
-			a[2] = new PyInteger(meta.getColumnDisplaySize(i));
+			a[0] = Py.newString(meta.getColumnName(i));
+			a[1] = Py.newInteger(meta.getColumnType(i));
+			a[2] = Py.newInteger(meta.getColumnDisplaySize(i));
 			a[3] = Py.None;
 
 			switch (meta.getColumnType(i)) {
@@ -239,8 +322,8 @@ abstract public class Fetch {
 				case Types.FLOAT :
 				case Types.INTEGER :
 				case Types.SMALLINT :
-					a[4] = new PyInteger(meta.getPrecision(i));
-					a[5] = new PyInteger(meta.getScale(i));
+					a[4] = Py.newInteger(meta.getPrecision(i));
+					a[5] = Py.newInteger(meta.getScale(i));
 					break;
 
 				default :
@@ -249,9 +332,65 @@ abstract public class Fetch {
 					break;
 			}
 
-			a[6] = new PyInteger(meta.isNullable(i));
+			a[6] = Py.newInteger(meta.isNullable(i));
 
 			((PyList)this.description).append(new PyTuple(a));
+		}
+	}
+
+	/**
+	 * Builds a tuple containing the meta-information about each column.
+	 *
+	 * (name, type_code, display_size, internal_size, precision, scale, null_ok)
+	 *
+	 * precision and scale are only available for numeric types
+	 */
+	protected void createDescription(Procedure procedure) throws SQLException {
+
+		this.description = new PyList();
+
+		for (int i = 0, len = procedure.columns.__len__(); i < len; i++) {
+			PyObject column = procedure.columns.__getitem__(i);
+			int colType = column.__getitem__(Procedure.COLUMN_TYPE).__int__().getValue();
+
+			switch (colType) {
+
+				case DatabaseMetaData.procedureColumnOut :
+				case DatabaseMetaData.procedureColumnInOut :
+				case DatabaseMetaData.procedureColumnReturn :
+					PyObject[] a = new PyObject[7];
+
+					a[0] = column.__getitem__(Procedure.NAME);
+					a[1] = column.__getitem__(Procedure.DATA_TYPE);
+					a[2] = Py.newInteger(-1);
+					a[3] = column.__getitem__(Procedure.LENGTH);
+
+					switch (a[1].__int__().getValue()) {
+
+						case Types.BIGINT :
+						case Types.BIT :
+						case Types.DECIMAL :
+						case Types.DOUBLE :
+						case Types.FLOAT :
+						case Types.INTEGER :
+						case Types.SMALLINT :
+							a[4] = column.__getitem__(Procedure.PRECISION);
+							a[5] = column.__getitem__(Procedure.SCALE);
+							break;
+
+						default :
+							a[4] = Py.None;
+							a[5] = Py.None;
+							break;
+					}
+
+					int nullable = column.__getitem__(Procedure.NULLABLE).__int__().getValue();
+
+					a[6] = (nullable == DatabaseMetaData.procedureNullable) ? Py.One : Py.Zero;
+
+					((PyList)this.description).append(new PyTuple(a));
+					break;
+			}
 		}
 	}
 
@@ -446,7 +585,7 @@ class StaticFetch extends Fetch {
 			int start = counter + 1;
 
 			counter += size;
-			res = current.__getslice__(new PyInteger(start), new PyInteger(counter + 1), new PyInteger(1));
+			res = current.__getslice__(Py.newInteger(start), Py.newInteger(counter + 1), Py.newInteger(1));
 		}
 
 		return res;
@@ -475,7 +614,7 @@ class StaticFetch extends Fetch {
 	/**
 	 * Remove the results.
 	 */
-	public void close() throws SQLException {
+	public void doClose() throws SQLException {
 
 		this.counter = -1;
 
@@ -538,6 +677,8 @@ class DynamicFetch extends Fetch {
 				this.resultSet = resultSet;
 				this.skipCols = skipCols;
 			}
+		} catch (PyException e) {
+			throw e;
 		} catch (Exception e) {
 			throw zxJDBC.newError(e);
 		}
@@ -582,6 +723,8 @@ class DynamicFetch extends Fetch {
 				// since the rowcount == -1 initially, bump it to one the first time through
 				this.rowcount = (this.rowcount == -1) ? 1 : this.rowcount + 1;
 			}
+		} catch (PyException e) {
+			throw e;
 		} catch (Exception e) {
 			throw zxJDBC.newError(e);
 		}
@@ -599,7 +742,7 @@ class DynamicFetch extends Fetch {
 	/**
 	 * Close the underlying ResultSet.
 	 */
-	public void close() throws SQLException {
+	public void doClose() throws SQLException {
 
 		if (this.resultSet == null) {
 			return;

@@ -28,7 +28,7 @@ class SPTest(zxJDBCTest):
 			try:
 				c.execute("create table plsqltest (x char(20))")
 				c.execute("create or replace procedure procnone is begin insert into plsqltest values ('testing'); end;")
-				c.execute("create or replace procedure procin (y char) is begin insert into plsqltest values (y); end;")
+				c.execute("create or replace procedure procin (y in char) is begin insert into plsqltest values (y); end;")
 				c.execute("create or replace procedure procout (y out char) is begin y := 'tested'; end;")
 				c.execute("create or replace procedure procinout (y out varchar, z in varchar) is begin insert into plsqltest values (z); y := 'tested'; end;")
 				c.execute("create or replace function funcnone return char is begin return 'tested'; end;")
@@ -64,72 +64,69 @@ class SPTest(zxJDBCTest):
 		finally:
 			c.close()
 
+	def testProcin(self):
+		c = self.cursor()
+		try:
+			c.callproc("procin", ("testProcin",))
+			self.assertEquals(None, c.fetchall())
+			c.execute("select * from plsqltest")
+			self.assertEquals(1, len(c.fetchall()))
+		finally:
+			c.close()
+
 	def testProcinout(self):
 		c = self.cursor()
 		try:
-			p = Procedure(c, "procinout")
-			stmt = p.prepareCall()
-			params = ["testing"]
-			params = p.normalizeParams(params)
-
-			self.assertEquals(2, len(params))
-			assert params[0] == p.PLACEHOLDER
-			assert params[1] == "testing"
+			c.callproc("procinout", ("testing",))
+			data = c.fetchone()
+			assert data is not None, "data was None"
+			self.assertEquals("tested", data[0])
 		finally:
-			if stmt:
-				stmt.close()
+			c.close()
+
+	def testFuncnone(self):
+		c = self.cursor()
+		try:
+			c.callproc("funcnone")
+			data = c.fetchone()
+			assert data is not None, "data was None"
+			self.assertEquals(1, len(data))
+			self.assertEquals("tested", data[0])
+		finally:
+			c.close()
+
+	def testFuncin(self):
+		c = self.cursor()
+		try:
+			c.callproc("funcin", ("testing",))
+			self.assertEquals(1, c.rowcount)
+			data = c.fetchone()
+			assert data is not None, "data was None"
+			self.assertEquals(1, len(data))
+			self.assertEquals("testingtesting", data[0])
+		finally:
 			c.close()
 
 	def testFuncout(self):
 		c = self.cursor()
 		try:
-			p = Procedure(c, "funcout")
-			stmt = p.prepareCall()
-			stmt.execute()
-			self.assertEquals("returned", stmt.getString(1).strip())
-			self.assertEquals("tested", stmt.getString(2).strip())
-		finally:
-			if stmt:
-				stmt.close()
-			c.close()
-
-	def testProcinoutCall(self):
-		c = self.cursor()
-		try:
-			c.callproc("procinout", ("testing",))
-			assert c.fetchall() == None, "expected None"
-		finally:
-			c.close()
-
-	def testFuncnoneCall(self):
-		c = self.cursor()
-		try:
-			c.callproc("funcnone")
-			assert c.fetchall() == None, "expected None"
-		finally:
-			c.close()
-
-	def testFuncinCall(self):
-		c = self.cursor()
-		try:
-			c.callproc("funcin", ("testing",))
-			assert c.fetchall() == None, "expected None"
-		finally:
-			c.close()
-
-	def testFuncoutCall(self):
-		c = self.cursor()
-		try:
 			c.callproc("funcout")
-			assert c.fetchall() == None, "expected None"
+			data = c.fetchone()
+			assert data is not None, "data was None"
+			self.assertEquals(2, len(data))
+			self.assertEquals("returned", data[0])
+			self.assertEquals("tested", data[1].strip())
 		finally:
 			c.close()
 
-	def testRaisesalaryCall(self):
+	def testRaisesalary(self):
 		c = self.cursor()
 		try:
 			c.callproc("raisesal", ("jython developer", 18000))
-			assert c.fetchall() == None, "expected None"
+			data = c.fetchone()
+			assert data is not None, "data was None"
+			self.assertEquals(1, len(data))
+			self.assertEquals(18000 + 100000, data[0])
 		finally:
 			c.close()
 

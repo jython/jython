@@ -281,6 +281,108 @@ public class DataHandler {
 	}
 
 	/**
+	 * Given a CallableStatement, column and type, return the appropriate
+	 * Jython object.
+	 *
+	 * @param stmt the CallableStatement
+	 * @param col the column number (adjusted properly for JDBC)
+	 * @param type the column type
+	 * @throws SQLException if the type is unmappable
+	 */
+	public PyObject getPyObject(CallableStatement stmt, int col, int type) throws SQLException {
+
+		PyObject obj = Py.None;
+
+		switch (type) {
+
+			case Types.CHAR :
+			case Types.VARCHAR :
+			case Types.LONGVARCHAR :
+				String string = stmt.getString(col);
+
+				obj = (string == null) ? Py.None : Py.newString(string);
+				break;
+
+			case Types.NUMERIC :
+			case Types.DECIMAL :
+				BigDecimal bd = stmt.getBigDecimal(col, 10);
+
+				obj = (bd == null) ? Py.None : Py.newFloat(bd.doubleValue());
+				break;
+
+			case Types.BIT :
+				obj = stmt.getBoolean(col) ? Py.One : Py.Zero;
+				break;
+
+			case Types.INTEGER :
+			case Types.TINYINT :
+			case Types.SMALLINT :
+				obj = Py.newInteger(stmt.getInt(col));
+				break;
+
+			case Types.BIGINT :
+				obj = new PyLong(stmt.getLong(col));
+				break;
+
+			case Types.FLOAT :
+			case Types.REAL :
+			case Types.DOUBLE :
+				obj = Py.newFloat(stmt.getFloat(col));
+				break;
+
+			case Types.TIME :
+				obj = Py.java2py(stmt.getTime(col));
+				break;
+
+			case Types.TIMESTAMP :
+				obj = Py.java2py(stmt.getTimestamp(col));
+				break;
+
+			case Types.DATE :
+				obj = Py.java2py(stmt.getDate(col));
+				break;
+
+			case Types.NULL :
+				obj = Py.None;
+				break;
+
+			case Types.OTHER :
+				obj = Py.java2py(stmt.getObject(col));
+				break;
+
+			case Types.BINARY :
+			case Types.VARBINARY :
+			case Types.LONGVARBINARY :
+				obj = Py.java2py(stmt.getBytes(col));
+				break;
+
+			default :
+				Integer[] vals = { new Integer(col), new Integer(type) };
+				String msg = zxJDBC.getString("errorGettingIndex", vals);
+
+				throw new SQLException(msg);
+		}
+
+		return (stmt.wasNull() || (obj == null)) ? Py.None : obj;
+	}
+
+	/**
+	 * Called when a stored procedure or function is executed and OUT parameters
+	 * need to be registered with the statement.
+	 *
+	 * @param CallableStatement statement
+	 * @param int index the JDBC offset column number
+	 * @param int colType the column as from DatabaseMetaData (eg, procedureColumnOut)
+	 * @param int dataType the JDBC datatype from Types
+	 *
+	 * @throws SQLException
+	 *
+	 */
+	public void registerOut(CallableStatement statement, int index, int colType, int dataType) throws SQLException {
+		statement.registerOutParameter(index, dataType);
+	}
+
+	/**
 	 * Handles checking if the object is null or None and setting it on the statement.
 	 *
 	 * @return true if the object is null and was set on the statement, false otherwise

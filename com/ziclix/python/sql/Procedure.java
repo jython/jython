@@ -24,11 +24,26 @@ import org.python.core.*;
  */
 public class Procedure extends Object {
 
+	/** Field NAME */
+	protected static final int NAME = 3;
+
 	/** Field COLUMN_TYPE */
 	protected static final int COLUMN_TYPE = 4;
 
 	/** Field DATA_TYPE */
 	protected static final int DATA_TYPE = 5;
+
+	/** Field PRECISION */
+	protected static final int PRECISION = 7;
+
+	/** Field LENGTH */
+	protected static final int LENGTH = 8;
+
+	/** Field SCALE */
+	protected static final int SCALE = 9;
+
+	/** Field NULLABLE */
+	protected static final int NULLABLE = 11;
 
 	/** Field PLACEHOLDER */
 	public static final PyObject PLACEHOLDER = new PyObject();
@@ -105,12 +120,12 @@ public class Procedure extends Object {
 	 */
 	public PyObject normalizeParams(PyObject params) {
 
-		if (columns == Py.None) {
-			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "too many params for input");
-		}
-
 		if (params == Py.None) {
 			return Py.None;
+		}
+
+		if (columns == Py.None) {
+			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "too many params for input");
 		}
 
 		int j = 0, plen = params.__len__();
@@ -225,7 +240,7 @@ public class Procedure extends Object {
 	 * @throws SQLException
 	 *
 	 */
-	private final void registerOutParameters(CallableStatement statement) throws SQLException {
+	protected void registerOutParameters(CallableStatement statement) throws SQLException {
 
 		if (columns == Py.None) {
 			return;
@@ -238,29 +253,13 @@ public class Procedure extends Object {
 
 			switch (colType) {
 
-				case DatabaseMetaData.procedureColumnIn :
 				case DatabaseMetaData.procedureColumnInOut :
 				case DatabaseMetaData.procedureColumnOut :
 				case DatabaseMetaData.procedureColumnReturn :
-					doRegister(statement, i + 1, colType, dataType);
+					cursor.datahandler.registerOut(statement, i + 1, colType, dataType);
 					break;
 			}
 		}
-	}
-
-	/**
-	 * Method doRegister
-	 *
-	 * @param CallableStatement statement
-	 * @param int index
-	 * @param int colType
-	 * @param int dataType
-	 *
-	 * @throws SQLException
-	 *
-	 */
-	protected void doRegister(CallableStatement statement, int index, int colType, int dataType) throws SQLException {
-		statement.registerOutParameter(index, dataType);
 	}
 
 	/**
