@@ -2,6 +2,7 @@
 package org.python.modules;
 import org.python.core.*;
 
+
 class SynchronizedCallable extends PyObject
 {
     PyObject callable;
@@ -14,9 +15,11 @@ class SynchronizedCallable extends PyObject
         // TBD: third arg == null?  Hmm...
         return new PyMethod(container, this, null);
     }
+
     public PyObject __call__() {
         throw Py.TypeError("synchronized callable called with 0 args");
     }   
+
     public PyObject __call__(PyObject arg) {
         synchronized(synchronize._getSync(arg)) {
             return callable.__call__(arg);
@@ -43,6 +46,7 @@ class SynchronizedCallable extends PyObject
             return callable.__call__(args, keywords);
         }
     }
+
     public PyObject __call__(PyObject arg1, PyObject[] args, String[] keywords)
     {
         synchronized(synchronize._getSync(arg1)) {
@@ -53,6 +57,7 @@ class SynchronizedCallable extends PyObject
 
 }
 
+
 public class synchronize
 {
     public static Object _getSync(PyObject obj) {
@@ -60,14 +65,16 @@ public class synchronize
     }
 
     public static PyObject apply_synchronized(PyObject sync_object,
-                                              PyObject callable, PyObject args)
+                                              PyObject callable,
+                                              PyObject args)
     {
         synchronized (_getSync(sync_object)) {
             return __builtin__.apply(callable, args);
         }
     }
     public static PyObject apply_synchronized(PyObject sync_object,
-                                              PyObject callable, PyObject args,
+                                              PyObject callable,
+                                              PyObject args,
                                               PyDictionary kws)
     {
         synchronized (_getSync(sync_object)) {
