@@ -12,8 +12,10 @@ import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Vector;
 
-public class CodeCompiler extends Visitor implements CompilationContext
+public class CodeCompiler extends Visitor
+    implements CompilationContext, ClassConstants, PythonGrammarTreeConstants
 {
+
     public static final Object Exit=new Integer(1);
     public static final Object NoExit=null;
 
@@ -67,7 +69,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public void getNone() throws IOException {
         if (mrefs.PyNone == 0) {
             mrefs.PyNone = pool.Fieldref("org/python/core/Py", "None",
-                                         "Lorg/python/core/PyObject;");
+                                         $pyObj);
         }
         code.getstatic(mrefs.PyNone);
     }
@@ -113,7 +115,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public void set(SimpleNode node, int tmp) throws Exception {
         //System.out.println("tmp: "+tmp);
         if (mode == SET) {
-            //System.out.println("recurse set: "+tmp+", "+temporary+", "+code.getLocal()+", "+code.getLocal());
+            //System.out.println("recurse set: "+tmp+", "+temporary+", "+
+            //                   code.getLocal()+", "+code.getLocal());
             int old_tmp = temporary;
             temporary = tmp;
             node.visit(this);
@@ -173,10 +176,13 @@ public class CodeCompiler extends Visitor implements CompilationContext
    }
 
 
-    public void error(String msg,boolean err,SimpleNode node) throws Exception {
+    public void error(String msg,boolean err,SimpleNode node)
+        throws Exception
+    {
         if (!err) {
             try {
-                Py.warning(Py.SyntaxWarning,msg,(module.sfilename!=null)?module.sfilename:"?",
+                Py.warning(Py.SyntaxWarning,msg,
+                           (module.sfilename!=null)?module.sfilename:"?",
                            node.beginLine,null,Py.None);
                 return;
             } catch(PyException e) {
@@ -215,7 +221,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (classBody) {
             loadFrame();
             code.invokevirtual("org/python/core/PyFrame", "getf_locals",
-            "()Lorg/python/core/PyObject;");
+                               "()" + $pyObj);
             code.areturn();
         } else {
             if (exit == null) {
@@ -245,12 +251,12 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.setglobal == 0) {
             mrefs.setglobal = code.pool.Methodref(
                 "org/python/core/PyFrame", "setglobal",
-                "(Ljava/lang/String;Lorg/python/core/PyObject;)V");
+                "(" +$str + $pyObj + ")V");
         }
 
         if (suite.getNumChildren() > 0 &&
-            suite.getChild(0).id == PythonGrammarTreeConstants.JJTEXPR_STMT &&
-            suite.getChild(0).getChild(0).id == PythonGrammarTreeConstants.JJTSTRING)
+            suite.getChild(0).id == JJTEXPR_STMT &&
+            suite.getChild(0).getChild(0).id == JJTSTRING)
         {
             loadFrame();
             code.ldc("__doc__");
@@ -280,15 +286,14 @@ public class CodeCompiler extends Visitor implements CompilationContext
         else
             n = nodes.length;
 
-        if (n > 0 && nodes[n-1].id == PythonGrammarTreeConstants.JJTCOMMA) {
+        if (n > 0 && nodes[n-1].id == JJTCOMMA) {
             n -= 1;
         }
 
         if (n == 0) {
             if (mrefs.EmptyObjects == 0) {
                 mrefs.EmptyObjects = code.pool.Fieldref(
-                    "org/python/core/Py", "EmptyObjects",
-                    "[Lorg/python/core/PyObject;");
+                    "org/python/core/Py", "EmptyObjects", $pyObjArr);
             }
             code.getstatic(mrefs.EmptyObjects);
         } else {
@@ -311,8 +316,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public void getDocString(SimpleNode suite) throws Exception {
         //System.out.println("doc: "+suite.getChild(0));
         if (suite.getNumChildren() > 0 &&
-            suite.getChild(0).id == PythonGrammarTreeConstants.JJTEXPR_STMT &&
-            suite.getChild(0).getChild(0).id == PythonGrammarTreeConstants.JJTSTRING)
+            suite.getChild(0).id == JJTEXPR_STMT &&
+            suite.getChild(0).getChild(0).id == JJTSTRING)
         {
             suite.getChild(0).getChild(0).visit(this);
         } else {
@@ -329,8 +334,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
         if (mrefs.getclosure == 0) {
             mrefs.getclosure = code.pool.Methodref(
-            "org/python/core/PyFrame", "getclosure",
-            "(I)Lorg/python/core/PyObject;");
+            "org/python/core/PyFrame", "getclosure", "(I)" + $pyObj);
         }
 
         int tmp = code.getLocal();
@@ -373,9 +377,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
         code.dup();
         loadFrame();
         if (mrefs.f_globals == 0) {
-            mrefs.f_globals = code.pool.Fieldref("org/python/core/PyFrame",
-                                                 "f_globals",
-                                                 "Lorg/python/core/PyObject;");
+            mrefs.f_globals = code.pool.Fieldref(
+                "org/python/core/PyFrame", "f_globals", $pyObj);
         }
         code.getfield(mrefs.f_globals);
 
@@ -393,15 +396,16 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (!makeClosure(freenames)) {
             if (mrefs.PyFunction_init == 0) {
                 mrefs.PyFunction_init = code.pool.Methodref(
-                "org/python/core/PyFunction", "<init>",
-                "(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;)V");
+                    "org/python/core/PyFunction", "<init>",
+                    "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + ")V");
             }
             code.invokespecial(mrefs.PyFunction_init);
         } else {
             if (mrefs.PyFunction_closure_init == 0) {
                 mrefs.PyFunction_closure_init = code.pool.Methodref(
-                "org/python/core/PyFunction", "<init>",
-                "(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;[Lorg/python/core/PyObject;)V");
+                    "org/python/core/PyFunction", "<init>",
+                    "(" + $pyObj + $pyObjArr + $pyCode + $pyObj + $pyObjArr +
+                    ")V");
             }
             code.invokespecial(mrefs.PyFunction_closure_init);
 
@@ -417,8 +421,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
         setline(node);
         int n = node.getNumChildren();
         if (n == 1 &&
-              node.getChild(0).id >= PythonGrammarTreeConstants.JJTAUG_PLUS &&
-              node.getChild(0).id <= PythonGrammarTreeConstants.JJTAUG_POWER) {
+              node.getChild(0).id >= JJTAUG_PLUS &&
+              node.getChild(0).id <= JJTAUG_POWER) {
            node.getChild(0).visit(this);
            return null;
         }
@@ -429,7 +433,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.printResult == 0) {
                     mrefs.printResult = code.pool.Methodref(
                         "org/python/core/Py",
-                        "printResult", "(Lorg/python/core/PyObject;)V");
+                        "printResult", "(" + $pyObj + ")V");
                 }
                 code.invokestatic(mrefs.printResult);
             } else {
@@ -468,7 +472,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         boolean printext = false;
 
         if (node.getNumChildren() > 0 &&
-            node.getChild(0).id == PythonGrammarTreeConstants.JJTPRINT_EXT)
+            node.getChild(0).id == JJTPRINT_EXT)
         {
             printext = true;
             node.getChild(0).visit(this);
@@ -478,19 +482,19 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.print4 == 0) {
                 mrefs.print4 = pool.Methodref(
                     "org/python/core/Py", "printComma",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + $pyObj + ")V");
             }
             printcomma = mrefs.print4;
             if (mrefs.print5 == 0) {
                 mrefs.print5 = pool.Methodref(
                     "org/python/core/Py", "println",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + $pyObj + ")V");
             }
             println = mrefs.print5;
             if (mrefs.print6 == 0) {
                 mrefs.print6 = pool.Methodref(
                     "org/python/core/Py", "printlnv",
-                    "(Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + ")V");
             }
             printlnv = mrefs.print6;
         }
@@ -498,13 +502,13 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.print1 == 0) {
                 mrefs.print1 = pool.Methodref(
                     "org/python/core/Py", "printComma",
-                    "(Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + ")V");
             }
             printcomma = mrefs.print1;
             if (mrefs.print2 == 0) {
                 mrefs.print2 = pool.Methodref(
                     "org/python/core/Py", "println",
-                    "(Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + ")V");
             }
             println = mrefs.print2;
             if (mrefs.print3 == 0) {
@@ -526,7 +530,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             code.invokestatic(printlnv);
         }
         else {
-            if (node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA) {
+            if (node.getChild(n-1).id != JJTCOMMA) {
                 if (printext)
                     code.aload(tmp);
                 node.getChild(n-1).visit(this);
@@ -625,7 +629,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.makeException0 == 0) {
                 mrefs.makeException0 = code.pool.Methodref(
                     "org/python/core/Py", "makeException",
-                    "()Lorg/python/core/PyException;");
+                    "()" + $pyExc);
             }
             code.invokestatic(mrefs.makeException0);
             break;
@@ -633,7 +637,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.makeException1 == 0) {
                 mrefs.makeException1 = code.pool.Methodref(
                     "org/python/core/Py", "makeException",
-                    "(Lorg/python/core/PyObject;)Lorg/python/core/PyException;");
+                    "(" + $pyObj + ")" + $pyExc);
             }
             code.invokestatic(mrefs.makeException1);
             break;
@@ -641,7 +645,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.makeException2 == 0) {
                 mrefs.makeException2 = code.pool.Methodref(
                     "org/python/core/Py", "makeException",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyException;");
+                    "(" + $pyObj + $pyObj + ")" + $pyExc);
             }
             code.invokestatic(mrefs.makeException2);
             break;
@@ -649,7 +653,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.makeException3 == 0) {
                 mrefs.makeException3 = code.pool.Methodref(
                     "org/python/core/Py", "makeException",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyException;");
+                    "(" + $pyObj + $pyObj + $pyObj + ")" + $pyExc);
             }
             code.invokestatic(mrefs.makeException3);
             break;
@@ -666,7 +670,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         for (int i=0; i<n; i++) {
             SimpleNode cnode = node.getChild(i);
             SimpleNode asnameNode;
-            if (cnode.id == PythonGrammarTreeConstants.JJTDOTTED_AS_NAME) {
+            if (cnode.id == JJTDOTTED_AS_NAME) {
                 String name = (String)cnode.getChild(0).visit(this);
                 asnameNode = cnode.getChild(1);
                 code.ldc(name);
@@ -674,7 +678,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.importOneAs == 0) {
                      mrefs.importOneAs = code.pool.Methodref(
                         "org/python/core/imp", "importOneAs",
-                        "(Ljava/lang/String;Lorg/python/core/PyFrame;)Lorg/python/core/PyObject;");
+                        "(" + $str + $pyFrame + ")" + $pyObj);
                 }
                 code.invokestatic(mrefs.importOneAs);
             } else {
@@ -685,7 +689,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.importOne == 0) {
                     mrefs.importOne = code.pool.Methodref(
                         "org/python/core/imp", "importOne",
-                         "(Ljava/lang/String;Lorg/python/core/PyFrame;)Lorg/python/core/PyObject;");
+                        "(" + $str + $pyFrame + ")" + $pyObj);
                 }
                 code.invokestatic(mrefs.importOne);
             }
@@ -710,7 +714,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             SimpleNode[] asnameNodes = new SimpleNode[n-1];
             for (int i=0; i<n-1; i++) {
                 SimpleNode cnode = node.getChild(i+1);
-                if (cnode.id == PythonGrammarTreeConstants.JJTIMPORT_AS_NAME) {
+                if (cnode.id == JJTIMPORT_AS_NAME) {
                     names[i] = (String)cnode.getChild(0).getInfo();
                     asnameNodes[i] = cnode.getChild(1);
                 } else {
@@ -724,7 +728,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.importFrom == 0) {
                 mrefs.importFrom = code.pool.Methodref(
                     "org/python/core/imp", "importFrom",
-                    "(Ljava/lang/String;[Ljava/lang/String;Lorg/python/core/PyFrame;)[Lorg/python/core/PyObject;");
+                    "(" + $str + $strArr + $pyFrame + ")" + $pyObjArr);
             }
             code.invokestatic(mrefs.importFrom);
             int tmp = storeTop();
@@ -740,7 +744,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.importAll == 0) {
                 mrefs.importAll = code.pool.Methodref(
                     "org/python/core/imp", "importAll",
-                    "(Ljava/lang/String;Lorg/python/core/PyFrame;)V");
+                    "(" + $str + $pyFrame + ")V");
             }
             code.invokestatic(mrefs.importAll);
         }
@@ -784,7 +788,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.exec == 0) {
             mrefs.exec = code.pool.Methodref(
                 "org/python/core/Py", "exec",
-                "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+                "(" + $pyObj + $pyObj + $pyObj + ")V");
         }
         code.invokestatic(mrefs.exec);
         return null;
@@ -814,14 +818,14 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.assert2 == 0) {
                 mrefs.assert2 = code.pool.Methodref(
                     "org/python/core/Py", "assert",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + $pyObj + ")V");
             }
             code.invokestatic(mrefs.assert2);
         } else {
             if (mrefs.assert1 == 0) {
                 mrefs.assert1 = code.pool.Methodref(
                     "org/python/core/Py", "assert",
-                    "(Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + ")V");
             }
             code.invokestatic(mrefs.assert1);
         }
@@ -974,7 +978,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.safe_getitem == 0) {
             mrefs.safe_getitem = code.pool.Methodref(
                 "org/python/core/PyObject",
-                "__finditem__", "(I)Lorg/python/core/PyObject;");
+                "__finditem__", "(I)" + $pyObj);
         }
         code.invokevirtual(mrefs.safe_getitem);
         code.astore(expr_tmp);
@@ -1018,7 +1022,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.match_exception == 0) {
                 mrefs.match_exception = code.pool.Methodref(
                     "org/python/core/Py", "matchException",
-                    "(Lorg/python/core/PyException;Lorg/python/core/PyObject;)Z");
+                    "(" + $pyExc + $pyObj + ")Z");
             }
             code.invokestatic(mrefs.match_exception);
             code.ifeq(end_of_self);
@@ -1092,7 +1096,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.add_traceback == 0) {
             mrefs.add_traceback = code.pool.Methodref(
                 "org/python/core/Py", "addTraceback",
-                "(Ljava/lang/Throwable;Lorg/python/core/PyFrame;)V");
+                "(" + $throwable + $pyFrame + ")V");
         }
         code.invokestatic(mrefs.add_traceback);
 
@@ -1106,7 +1110,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
         int retLocal = code.getLocal();
         code.astore(retLocal);
 
-        // Trick the JVM verifier into thinking this code might not be executed
+        // Trick the JVM verifier into thinking this code might not
+        // be executed
         code.iconst(1);
         code.ifeq(skipSuite);
 
@@ -1157,7 +1162,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.set_exception == 0) {
             mrefs.set_exception = code.pool.Methodref(
                 "org/python/core/Py", "setException",
-                "(Ljava/lang/Throwable;Lorg/python/core/PyFrame;)Lorg/python/core/PyException;");
+                "(" + $throwable + $pyFrame + ")" + $pyExc);
         }
         code.invokestatic(mrefs.set_exception);
 
@@ -1253,7 +1258,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
             node.getChild(i+1).visit(this);
             code.dup();
             code.astore(tmp1);
-            code.invokevirtual(((Integer)node.getChild(i).visit(this)).intValue());
+            code.invokevirtual(
+                    ((Integer)node.getChild(i).visit(this)).intValue());
             code.dup();
             code.astore(tmp2);
             code.invokevirtual(mrefs.nonzero);
@@ -1263,7 +1269,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
         node.getChild(n-1).visit(this);
         //System.out.println("node: "+node.getChild(n-2));
-        code.invokevirtual(((Integer)node.getChild(n-2).visit(this)).intValue());
+        code.invokevirtual(
+                ((Integer)node.getChild(n-2).visit(this)).intValue());
 
         if (n > 3) {
             code.astore(tmp2);
@@ -1278,7 +1285,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public int make_binop(String name) throws Exception {
         return code.pool.Methodref(
             "org/python/core/PyObject", name,
-            "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+            "(" + $pyObj + ")" + $pyObj);
     }
 
     public Integer less;
@@ -1301,13 +1308,15 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
     public Integer less_equal;
     public Object less_equal_cmp(SimpleNode node) throws Exception {
-        if (mrefs.less_equal == null) less_equal = new Integer(make_binop("_le"));
+        if (mrefs.less_equal == null)
+            less_equal = new Integer(make_binop("_le"));
         return mrefs.less_equal;
     }
 
     public Integer greater_equal;
     public Object greater_equal_cmp(SimpleNode node) throws Exception {
-        if (mrefs.greater_equal == null) greater_equal = new Integer(make_binop("_ge"));
+        if (mrefs.greater_equal == null)
+            greater_equal = new Integer(make_binop("_ge"));
         return mrefs.greater_equal;
     }
 
@@ -1346,14 +1355,14 @@ public class CodeCompiler extends Visitor implements CompilationContext
         node.getChild(0).visit(this);
         node.getChild(1).visit(this);
         code.invokevirtual("org/python/core/PyObject", name,
-                           "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                           "(" + $pyObj + ")" + $pyObj);
         return null;
     }
 
     public Object unaryop(SimpleNode node, String name) throws Exception {
         node.getChild(0).visit(this);
         code.invokevirtual("org/python/core/PyObject", name,
-                           "()Lorg/python/core/PyObject;");
+                           "()" + $pyObj);
         return null;
     }
 
@@ -1418,7 +1427,9 @@ public class CodeCompiler extends Visitor implements CompilationContext
     }
 
 
-    public Object aug_binaryop(SimpleNode node, String name) throws Exception {
+    public Object aug_binaryop(SimpleNode node, String name)
+        throws Exception
+    {
         //node.dump("aug_binaryop:");
         node.getChild(1).visit(this);
         int tmp = storeTop();
@@ -1429,7 +1440,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         code.aload(tmp);
 
         code.invokevirtual("org/python/core/PyObject", name,
-                 "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                 "(" + $pyObj + ")" + $pyObj);
         code.freeLocal(tmp);
 
         temporary = storeTop();
@@ -1521,7 +1532,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.invokea0 == 0) {
                 mrefs.invokea0 = code.pool.Methodref(
                     "org/python/core/PyObject", "invoke",
-                    "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+                    "(" + $str + ")" + $pyObj);
             }
             code.invokevirtual(mrefs.invokea0);
             break;
@@ -1529,7 +1540,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.invokea1 == 0) {
                 mrefs.invokea1 = code.pool.Methodref(
                     "org/python/core/PyObject", "invoke",
-                    "(Ljava/lang/String;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                    "(" + $str + $pyObj + ")" + $pyObj);
             }
             values[0].visit(this);
             code.invokevirtual(mrefs.invokea1);
@@ -1538,7 +1549,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.invokea2 == 0) {
                 mrefs.invokea2 = code.pool.Methodref(
                     "org/python/core/PyObject", "invoke",
-                    "(Ljava/lang/String;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                    "(" + $str + $pyObj + $pyObj + ")" + $pyObj);
             }
             values[0].visit(this);
             values[1].visit(this);
@@ -1549,7 +1560,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.invoke2 == 0) {
                 mrefs.invoke2 = code.pool.Methodref(
                     "org/python/core/PyObject", "invoke",
-                    "(Ljava/lang/String;[Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                    "(" + $str + $pyObjArr + ")" + $pyObj);
             }
             code.invokevirtual(mrefs.invoke2);
             break;
@@ -1581,13 +1592,13 @@ public class CodeCompiler extends Visitor implements CompilationContext
             int n = args.getNumChildren();
 
             SimpleNode lastarg = args.getChild(n-1);
-            if (lastarg.id == PythonGrammarTreeConstants.JJTEXTRAKEYWORDVALUELIST) {
+            if (lastarg.id == JJTEXTRAKEYWORDVALUELIST) {
                 n--;
                 kwargs = lastarg;
             }
             if (n > 0) {
                 lastarg = args.getChild(n-1);
-                if (lastarg.id == PythonGrammarTreeConstants.JJTEXTRAARGVALUELIST) {
+                if (lastarg.id == JJTEXTRAARGVALUELIST) {
                     n--;
                     starargs = lastarg;
                 }
@@ -1598,7 +1609,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
             for (int i=0; i<n; i++) {
                 SimpleNode arg = args.getChild(i);
-                if (arg.id != PythonGrammarTreeConstants.JJTKEYWORD) {
+                if (arg.id != JJTKEYWORD) {
                     values[i] = arg;
                     if (nKeywords > 0)
                         throw new ParseException(
@@ -1614,7 +1625,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
         // Detect a method invocation with no keywords
         if (nKeywords == 0 && starargs == null && kwargs == null &&
-            callee.id == PythonGrammarTreeConstants.JJTDOT_OP)
+            callee.id == JJTDOT_OP)
         {
             return Invoke(callee.getChild(0), callee.getChild(1), values);
         }
@@ -1636,9 +1647,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.callextra == 0) {
                 mrefs.callextra = code.pool.Methodref(
                     "org/python/core/PyObject", "_callextra",
-                    "([Lorg/python/core/PyObject;[Ljava/lang/String;" +
-                     "Lorg/python/core/PyObject;" +
-                     "Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                    "(" + $pyObjArr + $strArr + $pyObj + $pyObj + ")" +
+                    $pyObj);
             }
             code.invokevirtual(mrefs.callextra);
         } else if (nKeywords > 0) {
@@ -1648,7 +1658,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.call1 == 0) {
                 mrefs.call1 = code.pool.Methodref(
                     "org/python/core/PyObject", "__call__",
-                    "([Lorg/python/core/PyObject;[Ljava/lang/String;)Lorg/python/core/PyObject;");
+                    "(" + $pyObjArr + $strArr + ")" + $pyObj);
             }
             code.invokevirtual(mrefs.call1);
         } else {
@@ -1657,7 +1667,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.calla0 == 0) {
                     mrefs.calla0 = code.pool.Methodref(
                         "org/python/core/PyObject", "__call__",
-                        "()Lorg/python/core/PyObject;");
+                        "()" + $pyObj);
                 }
                 code.invokevirtual(mrefs.calla0);
                 break;
@@ -1665,7 +1675,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.calla1 == 0) {
                     mrefs.calla1 = code.pool.Methodref(
                         "org/python/core/PyObject", "__call__",
-                        "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                        "(" + $pyObj + ")" + $pyObj);
                 }
                 values[0].visit(this);
                 code.invokevirtual(mrefs.calla1);
@@ -1674,7 +1684,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.calla2 == 0) {
                     mrefs.calla2 = code.pool.Methodref(
                         "org/python/core/PyObject", "__call__",
-                        "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                        "(" + $pyObj + $pyObj + ")" + $pyObj);
                 }
                 values[0].visit(this);
                 values[1].visit(this);
@@ -1684,7 +1694,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.calla3 == 0) {
                     mrefs.calla3 = code.pool.Methodref(
                         "org/python/core/PyObject", "__call__",
-                        "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                        "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
                 }
                 values[0].visit(this);
                 values[1].visit(this);
@@ -1695,7 +1705,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.calla4 == 0) {
                     mrefs.calla4 = code.pool.Methodref(
                         "org/python/core/PyObject", "__call__",
-                        "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                        "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")" +
+                            $pyObj);
                 }
                 values[0].visit(this);
                 values[1].visit(this);
@@ -1708,7 +1719,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.call2 == 0) {
                     mrefs.call2 = code.pool.Methodref(
                         "org/python/core/PyObject", "__call__",
-                        "([Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                        "(" + $pyObjArr + ")" + $pyObj);
                 }
                 code.invokevirtual(mrefs.call2);
                 break;
@@ -1733,7 +1744,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             int i=0;
             for (int j=0; j<n; j++) {
                 SimpleNode child = node.getChild(j);
-                if (child.id == PythonGrammarTreeConstants.JJTCOLON)
+                if (child.id == JJTCOLON)
                     i++;
                 else
                     slice[i] = child;
@@ -1758,7 +1769,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.delslice == 0) {
                 mrefs.delslice = code.pool.Methodref(
                     "org/python/core/PyObject", "__delslice__",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + $pyObj + $pyObj + ")V");
             }
             code.invokevirtual(mrefs.delslice);
             return null;
@@ -1766,7 +1777,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.getslice == 0) {
                 mrefs.getslice = code.pool.Methodref(
                     "org/python/core/PyObject", "__getslice__",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                    "(" + $pyObj + $pyObj + $pyObj + ")" + $pyObj);
             }
             code.invokevirtual(mrefs.getslice);
             return null;
@@ -1775,7 +1786,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.setslice == 0) {
                 mrefs.setslice = code.pool.Methodref(
                     "org/python/core/PyObject", "__setslice__",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + $pyObj + $pyObj + $pyObj + ")V");
             }
             code.invokevirtual(mrefs.setslice);
             return null;
@@ -1788,7 +1799,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public Object Index_Op(SimpleNode node) throws Exception {
         SimpleNode seq = node.getChild(0);
         SimpleNode index = node.getChild(1);
-        if (index.id == PythonGrammarTreeConstants.JJTSLICE)
+        if (index.id == JJTSLICE)
             return Slice_Op(seq, index);
 
         if (mode == AUGSET) {
@@ -1812,7 +1823,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.delitem == 0) {
                 mrefs.delitem = code.pool.Methodref(
                     "org/python/core/PyObject", "__delitem__",
-                    "(Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + ")V");
             }
             code.invokevirtual(mrefs.delitem);
             return null;
@@ -1820,7 +1831,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.getitem == 0) {
                 mrefs.getitem = code.pool.Methodref(
                     "org/python/core/PyObject", "__getitem__",
-                    "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                    "(" + $pyObj + ")" + $pyObj);
             }
             code.invokevirtual(mrefs.getitem);
             return null;
@@ -1829,7 +1840,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.setitem == 0) {
                 mrefs.setitem = code.pool.Methodref(
                     "org/python/core/PyObject", "__setitem__",
-                    "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+                    "(" + $pyObj + $pyObj + ")V");
             }
             code.invokevirtual(mrefs.setitem);
             return null;
@@ -1862,7 +1873,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.delattr == 0) {
                 mrefs.delattr = code.pool.Methodref(
                     "org/python/core/PyObject", "__delattr__",
-                    "(Ljava/lang/String;)V");
+                    "(" + $str + ")V");
             }
             code.invokevirtual(mrefs.delattr);
             return null;
@@ -1870,7 +1881,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.getattr == 0) {
                 mrefs.getattr = code.pool.Methodref(
                     "org/python/core/PyObject", "__getattr__",
-                    "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+                    "(" + $str + ")" + $pyObj);
             }
             code.invokevirtual(mrefs.getattr);
             return null;
@@ -1879,7 +1890,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.setattr == 0) {
                 mrefs.setattr = code.pool.Methodref(
                     "org/python/core/PyObject", "__setattr__",
-                    "(Ljava/lang/String;Lorg/python/core/PyObject;)V");
+                    "(" + $str + $pyObj + ")V");
             }
             code.invokevirtual(mrefs.setattr);
             return null;
@@ -1890,9 +1901,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public int getitem2, unpackSequence;
     public Object seqSet(SimpleNode node) throws Exception {
         int n = node.getNumChildren();
-        if (n > 0 &&
-            node.getChild(n-1).id == PythonGrammarTreeConstants.JJTCOMMA)
-        {
+        if (n > 0 && node.getChild(n-1).id == JJTCOMMA) {
             n -= 1;
         }
 
@@ -1900,7 +1909,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             mrefs.unpackSequence = code.pool.Methodref(
                 "org/python/core/Py",
                 "unpackSequence",
-                "(Lorg/python/core/PyObject;I)[Lorg/python/core/PyObject;");
+                "(" + $pyObj + "I)" + $pyObjArr);
         }
         /*if (mrefs.checkSequence == 0) {
           mrefs.checkSequence = code.pool.Methodref("org/python/core/Py",
@@ -1923,8 +1932,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
         code.freeLocal(tmp);
 
         /*if (mrefs.getitem2 == 0) {
-          mrefs.getitem2 = code.pool.Methodref("org/python/core/PyObject", "__getitem__",
-          "(I)Lorg/python/core/PyObject;");
+          mrefs.getitem2 = code.pool.Methodref("org/python/core/PyObject",
+                "__getitem__", "(I)Lorg/python/core/PyObject;");
           }
           for(int i=0; i<n; i++) {
           code.aload(temporary);
@@ -1937,9 +1946,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
 
     public Object seqDel(SimpleNode node) throws Exception {
         int n = node.getNumChildren();
-        if (n > 0 &&
-            node.getChild(n-1).id == PythonGrammarTreeConstants.JJTCOMMA)
-        {
+        if (n > 0 && node.getChild(n-1).id == JJTCOMMA) {
             n -= 1;
         }
 
@@ -1963,7 +1970,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.PyTuple_init == 0) {
             mrefs.PyTuple_init = code.pool.Methodref(
                 "org/python/core/PyTuple", "<init>",
-                "([Lorg/python/core/PyObject;)V");
+                "(" + $pyObjArr + ")V");
         }
         code.invokespecial(mrefs.PyTuple_init);
         return null;
@@ -1979,8 +1986,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             throw new ParseException(
                       "augmented assign to list not possible", node); */
 
-        if (node.getNumChildren() > 1 && node.getChild(1).id ==
-                      PythonGrammarTreeConstants.JJTFOR_STMT)
+        if (node.getNumChildren() > 1 && node.getChild(1).id == JJTFOR_STMT)
              return list_comprehension(node);
 
         if (mode == SET) return seqSet(node);
@@ -1992,7 +1998,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.PyList_init == 0) {
             mrefs.PyList_init = code.pool.Methodref(
                 "org/python/core/PyList", "<init>",
-                "([Lorg/python/core/PyObject;)V");
+                "(" + $pyObjArr + ")V");
         }
         code.invokespecial(mrefs.PyList_init);
         return null;
@@ -2017,7 +2023,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.getattr == 0) {
             mrefs.getattr = code.pool.Methodref(
                 "org/python/core/PyObject", "__getattr__",
-                "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+                "(" + $str + ")" + $pyObj);
         }
         code.invokevirtual(mrefs.getattr);
         int tmp_append = storeTop();
@@ -2046,7 +2052,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.calla1 == 0) {
                 mrefs.calla1 = code.pool.Methodref(
                     "org/python/core/PyObject", "__call__",
-                    "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                    "(" + $pyObj + ")" + $pyObj);
             }
             code.invokevirtual(mrefs.calla1);
 
@@ -2067,7 +2073,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.PyDictionary_init == 0) {
             mrefs.PyDictionary_init = code.pool.Methodref(
                 "org/python/core/PyDictionary", "<init>",
-                "([Lorg/python/core/PyObject;)V");
+                "(" + $pyObjArr + ")V");
         }
         code.invokespecial(mrefs.PyDictionary_init);
         return null;
@@ -2076,7 +2082,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
     public Object str_1op(SimpleNode node) throws Exception {
         node.getChild(0).visit(this);
         code.invokevirtual("org/python/core/PyObject", "__repr__",
-                           "()Lorg/python/core/PyString;");
+                           "()" + $pyStr);
         return null;
     }
 
@@ -2091,8 +2097,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         }
 
         //Add a return node onto the outside of suite;
-        SimpleNode retSuite =
-            new SimpleNode(PythonGrammarTreeConstants.JJTRETURN_STMT);
+        SimpleNode retSuite = new SimpleNode(JJTRETURN_STMT);
         retSuite.jjtAddChild(suite, 0);
 
         setline(node);
@@ -2102,8 +2107,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         loadFrame();
         if (mrefs.f_globals == 0) {
             mrefs.f_globals = code.pool.Fieldref("org/python/core/PyFrame",
-                                                 "f_globals",
-                                                 "Lorg/python/core/PyObject;");
+                                                 "f_globals", $pyObj);
         }
         code.getfield(mrefs.f_globals);
 
@@ -2120,14 +2124,14 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.PyFunction_init1 == 0) {
                 mrefs.PyFunction_init1 = code.pool.Methodref(
                 "org/python/core/PyFunction", "<init>",
-                "(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;)V");
+                "(" + $pyObj + $pyObjArr + $pyCode + ")V");
             }
             code.invokespecial(mrefs.PyFunction_init1);
         } else {
             if (mrefs.PyFunction_closure_init1 == 0) {
                 mrefs.PyFunction_closure_init1 = code.pool.Methodref(
                 "org/python/core/PyFunction", "<init>",
-                "(Lorg/python/core/PyObject;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;[Lorg/python/core/PyObject;)V");
+                "(" + $pyObj + $pyObjArr + $pyCode + $pyObjArr + ")V");
             }
             code.invokespecial(mrefs.PyFunction_closure_init1);
         }
@@ -2154,7 +2158,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         int i=0;
         for (int j=0; j<n; j++) {
             SimpleNode child = node.getChild(j);
-            if (child.id == PythonGrammarTreeConstants.JJTCOLON)
+            if (child.id == JJTCOLON)
                 i++;
             else
                 slice[i] = child;
@@ -2172,7 +2176,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.PySlice_init == 0) {
             mrefs.PySlice_init = code.pool.Methodref(
                 "org/python/core/PySlice", "<init>",
-                "(Lorg/python/core/PyObject;Lorg/python/core/PyObject;Lorg/python/core/PyObject;)V");
+                "(" + $pyObj + $pyObj + $pyObj + ")V");
         }
         code.invokespecial(mrefs.PySlice_init);
         return null;
@@ -2210,14 +2214,15 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.makeClass == 0) {
                 mrefs.makeClass = code.pool.Methodref(
                 "org/python/core/Py", "makeClass",
-                "(Ljava/lang/String;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                "(" + $str + $pyObjArr + $pyCode + $pyObj + ")" + $pyObj);
             }
             code.invokestatic(mrefs.makeClass);
         } else {
             if (mrefs.makeClass_closure == 0) {
                 mrefs.makeClass_closure = code.pool.Methodref(
                 "org/python/core/Py", "makeClass",
-                "(Ljava/lang/String;[Lorg/python/core/PyObject;Lorg/python/core/PyCode;Lorg/python/core/PyObject;[Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+                "(" + $str + $pyObjArr + $pyCode + $pyObj + $pyObjArr + ")" +
+                    $pyObj);
             }
             code.invokestatic(mrefs.makeClass_closure);
         }
@@ -2268,7 +2273,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
         if (mrefs.getglobal == 0) {
             mrefs.getglobal = code.pool.Methodref(
             "org/python/core/PyFrame", "getglobal",
-            "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+            "(" + $str + ")" + $pyObj);
         }
         code.invokevirtual(mrefs.getglobal);
     }
@@ -2293,8 +2298,9 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (syminf != null) {
                 int flags = syminf.flags;
                 if (!my_scope.nested_scopes) flags &= ~ScopeInfo.FREE;
-                if ((flags&ScopeInfo.GLOBAL) !=0 ||
-                     optimizeGlobals&&(flags&(ScopeInfo.BOUND|ScopeInfo.CELL|ScopeInfo.FREE))==0) {
+                if ((flags&ScopeInfo.GLOBAL) !=0 || optimizeGlobals&&
+                        (flags&(ScopeInfo.BOUND|ScopeInfo.CELL|
+                                                        ScopeInfo.FREE))==0) {
                     emitGetGlobal(name);
                     return null;
                 }
@@ -2304,7 +2310,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                         if (mrefs.getderef == 0) {
                             mrefs.getderef = code.pool.Methodref(
                             "org/python/core/PyFrame", "getderef",
-                            "(I)Lorg/python/core/PyObject;");
+                            "(I)" + $pyObj);
                         }
                         code.invokevirtual(mrefs.getderef);
                         return null;
@@ -2314,18 +2320,19 @@ public class CodeCompiler extends Visitor implements CompilationContext
                         if (mrefs.getlocal2 == 0) {
                             mrefs.getlocal2 = code.pool.Methodref(
                             "org/python/core/PyFrame", "getlocal",
-                            "(I)Lorg/python/core/PyObject;");
+                            "(I)" + $pyObj);
                         }
                         code.invokevirtual(mrefs.getlocal2);
                         return null;
                     }
                 }
-                if ((flags&ScopeInfo.FREE) != 0 && (flags&ScopeInfo.BOUND) == 0) {
+                if ((flags&ScopeInfo.FREE) != 0 &&
+                            (flags&ScopeInfo.BOUND) == 0) {
                     code.iconst(syminf.env_index);
                     if (mrefs.getderef == 0) {
                         mrefs.getderef = code.pool.Methodref(
                         "org/python/core/PyFrame", "getderef",
-                        "(I)Lorg/python/core/PyObject;");
+                        "(I)" + $pyObj);
                     }
                     code.invokevirtual(mrefs.getderef);
                     return null;
@@ -2335,7 +2342,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
             if (mrefs.getlocal1 == 0) {
                 mrefs.getlocal1 = code.pool.Methodref(
                     "org/python/core/PyFrame", "getname",
-                    "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+                    "(" + $str + ")" + $pyObj);
             }
             code.invokevirtual(mrefs.getlocal1);
             return null;
@@ -2348,7 +2355,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.setglobal == 0) {
                     mrefs.setglobal = code.pool.Methodref(
                         "org/python/core/PyFrame", "setglobal",
-                        "(Ljava/lang/String;Lorg/python/core/PyObject;)V");
+                        "(" + $str + $pyObj + ")V");
                 }
                 code.invokevirtual(mrefs.setglobal);
             } else {
@@ -2358,7 +2365,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                     if (mrefs.setlocal1 == 0) {
                         mrefs.setlocal1 = code.pool.Methodref(
                             "org/python/core/PyFrame", "setlocal",
-                            "(Ljava/lang/String;Lorg/python/core/PyObject;)V");
+                            "(" + $str + $pyObj + ")V");
                     }
                     code.invokevirtual(mrefs.setlocal1);
                 } else {
@@ -2371,7 +2378,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                         if (mrefs.setderef == 0) {
                             mrefs.setderef = code.pool.Methodref(
                             "org/python/core/PyFrame", "setderef",
-                            "(ILorg/python/core/PyObject;)V");
+                            "(I" + $pyObj + ")V");
                         }
                         code.invokevirtual(mrefs.setderef);
                     } else {
@@ -2380,7 +2387,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                         if (mrefs.setlocal2 == 0) {
                             mrefs.setlocal2 = code.pool.Methodref(
                             "org/python/core/PyFrame", "setlocal",
-                            "(ILorg/python/core/PyObject;)V");
+                            "(I" + $pyObj + ")V");
                         }
                         code.invokevirtual(mrefs.setlocal2);
                     }
@@ -2394,7 +2401,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                 if (mrefs.delglobal == 0) {
                     mrefs.delglobal = code.pool.Methodref(
                         "org/python/core/PyFrame", "delglobal",
-                        "(Ljava/lang/String;)V");
+                        "(" + $str + ")V");
                 }
                 code.invokevirtual(mrefs.delglobal);
             } else {
@@ -2403,7 +2410,7 @@ public class CodeCompiler extends Visitor implements CompilationContext
                     if (mrefs.dellocal1 == 0) {
                         mrefs.dellocal1 = code.pool.Methodref(
                             "org/python/core/PyFrame", "dellocal",
-                            "(Ljava/lang/String;)V");
+                            "(" + $str + ")V");
                     }
                     code.invokevirtual(mrefs.dellocal1);
                 } else {
@@ -2411,7 +2418,8 @@ public class CodeCompiler extends Visitor implements CompilationContext
                         System.err.println("internal compiler error: "+node);
                     }
                     if ((syminf.flags&ScopeInfo.CELL) != 0) {
-                        error("can not delete variable '"+name+"' referenced in nested scope",true,node);
+                        error("can not delete variable '"+name+
+                              "' referenced in nested scope",true,node);
                     }
                     code.iconst(syminf.locals_index);
                     if (mrefs.dellocal2 == 0) {

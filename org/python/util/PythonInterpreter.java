@@ -134,7 +134,8 @@ public class PythonInterpreter {
      */
     public void exec(String s) {
         setState();
-        Py.exec(Py.compile_flags(s, "<string>", "exec",cflags), locals, locals);
+        Py.exec(Py.compile_flags(s, "<string>", "exec",cflags),
+                locals, locals);
     }
 
     /**

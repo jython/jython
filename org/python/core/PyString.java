@@ -1257,7 +1257,8 @@ public class PyString extends PySequence implements ClassDictInit
 
             if (base == 0 || base == 16) {
                 if (string.charAt(b) == '0') {
-                    if (b < e-1 && (string.charAt(b+1) == 'x' || string.charAt(b+1) == 'X')) {
+                    if (b < e-1 &&
+                           Character.toUpperCase(string.charAt(b+1)) == 'X') {
                         base = 16;
                         b += 2;
                     } else {
@@ -1319,7 +1320,8 @@ public class PyString extends PySequence implements ClassDictInit
 
             if (base == 0 || base == 16) {
                 if (string.charAt(b) == '0') {
-                    if (b < e-1 && (string.charAt(b+1) == 'x' || string.charAt(b+1) == 'X')) {
+                    if (b < e-1 &&
+                           Character.toUpperCase(string.charAt(b+1)) == 'X') {
                         base = 16;
                         b += 2;
                     } else {

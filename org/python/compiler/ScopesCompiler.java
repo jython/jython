@@ -27,8 +27,6 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         this.code_compiler = code_compiler;
         scopes = new Stack();
         mode = GET;
-        /*String nested_scopes_opt = org.python.core.PySystemState.registry.getProperty("python.xfutures.nested_scopes");
-        if (nested_scopes_opt != null && nested_scopes_opt.equals("on")) nested_scopes = true; else*/
         nested_scopes = code_compiler.getFutures().areNestedScopesOn();
         // System.err.println("nested-scopes: "+nested_scopes);
     }
@@ -53,12 +51,15 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         return null;
     }
 
-    public void beginScope(String name,int kind,SimpleNode node,ArgListCompiler ac) {
+    public void beginScope(String name, int kind, SimpleNode node,
+                           ArgListCompiler ac)
+    {
         if (cur != null) {
             scopes.push(cur);
         }
         if (kind == FUNCSCOPE) func_level++;
-        node.scope = cur = new ScopeInfo(name,node,level++,kind,func_level,ac,nested_scopes);
+        node.scope = cur = new ScopeInfo(name, node, level++, kind,
+                                         func_level, ac, nested_scopes);
     }
 
     public void endScope() throws Exception {
@@ -74,7 +75,8 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         try {
             node.visit(this);
         } catch(Throwable t) {
-            throw org.python.core.parser.fixParseError(null,t,code_compiler.getFilename());
+            throw org.python.core.parser.fixParseError(null, t,
+                    code_compiler.getFilename());
         }
     }
 
@@ -153,7 +155,8 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             for (int i=0; i<n-1; i++) {
                 node.getChild(i).visit(this);
             }
-            if(node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA) node.getChild(n-1).visit(this);
+            if(node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA)
+                node.getChild(n-1).visit(this);
         }
         return null;
     }
@@ -237,11 +240,14 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
             String name = (String)node.getChild(i).getInfo();
             int prev = cur.addGlobal(name);
             if (prev >= 0) {
-                if ((prev&FROM_PARAM) != 0) code_compiler.error("name '"+name+"' is local and global",true,node);
+                if ((prev&FROM_PARAM) != 0)
+                    code_compiler.error("name '"+name+"' is local and global",
+                                        true,node);
                 if ((prev&GLOBAL) != 0) continue;
                 String what;
                 if ((prev&BOUND) != 0) what = "assignment"; else what = "use";
-                code_compiler.error("name '"+name+"' declared global after "+what,false,node);
+                code_compiler.error("name '"+name+"' declared global after "+
+                                    what,false,node);
             }
         }
         return null;
@@ -476,7 +482,8 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         int n = node.getNumChildren();
         if (n > 0) {
             for (int i=0; i<n-1; i++) node.getChild(i).visit(this);
-            if (node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA) node.getChild(n-1).visit(this);
+            if (node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA)
+                node.getChild(n-1).visit(this);
         }
         return null;
     }
@@ -493,7 +500,8 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
         int n = node.getNumChildren();
         if (n > 0) {
             for (int i=0; i<n-1; i++) node.getChild(i).visit(this);
-            if (node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA) node.getChild(n-1).visit(this);
+            if (node.getChild(n-1).id != PythonGrammarTreeConstants.JJTCOMMA)
+                node.getChild(n-1).visit(this);
         }
         return null;
     }
@@ -581,7 +589,8 @@ public class ScopesCompiler extends Visitor implements ScopeConstants {
     public Object Name(SimpleNode node) throws Exception {
         String name = (String)node.getInfo();
         if ( mode != GET) {
-            if (name.equals("__debug__")) code_compiler.error("can not assign to __debug__",false,node);
+            if (name.equals("__debug__"))
+                code_compiler.error("can not assign to __debug__",false,node);
             cur.addBound(name);
         }
         else cur.addUsed(name);

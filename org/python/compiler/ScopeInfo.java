@@ -13,19 +13,23 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public int func_level;
 
     public void dump() { // for debugging
-        if (org.python.core.Options.verbose < org.python.core.Py.DEBUG) return;
+        if (org.python.core.Options.verbose < org.python.core.Py.DEBUG)
+            return;
         for(int i=0; i<level; i++) System.err.print(' ');
-        System.err.print(((kind != CLASSSCOPE)?scope_name:"class "+scope_name)+": ");
+        System.err.print(((kind != CLASSSCOPE)?scope_name:"class "+
+                         scope_name)+": ");
         for (Enumeration e = tbl.keys(); e.hasMoreElements(); ) {
             String name = (String)e.nextElement();
             SymInfo info = (SymInfo)tbl.get(name);
             int flags = info.flags;
             System.err.print(name);
             if ((flags&BOUND) != 0) System.err.print('=');
-            if ((flags&NGLOBAL) != 0) System.err.print('G'); else // func scope global (affect nested scopes)
-            if ((flags&CLASS_GLOBAL) != 0) System.err.print('g'); // vs. class scope global
-            if ((flags&PARAM) != 0) System.err.print('P'); else
-            if ((flags&FROM_PARAM) != 0) System.err.print('p');
+            // func scope global (affect nested scopes)
+            // vs. class scope global
+            if ((flags&NGLOBAL) != 0) System.err.print('G');
+            else if ((flags&CLASS_GLOBAL) != 0) System.err.print('g');
+            if ((flags&PARAM) != 0) System.err.print('P');
+            else if ((flags&FROM_PARAM) != 0) System.err.print('p');
             if ((flags&CELL) != 0) System.err.print('!');
             if ((flags&FREE) != 0) System.err.print(",f");
             System.err.print(" ");
@@ -33,7 +37,9 @@ public class ScopeInfo extends Object implements ScopeConstants {
         System.err.println();
     }
 
-    public ScopeInfo(String name,SimpleNode node,int level,int kind,int func_level,ArgListCompiler ac,boolean nested_scopes) {
+    public ScopeInfo(String name, SimpleNode node, int level, int kind,
+                     int func_level, ArgListCompiler ac,
+                     boolean nested_scopes) {
         scope_name = name;
         scope_node = node;
         this.level = level;
@@ -56,7 +62,8 @@ public class ScopeInfo extends Object implements ScopeConstants {
     public Vector names = new Vector();
 
     public int addGlobal(String name) {
-        int global = kind==CLASSSCOPE?CLASS_GLOBAL:NGLOBAL; // global kind = func vs. class
+        // global kind = func vs. class
+        int global = kind==CLASSSCOPE?CLASS_GLOBAL:NGLOBAL;
         SymInfo info = (SymInfo)tbl.get(name);
         if (info == null) {
             tbl.put(name,new SymInfo(global|BOUND));
@@ -127,16 +134,20 @@ public class ScopeInfo extends Object implements ScopeConstants {
             }
             int flags = info.flags;
             if (func) {
-                if ((flags&NGLOBAL) == 0 && (flags&BOUND) != 0) { // not func global and bound ?
+                // not func global and bound ?
+                if ((flags&NGLOBAL) == 0 && (flags&BOUND) != 0) {
                     if (nested_scopes) {
                         info.flags |= CELL;
-                        if ((info.flags&PARAM) != 0) jy_paramcells.addElement(name);
+                        if ((info.flags&PARAM) != 0)
+                            jy_paramcells.addElement(name);
                         cellvars.addElement(name);
                         info.env_index = cell++;
                         if ((flags&PARAM) == 0) purecells.addElement(name);
                         continue;
                     }
-                    ctxt.error("local name '"+name+"' in '"+scope_name+"' shadows use as global in nested scopes",false,scope_node);
+                    ctxt.error("local name '"+name+"' in '"+scope_name+
+                               "' shadows use as global in nested scopes",
+                               false, scope_node);
                 }
             } else {
                 info.flags |= FREE;
@@ -170,24 +181,29 @@ public class ScopeInfo extends Object implements ScopeConstants {
         }
         if ((unqual_exec || from_import_star)) {
             if(some_inner_free) dynastuff_trouble(true, ctxt);
-            else if(func_level > 1 && some_free) dynastuff_trouble(false, ctxt);
+            else if(func_level > 1 && some_free)
+                dynastuff_trouble(false, ctxt);
         }
 
     }
 
-    private void dynastuff_trouble(boolean inner_free,CompilationContext ctxt) throws Exception {
+    private void dynastuff_trouble(boolean inner_free,
+                                   CompilationContext ctxt) throws Exception {
         String illegal;
         if (unqual_exec && from_import_star)
-         illegal = "function '"+scope_name+"' uses import * and bare exec, which are illegal";
+            illegal = "function '"+scope_name+
+                      "' uses import * and bare exec, which are illegal";
         else if (unqual_exec)
-         illegal = "unqualified exec is not allowed in function '"+scope_name+"'";
-        else illegal = "import * is not allowed in function '"+scope_name+"'";
+            illegal = "unqualified exec is not allowed in function '"+
+                      scope_name+"'";
+        else
+            illegal = "import * is not allowed in function '"+scope_name+"'";
         String why;
         if (inner_free)
-         why = " because it contains a function with free variables";
+            why = " because it contains a function with free variables";
         else
-         why = " because it contains free variables";
-        ctxt.error(illegal + why ,nested_scopes,scope_node);
+            why = " because it contains free variables";
+        ctxt.error(illegal + why, nested_scopes, scope_node);
     }
 
     public Vector freevars = new Vector();
@@ -203,14 +219,16 @@ public class ScopeInfo extends Object implements ScopeConstants {
             int flags = info.flags;
             if ((flags&FREE) != 0) {
                 SymInfo up_info = (SymInfo)up_tbl.get(name);
-                if (up_info != null) { // ?? differs from CPython -- what is the intended behaviour?
+                // ?? differs from CPython -- what is the intended behaviour?
+                if (up_info != null) {
                     int up_flags = up_info.flags;
                     if ((up_flags&(CELL|FREE)) != 0) {
                         info.env_index = free++;
                         freevars.addElement(name);
                         continue;
                     }
-                    if (nested && (up_flags&NGLOBAL) != 0) { // ! func global affect nested scopes
+                    // ! func global affect nested scopes
+                    if (nested && (up_flags&NGLOBAL) != 0) {
                         info.flags = NGLOBAL|BOUND;
                         continue;
                     }
@@ -220,5 +238,4 @@ public class ScopeInfo extends Object implements ScopeConstants {
         }
 
     }
-
 }

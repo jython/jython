@@ -83,10 +83,14 @@ public class operator implements ClassDictInit
     public static PyString __doc__ = new PyString(
         "Operator interface.\n"+
         "\n"+
-        "This module exports a set of functions implemented in C corresponding\n"+
-        "to the intrinsic operators of Python.  For example, operator.add(x, y)\n"+
-        "is equivalent to the expression x+y.  The function names are those\n"+
-        "used for special class methods; variants without leading and trailing\n"+
+        "This module exports a set of functions implemented in C "+
+                "corresponding\n"+
+        "to the intrinsic operators of Python.  For example, "+
+                "operator.add(x, y)\n"+
+        "is equivalent to the expression x+y.  The function names "+
+                "are those\n"+
+        "used for special class methods; variants without leading "+
+                "and trailing\n"+
         "'__' are also provided for convenience.\n"
     );
 

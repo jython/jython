@@ -39,15 +39,25 @@ public class PyFrame extends PyObject
         f_builtins = builtins;
         // This needs work to be efficient with multiple interpreter states
         if (locals == null && code != null) {
-            if ((code.co_flags&PyTableCode.CO_OPTIMIZED)!=0 || code.nargs > 0) { // ! f_fastlocals needed for arg passing too
-                if (code.co_nlocals>0) f_fastlocals = new PyObject[code.co_nlocals-code.jy_npurecell]; // internal: may change
-            } else f_locals = new PyStringMap();
+            // ! f_fastlocals needed for arg passing too
+            if ((code.co_flags&PyTableCode.CO_OPTIMIZED)!=0 ||
+                                        code.nargs > 0) {
+                if (code.co_nlocals > 0) {
+                    // internal: may change
+                    f_fastlocals = new PyObject[
+                                code.co_nlocals-code.jy_npurecell];
+                }
+            } else
+                f_locals = new PyStringMap();
         }
         if (code != null) { // reserve space for env
             int env_sz = 0;
-            if (code.co_freevars != null) env_sz += (f_nfreevars = code.co_freevars.length);
-            if (code.co_cellvars != null) env_sz += (f_ncells = code.co_cellvars.length);
-            if (env_sz > 0) f_env = new PyCell[env_sz];
+            if (code.co_freevars != null)
+                env_sz += (f_nfreevars = code.co_freevars.length);
+            if (code.co_cellvars != null)
+                env_sz += (f_ncells = code.co_cellvars.length);
+            if (env_sz > 0)
+                f_env = new PyCell[env_sz];
         }
     }
 
@@ -118,9 +128,11 @@ public class PyFrame extends PyObject
             if (f_fastlocals != null) {
                 for (i=0; i<f_fastlocals.length; i++) {
                     PyObject o = f_fastlocals[i];
-                    if (o != null) f_locals.__setitem__(f_code.co_varnames[i], o);
+                    if (o != null)
+                        f_locals.__setitem__(f_code.co_varnames[i], o);
                 }
-                if ((f_code.co_flags&PyTableCode.CO_OPTIMIZED) == 0) f_fastlocals = null;
+                if ((f_code.co_flags&PyTableCode.CO_OPTIMIZED) == 0)
+                    f_fastlocals = null;
             }
             int j = 0;
             for (i=0; i<f_ncells; i++,j++) {
@@ -211,7 +223,8 @@ public class PyFrame extends PyObject
     public void dellocal(int index) {
         if (f_fastlocals != null) {
             if (f_fastlocals[index] == null) {
-              throw Py.UnboundLocalError("local: '"+f_code.co_varnames[index]+"'");
+              throw Py.UnboundLocalError("local: '"+
+                                         f_code.co_varnames[index]+"'");
             }
             f_fastlocals[index] = null;
         } else

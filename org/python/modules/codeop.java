@@ -32,14 +32,16 @@ public class codeop implements ClassDictInit {
         return compile_command_flags(string,filename,kind,null);
     }
 
-    public static PyObject compile_command_flags(String string,String filename,String kind,CompilerFlags cflags)
+    public static PyObject compile_command_flags(String string,
+                    String filename, String kind, CompilerFlags cflags)
     {
         org.python.parser.SimpleNode node =
             parser.partialParse(string+"\n", kind, filename, cflags);
 
         if (node == null)
             return Py.None;
-        return Py.compile_flags(node, Py.getName(), filename, true, true,cflags);
+        return Py.compile_flags(node, Py.getName(), filename, true, true,
+                                cflags);
     }
 
 }

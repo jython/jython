@@ -11,13 +11,15 @@ public class jython
         "usage: jython [options] [-jar jar | -c cmd | file | -] [args]\n"+
         "Options and arguments:\n"+
         "-i       : inspect interactively after running script, and force\n"+
-        "           prompts, even if stdin does not appear to be a terminal\n"+
+        "           prompts, even if stdin does not appear to be a "+
+                    "terminal\n"+
         "-S       : don't imply `import site' on initialization\n"+
         "-v       : verbose (trace import statements)\n"+
         "-Dprop=v : Set the property `prop' to value `v'\n"+
         "-jar jar : program read from __run__.py in jar file\n"+
         "-c cmd   : program passed in as string (terminates option list)\n"+
-        "-W arg   : warning control (arg is action:message:category:module:lineno)\n"+
+        "-W arg   : warning control (arg is action:message:category:module:"+
+                    "lineno)\n"+
         "-E codec : Use a different codec the reading from the console.\n"+
         "file     : program read from script file\n"+
         "-        : program read from stdin (default; interactive mode if a "+
@@ -109,9 +111,12 @@ public class jython
 
                 if (opts.notice) {
                     PyObject builtins = Py.getSystemState().builtins;
-                    boolean copyright = builtins.__finditem__("copyright") != null;
-                    boolean credits   = builtins.__finditem__("credits") != null;
-                    boolean license   = builtins.__finditem__("license") != null;
+                    boolean copyright =
+                                builtins.__finditem__("copyright") != null;
+                    boolean credits =
+                                builtins.__finditem__("credits") != null;
+                    boolean license =
+                                builtins.__finditem__("license") != null;
                     if (copyright) {
                         msg += "\"copyright\"";
                         if (credits && license)
@@ -127,7 +132,8 @@ public class jython
                     if (license)
                         msg += "\"license\"";
                     if (msg.length() > 0)
-                        System.err.println("Type " + msg + " for more information.");
+                        System.err.println("Type " + msg +
+                                           " for more information.");
                 }
             } catch (PyException pye) {
                 if (!Py.matchException(pye, Py.ImportError)) {

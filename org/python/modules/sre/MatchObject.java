@@ -127,7 +127,9 @@ public class MatchObject extends PyObject {
 
 
     PyTuple _pair(int i1, int i2) {
-        return new PyTuple(new PyObject[] { Py.newInteger(i1), Py.newInteger(i2) });
+        return new PyTuple(new PyObject[] {
+            Py.newInteger(i1), Py.newInteger(i2)
+        });
     }
 
     private PyObject getslice(PyObject index, PyObject def) {
@@ -157,7 +159,8 @@ public class MatchObject extends PyObject {
         int start = mark[index];
         int end = mark[index+1];
 
-        //System.out.println("group:" + index + " " + start + " " + end + " l:" + string.length());
+        //System.out.println("group:" + index + " " + start + " " +
+        //                   end + " l:" + string.length());
 
         if (string == null || start < 0)
             return def;

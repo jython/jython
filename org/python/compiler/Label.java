@@ -30,7 +30,8 @@ class Label {
             throw new InternalError("position never set for label");
 
         for (int i=0; i<noffsets; i++) {
-            //System.out.println("o: "+offsets[i]+", "+position+", "+positions[i]);
+            //System.out.println("o: "+offsets[i]+", "+position+", "+
+            //                   positions[i]);
             int off = position-offsets[i];
             int p = positions[i];
             if (sizes[i] == 2) {

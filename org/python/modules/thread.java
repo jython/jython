@@ -28,7 +28,8 @@ class FunctionThread extends Thread
 public class thread implements ClassDictInit
 {
     public static PyString __doc__ = new PyString(
-        "This module provides primitive operations to write multi-threaded programs.\n" +
+        "This module provides primitive operations to write multi-threaded "+
+                "programs.\n" +
         "The 'threading' module provides a more convenient interface."
     );
 

@@ -4,9 +4,11 @@ import org.python.core.*;
 
 public class types implements ClassDictInit {
     public static PyString __doc__ = new PyString(
-        "Define names for all type symbols known in the standard interpreter.\n"+
+        "Define names for all type symbols known in the standard "+
+                "interpreter.\n"+
         "\n"+
-        "Types that are part of optional modules (e.g. array) are not listed.\n"
+        "Types that are part of optional modules (e.g. array) "+
+                "are not listed.\n"
     );
 
     public static void classDictInit(PyObject dict) {

@@ -42,7 +42,9 @@ public class PyFunction extends PyObject
         this(globals, defaults, code, null,null);
     }
 
-    public PyFunction(PyObject globals, PyObject[] defaults, PyCode code, PyObject[] closure_cells) {
+    public PyFunction(PyObject globals, PyObject[] defaults, PyCode code,
+                      PyObject[] closure_cells)
+    {
         this(globals, defaults, code, null,closure_cells);
     }
 
@@ -170,14 +172,17 @@ public class PyFunction extends PyObject
         return func_code.call(arg, func_globals, func_defaults, func_closure);
     }
     public PyObject __call__(PyObject arg1, PyObject arg2) {
-        return func_code.call(arg1, arg2, func_globals, func_defaults, func_closure);
+        return func_code.call(arg1, arg2, func_globals, func_defaults,
+                              func_closure);
     }
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-        return func_code.call(arg1, arg2, arg3, func_globals, func_defaults, func_closure);
+        return func_code.call(arg1, arg2, arg3, func_globals, func_defaults,
+                              func_closure);
     }
 
     public PyObject __call__(PyObject[] args, String[] keywords) {
-        return func_code.call(args, keywords, func_globals, func_defaults, func_closure);
+        return func_code.call(args, keywords, func_globals, func_defaults,
+                              func_closure);
     }
     public PyObject __call__(PyObject arg1, PyObject[] args,
                              String[] keywords)

@@ -4,7 +4,7 @@ package org.python.compiler;
 
 import org.python.parser.*;
 
-public class Future extends Object {
+public class Future extends Object implements PythonGrammarTreeConstants {
 
     private boolean nested_scopes;
 
@@ -13,20 +13,22 @@ public class Future extends Object {
     private boolean check(SimpleNode cand) throws Exception {
         SimpleNode dotted_name = cand.getChild(0);
         if (dotted_name.getNumChildren() != 1 ||
-            !((String)dotted_name.getChild(0).getInfo()).equals(FUTURE)) return false;
+                !((String)dotted_name.getChild(0).getInfo()).equals(FUTURE))
+            return false;
         int n = cand.getNumChildren();
         if (n == 1) {
-            throw new ParseException("future statement does not support import *",cand);
+            throw new ParseException(
+                    "future statement does not support import *",cand);
         }
         for (int i = 1; i < n; i++) {
             SimpleNode imp = cand.getChild(i);
             String feature;
             switch(imp.id) {
             default:
-            case PythonGrammarTreeConstants.JJTNAME:
+            case JJTNAME:
                 feature = (String)imp.getInfo();
                 break;
-            case PythonGrammarTreeConstants.JJTIMPORT_AS_NAME:
+            case JJTIMPORT_AS_NAME:
                 feature = (String)imp.getChild(0).getInfo();
                 break;
             }
@@ -35,29 +37,33 @@ public class Future extends Object {
                 nested_scopes = true;
                 continue;
             }
-            throw new ParseException("future feature "+feature+" is not defined",cand);
+            throw new ParseException("future feature "+feature+
+                                     " is not defined",cand);
         }
         return true;
     }
 
-    public void preprocessFutures(SimpleNode node,org.python.core.CompilerFlags cflags) throws Exception {
+    public void preprocessFutures(SimpleNode node,
+                                  org.python.core.CompilerFlags cflags)
+        throws Exception
+    {
         if (cflags != null) {
             nested_scopes = cflags.nested_scopes;
         }
 
-        if ( node.id != PythonGrammarTreeConstants.JJTFILE_INPUT &&
-            node.id != PythonGrammarTreeConstants.JJTSINGLE_INPUT) return;
+        if ( node.id != JJTFILE_INPUT && node.id != JJTSINGLE_INPUT)
+            return;
         int n = node.getNumChildren();
         if (n == 0) return;
 
         int beg = 0;
-        if (node.id == PythonGrammarTreeConstants.JJTFILE_INPUT &&
-            node.getChild(0).id == PythonGrammarTreeConstants.JJTEXPR_STMT &&
-            node.getChild(0).getChild(0).id == PythonGrammarTreeConstants.JJTSTRING) beg++;
+        if (node.id == JJTFILE_INPUT &&
+            node.getChild(0).id == JJTEXPR_STMT &&
+            node.getChild(0).getChild(0).id == JJTSTRING) beg++;
 
         for (int i = beg; i < n; i++) {
             SimpleNode stmt = node.getChild(i);
-            if (stmt.id != PythonGrammarTreeConstants.JJTIMPORTFROM) break;
+            if (stmt.id != JJTIMPORTFROM) break;
             stmt.from_future_checked = true;
             if (!check(stmt)) break;
         }
@@ -71,8 +77,10 @@ public class Future extends Object {
     public static void checkFromFuture(SimpleNode node) throws Exception {
         if (node.from_future_checked) return;
         SimpleNode dotted_name = node.getChild(0);
-        if (dotted_name.getNumChildren() == 1 && ((String)dotted_name.getChild(0).getInfo()).equals(FUTURE)) {
-            throw  new ParseException("from __future__ imports must occur at the beginning of the file",node);
+        if (dotted_name.getNumChildren() == 1 &&
+                ((String)dotted_name.getChild(0).getInfo()).equals(FUTURE)) {
+            throw new ParseException("from __future__ imports must occur " +
+                                     "at the beginning of the file",node);
         }
         node.from_future_checked = true;
     }

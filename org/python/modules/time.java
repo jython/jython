@@ -54,13 +54,17 @@ public class time implements ClassDictInit
     public static PyString __doc__ = new PyString(
         "This module provides various functions to manipulate time values.\n"+
         "\n"+
-        "There are two standard representations of time.  One is the number\n"+
-        "of seconds since the Epoch, in UTC (a.k.a. GMT).  It may be an integer\n"+
+        "There are two standard representations of time.  One is the "+
+                "number\n"+
+        "of seconds since the Epoch, in UTC (a.k.a. GMT).  It may be an "+
+                "integer\n"+
         "or a floating point number (to represent fractions of seconds).\n"+
-        "The Epoch is system-defined; on Unix, it is generally January 1st, 1970.\n"+
+        "The Epoch is system-defined; on Unix, it is generally "+
+                "January 1st, 1970.\n"+
         "The actual value can be retrieved by calling gmtime(0).\n"+
         "\n"+
-        "The other representation is a tuple of 9 integers giving local time.\n"+
+        "The other representation is a tuple of 9 integers giving "+
+                "local time.\n"+
         "The tuple items are:\n"+
         "  year (four digits, e.g. 1998)\n"+
         "  month (1-12)\n"+
@@ -77,14 +81,16 @@ public class time implements ClassDictInit
         "\n"+
         "Variables:\n"+
         "\n"+
-        "timezone -- difference in seconds between UTC and local standard time\n"+
+        "timezone -- difference in seconds between UTC and local "+
+                "standard time\n"+
         "altzone -- difference in  seconds between UTC and local DST time\n"+
         "daylight -- whether local time should reflect DST\n"+
         "tzname -- tuple of (standard time zone name, DST time zone name)\n"+
         "\n"+
         "Functions:\n"+
         "\n"+
-        "time() -- return current time in seconds since the Epoch as a float\n"+
+        "time() -- return current time in seconds since the Epoch "+
+                "as a float\n"+
         "clock() -- return CPU time since process start as a float\n"+
         "sleep() -- delay for a number of seconds given as a float\n"+
         "gmtime() -- convert seconds since Epoch to UTC tuple\n"+
@@ -92,8 +98,10 @@ public class time implements ClassDictInit
         "asctime() -- convert time tuple to string\n"+
         "ctime() -- convert time in seconds to string\n"+
         "mktime() -- convert local time tuple to seconds since Epoch\n"+
-        "strftime() -- convert time tuple to string according to format specification\n"+
-        "strptime() -- parse string to time tuple according to format specification\n"
+        "strftime() -- convert time tuple to string according to "+
+                "format specification\n"+
+        "strptime() -- parse string to time tuple according to "+
+                "format specification\n"
     );
 
     public static void classDictInit(PyObject dict) {
@@ -577,7 +585,9 @@ public class time implements ClassDictInit
         }
     }
 
-    private static String getDisplayName(TimeZone tz, boolean dst, int style) {
+    private static String getDisplayName(TimeZone tz, boolean dst,
+                                         int style)
+    {
         String version = System.getProperty("java.version");
         if (version.compareTo("1.2") >= 0) {
             try {

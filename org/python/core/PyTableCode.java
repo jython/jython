@@ -35,7 +35,8 @@ public class PyTableCode extends PyCode
                        boolean args, boolean keywords,
                        PyFunctionTable funcs, int func_id)
     {
-        this(argcount,varnames,filename,name,firstlineno,args,keywords,funcs,func_id,null,null,0,0);
+        this(argcount, varnames, filename, name, firstlineno, args,
+             keywords, funcs, func_id, null, null, 0, 0);
     }
 
     public PyTableCode(int argcount, String varnames[],
@@ -43,7 +44,8 @@ public class PyTableCode extends PyCode
                        int firstlineno,
                        boolean args, boolean keywords,
                        PyFunctionTable funcs, int func_id,
-                       String[] cellvars,String[] freevars,int npurecell,int moreflags) // may change
+                       String[] cellvars, String[] freevars, int npurecell,
+                       int moreflags) // may change
     {
         co_argcount = nargs = argcount;
         co_varnames = varnames;
@@ -244,14 +246,18 @@ public class PyTableCode extends PyCode
         return ret;
     }
 
-    public PyObject call(PyObject globals, PyObject[] defaults, PyObject closure) {
+    public PyObject call(PyObject globals, PyObject[] defaults,
+                         PyObject closure)
+    {
         if (co_argcount != 0 || args || keywords)
-            return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults, closure);
+            return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults,
+                        closure);
         PyFrame frame = new PyFrame(this, globals);
         return call(frame, closure);
     }
 
-    public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults, PyObject closure)
+    public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults,
+                         PyObject closure)
     {
         if (co_argcount != 1 || args || keywords)
             return call(new PyObject[] {arg1},
@@ -274,7 +280,8 @@ public class PyTableCode extends PyCode
     }
 
     public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
-                         PyObject globals, PyObject[] defaults, PyObject closure)
+                         PyObject globals, PyObject[] defaults,
+                         PyObject closure)
     {
         if (co_argcount != 3 || args || keywords)
             return call(new PyObject[] {arg1, arg2, arg3},
@@ -301,7 +308,8 @@ public class PyTableCode extends PyCode
     }
 
     public PyObject call(PyObject call_args[], String call_keywords[],
-                         PyObject globals, PyObject[] defaults, PyObject closure)
+                         PyObject globals, PyObject[] defaults,
+                         PyObject closure)
     {
         //Needs try except finally blocks
         PyFrame my_frame = new PyFrame(this, globals);

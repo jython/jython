@@ -77,12 +77,13 @@ public class PyServlet extends HttpServlet {
             props.put(name, getInitParameter(name));
         }
         if (props.getProperty("python.home") == null &&
-                                   System.getProperty("python.home") == null) {
+                                System.getProperty("python.home") == null) {
             props.put("python.home", rootPath + "WEB-INF" +
                                              File.separator + "lib");
         }
 
-        PythonInterpreter.initialize(System.getProperties(), props, new String[0]);
+        PythonInterpreter.initialize(System.getProperties(), props,
+                                     new String[0]);
         reset();
 
         PySystemState sys = Py.getSystemState();
@@ -110,7 +111,8 @@ public class PyServlet extends HttpServlet {
     {
         req.setAttribute("pyservlet", this);
 
-        String spath = (String)req.getAttribute("javax.servlet.include.servlet_path");
+        String spath = (String)req.getAttribute(
+                                    "javax.servlet.include.servlet_path");
         if (spath == null) {
             spath = ((HttpServletRequest) req).getServletPath();
             if (spath == null || spath.length() == 0) {

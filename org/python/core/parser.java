@@ -26,8 +26,9 @@ public class parser {
         }
     }
 
-    static public PyException fixParseError(BufferedReader reader, Throwable t,
-                                     String filename)
+    static public PyException fixParseError(BufferedReader reader,
+                                            Throwable t,
+                                            String filename)
     {
         return fixParseError(reader, t, filename, false);
     }

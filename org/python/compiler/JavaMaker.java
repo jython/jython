@@ -7,7 +7,7 @@ import java.util.Hashtable;
 import org.python.core.PyObject;
 import org.python.core.PyProxy;
 
-public class JavaMaker extends ProxyMaker
+public class JavaMaker extends ProxyMaker implements ClassConstants
 {
     public String pythonClass, pythonModule;
     public String[] properties;
@@ -83,7 +83,8 @@ public class JavaMaker extends ProxyMaker
             super.addProxy();
 
         // _initProxy method
-        Code code = classfile.addMethod("__initProxy__", "([Ljava/lang/Object;)V", Modifier.PUBLIC);
+        Code code = classfile.addMethod("__initProxy__",
+                        "([Ljava/lang/Object;)V", Modifier.PUBLIC);
 
         code.aload(0);
         code.ldc(pythonModule);
@@ -98,7 +99,8 @@ public class JavaMaker extends ProxyMaker
 
         int initProxy = code.pool.Methodref(
             "org/python/core/Py", "initProxy",
-            "(Lorg/python/core/PyProxy;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/Object;[Ljava/lang/String;[Ljava/lang/String;Z)V");
+            "(" + $pyProxy + $str + $str + $objArr +
+                $strArr + $strArr + "Z)V");
         code.invokestatic(initProxy);
         code.return_();
 
@@ -113,7 +115,8 @@ public class JavaMaker extends ProxyMaker
 //     }
 
     public void addMethod(Method method, int access) throws Exception {
-//         System.out.println("add: "+method.getName()+", "+methods.containsKey(method.getName()));
+        //System.out.println("add: "+method.getName()+", "+
+        //                   methods.containsKey(method.getName()));
         // Check to see if it's an abstract method
         if (Modifier.isAbstract(access)) {
             // Maybe throw an exception here???
@@ -132,20 +135,20 @@ public class JavaMaker extends ProxyMaker
         throws Exception
     {
         if (!PyProxy.class.isAssignableFrom(this.superclass)) {
-            super.addSuperMethod(methodName,superName,superclass,parameters,ret,sig,access);
+            super.addSuperMethod(methodName,superName,superclass,parameters,
+                                 ret,sig,access);
         }
     }
 
 */
 
     public void addMain() throws Exception {
-        Code code = classfile.addMethod("main", "([Ljava/lang/String;)V",
+        Code code = classfile.addMethod("main", "(" + $str + ")V",
                                         ClassFile.PUBLIC | ClassFile.STATIC);
 
         // Load the class of the Python module to run
         int forname = code.pool.Methodref(
-               "java/lang/Class","forName",
-               "(Ljava/lang/String;)Ljava/lang/Class;");
+               "java/lang/Class","forName", "(" + $str + ")" + $clss);
         code.ldc(pythonModule);
         code.invokestatic(forname);
 
@@ -157,7 +160,7 @@ public class JavaMaker extends ProxyMaker
 
         int runMain = code.pool.Methodref(
             "org/python/core/Py", "runMain",
-            "(Ljava/lang/Class;[Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;Z)V");
+            "(" + $clss + $strArr + $strArr + $strArr + "Z)V");
         code.invokestatic(runMain);
         code.return_();
     }

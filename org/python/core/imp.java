@@ -126,7 +126,8 @@ public class imp
                 fp.close();
             }
             org.python.compiler.Module.compile(node, ofp, name+"$py",
-                                               filename, true, false, true,null);
+                                               filename, true, false, true,
+                                               null);
 
             if (outFilename != null) {
                 File classFile = new File(outFilename);
@@ -318,7 +319,8 @@ public class imp
                     long pyTime = pyEntry.getTime();
                     long classTime = classEntry.getTime();
                     if (classTime >= pyTime) {
-                        InputStream is = zipArchive.getInputStream(classEntry);
+                        InputStream is =
+                                    zipArchive.getInputStream(classEntry);
                         o = createFromPyClass(modName, is, true,
                                               classEntry.getName());
                         if (o != null) {
@@ -417,7 +419,8 @@ public class imp
             Py.writeDebug("import", "trying source " + pyFile.getPath());
 
             if (pyFile.isFile() && caseok(pyFile, pyName, nlen)) {
-                if (classFile.isFile() && caseok(classFile, className, nlen)) {
+                if (classFile.isFile() &&
+                                    caseok(classFile, className, nlen)) {
                     Py.writeDebug("import", "trying precompiled " +
                                   classFile.getPath());
                     long pyTime = pyFile.lastModified();
@@ -494,7 +497,8 @@ public class imp
             return ret;
         }
 
-        Py.writeComment("import", "'" + name + "' not found (=> ImportError)");
+        Py.writeComment("import", "'" + name +
+                        "' not found (=> ImportError)");
         return null;
     }
 
@@ -518,7 +522,10 @@ public class imp
     }
 
     // can return null, None
-    private static PyObject import_next(PyObject mod, StringBuffer parentNameBuffer, String name) {
+    private static PyObject import_next(PyObject mod,
+                                        StringBuffer parentNameBuffer,
+                                        String name)
+    {
         if (parentNameBuffer.length()>0) parentNameBuffer.append('.');
         parentNameBuffer.append(name);
         String fullName = parentNameBuffer.toString().intern();
@@ -526,26 +533,36 @@ public class imp
         PyObject ret = modules.__finditem__(fullName);
         if (ret != null) return ret;
         if (mod == null) {
-            ret = load(name.intern(),  Py.getSystemState().path); // ?? intern superfluous?
+            // ?? intern superfluous?
+            ret = load(name.intern(),  Py.getSystemState().path);
         } else {
             ret = mod.impAttr(name.intern());
         }
         if (ret == null || ret == Py.None) return ret;
-        if (modules.__finditem__(fullName) == null) modules.__setitem__(fullName, ret);
-        else ret = modules.__finditem__(fullName);
+        if (modules.__finditem__(fullName) == null)
+            modules.__setitem__(fullName, ret);
+        else
+            ret = modules.__finditem__(fullName);
         return ret;
     }
 
     // never returns null or None
-    private static PyObject import_first(String name, StringBuffer parentNameBuffer) {
+    private static PyObject import_first(String name,
+                                         StringBuffer parentNameBuffer)
+    {
         PyObject ret = import_next(null,parentNameBuffer,name);
-        if (ret == null || ret == Py.None) throw Py.ImportError("no module named "+name);
+        if (ret == null || ret == Py.None)
+            throw Py.ImportError("no module named "+name);
         return ret;
     }
 
-    // Hierarchy-recursively search for dotted name in mod; never returns null or None
+    // Hierarchy-recursively search for dotted name in mod;
+    // never returns null or None
     // ??pending: check if result is really a module/jpkg/jclass?
-    private static PyObject import_logic(PyObject mod, StringBuffer parentNameBuffer, String dottedName) {
+    private static PyObject import_logic(PyObject mod,
+                                         StringBuffer parentNameBuffer,
+                                         String dottedName)
+    {
         int dot = 0;
         int last_dot= 0;
 
@@ -566,34 +583,47 @@ public class imp
         return mod;
     }
 
-    public static PyObject import_name(String name,boolean top,PyObject modDict) {
+    public static PyObject import_name(String name, boolean top,
+                                       PyObject modDict)
+    {
         if (name.length() == 0)
-        throw Py.ValueError("Empty module name");
+            throw Py.ValueError("Empty module name");
         PyObject modules = Py.getSystemState().modules;
         PyObject pkgMod = null;
         String pkgName = null;
         if (modDict != null) {
             pkgName = getParent(modDict);
             pkgMod = modules.__finditem__(pkgName);
-            if (pkgMod != null && !(pkgMod instanceof PyModule)) pkgMod = null;
+            if (pkgMod != null && !(pkgMod instanceof PyModule))
+                pkgMod = null;
         }
         int dot = name.indexOf('.');
         String firstName;
-        if (dot == -1) firstName = name;
-        else firstName = name.substring(0,dot);
-        StringBuffer parentNameBuffer = new StringBuffer(pkgMod != null?pkgName:"");
-        PyObject topMod = import_next(pkgMod,parentNameBuffer,firstName); // None or null or module-like
+        if (dot == -1)
+            firstName = name;
+        else
+            firstName = name.substring(0,dot);
+        StringBuffer parentNameBuffer = new StringBuffer(
+                pkgMod != null ? pkgName : "");
+        PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName);
         if (topMod == Py.None || topMod == null) {
             if (topMod == null) {
-                modules.__setitem__(parentNameBuffer.toString().intern(),Py.None);
+                modules.__setitem__(parentNameBuffer.toString().intern(),
+                                    Py.None);
             }
             parentNameBuffer = new StringBuffer("");
-            topMod = import_first(firstName,parentNameBuffer); // could throw ImportError
+            // could throw ImportError
+            topMod = import_first(firstName,parentNameBuffer);
         }
         PyObject mod = topMod;
-        if (dot != -1) mod = import_logic(topMod,parentNameBuffer,name.substring(dot+1)); // could throw ImportError
-        if (top) return topMod;
-        else return mod;
+        if (dot != -1) {
+            // could throw ImportError
+            mod = import_logic(topMod,parentNameBuffer,name.substring(dot+1));
+        }
+        if (top)
+            return topMod;
+        else
+            return mod;
     }
 
     public static PyObject importName(String name, boolean top) {
@@ -641,7 +671,9 @@ public class imp
      * Called from jpython generated code when a stamenet like
      * "from spam.eggs import foo, bar" is executed.
      */
-    public static PyObject[] importFrom(String mod, String[] names, PyFrame frame) {
+    public static PyObject[] importFrom(String mod, String[] names,
+                                        PyFrame frame)
+    {
         return importFromAs(mod, names, null, frame);
     }
 

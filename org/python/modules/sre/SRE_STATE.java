@@ -20,9 +20,14 @@ package org.python.modules.sre;
 import java.util.*;
 
 public class SRE_STATE {
-    public static final int SRE_ERROR_ILLEGAL = -1; /* illegal opcode */
-    public static final int SRE_ERROR_STATE   = -2; /* illegal state */
-    public static final int SRE_ERROR_RECURSION_LIMIT = -3; /* runaway recursion */
+    /* illegal opcode */
+    public static final int SRE_ERROR_ILLEGAL = -1;
+
+    /* illegal state */
+    public static final int SRE_ERROR_STATE   = -2;
+
+    /* runaway recursion */
+    public static final int SRE_ERROR_RECURSION_LIMIT = -3;
 
     public static final int SRE_OP_FAILURE                 = 0;
     public static final int SRE_OP_SUCCESS                 = 1;
@@ -119,7 +124,9 @@ public class SRE_STATE {
     /* registers */
     int lastindex;
     int lastmark;
-    int[] mark = new int[200]; /* FIXME: <fl> should be dynamically allocated! */
+
+    /* FIXME: <fl> should be dynamically allocated! */
+    int[] mark = new int[200];
 
     /* dynamically allocated stuff */
     int[] mark_stack;
@@ -315,7 +322,8 @@ public class SRE_STATE {
 
             case SRE_OP_CHARSET:
                 /* <CHARSET> <bitmap> (16 bits per code word) */
-                if (ch < 256 && (set[setidx + (ch >> 4)] & (1 << (ch & 15))) != 0)
+                if (ch < 256 &&
+                            (set[setidx + (ch >> 4)] & (1 << (ch & 15))) != 0)
                     return ok;
                 setidx += 16;
                 break;
@@ -590,7 +598,8 @@ public class SRE_STATE {
 
             case SRE_OP_IN_IGNORE:
                 //TRACE(pidx, ptr, "IN_IGNORE");
-                if (ptr >= end || !SRE_CHARSET(pattern, pidx + 1, lower(str[ptr])))
+                if (ptr >= end ||
+                        !SRE_CHARSET(pattern, pidx + 1, lower(str[ptr])))
                     return 0;
                 pidx += (int)pattern[pidx];
                 ptr++;
@@ -655,8 +664,8 @@ public class SRE_STATE {
                     if (pattern[pidx+1] == SRE_OP_LITERAL &&
                         (ptr >= end || str[ptr] != pattern[pidx+2]))
                         continue;
-                    if (pattern[pidx+1] == SRE_OP_IN &&
-                        (ptr >= end || !SRE_CHARSET(pattern, pidx + 3, str[ptr])))
+                    if (pattern[pidx+1] == SRE_OP_IN && (ptr >= end ||
+                                !SRE_CHARSET(pattern, pidx + 3, str[ptr])))
                         continue;
                     this.ptr = ptr;
                     i = SRE_MATCH(pattern, pidx + 1, level + 1);
@@ -686,7 +695,8 @@ public class SRE_STATE {
 
                 this.ptr = ptr;
 
-                count = SRE_COUNT(pattern, pidx + 3, pattern[pidx+2], level + 1);
+                count = SRE_COUNT(pattern, pidx + 3, pattern[pidx+2],
+                                  level + 1);
                 if (count < 0)
                     return count;
 
@@ -718,7 +728,8 @@ public class SRE_STATE {
                         if (count < mincount)
                             break;
                         this.ptr = ptr;
-                        i = SRE_MATCH(pattern, pidx + pattern[pidx], level + 1);
+                        i = SRE_MATCH(pattern, pidx + pattern[pidx],
+                                     level + 1);
                         if (i != 0)
                             return 1;
                         ptr--;
@@ -730,7 +741,8 @@ public class SRE_STATE {
                     lastmark = this.lastmark;
                     while (count >= mincount) {
                         this.ptr = ptr;
-                        i = SRE_MATCH(pattern, pidx + pattern[pidx], level + 1);
+                        i = SRE_MATCH(pattern, pidx + pattern[pidx],
+                                      level + 1);
                         if (i != 0)
                             return i;
                         ptr--;
@@ -791,7 +803,8 @@ public class SRE_STATE {
                     return 0;
                 }
 
-                if (count < pattern[rp.pidx+2] || pattern[rp.pidx+2] == 65535) {
+                if (count < pattern[rp.pidx+2] ||
+                                            pattern[rp.pidx+2] == 65535) {
                     /* we may have enough matches, but if we can
                        match another item, do so */
                     rp.count = count;
@@ -861,7 +874,8 @@ public class SRE_STATE {
                 this.ptr = ptr;
                 this.repeat = rp;
 
-                if (count >= pattern[rp.pidx+2] && pattern[rp.pidx+2] != 65535)
+                if (count >= pattern[rp.pidx+2] &&
+                                                pattern[rp.pidx+2] != 65535)
                     return 0;
 
                 rp.count = count;
@@ -948,7 +962,8 @@ public class SRE_STATE {
                             this.ptr = ptr + 1 - prefix_len + prefix_skip;
                             if ((flags & SRE_INFO_LITERAL) != 0)
                                 return 1; /* we got all of it */
-                            status = SRE_MATCH(pattern, pidx + 2*prefix_skip, 1);
+                            status = SRE_MATCH(pattern,
+                                               pidx + 2*prefix_skip, 1);
                             if (status != 0)
                                 return status;
                             /* close but no cigar -- try again */
@@ -1078,7 +1093,8 @@ public class SRE_STATE {
     static final int SRE_ALNUM_MASK = 8;
     static final int SRE_WORD_MASK  = 16;
 
-    static byte[] sre_char_info = new byte[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 2,
+    static byte[] sre_char_info = new byte[] {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 2,
         2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 25, 25, 25, 25, 25, 25, 25,
         25, 25, 0, 0, 0, 0, 0, 0, 0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
@@ -1086,7 +1102,8 @@ public class SRE_STATE {
         0, 0, 16, 0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
         24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 0, 0, 0, 0, 0 };
 
-    static byte[] sre_char_lower = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    static byte[] sre_char_lower = new byte[] {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
         10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
         27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
         44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
@@ -1097,15 +1114,18 @@ public class SRE_STATE {
         120, 121, 122, 123, 124, 125, 126, 127 };
 
     final boolean SRE_IS_DIGIT(char ch) {
-        return ((ch) < 128 ? (sre_char_info[(ch)] & SRE_DIGIT_MASK) != 0 : false);
+        return ((ch) < 128 ?
+                (sre_char_info[(ch)] & SRE_DIGIT_MASK) != 0 : false);
     }
 
     final boolean SRE_IS_SPACE(char ch) {
-        return ((ch) < 128 ? (sre_char_info[(ch)] & SRE_SPACE_MASK) != 0 : false);
+        return ((ch) < 128 ?
+                (sre_char_info[(ch)] & SRE_SPACE_MASK) != 0 : false);
     }
 
     final boolean SRE_IS_WORD(char ch) {
-        return ((ch) < 128 ? (sre_char_info[(ch)] & SRE_WORD_MASK) != 0 : false);
+        return ((ch) < 128 ?
+                (sre_char_info[(ch)] & SRE_WORD_MASK) != 0 : false);
     }
 
     final boolean SRE_IS_LINEBREAK(char ch) {

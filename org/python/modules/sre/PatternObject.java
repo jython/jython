@@ -60,7 +60,8 @@ public class PatternObject extends PyObject {
 
 
     public MatchObject search(PyObject[] args, String[] kws) {
-        ArgParser ap = new ArgParser("search", args, kws, "pattern", "pos", "endpos");
+        ArgParser ap = new ArgParser("search", args, kws,
+                                     "pattern", "pos", "endpos");
         String string = ap.getString(0);
         int start = ap.getInt(1, 0);
         int end = ap.getInt(2, string.length());
@@ -74,7 +75,8 @@ public class PatternObject extends PyObject {
 
 
     public PyObject sub(PyObject[] args, String[] kws) {
-        ArgParser ap = new ArgParser("sub", args, kws, "repl", "string", "count");
+        ArgParser ap = new ArgParser("sub", args, kws,
+                                     "repl", "string", "count");
         PyObject template = ap.getPyObject(0);
         String string = ap.getString(1);
         int count = ap.getInt(2, 0);
@@ -88,7 +90,8 @@ public class PatternObject extends PyObject {
 
 
     public PyObject subn(PyObject[] args, String[] kws) {
-        ArgParser ap = new ArgParser("subn", args, kws, "repl", "string", "count");
+        ArgParser ap = new ArgParser("subn", args, kws,
+                                     "repl", "string", "count");
         PyObject template = ap.getPyObject(0);
         String string = ap.getString(1);
         int count = ap.getInt(2, 0);
@@ -102,7 +105,8 @@ public class PatternObject extends PyObject {
 
 
     public PyObject split(PyObject[] args, String[] kws) {
-        ArgParser ap = new ArgParser("split", args, kws, "source", "maxsplit");
+        ArgParser ap = new ArgParser("split", args, kws,
+                                     "source", "maxsplit");
         String string = ap.getString(0);
         int count = ap.getInt(1, 0);
 
@@ -120,7 +124,8 @@ public class PatternObject extends PyObject {
 
 
     public PyObject findall(PyObject[] args, String[] kws) {
-        ArgParser ap = new ArgParser("findall", args, kws, "source", "pos", "endpos");
+        ArgParser ap = new ArgParser("findall", args, kws,
+                                     "source", "pos", "endpos");
         String string = ap.getString(0);
         int start = ap.getInt(1, 0);
         int end = ap.getInt(2, Integer.MAX_VALUE);
@@ -139,7 +144,8 @@ public class PatternObject extends PyObject {
                 /* don't bother to build a match object */
                 switch (groups) {
                 case 0:
-                    item = Py.newString(string.substring(state.start, state.ptr));
+                    item = Py.newString(
+                                    string.substring(state.start, state.ptr));
                     break;
                 case 1:
                     item = Py.newString(state.getslice(1, string));
@@ -195,10 +201,10 @@ public class PatternObject extends PyObject {
     }
 
 
-    MatchObject _pattern_new_match(SRE_STATE state, String string, int status) {
-
+    MatchObject _pattern_new_match(SRE_STATE state, String string,
+                                   int status)
+    {
         /* create match object (from state object) */
-
 
         //System.out.println("status = " +  status + " " + string);
 
@@ -219,7 +225,8 @@ public class PatternObject extends PyObject {
             /* fill in the rest of the groups */
             int i, j;
             for (i = j = 0; i < groups; i++, j+=2) {
-                if (j+1 <= state.lastmark && state.mark[j] != -1 && state.mark[j+1] != -1) {
+                if (j+1 <= state.lastmark && state.mark[j] != -1 &&
+                                                    state.mark[j+1] != -1) {
                     match.mark[j+2] = state.mark[j] - base;
                     match.mark[j+3] = state.mark[j+1] - base;
                 } else

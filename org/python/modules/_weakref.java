@@ -239,7 +239,7 @@ public class _weakref implements ClassDictInit {
             PyObject o = (PyObject) gref.get();
             if (o == null) {
                 throw new PyException(ReferenceError,
-                                  "weakly-referenced object no longer exists");
+                              "weakly-referenced object no longer exists");
             }
             return o;
         }
@@ -252,7 +252,8 @@ public class _weakref implements ClassDictInit {
             if (other.getClass() != getClass())
                 return null;
             PyObject pythis = (PyObject) gref.get();
-            PyObject pyother = (PyObject) ((AbstractReference) other).gref.get();
+            PyObject pyother = (PyObject) ((AbstractReference) other).
+                                                            gref.get();
             if (pythis == null || pyother == null)
                 return this == other ? Py.One : Py.Zero;
             return  pythis._eq(pyother);

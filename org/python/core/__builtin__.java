@@ -258,10 +258,11 @@ public class __builtin__ implements ClassDictInit
         if (o instanceof PyCode)
             code = (PyCode)o;
         else {
-            if (o instanceof PyString)
+            if (o instanceof PyString) {
+                // eval does not inherit co_nested
                 code = Py.compile_flags(((PyString)o).toString(),
-                                           "<string>", "eval",null); // eval does not inherit co_nested
-            else
+                                           "<string>", "eval", null);
+            } else
                 throw Py.TypeError(
                     "eval: argument 1 must be string or code object");
         }
@@ -861,7 +862,9 @@ public class __builtin__ implements ClassDictInit
 
     public static PyClass type(PyObject o) {
         if (o instanceof PyInstance) {
-            return PyJavaClass.lookup(o.getClass()); // was just PyInstance.class, goes with experimental PyMetaClass hook
+            // was just PyInstance.class, goes with experimental
+            // PyMetaClass hook
+            return PyJavaClass.lookup(o.getClass());
         } else {
             return o.__class__;
         }

@@ -276,18 +276,24 @@ public final class Py
         }
     }
 
-    public static void warning(PyObject category, String message,String filename,int lineno, String module, PyObject registry) {
+    public static void warning(PyObject category, String message,
+                               String filename, int lineno, String module,
+                               PyObject registry)
+    {
         PyObject func = null;
         PyObject mod = importWarnings();
         if (mod != null)
             func = mod.__getattr__("warn_explicit");
         if (func == null) {
-            System.err.println(filename + ":" + lineno + ":" + warn_hcategory(category) + ": " + message);
+            System.err.println(filename + ":" + lineno + ":" +
+                               warn_hcategory(category) + ": " + message);
             return;
         } else {
-            func.__call__(new PyObject[] {Py.newString(message), category,
+            func.__call__(new PyObject[] {
+                Py.newString(message), category,
                 Py.newString(filename), Py.newInteger(lineno),
-                (module == null)?Py.None:Py.newString(module), registry}, Py.NoKeywords);
+                (module == null) ? Py.None : Py.newString(module),
+                registry}, Py.NoKeywords);
         }
     }
 
@@ -433,17 +439,20 @@ public final class Py
         return t ? Py.One : Py.Zero;
     }
 
-    // nested scopes:  String[] cellvars,String[] freevars,int npurecell & int moreflags
+    // nested scopes:
+    // String[] cellvars,String[] freevars,int npurecell & int moreflags
 
     public static PyCode newCode(int argcount, String varnames[],
                                  String filename, String name,
                                  boolean args, boolean keywords,
                                  PyFunctionTable funcs, int func_id,
-                                 String[] cellvars,String[] freevars,int npurecell,int moreflags)
+                                 String[] cellvars,String[] freevars,
+                                 int npurecell, int moreflags)
     {
         return new PyTableCode(argcount, varnames,
                                filename, name, 0, args, keywords, funcs,
-                               func_id, cellvars, freevars, npurecell,moreflags);
+                               func_id, cellvars, freevars, npurecell,
+                               moreflags);
     }
 
     public static PyCode newCode(int argcount, String varnames[],
@@ -451,12 +460,14 @@ public final class Py
                                  int firstlineno,
                                  boolean args, boolean keywords,
                                  PyFunctionTable funcs, int func_id,
-                                 String[] cellvars,String[] freevars,int npurecell,int moreflags)
+                                 String[] cellvars,String[] freevars,
+                                 int npurecell, int moreflags)
 
     {
         return new PyTableCode(argcount, varnames,
                                filename, name, firstlineno, args, keywords,
-                               funcs, func_id, cellvars, freevars, npurecell,moreflags);
+                               funcs, func_id, cellvars, freevars, npurecell,
+                               moreflags);
     }
 
     // --
@@ -808,7 +819,8 @@ public final class Py
             try {
                 code = ((PyRunnable)mainClass.newInstance()).getMain();
             } catch (Throwable t) {
-                System.err.println("Invalid class: "+mainClass.getName()+"$py");
+                System.err.println("Invalid class: " + mainClass.getName() +
+                                   "$py");
                 System.exit(-1);
             }
             PyObject mod = imp.createFromCode("__main__", code);
@@ -1125,7 +1137,8 @@ public final class Py
             } else
                 throw Py.TypeError(
                     "exec: argument 1 must be string, code or file object");
-            code = Py.compile_flags(contents, "<string>", "exec",Py.getCompilerFlags());
+            code = Py.compile_flags(contents, "<string>", "exec",
+                                    Py.getCompilerFlags());
         }
         Py.runCode(code, locals, globals);
     }
@@ -1405,7 +1418,8 @@ public final class Py
     }
 
     public static PyObject makeClass(String name, PyObject[] bases,
-                                     PyCode code, PyObject doc,PyObject[] closure_cells)
+                                     PyCode code, PyObject doc,
+                                     PyObject[] closure_cells)
     {
         return makeClass(name, bases, code, doc, null, closure_cells);
     }
@@ -1418,17 +1432,21 @@ public final class Py
     }
 
 
-    private static Class[] pyClassCtrSignature = {String.class,PyTuple.class,PyObject.class,Class.class};
+    private static Class[] pyClassCtrSignature = {
+        String.class, PyTuple.class, PyObject.class, Class.class
+    };
 
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc,
-                                     Class proxyClass,PyObject[] closure_cells)
+                                     Class proxyClass,
+                                     PyObject[] closure_cells)
     {
         PyFrame frame = getFrame();
         PyObject globals = frame.f_globals;
 
         PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords,
-                                  globals, Py.EmptyObjects,new PyTuple(closure_cells));
+                                  globals, Py.EmptyObjects,
+                                  new PyTuple(closure_cells));
         if (doc != null)
             dict.__setitem__("__doc__", doc);
 
@@ -1449,10 +1467,13 @@ public final class Py
             } else if (bases[i] instanceof PyMetaClass) {
                 // experimental PyMetaClass hook
                 try {
-                    return (PyObject)bases[i].getClass().getConstructor(pyClassCtrSignature).newInstance(
-                            new Object[] { name, new PyTuple(bases), dict, proxyClass });
+                    java.lang.reflect.Constructor ctor = bases[i].getClass().
+                                    getConstructor(pyClassCtrSignature);
+                    return (PyObject) ctor.newInstance(new Object[] {
+                            name, new PyTuple(bases), dict, proxyClass });
                 } catch(Exception e) {
-                    throw Py.TypeError("meta-class fails to supply proper ctr: "+bases[i].safeRepr());
+                    throw Py.TypeError("meta-class fails to supply proper " +
+                                       "ctr: " + bases[i].safeRepr());
                 }
             }
 
@@ -1495,7 +1516,8 @@ public final class Py
                                  boolean linenumbers,
                                  boolean printResults)
     {
-        return compile_flags(node,name,filename,linenumbers,printResults,null);
+        return compile_flags(node, name, filename, linenumbers,
+                             printResults, null);
     }
 
     public static PyCode compile(InputStream istream, String filename,
@@ -1532,11 +1554,15 @@ public final class Py
         boolean printResults = false;
         if (type.equals("single"))
             printResults = true;
-        return Py.compile_flags(node, getName(), filename, true, printResults,cflags);
+        return Py.compile_flags(node, getName(), filename, true, printResults,
+                                cflags);
     }
 
-    public static PyCode compile_flags(String data, String filename, String type,CompilerFlags cflags) {
-        return Py.compile_flags(new java.io.StringBufferInputStream(data+"\n\n"),
+    public static PyCode compile_flags(String data, String filename,
+                                       String type,CompilerFlags cflags)
+    {
+        return Py.compile_flags(
+            new java.io.StringBufferInputStream(data+"\n\n"),
                           filename, type,cflags);
     }
 
@@ -1586,7 +1612,6 @@ public final class Py
 
     public static void printResult(PyObject ret) {
         Py.getThreadState().systemState.invoke("displayhook", ret);
-        //Py.getThreadState().systemState.__dict__.__finditem__("displayhook").__call__(ret);
     }
 
     public static final int ERROR=-1;
@@ -1689,37 +1714,40 @@ class JavaCode extends PyCode {
     }
 
     public PyObject call(PyObject args[], String keywords[],
-                                  PyObject globals, PyObject[] defaults, PyObject closure)
+                         PyObject globals, PyObject[] defaults,
+                         PyObject closure)
     {
         return func.__call__(args, keywords);
     }
 
-    public PyObject call(PyObject self, PyObject args[],
-                                  String keywords[],
-                                  PyObject globals, PyObject[] defaults, PyObject closure)
+    public PyObject call(PyObject self, PyObject args[], String keywords[],
+                         PyObject globals, PyObject[] defaults,
+                         PyObject closure)
     {
         return func.__call__(self, args, keywords);
     }
 
-    public PyObject call(PyObject globals, PyObject[] defaults, PyObject closure)
+    public PyObject call(PyObject globals, PyObject[] defaults,
+                         PyObject closure)
     {
         return func.__call__();
     }
 
     public PyObject call(PyObject arg1, PyObject globals,
-                                  PyObject[] defaults, PyObject closure)
+                         PyObject[] defaults, PyObject closure)
     {
         return func.__call__(arg1);
     }
 
-    public PyObject call(PyObject arg1, PyObject arg2,
-                                  PyObject globals, PyObject[] defaults, PyObject closure)
+    public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
+                         PyObject[] defaults, PyObject closure)
     {
         return func.__call__(arg1, arg2);
     }
 
     public PyObject call(PyObject arg1, PyObject arg2, PyObject arg3,
-                                  PyObject globals, PyObject[] defaults, PyObject closure)
+                         PyObject globals, PyObject[] defaults,
+                         PyObject closure)
     {
         return func.__call__(arg1, arg2, arg3);
     }

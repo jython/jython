@@ -309,7 +309,8 @@ public class exceptions implements ClassDictInit {
         PyObject filename = basename(self.__findattr__("filename"));
         PyObject lineno = self.__findattr__("lineno");
         if (filename instanceof PyString && lineno instanceof PyInteger)
-            return new PyString(str + " (" + filename + ", line " + lineno + ")");
+            return new PyString(str + " (" + filename + ", line " +
+                                lineno + ")");
         else if (filename instanceof PyString)
             return new PyString(str + " (" + filename + ")");
         else if (lineno instanceof PyInteger)

@@ -8,6 +8,7 @@ import java.util.Vector;
 import java.util.Enumeration;
 
 public class ArgListCompiler extends org.python.parser.Visitor
+    implements PythonGrammarTreeConstants
 {
     public boolean arglist, keywordlist;
     public Vector defaults;
@@ -18,7 +19,7 @@ public class ArgListCompiler extends org.python.parser.Visitor
         arglist = keywordlist = false;
         defaults = new Vector();
         names = new Vector();
-        init_code = new SimpleNode(PythonGrammarTreeConstants.JJTSUITE);
+        init_code = new SimpleNode(JJTSUITE);
     }
 
     public void reset() {
@@ -68,13 +69,12 @@ public class ArgListCompiler extends org.python.parser.Visitor
         names.addElement(name);
 
         //Handle tuple arguments properly
-        if (node.getChild(0).id == PythonGrammarTreeConstants.JJTFPLIST) {
-            SimpleNode expr = new SimpleNode(
-                PythonGrammarTreeConstants.JJTEXPR_STMT);
+        if (node.getChild(0).id == JJTFPLIST) {
+            SimpleNode expr = new SimpleNode(JJTEXPR_STMT);
             // Set the right line number for this expr
             expr.beginLine = node.beginLine;
             expr.jjtAddChild(node.getChild(0), 0);
-            SimpleNode nm = new SimpleNode(PythonGrammarTreeConstants.JJTNAME);
+            SimpleNode nm = new SimpleNode(JJTNAME);
             nm.setInfo(name);
             expr.jjtAddChild(nm, 1);
             init_code.jjtAddChild(expr, init_code.getNumChildren());

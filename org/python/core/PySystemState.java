@@ -644,7 +644,8 @@ public class PySystemState extends PyObject
                 exitfunc.__call__();
             } catch (PyException exc) {
                 if (!Py.matchException(exc, Py.SystemExit)) {
-                    Py.println(stderr, Py.newString("Error in sys.exitfunc:"));
+                    Py.println(stderr,
+                               Py.newString("Error in sys.exitfunc:"));
                 }
                 Py.printException(exc);
             }

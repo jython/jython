@@ -148,7 +148,8 @@ public class Code extends Attribute
             stream.writeShort(e.exc);
         }
         if (linenumbers != null)
-            ClassFile.writeAttributes(stream, new Attribute[] { linenumbers });
+            ClassFile.writeAttributes(stream,
+                                      new Attribute[] { linenumbers });
         else
             ClassFile.writeAttributes(stream, new Attribute[0]);
     }
@@ -283,7 +284,9 @@ public class Code extends Attribute
         push(pool.sizes[c]-1);
     }
 
-    public void getfield(String c, String name, String type) throws IOException {
+    public void getfield(String c, String name, String type)
+        throws IOException
+    {
         getfield(pool.Fieldref(c, name, type));
     }
 
@@ -293,7 +296,9 @@ public class Code extends Attribute
         push(pool.sizes[c]);
     }
 
-    public void getstatic(String c, String name, String type) throws IOException {
+    public void getstatic(String c, String name, String type)
+        throws IOException
+    {
         getstatic(pool.Fieldref(c, name, type));
     }
 

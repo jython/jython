@@ -498,12 +498,16 @@ public class cPickle implements ClassDictInit {
 
     public static PyObject _UnpickleableError(PyObject[] arg, String[] kws) {
         PyObject dict = _empty__init__(arg, kws);
-        dict.__setitem__("__init__", getJavaFunc("_UnpickleableError__init__"));
-        dict.__setitem__("__str__", getJavaFunc("_UnpickleableError__str__"));
+        dict.__setitem__("__init__",
+                                getJavaFunc("_UnpickleableError__init__"));
+        dict.__setitem__("__str__",
+                                getJavaFunc("_UnpickleableError__str__"));
         return dict;
     }
 
-    public static void _UnpickleableError__init__(PyObject[] arg, String[] kws) {
+    public static void _UnpickleableError__init__(PyObject[] arg,
+                                                  String[] kws)
+    {
         ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
         PyObject self = ap.getPyObject(0);
         PyObject args = ap.getList(1);
@@ -511,7 +515,9 @@ public class cPickle implements ClassDictInit {
         self.__setattr__("args", args);
     }
 
-    public static PyString _UnpickleableError__str__(PyObject[] arg, String[] kws) {
+    public static PyString _UnpickleableError__str__(PyObject[] arg,
+                                                     String[] kws)
+    {
         ArgParser ap = new ArgParser("__str__", arg, kws, "self");
         PyObject self = ap.getPyObject(0);
 
