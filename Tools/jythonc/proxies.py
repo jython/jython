@@ -1,12 +1,13 @@
 # Copyright © Corporation for National Research Initiatives
 
+from types import TupleType, IntType
+
 import jast
+
 from java.lang.reflect.Modifier import *
 from java.lang.reflect import Modifier
 from java.lang import *
 import org, java
-from types import *
-import string
 
 
 
@@ -449,17 +450,22 @@ class JavaProxy:
                           map(lambda i: i.__name__, self.interfaces), body)
 
     def getDescription(self):
+        COMMASPACE = ', '
         ret = self.name+' extends '+self.supername
         if len(self.interfaces) > 0:
-            ret = ret+' implements '+string.join(map(lambda i: i.__name__, self.interfaces), ', ')
+            ret = ret + ' implements ' + \
+                  COMMASPACE.join(map(lambda i: i.__name__, self.interfaces))
         return ret
 
 
 
 if __name__ == '__main__':
     import java
-    methods = [ ("init", None, None), ("enable", None, ("public", Void.TYPE, [(java.awt.Event, 'event')])) ]
-
+    methods = [("init", None, None),
+               ("enable", None, ("public", Void.TYPE,
+                                 [(java.awt.Event, 'event')]
+                                 ))
+               ]
     jp = JavaProxy("Foo", [java.util.Random], methods) #applet.Applet], methods)
 
     print jast.Block(jp.dumpAll())
