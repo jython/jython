@@ -173,8 +173,8 @@ def lookup(dbname):
 class dbexts:
 	def __init__(self, dbname=None, cfg=None, formatter=console, autocommit=0, jndiname=None, out=None):
 		self.verbose = 1
-		self.results = None
-		self.headers = None
+		self.results = []
+		self.headers = []
 		self.autocommit = autocommit
 		self.formatter = formatter
 		self.out = out
@@ -259,7 +259,7 @@ class dbexts:
 
 	def begin(self):
 		""" reset ivars and return a new cursor, possibly binding an auxiliary datahandler """
-		self.headers, self.results = None, None
+		self.headers, self.results = [], []
 		c = self.db.cursor()
 		if __OS__ == 'java':
 			if hasattr(self, 'datahandler'):
@@ -277,8 +277,7 @@ class dbexts:
 			if hasattr(cursor, "nextset"):
 				s = cursor.nextset()
 				while s:
-					f = cursor.fetchall()
-					if f: self.results = choose(self.results is None, [], self.results) + f
+					self.results += cursor.fetchall()
 					s = cursor.nextset()
 		if hasattr(cursor, "lastrowid"):
 			self.lastrowid = cursor.lastrowid
