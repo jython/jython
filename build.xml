@@ -63,6 +63,7 @@
                    **/WeakInternalTables.java,
                    **/AutoInternalTables.java,
                    **/SoftIInternalTables.java
+                   **/BytecodeLoader2.java
             "/>
     </target>
 
