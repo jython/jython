@@ -97,8 +97,9 @@ class LocalFrame:
         if index == len(temps):
             temps.append(None)
 
-        tname = "t$%d$%s" % (index, type)
+        tname = "t$%d$%s" % (index, type.replace("[]", "__"))
         temp = jast.Identifier(tname)
+        temp.type = type
         temps[index] = temp
         #print 'get temp', index, type, temps
         return temp
@@ -106,7 +107,7 @@ class LocalFrame:
     def freetemp(self, temp):
         parts = temp.name.split('$')
         index = int(parts[1])
-        type = parts[2]
+        type = temp.type
         temps = self.gettemps(type)
 
         #print 'free temp', index, type, temps
@@ -207,7 +208,7 @@ class LocalFrame:
         for type, temps in self.temporaries.items():
             names = []
             for index in range(len(temps)):
-                names.append("t$%d$%s" % (index, type))
+                names.append("t$%d$%s" % (index, type.replace("[]", "__")))
             ident = "%s %s" % (type, COMMASPACE.join(names))
             decs.append(jast.Identifier(ident))
         decs.append(jast.Blank)
