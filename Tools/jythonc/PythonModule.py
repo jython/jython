@@ -303,6 +303,9 @@ class PythonModule:
     def getCodeConstant(self, name, args, locals, code):        
         return self.pyinner.getCodeConstant(name, args, locals, code)
 
+    def addFunctionCode(self, name, code):
+        return self.pyinner.addFunctionCode(name, code)
+
     def addMain(self, code, cc):
         return self.pyinner.addMain(code, cc)
 

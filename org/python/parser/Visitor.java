@@ -254,6 +254,10 @@ public class Visitor {
         throw new ParseException("Unhandled Node: "+n);
     }
 
+    public Object list_iter(SimpleNode n) throws Exception {
+        throw new ParseException("Unhandled Node: "+n);
+    }
+
     public Object dictionary(SimpleNode n) throws Exception {
         throw new ParseException("Unhandled Node: "+n);
     }

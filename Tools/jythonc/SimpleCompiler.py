@@ -244,6 +244,7 @@ class SimpleCompiler(BaseEvaluator):
         self.nthrowables = 0
         self.factory = factory
         self.options = options
+        self.listComprehensionStack = []
 
     def isAlwaysFalse(self, name):
         if self.options is None:
@@ -292,6 +293,55 @@ class SimpleCompiler(BaseEvaluator):
 
     def list_op(self, values):
         return self.factory.makeList(self.visitall(values))
+
+    def list_comprehension(self, node):
+        # Since this code generated here is placed in its own 
+        # java method, we need a new set of temp vrbls.
+        oldtmps = self.frame.temporaries
+        self.frame.temporaries = {}
+
+        expr = node.getChild(0)
+        suite = node.getChild(1)
+        lst = self.factory.makeList([])
+
+        lsttmp, lstcode = self.makeTemp(lst)
+
+        append = self.factory.makePyObject(jast.Invoke(lsttmp.asAny(),
+                     "__getattr__", [jast.StringConstant("append")]))
+
+        appendtmp, appendcode = self.makeTemp(append)
+
+        self.listComprehensionStack.append((appendtmp, expr))
+
+        stmts = [lstcode, appendcode]
+        stmts.append(self.visit(suite))
+        stmts.append(jast.Return(lsttmp.asAny()))
+
+        decs = self.frame.getDeclarations()
+        if len(decs) != 0:
+            stmts.insert(0, decs)
+
+        self.listComprehensionStack.pop(-1)
+
+        idx = self.module.addFunctionCode("__listcomprehension", 
+              jast.Block(stmts))
+
+        self.freeTemp(lsttmp)
+        self.freeTemp(appendtmp)
+
+        self.frame.temporaries = oldtmps
+
+        return self.factory.makePyObject(
+                   jast.InvokeLocal("__listcomprehension$%d" % (idx+1), 
+                           [jast.Identifier("frame")]))
+
+    def list_iter(self, node):
+        if node.getNumChildren() == 0:
+            append, expr = self.listComprehensionStack[-1]
+            return [jast.Invoke(append.asAny(), "__call__",
+                                         [self.visit(expr).asAny()])]
+
+        return self.visit(node.getChild(0))
 
     def tuple_op(self, values):
         return self.factory.makeTuple(self.visitall(values))

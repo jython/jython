@@ -335,8 +335,13 @@ class PythonVisitor(Visitor):
 
     def list(self, node):
         #self.startnode(node)
+        if node.numChildren > 1 and node.getChild(1).id == JJTFOR_STMT:
+            return self.walker.list_comprehension(node)
         return self.walker.list_op(self.makeSeqArgs(node))
 
+    def list_iter(self, node):
+        return self.walker.list_iter(node)
+            
     def tuple(self, node):
         #self.startnode(node)
         return self.walker.tuple_op(self.makeSeqArgs(node))

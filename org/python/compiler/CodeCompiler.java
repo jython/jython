@@ -36,6 +36,7 @@ public class CodeCompiler extends Visitor
     public String className;
 
     public Stack continueLabels, breakLabels, finallyLabels;
+    public Stack listComprehensionExprs, listComprehensionAppends;
 
     public CodeCompiler(Module module, boolean print_results) {
         this.module = module;
@@ -45,6 +46,8 @@ public class CodeCompiler extends Visitor
         continueLabels = new Stack();
         breakLabels = new Stack();
         finallyLabels = new Stack();
+        listComprehensionExprs = new Stack();
+        listComprehensionAppends = new Stack();
         this.print_results = print_results;
     }
 
@@ -1883,6 +1886,11 @@ public class CodeCompiler extends Visitor
         if (mode ==AUGSET)
             throw new ParseException(
                       "augmented assign to list not possible", node);
+
+        if (node.getNumChildren() > 1 && node.getChild(1).id ==
+                      PythonGrammarTreeConstants.JJTFOR_STMT)
+             return list_comprehension(node);
+
         if (mode == SET) return seqSet(node);
         if (mode == DEL) return seqDel(node);
 
@@ -1897,6 +1905,68 @@ public class CodeCompiler extends Visitor
         code.invokespecial(mrefs.PyList_init);
         return null;
     }
+
+    public int PyList_init2;
+    public Object list_comprehension(SimpleNode node) throws Exception {
+        code.new_(code.pool.Class("org/python/core/PyList"));
+        code.dup();
+        if (mrefs.PyList_init2 == 0) {
+            mrefs.PyList_init2 = code.pool.Methodref(
+                "org/python/core/PyList", "<init>", "()V");
+        }
+        code.invokespecial(mrefs.PyList_init2);
+
+        code.dup();
+
+        int tmp_list = storeTop();
+        code.aload(tmp_list);
+        code.ldc("append");
+
+        if (mrefs.getattr == 0) {
+            mrefs.getattr = code.pool.Methodref(
+                "org/python/core/PyObject", "__getattr__",
+                "(Ljava/lang/String;)Lorg/python/core/PyObject;");
+        }
+        code.invokevirtual(mrefs.getattr);
+        int tmp_append = storeTop();
+
+        listComprehensionExprs.push(node.getChild(0));
+        listComprehensionAppends.push(new Integer(tmp_append));
+
+        node.getChild(1).visit(this);
+
+        listComprehensionAppends.pop();
+        listComprehensionExprs.pop();
+
+        return null;
+    }
+
+
+    public Object list_iter(SimpleNode node) throws Exception {
+        if (node.getNumChildren() == 0) {
+            int tmp_append = 
+                 ((Integer) listComprehensionAppends.peek()).intValue();
+            SimpleNode exprNode = (SimpleNode) listComprehensionExprs.peek();
+
+            code.aload(tmp_append);
+            exprNode.visit(this);
+
+            if (mrefs.calla1 == 0) {
+                mrefs.calla1 = code.pool.Methodref(
+                    "org/python/core/PyObject", "__call__",
+                    "(Lorg/python/core/PyObject;)Lorg/python/core/PyObject;");
+            }
+            code.invokevirtual(mrefs.calla1);
+
+            code.pop();
+
+            return null;
+        }
+
+        return node.getChild(0).visit(this);
+    }
+
+
 
     public Object dictionary(SimpleNode node) throws Exception {
         code.new_(code.pool.Class("org/python/core/PyDictionary"));

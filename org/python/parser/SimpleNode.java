@@ -421,6 +421,8 @@ public class SimpleNode implements Node
             return visitor.aug_rshift(this);
         case PythonGrammarTreeConstants.JJTAUG_POWER:
             return visitor.aug_power(this);
+        case PythonGrammarTreeConstants.JJTLIST_ITER:
+            return visitor.list_iter(this);
         default:
             throw new ParseException("Unexpected node: "+this);
         }

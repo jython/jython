@@ -660,7 +660,7 @@ void atom() #void: {}
 {
     LOOKAHEAD(2) (  <LPAREN> <RPAREN> ) #tuple
 |   ( <LPAREN> [SmartTestList()] <RPAREN> )
-|   ( <LBRACKET> [testlist()] <RBRACKET> ) #list
+|   ( <LBRACKET> [listmaker()] <RBRACKET> ) #list
 |   ( <LBRACE> [dictmaker()] <RBRACE> ) #dictionary
 |   "`" SmartTestList() "`" #str_1op(1)
 |   Name()
@@ -707,6 +707,23 @@ void testlist() #void: {}
 //dictmaker: test ':' test (',' test ':' test)* [',']
 void dictmaker() #void: {}
 {test() <COLON> test() (LOOKAHEAD(2) <COMMA> test() <COLON> test())* [<COMMA>]}
+
+//listmaker: test ( list_for | (',' test)* [','] )
+void listmaker() #void: {}
+{ test() ( list_for() | (LOOKAHEAD(2) <COMMA> test())* [Comma()] #tuple(>1)) }
+
+//list_iter: [list_for | list_if]
+void list_iter(): {}
+{ [ (list_for() | list_if()) ] }
+
+//list_for: 'for' exprlist 'in' testlist list_iter
+void list_for() #for_stmt: {}
+{ <FOR> exprlist() <IN> SmartTestList() list_iter() }
+
+//list_if: 'if' test list_iter
+void list_if() #if_stmt: {}
+{ <IF> test() list_iter() }
+
 
 //classdef: 'class' NAME ['(' testlist ')'] ':' suite
 void classdef(): {}
