@@ -27,14 +27,6 @@ public class re implements InitModule {
         dict.__setitem__("L", new PyInteger(0));
     }
 
-    // Put all of these in an InitModule...
-    //public static final int IGNORECASE = Perl5Compiler.CASE_INSENSITIVE_MASK;
-    //public static final int MULTILINE = Perl5Compiler.MULTILINE_MASK;
-    //public static final int DOTALL = Perl5Compiler.SINGLELINE_MASK;
-
-    // These two are faked for now
-    //public static final int VERBOSE = 256;
-
     // Skip caching for now...
     private static RegexObject cachecompile(String pattern, int flags) {
         return compile(pattern, flags);
