@@ -3,21 +3,18 @@ Copyright © Corporation for National Research Initiatives
 
     Jim Hugunin invented JPython and was the primary developer while
     he was at CNRI.  In February 1999, Jim left CNRI for sunny
-    California and Barry Warsaw became the primary maintainer.  Jim
-    continues to provide valuable assistance, as does Python's
-    inventor Guido van Rossum.
+    California and Barry Warsaw became the primary maintainer.
+    When Barry and the rest of PythonLabs left CNRI, Barry renamed
+    JPython to Jython, put the sources on SourceForge and made 
+    Finn Bock the primary maintainer.
+
+    Python's inventor Guido van Rossum and the rest of PythonLabs
+    continues to help and support Jython by their understanding
+    of how Jython must live with the limits of Java.
 
     You can contact the Jython maintainers directly via
     jython-dev@lists.sourceforge.net, or the Jython community at
     jython-users@lists.sourceforge.net.
-
-    Finn Bock has been a frequent and valuable contributor to 
-    Jython, and has provided bug fixes and these important modules:
-
-        cPickle.java
-        cStringIO.java
-        struct.java
-        binascii.java
 
     Harry Mantakos contributed the underlying md5 implementation.
 
