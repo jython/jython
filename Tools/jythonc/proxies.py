@@ -58,9 +58,10 @@ def makeReturn(code, ret):
     if Class.isPrimitive(ret):
         r = jast.InvokeStatic("Py", "py2"+ret.__name__, [code])
     else:
+        typname = typeName(ret)
         r = jast.InvokeStatic("Py", "tojava",
-                              [code, jast.StringConstant(ret.__name__)])
-        r = jast.Cast(typeName(ret), r)
+                              [code, jast.GetStaticAttribute(typname,'class')])
+        r = jast.Cast(typname, r)
     return jast.Return(r)
 
 

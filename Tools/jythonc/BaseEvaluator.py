@@ -305,6 +305,8 @@ class BaseEvaluator:
             stmts.append(self.set_name(asname, 
          	module.getattr(modname).makeReference(code)))
 
+        stmts.append(jast.Set(imp_accu,jast.Null))
+        
         return stmts       
 
     #external interfaces

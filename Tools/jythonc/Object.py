@@ -134,7 +134,7 @@ class PyObject:
 
         tname = type.__name__
         tojava = jast.InvokeStatic('Py', 'tojava',
-                                   [code, jast.StringConstant(tname)])
+                                   [code, jast.GetStaticAttribute(tname,'class')])
         return jast.Cast(tname, tojava)
 
     def print_line(self, code):
