@@ -37,6 +37,7 @@ public class PythonInterpreter {
     }
     
     public PythonInterpreter(PyObject dict, PySystemState systemState) {
+        PySystemState.initialize();
         if (dict == null)
             dict = new PyStringMap();
         if (systemState == null) {
@@ -44,7 +45,6 @@ public class PythonInterpreter {
             if (systemState == null)
                 systemState = new PySystemState();
         }
-        PySystemState.initialize();
         module = new PyModule("main", dict);
         this.systemState = systemState;
         locals = module.__dict__;
