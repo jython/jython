@@ -182,7 +182,7 @@ public class PyObject implements java.io.Serializable {
                 return new exposed___delattr__((PyObject)self,info);
             }
 
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
+            public PyObject __call__(PyObject arg0) {
                 try {
                     String name=(arg0.asName(0));
                     self.object___delattr__(name);
@@ -200,7 +200,7 @@ public class PyObject implements java.io.Serializable {
                 }
             }
 
-            public PyObject inst_call(PyObject self,PyObject arg0,PyObject arg1) {
+            public PyObject inst_call(PyObject self,PyObject arg0) {
                 try {
                     String name=(arg0.asName(0));
                     self.object___delattr__(name);
@@ -219,7 +219,7 @@ public class PyObject implements java.io.Serializable {
             }
 
         }
-        dict.__setitem__("__delattr__",new PyMethodDescr("__delattr__",PyObject.class,2,2,new exposed___delattr__(null,null)));
+        dict.__setitem__("__delattr__",new PyMethodDescr("__delattr__",PyObject.class,1,1,new exposed___delattr__(null,null)));
         class exposed___hash__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
