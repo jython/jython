@@ -19,20 +19,21 @@ def copy(instream, outstream):
 class JavaArchive:
     def __init__(self, packages=[]):
         self.files = []
-        self.classes = []
         self.entries = []
         self.packages = packages
         self.manifest = []
-        self.singleclasses = []
-
-    def addSingleClass(self, class_):
-        self.singleclasses.append(class_)
+        self.jar_entries = {}
 
     def addFile(self, rootdir, filename):
         self.files.append( (rootdir, filename) )
 
     def addClass(self, rootdir, classname, properties=None):
         filename = apply(os.path.join, classname.split('.'))+'.class'
+        outfile = string.join(filename.split(os.sep), '/')
+        if self.jar_entries.has_key(outfile):
+            return
+        self.jar_entries[outfile] = 1
+
         self.addFile(rootdir, filename)
         if properties is not None:
             self.manifest.append("Name: "+
@@ -40,6 +41,11 @@ class JavaArchive:
             self.addToManifest(properties)
 
     def addEntry(self, entry):
+        outfile = string.join(entry.classname.split('.'), '/')+'.class'
+        if self.jar_entries.has_key(outfile):
+            return
+        self.jar_entries[outfile] = 1
+
         self.entries.append(entry)
 
     def addToManifest(self, properties=None, **kw):
@@ -75,9 +81,6 @@ class JavaArchive:
 
         for package, skiplist in self.packages:
             self.addPackage(package, skiplist)
-
-        for class_ in self.singleclasses:
-            self.addOneClass(class_)
 
         self.dumpManifest()
 
