@@ -190,7 +190,7 @@ class zxAPITestCase(zxJDBCTestCase):
 			# we're really just testing that this doesn't blow up
 			c.bestrow(None, None, "zxtesting")
 			f = c.fetchall()
-			if f is not None: # we might as well see that it worked
+			if f: # we might as well see that it worked
 				self.assertEquals(1, len(f))
 		finally:
 			c.close()
@@ -208,6 +208,103 @@ class zxAPITestCase(zxJDBCTestCase):
 			#assert f[0][1] == zxJDBC.INTEGER, "expected [%d], got [%d]" % (zxJDBC.INTEGER, f[0][1])
 		finally:
 			c.close()
+
+	def _test_scrolling(self, dynamic=0):
+		c = self.cursor(dynamic)
+		try:
+			# set everything up
+			c.execute("select id, name, state from zxtesting order by id")
+			self.assertEquals(1, c.fetchone()[0])
+			self.assertEquals(2, c.fetchone()[0])
+			self.assertEquals(3, c.fetchone()[0])
+			# move back two and fetch the row again
+			c.scroll(-2)
+			self.assertEquals(2, c.fetchone()[0])
+			# move to the fifth row (0-based indexing)
+			c.scroll(4, "absolute")
+			self.assertEquals(5, c.fetchone()[0])
+			# move back to the start
+			c.scroll(-5)
+			self.assertEquals(1, c.fetchone()[0])
+			# move to the end
+			c.scroll(6, "absolute")
+			self.assertEquals(7, c.fetchone()[0])
+			# make sure we get an IndexError
+			self.assertRaises(IndexError, c.scroll, 1, "relative")
+			self.assertRaises(IndexError, c.scroll, -1, "absolute")
+			self.assertRaises(zxJDBC.ProgrammingError, c.scroll, 1, "somethingelsealltogether")
+		finally:
+			c.close()
+
+	def testDynamicCursorScrolling(self):
+		"""testing the ability to scroll a dynamic cursor"""
+		self._test_scrolling(1)
+
+	def testStaticCursorScrolling(self):
+		"""testing the ability to scroll a static cursor"""
+		self._test_scrolling(0)
+
+	def _test_rownumber(self, dynamic=0):
+		c = self.cursor(dynamic)
+		try:
+			if not dynamic:
+				# a dynamic cursor doesn't know if any rows really exist
+				# maybe the 'possibility' of rows should change .rownumber to 0?
+				c.execute("select * from zxtesting where 1=0")
+				self.assertEquals(None, c.rownumber)
+			c.execute("select * from zxtesting")
+			self.assertEquals(0, c.rownumber)
+			c.next()
+			self.assertEquals(1, c.rownumber)
+			c.next()
+			self.assertEquals(2, c.rownumber)
+			c.scroll(-1)
+			self.assertEquals(1, c.rownumber)
+			c.scroll(2, "absolute")
+			self.assertEquals(2, c.rownumber)
+			c.scroll(6, "absolute")
+			self.assertEquals(6, c.rownumber)
+		finally:
+			c.close()
+		self.assertEquals(None, c.rownumber)
+
+	def testStaticRownumber(self):
+		"""testing a static cursor's rownumber"""
+		self._test_rownumber(0)
+
+	def testDynamicRownumber(self):
+		"""testing a dynamic cursor's rownumber"""
+		self._test_rownumber(1)
+
+	def _test_rowcount(self, dynamic=0):
+		c = self.cursor(dynamic)
+		try:
+			c.execute("select * from zxtesting")
+			c.next()
+			c.next()
+			c.next()
+			if dynamic:
+				# dynamic cursors only know about the number of rows encountered
+				self.assertEquals(3, c.rowcount)
+			else:
+				self.assertEquals(7, c.rowcount)
+			c.scroll(-1)
+			# make sure they don't change just because we scrolled backwards
+			if dynamic:
+				# dynamic cursors only know about the number of rows encountered
+				self.assertEquals(3, c.rowcount)
+			else:
+				self.assertEquals(7, c.rowcount)
+		finally:
+			c.close()
+
+	def testStaticRowcount(self):
+		"""testing a static cursor's rowcount"""
+		self._test_rowcount(0)
+
+	def testDynamicRowcount(self):
+		"""testing a dynamic cursor's rowcount"""
+		self._test_rowcount(1)
 
 	def testTableTypeInfo(self):
 		"""testing cursor.gettabletypeinfo()"""
@@ -594,19 +691,13 @@ class zxAPITestCase(zxJDBCTestCase):
 		finally:
 			c.close()
 
-	def testFetchingBeforeExecute(self):
-		"""testing fetch methods before execution"""
-		c = self.cursor()
+	def _test_fetching(self, dynamic=0):
+		c = self.cursor(dynamic)
 		try:
-			f = c.fetchall()
-			assert f == None, "expecting no results since no execute*() has been called"
-		finally:
-			c.close()
-
-	def testFetchingWithArraysize(self):
-		"""testing fetch methods using arraysize"""
-		c = self.cursor()
-		try:
+			# make sure None is result from an empty result set
+			c.execute("select * from zxtesting where 1<0")
+			self.assertEquals(None, c.fetchall())
+			# test some arraysize features
 			c.execute("select * from zxtesting")
 			f = c.fetchmany()
 			assert len(f) == c.arraysize, "expecting [%d] rows, got [%d]" % (c.arraysize, len(f))
@@ -618,6 +709,23 @@ class zxAPITestCase(zxJDBCTestCase):
 			c.arraysize = -1
 			f = c.fetchmany()
 			assert len(f) == 7, "expecting [7] rows, got [%d]" % (len(f))
+		finally:
+			c.close()
+
+	def testStaticFetching(self):
+		"""testing various static fetch methods"""
+		self._test_fetching(0)
+
+	def testDynamicFetching(self):
+		"""testing various dynamic fetch methods"""
+		self._test_fetching(1)
+
+	def testFetchingBeforeExecute(self):
+		"""testing fetch methods before execution"""
+		c = self.cursor()
+		try:
+			f = c.fetchall()
+			assert f is None, "expecting no results since no execute*() has been called"
 		finally:
 			c.close()
 

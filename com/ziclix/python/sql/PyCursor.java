@@ -122,14 +122,15 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		m[6] = new PyString("callproc");
 		m[7] = new PyString("next");
 		__methods__ = new PyList(m);
-		m = new PyObject[7];
+		m = new PyObject[8];
 		m[0] = new PyString("arraysize");
 		m[1] = new PyString("rowcount");
-		m[2] = new PyString("description");
-		m[3] = new PyString("datahandler");
-		m[4] = new PyString("warnings");
-		m[5] = new PyString("lastrowid");
-		m[6] = new PyString("updatecount");
+		m[2] = new PyString("rownumber");
+		m[3] = new PyString("description");
+		m[4] = new PyString("datahandler");
+		m[5] = new PyString("warnings");
+		m[6] = new PyString("lastrowid");
+		m[7] = new PyString("updatecount");
 		__members__ = new PyList(m);
 	}
 
@@ -174,9 +175,13 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		} else if ("__members__".equals(name)) {
 			return __members__;
 		} else if ("description".equals(name)) {
-			return this.fetch.getDescription();
+			return this.fetch.description;
 		} else if ("rowcount".equals(name)) {
-			return Py.newInteger(this.fetch.getRowCount());
+			return Py.newInteger(this.fetch.rowcount);
+		} else if ("rownumber".equals(name)) {
+			int rn = this.fetch.rownumber;
+
+			return (rn < 0) ? Py.None : Py.newInteger(rn);
 		} else if ("warnings".equals(name)) {
 			return warnings;
 		} else if ("lastrowid".equals(name)) {
@@ -212,6 +217,7 @@ public class PyCursor extends PyObject implements ClassDictInit {
 		dict.__setitem__("setoutputsize", new CursorFunc("setoutputsize", 7, 1, 2, "not implemented"));
 		dict.__setitem__("callproc", new CursorFunc("callproc", 8, 1, 4, "executes a stored procedure"));
 		dict.__setitem__("executemany", new CursorFunc("executemany", 9, 1, 3, "execute sql with the parameter list"));
+		dict.__setitem__("scroll", new CursorFunc("scroll", 10, 1, 2, "scroll the cursor in the result set to a new position according to mode"));
 
 		// hide from python
 		dict.__setitem__("classDictInit", null);
@@ -662,6 +668,32 @@ public class PyCursor extends PyObject implements ClassDictInit {
 	}
 
 	/**
+	 * Scroll the cursor in the result set to a new position according
+	 * to mode.
+	 *
+	 * If mode is 'relative' (default), value is taken as offset to
+	 * the current position in the result set, if set to 'absolute',
+	 * value states an absolute target position.
+	 *
+	 * An IndexError should be raised in case a scroll operation would
+	 * leave the result set. In this case, the cursor position is left
+	 * undefined (ideal would be to not move the cursor at all).
+	 *
+	 * Note: This method should use native scrollable cursors, if
+	 * available, or revert to an emulation for forward-only
+	 * scrollable cursors. The method may raise NotSupportedErrors to
+	 * signal that a specific operation is not supported by the
+	 * database (e.g. backward scrolling).
+	 *
+	 * @param int value
+	 * @param String mode
+	 *
+	 */
+	public void scroll(int value, String mode) {
+		this.fetch.scroll(value, mode);
+	}
+
+	/**
 	 * Adds a warning to the tuple and will follow the chain as necessary.
 	 */
 	protected void addWarning(SQLWarning warning) {
@@ -902,6 +934,11 @@ class CursorFunc extends PyBuiltinFunctionSet {
 
 				return Py.None;
 
+			case 10 :
+				cursor.scroll(arg.__int__().getValue(), "relative");
+
+				return Py.None;
+
 			default :
 				throw argCountError(1);
 		}
@@ -937,6 +974,11 @@ class CursorFunc extends PyBuiltinFunctionSet {
 
 			case 9 :
 				cursor.executemany(arga.__str__().toString(), argb, Py.None, Py.None);
+
+				return Py.None;
+
+			case 10 :
+				cursor.scroll(arga.__int__().getValue(), argb.toString());
 
 				return Py.None;
 

@@ -59,12 +59,10 @@ public class Connect extends PyObject {
 
 		if (arg == Py.NoConversion) {
 			Properties props = new Properties();
-			String url = null, user = null, password = null, driver = null;
-
-			url = (String)parser.arg(0).__tojava__(String.class);
-			user = (String)parser.arg(1).__tojava__(String.class);
-			password = (String)parser.arg(2).__tojava__(String.class);
-			driver = (String)parser.arg(3).__tojava__(String.class);
+			String url = (String)parser.arg(0).__tojava__(String.class);
+			String user = (String)parser.arg(1).__tojava__(String.class);
+			String password = (String)parser.arg(2).__tojava__(String.class);
+			String driver = (String)parser.arg(3).__tojava__(String.class);
 
 			if (url == null) {
 				throw zxJDBC.makeException(zxJDBC.DatabaseError, "no url specified");

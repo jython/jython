@@ -38,8 +38,17 @@ import org.python.core.*;
  */
 abstract public class Fetch {
 
-	/** Field rowcount */
+	/**
+	 * The total number of rows in the result set.
+	 *
+	 * Note: since JDBC provides no means to get this information without iterating
+	 * the entire result set, only those fetches which build the result statically
+	 * will have an accurate row count.
+	 */
 	protected int rowcount;
+
+	/** The current row of the cursor (-1 if off either end). */
+	protected int rownumber;
 
 	/** Field cursor */
 	protected PyCursor cursor;
@@ -56,6 +65,7 @@ abstract public class Fetch {
 	protected Fetch(PyCursor cursor) {
 
 		this.rowcount = -1;
+		this.rownumber = -1;
 		this.cursor = cursor;
 		this.description = Py.None;
 	}
@@ -168,6 +178,30 @@ abstract public class Fetch {
 	 * @return true if more sets exist, else None
 	 */
 	public abstract PyObject nextset();
+
+	/**
+	 * Scroll the cursor in the result set to a new position according
+	 * to mode.
+	 *
+	 * If mode is 'relative' (default), value is taken as offset to
+	 * the current position in the result set, if set to 'absolute',
+	 * value states an absolute target position.
+	 *
+	 * An IndexError should be raised in case a scroll operation would
+	 * leave the result set. In this case, the cursor position is left
+	 * undefined (ideal would be to not move the cursor at all).
+	 *
+	 * Note: This method should use native scrollable cursors, if
+	 * available, or revert to an emulation for forward-only
+	 * scrollable cursors. The method may raise NotSupportedErrors to
+	 * signal that a specific operation is not supported by the
+	 * database (e.g. backward scrolling).
+	 *
+	 * @param int value
+	 * @param String mode
+	 *
+	 */
+	public abstract void scroll(int value, String mode);
 
 	/**
 	 * Cleanup any resources.
@@ -384,22 +418,6 @@ abstract public class Fetch {
 
 		return tuple;
 	}
-
-	/**
-	 * Return the total row count.  Note: since JDBC provides no means to get this information
-	 * without iterating the entire result set, only those fetches which build the result
-	 * statically will have an accurate row count.
-	 */
-	public int getRowCount() {
-		return this.rowcount;
-	}
-
-	/**
-	 * Return the description of the result.
-	 */
-	public PyObject getDescription() {
-		return this.description;
-	}
 }
 
 /**
@@ -410,9 +428,6 @@ abstract public class Fetch {
  * consumed.
  */
 class StaticFetch extends Fetch {
-
-	/** Field counter */
-	protected int counter;
 
 	/** Field results */
 	protected List results;
@@ -430,7 +445,6 @@ class StaticFetch extends Fetch {
 
 		this.results = new LinkedList();
 		this.descriptions = new LinkedList();
-		this.counter = -1;
 	}
 
 	/**
@@ -457,14 +471,19 @@ class StaticFetch extends Fetch {
 				PyObject metadata = this.createDescription(resultSet.getMetaData());
 				PyObject result = this.createResults(resultSet, skipCols, metadata);
 
-				this.results.add(result);
-				this.descriptions.add(metadata);
+				if (result.__len__() > 0) {
+					this.results.add(result);
+					this.descriptions.add(metadata);
 
-				// we want the rowcount of the first result set
-				this.rowcount = ((PyObject)this.results.get(0)).__len__();
+					// we want the rowcount of the first result set
+					this.rowcount = ((PyObject)this.results.get(0)).__len__();
 
-				// we want the description of the first result set
-				this.description = ((PyObject)this.descriptions.get(0));
+					// we want the description of the first result set
+					this.description = ((PyObject)this.descriptions.get(0));
+
+					// set the current rownumber
+					this.rownumber = 0;
+				}
 			}
 		} catch (PyException e) {
 			throw e;
@@ -490,15 +509,18 @@ class StaticFetch extends Fetch {
 		try {
 			PyObject result = this.createResults(callableStatement, procedure, params);
 
-			if (result != Py.None) {
+			if ((result != Py.None) && (result.__len__() > 0)) {
 				this.results.add(result);
 				this.descriptions.add(this.createDescription(procedure));
+
+				// we want the rowcount of the first result set
+				this.rowcount = ((PyObject)this.results.get(0)).__len__();
 
 				// we want the description of the first result set
 				this.description = ((PyObject)this.descriptions.get(0));
 
-				// we want the rowcount of the first result set
-				this.rowcount = ((PyObject)this.results.get(0)).__len__();
+				// set the current rownumber
+				this.rownumber = 0;
 			}
 		} catch (PyException e) {
 			throw e;
@@ -556,14 +578,38 @@ class StaticFetch extends Fetch {
 			size = this.rowcount;
 		}
 
-		if ((counter + 1) < this.rowcount) {
-			int start = counter + 1;
-
-			counter += size;
-			res = current.__getslice__(Py.newInteger(start), Py.newInteger(counter + 1), Py.newInteger(1));
+		if (this.rownumber < this.rowcount) {
+			res = current.__getslice__(Py.newInteger(this.rownumber), Py.newInteger(this.rownumber + size), Py.newInteger(1));
+			this.rownumber += size;
 		}
 
 		return res;
+	}
+
+	/**
+	 * Method scroll
+	 *
+	 * @param int value
+	 * @param String mode 'relative' or 'absolute'
+	 *
+	 */
+	public void scroll(int value, String mode) {
+
+		int pos;
+
+		if ("relative".equals(mode)) {
+			pos = this.rownumber + value;
+		} else if ("absolute".equals(mode)) {
+			pos = value;
+		} else {
+			throw zxJDBC.makeException(zxJDBC.ProgrammingError, "invalid cursor scroll mode [" + mode + "]");
+		}
+
+		if ((pos >= 0) && (pos < this.rowcount)) {
+			this.rownumber = pos;
+		} else {
+			throw zxJDBC.makeException(Py.IndexError, "cursor index [" + pos + "] out of range");
+		}
 	}
 
 	/**
@@ -582,7 +628,7 @@ class StaticFetch extends Fetch {
 			next = (PyObject)this.results.get(0);
 			this.description = (PyObject)this.descriptions.get(0);
 			this.rowcount = next.__len__();
-			this.counter = -1;
+			this.rownumber = 0;
 		}
 
 		return (next == Py.None) ? Py.None : Py.One;
@@ -593,7 +639,7 @@ class StaticFetch extends Fetch {
 	 */
 	public void close() throws SQLException {
 
-		this.counter = -1;
+		this.rownumber = -1;
 
 		this.results.clear();
 	}
@@ -653,6 +699,12 @@ class DynamicFetch extends Fetch {
 
 				this.resultSet = resultSet;
 				this.skipCols = skipCols;
+
+				// it would be more compliant if we knew the resultSet actually
+				// contained some rows, but since we don't make a stab at it so
+				// everything else looks better
+				this.rowcount = 0;
+				this.rownumber = 0;
 			}
 		} catch (PyException e) {
 			throw e;
@@ -670,7 +722,7 @@ class DynamicFetch extends Fetch {
 	 *
 	 */
 	public void add(CallableStatement callableStatement, Procedure procedure, PyObject params) {
-		return;
+		throw zxJDBC.makeException(zxJDBC.NotSupportedError, "dynamic cursor does not support callproc(); use static cursors instead");
 	}
 
 	/**
@@ -709,8 +761,9 @@ class DynamicFetch extends Fetch {
 
 				res.append(tuple);
 
-				// since the rowcount == -1 initially, bump it to one the first time through
-				this.rowcount = (this.rowcount == -1) ? 1 : this.rowcount + 1;
+				this.rowcount++;
+
+				this.rownumber = this.resultSet.getRow();
 			}
 		} catch (PyException e) {
 			throw e;
@@ -729,6 +782,51 @@ class DynamicFetch extends Fetch {
 	}
 
 	/**
+	 * Method scroll
+	 *
+	 * @param int value
+	 * @param String mode
+	 *
+	 */
+	public void scroll(int value, String mode) {
+
+		try {
+			int type = this.resultSet.getType();
+
+			if ((type == ResultSet.TYPE_SCROLL_SENSITIVE) || (type == ResultSet.TYPE_SCROLL_INSENSITIVE)) {
+				if ("relative".equals(mode)) {
+					if (value < 0) {
+						value = Math.abs(this.rownumber + value);
+					} else if (value > 0) {
+						value = this.rownumber + value + 1;
+					}
+				} else if ("absolute".equals(mode)) {
+					if (value < 0) {
+						throw zxJDBC.makeException(Py.IndexError, "cursor index [" + value + "] out of range");
+					}
+				} else {
+					throw zxJDBC.makeException(zxJDBC.ProgrammingError, "invalid cursor scroll mode [" + mode + "]");
+				}
+
+				if (value == 0) {
+					this.resultSet.beforeFirst();
+				} else {
+					if (!this.resultSet.absolute(value)) {
+						throw zxJDBC.makeException(Py.IndexError, "cursor index [" + value + "] out of range");
+					}
+				}
+
+				// since .rownumber is the *next* row, then the JDBC value suits us fine
+				this.rownumber = this.resultSet.getRow();
+			} else {
+				throw zxJDBC.makeException(zxJDBC.NotSupportedError, "dynamic result set does not support scrolling");
+			}
+		} catch (SQLException e) {
+			throw zxJDBC.makeException(e);
+		}
+	}
+
+	/**
 	 * Close the underlying ResultSet.
 	 */
 	public void close() throws SQLException {
@@ -737,8 +835,12 @@ class DynamicFetch extends Fetch {
 			return;
 		}
 
-		this.resultSet.close();
+		this.rownumber = -1;
 
-		this.resultSet = null;
+		try {
+			this.resultSet.close();
+		} finally {
+			this.resultSet = null;
+		}
 	}
 }
