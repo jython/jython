@@ -1094,18 +1094,22 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public int count(String sub, int start, int end) {
-        int n = string.length();
-        if (start < 0)
-            start = n+start;
+        int len = string.length();
+        if (end > len)
+            end = len;
         if (end < 0)
-            end = n+end;
-        if (end > n)
-            end = n;
-        if (start > end)
-            start = end;
+            end += len;
+        if (end < 0)
+            end = 0;
+        if (start < 0)
+            start += len;
+        if (start < 0)
+            start = 0;
 
-        int slen = sub.length();
-        //end = end-slen;
+        int n = sub.length();
+        end = end + 1 - n;
+        if (n == 0)
+            return end-start;
 
         int count=0;
         while (start < end) {
@@ -1113,7 +1117,7 @@ public class PyString extends PySequence implements ClassDictInit
             if (index >= end || index == -1)
                 break;
             count++;
-            start = index+slen;
+            start = index + n;
         }
         return count;
     }
