@@ -951,7 +951,7 @@ public final class Py {
 	}
 
 	private static int nameindex=0;
-	public static String getName() {
+	public static synchronized String getName() {
 		String name = "org.python.pycode._pyx"+nameindex;
 		nameindex += 1;
 		return name;
