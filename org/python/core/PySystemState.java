@@ -49,7 +49,7 @@ public class PySystemState extends PyObject {
 	public PyList path;
 	public PyObject builtins;
 
-	public static String platform = "java1.1";
+	public static String platform = "java";
 
 	public PyObject ps1 = new PyString(">>> ");
 	public PyObject ps2 = new PyString("... ");
