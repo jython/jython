@@ -648,6 +648,10 @@ public class PyJavaClass extends PyClass {
 	PyObject lookup(String name, boolean stop_at_java) {
 	    if (stop_at_java) return null;
 	    if (!initialized) initialize();
+	    if (name == "__init__") {
+	        initConstructors();
+	        return __init__;
+	    }
 	    return super.lookup(name, stop_at_java);
 	    
 	    //if (!methodsInitialized) initMethods();
