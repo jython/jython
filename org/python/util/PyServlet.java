@@ -95,8 +95,7 @@ public class PyServlet extends HttpServlet {
         sys.add_classdir(rootPath + "WEB-INF" +
                           File.separator + "classes");
 
-        sys.add_extdir(rootPath + "WEB-INF" +
-                          File.separator + "lib");
+        sys.add_extdir(rootPath + "WEB-INF" + File.separator + "lib", true);
     }
 
     /**
