@@ -9,9 +9,13 @@ Jython NEWS
       which is a list of choices (':' separated) for internal 
       tables implementations. These tables contain the mapping of 
       classes to PyJavaClasses.
-      Long running applications under java2 can avoid memory leaks 
-      by setting the property to "weak" or "soft". That will use
-      a table implementation which use weak or soft refrences.
+      Long running applications that unloads classes can avoid a
+      memory leak by setting the property to "weak" or "soft". 
+      That will use a table implementation which use weak or soft 
+      refrences.
+    - Use a SecureClassLoader for loading compiled python modules.
+      This should allow jython to be used with the java plugin and
+      its fine grained security.
 
   CPython-2.0 compatibility
     - Added support for formatting of long values in "%d %x %X %o".
@@ -27,8 +31,8 @@ Jython NEWS
       being inserted at position 1 in sys.path.
 
   Bug fixes.
-    - Package relative import works in jythonc, at least when the dotted package name
-      match the directory structure.
+    - Package relative import works in jythonc, at least when the dotted 
+      package name match the directory structure.
     - Fixed oct(0) to return "0"
     - Added a os.__file__ attribute. CPython's site.py expects that.
     - Fixed a exception when calling int("0", 16)
