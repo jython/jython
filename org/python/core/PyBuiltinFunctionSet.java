@@ -1,7 +1,7 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyBuiltinFunctionSet extends PyObject
+public class PyBuiltinFunctionSet extends PyObject implements Cloneable
 {
     // part of the public interface for built-in functions
     public PyObject __name__;
@@ -52,20 +52,21 @@ public class PyBuiltinFunctionSet extends PyObject
     public PyObject _doget(PyObject container, PyObject wherefound) {
         if (isMethod) {
             // TBD: is there a better way?
-            PyBuiltinFunctionSet unique = new PyBuiltinFunctionSet(
-                name, index, minargs, maxargs, isMethod, doc);
-            unique.__self__ = container;
-            return unique;
+            try {
+                PyBuiltinFunctionSet unique = (PyBuiltinFunctionSet)clone();
+                unique.__self__ = container;
+                return unique;
+            }
+            catch (CloneNotSupportedException e) {}
         }
         return this;
     }
         
     public String toString() {
-        if (isMethod) {
-            return "<builtin method '"+name+"'>";            
-        } else {
+        if (isMethod)
+            return "<builtin method '"+name+"'>";
+        else
             return "<builtin function '"+name+"'>";
-        }
     }
 
     public PyException argCountError(int nargs) {
@@ -84,7 +85,7 @@ public class PyBuiltinFunctionSet extends PyObject
 
     public PyObject __call__(PyObject[] args) {
         int nargs = args.length;
-        if (minargs != -1 && nargs > minargs || nargs < minargs) {
+        if (minargs != -1 && (nargs > maxargs || nargs < minargs)) {
             throw argCountError(nargs);
         }
         switch (nargs) {
