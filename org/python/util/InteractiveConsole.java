@@ -1,5 +1,7 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.util;
 import org.python.core.*;
+
 // Based on CPython-1.5.2's code module
 
 public class InteractiveConsole extends InteractiveInterpreter {

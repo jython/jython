@@ -1,3 +1,4 @@
+// Copyright © Corporation for National Research Initiatives
 package org.python.parser;
 
 public class SimpleNode implements Node
@@ -131,7 +132,9 @@ public class SimpleNode implements Node
 		    if (Character.digit(ca[i], 16) != -1) {
 			int digit;
 			char x=0;
-			while (i<n && (digit = Character.digit(ca[i++], 16)) != -1) {
+			while (i<n &&
+			       (digit = Character.digit(ca[i++], 16)) != -1)
+			{
 			    x = (char)(x*16 + digit);
 			}
 			if (i<n) i-=1;
@@ -148,7 +151,6 @@ public class SimpleNode implements Node
 	    sb.append(ca, last_i, i-last_i);
 	    info = sb.toString();
 	}
-
     }
 
 
@@ -196,7 +198,8 @@ public class SimpleNode implements Node
        you need to do. */
 
     public String toString() {
-	return PythonGrammarTreeConstants.jjtNodeName[id]+":"+info+" at line "+beginLine;
+	return PythonGrammarTreeConstants.jjtNodeName[id]+":"+info+
+	    " at line "+beginLine;
     }
     public String toString(String prefix) { return prefix + toString(); }
 

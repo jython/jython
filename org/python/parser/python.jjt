@@ -1,3 +1,5 @@
+// -*- java -*-
+// Copyright © Corporation for National Research Initiatives
  options {
   NODE_SCOPE_HOOK = true;
   MULTI = false;
