@@ -15,6 +15,8 @@ public class PyLong extends PyObject
         BigInteger.valueOf(Long.MIN_VALUE);
     private static final BigInteger maxLong =
         BigInteger.valueOf(Long.MAX_VALUE);
+    public static final BigInteger maxULong = 
+    	BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));
 
     private static final BigInteger minDouble =
         new java.math.BigDecimal(Double.MIN_VALUE).toBigInteger();
