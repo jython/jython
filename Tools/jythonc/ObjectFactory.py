@@ -209,6 +209,19 @@ class PyClass(FixedObject):
                     self.proxyname = self.name
                     self.supername = base.name
                     continue
+            if isinstance(base, PyNamespace):
+                names = base.name.split('.')
+                if len(names) >= 2:
+                    modname = '.'.join(names[:-1])
+                    mod = compile.Compiler.allmodules.get(modname, None)
+                    if mod:
+                        cls = mod.classes.get(names[-1], None)
+                        if cls:
+                            if cls.value.isSuperclassJava():
+                                self.javaclasses.extend(cls.value.javaclasses)
+                                self.proxyname = self.name
+                                self.supername = cls.value.name
+                                continue
 
         if len(self.javaclasses) and self.supername == None:
             self.supername = "java.lang.Object"

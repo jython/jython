@@ -168,6 +168,10 @@ def printNames(heading, dict):
 
 
 class Compiler:
+    # Bad! But this modules dicts must be available from deep 
+    #      in ObjectFactory.
+    allmodules = {}
+
     def __init__(self, javapackage=None, deep = 1, skip=(), 
                  include=('org.python.modules', 'com.oroinc.text.regex'),
                  options=None):
@@ -201,6 +205,7 @@ class Compiler:
         self.modules[filename] = 1
         mod = self.compile(getdata(filename), filename, name)
         self.modules[filename] = mod
+        Compiler.allmodules[name] = mod
 
     def compile(self, data, filename, name):
         if self.javapackage is not None:
