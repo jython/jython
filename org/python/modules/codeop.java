@@ -11,7 +11,7 @@ public class codeop implements ClassDictInit {
     public static void classDictInit(PyObject dict) 
     { 
         dict.__delitem__("compile_command_flags");
-        dict.__delitem__("classInitDict");
+        dict.__delitem__("classDictInit");
     }
  
     public static PyList __all__ = new PyList(new PyString[] {
