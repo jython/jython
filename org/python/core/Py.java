@@ -792,22 +792,13 @@ public final class Py
         Py.runCode(code, dict, dict);
     }
 
-    public static void runMain(String module, String[] args,
+    public static void runMain(Class mainClass, String[] args,
                                String[] packages,
                                String[] props,
                                String frozenPackage,
                                String[] modules)
     {
         //System.err.println("main: "+module);
-
-        Class mainClass=null;
-        try {
-            // ??pending: should use Py.findClass?
-            mainClass = Class.forName(module);
-        } catch (ClassNotFoundException exc) {
-            System.err.println("Error running main.  Can't find: "+module);
-            System.exit(-1);
-        }
 
         initProperties(args, packages, props, frozenPackage, modules,
                        mainClass.getClassLoader());
@@ -817,7 +808,7 @@ public final class Py
             try {
                 code = ((PyRunnable)mainClass.newInstance()).getMain();
             } catch (Throwable t) {
-                System.err.println("Invalid class: "+module+"$py");
+                System.err.println("Invalid class: "+mainClass.getName()+"$py");
                 System.exit(-1);
             }
             PyObject mod = imp.createFromCode("__main__", code);
