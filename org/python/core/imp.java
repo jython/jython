@@ -161,11 +161,6 @@ public class imp
         return syspathJavaLoader;
     }
 
-    private static PyObject createFromClass(String name, InputStream fp) {
-        BytecodeLoader bcl = getSyspathJavaLoader();
-        return createFromClass(name, bcl.makeClass(name, readBytes(fp)));
-    }
-
     private static PyObject createFromClass(String name, Class c) {
         //Two choices.  c implements PyRunnable or c is Java package
         //System.err.println("create from class: "+name+", "+c);

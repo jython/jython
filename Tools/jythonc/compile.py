@@ -114,7 +114,10 @@ def getJavaClass(c):
             return primitives[c]
         if c.endswith("[]"):
             # java1.1 allows only this
-            return Class.getClass(reflect.Array.newInstance(getJavaClass(c[:-2]),0))
+            el = getJavaClass(c[:-2])
+            if el == None:
+                return None
+            return Class.getClass(reflect.Array.newInstance(el,0))
         try:
             return util.findClass(c) #Class.forName(c)
         except:

@@ -308,10 +308,6 @@ public class PySystemState extends PyObject
             
         // Initialize the path (and add system defaults)
         defaultPath = initPath(registry);
-        if (prefix != null) {
-            String libpath = new File(prefix, "Lib").toString();
-            defaultPath.append(new PyString(libpath));
-        }
 
         // Set up the known Java packages
         initPackages(registry);
@@ -434,12 +430,18 @@ public class PySystemState extends PyObject
         
     private static PyList initPath(Properties props) {
         PyList path = new PyList();
-        String pypath = props.getProperty("python.path", "");
-        StringTokenizer tok =
+        if (!Py.frozen) {
+            String pypath = props.getProperty("python.path", "");
+            StringTokenizer tok =
             new StringTokenizer(pypath, java.io.File.pathSeparator);
-        while  (tok.hasMoreTokens())  {
-            String p = tok.nextToken();
-            path.append(new PyString(p.trim()));
+            while  (tok.hasMoreTokens())  {
+                String p = tok.nextToken();
+                path.append(new PyString(p.trim()));
+            }
+            if (prefix != null) {
+                String libpath = new File(prefix, "Lib").toString();
+                path.append(new PyString(libpath));
+            }
         }
         return path;
     }

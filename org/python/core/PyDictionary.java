@@ -74,8 +74,9 @@ class DictFuncs extends PyBuiltinFunctionSet
 
 
 
-public class PyDictionary extends PyObject implements InitModule
+public class PyDictionary extends PyObject implements ClassDictInit
 {
+
     protected Hashtable table;
     protected static PyObject __methods__;
 
@@ -105,7 +106,7 @@ public class PyDictionary extends PyObject implements InitModule
         }
     }
 
-    public void initModule(PyObject dict) {
+    public static void classDictInit(PyObject dict) {
         dict.__setitem__("__len__", new DictFuncs("__len__", 1, 0));
         dict.__setitem__("__nonzero__", new DictFuncs("__nonzero__", 2, 0));
         dict.__setitem__("copy", new DictFuncs("copy", 3, 0));
@@ -123,6 +124,7 @@ public class PyDictionary extends PyObject implements InitModule
         dict.__setitem__("__delitem__", null);
         dict.__setitem__("toString", null);
         dict.__setitem__("hashCode", null);
+        dict.__setitem__("classDictInit", null);
     }
 
     protected String safeRepr() {

@@ -116,7 +116,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
         }
 
         // Do the actual constructor call
-        Object jself;
+        Object jself = null;
         ThreadState ts = Py.getThreadState();
         try {
             ts.pushInitializingProxy(iself);

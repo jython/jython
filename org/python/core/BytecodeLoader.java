@@ -58,6 +58,10 @@ public class BytecodeLoader extends ClassLoader
         catch(ClassNotFoundException e) {
         }
         
+        Class c = findLoadedClass(name);
+        if (c != null)
+         return c;
+        
         /* previously: if
             Options.extendedClassLoader &&
             // KLUDGE ALERT: without this test, running jpython
