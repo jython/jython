@@ -1,7 +1,8 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyFrame extends PyObject {
+public class PyFrame extends PyObject
+{
     public PyFrame f_back;
     public PyTableCode f_code;
     public PyObject f_locals;
@@ -10,9 +11,15 @@ public class PyFrame extends PyObject {
     public PyObject f_builtins;
     public PyObject[] f_fastlocals;
         
+    // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
 
     public static PyClass __class__;
+
+    private static final String[] __members__ = {
+        "f_back", "f_code", "f_locals", "f_globals", "f_lineno",
+        "f_builtins", "f_trace"
+    };
 
     public PyFrame(PyTableCode code, PyObject locals, PyObject globals,
                    PyObject builtins)
@@ -23,7 +30,6 @@ public class PyFrame extends PyObject {
         f_globals = globals;
         f_builtins = builtins;
         // This needs work to be efficient with multiple interpreter states
-                
         if (locals == null && code != null && code.co_varnames.length > 0) {
             f_fastlocals = new PyObject[code.co_varnames.length];
         }
@@ -41,10 +47,54 @@ public class PyFrame extends PyObject {
         }
     }
 
+    public void __setattr__(String name, PyObject value) {
+        // In CPython, some of the frame's attributes are read/writeable
+        if (name == "f_trace")
+            tracefunc = new PythonTraceFunction(value);
+        // not yet implemented:
+        // f_exc_type
+        // f_exc_value
+        // f_exc_traceback
+        else {
+            for (int i = 0; i < __members__.length; i++)
+                if (__members__[i] == name)
+                    throw Py.TypeError("readonly attribute");
+            throw Py.AttributeError(name);
+        }
+    }
+
+    public void __delattr__(String name) {
+        if (name == "f_trace")
+            tracefunc = null;
+        // not yet implemented:
+        // f_exc_type
+        // f_exc_value
+        // f_exc_traceback
+        else {
+            for (int i = 0; i < __members__.length; i++)
+                if (__members__[i] == name)
+                    throw Py.TypeError("readonly attribute");
+            throw Py.AttributeError(name);
+        }
+    }
+
     public PyObject __findattr__(String name) {
         if (name == "f_locals")
             return getf_locals();
+        else if (name == "f_trace") {
+            if (tracefunc instanceof PythonTraceFunction) {
+                return ((PythonTraceFunction)tracefunc).tracefunc;
+            }
+            return Py.None;
+        }
         return super.__findattr__(name);
+    }
+
+    public PyObject __dir__() {
+        PyString members[] = new PyString[__members__.length];
+        for (int i = 0; i < __members__.length; i++)
+            members[i] = new PyString(__members__[i]);
+        return new PyList(members);
     }
 
     public PyObject getf_locals() {
@@ -56,7 +106,8 @@ public class PyFrame extends PyObject {
                 if (o != null)
                     f_locals.__setitem__(f_code.co_varnames[i], o);
             }
-            // This should turn off fast_locals optimization after somebody gets the locals dict
+            // This should turn off fast_locals optimization after somebody
+            // gets the locals dict
             f_fastlocals = null;
         }
         return f_locals;
@@ -80,7 +131,8 @@ public class PyFrame extends PyObject {
             PyObject ret = f_fastlocals[index];
             if (ret != null)
                 return ret;
-            //System.err.println("no local: "+index+", "+f_code.co_varnames[index]);
+//             System.err.println("no local: "+index+", "+
+//                                f_code.co_varnames[index]);
         }
         return getlocal(f_code.co_varnames[index]);
     }
@@ -116,7 +168,8 @@ public class PyFrame extends PyObject {
                 
         // Set up f_builtins if not already set
         if (f_builtins == null) {
-            //System.err.println("Ooops, forced to set f_builtins in PyFrame: "+this+", "+index);
+//             System.err.println("Oops, forced to set f_builtins in PyFrame: "
+//                                +this+", "+index);
             f_builtins = Py.getSystemState().builtins;
         }
         ret = f_builtins.__finditem__(index);
