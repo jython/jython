@@ -149,20 +149,28 @@ public class PyLong extends PyObject {
 		    // are fixed by SUN
 
 		    BigInteger z = ((PyLong)modulo).value;
+		    int zi = z.intValue();
+		    // Clear up some special cases right away
+		    if (zi == 0) throw Py.ValueError("pow(x, y, z) with z == 0");
+		    if (zi == 1 || zi == -1) return new PyLong(0);
+
 		    if (z.compareTo(BigInteger.valueOf(0)) <= 0) {
 		        // Handle negative modulo's specially
-		        if (z.compareTo(BigInteger.valueOf(0)) == 0) {
+		        /*if (z.compareTo(BigInteger.valueOf(0)) == 0) {
 		            throw Py.ValueError("pow(x, y, z) with z == 0");
-		        }
-
-		        //y = value.modPow(y, z.negate());
-
-		        return __pow__(right).__mod__(modulo);
+		        }*/
+		        y = value.modPow(y, z.negate());
+		        if (y.compareTo(BigInteger.valueOf(0)) > 0) {
+                    return new PyLong(z.add(y));
+                } else {
+                    return new PyLong(y);
+                }
+		        //return __pow__(right).__mod__(modulo);
 	        } else {
     		    // This is buggy in SUN's jdk1.1.5
     		    // Extra __mod__ improves things slightly
-    		    //return new PyLong(value.modPow(y, ((PyLong)modulo).value));
-    		    return __pow__(right).__mod__(modulo);
+    		    return new PyLong(value.modPow(y, z));
+    		    //return __pow__(right).__mod__(modulo);
             }
 		}
 	}
