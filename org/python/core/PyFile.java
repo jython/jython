@@ -54,7 +54,7 @@ public class PyFile extends PyObject
         public void close() throws java.io.IOException {
         }
         public void truncate(long position) throws java.io.IOException {
-            throw new java.io.IOException("file doens't support truncate");
+            throw new java.io.IOException("file doesn't support truncate");
         }
 
         public Object __tojava__(Class cls) throws IOException {
