@@ -367,8 +367,6 @@ public class Module
             tree = ac.init_code;
         }
 
-        //System.out.println("l: "+c.getLocal()+", "+c.getLocal()+", "+c.getLocal());
-        //c.print("in code: "+name);
         compiler.parse(tree, c, fast_locals, className, classBody, ac);
 
         code.names = new String[compiler.names.size()];

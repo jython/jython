@@ -8,7 +8,8 @@ import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Vector;
 
-public class CodeCompiler extends Visitor {
+public class CodeCompiler extends Visitor
+{
     public static final Object Exit=new Integer(1);
     public static final Object NoExit=null;
 
@@ -782,37 +783,6 @@ public class CodeCompiler extends Visitor {
         // Probably need to detect "guaranteed exits"
         return null;
     }
-
-    /*def exc_test(self, exc, end_of_exceptions, name, suite, alternatives):
-      self.setline()
-      end_of_self = self.code.new_label()
-      if len(name.children) > 0:
-      self.setline()
-      self.code.aload(exc)
-      self.parse(name.children[0])
-      self.code.invokestatic(Py, 'match_exception', ('Z', PyException, PyObject))
-      self.code.ifeq(end_of_self)
-      else:
-      if len(alternatives) > 1:
-      raise SyntaxError, 'bare except must be last except clause'
-
-      if len(name.children) == 2:
-      exc_value = self.code.get_local()
-      self.code.getstatic('org/python/core/sys', 'exc_value', PyObject)
-      self.code.astore(exc_value)
-      self.setattr(name.children[1], exc_value)
-      self.code.free_local(exc_value)
-
-      self.parse(suite)
-      self.code.goto(end_of_exceptions)
-      self.code.label(end_of_self)
-
-      #Get stack in order again ???
-      if len(alternatives) > 1:
-      self.exc_test(exc, end_of_exceptions, alternatives[0], alternatives[1], alternatives[2:])
-      else:
-      self.code.aload(exc)
-      self.code.athrow()*/
 
     public int match_exception;
 
