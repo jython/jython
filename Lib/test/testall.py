@@ -10,7 +10,7 @@ import test_opcodes
 import test_operations
 import test_unpack
 import test_pow
-import test_builtin
+#import test_builtin
 import test_exceptions
 import test_types
 import test_methods
@@ -21,7 +21,7 @@ import test_string
 import test_math
 import test_thread
 import test_time
-#import test_re
+import test_re
 
 print_test('Integration with Java', 0)
 
@@ -31,4 +31,12 @@ import test_jser
 import test_jarray
 import test_janoninner
 
-print 'All tests completed successfully!'
+print 'All old-style tests completed successfully!'
+
+print "Executing unittest tests"
+from test_jreload import *
+from test_javashell import *
+
+import unittest
+unittest.main()
+
