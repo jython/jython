@@ -3,9 +3,9 @@ package org.python.core;
 
 public class PyJavaInnerClass extends PyJavaClass
 {
-    public PyJavaClass parent=null;
+    public PyJavaClass parent = null;
+
     public PyJavaInnerClass(Class c, PyJavaClass parent) {
-        super(__class__);
         init(c);
         this.parent = parent;
         int dollar = __name__.indexOf('$');
@@ -13,7 +13,6 @@ public class PyJavaInnerClass extends PyJavaClass
             __name__ = __name__.substring(0, dollar)+
                 "." + __name__.substring(dollar+1, __name__.length());
         }
-
     }
 
     PyObject lookup(String name, boolean stop_at_java) {
