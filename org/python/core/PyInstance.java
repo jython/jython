@@ -370,15 +370,6 @@ public class PyInstance extends PyObject
         return meth.__call__(arg1, arg2);
     }
 
-    /* __del__ method is invoked upon object finalization. */
-    /*protected void finalize() {
-      PyObject delfunc = __class__.__getattr__;
-      if (delfunc != null) {
-      delfunc.__call__(this);
-      }
-      //invoke_ex("__del__");
-      }*/
-
     public PyObject __call__(PyObject args[], String keywords[]) {
         return invoke("__call__", args, keywords);
     }
