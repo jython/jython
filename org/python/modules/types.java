@@ -49,5 +49,9 @@ public class types implements ClassDictInit {
                          PyJavaClass.lookup(PyMethod.class));
         dict.__setitem__("UnicodeType", PyJavaClass.lookup(PyString.class));
         dict.__setitem__("XRangeType", PyJavaClass.lookup(PyXRange.class));
+
+        dict.__setitem__("StringTypes", new PyList(new PyObject[] {
+                PyJavaClass.lookup(PyString.class)
+        }));
     }
 }
