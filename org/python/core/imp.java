@@ -6,9 +6,14 @@ import java.io.*;
 import java.util.Hashtable;
 import java.util.Properties;
 
+/**
+ * Utility functions for "import" support.
+ */
 public class imp
 {
     public static final int APIVersion = 8;
+
+    private imp() { ; }
 
     public static PyModule addModule(String name) {
         PyObject modules = Py.getSystemState().modules;

@@ -3,7 +3,13 @@
 package org.python.core;
 
 import java.lang.reflect.*;
-	
+
+/**
+ * The builtin exceptions module. The entire module should be imported
+ * from python. None of the methods defined here should be called
+ * from java.
+ */
+
 public class exceptions implements ClassDictInit {
 
     public static String __doc__ = 
@@ -71,6 +77,7 @@ public class exceptions implements ClassDictInit {
 "      +-- SyntaxWarning\n" +
 "      +-- RuntimeWarning";
 
+    private exceptions() { ; }
 
     public static void classDictInit(PyObject dict) {
         dict.invoke("clear");

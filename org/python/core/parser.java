@@ -4,8 +4,15 @@ package org.python.core;
 import org.python.parser.*;
 import java.io.*;
 
+/**
+ * Facade for the classes in the org.python.parser package.
+ */
+
 public class parser {
-    public static String getLine(BufferedReader reader, int line) {
+
+    private parser() { ; }
+
+    static String getLine(BufferedReader reader, int line) {
         if (reader == null)
             return "";
         try {
