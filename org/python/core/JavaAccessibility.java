@@ -11,7 +11,7 @@ import java.lang.reflect.*;
  * be found, then the methods here have no effect.
  */
 
-public class JavaAccessibility
+class JavaAccessibility
 {
     private static JavaAccessibility access = null;
 

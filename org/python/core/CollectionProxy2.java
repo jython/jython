@@ -9,7 +9,7 @@ just leave this uncompiled if you're using jdk-1.1.
 package org.python.core;
 import java.util.*;
 
-public class CollectionProxy2 extends CollectionProxy
+class CollectionProxy2 extends CollectionProxy
 {
     public CollectionProxy instanceFindCollection(Object object) {
         if (object instanceof List) {

@@ -8,7 +8,7 @@ import java.lang.reflect.*;
  * This class should not be compilied (and it won't compile) under Java 1.
  */
 
-public class Java2Accessibility extends JavaAccessibility
+class Java2Accessibility extends JavaAccessibility
 {
     void setAccess(Field field, boolean flag) throws SecurityException {
         field.setAccessible(flag);

@@ -4,7 +4,10 @@ package org.python.core;
 import java.io.*;
 import java.util.*;
 
-public class BytecodeLoader1 extends ClassLoader implements Loader {
+/**
+ * A java1 classloader for loading compiled python modules.
+ */
+class BytecodeLoader1 extends ClassLoader implements Loader {
     private Vector parents;
 
     public BytecodeLoader1() {

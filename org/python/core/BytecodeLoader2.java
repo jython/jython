@@ -5,7 +5,10 @@ import java.io.*;
 import java.util.*;
 import java.security.*;
 
-public class BytecodeLoader2 extends SecureClassLoader implements Loader {
+/**
+ * A java2 classloader for loading compiled python modules.
+ */
+class BytecodeLoader2 extends SecureClassLoader implements Loader {
     private Vector parents;
 
     public BytecodeLoader2() {

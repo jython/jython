@@ -3,7 +3,7 @@
 package org.python.core;
 import java.util.*;
 
-public class CollectionProxy {
+class CollectionProxy {
     public static final CollectionProxy NoProxy = new EnumerationProxy(null);
 
     private static boolean checkedJava2 = false;
