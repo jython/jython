@@ -250,27 +250,23 @@ public class PyJavaClass extends PyClass {
             name == "_getPySystemState" || name == "_setPySystemState") {
                 return;
             }
-            
+           
+        // Special case to handle a few troublesome methods in java.awt.*
+        // These methods are all deprecated and interfere too badly with bean properties
+        // to be tolerated
+        // This is totally a hack, but a lot of code that uses java.awt will break without it
+        String classname = proxyClass.getName();
+        if (classname.startsWith("java.awt.") && classname.indexOf('.', 9) == -1) { 
+            if (name == "layout" || name == "insets" || 
+                name == "size" || name == "minimumSize" || name == "preferredSize" ||
+                name == "maximumSize" || name == "bounds" || name == "enable") {
+                    return;
+                }
+        }
+        
         // See if any of my superclasses are using 'name' for something else
         // Or if I'm already using it myself
         PyObject o = lookup(name, false);
-            
-        // If it's being used as a bean property, and it's a "good" bean property
-        // Then add a "_" after name (we can fix anything if we add enough _'s
-        // Only do this tricky handling for java.awt classes - 
-        // which have seriously messed up api's
-        String classname = proxyClass.getName();
-            
-        if (classname.startsWith("java.awt.") || 
-            classname.startsWith("org.python.proxies.java.awt.")) {
-            if (o != null && o instanceof PyBeanProperty) {
-                PyBeanProperty prop = (PyBeanProperty)o;
-                if (prop.getMethod != null && prop.setMethod != null) {
-                    name = (name+"_").intern();
-                    o = super.lookup(name, false);
-                }
-            }
-        }
             
         // If it's being used as a function, then things get more interesting...
         PyReflectedFunction func;
