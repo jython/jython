@@ -12,7 +12,21 @@ public class PyFloat extends PyObject {
     }
 
 	public String toString() {
-		return Double.toString(value);
+	    String s = Double.toString(value);
+	    // this is to work around an apparent bug in Double.toString(0.001)
+	    // which returns "0.0010"
+	    if (s.indexOf('E') == -1) {
+	        while (true) {
+	            int n = s.length();
+	            if (n <= 2) break;
+	            if (s.charAt(n-1) == '0' && s.charAt(n-2) != '.') {
+	                s = s.substring(0,n-1);
+	                continue;
+	            }
+	            break;
+	        }
+	    }
+		return s;
 	}
 
 	public int hashCode() {
