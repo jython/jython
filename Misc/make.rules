@@ -2,13 +2,15 @@
 #
 # Generic Makefile rules for building JPython
 
-JAVAC = javac
+#JAVAC = javac
+JAVAC = jikes +E +D
 JAVA = java
-OPT = -g:lines,vars,source
+#OPT = -g:lines,vars,source
+OPT = -g
 
 CLASSPATH = "MUST OVERRIDE"
-#JDKCLASSPATH = "/depot/java/plat/jdk1.2/jre/lib/rt.jar"
-CLASSPATHSWITCH = $(CLASSPATH)
+JIKESPATH = /usr/java1.2/jre/lib/rt.jar
+CLASSPATHSWITCH = $(CLASSPATH):$(JIKESPATH)
 
 .SUFFIXES= .java .class
 
