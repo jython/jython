@@ -183,8 +183,12 @@ public class PyJavaClass extends PyClass
  	if (!JavaAccessibility.accessIsMutable())
             // returns just the public fields
  	    return c.getFields();
-        // from here on out we know we must be using at least Java 1.2
-        java.util.ArrayList fields = new java.util.ArrayList();
+        // from here on out we know we must be using at least Java 1.2.
+        // Note that an ArrayList would be better here because we don't
+        // need access to be synchronized, but that would prevent this file 
+        // from being compiled on Java 1.1 (as opposed to being compilable, 
+        // but not having the feature available).
+        java.util.Vector fields = new java.util.Vector();
         while (c != null) {
             // get all declared fields for this class, mutate their
             // accessibility and pop it into the array for later
@@ -193,20 +197,24 @@ public class PyJavaClass extends PyClass
                 // TBD: this is a permanent change.  Should we provide a
                 // way to restore the original accessibility flag?
                 JavaAccessibility.setAccessible(declared[i], true);
-                fields.add(declared[i]);
+                fields.addElement(declared[i]);
             }
             // walk down superclass chain.  no need to deal specially with
             // interfaces...
             c = c.getSuperclass();
         }
-        return (Field[])fields.toArray(new Field[fields.size()]);
+//        return (Field[])fields.toArray(new Field[fields.size()]);
+        Field[] ret = new Field[fields.size()];
+        fields.copyInto(ret);
+        return ret;
     }
 
     private void setFields(Class c) {
         Field[] fields = getAccessibleFields(c);
-        for(int i=0; i<fields.length; i++) {
+        for (int i=0; i<fields.length; i++) {
             Field field = fields[i];
-            if (field.getDeclaringClass() != c) continue;
+            if (field.getDeclaringClass() != c)
+                continue;
 
             String name = getName(field.getName());
             boolean isstatic = Modifier.isStatic(field.getModifiers());
@@ -295,8 +303,12 @@ public class PyJavaClass extends PyClass
  	if (!JavaAccessibility.accessIsMutable())
             // returns just the public methods
  	    return c.getMethods();
-        // from here on out we know we must be using at least Java 1.2
-        java.util.ArrayList methods = new java.util.ArrayList();
+        // from here on out we know we must be using at least Java 1.2.
+        // Note that an ArrayList would be better here because we don't
+        // need access to be synchronized, but that would prevent this file
+        // from being compiled on Java 1.1 (as opposed to being compilable,
+        // but not having the feature available).
+        java.util.Vector methods = new java.util.Vector();
         while (c != null) {
             // get all declared methods for this class, mutate their
             // accessibility and pop it into the array for later
@@ -305,12 +317,15 @@ public class PyJavaClass extends PyClass
                 // TBD: this is a permanent change.  Should we provide a way to
                 // restore the original accessibility flag?
                 JavaAccessibility.setAccessible(declared[i], true);
-                methods.add(declared[i]);
+                methods.addElement(declared[i]);
             }
             // walk down superclass chain
             c = c.getSuperclass();
         }
-        return (Method[])methods.toArray(new Method[methods.size()]);
+//        return (Method[])methods.toArray(new Method[methods.size()]);
+        Method[] ret = new Method[methods.size()];
+        methods.copyInto(ret);
+        return ret;
     }
 
     /* Add all methods declared by this class */
