@@ -9,6 +9,7 @@ EMPTYSTRING = ''
 
 
 from org.python.core.PyTableCode import CO_OPTIMIZED,CO_NESTED
+from org.python.compiler import Future
 
 
 """
@@ -287,6 +288,7 @@ class PythonModule:
 
         self.javaclasses = []
         self.addjavaclass(self.name)
+        self.futures = Future()
 
     def getFrozen(self):
         if self.frozen:

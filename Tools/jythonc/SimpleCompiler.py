@@ -263,7 +263,7 @@ class SimpleCompiler(BaseEvaluator, CompilationContext):
         return name in self.options.falsenames
 
     def getFutures(self):
-        return self._futures
+        return self.module.futures
 
     def getFilename(self):
         return self.module.filename
@@ -279,8 +279,7 @@ class SimpleCompiler(BaseEvaluator, CompilationContext):
 
     def parse(self, node):
         if isinstance(self.frame,GlobalFrame):
-            futures = self._futures = Future()
-            futures.preprocessFutures(node,None)
+            self.getFutures().preprocessFutures(node,None)
             ScopesCompiler(self).parse(node)
             self.frame.setScope(node.scope)
         ret = BaseEvaluator.parse(self, node)
