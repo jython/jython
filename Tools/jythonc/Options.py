@@ -1,3 +1,4 @@
+# Copyright © Corporation for National Research Initiatives
 import sys
 
 class YesNo:
