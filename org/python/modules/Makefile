@@ -1,6 +1,6 @@
 # Copyright © Corporation for National Research Initiatives
 
-include ../../../rules/make.rules
+include ../../../Misc/make.rules
 CLASSPATH = ../../..
 
 MD5Module.java: md.class

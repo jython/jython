@@ -1,2 +1,2 @@
 # Copyright © Corporation for National Research Initiatives
-include ../../rules/make.rules
+include ../../Misc/make.rules
