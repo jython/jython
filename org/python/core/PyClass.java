@@ -40,18 +40,45 @@ public class PyClass extends PyObject
         proxyClass = null;
     }
 
-    public PyClass() {
-        super(__class__);
-        proxyClass = null;
-    }
-
     protected PyClass(PyClass c) {
         super(c);
         proxyClass = null;
     }
 
+
+    /**
+     * Create a python class.
+     *
+     * @param name   name of the class.
+     * @param bases  A list of base classes.
+     * @param dict   The class dict. Normally this dict is returned by
+     *               the class code object.
+     *
+     * @see org.python.core.Py#makeClass(String, PyObject[], PyCode, PyObject)
+     */
     public PyClass(String name, PyTuple bases, PyObject dict) {
-        this();
+        this(name, bases, dict, null);
+    }
+
+    /**
+     * Create a python class which inherit from a java class and where
+     * we already have generated a proxyclass. If we do not have a
+     * pre-generated proxyclass, the class initialization method will
+     * create such a proxyclass if bases contain a java class.
+     *
+     * @param name   name of the class.
+     * @param bases  A list of base classes.
+     * @param dict   The class dict. Normally this dict is returned by
+     *               the class code object.
+     *
+     * @see org.python.core.Py#makeClass(String, PyObject[], PyCode,
+     *                                   PyObject, Class)
+     */
+    public PyClass(String name, PyTuple bases, PyObject dict,
+                   Class proxyClass)
+    {
+        super(__class__);
+        this.proxyClass = proxyClass;
         init(name, bases, dict);
     }
 

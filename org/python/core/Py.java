@@ -422,7 +422,7 @@ public final class Py
 
     public static PyObject newJavaFunc(Class cls, String name) {
         try {
-            java.lang.reflect.Method m = cls.getMethod(name, new Class[] { 
+            java.lang.reflect.Method m = cls.getMethod(name, new Class[] {
                        PyObject[].class, String[].class });
             return new JavaFunc(m);
         } catch (NoSuchMethodException e) {
@@ -1334,12 +1334,7 @@ public final class Py
             }
         }
 
-        PyClass pyclass = new PyClass();
-        if (proxyClass != null)
-            pyclass.proxyClass = proxyClass;
-
-        pyclass.init(name, new PyTuple(bases), dict);
-        return pyclass;
+        return new PyClass(name, new PyTuple(bases), dict, proxyClass);
     }
 
     private static int nameindex=0;
@@ -1577,7 +1572,7 @@ class JavaCode extends PyCode {
 }
 
 /**
- * A function object wrapper for a java method which comply with the 
+ * A function object wrapper for a java method which comply with the
  * PyArgsKeywordsCall standard.
  */
 class JavaFunc extends PyObject {
