@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- Wed Sep 22 16:51:31 1999 -->
+<!-- Tue Oct 26 18:40:52 1999 -->
 <!-- USING HT2HTML 1.0 -->
 <!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
@@ -325,6 +325,16 @@ Email Us
 
     <p>Note that you can still multiply inherit from any number of
     Python classes.
+
+<p><li><b>Why does dir(someJavaObject) return the empty list?</b>
+
+    <p>Because the built-in <tt>dir()</tt> function returns
+    a list of names culled from the object's <tt>__dict__</tt>,
+    <tt>__methods__</tt>, and <tt>__members__</tt> attributes.  In
+    Python, an instance's methods live in the instance's class's
+    dictionary, so dir(someJavaObject.__class__) would return a list
+    of the method names (although only for the direct class, not for
+    any base classes).
 
 <p><li><b>JPython and Y2K</b>
 

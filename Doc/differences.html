@@ -1,6 +1,6 @@
 <HTML>
 <!-- THIS PAGE IS AUTOMATICALLY GENERATED.  DO NOT EDIT. -->
-<!-- Wed Sep 22 16:51:30 1999 -->
+<!-- Tue Oct 26 19:08:02 1999 -->
 <!-- USING HT2HTML 1.0 -->
 <!-- SEE http://www.python.org/~bwarsaw/software/pyware.html -->
 <!-- User-specified headers:
@@ -259,16 +259,28 @@ CPython 1.5.2</i>
 	into an (errno, message) tuple. <I>Both behaviors are
 	acceptable.</I>
 
-	<p><LI>JPython function objects don't have the
-	func_name attribute (an alias for __name__). <I>This attribute
-	is considered obsolete and won't be supported by JPython.</I>
-
 	<p><LI>JPython code objects are missing other attributes --
 	co_code, co_consts, co_lnotab, co_names, co_nlocals,
 	co_stacksize. <I>co_flags is now supported because the Python
 	debugger requires it.  Other attributes will probably never be
 	supported in JPython due to its implementation of code objects
 	as compiled Java bytecodes.</I>
+
+	<p><li>Accessing, setting, or deleting attributes on built-in
+	objects may raise <tt>AttributeError</tt> or
+	<tt>TypeError</tt> differently.  <i>This is considered
+	implementation dependent.  In JPython the following rules are
+	used: when getting a non-existant attribute,
+	<tt>AttributeError</tt> is raised; when setting or deleting a
+	readonly attribute, <tt>TypeError</tt> is raised; when setting
+	or deleting a non-existant attribute, <tt>AttributeError</tt>
+	is raised.  Be aware though currently neither JPython nor
+	CPython are completely consistent.</i>
+
+	<p><li>Function objects do not have writable func_code or
+	func_defaults attributes. <i>While these are writable in
+	CPython, I haven't decided whether they should be writable in
+	JPython.</i>
 
 	<p><LI>JPython has &quot;true&quot; garbage collection whereas
 	CPython uses reference counting. This means that in JPython
@@ -293,6 +305,7 @@ CPython 1.5.2</i>
 	in JPython.  <I>Both behaviors are acceptable -- CPython might
 	adopt JPython's approach in the future for the performance
 	gains it can provide.</I>
+
 </UL>
 
 <h3>Extension modules</h3>
