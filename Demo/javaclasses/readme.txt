@@ -17,7 +17,7 @@ Note: path names are given for a Windows machine.  Make the obvious translation 
 
 3. run "javac PythonGraph.java"
     You must have both the current directory ('.') and the JPython library
-    directory (<install_dir>\JavaCode) in your CLASSPATH for this to work.
+    directory (<install_dir>\jpython.jar) in your CLASSPATH for this to work.
 
 4. run "java PythonGraph"
     You need the same classpath as given above
