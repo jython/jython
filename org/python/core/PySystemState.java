@@ -17,7 +17,7 @@ public class PySystemState extends PyObject
     /**
      * The current version of JPython.
      */
-    public static String version = "2.1pre-a1";
+    public static String version = "2.1a1";
 
     /**
      * The copyright notice for this release.
