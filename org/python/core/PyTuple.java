@@ -1,24 +1,63 @@
 // Copyright © Corporation for National Research Initiatives
 package org.python.core;
 
-public class PyTuple extends PySequence {
-    public PyObject list[];
 
-    public static PyClass __class__;
+
+class TupleFunctions extends PyBuiltinFunctionSet 
+{
+    TupleFunctions(String name, int index, int argcount) {
+        super(name, index, argcount, argcount, true, null);
+    }
+
+    public PyObject __call__() {
+        PyTuple tuple = (PyTuple)__self__;
+        switch (index) {
+        case 3:
+            return new PyInteger(tuple.__len__());
+        default:
+            throw argCountError(0);
+        }
+    }
+
+    public PyObject __call__(PyObject arg) {
+        PyTuple tuple = (PyTuple)__self__;
+        switch (index) {
+        case 15:
+            return tuple.__add__(arg);
+        default:
+            throw argCountError(1);
+        }
+    }
+}
+
+
+
+public class PyTuple extends PySequence implements InitModule
+{
+    // TBD: this should not be public, but it is required to be by the
+    // thread.java module.  This should be fixed.
+    public PyObject[] list;
+
+    public void initModule(PyObject dict) {
+        super.initModule(dict);
+        dict.__setitem__("__len__", new TupleFunctions("__len__", 3, 0));
+        dict.__setitem__("__add__", new TupleFunctions("__add__", 15, 1));
+        // hide these from Python!
+        dict.__setitem__("initModule", null);
+        dict.__setitem__("toString", null);
+        dict.__setitem__("hashCode", null);
+    }
+
+    public PyTuple() {
+        this(Py.EmptyObjects);
+    }
 
     public PyTuple(PyObject elements[]) {
-        super(__class__);
         list = elements;
     }
 
-    protected String safeRepr(PyObject o) {
-        if (o == null)
-            return "null";
-        return o.__repr__().toString();
-    }
-
-    public int __len__() { 
-        return list.length; 
+    protected String safeRepr() {
+        return "'tuple' object";
     }
 
     protected PyObject get(int i) {
@@ -50,6 +89,10 @@ public class PyTuple extends PySequence {
         return new PyTuple(newList);
     }
 
+    public int __len__() { 
+        return list.length; 
+    }
+
     public PyObject __add__(PyObject generic_other) {
         if (generic_other instanceof PyTuple) {
             PyTuple other = (PyTuple)generic_other;
@@ -59,9 +102,8 @@ public class PyTuple extends PySequence {
                              other.list.length);
 
             return new PyTuple(new_list);
-        } else {
+        } else
             return null;
-        }
     }
 
     public int hashCode() {
@@ -92,18 +134,23 @@ public class PyTuple extends PySequence {
 //         return true;
 //     }
         
+    private String subobjRepr(PyObject o) {
+        if (o == null)
+            return "null";
+        return o.__repr__().toString();
+    }
+
     public String toString() {
         StringBuffer buf = new StringBuffer("(");
-        for (int i=0; i<list.length-1; i++) {
-            buf.append(safeRepr(list[i]));
+        for (int i = 0; i < list.length-1; i++) {
+            buf.append(subobjRepr(list[i]));
             buf.append(", ");
         }
         if (list.length > 0)
-            buf.append(safeRepr(list[list.length-1]));
+            buf.append(subobjRepr(list[list.length-1]));
         if (list.length == 1)
             buf.append(",");
         buf.append(")");
-
         return buf.toString();
     }
 }
