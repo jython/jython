@@ -14,7 +14,7 @@ public class BytecodeLoader extends ClassLoader {
 		// This method has caused much trouble.  Using it breaks jdk1.2rc1
 		// Not using it can make SUN's jdk1.1.6 JIT slightly unhappy
 		// Don't use by default, but allow python.options.compileClass to override
-		if (Py.compileClass) {
+		if (!Options.skipCompile) {
 		    //System.err.println("compile: "+name);
 		    Compiler.compileClass(c);
 		}

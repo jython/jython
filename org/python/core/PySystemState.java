@@ -122,10 +122,18 @@ public class PySystemState extends PyObject {
 	    return initRegistry(System.getProperties());
 	}*/
 
-    private boolean getBooleanOption(String name) {
-        String prop = registry.getProperty(name);
-        return prop != null && (prop.equalsIgnoreCase("true") || prop.equalsIgnoreCase("yes"));
+    private boolean getBooleanOption(String name, boolean defaultValue) {
+        String prop = registry.getProperty("python.options."+name);
+        if (prop == null) return defaultValue;
+        return prop.equalsIgnoreCase("true") || prop.equalsIgnoreCase("yes");
     }
+    
+  
+    private String getStringOption(String name, String defaultValue) {
+        String prop = registry.getProperty("python.options."+name);
+        if (prop == null) return defaultValue;
+        return prop;
+    }  
 
     public PyObject stdout, stderr, stdin;
     public PyObject __stdout__, __stderr__, __stdin__;
@@ -192,15 +200,6 @@ public class PySystemState extends PyObject {
         	}
 		}
 
-		// Initialize the path (and add system defaults)
-		path = initPath(registry);
-		if (prefix != null) {
-		    path.append(new PyString(new File(prefix, "Lib").toString()));
-		}
-
-        // Set up the known Java packages
-		initPackages(registry);
-
         // Set up the initial standard ins and outs
         __stdout__ = stdout = new PyFile(System.out, "<stdout>");
         __stderr__ = stderr = new PyFile(System.err, "<stderr>");
@@ -211,12 +210,33 @@ public class PySystemState extends PyObject {
         Py.stdout = new StdoutWrapper("stdout");
 
         // Set up options from registry
-        PyJavaClass.withinner = getBooleanOption("python.options.innerclasses");
-        Py.compileClass = getBooleanOption("python.options.compileClass");
+        setOptionsFromRegistry();
 
 	    // This isn't quite right...
         builtins = PyJavaClass.lookup(__builtin__.class).__dict__;
 	}
+	
+	public void setOptionsFromRegistry() {
+		// Initialize the path (and add system defaults)
+		path = initPath(registry);
+		if (prefix != null) {
+		    path.append(new PyString(new File(prefix, "Lib").toString()));
+		}
+
+        // Set up the known Java packages
+		initPackages(registry);	    
+	    
+	    // Set the more unusual options
+	    Options.showJavaExceptions = 
+	        getBooleanOption("showJavaExceptions", Options.showJavaExceptions);
+	    Options.skipCompile = 
+	        getBooleanOption("skipCompile", Options.skipCompile);
+	    Options.proxyCacheDirectory = 
+	        getStringOption("proxyCacheDirectory", Options.proxyCacheDirectory);
+	    Options.showPythonProxyExceptions = 
+	        getBooleanOption("showPythonProxyExceptions", Options.showPythonProxyExceptions);
+	}
+	    
 
 	private PyJavaPackage addPackage(String name) {
 	    //System.out.println("add package: "+name);

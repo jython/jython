@@ -12,7 +12,7 @@ public class imp {
     
     public static final int APIVersion = 5;
     
-    static PyModule addModule(String name) {
+    public static PyModule addModule(String name) {
         PyObject modules = Py.getSystemState().modules;
 		PyModule module = (PyModule)modules.__finditem__(name);
 		if (module != null) {

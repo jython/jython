@@ -109,7 +109,13 @@ public class PyBeanEventProperty extends PyReflectedField {
 
 	public boolean _doset(PyObject self, PyObject value) {
 	    Object jself = Py.tojava(self, addMethod.getDeclaringClass());
-		setFunction(jself, value);
+	    if (!(value instanceof PyCompoundCallable)) {
+	        PyCompoundCallable func = new PyCompoundCallable();
+	        setFunction(jself, func);
+	        func.append(value);
+	    } else {
+		    setFunction(jself, value);
+		}
 		return true;
 	}
 

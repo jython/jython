@@ -63,7 +63,7 @@ public class PyInstance extends PyObject {
     private Hashtable primitiveMap;
 
 
-    protected void setProxy(Object proxy, int index) {
+    protected void setProxy(PyProxy proxy, int index) {
         proxy._setPyInstance(this);
         proxy._setPySystemState(Py.getSystemState());
         javaProxies[index] = proxy;
