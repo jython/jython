@@ -24,11 +24,7 @@ package org.python.modules;
 import org.python.core.*;
 import java.text.DateFormatSymbols;
 import java.text.DateFormat;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.SimpleTimeZone;
+import java.util.*;
 
 
 
@@ -52,6 +48,51 @@ class TimeFunctions extends PyBuiltinFunctionSet
 
 public class time implements ClassDictInit
 {
+    public static PyString __doc__ = new PyString(
+        "This module provides various functions to manipulate time values.\n"+
+        "\n"+
+        "There are two standard representations of time.  One is the number\n"+
+        "of seconds since the Epoch, in UTC (a.k.a. GMT).  It may be an integer\n"+
+        "or a floating point number (to represent fractions of seconds).\n"+
+        "The Epoch is system-defined; on Unix, it is generally January 1st, 1970.\n"+
+        "The actual value can be retrieved by calling gmtime(0).\n"+
+        "\n"+
+        "The other representation is a tuple of 9 integers giving local time.\n"+
+        "The tuple items are:\n"+
+        "  year (four digits, e.g. 1998)\n"+
+        "  month (1-12)\n"+
+        "  day (1-31)\n"+
+        "  hours (0-23)\n"+
+        "  minutes (0-59)\n"+
+        "  seconds (0-59)\n"+
+        "  weekday (0-6, Monday is 0)\n"+
+        "  Julian day (day in the year, 1-366)\n"+
+        "  DST (Daylight Savings Time) flag (-1, 0 or 1)\n"+
+        "If the DST flag is 0, the time is given in the regular time zone;\n"+
+        "if it is 1, the time is given in the DST time zone;\n"+
+        "if it is -1, mktime() should guess based on the date and time.\n"+
+        "\n"+
+        "Variables:\n"+
+        "\n"+
+        "timezone -- difference in seconds between UTC and local standard time\n"+
+        "altzone -- difference in  seconds between UTC and local DST time\n"+
+        "daylight -- whether local time should reflect DST\n"+
+        "tzname -- tuple of (standard time zone name, DST time zone name)\n"+
+        "\n"+
+        "Functions:\n"+
+        "\n"+
+        "time() -- return current time in seconds since the Epoch as a float\n"+
+        "clock() -- return CPU time since process start as a float\n"+
+        "sleep() -- delay for a number of seconds given as a float\n"+
+        "gmtime() -- convert seconds since Epoch to UTC tuple\n"+
+        "localtime() -- convert seconds since Epoch to local time tuple\n"+
+        "asctime() -- convert time tuple to string\n"+
+        "ctime() -- convert time in seconds to string\n"+
+        "mktime() -- convert local time tuple to seconds since Epoch\n"+
+        "strftime() -- convert time tuple to string according to format specification\n"+
+        "strptime() -- parse string to time tuple according to format specification\n"
+    );
+
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("time", new TimeFunctions("time", 0, 0));
         dict.__setitem__("clock", new TimeFunctions("clock", 0, 0));
@@ -227,6 +268,7 @@ public class time implements ClassDictInit
     }
 
     // Python's time module specifies use of current locale
+    protected static Locale currentLocale = null;
     protected static DateFormatSymbols datesyms = new DateFormatSymbols();
     protected static String[] shortdays = null;
     protected static String[] shortmonths = null;
@@ -297,6 +339,7 @@ public class time implements ClassDictInit
     }
 
     public static String asctime(PyTuple tup) {
+        checkLocale();
         int day = item(tup, 6);
         int mon = item(tup, 1);
         return _shortday(day) + " " + _shortmonth(mon) + " " +
@@ -326,6 +369,8 @@ public class time implements ClassDictInit
     public static final int accept2dyear = 0;
 
     public static String strftime(String format, PyTuple tup) {
+        checkLocale();
+
         String s = "";
         int lastc = 0;
         int j;
@@ -431,6 +476,8 @@ public class time implements ClassDictInit
                 cal.setFirstDayOfWeek(cal.SUNDAY);
                 cal.setMinimalDaysInFirstWeek(7);
                 j = cal.get(cal.WEEK_OF_YEAR);
+                if (cal.get(cal.MONTH) == cal.JANUARY && j >= 52)
+                    j = 0;
                 s = s + _twodigit(j);
                 break;
             case 'w':
@@ -448,6 +495,9 @@ public class time implements ClassDictInit
                 cal.setFirstDayOfWeek(cal.MONDAY);
                 cal.setMinimalDaysInFirstWeek(7);
                 j = cal.get(cal.WEEK_OF_YEAR);
+
+                if (cal.get(cal.MONTH) == cal.JANUARY && j >= 52)
+                    j = 0;
                 s = s + _twodigit(j);
                 break;
             case 'x':
@@ -523,4 +573,15 @@ public class time implements ClassDictInit
         }
         return s;
     }
+
+
+    private static void checkLocale() {
+        if (!Locale.getDefault().equals(currentLocale)) {
+            currentLocale = Locale.getDefault();
+            datesyms = new DateFormatSymbols(currentLocale);
+            shortdays = null;
+            shortmonths = null;
+        }
+    }
+
 }
