@@ -408,7 +408,9 @@ public class imp
                     } else {
                         tmpName = name.substring(last_dot+1, dot).intern();
                     }
-                    mod = mod.__getattr__(tmpName);
+                    mod = mod.__findattr__(tmpName);
+                    if (mod == null)
+                        throw Py.ImportError("No module named " + tmpName);
                     last_dot = dot;
                 }
             }
