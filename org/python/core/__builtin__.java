@@ -107,6 +107,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
  */
 public class __builtin__ implements ClassDictInit
 {
+    /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("None", Py.None);
         dict.__setitem__("Ellipsis", Py.Ellipsis);

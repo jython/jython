@@ -247,6 +247,7 @@ public class PyString extends PySequence implements ClassDictInit
         this(String.valueOf(c));
     }
 
+    /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__str__", new StringFuncs("__str__", 1, 0));
         dict.__setitem__("__len__", new StringFuncs("__len__", 2, 0));

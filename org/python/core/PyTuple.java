@@ -43,6 +43,7 @@ public class PyTuple extends PySequence implements ClassDictInit
     // URG!  This should be fixed.
     public PyObject[] list;
 
+    /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         PySequence.classDictInit(dict);
         dict.__setitem__("__len__", new TupleFunctions("__len__", 3, 0));

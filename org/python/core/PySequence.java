@@ -112,6 +112,7 @@ abstract public class PySequence extends PyObject
         super(c);
     }
 
+    /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__nonzero__", new SeqFuncs("__nonzero__", 1, 0));
         dict.__setitem__("__getitem__", new SeqFuncs("__getitem__", 11, 1));
