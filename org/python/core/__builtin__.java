@@ -663,7 +663,7 @@ public class __builtin__ implements InitModule
         PyObject[] l = new PyObject[n];
         int j=start;
         for (int i=0; i<n; i++) {
-            l[i] = new PyInteger(j);
+            l[i] = Py.newInteger(j);
             j+= step;
         }
         return new PyList(l);
