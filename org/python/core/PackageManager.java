@@ -53,7 +53,8 @@ public class PackageManager {
         if (cachedir == null) return;
         
         if (!cachedir.isDirectory() && cachedir.mkdirs() == false) {
-            Py.writeWarning("packageManager", "can't create package cache dir, '"+cachedir+"'");
+            Py.writeWarning("packageManager",
+			    "can't create package cache dir, '"+cachedir+"'");
             return;
         }
         
@@ -107,8 +108,8 @@ public class PackageManager {
     }
 
     /**
-        Find a top-level package by name (a top-level package is one without
-        any '.' in its name).
+       Find a top-level package by name (a top-level package is one without
+       any '.' in its name).
 
        @param name the name of the top-level package to find -
        <b> must be an interned string </b>.
@@ -164,8 +165,10 @@ public class PackageManager {
 
     // Add a single class from zipFile to zipPackages
     // Only add valid, public classes
-    static void addZipEntry(Hashtable zipPackages, ZipEntry entry, ZipFile zipFile)
-    throws IOException {
+    static void addZipEntry(Hashtable zipPackages, ZipEntry entry,
+			    ZipFile zipFile)
+	throws IOException
+    {
         String name = entry.getName();
         //System.err.println("entry: "+name);
         if (!name.endsWith(".class")) return;
@@ -185,7 +188,8 @@ public class PackageManager {
 
         // An extra careful test, maybe should be ignored????
         InputStream istream = zipFile.getInputStream(entry);
-        int access = checkAccess(new DataInputStream(new BufferedInputStream(istream)));
+        int access = checkAccess(
+	    new DataInputStream(new BufferedInputStream(istream)));
         if ((access == -1) || ((access & 0x01) != 1)) return;
 
         Vector vec = (Vector)zipPackages.get(packageName);
@@ -241,7 +245,7 @@ public class PackageManager {
         } catch (IOException ioe) {
             // silently skip any bad directories
             Py.writeWarning("packageManager",
-            "skipping bad directory, '" + directory.toString() + "'");
+			    "skipping bad directory, '" + directory.toString() + "'");
         }
     }
 
@@ -255,7 +259,8 @@ public class PackageManager {
             JarEntry jarEntry = (JarEntry)jarfiles.get(canonicalJarfile);
 
             if (jarEntry == null) {
-                Py.writeMessage("packageManager", "processing new jar, \""+canonicalJarfile+"\"");
+                Py.writeMessage("packageManager", "processing new jar, \""+
+				canonicalJarfile+"\"");
 
                 jarEntry = new JarEntry(findJarCacheFile(jarfile), 0);
                 jarfiles.put(canonicalJarfile, jarEntry);
@@ -269,27 +274,33 @@ public class PackageManager {
             if (zipPackages == null) {
                 indexModified = true;
                 if (jarEntry.mtime != 0) {
-                    Py.writeMessage("packageManager", "processing modified jar, \""+canonicalJarfile+"\"");
+                    Py.writeMessage("packageManager",
+				    "processing modified jar, \""+
+				    canonicalJarfile+"\"");
                 }
                 jarEntry.mtime = mtime;
 
                 zipPackages = getZipPackages(jarfile);
                 // Write the cache file
-                writeCacheFile(jarEntry.cachefile, mtime, canonicalJarfile, zipPackages);
+                writeCacheFile(jarEntry.cachefile, mtime,
+			       canonicalJarfile, zipPackages);
             }
 
             addPackages(zipPackages, canonicalJarfile);
         } catch (IOException ioe) {
             // silently skip any bad directories
             Py.writeWarning("packageManager",
-            "skipping bad jarfile, '" + jarfile.toString() + "'");
+			    "skipping bad jarfile, '" +
+			    jarfile.toString() + "'");
         }
     }
 
     void addPackages(Hashtable zipPackages, String jarfile) {
         for (Enumeration e = zipPackages.keys() ; e.hasMoreElements() ;) {
             Object key = e.nextElement();
-            JarPackage value = new JarPackage((String)key, (String)zipPackages.get(key), jarfile);
+            JarPackage value = new JarPackage((String)key,
+					      (String)zipPackages.get(key),
+					      jarfile);
             //Object value = zipPackages.get(key);
             packages.put(key, value);
         }
@@ -315,14 +326,17 @@ public class PackageManager {
     }
 
     // Write a cache file storing package info for a single .jar
-    public static void writeCacheFile(File cachefile, long mtime, String canonicalJarfile,
-    Hashtable zipPackages) {
+    public static void writeCacheFile(File cachefile, long mtime,
+				      String canonicalJarfile,
+				      Hashtable zipPackages)
+    {
         try {
             DataOutputStream ostream = new DataOutputStream(
-                    new BufferedOutputStream(new FileOutputStream(cachefile)));
+		new BufferedOutputStream(new FileOutputStream(cachefile)));
             ostream.writeUTF(canonicalJarfile);
             ostream.writeLong(mtime);
-            Py.writeComment("packageManager", "rewriting cachefile for '"+canonicalJarfile+"'");
+            Py.writeComment("packageManager", "rewriting cachefile for '"+
+			    canonicalJarfile+"'");
 
             for (Enumeration e = zipPackages.keys() ; e.hasMoreElements() ;) {
                 String packageName = (String)e.nextElement();
@@ -332,22 +346,30 @@ public class PackageManager {
             }
             ostream.close();
         } catch (IOException ioe) {
-            Py.writeWarning("packageManager", "can't write cache file to, '"+cachefile+"'");
+            Py.writeWarning("packageManager", "can't write cache file to, '"+
+			    cachefile+"'");
         }
     }
 
     // Read in cache file storing package info for a single .jar
     // Return null and delete this cachefile if it is invalid
-    public static Hashtable readCacheFile(File cachefile, long mtime, String canonicalJarfile) {
-        Py.writeDebug("packageManager", "reading cache, '"+canonicalJarfile+"'");
+    public static Hashtable readCacheFile(File cachefile, long mtime,
+					  String canonicalJarfile)
+    {
+        Py.writeDebug("packageManager", "reading cache, '"+
+		      canonicalJarfile+"'");
         try {
             DataInputStream istream = new DataInputStream(
-                    new BufferedInputStream(new FileInputStream(cachefile)));
+		new BufferedInputStream(new FileInputStream(cachefile)));
             String old_jarfile = istream.readUTF();
             long old_mtime = istream.readLong();
-            if ((!old_jarfile.equals(canonicalJarfile)) || (old_mtime != mtime)) {
+            if ((!old_jarfile.equals(canonicalJarfile)) ||
+		(old_mtime != mtime))
+	    {
                 Py.writeComment("packageManager",
-                  "invalid cache file: "+cachefile+", "+canonicalJarfile+":"+old_jarfile+", "+mtime+":"+old_mtime);
+				"invalid cache file: "+
+				cachefile+", "+canonicalJarfile+":"+
+				old_jarfile+", "+mtime+":"+old_mtime);
                 cachefile.delete();
                 return null;
             }
@@ -372,10 +394,12 @@ public class PackageManager {
 
 
     public void findAllPackages(Properties registry) {
-        String paths = registry.getProperty("python.packages.paths",
-                                            "java.class.path,sun.boot.class.path");
-        String directories = registry.getProperty("python.packages.directories",
-                                                  "java.ext.dirs");
+        String paths = registry.getProperty(
+	    "python.packages.paths",
+	    "java.class.path,sun.boot.class.path");
+        String directories = registry.getProperty(
+	    "python.packages.directories",
+	    "java.ext.dirs");
         String fakepath = registry.getProperty("python.packages.fakepath", "");
 
         StringTokenizer tok = new StringTokenizer(paths, ",");
@@ -398,7 +422,9 @@ public class PackageManager {
     }
 
 
-    public PyJavaPackage makeJavaPackage(String name, String classes, String jarfile) {
+    public PyJavaPackage makeJavaPackage(String name, String classes,
+					 String jarfile)
+    {
         int dot = name.indexOf('.');
         String firstName=name;
         String lastName=null;
@@ -408,7 +434,8 @@ public class PackageManager {
         }
 
         firstName = firstName.intern();
-        PyJavaPackage p = (PyJavaPackage)topLevelPackages.__finditem__(firstName);
+        PyJavaPackage p =
+	    (PyJavaPackage)topLevelPackages.__finditem__(firstName);
         if (p == null) {
             p = new PyJavaPackage(firstName, jarfile);
             topLevelPackages.__setitem__(firstName, p);
@@ -430,12 +457,13 @@ public class PackageManager {
             }
         }
         /*} catch (IOException ioe) {
-            Py.writeWarning("packageManager", "bad jar directory, '"+jdir+"'");
-        }*/
+	  Py.writeWarning("packageManager", "bad jar directory, '"+jdir+"'");
+	  }*/
     }
 
     public void addJarPath(String path) {
-        StringTokenizer tok = new StringTokenizer(path, java.io.File.pathSeparator);
+        StringTokenizer tok =
+	    new StringTokenizer(path, java.io.File.pathSeparator);
         while  (tok.hasMoreTokens())  {
             String entry = tok.nextToken();
             addJarDir(entry);
@@ -443,7 +471,8 @@ public class PackageManager {
     }
 
     public void addClassPath(String path) {
-        StringTokenizer tok = new StringTokenizer(path, java.io.File.pathSeparator);
+        StringTokenizer tok =
+	    new StringTokenizer(path, java.io.File.pathSeparator);
         while  (tok.hasMoreTokens())  {
             String entry = tok.nextToken().trim();
             if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
@@ -463,20 +492,22 @@ public class PackageManager {
             if (!indexFile.exists()) return;
 
             DataInputStream istream = new DataInputStream(
-                    new BufferedInputStream(new FileInputStream(indexFile)));
+		new BufferedInputStream(new FileInputStream(indexFile)));
             try {
                 while (true) {
                     String jarfile = istream.readUTF();
                     String cachefile = istream.readUTF();
                     long mtime = istream.readLong();
-                    jarfiles.put(jarfile, new JarEntry(new File(cachefile), mtime));
+                    jarfiles.put(jarfile, new JarEntry(new File(cachefile),
+						       mtime));
                 }
             } catch (EOFException eof) {
                 ;
             }
             istream.close();
         } catch (IOException ioe) {
-            Py.writeWarning("packageManager", "invalid index file, '"+indexFile+"'");
+            Py.writeWarning("packageManager",
+			    "invalid index file, '"+indexFile+"'");
         }
     }
 
@@ -489,7 +520,7 @@ public class PackageManager {
 
         try {
             DataOutputStream ostream = new DataOutputStream(
-                    new BufferedOutputStream(new FileOutputStream(indexFile)));
+		new BufferedOutputStream(new FileOutputStream(indexFile)));
             for (Enumeration e = jarfiles.keys(); e.hasMoreElements();) {
                 String jarfile = (String)e.nextElement();
                 JarEntry je = (JarEntry)jarfiles.get(jarfile);
@@ -499,7 +530,8 @@ public class PackageManager {
             }
             ostream.close();
         } catch (IOException ioe) {
-            Py.writeWarning("packageManager", "can't write index file, '"+indexFile+"'");
+            Py.writeWarning("packageManager",
+			    "can't write index file, '"+indexFile+"'");
         }
     }
 }
