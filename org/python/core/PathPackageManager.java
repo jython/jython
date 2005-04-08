@@ -5,8 +5,8 @@ package org.python.core;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 
 /**
@@ -42,17 +42,20 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                  */
                 PackageExistsFileFilter m = new PackageExistsFileFilter();
                 f.listFiles(m);
-                return m.packageExists();
+                boolean exists = m.packageExists();
+                if(exists) {
+                    Py.writeDebug("import", "java package as '" + f.getAbsolutePath() + "'");
+                }
+                return exists;
             }
         }
         return false;
     }
 
-    class PackageExistsFileFilter implements FileFilter {
+    class PackageExistsFileFilter implements FilenameFilter {
         private boolean java;
         private boolean python;
-        public boolean accept(File file) {
-            String name = file.getName();
+        public boolean accept(File dir, String name) {
             if(name.endsWith(".py") || name.endsWith("$py.class")) {
                 python = true;
             } else if(name.endsWith(".class")) {
