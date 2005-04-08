@@ -264,8 +264,22 @@ public class imp
         PyObject loader = Py.None;
         PySystemState sys = Py.getSystemState();
         PyObject metaPath = sys.meta_path;
-        PyObject iter = metaPath.__iter__();
 
+        /*
+         Needed to convert all entries on the path to SyspathArchives if
+         necessary.
+        */
+        PyList ppath = path == null ? sys.path : path;
+        for(int i=0;i<ppath.__len__();i++) {
+            PyObject p = ppath.__getitem__(i);
+            PyObject q = replacePathItem(p);
+            if(q == null) {
+                continue;
+            }
+            ppath.__setitem__(i, q);
+        }
+
+        PyObject iter = metaPath.__iter__();
         for(PyObject importer; (importer = iter.__iternext__()) != null;) {
             PyObject findModule = importer.__getattr__("find_module");
             loader = findModule.__call__(new PyObject[] {
@@ -280,15 +294,6 @@ public class imp
         if (ret != null) return ret;
 
         path = path == null ? sys.path : path;
-        for(int i=0;i<path.__len__();i++) {
-            PyObject p = path.__getitem__(i);
-            PyObject q = replacePathItem(p);
-            if(q == null) {
-                continue;
-            }
-            path.__setitem__(i, q);
-        }
-
         for(int i=0;i<path.__len__();i++) {
             PyObject p = path.__getitem__(i);
             //System.err.println("find_module (" + name + ", " + moduleName + ") Path: " + path);
