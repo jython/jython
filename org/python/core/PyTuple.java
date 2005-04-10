@@ -1,33 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-class TupleFunctions extends PyBuiltinFunctionSet
-{
-    TupleFunctions(String name, int index, int argcount) {
-        super(name, index, argcount, argcount, true, null);
-    }
-
-    public PyObject __call__() {
-        PyTuple tuple = (PyTuple)__self__;
-        switch (index) {
-        case 3:
-            return new PyInteger(tuple.__len__());
-        default:
-            throw argCountError(0);
-        }
-    }
-
-    public PyObject __call__(PyObject arg) {
-        PyTuple tuple = (PyTuple)__self__;
-        switch (index) {
-        case 15:
-            return tuple.__add__(arg);
-        default:
-            throw argCountError(1);
-        }
-    }
-}
-
 /**
  * A builtin python tuple.
  */
