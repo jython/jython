@@ -135,7 +135,8 @@
             destdir="${outputDir}/"
             target="${targetver}"
             debug="${debug}"
-            optimize="${optimize}">
+            optimize="${optimize}"
+            deprecation="${deprecation}">
             <include name="org/**"/>
             <exclude name="org/python/parser/python.java"/>
 
