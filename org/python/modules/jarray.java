@@ -4,14 +4,14 @@ import org.python.core.*;
 
 public class jarray {
     public static PyArray array(PyObject seq, char typecode) {
-        return PyArray.array(seq, PyArray.char2class(typecode));
+        return PyArray.array(seq, typecode);
     }
 
     public static PyArray array(PyObject seq, Class type) {
         return PyArray.array(seq, type);
     }
     public static PyArray zeros(int n, char typecode) {
-        return PyArray.zeros(n, PyArray.char2class(typecode));
+        return PyArray.zeros(n, typecode);
     }
 
     public static PyArray zeros(int n, Class type) {

@@ -520,7 +520,7 @@ abstract public class PySequence extends PyObject {
                     array.set(i, o);
                 }
                 //System.out.println("getting: "+component+", "+array.data);
-                return array.data;
+                return array.getArray();
             } catch (Throwable t) {
                 ;//System.out.println("failed to get: "+component.getName());
             }
