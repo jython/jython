@@ -35,6 +35,7 @@
         
         <property name="targetver" value="1.1" />
         <property name="debug" value="off" />
+        <property name="deprecation" value="off" />
         <property name="optimize" value="on" />
         
         <property name="release" value="22a0" />
