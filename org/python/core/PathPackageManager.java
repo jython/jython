@@ -27,7 +27,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                        File.separator + name;
 
         for (int i=0; i < path.__len__(); i++) {
-            String dir = path.get(i).__str__().toString();
+            String dir = path.pyget(i).__str__().toString();
             if (dir.length() == 0) dir = null;
 
             File f = new File(dir,child);
@@ -49,7 +49,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         String child=jpkg.__name__.replace('.',File.separatorChar);
 
         for (int i=0; i < path.__len__(); i++) {
-            String dir = path.get(i).__str__().toString();
+            String dir = path.pyget(i).__str__().toString();
             if (dir.length() == 0) dir = null;
 
             File childFile = new File(dir,child);
@@ -148,7 +148,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         PyList paths = new PyString(path).split(java.io.File.pathSeparator);
 
         for (int i = 0; i < paths.__len__(); i++) {
-            String entry = paths.get(i).toString();
+            String entry = paths.pyget(i).toString();
             if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
                 addJarToPackages(new File(entry),true);
             } else {

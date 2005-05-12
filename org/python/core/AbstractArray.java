@@ -156,7 +156,7 @@ public abstract class AbstractArray {
 
     /**
      * Set the array to the empty state, clearing all the data out and
-     * nulling objects (or "zero-ing" primitives.
+     * nulling objects (or "zero-ing" primitives).
      * <P>Note: This method does not set <CODE>modCountIncr</CODE> to
      * <CODE>1</CODE> even though <CODE>java.util.ArrayList</CODE>
      * would.
@@ -168,7 +168,7 @@ public abstract class AbstractArray {
         modCountIncr = 0;
         if (size != 0) {
             modCountIncr = 1;
-            clearRange(0, size - 1);
+            clearRange(0, size);  
             setSize(0);
         }
 
@@ -178,24 +178,23 @@ public abstract class AbstractArray {
     /**
      * Clears out the values in the specified range.  For object arrays,
      * the cleared range is nullified.  For primitve arrays, it is
-     * "zero-ed" out.  Note that the stop value is inclusive (not
-     * exclusive like some of the jdk equivalents).
+     * "zero-ed" out.
      * <P>Note: This method does not set <CODE>modCountIncr</CODE> to
      * <CODE>1</CODE> even though <CODE>java.util.ArrayList</CODE>
      * would.
      *
      * @param start the start index, inclusive
-     * @param stop  the stop index, inclusive
+     * @param stop  the stop index, exclusive
      */
     protected void clearRange(int start, int stop) {
 
-        if (start < stop && start >= 0 && stop <= size - 1) {
+        if (start < stop && start >= 0 && stop <= size) {
             clearRangeInternal(start, stop);
         } else {
-            if (start == stop && start >= 0 && stop <= size - 1) return;
+            if (start == stop && start >= 0 && stop <= size) return;
 
             throw new ArrayIndexOutOfBoundsException("start and stop must follow: 0 <= start <= stop <= " +
-                    (size - 1) + ", but found start= " + start + " and stop=" + stop);
+                    (size) + ", but found start= " + start + " and stop=" + stop);
         }
     }
 
@@ -203,7 +202,7 @@ public abstract class AbstractArray {
      * Used internally, no bounds checking.
      *
      * @param start the start index, inclusive
-     * @param stop  the stop index, inclusive
+     * @param stop  the stop index, exclusive
      */
     private void clearRangeInternal(int start, int stop) {
 
@@ -211,24 +210,24 @@ public abstract class AbstractArray {
         Class arrayType = base.getClass().getComponentType();
         if (arrayType.isPrimitive()) {
             if (arrayType == Boolean.TYPE) {
-                Arrays.fill((boolean[]) base, start, stop + 1, false);
+                Arrays.fill((boolean[]) base, start, stop, false);
             } else if (arrayType == Character.TYPE) {
-                Arrays.fill((char[]) base, start, stop + 1, '\u0000');
+                Arrays.fill((char[]) base, start, stop, '\u0000');
             } else if (arrayType == Byte.TYPE) {
-                Arrays.fill((byte[]) base, start, stop + 1, (byte) 0);
+                Arrays.fill((byte[]) base, start, stop, (byte) 0);
             } else if (arrayType == Short.TYPE) {
-                Arrays.fill((short[]) base, start, stop + 1, (short) 0);
+                Arrays.fill((short[]) base, start, stop, (short) 0);
             } else if (arrayType == Integer.TYPE) {
-                Arrays.fill((int[]) base, start, stop + 1, 0);
+                Arrays.fill((int[]) base, start, stop, 0);
             } else if (arrayType == Long.TYPE) {
-                Arrays.fill((long[]) base, start, stop + 1, 0);
+                Arrays.fill((long[]) base, start, stop, 0);
             } else if (arrayType == Float.TYPE) {
-                Arrays.fill((float[]) base, start, stop + 1, 0.f);
+                Arrays.fill((float[]) base, start, stop, 0.f);
             } else if (arrayType == Double.TYPE) {
-                Arrays.fill((double[]) base, start, stop + 1, 0.);
+                Arrays.fill((double[]) base, start, stop, 0.);
             }
         } else {
-            Arrays.fill((Object[]) base, start, stop + 1, null);
+            Arrays.fill((Object[]) base, start, stop, null);
         }
 
     }
@@ -303,32 +302,14 @@ public abstract class AbstractArray {
     /**
      * Makes room to insert a value at a specified index in the array.
      * <P><CODE>AbstractList</CODE> subclasses should update their
-     * <CODE>modCount</CODE> after calling this method.
+     * <CODE>modCount</CODE> after calling this method.  Does not change
+     * the <CODE>size</CODE> property of the array.
      *
      * @param index index position at which to insert element
      */
     protected void makeInsertSpace(int index) {
         makeInsertSpace(index, 1);
     }
-//   protected void makeInsertSpace(int index) {
-//       
-//       modCountIncr = 0;
-//      if (index >= 0 && index <= size) {
-//         if (++size > capacity) {
-//             ensureCapacity(size);
-//         }
-//         if (index < size - 1) {
-//             modCountIncr = 1;
-//            Object array = getArray();
-//            System.arraycopy(array, index, array, index + 1,
-//               size - index - 1);
-//         }
-//      } else {
-//         throw new ArrayIndexOutOfBoundsException(
-//                 "Index must be between 0 and " + 
-//                 size + ", but was " + index);
-//      }
-//   }
 
     protected void makeInsertSpace(int index, int length) {
 
@@ -379,11 +360,17 @@ public abstract class AbstractArray {
         }
     }
 
+    /**
+     * Removes a range from the array at the specified indices.
+     * @param start inclusive
+     * @param stop exclusive
+     */
     public void remove(int start, int stop) {
         if (start >= 0 && stop <= size && start <= stop) {
             Object base = getArray();
-            int nRemove = stop - start + 1;
-            System.arraycopy(base, stop + 1, base, start, size - stop - 1);
+            int nRemove = stop - start;
+            if (nRemove == 0) return;
+            System.arraycopy(base, stop, base, start, size - stop);
             size = size - nRemove;
             clearRangeInternal(size, size + nRemove - 1);
             setArray(base);
@@ -405,39 +392,85 @@ public abstract class AbstractArray {
      * @param atIndex
      */
     public void replaceSubArray(Object array, int atIndex) {
+        int arrayLen = Array.getLength(array);
+        replaceSubArray(atIndex, Math.min(size, atIndex + arrayLen), array, 0, arrayLen);
+    }
+    
+    /**
+     * Replace a range of this array with another subarray.
+     * @param thisStart the start index (inclusive) of the subarray in this 
+     * array to be replaced
+     * @param thisStop the stop index (exclusive) of the subarray in this 
+     * array to be replaced
+     * @param srcArray the source array from which to copy
+     * @param srcStart the start index (inclusive) of the replacement subarray
+     * @param srcStop the stop index (exclusive)  of the replacement subarray
+     */
+    public void replaceSubArray(int thisStart, int thisStop, Object srcArray, 
+            int srcStart, int srcStop) {
 
         modCountIncr = 0;
-        if (!array.getClass().isArray()) {
+        if (!srcArray.getClass().isArray()) {
             throw new IllegalArgumentException("'array' must be an array type");
         }
 
-        if (atIndex < 0 || atIndex > size) {
-            String message = (atIndex < 0) ?
-                    "Index cannot be negative" :
-                    "Index of " + atIndex + " must not exceed current size of " + size;
+        int replacedLen = thisStop - thisStart;
+         if (thisStart < 0 || replacedLen < 0 || thisStop > size) {
+            String message = null;
+            if (thisStart < 0) {
+                message = "thisStart < 0 (thisStart = " + thisStart + ")";
+            } else if (replacedLen < 0) {
+                message = "thisStart > thistStop (thisStart = " + thisStart + 
+                		", thisStop = " + thisStop + ")";
+            } else if (thisStop > size) {
+                message = "thisStop > size (thisStop = " + thisStop + 
+                		", size = " + size + ")";
+            } else {
+                throw new InternalError("Incorrect validation logic");
+            }
 
             throw new ArrayIndexOutOfBoundsException(message);
         }
 
-        int nAddLength = Array.getLength(array);
-
-        int requiredLength = atIndex + nAddLength;
-
-        if (requiredLength > capacity) {
-            // need to expand to size atIndex + nAddLength
-            ensureCapacity(requiredLength);
+        int srcLen = Array.getLength(srcArray);
+        int replacementLen = srcStop - srcStart;
+        if (srcStart < 0 || replacementLen < 0 || srcStop > srcLen) {
+            String message = null;
+            if (srcStart < 0) {
+                message = "srcStart < 0 (srcStart = " + srcStart +")";
+            } else if (replacementLen < 0) {
+                message = "srcStart > srcStop (srcStart = " + srcStart + 
+                		", srcStop = " + srcStop + ")";
+            } else if (srcStop > srcLen) {
+                message = "srcStop > srcArray length (srcStop = " + srcStop + 
+                		", srcArray length = " +srcLen + ")";
+            } else {
+                throw new InternalError("Incorrect validation logic");
+            }
+            
+            throw new IllegalArgumentException("start, stop and array must follow:\n\t"
+                    + "0 <= 'start' <= 'stop' <= 'array' length\nBut found\n\t" +
+                    message);
         }
 
-        size = Math.max(size, requiredLength);
+        int lengthChange = replacementLen - replacedLen;
+        
+        // Adjust array size if needed.
+        if (lengthChange < 0) {
+            remove(thisStop + lengthChange, thisStop);
+        } else if (lengthChange > 0) {
+            makeInsertSpace(thisStop, lengthChange);
+        }
+
         try {
             modCountIncr = 1;
-            System.arraycopy(array, 0, getArray(), atIndex, nAddLength);
+            System.arraycopy(srcArray, srcStart, getArray(), thisStart, replacementLen);
         } catch (ArrayStoreException e) {
             throw new IllegalArgumentException("'ofArrayType' must be compatible with existing array type of " +
                     getArray().getClass().getName() + "\tsee java.lang.Class.getName().");
         }
     }
-
+    
     /**
      * Set the backing array. This method is used by the type-agnostic base
      * class code to set the array used for type-specific storage by the
@@ -476,7 +509,7 @@ public abstract class AbstractArray {
         if (count > capacity) {
             ensureCapacity(count);
         } else if (count < size) {
-            clearRange(count, size);
+            clearRange(count, size + 1);  
         }
         size = count;
     }

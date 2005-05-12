@@ -397,7 +397,7 @@ public class PyType extends PyObject {
     private static void fill_classic_mro(ArrayList acc,PyClass classic_cl) {
         if(!acc.contains(classic_cl))
             acc.add(classic_cl);
-        PyObject[] bases = classic_cl.__bases__.list;
+        PyObject[] bases = classic_cl.__bases__.getArray();
         for (int i=0; i <bases.length; i++) {
             fill_classic_mro(acc,(PyClass)bases[i]);
         }
@@ -557,7 +557,7 @@ public class PyType extends PyObject {
     public static PyObject newType(PyObject new_,PyType metatype,String name,PyTuple bases,PyObject dict) {
         PyType object_type = fromClass(PyObject.class);
 
-        PyObject[] bases_list = bases.list;
+        PyObject[] bases_list = bases.getArray();
         PyType winner = metatype;
         for (int i=0; i<bases_list.length; i++) {
             PyObject bases_i = bases_list[i];

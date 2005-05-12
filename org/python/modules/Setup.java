@@ -51,5 +51,6 @@ public class Setup
         "_weakref",
         "xreadlines",
         "errno",
+        "array:org.python.modules.ArrayModule"
     };
 }

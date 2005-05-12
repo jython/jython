@@ -724,7 +724,7 @@ public class PyInstance extends PyObject
             return ret;
         if (!(ret instanceof PyTuple))
             throw Py.TypeError("coercion should return None or 2-tuple");
-        return ((PyTuple)ret).list;
+        return ((PyTuple)ret).getArray();
     }
 
 

@@ -1089,7 +1089,7 @@ public final class Py
                 return true;
 
             if (e instanceof PyTuple) {
-                PyObject[] l = ((PyTuple)e).list;
+                PyObject[] l = ((PyTuple)e).getArray();
                 for (int i=0; i<l.length; i++) {
                     if (matchException(pye, l[i]))
                         return true;
@@ -1677,7 +1677,7 @@ public final class Py
             PyTuple tup = (PyTuple)o;
             //System.err.println("unpack tuple");
             if (tup.__len__() == length)
-                return tup.list;
+                return tup.getArray();
             throw Py.ValueError("unpack tuple of wrong size");
         }
 
@@ -1858,7 +1858,7 @@ public final class Py
 
     static PyObject[] make_array(PyObject o) {
         if (o instanceof PyTuple)
-            return ((PyTuple)o).list;
+            return ((PyTuple)o).getArray();
     
         PyObject iter = o.__iter__();
     

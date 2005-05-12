@@ -861,8 +861,8 @@ public class __builtin__ implements ClassDictInit
             // underlying data structure with the list object, which
             // renders the tuple mutable!
             PyList l = (PyList)o;
-            PyObject[] a = new PyObject[l.length];
-            System.arraycopy(l.list, 0, a, 0, a.length);
+            PyObject[] a = new PyObject[l.size()];
+            System.arraycopy(l.getArray(), 0, a, 0, a.length);
             return new PyTuple(a);
         }
         return new PyTuple(Py.make_array(o));

@@ -677,7 +677,7 @@ public class PyString extends PySequence implements ClassDictInit
         return Py.NoConversion;
     }
 
-    protected PyObject get(int i) {
+    protected PyObject pyget(int i) {
         return Py.newString(string.charAt(i));
     }
 

@@ -976,7 +976,7 @@ public class PyDictionary extends PyObject {
 
         PyList akeys = keys();
         for (int i=0; i<an; i++) {
-            PyObject akey = akeys.get(i);
+            PyObject akey = akeys.pyget(i);
             PyObject bvalue = other.__finditem__(akey);
             if (bvalue == null)
                 return Py.Zero;
@@ -1018,8 +1018,8 @@ public class PyDictionary extends PyObject {
         bkeys.sort();
 
         for (int i=0; i<bn; i++) {
-            PyObject akey = akeys.get(i);
-            PyObject bkey = bkeys.get(i);
+            PyObject akey = akeys.pyget(i);
+            PyObject bkey = bkeys.pyget(i);
             int c = akey._cmp(bkey);
             if (c != 0)
                 return c;

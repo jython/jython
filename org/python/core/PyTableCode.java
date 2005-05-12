@@ -157,7 +157,7 @@ public class PyTableCode extends PyCode
             env[env_j] = new PyCell();
         }
         for (int i=0; i<nfreevars; i++,env_j++) {
-            env[env_j] = (PyCell)freevars.get(i);
+            env[env_j] = (PyCell)freevars.pyget(i);
         }
 
         ts.frame = frame;

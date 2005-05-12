@@ -11,9 +11,9 @@ import java.io.Serializable;
 
 public class PyLong extends PyObject
 {
-    private static final BigInteger minLong =
+    public static final BigInteger minLong =
         BigInteger.valueOf(Long.MIN_VALUE);
-    private static final BigInteger maxLong =
+    public static final BigInteger maxLong =
         BigInteger.valueOf(Long.MAX_VALUE);
     public static final BigInteger maxULong =
         BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));

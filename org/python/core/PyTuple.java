@@ -1,16 +1,16 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.ListIterator;
+
 /**
  * A builtin python tuple.
  */
 
-public class PyTuple extends PySequence implements ClassDictInit
+public class PyTuple extends PySequenceList implements ClassDictInit
 {
-    // TBD: this should not be public, but it is required to be public by
-    // many classes, including the thread.java and PyClass.java classes.
-    // URG!  This should be fixed.
-    public PyObject[] list;
 
     /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict)throws PyIgnoreMethodTag {}
@@ -294,8 +294,8 @@ public class PyTuple extends PySequence implements ClassDictInit
         this(Py.EmptyObjects);
     }
 
-    public PyTuple(PyObject elements[]) {
-        list = elements;
+    public PyTuple(PyObject[] elements) {
+        super(elements);
     }
 
     final static PyObject tuple_new(PyObject new_, boolean init, PyType subtype,
@@ -320,35 +320,34 @@ public class PyTuple extends PySequence implements ClassDictInit
         return "'tuple' object";
     }
 
-    protected PyObject get(int i) {
-        return list[i];
-    }
-
     protected PyObject getslice(int start, int stop, int step) {
         if (step > 0 && stop < start)
             stop = start;
         int n = sliceLength(start, stop, step);
-        PyObject[] newList = new PyObject[n];
+        PyObject[] newArray = new PyObject[n];
+        PyObject[] array = getArray(); 
 
         if (step == 1) {
-            System.arraycopy(list, start, newList, 0, stop-start);
-            return new PyTuple(newList);
+            System.arraycopy(array, start, newArray, 0, stop-start);
+            return new PyTuple(newArray);
         }
         int j = 0;
         for (int i=start; j<n; i+=step) {
-            newList[j] = list[i];
+            newArray[j] = array[i];
             j++;
         }
-        return new PyTuple(newList);
+        return new PyTuple(newArray);
     }
 
     protected PyObject repeat(int count) {
-        int l = list.length;
-        PyObject[] newList = new PyObject[l*count];
+        
+        PyObject[] array = getArray();
+        int l = size();
+        PyObject[] newArray = new PyObject[l*count];
         for (int i=0; i<count; i++) {
-            System.arraycopy(list, 0, newList, i*l, l);
+            System.arraycopy(array, 0, newArray, i*l, l);
         }
-        return new PyTuple(newList);
+        return new PyTuple(newArray);
     }
 
     public int __len__() {
@@ -356,7 +355,7 @@ public class PyTuple extends PySequence implements ClassDictInit
     }
 
     final int tuple___len__() {
-        return list.length;
+        return size();
     }
 
     final boolean tuple___contains__(PyObject o) {
@@ -376,16 +375,19 @@ public class PyTuple extends PySequence implements ClassDictInit
     }
 
     final PyObject tuple___add__(PyObject generic_other) {
+        PyTuple sum = null;
         if (generic_other instanceof PyTuple) {
-            PyTuple other = (PyTuple)generic_other;
-            PyObject new_list[] = new PyObject[list.length+other.list.length];
-            System.arraycopy(list, 0, new_list, 0, list.length);
-            System.arraycopy(other.list, 0, new_list, list.length,
-                             other.list.length);
-
-            return new PyTuple(new_list);
-        } else
-            return null;
+            PyTuple otherTuple = (PyTuple)generic_other;
+            PyObject[] array = getArray();
+            PyObject[] otherArray = otherTuple.getArray();
+            int thisLen = size();
+            int otherLen = otherTuple.size();
+            PyObject[] newArray = new PyObject[thisLen + otherLen];
+            System.arraycopy(array, 0, newArray, 0, thisLen);
+            System.arraycopy(otherArray, 0, newArray, thisLen, otherLen);
+            sum = new PyTuple(newArray);
+        }
+        return sum;
     }
 
     final PyObject tuple___mul__(PyObject o) {
@@ -407,16 +409,17 @@ public class PyTuple extends PySequence implements ClassDictInit
     }
 
     final int tuple_hashCode() {
-        int x, y;
-        int len = list.length;
-        x = 0x345678;
-
-        for (len--; len>=0; len--) {
-            y = list[len].hashCode();
-            x = (x + x + x) ^ y;
-        }
-        x ^= list.length;
-        return x;
+//        int x, y;
+//        int len = list.length;
+//        x = 0x345678;
+//
+//        for (len--; len>=0; len--) {
+//            y = list[len].hashCode();
+//            x = (x + x + x) ^ y;
+//        }
+//        x ^= list.length;
+//        return x;
+        return getArray().hashCode();
     }
 
 
@@ -446,15 +449,104 @@ public class PyTuple extends PySequence implements ClassDictInit
 
     final String tuple_toString() {
         StringBuffer buf = new StringBuffer("(");
-        for (int i = 0; i < list.length-1; i++) {
-            buf.append(subobjRepr(list[i]));
+        PyObject[] array = getArray();
+        int arrayLen = size();
+        for (int i = 0; i < arrayLen-1; i++) {
+            buf.append(subobjRepr(array[i]));
             buf.append(", ");
         }
-        if (list.length > 0)
-            buf.append(subobjRepr(list[list.length-1]));
-        if (list.length == 1)
+        if (arrayLen > 0)
+            buf.append(subobjRepr(array[arrayLen-1]));
+        if (arrayLen == 1)
             buf.append(",");
         buf.append(")");
         return buf.toString();
+    }
+    
+    // Make PyTuple immutable from the collections interfaces by overriding
+    // all the mutating methods to throw UnsupportedOperationException exception.
+    // This is how Collections.unmodifiableList() does it.
+    public Iterator iterator() {
+        return new Iterator() {
+            Iterator i = list.iterator();
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+            public boolean hasNext() {
+                return i.hasNext();
+                }
+            public Object next() {
+                return i.next();
+                }
+        };
+    }
+    
+    public boolean add(Object o){
+        throw new UnsupportedOperationException();
+    }
+    
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public boolean addAll(Collection coll) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public boolean removeAll(Collection coll) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public boolean retainAll(Collection coll) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
+    
+    public Object set(int index, Object element) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public void add(int index, Object element) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public Object remove(int index) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public boolean addAll(int index, Collection c) {
+        throw new UnsupportedOperationException();
+    }
+    
+    public ListIterator listIterator() 	{
+        return listIterator(0);
+    }
+    
+    public ListIterator listIterator(final int index) {
+        return new ListIterator() {
+            ListIterator i = list.listIterator(index);
+            
+            public boolean hasNext()     {return i.hasNext();}
+            public Object next()         {return i.next();}
+            public boolean hasPrevious() {return i.hasPrevious();}
+            public Object previous()     {return i.previous();}
+            public int nextIndex()       {return i.nextIndex();}
+            public int previousIndex()   {return i.previousIndex();}
+            
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+            
+            public void set(Object o) {
+                throw new UnsupportedOperationException();
+            }
+            
+            public void add(Object o) {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

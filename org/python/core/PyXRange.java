@@ -43,7 +43,7 @@ public class PyXRange extends PySequence {
         }
     }
 
-    protected PyObject get(int i) {
+    protected PyObject pyget(int i) {
         return new PyInteger(getInt(i));
     }
 
@@ -100,11 +100,11 @@ public class PyXRange extends PySequence {
         StringBuffer buf = new StringBuffer("(");
         int count = __len__();
         for (int i=0; i<(count-1); i++) {
-            buf.append(get(i).__repr__().toString());
+            buf.append(pyget(i).__repr__().toString());
             buf.append(", ");
         }
         if (count > 0)
-            buf.append(get(count-1).__repr__().toString());
+            buf.append(pyget(count-1).__repr__().toString());
         if (count == 1)
             buf.append(",");
         buf.append(")");
@@ -118,7 +118,7 @@ public class PyXRange extends PySequence {
         PyList list = new PyList();
         int count = __len__();
         for (int i=0; i<count; i++) {
-            list.append(get(i));
+            list.append(pyget(i));
         }
         return list;
     }
