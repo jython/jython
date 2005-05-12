@@ -1792,8 +1792,11 @@ public class PyInteger extends PyObject {
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }
 
-    public int asInt(int index) throws PyObject.ConversionException {
+    public long asLong(int index) throws PyObject.ConversionException {
         return getValue();
     }
 
+    public int asInt(int index) throws PyObject.ConversionException {
+        return getValue();
+    }
 }

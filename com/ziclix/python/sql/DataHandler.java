@@ -13,6 +13,7 @@ import org.python.core.PyFile;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyList;
+import org.python.core.PyString;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -177,7 +178,7 @@ public class DataHandler {
 
                 case Types.LONGVARCHAR:
                     if (object instanceof PyFile) {
-                        object = ((PyFile) object).read();
+                        object = new PyString(((PyFile) object).read());
                     }
 
                     String varchar = (String) object.__tojava__(String.class);
@@ -192,7 +193,7 @@ public class DataHandler {
 
                 default :
                     if (object instanceof PyFile) {
-                        object = ((PyFile) object).read();
+                        object = new PyString(((PyFile) object).read());
                     }
 
                     stmt.setObject(index, object.__tojava__(Object.class), type);

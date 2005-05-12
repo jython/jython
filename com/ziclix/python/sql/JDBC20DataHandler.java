@@ -11,6 +11,7 @@ package com.ziclix.python.sql;
 import org.python.core.Py;
 import org.python.core.PyFile;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -60,7 +61,7 @@ public class JDBC20DataHandler extends FilterDataHandler {
 
             case Types.CLOB:
                 if (object instanceof PyFile) {
-                    object = ((PyFile) object).read();
+                    object = new PyString(((PyFile) object).read());
                 }
 
                 String clob = (String) object.__tojava__(String.class);

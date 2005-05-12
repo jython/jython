@@ -1246,6 +1246,10 @@ public class PyLong extends PyObject
         throw Py.OverflowError("long int too long to convert");
     }
 
+    public long asLong(int index) {
+        return getLong(Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+
     public Object __tojava__(Class c) {
         try {
             if (c == Byte.TYPE || c == Byte.class) {

@@ -715,7 +715,7 @@ public class __builtin__ implements ClassDictInit
 
     private static PyString readline(PyObject file) {
         if (file instanceof PyFile) {
-            return ((PyFile)file).readline();
+            return new PyString(((PyFile)file).readline());
         } else {
             PyObject ret = file.invoke("readline");
             if (!(ret instanceof PyString)) {
