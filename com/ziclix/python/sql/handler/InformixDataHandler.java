@@ -76,13 +76,13 @@ public class InformixDataHandler extends FilterDataHandler {
 
             case Types.LONGVARCHAR:
 
+                String varchar;
                 // Ifx driver can't handle the setCharacterStream() method so use setObject() instead
                 if (object instanceof PyFile) {
-                    object = ((PyFile) object).read();
+                    varchar = ((PyFile) object).read();
+                } else {
+                    varchar = (String) object.__tojava__(String.class);
                 }
-
-                String varchar = (String) object.__tojava__(String.class);
-
                 stmt.setObject(index, varchar, type);
                 break;
 

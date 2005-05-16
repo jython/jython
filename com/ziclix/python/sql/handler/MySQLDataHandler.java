@@ -53,11 +53,12 @@ public class MySQLDataHandler extends RowIdHandler {
     switch (type) {
 
       case Types.LONGVARCHAR:
+        String varchar;
         if (object instanceof PyFile) {
-          object = ((PyFile) object).read();
+          varchar = ((PyFile) object).read();
+        } else {
+          varchar = (String) object.__tojava__(String.class);
         }
-
-        String varchar = (String) object.__tojava__(String.class);
         InputStream stream = new ByteArrayInputStream(varchar.getBytes());
 
         stream = new BufferedInputStream(stream);
