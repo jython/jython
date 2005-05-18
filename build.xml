@@ -116,8 +116,8 @@
     </target>
 
     <target name="clean" depends="init">
-        <delete dir="${outputDir}/" />
-        <delete>
+        <delete dir="${outputDir}/"/>
+        <delete failonerror="false">
            <fileset dir="${distDir}" excludes="jython.jar"/>
         </delete>
     </target>
@@ -449,12 +449,12 @@
                 email/test/*.py,
                 email/test/data/*,
                 test/**,
-            "/>
+            " excludes="**/*.pyc,**/*.pyo"/>
         </copy>
 
         <copy todir="${distDir}/Lib">
             <!-- The jython .py modules -->
-            <fileset dir="${sourceDir}/Lib" includes="*.py, pawt/*.py"/>
+            <fileset dir="${sourceDir}/Lib" includes="*.py, pawt/*.py test/**"/>
         </copy>
 
         <!-- The demo files -->
