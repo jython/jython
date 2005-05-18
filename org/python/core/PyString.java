@@ -698,8 +698,8 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean __contains__(PyObject o) {
-        if (!(o instanceof PyString) || o.__len__() != 1)
-            throw Py.TypeError("string member test needs char left operand");
+        if (!(o instanceof PyString))
+            throw Py.TypeError("'in <string>' requires string as left operand");
         PyString other = (PyString) o;
         return string.indexOf(other.string) >= 0;
     }
