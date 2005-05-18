@@ -327,7 +327,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
             stop = start;
         int n = sliceLength(start, stop, step);
         PyObject[] newArray = new PyObject[n];
-        PyObject[] array = getArray(); 
+        PyObject[] array = getArray();
 
         if (step == 1) {
             System.arraycopy(array, start, newArray, 0, stop-start);
@@ -342,7 +342,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
     }
 
     protected PyObject repeat(int count) {
-        
+
         PyObject[] array = getArray();
         int l = size();
         PyObject[] newArray = new PyObject[l*count];
@@ -411,33 +411,8 @@ public class PyTuple extends PySequenceList implements ClassDictInit
     }
 
     final int tuple_hashCode() {
-//        int x, y;
-//        int len = list.length;
-//        x = 0x345678;
-//
-//        for (len--; len>=0; len--) {
-//            y = list[len].hashCode();
-//            x = (x + x + x) ^ y;
-//        }
-//        x ^= list.length;
-//        return x;
-        return getArray().hashCode();
+        return super.hashCode();
     }
-
-
-    // Should go away when compare works properly
-//     public boolean equals(Object other) {
-//         if (other instanceof PyTuple &&
-//             ((PyTuple)other).size() == list.length)
-//         {
-//             Object[] ol = ((PyTuple)other).list;
-//             for(int i=0; i<list.length; i++) {
-//                 if (!ol[i].equals(list[i])) return false;
-//             }
-//             return true;
-//         }
-//         return true;
-//     }
 
     private String subobjRepr(PyObject o) {
         if (o == null)
@@ -464,11 +439,11 @@ public class PyTuple extends PySequenceList implements ClassDictInit
         buf.append(")");
         return buf.toString();
     }
-    
+
     public List subList(int fromIndex, int toIndex) {
         return Collections.unmodifiableList(list.subList(fromIndex, toIndex));
-    }    
-    
+    }
+
     // Make PyTuple immutable from the collections interfaces by overriding
     // all the mutating methods to throw UnsupportedOperationException exception.
     // This is how Collections.unmodifiableList() does it.
@@ -486,70 +461,70 @@ public class PyTuple extends PySequenceList implements ClassDictInit
                 }
         };
     }
-    
+
     public boolean add(Object o){
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean remove(Object o) {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean addAll(Collection coll) {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean removeAll(Collection coll) {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean retainAll(Collection coll) {
         throw new UnsupportedOperationException();
     }
-    
+
     public void clear() {
         throw new UnsupportedOperationException();
     }
-    
+
     public Object set(int index, Object element) {
         throw new UnsupportedOperationException();
     }
-    
+
     public void add(int index, Object element) {
         throw new UnsupportedOperationException();
     }
-    
+
     public Object remove(int index) {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean addAll(int index, Collection c) {
         throw new UnsupportedOperationException();
     }
-    
+
     public ListIterator listIterator() 	{
         return listIterator(0);
     }
-    
+
     public ListIterator listIterator(final int index) {
         return new ListIterator() {
             ListIterator i = list.listIterator(index);
-            
+
             public boolean hasNext()     {return i.hasNext();}
             public Object next()         {return i.next();}
             public boolean hasPrevious() {return i.hasPrevious();}
             public Object previous()     {return i.previous();}
             public int nextIndex()       {return i.nextIndex();}
             public int previousIndex()   {return i.previousIndex();}
-            
+
             public void remove() {
                 throw new UnsupportedOperationException();
             }
-            
+
             public void set(Object o) {
                 throw new UnsupportedOperationException();
             }
-            
+
             public void add(Object o) {
                 throw new UnsupportedOperationException();
             }

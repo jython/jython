@@ -3,7 +3,7 @@
  * All rights reserved.  This software is for internal JHU/APL use only and
  * is not to be distributed outside of JHU/APL.  For all other permissions,
  * please contact the RMIS Development Team at JHU/APL.
- * 
+ *
  * Created: Apr 18, 2005
  * By: updikca1
  */
@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Arrays;
 
 
 /**
@@ -21,31 +22,31 @@ import java.util.ListIterator;
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-public abstract class PySequenceList extends PySequence implements List{
+public abstract class PySequenceList extends PySequence implements List {
 
     protected PyObjectList list;
-    
+
     public PySequenceList() {
         list = new PyObjectList();
     }
-    
+
     protected PySequenceList(PyType type) {
         super(type);
         list = new PyObjectList();
     }
-    
+
     /**
-     * Creates an instance directly backed by the array of PyOBject elements.
+     * Creates an instance directly backed by the array of PyObject elements.
      * @param elements
      */
     public PySequenceList(PyObject[] elements) {
         list = new PyObjectList(elements);
     }
-    
+
     public PySequenceList(Collection c) {
         list = new PyObjectList(c);
     }
-    
+
     public void add(int index, Object element) {
         list.add(index, element);
     }
@@ -67,14 +68,8 @@ public abstract class PySequenceList extends PySequence implements List{
     public boolean containsAll(Collection c) {
         return list.containsAll(c);
     }
-    public boolean equals(Object obj) {
-        return list.equals(obj);
-    }
     public Object get(int index) {
         return list.get(index);
-    }
-    public int hashCode() {
-        return list.hashCode();
     }
     public int indexOf(Object o) {
         return list.indexOf(o);
@@ -139,7 +134,17 @@ public abstract class PySequenceList extends PySequence implements List{
     public boolean pyadd(PyObject o) {
         return list.pyadd(o);
     }
-    
+
+    public boolean equals(Object o) {
+        if(o instanceof PySequenceList) {
+            return list.equals(((PySequenceList)o).list);
+        }
+        return false;
+    }
+
+    public int hashCode() {
+        return list.hashCode();
+    }
 
 //    /**
 //     * @param list The list to set.
@@ -149,7 +154,7 @@ public abstract class PySequenceList extends PySequence implements List{
 //    }
 
 	/**
-	 * Get the backing array. The array should not be modified.  
+	 * Get the backing array. The array should not be modified.
 	 * To get a copy of the array, see {@link #toArray()}.
 	 *
 	 * @return backing array object

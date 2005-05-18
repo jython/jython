@@ -1,18 +1,19 @@
 //Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.util.Arrays;
 
 /**
- * Provides mutable behavior on a PyObject array.  Supports operations for 
+ * Provides mutable behavior on a PyObject array.  Supports operations for
  * implementing  <CODE>java.util.List</CODE>.
  * @author Clark Updike
  */
 public class PyObjectArray extends AbstractArray {
-    
+
     public void remove(int start, int stop) {
         super.remove(start, stop);
     }
-    
+
 	/**
 	 * The underlying array used for storing the data.
 	 */
@@ -24,7 +25,7 @@ public class PyObjectArray extends AbstractArray {
 	public PyObjectArray() {
 		super(PyObject.class);
 	}
-	
+
 	public PyObjectArray(PyObject[] rawArray) {
 	    super(rawArray == null ? 0 : rawArray.length);
 	    baseArray = (rawArray == null) ? new PyObject[] {} : rawArray;
@@ -37,12 +38,12 @@ public class PyObjectArray extends AbstractArray {
 	public PyObjectArray(int size) {
 		super(PyObject.class, size);
 	}
-	
+
 	/**
      * @param toCopy
      */
     public PyObjectArray(PyObjectArray toCopy) {
-        
+
         super(toCopy);
         this.baseArray = (PyObject[])toCopy.copyArray();
     }
@@ -51,7 +52,7 @@ public class PyObjectArray extends AbstractArray {
 	 * Add a value at a specified index in the array.
 	 * <P><CODE>AbstractList</CODE> subclasses should update their
 	 * <CODE>modCount</CODE> after calling this method.
-	 * 
+	 *
 	 * @param index index position at which to insert element
 	 * @param value value to be inserted into array
 	 */
@@ -64,7 +65,7 @@ public class PyObjectArray extends AbstractArray {
 	 * Add a value to the array, appending it after the current values.
 	 * <P><CODE>AbstractList</CODE> subclasses should update their
 	 * <CODE>modCount</CODE> after calling this method.
-	 * 
+	 *
 	 * @param value value to be added
 	 * @return index number of added element
 	 */
@@ -82,6 +83,26 @@ public class PyObjectArray extends AbstractArray {
 	public Object clone() {
 		return new PyObjectArray(this);
 	}
+
+    public boolean equals(Object o) {
+        if(o instanceof PyObjectArray) {
+            return Arrays.equals(baseArray, ((PyObjectArray)o).baseArray);
+        }
+        return false;
+    }
+
+    public int hashCode() {
+        int x, y;
+        int len = baseArray.length;
+        x = 0x345678;
+
+        for (len--; len>=0; len--) {
+            y = baseArray[len].hashCode();
+            x = (x + x + x) ^ y;
+        }
+        x ^= baseArray.length;
+        return x;
+    }
 
 	/**
 	 * Discards values for a range of indices from the array. For the array of
@@ -103,15 +124,15 @@ public class PyObjectArray extends AbstractArray {
 	 * @return value from position in the array
 	 */
 	public PyObject get(int index) {
-		
+
 	    if (index >= 0 && index < size) {
 			return baseArray[index];
 		}
-		
-		String message = (size == 0) 
+
+		String message = (size == 0)
 				? "No data was added, unable to get entry at " + index
-				: "Index must be between " + 0 + " and " + 
-				  (size - 1) + ", but was " + index;					        
+				: "Index must be between " + 0 + " and " +
+				  (size - 1) + ", but was " + index;
 		throw new ArrayIndexOutOfBoundsException(message);
 
 	}
@@ -119,7 +140,7 @@ public class PyObjectArray extends AbstractArray {
 	/**
 	 * Get the backing array. This method is used by the type-agnostic base
 	 * class code to access the array used for type-specific storage.  The array
-	 * should generally not be modified.  To get a copy of the array, see 
+	 * should generally not be modified.  To get a copy of the array, see
 	 * {@link #toArray()} which returns a copy.
 	 *
 	 * @return backing array object
@@ -140,8 +161,8 @@ public class PyObjectArray extends AbstractArray {
 			baseArray[index] = value;
 			return existing;
 		}
-		throw new ArrayIndexOutOfBoundsException(			
-				"Index must be between " + 0 + " and " + 
+		throw new ArrayIndexOutOfBoundsException(
+				"Index must be between " + 0 + " and " +
 				(size - 1) + ", but was " + index);
 	}
 
@@ -164,7 +185,7 @@ public class PyObjectArray extends AbstractArray {
 	public PyObject[] toArray() {
 		return (PyObject[]) copyArray();
 	}
-	
+
 	public void ensureCapacity(int minCapacity) {
 	    super.ensureCapacity(minCapacity);
 	}
