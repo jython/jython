@@ -15,6 +15,7 @@ public class SyspathJavaLoader extends ClassLoader
 {
 
     public InputStream getResourceAsStream(String res) {
+        Py.writeDebug("resource", "trying resource: " + res);
         ClassLoader classLoader = Py.getSystemState().getClassLoader();
         if (classLoader != null) return classLoader.getResourceAsStream(res);
 
