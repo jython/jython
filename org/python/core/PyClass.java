@@ -101,7 +101,7 @@ public class PyClass extends PyObject
             Vector interfaces = new Vector();
             Class baseClass = null;
             for (int i=0; i<bases.size(); i++) {
-                Class proxy = ((PyClass)bases.get(i)).getProxyClass();
+                Class proxy = ((PyClass)bases.pyget(i)).getProxyClass();
                 if (proxy != null) {
                     if (proxy.isInterface()) {
                         interfaces.addElement(proxy);

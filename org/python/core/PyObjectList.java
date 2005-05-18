@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.util.AbstractList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.RandomAccess;
 
 /**
@@ -122,7 +123,7 @@ public class PyObjectList
     }
 
     public Object set(int index, Object element) {
-        return array.set(index, Py.java2py(element) );
+        return array.set(index, Py.java2py(element) ).__tojava__(Object.class);
     }
  
     /** 
@@ -137,11 +138,26 @@ public class PyObjectList
     }
     
     public boolean addAll(Collection c) {
+        return addAll(size(), c);
+    }
+    
+    public boolean addAll(int index, Collection c) {
         
-        // To prevent concurrent modification exception.
-        if (c == this) c = (Collection)this.clone();
-
-        return super.addAll(c);
+        if (c instanceof PySequenceList) {
+            PySequenceList cList = (PySequenceList)c;
+            PyObject[] cArray = cList.getArray();
+            int cOrigSize = cList.size();
+            array.makeInsertSpace(index, cOrigSize);
+            array.replaceSubArray(index, index + cOrigSize, cArray, 0, cOrigSize);
+        } else {
+            // need to use add to convert anything pulled from a collection
+            // into a PyObject
+            for (Iterator i = c.iterator(); i.hasNext(); ) {
+                add(i.next());
+            }
+        }
+        return c.size() > 0;
+        
     }
     
 	/**

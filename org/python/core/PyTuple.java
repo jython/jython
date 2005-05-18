@@ -2,7 +2,9 @@
 package org.python.core;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
 
 /**
@@ -462,6 +464,10 @@ public class PyTuple extends PySequenceList implements ClassDictInit
         buf.append(")");
         return buf.toString();
     }
+    
+    public List subList(int fromIndex, int toIndex) {
+        return Collections.unmodifiableList(list.subList(fromIndex, toIndex));
+    }    
     
     // Make PyTuple immutable from the collections interfaces by overriding
     // all the mutating methods to throw UnsupportedOperationException exception.

@@ -193,6 +193,16 @@
             optimize="${optimize}"
         />
 
+    	<!-- java files used by tests  -->
+        <javac
+            srcdir="${sourceDir}/Lib/test/"
+            includes="javatests/**"
+            destdir="${outputDir}/"
+            target="${targetver}"
+            debug="${debug}"
+            optimize="${optimize}"
+        />    	
+    	
        <copy file="org/python/modules/ucnhash.dat"
              todir="${outputDir}/org/python/modules" />
 
@@ -299,6 +309,7 @@
                     org/**/*.java, org/**/Makefile,
                     com/**/*.java, com/**/Makefile,
                     Lib/jxxload_help/*.java, Lib/jxxload_help/Makefile,
+            	    Lib/test/javatests/*.java,
                     org/**/ucnhash.dat,
                     com/**/*.properties,"
                 excludes="org/python/parser/python.java"/>

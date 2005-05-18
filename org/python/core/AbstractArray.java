@@ -408,12 +408,12 @@ public abstract class AbstractArray {
      */
     public void replaceSubArray(int thisStart, int thisStop, Object srcArray, 
             int srcStart, int srcStop) {
-
+    
         modCountIncr = 0;
         if (!srcArray.getClass().isArray()) {
             throw new IllegalArgumentException("'array' must be an array type");
         }
-
+    
         int replacedLen = thisStop - thisStart;
          if (thisStart < 0 || replacedLen < 0 || thisStop > size) {
             String message = null;
@@ -428,10 +428,10 @@ public abstract class AbstractArray {
             } else {
                 throw new InternalError("Incorrect validation logic");
             }
-
+    
             throw new ArrayIndexOutOfBoundsException(message);
         }
-
+    
         int srcLen = Array.getLength(srcArray);
         int replacementLen = srcStop - srcStart;
         if (srcStart < 0 || replacementLen < 0 || srcStop > srcLen) {
@@ -449,10 +449,10 @@ public abstract class AbstractArray {
             }
             
             throw new IllegalArgumentException("start, stop and array must follow:\n\t"
-                    + "0 <= 'start' <= 'stop' <= 'array' length\nBut found\n\t" +
+                    + "0 <= start <= stop <= array length\nBut found\n\t" +
                     message);
         }
-
+    
         int lengthChange = replacementLen - replacedLen;
         
         // Adjust array size if needed.
@@ -461,7 +461,7 @@ public abstract class AbstractArray {
         } else if (lengthChange > 0) {
             makeInsertSpace(thisStop, lengthChange);
         }
-
+    
         try {
             modCountIncr = 1;
             System.arraycopy(srcArray, srcStart, getArray(), thisStart, replacementLen);
