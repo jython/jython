@@ -44,7 +44,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 f.listFiles(m);
                 boolean exists = m.packageExists();
                 if(exists) {
-                    Py.writeDebug("import", "java package as '" + f.getAbsolutePath() + "'");
+                    Py.writeComment("import", "java package as '" + f.getAbsolutePath() + "'");
                 }
                 return exists;
             }
