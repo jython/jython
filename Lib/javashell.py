@@ -99,7 +99,12 @@ class _ShellEnv:
             try:
                 p = self.execute( self.getEnv )
                 r = BufferedReader( InputStreamReader( p.getInputStream() ) )
-                lines = [line for line in r.readLine()]
+                lines = []
+                while True:
+                  line = r.readLine()
+                  if not line:
+                    break
+                  lines.append(line)
                 if '=' not in lines[0]:
                     __warn(
                         "Failed to get environment, getEnv command (%s) " \
