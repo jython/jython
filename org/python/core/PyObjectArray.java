@@ -86,21 +86,32 @@ public class PyObjectArray extends AbstractArray {
 
     public boolean equals(Object o) {
         if(o instanceof PyObjectArray) {
-            return Arrays.equals(baseArray, ((PyObjectArray)o).baseArray);
+            PyObjectArray arr = (PyObjectArray)o;
+            if (size != arr.size) return false;
+            for (int i = 0; i < size; i++) {
+                PyObject thisElem = baseArray[i];
+                PyObject otherElem = arr.baseArray[i];
+                if (thisElem == null) {
+                    if (otherElem == null) continue;
+                    return false;
+                }
+                if (!thisElem.equals(otherElem)) return false;
+            }
+            return true;
         }
         return false;
     }
 
     public int hashCode() {
         int x, y;
-        int len = baseArray.length;
+        int len = size;
         x = 0x345678;
 
         for (len--; len>=0; len--) {
             y = baseArray[len].hashCode();
             x = (x + x + x) ^ y;
         }
-        x ^= baseArray.length;
+        x ^= size;
         return x;
     }
 
@@ -141,7 +152,11 @@ public class PyObjectArray extends AbstractArray {
 	 * Get the backing array. This method is used by the type-agnostic base
 	 * class code to access the array used for type-specific storage.  The array
 	 * should generally not be modified.  To get a copy of the array, see
-	 * {@link #toArray()} which returns a copy.
+	 * {@link #toArray()} which returns a copy.  Note that 
+     * <CODE>getSize()</CODE> should be used to determine the number of elements
+     * in the array, not the array's length (which may reflect excess capacity).
+     * <CODE>toArray()</CODE> returns an array whose length equals the value
+     * returned by <CODE>getSize()</CODE>.
 	 *
 	 * @return backing array object
 	 */
@@ -178,7 +193,8 @@ public class PyObjectArray extends AbstractArray {
 
 	/**
 	 * Constructs and returns a simple array containing the same data as held
-	 * in this growable array.
+	 * in this growable array.  The array's length matches the value returned
+     * by <CODE>getSize()</CODE>
 	 *
 	 * @return array containing a copy of the data
 	 */

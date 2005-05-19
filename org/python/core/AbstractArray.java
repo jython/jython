@@ -509,7 +509,7 @@ public abstract class AbstractArray {
         if (count > capacity) {
             ensureCapacity(count);
         } else if (count < size) {
-            clearRange(count, size + 1);  
+            clearRange(count, size);  
         }
         size = count;
     }
