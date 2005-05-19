@@ -117,10 +117,10 @@ class _ShellEnv:
                     try:
                         i = line.index( '=' )
                         key = self._keyTransform(line[:i])
-                        value = line[i+1:-1] # remove = and end-of-line
+                        value = line[i+1:] # remove = and end-of-line
                     except ValueError:
                         # found no '=', treat line as part of previous value
-                        value = '%s\n%s' % ( value, line[:-1] )
+                        value = '%s\n%s' % ( value, line )
                     env[ key ] = value
             except OSError, ex:
                 __warn( "Failed to get environment, environ will be empty:",
