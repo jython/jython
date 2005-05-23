@@ -8,6 +8,7 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
 import org.python.core.__builtin__;
+import org.python.core.PyType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,6 +41,11 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         super();
         this._set = new HashSet();
         this._update(data);
+    }
+
+    public BaseSet(PyType type) {
+        super(type);
+        this._set = new HashSet();
     }
 
     /**
@@ -92,23 +98,6 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     /**
-     * Used for pickling.  Uses the module <code>setsfactory</sets> to
-     * export safe constructors.
-     *
-     * @return a tuple of (constructor, (elements))
-     */
-    public PyObject __reduce__() {
-        PyObject factory = __builtin__.__import__("setsfactory");
-        PyObject func = factory.__getattr__(getName());
-        return new PyTuple(new PyObject[]{
-            func,
-            new PyTuple(new PyObject[]{
-                new PyList(this)
-            })
-        });
-    }
-
-    /**
      * The union of <code>this</code> with <code>other</code>.
      * <p/>
      * <br/>
@@ -118,10 +107,14 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return The union of the two sets as a new set.
      */
     public PyObject __or__(PyObject other) {
+        return baseset___or__(other);
+    }
+
+    final PyObject baseset___or__(PyObject other) {
         if (!(other instanceof BaseSet)) {
             throw Py.TypeError("Not Implemented");
         }
-        return union(other);
+        return baseset_union(other);
     }
 
     /**
@@ -134,10 +127,14 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return The intersection of the two sets as a new set.
      */
     public PyObject __and__(PyObject other) {
+        return baseset___and__(other);
+    }
+
+    final PyObject baseset___and__(PyObject other) {
         if (!(other instanceof BaseSet)) {
             throw Py.TypeError("Not Implemented");
         }
-        return intersection(other);
+        return baseset_intersection(other);
     }
 
     /**
@@ -150,6 +147,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return The difference of the two sets as a new set.
      */
     public PyObject __sub__(PyObject other) {
+        return baseset___sub__(other);
+    }
+
+    final PyObject baseset___sub__(PyObject other) {
         if (!(other instanceof BaseSet)) {
             throw Py.TypeError("Not Implemented");
         }
@@ -157,7 +158,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public PyObject difference(PyObject other) {
+        return baseset_difference(other);
+    }
 
+    final PyObject baseset_difference(PyObject other) {
         BaseSet iterable = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         Set set = iterable._set;
         BaseSet o = (BaseSet) this.getType().__call__();
@@ -181,6 +185,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return The symmetric difference of the two sets as a new set.
      */
     public PyObject __xor__(PyObject other) {
+        return baseset___xor__(other);
+    }
+
+    final PyObject baseset___xor__(PyObject other) {
         if (!(other instanceof BaseSet)) {
             throw Py.TypeError("Not Implemented");
         }
@@ -188,7 +196,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public PyObject symmetric_difference(PyObject other) {
+        return baseset_symmetric_difference(other);
+    }
 
+    public PyObject baseset_symmetric_difference(PyObject other) {
         BaseSet iterable = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         BaseSet o = (BaseSet) this.getType().__call__();
         for (Iterator i = this._set.iterator(); i.hasNext();) {
@@ -219,6 +230,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return The length of the set.
      */
     public int __len__() {
+        return baseset___len__();
+    }
+
+    final int baseset___len__() {
         return this._set.size();
     }
 
@@ -229,6 +244,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return <code>true</code> if the set is not empty, <code>false</code> otherwise
      */
     public boolean __nonzero__() {
+        return baseset___nonzero__();
+    }
+
+    final boolean baseset___nonzero__() {
         return !this._set.isEmpty();
     }
 
@@ -242,10 +261,18 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public boolean __contains__(PyObject other) {
+        return baseset___contains__(other);
+    }
+
+    final boolean baseset___contains__(PyObject other) {
         return this._set.contains(other);
     }
 
     public PyObject __eq__(PyObject other) {
+        return baseset___eq__(other);
+    }
+
+    final PyObject baseset___eq__(PyObject other) {
         if(other instanceof BaseSet) {
             BaseSet bs = this._binary_sanity_check(other);
             return Py.newBoolean(this._set.equals(bs._set));
@@ -254,6 +281,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public PyObject __ne__(PyObject other) {
+        return baseset___ne__(other);
+    }
+
+    final PyObject baseset___ne__(PyObject other) {
         if(other instanceof BaseSet) {
             BaseSet bs = this._binary_sanity_check(other);
             return Py.newBoolean(!this._set.equals(bs._set));
@@ -262,26 +293,64 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public PyObject __le__(PyObject other) {
-        return this.issubset(other);
+        return baseset___le__(other);
+    }
+
+    final PyObject baseset___le__(PyObject other) {
+        return this.baseset_issubset(other);
     }
 
     public PyObject __ge__(PyObject other) {
-        return this.issuperset(other);
+        return baseset___ge__(other);
+    }
+
+    final PyObject baseset___ge__(PyObject other) {
+        return this.baseset_issuperset(other);
     }
 
     public PyObject __lt__(PyObject other) {
+        return baseset___lt__(other);
+    }
+
+    final PyObject baseset___lt__(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         return Py.newBoolean(this.__len__() < bs.__len__()
-          && this.issubset(other).__nonzero__());
+          && this.baseset_issubset(other).__nonzero__());
     }
 
     public PyObject __gt__(PyObject other) {
+        return baseset___gt__(other);
+    }
+
+    public PyObject baseset___gt__(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         return Py.newBoolean(this.__len__() > bs.__len__()
-          && this.issuperset(other).__nonzero__());
+          && this.baseset_issuperset(other).__nonzero__());
+    }
+
+    /**
+     * Used for pickling.  Uses the module <code>setsfactory</sets> to
+     * export safe constructors.
+     *
+     * @return a tuple of (constructor, (elements))
+     */
+    public PyObject __reduce__() {
+        String name = getType().getFullName();
+        PyObject factory = __builtin__.__import__("setsfactory");
+        PyObject func = factory.__getattr__(name);
+        return new PyTuple(new PyObject[]{
+            func,
+            new PyTuple(new PyObject[]{
+                new PyList((PyObject)this)
+            })
+        });
     }
 
     public PyObject __deepcopy__(PyObject memo) {
+        return baseset___deepcopy__(memo);
+    }
+
+    final PyObject baseset___deepcopy__(PyObject memo) {
         PyObject copy = __builtin__.__import__("copy");
         PyObject deepcopy = copy.__getattr__("deepcopy");
         BaseSet result = (BaseSet) this.getType().__call__();
@@ -305,13 +374,13 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return super.__tojava__(c);
     }
 
-    public PyObject union(PyObject other) {
+    public PyObject baseset_union(PyObject other) {
         BaseSet result = (BaseSet) this.getType().__call__(this);
         result._update(other);
         return result;
     }
 
-    public PyObject intersection(PyObject other) {
+    public PyObject baseset_intersection(PyObject other) {
 
         PyObject little, big;
         if(!(other instanceof BaseSet)) {
@@ -330,13 +399,13 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return other.getType().__call__(common);
     }
 
-    public PyObject copy() {
+    public PyObject baseset_copy() {
         BaseSet copy = (BaseSet) this.getType().__call__();
         copy._set = (HashSet) this._set.clone();
         return copy;
     }
 
-    public PyObject issubset(PyObject other) {
+    public PyObject baseset_issubset(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         if (this.__len__() > bs.__len__()) {
             return Py.Zero;
@@ -349,7 +418,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return Py.One;
     }
 
-    public PyObject issuperset(PyObject other) {
+    public PyObject baseset_issuperset(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         if (this.__len__() < bs.__len__()) {
             return Py.Zero;
@@ -362,20 +431,24 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return Py.One;
     }
 
-    /**
-     * Get the name from the last part of the Java classname minus the leading
-     * 'Py'.
-     *
-     * @return the String name of this concrete class
-     * @throws PyIgnoreMethodTag hide from Jython
-     */
-    private final String getName() throws PyIgnoreMethodTag {
-        PyObject name = Py.newString(this.getClass().getName()).split(".").__getitem__(-1);
-        return name.toString().substring(2).intern();
+//    /**
+//     * Get the name from the last part of the Java classname minus the leading
+//     * 'Py'.
+//     *
+//     * @return the String name of this concrete class
+//     */
+//    private final String getName() {
+//        PyObject name = Py.newString(this.getClass().getName()).split(".").__getitem__(-1);
+//        return name.toString().substring(2).intern();
+//    }
+
+    final String baseset_toString() {
+        return toString();
     }
 
     public final String toString() {
-        StringBuffer buf = new StringBuffer(getName()).append("([");
+        String name = getType().getFullName();
+        StringBuffer buf = new StringBuffer(name).append("([");
         for (Iterator i = this._set.iterator(); i.hasNext();) {
             buf.append(((PyObject) i.next()).__repr__().toString());
             if (i.hasNext()) {
@@ -401,9 +474,8 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @param e     The exception thrown from a hashable operation.
      * @param value The object which was unhashable.
      * @return An ImmutableSet if available, a <code>TypeError</code> is thrown otherwise.
-     * @throws PyIgnoreMethodTag hide from Jython
      */
-    protected final PyObject asImmutable(PyException e, PyObject value) throws PyIgnoreMethodTag {
+    protected final PyObject asImmutable(PyException e, PyObject value) {
         if (Py.matchException(e, Py.TypeError)) {
             PyObject transform = value.__findattr__("_as_immutable");
             if (transform != null) {
@@ -413,55 +485,55 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         throw e;
     }
 
-    public int size() {
-        return this._set.size();
-    }
-
-    public void clear() {
-        this._set.clear();
-    }
-
-    public boolean isEmpty() {
-        return this._set.isEmpty();
-    }
-
-    public Object[] toArray() {
-        return this._set.toArray();
-    }
-
-    public boolean add(Object o) {
-        return this._set.add(o);
-    }
-
-    public boolean contains(Object o) {
-        return this._set.contains(o);
-    }
-
-    public boolean remove(Object o) {
-        return this._set.remove(o);
-    }
-
-    public boolean addAll(Collection c) {
-        return this._set.addAll(c);
-    }
-
-    public boolean containsAll(Collection c) {
-        return this._set.containsAll(c);
-    }
-
-    public boolean removeAll(Collection c) {
-        return this._set.removeAll(c);
-    }
-
-    public boolean retainAll(Collection c) {
-        return this._set.retainAll(c);
-    }
-
-    public Iterator iterator() {
-        return this._set.iterator();
-    }
-
-    public Object[] toArray(Object a[]) {
-        return this._set.toArray(a);
-    }
+//    public int size() {
+//        return this._set.size();
+//    }
+//
+//    public void clear() {
+//        this._set.clear();
+//    }
+//
+//    public boolean isEmpty() {
+//        return this._set.isEmpty();
+//    }
+//
+//    public Object[] toArray() {
+//        return this._set.toArray();
+//    }
+//
+//    public boolean add(Object o) {
+//        return this._set.add(o);
+//    }
+//
+//    public boolean contains(Object o) {
+//        return this._set.contains(o);
+//    }
+//
+//    public boolean remove(Object o) {
+//        return this._set.remove(o);
+//    }
+//
+//    public boolean addAll(Collection c) {
+//        return this._set.addAll(c);
+//    }
+//
+//    public boolean containsAll(Collection c) {
+//        return this._set.containsAll(c);
+//    }
+//
+//    public boolean removeAll(Collection c) {
+//        return this._set.removeAll(c);
+//    }
+//
+//    public boolean retainAll(Collection c) {
+//        return this._set.retainAll(c);
+//    }
+//
+//    public Iterator iterator() {
+//        return this._set.iterator();
+//    }
+//
+//    public Object[] toArray(Object a[]) {
+//        return this._set.toArray(a);
+//    }
 }
