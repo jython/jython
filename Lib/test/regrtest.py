@@ -445,7 +445,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     if memo:
         savememo(memo,good,bad,skipped)
 
-    sys.exit(len(bad) > 0)
+    return len(bad) > 0
 
 
 STDTESTS = [
@@ -1007,4 +1007,4 @@ class _ExpectedSkips:
         return self.expected
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
