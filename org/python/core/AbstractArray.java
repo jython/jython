@@ -1,5 +1,6 @@
 package org.python.core;
 
+import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
@@ -35,7 +36,7 @@ import java.util.Arrays;
  * @see <A href="http://www.sosnoski.com/opensrc/tclib/index.html">
  *      Sosnoski's Type-Specific Collection Library</A>
  */
-public abstract class AbstractArray {
+public abstract class AbstractArray implements Serializable{
 
     /**
      * Size of the current array, which can be larger than the

@@ -1,6 +1,7 @@
 //Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -19,7 +20,7 @@ import java.util.RandomAccess;
  * @author Clark Updike
  */
 public class PyObjectList
-	extends AbstractList implements RandomAccess, Cloneable {
+	extends AbstractList implements RandomAccess, Cloneable, Serializable {
 
     /* Design note:
      * This class let's PySequenceList implement java.util.List by delegating

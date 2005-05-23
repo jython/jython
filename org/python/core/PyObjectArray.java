@@ -1,7 +1,6 @@
 //Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.Arrays;
 
 /**
  * Provides mutable behavior on a PyObject array.  Supports operations for
