@@ -454,9 +454,16 @@
 
         <copy todir="${distDir}/Lib">
             <!-- The jython .py modules -->
-            <fileset dir="${sourceDir}/Lib" includes="*.py, pawt/*.py test/**"/>
+            <fileset dir="${sourceDir}/Lib" includes="*.py, pawt/*.py"/>
         </copy>
 
+    	<!-- Copy stuff under Lib/test so an overwrite is forced.
+    	     This should make jython tests overwrite cpython tests
+    	     of the same name. -->
+        <copy todir="${distDir}/Lib/test" overwrite="true">
+            <fileset dir="${sourceDir}/Lib/test" includes="**"/>
+        </copy>    	
+    	
         <!-- The demo files -->
         <copy todir="${distDir}/Demo">
             <fileset dir="${sourceDir}/Demo"
