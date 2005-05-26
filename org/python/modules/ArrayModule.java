@@ -1,9 +1,13 @@
+//Copyright (c) Corporation for National Research Initiatives
 package org.python.modules;
 
 import org.python.core.*;
 
-public class ArrayModule 
-{
+/**
+ * The python array module, plus jython extensions from jarray.
+ */
+public class ArrayModule {
+    
     public static PyString __doc__ = new PyString(
         "This module defines a new object type which can efficiently represent\n" +
         "an array of basic values: characters, integers, floating point\n" +
@@ -37,6 +41,10 @@ public class ArrayModule
     
     public static PyString __name__ = new PyString("array");
     
+    /*
+     * These are python array methods.  
+     */
+    
 	public static PyArray ArrayType(char TypeCode) {
     	return PyArray.array(new PyList(), TypeCode);
     }
@@ -52,7 +60,22 @@ public class ArrayModule
     public static PyObject array(char TypeCode, PyObject sequence) {
      	return PyArray.array(sequence, TypeCode);
     }
-    
-    
 
+    /*
+     * These are jython extensions (from jarray module). 
+     * Note that the argument order is consistent with
+     * python array module, but is reversed from jarray module. 
+     */
+
+    public static PyArray array(Class type, PyObject seq) {
+        return PyArray.array(seq, type);
+    }
+    
+    public static PyArray zeros(char typecode, int n) {
+        return PyArray.zeros(n, typecode);
+    }
+
+    public static PyArray zeros(Class type, int n) {
+        return PyArray.zeros(n, type);
+    }    
 }
