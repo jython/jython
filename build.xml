@@ -1,238 +1,457 @@
 <!-- Copyright 2000 Dj Walker-Morgan -->
 
-<project name="jython" default="copy-dist" basedir=".">
 
-    <!--
-      This propery should be specified in the ant.property file
-      property name="javaccHome" value="/opt/javacc2.0/bin/lib"
-    -->
+<project name="jython" default="developer-build" basedir=".">
 
-    <!-- Give users a change to override editing this file. -->
-    <property file="ant.properties" />
 
-    <!-- =================================================================== -->
-    <!-- Classpaths                                                          -->
-    <!-- =================================================================== -->
-    <path id="main.classpath">
-        <pathelement path="${readline.jar}"/>
-        <pathelement path="${servlet.jar}"/>
-        <pathelement path="${informix.jar}"/>
-        <pathelement path="${oracle.jar}"/>
-        <pathelement path="${mysql.jar}"/>
-        <pathelement path="${postgresql.jar}"/>
-        <pathelement path="${jndi.jar}"/>
-        <pathelement path="${jdbc.jar}"/>
-        <pathelement path="${java.class.path}"/>
-        <pathelement location="${build.classes}"/>
-    </path>
+    <!-- print out some usage hints -->
+    <target name="usage" description="prints a short usage">
+        <echo>
+Use case 1: developer build (in your local jython copy)
+-------------------------------------------------------
+  - call target 'developer-build' (which is the default for this build.xml)
+This build will create directories /build and /dist below basedir.
 
-    <target name="init">
 
-        <property name="sourceDir" value="${basedir}" />
-        <property name="outputDir" value="${basedir}/build" />
-        <property name="distDir" value="${basedir}/dist" />
-        <property name="apidocDir" value="${distDir}/Doc/javadoc" />
-        
-        <property name="targetver" value="1.1" />
-        <property name="debug" value="off" />
-        <property name="deprecation" value="off" />
-        <property name="optimize" value="on" />
-        
-        <property name="release" value="22a0" />
+Use case 2: full build for a release (using cvs checkout)
+---------------------------------------------------------
+  - make sure you have access to anonymous cvs
+  - override cvs.tag in ant.properties (if necessary)
+  - call target 'full-build'
+This build will create a working directory named full_build_${cvs.tag} at the same
+level as your local directories bugtests, jython, sandbox and installer.
+It will contain a big jython_${cvs.tag}.jar file suitable for installation.
 
-        <property name="python.lib" value="${python.home}/Lib" />
-        <property name="python.exe" value="${python.home}/python" />
 
-        <available property="java2collection.present"
-            classname="java.util.List"
-        />
-        <available property="threadlocal.present"
-            classname="java.lang.ThreadLocal"
-        />
-        <available property="secureclassloader.present"
-            classname="java.security.SecureClassLoader"
-        />
-        <available property="java2accessible.present"
-            classname="java.lang.reflect.AccessibleObject"
-        />
-        <available property="weakref.present"
-            classname="java.lang.ref.WeakReference"
-        />
-        <available property="servlet.present"
-            classname="javax.servlet.Servlet"
-            classpath="${servlet.jar}"
-        />
+Use case 3: build only the parser (grammar)
+-------------------------------------------
+  - override javaccHome in ant.properties (if necessary)
+  - call target 'parser'
+or:
+  - set javaccHome, either on the command line, or inside parser/build.xml
+  - call parser/build.xml (default target)
+This build will only create files inside org/python/parser.
 
-        <available property="readline.present"
-            classname="org.gnu.readline.Readline"
-            classpath="${readline.jar}"
-        />
 
-        <available property="informix.present"
-            classname="com.informix.jdbc.IfxDriver"
-            classpath="${informix.jar}"
-        />
-        <available property="mysql.present"
-            classname="org.gjt.mm.mysql.Driver"
-            classpath="${mysql.jar}"
-        />
-        <available property="postgresql.present"
-            classname="org.postgresql.Driver"
-            classpath="${postgresql.jar}"
-        />
-        <available property="oracle.present"
-            classname="oracle.jdbc.driver.OracleDriver"
-            classpath="${oracle.jar}"
-        />
-        <available property="jndi.present"
-            classname="javax.naming.Context"
-            classpath="${jndi.jar}"
-        />
-        <available property="javax.sql.present"
-            classname="javax.sql.DataSource"
-            classpath="${jdbc.jar}"
-        />
-        <available property="jdbc30.present"
-            classname="java.sql.ParameterMetaData"
-        />
+Note on targets
+---------------
+The following targets are designed for direct invocation:
+  - usage
+  - developer-build
+  - full-build
+  - parser (uses developer-build settings)
+Following an ant convention, the callable targets have a description attribute.
+All other targets may give unpredicted results if called directly.
 
-        <echo>--- Build environment for ${ant.project.name} ---</echo>
-        <echo>--- Flags (Note: If the {property name} is displayed,</echo>
-        <echo>--- then the component is not present)</echo>
-        <echo/>
-        <echo>--- Optional Libraries ---</echo>
-        <echo>java2 coll  = ${java2collection.present}</echo>
-        <echo>servlet     = ${servlet.present}</echo>
-        <echo>readline    = ${readline.present}</echo>
-        <echo>oracle      = ${oracle.present}</echo>
-        <echo>informix    = ${informix.present}</echo>
-        <echo>mysql       = ${mysql.present}</echo>
-        <echo>postgresql  = ${postgresql.present}</echo>
-        <echo>jndi        = ${jndi.present}</echo>
-        <echo>jdbc        = ${javax.sql.present}</echo>
-        <echo>jdbc3.0     = ${jdbc30.present}</echo>
 
-        <property name="parser" value="${sourceDir}/org/python/parser" />
+Where ant.properties are searched
+---------------------------------
+  1. in user.home
+  2. in the same directory as this build.xml file
+The first setting of a property wins, further settings are ignored.
+
+
+Actions for a release
+---------------------
+  1. determine the new cvs tag to be applied to jython
+  2. determine the existing cvs tag of the CPython Lib files which should be included
+  3. change the following properties in this build.xml, if necessary:
+       - cvs.tag             (target: full-init)
+       - python.cvs.tag      (target: full-init)
+       - jdk.target.version  (target: pre-init)
+  4. if new CPython .py files should be distributed, add them to build.Lib.include.properties           
+  5. check in this build.xml, and build.Lib.include.properties
+  6. apply the new tag to the jython cvs (all projects)
+  7. call target 'full-build' 
+
+
+            
+An example ant.properties file:
+-------------------------------
+
+# - define the home for javacc (only used for parser grammar)
+javaccHome=${basedir}/../externals/javacc-3.2
+
+# - ht2html tool for the doc target (only needed for full-build)
+ht2html.dir=${basedir}/../externals/ht2html-2.0
+
+# - define the home of the corresponding CPython version
+python.home=c:/Programme/Python/Python22
+
+# - javax.servlet
+servlet.jar=c:/workspace/HEAD/CH.obj.commons.core/make_lib/j2ee.jar
+
+# - org.gnu.readline
+readline.jar=${basedir}/../externals/external-jars/readline.jar
+
+# - zxJDBC
+# (for mysql, see www.mysql.com/downloads/api-jdbc-stable.html)
+# (for postgres, see http://jdbc.postgresql.org/)
+mysql.jar=${basedir}/../externals/external-jars/mysql-connector-java-3.0.16-ga-bin.jar
+postgresql.jar=${basedir}/../externals/external-jars/pg74.215.jdbc2.jar
+oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/ojdbc14.jar
+#informix.jar=
+
+# - option for javac (build.compiler=modern is a global option to use standard jdk 1.3/1.4/1.5)
+#build.compiler=modern
+#jdk.target.version=1.2
+#debug=false
+#optimize=off
+#deprecation=off
+
+# - the cvs tag to build from; only needed for full-build
+#cvs.tag=Release_2_2alpha0
+#cvs.tag=HEAD
+#cvs.tag=pep302
+        </echo>
     </target>
 
-    <target name="clean" depends="init">
-        <delete dir="${outputDir}/" />
-        <delete>
-           <fileset dir="${distDir}" excludes="jython.jar"/>
+
+    <!-- developer build -->
+    <target name="developer-build"
+            depends="developer-init, post-init, copy-dist"
+            description="a local build for developers"
+    />
+
+
+    <!-- full build -->
+    <target name="full-build" depends="full-init, post-init, install" description="a full build from cvs" />
+
+
+    <!-- initialize properties common to both developer build and full build -->
+    <target name="pre-init">
+        <!-- load from .properties file -->
+        <echo>loading properties from ${user.home}/ant.properties</echo>
+        <property file="${user.home}/ant.properties" />
+        <echo>loading properties from ${basedir}/ant.properties</echo>
+        <property file="${basedir}/ant.properties" />
+
+        <property name="build.compiler" value="modern" />
+        <property name="jdk.target.version" value="1.2" />
+        <property name="deprecation" value="off" />
+        <property name="debug" value="off" />
+        <property name="optimize" value="on" />
+
+        <!-- classpaths -->
+        <path id="main.classpath">
+            <pathelement path="${readline.jar}" />
+            <pathelement path="${servlet.jar}" />
+            <pathelement path="${informix.jar}" />
+            <pathelement path="${oracle.jar}" />
+            <pathelement path="${mysql.jar}" />
+            <pathelement path="${postgresql.jar}" />
+            <pathelement path="${jndi.jar}" />
+            <pathelement path="${jdbc.jar}" />
+            <pathelement path="${java.class.path}" />
+        </path>
+
+        <available property="java2collection.present" classname="java.util.List" />
+        <available property="threadlocal.present" classname="java.lang.ThreadLocal" />
+        <available property="secureclassloader.present" classname="java.security.SecureClassLoader" />
+        <available property="java2accessible.present" classname="java.lang.reflect.AccessibleObject" />
+        <available property="weakref.present" classname="java.lang.ref.WeakReference" />
+        <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />
+        <available property="readline.present" classname="org.gnu.readline.Readline" classpath="${readline.jar}" />
+        <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
+        <available property="mysql.present" classname="org.gjt.mm.mysql.Driver" classpath="${mysql.jar}" />
+        <available property="postgresql.present" classname="org.postgresql.Driver" classpath="${postgresql.jar}" />
+        <available property="oracle.present" classname="oracle.jdbc.driver.OracleDriver" classpath="${oracle.jar}" />
+        <available property="jndi.present" classname="javax.naming.Context" classpath="${jndi.jar}" />
+        <available property="javax.sql.present" classname="javax.sql.DataSource" />
+        <available property="jdbc30.present" classname="java.sql.ParameterMetaData" />
+    </target>
+
+
+    <!-- init properties for the developer build -->
+    <target name="developer-init" depends="pre-init">
+        <property name="work.dir" value="${basedir}" />
+        <property name="sourceDir" value="${basedir}" />
+        <property name="python.lib" value="${python.home}/Lib" />
+    </target>
+
+
+    <!-- init properties for the full build -->
+    <target name="full-init" depends="pre-init">
+        <!-- use this property to distinguish a full-build from a developer-build -->
+        <property name="full-build" value="true" />
+
+        <!-- predefined cvs tags for jython and cpython -->
+        <property name="cvs.tag" value="HEAD" />
+        <property name="python.cvs.tag" value="r223" />
+
+        <property name="work.dir" value="${basedir}/../full_build_${cvs.tag}" />
+        <property name="cvs.checkout.dir" value="${work.dir}/checkout" />
+        <property name="sourceDir" value="${cvs.checkout.dir}/jython" />
+        <property name="has.cvs.connection" value="true" />
+        <property name="python.module" value="python/dist/src/Lib" />
+        <property name="python.lib" value="${cvs.checkout.dir}/${python.module}" />
+        <property name="python.exe" value="${python.home}/python" />
+        <condition property="do.checkout" value="true">
+            <istrue value="${has.cvs.connection}" />
+        </condition>
+    </target>
+
+
+    <target name="post-init">
+        <property name="outputDir" value="${work.dir}/build" />
+        <property name="distDir" value="${work.dir}/dist" />
+        <property name="apidocDir" value="${distDir}/Doc/javadoc" />
+        <property name="parser.dir" value="${sourceDir}/org/python/parser" />
+        <echo>.</echo>
+        <echo>Build environment for ${ant.project.name}</echo>
+        <echo>(Note: if ${propertyname} is displayed, then the property is not set)</echo>
+        <echo>--- optional libraries ---</echo>
+        <echo>collections        = '${java2collection.present}'</echo>
+        <echo>weakref            = '${weakref.present}'</echo>
+        <echo>threadlocal        = '${threadlocal.present}'</echo>
+        <echo>java2 access       = '${java2accessible.present}'</echo>
+        <echo>secureclassloader  = '${secureclassloader.present}'</echo>
+        <echo>servlet            = '${servlet.present}'</echo>
+        <echo>readline           = '${readline.present}'</echo>
+        <echo>oracle             = '${oracle.present}'</echo>
+        <echo>informix           = '${informix.present}'</echo>
+        <echo>mysql              = '${mysql.present}'</echo>
+        <echo>postgresql         = '${postgresql.present}'</echo>
+        <echo>jndi               = '${jndi.present}'</echo>
+        <echo>jdbc               = '${javax.sql.present}'</echo>
+        <echo>jdbc3.0            = '${jdbc30.present}'</echo>
+        <echo>--- properties ---</echo>
+        <echo>work.dir           = '${work.dir}'</echo>
+        <echo>sourceDir          = '${sourceDir}'</echo>
+        <echo>parser.dir         = '${parser.dir}'</echo>
+        <echo>outputDir          = '${outputDir}'</echo>
+        <echo>distDir            = '${distDir}'</echo>
+        <echo>apidocDir          = '${apidocDir}'</echo>
+        <echo>python.lib         = '${python.lib}'</echo>
+        <echo>javaccHome         = '${javaccHome}'</echo>
+        <echo>ht2html.dir        = '${ht2html.dir}'</echo>
+        <echo>build.compiler     = '${build.compiler}'</echo>
+        <echo>jdk.target.version = '${jdk.target.version}'</echo>
+        <echo>deprecation        = '${deprecation}'</echo>
+        <echo>debug              = '${debug}'</echo>
+        <echo>optimize           = '${optimize}'</echo>
+        <echo>--- properties (used for full-build only )---</echo>
+        <echo>cvs.tag            = '${cvs.tag}'</echo>
+        <echo>python.cvs.tag     = '${python.cvs.tag}'</echo>
+        <echo>cvs.checkout.dir   = '${cvs.checkout.dir}'</echo>
+        <echo>do.checkout        = '${do.checkout}'</echo>
+        <echo>python.exe         = '${python.exe}'</echo>
+    </target>
+
+
+    <!-- delete what's necessary. should correspond to the directories created in prepare  -->
+    <target name="clean" depends="clean-checkout-dir">
+        <!-- do not hard delete ${work.dir}, since it could be basedir -->
+        <!-- deletes all files and subdirectories of ${outputDir}, without ${outputDir} itself. -->
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${outputDir}" includes="**/*" />
+        </delete>
+        <!-- deletes all files and subdirectories of ${distDir}, without ${distDir} itself. -->
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${distDir}" includes="**/*" />
+        </delete>
+        <!-- delete the installation .jar file from ${work.dir}, but no other files -->
+        <delete failonerror="false">
+            <fileset dir="${work.dir}" includes="jython*.jar" />
         </delete>
     </target>
 
-    <target name="prepare" depends="init">
+
+    <!-- clean cvs.checkout.dir if we really checkout -->
+    <target name="clean-checkout-dir" if="do.checkout">
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${cvs.checkout.dir}" includes="**/*" defaultexcludes="no" />
+        </delete>
+    </target>
+
+
+    <!-- create necessary directories -->
+    <target name="prepare" depends="clean, prepare-full, prepare-checkout">
         <mkdir dir="${outputDir}" />
-    </target>
-
-    <target name="parser" depends="init" if="javaccHome">
-        <ant dir="${parser}" />
-    </target>
-
-    <target name="compile" depends="prepare,parser">
-        <javac
-            srcdir="${sourceDir}/"
-            destdir="${outputDir}/"
-            target="${targetver}"
-            debug="${debug}"
-            optimize="${optimize}"
-            deprecation="${deprecation}">
-            <include name="org/**"/>
-            <exclude name="org/python/parser/python.java"/>
-
-            <include name="com/ziclix/python/sql/**"
-                     if="java2collection.present"/>
-
-            <exclude name="**/CollectionProxy2.java"
-                     unless="java2collection.present"/>
-            <exclude name="**/Java2Accessibility.java"
-                     unless="java2accessible.present"/>
-            <exclude name="**/BytecodeLoader2.java"
-                     unless="secureclassloader.present"/>
-            <exclude name="**/ThreadStateMapping2.java"
-                     unless="threadlocal.present"/>
-
-            <exclude name="**/InternalTables2.java"
-                     unless="weakref.present"/>
-            <exclude name="**/WeakInternalTables.java"
-                     unless="weakref.present"/>
-            <exclude name="**/AutoInternalTables.java"
-                     unless="weakref.present"/>
-            <exclude name="**/SoftIInternalTables.java"
-                     unless="weakref.present"/>
-            <exclude name="**/_weakref.java"
-                     unless="weakref.present"/>
-
-            <exclude name="**/PyServlet.java" unless="servlet.present"/>
-            <exclude name="**/ReadlineConsole.java"
-                     unless="readline.present"/>
-
-            <exclude name="**/handler/InformixDataHandler.java"
-                     unless="informix.present"/>
-            <exclude name="**/handler/MySQLDataHandler.java"
-                     unless="mysql.present"/>
-            <exclude name="**/handler/OracleDataHandler.java"
-                     unless="oracle.present"/>
-            <exclude name="**/handler/PostgresqlDataHandler.java"
-                     unless="postgresql.present"/>
-            <exclude name="**/connect/Lookup.java" unless="jndi.present"/>
-            <exclude name="**/connect/Lookup.java" unless="javax.sql.present"/>
-            <exclude name="**/connect/Connectx.java"
-                     unless="javax.sql.present"/>
-            <exclude name="**/JDBC30DataHandler.java" unless="jdbc30.present"/>
-            <classpath refid="main.classpath"/>
-        </javac>
-
-        <javac
-            srcdir="${sourceDir}/Lib"
-            includes="jxxload_help/**"
-            destdir="${outputDir}/"
-            target="${targetver}"
-            debug="${debug}"
-            optimize="${optimize}"
-        />
-
-       <copy file="org/python/modules/ucnhash.dat"
-             todir="${outputDir}/org/python/modules" />
-
-       <copy todir="${outputDir}/com">
-           <fileset dir="${sourceDir}/com">
-              <include name="**/*.properties" if="java2collection.present"/>
-           </fileset>
-       </copy>
-
-    </target>
-
-    <target name="jar" depends="compile">
-        <!--
-            Some windows systems need the ${line.separator} or will report a
-            "Failed to load Main-Class manifest attribute" error
-        -->
-        <echo file="${outputDir}/mainClass.mf"
-              message="Main-Class: org.python.util.jython${line.separator}"/>
-        <jar jarfile="${distDir}/jython.jar"
-             basedir="${outputDir}"
-             manifest="${outputDir}/mainClass.mf"
-             includes="**/*.class,**/ucnhash.dat,**/*.properties" />
-        <delete file="${outputDir}/mainClass.mf"/>
-    </target>
-
-    <target name="dist-prepare" depends="init">
         <mkdir dir="${distDir}" />
     </target>
 
-    <target name="doc" depends="dist-prepare">
-        <delete dir="${distDir}/Doc" />
+
+    <!-- create directories needed only in full-build -->
+    <target name="prepare-full" if="full-build">
+        <mkdir dir="${work.dir}" />
         <mkdir dir="${distDir}/Doc" />
-        <copy todir="${distDir}/Doc">
+        <mkdir dir="${apidocDir}" />
+    </target>
+
+
+    <!-- create checkout directory if necessary -->
+    <target name="prepare-checkout" if="do.checkout">
+        <mkdir dir="${cvs.checkout.dir}" />
+    </target>
+
+
+    <!-- checkout from cvs if so defined -->
+    <target name="checkout" depends="prepare" if="do.checkout">
+        <!-- common properties -->
+        <property name="sf.cvs.root" value=":pserver:anonymous@cvs.sourceforge.net:/cvsroot" />
+
+        <!-- jython -->
+        <property name="jython.cvs.root" value="${sf.cvs.root}/jython" />
+        <echo>setting jython password for anonymous</echo>
+        <cvspass cvsroot="${jython.cvs.root}" password="" />
+        <!-- -r: use the cvs tag, -P: prune empty directories -->
+        <property name="jython.checkout.options" value="checkout -r ${cvs.tag} -P" />
+        <property name="jython.checkout.command" value="-z3 -d${jython.cvs.root} ${jython.checkout.options}" />
+        <echo>checking out jython with the following command: ${jython.checkout.command} jython</echo>
+        <cvs command="${jython.checkout.command} jython" dest="${cvs.checkout.dir}" />
+        <!-- -f: use HEAD if tag not found, -r: use the cvs tag, -P: prune empty directories -->
+        <property name="installer.checkout.options" value="checkout -f -r ${cvs.tag} -P" />
+        <property name="installer.checkout.command" value="-z3 -d${jython.cvs.root} ${installer.checkout.options}" />
+        <echo>checking out installer with the following command: ${installer.checkout.command} installer</echo>
+        <cvs command="${installer.checkout.command} installer" dest="${cvs.checkout.dir}" />
+
+        <!-- cpython -->
+        <property name="python.cvs.root" value="${sf.cvs.root}/python" />
+        <echo>setting python password for anonymous</echo>
+        <cvspass cvsroot="${python.cvs.root}" password="" />
+        <!-- -r: use the cvs tag, -P: prune empty directories -->
+        <property name="python.checkout.options" value="checkout -r ${python.cvs.tag} -P" />
+        <property name="python.checkout.command" value="-z3 -d${python.cvs.root} ${python.checkout.options}" />
+        <echo>checking out ${python.module} with the following command: ${python.checkout.command} ${python.module}</echo>
+        <cvs command="${python.checkout.command} ${python.module}" dest="${cvs.checkout.dir}" />
+    </target>
+
+
+    <!-- separate build.xml for parser grammar -->
+    <!-- we use settings as in developer-build - at the moment all properties will already be set if we do a full build -->
+    <target name="parser" depends="developer-init, post-init, prepare" if="javaccHome" description="the grammar build">
+        <echo>processing ${parser.dir}/build.xml</echo>
+        <ant dir="${parser.dir}" />
+    </target>
+
+
+    <!-- replace the version string in PySystemState.java -->
+    <target name="version" depends="checkout" if="full-build">
+        <echo>replacing version in PySystemState.java with ${cvs.tag}</echo>
+        <replace file="${sourceDir}/org/python/core/PySystemState.java" token="developer-build" value="${cvs.tag}" />
+    </target>
+
+
+    <!-- compile java sources -->
+    <target name="compile" depends="version, parser">
+        <javac srcdir="${sourceDir}/"
+               destdir="${outputDir}/"
+               target="${jdk.target.version}"
+               debug="${debug}"
+               optimize="${optimize}"
+               deprecation="${deprecation}"
+        >
+            <include name="org/**" />
+            <exclude name="org/python/parser/python.java" />
+
+            <include name="com/ziclix/python/sql/**" if="java2collection.present" />
+            <!-- +++ TODO: the following java files could be removed from cvs since we are targeting jdk 1.2 -->
+            <exclude name="**/CollectionProxy2.java" unless="java2collection.present" />
+            <exclude name="**/Java2Accessibility.java" unless="java2accessible.present" />
+            <exclude name="**/BytecodeLoader2.java" unless="secureclassloader.present" />
+            <exclude name="**/ThreadStateMapping2.java" unless="threadlocal.present" />
+            <exclude name="**/InternalTables2.java" unless="weakref.present" />
+            <exclude name="**/WeakInternalTables.java" unless="weakref.present" />
+            <exclude name="**/AutoInternalTables.java" unless="weakref.present" />
+            <exclude name="**/SoftIInternalTables.java" unless="weakref.present" />
+            <exclude name="**/_weakref.java" unless="weakref.present" />
+            <!-- end of java files to be removed from cvs -->
+            <exclude name="**/PyServlet.java" unless="servlet.present" />
+            <exclude name="**/ReadlineConsole.java" unless="readline.present" />
+            <exclude name="**/handler/InformixDataHandler.java" unless="informix.present" />
+            <exclude name="**/handler/MySQLDataHandler.java" unless="mysql.present" />
+            <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present" />
+            <exclude name="**/handler/PostgresqlDataHandler.java" unless="postgresql.present" />
+            <exclude name="**/connect/Lookup.java" unless="jndi.present" />
+            <exclude name="**/connect/Lookup.java" unless="javax.sql.present" />
+            <exclude name="**/connect/Connectx.java" unless="javax.sql.present" />
+            <exclude name="**/JDBC30DataHandler.java" unless="jdbc30.present" />
+            <classpath refid="main.classpath" />
+        </javac>
+
+        <javac srcdir="${sourceDir}/Lib"
+               includes="jxxload_help/**"
+               destdir="${outputDir}/"
+               target="${jdk.target.version}"
+               debug="${debug}"
+               optimize="${optimize}"
+               deprecation="${deprecation}"
+        />
+
+        <!-- java files used by tests -->
+        <javac srcdir="${sourceDir}/Lib/test/"
+               includes="javatests/**"
+               destdir="${outputDir}/"
+               target="${jdk.target.version}"
+               debug="${debug}"
+               optimize="${optimize}"
+               deprecation="${deprecation}"
+        />
+
+        <copy file="org/python/modules/ucnhash.dat"
+              todir="${outputDir}/org/python/modules"
+              preservelastmodified="true"
+        />
+
+        <copy todir="${outputDir}/com" preservelastmodified="true">
+            <fileset dir="${sourceDir}/com">
+                <include name="**/*.properties" if="java2collection.present" />
+            </fileset>
+        </copy>
+    </target>
+
+
+    <!-- build jython.jar -->
+    <target name="jar" depends="compile">
+        <jar destfile="${distDir}/jython.jar"
+             basedir="${outputDir}"
+             update="true"
+             includes="**/*.class, **/ucnhash.dat, **/*.properties"
+        >
+            <manifest>
+                <attribute name="Main-Class" value="org.python.util.jython" />
+                <attribute name="Built-By" value="${user.name}" />
+                <!-- info section. ATTN: no blanks, no '.' in the names -->
+                <section name="Build-Info">
+                    <attribute name="version" value="${cvs.tag}" />
+                    <attribute name="cvs-build" value="${do.checkout}" />
+                    <attribute name="collections" value="${java2collection.present}" />
+                    <attribute name="weakref" value="${weakref.present}" />
+                    <attribute name="threadlocal" value="${threadlocal.present}" />
+                    <attribute name="java2-accessibility" value="${java2accessible.present}" />
+                    <attribute name="secureclassloader" value="${secureclassloader.present}" />
+                    <attribute name="servlet" value="${servlet.present}" />
+                    <attribute name="readline" value="${readline.present}" />
+                    <attribute name="oracle" value="${oracle.present}" />
+                    <attribute name="informix" value="${informix.present}" />
+                    <attribute name="mysql" value="${mysql.present}" />
+                    <attribute name="postgresql" value="${postgresql.present}" />
+                    <attribute name="jndi" value="${jndi.present}" />
+                    <attribute name="jdbc" value="${javax.sql.present}" />
+                    <attribute name="jdbc3_0" value="${jdbc30.present}" />
+                    <attribute name="build.compiler" value="${build.compiler}" />
+                    <attribute name="jdk.target.version" value="${jdk.target.version}" />
+                    <attribute name="deprecation" value="${deprecation}" />
+                    <attribute name="debug" value="${debug}" />
+                    <attribute name="optimize" value="${optimize}" />
+                </section>
+            </manifest>
+        </jar>
+    </target>
+
+
+    <!-- build the .html files using the ht2html tool -->
+    <target name="doc" depends="compile" if="full-build">
+        <fail unless="ht2html.dir" message="ht2html.dir is not set" />
+        <copy todir="${distDir}/Doc" preservelastmodified="true">
             <fileset dir="Doc" includes="*.ht, **/*.gif" />
         </copy>
         <!-- Create .html files in Doc -->
         <apply executable="${python.exe}" dir="Doc">
-            <env key="PYTHONPATH" path="${basedir}/Misc/htgen"/>
-            <arg line="${ht2html.dir}/ht2html.py"/>
-            <arg line="-s JyLocalGenerator"/>
+            <env key="PYTHONPATH" path="${sourceDir}/Misc/htgen" />
+            <arg line="${ht2html.dir}/ht2html.py" />
+            <arg line="-s JyLocalGenerator" />
             <fileset dir="${distDir}/Doc">
                 <include name="*.ht" />
             </fileset>
@@ -242,234 +461,142 @@
         </delete>
     </target>
 
-    <target name="javadoc" depends="compile, dist-prepare">
-        <delete dir="${apidocDir}" />
-        <mkdir dir="${apidocDir}" />
+
+    <!-- javadoc -->
+    <target name="javadoc" depends="compile" if="full-build">
         <javadoc sourcepath="${sourceDir}"
                  destdir="${apidocDir}"
                  public="true"
                  breakiterator="yes"
-                 packagenames="org.python.core,
-                               org.python.util,
-                               com.ziclix.python.sql"
+                 packagenames="org.python.core, org.python.util, com.ziclix.python.sql"
                  windowtitle="Jython API documentation"
-                 bottom="&lt;a href='http://www.jython.org'
-                         target='_top'>Jython homepage&lt;/a>">
-                <classpath refid="main.classpath"/>
+                 bottom="&lt;a href='http://www.jython.org' target='_top'>Jython homepage&lt;/a>"
+        >
+            <classpath refid="main.classpath" />
         </javadoc>
     </target>
 
-    <target name="copy-xml" depends="dist-prepare" if="PyXmlHome">
-        <!-- The xml files -->
-        <copy todir="${distDir}/Lib/xml">
-            <fileset dir="${python.lib}/xml" includes="__init__.py"/>
-            <fileset dir="${PyXmlHome}/xml" includes="
-                sax/*.py,
-                dom/*.py,
-                parsers/*.py,
-                "/>
-        </copy>
-        <copy todir="${distDir}/Lib/site-packages/_xmlplus">
-            <fileset dir="${PyXmlHome}/site-packages/_xmlplus" includes="
-                **/*.py,
-                "/>
-        </copy>
-    </target>
 
-    <target name="copy-dist" depends="dist-prepare,jar,copy-xml">
+    <!-- copy for full distribution -->
+    <target name="copy-full" if="full-build">
         <!-- Misc files -->
-        <copy todir="${distDir}">
-            <fileset dir="${sourceDir}" includes="
-                ACKNOWLEDGMENTS,
-                NEWS,
-                LICENSE.txt,
-                README.txt,
-                registry,
-                build.xml,
-                jython.bat,
-                jythonc.bat,
-                jython,
-                jythonc,
-                "/>
+        <echo>copy misc files from ${sourceDir}</echo>
+        <copy todir="${distDir}" preservelastmodified="true">
+            <fileset dir="${sourceDir}"
+                     includes="ACKNOWLEDGMENTS, build.xml, build.Lib.include.properties, NEWS, LICENSE.txt, README.txt, registry"
+            />
         </copy>
 
-        <!-- Sources -->
-        <copy todir="${distDir}">
-            <fileset dir="${sourceDir}" includes="
-                    org/**/*.java, org/**/Makefile,
-                    com/**/*.java, com/**/Makefile,
-                    Lib/jxxload_help/*.java, Lib/jxxload_help/Makefile,
-                    org/**/ucnhash.dat,
-                    com/**/*.properties,"
-                excludes="org/python/parser/python.java"/>
-        </copy>
+        <!-- copy the CPython license -->
+        <echo>copy CPython LICENSE from ${python.home} to ${distDir}/LICENSE_CPython.txt</echo>
+        <!-- +++ TODO: checkout the CPython LICENSE (not: .txt) and copy from there -->
+        <copy file="${python.home}/LICENSE.txt" tofile="${distDir}/LICENSE_CPython.txt" preservelastmodified="true" />
 
-        <!-- Jythonc -->
-        <copy todir="${distDir}">
-            <fileset dir="${sourceDir}" includes="Tools/**/*.py"/>
-        </copy>
-
-        <copy todir="${distDir}/Lib">
-            <!-- Copy the CPython standard library files -->
-            <fileset dir="${python.lib}" includes="
-                ../LICENSE,
-                __future__.py,
-                BaseHTTPServer.py,
-                CGIHTTPServer.py,
-                ConfigParser.py,
-                Cookie.py,
-                HTMLParser.py,
-                MimeWriter.py,
-                Queue.py,
-                SimpleHTTPServer.py,
-                SocketServer.py,
-                StringIO.py,
-                UserDict.py,
-                UserList.py,
-                aifc.py,
-                anydbm.py,
-                base64.py,
-                bdb.py,
-                binhex.py,
-                bisect.py,
-                calendar.py,
-                cgi.py,
-                chunk.py,
-                cmd.py,
-                cmp.py,
-                cmpcache.py,
-                colorsys.py,
-                commands.py,
-                compileall.py,
-                copy.py,
-                copy_reg.py,
-                difflib.py,
-                dircache.py,
-                dircmp.py,
-                doctest.py,
-                dospath.py,
-                dumbdbm.py,
-                exceptions.py,
-                fileinput.py,
-                fnmatch.py,
-                formatter.py,
-                fpformat.py,
-                ftplib.py,
-                getopt.py,
-                glob.py,
-                gopherlib.py,
-                gzip.py,
-                hmac.py,
-                htmlentitydefs.py,
-                htmllib.py,
-                httplib.py,
-                imaplib.py,
-                imghdr.py,
-                keyword.py,
-                linecache.py,
-                macpath.py,
-                macurl2path.py,
-                mailbox.py,
-                mailcap.py,
-                markupbase.py,
-                mhlib.py,
-                mimetools.py,
-                mimetypes.py,
-                mimify.py,
-                multifile.py,
-                mutex.py,
-                netrc.py,
-                nntplib.py,
-                ntpath.py,
-                nturl2path.py,
-                pdb.py,
-                pickle.py,
-                pipes.py,
-                poplib.py,
-                posixfile.py,
-                posixpath.py,
-                pprint.py,
-                profile.py,
-                pyclbr.py,
-                quopri.py,
-                random.py,
-                reconvert.py,
-                repr.py,
-                rfc822.py,
-                sched.py,
-                sgmllib.py,
-                site.py,
-                shelve.py,
-                shlex.py,
-                shutil.py,
-                smtplib.py,
-                sndhdr.py,
-                stat.py,
-                symbol.py,
-                telnetlib.py,
-                tempfile.py,
-                token.py,
-                tokenize.py,
-                traceback.py,
-                tzparse.py,
-                unittest.py,
-                urllib.py,
-                urllib2.py,
-                urlparse.py,
-                user.py,
-                uu.py,
-                weakref.py,
-                whichdb.py,
-                whrandom.py,
-                xdrlib.py,
-                xmllib.py,
-                xmlrpclib.py,
-                zipfile.py
-                pstats.py,
-                code.py,
-                codecs.py,
-                sre*.py,
-                threading.py,
-                atexit.py,
-                UserString.py,
-                warnings.py,
-                encodings/*.py,
-                email/*.py,
-                email/test/*.py,
-                email/test/data/*,
-                test/**,
-            "/>
-        </copy>
-
-        <copy todir="${distDir}/Lib">
-            <!-- The jython .py modules -->
-            <fileset dir="${sourceDir}/Lib" includes="*.py, pawt/*.py"/>
+        <!-- sources: todir has to correspond with installer/**/JarInstaller.java -->
+        <echo>copy sources from ${sourceDir}</echo>
+        <copy todir="${distDir}/src/java" preservelastmodified="true">
+            <fileset dir="${sourceDir}"
+                     includes="org/**/*.java, com/**/*.java, Lib/jxxload_help/*.java, Lib/test/javatests/*.java, org/**/ucnhash.dat, com/**/*.properties, org/python/parser/build.xml"
+                     excludes="org/python/parser/python.java"
+            />
         </copy>
 
         <!-- The demo files -->
-        <copy todir="${distDir}/Demo">
+        <echo>copy the demo files from ${sourceDir}/Demo</echo>
+        <copy todir="${distDir}/Demo" preservelastmodified="true">
             <fileset dir="${sourceDir}/Demo"
-                     includes="**/*.java, **/*.html, **/*.py,
-                               **/*.txt, **/Makefile, **/*.xml,
-                               **/jreload/example.jar,
-                               **/jreload/_xample/Version.class"
-                     excludes="**/jpywork/**"/>
+                     includes="**/*.java, **/*.html, **/*.py, **/*.txt, **/*.xml, **/jreload/example.jar, **/jreload/_xample/Version.class"
+                     excludes="**/jpywork/**"
+            />
         </copy>
     </target>
 
 
-    <target name="dist" depends="copy-dist, doc, javadoc">
-        <!--
-            Some windows systems need the ${line.separator} or will report a
-            "Failed to load Main-Class manifest attribute" error
-        -->
-        <tar tarfile="jython-${release}.tar"
-             basedir="${distDir}"
-             excludes="jython.jar, cachedir"/>
-        <gzip zipfile="jython-${release}.tgz" src="jython-${release}.tar" />
+    <!-- copy for distribution -->
+    <target name="copy-dist" depends="jar, doc, javadoc, copy-full">
+        <!-- Tools: jythonc and freeze -->
+        <echo>copy Tools from ${sourceDir}/Tools</echo>
+        <copy todir="${distDir}" preservelastmodified="true">
+            <fileset dir="${sourceDir}" includes="Tools/**/*.py" />
+        </copy>
+
+        <!-- Copy the CPython standard library files -->
+        <echo>copy CPython/Lib *.py files from ${python.lib}</echo>
+        <copy todir="${distDir}/Lib" preservelastmodified="true">
+            <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo">
+                <patternset>
+                    <includesfile name="${sourceDir}/build.Lib.include.properties" />
+                </patternset>
+            </fileset>
+        </copy>
+
+        <!-- The jython .py modules: important to overwrite the above CPython .py files -->
+        <echo>copy the jython *.py modules from ${sourceDir}/Lib</echo>
+        <copy todir="${distDir}/Lib" preservelastmodified="true" overwrite="true">
+            <fileset dir="${sourceDir}/Lib" includes="**/*.py" />
+        </copy>
     </target>
 
 
-    <target name="all" depends="init,clean,prepare,parser,compile,jar"/>
-</project>
+    <!-- wrap the build into the installer -->
+    <target name="install" depends="copy-dist">
+        <fail unless="cvs.tag" message="no cvs.tag specified" />
+        <property name="install.src.dir" value="${sourceDir}/../installer" />
+        <echo>compiling installer from ${install.src.dir}</echo>
+        <javac srcdir="${install.src.dir}"
+               includes="org/**"
+               destdir="${outputDir}/"
+               target="${jdk.target.version}"
+               debug="${debug}"
+               optimize="${optimize}"
+               deprecation="${deprecation}"
+        />
+        <echo>copy installer classes to ${distDir}</echo>
+        <copy todir="${distDir}" preservelastmodified="true">
+            <fileset dir="${outputDir}" includes="org/python/util/install/*.class" />
+        </copy>
+        <echo>copy installer icon to ${distDir}</echo>
+        <copy todir="${distDir}" preservelastmodified="true">
+            <!-- check no /bin directory -->
+            <fileset dir="${install.src.dir}" includes="**/*.png" excludes="bin/**" />
+        </copy>
+        <echo>building installer .jar file</echo>
+        <jar destfile="${work.dir}/jython_${cvs.tag}.jar" basedir="${distDir}" update="true">
+            <manifest>
+                <attribute name="Main-Class" value="org.python.util.install.Installation" />
+                <attribute name="Built-By" value="${user.name}" />
+                <!-- section for the install program -->
+                <section name="Jython">
+                    <attribute name="version" value="${cvs.tag}" />
+                    <attribute name="exclude-dirs" value="org;META-INF" />
+                </section>
+                <!-- info section. ATTN: no blanks, no '.' in the names -->
+                <section name="Build-Info">
+                    <attribute name="cvs-build" value="${do.checkout}" />
+                    <attribute name="cpython-version" value="${python.cvs.tag}" />
+                    <attribute name="collections" value="${java2collection.present}" />
+                    <attribute name="weakref" value="${weakref.present}" />
+                    <attribute name="threadlocal" value="${threadlocal.present}" />
+                    <attribute name="java2-accessibility" value="${java2accessible.present}" />
+                    <attribute name="secureclassloader" value="${secureclassloader.present}" />
+                    <attribute name="servlet" value="${servlet.present}" />
+                    <attribute name="readline" value="${readline.present}" />
+                    <attribute name="oracle" value="${oracle.present}" />
+                    <attribute name="informix" value="${informix.present}" />
+                    <attribute name="mysql" value="${mysql.present}" />
+                    <attribute name="postgresql" value="${postgresql.present}" />
+                    <attribute name="jndi" value="${jndi.present}" />
+                    <attribute name="jdbc" value="${javax.sql.present}" />
+                    <attribute name="jdbc3_0" value="${jdbc30.present}" />
+                    <attribute name="build.compiler" value="${build.compiler}" />
+                    <attribute name="jdk.target.version" value="${jdk.target.version}" />
+                    <attribute name="deprecation" value="${deprecation}" />
+                    <attribute name="debug" value="${debug}" />
+                    <attribute name="optimize" value="${optimize}" />
+                </section>
+            </manifest>
+        </jar>
+    </target>
 
+
+</project>
