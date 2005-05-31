@@ -3,3 +3,5 @@
 .ipr
 .iws
 .iml
+build
+dist
