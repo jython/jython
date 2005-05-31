@@ -16,23 +16,9 @@ import org.python.modules.Setup;
 public class PySystemState extends PyObject
 {
     /**
-     * The current version of JPython.
+     * The current version of Jython. Will be replaced during a full build.
      */
-    public static String version = "2.2a1";
-
-    private static int PY_MAJOR_VERSION = 2;
-    private static int PY_MINOR_VERSION = 2;
-    private static int PY_MICRO_VERSION = 0;
-    private static int PY_RELEASE_LEVEL = 0xA;
-    private static int PY_RELEASE_SERIAL = 1;
-
-    public static int hexversion = ((PY_MAJOR_VERSION << 24) |
-                                    (PY_MINOR_VERSION << 16) |
-                                    (PY_MICRO_VERSION <<  8) |
-                                    (PY_RELEASE_LEVEL <<  4) |
-                                    (PY_RELEASE_SERIAL << 0));
-
-    public static PyTuple version_info;
+    public static String VERSION = "developer-build";
 
     public static int maxunicode = 65535;
 
@@ -436,22 +422,6 @@ public class PySystemState extends PyObject
         // Setup standard wrappers for stdout and stderr...
         Py.stderr = new StderrWrapper();
         Py.stdout = new StdoutWrapper();
-
-        String s = null;
-        if (PY_RELEASE_LEVEL == 0x0A)
-            s = "alpha";
-        else if (PY_RELEASE_LEVEL == 0x0B)
-            s = "beta";
-        else if (PY_RELEASE_LEVEL == 0x0C)
-            s = "candidate";
-        else if (PY_RELEASE_LEVEL == 0x0F)
-            s = "final";
-        version_info = new PyTuple(new PyObject[] {
-                            Py.newInteger(PY_MAJOR_VERSION),
-                            Py.newInteger(PY_MINOR_VERSION),
-                            Py.newInteger(PY_MICRO_VERSION),
-                            Py.newString(s),
-                            Py.newInteger(PY_RELEASE_SERIAL) });
     }
 
     public static PackageManager packageManager;
