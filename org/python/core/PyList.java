@@ -3,15 +3,16 @@
 // Implementation of the standard Python list objects
 
 package org.python.core;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 
 /**
  * A builtin python list.
  */
 
-public class PyList extends PySequence {
-    protected int length;
-    protected PyObject[] list;
+public class PyList extends PySequenceList {
 
     public static void classDictInit(PyObject dict) throws PyIgnoreMethodTag {}
 
@@ -438,6 +439,23 @@ public class PyList extends PySequence {
             public PyObject __call__(PyObject arg0) {
                 return Py.newInteger(self.list_index(arg0));
             }
+            
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return Py.newInteger(self.list_index(
+                            arg0, arg1.asInt(0), arg2.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+	                    case 0:
+	                        msg="slice indices must be integers";
+	                        break;
+	                    default:
+	                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyList self=(PyList)gself;
@@ -445,7 +463,7 @@ public class PyList extends PySequence {
             }
 
         }
-        dict.__setitem__("index",new PyMethodDescr("index",PyList.class,1,1,new exposed_index(null,null)));
+        dict.__setitem__("index",new PyMethodDescr("index",PyList.class,1,3,new exposed_index(null,null)));
         class exposed_insert extends PyBuiltinFunctionNarrow {
 
             private PyList self;
@@ -718,6 +736,34 @@ public class PyList extends PySequence {
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyList.class,1,1,new exposed___add__(null,null)));
+        class exposed___radd__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___radd__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___radd__((PyList)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.list___radd__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyList self=(PyList)gself;
+                return self.list___radd__(arg0);
+            }
+
+        }
+        dict.__setitem__("__radd__",new PyMethodDescr("__radd__",PyList.class,1,1,new exposed___radd__(null,null)));
         class exposed___iadd__ extends PyBuiltinFunctionNarrow {
 
             private PyList self;
@@ -926,19 +972,19 @@ public class PyList extends PySequence {
         dict.__setitem__("__init__",new PyMethodDescr("__init__",PyList.class,-1,-1,new exposed___init__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyList.class,"__new__",-1,-1) {
 
-                                                                                      public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                          PyList newobj;
-                                                                                          if (for_type==subtype) {
-                                                                                              newobj=new PyList();
-                                                                                              if (init)
-                                                                                                  newobj.list_init(args,keywords);
-                                                                                          } else {
-                                                                                              newobj=new PyListDerived(subtype);
-                                                                                          }
-                                                                                          return newobj;
-                                                                                      }
+        public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+            PyList newobj;
+            if (for_type==subtype) {
+                newobj=new PyList();
+                if (init)
+                    newobj.list_init(args,keywords);
+            	} else {
+            	    newobj=new PyListDerived(subtype);
+            	}
+            	return newobj;
+        	}
 
-                                                                                  });
+        });
     }
 
     public PyList() {
@@ -947,20 +993,21 @@ public class PyList extends PySequence {
 
     public PyList(PyType type) {
         super(type);
-        length = 0;
-        list = Py.EmptyObjects;
     }
 
-    public PyList(Vector ilist) {
-        this(new PyObject[ilist.size()]);
-        for (int i=0; i<ilist.size(); i++) {
-            list[i] = (PyObject)ilist.elementAt(i);
-        }
+    public PyList(Collection c) {
+        super(c);
     }
 
-    public PyList(PyObject elements[]) {
-        list = elements;
-        length = elements.length;
+    // TODO: fix dependency so it can be removed.
+    // Shouldn't be required (see PyList(Collection c), but test_re.py fails 
+    // without it.  Probably used by reflection.
+    public PyList(Vector v) {
+        super(v);
+    }    
+    
+    public PyList(PyObject[] elements) {
+        super(elements);
     }
 
     public PyList(PyObject o) {
@@ -981,16 +1028,9 @@ public class PyList extends PySequence {
         }
 
         PyObject o = args[0];
-        if (o instanceof PyList) {
-            PyList p = (PyList) o.__getslice__(Py.None, Py.None, Py.One);
+        if (o instanceof PySequenceList) {
+            PySequenceList p = (PySequenceList) o.__getslice__(Py.None, Py.None, Py.One);
             this.list = p.list;
-            this.length = p.length;
-        } else if (o instanceof PyTuple) {
-            PyTuple t = (PyTuple)o;
-            PyObject[] a = new PyObject[t.__len__()];
-            System.arraycopy(t.list, 0, a, 0, a.length);
-            this.list = a;
-            this.length = a.length;
         } else {
             PyObject iter = o.__iter__();
             for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
@@ -1008,11 +1048,7 @@ public class PyList extends PySequence {
     }
 
     final int list___len__() {
-        return length;
-    }
-
-    protected PyObject get(int i) {
-        return list[i];
+        return size();
     }
 
     protected PyObject getslice(int start, int stop, int step) {
@@ -1020,102 +1056,123 @@ public class PyList extends PySequence {
             stop = start;
         int n = sliceLength(start, stop, step);
         PyObject[] newList = new PyObject[n];
+        PyObject[] array = getArray();
 
         if (step == 1) {
-            System.arraycopy(list, start, newList, 0, stop-start);
+            System.arraycopy(array, start, newList, 0, stop-start);
             return new PyList(newList);
         }
         int j = 0;
         for (int i=start; j<n; i+=step) {
-            newList[j] = list[i];
+            newList[j] = array[i];
             j++;
         }
         return new PyList(newList);
     }
 
     protected void del(int i) {
-        length = length-1;
-        System.arraycopy(list, i+1, list, i, length-i);
-        list[length] = null;
+        remove(i);
     }
 
     protected void delRange(int start, int stop, int step) {
         if (step != 1)
             throw Py.ValueError("step size must be 1 for deleting "+
                                 "list slice");
-
-        System.arraycopy(list, stop, list, start, length-stop);
-        int newLength = length-(stop-start);
-        int oldLength = length;
-
-        for(int i = newLength; i < oldLength; i++)
-            list[i] = null;
-        length = newLength;
+        
+        remove(start, stop);
     }
 
     protected void set(int i, PyObject value) {
-        list[i] = value;
+        list.pyset(i, value);
     }
 
+//    protected void setslice(int start, int stop, int step, PyObject value) {
+//
+//        if (step != 1)
+//            throw Py.ValueError("step size must be 1 for setting list slice");
+//        if (stop < start)
+//            stop = start;
+//        
+//        if (value instanceof PySequenceList) {
+//            
+//            if (value instanceof PyList) {
+//                PyObject[] otherArray = null;
+//                PyObject[] array = getArray(); 
+//	            PySequenceList seqList = (PySequenceList)value;
+//	            otherArray = seqList.getArray();
+//	            if (otherArray == array) {
+//	                otherArray = (PyObject[])otherArray.clone();
+//	            }
+//	            list.replaceSubArray(start, stop, otherArray, 0, seqList.size());
+//            } else {
+//	            throw Py.TypeError("can only concatenate list (not \"" +
+//	                    value.getType() + "\") to list");
+//            }
+//        } else { 
+//            
+//            // also allow java.util.List
+//            List other = (List)value.__tojava__(List.class);
+//            if(other != Py.NoConversion) {
+//	            int n = other.size();
+//	            list.ensureCapacity(start + n);
+//	            for(int i=0; i<n; i++) {
+//	                list.add(i+start, other.get(i));
+//	            }
+//            } else {        
+//                throw Py.TypeError(
+//                		"rhs of setslice must be a sequence or java.util.List");
+//            }
+//        }
+//    }    
     protected void setslice(int start, int stop, int step, PyObject value) {
-        if (!(value instanceof PySequence))
-            throw Py.TypeError("rhs of setslice must be a sequence");
 
         if (step != 1)
             throw Py.ValueError("step size must be 1 for setting list slice");
         if (stop < start)
             stop = start;
+        
+        if (value instanceof PySequence) {
+            
+            PySequence seq = (PySequence)value;
 
-        PySequence seq = (PySequence)value;
+            PyObject[] otherArray = null;
+            PyObject[] array = getArray(); 
 
-        // Hack to make recursive setslices work correctly.
-        // Could avoid the copy if we wanted to be more clever about
-        // the code to do the moving
-
-        int n = seq.__len__();
-        int i;
-        int length = this.length;
-        int newLength = length-(stop-start)+n;
-
-        if (newLength > length || newLength < length) {
-            resize(newLength);
-            System.arraycopy(list, stop, list, stop+(newLength-length),
-                             length-stop);
-            if (newLength < length) {
-                for (i = newLength; i < length; i++)
-                    list[i] = null;
+            if (value instanceof PySequenceList) {
+	            PySequenceList seqList = (PySequenceList)value;
+	            otherArray = seqList.getArray();
+	            if (otherArray == array) {
+	                otherArray = (PyObject[])otherArray.clone();
+	            }
+	            list.replaceSubArray(start, stop, otherArray, 0, seqList.size());
+            } else {
+	            int n = seq.__len__();
+	            list.ensureCapacity(start + n);
+	            for(int i=0; i<n; i++) {
+	                list.add(i+start, seq.pyget(i));
+	            }
             }
-        }
-//         else if (newLength < length) {
-//             System.arraycopy(list, stop, list, stop+(newLength-length),
-//                              length-stop);
-//             this.length = newLength;
-//         }
-
-        PyObject[] otherList = null;
-
-        if (value instanceof PyTuple)
-            otherList = ((PyTuple)value).list;
-        if (value instanceof PyList) {
-            otherList = ((PyList)value).list;
-            if (otherList == list)
-                otherList = (PyObject[])otherList.clone();
-        }
-        if (otherList != null) {
-            System.arraycopy(otherList, 0, list, start, n);
-        }
-        else {
-            for(i=0; i<n; i++) {
-                list[i+start] = seq.get(i);
+        } else { 
+            
+            List other = (List)value.__tojava__(List.class);
+            if(other != Py.NoConversion && other != null) {
+	            int n = other.size();
+	            list.ensureCapacity(start + n);
+	            for(int i=0; i<n; i++) {
+	                list.add(i+start, other.get(i));
+	            }
+            } else {        
+                throw Py.TypeError(
+                		"rhs of setslice must be a sequence or java.util.List");
             }
         }
     }
-
+    
     protected PyObject repeat(int count) {
-        int l = length;
+        int l = size();
         PyObject[] newList = new PyObject[l*count];
         for (int i=0; i<count; i++) {
-            System.arraycopy(list, 0, newList, i*l, l);
+            System.arraycopy(getArray(), 0, newList, i*l, l);
         }
         return new PyList(newList);
     }
@@ -1127,13 +1184,17 @@ public class PyList extends PySequence {
     final PyObject list___imul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             throw Py.TypeError("can't multiply sequence to non-int");
-        int l = length;
+        int l = size();
         int count = o.__int__().getValue();
 
-        resize(l * count);
-
-        for (int i=0; i<count; i++) {
-            System.arraycopy(list, 0, list, i*l, l);
+        int newSize = l * count;
+        list.ensureCapacity(newSize);
+        list.setSize(newSize);
+        //resize(l * count);
+        
+        PyObject[] array = getArray();
+        for (int i=1; i<count; i++) {
+            System.arraycopy(array, 0, array, i*l, l);
         }
         return this;
     }
@@ -1152,54 +1213,89 @@ public class PyList extends PySequence {
         return repeat(count);
     }
 
-    public PyObject __add__(PyObject genericOther) {
-        return list___add__(genericOther);
+    public PyObject __add__(PyObject o) {
+        return list___add__(o);
     }
 
-    final PyObject list___add__(PyObject genericOther) {
-        if (genericOther instanceof PyList) {
-            PyList other = (PyList)genericOther;
-
-            PyObject[] newList = new PyObject[length+other.length];
-            System.arraycopy(list, 0, newList, 0, length);
-            System.arraycopy(other.list, 0, newList, length, other.length);
-
-            return new PyList(newList);
+    final PyObject list___add__(PyObject o) {
+        PyList sum = null;
+        boolean throwTE = false;
+        if (o instanceof PyList) {
+            PyList other = (PyList)o;           
+            int thisLen = size();
+            int otherLen = other.size();
+            PyObject[] newList = new PyObject[thisLen+otherLen];
+            System.arraycopy(getArray(), 0, newList, 0, thisLen);
+            System.arraycopy(other.getArray(), 0, newList, thisLen, otherLen);
+            sum = new PyList(newList);
+        } else if ( !(o instanceof PySequenceList) ) {
+            // also support adding java lists (but not PyTuple!)
+            Object oList = o.__tojava__(List.class);
+            if (oList != Py.NoConversion && oList != null) {
+	            List otherList = (List)oList;
+	            sum = new PyList();
+	            sum.list_extend(this);
+	            for (Iterator i = otherList.iterator(); i.hasNext(); ) {
+	                sum.add(i.next());
+	            }   
+            } else {
+                throwTE = true;
+            }
         } else {
-            return null;
+            throwTE = true;
         }
+        if (throwTE) {
+        	throw Py.TypeError("can only concatenate list (not \"" +
+                    o.getType().fastGetName() + "\") to list");
+        }
+        return sum;
+    }
+ 
+    public PyObject __radd__(PyObject o) {
+        return list___radd__(o);
     }
 
+    final PyObject list___radd__(PyObject o) {
+        // Support adding java.util.List, but prevent adding PyTuple.
+        // 'o' should never be a PyList since __add__ is defined.
+        PyList sum = null;
+        if (o instanceof PySequence) {
+            throw Py.TypeError("can only concatenate list (not \"" +
+                    o.getType().fastGetName() + "\") to list");
+        }
+        Object oList = o.__tojava__(List.class);
+        if(oList != Py.NoConversion && oList != null) {
+            sum = new PyList();
+            sum.addAll((List)oList);
+            sum.extend(this);
+        }
+        return sum;
+    }
+    
     public String toString() {
         return list_toString();
     }
 
     final String list_toString() {
         ThreadState ts = Py.getThreadState();
-        if (!ts.enterRepr(this)) {
+        if (!ts.enterRepr(this)) { 
             return "[...]";
         }
 
         StringBuffer buf = new StringBuffer("[");
+        int length = size();
+        PyObject[] array = getArray();
+        
         for (int i=0; i<length-1; i++) {
-            buf.append(((PyObject)list[i]).__repr__().toString());
+            buf.append((array[i]).__repr__().toString());
             buf.append(", ");
         }
         if (length > 0)
-            buf.append(((PyObject)list[length-1]).__repr__().toString());
+            buf.append((array[length-1]).__repr__().toString());
         buf.append("]");
 
         ts.exitRepr(this);
         return buf.toString();
-    }
-
-    protected void resize(int n) {
-        if (list.length < n) {
-            PyObject[] newList = new PyObject[(int)(n*1.5)];
-            System.arraycopy(list, 0, newList, 0, length);
-            list = newList;
-        }
-        length = n;
     }
 
     /**
@@ -1212,8 +1308,7 @@ public class PyList extends PySequence {
     }
 
     final void list_append(PyObject o) {
-        resize(length+1);
-        list[length-1] = o;
+        pyadd(o);
     }
 
     /**
@@ -1228,10 +1323,9 @@ public class PyList extends PySequence {
 
     final int list_count(PyObject o) {
         int count = 0;
-        int n = length;
-        PyObject[] list = this.list;
-        for (int i=0; i<n; i++) {
-            if (list[i].equals(o))
+        PyObject[] array = getArray();
+        for (int i=0, n = size(); i<n; i++) {
+            if (array[i].equals(o))
                 count++;
         }
         return count;
@@ -1245,25 +1339,38 @@ public class PyList extends PySequence {
      *          the <code>==</code> operator.
      */
     public int index(PyObject o) {
-        return list_index(o);
+        return list_index(o, 0, size());
+    }
+    
+    // CAU: not referenced anywhere, why is this here?
+    public int index(PyObject o, int start, int stop) {
+        return list_index(o, start, stop);
     }
 
+    final int list_index(PyObject o, int start, int stop) {
+        return _index(o, "list.index(x): x not in list", start, stop);
+    }
+    
     final int list_index(PyObject o) {
-        return _index(o, "list.index(x): x not in list");
+        return _index(o, "list.index(x): x not in list", 0, size());
     }
 
-    private int _index(PyObject o, String message) {
-        int n = length;
-        PyObject[] list = this.list;
-        int i=0;
-        for (; i<n; i++) {
-            if (list[i].equals(o))
+    private int _index(PyObject o, String message, int start, int stop) {
+        
+        // Emulate python behavior when start/stop are out of nominal range.
+        int validStop = Math.max(Math.min(size(), stop), 0);
+        int validStart = Math.min(Math.max(0, start), validStop);
+        
+        PyObject[] array = getArray();
+        int i=validStart;
+        for (; i<validStop; i++) {
+            if (array[i].equals(o))
                 break;
         }
-        if (i == n)
+        if (i == validStop)
             throw Py.ValueError(message);
         return i;
-    }
+    }    
 
     /**
      * Insert the argument element into the list at the specified
@@ -1279,13 +1386,9 @@ public class PyList extends PySequence {
     }
 
     final void list_insert(int index, PyObject o) {
-        if (index < 0)
-            index = 0;
-        if (index > length)
-            index = length;
-        resize(length+1);
-        System.arraycopy(list, index, list, index+1, length-index-1);
-        list[index] = o;
+        if (index < 0) index = Math.max(0, size() + index);
+        if (index > size()) index = size();
+        list.pyadd(index, o);
     }
 
     /**
@@ -1301,7 +1404,7 @@ public class PyList extends PySequence {
     }
 
     final void list_remove(PyObject o) {
-        del(_index(o, "list.remove(x): x not in list"));
+        del(_index(o, "list.remove(x): x not in list", 0, size()));
     }
 
     /**
@@ -1316,13 +1419,13 @@ public class PyList extends PySequence {
 
     final void list_reverse() {
         PyObject tmp;
-        int n = length;
-        PyObject[] list = this.list;
+        int n = size();
+        PyObject[] array = getArray();
         int j = n-1;
         for (int i=0; i<n/2; i++, j--) {
-            tmp = list[i];
-            list[i] = list[j];
-            list[j] = tmp;
+            tmp = array[i];
+            array[i] = array[j];
+            array[j] = tmp;
         }
     }
 
@@ -1348,6 +1451,7 @@ public class PyList extends PySequence {
     }
 
     final PyObject list_pop(int n) {
+        int length = size();
         if (length==0) {
             throw Py.IndexError("pop from empty list");
         }
@@ -1355,7 +1459,7 @@ public class PyList extends PySequence {
             n += length;
         if (n < 0 || n >= length)
             throw Py.IndexError("pop index out of range");
-        PyObject v = list[n];
+        PyObject v = pyget(n);
 
         setslice(n, n+1, 1, Py.EmptyTuple);
         return v;
@@ -1373,6 +1477,7 @@ public class PyList extends PySequence {
     }
 
     final void list_extend(PyObject o) {
+        int length = size();
         setslice(length, length, 1, o);
     }
 
@@ -1403,7 +1508,7 @@ public class PyList extends PySequence {
     }
 
     final synchronized void list_sort(PyObject compare) {
-        MergeState ms = new MergeState(list, length, compare);
+        MergeState ms = new MergeState(getArray(), size(), compare);
         ms.sort();
     }
 

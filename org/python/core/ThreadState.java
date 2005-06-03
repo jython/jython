@@ -60,8 +60,8 @@ public class ThreadState {
             reprStack = new PyList(new PyObject[] {obj});
             return true;
         }
-        for(int i=reprStack.length-1; i>=0; i--) {
-            if (obj == reprStack.get(i))
+        for(int i=reprStack.size()-1; i>=0; i--) {
+            if (obj == reprStack.pyget(i))
                 return false;
         }
         reprStack.append(obj);
@@ -72,9 +72,9 @@ public class ThreadState {
         if (reprStack == null)
             return;
 
-        for (int i = reprStack.length-1; i>=0; i--) {
-            if (reprStack.get(i) == obj) {
-                reprStack.delRange(i, reprStack.length, 1);
+        for (int i = reprStack.size()-1; i>=0; i--) {
+            if (reprStack.pyget(i) == obj) {
+                reprStack.delRange(i, reprStack.size(), 1);
             }
         }
     }

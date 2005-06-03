@@ -39,7 +39,8 @@ public class PyException extends RuntimeException
             {
                 //System.out.println("value: "+value);
                 if (value instanceof PyTuple) {
-                    value = ((PyClass)type).__call__(((PyTuple)value).list);
+                    value = ((PyClass)type).__call__(
+                            ((PyTuple)value).getArray());
                 } else {
                     if (value == Py.None) {
                         value = ((PyClass)type).__call__(Py.EmptyObjects);

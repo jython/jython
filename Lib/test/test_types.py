@@ -167,11 +167,92 @@ if a <> [-2,-1,0,1,2]: raise TestFailed, 'list sort'
 def revcmp(a, b): return cmp(b, a)
 a.sort(revcmp)
 if a <> [2,1,0,-1,-2]: raise TestFailed, 'list sort with cmp func'
+
+# cpython 2.3 windowed index behavior
+if range(10).index(6,4,8) <> 6: raise TestFailed, "windowed list index failed"
+
+if range(10).index(6,-20,100) <> 6: raise TestFailed, "windowed list index failed"
+
+if range(10).index(6,6,100) <> 6: raise TestFailed, "windowed list index failed"
+
+if range(10).index(0,0,1) <> 0: raise TestFailed, "windowed list index failed"
+
+if range(10).index(9,9,10) <> 9: raise TestFailed, "windowed list index failed"
+
+try: range(10).index(6,6,-1)
+except ValueError: pass
+else: raise TestFailed, "range(10).index(6,6,-1) did not raise ValueError"
+
+try: range(10).index(6,7,100)
+except ValueError: pass
+else: raise TestFailed, "range(10).index(6,7,100) did not raise ValueError"
+
+try: range(10).index(0,1,2) 
+except ValueError: pass
+else: raise TestFailed, "range(10).index(0,1,2) did not raise ValueError"
+
+try: range(10).index(9,9,9)
+except ValueError: pass
+else: raise TestFailed, "range(10).index(9,9,9) did not raise ValueError"
+
+try: range(10).index(0,0,0)
+except ValueError: pass
+else: raise TestFailed, "range(10).index(0,0,0) did not raise ValueError"
+
+try: [].index("comfy pillow",0,0)
+except ValueError: pass
+else: raise TestFailed, "[].index('comfy pillow',0,0) did not raise ValueError"
+
+# cpython 2.3 insert behavior
+l = range(4)
+l.insert(  -2, "spam")
+if l <> [0, 1, "spam", 2, 3]: 
+   raise TestFailed, "list.insert on negative index failed"
+
+l = range(4)
+l.insert( 100, "spam")
+if l <> [0, 1, 2, 3, "spam"]: 
+   raise TestFailed, "list.insert on negative index failed"
+
+l = range(4)
+l.insert(-100, "spam")
+if l <> ["spam", 0, 1, 2, 3]: 
+   raise TestFailed, "list.insert on negative index failed"
+
+# type restrictions
+try: None + []
+except TypeError: pass
+else: raise TestFailed, "expected TypeError on None + []"
+
+try: [] + None
+except TypeError: pass
+else: raise TestFailed, "expected TypeError on [] + None"
+
+try: (1,2,3) + []
+except TypeError: pass
+else: raise TestFailed, "expected TypeError on (1,2,3) + []"
+
+try: [] + (1,2,3)
+except TypeError: pass
+else: raise TestFailed, "expected TypeError on [] + (1,2,3)"
+
+l = range(5)
+del l[:]
+if len(l) <> 0: raise TestFailed, "del <list>[:] did not empty list"
+del l[:] # boundary case
+
 # The following dumps core in unpatched Python 1.5:
 def myComparison(x,y):
     return cmp(x%3, y%7)
 z = range(12)
 z.sort(myComparison)
+
+print_test('Interoperability: list and java.util.List')
+from java.util import ArrayList
+al = ArrayList(range(5))
+l = range(5)
+if not (l + al == range(5)*2): raise TestFailed, "list + java.util.List failed"
+if not (al + l == range(5)*2): raise TestFailed, "java.util.List + list failed"
 
 print_test('Mappings and Dictionaries', 2)
 d = {}

@@ -40,7 +40,7 @@ public class thread implements ClassDictInit
     public static PyObject error = new PyString("thread.error");
 
     public static void start_new_thread(PyObject func, PyTuple args) {
-        Thread pt = new FunctionThread(func, args.list);
+        Thread pt = new FunctionThread(func, args.getArray());
         pt.start();
     }
 

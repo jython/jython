@@ -189,22 +189,19 @@ Instead, you can get the same information from the list type:
      '__delslice__',
      '__doc__',
      '__eq__',
-     '__ge__',
      '__getattribute__',
      '__getitem__',
      '__getslice__',
-     '__gt__',
      '__hash__',
      '__iadd__',
      '__imul__',
      '__init__',
-     '__le__',
      '__len__',
-     '__lt__',
      '__mul__',
      '__ne__',
      '__new__',
-     '__reduce__',
+     '__nonzero__',
+     '__radd__',
      '__repr__',
      '__rmul__',
      '__setattr__',
@@ -220,6 +217,7 @@ Instead, you can get the same information from the list type:
      'remove',
      'reverse',
      'sort']
+
 
 The new introspection API gives more information than the old one:  in
 addition to the regular methods, it also shows the methods that are

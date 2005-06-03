@@ -82,7 +82,7 @@ public abstract class PackageManager extends Object {
             PyList dictKeys = dict.keys();
 
             for(int i=0; i < dictKeys.__len__(); i++) {
-                PyObject name = dictKeys.get(i);
+                PyObject name = dictKeys.pyget(i);
                 if (!cls.has_key(name)) {
                     if (exclpkgs && dict.get(name) instanceof PyJavaPackage)
                         continue;
@@ -96,7 +96,7 @@ public abstract class PackageManager extends Object {
         PyList clsNames = cls.keys();
 
         for(int i=0; i < clsNames.__len__(); i++) {
-            PyObject name = clsNames.get(i);
+            PyObject name = clsNames.pyget(i);
             if(!dict.has_key(name)) jpkg.addLazyClass(name.toString());
         }
 
@@ -107,7 +107,7 @@ public abstract class PackageManager extends Object {
      */
     protected PyList merge(PyList list1,PyList list2) {
         for(int i=0; i < list2.__len__() ;i++) {
-            PyObject name = list2.get(i);
+            PyObject name = list2.pyget(i);
             list1.append(name);
         }
 

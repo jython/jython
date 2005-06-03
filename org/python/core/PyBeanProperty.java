@@ -59,7 +59,7 @@ public class PyBeanProperty extends PyReflectedField {
         if (value instanceof PyTuple) {
             try {
                 PyTuple vtup = (PyTuple)value;
-                value = PyJavaClass.lookup(myType).__call__(vtup.list); // xxx PyObject subclasses
+                value = PyJavaClass.lookup(myType).__call__(vtup.getArray()); // xxx PyObject subclasses
             } catch (Throwable t) {
                 // If something goes wrong ignore it?
             }

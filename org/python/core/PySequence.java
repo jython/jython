@@ -127,7 +127,7 @@ abstract public class PySequence extends PyObject {
      * @param index index of element to return.
      * @return the element at the given position in the list.
      */
-    abstract protected PyObject get(int index);
+    abstract protected PyObject pyget(int index);
 
     /**
      * Returns a range of elements from the sequence.
@@ -332,7 +332,7 @@ abstract public class PySequence extends PyObject {
         if (index == -1)
             return null;
         else
-            return get(index);
+            return pyget(index);
     }
 
     public PyObject __finditem__(PyObject index) {
@@ -516,7 +516,7 @@ abstract public class PySequence extends PyObject {
                 int n = __len__();
                 PyArray array = new PyArray(component, n);
                 for (int i=0; i<n; i++) {
-                    PyObject o = get(i);
+                    PyObject o = pyget(i);
                     array.set(i, o);
                 }
                 //System.out.println("getting: "+component+", "+array.data);

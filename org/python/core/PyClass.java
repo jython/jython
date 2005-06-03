@@ -100,8 +100,8 @@ public class PyClass extends PyObject
         if (proxyClass == null) {
             Vector interfaces = new Vector();
             Class baseClass = null;
-            for (int i=0; i<bases.list.length; i++) {
-                Class proxy = ((PyClass)bases.list[i]).getProxyClass();
+            for (int i=0; i<bases.size(); i++) {
+                Class proxy = ((PyClass)bases.pyget(i)).getProxyClass();
                 if (proxy != null) {
                     if (proxy.isInterface()) {
                         interfaces.addElement(proxy);
@@ -279,7 +279,7 @@ public class PyClass extends PyObject
 
     public void __rawdir__(PyDictionary accum) {
         addKeys(accum, "__dict__");
-        PyObject[] bases = __bases__.list;
+        PyObject[] bases = __bases__.getArray();
         for (int i=0; i < bases.length; i++)
             bases[i].__rawdir__(accum);
     }
@@ -346,7 +346,7 @@ public class PyClass extends PyObject
         }
         if (this.__bases__ == null || superclass.__bases__ == null)
             return false;
-        PyObject[] bases = this.__bases__.list;
+        PyObject[] bases = this.__bases__.getArray();
         int n = bases.length;
         for(int i=0; i<n; i++) {
             PyClass c = (PyClass)bases[i];
