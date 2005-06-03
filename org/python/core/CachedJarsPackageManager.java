@@ -232,7 +232,7 @@ public abstract class CachedJarsPackageManager extends PackageManager {
 
                 entry = (JarXEntry)jarfiles.get(jarcanon);
 
-                if (entry == null && cache) {
+                if ((entry == null || !(new File(entry.cachefile).exists())) && cache) {
                     message("processing new jar, '"+
                     jarcanon+"'");
 
