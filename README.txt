@@ -262,7 +262,7 @@ get a NullPointerException trying to do File|Open, just try again. (!?)
 
 ChangeLog from Release_2_1 to head
 ========================================================================
-2003/04/10    <bzimmer@hyakutake.duncllc.com>
+2003/04/10    bzimmer
 
   * com/ziclix/python/sql/PyCursor.java:1.31
   * com/ziclix/python/sql/Fetch.java:1.14
@@ -276,7 +276,7 @@ ChangeLog from Release_2_1 to head
   * Lib/test/zxjdbc/zxtest.py:1.19
     fixes to pass compatability tests
 
-2003/04/09    <bzimmer@hyakutake.duncllc.com>
+2003/04/09    bzimmer
 
   * com/ziclix/python/sql/JavaDateFactory.java:1.3
   * com/ziclix/python/sql/PyStatement.java:1.4
@@ -316,7 +316,7 @@ ChangeLog from Release_2_1 to head
   * Lib/jxxload_help/PathVFSJavaLoader.java:1.2
     [511493] Prevent truncation of large file loads, especially in jreload, but also in other locations that loaded only the available bytes.
 
-2003/01/03    <bzimmer@hyakutake.duncllc.com>
+2003/01/03    bzimmer
 
   * com/ziclix/python/sql/DateFactory.java:1.2
   * com/ziclix/python/sql/JavaDateFactory.java:1.2
@@ -329,7 +329,7 @@ ChangeLog from Release_2_1 to head
   * com/ziclix/python/sql/zxJDBC.java:1.10
     abstract date creation
 
-2002/12/31    <bzimmer@hyakutake.duncllc.com>
+2002/12/31    bzimmer
 
   * Lib/isql.py:1.5
     allow escaping of commands
@@ -337,7 +337,7 @@ ChangeLog from Release_2_1 to head
   * Lib/dbexts.py:1.11
     allow dynamic cursors in begin()
 
-2002/12/24    <bzimmer@hyakutake.duncllc.com>
+2002/12/24    bzimmer
 
   * com/ziclix/python/sql/PyCursor.java:1.28
     fixed warnings bug #609505; tabs->spaces
@@ -355,7 +355,7 @@ ChangeLog from Release_2_1 to head
   * Lib/javaos.py:2.17
     Remove unnecessary from __future__ import division, for Jython 2.1 compatibility
 
-2002/11/27    <bzimmer@hyakutake.duncllc.com>
+2002/11/27    bzimmer
 
   * Lib/dbexts.py:1.10
     changed empty results from None to []
@@ -452,7 +452,7 @@ sequences.
   * org/python/compiler/CodeCompiler.java:2.31
     Fix for "[ 631017 ] Private fields mismangled".
 
-2002/10/29    <bzimmer@hyakutake.duncllc.com>
+2002/10/29    bzimmer
 
   * Lib/dbexts.py:1.9
     add exception subclasses to instance; don't silently ignore class import problems
@@ -533,7 +533,7 @@ This fixes expressions like "[][::-1]".
     Force exit even when there are non-deamon running threads (e.g. AWT) when quitting
 interactive mode.
 
-2002/10/10    <bzimmer@hyakutake.duncllc.com>
+2002/10/10    bzimmer
 
   * Misc/make_errno.py:1.2
   * org/python/modules/errno.java:2.2
@@ -555,7 +555,7 @@ Added the 'errno' module.
   * org/python/modules/errno.java:2.1
     Added the 'errno' module.
 
-2002/10/07    <bzimmer@hyakutake.duncllc.com>
+2002/10/07    bzimmer
 
   * Lib/dbexts.py:1.8
     allow multiple datahandlers in config
@@ -834,12 +834,12 @@ Fixes patch "[ 511321 ] Jython complex from string".
   * org/python/core/PyString.java:2.56
     Added .decode() methods.
 
-2002/05/16    <bzimmer@hyakutake.duncllc.com>
+2002/05/16    bzimmer
 
   * com/ziclix/python/sql/Fetch.java:1.12
     added accessor for description
 
-2002/05/10    <bzimmer@hyakutake.duncllc.com>
+2002/05/10    bzimmer
 
   * com/ziclix/python/sql/Fetch.java:1.11
     fixed indexing out of output parameters
@@ -856,7 +856,7 @@ Fixes patch "[ 511321 ] Jython complex from string".
   * Lib/test/zxjdbc/sptest.py:1.5
     extensible stored procedures
 
-2002/05/09    <bzimmer@hyakutake.duncllc.com>
+2002/05/09    bzimmer
 
   * com/ziclix/python/sql/PyStatement.java:1.3
   * com/ziclix/python/sql/PyCursor.java:1.26
@@ -874,7 +874,7 @@ Fixes patch "[ 511321 ] Jython complex from string".
   * Lib/test/zxjdbc/sptest.py:1.4
     added public Java API for Fetch; fetch[many|all] return empty list on completion
 
-2002/04/21    <bzimmer@hyakutake.duncllc.com>
+2002/04/21    bzimmer
 
   * com/ziclix/python/sql/PyStatement.java:1.2
   * Lib/dbexts.py:1.7
@@ -884,7 +884,7 @@ Fixes patch "[ 511321 ] Jython complex from string".
   * Lib/test/zxjdbc/dbextstest.py:1.5
     prepared statements can live outside the cursor
 
-2002/04/19    <bzimmer@hyakutake.duncllc.com>
+2002/04/19    bzimmer
 
   * com/ziclix/python/sql/PyCursor.java:1.23
   * com/ziclix/python/sql/zxJDBC.java:1.9
@@ -900,7 +900,7 @@ Fixes patch "[ 511321 ] Jython complex from string".
   * Lib/test/zxjdbc/runner.py:1.3
     added .prepare() to cursor
 
-2002/04/12    <bzimmer@hyakutake.duncllc.com>
+2002/04/12    bzimmer
 
   * com/ziclix/python/sql/PyCursor.java:1.21
   * com/ziclix/python/sql/Procedure.java:1.7
@@ -918,7 +918,7 @@ Fixes patch "[ 511321 ] Jython complex from string".
   * Lib/test/zxjdbc/runner.py:1.2
     added option to run a single test
 
-2002/03/29    <bzimmer@hyakutake.duncllc.com>
+2002/03/29    bzimmer
 
   * com/ziclix/python/sql/PyCursor.java:1.19
   * Lib/test/zxjdbc/zxtest.py:1.12
@@ -926,7 +926,7 @@ Fixes patch "[ 511321 ] Jython complex from string".
   * com/ziclix/python/sql/pipe/db/DBSink.java:1.3
     cursor is now file-like
 
-2002/03/26    <bzimmer@hyakutake.duncllc.com>
+2002/03/26    bzimmer
 
   * com/ziclix/python/sql/PyConnection.java:1.6
   * com/ziclix/python/sql/PyCursor.java:1.18
@@ -950,12 +950,12 @@ Fixes patch "[ 511321 ] Jython complex from string".
   * org/python/core/PyLong.java:2.15
     Fix for "[ 517237 ] Binary ops with int and long fail".
 
-2002/01/26    <bzimmer@hyakutake.duncllc.com>
+2002/01/26    bzimmer
 
   * Lib/isql.py:1.4
     quit from within the interpreter no longer dumps a stacktrace; use connects with the same dbexts class
 
-2002/01/14    <bzimmer@hyakutake.duncllc.com>
+2002/01/14    bzimmer
 
   * com/ziclix/python/sql/PyCursor.java:1.17
   * com/ziclix/python/sql/Fetch.java:1.7
@@ -1019,7 +1019,7 @@ Emit warnings when classic __div__ is called.
   * org/python/core/PyTableCode.java:2.19
     Added CO_FUTUREDIVISION. Value must match the value in __future__.py.
 
-2002/01/11    <bzimmer@hyakutake.duncllc.com>
+2002/01/11    bzimmer
 
   * com/ziclix/python/sql/zxJDBC.java:1.5
     print the java stacktrace if requested
@@ -1052,7 +1052,7 @@ Emit warnings when classic __div__ is called.
   * Lib/javaos.py:2.14
     added OS/2 support (from Ype Kingma)
 
-2002/01/10    <bzimmer@hyakutake.duncllc.com>
+2002/01/10    bzimmer
 
   * Lib/test/zxjdbc/dbextstest.py:1.3
   * Lib/test/zxjdbc/zxtest.py:1.9
@@ -1064,12 +1064,12 @@ Emit warnings when classic __div__ is called.
   * com/ziclix/python/sql/PyExtendedCursor.java:1.8
     documentation and some cleanup
 
-2002/01/09    <bzimmer@hyakutake.duncllc.com>
+2002/01/09    bzimmer
 
   * Lib/isql.py:1.3
     added __tojava__() to raw_input = 0
 
-2002/01/08    <bzimmer@hyakutake.duncllc.com>
+2002/01/08    bzimmer
 
   * com/ziclix/python/sql/PyCursor.java:1.14
   * Lib/test/zxjdbc/zxtest.py:1.8
@@ -1078,7 +1078,7 @@ Emit warnings when classic __div__ is called.
   * org/python/core/CollectionIter2.java:1.2
     dictionaries return the keys in an iteration, not the (key,value) mapping
 
-2002/01/07    <bzimmer@hyakutake.duncllc.com>
+2002/01/07    bzimmer
 
   * Lib/test/zxjdbc/zxtest.py:1.6
     use the cursor's datahandler
