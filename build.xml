@@ -165,7 +165,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- init properties for the developer build -->
     <target name="developer-init" depends="pre-init">
         <property name="work.dir" value="${basedir}" />
-        <property name="sourceDir" value="${basedir}" />
+        <property name="source.dir" value="${basedir}" />
         <property name="python.lib" value="${python.home}/Lib" />
     </target>
 
@@ -181,7 +181,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
         <property name="work.dir" value="${basedir}/../full_build_${cvs.tag}" />
         <property name="cvs.checkout.dir" value="${work.dir}/checkout" />
-        <property name="sourceDir" value="${cvs.checkout.dir}/jython" />
+        <property name="source.dir" value="${cvs.checkout.dir}/jython" />
         <property name="has.cvs.connection" value="true" />
         <property name="python.module" value="python/dist/src/Lib" />
         <property name="python.lib" value="${cvs.checkout.dir}/${python.module}" />
@@ -193,10 +193,10 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
 
     <target name="post-init">
-        <property name="outputDir" value="${work.dir}/build" />
-        <property name="distDir" value="${work.dir}/dist" />
-        <property name="apidocDir" value="${distDir}/Doc/javadoc" />
-        <property name="parser.dir" value="${sourceDir}/org/python/parser" />
+        <property name="output.dir" value="${work.dir}/build" />
+        <property name="dist.dir" value="${work.dir}/dist" />
+        <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
+        <property name="parser.dir" value="${source.dir}/org/python/parser" />
         <echo>.</echo>
         <echo>Build environment for ${ant.project.name}</echo>
         <echo>(Note: if ${propertyname} is displayed, then the property is not set)</echo>
@@ -217,11 +217,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <echo>jdbc3.0            = '${jdbc30.present}'</echo>
         <echo>--- properties ---</echo>
         <echo>work.dir           = '${work.dir}'</echo>
-        <echo>sourceDir          = '${sourceDir}'</echo>
+        <echo>source.dir         = '${source.dir}'</echo>
         <echo>parser.dir         = '${parser.dir}'</echo>
-        <echo>outputDir          = '${outputDir}'</echo>
-        <echo>distDir            = '${distDir}'</echo>
-        <echo>apidocDir          = '${apidocDir}'</echo>
+        <echo>output.dir         = '${output.dir}'</echo>
+        <echo>dist.dir           = '${dist.dir}'</echo>
+        <echo>apidoc.dir         = '${apidoc.dir}'</echo>
         <echo>python.lib         = '${python.lib}'</echo>
         <echo>javaccHome         = '${javaccHome}'</echo>
         <echo>ht2html.dir        = '${ht2html.dir}'</echo>
@@ -240,15 +240,15 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
 
     <!-- delete what's necessary. should correspond to the directories created in prepare  -->
-    <target name="clean" depends="clean-checkout-dir">
+    <target name="clean" depends="developer-init, post-init, clean-checkout-dir">
         <!-- do not hard delete ${work.dir}, since it could be basedir -->
-        <!-- deletes all files and subdirectories of ${outputDir}, without ${outputDir} itself. -->
+        <!-- deletes all files and subdirectories of ${output.dir}, without ${output.dir} itself. -->
         <delete includeemptydirs="true" failonerror="false">
-            <fileset dir="${outputDir}" includes="**/*" />
+            <fileset dir="${output.dir}" includes="**/*" />
         </delete>
-        <!-- deletes all files and subdirectories of ${distDir}, without ${distDir} itself. -->
+        <!-- deletes all files and subdirectories of ${dist.dir}, without ${dist.dir} itself. -->
         <delete includeemptydirs="true" failonerror="false">
-            <fileset dir="${distDir}" includes="**/*" />
+            <fileset dir="${dist.dir}" includes="**/*" />
         </delete>
         <!-- delete the installation .jar file from ${work.dir}, but no other files -->
         <delete failonerror="false">
@@ -266,17 +266,17 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
 
     <!-- create necessary directories -->
-    <target name="prepare" depends="clean, prepare-full, prepare-checkout">
-        <mkdir dir="${outputDir}" />
-        <mkdir dir="${distDir}" />
+    <target name="prepare" depends="prepare-full, prepare-checkout">
+        <mkdir dir="${output.dir}" />
+        <mkdir dir="${dist.dir}" />
     </target>
 
 
     <!-- create directories needed only in full-build -->
     <target name="prepare-full" if="full-build">
         <mkdir dir="${work.dir}" />
-        <mkdir dir="${distDir}/Doc" />
-        <mkdir dir="${apidocDir}" />
+        <mkdir dir="${dist.dir}/Doc" />
+        <mkdir dir="${apidoc.dir}" />
     </target>
 
 
@@ -329,14 +329,14 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- replace the version string in PySystemState.java -->
     <target name="version" depends="checkout" if="full-build">
         <echo>replacing version in PySystemState.java with ${cvs.tag}</echo>
-        <replace file="${sourceDir}/org/python/core/PySystemState.java" token="developer-build" value="${cvs.tag}" />
+        <replace file="${source.dir}/org/python/core/PySystemState.java" token="developer-build" value="${cvs.tag}" />
     </target>
 
 
     <!-- compile java sources -->
     <target name="compile" depends="version, parser">
-        <javac srcdir="${sourceDir}/"
-               destdir="${outputDir}/"
+        <javac srcdir="${source.dir}/"
+               destdir="${output.dir}/"
                target="${jdk.target.version}"
                debug="${debug}"
                optimize="${optimize}"
@@ -370,9 +370,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <classpath refid="main.classpath" />
         </javac>
 
-        <javac srcdir="${sourceDir}/Lib"
+        <javac srcdir="${source.dir}/Lib"
                includes="jxxload_help/**"
-               destdir="${outputDir}/"
+               destdir="${output.dir}/"
                target="${jdk.target.version}"
                debug="${debug}"
                optimize="${optimize}"
@@ -380,9 +380,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         />
 
         <!-- java files used by tests -->
-        <javac srcdir="${sourceDir}/Lib/test/"
+        <javac srcdir="${source.dir}/Lib/test/"
                includes="javatests/**"
-               destdir="${outputDir}/"
+               destdir="${output.dir}/"
                target="${jdk.target.version}"
                debug="${debug}"
                optimize="${optimize}"
@@ -390,12 +390,12 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         />
 
         <copy file="org/python/modules/ucnhash.dat"
-              todir="${outputDir}/org/python/modules"
+              todir="${output.dir}/org/python/modules"
               preservelastmodified="true"
         />
 
-        <copy todir="${outputDir}/com" preservelastmodified="true">
-            <fileset dir="${sourceDir}/com">
+        <copy todir="${output.dir}/com" preservelastmodified="true">
+            <fileset dir="${source.dir}/com">
                 <include name="**/*.properties" if="java2collection.present" />
             </fileset>
         </copy>
@@ -404,39 +404,40 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
     <!-- build jython.jar -->
     <target name="jar" depends="compile">
-        <jar destfile="${distDir}/jython.jar"
-             basedir="${outputDir}"
-             update="true"
-             includes="**/*.class, **/ucnhash.dat, **/*.properties"
-        >
-            <manifest>
-                <attribute name="Main-Class" value="org.python.util.jython" />
-                <attribute name="Built-By" value="${user.name}" />
-                <!-- info section. ATTN: no blanks, no '.' in the names -->
-                <section name="Build-Info">
-                    <attribute name="version" value="${cvs.tag}" />
-                    <attribute name="cvs-build" value="${do.checkout}" />
-                    <attribute name="collections" value="${java2collection.present}" />
-                    <attribute name="weakref" value="${weakref.present}" />
-                    <attribute name="threadlocal" value="${threadlocal.present}" />
-                    <attribute name="java2-accessibility" value="${java2accessible.present}" />
-                    <attribute name="secureclassloader" value="${secureclassloader.present}" />
-                    <attribute name="servlet" value="${servlet.present}" />
-                    <attribute name="readline" value="${readline.present}" />
-                    <attribute name="oracle" value="${oracle.present}" />
-                    <attribute name="informix" value="${informix.present}" />
-                    <attribute name="mysql" value="${mysql.present}" />
-                    <attribute name="postgresql" value="${postgresql.present}" />
-                    <attribute name="jndi" value="${jndi.present}" />
-                    <attribute name="jdbc" value="${javax.sql.present}" />
-                    <attribute name="jdbc3_0" value="${jdbc30.present}" />
-                    <attribute name="build.compiler" value="${build.compiler}" />
-                    <attribute name="jdk.target.version" value="${jdk.target.version}" />
-                    <attribute name="deprecation" value="${deprecation}" />
-                    <attribute name="debug" value="${debug}" />
-                    <attribute name="optimize" value="${optimize}" />
-                </section>
-            </manifest>
+        <jar destfile="${dist.dir}/jython.jar"
+             basedir="${output.dir}"
+             update="true">
+          <include name="**/*.class" />
+          <include name="**/ucnhash.dat" />
+          <include name="**/*.properties" />
+          <manifest>
+              <attribute name="Main-Class" value="org.python.util.jython" />
+              <attribute name="Built-By" value="${user.name}" />
+              <!-- info section. ATTN: no blanks, no '.' in the names -->
+              <section name="Build-Info">
+                  <attribute name="version" value="${cvs.tag}" />
+                  <attribute name="cvs-build" value="${do.checkout}" />
+                  <attribute name="collections" value="${java2collection.present}" />
+                  <attribute name="weakref" value="${weakref.present}" />
+                  <attribute name="threadlocal" value="${threadlocal.present}" />
+                  <attribute name="java2-accessibility" value="${java2accessible.present}" />
+                  <attribute name="secureclassloader" value="${secureclassloader.present}" />
+                  <attribute name="servlet" value="${servlet.present}" />
+                  <attribute name="readline" value="${readline.present}" />
+                  <attribute name="oracle" value="${oracle.present}" />
+                  <attribute name="informix" value="${informix.present}" />
+                  <attribute name="mysql" value="${mysql.present}" />
+                  <attribute name="postgresql" value="${postgresql.present}" />
+                  <attribute name="jndi" value="${jndi.present}" />
+                  <attribute name="jdbc" value="${javax.sql.present}" />
+                  <attribute name="jdbc3_0" value="${jdbc30.present}" />
+                  <attribute name="build-compiler" value="${build.compiler}" />
+                  <attribute name="jdk-target-version" value="${jdk.target.version}" />
+                  <attribute name="deprecation" value="${deprecation}" />
+                  <attribute name="debug" value="${debug}" />
+                  <attribute name="optimize" value="${optimize}" />
+              </section>
+          </manifest>
         </jar>
     </target>
 
@@ -444,28 +445,28 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- build the .html files using the ht2html tool -->
     <target name="doc" depends="compile" if="full-build">
         <fail unless="ht2html.dir" message="ht2html.dir is not set" />
-        <copy todir="${distDir}/Doc" preservelastmodified="true">
+        <copy todir="${dist.dir}/Doc" preservelastmodified="true">
             <fileset dir="Doc" includes="*.ht, **/*.gif" />
         </copy>
         <!-- Create .html files in Doc -->
         <apply executable="${python.exe}" dir="Doc">
-            <env key="PYTHONPATH" path="${sourceDir}/Misc/htgen" />
+            <env key="PYTHONPATH" path="${source.dir}/Misc/htgen" />
             <arg line="${ht2html.dir}/ht2html.py" />
             <arg line="-s JyLocalGenerator" />
-            <fileset dir="${distDir}/Doc">
+            <fileset dir="${dist.dir}/Doc">
                 <include name="*.ht" />
             </fileset>
         </apply>
         <delete>
-            <fileset dir="${distDir}/Doc" includes="*.ht" />
+            <fileset dir="${dist.dir}/Doc" includes="*.ht" />
         </delete>
     </target>
 
 
     <!-- javadoc -->
     <target name="javadoc" depends="compile" if="full-build">
-        <javadoc sourcepath="${sourceDir}"
-                 destdir="${apidocDir}"
+        <javadoc sourcepath="${source.dir}"
+                 destdir="${apidoc.dir}"
                  public="true"
                  breakiterator="yes"
                  packagenames="org.python.core, org.python.util, com.ziclix.python.sql"
@@ -480,34 +481,46 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- copy for full distribution -->
     <target name="copy-full" if="full-build">
         <!-- Misc files -->
-        <echo>copy misc files from ${sourceDir}</echo>
-        <copy todir="${distDir}" preservelastmodified="true">
-            <fileset dir="${sourceDir}"
+        <echo>copy misc files from ${source.dir}</echo>
+        <copy todir="${dist.dir}" preservelastmodified="true">
+            <fileset dir="${source.dir}"
                      includes="ACKNOWLEDGMENTS, build.xml, build.Lib.include.properties, NEWS, LICENSE.txt, README.txt, registry"
             />
         </copy>
 
         <!-- copy the CPython license -->
-        <echo>copy CPython LICENSE from ${python.home} to ${distDir}/LICENSE_CPython.txt</echo>
+        <echo>copy CPython LICENSE from ${python.home} to ${dist.dir}/LICENSE_CPython.txt</echo>
         <!-- +++ TODO: checkout the CPython LICENSE (not: .txt) and copy from there -->
-        <copy file="${python.home}/LICENSE.txt" tofile="${distDir}/LICENSE_CPython.txt" preservelastmodified="true" />
+        <copy file="${python.home}/LICENSE.txt" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
 
         <!-- sources: todir has to correspond with installer/**/JarInstaller.java -->
-        <echo>copy sources from ${sourceDir}</echo>
-        <copy todir="${distDir}/src/java" preservelastmodified="true">
-            <fileset dir="${sourceDir}"
-                     includes="org/**/*.java, com/**/*.java, Lib/jxxload_help/*.java, Lib/test/javatests/*.java, org/**/ucnhash.dat, com/**/*.properties, org/python/parser/build.xml"
-                     excludes="org/python/parser/python.java"
-            />
+        <echo>copy sources from ${source.dir}</echo>
+        <copy todir="${dist.dir}/src/java" preservelastmodified="true">
+            <fileset dir="${source.dir}">
+            	  <include name="org/**/*.java" />
+            	  <include name="com/**/*.java" />
+            	  <include name="com/**/*.properties" />
+            	  <include name="Lib/jxxload_help/*.java" />
+            	  <include name="Lib/test/javatests/*.java" />
+            	  <include name="org/**/ucnhash.dat" />
+            	  <include name="org/python/parser/build.xml" />
+            	  <exclude name="org/python/parser/python.java" />
+            </fileset>
         </copy>
 
         <!-- The demo files -->
-        <echo>copy the demo files from ${sourceDir}/Demo</echo>
-        <copy todir="${distDir}/Demo" preservelastmodified="true">
-            <fileset dir="${sourceDir}/Demo"
-                     includes="**/*.java, **/*.html, **/*.py, **/*.txt, **/*.xml, **/jreload/example.jar, **/jreload/_xample/Version.class"
-                     excludes="**/jpywork/**"
-            />
+        <echo>copy the demo files from ${source.dir}/Demo</echo>
+        <copy todir="${dist.dir}/Demo" preservelastmodified="true">
+            <fileset dir="${source.dir}/Demo">
+              <include name="**/*.java" />
+              <include name="**/*.html" />
+              <include name="**/*.py" />
+              <include name="**/*.txt" />
+              <include name="**/*.xml**" />
+              <include name="**/jreload/example.jar" />
+              <include name="**/jreload/_xample/Version.class" />
+              <exclude name="**/jpywork/**" />
+            </fileset>
         </copy>
     </target>
 
@@ -515,25 +528,25 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- copy for distribution -->
     <target name="copy-dist" depends="jar, doc, javadoc, copy-full">
         <!-- Tools: jythonc and freeze -->
-        <echo>copy Tools from ${sourceDir}/Tools</echo>
-        <copy todir="${distDir}" preservelastmodified="true">
-            <fileset dir="${sourceDir}" includes="Tools/**/*.py" />
+        <echo>copy Tools from ${source.dir}/Tools</echo>
+        <copy todir="${dist.dir}" preservelastmodified="true">
+            <fileset dir="${source.dir}" includes="Tools/**/*.py" />
         </copy>
 
         <!-- Copy the CPython standard library files -->
         <echo>copy CPython/Lib *.py files from ${python.lib}</echo>
-        <copy todir="${distDir}/Lib" preservelastmodified="true">
+        <copy todir="${dist.dir}/Lib" preservelastmodified="true">
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo">
                 <patternset>
-                    <includesfile name="${sourceDir}/build.Lib.include.properties" />
+                    <includesfile name="${source.dir}/build.Lib.include.properties" />
                 </patternset>
             </fileset>
         </copy>
 
         <!-- The jython .py modules: important to overwrite the above CPython .py files -->
-        <echo>copy the jython *.py modules from ${sourceDir}/Lib</echo>
-        <copy todir="${distDir}/Lib" preservelastmodified="true" overwrite="true">
-            <fileset dir="${sourceDir}/Lib" includes="**/*.py" />
+        <echo>copy the jython *.py modules from ${source.dir}/Lib</echo>
+        <copy todir="${dist.dir}/Lib" preservelastmodified="true" overwrite="true">
+            <fileset dir="${source.dir}/Lib" includes="**/*.py" />
         </copy>
     </target>
 
@@ -541,27 +554,27 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- wrap the build into the installer -->
     <target name="install" depends="copy-dist">
         <fail unless="cvs.tag" message="no cvs.tag specified" />
-        <property name="install.src.dir" value="${sourceDir}/../installer" />
+        <property name="install.src.dir" value="${source.dir}/../installer" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
                includes="org/**"
-               destdir="${outputDir}/"
+               destdir="${output.dir}/"
                target="${jdk.target.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
         />
-        <echo>copy installer classes to ${distDir}</echo>
-        <copy todir="${distDir}" preservelastmodified="true">
-            <fileset dir="${outputDir}" includes="org/python/util/install/*.class" />
+        <echo>copy installer classes to ${dist.dir}</echo>
+        <copy todir="${dist.dir}" preservelastmodified="true">
+            <fileset dir="${output.dir}" includes="org/python/util/install/*.class" />
         </copy>
-        <echo>copy installer icon to ${distDir}</echo>
-        <copy todir="${distDir}" preservelastmodified="true">
+        <echo>copy installer icon to ${dist.dir}</echo>
+        <copy todir="${dist.dir}" preservelastmodified="true">
             <!-- check no /bin directory -->
             <fileset dir="${install.src.dir}" includes="**/*.png" excludes="bin/**" />
         </copy>
         <echo>building installer .jar file</echo>
-        <jar destfile="${work.dir}/jython_${cvs.tag}.jar" basedir="${distDir}" update="true">
+        <jar destfile="${work.dir}/jython_${cvs.tag}.jar" basedir="${dist.dir}" update="true">
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
                 <attribute name="Built-By" value="${user.name}" />
@@ -588,8 +601,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                     <attribute name="jndi" value="${jndi.present}" />
                     <attribute name="jdbc" value="${javax.sql.present}" />
                     <attribute name="jdbc3_0" value="${jdbc30.present}" />
-                    <attribute name="build.compiler" value="${build.compiler}" />
-                    <attribute name="jdk.target.version" value="${jdk.target.version}" />
+                    <attribute name="build-compiler" value="${build.compiler}" />
+                    <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="deprecation" value="${deprecation}" />
                     <attribute name="debug" value="${debug}" />
                     <attribute name="optimize" value="${optimize}" />
