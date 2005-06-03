@@ -487,6 +487,34 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("copy",new PyMethodDescr("copy",PySet.class,0,0,new exposed_copy(null,null)));
+        class exposed__as_immutable extends PyBuiltinFunctionNarrow {
+
+            private PySet self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed__as_immutable(PySet self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed__as_immutable((PySet)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.set__as_immutable();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PySet self=(PySet)gself;
+                return self.set__as_immutable();
+            }
+
+        }
+        dict.__setitem__("_as_immutable",new PyMethodDescr("_as_immutable",PySet.class,0,0,new exposed__as_immutable(null,null)));
         class exposed_union extends PyBuiltinFunctionNarrow {
 
             private PySet self;
@@ -1098,7 +1126,6 @@ public class PySet extends BaseSet {
         return this;
     }
 
-
     public PyObject __iand__(PyObject other) {
         return set___iand__(other);
     }
@@ -1211,7 +1238,7 @@ public class PySet extends BaseSet {
         }
     }
 
-    public PyObject _as_immutable() {
+    final PyObject set__as_immutable() {
         return new PyImmutableSet(this);
     }
 }
