@@ -110,6 +110,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("object", PyType.fromClass(PyObject.class));
         dict.__setitem__("type", PyType.fromClass(PyType.class));
         dict.__setitem__("int", PyType.fromClass(PyInteger.class));
+        dict.__setitem__("enumerate", PyType.fromClass(PyEnumerate.class));
         dict.__setitem__("float", PyType.fromClass(PyFloat.class));
         dict.__setitem__("long", PyType.fromClass(PyLong.class));
         dict.__setitem__("complex", PyType.fromClass(PyComplex.class));

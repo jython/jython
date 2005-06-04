@@ -1,9 +1,9 @@
-# Taken from Python 2.3.4 test suite.
+# Taken from Python 2.3.5
 
 from __future__ import generators
-import unittest
 
-#from sets import Set
+import unittest
+from sets import Set
 
 from test import test_support
 
@@ -71,7 +71,7 @@ class EnumerateTestCase(unittest.TestCase):
     seq, res = 'abc', [(0,'a'), (1,'b'), (2,'c')]
 
     def test_basicfunction(self):
-        #
+        # This one fails.
         #self.assertEqual(type(self.enum(self.seq)), self.enum)
         #
         e = self.enum(self.seq)
@@ -108,18 +108,19 @@ class EnumerateTestCase(unittest.TestCase):
         self.assertRaises(TypeError, self.enum, 1) # wrong type (not iterable)
         self.assertRaises(TypeError, self.enum, 'abc', 2) # too many arguments
 
-    #def test_tuple_reuse(self):
-    #    # Tests an implementation detail where tuple is reused
-    #    # whenever nothing else holds a reference to it
-    #    self.assertEqual(len(Set(map(id, list(enumerate(self.seq))))), len(self.seq))
-    #    self.assertEqual(len(Set(map(id, enumerate(self.seq)))), min(1,len(self.seq)))
+    def test_tuple_reuse(self):
+        # Tests an implementation detail where tuple is reused
+        # whenever nothing else holds a reference to it
+        #self.assertEqual(len(Set(map(id, list(enumerate(self.seq))))), len(self.seq))
+        #self.assertEqual(len(Set(map(id, enumerate(self.seq)))), min(1,len(self.seq)))
+        pass
 
-#class MyEnum(enumerate):
-#    pass
-#
-#class SubclassTestCase(EnumerateTestCase):
-#
-#    enum = MyEnum
+class MyEnum(enumerate):
+    pass
+
+class SubclassTestCase(EnumerateTestCase):
+
+    enum = MyEnum
 
 class TestEmpty(EnumerateTestCase):
 
@@ -132,11 +133,9 @@ class TestBig(EnumerateTestCase):
 
 
 def test_main(verbose=None):
-    #testclasses = (EnumerateTestCase, SubclassTestCase, TestEmpty, TestBig)
-    #test_support.run_unittest(*testclasses)
-    test_support.run_unittest(EnumerateTestCase)
-    test_support.run_unittest(TestEmpty)
-    test_support.run_unittest(TestBig)
+    testclasses = (EnumerateTestCase, SubclassTestCase, TestEmpty, TestBig)
+    for test in testclasses:
+        test_support.run_unittest(test)
 
     # verify reference counting
     import sys
