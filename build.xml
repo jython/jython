@@ -39,7 +39,8 @@ The following targets are designed for direct invocation:
   - usage
   - developer-build
   - full-build
-  - parser (uses developer-build settings)
+  - clean (uses developer-build settings if called directly)
+  - parser (uses developer-build settings if called directly)
 Following an ant convention, the callable targets have a description attribute.
 All other targets may give unpredicted results if called directly.
 
@@ -110,13 +111,19 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
     <!-- developer build -->
     <target name="developer-build"
-            depends="developer-init, post-init, copy-dist"
+            depends="developer-build-called, developer-init, post-init, copy-dist"
             description="a local build for developers"
     />
 
 
     <!-- full build -->
     <target name="full-build" depends="full-init, post-init, install" description="a full build from cvs" />
+
+
+    <!-- set a properety to indicate that target 'developer-build' is was really called -->
+    <target name="developer-build-called">
+        <property name="developer-build-called" value="true" />
+    </target>
 
 
     <!-- initialize properties common to both developer build and full build -->
@@ -241,7 +248,13 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
 
     <!-- delete what's necessary. should correspond to the directories created in prepare  -->
-    <target name="clean" depends="developer-init, post-init, clean-checkout-dir">
+    <!-- if called directly, we use settings as in developer-build -->
+    <!-- (at the moment all properties will already be set if we do a full build) -->
+    <target name="clean"
+            depends="developer-init, post-init, clean-checkout-dir"
+            unless="developer-build-called"
+            description="clean up build working directories"
+    >
         <!-- do not hard delete ${work.dir}, since it could be basedir -->
         <!-- deletes all files and subdirectories of ${output.dir}, without ${output.dir} itself. -->
         <delete includeemptydirs="true" failonerror="false">
@@ -274,7 +287,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
 
     <!-- create directories needed only in full-build -->
-    <target name="prepare-full" if="full-build">
+    <target name="prepare-full" depends="clean" if="full-build">
         <mkdir dir="${work.dir}" />
         <mkdir dir="${dist.dir}/Doc" />
         <mkdir dir="${apidoc.dir}" />
