@@ -60,9 +60,10 @@ Actions for a release
        - python.cvs.tag      (target: full-init)
        - jdk.target.version  (target: pre-init)
   4. if new CPython .py files should be distributed, add them to build.Lib.include.properties           
-  5. check in this build.xml, and build.Lib.include.properties
-  6. apply the new tag to the jython cvs (all projects)
-  7. call target 'full-build' 
+  5. adjust the public static String version in PySystemState.java
+  6. check in all the changes
+  7. apply the new tag to the jython cvs (all projects)
+  8. call target 'full-build' 
 
 
             
@@ -326,15 +327,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     </target>
 
 
-    <!-- replace the version string in PySystemState.java -->
-    <target name="version" depends="checkout" if="full-build">
-        <echo>replacing version in PySystemState.java with ${cvs.tag}</echo>
-        <replace file="${source.dir}/org/python/core/PySystemState.java" token="developer-build" value="${cvs.tag}" />
-    </target>
-
-
     <!-- compile java sources -->
-    <target name="compile" depends="version, parser">
+    <target name="compile" depends="checkout, parser">
         <javac srcdir="${source.dir}/"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
