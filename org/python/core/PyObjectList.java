@@ -110,7 +110,7 @@ public class PyObjectList
     }
 
     /**
-     *  Use {@link #pyget(int)} for internal jython usage,.
+     * Use <code>pyget(int)</code> for internal jython usage.
      */
     public Object get(int index) {
         PyObject obj = array.get(index);
@@ -133,13 +133,13 @@ public class PyObjectList
         array.remove(start, stop);
     }
 
+    /**
+     * Use <code>pyset(int, PyObject)</code> for internal jython usage.
+     */
     public Object set(int index, Object element) {
         return array.set(index, Py.java2py(element) ).__tojava__(Object.class);
     }
 
-    /**
-     * Use {@link #pyset(int, PyObject)} for internal jython usage.
-     */
     PyObject pyset(int index, PyObject element) {
         return array.set(index, element);
     }
