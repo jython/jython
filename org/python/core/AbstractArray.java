@@ -64,7 +64,7 @@ public abstract class AbstractArray implements Serializable{
      * <CODE>modCount</CODE> if a potentially structure-altering method
      * is called, regardless of whether or not a change actually occurred.
      *
-     * @see java.util.AbstractList#modCount
+     * <b>See also:</b> <code>java.util.AbstractList#modCount</code>
      */
     protected int modCountIncr;
 
