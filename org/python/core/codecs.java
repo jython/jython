@@ -88,7 +88,7 @@ public class codecs {
 
 
 
-    public static PyString decode(PyString v, String encoding,
+    public static String decode(PyString v, String encoding,
                                   String errors)
     {
         if (encoding == null)
@@ -108,8 +108,8 @@ public class codecs {
             ; //return PyUnicode_DecodeASCII(s, size, errors);
 */
         if (encoding.equals("ascii"))
-            return new PyString(PyUnicode_DecodeASCII(v.toString(),
-                                                      v.__len__(), errors));
+            return PyUnicode_DecodeASCII(v.toString(),
+                                                      v.__len__(), errors);
 
         /* Decode via the codec registry */
         PyObject decoder = getDecoder(encoding);
@@ -123,7 +123,7 @@ public class codecs {
         if (!(result instanceof PyTuple) || result.__len__() != 2)
             throw Py.TypeError("decoder must return a tuple " +
                                "(object,integer)");
-        return result.__getitem__(0).__str__();
+        return result.__getitem__(0).toString();
     }
 
 
@@ -134,7 +134,7 @@ public class codecs {
 
 
 
-    public static PyString encode(PyString v, String encoding,
+    public static String encode(PyString v, String encoding,
                                   String errors)
     {
         if (encoding == null)
@@ -154,8 +154,8 @@ public class codecs {
 */
 
         if (encoding.equals("ascii"))
-            return new PyString(PyUnicode_EncodeASCII(v.toString(),
-                                                      v.__len__(), errors));
+            return PyUnicode_EncodeASCII(v.toString(),
+                                                      v.__len__(), errors);
 
         /* Decode via the codec registry */
         PyObject encoder = getEncoder(encoding);
@@ -169,7 +169,7 @@ public class codecs {
         if (!(result instanceof PyTuple) || result.__len__() != 2)
             throw Py.TypeError("encoder must return a tuple " +
                                "(object,integer)");
-        return result.__getitem__(0).__str__();
+        return result.__getitem__(0).toString();
     }
 
     private static PyObject getEncoder(String encoding) {

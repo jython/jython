@@ -1,237 +1,2599 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.io.Serializable;
-
-class StringFuncs extends PyBuiltinFunctionSet
-{
-    StringFuncs(String name, int index, int argcount) {
-        super(name, index, argcount, argcount, true, null);
-    }
-
-    StringFuncs(String name, int index, int mincount, int maxcount) {
-        super(name, index, mincount, maxcount, true, null);
-    }
-
-    private String tostring(PyObject o) {
-        if (o == Py.None)
-            return null;
-        if (o instanceof PyString)
-            return ((PyString)o).toString();
-        throw Py.TypeError("1st arg can't be coerced to string");
-    }
-
-    private String tostring(PyObject o, String which) {
-        if (o instanceof PyString)
-            return ((PyString)o).toString();
-        throw Py.TypeError(which + " arg can't be coerced to string");
-    }
-
-    private int toint(PyObject o) {
-        if (o instanceof PyInteger)
-            return ((PyInteger)o).getValue();
-        throw Py.TypeError("2nd arg can't be coerced to int");
-    }
-
-    private int toint(PyObject o, String which) {
-        if (o instanceof PyInteger)
-            return ((PyInteger)o).getValue();
-        throw Py.TypeError(which + " arg can't be coerced to int");
-    }
-
-    public PyObject __call__() {
-        PyString s = (PyString)__self__;
-        switch (index) {
-        case 1:
-            return s.__str__();
-        case 2:
-            return new PyInteger(s.__len__());
-        case 3:
-            return s.__repr__();
-        case 4:
-            return Py.newBoolean(s.islower());
-        case 5:
-            return Py.newBoolean(s.isalpha());
-        case 6:
-            return Py.newBoolean(s.isdigit());
-        case 7:
-            return Py.newBoolean(s.isupper());
-        case 8:
-            return Py.newBoolean(s.isspace());
-        case 9:
-            return Py.newBoolean(s.istitle());
-        case 10:
-            return Py.newBoolean(s.isnumeric());
-        case 101:
-            return new PyString(s.lower());
-        case 102:
-            return new PyString(s.upper());
-        case 103:
-            return new PyString(s.swapcase());
-        case 104:
-            return new PyString(s.strip());
-        case 105:
-            return new PyString(s.lstrip());
-        case 106:
-            return new PyString(s.rstrip());
-        case 107:
-            return s.split();
-        case 113:
-            return new PyString(s.capitalize());
-        default:
-            throw argCountError(0);
-        }
-    }
-
-    public PyObject __call__(PyObject arg) {
-        PyString s = (PyString)__self__;
-        switch (index) {
-        case 11:
-            return new PyInteger(s.__cmp__(arg));
-        case 12:
-            return s.__add__(arg);
-        case 13:
-            return s.__mod__(arg);
-        case 104:
-            return new PyString(s.strip(tostring(arg)));
-        case 105:
-            return new PyString(s.lstrip(tostring(arg)));
-        case 106:
-            return new PyString(s.rstrip(tostring(arg)));
-        case 107:
-            return s.split(tostring(arg));
-        case 108:
-            return new PyInteger(s.index(tostring(arg)));
-        case 109:
-            return new PyInteger(s.rindex(tostring(arg)));
-        case 110:
-            return new PyInteger(s.count(tostring(arg)));
-        case 111:
-            return new PyInteger(s.find(tostring(arg)));
-        case 112:
-            return new PyInteger(s.rfind(tostring(arg)));
-        case 114:
-            return new PyInteger(s.endswith(tostring(arg)) ? 1 : 0);
-        case 115:
-            return new PyString(s.join(arg));
-        case 117:
-            return new PyInteger(s.startswith(tostring(arg)) ? 1 : 0);
-        case 118:
-            if (arg instanceof PyString)
-                return new PyString(s.translate(tostring(arg)));
-            else
-                return new PyString(s.translate(arg));
-        default:
-            throw argCountError(1);
-        }
-    }
-
-    public PyObject __call__(PyObject arg1, PyObject arg2) {
-        PyString s = (PyString)__self__;
-        String args, args1, args2;
-        int argi;
-        switch (index) {
-        case 107:
-            args = tostring(arg1);
-            argi = toint(arg2);
-            return s.split(args, argi);
-        case 108:
-            args = tostring(arg1);
-            argi = toint(arg2);
-            return new PyInteger(s.index(args, argi));
-        case 109:
-            args = tostring(arg1);
-            argi = toint(arg2);
-            return new PyInteger(s.rindex(args, argi));
-        case 110:
-            args = tostring(arg1);
-            argi = toint(arg2);
-            return new PyInteger(s.count(args, argi));
-        case 111:
-            args = tostring(arg1);
-            argi = toint(arg2);
-            return new PyInteger(s.find(args, argi));
-        case 112:
-            args = tostring(arg1);
-            argi = toint(arg2);
-            return new PyInteger(s.rfind(args, argi));
-        case 114:
-            args = tostring(arg1);
-            argi = toint(arg2);
-            return new PyInteger(s.endswith(args, argi) ? 1 : 0);
-        case 116:
-            args1 = tostring(arg1);
-            args2 = tostring(arg2, "2nd");
-            return new PyString(s.replace(args1, args2));
-        case 117:
-            args = tostring(arg1);
-            argi = toint(arg2);
-            return new PyInteger(s.startswith(args, argi) ? 1 : 0);
-        case 118:
-            args1 = tostring(arg1);
-            args2 = tostring(arg2, "2nd");
-            return new PyString(s.translate(args1, args2));
-        default:
-            throw argCountError(2);
-        }
-    }
-
-    public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-        PyString s = (PyString)__self__;
-        String args, args1, args2;
-        int argi, argi2, argi3;
-        switch (index) {
-        case 108:
-            args = tostring(arg1);
-            argi2 = toint(arg2);
-            argi3 = toint(arg3, "3rd");
-            return new PyInteger(s.index(args, argi2, argi3));
-        case 109:
-            args = tostring(arg1);
-            argi2 = toint(arg2);
-            argi3 = toint(arg3, "3rd");
-            return new PyInteger(s.rindex(args, argi2, argi3));
-        case 110:
-            args = tostring(arg1);
-            argi2 = toint(arg2);
-            argi3 = toint(arg3, "3rd");
-            return new PyInteger(s.count(args, argi2, argi3));
-        case 111:
-            args = tostring(arg1);
-            argi2 = toint(arg2);
-            argi3 = toint(arg3, "3rd");
-            return new PyInteger(s.find(args, argi2, argi3));
-        case 112:
-            args = tostring(arg1);
-            argi2 = toint(arg2);
-            argi3 = toint(arg3, "3rd");
-            return new PyInteger(s.rfind(args, argi2, argi3));
-        case 114:
-            args = tostring(arg1);
-            argi2 = toint(arg2);
-            argi3 = toint(arg3, "3rd");
-            return new PyInteger(s.endswith(args, argi2, argi3) ? 1 : 0);
-        case 116:
-            args1 = tostring(arg1);
-            args2 = tostring(arg2, "2nd");
-            argi = toint(arg3, "3rd");
-            return new PyString(s.replace(args1, args2, argi));
-        case 117:
-            args = tostring(arg1);
-            argi2 = toint(arg2);
-            argi3 = toint(arg3, "3rd");
-            return new PyInteger(s.startswith(args, argi2, argi3) ? 1 : 0);
-        default:
-            throw argCountError(3);
-        }
-    }
-}
-
 /**
  * A builtin python string.
  */
 public class PyString extends PySequence implements ClassDictInit
 {
+    //~ BEGIN GENERATED
+    /* type info */
+
+    public static final String exposed_name="str";
+
+    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
+        class exposed___ne__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___ne__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___ne__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=self.str___ne__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                PyObject ret=self.str___ne__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__ne__",new PyMethodDescr("__ne__",PyString.class,1,1,new exposed___ne__(null,null)));
+        class exposed___eq__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___eq__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___eq__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=self.str___eq__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                PyObject ret=self.str___eq__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyString.class,1,1,new exposed___eq__(null,null)));
+        class exposed___contains__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___contains__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___contains__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return Py.newBoolean(self.str___contains__(arg0));
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str___contains__(arg0));
+            }
+
+        }
+        dict.__setitem__("__contains__",new PyMethodDescr("__contains__",PyString.class,1,1,new exposed___contains__(null,null)));
+        class exposed___len__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___len__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___len__((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newInteger(self.str___len__());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newInteger(self.str___len__());
+            }
+
+        }
+        dict.__setitem__("__len__",new PyMethodDescr("__len__",PyString.class,0,0,new exposed___len__(null,null)));
+        class exposed___add__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___add__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___add__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.str___add__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return self.str___add__(arg0);
+            }
+
+        }
+        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
+        class exposed___mul__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___mul__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___mul__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.str___mul__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return self.str___mul__(arg0);
+            }
+
+        }
+        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyString.class,1,1,new exposed___mul__(null,null)));
+        class exposed___rmul__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___rmul__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___rmul__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.str___rmul__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return self.str___rmul__(arg0);
+            }
+
+        }
+        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyString.class,1,1,new exposed___rmul__(null,null)));
+        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___hash__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___hash__((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newInteger(self.str_hashCode());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newInteger(self.str_hashCode());
+            }
+
+        }
+        dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyString.class,0,0,new exposed___hash__(null,null)));
+        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___repr__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___repr__((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_toString());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_toString());
+            }
+
+        }
+        dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyString.class,0,0,new exposed___repr__(null,null)));
+        class exposed_capitalize extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_capitalize(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_capitalize((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_capitalize());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_capitalize());
+            }
+
+        }
+        dict.__setitem__("capitalize",new PyMethodDescr("capitalize",PyString.class,0,0,new exposed_capitalize(null,null)));
+        class exposed_center extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_center(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_center((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_center(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_center(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("center",new PyMethodDescr("center",PyString.class,1,1,new exposed_center(null,null)));
+        class exposed_count extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_count(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_count((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return Py.newInteger(self.str_count(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_count(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return Py.newInteger(self.str_count(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_count(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return Py.newInteger(self.str_count(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_count(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("count",new PyMethodDescr("count",PyString.class,1,3,new exposed_count(null,null)));
+        class exposed_decode extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_decode(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_decode((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return new PyString(self.str_decode(arg0.asString(0),arg1.asString(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_decode(arg0.asString(0),arg1.asString(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_decode(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_decode(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_decode());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_decode());
+            }
+
+        }
+        dict.__setitem__("decode",new PyMethodDescr("decode",PyString.class,0,2,new exposed_decode(null,null)));
+        class exposed_encode extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_encode(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_encode((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return new PyString(self.str_encode(arg0.asString(0),arg1.asString(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_encode(arg0.asString(0),arg1.asString(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_encode(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_encode(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_encode());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_encode());
+            }
+
+        }
+        dict.__setitem__("encode",new PyMethodDescr("encode",PyString.class,0,2,new exposed_encode(null,null)));
+        class exposed_endswith extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_endswith(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_endswith((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return Py.newBoolean(self.str_endswith(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newBoolean(self.str_endswith(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return Py.newBoolean(self.str_endswith(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newBoolean(self.str_endswith(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return Py.newBoolean(self.str_endswith(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newBoolean(self.str_endswith(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("endswith",new PyMethodDescr("endswith",PyString.class,1,3,new exposed_endswith(null,null)));
+        class exposed_expandtabs extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_expandtabs(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_expandtabs((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_expandtabs(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_expandtabs(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_expandtabs());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_expandtabs());
+            }
+
+        }
+        dict.__setitem__("expandtabs",new PyMethodDescr("expandtabs",PyString.class,0,1,new exposed_expandtabs(null,null)));
+        class exposed_find extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_find(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_find((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return Py.newInteger(self.str_find(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_find(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return Py.newInteger(self.str_find(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_find(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return Py.newInteger(self.str_find(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_find(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("find",new PyMethodDescr("find",PyString.class,1,3,new exposed_find(null,null)));
+        class exposed_index extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_index(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_index((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return Py.newInteger(self.str_index(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_index(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return Py.newInteger(self.str_index(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_index(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return Py.newInteger(self.str_index(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_index(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("index",new PyMethodDescr("index",PyString.class,1,3,new exposed_index(null,null)));
+        class exposed_isalnum extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_isalnum(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_isalnum((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_isalnum());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_isalnum());
+            }
+
+        }
+        dict.__setitem__("isalnum",new PyMethodDescr("isalnum",PyString.class,0,0,new exposed_isalnum(null,null)));
+        class exposed_isalpha extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_isalpha(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_isalpha((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_isalpha());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_isalpha());
+            }
+
+        }
+        dict.__setitem__("isalpha",new PyMethodDescr("isalpha",PyString.class,0,0,new exposed_isalpha(null,null)));
+        class exposed_isdecimal extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_isdecimal(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_isdecimal((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_isdecimal());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_isdecimal());
+            }
+
+        }
+        dict.__setitem__("isdecimal",new PyMethodDescr("isdecimal",PyString.class,0,0,new exposed_isdecimal(null,null)));
+        class exposed_isdigit extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_isdigit(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_isdigit((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_isdigit());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_isdigit());
+            }
+
+        }
+        dict.__setitem__("isdigit",new PyMethodDescr("isdigit",PyString.class,0,0,new exposed_isdigit(null,null)));
+        class exposed_islower extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_islower(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_islower((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_islower());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_islower());
+            }
+
+        }
+        dict.__setitem__("islower",new PyMethodDescr("islower",PyString.class,0,0,new exposed_islower(null,null)));
+        class exposed_isnumeric extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_isnumeric(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_isnumeric((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_isnumeric());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_isnumeric());
+            }
+
+        }
+        dict.__setitem__("isnumeric",new PyMethodDescr("isnumeric",PyString.class,0,0,new exposed_isnumeric(null,null)));
+        class exposed_isspace extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_isspace(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_isspace((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_isspace());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_isspace());
+            }
+
+        }
+        dict.__setitem__("isspace",new PyMethodDescr("isspace",PyString.class,0,0,new exposed_isspace(null,null)));
+        class exposed_istitle extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_istitle(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_istitle((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_istitle());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_istitle());
+            }
+
+        }
+        dict.__setitem__("istitle",new PyMethodDescr("istitle",PyString.class,0,0,new exposed_istitle(null,null)));
+        class exposed_isupper extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_isupper(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_isupper((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_isupper());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_isupper());
+            }
+
+        }
+        dict.__setitem__("isupper",new PyMethodDescr("isupper",PyString.class,0,0,new exposed_isupper(null,null)));
+        class exposed_join extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_join(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_join((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return new PyString(self.str_join(arg0));
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_join(arg0));
+            }
+
+        }
+        dict.__setitem__("join",new PyMethodDescr("join",PyString.class,1,1,new exposed_join(null,null)));
+        class exposed_ljust extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_ljust(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_ljust((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_ljust(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_ljust(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("ljust",new PyMethodDescr("ljust",PyString.class,1,1,new exposed_ljust(null,null)));
+        class exposed_lower extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_lower(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_lower((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_lower());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_lower());
+            }
+
+        }
+        dict.__setitem__("lower",new PyMethodDescr("lower",PyString.class,0,0,new exposed_lower(null,null)));
+        class exposed_lstrip extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_lstrip(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_lstrip((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_lstrip(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_lstrip(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_lstrip());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_lstrip());
+            }
+
+        }
+        dict.__setitem__("lstrip",new PyMethodDescr("lstrip",PyString.class,0,1,new exposed_lstrip(null,null)));
+        class exposed_replace extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_replace(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_replace((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return new PyString(self.str_replace(arg0.asString(0),arg1.asString(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_replace(arg0.asString(0),arg1.asString(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return new PyString(self.str_replace(arg0.asString(0),arg1.asString(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_replace(arg0.asString(0),arg1.asString(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("replace",new PyMethodDescr("replace",PyString.class,2,3,new exposed_replace(null,null)));
+        class exposed_rfind extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_rfind(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_rfind((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return Py.newInteger(self.str_rfind(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_rfind(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return Py.newInteger(self.str_rfind(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_rfind(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return Py.newInteger(self.str_rfind(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_rfind(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("rfind",new PyMethodDescr("rfind",PyString.class,1,3,new exposed_rfind(null,null)));
+        class exposed_rindex extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_rindex(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_rindex((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return Py.newInteger(self.str_rindex(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_rindex(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return Py.newInteger(self.str_rindex(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_rindex(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return Py.newInteger(self.str_rindex(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newInteger(self.str_rindex(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("rindex",new PyMethodDescr("rindex",PyString.class,1,3,new exposed_rindex(null,null)));
+        class exposed_rjust extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_rjust(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_rjust((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_rjust(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_rjust(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("rjust",new PyMethodDescr("rjust",PyString.class,1,1,new exposed_rjust(null,null)));
+        class exposed_rstrip extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_rstrip(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_rstrip((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_rstrip(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_rstrip(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_rstrip());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_rstrip());
+            }
+
+        }
+        dict.__setitem__("rstrip",new PyMethodDescr("rstrip",PyString.class,0,1,new exposed_rstrip(null,null)));
+        class exposed_split extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_split(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_split((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return self.str_split(arg0.asString(0),arg1.asInt(1));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return self.str_split(arg0.asString(0),arg1.asInt(1));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return self.str_split(arg0.asString(0));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return self.str_split(arg0.asString(0));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return self.str_split();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return self.str_split();
+            }
+
+        }
+        dict.__setitem__("split",new PyMethodDescr("split",PyString.class,0,2,new exposed_split(null,null)));
+        class exposed_splitlines extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_splitlines(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_splitlines((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.str_splitlines(Py.py2boolean(arg0));
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return self.str_splitlines(Py.py2boolean(arg0));
+            }
+
+            public PyObject __call__() {
+                return self.str_splitlines();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return self.str_splitlines();
+            }
+
+        }
+        dict.__setitem__("splitlines",new PyMethodDescr("splitlines",PyString.class,0,1,new exposed_splitlines(null,null)));
+        class exposed_startswith extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_startswith(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_startswith((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                try {
+                    return Py.newBoolean(self.str_startswith(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newBoolean(self.str_startswith(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                    case 2:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return Py.newBoolean(self.str_startswith(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newBoolean(self.str_startswith(arg0.asString(0),arg1.asInt(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 1:
+                        msg="expected an integer";
+                        break;
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return Py.newBoolean(self.str_startswith(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return Py.newBoolean(self.str_startswith(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("startswith",new PyMethodDescr("startswith",PyString.class,1,3,new exposed_startswith(null,null)));
+        class exposed_strip extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_strip(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_strip((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_strip(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_strip(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_strip());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_strip());
+            }
+
+        }
+        dict.__setitem__("strip",new PyMethodDescr("strip",PyString.class,0,1,new exposed_strip(null,null)));
+        class exposed_swapcase extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_swapcase(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_swapcase((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_swapcase());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_swapcase());
+            }
+
+        }
+        dict.__setitem__("swapcase",new PyMethodDescr("swapcase",PyString.class,0,0,new exposed_swapcase(null,null)));
+        class exposed_title extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_title(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_title((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_title());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_title());
+            }
+
+        }
+        dict.__setitem__("title",new PyMethodDescr("title",PyString.class,0,0,new exposed_title(null,null)));
+        class exposed_translate extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_translate(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_translate((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                try {
+                    return new PyString(self.str_translate(arg0.asString(0),arg1.asString(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_translate(arg0.asString(0),arg1.asString(1)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                    case 1:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_translate(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_translate(arg0.asString(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected a string";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("translate",new PyMethodDescr("translate",PyString.class,1,2,new exposed_translate(null,null)));
+        class exposed_upper extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_upper(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_upper((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyString(self.str_upper());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return new PyString(self.str_upper());
+            }
+
+        }
+        dict.__setitem__("upper",new PyMethodDescr("upper",PyString.class,0,0,new exposed_upper(null,null)));
+        class exposed_zfill extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_zfill(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_zfill((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return new PyString(self.str_zfill(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                try {
+                    return new PyString(self.str_zfill(arg0.asInt(0)));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+        }
+        dict.__setitem__("zfill",new PyMethodDescr("zfill",PyString.class,1,1,new exposed_zfill(null,null)));
+        dict.__setitem__("__new__",new PyNewWrapper(PyString.class,"__new__",-1,-1) {
+
+                                                                                        public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                            return str_new(this,init,subtype,args,keywords);
+                                                                                        }
+
+                                                                                    });
+    }
+
+    //~ END GENERATED
+
     private String string;
     private transient int cached_hashcode=0;
     private transient boolean interned=false;
@@ -239,6 +2601,10 @@ public class PyString extends PySequence implements ClassDictInit
     // for PyJavaClass.init()
     public PyString() {
         string = "";
+    }
+
+    public PyString(PyType subType) {
+        super(subType);
     }
 
     public PyString(String string) {
@@ -253,68 +2619,17 @@ public class PyString extends PySequence implements ClassDictInit
         this(String.valueOf(c));
     }
 
-    /** <i>Internal use only. Do not call this method explicit.</i> */
-    public static void classDictInit(PyObject dict) {
-        dict.__setitem__("__str__", new StringFuncs("__str__", 1, 0));
-        dict.__setitem__("__len__", new StringFuncs("__len__", 2, 0));
-        dict.__setitem__("__repr__", new StringFuncs("__repr__", 3, 0));
-        dict.__setitem__("islower", new StringFuncs("islower", 4, 0));
-        dict.__setitem__("isalpha", new StringFuncs("isalpha", 5, 0));
-        dict.__setitem__("isdigit", new StringFuncs("isdigit", 6, 0));
-        dict.__setitem__("isupper", new StringFuncs("isupper", 7, 0));
-        dict.__setitem__("isspace", new StringFuncs("isspace", 8, 0));
-        dict.__setitem__("istitle", new StringFuncs("istitle", 9, 0));
-        dict.__setitem__("isnumeric", new StringFuncs("isnumeric", 10, 0));
-        dict.__setitem__("__cmp__", new StringFuncs("__cmp__", 11, 1));
-        dict.__setitem__("__add__", new StringFuncs("__add__", 12, 1));
-        dict.__setitem__("__mod__", new StringFuncs("__mod__", 13, 1));
-        // new experimental string methods
-        dict.__setitem__("lower", new StringFuncs("lower", 101, 0));
-        dict.__setitem__("upper", new StringFuncs("upper", 102, 0));
-        dict.__setitem__("swapcase", new StringFuncs("swapcase", 103, 0));
-        dict.__setitem__("strip", new StringFuncs("strip", 104, 0, 1));
-        dict.__setitem__("lstrip", new StringFuncs("lstrip", 105, 0, 1));
-        dict.__setitem__("rstrip", new StringFuncs("rstrip", 106, 0, 1));
-        dict.__setitem__("split", new StringFuncs("split", 107, 0, 2));
-        dict.__setitem__("index", new StringFuncs("index", 108, 1, 3));
-        dict.__setitem__("rindex", new StringFuncs("rindex", 109, 1, 3));
-        dict.__setitem__("count", new StringFuncs("count", 110, 1, 3));
-        dict.__setitem__("find", new StringFuncs("find", 111, 1, 3));
-        dict.__setitem__("rfind", new StringFuncs("rfind", 112, 1, 3));
-        dict.__setitem__("capitalize", new StringFuncs("capitalize", 113, 0));
-        dict.__setitem__("endswith", new StringFuncs("endswith", 114, 1, 3));
-        dict.__setitem__("join", new StringFuncs("join", 115, 1));
-        dict.__setitem__("replace", new StringFuncs("replace", 116, 2, 3));
-        dict.__setitem__("startswith",
-                         new StringFuncs("startswith", 117, 1, 3));
-        dict.__setitem__("translate",
-                         new StringFuncs("translate", 118, 1, 2));
-        // TBD: CPython currently doesn't have these as string methods, but
-        // they'd be easy to add for JPython.  For now, compatibility says
-        // to access these only through the string module
-        //
-        // ljust()
-        // rjust()
-        // center()
-        // zfill()
-        // expandtabs()
-        // capwords()
-        //
-        // Hide these from Python!
-        dict.__setitem__("toString", null);
-        dict.__setitem__("internedString", null);
-        dict.__setitem__("hashCode", null);
-        dict.__setitem__("equals", null);
-        dict.__setitem__("__int__", null);
-        dict.__setitem__("__long__", null);
-        dict.__setitem__("__float__", null);
-        dict.__setitem__("__tojava__", null);
-        dict.__setitem__("atof", null);
-        dict.__setitem__("atoi", null);
-        dict.__setitem__("atol", null);
-        dict.__setitem__("encode_UnicodeEscape", null);
-        dict.__setitem__("decode_UnicodeEscape", null);
+    final static PyObject str_new(PyObject new_, boolean init, PyType subtype,
+            PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("str", args, keywords, new String[] { "S" }, 0);
+        PyObject S = ap.getPyObject(0, null);
+        if (S instanceof PyString)
+            return S;
+        return S.__str__();
     }
+
+    /** <i>Internal use only. Do not call this method explicit.</i> */
+    public static void classDictInit(PyObject dict) throws PyIgnoreMethodTag {}
 
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'string' object";
@@ -325,10 +2640,18 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public int __len__() {
+        return str___len__();
+    }
+
+    final int str___len__() {
         return string.length();
     }
 
     public String toString() {
+        return str_toString();
+    }
+
+    final String str_toString() {
         return string;
     }
 
@@ -588,6 +2911,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public int __cmp__(PyObject other) {
+        return str___cmp__(other);
+    }
+
+    final int str___cmp__(PyObject other) {
         if (!(other instanceof PyString))
             return -2;
 
@@ -596,6 +2923,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public PyObject __eq__(PyObject other) {
+        return str___eq__(other);
+    }
+
+    final PyObject str___eq__(PyObject other) {
         String s = coerce(other);
         if (s == null)
             return null;
@@ -603,6 +2934,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public PyObject __ne__(PyObject other) {
+        return str___ne__(other);
+    }
+
+    final PyObject str___ne__(PyObject other) {
         String s = coerce(other);
         if (s == null)
             return null;
@@ -644,6 +2979,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public int hashCode() {
+        return str_hashCode();
+    }
+
+    final int str_hashCode() {
         if (cached_hashcode == 0)
             cached_hashcode = string.hashCode();
         return cached_hashcode;
@@ -698,6 +3037,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean __contains__(PyObject o) {
+        return str___contains__(o);
+    }
+
+    final boolean str___contains__(PyObject o) {
         if (!(o instanceof PyString))
             throw Py.TypeError("'in <string>' requires string as left operand");
         PyString other = (PyString) o;
@@ -715,7 +3058,25 @@ public class PyString extends PySequence implements ClassDictInit
         return new PyString(new String(new_chars));
     }
 
+    final PyObject str___mul__(PyObject o) {
+        if (!(o instanceof PyInteger || o instanceof PyLong))
+            throw Py.TypeError("can't multiply sequence to non-int");
+        int count = o.__int__().getValue();
+        return repeat(count);
+    }
+
+    final PyObject str___rmul__(PyObject o) {
+        if (!(o instanceof PyInteger || o instanceof PyLong))
+            throw Py.TypeError("can't multiply sequence to non-int");
+        int count = o.__int__().getValue();
+        return repeat(count);
+    }
+
     public PyObject __add__(PyObject generic_other) {
+        return str___add__(generic_other);
+    }
+
+    final PyObject str___add__(PyObject generic_other) {
         if (generic_other instanceof PyString) {
             PyString other = (PyString)generic_other;
             return new PyString(string.concat(other.string));
@@ -867,14 +3228,26 @@ public class PyString extends PySequence implements ClassDictInit
 
     // Add in methods from string module
     public String lower() {
+        return str_lower();
+    }
+
+    final String str_lower() {
         return string.toLowerCase();
     }
 
     public String upper() {
+        return str_upper();
+    }
+
+    final String str_upper() {
         return string.toUpperCase();
     }
 
     public String title() {
+        return str_title();
+    }
+
+    final String str_title() {
         char[] chars = string.toCharArray();
         int n = chars.length;
 
@@ -897,6 +3270,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String swapcase() {
+        return str_swapcase();
+    }
+
+    final String str_swapcase() {
         char[] chars = string.toCharArray();
         int n=chars.length;
         for (int i=0; i<n; i++) {
@@ -912,10 +3289,18 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String strip() {
-        return strip(null);
+        return str_strip();
+    }
+
+    final String str_strip() {
+        return str_strip(null);
     }
 
     public String strip(String sep) {
+        return str_strip(sep);
+    }
+
+    final String str_strip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int start=0;
@@ -943,10 +3328,18 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String lstrip() {
-        return lstrip(null);
+        return str_lstrip();
+    }
+
+    final String str_lstrip() {
+        return str_lstrip(null);
     }
 
     public String lstrip(String sep) {
+        return str_lstrip(sep);
+    }
+
+    final String str_lstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int start=0;
@@ -961,10 +3354,18 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String rstrip() {
-        return rstrip(null);
+        return str_rstrip();
+    }
+
+    final String str_rstrip() {
+        return str_rstrip(null);
     }
 
     public String rstrip(String sep) {
+        return str_rstrip(sep);
+    }
+
+    final String str_rstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
         int end=n-1;
@@ -980,14 +3381,26 @@ public class PyString extends PySequence implements ClassDictInit
 
 
     public PyList split() {
-        return split(null, -1);
+        return str_split();
+    }
+
+    final PyList str_split() {
+        return str_split(null, -1);
     }
 
     public PyList split(String sep) {
-        return split(sep, -1);
+        return str_split(sep);
+    }
+
+    final PyList str_split(String sep) {
+        return str_split(sep, -1);
     }
 
     public PyList split(String sep, int maxsplit) {
+        return str_split(sep, maxsplit);
+    }
+
+    final PyList str_split(String sep, int maxsplit) {
         if (sep != null)
             return splitfields(sep, maxsplit);
 
@@ -1050,10 +3463,18 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public PyList splitlines() {
-        return splitlines(false);
+        return str_splitlines();
+    }
+
+    final PyList str_splitlines() {
+        return str_splitlines(false);
     }
 
     public PyList splitlines(boolean keepends) {
+        return str_splitlines(keepends);
+    }
+
+    final PyList str_splitlines(boolean keepends) {
         PyList list = new PyList();
 
         char[] chars = string.toCharArray();
@@ -1088,14 +3509,26 @@ public class PyString extends PySequence implements ClassDictInit
 
 
     public int index(String sub) {
-        return index(sub, 0, string.length());
+        return str_index(sub);
+    }
+
+    final int str_index(String sub) {
+        return str_index(sub, 0, string.length());
     }
 
     public int index(String sub, int start) {
-        return index(sub, start, string.length());
+        return str_index(sub, start);
+    }
+
+    final int str_index(String sub, int start) {
+        return str_index(sub, start, string.length());
     }
 
     public int index(String sub, int start, int end) {
+        return str_index(sub, start, end);
+    }
+
+    final int str_index(String sub, int start, int end) {
         int n = string.length();
 
         if (start < 0)
@@ -1115,14 +3548,26 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public int rindex(String sub) {
-        return rindex(sub, 0, string.length());
+        return str_rindex(sub);
+    }
+
+    final int str_rindex(String sub) {
+        return str_rindex(sub, 0, string.length());
     }
 
     public int rindex(String sub, int start) {
-        return rindex(sub, start, string.length());
+        return str_rindex(sub, start);
+    }
+
+    final int str_rindex(String sub, int start) {
+        return str_rindex(sub, start, string.length());
     }
 
     public int rindex(String sub, int start, int end) {
+        return str_rindex(sub, start, end);
+    }
+
+    final int str_rindex(String sub, int start, int end) {
         int n = string.length();
 
         if (start < 0)
@@ -1142,13 +3587,26 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public int count(String sub) {
+        return str_count(sub);
+    }
+
+    final int str_count(String sub) {
         return count(sub, 0, string.length());
     }
+
     public int count(String sub, int start) {
+        return str_count(sub, start);
+    }
+
+    final int str_count(String sub, int start) {
         return count(sub, start, string.length());
     }
 
     public int count(String sub, int start, int end) {
+        return str_count(sub, start, end);
+    }
+
+    final int str_count(String sub, int start, int end) {
         int len = string.length();
         if (end > len)
             end = len;
@@ -1178,14 +3636,26 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public int find(String sub) {
-        return find(sub, 0, string.length());
+        return str_find(sub);
+    }
+
+    final int str_find(String sub) {
+        return str_find(sub, 0, string.length());
     }
 
     public int find(String sub, int start) {
-        return find(sub, start, string.length());
+        return str_find(sub, start);
+    }
+
+    final int str_find(String sub, int start) {
+        return str_find(sub, start, string.length());
     }
 
     public int find(String sub, int start, int end) {
+        return str_find(sub, start, end);
+    }
+
+    final int str_find(String sub, int start, int end) {
         int n = string.length();
         if (start < 0)
             start = n+start;
@@ -1205,14 +3675,26 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public int rfind(String sub) {
-        return rfind(sub, 0, string.length());
+        return str_rfind(sub);
+    }
+
+    final int str_rfind(String sub) {
+        return str_rfind(sub, 0, string.length());
     }
 
     public int rfind(String sub, int start) {
-        return rfind(sub, start, string.length());
+        return str_rfind(sub, start);
+    }
+
+    final int str_rfind(String sub, int start) {
+        return str_rfind(sub, start, string.length());
     }
 
     public int rfind(String sub, int start, int end) {
+        return str_rfind(sub, start, end);
+    }
+
+    final int str_rfind(String sub, int start, int end) {
         int n = string.length();
         if (start < 0)
             start = n+start;
@@ -1388,6 +3870,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String ljust(int width) {
+        return str_ljust(width);
+    }
+
+    final String str_ljust(int width) {
         int n = width-string.length();
         if (n <= 0)
             return string;
@@ -1395,6 +3881,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String rjust(int width) {
+        return str_rjust(width);
+    }
+
+    final String str_rjust(int width) {
         int n = width-string.length();
         if (n <= 0)
             return string;
@@ -1402,6 +3892,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String center(int width) {
+        return str_center(width);
+    }
+
+    final String str_center(int width) {
         int n = width-string.length();
         if (n <= 0)
             return string;
@@ -1412,6 +3906,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String zfill(int width) {
+        return str_zfill(width);
+    }
+
+    final String str_zfill(int width) {
         String s = string;
         int n = s.length();
         if (n >= width)
@@ -1437,10 +3935,18 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String expandtabs() {
-        return expandtabs(8);
+        return str_expandtabs();
+    }
+
+    final String str_expandtabs() {
+        return str_expandtabs(8);
     }
 
     public String expandtabs(int tabsize) {
+        return str_expandtabs(tabsize);
+    }
+
+    final String str_expandtabs(int tabsize) {
         String s = string;
         StringBuffer buf = new StringBuffer((int)(s.length()*1.5));
         char[] chars = s.toCharArray();
@@ -1467,6 +3973,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String capitalize() {
+        return str_capitalize();
+    }
+
+    final String str_capitalize() {
         if (string.length() == 0)
             return string;
         String first = string.substring(0,1).toUpperCase();
@@ -1474,15 +3984,27 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public String replace(String oldPiece, String newPiece) {
-        return replace(oldPiece, newPiece, string.length());
+        return str_replace(oldPiece, newPiece);
+    }
+
+    final String str_replace(String oldPiece, String newPiece) {
+        return str_replace(oldPiece, newPiece, string.length());
     }
 
     public String replace(String oldPiece, String newPiece, int maxsplit) {
+        return str_replace(oldPiece, newPiece, maxsplit);
+    }
+
+    final String str_replace(String oldPiece, String newPiece, int maxsplit) {
         PyString newstr = new PyString(newPiece);
         return newstr.join(split(oldPiece, maxsplit));
     }
 
     public String join(PyObject seq) {
+        return str_join(seq);
+    }
+
+    final String str_join(PyObject seq) {
         StringBuffer buf = new StringBuffer();
 
         PyObject iter = seq.__iter__();
@@ -1501,14 +4023,26 @@ public class PyString extends PySequence implements ClassDictInit
 
 
     public boolean startswith(String prefix) {
+        return str_startswith(prefix);
+    }
+
+    final boolean str_startswith(String prefix) {
         return string.startsWith(prefix);
     }
 
     public boolean startswith(String prefix, int offset) {
+        return str_startswith(prefix, offset);
+    }
+
+    final boolean str_startswith(String prefix, int offset) {
         return string.startsWith(prefix, offset);
     }
 
     public boolean startswith(String prefix, int start, int end) {
+        return str_startswith(prefix, start, end);
+    }
+
+    final boolean str_startswith(String prefix, int start, int end) {
         if (start < 0 || start + prefix.length() > string.length())
             return false;
         if (end > string.length())
@@ -1518,14 +4052,26 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean endswith(String suffix) {
+        return str_endswith(suffix);
+    }
+
+    final boolean str_endswith(String suffix) {
         return string.endsWith(suffix);
     }
 
     public boolean endswith(String suffix, int start) {
-        return endswith(suffix, start, string.length());
+        return str_endswith(suffix, start);
+    }
+
+    final boolean str_endswith(String suffix, int start) {
+        return str_endswith(suffix, start, string.length());
     }
 
     public boolean endswith(String suffix, int start, int end) {
+        return str_endswith(suffix, start, end);
+    }
+
+    final boolean str_endswith(String suffix, int start, int end) {
         int len = string.length();
 
         if (start < 0 || start > len || suffix.length() > len)
@@ -1539,15 +4085,19 @@ public class PyString extends PySequence implements ClassDictInit
         return substr.endsWith(suffix);
     }
 
-    //public static String zfill(PyObject o, int width) {
-    //    return zfill(o.toString(), width);
-    //}
-
     public String translate(String table) {
-        return translate(table, null);
+        return str_translate(table);
+    }
+
+    final String str_translate(String table) {
+        return str_translate(table, null);
     }
 
     public String translate(String table, String deletechars) {
+        return str_translate(table, deletechars);
+    }
+
+    final String str_translate(String table, String deletechars) {
         if (table.length() != 256)
             throw Py.ValueError(
                 "translation table must be 256 characters long");
@@ -1568,6 +4118,7 @@ public class PyString extends PySequence implements ClassDictInit
         return buf.toString();
     }
 
+    //XXX: is this needed?
     public String translate(PyObject table) {
         StringBuffer v = new StringBuffer(string.length());
         for (int i=0; i < string.length(); i++) {
@@ -1606,6 +4157,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean islower() {
+        return str_islower();
+    }
+
+    final boolean str_islower() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1625,6 +4180,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean isupper() {
+        return str_isupper();
+    }
+
+    final boolean str_isupper() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1644,6 +4203,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean isalpha() {
+        return str_isalpha();
+    }
+
+    final boolean str_isalpha() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1663,6 +4226,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean isalnum() {
+        return str_isalnum();
+    }
+
+    final boolean str_isalnum() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1691,6 +4258,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean isdecimal() {
+        return str_isdecimal();
+    }
+
+    final boolean str_isdecimal() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1717,6 +4288,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean isdigit() {
+        return str_isdigit();
+    }
+
+    final boolean str_isdigit() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1736,6 +4311,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean isnumeric() {
+        return str_isnumeric();
+    }
+
+    final boolean str_isnumeric() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1761,6 +4340,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean istitle() {
+        return str_istitle();
+    }
+
+    final boolean str_istitle() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1792,6 +4375,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean isspace() {
+        return str_isspace();
+    }
+
+    final boolean str_isspace() {
         int n = string.length();
 
         /* Shortcut for single character strings */
@@ -1811,6 +4398,10 @@ public class PyString extends PySequence implements ClassDictInit
     }
 
     public boolean isunicode() {
+        return str_isunicode();
+    }
+
+    final boolean str_isunicode() {
         int n = string.length();
         for (int i = 0; i < n; i++) {
             char ch = string.charAt(i);
@@ -1820,27 +4411,51 @@ public class PyString extends PySequence implements ClassDictInit
         return false;
     }
 
-    public PyString encode() {
-        return encode(null, null);
+    public String encode() {
+        return str_encode();
     }
 
-    public PyString encode(String encoding) {
-        return encode(encoding, null);
+    final String str_encode() {
+        return str_encode(null, null);
     }
 
-    public PyString encode(String encoding, String errors) {
+    public String encode(String encoding) {
+        return str_encode(encoding);
+    }
+
+    final String str_encode(String encoding) {
+        return str_encode(encoding, null);
+    }
+
+    public String encode(String encoding, String errors) {
+        return str_encode(encoding, errors);
+    }
+
+    final String str_encode(String encoding, String errors) {
         return codecs.encode(this, encoding, errors);
     }
 
-    public PyString decode() {
-        return encode(null, null); // xxx
+    public String decode() {
+        return str_decode();
     }
 
-    public PyString decode(String encoding) {
-        return decode(encoding, null);
+    final String str_decode() {
+        return str_decode(null, null); // xxx
     }
 
-    public PyString decode(String encoding, String errors) {
+    public String decode(String encoding) {
+        return str_decode(encoding);
+    }
+
+    final String str_decode(String encoding) {
+        return str_decode(encoding, null);
+    }
+
+    public String decode(String encoding, String errors) {
+        return str_decode(encoding, errors);
+    }
+
+    final String str_decode(String encoding, String errors) {
         return codecs.decode(this, encoding, errors);
     }
 

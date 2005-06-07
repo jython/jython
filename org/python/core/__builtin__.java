@@ -122,6 +122,8 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
         dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
         dict.__setitem__("super", PyType.fromClass(PySuper.class));
+        dict.__setitem__("str", PyType.fromClass(PyString.class));
+        dict.__setitem__("file", PyType.fromClass(PyFile.class));
 
         /* - */
 
@@ -572,40 +574,40 @@ public class __builtin__ implements ClassDictInit
         return new PyFile(name, mode, bufsize);
     }
 
-
-    /**
+    //XXX: remove once we're sure this isn't needed
+    /*
      * Open a file read-only.
      * @param name the file to open.
      * @exception java.io.IOException
      */
-    public static PyFile file(String name) throws java.io.IOException {
-        return open(name);
-    }
+    //public static PyFile file(String name) throws java.io.IOException {
+    //    return open(name);
+    //}
 
-    /**
+    /*
      * Open a file with the specified mode.
      * @param name name of the file to open.
      * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
      * @exception java.io.IOException
      */
-    public static PyFile file(String name, String mode)
-        throws java.io.IOException
-    {
-        return open(name, mode);
-    }
+    //public static PyFile file(String name, String mode)
+    //    throws java.io.IOException
+    //{
+    //    return open(name, mode);
+    //}
 
-    /**
+    /*
      * Open a file with the specified mode and buffer size.
      * @param name name of the file to open.
      * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
      * @param bufsize size of the internal buffer. Not currently used.
      * @exception java.io.IOException
      */
-    public static PyFile file(String name, String mode, int bufsize)
-        throws java.io.IOException
-    {
-        return open(name, mode, bufsize);
-    }
+    //public static PyFile file(String name, String mode, int bufsize)
+    //    throws java.io.IOException
+    //{
+    //    return open(name, mode, bufsize);
+    //}
 
 
     public static final int ord(char c) {
@@ -818,10 +820,6 @@ public class __builtin__ implements ClassDictInit
         return new PyCallIter(callable, sentinel);
     }
 
-    public static PyString str(PyObject o) {
-        return o.__str__();
-    }
-
     public static PyObject sum(PyObject seq, PyObject result) {
 
         if(result instanceof PyString) {
@@ -851,7 +849,7 @@ public class __builtin__ implements ClassDictInit
     public static PyString unicode(PyString v, String encoding,
                                   String errors)
     {
-        return codecs.decode(v, encoding, errors);
+        return new PyString(codecs.decode(v, encoding, errors));
     }
 
     public static PyTuple tuple(PyObject o) {

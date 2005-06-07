@@ -16,6 +16,7 @@ import java.io.*;
 
 public class PyFile extends PyObject
 {
+
     private static class FileWrapper {
         protected boolean reading;
         protected boolean writing;
@@ -1403,24 +1404,21 @@ public class PyFile extends PyObject
     }
 
     final void file_init(PyObject[] args,String[] kwds) {
-        int nargs = args.length - kwds.length;
-        if (nargs < 1) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs,false,exposed_name,0,1);
-        }
-        ArgParser ap = new ArgParser("file", args, kwds, new String[] { "name", "mode" }, 2);
-        String name = ap.getString(0, null);
-        String mode = ap.getString(1, "r");
-        int buffering = 0;//ap.getInt(2, 0);
-        FileWrapper fw = _setup(name, mode, buffering);
+
+        ArgParser ap = new ArgParser("file", args, kwds, new String[] { "name", "mode" }, 1);
+        String nameArg = ap.getString(0, null);
+        String modeArg = ap.getString(1, "r");
+        int buffArg = 0;//ap.getInt(2, 0);
+        FileWrapper fw = _setup(nameArg, modeArg, buffArg);
 
         //xxx: c&p'ed from one of the constructors.
-        file.setMode(mode);
-        this.name = name;
-        this.mode = mode;
+        fw.setMode(modeArg);
+        this.name = nameArg;
+        this.mode = modeArg;
         this.softspace = false;
         this.closed = false;
-        if (mode.indexOf('b') < 0)
-            this.file = new TextWrapper(file);
+        if (modeArg.indexOf('b') < 0)
+            this.file = new TextWrapper(fw);
         else
             this.file = fw;
     }
