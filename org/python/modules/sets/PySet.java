@@ -1084,8 +1084,7 @@ public class PySet extends BaseSet {
                      if (init)
                          newobj.set_init(args,keywords);
                  } else {
-                     //newobj=new PySetDerived(subtype);
-                     return Py.NotImplemented;
+                     newobj=new PySetDerived(subtype);
                  }
                  return newobj;
              }

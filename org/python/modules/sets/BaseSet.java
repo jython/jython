@@ -431,22 +431,11 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return Py.One;
     }
 
-//    /**
-//     * Get the name from the last part of the Java classname minus the leading
-//     * 'Py'.
-//     *
-//     * @return the String name of this concrete class
-//     */
-//    private final String getName() {
-//        PyObject name = Py.newString(this.getClass().getName()).split(".").__getitem__(-1);
-//        return name.toString().substring(2).intern();
-//    }
-
     final String baseset_toString() {
         return toString();
     }
 
-    public final String toString() {
+    public String toString() {
         String name = getType().getFullName();
         StringBuffer buf = new StringBuffer(name).append("([");
         for (Iterator i = this._set.iterator(); i.hasNext();) {
