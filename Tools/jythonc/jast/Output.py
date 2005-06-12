@@ -3,7 +3,7 @@ import os
 from Modifier import ModifierString
 
 
-
+
 class SourceFile:
     def __init__(self, classname):
 	self.text = []
@@ -61,7 +61,7 @@ class SourceFile:
 	self.writeln('}')
 
 
-
+
 if __name__ == '__main__':
     sf = SourceFile('foo')
     sf.write('public class foo')

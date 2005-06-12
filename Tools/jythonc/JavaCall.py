@@ -4,7 +4,7 @@ import java, org.python.core
 import jast
 
 
-
+
 funcs = {}
 def call(func, this, args=None):
     if not funcs.has_key(func):
@@ -18,7 +18,7 @@ def call(func, this, args=None):
         return jf.invoke(this, args)
 
 
-
+
 class Signature:
     def __init__(self, name, inTypes, retType, isStatic=0, isPyArgs=0,
                  isConstructor=0):
@@ -69,7 +69,7 @@ class Signature:
         return '(%s)->%s' % (COMMASPACE.join(r), self.retType.name)
 
 
-
+
 class JavaFunction:
     def __init__(self, reflectedFunction):
         self.name = reflectedFunction.__name__
@@ -126,7 +126,7 @@ class JavaFunction:
         raise TypeError, repr(args)+' args do not match: '+repr(self)
 
 
-
+
 if __name__ == '__main__':
     f = JavaFunction(org.python.core.PyObject._add)
     print f

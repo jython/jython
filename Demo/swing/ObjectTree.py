@@ -12,7 +12,7 @@ leaves = (None, TypeType, IntType, StringType, FloatType, NoneType,
 	  BuiltinFunctionType, BuiltinMethodType)
 
 
-
+
 class PyEnumeration(java.util.Enumeration):
     def __init__(self, seq):
         self.seq = seq
@@ -26,7 +26,7 @@ class PyEnumeration(java.util.Enumeration):
         return self.seq[self.index-1]
 
 
-
+
 def classattrs(c, attrs):
     for base in c.__bases__:
         classattrs(base, attrs)
@@ -51,7 +51,7 @@ def shortrepr(obj):
     return r
 
 
-
+
 class ObjectNode(swing.tree.TreeNode):
     def __init__(self, parent, name, object):
         self.myparent = parent
@@ -113,7 +113,7 @@ class ObjectNode(swing.tree.TreeNode):
         return self.name+' = '+shortrepr(self.object)
 
 
-
+
 if __name__ == '__main__':
     class foo:
         bar=99

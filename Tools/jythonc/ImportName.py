@@ -9,7 +9,7 @@ from org.python.core import PyModule, PyJavaClass, PyClass, \
 from util import lookup
 
 
-
+
 def wrapJava(mod):
     if isinstance(mod, PyModule):
         return Module(mod)
@@ -68,7 +68,7 @@ class Resource:
     def getDepends(self):
         return []
  
-
+
 class Namespace:
     def __init__(self, mod):
         if hasattr(mod, '__name__'):
@@ -93,7 +93,7 @@ class Namespace:
         return map(lookupName, self.mod.__depends__)
 
 
-
+
 from util import reportPublicPlainClasses
 class Package(Namespace):
     _classes = {}
@@ -108,12 +108,12 @@ class Package(Namespace):
         return self._classes.get(self.name, None)
 
 
-
+
 class Class(Namespace):
     pass
 
 
-
+
 class Module(Namespace):
     def __init__(self, mod=None, name=None, file=None, path=None):
         Namespace.__init__(self, mod)
@@ -140,7 +140,7 @@ class Module(Namespace):
     def __repr__(self):
         return "Module(%s, %s, %s)" % (self.name, self.file, self.path)
 
-
+
 class JavaClass(Namespace):
     def __init__(self, mod):
         Namespace.__init__(self, mod)   
@@ -176,7 +176,7 @@ class JavaClass(Namespace):
             base.addEvents(attrs, events, source)
 
 
-
+
 if __name__ == '__main__':
     import sys
     print sys.path

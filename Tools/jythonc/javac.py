@@ -5,7 +5,7 @@ from java.lang import System
 runtime = java.lang.Runtime.getRuntime()
 
 
-
+
 def dumpStream(stream, txtarr):
     array = jarray.zeros( 1024, 'b' )
     while 1:
@@ -15,7 +15,7 @@ def dumpStream(stream, txtarr):
         txtarr.append(array[:len].tostring())
 
 
-
+
 def findDefaultJavac():
     jhome = System.getProperty("java.home")
     if jhome is None:
@@ -31,7 +31,7 @@ def getClasspath():
     return cpath
 
 
-
+
 import sys
 def compile(files, javac=None, cpathopt="-classpath",
             cpath=None, options=None, sourcedir=None):
@@ -107,7 +107,7 @@ the property python.jythonc.compiler in the registry.''' % e
     return (proc.exitValue(), "".join(procout), "".join(procerr))
 
 
-
+
 if __name__ == '__main__':
     files = ["c:\\jpython\\tools\\jpythonc2\\test\\ButtonDemo.java",
             "c:\\jpython\\tools\\jpythonc2\\test\\pawt.java",]

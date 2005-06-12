@@ -10,7 +10,7 @@ from java.lang import *
 import org, java
 
 
-
+
 def aget(dict, key, default):
     if dict.has_key(key):
         return dict[key]
@@ -19,7 +19,7 @@ def aget(dict, key, default):
         dict[key] = ret
         return ret
 
-
+
 #Utility functions for converting between java and python types
 def typeName(cls):
     if Class.isArray(cls):
@@ -33,7 +33,7 @@ def typeName(cls):
         return cls.__name__
 
 
-
+
 def nullReturn(ret):
     if ret == Void.TYPE:
         return jast.Return()
@@ -50,7 +50,7 @@ def nullReturn(ret):
     return jast.Return(value)
 
 
-
+
 def makeReturn(code, ret):
     if ret == Void.TYPE:
         return code
@@ -65,7 +65,7 @@ def makeReturn(code, ret):
     return jast.Return(r)
 
 
-
+
 def makeObject(code, c):
     if c in [Integer.TYPE, Byte.TYPE, Short.TYPE, Long.TYPE]:
         mname = "newInteger"
@@ -80,7 +80,7 @@ def makeObject(code, c):
     return jast.InvokeStatic("Py", mname, [code])
 
 
-
+
 def filterThrows(throws):
     ret = []
     for throwc in throws:
@@ -89,7 +89,7 @@ def filterThrows(throws):
     return ret
 
 
-
+
 def wrapThrows(stmt, throws, retType):
     if len(throws) == 0: return stmt
     catches = []
@@ -111,7 +111,7 @@ def wrapThrows(stmt, throws, retType):
     return jast.TryCatches(jast.Block([stmt]), catches)
 
 
-
+
 class JavaProxy:
     def __init__(self, name, supername, bases, methods, module=None,
                        issuperproxy = 1):
@@ -569,7 +569,7 @@ class JavaProxy:
         return ret
 
 
-
+
 if __name__ == '__main__':
     import java
     methods = [("init", None, None),

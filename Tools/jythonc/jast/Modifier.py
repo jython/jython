@@ -40,7 +40,7 @@ def ModifierString(modifier):
     return SPACE.join(text)
 
 
-
+
 if __name__ == '__main__':
     m0 = Modifier(0)
     m1 = Modifier(public=1, final=1)

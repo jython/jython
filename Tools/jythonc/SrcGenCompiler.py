@@ -19,7 +19,7 @@ def getDocString(suite):
             return n.value.s
     return None
 
-
+
 class LocalFrame:
     def __init__(self, compiler, scope=None):
         
@@ -221,7 +221,7 @@ class LocalFrame:
         return decs 
 
 
-
+
 class GlobalFrame(LocalFrame):
     def __init__(self, compiler):
         LocalFrame.__init__(self, compiler)
@@ -238,7 +238,7 @@ class FunctionFrame(LocalFrame):
         self.fast_locals = 1
         self.opt_globals = not scope.exec and not scope.from_import_star
 
-
+
 class SrcGenCompiler(Visitor, CompilationContext):
     def __init__(self, module, factory, parent=None, frameCtr=None, scope=None,
                  options=None, className=None):

@@ -3,7 +3,7 @@ import jast
 import org, java
 
 
-
+
 def makeAnys(args):
     ret = []
     for arg in args:
@@ -11,7 +11,7 @@ def makeAnys(args):
     return ret
 
 
-
+
 def PyObjectArray(args):
     aargs = makeAnys(args)
     return Object(
@@ -23,7 +23,7 @@ def makeStringArray(args):
         jast.StringArray(args),
         findType(java.lang.Class.forName("[Ljava.lang.String;")))
 
-
+
 class DelegateMethod:
     def __init__(self, method, code):
         self.method = method
@@ -32,7 +32,7 @@ class DelegateMethod:
     def __call__(self, *args):
         return apply(self.method, (self.code, )+args)
 
-
+
 class Object:
     def __init__(self, code, value):
         self.code = code
@@ -65,7 +65,7 @@ primitives = {java.lang.Integer.TYPE  : 'py2int',
 import JavaCall
 
 
-
+
 class JavaObject:
     def __init__(self, javaclass):
         self.javaclass = javaclass
@@ -89,7 +89,7 @@ class JavaObject:
         return code
 
 
-
+
 class JavaInteger(JavaObject):
     def __init__(self):
         JavaObject.__init__(self, java.lang.Integer.TYPE)
@@ -98,7 +98,7 @@ class JavaInteger(JavaObject):
         return jast.InvokeStatic('Py', 'newInteger', [code])
 
 
-
+
 class JavaString(JavaObject):
     def __init__(self):
         JavaObject.__init__(self, java.lang.String)
@@ -107,7 +107,7 @@ class JavaString(JavaObject):
         return jast.InvokeStatic('Py', 'newString', [code])
 
 
-
+
 
 PyObject_as_java_class = org.python.core.PyJavaClass.lookup(org.python.core.PyObject) # xxx temporary fix
 
@@ -294,7 +294,7 @@ class PyObject:
         frame.freetemp(self.value)
 
 
-
+
 types = {}
 def findType(type):
     if types.has_key(type):
@@ -315,13 +315,13 @@ def findType(type):
     return ret
 
 
-
+
 Generic = findType(org.python.core.PyObject)
 IntType = findType(java.lang.Integer.TYPE)
 StringType = findType(java.lang.String)
 
 
-
+
 if __name__ == '__main__':
     foo = Object(jast.Identifier("foo"), Generic)
     one = Object(jast.IntegerConstant(1), IntType)

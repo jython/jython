@@ -12,7 +12,7 @@ DOT = '.'
 SLASH = '/'
 
 
-
+
 def copy(instream, outstream):
     data = jarray.zeros(1024*4, 'b')
     while 1:
@@ -24,7 +24,7 @@ def copy(instream, outstream):
         outstream.write(data, 0, n)
 
 
-
+
 class JavaArchive:
     def __init__(self, packages=[]):
         self.files = []
@@ -163,7 +163,7 @@ class JavaArchive:
 ##            instream.close()
 
 
-
+
 if __name__ == '__main__':
     root = "c:\\jpython\\tools\\jpythonc2"
     ja = JavaArchive()

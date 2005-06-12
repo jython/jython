@@ -19,7 +19,7 @@ basicUnits = [['Metric System', [('Centimeters', 0.01),
 	      ]
 
 
-
+
 class SimpleBorder:
     def paint(self, g):
 	g.drawRect(0,0,self.size.width-1, self.size.height-1)
@@ -28,7 +28,7 @@ class SimpleBorder:
 	return awt.Insets(5,5,5,5)
 
 
-
+
 class Converter(Applet, SimpleBorder):
     def init(self, unitSets=basicUnits):
 	self.setLayout(awt.GridLayout(2,0,5,5))
@@ -47,7 +47,7 @@ class Converter(Applet, SimpleBorder):
 		panel.setValue(multiplier/panel.getMultiplier()*value)
 
 
-
+
 class ConversionPanel(awt.Panel, SimpleBorder,
 		      ActionListener, AdjustmentListener, ItemListener):
     max, block = 10000, 100
@@ -107,7 +107,7 @@ class ConversionPanel(awt.Panel, SimpleBorder,
 	self.slider.value = int(f)
 
 
-
+
 if __name__ == '__main__':
     import pawt
     pawt.test(Converter())

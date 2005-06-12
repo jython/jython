@@ -11,7 +11,7 @@ EMPTYSTRING = ''
 from org.python.core.PyTableCode import CO_OPTIMIZED,CO_NESTED
 from org.python.compiler import Future
 
-
+
 """
 class foo
     class py -- what gets imported by jpython
@@ -29,7 +29,7 @@ def clean(node):
                        jast.Return(jast.GetStaticAttribute('Py', 'None'))])
 
 
-
+
 from java.lang.Character import isJavaIdentifierPart
 def legalJavaName(name):
     letters = []
@@ -44,7 +44,7 @@ def legalJavaName(name):
         return EMPTYSTRING.join(letters)
 
 
-
+
 
 def StringArrayOrNull(strs):
     if strs:
@@ -224,7 +224,7 @@ class PythonInner:
         return jast.Class(self.name, self.modifier,
                           self.superclass, self.interfaces, body)
 
-
+
 defaultProxyProps = {
     "python.options.showJavaExceptions": "true",
     "python.modules.builtin": "exceptions:org.python.core.exceptions",
@@ -235,7 +235,7 @@ defaultMainProps = {
     }
 
 
-
+
 class PythonModule:
     def getclassname(self, name):
         if self.package is not None:
@@ -472,7 +472,7 @@ class PythonModule:
         sf.dump(directory)
         return os.path.join(directory, self.name+'.java')
 
-
+
 if __name__ == '__main__':
     pm = PythonModule("baz")
     pm.packages = ['java.lang', 'java.awt']

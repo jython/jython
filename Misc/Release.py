@@ -63,7 +63,7 @@ def usage(status, msg=''):
     sys.exit(status)
 
 
-
+
 # CVS related commands and other utils
 
 def cvsdo(cvscmd, indir=None):
@@ -118,7 +118,7 @@ def rmdirhier(dirname):
         rmdir_ex(dir)
 
 
-
+
 # preparations
 
 def make_jpython_jar(withoro=1, jarname='jpython.jar'):
@@ -220,7 +220,7 @@ def make_jars():
     make_pylib_jar()
 
 
-
+
 def prep_distro(tagname):
     # This function creates a directory image that the Jshield installer gets
     # ponted at.  Jshield then gloms everything under this directory into the
@@ -254,7 +254,7 @@ def prep_distro(tagname):
     unlink_ex('export/mkisj.bat')
 
 
-
+
 def bump_isj(tagname):
     infile = 'dist/jpython.isj'
     outfile = infile + '.new'
@@ -319,7 +319,7 @@ def do_bump(tagname):
         i = i + 1
 
 
-
+
 def do_build(tagname):
     table = string.maketrans('', '')
     tagname = tagname.translate(table, '.')
@@ -361,7 +361,7 @@ def do_clean():
     unlink_ex(PYLIB)
 
 
-
+
 def main():
     try:
 	opts, args = getopt.getopt(

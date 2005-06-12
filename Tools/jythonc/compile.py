@@ -19,7 +19,7 @@ import org
 from java.lang import *
 
 
-
+
 def getdata(filename):
     fp = open(filename, "r")
     data = fp.read()
@@ -63,7 +63,7 @@ def getsig(doc, pargs, constructor=0):
     return sigs
 
 
-
+
 primitives = {'void'   : Void.TYPE,
               'int'    : Integer.TYPE,
               'byte'   : Byte.TYPE, 
@@ -75,7 +75,7 @@ primitives = {'void'   : Void.TYPE,
               'char'   : Character.TYPE,
               }
 
-
+
 def insistJavaClass(c):
     jc = getJavaClass(c)
     if jc is None and isinstance(c, StringType):
@@ -85,7 +85,7 @@ def insistJavaClass(c):
     return jc
 
 
-
+
 primNames = {'void'   : 'V',
              'int'    : 'I',
              'byte'   : 'B', 
@@ -97,7 +97,7 @@ primNames = {'void'   : 'V',
              'char'   : 'C'
              }
 
-
+
 ##def makeArrayName(c):
 ##    if c.endswith("[]"):
 ##        return "["+makeArrayName(c[:-2])
@@ -130,10 +130,10 @@ def getJavaClass(c):
         return None
 
 
-
 
 
-
+
+
 def printNames(heading, dict):
     items = dict.items()
     if len(items) == 0:
@@ -155,7 +155,7 @@ def printNames(heading, dict):
         print '  %s used in %s' % (key, COMMA.join(value))
 
 
-
+
 class Compiler:
     # TBD: Bad! But this modules dicts must be available from deep in
     # ObjectFactory.
@@ -438,7 +438,7 @@ class Compiler:
         return done.values()
 
 
-
+
 from java.io import *
 
 def writefile(filename, instream):
@@ -460,7 +460,7 @@ def compile(files, outdir):
     c.dump(outdir)
     return c.files, c.javaclasses
 
-
+
 if __name__ == '__main__':
     import sys
     filenames = sys.argv[1:]

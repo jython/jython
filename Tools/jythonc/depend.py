@@ -8,7 +8,7 @@ from java import io
 from java.util.zip import ZipFile
 
 
-
+
 def fix(n):
     DOT = '.'
     return DOT.join(n.split('/'))
@@ -38,7 +38,7 @@ def getClass(t, names):
         return 1, None
 
 
-
+
 def dependencies(file):
     data = io.DataInputStream(file)
 
@@ -112,12 +112,12 @@ def dependencies(file):
     return filter(defaultFilter, names.keys())
 
 
-
+
 def defaultFilter(name):
     return not (name[:5] == 'java.' or name[:16] == 'org.python.core.')
 
 
-
+
 from org.python.core import PyJavaPackage
 from util import lookup, getzip
 from util import openResource
@@ -168,7 +168,7 @@ class ResourceEntry:
     def getZipName(self):
         return self.name[1:]
 
-
+
 ##class ZipEntry:
 ##    def __init__(self, filename, classname):
 ##        self.filename = filename
@@ -183,7 +183,7 @@ class ResourceEntry:
 ##        entry = zf.getEntry(zfilename)
 ##        return zf.getInputStream(entry)
 ##
-##
+##
 ##class DirEntry:
 ##    def __init__(self, dirname, classname):
 ##        self.dirname = dirname
@@ -197,7 +197,7 @@ class ResourceEntry:
 ##        fullname = os.path.join(self.dirname, lastname+'.class')
 ##        return io.FileInputStream(fullname)
 
-
+
 def depends(name):
     if name[0] == '/':
         return ResourceEntry(name), []
@@ -207,7 +207,7 @@ def depends(name):
     ip.close()
     return ze, ret
 
-
+
 if __name__ == '__main__':
     #print getFile('org.python.modules.strop')
     #print getFile('java.lang.String')

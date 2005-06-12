@@ -4,7 +4,7 @@ import org, java
 from Object import Object, PyObject, Generic
 from org.python.parser import ast
 
-
+
 def makeAnys(args):
     ret = []
     for arg in args:
@@ -12,7 +12,7 @@ def makeAnys(args):
     return ret
 
 
-
+
 def PyObjectArray(args):
     aargs = makeAnys(args)
     return jast.FilledArray("PyObject", aargs)
@@ -20,7 +20,7 @@ def PyObjectArray(args):
 import SrcGenCompiler
 
 
-
+
 class ObjectFactory:
     def __init__(self, parent=None):
         self.parent = parent
@@ -115,12 +115,12 @@ class ObjectFactory:
                                              options = self.parent.options,
                                              className = className)
 
-
+
 class FixedObject(PyObject):
     pass
 
 
-
+
 class PyConstant(FixedObject):
     def __init__(self, value):
         self.value = value
@@ -129,7 +129,7 @@ class PyConstant(FixedObject):
         return jast.Comment(str(self.value))
 
 
-
+
 class PyFunction(FixedObject):
     def __init__(self, factory, name, def_compiler,scope, body, doc=None):
         self.name = name
@@ -170,7 +170,7 @@ class PyFunction(FixedObject):
         return self.pycode
 
 
-
+
 class PyClass(FixedObject):
     def __init__(self, factory, name, bases, def_compiler, scope, body, doc=None):
         self.name = name
@@ -299,7 +299,7 @@ class PyNamespace(FixedObject):
         return self.getattr(code, name).call(args, keyargs)
 
 
-
+
 data = """
 x=1+1
 #import pawt

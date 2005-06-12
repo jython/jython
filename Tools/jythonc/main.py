@@ -70,7 +70,7 @@ from types import TupleType
 from compile import Compiler
                 
 
-
+
 # Standard usage message printing
 def usage(errcode, msg=''):
     print __doc__ % globals()
@@ -165,7 +165,7 @@ def getOptions():
     return options
 
 
-
+
 def addCore(extraPackages):
     skiplist = [ 'org.python.core.parser',
                  #'org.python.core.BytecodeLoader',
@@ -178,7 +178,7 @@ def addAll(extraPackages):
         extraPackages.append(('org.python.'+name, []))
                 
                       
-
+
 mainclass = basepath = None
 
 def doCompile(opts):
@@ -222,7 +222,7 @@ def doCompile(opts):
     return comp
 
 
-
+
 def copyclass(jc, fromdir, todir):
     import jar
     from java.io import FileInputStream, FileOutputStream
@@ -240,7 +240,7 @@ def copyclass(jc, fromdir, todir):
     ostream.close()
 
 
-
+
 def writeResults(comp, opts):
     global mainclass
     global basepath

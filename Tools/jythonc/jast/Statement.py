@@ -4,7 +4,7 @@ from Output import SourceFile
 COMMASPACE = ', '
 
 
-
+
 class Statement:
     def __repr__(self):
         out = SourceFile('Foo')
@@ -14,7 +14,7 @@ class Statement:
     def exits(self):
         return 0
 
-
+
 class Class(Statement):
     def __init__(self, name, access, superclass, interfaces, body):
         self.name = name
@@ -35,7 +35,7 @@ class Class(Statement):
                                               self.superclass,
                                               self.interfaces, self.body)
 
-
+
 class Method(Statement):
     def __init__(self, name, access, args, body, throws=[]):
         self.name = name
@@ -62,7 +62,7 @@ class Method(Statement):
         return "Method(%s, %s, %s, %s)" % (self.name, self.access,
                                            self.args, self.body)
 
-
+
 class Constructor(Statement):
     def __init__(self, name, access, args, body, throws=[]):
         self.name = name
@@ -90,7 +90,7 @@ class Constructor(Statement):
                                                 self.args, self.body)
 
 
-
+
 class BlankLine(Statement):
     def writeSource(self, out):
         out.writeln()
@@ -101,7 +101,7 @@ class BlankLine(Statement):
 Blank = BlankLine()
 
 
-
+
 class Import(Statement):
     def __init__(self, package):
         self.package = package
@@ -113,7 +113,7 @@ class Import(Statement):
         return "Import(%s)" % (self.package)
 
 
-
+
 class SimpleComment(Statement):
     """ ??? """
     def __init__(self, text):
@@ -126,7 +126,7 @@ class SimpleComment(Statement):
         return "SimpleComment(%s)" % (self.text)
 
 
-
+
 class Comment(Statement):
     """ ??? """
     def __init__(self, text):
@@ -147,7 +147,7 @@ class Comment(Statement):
         return "Comment(%s)" % (self.package)
 
 
-
+
 class Declare(Statement):
     def __init__(self, type, name, value=None):
         self.type = type
@@ -165,7 +165,7 @@ class Declare(Statement):
         return "Declare(%s, %s, %s)" % (self.type, self.name, self.value)
 
 
-
+
 class Pass(Statement):
     def writeSource(self, out):
         pass
@@ -174,7 +174,7 @@ class Pass(Statement):
         return "Pass()"
 
 
-
+
 def flatten(lst):
     ret = []
     for item in lst:
@@ -187,7 +187,7 @@ def flatten(lst):
     return ret
 
 
-
+
 class FreeBlock(Statement):
     def __init__(self, code=None):
         if code is None:
@@ -235,7 +235,7 @@ class FreeBlock(Statement):
         return "FreeBlock(%s)" % (self.code)
 
 
-
+
 class Block(FreeBlock):
     def writeSource(self, out):
         out.beginBlock()
@@ -246,7 +246,7 @@ class Block(FreeBlock):
         return "Block(%s)" % (self.code)
 
 
-
+
 class TryCatch(Statement):
     def __init__(self, body, exctype, excname, catchbody):
         self.body = body
@@ -264,7 +264,7 @@ class TryCatch(Statement):
         return self.body.exits() and self.catchbody.exits()
 
 
-
+
 class TryCatches(Statement):
     def __init__(self, body, catches):
         self.body = body
@@ -283,7 +283,7 @@ class TryCatches(Statement):
             r = r and catchbody.exits()
         return r
 
-
+
 class TryFinally(Statement):
     def __init__(self, body, finalbody):
         self.body = body
@@ -299,7 +299,7 @@ class TryFinally(Statement):
         return self.body.exits() or self.finalbody.exits()
 
 
-
+
 class If(Statement):
     def __init__(self, test, thenBody, elseBody=None):
         self.test = test
@@ -319,7 +319,7 @@ class If(Statement):
         return self.thenBody.exits() and self.elseBody.exits()
 
 
-
+
 class MultiIf(Statement):
     def __init__(self, tests, elseBody=None):
         self.tests = tests
@@ -348,7 +348,7 @@ class MultiIf(Statement):
         return 1
 
 
-
+
 class While(Statement):
     def __init__(self, test, body):
         self.test = test
@@ -359,7 +359,7 @@ class While(Statement):
         self.body.writeSource(out)
 
 
-
+
 class WhileElse(Statement):
     def __init__(self, test, body, else_body, while_temp):
         self.test = test
@@ -375,7 +375,7 @@ class WhileElse(Statement):
         self.else_body.writeSource(out)
 
 
-
+
 class Switch(Statement):
     def __init__(self, index, cases, defaultCase=None):
         self.index = index
@@ -394,7 +394,7 @@ class Switch(Statement):
         out.endBlock()
 
 
-
+
 class Return(Statement):
     def __init__(self, value=None):
         self.value = value
@@ -409,7 +409,7 @@ class Return(Statement):
         return 1
 
 
-
+
 class Throw(Statement):
     def __init__(self, value):
         self.value = value
@@ -422,7 +422,7 @@ class Throw(Statement):
         return 1
 
 
-
+
 class Break(Statement):
     def writeSource(self, out):
         out.writeln("break;")
@@ -432,7 +432,7 @@ class Continue(Statement):
         out.writeln("continue;")
 
 
-
+
 class Expression:
     def __repr__(self):
         return self.sourceString()
@@ -460,13 +460,13 @@ class Expression:
         return 0
 
 
-
+
 class UnsafeExpression(Expression):
     def safeSourceString(self):
         return "("+self.sourceString()+")"      
 
 
-
+
 class Cast(UnsafeExpression):
     def __init__(self, totype, value):
         self.totype = totype
@@ -476,7 +476,7 @@ class Cast(UnsafeExpression):
         return "(%s)%s" % (self.totype, self.value.safeSourceString())
 
 
-
+
 class Set(UnsafeExpression):
     def __init__(self, lvalue, value):
         self.lvalue = lvalue
@@ -487,7 +487,7 @@ class Set(UnsafeExpression):
                             self.value.safeSourceString())      
 
 
-
+
 class Constant(Expression):
     def __init__(self, value):
         self.value = value
@@ -506,7 +506,7 @@ class CharacterConstant(Constant):
     pass
 
 
-
+
 class StringConstant(Constant):
     def sourceString(self):
         ret = ['"']
@@ -526,7 +526,7 @@ class StringConstant(Constant):
         return ''.join(ret)
 
 
-
+
 class Operation(UnsafeExpression):
     def __init__(self, op, x, y=None):
         self.op = op
@@ -540,7 +540,7 @@ class Operation(UnsafeExpression):
             return "%s %s %s" % (self.x.safeSourceString(), self.op,
                                  self.y.safeSourceString())
 
-
+
 class TriTest(UnsafeExpression):
     def __init__(self, test, x, y):
         self.test = test
@@ -553,7 +553,7 @@ class TriTest(UnsafeExpression):
                                  self.y.safeSourceString())
 
 
-
+
 class PostOperation(UnsafeExpression):
     def __init__(self, x, op):
         self.op = op
@@ -572,7 +572,7 @@ class Subscript(UnsafeExpression):
         return "%s[%s]" % (self.x.safeSourceString(), self.ind)
 
 
-
+
 class InvokeLocal(Expression):
     def __init__(self, name, args):
         self.name = name
@@ -582,7 +582,7 @@ class InvokeLocal(Expression):
         return '%s(%s)' % (self.name, self._calcargs())
 
 
-
+
 class Invoke(Expression):
     def __init__(self, this, name, args):
         self.name = name
@@ -594,7 +594,7 @@ class Invoke(Expression):
                               self.name, self._calcargs())
 
 
-
+
 class InvokeStatic(Expression):
     def __init__(self, this, name, args):
         self.name = name
@@ -605,7 +605,7 @@ class InvokeStatic(Expression):
         return '%s.%s(%s)' % (self.this, self.name, self._calcargs())
 
 
-
+
 class GetInstanceAttribute(Expression):
     def __init__(self, this, name):
         self.name = name
@@ -615,7 +615,7 @@ class GetInstanceAttribute(Expression):
         return "%s.%s" % (self.this.sourceString(), self.name)
 
 
-
+
 class GetStaticAttribute(Expression):
     def __init__(self, this, name):
         self.name = name
@@ -625,7 +625,7 @@ class GetStaticAttribute(Expression):
         return "%s.%s" % (self.this, self.name)
 
 
-
+
 class SetInstanceAttribute(Expression):
     def __init__(self, this, name, value):
         self.name = name
@@ -637,7 +637,7 @@ class SetInstanceAttribute(Expression):
                                self.value.sourceString())
 
 
-
+
 class SetStaticAttribute(Expression):
     def __init__(self, this, name, value):
         self.name = name
@@ -648,7 +648,7 @@ class SetStaticAttribute(Expression):
         return "%s.%s = %s" % (self.this, self.name, self.value.sourceString())
 
 
-
+
 class Identifier(Expression):
     def __init__(self, name):
         self.name = name
@@ -657,7 +657,7 @@ class Identifier(Expression):
         return str(self.name)
 
 
-
+
 class New(Expression):
     def __init__(self, name, args):
         self.name = name
@@ -667,7 +667,7 @@ class New(Expression):
         return 'new %s(%s)' % (self.name, self._calcargs())
 
 
-
+
 class FilledArray(Expression):
     def __init__(self, type, values):
         self.type = type
@@ -679,7 +679,7 @@ class FilledArray(Expression):
             COMMASPACE.join(map(lambda arg: arg.sourceString(), self.values)))
 
 
-
+
 class NewArray(Expression):
     def __init__(self, mytype, dimensions):
         self.type = mytype
@@ -693,7 +693,7 @@ class NewArray(Expression):
             ']['.join(map(lambda arg: str(arg), self.dimensions)))
 
 
-
+
 class StringArray(FilledArray):
     def __init__(self, values):
         lst = []
@@ -707,7 +707,7 @@ class StringArray(FilledArray):
         self.type = "String"
 
 
-
+
 class ClassReference(Expression):
     def __init__(self, name):
         self.name = name
@@ -716,7 +716,7 @@ class ClassReference(Expression):
         return module.simpleClassName(self.name)
 
 
-
+
 True = Identifier("true")
 False = Identifier("false")
 Null = Identifier("null")
@@ -729,7 +729,7 @@ Null = Identifier("null")
 ##    def __init__(self, lvalue, name, value):
 
 
-
+
 # Python also has a complicated set sequence form here, but that's just sugar
 # for ???
 

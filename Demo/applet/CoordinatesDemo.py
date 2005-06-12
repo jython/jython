@@ -7,7 +7,7 @@ This example shows how to do very simple Canvas Drawing
 from java import applet, awt
 from pawt import GridBag
 
-
+
 class CoordinatesDemo(applet.Applet):
     def init(self):
 	bag = GridBag(self)
@@ -23,7 +23,7 @@ class CoordinatesDemo(applet.Applet):
 	self.label.text = text % (point.x, point.y)
 
 
-
+
 class FramedArea(awt.Panel):
     def __init__(self, controller):
 	self.background = awt.Color.lightGray
@@ -42,7 +42,7 @@ class FramedArea(awt.Panel):
 	g.draw3DRect(3, 3, d.width-7, d.height-7, 1)
 
 
-
+
 class CoordinateArea(awt.Canvas):
     def __init__(self, controller):
 	self.mousePressed = self.push
@@ -63,7 +63,7 @@ class CoordinateArea(awt.Canvas):
 	    g.fillRect(self.point.x-1, self.point.y-1, 2, 2)
 
 
-
+
 if __name__ == '__main__':
     import pawt
     pawt.test(CoordinatesDemo(), size=(300, 200))
