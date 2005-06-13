@@ -404,10 +404,7 @@ public class PyInstance extends PyObject
     }
 
     public PyString __str__() {
-        PyObject ret = null;
-        try {
-            ret = invoke_ex("__str__");
-        } catch (PyException exc) { }
+        PyObject ret = invoke_ex("__str__");
         if (ret == null)
             return __repr__();
         if (!(ret instanceof PyString))
