@@ -1361,6 +1361,34 @@ public class PyString extends PySequence implements ClassDictInit
 
         }
         dict.__setitem__("istitle",new PyMethodDescr("istitle",PyString.class,0,0,new exposed_istitle(null,null)));
+        class exposed_isunicode extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_isunicode(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_isunicode((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(self.str_isunicode());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return Py.newBoolean(self.str_isunicode());
+            }
+
+        }
+        dict.__setitem__("isunicode",new PyMethodDescr("isunicode",PyString.class,0,0,new exposed_isunicode(null,null)));
         class exposed_isupper extends PyBuiltinFunctionNarrow {
 
             private PyString self;
