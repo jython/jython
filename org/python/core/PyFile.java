@@ -1367,20 +1367,36 @@ public class PyFile extends PyObject
         }
         dict.__setitem__("__init__",new PyMethodDescr("__init__",PyFile.class,-1,-1,new exposed___init__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyFile.class,"__new__",-1,-1) {
+            public PyObject new_impl(boolean init, PyType subtype, PyObject[] args, String[] keywords) {
+                PyFile newobj;
+                if (for_type == subtype) {
+                    newobj = null;
+                    if (init) {
+                        if (args.length == 0) {
+                            newobj = new PyFile();
+                            newobj.file_init(args, keywords);
+                        } else if (args[0] instanceof PyString ||
+                                (args[0] instanceof PyJavaInstance &&
+                                ((PyJavaInstance) args[0]).javaProxy == String.class)) {
+                            // If first arg is a PyString or String, assume its being 
+                            // called as a builtin.
+                            newobj = new PyFile();
+                            newobj.file_init(args, keywords);
+                        } else {
+                            // assume it's being called as a java class
+                            PyJavaClass pjc = new PyJavaClass(PyFile.class);
+                            newobj = (PyFile) pjc.__call__(args, keywords);
+                        }
+                    } else {
+                        newobj = new PyFile();
+                    }
+                } else {
+                    newobj = new PyFileDerived(subtype);
+                }
+                return newobj;
+            }
 
-                                                                                      public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                          PyFile newobj;
-                                                                                          if (for_type==subtype) {
-                                                                                              newobj=new PyFile();
-                                                                                              if (init)
-                                                                                                  newobj.file_init(args,keywords);
-                                                                                          } else {
-                                                                                              newobj=new PyFileDerived(subtype);
-                                                                                          }
-                                                                                          return newobj;
-                                                                                      }
-
-                                                                                  });
+        });
     }
 
     //~ END GENERATED
