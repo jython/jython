@@ -2049,7 +2049,7 @@ public class PyString extends PySequence implements ClassDictInit
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return self.str_split(arg0.asString(0),arg1.asInt(1));
+                    return self.str_split(arg0.asStringOrNull(0),arg1.asInt(1));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2069,7 +2069,7 @@ public class PyString extends PySequence implements ClassDictInit
             public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
                 PyString self=(PyString)gself;
                 try {
-                    return self.str_split(arg0.asString(0),arg1.asInt(1));
+                    return self.str_split(arg0.asStringOrNull(0),arg1.asInt(1));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2088,7 +2088,7 @@ public class PyString extends PySequence implements ClassDictInit
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return self.str_split(arg0.asString(0));
+                    return self.str_split(arg0.asStringOrNull(0));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2105,7 +2105,7 @@ public class PyString extends PySequence implements ClassDictInit
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyString self=(PyString)gself;
                 try {
-                    return self.str_split(arg0.asString(0));
+                    return self.str_split(arg0.asStringOrNull(0));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2591,7 +2591,6 @@ public class PyString extends PySequence implements ClassDictInit
 
                                                                                     });
     }
-
     //~ END GENERATED
 
     private String string;

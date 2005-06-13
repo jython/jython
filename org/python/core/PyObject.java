@@ -2824,6 +2824,10 @@ public class PyObject implements java.io.Serializable {
         throw new ConversionException(index);
     }
 
+    public String asStringOrNull(int index) throws ConversionException {
+       return asString(index);
+    }
+
     public String asName(int index) throws ConversionException {
         throw new ConversionException(index);
     }

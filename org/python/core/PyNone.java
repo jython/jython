@@ -30,5 +30,5 @@ public class PyNone extends PySingleton
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }
     public boolean isNumberType() { return false; }
-
+    public String asStringOrNull(int index) { return null; }
 }
