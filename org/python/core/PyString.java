@@ -7,6 +7,7 @@ package org.python.core;
 public class PyString extends PySequence implements ClassDictInit
 {
     //~ BEGIN GENERATED
+
     /* type info */
 
     public static final String exposed_name="str";
@@ -1544,12 +1545,12 @@ public class PyString extends PySequence implements ClassDictInit
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.str_lstrip(arg0.asString(0)));
+                    return new PyString(self.str_lstrip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -1561,12 +1562,12 @@ public class PyString extends PySequence implements ClassDictInit
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyString self=(PyString)gself;
                 try {
-                    return new PyString(self.str_lstrip(arg0.asString(0)));
+                    return new PyString(self.str_lstrip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2016,12 +2017,12 @@ public class PyString extends PySequence implements ClassDictInit
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.str_rstrip(arg0.asString(0)));
+                    return new PyString(self.str_rstrip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2033,12 +2034,12 @@ public class PyString extends PySequence implements ClassDictInit
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyString self=(PyString)gself;
                 try {
-                    return new PyString(self.str_rstrip(arg0.asString(0)));
+                    return new PyString(self.str_rstrip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2085,7 +2086,7 @@ public class PyString extends PySequence implements ClassDictInit
                         msg="expected an integer";
                         break;
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2105,7 +2106,7 @@ public class PyString extends PySequence implements ClassDictInit
                         msg="expected an integer";
                         break;
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2121,7 +2122,7 @@ public class PyString extends PySequence implements ClassDictInit
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2138,7 +2139,7 @@ public class PyString extends PySequence implements ClassDictInit
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2176,12 +2177,12 @@ public class PyString extends PySequence implements ClassDictInit
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.str_splitlines(Py.py2boolean(arg0));
+                return self.str_splitlines(arg0.__nonzero__());
             }
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyString self=(PyString)gself;
-                return self.str_splitlines(Py.py2boolean(arg0));
+                return self.str_splitlines(arg0.__nonzero__());
             }
 
             public PyObject __call__() {
@@ -2346,12 +2347,12 @@ public class PyString extends PySequence implements ClassDictInit
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.str_strip(arg0.asString(0)));
+                    return new PyString(self.str_strip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2363,12 +2364,12 @@ public class PyString extends PySequence implements ClassDictInit
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyString self=(PyString)gself;
                 try {
-                    return new PyString(self.str_strip(arg0.asString(0)));
+                    return new PyString(self.str_strip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="expected a string";
+                        msg="expected a string or None";
                         break;
                     default:
                         msg="xxx";
@@ -2612,12 +2613,10 @@ public class PyString extends PySequence implements ClassDictInit
         }
         dict.__setitem__("zfill",new PyMethodDescr("zfill",PyString.class,1,1,new exposed_zfill(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyString.class,"__new__",-1,-1) {
-
-                                                                                        public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                            return str_new(this,init,subtype,args,keywords);
-                                                                                        }
-
-                                                                                    });
+            public PyObject new_impl(boolean init, PyType subtype, PyObject[] args, String[] keywords) {
+                return str_new(this, init, subtype, args, keywords);
+            }
+        });
     }
     //~ END GENERATED
 
