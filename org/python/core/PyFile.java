@@ -1572,6 +1572,11 @@ public class PyFile extends PyObject
         else if (c1 == 'w' || c1 == 'a') jmode = "rw";
         try {
             java.io.File f = new java.io.File(name);
+            if (c1 == 'r') {
+                if (!f.exists()) {
+                    throw new java.io.IOException("No such file or directory: " + name);
+                }
+            }
             if (c1 == 'w') {
                 // Hack to truncate the file without deleting it:
                 // create a FileOutputStream for it and close it again.
