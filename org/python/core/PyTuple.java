@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.ListIterator;
 
 /**
@@ -309,13 +310,12 @@ public class PyTuple extends PySequenceList implements ClassDictInit
         if (S instanceof PyTuple)
             return S;
         PyObject iter = S.__iter__();
-        PyObject [] a = new PyObject[S.__len__()];
-        int i = 0;
+        // it's not always possible to know the length of the iterable
+        ArrayList a = new ArrayList(10);
         for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
-            a[i] = item;
-            i++;
+            a.add(item);
         }
-        return new PyTuple(a);
+        return new PyTuple((PyObject[])a.toArray(new PyObject[a.size()]));
     }
 
     public String safeRepr() throws PyIgnoreMethodTag {
