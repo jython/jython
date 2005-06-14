@@ -1149,6 +1149,34 @@ public class PyFile extends PyObject
 
         }
         dict.__setitem__("tell",new PyMethodDescr("tell",PyFile.class,0,0,new exposed_tell(null,null)));
+        class exposed_next extends PyBuiltinFunctionNarrow {
+
+            private PyFile self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_next(PyFile self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_next((PyFile)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.file_next();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyFile self=(PyFile)gself;
+                return self.file_next();
+            }
+
+        }
+        dict.__setitem__("next",new PyMethodDescr("next",PyFile.class,0,0,new exposed_next(null,null)));
         class exposed_truncate extends PyBuiltinFunctionNarrow {
 
             private PyFile self;
@@ -1316,14 +1344,12 @@ public class PyFile extends PyObject
             }
 
             public PyObject __call__() {
-                self.file_xreadlines();
-                return Py.None;
+                return self.file_xreadlines();
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyFile self=(PyFile)gself;
-                self.file_xreadlines();
-                return Py.None;
+                return self.file_xreadlines();
             }
 
         }
@@ -1398,7 +1424,6 @@ public class PyFile extends PyObject
 
         });
     }
-
     //~ END GENERATED
 
     public String name;
@@ -1694,7 +1719,7 @@ public class PyFile extends PyObject
         return file_readlines();
     }
 
-    public PyObject __iter() {
+    public PyObject __iter__() {
         return file___iter__();
     }
 
