@@ -30,6 +30,20 @@ import java
 from java.io import File
 import javapath as path
 from UserDict import UserDict
+import stat as _stat
+
+_stat_members = [(x, getattr(_stat, x)) for x in dir(_stat) if x[:3] == "ST_"]
+_stat_members.sort(lambda x, y: cmp(x[1], y[1]))
+
+class stat_result:
+  def __init__(self, results):
+    self._results = results
+    for name, value in zip([name.lower() for name, index in _stat_members], self._results):
+      setattr(self, name, value)
+  def __getitem__(self, i):
+    return self._results[i]
+  def __len__(self):
+    return len(self._results)
 
 error = OSError
 
@@ -94,7 +108,7 @@ def stat(path):
     if size == 0 and not f.exists():
         raise OSError(0, 'No such file or directory', path)
     mtime = f.lastModified() / 1000.0
-    return (0, 0, 0, 0, 0, 0, size, mtime, mtime, 0)
+    return stat_result((0, 0, 0, 0, 0, 0, size, mtime, mtime, 0))
 
 def utime(path, times):
     # Only the modification time is changed (and only on java2).
