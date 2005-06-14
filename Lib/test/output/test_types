@@ -1,4 +1,3 @@
-test_types
 Built-in types (test_types.py)
 Truth value testing
 Boolean operations
@@ -13,4 +12,5 @@ Strings
 Tuples
 Lists
 Additional list operations
+Interoperability: list and java.util.List
 Mappings and Dictionaries
