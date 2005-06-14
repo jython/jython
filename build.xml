@@ -553,7 +553,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <!-- The jython .py modules: important to overwrite the above CPython .py files -->
         <echo>copy the jython *.py modules from ${source.dir}/Lib</echo>
         <copy todir="${dist.dir}/Lib" preservelastmodified="true" overwrite="true">
-            <fileset dir="${source.dir}/Lib" includes="**/*.py" />
+            <fileset dir="${source.dir}/Lib" excludes="**/*.class"/>
         </copy>
     </target>
 
