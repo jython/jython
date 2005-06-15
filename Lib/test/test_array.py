@@ -51,6 +51,10 @@ def test_java_object_arrays():
          "String array typecode of wrong type, expected %s, found %s" % 
          (jStringArr.typecode, str(String)))
    verify(zeros(String, 5) == Array.newInstance(String, 5))
+
+   import java # require for eval to work
+   if jStringArr != eval(str(jStringArr)):
+      raise TestFailed, "eval(str(%s)) <> %s" % (jStringArr,)*2
    
 
 def test_java_compat():
@@ -120,6 +124,9 @@ def testtype(type, example):
         print 'array after append: ', a
     a.typecode
     a.itemsize
+    
+    if a <> eval(str(a)):
+       raise TestFailed, "eval(str(%s)) <> %s" % (a,a)
 
     if a.typecode in ('i', 'b', 'h', 'l'):
         a.byteswap()

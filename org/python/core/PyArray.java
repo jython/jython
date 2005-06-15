@@ -164,17 +164,16 @@ public class PyArray extends PySequence implements Cloneable, ClassDictInit {
    * @return string representation of PyArray
    */
     public PyString __repr__() {
-        StringBuffer buf = new StringBuffer("array([");
+        StringBuffer buf = new StringBuffer(128);
+        buf.append("array(").append(class2char(type)).append(",[");
         for (int i=0; i<__len__()-1; i++) {
             buf.append(pyget(i).__repr__().toString());
             buf.append(", ");
         }
-        if (__len__() > 0)
+        if (__len__() > 0) {
             buf.append(pyget(__len__()-1).__repr__().toString());
-        buf.append("], ");
-        buf.append(type.getName());
-        buf.append(")");
-
+        }
+        buf.append("]) ");
         return new PyString(buf.toString());
     }
     
@@ -292,6 +291,19 @@ public class PyArray extends PySequence implements Cloneable, ClassDictInit {
         default:
             throw Py.ValueError("typecode must be in [zcbhilfd]");
         }
+    }
+    
+    private static String class2char(Class cls) {
+        
+        if      (cls.equals(Boolean.TYPE)  ) return "'z'";
+        else if (cls.equals(Character.TYPE)) return "'c'";
+        else if (cls.equals(Byte.TYPE)     ) return "'b'";
+        else if (cls.equals(Short.TYPE)    ) return "'h'";
+        else if (cls.equals(Integer.TYPE)  ) return "'i'";
+        else if (cls.equals(Long.TYPE)     ) return "'l'";
+        else if (cls.equals(Float.TYPE)    ) return "'f'";
+        else if (cls.equals(Double.TYPE)   ) return "'d'";
+        else return cls.getName();
     }
 
   /**
