@@ -30,20 +30,40 @@ import java
 from java.io import File
 import javapath as path
 from UserDict import UserDict
-import stat as _stat
-
-_stat_members = [(x, getattr(_stat, x)) for x in dir(_stat) if x[:3] == "ST_"]
-_stat_members.sort(lambda x, y: cmp(x[1], y[1]))
 
 class stat_result:
+  import stat as _stat
+
+  _stat_members = (
+    ('st_mode', _stat.ST_MODE),
+    ('st_ino', _stat.ST_INO),
+    ('st_dev', _stat.ST_DEV),
+    ('st_nlink', _stat.ST_NLINK),
+    ('st_uid', _stat.ST_UID),
+    ('st_gid', _stat.ST_GID),
+    ('st_size', _stat.ST_SIZE),
+    ('st_atime', _stat.ST_ATIME),
+    ('st_mtime', _stat.ST_MTIME),
+    ('st_ctime', _stat.ST_CTIME),
+  )
+
   def __init__(self, results):
-    self._results = results
-    for name, value in zip([name.lower() for name, index in _stat_members], self._results):
-      setattr(self, name, value)
+    if len(results) != 10:
+      raise TypeError("stat_result() takes an at least 10-sequence")
+    for (name, index) in stat_result._stat_members:
+      self.__dict__[name] = results[index]
   def __getitem__(self, i):
-    return self._results[i]
+    if i < 0 or i > 9:
+      raise IndexError(i)
+    return getattr(self, stat_result._stat_members[i][0])
+  def __setitem__(self, x, value):
+    raise TypeError("object doesn't support item assignment")
+  def __setattr__(self, name, value):
+    if name in [x[0] for x in stat_result._stat_members]:
+      raise TypeError(name)
+    raise AttributeError("readonly attribute")
   def __len__(self):
-    return len(self._results)
+    return 10
 
 error = OSError
 
