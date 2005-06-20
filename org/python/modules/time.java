@@ -138,7 +138,7 @@ public class time implements ClassDictInit
     private static int item(PyTuple tup, int i) {
         // knows about and asserts format on tuple items.  See
         // documentation for Python's time module for details.
-        int val = tup.__getitem__(i).__int__().getValue();
+        int val = ((PyInteger)tup.__getitem__(i).__int__()).getValue();
         boolean valid = true;
         switch (i) {
         case 0: break;                                  // year

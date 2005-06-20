@@ -143,7 +143,7 @@ public class ArgParser {
      *               numbered 0.
      */
     public int getInt(int pos) {
-         return getRequiredArg(pos).__int__().getValue();
+         return ((PyInteger)getRequiredArg(pos).__int__()).getValue();
     }
 
     /**
@@ -155,7 +155,7 @@ public class ArgParser {
          PyObject value = getOptionalArg(pos);
          if (value == null)
              return def;
-         return value.__int__().getValue();
+         return ((PyInteger)value.__int__()).getValue();
     }
 
 

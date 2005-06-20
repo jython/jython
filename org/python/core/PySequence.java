@@ -302,7 +302,7 @@ abstract public class PySequence extends PyObject {
             return defaultValue;
         if (index instanceof PyLong) {
             try {
-                index = index.__int__();
+                index = ((PyInteger)index.__int__());
             } catch (PyException exc) {
                 if (Py.matchException(exc, Py.OverflowError)) {
                     if (new PyLong(0L).__cmp__(index) < 0)
@@ -346,7 +346,7 @@ abstract public class PySequence extends PyObject {
             PySlice s = (PySlice)index;
             return __getslice__(s.start, s.stop, s.step);
         } else if (index instanceof PyLong)
-            return __finditem__(index.__int__().getValue());
+            return __finditem__(((PyInteger)index.__int__()).getValue());
         else
             throw Py.TypeError("sequence subscript must be integer or slice");
     }
@@ -473,7 +473,7 @@ abstract public class PySequence extends PyObject {
                 PySlice s = (PySlice)index;
                 __setslice__(s.start, s.stop, s.step, value);
             } else if (index instanceof PyLong) {
-                __setitem__(index.__int__().getValue(), value);
+                __setitem__(((PyInteger)index.__int__()).getValue(), value);
             } else {
                 throw Py.TypeError(
                     "sequence subscript must be integer or slice");
@@ -497,7 +497,7 @@ abstract public class PySequence extends PyObject {
                 PySlice s = (PySlice)index;
                 __delslice__(s.start, s.stop, s.step);
             } else if (index instanceof PyLong) {
-                int i = fixindex(index.__int__().getValue());
+                int i = fixindex(((PyInteger)index.__int__()).getValue());
                 if (i == -1)
                     throw Py.IndexError("index out of range: "+i);
                 del(i);

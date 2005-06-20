@@ -395,14 +395,14 @@ public class PyTuple extends PySequenceList implements ClassDictInit
     final PyObject tuple___mul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             throw Py.TypeError("can't multiply sequence to non-int");
-        int count = o.__int__().getValue();
+        int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
 
     final PyObject tuple___rmul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             throw Py.TypeError("can't multiply sequence to non-int");
-        int count = o.__int__().getValue();
+        int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
 

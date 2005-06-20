@@ -11,6 +11,7 @@ package org.python.modules;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyFloat;
+import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyLong;
 import org.python.core.PyObject;
@@ -321,7 +322,7 @@ public class struct {
 
         int get_int(PyObject value) {
             try {
-                return value.__int__().getValue();
+                return ((PyInteger)value.__int__()).getValue();
             } catch (PyException ex) {
                 throw StructError("required argument is not an integer");
             }

@@ -1539,7 +1539,7 @@ public class PyComplex extends PyObject {
         return new PyFloat(ExtraMath.hypot(real, imag));
     }
 
-    public PyInteger __int__() {
+    public PyObject __int__() {
         return complex___int__();
     }
 

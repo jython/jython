@@ -755,7 +755,7 @@ public class PyInstance extends PyObject
      * Implements the __int__ method by looking it up
      * in the instance's dictionary and calling it if it is found.
      **/
-    public PyInteger __int__() {
+    public PyObject __int__() {
         PyObject ret = invoke("__int__");
         if (ret instanceof PyInteger)
             return (PyInteger)ret;

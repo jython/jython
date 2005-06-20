@@ -236,7 +236,7 @@ public class RegexObject extends PyObject
         PyInteger v = (PyInteger)groupindex.__finditem__(s);
         if (v == null) {
             try {
-                v = s.__int__();
+                v = (PyInteger)s.__int__();
             }
             catch (PyException exc) {
                 if (!isname(s.toString()))

@@ -1761,7 +1761,7 @@ public class PyObject implements java.io.Serializable {
      *
      * @return an integer corresponding to the value of this object.
      **/
-    public PyInteger __int__() {
+    public PyObject __int__() {
         throw Py.AttributeError("__int__");
     }
 

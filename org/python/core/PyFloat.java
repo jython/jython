@@ -1307,7 +1307,7 @@ public class PyFloat extends PyObject
             return __neg__();
     }
 
-    public PyInteger __int__() {
+    public PyObject __int__() {
         return float___int__();
     }
 

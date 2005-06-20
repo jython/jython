@@ -3087,14 +3087,14 @@ public class PyString extends PySequence implements ClassDictInit
     final PyObject str___mul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             throw Py.TypeError("can't multiply sequence to non-int");
-        int count = o.__int__().getValue();
+        int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
 
     final PyObject str___rmul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             throw Py.TypeError("can't multiply sequence to non-int");
-        int count = o.__int__().getValue();
+        int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
 
@@ -3116,7 +3116,7 @@ public class PyString extends PySequence implements ClassDictInit
         return new PyString(fmt.format(other));
     }
 
-    public PyInteger __int__() {
+    public PyObject __int__() {
         return Py.newInteger(atoi(10));
     }
 
@@ -3744,6 +3744,9 @@ public class PyString extends PySequence implements ClassDictInit
         int n = string.length();
         for (int i = 0; i < n; i++) {
             char ch = string.charAt(i);
+            if (ch == '\u0000') {
+                throw Py.ValueError("null byte in argument for float()");
+            }
             if (Character.isDigit(ch)) {
                 if (s == null)
                     s = new StringBuffer(string);
@@ -4629,7 +4632,7 @@ final class StringFormatter
     }
 
     public String formatInteger(PyObject arg, int radix, boolean unsigned) {
-        return formatInteger(arg.__int__().getValue(), radix, unsigned);
+        return formatInteger(((PyInteger)arg.__int__()).getValue(), radix, unsigned);
     }
 
     public String formatInteger(long v, int radix, boolean unsigned) {
@@ -4921,7 +4924,7 @@ final class StringFormatter
                         throw Py.TypeError("%c requires int or char");
                     break;
                 }
-                char tmp = (char)arg.__int__().getValue();
+                char tmp = (char)((PyInteger)arg.__int__()).getValue();
                 string = new Character(tmp).toString();
                 break;
 

@@ -16,6 +16,7 @@ import org.python.core.PyBuiltinFunctionSet;
 import org.python.core.PyClass;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
+import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -193,9 +194,9 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
   public void __setattr__(String name, PyObject value) {
 
     if ("arraysize".equals(name)) {
-      this.arraysize = value.__int__().getValue();
+      this.arraysize = ((PyInteger)value.__int__()).getValue();
     } else if ("softspace".equals(name)) {
-      this.softspace = value.__int__().getValue();
+      this.softspace = ((PyInteger)value.__int__()).getValue();
     } else if ("datahandler".equals(name)) {
       this.datahandler = (DataHandler)value.__tojava__(DataHandler.class);
     } else {
@@ -411,8 +412,8 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
             sqlStatement = this.connection.connection.createStatement();
           }
         } else {
-          int t = this.rsType.__int__().getValue();
-          int c = this.rsConcur.__int__().getValue();
+          int t = ((PyInteger)this.rsType.__int__()).getValue();
+          int c = ((PyInteger)this.rsConcur.__int__()).getValue();
 
           if (prepared) {
             sqlStatement = this.connection.connection.prepareStatement(sqlString, t, c);
@@ -427,7 +428,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
       }
 
       if (maxRows != Py.None) {
-        stmt.statement.setMaxRows(maxRows.__int__().getValue());
+        stmt.statement.setMaxRows(((PyInteger)maxRows.__int__()).getValue());
       }
     } catch (AbstractMethodError e) {
       throw zxJDBC.makeException(zxJDBC.NotSupportedError, zxJDBC.getString("nodynamiccursors"));
@@ -470,7 +471,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
         Statement stmt = procedure.prepareCall(this.rsType, this.rsConcur);
 
         if (maxRows != Py.None) {
-          stmt.setMaxRows(maxRows.__int__().getValue());
+          stmt.setMaxRows(((PyInteger)maxRows.__int__()).getValue());
         }
 
         // get the bindings per the stored proc spec
@@ -904,7 +905,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
     PyCursor cursor = (PyCursor)__self__;
     switch (index) {
       case 0 :
-        return cursor.fetchmany(arg.__int__().getValue());
+        return cursor.fetchmany(((PyInteger)arg.__int__()).getValue());
       case 5 :
         cursor.execute(arg, Py.None, Py.None, Py.None);
         return Py.None;
@@ -918,7 +919,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
         cursor.executemany(arg, Py.None, Py.None, Py.None);
         return Py.None;
       case 10 :
-        cursor.scroll(arg.__int__().getValue(), "relative");
+        cursor.scroll(((PyInteger)arg.__int__()).getValue(), "relative");
         return Py.None;
       case 11 :
         cursor.execute(arg, Py.None, Py.None, Py.None);
@@ -945,7 +946,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
         cursor.executemany(arga, argb, Py.None, Py.None);
         return Py.None;
       case 10 :
-        cursor.scroll(arga.__int__().getValue(), argb.toString());
+        cursor.scroll(((PyInteger)arga.__int__()).getValue(), argb.toString());
         return Py.None;
       default :
         throw argCountError(2);

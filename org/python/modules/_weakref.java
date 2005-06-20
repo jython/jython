@@ -303,7 +303,7 @@ public class _weakref implements ClassDictInit {
         public PyString __str__() { return py().__str__(); }
         public PyString __hex__() { return py().__hex__(); }
         public PyString __oct__() { return py().__oct__(); }
-        public PyInteger __int__() { return py().__int__(); }
+        public PyObject __int__() { return py().__int__(); }
         public PyFloat __float__() { return py().__float__(); }
         public PyLong __long__() { return py().__long__(); }
         public PyComplex __complex__() { return py().__complex__(); }

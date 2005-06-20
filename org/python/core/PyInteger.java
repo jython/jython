@@ -1734,7 +1734,7 @@ public class PyInteger extends PyObject {
         return Py.newInteger(~value);
     }
 
-    public PyInteger __int__() {
+    public PyObject __int__() {
         return int___int__();
     }
 

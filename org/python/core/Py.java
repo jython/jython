@@ -970,7 +970,7 @@ public final class Py
             if (text != Py.None && text.__len__() != 0) {
                 stderr.println("\t"+text);
                 String space = "\t";
-                int col = value.__findattr__("offset").__int__().getValue();
+                int col = ((PyInteger)value.__findattr__("offset").__int__()).getValue();
                 for(int j=1; j<col; j++)
                     space = space+" ";
                 stderr.println(space+"^");

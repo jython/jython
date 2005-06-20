@@ -65,7 +65,7 @@ public class PyObjectDerived extends PyObject {
         return super.__oct__();
     }
 
-    public PyInteger __int__() {
+    public PyObject __int__() {
         PyType self_type = getType();
         PyObject impl = self_type.lookup("__int__");
         if (impl != null) {

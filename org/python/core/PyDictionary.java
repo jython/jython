@@ -119,6 +119,45 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("__cmp__",new PyMethodDescr("__cmp__",PyDictionary.class,1,1,new exposed___cmp__(null,null)));
+        class exposed_fromkeys extends PyBuiltinFunctionNarrow {
+
+            private PyDictionary self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_fromkeys(PyDictionary self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_fromkeys((PyDictionary)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                return self.dict_fromkeys(arg0,arg1);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyDictionary self=(PyDictionary)gself;
+                return self.dict_fromkeys(arg0,arg1);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.dict_fromkeys(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyDictionary self=(PyDictionary)gself;
+                return self.dict_fromkeys(arg0);
+            }
+
+        }
+        dict.__setitem__("fromkeys",new PyMethodDescr("fromkeys",PyDictionary.class,1,2,new exposed_fromkeys(null,null)));
+
+
         class exposed___getitem__ extends PyBuiltinFunctionNarrow {
 
             private PyDictionary self;
@@ -227,6 +266,44 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("setdefault",new PyMethodDescr("setdefault",PyDictionary.class,1,2,new exposed_setdefault(null,null)));
+        class exposed_pop extends PyBuiltinFunctionNarrow {
+
+            private PyDictionary self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_pop(PyDictionary self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_pop((PyDictionary)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                return self.dict_pop(arg0,arg1);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyDictionary self=(PyDictionary)gself;
+                return self.dict_pop(arg0,arg1);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.dict_pop(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyDictionary self=(PyDictionary)gself;
+                return self.dict_pop(arg0);
+            }
+
+        }
+        dict.__setitem__("pop",new PyMethodDescr("pop",PyDictionary.class,1,2,new exposed_pop(null,null)));
+
         class exposed_popitem extends PyBuiltinFunctionNarrow {
 
             private PyDictionary self;
@@ -872,6 +949,30 @@ public class PyDictionary extends PyObject {
             }
         }
     }
+    public PyObject fromkeys(PyObject keys) {
+        return dict_fromkeys(keys, null);
+    }
+
+    public PyObject fromkeys(PyObject keys, PyObject value) {
+        return dict_fromkeys(keys, value);
+    }
+
+    final PyObject dict_fromkeys(PyObject keys) {
+        return dict_fromkeys(keys, null);
+    }
+
+    final PyObject dict_fromkeys(PyObject keys, PyObject value) {
+        if (value == null) {
+            value = Py.None;
+        }
+        PyDictionary d = new PyDictionary();
+        PyIterator iter = (PyIterator)keys.__iter__();
+	for (PyObject o = iter.__iternext__();o != null;o = iter.__iternext__()) {
+	    d.__setitem__(o, value);
+	}
+        return d;
+    }
+
 
 
     public String safeRepr() throws PyIgnoreMethodTag {
@@ -1172,6 +1273,39 @@ public class PyDictionary extends PyObject {
             __setitem__(key, o = failobj);
         return o;
     }
+    
+    /**
+     * Return a value based on key
+     * from the dictionary.
+     */
+    public PyObject pop(PyObject key) {
+        return dict_pop(key);
+    }
+
+    final PyObject dict_pop(PyObject key) {
+        if (!table.containsKey(key))
+            throw Py.KeyError("popitem(): dictionary is empty");
+        PyObject val = (PyObject) table.get(key);
+        table.remove(key);
+        return val;
+    }
+
+    /**
+     * Return a value based on key
+     * from the dictionary or default if that key is not found.
+     */
+    public PyObject pop(PyObject key, PyObject defaultValue) {
+        return dict_pop(key, defaultValue);
+    }
+
+    final PyObject dict_pop(PyObject key, PyObject defaultValue) {
+        if (!table.containsKey(key))
+            return defaultValue;
+        PyObject val = (PyObject) table.get(key);
+        table.remove(key);
+        return val;
+    }
+
 
     /**
      * Return a random (key, value) tuple pair and remove the pair

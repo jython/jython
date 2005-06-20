@@ -11,6 +11,7 @@ package com.ziclix.python.sql;
 import org.python.core.Py;
 import org.python.core.PyClass;
 import org.python.core.PyException;
+import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -314,7 +315,7 @@ public class PyStatement extends PyObject {
 
                 if (binding != null) {
                     try {
-                        int bindingValue = binding.__int__().getValue();
+                        int bindingValue = ((PyInteger)binding.__int__()).getValue();
 
                         datahandler.setJDBCObject(preparedStatement, column, param, bindingValue);
                     } catch (PyException e) {

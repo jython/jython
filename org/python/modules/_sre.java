@@ -34,7 +34,7 @@ public class _sre {
             int n = code.__len__();
             ccode = new char[n];
             for (int i = 0; i < n; i++)
-                ccode[i] = (char) code.__getitem__(i).__int__().getValue();
+                ccode[i] = (char) ((PyInteger)code.__getitem__(i).__int__()).getValue();
         } else {
             throw Py.TypeError("Expected list");
         }

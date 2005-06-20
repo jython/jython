@@ -33,7 +33,7 @@ public class xreadlines {
         }
 
         public PyObject __finditem__(PyObject idx) {
-            return __finditem__(idx.__int__().getValue());
+            return __finditem__(((PyInteger)idx.__int__()).getValue());
         }
 
         public PyObject __finditem__(int idx) {

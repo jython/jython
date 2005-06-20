@@ -1741,14 +1741,19 @@ public class PyLong extends PyObject
         return new PyLong(value.not());
     }
 
-    public PyInteger __int__() {
+    public PyObject __int__() {
         return long___int__();
     }
 
-    final PyInteger long___int__() {
+    final PyObject long___int__() {
+        long v = value.longValue();
+        if (v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
+            return this;
+        }
         return new PyInteger((int)getLong(Integer.MIN_VALUE,
                                           Integer.MAX_VALUE));
     }
+
 
     public PyLong __long__() {
         return long___long__();
