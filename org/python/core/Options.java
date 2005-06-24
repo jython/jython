@@ -64,7 +64,7 @@ public class Options
      * Setting this to true will support old 1.0 style keyword+"_" names.
      * This isn't needed any more due to improvements in the parser
      */
-    public static boolean deprecatedKeywordMangling = true;
+    public static boolean deprecatedKeywordMangling = false;
 
     /**
      * A directory where the dynamicly generated classes are written.
