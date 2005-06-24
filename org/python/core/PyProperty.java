@@ -197,11 +197,11 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
     public PyObject getFset() {
         return fset;
     }
-    
+
     public PyObject getFget() {
         return fget;
     }
-    
+
     public void property_init(PyObject[] args, String[] keywords) {
         ArgParser argparse = new ArgParser("property",args, keywords,
                 new String[] {"fget","fset","fdel","doc"}, 0);
@@ -212,6 +212,10 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
         fdel = argparse.getPyObject(2, null);
         fdel = fdel==Py.None?null:fdel;
         doc = argparse.getPyObject(3, null);
+    }
+
+    public PyObject __call__(PyObject arg1, PyObject args[], String keywords[]) {
+        return fget.__call__(arg1);
     }
 
     public PyObject __get__(PyObject obj, PyObject type) {
