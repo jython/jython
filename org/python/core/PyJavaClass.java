@@ -1,8 +1,10 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.lang.reflect.*;
-import java.beans.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * A wrapper around a java class.
@@ -85,11 +87,11 @@ public class PyJavaClass extends PyClass
 
     // for the moment trying to lazily load a PyObject subclass
     // is not allowed, (because of the PyJavaClass vs PyType class mismatch)
-    // pending PyJavaClass becoming likely a subclass of PyType  
+    // pending PyJavaClass becoming likely a subclass of PyType
     private static final void check_lazy_allowed(Class c) {
         if (PyObject.class.isAssignableFrom(c)) { // xxx
             throw Py.TypeError("cannot lazy load PyObject subclass");
-        }        
+        }
     }
 
     private static final void initLazy(PyJavaClass jc) {
@@ -416,6 +418,11 @@ public class PyJavaClass extends PyClass
             Class dc = method.getDeclaringClass();
             if (dc != c)
                 continue;
+            int mods = dc.getModifiers();
+            if(!(Modifier.isPublic(mods) || Modifier.isPrivate(mods) || Modifier.isProtected(mods))) {
+                // skip package protected classes such as AbstractStringBuilder or UNIXProcess
+                continue;
+            }
             if (ignoreMethod(method))
                 continue;
             addMethod(method);
@@ -848,7 +855,7 @@ public class PyJavaClass extends PyClass
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if (!constructorsInitialized)
             initConstructors();
-        
+
         // xxx instantiation of PyObject subclass, still needed?
         if (PyObject.class.isAssignableFrom(proxyClass)) {
             if (Modifier.isAbstract(proxyClass.getModifiers())) {
@@ -861,7 +868,7 @@ public class PyJavaClass extends PyClass
             }
             return __init__.make(args,keywords);
         }
-            
+
         PyInstance inst = new PyJavaInstance(this);
         inst.__init__(args, keywords);
 
