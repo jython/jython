@@ -16,7 +16,7 @@ import org.python.modules.Setup;
 public class PySystemState extends PyObject
 {
     /**
-     * The current version of JPython.
+     * The current version of Jython.
      */
     public static String version = "2.2a2";
 
@@ -67,7 +67,7 @@ public class PySystemState extends PyObject
      * Exit a Python program with the given status.
      *
      * @param status the value to exit with
-     * @exception PySystemExit always throws this exception.
+     * @exception Py.SystemExit always throws this exception.
      * When caught at top level the program will exit.
      */
     public static void exit(PyObject status) {
@@ -84,6 +84,10 @@ public class PySystemState extends PyObject
     public PyObject modules; // = new PyStringMap();
     public PyList path;
     public PyObject builtins;
+
+    public PyList meta_path;
+    public PyList path_hooks;
+    public PyObject path_importer_cache;
 
     public static String platform = "java";
     public static String byteorder = "big";
@@ -218,7 +222,6 @@ public class PySystemState extends PyObject
         this.recursionlimit = recursionlimit;
     }
 
-
     // xxx fix and polish this
     public PySystemState() {
         initialize();
@@ -226,6 +229,13 @@ public class PySystemState extends PyObject
 
         argv = (PyList)defaultArgv.repeat(1);
         path = (PyList)defaultPath.repeat(1);
+
+        meta_path = new PyList();
+        meta_path.append(new PrecompiledImporter());
+        meta_path.append(new JavaImporter());
+        path_hooks = new PyList();
+        path_hooks.append(PyJavaClass.lookup(ZipFileImporter.class));
+        path_importer_cache = new PyDictionary();
 
         // Set up the initial standard ins and outs
         __stdout__ = stdout = new PyFile(System.out, "<stdout>");
@@ -411,7 +421,7 @@ public class PySystemState extends PyObject
             Py.defaultSystemState.setClassLoader(classLoader);
         Py.initClassExceptions(__builtin__class.__getattr__("__dict__"));
         // Make sure that Exception classes have been loaded
-        PySyntaxError dummy = new PySyntaxError("", 1,1,"", "");
+        new PySyntaxError("", 1,1,"", "");
     }
 
     private static void initStaticFields() {
@@ -580,8 +590,8 @@ public class PySystemState extends PyObject
      * for java packages.
      * <p>
      * <b>Note</b>. Classes found in directory and subdirectory are not
-     * made available to jython by this call. It only make the java
-     * package found ion the directory available. This call is mostly
+     * made available to jython by this call. It only makes the java
+     * package found in the directory available. This call is mostly
      * usefull if jython is embedded in an application that deals with
      * its own classloaders. A servlet container is a very good example.
      * Calling add_classdir("<context>/WEB-INF/classes") makes the java
@@ -612,14 +622,14 @@ public class PySystemState extends PyObject
 
     /**
      * Add a .jar & .zip directory to the list of places that are searched
-     * for java .jar and .zip files. 
+     * for java .jar and .zip files.
      * <p>
      * <b>Note</b>. Classes in .jar and .zip files found in the directory
      * are not made available to jython by this call. See the note for
      * add_classdir(dir) for more details.
      *
      * @param directoryPath The name of a directory.
-     * @param cache         Controls if the packages in the zip and jar 
+     * @param cache         Controls if the packages in the zip and jar
      *                      file should be cached.
      *
      * @see #add_classdir
@@ -714,7 +724,7 @@ class PollingInputStream extends FilterInputStream {
         try {
             while(available()==0) {
                 //System.err.println("waiting...");
-                Thread.currentThread().sleep(100);
+                Thread.sleep(100);
             }
         } catch (InterruptedException e) {
             throw new PyException(Py.KeyboardInterrupt,
@@ -741,20 +751,18 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet
     }
 
     public PyObject __call__(PyObject arg) {
-        PySystemState sys = Py.getThreadState().systemState;
         switch (index) {
         case 10:
-            sys.displayhook(arg);
+            PySystemState.displayhook(arg);
             return Py.None;
         default:
             throw argCountError(1);
         }
     }
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-        PySystemState sys = Py.getThreadState().systemState;
         switch (index) {
         case 30:
-            sys.excepthook(arg1, arg2, arg3);
+            PySystemState.excepthook(arg1, arg2, arg3);
             return Py.None;
         default:
             throw argCountError(3);

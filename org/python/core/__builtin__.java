@@ -954,7 +954,7 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject __import__(String name, PyObject globals,
-                                      PyObject locals,PyObject fromlist)
+                                      PyObject locals, PyObject fromlist)
     {
         PyFrame frame = Py.getFrame();
         if (frame == null)

@@ -25,6 +25,7 @@ public class PyModule extends PyObject
 
         PyObject ret = null;
 
+        //System.err.println("PyModule.impAttr " + attr + " " + name + " " + fullName);
         if (path == Py.None) {
             /* disabled:
             ret = imp.loadFromClassLoader(
@@ -33,7 +34,7 @@ public class PyModule extends PyObject
              */
         }
         else if (path instanceof PyList) {
-            ret = imp.loadFromPath(attr, fullName,(PyList)path);
+            ret = imp.find_module(attr, fullName, (PyList)path);
         }
         else {
             throw Py.TypeError("__path__ must be list or None");
@@ -57,6 +58,7 @@ public class PyModule extends PyObject
 
     public PyObject __findattr__(String attr) {
         PyObject ret;
+
         ret = __dict__.__finditem__(attr);
         if (ret != null) return ret;
 
@@ -80,10 +82,11 @@ public class PyModule extends PyObject
     public PyObject __dir__() {
         return __dict__.invoke("keys");
     }
-    
+
     public String toString()  {
-        return "<module "+__dict__.__finditem__("__name__")+" "+
-            Py.idstr(this)+">";
+        PyObject name = __dict__.__finditem__("__name__");
+        PyObject file = __dict__.__finditem__("__file__");
+        return "<module '"+ name + "' from '" + file + "'>";
     }
 
     static private PyObject silly_list = null;
