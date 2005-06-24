@@ -3128,6 +3128,18 @@ public class PyString extends PySequence implements ClassDictInit
         return new PyFloat(atof());
     }
 
+    public PyObject __pos__() {
+      throw Py.TypeError("bad operand type for unary +");
+    }
+
+    public PyObject __neg__() {
+      throw Py.TypeError("bad operand type for unary -");
+    }
+
+    public PyObject __invert__() {
+      throw Py.TypeError("bad operand type for unary ~");
+    }
+
     public PyComplex __complex__() {
         boolean got_re = false;
         boolean got_im = false;

@@ -1296,6 +1296,10 @@ public class PyFloat extends PyObject
         return this;
     }
 
+    public PyObject __invert__() {
+        throw Py.TypeError("bad operand type for unary ~");
+    }
+
     public PyObject __abs__() {
         return float___abs__();
     }

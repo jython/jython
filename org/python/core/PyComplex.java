@@ -1531,6 +1531,10 @@ public class PyComplex extends PyObject {
         return this;
     }
 
+    public PyObject __invert__() {
+      throw Py.TypeError("bad operand type for unary ~");
+    }
+
     public PyObject __abs__() {
         return complex___abs__();
     }
