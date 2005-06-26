@@ -4,7 +4,7 @@ package org.python.core;
 /**
  * A builtin python string.
  */
-public class PyString extends PySequence implements ClassDictInit
+public class PyString extends PyBaseString implements ClassDictInit
 {
     //~ BEGIN GENERATED
 

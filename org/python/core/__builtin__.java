@@ -123,6 +123,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
         dict.__setitem__("super", PyType.fromClass(PySuper.class));
         dict.__setitem__("str", PyType.fromClass(PyString.class));
+        dict.__setitem__("unicode", PyType.fromClass(PyUnicode.class));
         dict.__setitem__("file", PyType.fromClass(PyFile.class));
 
         /* - */
@@ -838,6 +839,7 @@ public class __builtin__ implements ClassDictInit
         return sum(seq, Py.Zero);
     }
 
+    /*
     public static PyString unicode(PyObject v) {
         return unicode(v.__str__(), null, null);
     }
@@ -851,7 +853,7 @@ public class __builtin__ implements ClassDictInit
     {
         return new PyString(codecs.decode(v, encoding, errors));
     }
-
+    */
     public static PyTuple tuple(PyObject o) {
         if (o instanceof PyTuple)
             return (PyTuple)o;

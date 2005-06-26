@@ -54,7 +54,7 @@ public class types implements ClassDictInit {
         dict.__setitem__("XRangeType", PyType.fromClass(PyXRange.class));
 
         dict.__setitem__("StringTypes", new PyTuple(new PyObject[] {
-                PyType.fromClass(PyString.class)
+                PyType.fromClass(PyString.class), PyType.fromClass(PyUnicode.class)
         }));
     }
 }
