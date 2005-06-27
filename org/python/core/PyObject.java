@@ -1515,6 +1515,11 @@ public class PyObject implements java.io.Serializable {
             if (res != null)
                 return res;
             return _cmpeq_unsafe(o) == 0 ? Py.One : Py.Zero;
+        } catch (PyException e) {
+            if (Py.matchException(e, Py.AttributeError)) {
+                return Py.Zero;
+            }
+            throw e;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
