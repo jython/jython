@@ -97,18 +97,17 @@ public class PyXRange extends PySequence {
     }
 
     public String toString() {
-        StringBuffer buf = new StringBuffer("(");
-        int count = __len__();
-        for (int i=0; i<(count-1); i++) {
-            buf.append(pyget(i).__repr__().toString());
-            buf.append(", ");
+        StringBuffer buf = new StringBuffer("xrange(");
+	if (start != 0) {
+	    buf.append(start);
+	    buf.append(", ");
+	}
+        buf.append(__len__() * step + start);
+	if (step != 1) {
+	    buf.append(", ");
+	    buf.append(step);
         }
-        if (count > 0)
-            buf.append(pyget(count-1).__repr__().toString());
-        if (count == 1)
-            buf.append(",");
         buf.append(")");
-
         return buf.toString();
     }
 

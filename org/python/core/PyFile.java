@@ -1883,8 +1883,20 @@ public class PyFile extends PyObject
     }
 
     final String file_toString() {
-        return "<file " + name + ", mode " + mode + " " +
-               Py.idstr(this) + ">";
+	StringBuffer s = new StringBuffer("<");
+	if (closed) {
+	    s.append("closed ");
+	} else {
+	    s.append("open ");
+	}
+        s.append("file '");
+	s.append(name);
+	s.append("', mode '");
+	s.append(mode);
+	s.append("' ");
+        s.append(Py.idstr(this));
+	s.append(">");
+        return s.toString();
     }
 
     public String toString() {

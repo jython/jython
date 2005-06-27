@@ -74,9 +74,9 @@ public class PyBuiltinFunctionSet extends PyObject implements Cloneable
 
     public String toString() {
         if (isMethod)
-            return "<builtin method '"+name+"'>";
+            return "<built-in method "+name+">";
         else
-            return "<builtin function '"+name+"'>";
+            return "<built-in function "+name+">";
     }
 
     public boolean isMappingType() { return false; }
