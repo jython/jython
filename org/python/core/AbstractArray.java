@@ -422,10 +422,10 @@ public abstract class AbstractArray implements Serializable{
                 message = "thisStart < 0 (thisStart = " + thisStart + ")";
             } else if (replacedLen < 0) {
                 message = "thisStart > thistStop (thisStart = " + thisStart + 
-                		", thisStop = " + thisStop + ")";
+                                ", thisStop = " + thisStop + ")";
             } else if (thisStop > size) {
                 message = "thisStop > size (thisStop = " + thisStop + 
-                		", size = " + size + ")";
+                                ", size = " + size + ")";
             } else {
                 throw new InternalError("Incorrect validation logic");
             }
@@ -441,10 +441,10 @@ public abstract class AbstractArray implements Serializable{
                 message = "srcStart < 0 (srcStart = " + srcStart +")";
             } else if (replacementLen < 0) {
                 message = "srcStart > srcStop (srcStart = " + srcStart + 
-                		", srcStop = " + srcStop + ")";
+                                ", srcStop = " + srcStop + ")";
             } else if (srcStop > srcLen) {
                 message = "srcStop > srcArray length (srcStop = " + srcStop + 
-                		", srcArray length = " +srcLen + ")";
+                                ", srcArray length = " +srcLen + ")";
             } else {
                 throw new InternalError("Incorrect validation logic");
             }

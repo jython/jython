@@ -154,12 +154,12 @@ public abstract class PySequenceList extends PySequence implements List {
 //        this.list = list;
 //    }
 
-	/**
-	 * Get the backing array. The array should not be modified.
-	 * To get a copy of the array, see {@link #toArray()}.
-	 *
-	 * @return backing array object
-	 */
+        /**
+         * Get the backing array. The array should not be modified.
+         * To get a copy of the array, see {@link #toArray()}.
+         *
+         * @return backing array object
+         */
     public PyObject[] getArray() {
         return list.getArray();
     }

@@ -502,7 +502,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
         throw new UnsupportedOperationException();
     }
 
-    public ListIterator listIterator() 	{
+    public ListIterator listIterator() {
         return listIterator(0);
     }
 

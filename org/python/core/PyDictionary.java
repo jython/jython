@@ -967,9 +967,9 @@ public class PyDictionary extends PyObject {
         }
         PyDictionary d = new PyDictionary();
         PyIterator iter = (PyIterator)keys.__iter__();
-	for (PyObject o = iter.__iternext__();o != null;o = iter.__iternext__()) {
-	    d.__setitem__(o, value);
-	}
+        for (PyObject o = iter.__iternext__();o != null;o = iter.__iternext__()) {
+            d.__setitem__(o, value);
+        }
         return d;
     }
 

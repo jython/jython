@@ -504,14 +504,14 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <echo>copy sources from ${source.dir}</echo>
         <copy todir="${dist.dir}/src/java" preservelastmodified="true">
             <fileset dir="${source.dir}">
-            	  <include name="org/**/*.java" />
-            	  <include name="com/**/*.java" />
-            	  <include name="com/**/*.properties" />
-            	  <include name="Lib/jxxload_help/*.java" />
-            	  <include name="Lib/test/javatests/*.java" />
-            	  <include name="org/**/ucnhash.dat" />
-            	  <include name="org/python/parser/build.xml" />
-            	  <exclude name="org/python/parser/python.java" />
+              <include name="org/**/*.java" />
+              <include name="com/**/*.java" />
+              <include name="com/**/*.properties" />
+              <include name="Lib/jxxload_help/*.java" />
+              <include name="Lib/test/javatests/*.java" />
+              <include name="org/**/ucnhash.dat" />
+              <include name="org/python/parser/build.xml" />
+              <exclude name="org/python/parser/python.java" />
             </fileset>
         </copy>
 

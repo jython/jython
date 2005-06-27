@@ -45,20 +45,20 @@ public class ArrayModule {
      * These are python array methods.  
      */
     
-	public static PyArray ArrayType(char TypeCode) {
-    	return PyArray.array(new PyList(), TypeCode);
+    public static PyArray ArrayType(char TypeCode) {
+            return PyArray.array(new PyList(), TypeCode);
     }
     
     public static PyObject ArrayType(char TypeCode, PyObject sequence) {
-    	return PyArray.array(sequence, TypeCode);
+            return PyArray.array(sequence, TypeCode);
     }
 
     public static PyObject array(char TypeCode) {
-    	return PyArray.array(new PyList(), TypeCode);
+            return PyArray.array(new PyList(), TypeCode);
     }
     
     public static PyObject array(char TypeCode, PyObject sequence) {
-     	return PyArray.array(sequence, TypeCode);
+             return PyArray.array(sequence, TypeCode);
     }
 
     /*

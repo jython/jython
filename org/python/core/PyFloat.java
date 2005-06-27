@@ -910,7 +910,7 @@ public class PyFloat extends PyObject
     private double value;
 
     public PyFloat(double v) {
-	    super(FLOATTYPE);
+            super(FLOATTYPE);
         value = v;
     }
 

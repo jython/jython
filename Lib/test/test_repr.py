@@ -109,7 +109,7 @@ class ReprTests(unittest.TestCase):
         eq(repr(xrange(1)), 'xrange(1)')
         eq(repr(xrange(1, 2)), 'xrange(1, 2)')
         eq(repr(xrange(1, 2, 3)), 'xrange(1, 4, 3)')
-	#commented out for jython since this is deprecated.
+        #commented out for jython since this is deprecated.
         # Turn off warnings for deprecated multiplication
         #import warnings
         #warnings.filterwarnings('ignore', category=DeprecationWarning,

@@ -20,7 +20,7 @@ import java.util.RandomAccess;
  * @author Clark Updike
  */
 public class PyObjectList
-	extends AbstractList implements RandomAccess, Cloneable, Serializable {
+        extends AbstractList implements RandomAccess, Cloneable, Serializable {
 
     /* Design note:
      * This class let's PySequenceList implement java.util.List by delegating
@@ -169,19 +169,19 @@ public class PyObjectList
         return c.size() > 0;
     }
 
-	/**
-	 * Get the backing array. The array should generally not be modified.
-	 * To get a copy of the array, see {@link #toArray()} which returns a copy.
-	 *
-	 * @return backing array object
-	 */
+        /**
+         * Get the backing array. The array should generally not be modified.
+         * To get a copy of the array, see {@link #toArray()} which returns a copy.
+         *
+         * @return backing array object
+         */
     PyObject[] getArray() {
         return (PyObject[])array.getArray();
     }
 
-	void ensureCapacity(int minCapacity) {
-	    array.ensureCapacity(minCapacity);
-	}
+        void ensureCapacity(int minCapacity) {
+            array.ensureCapacity(minCapacity);
+        }
 
     void replaceSubArray(int destStart, int destStop, Object srcArray, int srcStart, int srcStop) {
         array.replaceSubArray(destStart, destStop, srcArray, srcStart, srcStop);
