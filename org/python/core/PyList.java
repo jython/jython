@@ -1311,7 +1311,6 @@ public class PyList extends PySequenceList {
 
     final PyObject list___add__(PyObject o) {
         PyList sum = null;
-        boolean throwTE = false;
         if (o instanceof PyList) {
             PyList other = (PyList)o;           
             int thisLen = size();
@@ -1324,21 +1323,13 @@ public class PyList extends PySequenceList {
             // also support adding java lists (but not PyTuple!)
             Object oList = o.__tojava__(List.class);
             if (oList != Py.NoConversion && oList != null) {
-                   List otherList = (List)oList;
-                   sum = new PyList();
-                   sum.list_extend(this);
-                   for (Iterator i = otherList.iterator(); i.hasNext(); ) {
-                       sum.add(i.next());
-                   }   
-            } else {
-                throwTE = true;
+                List otherList = (List)oList;
+                sum = new PyList();
+                sum.list_extend(this);
+                for (Iterator i = otherList.iterator(); i.hasNext(); ) {
+                    sum.add(i.next());
+                }
             }
-        } else {
-            throwTE = true;
-        }
-        if (throwTE) {
-               throw Py.TypeError("can only concatenate list (not \"" +
-                    o.getType().fastGetName() + "\") to list");
         }
         return sum;
     }
