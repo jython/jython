@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.text.MessageFormat;
+
 /**
  * All objects known to the Jython runtime system are represented
  * by an instance of the class <code>PyObject</code> or one of
@@ -1895,13 +1897,54 @@ public class PyObject implements java.io.Serializable {
      **/
     public final PyObject _add(PyObject o2) {
         PyObject x = __add__(o2);
-        if (x != null)
+        if (x != null) {
             return x;
+        }
         x = o2.__radd__(this);
-        if (x != null)
+        if (x != null) {
             return x;
-        throw Py.TypeError("__add__ nor __radd__ defined for these operands");
+        }
+        throw Py.TypeError(_unsupportedop("+", o2));
     }
+
+    /**
+     * @param op the String form of the op (e.g. "+")
+     * @param o2 the right operand
+     */
+    protected final String _unsupportedop(String op, PyObject o2) {
+        Object[] args = {op, getType().fastGetName(), o2.getType().fastGetName()};
+        String msg = unsupportedopMessage(op, o2);
+        if (msg == null) {
+            msg = o2.runsupportedopMessage(op, o2);
+        }
+        if (msg == null) {
+            msg = "unsupported operand type(s) for {0}: ''{1}'' and ''{2}''";
+        }
+        return MessageFormat.format(msg, args);
+    }
+
+    /**
+     * Should return an error message suitable for substitution where.
+     *
+     * {0} is the op name.
+     * {1} is the left operand type.
+     * {2} is the right operand type.
+     */
+    protected String unsupportedopMessage(String op, PyObject o2) {
+        return null;
+    }
+    
+    /**
+     * Should return an error message suitable for substitution where.
+     *
+     * {0} is the op name.
+     * {1} is the left operand type.
+     * {2} is the right operand type.
+     */
+    protected String runsupportedopMessage(String op, PyObject o2) {
+        return null;
+    }
+
 
     /**
      * Equivalent to the standard Python __sub__ method
@@ -1950,7 +1993,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rsub__(this);
         if (x != null)
             return x;
-        throw Py.TypeError("__sub__ nor __rsub__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("-", o2));
     }
 
     /**
@@ -2000,7 +2043,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rmul__(this);
         if (x != null)
             return x;
-        throw Py.TypeError("__mul__ nor __rmul__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("*", o2));
     }
 
     /**
@@ -2052,7 +2095,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rdiv__(this);
         if (x != null)
             return x;
-        throw Py.TypeError("__div__ nor __rdiv__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("/", o2));
     }
 
     /**
@@ -2102,8 +2145,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rfloordiv__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-            "__floordiv__ nor __rfloordiv__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("//", o2));
     }
 
     /**
@@ -2153,8 +2195,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rtruediv__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-            "__truediv__ nor __rtruediv__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("/", o2));
     }
 
     /**
@@ -2204,7 +2245,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rmod__(this);
         if (x != null)
             return x;
-        throw Py.TypeError("__mod__ nor __rmod__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("%", o2));
     }
 
     /**
@@ -2254,8 +2295,8 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rdivmod__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-            "__divmod__ nor __rdivmod__ defined for these operands");
+        //FIXME:
+        throw Py.TypeError(_unsupportedop("divmod", o2));
     }
 
     /**
@@ -2305,7 +2346,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rpow__(this);
         if (x != null)
             return x;
-        throw Py.TypeError("__pow__ nor __rpow__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("**", o2));
     }
 
     /**
@@ -2355,8 +2396,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rlshift__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-            "__lshift__ nor __rlshift__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("<<", o2));
     }
 
     /**
@@ -2406,8 +2446,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rrshift__(this);
         if (x != null)
             return x;
-        throw Py.TypeError(
-            "__rshift__ nor __rrshift__ defined for these operands");
+        throw Py.TypeError(_unsupportedop(">>", o2));
     }
 
     /**
@@ -2457,7 +2496,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rand__(this);
         if (x != null)
             return x;
-        throw Py.TypeError("__and__ nor __rand__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("&", o2));
     }
 
     /**
@@ -2507,7 +2546,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__ror__(this);
         if (x != null)
             return x;
-        throw Py.TypeError("__or__ nor __ror__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("|", o2));
     }
 
     /**
@@ -2557,7 +2596,7 @@ public class PyObject implements java.io.Serializable {
         x = o2.__rxor__(this);
         if (x != null)
             return x;
-        throw Py.TypeError("__xor__ nor __rxor__ defined for these operands");
+        throw Py.TypeError(_unsupportedop("^", o2));
     }
 
     // Generated by make_binops.py (End)

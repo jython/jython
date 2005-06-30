@@ -1343,8 +1343,7 @@ public class PyList extends PySequenceList {
         // 'o' should never be a PyList since __add__ is defined.
         PyList sum = null;
         if (o instanceof PySequence) {
-            throw Py.TypeError("can only concatenate list (not \"" +
-                    o.getType().fastGetName() + "\") to list");
+            return null;
         }
         Object oList = o.__tojava__(List.class);
         if(oList != Py.NoConversion && oList != null) {
@@ -1353,6 +1352,20 @@ public class PyList extends PySequenceList {
             sum.extend(this);
         }
         return sum;
+    }
+    
+    protected String unsupportedopMessage(String op, PyObject o2) {
+        if (op.equals("+")) {
+            return "can only concatenate list (not \"{2}\") to list";
+        }
+        return null;
+    }
+
+    protected String runsupportedopMessage(String op, PyObject o2) {
+        if (op.equals("+")) {
+            return "can only concatenate list (not \"{1}\") to list";
+        }
+        return null;
     }
     
     public String toString() {
