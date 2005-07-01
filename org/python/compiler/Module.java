@@ -486,8 +486,13 @@ public class Module implements ClassConstants, CompilationContext
         if (compiler.my_scope.generator) {
             code.moreflags |= org.python.core.PyTableCode.CO_GENERATOR;
         }
-        if (cflags != null && cflags.generator_allowed) {
-            code.moreflags |= org.python.core.PyTableCode.CO_GENERATOR_ALLOWED;
+        if (cflags != null) {
+            if (cflags.generator_allowed) {
+                code.moreflags |= org.python.core.PyTableCode.CO_GENERATOR_ALLOWED;
+            }
+            if (cflags.division) {
+                code.moreflags |= org.python.core.PyTableCode.CO_FUTUREDIVISION;
+            }
         }
 
         code.module = this;

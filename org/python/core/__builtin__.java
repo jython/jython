@@ -269,9 +269,7 @@ public class __builtin__ implements ClassDictInit
             code = (PyCode)o;
         else {
             if (o instanceof PyString) {
-                // eval does not inherit co_nested
-                code = Py.compile_flags(((PyString)o).toString(),
-                                           "<string>", "eval", null);
+                code = compile(o.toString(), "<string>", "eval");
             } else
                 throw Py.TypeError(
                     "eval: argument 1 must be string or code object");

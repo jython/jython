@@ -5,6 +5,7 @@ package org.python.compiler;
 import org.python.parser.*;
 import org.python.parser.ast.*;
 import org.python.parser.ast.Attribute;
+import org.python.core.CompilerFlags;
 import org.python.core.Py;
 import org.python.core.PyObject;
 import org.python.core.PyInteger;
@@ -12,7 +13,6 @@ import org.python.core.PyFloat;
 import org.python.core.PyLong;
 import org.python.core.PyComplex;
 import org.python.core.PyException;
-import org.python.core.CompilerFlags;
 import java.io.IOException;
 import java.util.Stack;
 import java.util.Hashtable;
@@ -35,6 +35,7 @@ public class CodeCompiler extends Visitor
     public Code code;
     public ConstantPool pool;
     public CodeCompiler mrefs;
+    public CompilerFlags cflags;
 
     int temporary;
     int augmode;
@@ -195,12 +196,13 @@ public class CodeCompiler extends Visitor
 
     public void parse(modType node, Code code,
                       boolean fast_locals, String className,
-                      boolean classBody, ScopeInfo scope,CompilerFlags cflags)
+                      boolean classBody, ScopeInfo scope, CompilerFlags cflags)
         throws Exception
     {
         this.fast_locals = fast_locals;
         this.className = className;
         this.code = code;
+        this.cflags = cflags;
 
         my_scope = scope;
         names = scope.names;
@@ -369,7 +371,7 @@ public class CodeCompiler extends Visitor
         scope.dump();
         module.PyCode(new Suite(node.body, node), name, true,
                       className, false, false,
-                      node.beginLine, scope).get(code);
+                      node.beginLine, scope, cflags).get(code);
         Vector freenames = scope.freevars;
 
         getDocString(node.body);
