@@ -223,10 +223,8 @@ public class PyClass extends PyObject
                 resolvedClass = (PyClass)(__bases__.__getitem__(i));
                 PyObject[] res = resolvedClass.lookupGivingClass(name,
                                                                stop_at_java);
-                result = res[0];
-                resolvedClass = (PyClass)(res[1]);
-                if (result != null)
-                    break;
+                if (res[0] != null)
+                    return res;
             }
         }
         return new PyObject[] {result, resolvedClass};
