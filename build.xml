@@ -60,14 +60,14 @@ Actions for a release
        - cvs.tag             (target: full-init)
        - python.cvs.tag      (target: full-init)
        - jdk.target.version  (target: pre-init)
-  4. if new CPython .py files should be distributed, add them to build.Lib.include.properties           
+  4. if new CPython .py files should be distributed, add them to build.Lib.include.properties
   5. adjust the public static String version in PySystemState.java
   6. check in all the changes
   7. apply the new tag to the jython cvs (all projects)
-  8. call target 'full-build' 
+  8. call target 'full-build'
 
 
-            
+
 An example ant.properties file:
 -------------------------------
 
@@ -136,9 +136,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
         <property name="build.compiler" value="modern" />
         <property name="jdk.target.version" value="1.2" />
+        <property name="jdk.source.version" value="1.3" />
         <property name="deprecation" value="off" />
         <property name="debug" value="off" />
         <property name="optimize" value="on" />
+        <property name="nowarn" value="false" />
 
         <!-- classpaths -->
         <path id="main.classpath">
@@ -235,9 +237,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <echo>ht2html.dir        = '${ht2html.dir}'</echo>
         <echo>build.compiler     = '${build.compiler}'</echo>
         <echo>jdk.target.version = '${jdk.target.version}'</echo>
+        <echo>jdk.source.version = '${jdk.source.version}'</echo>
         <echo>deprecation        = '${deprecation}'</echo>
         <echo>debug              = '${debug}'</echo>
         <echo>optimize           = '${optimize}'</echo>
+        <echo>nowarn             = '${nowarn}'</echo>
         <echo>--- properties (used for full-build only )---</echo>
         <echo>cvs.tag            = '${cvs.tag}'</echo>
         <echo>python.cvs.tag     = '${python.cvs.tag}'</echo>
@@ -345,9 +349,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <javac srcdir="${source.dir}/"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
+               source="${jdk.source.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
+               nowarn="${nowarn}"
         >
             <include name="org/**" />
             <exclude name="org/python/parser/python.java" />
@@ -381,9 +387,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                includes="jxxload_help/**"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
+               source="${jdk.source.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
+               nowarn="${nowarn}"
         />
 
         <!-- java files used by tests -->
@@ -391,9 +399,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                includes="javatests/**"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
+               source="${jdk.source.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
+               nowarn="${nowarn}"
         />
 
         <copy file="org/python/modules/ucnhash.dat"
@@ -414,9 +424,10 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <jar destfile="${dist.dir}/jython.jar"
              basedir="${output.dir}"
              update="true">
-          <include name="**/*.class" />
-          <include name="**/ucnhash.dat" />
-          <include name="**/*.properties" />
+          <include name="com/**/*" />
+          <include name="org/**/*" />
+          <include name="jxxload_help/*" />
+          <include name="javatests/*" />
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
               <attribute name="Built-By" value="${user.name}" />
@@ -440,7 +451,6 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                   <attribute name="jdbc3_0" value="${jdbc30.present}" />
                   <attribute name="build-compiler" value="${build.compiler}" />
                   <attribute name="jdk-target-version" value="${jdk.target.version}" />
-                  <attribute name="deprecation" value="${deprecation}" />
                   <attribute name="debug" value="${debug}" />
                   <attribute name="optimize" value="${optimize}" />
               </section>
@@ -474,6 +484,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <target name="javadoc" depends="compile" if="full-build">
         <javadoc sourcepath="${source.dir}"
                  destdir="${apidoc.dir}"
+                 source="${jdk.source.version}"
                  public="true"
                  breakiterator="yes"
                  packagenames="org.python.core, org.python.util, com.ziclix.python.sql"
@@ -567,9 +578,11 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                includes="org/**"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
+               source="${jdk.source.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
+               nowarn="${nowarn}"
         />
         <echo>copy installer classes to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
@@ -610,7 +623,6 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                     <attribute name="jdbc3_0" value="${jdbc30.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
-                    <attribute name="deprecation" value="${deprecation}" />
                     <attribute name="debug" value="${debug}" />
                     <attribute name="optimize" value="${optimize}" />
                 </section>
