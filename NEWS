@@ -1,5 +1,21 @@
 Jython NEWS
 
+xx-jul-2005
+
+  New features
+    - finished long/int unification -- PyObject.__int__() now returns a
+      PyObject (which could be a PyInteger or a PyLong).
+    - dict and list conform to CPython 2.3 behaviors (such as the 3 arg 
+        list.index()).
+    - new-style conversion of tuple, float, file and str.
+    - Preliminary work on a unicode type.
+    - Imported tempfile.py and userlist.py from CPython 2.3 and applied some
+        small adjustments to get tests to pass.
+    - Reworked message construction for TypeError exceptions
+      (such as the exceptions generated from operations like [] + "").
+
+  Bug fixes.
+
 xx-xxx-2003 Jython 2.2 alpha1
 
   New features
