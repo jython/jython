@@ -1,8 +1,8 @@
 .classpath
 .project
-.ipr
-.iws
-.iml
+*.ipr
+*.iws
+*.iml
 build
 dist
 ant.properties
