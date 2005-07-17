@@ -27,6 +27,9 @@ xx-xxx-2003 Jython 2.2 alpha1
      They both takes an impl of org.python.parser.IParserHost to which 
      literal building is delegated. org.python.core.parser contains the
      source of the impl used by Jython.
+   - New-style classes
+   - PEP 302 implementation
+   - Java collections integration
 
   Bug fixes.
 
