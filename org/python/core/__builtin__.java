@@ -124,6 +124,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("super", PyType.fromClass(PySuper.class));
         dict.__setitem__("str", PyType.fromClass(PyString.class));
         dict.__setitem__("unicode", PyType.fromClass(PyUnicode.class));
+        dict.__setitem__("basestring", PyType.fromClass(PyBaseString.class));
         dict.__setitem__("file", PyType.fromClass(PyFile.class));
 
         /* - */
