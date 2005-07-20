@@ -41,6 +41,12 @@ public class Code extends Attribute
         return l;
     }
 
+    public Label getLabelAtPosition() {
+        Label l = getLabel();
+        l.setPosition();
+        return l;
+    }
+
     public void addLabel(Label l) {
         labels.addElement(l);
     }

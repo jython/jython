@@ -53,30 +53,30 @@ public class CodeCompiler extends Visitor
     public Vector names;
     public String className;
 
-    public Stack continueLabels, breakLabels, finallyLabels;
-    public Stack inFinallyLabels;
+    public Stack continueLabels, breakLabels;
+    public Stack exceptionHandlers;
     public Vector yields = new Vector();
 
     /* break/continue finally's level.
-     * This is the lowest level in finallyLabels which should
+     * This is the lowest level in the exceptionHandlers which should
      * be executed at break or continue.
      * It is saved/updated/restored when compiling loops.
      * A similar level for returns is not needed because a new CodeCompiler
      * is used for each PyCode, ie. each 'function'.
-     * When returning through finally's all finallyLabels are executed.
+     * When returning through finally's all the exceptionHandlers are executed.
      */
     public int bcfLevel = 0;
 
     public CodeCompiler(Module module, boolean print_results) {
         this.module = module;
+        this.print_results = print_results;
+
         mrefs = this;
         pool = module.classfile.pool;
 
         continueLabels = new Stack();
         breakLabels = new Stack();
-        finallyLabels = new Stack();
-        inFinallyLabels = new Stack();
-        this.print_results = print_results;
+        exceptionHandlers = new Stack();
     }
 
     public int PyNone;
@@ -520,9 +520,7 @@ public class CodeCompiler extends Visitor
             throw new ParseException("'break' outside loop", node);
         }
 
-        for (int i = finallyLabels.size() - 1; i >= bcfLevel; i--) {
-            doFinallyPart((InFinally)finallyLabels.elementAt(i));
-        }
+        doFinallysDownTo(bcfLevel);
 
         code.goto_((Label)breakLabels.peek());
         return null;
@@ -534,9 +532,8 @@ public class CodeCompiler extends Visitor
             throw new ParseException("'continue' not properly in loop", node);
         }
 
-        for (int i = finallyLabels.size() - 1; i >= bcfLevel; i--) {
-            doFinallyPart((InFinally)finallyLabels.elementAt(i));
-        }
+        doFinallysDownTo(bcfLevel);
+
         code.goto_((Label)continueLabels.peek());
         return Exit;
     }
@@ -546,47 +543,42 @@ public class CodeCompiler extends Visitor
     int f_savedlocals;
 
     public Object visitYield(Yield node) throws Exception {
-
         setline(node);
         if (!fast_locals) {
             throw new ParseException("'yield' outside function", node);
         }
 
-        if (!finallyLabels.empty()) {
+        if (inFinallyBody()) {
             throw new ParseException("'yield' not allowed in a 'try' "+
                                      "block with a 'finally' clause", node);
         }
-        
 
+        saveLocals();
+        visit(node.value);
+        setLastI(++yield_count);
+        code.areturn();
 
-        InFinally inFinally = null;
-        if (inFinallyLabels.size() > 0)
-            inFinally = (InFinally) inFinallyLabels.peek();
-
-
-        if (inFinally == null) {
-            saveLocals();
-            visit(node.value);
-            setLastI(++yield_count);
-            code.areturn();
-            Label restart = code.getLabel();
-            yields.addElement(restart);
-            restart.setPosition();
-            restoreLocals();
-        } else {
-            saveLocals();
-            visit(node.value);
-            code.areturn();
-            code.ret(inFinally.retLocal);
-            inFinally.labels[inFinally.cnt++].setPosition();
-            code.stack = 1;
-            code.astore(inFinally.retLocal);
-            restoreLocals();
-        }   
+        Label restart = code.getLabel();
+        yields.addElement(restart);
+        restart.setPosition();
+        restoreLocals();
         return null;
     }
 
+    private boolean inFinallyBody() {
+        for (int i = 0; i < exceptionHandlers.size(); ++i) {
+            ExceptionHandler handler = 
+                (ExceptionHandler)exceptionHandlers.elementAt(i);
+            if (handler.isFinallyHandler()) {
+                return true;
+            }
+        }
+        return false;
+    }
+ 
     private void restoreLocals() throws Exception {
+        endExceptionHandlers();
+
         Vector v = code.getActiveLocals();
 
         loadFrame();
@@ -611,8 +603,36 @@ public class CodeCompiler extends Visitor
             code.astore(i);
         }
         code.freeLocal(locals);
+
+        restartExceptionHandlers();
     }
 
+    /**
+     *  Close all the open exception handler ranges.  This should be paired
+     *  with restartExceptionHandlers to delimit internal code that
+     *  shouldn't be handled by user handlers.  This allows us to set 
+     *  variables without the verifier thinking we might jump out of our
+     *  handling with an exception.
+     */
+    private void endExceptionHandlers()
+    {
+        Label end = code.getLabelAtPosition();
+        for (int i = 0; i < exceptionHandlers.size(); ++i) {
+            ExceptionHandler handler = 
+                (ExceptionHandler)exceptionHandlers.elementAt(i);
+            handler.exceptionEnds.addElement(end);
+        }
+    }
+
+    private void restartExceptionHandlers()
+    {
+        Label start = code.getLabelAtPosition();
+        for (int i = 0; i < exceptionHandlers.size(); ++i) {
+            ExceptionHandler handler = 
+                (ExceptionHandler)exceptionHandlers.elementAt(i);
+            handler.exceptionStarts.addElement(start);
+        }
+    }
 
     private void saveLocals() throws Exception {
         Vector v = code.getActiveLocals();
@@ -654,9 +674,7 @@ public class CodeCompiler extends Visitor
         return visitReturn(node, false);
     }
 
-    public Object visitReturn(Return node, boolean inEval)
-        throws Exception
-    {
+    public Object visitReturn(Return node, boolean inEval) throws Exception {
         setline(node);
         if (!inEval && !fast_locals) {
             throw new ParseException("'return' outside function", node);
@@ -670,9 +688,8 @@ public class CodeCompiler extends Visitor
             tmp = code.getReturnLocal();
             code.astore(tmp);
         }
-        for (int i = finallyLabels.size() - 1; i >= 0; i--) {
-            doFinallyPart((InFinally) finallyLabels.elementAt(i));
-        }
+        doFinallysDownTo(0);
+
         setLastI(-1);
 
         if (node.value != null) {
@@ -920,7 +937,7 @@ public class CodeCompiler extends Visitor
         continueLabels.push(code.getLabel());
         breakLabels.push(code.getLabel());
         int savebcf = bcfLevel;
-        bcfLevel = finallyLabels.size();
+        bcfLevel = exceptionHandlers.size();
         return savebcf;
     }
 
@@ -1092,39 +1109,33 @@ public class CodeCompiler extends Visitor
         Label end = code.getLabel();
         Label handlerStart = code.getLabel();
         Label finallyEnd = code.getLabel();
-        Label skipSuite = code.getLabel();
 
         Object ret;
 
-        // Do protected suite
-        int yieldCount = 0;
-        if (my_scope.generator) {
-            YieldChecker checker = new YieldChecker();
-            checker.visit(node.finalbody);
-            yieldCount = checker.yieldCount;
-        }
-        if (yieldCount > 0) {
-            throw new ParseException("'yield' in finally not yet supported",
-                                     node);
-        }
+        ExceptionHandler inFinally = new ExceptionHandler(node);
 
-        InFinally inFinally = new InFinally(yieldCount + 1);
-        
-        finallyLabels.push(inFinally);
+        // Do protected suite
+        exceptionHandlers.push(inFinally);
 
         int excLocal = code.getLocal("java/lang/Throwable");
         code.aconst_null();
         code.astore(excLocal);
 
         start.setPosition();
+        inFinally.exceptionStarts.addElement(start);
+
         ret = suite(node.body);
+
         end.setPosition();
-        if (ret == null) {
-            doFinallyPart(inFinally);
+        inFinally.exceptionEnds.addElement(end);
+        inFinally.bodyDone = true;
+
+        exceptionHandlers.pop();
+
+        if (ret == NoExit) {
+            inlineFinally(inFinally);
             code.goto_(finallyEnd);
         }
-
-        finallyLabels.pop();
 
         // Handle any exceptions that get thrown in suite
         handlerStart.setPosition();
@@ -1141,87 +1152,77 @@ public class CodeCompiler extends Visitor
         }
         code.invokestatic(mrefs.add_traceback);
 
-        doFinallyPart(inFinally);
+        inlineFinally(inFinally);
         code.aload(excLocal);
         code.checkcast(code.pool.Class("java/lang/Throwable"));
         code.athrow();
 
-        // Do finally suite
-        inFinally.labels[0].setPosition();
-        code.stack = 1;
-        inFinally.retLocal = code.getFinallyLocal("ret");
-        code.astore(inFinally.retLocal);
-
-        // Trick the JVM verifier into thinking this code might not
-        // be executed
-        //code.iconst(1);
-        //code.ifeq(skipSuite);
-
-        inFinallyLabels.push(inFinally);
-
-        // The actual finally suite is always executed (since 1 != 0)
-        ret = suite(node.finalbody);
-
-        inFinallyLabels.pop();
-
-        // Fake jump to here to pretend this could always happen
-        //skipSuite.setPosition();
-
-        code.ret(inFinally.retLocal);
-        code.freeFinallyLocal(inFinally.retLocal);
-
         finallyEnd.setPosition();
 
         code.freeLocal(excLocal);
-        code.addExceptionHandler(start, end, handlerStart,
-                                 code.pool.Class("java/lang/Throwable"));
 
+        inFinally.addExceptionHandlers(handlerStart);
         // According to any JVM verifiers, this code block might not return
         return null;
     }
 
-    private void doFinallyPart(InFinally inFinally) throws Exception {
-        if (inFinally.labels.length == 1) {
-            code.jsr(inFinally.labels[0]);
-        } else {
-            Label endOfFinal = code.getLabel();
-            for (int i = 0; i < inFinally.labels.length; i++) {
-                setLastI(++yield_count);
-                code.jsr(inFinally.labels[i]);
-                
-                //code.areturn();
-                if (i < inFinally.labels.length-1) {
-                    code.goto_(endOfFinal);
-                    Label restart = code.getLabel();
-                    yields.addElement(restart);
-                    restart.setPosition();
-                }
-            }
-            endOfFinal.setPosition();
+    private void inlineFinally(ExceptionHandler handler) throws Exception {
+        if (!handler.bodyDone) {
+            // end the previous exception block so inlined finally code doesn't
+            // get covered by our exception handler.
+            handler.exceptionEnds.addElement(code.getLabelAtPosition());
+            // also exiting the try: portion of this particular finally
+         }
+        if (handler.isFinallyHandler()) {
+            suite(handler.node.finalbody);
         }
     }
-
-    class YieldChecker extends Visitor {
-        public int yieldCount = 0;
-
-        public Object visitYield(Yield node) throws Exception {
-            yieldCount++;
-            return super.visitYield(node);
-        }
+    
+    private void reenterProtectedBody(ExceptionHandler handler) throws Exception {
+        // restart exception coverage 
+        handler.exceptionStarts.addElement(code.getLabelAtPosition());
     }
-
+ 
+    /**
+     *  Inline the finally handling code for levels down to the levelth parent
+     *  (0 means all).  This takes care to avoid having more nested finallys
+     *  catch exceptions throw by the parent finally code.  This also pops off
+     *  all the handlers above level temporarily.
+     */
+    private void doFinallysDownTo(int level) throws Exception {
+        Stack poppedHandlers = new Stack();
+        while (exceptionHandlers.size() > level) {
+            ExceptionHandler handler = 
+                (ExceptionHandler)exceptionHandlers.pop();
+            inlineFinally(handler);
+            poppedHandlers.push(handler);
+        }
+        while (poppedHandlers.size() > 0) {
+            ExceptionHandler handler = 
+                (ExceptionHandler)poppedHandlers.pop();
+            reenterProtectedBody(handler);
+            exceptionHandlers.push(handler);
+         }
+     }
+ 
     public int set_exception;
     public Object visitTryExcept(TryExcept node) throws Exception {
         Label start = code.getLabel();
         Label end = code.getLabel();
         Label handler_start = code.getLabel();
         Label handler_end = code.getLabel();
+        ExceptionHandler handler = new ExceptionHandler();
 
         start.setPosition();
+        handler.exceptionStarts.addElement(start);
+        exceptionHandlers.push(handler);
         //Do suite
         Object exit = suite(node.body);
         //System.out.println("exit: "+exit+", "+(exit != null));
+        exceptionHandlers.pop();
         end.setPosition();
+        handler.exceptionEnds.addElement(end);
+
         if (exit == null)
             code.goto_(handler_end);
 
@@ -1257,8 +1258,7 @@ public class CodeCompiler extends Visitor
         }
 
         code.freeFinallyLocal(exc);
-        code.addExceptionHandler(start, end, handler_start,
-                                 code.pool.Class("java/lang/Throwable"));
+        handler.addExceptionHandlers(handler_start);
         return null;
     }
 
@@ -2328,16 +2328,56 @@ public class CodeCompiler extends Visitor
         throw new Exception("Unhandled node " + node);
     }
 
+    /**
+     *  Data about a given exception range whether a try:finally: or a
+     *  try:except:.  The finally needs to inline the finally block for
+     *  each exit of the try: section, so we carry around that data for it.
+     *  
+     *  Both of these need to stop exception coverage of an area that is either
+     *  the inlined finally of a parent try:finally: or the reentry block after
+     *  a yield.  Thus we keep around a set of exception ranges that the
+     *  catch block will eventually handle.
+     */
+    class ExceptionHandler {
+        /**
+         *  Each handler gets several exception ranges, this is because inlined
+         *  finally exit code shouldn't be covered by the exception handler of
+         *  that finally block.  Thus each time we inline the finally code, we
+         *  stop one range and then enter a new one.
+         *
+         *  We also need to stop coverage for the recovery of the locals after
+         *  a yield.
+         */
+        public Vector exceptionStarts = new Vector();
+        public Vector exceptionEnds = new Vector();
 
-    class InFinally {
-        public int retLocal;
-        public Label[] labels;
-        public int cnt = 1;
-    
-        public InFinally(int labelcnt) {
-            labels = new Label[labelcnt];
-            for (int i = 0; i < labelcnt; i++) {
-                labels[i] = code.getLabel();
+        public boolean bodyDone = false;
+
+        public TryFinally node = null;
+
+        public ExceptionHandler() {
+        }
+
+        public ExceptionHandler(TryFinally n) {
+            node = n;
+        }
+
+        public boolean isFinallyHandler() {
+            return node != null;
+        }
+
+        public void addExceptionHandlers(Label handlerStart) throws Exception {
+            int throwable = code.pool.Class("java/lang/Throwable");
+            for (int i = 0; i < exceptionStarts.size(); ++i) {
+                Label start = (Label)exceptionStarts.elementAt(i);
+                Label end = (Label)exceptionEnds.elementAt(i);
+                if (start.getPosition() != end.getPosition()) {
+                    code.addExceptionHandler(
+                        (Label)exceptionStarts.elementAt(i),
+                        (Label)exceptionEnds.elementAt(i),
+                        handlerStart,
+                        throwable);
+                }
             }
         }
     }
