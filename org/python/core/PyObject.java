@@ -280,6 +280,35 @@ public class PyObject implements java.io.Serializable {
         }
         dict.__setitem__("__repr__", new PyMethodDescr("__repr__",
                 PyObject.class, 0, 0, new exposed___repr__(null, null)));
+        class exposed___unicode__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___unicode__(PyObject self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___unicode__((PyObject)self,info);
+            }
+
+            public PyObject __call__() {
+                return new PyUnicode(self.object_toString());
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyObject self=(PyObject)gself;
+                return new PyUnicode(self.object_toString());
+            }
+
+        }
+        dict.__setitem__("__unicode__",new PyMethodDescr("__unicode__",PyObject.class,0,0,new exposed___unicode__(null,null)));
+
         class exposed___init__ extends PyBuiltinFunctionWide {
 
             private PyObject self;
@@ -469,6 +498,10 @@ public class PyObject implements java.io.Serializable {
         return __repr__();
     }
 
+    public PyUnicode __unicode__() {
+        return new PyUnicode(__str__());
+    }
+ 
     /**
      * Equivalent to the standard Python __hash__ method.  This method can
      * not be overridden.  Instead, you should override the standard Java

@@ -230,6 +230,12 @@ public abstract class VisitorBase implements VisitorIF {
         traverse(node);
         return ret;
     }
+    
+    public Object visitUnicode(Unicode node) throws Exception {
+        Object ret = unhandled_node(node);
+        traverse(node);
+        return ret;
+    }
 
     public Object visitAttribute(Attribute node) throws Exception {
         Object ret = unhandled_node(node);

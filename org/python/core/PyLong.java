@@ -1809,6 +1809,11 @@ public class PyLong extends PyObject
     public PyString __str__() {
         return Py.newString(value.toString());
     }
+    
+    public PyUnicode __unicode__() {
+        return new PyUnicode(value.toString());
+    }
+
 
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }

@@ -462,6 +462,14 @@ public final class Py
         return new PyString(s);
     }
 
+    public static PyUnicode newUnicode(char c) {
+        return (PyUnicode)makeCharacter(c, true);
+    }
+
+    public static PyUnicode newUnicode(String s) {
+        return new PyUnicode(s);
+    }
+
     public static PyInteger newBoolean(boolean t) {
         return t ? Py.One : Py.Zero;
     }
@@ -1422,8 +1430,11 @@ public final class Py
     }
 
     static final PyString makeCharacter(char c) {
-        if (c > 255) {
-            return new PyString(new Character(c).toString());
+        return makeCharacter(c, false);
+    }
+    static final PyString makeCharacter(char c, boolean explicitUnicode) {
+        if (explicitUnicode || c > 255) {
+            return new PyUnicode(new Character(c).toString());
         }
 
         if (letters == null) {

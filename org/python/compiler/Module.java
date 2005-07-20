@@ -148,6 +148,41 @@ class PyStringConstant extends Constant implements ClassConstants
     }
 }
 
+class PyUnicodeConstant extends Constant implements ClassConstants
+{
+    String value;
+
+    public PyUnicodeConstant(String value) {
+        this.value = value;
+    }
+
+    public void get(Code c) throws IOException {
+        c.getstatic(module.classfile.name, name, $pyUnicode);
+    }
+
+    public void put(Code c) throws IOException {
+        module.classfile.addField(name, $pyUnicode, access);
+        c.ldc(value);
+        int mref_newString = c.pool.Methodref(
+            "org/python/core/Py",
+            "newUnicode",
+            "(" + $str + ")" + $pyUnicode);
+        c.invokestatic(mref_newString);
+        c.putstatic(module.classfile.name, name, $pyUnicode);
+    }
+
+    public int hashCode() {
+        return value.hashCode();
+    }
+
+    public boolean equals(Object o) {
+        if (o instanceof PyUnicodeConstant)
+            return ((PyUnicodeConstant)o).value.equals(value);
+        else
+            return false;
+    }
+}
+
 class PyLongConstant extends Constant implements ClassConstants
 {
     String value;
@@ -316,6 +351,9 @@ public class Module implements ClassConstants, CompilationContext
 
     public Constant PyString(String value) {
         return findConstant(new PyStringConstant(value));
+    }
+    public Constant PyUnicode(String value) {
+        return findConstant(new PyUnicodeConstant(value));
     }
     public Constant PyLong(String value) {
         return findConstant(new PyLongConstant(value));

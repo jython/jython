@@ -2313,6 +2313,17 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
+    public Object visitUnicode(Unicode node) throws Exception {
+        String s = node.s;
+        if (s.length() > 32767) {
+            throw new ParseException(
+                "string constant too large (more than 32767 characters)",
+                node);
+        }
+        module.PyUnicode(s).get(code);
+        return null;
+    }
+
     public Object visitStr(Str node) throws Exception {
         String s = node.s;
         if (s.length() > 32767) {

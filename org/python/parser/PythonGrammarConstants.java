@@ -96,10 +96,14 @@ public interface PythonGrammarConstants {
   int COMPLEX = 97;
   int EXPONENT = 98;
   int DIGIT = 99;
-  int SINGLE_STRING = 104;
-  int SINGLE_STRING2 = 105;
-  int TRIPLE_STRING = 106;
-  int TRIPLE_STRING2 = 107;
+  int SINGLE_STRING = 108;
+  int SINGLE_STRING2 = 109;
+  int TRIPLE_STRING = 110;
+  int TRIPLE_STRING2 = 111;
+  int SINGLE_USTRING = 112;
+  int SINGLE_USTRING2 = 113;
+  int TRIPLE_USTRING = 114;
+  int TRIPLE_USTRING2 = 115;
 
   int DEFAULT = 0;
   int FORCE_NEWLINE1 = 1;
@@ -112,8 +116,14 @@ public interface PythonGrammarConstants {
   int IN_STRING21 = 8;
   int IN_STRING13 = 9;
   int IN_STRING23 = 10;
-  int IN_STRING1NLC = 11;
-  int IN_STRING2NLC = 12;
+  int IN_USTRING11 = 11;
+  int IN_USTRING21 = 12;
+  int IN_USTRING13 = 13;
+  int IN_USTRING23 = 14;
+  int IN_STRING1NLC = 15;
+  int IN_STRING2NLC = 16;
+  int IN_USTRING1NLC = 17;
+  int IN_USTRING2NLC = 18;
 
   String[] tokenImage = {
     "<EOF>",
@@ -220,23 +230,37 @@ public interface PythonGrammarConstants {
     "<token of kind 101>",
     "<token of kind 102>",
     "<token of kind 103>",
+    "<token of kind 104>",
+    "<token of kind 105>",
+    "<token of kind 106>",
+    "<token of kind 107>",
+    "\"\\\'\"",
+    "\"\\\"\"",
+    "\"\\\'\\\'\\\'\"",
+    "\"\\\"\\\"\\\"\"",
     "\"\\\'\"",
     "\"\\\"\"",
     "\"\\\'\\\'\\\'\"",
     "\"\\\"\\\"\\\"\"",
     "\"\\\\\\r\\n\"",
-    "<token of kind 109>",
+    "<token of kind 117>",
     "\"\\\\\\r\\n\"",
-    "<token of kind 111>",
+    "<token of kind 119>",
+    "\"\\\\\\r\\n\"",
+    "<token of kind 121>",
+    "\"\\\\\\r\\n\"",
+    "<token of kind 123>",
     "\"\"",
     "\"\"",
-    "<token of kind 114>",
-    "<token of kind 115>",
+    "\"\"",
+    "\"\"",
+    "<token of kind 128>",
+    "<token of kind 129>",
     "\"\\r\\n\"",
     "\"\\n\"",
     "\"\\r\"",
-    "<token of kind 119>",
-    "<token of kind 120>",
+    "<token of kind 133>",
+    "<token of kind 134>",
     "\"`\"",
   };
 

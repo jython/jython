@@ -101,6 +101,7 @@ public interface PythonGrammarTreeConstants
   public int JJTCOMPLEX = 94;
   public int JJTNAME = 95;
   public int JJTSTRING = 96;
+  public int JJTUNICODE = 97;
 
 
   public String[] jjtNodeName = {
@@ -201,5 +202,6 @@ public interface PythonGrammarTreeConstants
     "Complex",
     "Name",
     "String",
+    "Unicode",
   };
 }

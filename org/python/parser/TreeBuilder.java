@@ -101,6 +101,8 @@ public class TreeBuilder implements PythonGrammarTreeConstants {
             return new Num((PyObject) n.getImage());
         case JJTSTRING:
             return new Str(n.getImage().toString());
+        case JJTUNICODE:
+            return new Unicode(n.getImage().toString());
 
         case JJTSUITE:
             stmtType[] stmts = new stmtType[arity];

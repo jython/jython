@@ -102,6 +102,10 @@ public class PythonGrammar
            case IN_STRING2NLC:
            case IN_STRING13:
            case IN_STRING23:
+           case IN_USTRING1NLC:
+           case IN_USTRING2NLC:
+           case IN_USTRING13:
+           case IN_USTRING23:
                return e.EOFSeen;
            default:
                return false;
@@ -494,10 +498,14 @@ TOKEN : /* Numeric literals */
 
 MORE : /* Strings */
 {
-    < (["u", "U"])? (["r", "R"])? "'" > :  IN_STRING11
-|   < (["u", "U"])? (["r", "R"])? "\"" > :  IN_STRING21
-|   < (["u", "U"])? (["r", "R"])? "'''" > :  IN_STRING13
-|   < (["u", "U"])? (["r", "R"])? "\"\"\"" > :  IN_STRING23
+    < (["u", "U"]) (["r", "R"])? "'" > :  IN_USTRING11
+|   < (["u", "U"]) (["r", "R"])? "\"" > :  IN_USTRING21
+|   < (["u", "U"]) (["r", "R"])? "'''" > :  IN_USTRING13
+|   < (["u", "U"]) (["r", "R"])? "\"\"\"" > :  IN_USTRING23
+|   < (["r", "R"])? "'" > :  IN_STRING11
+|   < (["r", "R"])? "\"" > :  IN_STRING21
+|   < (["r", "R"])? "'''" > :  IN_STRING13
+|   < (["r", "R"])? "\"\"\"" > :  IN_STRING23
 }
 
 <IN_STRING11> TOKEN : { <SINGLE_STRING: "'"> {
@@ -507,6 +515,15 @@ MORE : /* Strings */
 <IN_STRING13> TOKEN : { <TRIPLE_STRING: "'''"> {
     matchedToken.image = image.toString(); } : DEFAULT}
 <IN_STRING23> TOKEN : { <TRIPLE_STRING2: "\"\"\""> {
+    matchedToken.image = image.toString(); } : DEFAULT}
+
+<IN_USTRING11> TOKEN : { <SINGLE_USTRING: "'"> {
+    matchedToken.image = image.toString(); } : DEFAULT}
+<IN_USTRING21> TOKEN : { <SINGLE_USTRING2: "\""> {
+    matchedToken.image = image.toString(); } : DEFAULT}
+<IN_USTRING13> TOKEN : { <TRIPLE_USTRING: "'''"> {
+    matchedToken.image = image.toString(); } : DEFAULT}
+<IN_USTRING23> TOKEN : { <TRIPLE_USTRING2: "\"\"\""> {
     matchedToken.image = image.toString(); } : DEFAULT}
 
 <IN_STRING11> MORE:
@@ -521,6 +538,18 @@ MORE : /* Strings */
 |   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); } : IN_STRING2NLC
 }
 
+<IN_USTRING11> MORE:
+{
+    <"\\\r\n">           { image.setLength(image.length()-3); } : IN_USTRING1NLC
+|   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); } : IN_USTRING1NLC
+}
+
+<IN_USTRING21> MORE:
+{
+    <"\\\r\n">           { image.setLength(image.length()-3); } : IN_USTRING2NLC
+|   <("\\" ("\n"|"\r"))> { image.setLength(image.length()-2); } : IN_USTRING2NLC
+}
+
 <IN_STRING1NLC> MORE:
 {
  <""> : IN_STRING11
@@ -531,10 +560,20 @@ MORE : /* Strings */
  <""> : IN_STRING21
 }
 
-<IN_STRING11> MORE: { <("\\" ("\\"|"'")) | ~["\n","\r"]> }
-<IN_STRING21> MORE: { <("\\" ("\\"|"\"")) | ~["\n","\r"]> }
+<IN_USTRING1NLC> MORE:
+{
+ <""> : IN_USTRING11
+}
 
-<IN_STRING13, IN_STRING23> MORE:
+<IN_USTRING2NLC> MORE:
+{
+ <""> : IN_USTRING21
+}
+
+<IN_STRING11, IN_USTRING11> MORE: { <("\\" ("\\"|"'")) | ~["\n","\r"]> }
+<IN_STRING21, IN_USTRING21> MORE: { <("\\" ("\\"|"\"")) | ~["\n","\r"]> }
+
+<IN_STRING13, IN_STRING23, IN_USTRING13, IN_USTRING23> MORE:
 {
     <"\r\n"> {
         int l = image.length();
@@ -546,7 +585,6 @@ MORE : /* Strings */
 |   <~["\n","\r"]>
 |   <"\\" ~["\n","\r"]>
 }
-
 
 //single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 // apparently CPython coalesces newlines, we don't
@@ -1018,6 +1056,10 @@ void String() #void :
 |   ( t=<SINGLE_STRING2> { jjtThis.setImage(makeString(t.image, 1)); } {} )#String
 |   ( t=<TRIPLE_STRING> { jjtThis.setImage(makeString(t.image, 3)); } {} )#String
 |   ( t=<TRIPLE_STRING2> { jjtThis.setImage(makeString(t.image, 3)); } {} )#String
+|   ( t=<SINGLE_USTRING> { jjtThis.setImage(makeString(t.image, 1)); } {} )#Unicode
+|   ( t=<SINGLE_USTRING2> { jjtThis.setImage(makeString(t.image, 1)); } {} )#Unicode
+|   ( t=<TRIPLE_USTRING> { jjtThis.setImage(makeString(t.image, 3)); } {} )#Unicode
+|   ( t=<TRIPLE_USTRING2> { jjtThis.setImage(makeString(t.image, 3)); } {} )#Unicode
 }
 
 Token AnyName() #void:

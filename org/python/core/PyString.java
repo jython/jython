@@ -1436,12 +1436,22 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
 
             public PyObject __call__(PyObject arg0) {
-                return new PyString(self.str_join(arg0));
+                String result = self.str_join(arg0);
+                if (self instanceof PyUnicode || arg0 instanceof PyUnicode) {
+                    return new PyUnicode(result);
+                } else {
+                    return new PyString(result);
+                }
             }
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyString self=(PyString)gself;
-                return new PyString(self.str_join(arg0));
+                String result = self.str_join(arg0);
+                if (self instanceof PyUnicode || arg0 instanceof PyUnicode) {
+                    return new PyUnicode(result);
+                } else {
+                    return new PyString(result);
+                }
             }
 
         }
@@ -2620,7 +2630,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
     //~ END GENERATED
 
-    private String string;
+    protected String string;
     private transient int cached_hashcode=0;
     private transient boolean interned=false;
 
@@ -3105,12 +3115,17 @@ public class PyString extends PyBaseString implements ClassDictInit
     final PyObject str___add__(PyObject generic_other) {
         if (generic_other instanceof PyString) {
             PyString other = (PyString)generic_other;
-            return new PyString(string.concat(other.string));
+            String result = string.concat(other.string);
+            if (this instanceof PyUnicode || generic_other instanceof PyUnicode) {
+                return new PyUnicode(result);
+            } else {
+                return new PyString(result);
+            }
         }
         else return null;
     }
 
-
+    //XXX: PyUnicode?
     public PyObject __mod__(PyObject other) {
         StringFormatter fmt = new StringFormatter(string);
         return new PyString(fmt.format(other));
@@ -3461,13 +3476,13 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             while (index < n && !Character.isWhitespace(chars[index]))
                 index++;
-            list.append(new PyString(string.substring(start, index)));
+            list.append(fromSubstring(start, index));
             splits++;
         }
         while (index < n && Character.isWhitespace(chars[index]))
             index++;
         if (index < n) {
-            list.append(new PyString(string.substring(index, n)));
+            list.append(fromSubstring(index, n));
         }
         return list;
     }
@@ -3491,11 +3506,11 @@ public class PyString extends PyBaseString implements ClassDictInit
             if (index == -1)
                 break;
             splits += 1;
-            list.append(new PyString(string.substring(lastbreak, index)));
+            list.append(fromSubstring(lastbreak, index));
             lastbreak = index + sepLength;
         }
         if (lastbreak <= length) {
-            list.append(new PyString(string.substring(lastbreak, length)));
+            list.append(fromSubstring(lastbreak, length));
         }
         return list;
     }
@@ -3535,16 +3550,18 @@ public class PyString extends PyBaseString implements ClassDictInit
                 if (keepends)
                     eol = i;
             }
-            list.append(new PyString(string.substring(j, eol)));
+            list.append(fromSubstring(j, eol));
             j = i;
         }
         if (j < n) {
-            list.append(new PyString(string.substring(j, n)));
+            list.append(fromSubstring(j, n));
         }
         return list;
     }
 
-
+    protected PyString fromSubstring(int begin, int end) {
+        return new PyString(string.substring(begin, end));
+    }
 
     public int index(String sub) {
         return str_index(sub);

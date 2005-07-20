@@ -268,12 +268,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_toString());
+                return new PyUnicode(self.unicode_toString());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_toString());
+                return new PyUnicode(self.unicode_toString());
             }
 
         }
@@ -296,12 +296,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_capitalize());
+                return new PyUnicode(self.unicode_capitalize());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_capitalize());
+                return new PyUnicode(self.unicode_capitalize());
             }
 
         }
@@ -325,7 +325,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_center(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_center(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -342,7 +342,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_center(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_center(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -509,7 +509,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyString(self.unicode_decode(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(self.unicode_decode(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -527,7 +527,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_decode(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(self.unicode_decode(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -544,7 +544,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_decode(arg0.asString(0)));
+                    return new PyUnicode(self.unicode_decode(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -561,7 +561,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_decode(arg0.asString(0)));
+                    return new PyUnicode(self.unicode_decode(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -576,12 +576,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_decode());
+                return new PyUnicode(self.unicode_decode());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_decode());
+                return new PyUnicode(self.unicode_decode());
             }
 
         }
@@ -605,7 +605,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyString(self.unicode_encode(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(self.unicode_encode(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -623,7 +623,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_encode(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(self.unicode_encode(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -640,7 +640,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_encode(arg0.asString(0)));
+                    return new PyUnicode(self.unicode_encode(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -657,7 +657,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_encode(arg0.asString(0)));
+                    return new PyUnicode(self.unicode_encode(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -672,12 +672,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_encode());
+                return new PyUnicode(self.unicode_encode());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_encode());
+                return new PyUnicode(self.unicode_encode());
             }
 
         }
@@ -833,7 +833,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_expandtabs(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_expandtabs(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -850,7 +850,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_expandtabs(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_expandtabs(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -865,12 +865,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_expandtabs());
+                return new PyUnicode(self.unicode_expandtabs());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_expandtabs());
+                return new PyUnicode(self.unicode_expandtabs());
             }
 
         }
@@ -1437,12 +1437,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__(PyObject arg0) {
-                return new PyString(self.unicode_join(arg0));
+                return new PyUnicode(self.unicode_join(arg0));
             }
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_join(arg0));
+                return new PyUnicode(self.unicode_join(arg0));
             }
 
         }
@@ -1466,7 +1466,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_ljust(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_ljust(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1483,7 +1483,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_ljust(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_ljust(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1517,12 +1517,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_lower());
+                return new PyUnicode(self.unicode_lower());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_lower());
+                return new PyUnicode(self.unicode_lower());
             }
 
         }
@@ -1546,7 +1546,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_lstrip(arg0.asStringOrNull(0)));
+                    return new PyUnicode(self.unicode_lstrip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1563,7 +1563,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_lstrip(arg0.asStringOrNull(0)));
+                    return new PyUnicode(self.unicode_lstrip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1578,12 +1578,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_lstrip());
+                return new PyUnicode(self.unicode_lstrip());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_lstrip());
+                return new PyUnicode(self.unicode_lstrip());
             }
 
         }
@@ -1607,7 +1607,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
                 try {
-                    return new PyString(self.unicode_replace(arg0.asString(0),arg1.asString(1),arg2.asInt(2)));
+                    return new PyUnicode(self.unicode_replace(arg0.asString(0),arg1.asString(1),arg2.asInt(2)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1628,7 +1628,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_replace(arg0.asString(0),arg1.asString(1),arg2.asInt(2)));
+                    return new PyUnicode(self.unicode_replace(arg0.asString(0),arg1.asString(1),arg2.asInt(2)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1648,7 +1648,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyString(self.unicode_replace(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(self.unicode_replace(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1666,7 +1666,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_replace(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(self.unicode_replace(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1966,7 +1966,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_rjust(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_rjust(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1983,7 +1983,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_rjust(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_rjust(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2018,7 +2018,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_rstrip(arg0.asStringOrNull(0)));
+                    return new PyUnicode(self.unicode_rstrip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2035,7 +2035,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_rstrip(arg0.asStringOrNull(0)));
+                    return new PyUnicode(self.unicode_rstrip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2050,12 +2050,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_rstrip());
+                return new PyUnicode(self.unicode_rstrip());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_rstrip());
+                return new PyUnicode(self.unicode_rstrip());
             }
 
         }
@@ -2348,7 +2348,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_strip(arg0.asStringOrNull(0)));
+                    return new PyUnicode(self.unicode_strip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2365,7 +2365,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_strip(arg0.asStringOrNull(0)));
+                    return new PyUnicode(self.unicode_strip(arg0.asStringOrNull(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2380,12 +2380,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_strip());
+                return new PyUnicode(self.unicode_strip());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_strip());
+                return new PyUnicode(self.unicode_strip());
             }
 
         }
@@ -2408,12 +2408,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_swapcase());
+                return new PyUnicode(self.unicode_swapcase());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_swapcase());
+                return new PyUnicode(self.unicode_swapcase());
             }
 
         }
@@ -2436,12 +2436,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_title());
+                return new PyUnicode(self.unicode_title());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_title());
+                return new PyUnicode(self.unicode_title());
             }
 
         }
@@ -2465,7 +2465,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyString(self.unicode_translate(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(self.unicode_translate(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2483,7 +2483,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_translate(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(self.unicode_translate(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2500,7 +2500,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_translate(arg0.asString(0)));
+                    return new PyUnicode(self.unicode_translate(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2517,7 +2517,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_translate(arg0.asString(0)));
+                    return new PyUnicode(self.unicode_translate(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2551,12 +2551,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyString(self.unicode_upper());
+                return new PyUnicode(self.unicode_upper());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyString(self.unicode_upper());
+                return new PyUnicode(self.unicode_upper());
             }
 
         }
@@ -2580,7 +2580,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.unicode_zfill(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_zfill(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2597,7 +2597,7 @@ public class PyUnicode extends PyString {
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
                 try {
-                    return new PyString(self.unicode_zfill(arg0.asInt(0)));
+                    return new PyUnicode(self.unicode_zfill(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -2661,7 +2661,7 @@ public class PyUnicode extends PyString {
             return new PyUnicode(codecs.decode((PyString)S, encoding, errors));
         }
            
-        return S.__str__();
+        return S.__unicode__();
     }
 
     /** <i>Internal use only. Do not call this method explicitly.</i> */
@@ -2669,6 +2669,10 @@ public class PyUnicode extends PyString {
 
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'unicode' object";
+    }
+
+    public PyUnicode __unicode__() {
+        return this;
     }
 
     public PyString __str__() {
@@ -2679,8 +2683,12 @@ public class PyUnicode extends PyString {
         return str___len__();
     }
 
+    public PyString __repr__() {
+        return new PyUnicode("u" + encode_UnicodeEscape(string, true));
+    }
+
     public String unicode_toString() {
-        return str_toString();
+        return "u" + str_toString();
     }
 
     final int unicode___cmp__(PyObject other) {
@@ -2780,6 +2788,11 @@ public class PyUnicode extends PyString {
     final PyList unicode_splitlines(boolean keepends) {
         return str_splitlines(keepends);
     }
+    
+    protected PyString fromSubstring(int begin, int end) {
+        return new PyUnicode(string.substring(begin, end));
+    }
+
 
     final int unicode_index(String sub) {
         return str_index(sub);
@@ -2958,11 +2971,11 @@ public class PyUnicode extends PyString {
     }
 
     final String unicode_encode(String encoding) {
-        return str_encode();
+        return str_encode(encoding);
     }
 
     final String unicode_encode(String encoding, String errors) {
-        return str_encode();
+        return str_encode(encoding, errors);
     }
 
     final String unicode_decode() {
