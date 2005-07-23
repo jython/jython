@@ -298,12 +298,12 @@ public class PyObject implements java.io.Serializable {
             }
 
             public PyObject __call__() {
-                return new PyUnicode(self.object_toString());
+                return new PyUnicode(self.__str__());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyObject self=(PyObject)gself;
-                return new PyUnicode(self.object_toString());
+                return new PyUnicode(self.__str__());
             }
 
         }

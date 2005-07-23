@@ -1,3 +1,5 @@
+//Created by hand from Str instead of generated.  This should be revisited
+//and hopefully added to the grammar.
 package org.python.parser.ast;
 import org.python.parser.SimpleNode;
 import java.io.DataOutputStream;
