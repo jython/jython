@@ -219,6 +219,12 @@ public class time implements ClassDictInit
         return (double)cal.getTime().getTime()/1000.0;
     }
 
+    //XXX: simple tuple construction, needs error checking.
+    public static PyTuple struct_time(PyTuple vals) {
+        return new PyTimeTuple(vals);
+    }
+        
+
     protected static PyTuple _timefields(double secs, TimeZone tz) {
         GregorianCalendar cal = new GregorianCalendar(tz);
         cal.clear();
@@ -605,5 +611,40 @@ public class time implements ClassDictInit
              } catch (Exception exc) { }
         }
         return 0;
+    }
+
+    public static class PyTimeTuple extends PyTuple {
+        public PyInteger tm_year;
+        public PyInteger tm_mon;
+        public PyInteger tm_mday;
+        public PyInteger tm_hour;
+        public PyInteger tm_min;
+        public PyInteger tm_sec;
+        public PyInteger tm_wday;
+        public PyInteger tm_yday;
+        public PyInteger tm_isdst;
+        
+        PyTimeTuple(PyTuple vals) {
+        super(new PyObject[] {
+            vals.pyget(0),
+            vals.pyget(1),
+            vals.pyget(2),
+            vals.pyget(3),
+            vals.pyget(4),
+            vals.pyget(5),
+            vals.pyget(6),
+            vals.pyget(7),
+            vals.pyget(8)
+        });
+        tm_year = (PyInteger)vals.pyget(0);
+        tm_mon = (PyInteger)vals.pyget(1);
+        tm_mday = (PyInteger)vals.pyget(2);
+        tm_hour = (PyInteger)vals.pyget(3);
+        tm_min = (PyInteger)vals.pyget(4);
+        tm_sec = (PyInteger)vals.pyget(5);
+        tm_wday = (PyInteger)vals.pyget(6);
+        tm_yday = (PyInteger)vals.pyget(7);
+        tm_isdst = (PyInteger)vals.pyget(8);
+        }
     }
 }
