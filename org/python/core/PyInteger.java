@@ -1183,42 +1183,66 @@ public class PyInteger extends PyObject {
         }
         dict.__setitem__("__hash__", new PyMethodDescr("__hash__",
                 PyInteger.class, 0, 0, new exposed___hash__(null, null)));
-        dict.__setitem__("__new__", new PyNewWrapper(PyInteger.class,
-                "__new__", -1, -1) {
 
-            public PyObject new_impl(boolean init, PyType subtype,
-                    PyObject[] args, String[] keywords) {
-                return int_new(this, init, subtype, args, keywords);
+        dict.__setitem__("__new__",new PyNewWrapper(PyInteger.class,"__new__",-1,-1) {
+
+            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                 return int_new(this,init,subtype,args,keywords);
             }
 
         });
     }
     
-    public static PyObject int_new(PyObject new_, boolean init, PyType subtype,
+    public static PyObject int_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("int", args, keywords, new String[] { "x",
                 "base" }, 0);
         PyObject x = ap.getPyObject(0, null);
         int base = ap.getInt(1, -909);
-        if (x == null)
-            return Py.Zero;
-        if (base == -909) {
-            return x.__int__();
+        if (new_.for_type == subtype) {
+            if (x == null) {
+                return Py.Zero;
+            }
+            if (base == -909) {
+                return x.__int__();
+            }
+            if (!(x instanceof PyString)) {
+                throw Py
+                        .TypeError("int: can't convert non-string with explicit base");
+            }
+            return Py.newInteger(((PyString) x).atoi(base));
+        } else {
+            if (x == null) {
+                return new PyIntegerDerived(subtype, 0);
+            }
+            if (base == -909) {
+                PyObject intOrLong = x.__int__();
+                if (intOrLong instanceof PyInteger) {
+                    return new PyIntegerDerived(subtype, ((PyInteger)intOrLong).getValue());
+                }
+                else {
+                    err_ovf("long int too large to convert to int");
+                }
+            }
+            if (!(x instanceof PyString)) {
+                throw Py
+                        .TypeError("int: can't convert non-string with explicit base");
+            }
+            return new PyIntegerDerived(subtype, ((PyString) x).atoi(base));
         }
-        if (!(x instanceof PyString)) {
-            throw Py
-                    .TypeError("int: can't convert non-string with explicit base");
-        }
-        return Py.newInteger(((PyString) x).atoi(base));
     } // xxx
     
     private static final PyType INTTYPE = PyType.fromClass(PyInteger.class);
     
     private int value;
 
+    public PyInteger(PyType subType, int v) {
+        super(subType);
+        value = v;
+    }
+
     public PyInteger(int v) {
-        super(INTTYPE);
-        value = (int)v;
+        this(INTTYPE, v);
     }
 
     public int getValue() {

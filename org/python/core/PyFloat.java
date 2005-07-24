@@ -896,22 +896,34 @@ public class PyFloat extends PyObject
         });
     }
 
-    public static PyObject float_new(PyObject new_, boolean init, PyType subtype,
+    public static PyObject float_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("float", args, keywords, new String[] { "x" }, 0);
         PyObject x = ap.getPyObject(0, null);
-        if (x == null)
-            return new PyFloat(0.0);
-        return x.__float__();
+        if (new_.for_type == subtype) {
+            if (x == null) {
+                return new PyFloat(0.0);
+            }
+            return x.__float__();
+        } else {
+            if (x == null) {
+                return new PyFloatDerived(subtype, 0.0);
+            }
+            return new PyFloatDerived(subtype, x.__float__().getValue());
+        }
     } // xxx
 
     private static final PyType FLOATTYPE = PyType.fromClass(PyFloat.class);
 
     private double value;
 
-    public PyFloat(double v) {
-            super(FLOATTYPE);
+    public PyFloat(PyType subtype, double v) {
+        super(subtype);
         value = v;
+    }
+    
+    public PyFloat(double v) {
+        this(FLOATTYPE, v);
     }
 
     public PyFloat(float v) {

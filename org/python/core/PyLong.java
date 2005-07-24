@@ -1131,9 +1131,9 @@ public class PyLong extends PyObject
         });
     }
 
-    private java.math.BigInteger value;
+    private BigInteger value;
 
-    public static PyObject long_new(PyObject new_, boolean init, PyType subtype,
+    public static PyObject long_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
 
         ArgParser ap = new ArgParser(exposed_name, args, keywords,
@@ -1141,38 +1141,68 @@ public class PyLong extends PyObject
 
         PyObject x = ap.getPyObject(0, null);
         int base = ap.getInt(1, -909);
-        if (x == null) {
-            return Py.Zero;
-        }
+        if (new_.for_type == subtype) {
+            if (x == null) {
+                return Py.Zero;
+            }
 
-        Object o = x.__tojava__(BigInteger.class);
-        if(o != Py.NoConversion) {
-            return new PyLong((BigInteger)o);
-        }
+            Object o = x.__tojava__(BigInteger.class);
+            if(o != Py.NoConversion) {
+                return new PyLong((BigInteger)o);
+            }
 
-        if (base == -909) {
-            return x.__long__();
-        }
+            if (base == -909) {
+                return x.__long__();
+            }
 
-        if (!(x instanceof PyString)) {
-            throw Py.TypeError("long: can't convert non-string with explicit base");
-        }
+            if (!(x instanceof PyString)) {
+                throw Py.TypeError("long: can't convert non-string with explicit base");
+            }
 
-        return ((PyString) x).atol(base);
+            return ((PyString) x).atol(base);
+        } else {
+            if (x == null) {
+                return new PyLongDerived(subtype, BigInteger.valueOf(0));
+            }
+            Object o = x.__tojava__(BigInteger.class);
+            if(o != Py.NoConversion) {
+                return new PyLongDerived(subtype, (BigInteger)o);
+            }
+
+            if (base == -909) {
+                return new PyLongDerived(subtype, x.__long__().getValue());
+            }
+
+            if (!(x instanceof PyString)) {
+                throw Py.TypeError("long: can't convert non-string with explicit base");
+            }
+
+            return new PyLongDerived(subtype, (((PyString) x).atol(base)).getValue());
+        }
     } // xxx
+    
+    private static final PyType LONGTYPE = PyType.fromClass(PyLong.class);
 
-    public PyLong(java.math.BigInteger v) {
+    public PyLong(PyType subType, BigInteger v) {
+        super(subType);
         value = v;
+    }
+    public PyLong(BigInteger v) {
+        this(LONGTYPE, v);
     }
 
     public PyLong(double v) {
         this(new java.math.BigDecimal(v).toBigInteger());
     }
     public PyLong(long v) {
-        this(java.math.BigInteger.valueOf(v));
+        this(BigInteger.valueOf(v));
     }
     public PyLong(String s) {
-        this(new java.math.BigInteger(s));
+        this(new BigInteger(s));
+    }
+    
+    public BigInteger getValue() {
+        return value;
     }
 
     public String toString() {
@@ -1193,7 +1223,7 @@ public class PyLong extends PyObject
     }
 
     public boolean __nonzero__() {
-        return !value.equals(java.math.BigInteger.valueOf(0));
+        return !value.equals(BigInteger.valueOf(0));
     }
 
     public double doubleValue() {
@@ -1313,7 +1343,7 @@ public class PyLong extends PyObject
         if (other instanceof PyLong)
             return ((PyLong) other).value;
         else if (other instanceof PyInteger)
-            return java.math.BigInteger.valueOf(
+            return BigInteger.valueOf(
                    ((PyInteger) other).getValue());
         else
             throw Py.TypeError("xxx");
@@ -1383,7 +1413,7 @@ public class PyLong extends PyObject
     // Getting signs correct for integer division
     // This convention makes sense when you consider it in tandem with modulo
     private BigInteger divide(BigInteger x, BigInteger y) {
-        BigInteger zero = java.math.BigInteger.valueOf(0);
+        BigInteger zero = BigInteger.valueOf(0);
         if (y.equals(zero))
             throw Py.ZeroDivisionError("long division or modulo");
 
