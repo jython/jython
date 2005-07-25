@@ -2630,20 +2630,19 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
     //~ END GENERATED
 
+    private static final PyType STRTYPE = PyType.fromClass(PyString.class);
+
     protected String string;
     private transient int cached_hashcode=0;
     private transient boolean interned=false;
 
     // for PyJavaClass.init()
     public PyString() {
-        string = "";
+        this(STRTYPE, "");
     }
 
-    public PyString(PyType subType) {
+    public PyString(PyType subType, String string) {
         super(subType);
-    }
-
-    public PyString(String string) {
         if (string == null) {
             throw new IllegalArgumentException(
                             "Cannot create PyString from null!");
@@ -2651,17 +2650,32 @@ public class PyString extends PyBaseString implements ClassDictInit
         this.string = string;
     }
 
-    public PyString(char c) {
-        this(String.valueOf(c));
+    public PyString(String string) {
+        this(STRTYPE, string);
     }
 
-    final static PyObject str_new(PyObject new_, boolean init, PyType subtype,
+    public PyString(char c) {
+        this(STRTYPE,String.valueOf(c));
+    }
+
+    final static PyObject str_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("str", args, keywords, new String[] { "S" }, 0);
         PyObject S = ap.getPyObject(0, null);
-        if (S instanceof PyString)
-            return S;
-        return S.__str__();
+        if (new_.for_type == subtype) {
+            if (S == null) {
+                return new PyString("");
+            }
+            if (S instanceof PyString) {
+                return S;
+            }
+            return S.__str__();
+        } else {
+            if (S == null) {
+                return new PyStringDerived(subtype, "");
+            }
+            return new PyStringDerived(subtype, S.__str__().toString());
+        }
     }
 
     /** <i>Internal use only. Do not call this method explicit.</i> */

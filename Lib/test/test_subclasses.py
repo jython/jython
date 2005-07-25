@@ -26,14 +26,13 @@ class TestSubclasses(unittest.TestCase):
         self.assertEqual(Spam(), 0L)
         self.assertEqual(str(Spam()), "hi")
 
-    def test_tuple(self):
-        class Spam(tuple):
-            def __str__(self):
-                return "hi"
+    def test_str(self):
+        class Spam(str):
+            def eggs(self):
+                return "I am eggs."
 
-        self.assertEqual(Spam(), ())
-        #XXX: not done yet.
-        #self.assertEqual(str(Spam()), "hi")
+        self.assertEqual(Spam(), "")
+        self.assertEqual(Spam().eggs(), "I am eggs.")
 
 
 def test_suite():

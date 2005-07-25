@@ -1,6 +1,16 @@
 Jython NEWS
 
-xx-jul-2005
+Jython 2.2 tip
+
+  New features
+    - much improved support for __unicode__ especially in the parser (u"string" and
+        friends now result in a PyUnicode object)
+    - added datetime support using the pure python datetime.py from cpython non-dist.
+  Bug fixes.
+    - applied patch 906256: Follow spec for read modes of open()
+    - applied patch 868514: yield in finally block -- yield in nested try:except:
+
+xx-jul-2005 Jython 2.2 alpha1 continued
 
   New features
     - finished long/int unification -- PyObject.__int__() now returns a
