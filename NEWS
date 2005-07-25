@@ -9,6 +9,7 @@ Jython 2.2 tip
   Bug fixes.
     - applied patch 906256: Follow spec for read modes of open()
     - applied patch 868514: yield in finally block -- yield in nested try:except:
+    - fixed bug 1243049: Can't subclass str in 2.2a1
 
 xx-jul-2005 Jython 2.2 alpha1 continued
 
