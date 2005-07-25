@@ -34,6 +34,11 @@ public abstract class PySequenceList extends PySequence implements List {
         super(type);
         list = new PyObjectList();
     }
+    
+    protected PySequenceList(PyType type, PyObject[] elements) {
+        super(type);
+        list = new PyObjectList(elements);
+    }
 
     /**
      * Creates an instance directly backed by the array of PyObject elements.

@@ -293,29 +293,50 @@ public class PyTuple extends PySequenceList implements ClassDictInit
             });
     }
 
+    private static final PyType TUPLETYPE = PyType.fromClass(PyTuple.class);
+
     public PyTuple() {
-        this(Py.EmptyObjects);
+        this(TUPLETYPE, Py.EmptyObjects);
     }
 
     public PyTuple(PyObject[] elements) {
-        super(elements);
+        this(TUPLETYPE, elements);
     }
 
-    final static PyObject tuple_new(PyObject new_, boolean init, PyType subtype,
+    public PyTuple(PyType subtype, PyObject[] elements) {
+        super(subtype, elements);
+    }
+
+    final static PyObject tuple_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("tuple", args, keywords, new String[] { "S" }, 0);
         PyObject S = ap.getPyObject(0, null);
-        if (S == null)
-            return new PyTuple();
-        if (S instanceof PyTuple)
-            return S;
-        PyObject iter = S.__iter__();
-        // it's not always possible to know the length of the iterable
-        ArrayList a = new ArrayList(10);
-        for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
-            a.add(item);
+        if (new_.for_type == subtype) {
+            if (S == null) {
+                return new PyTuple();
+            }
+            if (S instanceof PyTuple) {
+                return S;
+            }
+            PyObject iter = S.__iter__();
+            // it's not always possible to know the length of the iterable
+            ArrayList a = new ArrayList(10);
+            for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+                a.add(item);
+            }
+            return new PyTuple((PyObject[])a.toArray(new PyObject[a.size()]));
+        } else {
+            if (S == null) {
+                return new PyTupleDerived(subtype, Py.EmptyObjects);
+            }
+            PyObject iter = S.__iter__();
+            // it's not always possible to know the length of the iterable
+            ArrayList a = new ArrayList(10);
+            for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+                a.add(item);
+            }
+            return new PyTupleDerived(subtype, (PyObject[])a.toArray(new PyObject[a.size()]));
         }
-        return new PyTuple((PyObject[])a.toArray(new PyObject[a.size()]));
     }
 
     public String safeRepr() throws PyIgnoreMethodTag {

@@ -1,4 +1,4 @@
-import test.test_support, unittest
+import test_support, unittest
 
 class TestSubclasses(unittest.TestCase):
 
@@ -25,6 +25,16 @@ class TestSubclasses(unittest.TestCase):
 
         self.assertEqual(Spam(), 0L)
         self.assertEqual(str(Spam()), "hi")
+    
+    def test_tuple(self):
+        class Spam(tuple):
+            def __str__(self):
+                return "hi"
+
+        #XXX: subclasses of tuple are not coming out equal...
+        #self.assertEqual(Spam(), ())
+        self.assertEqual(str(Spam()), "hi")
+
 
     def test_str(self):
         class Spam(str):
@@ -45,11 +55,7 @@ def test_suite():
 
 def test_main():
     import sys
-
-    r = unittest.TextTestRunner(stream=sys.stdout, verbosity=2)
-    s = test_suite()
-    lastrc = None
-    r.run(s)
+    test_support.run_unittest(TestSubclasses)
 
 if __name__ == "__main__":
     test_main()
