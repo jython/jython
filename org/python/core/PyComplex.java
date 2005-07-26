@@ -961,10 +961,14 @@ public class PyComplex extends PyObject {
         });
     }
 
-    public static PyObject complex_new(PyObject new_, boolean init, PyType subtype,
+    public static PyObject complex_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
-        if (args.length == 0)
-            return new PyComplex(0, 0);
+        if (args.length == 0) {
+            if (new_.for_type == subtype) {
+                return new PyComplex(0, 0);
+            }
+            return new PyComplexDerived(subtype, 0, 0);
+        }
 
         if (args.length > 2)
             throw Py.TypeError("complex() "+"takes at most 2 arguments (" +
@@ -1011,7 +1015,11 @@ public class PyComplex extends PyObject {
                     ret.imag += imag.__float__().getValue();
                 }
             }
-            return ret;
+            if (new_.for_type == subtype) {
+                return ret;
+            } else {
+                return new PyComplexDerived(subtype, ret.real, ret.imag);
+            }
         } catch (PyException pye) {
             // convert all AttributeErrors except on PyInstance to TypeError
             if (Py.matchException(pye, Py.AttributeError)) {
@@ -1026,10 +1034,14 @@ public class PyComplex extends PyObject {
 
     private static final PyType COMPLEXTYPE = PyType.fromClass(PyComplex.class);
 
-    public PyComplex(double r, double i) {
-        super(COMPLEXTYPE);
+    public PyComplex(PyType subtype, double r, double i) {
+        super(subtype);
         real = r;
         imag = i;
+    }
+
+    public PyComplex(double r, double i) {
+        this(COMPLEXTYPE, r, i);
     }
 
     public String safeRepr() throws PyIgnoreMethodTag {

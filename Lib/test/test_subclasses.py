@@ -10,6 +10,14 @@ class TestSubclasses(unittest.TestCase):
         self.assertEqual(Spam(), 0.0)
         self.assertEqual(str(Spam()), "hi")
 
+    def test_complex(self):
+        class Spam(complex):
+            def __str__(self):
+                return "hi"
+
+        self.assertEqual(Spam(), 0j)
+        self.assertEqual(str(Spam()), "hi")
+
     def test_int(self):
         class Spam(int):
             def __str__(self):
@@ -38,6 +46,14 @@ class TestSubclasses(unittest.TestCase):
 
     def test_str(self):
         class Spam(str):
+            def eggs(self):
+                return "I am eggs."
+
+        self.assertEqual(Spam(), "")
+        self.assertEqual(Spam().eggs(), "I am eggs.")
+
+    def test_unicode(self):
+        class Spam(unicode):
             def eggs(self):
                 return "I am eggs."
 

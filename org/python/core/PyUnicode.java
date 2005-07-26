@@ -2628,40 +2628,58 @@ public class PyUnicode extends PyString {
     //private transient int cached_hashcode=0;
     //private transient boolean interned=false;
 
+    private static final PyType UNICODETYPE = PyType.fromClass(PyUnicode.class);
+    
     // for PyJavaClass.init()
     public PyUnicode() {
-        super();
-    }
-
-    public PyUnicode(PyType subType) {
-        super(subType);
+        this(UNICODETYPE, "");
     }
 
     public PyUnicode(String string) {
-        super(string);
+        this(UNICODETYPE, string);
+    }
+    
+    public PyUnicode(PyType subtype, String string) {
+        super(subtype, string);
     }
     
     public PyUnicode(PyString pystring) {
-        this((String)pystring.__tojava__(String.class));
+        this(UNICODETYPE, pystring);
     }
+    
+    public PyUnicode(PyType subtype, PyString pystring) {
+        this(subtype, (String)pystring.__tojava__(String.class));
+    }
+
 
     public PyUnicode(char c) {
-        super(c);
+        this(UNICODETYPE,String.valueOf(c));
     }
 
-    final static PyObject unicode_new(PyObject new_, boolean init, PyType subtype,
+    final static PyObject unicode_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("unicode", args, keywords, new String[] { "S", "encoding", "errors" }, 0);
         PyObject S = ap.getPyObject(0, null);
         String encoding = ap.getString(1, null);
         String errors = ap.getString(2, null);
-        if (S instanceof PyUnicode) {
-            return S;
-        } else if (S instanceof PyString) {
-            return new PyUnicode(codecs.decode((PyString)S, encoding, errors));
+        if (new_.for_type == subtype) {
+            if (S == null) {
+                return new PyUnicode("");
+            }
+            if (S instanceof PyUnicode) {
+                return S;
+            }
+            if (S instanceof PyString) {
+                return new PyUnicode(codecs.decode((PyString)S, encoding, errors));
+            }
+            return S.__unicode__();
+        } else {
+            if (S == null) {
+                return new PyUnicodeDerived(subtype, "");
+            }
+        
+            return new PyUnicodeDerived(subtype, (String)((S.__str__()).__tojava__(String.class)));
         }
-           
-        return S.__unicode__();
     }
 
     /** <i>Internal use only. Do not call this method explicitly.</i> */
