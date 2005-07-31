@@ -1,9 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 
 /* Support for java-1.2 collections
-This will only compile with jdk-1.2 or later.
-The rest of JPython works just fine with out it, so feel free to
-just leave this uncompiled if you're using jdk-1.1.
+*  XXX: Is this used?  Or does the new collections integration
+*  (starting at 2.2a1) make it obsolete?
 */
 
 package org.python.core;

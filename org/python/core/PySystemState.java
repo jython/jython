@@ -286,8 +286,6 @@ public class PySystemState extends PyObject
             if (lversion.startsWith("jdk") || lversion.startsWith("jre")) {
                 version = version.substring(3, version.length());
             }
-            if (version.equals("11"))
-                version = "1.1";
             if (version.equals("12"))
                 version = "1.2";
             if (version != null)

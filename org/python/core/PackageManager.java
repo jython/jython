@@ -187,10 +187,6 @@ public abstract class PackageManager extends Object {
                 case 1:
                 //System.out.println("utf: "+istream.readUTF()+";");
                 int slength = istream.readUnsignedShort();
-                while (slength > MAXSKIP) { // workaround to java1.1 bug
-                    istream.skipBytes(MAXSKIP);
-                    slength -= MAXSKIP;
-                }
                 istream.skipBytes(slength);
                 break;
                 default:

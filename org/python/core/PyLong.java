@@ -1636,6 +1636,7 @@ public class PyLong extends PyObject
                 }
                 //return __pow__(right).__mod__(modulo);
             } else {
+                // XXX: 1.1 no longer supported so review this.
                 // This is buggy in SUN's jdk1.1.5
                 // Extra __mod__ improves things slightly
                 return new PyLong(value.modPow(y, z));

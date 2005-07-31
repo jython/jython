@@ -251,19 +251,14 @@ public class PyJavaClass extends PyClass
 
      /**
       * Return the list of all accessible fields for a class.  This will
-      * only the public fields unless Options.respectJavaAccessibility is
+      * only be the public fields unless Options.respectJavaAccessibility is
       * false, in which case all fields are returned.
       */
     private static Field[] getAccessibleFields(Class c) {
         if (!JavaAccessibility.accessIsMutable())
             // returns just the public fields
             return c.getFields();
-        // from here on out we know we must be using at least Java 1.2.
-        // Note that an ArrayList would be better here because we don't
-        // need access to be synchronized, but that would prevent this file
-        // from being compiled on Java 1.1 (as opposed to being compilable,
-        // but not having the feature available).
-        java.util.Vector fields = new java.util.Vector();
+        java.util.ArrayList fields = new java.util.ArrayList();
         while (c != null) {
             // get all declared fields for this class, mutate their
             // accessibility and pop it into the array for later
@@ -272,7 +267,7 @@ public class PyJavaClass extends PyClass
                 // TBD: this is a permanent change.  Should we provide a
                 // way to restore the original accessibility flag?
                 JavaAccessibility.setAccessible(declared[i], true);
-                fields.addElement(declared[i]);
+                fields.add(declared[i]);
             }
             // walk down superclass chain.  no need to deal specially with
             // interfaces...
@@ -280,7 +275,7 @@ public class PyJavaClass extends PyClass
         }
 //        return (Field[])fields.toArray(new Field[fields.size()]);
         Field[] ret = new Field[fields.size()];
-        fields.copyInto(ret);
+        ret = (Field[])fields.toArray(ret);
         return ret;
     }
 

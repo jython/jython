@@ -66,6 +66,8 @@ public class SyspathArchive extends PyString {
         // stream correctly. If you read beyond the end, you get a
         // EOFException("Unexpected end of ZLIB input stream"), not a
         // -1 return value.
+        // XXX: Since 1.1 is no longer supported, we should review the usefulness
+        // of this workaround.
         // As a workaround we read the file fully here, but only getSize()
         // bytes.
         int len = (int) entry.getSize();

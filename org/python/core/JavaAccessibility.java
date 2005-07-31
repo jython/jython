@@ -3,12 +3,10 @@ import java.lang.reflect.*;
 
 /**
  * Provides a means of using the Java 2
- * {Field|Method|Constructor}.setAccessibility() methods that can be
- * compiled with Java 1 or Java 2.
+ * {Field|Method|Constructor}.setAccessibility() methods.
  *
- * When compiling with Java 2, Java2Accessibility.java must also be
- * compiled.  If compiled Java 1, or if the Java2Accessibility class cannot
- * be found, then the methods here have no effect.
+ * This class was formerly necessary for Java 1 compattibility.
+ * In the future, this class may be removed.
  */
 
 class JavaAccessibility
@@ -16,19 +14,12 @@ class JavaAccessibility
     private static JavaAccessibility access = null;
 
     static void initialize() {
-        // If we can find it, and the registry option
+        // If registry option
         // python.security.respectJavaAccessibility is set, then we set the
         // access object to an instance of the subclass Java2Accessibility
         if (Options.respectJavaAccessibility)
             return;
-        try {
-            Class c = Class.forName("org.python.core.Java2Accessibility");
-            Class.forName("java.lang.reflect.AccessibleObject");
-            access = (JavaAccessibility)c.newInstance();
-        }
-        catch (InstantiationException e) {}
-        catch (IllegalAccessException e) {}
-        catch (ClassNotFoundException e) {}
+        access = new Java2Accessibility();
     }
 
     static boolean accessIsMutable() {

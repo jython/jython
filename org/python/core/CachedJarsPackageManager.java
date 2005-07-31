@@ -203,7 +203,6 @@ public abstract class CachedJarsPackageManager extends PackageManager {
                 // uniformly.
                 if(jarconn.getURL().getProtocol().equals("file")) {
                     // ??pending: need to use java2 URLDecoder.decode?
-                    // but under 1.1 this is absent and should be simulated.
                     String jarfilename = jarurl.getFile();
                     jarfilename = jarfilename.replace('/',File.separatorChar);
                     jarfile = new File(jarfilename);
