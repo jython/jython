@@ -19,4 +19,4 @@ if r4 != 4:
 try:
    r3 = string.find("abcdef", "f", 0, None)	#stmt 2
 except TypeError, e:
-   support.compare(e, "3rd arg can't be coerced to int")
+   support.compare(e, "expected an integer")

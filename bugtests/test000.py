@@ -1,5 +1,5 @@
 """
-Basic test, just raises an TestError
+Basic test, just raises a TestWarning
 """
 
 import support
