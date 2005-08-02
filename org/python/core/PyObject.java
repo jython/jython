@@ -686,9 +686,11 @@ public class PyObject implements java.io.Serializable {
         int nstar = 0;
 
         String name = "";
-        if (this instanceof PyFunction)
+        if (this instanceof PyFunction) {
             name = ((PyFunction) this).__name__ + "() ";
-
+        } else {
+            name = getType().fastGetName() + " ";
+        }
         if (kwargs != null) {
             PyObject keys = kwargs.__findattr__("keys");
             if (keys == null)
@@ -709,7 +711,15 @@ public class PyObject implements java.io.Serializable {
                 || starargs instanceof PyInstance)) // xxx
                 throw Py.TypeError(
                     name + "argument after * must " + "be a sequence");
-            nstar = starargs.__len__();
+            try {
+                nstar = starargs.__len__();
+            } catch (PyException e) {
+                if (Py.matchException(e, Py.AttributeError)) {
+                    throw Py.TypeError(
+                        name + "argument after * must " + "be a sequence");
+                }
+                throw e;
+            }
             argslen += nstar;
         }
 
@@ -719,10 +729,18 @@ public class PyObject implements java.io.Serializable {
 
         if (starargs != null) {
             PyObject a;
-            for (int i = 0;
-                (a = starargs.__finditem__(i)) != null && i < nstar;
-                i++) {
-                newargs[argidx++] = a;
+            try {
+                for (int i = 0;
+                    (a = starargs.__finditem__(i)) != null && i < nstar;
+                    i++) {
+                    newargs[argidx++] = a;
+                }
+            } catch (PyException e) {
+                if (Py.matchException(e, Py.AttributeError)) {
+                    throw Py.TypeError(
+                        name + "argument after * must " + "be a sequence");
+                }
+                throw e;
             }
         }
         System.arraycopy(
