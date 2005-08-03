@@ -76,27 +76,29 @@ public class PyFunction extends PyObject
     }
 
     public void __setattr__(String name, PyObject value) {
-        // TBD: in CPython, func_code, func_defaults, func_doc, __doc__ are
+        // TBD: in CPython, func_defaults, func_doc, __doc__ are
         // writable.  For now, only func_doc, __doc__ are writable in
         // JPython.
         if (name == "func_doc" || name == "__doc__")
             __doc__ = value;
         else if (name == "func_closure") {
-            if (!(value instanceof PyTuple)) {
-                throw Py.TypeError("func_closure must be set to a tuple");
-            }
-            func_closure = value;
+            throwReadonly(name);
         }
         // not yet implemented:
-        // func_code
         // func_defaults
+        else if (name == "__name__")
+            throwReadonly(name);
+        else if (name == "func_name")
+            throwReadonly(name);
         else if (name == "func_defaults")
             throwReadonly(name);
+        else if (name == "func_globals")
+            throwReadonly(name);
         else if (name == "func_code") {
-            if (value instanceof PyCode)
-                func_code = (PyCode) value;
-            else
-                throw Py.TypeError("func_code must be set to a code object");
+             if (value instanceof PyCode)
+                 func_code = (PyCode) value;
+             else
+                 throw Py.TypeError("func_code must be set to a code object"); 
         } else if (name == "__dict__" || name == "func_dict") {
             if (value instanceof PyDictionary || value instanceof PyStringMap)
                 __dict__ = value;

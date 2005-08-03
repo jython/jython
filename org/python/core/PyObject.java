@@ -2803,11 +2803,11 @@ public class PyObject implements java.io.Serializable {
     }
 
     public void __set__(PyObject obj, PyObject value) {
-        throw Py.RuntimeError("object internal __set__ impl is abstract");
+        throw Py.AttributeError("object internal __set__ impl is abstract");
     }
 
     public void __delete__(PyObject obj) {
-        throw Py.RuntimeError("object internal __delete__ impl is abstract");
+        throw Py.AttributeError("object internal __delete__ impl is abstract");
     }
 
     // name must be interned

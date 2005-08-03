@@ -402,7 +402,7 @@ And more, added later.
 >>> i.gi_running = 42
 Traceback (most recent call last):
   ...
-RuntimeError: object internal __set__ impl is abstract
+AttributeError: object internal __set__ impl is abstract
 >>> def g():
 ...     yield me.gi_running
 >>> me = g()

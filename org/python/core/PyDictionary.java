@@ -1004,7 +1004,11 @@ public class PyDictionary extends PyObject {
     }
 
     final PyObject dict___finditem__(PyObject key) {
-        return (PyObject)table.get(key);
+        PyObject value = (PyObject)table.get(key);
+        if (value == null) {
+            return Py.None;
+        }
+        return value;
     }
 
     public void __setitem__(PyObject key, PyObject value) {

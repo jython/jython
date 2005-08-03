@@ -63,6 +63,9 @@ public class PyMethod extends PyObject
     }
 
     public void __delattr__(String name) {
+        if (name == "__doc__") {
+            throwReadonly(name);
+        }
         im_func.__delattr__(name);
     }
 
