@@ -774,7 +774,7 @@ SyntaxError: invalid syntax
 ...             yield 1
 ...
 >>> type(f())
-<type 'none'>
+<type 'NoneType'>
 
 >>> def f():
 ...     if 0:
@@ -784,7 +784,7 @@ SyntaxError: invalid syntax
 ...             def f(self):
 ...                 yield 2
 >>> type(f())
-<type 'none'>
+<type 'NoneType'>
 
 >>> def f():
 ...     if 0:
