@@ -825,9 +825,7 @@ public class PyType extends PyObject {
             name = c.getName();
         }
 
-        if (name.equals("org.python.core.PyNone")) {
-            name = "NoneType";
-        } else if (name.startsWith("org.python.core.Py")) {
+        if (name.startsWith("org.python.core.Py")) {
             name = name.substring("org.python.core.Py".length()).toLowerCase();
         } else {
             int lastdot = name.lastIndexOf('.');
