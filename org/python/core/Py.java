@@ -1570,7 +1570,16 @@ public final class Py
 
         if (metaclass == null || metaclass == CLASS_TYPE ||
              (metaclass instanceof PyJavaClass && ((PyJavaClass)metaclass).proxyClass == Class.class) ) {
-            return new PyClass(name, new PyTuple(bases), dict, proxyClass);
+            boolean more_general = false;
+            for (int i = 0; i < bases.length; i++) {
+                if (!(bases[i] instanceof PyClass)) {
+                    metaclass = bases[i].getType();
+                    more_general = true;
+                    break;
+                }
+            }
+            if (!more_general)
+                return new PyClass(name, new PyTuple(bases), dict, proxyClass);
         }
         
         if (proxyClass != null) {

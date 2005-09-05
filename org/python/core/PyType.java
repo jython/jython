@@ -405,8 +405,7 @@ public class PyType extends PyObject {
 
     private static PyObject[] classic_mro(PyClass classic_cl) {
         ArrayList acc = new ArrayList();
-
-
+        fill_classic_mro(acc, classic_cl);
         return (PyObject[])acc.toArray(new PyObject[0]);
     }
 

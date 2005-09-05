@@ -230,6 +230,10 @@ public class PyClass extends PyObject
         return new PyObject[] {result, resolvedClass};
     }
 
+    public PyObject fastGetDict() {
+        return __dict__;
+    }
+
     PyObject lookup(String name, boolean stop_at_java) {
         PyObject[] result = lookupGivingClass(name, stop_at_java);
         return result[0];

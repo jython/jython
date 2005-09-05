@@ -60,6 +60,74 @@ class TestSubclasses(unittest.TestCase):
         self.assertEqual(Spam(), "")
         self.assertEqual(Spam().eggs(), "I am eggs.")
 
+    def test_classic(self):
+        class Spam:
+            def eggs(self):
+                return "I am eggs."
+
+        class SubSpam(Spam):
+            pass
+
+        class SubSubSpam(SubSpam):
+            pass
+
+        self.assertEqual(Spam().eggs(), "I am eggs.")
+        self.assertEqual(SubSpam().eggs(), "I am eggs.")
+        self.assertEqual(SubSubSpam().eggs(), "I am eggs.")
+
+    def test_classic_multiple(self):
+        class Spam:
+            def eggs(self):
+                return "I am eggs."
+
+        class SubSpam(Spam):
+            pass
+
+        class SubSubStrSpam(SubSpam, str):
+            pass
+
+        class SubSubStrSpam2(str, SubSpam):
+            pass
+
+        self.assertEqual(Spam().eggs(), "I am eggs.")
+        self.assertEqual(SubSpam().eggs(), "I am eggs.")
+        self.assertEqual(SubSubStrSpam().eggs(), "I am eggs.")
+        self.assertEqual(SubSubStrSpam2().eggs(), "I am eggs.")
+
+    def test_newstyle(self):
+        class Spam(object):
+            def eggs(self):
+                return "I am eggs."
+
+        class SubSpam(Spam):
+            pass
+
+        class SubSubSpam(SubSpam):
+            pass
+
+        self.assertEqual(Spam().eggs(), "I am eggs.")
+        self.assertEqual(SubSpam().eggs(), "I am eggs.")
+        self.assertEqual(SubSubSpam().eggs(), "I am eggs.")
+
+    def test_newstyle_multiple(self):
+        class Spam(object):
+            def eggs(self):
+                return "I am eggs."
+
+        class SubSpam(Spam):
+            pass
+
+        class SubSubStrSpam(SubSpam, str):
+            pass
+
+        class SubSubStrSpam2(str, SubSpam):
+            pass
+
+        self.assertEqual(Spam().eggs(), "I am eggs.")
+        self.assertEqual(SubSpam().eggs(), "I am eggs.")
+        self.assertEqual(SubSubStrSpam().eggs(), "I am eggs.")
+        self.assertEqual(SubSubStrSpam2().eggs(), "I am eggs.")
+
 
 def test_suite():
     allsuites = [unittest.makeSuite(klass, 'test')
