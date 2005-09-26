@@ -6,3 +6,4 @@
 build
 dist
 ant.properties
+bin
