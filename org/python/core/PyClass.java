@@ -1,40 +1,39 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
+
 import java.util.Vector;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 
 /**
  * A python class.
  */
 
-public class PyClass extends PyObject
-{
+public class PyClass extends PyObject {
     /**
      * Holds the namespace for this class
-     **/
+     */
     public PyObject __dict__;
 
     /**
      * The base classes of this class
-     **/
+     */
     public PyTuple __bases__;
 
     /**
      * The name of this class
-     **/
+     */
     public String __name__;
 
     // Store these methods for performance optimization
     // These are only used by PyInstance
-    PyObject __getattr__, __setattr__, __delattr__, __tojava__,
-             __del__, __contains__;
+    PyObject __getattr__, __setattr__, __delattr__, __tojava__, __del__,
+            __contains__;
 
     // Holds the classes for which this is a proxy
     // Only used when subclassing from a Java class
     protected Class proxyClass;
-    
-    // xxx map  'super__*' names -> array of methods
+
+    // xxx map 'super__*' names -> array of methods
     protected java.util.HashMap super__methods;
 
     public static PyClass __class__;
@@ -48,15 +47,14 @@ public class PyClass extends PyObject
         proxyClass = null;
     }
 
-
     /**
      * Create a python class.
-     *
-     * @param name   name of the class.
-     * @param bases  A list of base classes.
-     * @param dict   The class dict. Normally this dict is returned by
-     *               the class code object.
-     *
+     * 
+     * @param name name of the class.
+     * @param bases A list of base classes.
+     * @param dict The class dict. Normally this dict is returned by the class
+     *            code object.
+     * 
      * @see org.python.core.Py#makeClass(String, PyObject[], PyCode, PyObject)
      */
     public PyClass(String name, PyTuple bases, PyObject dict) {
@@ -64,22 +62,20 @@ public class PyClass extends PyObject
     }
 
     /**
-     * Create a python class which inherit from a java class and where
-     * we already have generated a proxyclass. If we do not have a
-     * pre-generated proxyclass, the class initialization method will
-     * create such a proxyclass if bases contain a java class.
-     *
-     * @param name   name of the class.
-     * @param bases  A list of base classes.
-     * @param dict   The class dict. Normally this dict is returned by
-     *               the class code object.
-     *
-     * @see org.python.core.Py#makeClass(String, PyObject[], PyCode,
-     *                                   PyObject, Class)
+     * Create a python class which inherits from a java class and where we
+     * already have generated a proxyclass. If we do not have a pre-generated
+     * proxyclass, the class initialization method will create such a proxyclass
+     * if bases contain a java class.
+     * 
+     * @param name name of the class.
+     * @param bases A list of base classes.
+     * @param dict The class dict. Normally this dict is returned by the class
+     *            code object.
+     * 
+     * @see org.python.core.Py#makeClass(String, PyObject[], PyCode, PyObject,
+     *      Class)
      */
-    public PyClass(String name, PyTuple bases, PyObject dict,
-                   Class proxyClass)
-    {
+    public PyClass(String name, PyTuple bases, PyObject dict, Class proxyClass) {
         this.proxyClass = proxyClass;
         init(name, bases, dict);
     }
@@ -89,8 +85,8 @@ public class PyClass extends PyObject
     }
 
     void init(String name, PyTuple bases, PyObject dict) {
-        //System.out.println("bases: "+bases+", "+name.string);
-        //System.out.println("init class: "+name);
+        // System.out.println("bases: "+bases+", "+name.string);
+        // System.out.println("init class: "+name);
         __name__ = name;
         __bases__ = bases;
         __dict__ = dict;
@@ -100,22 +96,24 @@ public class PyClass extends PyObject
         if (proxyClass == null) {
             Vector interfaces = new Vector();
             Class baseClass = null;
-            for (int i=0; i<bases.size(); i++) {
-                Class proxy = ((PyClass)bases.pyget(i)).getProxyClass();
+            for (int i = 0; i < bases.size(); i++) {
+                Class proxy = ((PyClass) bases.pyget(i)).getProxyClass();
                 if (proxy != null) {
                     if (proxy.isInterface()) {
                         interfaces.addElement(proxy);
                     } else {
                         if (baseClass != null) {
-                            throw Py.TypeError("no multiple inheritance "+
-                                               "for Java classes: "+
-                                               proxy.getName()+
-                                               " and "+
-                                               baseClass.getName());
+                            throw Py.TypeError("no multiple inheritance "
+                                    + "for Java classes: " + proxy.getName()
+                                    + " and " + baseClass.getName());
                         }
-                        // xxx explicitly disable this for now, types will allow this
-                        if (PyObject.class.isAssignableFrom(proxy)) 
-                            throw Py.TypeError("subclassing PyObject subclasses" +                                " not supported");
+                        // xxx explicitly disable this for now, types will allow
+                        // this
+                        if (PyObject.class.isAssignableFrom(proxy)) {
+                            throw Py
+                                    .TypeError("subclassing PyObject subclasses"
+                                            + " not supported");
+                        }
                         baseClass = proxy;
                     }
                 }
@@ -123,62 +121,64 @@ public class PyClass extends PyObject
             if (baseClass != null || interfaces.size() != 0) {
                 String proxyName = __name__;
                 PyObject module = dict.__finditem__("__module__");
-                if (module != null)
+                if (module != null) {
                     proxyName = module.toString() + "$" + __name__;
+                }
                 proxyClass = MakeProxies.makeProxy(baseClass, interfaces,
-                                                   __name__, proxyName,
-                                                   __dict__);
+                        __name__, proxyName, __dict__);
             }
         }
 
         if (proxyClass != null) {
             // xxx more efficient way without going through a PyJavaClass?
-            PyObject superDict =
-                PyJavaClass.lookup(proxyClass).__findattr__("__dict__"); // xxx getDict perhaps?
+            PyObject superDict = PyJavaClass.lookup(proxyClass).__findattr__(
+                    "__dict__"); // xxx getDict perhaps?
             // This code will add in the needed super__ methods to the class
             PyObject snames = superDict.__finditem__("__supernames__");
             if (snames != null) {
                 PyObject iter = snames.__iter__();
-                for (PyObject item; (item = iter.__iternext__()) != null; ) {
+                for (PyObject item; (item = iter.__iternext__()) != null;) {
                     if (__dict__.__finditem__(item) == null) {
                         PyObject superFunc = superDict.__finditem__(item);
-                        if (superFunc != null)
+                        if (superFunc != null) {
                             __dict__.__setitem__(item, superFunc);
+                        }
                     }
                 }
             }
-            
+
             // xxx populate super__methods, experiment.
-            
+
             java.lang.reflect.Method proxy_methods[] = proxyClass.getMethods();
-            
+
             super__methods = new java.util.HashMap();
-            
-            for(int i = 0; i<proxy_methods.length; i++) {
+
+            for (int i = 0; i < proxy_methods.length; i++) {
                 java.lang.reflect.Method meth = proxy_methods[i];
-                String meth_name = meth.getName(); 
+                String meth_name = meth.getName();
                 if (meth_name.startsWith("super__")) {
-                    java.util.ArrayList samename = (java.util.ArrayList)super__methods.get(meth_name);
+                    java.util.ArrayList samename = (java.util.ArrayList) super__methods
+                            .get(meth_name);
                     if (samename == null) {
                         samename = new java.util.ArrayList();
-                        super__methods.put(meth_name,samename);
-                    } 
-                    samename.add(meth);                  
+                        super__methods.put(meth_name, samename);
+                    }
+                    samename.add(meth);
                 }
             }
-            
+
             java.lang.reflect.Method[] empty_methods = new java.lang.reflect.Method[0];
-            for (java.util.Iterator iter = super__methods.entrySet().iterator();
-                 iter.hasNext();) {
-                java.util.Map.Entry entry = (java.util.Map.Entry)iter.next();
-                //System.out.println(entry.getKey()); // debug
-                entry.setValue(((java.util.ArrayList)entry.getValue()).toArray(empty_methods));
+            for (java.util.Iterator iter = super__methods.entrySet().iterator(); iter
+                    .hasNext();) {
+                java.util.Map.Entry entry = (java.util.Map.Entry) iter.next();
+                // System.out.println(entry.getKey()); // debug
+                entry.setValue(((java.util.ArrayList) entry.getValue())
+                        .toArray(empty_methods));
             }
-            
         }
 
-        //System.out.println("proxyClasses: "+proxyClasses+", "+
-        //                   proxyClasses[0]);
+        // System.out.println("proxyClasses: "+proxyClasses+", "+
+        // proxyClasses[0]);
         if (dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", Py.None);
         }
@@ -195,19 +195,20 @@ public class PyClass extends PyObject
     protected void findModule(PyObject dict) {
         PyObject module = dict.__finditem__("__module__");
         if (module == null || module == Py.None) {
-            //System.out.println("in PyClass getFrame: "+__name__.string);
+            // System.out.println("in PyClass getFrame: "+__name__.string);
             PyFrame f = Py.getFrame();
             if (f != null) {
                 PyObject nm = f.f_globals.__finditem__("__name__");
-                if (nm != null)
+                if (nm != null) {
                     dict.__setitem__("__module__", nm);
+                }
             }
         }
     }
 
     public Object __tojava__(Class c) {
         if ((c == Object.class || c == Class.class || c == Serializable.class)
-                                      && proxyClass != null) {
+                && proxyClass != null) {
             return proxyClass;
         }
         return super.__tojava__(c);
@@ -219,15 +220,16 @@ public class PyClass extends PyObject
         PyClass resolvedClass = this;
         if (result == null && __bases__ != null) {
             int n = __bases__.__len__();
-            for (int i=0; i<n; i++) {              
-                resolvedClass = (PyClass)(__bases__.__getitem__(i));
+            for (int i = 0; i < n; i++) {
+                resolvedClass = (PyClass) (__bases__.__getitem__(i));
                 PyObject[] res = resolvedClass.lookupGivingClass(name,
-                                                               stop_at_java);
-                if (res[0] != null)
+                        stop_at_java);
+                if (res[0] != null) {
                     return res;
+                }
             }
         }
-        return new PyObject[] {result, resolvedClass};
+        return new PyObject[] { result, resolvedClass };
     }
 
     public PyObject fastGetDict() {
@@ -240,15 +242,23 @@ public class PyClass extends PyObject
     }
 
     public PyObject __findattr__(String name) {
-        if (name == "__dict__") return __dict__;
-        if (name == "__name__") return new PyString(__name__);
-        if (name == "__bases__") return __bases__;
+        if (name == "__dict__") {
+            return __dict__;
+        }
+        if (name == "__name__") {
+            return new PyString(__name__);
+        }
+        if (name == "__bases__") {
+            return __bases__;
+        }
 
         PyObject[] result = lookupGivingClass(name, false);
 
-        if (result[0] == null)
+        if (result[0] == null) {
             return super.__findattr__(name);
-        // xxx do we need to use result[1] (wherefound) for java cases for backw comp?
+        }
+        // xxx do we need to use result[1] (wherefound) for java cases for backw
+        // comp?
         return result[0].__get__(null, this);
     }
 
@@ -260,14 +270,16 @@ public class PyClass extends PyObject
             return;
         }
         if (name == "__name__") {
-            if (!(value instanceof PyString))
+            if (!(value instanceof PyString)) {
                 throw Py.TypeError("__name__ must be a string object");
+            }
             __name__ = value.toString();
             return;
         }
         if (name == "__bases__") {
-            if (!(value instanceof PyTuple))
+            if (!(value instanceof PyTuple)) {
                 throw Py.TypeError("__bases__ must be a tuple object");
+            }
             __bases__ = (PyTuple) value;
             return;
         }
@@ -282,87 +294,95 @@ public class PyClass extends PyObject
     public void __rawdir__(PyDictionary accum) {
         addKeys(accum, "__dict__");
         PyObject[] bases = __bases__.getArray();
-        for (int i=0; i < bases.length; i++)
+        for (int i = 0; i < bases.length; i++) {
             bases[i].__rawdir__(accum);
+        }
     }
-    
+
     public PyObject __call__(PyObject[] args, String[] keywords) {
         PyInstance inst;
-        if (__del__ == null)
+        if (__del__ == null) {
             inst = new PyInstance(this);
-        else
+        } else {
             // the class defined an __del__ method
             inst = new PyFinalizableInstance(this);
-
+        }
         inst.__init__(args, keywords);
 
         // xxx this cannot happen anymore
-        /*if (proxyClass != null &&
-                   PyObject.class.isAssignableFrom(proxyClass)) {
-            // It would be better if we didn't have to create a PyInstance
-            // in the first place.
-            ((PyObject)inst.javaProxy).__class__ = this;
-            return (PyObject)inst.javaProxy;
-        }*/
+        /*
+         * if (proxyClass != null &&
+         * PyObject.class.isAssignableFrom(proxyClass)) { // It would be better
+         * if we didn't have to create a PyInstance // in the first place.
+         * ((PyObject)inst.javaProxy).__class__ = this; return
+         * (PyObject)inst.javaProxy; }
+         */
 
         return inst;
     }
 
     /* PyClass's are compared based on __name__ */
     public int __cmp__(PyObject other) {
-        if (!(other instanceof PyClass))
+        if (!(other instanceof PyClass)) {
             return -2;
-        int c = __name__.compareTo(((PyClass)other).__name__);
+        }
+        int c = __name__.compareTo(((PyClass) other).__name__);
         return c < 0 ? -1 : c > 0 ? 1 : 0;
     }
 
     public PyString __str__() {
         // Current CPython standard is that str(class) prints as
-        // module.class.  If the class has no module, then just the class
+        // module.class. If the class has no module, then just the class
         // name is printed.
-        if (__dict__ == null)
+        if (__dict__ == null) {
             return new PyString(__name__);
+        }
         PyObject mod = __dict__.__finditem__("__module__");
-        if (mod == null || !(mod instanceof PyString))
+        if (mod == null || !(mod instanceof PyString)) {
             return new PyString(__name__);
-        String smod = ((PyString)mod).toString();
+        }
+        String smod = ((PyString) mod).toString();
         return new PyString(smod + "." + __name__);
     }
 
-    public String toString()  {
+    public String toString() {
         PyObject mod = __dict__.__finditem__("__module__");
         String smod;
-        if (mod == null || !(mod instanceof PyString))
+        if (mod == null || !(mod instanceof PyString)) {
             smod = "<unknown>";
-        else
-            smod = ((PyString)mod).toString();
-        return "<class "+smod+"."+__name__+" "+Py.idstr(this)+">";
-    }
-    
-    public boolean isSubClass(PyClass superclass) {
-        if (this == superclass)
-            return true;
-        if (this.proxyClass != null && superclass.proxyClass != null) {
-            if (superclass.proxyClass.isAssignableFrom(this.proxyClass))
-                return true;
+        } else {
+            smod = ((PyString) mod).toString();
         }
-        if (this.__bases__ == null || superclass.__bases__ == null)
+        return "<class " + smod + "." + __name__ + " " + Py.idstr(this) + ">";
+    }
+
+    public boolean isSubClass(PyClass superclass) {
+        if (this == superclass) {
+            return true;
+        }
+        if (this.proxyClass != null && superclass.proxyClass != null) {
+            if (superclass.proxyClass.isAssignableFrom(this.proxyClass)) {
+                return true;
+            }
+        }
+        if (this.__bases__ == null || superclass.__bases__ == null) {
             return false;
+        }
         PyObject[] bases = this.__bases__.getArray();
         int n = bases.length;
-        for(int i=0; i<n; i++) {
-            PyClass c = (PyClass)bases[i];
-            if (c.isSubClass(superclass))
+        for (int i = 0; i < n; i++) {
+            PyClass c = (PyClass) bases[i];
+            if (c.isSubClass(superclass)) {
                 return true;
+            }
         }
         return false;
     }
-    
+
     /**
      * @see org.python.core.PyObject#safeRepr()
      */
     public String safeRepr() throws PyIgnoreMethodTag {
-        return "class '"+__name__+"'";
+        return "class '" + __name__ + "'";
     }
-
 }
