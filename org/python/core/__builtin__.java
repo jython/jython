@@ -3,13 +3,12 @@ package org.python.core;
 
 import java.util.Hashtable;
 
-class BuiltinFunctions extends PyBuiltinFunctionSet
-{
+class BuiltinFunctions extends PyBuiltinFunctionSet {
     public BuiltinFunctions(String name, int index, int argcount) {
         super(name, index, argcount, argcount, false, null);
     }
 
-    public BuiltinFunctions(String name, int index, int minargs, int maxargs){
+    public BuiltinFunctions(String name, int index, int minargs, int maxargs) {
         super(name, index, minargs, maxargs, false, null);
     }
 
@@ -25,16 +24,16 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
     public PyObject __call__(PyObject arg1) {
         switch (index) {
         case 0:
-            return Py.newString(__builtin__.chr(
-                Py.py2int(arg1, "chr(): 1st arg can't be coerced to int")));
+            return Py.newString(__builtin__.chr(Py.py2int(arg1,
+                    "chr(): 1st arg can't be coerced to int")));
         case 1:
             return Py.newInteger(__builtin__.len(arg1));
         case 2:
-            return __builtin__.range(
-                Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
+            return __builtin__.range(Py.py2int(arg1,
+                    "range(): 1st arg can't be coerced to int"));
         case 3:
-            return Py.newInteger(__builtin__.ord(
-                Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
+            return Py.newInteger(__builtin__.ord(Py.py2char(arg1,
+                    "ord(): 1st arg can't be coerced to char")));
         case 5:
             return __builtin__.hash(arg1);
         case 8:
@@ -51,9 +50,9 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
     public PyObject __call__(PyObject arg1, PyObject arg2) {
         switch (index) {
         case 2:
-            return __builtin__.range(
-                Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
-                Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"));
+            return __builtin__.range(Py.py2int(arg1,
+                    "range(): 1st arg can't be coerced to int"), Py.py2int(
+                    arg2, "range(): 2nd arg can't be coerced to int"));
         case 6:
             return Py.newInteger(__builtin__.cmp(arg1, arg2));
         case 9:
@@ -70,27 +69,26 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
         switch (index) {
         case 2:
-            return __builtin__.range(
-                Py.py2int(arg1, "range(): 1st arg can't be coerced to int"),
-                Py.py2int(arg2, "range(): 2nd arg can't be coerced to int"),
-                Py.py2int(arg3, "range(): 3rd arg can't be coerced to int"));
+            return __builtin__.range(Py.py2int(arg1,
+                    "range(): 1st arg can't be coerced to int"), Py.py2int(
+                    arg2, "range(): 2nd arg can't be coerced to int"), Py
+                    .py2int(arg3, "range(): 3rd arg can't be coerced to int"));
         case 9:
             try {
                 if (arg3 instanceof PyStringMap) {
                     PyDictionary d = new PyDictionary();
-                    d.update((PyStringMap) arg3);
+                    d.update(arg3);
                     arg3 = d;
                 }
 
                 // this catches both casts of arg3 to a PyDictionary, and
                 // all casts of keys in the dictionary to PyStrings inside
                 // apply(PyObject, PyObject, PyDictionary)
-                PyDictionary d = (PyDictionary)arg3;
+                PyDictionary d = (PyDictionary) arg3;
                 return __builtin__.apply(arg1, arg2, d);
-            }
-            catch (ClassCastException e) {
-                throw Py.TypeError("apply() 3rd argument must be a "+
-                                   "dictionary with string keys");
+            } catch (ClassCastException e) {
+                throw Py.TypeError("apply() 3rd argument must be a "
+                        + "dictionary with string keys");
             }
         default:
             throw argCountError(3);
@@ -101,8 +99,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet
 /**
  * The builtin module. All builtin functions are defined here
  */
-public class __builtin__ implements ClassDictInit
-{
+public class __builtin__ implements ClassDictInit {
     /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
         /* newstyle */
@@ -119,7 +116,9 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("tuple", PyType.fromClass(PyTuple.class));
 
         dict.__setitem__("property", PyType.fromClass(PyProperty.class));
-        dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
+        dict
+                .__setitem__("staticmethod", PyType
+                        .fromClass(PyStaticMethod.class));
         dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
         dict.__setitem__("super", PyType.fromClass(PySuper.class));
         dict.__setitem__("str", PyType.fromClass(PyString.class));
@@ -148,7 +147,7 @@ public class __builtin__ implements ClassDictInit
         dict.__setitem__("cmp", new BuiltinFunctions("cmp", 6, 2));
         dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
         dict.__setitem__("isinstance",
-                                  new BuiltinFunctions("isinstance", 10, 2));
+                new BuiltinFunctions("isinstance", 10, 2));
         dict.__setitem__("id", new BuiltinFunctions("id", 11, 1));
         dict.__setitem__("sum", new BuiltinFunctions("sum", 12, 1, 2));
         dict.__setitem__("__import__", new ImportFunction());
@@ -157,8 +156,9 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject abs(PyObject o) {
-        if (o.isNumberType())
+        if (o.isNumberType()) {
             return o.__abs__();
+        }
         throw Py.TypeError("bad operand type for abs()");
     }
 
@@ -166,8 +166,7 @@ public class __builtin__ implements ClassDictInit
         return o.__call__(Py.make_array(args));
     }
 
-    public static PyObject apply(PyObject o, PyObject args,
-                                 PyDictionary kws) {
+    public static PyObject apply(PyObject o, PyObject args, PyDictionary kws) {
         PyObject[] a;
         String[] kw;
         Hashtable table = kws.table;
@@ -177,13 +176,13 @@ public class __builtin__ implements ClassDictInit
             int n = table.size();
             kw = new String[n];
             PyObject[] aargs = Py.make_array(args);
-            a = new PyObject[n+aargs.length];
+            a = new PyObject[n + aargs.length];
             System.arraycopy(aargs, 0, a, 0, aargs.length);
             int offset = aargs.length;
 
-            for (int i=0; i<n; i++) {
-                kw[i] = ((PyString)ek.nextElement()).internedString();
-                a[i+offset] = (PyObject)ev.nextElement();
+            for (int i = 0; i < n; i++) {
+                kw[i] = ((PyString) ek.nextElement()).internedString();
+                a[i + offset] = (PyObject) ev.nextElement();
             }
             return o.__call__(a, kw);
         } else {
@@ -204,9 +203,10 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static char chr(int i) {
-        if (i < 0 || i > 65535)
+        if (i < 0 || i > 65535) {
             throw Py.ValueError("chr() arg not in range(65535)");
-        return (char)i;
+        }
+        return (char) i;
     }
 
     public static int cmp(PyObject x, PyObject y) {
@@ -215,20 +215,23 @@ public class __builtin__ implements ClassDictInit
 
     public static PyTuple coerce(PyObject o1, PyObject o2) {
         PyObject[] result = o1._coerce(o2);
-        if (result != null)
+        if (result != null) {
             return new PyTuple(result);
+        }
         throw Py.TypeError("number coercion failed");
     }
 
     public static PyCode compile(String data, String filename, String type) {
-        return  Py.compile_flags(data,filename,type,Py.getCompilerFlags());
+        return Py.compile_flags(data, filename, type, Py.getCompilerFlags());
     }
 
     public static PyCode compile(String data, String filename, String type,
-                                 int flags, boolean dont_inherit) {
-        if ((flags&~PyTableCode.CO_ALL_FEATURES) != 0)
+            int flags, boolean dont_inherit) {
+        if ((flags & ~PyTableCode.CO_ALL_FEATURES) != 0) {
             throw Py.ValueError("compile(): unrecognised flags");
-        return  Py.compile_flags(data,filename,type,Py.getCompilerFlags(flags,dont_inherit));
+        }
+        return Py.compile_flags(data, filename, type, Py.getCompilerFlags(
+                flags, dont_inherit));
     }
 
     public static void delattr(PyObject o, PyString n) {
@@ -236,7 +239,7 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject dir(PyObject o) {
-        PyList ret = (PyList)o.__dir__();
+        PyList ret = (PyList) o.__dir__();
         ret.sort();
         return ret;
     }
@@ -245,12 +248,13 @@ public class __builtin__ implements ClassDictInit
         PyObject l = locals();
         PyList ret;
 
-        if (l instanceof PyStringMap)
-            ret = ((PyStringMap)l).keys();
-        if (l instanceof PyDictionary)
-            ret = ((PyDictionary)l).keys();
+        if (l instanceof PyStringMap) {
+            ret = ((PyStringMap) l).keys();
+        } else if (l instanceof PyDictionary) {
+            ret = ((PyDictionary) l).keys();
+        }
 
-        ret = (PyList)l.invoke("keys");
+        ret = (PyList) l.invoke("keys");
         ret.sort();
         return ret;
     }
@@ -263,17 +267,17 @@ public class __builtin__ implements ClassDictInit
         return new PyEnumerate(seq);
     }
 
-    public static PyObject eval(PyObject o, PyObject globals, PyObject locals)
-    {
+    public static PyObject eval(PyObject o, PyObject globals, PyObject locals) {
         PyCode code;
-        if (o instanceof PyCode)
-            code = (PyCode)o;
-        else {
+        if (o instanceof PyCode) {
+            code = (PyCode) o;
+        } else {
             if (o instanceof PyString) {
                 code = compile(o.toString(), "<string>", "eval");
-            } else
-                throw Py.TypeError(
-                    "eval: argument 1 must be string or code object");
+            } else {
+                throw Py
+                        .TypeError("eval: argument 1 must be string or code object");
+            }
         }
         return Py.runCode(code, locals, globals);
     }
@@ -286,16 +290,12 @@ public class __builtin__ implements ClassDictInit
         return eval(o, null, null);
     }
 
-    public static void execfile(String name, PyObject globals,
-                                PyObject locals)
-    {
-        execfile_flags(name,globals,locals,Py.getCompilerFlags());
+    public static void execfile(String name, PyObject globals, PyObject locals) {
+        execfile_flags(name, globals, locals, Py.getCompilerFlags());
     }
 
-
     public static void execfile_flags(String name, PyObject globals,
-                                PyObject locals,CompilerFlags cflags)
-    {
+            PyObject locals, CompilerFlags cflags) {
         java.io.FileInputStream file;
         try {
             file = new java.io.FileInputStream(name);
@@ -305,7 +305,7 @@ public class __builtin__ implements ClassDictInit
         PyCode code;
 
         try {
-            code = Py.compile_flags(file, name, "exec",cflags);
+            code = Py.compile_flags(file, name, "exec", cflags);
         } finally {
             try {
                 file.close();
@@ -325,38 +325,40 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject filter(PyObject f, PyString s) {
-        if (f == Py.None)
+        if (f == Py.None) {
             return s;
+        }
         PyObject[] args = new PyObject[1];
         char[] chars = s.toString().toCharArray();
         int i;
         int j;
         int n = chars.length;
-        for(i=0, j=0; i<n; i++) {
+        for (i = 0, j = 0; i < n; i++) {
             args[0] = Py.makeCharacter(chars[i]);
-            if (!f.__call__(args).__nonzero__())
+            if (!f.__call__(args).__nonzero__()) {
                 continue;
+            }
             chars[j++] = chars[i];
         }
         return new PyString(new String(chars, 0, j));
     }
 
-
     public static PyObject filter(PyObject f, PyObject l) {
         PyList list = new PyList();
         PyObject iter = l.__iter__();
-        for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+        for (PyObject item = null; (item = iter.__iternext__()) != null;) {
             if (f == Py.None) {
-                if (!item.__nonzero__())
+                if (!item.__nonzero__()) {
                     continue;
-            } else {
-                if (!f.__call__(item).__nonzero__())
-                    continue;
+                }
+            } else if (!f.__call__(item).__nonzero__()) {
+                continue;
             }
             list.append(item);
         }
-        if (l instanceof PyTuple)
+        if (l instanceof PyTuple) {
             return tuple(list);
+        }
         return list;
     }
 
@@ -366,8 +368,9 @@ public class __builtin__ implements ClassDictInit
 
     public static PyObject getattr(PyObject o, PyString n, PyObject def) {
         PyObject val = o.__findattr__(n);
-        if (val != null)
-             return val;
+        if (val != null) {
+            return val;
+        }
         return def;
     }
 
@@ -379,8 +382,9 @@ public class __builtin__ implements ClassDictInit
         try {
             return o.__findattr__(n) != null;
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.AttributeError))
+            if (Py.matchException(exc, Py.AttributeError)) {
                 return false;
+            }
             throw exc;
         }
     }
@@ -397,7 +401,6 @@ public class __builtin__ implements ClassDictInit
         return Py.id(o);
     }
 
-
     public static PyObject input(PyObject prompt) {
         String line = raw_input(prompt);
         return eval(new PyString(line));
@@ -408,6 +411,7 @@ public class __builtin__ implements ClassDictInit
     }
 
     private static PyStringMap internedStrings;
+
     public static PyString intern(PyString s) {
         if (internedStrings == null) {
             internedStrings = new PyStringMap();
@@ -415,28 +419,27 @@ public class __builtin__ implements ClassDictInit
 
         String istring = s.internedString();
         PyObject ret = internedStrings.__finditem__(istring);
-        if (ret != null)
-            return (PyString)ret;
-
+        if (ret != null) {
+            return (PyString) ret;
+        }
         internedStrings.__setitem__(istring, s);
         return s;
     }
 
-    //  xxx find where used, modify with more appropriate if necessary
+    // xxx find where used, modify with more appropriate if necessary
     public static boolean isinstance(PyObject obj, PyObject cls) {
-        return Py.isInstance(obj,cls);
+        return Py.isInstance(obj, cls);
     }
 
-    //  xxx find where used, modify with more appropriate if necessary
+    // xxx find where used, modify with more appropriate if necessary
     public static boolean issubclass(PyObject derived, PyObject cls) {
-        return Py.isSubClass(derived,cls);
+        return Py.isSubClass(derived, cls);
     }
 
     public static int len(PyObject o) {
         try {
             return o.__len__();
-        }
-        catch (PyException e) {
+        } catch (PyException e) {
             // Make this work like CPython where
             //
             // a = 7; len(a) raises a TypeError,
@@ -446,10 +449,10 @@ public class __builtin__ implements ClassDictInit
             // f = F(); len(f) also raises an AttributeError
             //
             // Testing the type of o feels unclean though
-            if (e.type == Py.AttributeError && !(o instanceof PyInstance))
+            if (e.type == Py.AttributeError && !(o instanceof PyInstance)) {
                 throw Py.TypeError("len() of unsized object");
-            else
-                throw e;
+            }
+            throw e;
         }
     }
 
@@ -458,9 +461,10 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject map(PyObject[] argstar) {
-        int n = argstar.length-1;
-        if (n < 1)
+        int n = argstar.length - 1;
+        if (n < 1) {
             throw Py.TypeError("map requires at least two arguments");
+        }
         PyObject element;
         PyObject f = argstar[0];
         PyList list = new PyList();
@@ -468,13 +472,13 @@ public class __builtin__ implements ClassDictInit
         PyObject[] iters = new PyObject[n];
 
         for (int j = 0; j < n; j++) {
-            iters[j] = Py.iter(argstar[j+1], "argument " + (j+1) +
-                               " to map() must support iteration");
+            iters[j] = Py.iter(argstar[j + 1], "argument " + (j + 1)
+                    + " to map() must support iteration");
         }
 
         while (true) {
             boolean any_items = false;
-            for(int j = 0; j < n; j++) {
+            for (int j = 0; j < n; j++) {
                 if ((element = iters[j].__iternext__()) != null) {
                     args[j] = element;
                     any_items = true;
@@ -482,13 +486,14 @@ public class __builtin__ implements ClassDictInit
                     args[j] = Py.None;
                 }
             }
-            if (!any_items)
+            if (!any_items) {
                 break;
+            }
             if (f == Py.None) {
                 if (n == 1) {
                     list.append(args[0]);
                 } else {
-                    list.append(new PyTuple((PyObject[])args.clone()));
+                    list.append(new PyTuple((PyObject[]) args.clone()));
                 }
             } else {
                 list.append(f.__call__(args));
@@ -497,42 +502,47 @@ public class __builtin__ implements ClassDictInit
         return list;
     }
 
-
     // I've never been happy with max and min builtin's...
 
     public static PyObject max(PyObject[] l) {
-        if (l.length == 1)
+        if (l.length == 1) {
             return max(l[0]);
-        else return max(new PyTuple(l));
+        }
+        return max(new PyTuple(l));
     }
 
     private static PyObject max(PyObject o) {
         PyObject max = null;
         PyObject iter = o.__iter__();
-        for (PyObject item; (item = iter.__iternext__()) != null; ) {
-            if (max == null || item._gt(max).__nonzero__())
+        for (PyObject item; (item = iter.__iternext__()) != null;) {
+            if (max == null || item._gt(max).__nonzero__()) {
                 max = item;
+            }
         }
-        if (max == null)
+        if (max == null) {
             throw Py.ValueError("max of empty sequence");
+        }
         return max;
     }
 
     public static PyObject min(PyObject[] l) {
-        if (l.length == 1)
+        if (l.length == 1) {
             return min(l[0]);
-        else return min(new PyTuple(l));
+        }
+        return min(new PyTuple(l));
     }
 
     private static PyObject min(PyObject o) {
         PyObject min = null;
         PyObject iter = o.__iter__();
-        for (PyObject item; (item = iter.__iternext__()) != null; ) {
-            if (min == null || item._lt(min).__nonzero__())
+        for (PyObject item; (item = iter.__iternext__()) != null;) {
+            if (min == null || item._lt(min).__nonzero__()) {
                 min = item;
+            }
         }
-        if (min == null)
+        if (min == null) {
             throw Py.ValueError("min of empty sequence");
+        }
         return min;
     }
 
@@ -542,76 +552,39 @@ public class __builtin__ implements ClassDictInit
 
     /**
      * Open a file read-only.
+     * 
      * @param name the file to open.
      * @exception java.io.IOException
      */
-    public static PyFile open(String name) throws java.io.IOException {
+    public static PyFile open(String name) {
         return new PyFile(name, "r", -1);
     }
 
     /**
      * Open a file with the specified mode.
+     * 
      * @param name name of the file to open.
      * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
      * @exception java.io.IOException
      */
-    public static PyFile open(String name, String mode)
-        throws java.io.IOException
-    {
+    public static PyFile open(String name, String mode) {
         return new PyFile(name, mode, -1);
     }
 
     /**
      * Open a file with the specified mode and buffer size.
+     * 
      * @param name name of the file to open.
      * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
      * @param bufsize size of the internal buffer. Not currently used.
      * @exception java.io.IOException
      */
-    public static PyFile open(String name, String mode, int bufsize)
-        throws java.io.IOException
-    {
+    public static PyFile open(String name, String mode, int bufsize) {
         return new PyFile(name, mode, bufsize);
     }
 
-    //XXX: remove once we're sure this isn't needed
-    /*
-     * Open a file read-only.
-     * @param name the file to open.
-     * @exception java.io.IOException
-     */
-    //public static PyFile file(String name) throws java.io.IOException {
-    //    return open(name);
-    //}
-
-    /*
-     * Open a file with the specified mode.
-     * @param name name of the file to open.
-     * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
-     * @exception java.io.IOException
-     */
-    //public static PyFile file(String name, String mode)
-    //    throws java.io.IOException
-    //{
-    //    return open(name, mode);
-    //}
-
-    /*
-     * Open a file with the specified mode and buffer size.
-     * @param name name of the file to open.
-     * @param mode open mode of the file. Use "r", "w", "r+", "w+" and "a".
-     * @param bufsize size of the internal buffer. Not currently used.
-     * @exception java.io.IOException
-     */
-    //public static PyFile file(String name, String mode, int bufsize)
-    //    throws java.io.IOException
-    //{
-    //    return open(name, mode, bufsize);
-    //}
-
-
     public static final int ord(char c) {
-        return (int)(c);
+        return c;
     }
 
     public static PyObject pow(PyObject x, PyObject y) {
@@ -638,11 +611,9 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject pow(PyObject xi, PyObject yi, PyObject zi) {
-        PyObject x=xi;
-        PyObject y=yi;
-        PyObject z=zi;
-
-        boolean doit=false;
+        PyObject x = xi;
+        PyObject y = yi;
+        PyObject z = zi;
 
         PyObject[] tmp = new PyObject[2];
 
@@ -659,22 +630,21 @@ public class __builtin__ implements ClassDictInit
                 if (coerce(tmp)) {
                     z = tmp[1];
                     y = tmp[0];
-                    doit=true;
                 }
             }
         } else {
             tmp[1] = z;
             if (coerce(tmp)) {
-                x=tmp[0];
-                z=tmp[1];
+                x = tmp[0];
+                z = tmp[1];
                 tmp[0] = y;
                 if (coerce(tmp)) {
-                    y=tmp[0]; z = tmp[1];
+                    y = tmp[0];
+                    z = tmp[1];
                     tmp[1] = x;
                     if (coerce(tmp)) {
-                        x=tmp[1];
-                        y=tmp[0];
-                        doit = true;
+                        x = tmp[1];
+                        y = tmp[0];
                     }
                 }
             }
@@ -682,49 +652,52 @@ public class __builtin__ implements ClassDictInit
 
         if (x.getType() == y.getType() && x.getType() == z.getType()) {
             x = x.__pow__(y, z);
-            if (x != null)
+            if (x != null) {
                 return x;
+            }
         }
         throw Py.TypeError("__pow__ not defined for these operands");
     }
 
     public static PyObject range(int start, int stop, int step) {
-        if (step == 0)
+        if (step == 0) {
             throw Py.ValueError("zero step for range()");
+        }
         int n;
-        if (step > 0)
-            n = (stop-start+step-1)/step;
-        else
-            n = (stop-start+step+1)/step;
-
-        if (n <= 0)
+        if (step > 0) {
+            n = (stop - start + step - 1) / step;
+        } else {
+            n = (stop - start + step + 1) / step;
+        }
+        if (n <= 0) {
             return new PyList();
+        }
         PyObject[] l = new PyObject[n];
-        int j=start;
-        for (int i=0; i<n; i++) {
+        int j = start;
+        for (int i = 0; i < n; i++) {
             l[i] = Py.newInteger(j);
-            j+= step;
+            j += step;
         }
         return new PyList(l);
     }
 
     public static PyObject range(int n) {
-        return range(0,n,1);
+        return range(0, n, 1);
     }
 
     public static PyObject range(int start, int stop) {
-        return range(start,stop,1);
+        return range(start, stop, 1);
     }
 
     private static PyString readline(PyObject file) {
         if (file instanceof PyFile) {
-            return new PyString(((PyFile)file).readline());
+            return new PyString(((PyFile) file).readline());
         } else {
             PyObject ret = file.invoke("readline");
             if (!(ret instanceof PyString)) {
                 throw Py.TypeError("object.readline() returned non-string");
             }
-            return (PyString)ret;
+            return (PyString) ret;
         }
     }
 
@@ -733,7 +706,7 @@ public class __builtin__ implements ClassDictInit
         PyObject stdin = Py.getSystemState().stdin;
         String data = readline(stdin).toString();
         if (data.endsWith("\n")) {
-            return data.substring(0, data.length()-1);
+            return data.substring(0, data.length() - 1);
         } else {
             if (data.length() == 0) {
                 throw Py.EOFError("raw_input()");
@@ -750,15 +723,16 @@ public class __builtin__ implements ClassDictInit
         PyObject result = z;
         PyObject iter = Py.iter(l, "reduce() arg 2 must support iteration");
 
-        for (PyObject item; (item = iter.__iternext__()) != null; ) {
-            if (result == null)
+        for (PyObject item; (item = iter.__iternext__()) != null;) {
+            if (result == null) {
                 result = item;
-            else
+            } else {
                 result = f.__call__(result, item);
+            }
         }
         if (result == null) {
-            throw Py.TypeError(
-                    "reduce of empty sequence with no initial value");
+            throw Py
+                    .TypeError("reduce of empty sequence with no initial value");
         }
         return result;
     }
@@ -770,6 +744,7 @@ public class __builtin__ implements ClassDictInit
     public static PyObject reload(PyModule o) {
         return imp.reload(o);
     }
+
     public static PyObject reload(PyJavaClass o) {
         return imp.reload(o);
     }
@@ -778,16 +753,18 @@ public class __builtin__ implements ClassDictInit
         return o.__repr__();
     }
 
-    //This seems awfully special purpose...
+    // This seems awfully special purpose...
     public static PyFloat round(double f, int digits) {
         boolean neg = f < 0;
         double multiple = Math.pow(10., digits);
-        if (neg)
+        if (neg) {
             f = -f;
-        double tmp = Math.floor(f*multiple+0.5);
-        if (neg)
+        }
+        double tmp = Math.floor(f * multiple + 0.5);
+        if (neg) {
             tmp = -tmp;
-        return new PyFloat(tmp/multiple);
+        }
+        return new PyFloat(tmp / multiple);
     }
 
     public static PyFloat round(double f) {
@@ -798,9 +775,7 @@ public class __builtin__ implements ClassDictInit
         o.__setattr__(n, v);
     }
 
-    public static PySlice slice(PyObject start, PyObject stop,
-                                PyObject step)
-    {
+    public static PySlice slice(PyObject start, PyObject stop, PyObject step) {
         return new PySlice(start, stop, step);
     }
 
@@ -822,13 +797,14 @@ public class __builtin__ implements ClassDictInit
 
     public static PyObject sum(PyObject seq, PyObject result) {
 
-        if(result instanceof PyString) {
-            throw Py.TypeError("sum() can't sum strings [use ''.join(seq) instead]");
+        if (result instanceof PyString) {
+            throw Py
+                    .TypeError("sum() can't sum strings [use ''.join(seq) instead]");
         }
 
         PyObject item;
         PyObject iter = seq.__iter__();
-        while((item = iter.__iternext__()) != null) {
+        while ((item = iter.__iternext__()) != null) {
             result = result._add(item);
         }
         return result;
@@ -839,28 +815,24 @@ public class __builtin__ implements ClassDictInit
     }
 
     /*
-    public static PyString unicode(PyObject v) {
-        return unicode(v.__str__(), null, null);
-    }
-
-    public static PyString unicode(PyString v, String encoding) {
-        return unicode(v, encoding, null);
-    }
-
-    public static PyString unicode(PyString v, String encoding,
-                                  String errors)
-    {
-        return new PyString(codecs.decode(v, encoding, errors));
-    }
-    */
+     * public static PyString unicode(PyObject v) { return unicode(v.__str__(),
+     * null, null); }
+     * 
+     * public static PyString unicode(PyString v, String encoding) { return
+     * unicode(v, encoding, null); }
+     * 
+     * public static PyString unicode(PyString v, String encoding, String
+     * errors) { return new PyString(codecs.decode(v, encoding, errors)); }
+     */
     public static PyTuple tuple(PyObject o) {
-        if (o instanceof PyTuple)
-            return (PyTuple)o;
+        if (o instanceof PyTuple) {
+            return (PyTuple) o;
+        }
         if (o instanceof PyList) {
             // always make a copy, otherwise the tuple will share the
             // underlying data structure with the list object, which
             // renders the tuple mutable!
-            PyList l = (PyList)o;
+            PyList l = (PyList) o;
             PyObject[] a = new PyObject[l.size()];
             System.arraycopy(l.getArray(), 0, a, 0, a.length);
             return new PyTuple(a);
@@ -885,56 +857,57 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject xrange(int n) {
-        return xrange(0,n,1);
+        return xrange(0, n, 1);
     }
 
     public static PyObject xrange(int start, int stop) {
-        return xrange(start,stop,1);
+        return xrange(start, stop, 1);
     }
 
     public static PyString __doc__zip = new PyString(
-      "zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n"+
-      "\n"+
-      "Return a list of tuples, where each tuple contains the i-th element\n"+
-      "from each of the argument sequences.  The returned list is\n"+
-      "truncated in length to the length of the shortest argument sequence."
-    );
+            "zip(seq1 [, seq2 [...]]) -> [(seq1[0], seq2[0] ...), (...)]\n"
+                    + "\n"
+                    + "Return a list of tuples, where each tuple contains the i-th element\n"
+                    + "from each of the argument sequences.  The returned list is\n"
+                    + "truncated in length to the length of the shortest argument sequence.");
 
     public static PyObject zip(PyObject[] argstar) {
         int itemsize = argstar.length;
-        if (itemsize < 1)
+        if (itemsize < 1) {
             throw Py.TypeError("zip requires at least one sequence");
+        }
 
-        // Type check the arguments; they must be sequences.  Might as well
+        // Type check the arguments; they must be sequences. Might as well
         // cache the __iter__() methods.
         PyObject[] iters = new PyObject[itemsize];
 
-        for (int j=0; j < itemsize; j++) {
+        for (int j = 0; j < itemsize; j++) {
             PyObject iter = argstar[j].__iter__();
             if (iter == null) {
-                throw Py.TypeError("zip argument #" + (j + 1) +
-                                   " must support iteration");
+                throw Py.TypeError("zip argument #" + (j + 1)
+                        + " must support iteration");
             }
             iters[j] = iter;
         }
 
         PyList ret = new PyList();
 
-        for (int i=0;; i++) {
+        for (int i = 0;; i++) {
             PyObject[] next = new PyObject[itemsize];
             PyObject item;
 
-            for (int j=0; j < itemsize; j++) {
+            for (int j = 0; j < itemsize; j++) {
                 try {
                     item = iters[j].__iternext__();
-                }
-                catch (PyException e) {
-                    if (Py.matchException(e, Py.StopIteration))
+                } catch (PyException e) {
+                    if (Py.matchException(e, Py.StopIteration)) {
                         return ret;
+                    }
                     throw e;
                 }
-                if (item == null)
+                if (item == null) {
                     return ret;
+                }
                 next[j] = item;
             }
             ret.append(new PyTuple(next));
@@ -950,63 +923,58 @@ public class __builtin__ implements ClassDictInit
     }
 
     public static PyObject __import__(String name, PyObject globals,
-                                      PyObject locals) {
+            PyObject locals) {
         return __import__(name, globals, locals, null);
     }
 
     public static PyObject __import__(String name, PyObject globals,
-                                      PyObject locals, PyObject fromlist)
-    {
+            PyObject locals, PyObject fromlist) {
         PyFrame frame = Py.getFrame();
-        if (frame == null)
+        if (frame == null) {
             return null;
-
+        }
         PyObject builtins = frame.f_builtins;
-        if (builtins == null)
+        if (builtins == null) {
             builtins = Py.getSystemState().builtins;
+        }
 
         PyObject __import__ = builtins.__finditem__("__import__");
-        if (__import__ == null)
+        if (__import__ == null) {
             return null;
+        }
 
         PyObject module = __import__.__call__(new PyObject[] {
-                Py.newString(name),
-                globals,
-                locals,
-                fromlist } );
+                Py.newString(name), globals, locals, fromlist });
         return module;
     }
 
 }
 
-
 class ImportFunction extends PyObject {
-    public ImportFunction() {}
+    public ImportFunction() {
+    }
 
     public PyObject __call__(PyObject args[], String keywords[]) {
-        if (!(args.length < 1 || args[0] instanceof PyString))
+        if (!(args.length < 1 || args[0] instanceof PyString)) {
             throw Py.TypeError("first argument must be a string");
-        if (keywords.length > 0)
+        }
+        if (keywords.length > 0) {
             throw Py.TypeError("__import__() takes no keyword arguments");
-
+        }
+        
         int argc = args.length;
         String module = args[0].__str__().toString();
 
-        PyObject globals = (argc > 1 && args[1] != null)
-            ? args[1] : null;
-        PyObject fromlist = (argc > 3 && args[3] != null)
-            ? args[3] : Py.EmptyTuple;
+        PyObject globals = (argc > 1 && args[1] != null) ? args[1] : null;
+        PyObject fromlist = (argc > 3 && args[3] != null) ? args[3]
+                : Py.EmptyTuple;
 
         return load(module, globals, fromlist);
     }
 
-    private PyObject load(String module,
-                          PyObject globals,
-                          PyObject fromlist)
-    {
-        PyObject mod = imp.importName(module.intern(),
-                                      fromlist.__len__() == 0,
-                                      globals);
+    private PyObject load(String module, PyObject globals, PyObject fromlist) {
+        PyObject mod = imp.importName(module.intern(), fromlist.__len__() == 0,
+                globals);
         return mod;
     }
 
