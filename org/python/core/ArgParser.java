@@ -2,16 +2,17 @@ package org.python.core;
 
 /**
  * A utility class for handling mixed positional and keyword arguments.
- *
+ * 
  * A typical usage:
+ * 
  * <pre>
- *  public MatchObject search(PyObject[] args, String[] kws) {
- *      ArgParser ap = new ArgParser("search", args, kws,
- *                                   "pattern", "pos", "endpos");
- *      String string = ap.getString(0);
- *      int start     = ap.getInt(1, 0);
- *      int end       = ap.getInt(2, string.length());
- *      ...
+ *   public MatchObject search(PyObject[] args, String[] kws) {
+ *       ArgParser ap = new ArgParser(&quot;search&quot;, args, kws,
+ *                                    &quot;pattern&quot;, &quot;pos&quot;, &quot;endpos&quot;);
+ *       String string = ap.getString(0);
+ *       int start     = ap.getInt(1, 0);
+ *       int end       = ap.getInt(2, string.length());
+ *       ...
  * </pre>
  */
 
@@ -30,27 +31,29 @@ public class ArgParser {
 
     // A marker.
     private static Object required = new Object();
+
     private static String[] emptyKws = new String[0];
 
-    //private PyBuiltinFunction.Info info;
+    // private PyBuiltinFunction.Info info;
 
     private ArgParser(String funcname, PyObject[] args, String[] kws) {
         this.funcname = funcname;
         this.args = args;
-        if (kws == null)
+        if (kws == null) {
             kws = emptyKws;
+        }
         this.kws = kws;
     }
 
     /**
      * Create an ArgParser with one method argument
-     * @param  funcname   Name of the method. Used in error messages.
-     * @param  args       The actual call arguments supplied in the call.
-     * @param  kws        The actual keyword names supplied in the call.
-     * @param  p0         The expected argument in the method definition.
+     * 
+     * @param funcname Name of the method. Used in error messages.
+     * @param args The actual call arguments supplied in the call.
+     * @param kws The actual keyword names supplied in the call.
+     * @param p0 The expected argument in the method definition.
      */
-    public ArgParser(String funcname, PyObject[] args, String[] kws,
-                     String p0) {
+    public ArgParser(String funcname, PyObject[] args, String[] kws, String p0) {
         this(funcname, args, kws);
         this.params = new String[] { p0 };
         check();
@@ -58,16 +61,15 @@ public class ArgParser {
 
     /**
      * Create an ArgParser with two method argument
-     * @param  funcname   Name of the method. Used in error messages.
-     * @param  args       The actual call arguments supplied in the call.
-     * @param  kws        The actual keyword names supplied in the call.
-     * @param  p0         The first expected argument in the method
-                          definition.
-     * @param  p1         The second expected argument in the method
-                          definition.
+     * 
+     * @param funcname Name of the method. Used in error messages.
+     * @param args The actual call arguments supplied in the call.
+     * @param kws The actual keyword names supplied in the call.
+     * @param p0 The first expected argument in the method definition.
+     * @param p1 The second expected argument in the method definition.
      */
-    public ArgParser(String funcname, PyObject[] args, String[] kws,
-                     String p0, String p1) {
+    public ArgParser(String funcname, PyObject[] args, String[] kws, String p0,
+            String p1) {
         this(funcname, args, kws);
         this.params = new String[] { p0, p1 };
         check();
@@ -75,18 +77,16 @@ public class ArgParser {
 
     /**
      * Create an ArgParser with three method argument
-     * @param  funcname   Name of the method. Used in error messages.
-     * @param  args       The actual call arguments supplied in the call.
-     * @param  kws        The actual keyword names supplied in the call.
-     * @param  p0         The first expected argument in the method
-                          definition.
-     * @param  p1         The second expected argument in the method
-                          definition.
-     * @param  p2         The third expected argument in the method
-                          definition.
+     * 
+     * @param funcname Name of the method. Used in error messages.
+     * @param args The actual call arguments supplied in the call.
+     * @param kws The actual keyword names supplied in the call.
+     * @param p0 The first expected argument in the method definition.
+     * @param p1 The second expected argument in the method definition.
+     * @param p2 The third expected argument in the method definition.
      */
-    public ArgParser(String funcname, PyObject[] args, String[] kws,
-                     String p0, String p1, String p2) {
+    public ArgParser(String funcname, PyObject[] args, String[] kws, String p0,
+            String p1, String p2) {
         this(funcname, args, kws);
         this.params = new String[] { p0, p1, p2 };
         check();
@@ -94,14 +94,14 @@ public class ArgParser {
 
     /**
      * Create an ArgParser with three method argument
-     * @param funcname   Name of the method. Used in error messages.
-     * @param args       The actual call arguments supplied in the call.
-     * @param kws        The actual keyword names supplied in the call.
-     * @param paramnames The list of expected argument in the method
-                          definition.
+     * 
+     * @param funcname Name of the method. Used in error messages.
+     * @param args The actual call arguments supplied in the call.
+     * @param kws The actual keyword names supplied in the call.
+     * @param paramnames The list of expected argument in the method definition.
      */
     public ArgParser(String funcname, PyObject[] args, String[] kws,
-                     String[] paramnames) {
+            String[] paramnames) {
         this(funcname, args, kws);
         this.params = paramnames;
         check();
@@ -112,127 +112,129 @@ public class ArgParser {
         this(funcname, args, kws);
         this.params = paramnames;
         check();
-        if (!PyBuiltinFunction.DefaultInfo.check(args.length,minargs,this.params.length))
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(args.length, false, funcname,
-                    minargs, this.params.length);
+        if (!PyBuiltinFunction.DefaultInfo.check(args.length, minargs,
+                this.params.length)) {
+            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(args.length,
+                    false, funcname, minargs, this.params.length);
+        }
     }
-
 
     /**
      * Return a required argument as a String.
-     * @param pos    The position of the .. First argument is
-     *               numbered 0.
+     * 
+     * @param pos The position of the .. First argument is numbered 0.
      */
     public String getString(int pos) {
-         return (String) getArg(pos, String.class, "string");
+        return (String) getArg(pos, String.class, "string");
     }
 
     /**
      * Return an optional argument as a String.
-     * @param pos    The position of the argument. First argument is
-     *               numbered 0.
+     * 
+     * @param pos The position of the argument. First argument is numbered 0.
      */
     public String getString(int pos, String def) {
-         return (String) getArg(pos, String.class, "string", def);
+        return (String) getArg(pos, String.class, "string", def);
     }
-
 
     /**
      * Return a required argument as an int.
-     * @param pos    The position of the argument. First argument is
-     *               numbered 0.
+     * 
+     * @param pos The position of the argument. First argument is numbered 0.
      */
     public int getInt(int pos) {
-         return ((PyInteger)getRequiredArg(pos).__int__()).getValue();
+        return ((PyInteger) getRequiredArg(pos).__int__()).getValue();
     }
 
     /**
      * Return an optional argument as an int.
-     * @param pos    The position of the argument. First argument is
-     *               numbered 0.
+     * 
+     * @param pos The position of the argument. First argument is numbered 0.
      */
     public int getInt(int pos, int def) {
-         PyObject value = getOptionalArg(pos);
-         if (value == null)
-             return def;
-         return ((PyInteger)value.__int__()).getValue();
+        PyObject value = getOptionalArg(pos);
+        if (value == null) {
+            return def;
+        }
+        return ((PyInteger) value.__int__()).getValue();
     }
-
 
     /**
      * Return a required argument as a PyObject.
-     * @param pos    The position of the argument. First argument is
-     *               numbered 0.
+     * 
+     * @param pos The position of the argument. First argument is numbered 0.
      */
     public PyObject getPyObject(int pos) {
-         return getRequiredArg(pos);
+        return getRequiredArg(pos);
     }
 
     /**
      * Return an optional argument as a PyObject.
-     * @param pos    The position of the argument. First argument is
-     *               numbered 0.
+     * 
+     * @param pos The position of the argument. First argument is numbered 0.
      */
     public PyObject getPyObject(int pos, PyObject def) {
-         PyObject value = getOptionalArg(pos);
-         if (value == null)
-             value = def;
-         return value;
+        PyObject value = getOptionalArg(pos);
+        if (value == null) {
+            value = def;
+        }
+        return value;
     }
 
     /**
      * Return the remaining arguments as a tuple.
-     * @param pos    The position of the argument. First argument is
-     *               numbered 0.
+     * 
+     * @param pos The position of the argument. First argument is numbered 0.
      */
     public PyObject getList(int pos) {
-        int kws_start = args.length - kws.length;
+        int kws_start = this.args.length - this.kws.length;
         if (pos < kws_start) {
             PyObject[] ret = new PyObject[kws_start - pos];
-            System.arraycopy(args, pos, ret, 0, kws_start - pos);
+            System.arraycopy(this.args, pos, ret, 0, kws_start - pos);
             return new PyTuple(ret);
         }
         return Py.EmptyTuple;
     }
 
-
     private void check() {
-        int nargs = args.length - kws.length;
-        l1:
-        for (int i = 0; i < kws.length; i++) {
-            for (int j = 0; j < params.length; j++) {
-                if (kws[i].equals(params[j])) {
+        int nargs = this.args.length - this.kws.length;
+        l1: for (int i = 0; i < this.kws.length; i++) {
+            for (int j = 0; j < this.params.length; j++) {
+                if (this.kws[i].equals(this.params[j])) {
                     if (j < nargs) {
-                        throw Py.TypeError("keyword parameter '" + params[j] + 
-                                "' was given by position and by name");
+                        throw Py.TypeError("keyword parameter '"
+                                + this.params[j]
+                                + "' was given by position and by name");
                     }
                     continue l1;
                 }
             }
-            throw Py.TypeError("'" + kws[i] + "' is an invalid keyword " + 
-                               "argument for this function");
+            throw Py.TypeError("'" + this.kws[i] + "' is an invalid keyword "
+                    + "argument for this function");
         }
     }
 
     private PyObject getRequiredArg(int pos) {
         PyObject ret = getOptionalArg(pos);
-        if (ret == null)
-            throw Py.TypeError(funcname + ": The " + ordinal(pos) +
-                               " argument is required");
+        if (ret == null) {
+            throw Py.TypeError(this.funcname + ": The " + ordinal(pos)
+                    + " argument is required");
+        }
         return ret;
     }
 
     private PyObject getOptionalArg(int pos) {
-        int kws_start = args.length - kws.length;
-        if (pos < kws_start)
-            return args[pos];
-        for (int i = 0; i < kws.length; i++) {
-            if (kws[i].equals(params[pos]))
-                return args[kws_start + i];
+        int kws_start = this.args.length - this.kws.length;
+        if (pos < kws_start) {
+            return this.args[pos];
+        }
+        for (int i = 0; i < this.kws.length; i++) {
+            if (this.kws[i].equals(this.params[pos])) {
+                return this.args[kws_start + i];
+            }
         }
         return null;
     }
-
 
     private Object getArg(int pos, Class clss, String classname) {
         return getArg(pos, clss, classname, required);
@@ -240,25 +242,25 @@ public class ArgParser {
 
     private Object getArg(int pos, Class clss, String classname, Object def) {
         PyObject value = null;
-        if (def == required)
+        if (def == required) {
             value = getRequiredArg(pos);
-        else {
+        } else {
             value = getOptionalArg(pos);
-            if (value == null)
+            if (value == null) {
                 return def;
+            }
         }
 
         Object ret = value.__tojava__(clss);
-        if (ret == Py.NoConversion)
-            throw Py.TypeError("argument " + (pos+1) + ": expected " +
-                               classname + ", " + Py.safeRepr(value) +
-                               " found");
+        if (ret == Py.NoConversion) {
+            throw Py.TypeError("argument " + (pos + 1) + ": expected "
+                    + classname + ", " + Py.safeRepr(value) + " found");
+        }
         return ret;
     }
 
-
     private static String ordinal(int n) {
-        switch(n+1) {
+        switch (n + 1) {
         case 1:
             return "1st";
         case 2:
@@ -266,7 +268,7 @@ public class ArgParser {
         case 3:
             return "3rd";
         default:
-            return Integer.toString(n+1)+"th";
+            return Integer.toString(n + 1) + "th";
         }
     }
 }

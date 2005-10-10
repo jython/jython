@@ -13,7 +13,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     }
 
     public PyObject __call__() {
-        switch (index) {
+        switch (this.index) {
         case 4:
             return __builtin__.globals();
         default:
@@ -22,7 +22,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     }
 
     public PyObject __call__(PyObject arg1) {
-        switch (index) {
+        switch (this.index) {
         case 0:
             return Py.newString(__builtin__.chr(Py.py2int(arg1,
                     "chr(): 1st arg can't be coerced to int")));
@@ -48,7 +48,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     }
 
     public PyObject __call__(PyObject arg1, PyObject arg2) {
-        switch (index) {
+        switch (this.index) {
         case 2:
             return __builtin__.range(Py.py2int(arg1,
                     "range(): 1st arg can't be coerced to int"), Py.py2int(
@@ -67,7 +67,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
     }
 
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-        switch (index) {
+        switch (this.index) {
         case 2:
             return __builtin__.range(Py.py2int(arg1,
                     "range(): 1st arg can't be coerced to int"), Py.py2int(
@@ -961,7 +961,7 @@ class ImportFunction extends PyObject {
         if (keywords.length > 0) {
             throw Py.TypeError("__import__() takes no keyword arguments");
         }
-        
+
         int argc = args.length;
         String module = args[0].__str__().toString();
 

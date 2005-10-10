@@ -88,9 +88,9 @@ public abstract class AbstractArray implements Serializable{
      * @param toCopy
      */
     public AbstractArray(AbstractArray toCopy) {
-        capacity = toCopy.capacity;
+        this.capacity = toCopy.capacity;
         // let modCountIncr default to 0
-        size = toCopy.size;
+        this.size = toCopy.size;
     }
 
     /**
@@ -100,7 +100,7 @@ public abstract class AbstractArray implements Serializable{
      */
     public AbstractArray(int size) {
         this.size = size;
-        capacity = size;
+        this.capacity = size;
     }
 
     /**
@@ -127,7 +127,7 @@ public abstract class AbstractArray implements Serializable{
      */
     public AbstractArray(Class type, int[] dimensions) {
         Object array = Array.newInstance(type, dimensions);
-        capacity = dimensions[0];
+        this.capacity = dimensions[0];
         setArray(array);
     }
 
@@ -139,7 +139,7 @@ public abstract class AbstractArray implements Serializable{
      */
     public AbstractArray(Class type, int size) {
         Object array = Array.newInstance(type, size);
-        capacity = Math.max(size, 10);
+        this.capacity = Math.max(size, 10);
         setArray(array);
     }
 
@@ -152,7 +152,7 @@ public abstract class AbstractArray implements Serializable{
      * @param ofArrayType the array to append
      */
     public void appendArray(Object ofArrayType) {
-        replaceSubArray(ofArrayType, size);
+        replaceSubArray(ofArrayType, this.size);
     }
 
     /**
@@ -166,10 +166,10 @@ public abstract class AbstractArray implements Serializable{
      * <CODE>modCount</CODE> after calling this method.
      */
     public void clear() {
-        modCountIncr = 0;
-        if (size != 0) {
-            modCountIncr = 1;
-            clearRange(0, size);  
+        this.modCountIncr = 0;
+        if (this.size != 0) {
+            this.modCountIncr = 1;
+            clearRange(0, this.size);  
             setSize(0);
         }
 
@@ -189,13 +189,15 @@ public abstract class AbstractArray implements Serializable{
      */
     protected void clearRange(int start, int stop) {
 
-        if (start < stop && start >= 0 && stop <= size) {
+        if (start < stop && start >= 0 && stop <= this.size) {
             clearRangeInternal(start, stop);
         } else {
-            if (start == stop && start >= 0 && stop <= size) return;
+            if (start == stop && start >= 0 && stop <= this.size) {
+                return;
+            }
 
             throw new ArrayIndexOutOfBoundsException("start and stop must follow: 0 <= start <= stop <= " +
-                    (size) + ", but found start= " + start + " and stop=" + stop);
+                    (this.size) + ", but found start= " + start + " and stop=" + stop);
         }
     }
 
@@ -240,8 +242,8 @@ public abstract class AbstractArray implements Serializable{
      * @return array containing a shallow copy of the data.
      */
     public Object copyArray() {
-        Object copy = Array.newInstance(getArray().getClass().getComponentType(), size);
-        System.arraycopy(getArray(), 0, copy, 0, size);
+        Object copy = Array.newInstance(getArray().getClass().getComponentType(), this.size);
+        System.arraycopy(getArray(), 0, copy, 0, this.size);
         return copy;
     }
 
@@ -257,15 +259,15 @@ public abstract class AbstractArray implements Serializable{
         // ArrayList always increments the mod count, even if no
         // structural change is made (not sure why).
         // This only indicates a mod count change if a change is made.
-        modCountIncr = 0;
-        if (minCapacity > capacity) {
-            modCountIncr = 1;
-            int newCapacity = (capacity * 2) + 1;
+        this.modCountIncr = 0;
+        if (minCapacity > this.capacity) {
+            this.modCountIncr = 1;
+            int newCapacity = (this.capacity * 2) + 1;
             newCapacity = (newCapacity < minCapacity)
                     ? minCapacity
                     : newCapacity;
             setNewBase(newCapacity);
-            capacity = newCapacity;
+            this.capacity = newCapacity;
         }
     }
 
@@ -280,9 +282,9 @@ public abstract class AbstractArray implements Serializable{
      * @return index position for next added element
      */
     protected int getAddIndex() {
-        int index = size++;
-        if (size > capacity) {
-            ensureCapacity(size);
+        int index = this.size++;
+        if (this.size > this.capacity) {
+            ensureCapacity(this.size);
         }
         return index;
     }
@@ -297,7 +299,7 @@ public abstract class AbstractArray implements Serializable{
     protected abstract Object getArray();
 
     protected boolean isEmpty() {
-        return size == 0;
+        return this.size == 0;
     }
 
     /**
@@ -314,22 +316,22 @@ public abstract class AbstractArray implements Serializable{
 
     protected void makeInsertSpace(int index, int length) {
 
-        modCountIncr = 0;
-        if (index >= 0 && index <= size) {
-            int toCopy = size - index;
-            size = size + length;
+        this.modCountIncr = 0;
+        if (index >= 0 && index <= this.size) {
+            int toCopy = this.size - index;
+            this.size = this.size + length;
             // First increase array size if needed
-            if (size > capacity) {
-                ensureCapacity(size);
+            if (this.size > this.capacity) {
+                ensureCapacity(this.size);
             }
-            if (index < size - 1) {
-                modCountIncr = 1;
+            if (index < this.size - 1) {
+                this.modCountIncr = 1;
                 Object array = getArray();
                 System.arraycopy(array, index, array, index + length, toCopy);
             }
         } else {
             throw new ArrayIndexOutOfBoundsException("Index must be between 0 and " +
-                    size + ", but was " + index);
+                    this.size + ", but was " + index);
         }
     }
 
@@ -343,20 +345,20 @@ public abstract class AbstractArray implements Serializable{
      * @param index index number of value to be removed
      */
     public void remove(int index) {
-        if (index >= 0 && index < size) {
-            size = size - 1;
-            if (index < size) {
+        if (index >= 0 && index < this.size) {
+            this.size = this.size - 1;
+            if (index < this.size) {
                 Object base = getArray();
-                System.arraycopy(base, index + 1, base, index, size - index);
-                clearRangeInternal(size, size);
+                System.arraycopy(base, index + 1, base, index, this.size - index);
+                clearRangeInternal(this.size, this.size);
             }
 
         } else {
-            if (size == 0) {
+            if (this.size == 0) {
                 throw new IllegalStateException("Cannot remove data from an empty array");
             }
             throw new IndexOutOfBoundsException("Index must be between 0 and " +
-                    (size - 1) + ", but was " + index);
+                    (this.size - 1) + ", but was " + index);
 
         }
     }
@@ -367,19 +369,21 @@ public abstract class AbstractArray implements Serializable{
      * @param stop exclusive
      */
     public void remove(int start, int stop) {
-        if (start >= 0 && stop <= size && start <= stop) {
+        if (start >= 0 && stop <= this.size && start <= stop) {
             Object base = getArray();
             int nRemove = stop - start;
-            if (nRemove == 0) return;
-            System.arraycopy(base, stop, base, start, size - stop);
-            size = size - nRemove;
-            clearRangeInternal(size, size + nRemove - 1);
+            if (nRemove == 0) {
+                return;
+            }
+            System.arraycopy(base, stop, base, start, this.size - stop);
+            this.size = this.size - nRemove;
+            clearRangeInternal(this.size, this.size + nRemove - 1);
             setArray(base);
             return;
         }
 
         throw new IndexOutOfBoundsException("start and stop must follow: 0 <= start <= stop <= " +
-                (size - 1) + ", but found start= " + start + " and stop=" + stop);
+                (this.size - 1) + ", but found start= " + start + " and stop=" + stop);
     }
 
     /**
@@ -394,7 +398,7 @@ public abstract class AbstractArray implements Serializable{
      */
     public void replaceSubArray(Object array, int atIndex) {
         int arrayLen = Array.getLength(array);
-        replaceSubArray(atIndex, Math.min(size, atIndex + arrayLen), array, 0, arrayLen);
+        replaceSubArray(atIndex, Math.min(this.size, atIndex + arrayLen), array, 0, arrayLen);
     }
     
     /**
@@ -410,22 +414,22 @@ public abstract class AbstractArray implements Serializable{
     public void replaceSubArray(int thisStart, int thisStop, Object srcArray, 
             int srcStart, int srcStop) {
     
-        modCountIncr = 0;
+        this.modCountIncr = 0;
         if (!srcArray.getClass().isArray()) {
             throw new IllegalArgumentException("'array' must be an array type");
         }
     
         int replacedLen = thisStop - thisStart;
-         if (thisStart < 0 || replacedLen < 0 || thisStop > size) {
+         if (thisStart < 0 || replacedLen < 0 || thisStop > this.size) {
             String message = null;
             if (thisStart < 0) {
                 message = "thisStart < 0 (thisStart = " + thisStart + ")";
             } else if (replacedLen < 0) {
                 message = "thisStart > thistStop (thisStart = " + thisStart + 
                                 ", thisStop = " + thisStop + ")";
-            } else if (thisStop > size) {
+            } else if (thisStop > this.size) {
                 message = "thisStop > size (thisStop = " + thisStop + 
-                                ", size = " + size + ")";
+                                ", size = " + this.size + ")";
             } else {
                 throw new InternalError("Incorrect validation logic");
             }
@@ -464,7 +468,7 @@ public abstract class AbstractArray implements Serializable{
         }
     
         try {
-            modCountIncr = 1;
+            this.modCountIncr = 1;
             System.arraycopy(srcArray, srcStart, getArray(), thisStart, replacementLen);
         } catch (ArrayStoreException e) {
             throw new IllegalArgumentException("'ofArrayType' must be compatible with existing array type of " +
@@ -488,11 +492,11 @@ public abstract class AbstractArray implements Serializable{
      * @param newCapacity
      */
     private void setNewBase(int newCapacity) {
-        modCountIncr = 1;
+        this.modCountIncr = 1;
         Object base = getArray();
         Class baseType = base.getClass().getComponentType();
         Object newBase = Array.newInstance(baseType, newCapacity);
-        System.arraycopy(base, 0, newBase, 0, capacity);
+        System.arraycopy(base, 0, newBase, 0, this.capacity);
         setArray(newBase);
     }
 
@@ -507,12 +511,12 @@ public abstract class AbstractArray implements Serializable{
      * @param count number of values to be set
      */
     public void setSize(int count) {
-        if (count > capacity) {
+        if (count > this.capacity) {
             ensureCapacity(count);
-        } else if (count < size) {
-            clearRange(count, size);  
+        } else if (count < this.size) {
+            clearRange(count, this.size);  
         }
-        size = count;
+        this.size = count;
     }
 
     /**
@@ -521,7 +525,7 @@ public abstract class AbstractArray implements Serializable{
      * @return count of values present
      */
     public int getSize() {
-        return size;
+        return this.size;
     }
 
     /**
@@ -535,7 +539,7 @@ public abstract class AbstractArray implements Serializable{
 
         Object base = getArray();
         Class arrayType = base.getClass().getComponentType();
-        int n = size - 1;
+        int n = this.size - 1;
         if (arrayType.isPrimitive()) {
             for (int i = 0; i < n; i++) {
                 buf.append(Array.get(base, i)).append(", ");
@@ -546,7 +550,9 @@ public abstract class AbstractArray implements Serializable{
             for (int i = 0; i < n; i++) {
                 buf.append(objects[i]).append(", ");
             }
-            if (n >= 0) buf.append(objects[n]);
+            if (n >= 0) {
+                buf.append(objects[n]);
+            }
         }
         buf.append("]");
         return buf.toString();
@@ -561,8 +567,8 @@ public abstract class AbstractArray implements Serializable{
         // Don't need to adjust modCountIncr since AbstractList subclasses
         // should only ever see up to the size (and not the capacity--which
         // is encapsulated).
-        if (size < capacity) {
-            setNewBase(size);
+        if (this.size < this.capacity) {
+            setNewBase(this.size);
         }
     }
 
@@ -578,6 +584,6 @@ public abstract class AbstractArray implements Serializable{
      * @return the modification count increment (0 if no change, 1 if changed)
      */
     public int getModCountIncr() {
-        return modCountIncr;
+        return this.modCountIncr;
     }
 }

@@ -15,23 +15,23 @@ public abstract class AutoInternalTables extends InternalTables2 {
     protected abstract Object getAutoRefKey(Reference ref);
 
     private synchronized void cleanup() {
-        if (keepstable >= GSTABLE)
+        if (this.keepstable >= this.GSTABLE)
          return;
-        adapters.remove(null); // trick
+        this.adapters.remove(null); // trick
         Reference ref;
-        while ((ref = queue.poll()) != null) {
+        while ((ref = this.queue.poll()) != null) {
             Object key = getAutoRefKey(ref);
             switch(getAutoRefType(ref)) {
             case JCLASS:
                 Class cl = (Class)key;
-                classes.remove(cl);
+                this.classes.remove(cl);
                 classesDec(cl.getName());
                 break;
             case LAZY_JCLASS:
-                lazyClasses.remove(key);
+                this.lazyClasses.remove(key);
                 break;
             case ADAPTER_CLASS:
-                adapterClasses.remove(key);
+                this.adapterClasses.remove(key);
             }
         }
     }
@@ -51,7 +51,7 @@ public abstract class AutoInternalTables extends InternalTables2 {
 
     protected PyJavaClass getLazyCanonical(String name) {
         cleanup();
-        Reference ref = (Reference)lazyClasses.get(name);
+        Reference ref = (Reference)this.lazyClasses.get(name);
         if (ref == null) return null;
         return (PyJavaClass)ref.get();
     }
@@ -63,19 +63,19 @@ public abstract class AutoInternalTables extends InternalTables2 {
 
     protected void putLazyCanonical(String name,PyJavaClass canonical) {
         cleanup();
-        lazyClasses.put(name,newAutoRef(LAZY_JCLASS,name,canonical));
+        this.lazyClasses.put(name,newAutoRef(LAZY_JCLASS,name,canonical));
     }
 
     protected Class getAdapterClass(Class c) {
         cleanup();
-        Reference ref = (Reference)adapterClasses.get(c);
+        Reference ref = (Reference)this.adapterClasses.get(c);
         if (ref == null) return null;
         return (Class)ref.get();
     }
 
     protected void putAdapterClass(Class c,Class ac) {
         cleanup();
-        adapterClasses.put(c,newAutoRef(ADAPTER_CLASS,c,ac));
+        this.adapterClasses.put(c,newAutoRef(ADAPTER_CLASS,c,ac));
     }
 
     protected Object getAdapter(Object o,String evc) {
@@ -115,31 +115,31 @@ public abstract class AutoInternalTables extends InternalTables2 {
     }
 
     public Object _next() {
-        if (iterType == ADAPTER) {
+        if (this.iterType == ADAPTER) {
             Object ret = super._next();
             if (ret != null) return ret;
         }  else {
-            while(iter.hasNext()) {
-                cur = iter.next();
-                switch(iterType) {
+            while(this.iter.hasNext()) {
+                this.cur = this.iter.next();
+                switch(this.iterType) {
                 case JCLASS:
-                    PyJavaClass jc = (PyJavaClass)((Reference)cur).get();
+                    PyJavaClass jc = (PyJavaClass)((Reference)this.cur).get();
                     if (jc == null ) continue;
-                    cur = jc;
+                    this.cur = jc;
                     return jc;
                 case LAZY_JCLASS:
-                    PyJavaClass lazy = (PyJavaClass)((Reference)cur).get();
+                    PyJavaClass lazy = (PyJavaClass)((Reference)this.cur).get();
                     if (lazy == null) continue;
                     return new _LazyRep(lazy.__name__,lazy.__mgr__);
                 case ADAPTER_CLASS:
-                    Map.Entry entry = (Map.Entry)cur;
+                    Map.Entry entry = (Map.Entry)this.cur;
                     if (((Reference)entry.getValue()).get() == null )
                         continue;
                     return entry.getKey();
                 }
             }
-            cur = null;
-            iter = null;
+            this.cur = null;
+            this.iter = null;
             endStable();
         }
         cleanup();
