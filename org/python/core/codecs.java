@@ -31,8 +31,9 @@ public class codecs {
     }
 
     public static void register(PyObject search_function) {
-        if (!search_function.isCallable())
+        if (!search_function.isCallable()) {
            throw Py.TypeError("argument must be callable");
+        }
         searchPath.append(search_function);
     }
 
@@ -41,28 +42,33 @@ public class codecs {
         import_encodings();
         PyString v = new PyString(normalizestring(encoding));
         PyObject result = searchCache.__finditem__(v);
-        if (result != null)
+        if (result != null) {
             return (PyTuple)result;
+        }
 
-        if (searchPath.__len__() == 0)
+        if (searchPath.__len__() == 0) {
              throw new PyException(Py.LookupError,
                    "no codec search functions registered: " +
                    "can't find encoding");
+        }
 
         PyObject iter = searchPath.__iter__();
         PyObject func = null;
         while ((func = iter.__iternext__()) != null) {
             result = func.__call__(v);
-            if (result == Py.None)
+            if (result == Py.None) {
                 continue;
-            if (!(result instanceof PyTuple) || result.__len__() != 4)
+            }
+            if (!(result instanceof PyTuple) || result.__len__() != 4) {
                 throw Py.TypeError("codec search functions must "+
                                    "return 4-tuples");
+            }
             break;
         }
-        if (func == null)
+        if (func == null) {
             throw new PyException(Py.LookupError, "unknown encoding " +
                                   encoding);
+        }
         searchCache.__setitem__(v, result);
         return (PyTuple)result;
     }
@@ -80,8 +86,9 @@ public class codecs {
             try {
                 __builtin__.__import__("encodings");
             } catch (PyException exc) {
-                if (exc.type != Py.ImportError)
+                if (exc.type != Py.ImportError) {
                     throw exc;
+                }
             }
         }
     }
@@ -91,12 +98,15 @@ public class codecs {
     public static String decode(PyString v, String encoding,
                                   String errors)
     {
-        if (encoding == null)
+        if (encoding == null) {
             encoding = getDefaultEncoding();
-        else
+        } else {
             encoding = normalizestring(encoding);
-        if (errors != null)
+        }
+
+        if (errors != null) {
             errors = errors.intern();
+        }
 
         /* Shortcuts for common default encodings */
 /*
@@ -107,9 +117,10 @@ public class codecs {
         else if (encoding.equals("ascii"))
             ; //return PyUnicode_DecodeASCII(s, size, errors);
 */
-        if (encoding.equals("ascii"))
+        if (encoding.equals("ascii")) {
             return PyUnicode_DecodeASCII(v.toString(),
                                                       v.__len__(), errors);
+        }
 
         /* Decode via the codec registry */
         PyObject decoder = getDecoder(encoding);
@@ -120,9 +131,10 @@ public class codecs {
             result = decoder.__call__(v);
         }
 
-        if (!(result instanceof PyTuple) || result.__len__() != 2)
+        if (!(result instanceof PyTuple) || result.__len__() != 2) {
             throw Py.TypeError("decoder must return a tuple " +
                                "(object,integer)");
+        }
         return result.__getitem__(0).toString();
     }
 
@@ -137,12 +149,15 @@ public class codecs {
     public static String encode(PyString v, String encoding,
                                   String errors)
     {
-        if (encoding == null)
+        if (encoding == null) {
             encoding = getDefaultEncoding();
-        else
+        } else {
             encoding = normalizestring(encoding);
-        if (errors != null)
+        }
+
+        if (errors != null) {
             errors = errors.intern();
+        }
 
         /* Shortcuts for common default encodings */
 /*
@@ -153,9 +168,10 @@ public class codecs {
         else
 */
 
-        if (encoding.equals("ascii"))
+        if (encoding.equals("ascii")) {
             return PyUnicode_EncodeASCII(v.toString(),
                                                       v.__len__(), errors);
+        }
 
         /* Decode via the codec registry */
         PyObject encoder = getEncoder(encoding);
@@ -166,9 +182,10 @@ public class codecs {
             result = encoder.__call__(v);
         }
 
-        if (!(result instanceof PyTuple) || result.__len__() != 2)
+        if (!(result instanceof PyTuple) || result.__len__() != 2) {
             throw Py.TypeError("encoder must return a tuple " +
                                "(object,integer)");
+        }
         return result.__getitem__(0).toString();
     }
 
@@ -334,9 +351,9 @@ public class codecs {
 
         for (int i = 0; i < size; ) {
             int ch = str.charAt(i++);
-            if (ch < 0x80)
+            if (ch < 0x80) {
                 v.append((char) ch);
-            else if (ch < 0x0800) {
+            } else if (ch < 0x0800) {
                 v.append((char) (0xc0 | (ch >> 6)));
                 v.append((char) (0x80 | (ch & 0x3f)));
             } else {
@@ -396,8 +413,9 @@ public class codecs {
             if (ch >= 128) {
                 encoding_error("ascii", v, errors,
                                "ordinal not in range(128)");
-            } else
+            } else {
                 v.append(ch);
+            }
         }
         return v.toString();
     }
@@ -425,8 +443,9 @@ public class codecs {
                 v.append(hexdigit[(ch >>> 8) & 0xF]);
                 v.append(hexdigit[(ch >>> 4) & 0xF]);
                 v.append(hexdigit[ch & 0xF]);
-            } else
+            } else {
                 v.append(ch);
+            }
         }
 
         return v.toString();
@@ -489,28 +508,34 @@ public class codecs {
     public static void encoding_error(String type, StringBuffer dest,
                                       String errors, String details)
     {
-        if (errors == null || errors == "strict")
+        if (errors == null || errors == "strict") {
             throw Py.UnicodeError(type + " encoding error: " + details);
-        else if (errors == "ignore") { }
-        else if (errors == "replace")
+        } else if (errors == "ignore") {
+            //ignore
+        } else if (errors == "replace") {
             dest.append('?');
-        else
+        } else {
             throw Py.ValueError(type + " encoding error; "+
                                 "unknown error handling code: " + errors);
+        }
     }
 
 
     public static void decoding_error(String type, StringBuffer dest,
                                       String errors, String details)
     {
-        if (errors == null || errors == "strict")
+        if (errors == null || errors == "strict") {
             throw Py.UnicodeError(type + " decoding error: " + details);
-        else if (errors == "ignore") { }
-        else if (errors == "replace") {
-            if (dest != null)
+        }
+        else if (errors == "ignore") {
+            //ignore
+        } else if (errors == "replace") {
+            if (dest != null) {
                 dest.append(Py_UNICODE_REPLACEMENT_CHARACTER);
-        } else
+            }
+        } else {
             throw Py.ValueError(type + " decoding error; "+
                                 "unknown error handling code: " + errors);
+        }
     }
 }

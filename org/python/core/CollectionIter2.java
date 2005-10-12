@@ -1,6 +1,7 @@
 // Copyright (c) Finn Bock
 
 package org.python.core;
+
 import java.util.*;
 
 class CollectionIter2 extends CollectionIter {
@@ -10,13 +11,13 @@ class CollectionIter2 extends CollectionIter {
 
     PyObject findCollection(Object object) {
         if (object instanceof Map) {
-            return new IteratorIter(((Map)object).keySet().iterator());
+            return new IteratorIter(((Map) object).keySet().iterator());
         }
         if (object instanceof Collection) {
-            return new IteratorIter(((Collection)object).iterator());
+            return new IteratorIter(((Collection) object).iterator());
         }
         if (object instanceof Iterator) {
-            return new IteratorIter(((Iterator)object));
+            return new IteratorIter(((Iterator) object));
         }
 
         return null;
@@ -31,8 +32,8 @@ class IteratorIter extends CollectionIter {
     }
 
     public PyObject __iternext__() {
-        if (!proxy.hasNext())
+        if (!this.proxy.hasNext())
             return null;
-        return Py.java2py(proxy.next());
+        return Py.java2py(this.proxy.next());
     }
 }

@@ -6,12 +6,15 @@ public class CompilerFlags extends Object {
     public CompilerFlags() {}
 
     public CompilerFlags(int co_flags) {
-        if ((co_flags & org.python.core.PyTableCode.CO_NESTED) != 0)
-            nested_scopes = true;
-        if ((co_flags & org.python.core.PyTableCode.CO_FUTUREDIVISION) != 0)
-            division = true;
-        if ((co_flags & org.python.core.PyTableCode.CO_GENERATOR_ALLOWED) != 0)
-            generator_allowed = true;
+        if ((co_flags & org.python.core.PyTableCode.CO_NESTED) != 0) {
+            this.nested_scopes = true;
+        }
+        if ((co_flags & org.python.core.PyTableCode.CO_FUTUREDIVISION) != 0) {
+            this.division = true;
+        }
+        if ((co_flags & org.python.core.PyTableCode.CO_GENERATOR_ALLOWED) != 0) {
+            this.generator_allowed = true;
+        }
     }
 
     public boolean nested_scopes = true;
