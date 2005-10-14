@@ -255,7 +255,7 @@ abstract public class PySequence extends PyObject {
     // -1: reached the end of o1 without a difference
     // -2: reached the end of both seqeunces without a difference
     // -3: reached the end of o2 without a difference
-    private static int cmp(PyObject o1, int ol1, PyObject o2, int ol2) {
+    protected static int cmp(PyObject o1, int ol1, PyObject o2, int ol2) {
         if (ol1 < 0)
             ol1 = o1.__len__();
         if (ol2 < 0)

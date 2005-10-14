@@ -19,7 +19,8 @@
 // "XXXAPI" and stick a couple of double slashes at the beginning of each
 // matching line.
 
-package org.python.modules;
+// see org/python/modules/time.java for previous history.
+package org.python.modules.time;
 
 import org.python.core.*;
 import java.text.DateFormatSymbols;
@@ -36,16 +37,16 @@ class TimeFunctions extends PyBuiltinFunctionSet
     public PyObject __call__() {
         switch (index) {
         case 0:
-            return Py.newFloat(time.time$());
+            return Py.newFloat(Time.time());
         case 1:
-            return Py.newFloat(time.clock$());
+            return Py.newFloat(Time.clock());
         default:
             throw argCountError(0);
         }
     }
 }
 
-public class time implements ClassDictInit
+public class Time implements ClassDictInit
 {
     public static PyString __doc__ = new PyString(
         "This module provides various functions to manipulate time values.\n"+
@@ -118,17 +119,17 @@ public class time implements ClassDictInit
         altzone = timezone - getDSTSavings(tz) / 1000;
     }
 
-    public static double time$() {
+    public static double time() {
         return System.currentTimeMillis()/1000.0;
     }
 
     private static double __initialclock__ = 0.0;
-    public static double clock$() {
+    public static double clock() {
         if(__initialclock__ == 0.0) {
             // set on the first call
-            __initialclock__ = time$();
+            __initialclock__ = time();
         }
-        return time$() - __initialclock__;
+        return time() - __initialclock__;
     }
 
     private static void throwValueError(String msg) {
@@ -225,7 +226,7 @@ public class time implements ClassDictInit
     }
         
 
-    protected static PyTuple _timefields(double secs, TimeZone tz) {
+    protected static PyTimeTuple _timefields(double secs, TimeZone tz) {
         GregorianCalendar cal = new GregorianCalendar(tz);
         cal.clear();
         cal.setTime(new Date((long)(secs*1000)));
@@ -237,7 +238,7 @@ public class time implements ClassDictInit
             dow = dow+7;
         // TBD: is this date dst?
         boolean isdst = tz.inDaylightTime(cal.getTime());
-        return new PyTuple(new PyObject[] {
+        return new PyTimeTuple(new PyObject[] {
             new PyInteger(cal.get(Calendar.YEAR)),
             new PyInteger(cal.get(Calendar.MONTH)+1),
             new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
@@ -252,7 +253,7 @@ public class time implements ClassDictInit
     }
 
     public static PyTuple localtime() {
-        return localtime(time$());
+        return localtime(time());
     }
 
     public static PyTuple localtime(double secs) {
@@ -260,7 +261,7 @@ public class time implements ClassDictInit
     }
 
     public static PyTuple gmtime() {
-        return gmtime(time$());
+        return gmtime(time());
     }
 
     public static PyTuple gmtime(double secs) {
@@ -268,7 +269,7 @@ public class time implements ClassDictInit
     }
 
     public static String ctime() {
-        return ctime(time$());
+        return ctime(time());
     }
 
     public static String ctime(double secs) {
@@ -329,10 +330,7 @@ public class time implements ClassDictInit
             return "00"+s;
         else {
             char[] c = new char[target-sz];
-            while (target > sz) {
-                c[target-sz] = '0';
-                target--;
-            }
+            Arrays.fill(c, '0');
             return new String(c) + s;
         }
     }
@@ -458,7 +456,7 @@ public class time implements ClassDictInit
                 break;
             case 'j':
                 // day of year (001-366)
-                s = _padint(item(tup, 7), 3);
+                s = s + _padint(item(tup, 7), 3);
                 break;
             case 'm':
                 // month (01-12)
@@ -613,38 +611,4 @@ public class time implements ClassDictInit
         return 0;
     }
 
-    public static class PyTimeTuple extends PyTuple {
-        public PyInteger tm_year;
-        public PyInteger tm_mon;
-        public PyInteger tm_mday;
-        public PyInteger tm_hour;
-        public PyInteger tm_min;
-        public PyInteger tm_sec;
-        public PyInteger tm_wday;
-        public PyInteger tm_yday;
-        public PyInteger tm_isdst;
-        
-        PyTimeTuple(PyTuple vals) {
-        super(new PyObject[] {
-            vals.pyget(0),
-            vals.pyget(1),
-            vals.pyget(2),
-            vals.pyget(3),
-            vals.pyget(4),
-            vals.pyget(5),
-            vals.pyget(6),
-            vals.pyget(7),
-            vals.pyget(8)
-        });
-        tm_year = (PyInteger)vals.pyget(0);
-        tm_mon = (PyInteger)vals.pyget(1);
-        tm_mday = (PyInteger)vals.pyget(2);
-        tm_hour = (PyInteger)vals.pyget(3);
-        tm_min = (PyInteger)vals.pyget(4);
-        tm_sec = (PyInteger)vals.pyget(5);
-        tm_wday = (PyInteger)vals.pyget(6);
-        tm_yday = (PyInteger)vals.pyget(7);
-        tm_isdst = (PyInteger)vals.pyget(8);
-        }
-    }
 }

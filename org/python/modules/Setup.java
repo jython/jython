@@ -29,7 +29,7 @@ public class Setup
         "math",
         "thread",
         "operator",
-        "time",
+        "time:org.python.modules.time.Time",
         "os",
         "types",
         "py_compile",
