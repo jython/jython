@@ -120,7 +120,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <target name="full-build" depends="full-init, post-init, install" description="a full build from cvs" />
 
 
-    <!-- set a properety to indicate that target 'developer-build' is was really called -->
+    <!-- set a property to indicate that target 'developer-build' was really called -->
     <target name="developer-build-called">
         <property name="developer-build-called" value="true" />
     </target>
