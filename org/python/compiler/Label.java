@@ -2,8 +2,9 @@
 
 package org.python.compiler;
 
-import java.io.*;
-import java.util.Vector;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 class Label {
     int position;

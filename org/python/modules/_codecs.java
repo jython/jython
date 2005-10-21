@@ -8,8 +8,12 @@
 
 package org.python.modules;
 
-import org.python.core.*;
-import org.python.core.imp;
+import org.python.core.Py;
+import org.python.core.PyInteger;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
+import org.python.core.codecs;
 
 public class _codecs {
 

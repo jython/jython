@@ -15,9 +15,13 @@
 
 package org.python.modules;
 
-import java.util.*;
-import org.python.core.*;
-import org.python.modules.sre.*;
+import org.python.core.Py;
+import org.python.core.PyInteger;
+import org.python.core.PyList;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.modules.sre.PatternObject;
+import org.python.modules.sre.SRE_STATE;
 
 
 public class _sre {

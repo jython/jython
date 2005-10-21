@@ -1,10 +1,6 @@
 package org.python.modules.time;
 
 import org.python.core.Py;
-import org.python.core.PyBuiltinFunction;
-import org.python.core.PyBuiltinFunctionNarrow;
-import org.python.core.PyGetSetDescr;
-import org.python.core.PyMethodDescr;
 import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;

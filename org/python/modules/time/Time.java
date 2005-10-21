@@ -22,11 +22,23 @@
 // see org/python/modules/time.java for previous history.
 package org.python.modules.time;
 
-import org.python.core.*;
+import java.lang.reflect.Method;
 import java.text.DateFormatSymbols;
-import java.text.DateFormat;
-import java.lang.reflect.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Locale;
+import java.util.TimeZone;
+
+import org.python.core.ClassDictInit;
+import org.python.core.Py;
+import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyException;
+import org.python.core.PyInteger;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
 
 class TimeFunctions extends PyBuiltinFunctionSet
 {

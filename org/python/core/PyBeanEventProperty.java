@@ -1,9 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.lang.reflect.*;
-import java.util.Hashtable;
-import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 public class PyBeanEventProperty extends PyReflectedField
 {

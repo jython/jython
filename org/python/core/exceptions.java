@@ -2,7 +2,6 @@
 
 package org.python.core;
 
-import java.lang.reflect.*;
 
 /**
  * The builtin exceptions module. The entire module should be imported

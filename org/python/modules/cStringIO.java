@@ -8,10 +8,11 @@
 
 package org.python.modules;
 
-import java.io.*;
-import java.util.*;
-
-import org.python.core.*;
+import org.python.core.Py;
+import org.python.core.PyCallIter;
+import org.python.core.PyList;
+import org.python.core.PyObject;
+import org.python.core.PyString;
 
 /**
  * This module implements a file-like class, StringIO, that reads and

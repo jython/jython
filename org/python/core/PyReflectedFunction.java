@@ -3,9 +3,8 @@ package org.python.core;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Hashtable;
 import java.util.Enumeration;
+import java.util.Hashtable;
 
 
 public class PyReflectedFunction extends PyObject

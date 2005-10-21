@@ -2,11 +2,18 @@
 
 package org.python.compiler;
 
-import org.python.parser.*;
-import org.python.parser.ast.*;
-import java.io.IOException;
 import java.util.Vector;
-import java.util.Enumeration;
+
+import org.python.parser.ParseException;
+import org.python.parser.PythonGrammarTreeConstants;
+import org.python.parser.Visitor;
+import org.python.parser.ast.Assign;
+import org.python.parser.ast.Name;
+import org.python.parser.ast.Suite;
+import org.python.parser.ast.Tuple;
+import org.python.parser.ast.argumentsType;
+import org.python.parser.ast.exprType;
+import org.python.parser.ast.stmtType;
 
 public class ArgListCompiler extends Visitor
     implements PythonGrammarTreeConstants

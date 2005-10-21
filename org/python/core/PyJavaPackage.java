@@ -3,8 +3,7 @@
 
 package org.python.core;
 
-import java.util.*;
-import java.io.File;
+import java.util.StringTokenizer;
 
 /**
  * A representation of java package.

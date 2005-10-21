@@ -57,7 +57,6 @@ package org.apache.oro.text.regex;
  * by Daniel F. Savarese. We appreciate his contributions.
  */
 
-import java.lang.*;
 
 /**
  * A class used to signify the occurrence of a syntax error in a

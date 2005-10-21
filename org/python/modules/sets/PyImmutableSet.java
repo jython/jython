@@ -2,16 +2,14 @@
 package org.python.modules.sets;
 
 import org.python.core.Py;
-import org.python.core.PyObject;
-import org.python.core.PyType;
-import org.python.core.PyBuiltinFunctionNarrow;
 import org.python.core.PyBuiltinFunction;
-import org.python.core.PyMethodDescr;
-import org.python.core.PyString;
+import org.python.core.PyBuiltinFunctionNarrow;
 import org.python.core.PyBuiltinFunctionWide;
+import org.python.core.PyMethodDescr;
 import org.python.core.PyNewWrapper;
-
-import java.util.Collection;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyType;
 
 public class PyImmutableSet extends BaseSet {
 

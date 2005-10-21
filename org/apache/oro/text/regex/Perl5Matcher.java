@@ -57,8 +57,7 @@ package org.apache.oro.text.regex;
  * by Daniel F. Savarese. We appreciate his contributions.
  */
 
-import java.io.IOException;
-import java.util.*;
+import java.util.Stack;
 
 /**
  * The Perl5Matcher class is used to match regular expressions

@@ -2,8 +2,9 @@
 
 package org.python.core;
 
-import java.lang.ref.*;
-import java.util.*;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 
 public class WeakInternalTables extends AutoInternalTables {
 

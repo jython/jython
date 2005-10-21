@@ -43,8 +43,7 @@
 
 package org.python.modules;
 
-import java.util.*;
-import org.python.core.*;
+import org.python.core.PyString;
 
 /**
  * This class implements the SHA-1 message digest algorithm.

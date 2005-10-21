@@ -1,12 +1,11 @@
 // Copyright (c) Corporation for National Research Initiatives
 
 package org.python.compiler;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Hashtable;
+
 import org.python.core.PyObject;
-import org.python.core.PyProxy;
-import org.python.core.Py;
 
 public class JavaMaker extends ProxyMaker implements ClassConstants
 {

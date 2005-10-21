@@ -17,7 +17,6 @@
 
 package org.python.modules.sre;
 
-import java.util.*;
 
 public class SRE_STATE {
     /* illegal opcode */

@@ -2,13 +2,11 @@
 
 package org.python.core;
 
-import java.lang.reflect.*;
+import java.io.ByteArrayOutputStream;
 import java.util.Vector;
-import java.util.Hashtable;
-import java.io.*;
-import org.python.compiler.JavaMaker;
+
 import org.python.compiler.AdapterMaker;
-import org.python.compiler.ProxyMaker;
+import org.python.compiler.JavaMaker;
 
 
 class MakeProxies

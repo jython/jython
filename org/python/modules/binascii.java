@@ -9,9 +9,11 @@
 package org.python.modules;
 
 
-import java.util.*;
-
-import org.python.core.*;
+import org.python.core.Py;
+import org.python.core.PyException;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
 
 /**
  * The <tt>binascii.java</tt> module contains a number of methods to convert
