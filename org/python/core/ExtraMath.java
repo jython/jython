@@ -7,7 +7,9 @@ package org.python.core;
  */
 public class ExtraMath {
     public static double LOG10 = Math.log(10.0);
+
     public static double EPSILON = Math.pow(2.0, -52.0);
+
     public static double CLOSE = EPSILON * 2.0;
 
     public static double log10(double v) {
@@ -22,34 +24,32 @@ public class ExtraMath {
             v = w;
             w = temp;
         }
-        if (v == 0.0)
+        if (v == 0.0) {
             return 0.0;
-        else {
-            double wv = w/v;
-            return v * Math.sqrt(1.0 + wv*wv);
+        } else {
+            double wv = w / v;
+            return v * Math.sqrt(1.0 + wv * wv);
         }
     }
 
     /**
-     *  Are v and w "close" to each other?  Uses a scaled tolerance.
+     * Are v and w "close" to each other? Uses a scaled tolerance.
      */
     public static boolean close(double v, double w, double tol) {
-        if (v == w)
-        {
+        if (v == w) {
             return true;
         }
-        double scaled = tol * (Math.abs(v) + Math.abs(w))/2.0;
+        double scaled = tol * (Math.abs(v) + Math.abs(w)) / 2.0;
         return Math.abs(w - v) < scaled;
     }
 
-    public static boolean close(double v, double w)
-    {
-      return close(v, w, CLOSE);
+    public static boolean close(double v, double w) {
+        return close(v, w, CLOSE);
     }
 
     /**
-     *  Returns floor(v) except when v is very close to the next number, 
-     *  when it returns ceil(v);
+     * Returns floor(v) except when v is very close to the next number, when it
+     * returns ceil(v);
      */
     public static double closeFloor(double v) {
         double floor = Math.floor(v);

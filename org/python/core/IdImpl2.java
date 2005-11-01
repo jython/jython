@@ -13,8 +13,8 @@ public class IdImpl2 extends IdImpl {
         
         private void cleanup() {
             Object k;
-            while ((k = refqueue.poll()) != null) {
-                hashmap.remove(k);
+            while ((k = this.refqueue.poll()) != null) {
+                this.hashmap.remove(k);
             }
         }
                 
@@ -22,12 +22,12 @@ public class IdImpl2 extends IdImpl {
             private int hashcode;
             
             WeakIdKey(Object obj) {
-                super(obj,refqueue);
-                hashcode = System.identityHashCode(obj);                
+                super(obj,WeakIdentityMap.this.refqueue);
+                this.hashcode = System.identityHashCode(obj);                
             }
             
             public int hashCode() {
-                return hashcode;
+                return this.hashcode;
             }
             
             public boolean equals(Object other) {
@@ -41,22 +41,22 @@ public class IdImpl2 extends IdImpl {
         }
         
         public int _internal_map_size() {
-            return hashmap.size();
+            return this.hashmap.size();
         }
         
         public void put(Object key,Object val) {
             cleanup();
-            hashmap.put(new WeakIdKey(key),val);
+            this.hashmap.put(new WeakIdKey(key),val);
         }
         
         public Object get(Object key) {
             cleanup();
-            return hashmap.get(new WeakIdKey(key));
+            return this.hashmap.get(new WeakIdKey(key));
         }
 
         public void remove(Object key) {
             cleanup();
-            hashmap.remove(new WeakIdKey(key));        
+            this.hashmap.remove(new WeakIdKey(key));        
         }
 
     }
@@ -79,11 +79,11 @@ public class IdImpl2 extends IdImpl {
     }
 
     public synchronized long java_obj_id(Object o) {
-        Long cand = (Long)id_map.get(o);
+        Long cand = (Long)this.id_map.get(o);
         if (cand == null) {
-            sequential_id++;
-            long new_id = sequential_id;           
-            id_map.put(o,new Long(new_id));
+            this.sequential_id++;
+            long new_id = this.sequential_id;           
+            this.id_map.put(o,new Long(new_id));
             return new_id;            
         }
         return cand.longValue();

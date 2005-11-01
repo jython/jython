@@ -2,85 +2,83 @@
 
 package org.python.core;
 
-
 /**
- * The builtin exceptions module. The entire module should be imported
- * from python. None of the methods defined here should be called
- * from java.
+ * The builtin exceptions module. The entire module should be imported from
+ * python. None of the methods defined here should be called from java.
  */
 
 public class exceptions implements ClassDictInit {
 
-    public static String __doc__ =
-"Python's standard exception class hierarchy.\n" +
-"\n" +
-"Here is a rundown of the class hierarchy.  The classes found here are\n" +
-"inserted into both the exceptions module and the `built-in' module. "+
-"It is\n" +
-"recommended that user defined class based exceptions be derived from the\n" +
-"`Exception' class, although this is currently not enforced.\n" +
-"\n" +
-"Exception\n" +
-" |\n" +
-" +-- SystemExit\n" +
-" +-- StopIteration\n" +
-" +-- StandardError\n" +
-" |    |\n" +
-" |    +-- KeyboardInterrupt\n" +
-" |    +-- ImportError\n" +
-" |    +-- EnvironmentError\n" +
-" |    |    |\n" +
-" |    |    +-- IOError\n" +
-" |    |    +-- OSError\n" +
-" |    |         |\n" +
-" |    |         +-- WindowsError\n" +
-" |    |\n" +
-" |    +-- EOFError\n" +
-" |    +-- RuntimeError\n" +
-" |    |    |\n" +
-" |    |    +-- NotImplementedError\n" +
-" |    |\n" +
-" |    +-- NameError\n" +
-" |    |    |\n" +
-" |    |    +-- UnboundLocalError\n" +
-" |    |\n" +
-" |    +-- AttributeError\n" +
-" |    +-- SyntaxError\n" +
-" |    |    |\n" +
-" |    |    +-- IndentationError\n" +
-" |    |         |\n" +
-" |    |         +-- TabError\n" +
-" |    |\n" +
-" |    +-- TypeError\n" +
-" |    +-- AssertionError\n" +
-" |    +-- LookupError\n" +
-" |    |    |\n" +
-" |    |    +-- IndexError\n" +
-" |    |    +-- KeyError\n" +
-" |    |\n" +
-" |    +-- ArithmeticError\n" +
-" |    |    |\n" +
-" |    |    +-- OverflowError\n" +
-" |    |    +-- ZeroDivisionError\n" +
-" |    |    +-- FloatingPointError\n" +
-" |    |\n" +
-" |    +-- ValueError\n" +
-" |    |    |\n" +
-" |    |    +-- UnicodeError\n" +
-" |    |\n" +
-" |    +-- ReferenceError\n" +
-" |    +-- SystemError\n" +
-" |    +-- MemoryError\n" +
-" |\n" +
-" +---Warning\n" +
-"      |\n" +
-"      +-- UserWarning\n" +
-"      +-- DeprecationWarning\n" +
-"      +-- SyntaxWarning\n" +
-"      +-- OverflowWarning\n" +
-"      +-- RuntimeWarning";
+    public static String __doc__ = "Python's standard exception class hierarchy.\n"
+            + "\n"
+            + "Here is a rundown of the class hierarchy.  The classes found here are\n"
+            + "inserted into both the exceptions module and the `built-in' module. "
+            + "It is\n"
+            + "recommended that user defined class based exceptions be derived from the\n"
+            + "`Exception' class, although this is currently not enforced.\n"
+            + "\n"
+            + "Exception\n"
+            + " |\n"
+            + " +-- SystemExit\n"
+            + " +-- StopIteration\n"
+            + " +-- StandardError\n"
+            + " |    |\n"
+            + " |    +-- KeyboardInterrupt\n"
+            + " |    +-- ImportError\n"
+            + " |    +-- EnvironmentError\n"
+            + " |    |    |\n"
+            + " |    |    +-- IOError\n"
+            + " |    |    +-- OSError\n"
+            + " |    |         |\n"
+            + " |    |         +-- WindowsError\n"
+            + " |    |\n"
+            + " |    +-- EOFError\n"
+            + " |    +-- RuntimeError\n"
+            + " |    |    |\n"
+            + " |    |    +-- NotImplementedError\n"
+            + " |    |\n"
+            + " |    +-- NameError\n"
+            + " |    |    |\n"
+            + " |    |    +-- UnboundLocalError\n"
+            + " |    |\n"
+            + " |    +-- AttributeError\n"
+            + " |    +-- SyntaxError\n"
+            + " |    |    |\n"
+            + " |    |    +-- IndentationError\n"
+            + " |    |         |\n"
+            + " |    |         +-- TabError\n"
+            + " |    |\n"
+            + " |    +-- TypeError\n"
+            + " |    +-- AssertionError\n"
+            + " |    +-- LookupError\n"
+            + " |    |    |\n"
+            + " |    |    +-- IndexError\n"
+            + " |    |    +-- KeyError\n"
+            + " |    |\n"
+            + " |    +-- ArithmeticError\n"
+            + " |    |    |\n"
+            + " |    |    +-- OverflowError\n"
+            + " |    |    +-- ZeroDivisionError\n"
+            + " |    |    +-- FloatingPointError\n"
+            + " |    |\n"
+            + " |    +-- ValueError\n"
+            + " |    |    |\n"
+            + " |    |    +-- UnicodeError\n"
+            + " |    |\n"
+            + " |    +-- ReferenceError\n"
+            + " |    +-- SystemError\n"
+            + " |    +-- MemoryError\n"
+            + " |\n"
+            + " +---Warning\n"
+            + "      |\n"
+            + "      +-- UserWarning\n"
+            + "      +-- DeprecationWarning\n"
+            + "      +-- SyntaxWarning\n"
+            + "      +-- OverflowWarning\n" + "      +-- RuntimeWarning";
 
-    private exceptions() { ; }
+    private exceptions() {
+        ;
+    }
 
     /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict) {
@@ -104,134 +102,129 @@ public class exceptions implements ClassDictInit {
         }
         ts.frame = frame;
 
-
         buildClass(dict, "Exception", null, "Exception",
-                   "Proposed base class for all exceptions.");
+                "Proposed base class for all exceptions.");
 
         buildClass(dict, "StandardError", "Exception", "empty__init__",
-                   "Base class for all standard Python exceptions.");
+                "Base class for all standard Python exceptions.");
 
         buildClass(dict, "SyntaxError", "StandardError", "SyntaxError",
-                   "Invalid syntax");
+                "Invalid syntax");
 
         buildClass(dict, "IndentationError", "SyntaxError", "empty__init__",
-                   "Improper indentation");
+                "Improper indentation");
 
         buildClass(dict, "TabError", "IndentationError", "empty__init__",
-                   "Improper mixture of spaces and tabs.");
+                "Improper mixture of spaces and tabs.");
 
         buildClass(dict, "EnvironmentError", "StandardError",
-                   "EnvironmentError",
-                   "Base class for I/O related errors.");
+                "EnvironmentError", "Base class for I/O related errors.");
 
         buildClass(dict, "IOError", "EnvironmentError", "empty__init__",
-                   "I/O operation failed.");
+                "I/O operation failed.");
 
         buildClass(dict, "OSError", "EnvironmentError", "empty__init__",
-                   "OS system call failed.");
+                "OS system call failed.");
 
         buildClass(dict, "RuntimeError", "StandardError", "empty__init__",
-                   "Unspecified run-time error.");
+                "Unspecified run-time error.");
 
         buildClass(dict, "NotImplementedError", "RuntimeError",
-                   "empty__init__",
-                   "Method or function hasn't been implemented yet.");
+                "empty__init__",
+                "Method or function hasn't been implemented yet.");
 
         buildClass(dict, "SystemError", "StandardError", "empty__init__",
-                   "Internal error in the Python interpreter.\n\n" +
-                   "Please report this to the Python maintainer, "+
-                   "along with the traceback,\n" +
-                   "the Python version, and the hardware/OS "+
-                   "platform and version.");
+                "Internal error in the Python interpreter.\n\n"
+                        + "Please report this to the Python maintainer, "
+                        + "along with the traceback,\n"
+                        + "the Python version, and the hardware/OS "
+                        + "platform and version.");
 
         buildClass(dict, "ReferenceError", "StandardError", "empty__init__",
-                    "Weak ref proxy used after referent went away.");
+                "Weak ref proxy used after referent went away.");
 
         buildClass(dict, "EOFError", "StandardError", "empty__init__",
-                   "Read beyond end of file.");
+                "Read beyond end of file.");
 
         buildClass(dict, "ImportError", "StandardError", "empty__init__",
-                   "Import can't find module, or can't find name in module.");
+                "Import can't find module, or can't find name in module.");
 
         buildClass(dict, "TypeError", "StandardError", "empty__init__",
-                   "Inappropriate argument type.");
+                "Inappropriate argument type.");
 
         buildClass(dict, "ValueError", "StandardError", "empty__init__",
-                   "Inappropriate argument value (of correct type).");
+                "Inappropriate argument value (of correct type).");
 
         buildClass(dict, "UnicodeError", "ValueError", "empty__init__",
-                   "Unicode related error.");
+                "Unicode related error.");
 
-        buildClass(dict, "KeyboardInterrupt", "StandardError",
-                   "empty__init__",
-                   "Program interrupted by user.");
+        buildClass(dict, "KeyboardInterrupt", "StandardError", "empty__init__",
+                "Program interrupted by user.");
 
         buildClass(dict, "AssertionError", "StandardError", "empty__init__",
-                   "Assertion failed.");
+                "Assertion failed.");
 
         buildClass(dict, "ArithmeticError", "StandardError", "empty__init__",
-                   "Base class for arithmetic errors.");
+                "Base class for arithmetic errors.");
 
         buildClass(dict, "OverflowError", "ArithmeticError", "empty__init__",
-                   "Result too large to be represented.");
+                "Result too large to be represented.");
 
         buildClass(dict, "FloatingPointError", "ArithmeticError",
-                   "empty__init__",
-                   "Floating point operation failed.");
+                "empty__init__", "Floating point operation failed.");
 
         buildClass(dict, "ZeroDivisionError", "ArithmeticError",
-                   "empty__init__",
-                   "Second argument to a division or modulo operation "+
-                   "was zero.");
+                "empty__init__",
+                "Second argument to a division or modulo operation "
+                        + "was zero.");
 
         buildClass(dict, "LookupError", "StandardError", "empty__init__",
-                   "Base class for lookup errors.");
+                "Base class for lookup errors.");
 
         buildClass(dict, "IndexError", "LookupError", "empty__init__",
-                   "Sequence index out of range.");
+                "Sequence index out of range.");
 
         buildClass(dict, "KeyError", "LookupError", "empty__init__",
-                   "Mapping key not found.");
+                "Mapping key not found.");
 
         buildClass(dict, "AttributeError", "StandardError", "empty__init__",
-                   "Attribute not found.");
+                "Attribute not found.");
 
         buildClass(dict, "NameError", "StandardError", "empty__init__",
-                   "Name not found globally.");
+                "Name not found globally.");
 
         buildClass(dict, "UnboundLocalError", "NameError", "empty__init__",
-                   "Local name referenced but not bound to a value.");
+                "Local name referenced but not bound to a value.");
 
         buildClass(dict, "MemoryError", "StandardError", "empty__init__",
-                   "Out of memory.");
+                "Out of memory.");
 
         buildClass(dict, "SystemExit", "Exception", "SystemExit",
-                   "Request to exit from the interpreter.");
+                "Request to exit from the interpreter.");
 
         buildClass(dict, "StopIteration", "Exception", "empty__init__",
-                   "Signal the end from iterator.next().");
+                "Signal the end from iterator.next().");
 
         buildClass(dict, "Warning", "Exception", "empty__init__",
-                   "Base class for warning categories.");
+                "Base class for warning categories.");
 
         buildClass(dict, "UserWarning", "Warning", "empty__init__",
-                   "Base class for warnings generated by user code.");
+                "Base class for warnings generated by user code.");
 
         buildClass(dict, "DeprecationWarning", "Warning", "empty__init__",
-                   "Base class for warnings about deprecated features.");
+                "Base class for warnings about deprecated features.");
 
         buildClass(dict, "SyntaxWarning", "Warning", "empty__init__",
-                   "Base class for warnings about dubious syntax.");
+                "Base class for warnings about dubious syntax.");
 
         buildClass(dict, "RuntimeWarning", "Warning", "empty__init__",
-                   "Base class for warnings about dubious runtime behavior.");
+                "Base class for warnings about dubious runtime behavior.");
 
         buildClass(dict, "OverflowWarning", "Warning", "empty__init__",
-                   "Base class for warnings about numeric overflow.");
+                "Base class for warnings about numeric overflow.");
 
         ts.frame = ts.frame.f_back;
     }
-
 
     // An empty __init__ method
     public static PyObject empty__init__(PyObject[] arg, String[] kws) {
@@ -239,7 +232,6 @@ public class exceptions implements ClassDictInit {
         dict.__setitem__("__module__", new PyString("exceptions"));
         return dict;
     }
-
 
     public static PyObject Exception(PyObject[] arg, String[] kws) {
         PyObject dict = empty__init__(arg, kws);
@@ -262,24 +254,22 @@ public class exceptions implements ClassDictInit {
         PyObject self = ap.getPyObject(0);
 
         PyObject args = self.__getattr__("args");
-        if (!args.__nonzero__())
+        if (!args.__nonzero__()) {
             return new PyString("");
-        else if (args.__len__() == 1)
+        } else if (args.__len__() == 1) {
             return args.__getitem__(0).__str__();
-        else
+        } else {
             return args.__str__();
+        }
     }
 
-    public static PyObject Exception__getitem__(PyObject[] arg,
-                                                String[] kws)
-    {
+    public static PyObject Exception__getitem__(PyObject[] arg, String[] kws) {
         ArgParser ap = new ArgParser("__getitem__", arg, kws, "self", "i");
         PyObject self = ap.getPyObject(0);
         PyObject i = ap.getPyObject(1);
 
         return self.__getattr__("args").__getitem__(i);
     }
-
 
     public static PyObject SyntaxError(PyObject[] arg, String[] kws) {
         PyObject __dict__ = empty__init__(arg, kws);
@@ -300,8 +290,9 @@ public class exceptions implements ClassDictInit {
         PyObject args = ap.getList(1);
 
         self.__setattr__("args", args);
-        if (args.__len__() >= 1)
+        if (args.__len__() >= 1) {
             self.__setattr__("msg", args.__getitem__(0));
+        }
         if (args.__len__() == 2) {
             PyObject info = args.__getitem__(1);
             try {
@@ -310,7 +301,9 @@ public class exceptions implements ClassDictInit {
                 self.__setattr__("lineno", tmp[1]);
                 self.__setattr__("offset", tmp[2]);
                 self.__setattr__("text", tmp[3]);
-            } catch (PyException exc) { ; }
+            } catch (PyException exc) {
+                ;
+            }
         }
     }
 
@@ -320,22 +313,24 @@ public class exceptions implements ClassDictInit {
         PyString str = self.__getattr__("msg").__str__();
         PyObject filename = basename(self.__findattr__("filename"));
         PyObject lineno = self.__findattr__("lineno");
-        if (filename instanceof PyString && lineno instanceof PyInteger)
-            return new PyString(str + " (" + filename + ", line " +
-                                lineno + ")");
-        else if (filename instanceof PyString)
+        if (filename instanceof PyString && lineno instanceof PyInteger) {
+            return new PyString(str + " (" + filename + ", line " + lineno
+                    + ")");
+        } else if (filename instanceof PyString) {
             return new PyString(str + " (" + filename + ")");
-        else if (lineno instanceof PyInteger)
+        } else if (lineno instanceof PyInteger) {
             return new PyString(str + " (line " + lineno + ")");
+        }
         return str;
     }
 
     private static PyObject basename(PyObject filename) {
         if (filename instanceof PyString) {
-             int i = ((PyString) filename).rfind(java.io.File.separator);
-             if (i >= 0)
-                  return filename.__getslice__(
-                       new PyInteger(i+1), new PyInteger(Integer.MAX_VALUE));
+            int i = ((PyString) filename).rfind(java.io.File.separator);
+            if (i >= 0) {
+                return filename.__getslice__(new PyInteger(i + 1),
+                        new PyInteger(Integer.MAX_VALUE));
+            }
         }
         return filename;
     }
@@ -347,9 +342,7 @@ public class exceptions implements ClassDictInit {
         return dict;
     }
 
-    public static void EnvironmentError__init__(PyObject[] arg,
-                                                String[] kws)
-    {
+    public static void EnvironmentError__init__(PyObject[] arg, String[] kws) {
         ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
         PyObject self = ap.getPyObject(0);
         PyObject args = ap.getList(1);
@@ -359,20 +352,20 @@ public class exceptions implements ClassDictInit {
         self.__setattr__("strerror", Py.None);
         self.__setattr__("filename", Py.None);
         if (args.__len__() == 3) {
-            // open() errors give third argument which is the filename.  BUT,
+            // open() errors give third argument which is the filename. BUT,
             // so common in-place unpacking doesn't break, e.g.:
             //
             // except IOError, (errno, strerror):
             //
-            // we hack args so that it only contains two items.  This also
+            // we hack args so that it only contains two items. This also
             // means we need our own __str__() which prints out the filename
             // when it was supplied.
             PyObject[] tmp = Py.unpackSequence(args, 3);
             self.__setattr__("errno", tmp[0]);
             self.__setattr__("strerror", tmp[1]);
             self.__setattr__("filename", tmp[2]);
-            self.__setattr__("args",
-                     args.__getslice__(Py.Zero, Py.newInteger(2), Py.One));
+            self.__setattr__("args", args.__getslice__(Py.Zero, Py
+                    .newInteger(2), Py.One));
         }
         if (args.__len__() == 2) {
             // common case: PyErr_SetFromErrno()
@@ -382,30 +375,24 @@ public class exceptions implements ClassDictInit {
         }
     }
 
-    public static PyString EnvironmentError__str__(PyObject[] arg,
-                                                   String[] kws)
-    {
+    public static PyString EnvironmentError__str__(PyObject[] arg, String[] kws) {
         ArgParser ap = new ArgParser("__init__", arg, kws, "self");
         PyObject self = ap.getPyObject(0);
 
         if (self.__getattr__("filename") != Py.None) {
             return Py.newString("[Errno %s] %s: %s").__mod__(
-                       new PyTuple(new PyObject[] {
-                            self.__getattr__("errno"),
+                    new PyTuple(new PyObject[] { self.__getattr__("errno"),
                             self.__getattr__("strerror"),
-                            self.__getattr__("filename")})).__str__();
-        } else if (self.__getattr__("errno").__nonzero__() &&
-                   self.__getattr__("strerror").__nonzero__()) {
+                            self.__getattr__("filename") })).__str__();
+        } else if (self.__getattr__("errno").__nonzero__()
+                && self.__getattr__("strerror").__nonzero__()) {
             return Py.newString("[Errno %s] %s").__mod__(
-                       new PyTuple(new PyObject[] {
-                           self.__getattr__("errno"),
-                           self.__getattr__("strerror")})).__str__();
+                    new PyTuple(new PyObject[] { self.__getattr__("errno"),
+                            self.__getattr__("strerror") })).__str__();
         } else {
-             return Exception__str__(arg, kws);
+            return Exception__str__(arg, kws);
         }
     }
-
-
 
     public static PyObject SystemExit(PyObject[] arg, String[] kws) {
         PyObject dict = empty__init__(arg, kws);
@@ -419,33 +406,29 @@ public class exceptions implements ClassDictInit {
         PyObject args = ap.getList(1);
 
         self.__setattr__("args", args);
-        if (args.__len__() == 0)
+        if (args.__len__() == 0) {
             self.__setattr__("code", Py.None);
-        else if (args.__len__() == 1)
+        } else if (args.__len__() == 1) {
             self.__setattr__("code", args.__getitem__(0));
-        else
+        } else {
             self.__setattr__("code", args);
+        }
     }
-
 
     private static PyObject getJavaFunc(String name) {
         return Py.newJavaFunc(exceptions.class, name);
     }
 
     private static PyObject buildClass(PyObject dict, String classname,
-                                       String superclass,
-                                       String classCodeName,
-                                       String doc) {
+            String superclass, String classCodeName, String doc) {
         PyObject[] sclass = Py.EmptyObjects;
-        if (superclass != null)
-             sclass = new PyObject[] {
-                            dict.__getitem__(new PyString(superclass)) };
-        PyObject cls = Py.makeClass(
-                            classname, sclass,
-                            Py.newJavaCode(exceptions.class, classCodeName),
-                            new PyString(doc));
+        if (superclass != null) {
+            sclass = new PyObject[] { dict
+                    .__getitem__(new PyString(superclass)) };
+        }
+        PyObject cls = Py.makeClass(classname, sclass, Py.newJavaCode(
+                exceptions.class, classCodeName), new PyString(doc));
         dict.__setitem__(classname, cls);
         return cls;
     }
 }
-

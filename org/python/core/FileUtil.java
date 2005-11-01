@@ -10,18 +10,14 @@ import java.io.IOException;
  */
 public class FileUtil {
     /**
-     * Read all bytes from the input stream.
-     * <p/>
-     * Note that using this method to read very large streams could
-     * cause out-of-memory exceptions and/or block for large periods
-     * of time.
+     * Read all bytes from the input stream. <p/> Note that using this method to
+     * read very large streams could cause out-of-memory exceptions and/or block
+     * for large periods of time.
      */
-    public static byte[] readBytes(InputStream in)
-      throws IOException {
+    public static byte[] readBytes(InputStream in) throws IOException {
         final int bufsize = 8192; // nice buffer size used in JDK
         byte[] buf = new byte[bufsize];
-        ByteArrayOutputStream out =
-          new ByteArrayOutputStream(bufsize);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(bufsize);
         int count;
         while (true) {
             count = in.read(buf, 0, bufsize);
