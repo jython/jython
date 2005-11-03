@@ -427,26 +427,6 @@ public class imp
         }
     }
 
-//    static PyObject loadFromClassLoader(String name,
-//                                        ClassLoader classLoader)
-//    {
-//        String path = name.replace('.', '/');
-//
-//        // First check to see if a package exists (look for name/__init__.py)
-//        InputStream istream = classLoader.getResourceAsStream(path+"/__init__.py");
-//        if (istream != null) {
-//            PyModule m = addModule(name);
-//            m.__dict__.__setitem__("__path__", Py.None);
-//            return createFromSource(name, istream, null);
-//        }
-//
-//        // Finally, try to load from source
-//        istream = classLoader.getResourceAsStream(path+".py");
-//        if (istream != null) return createFromSource(name, istream, null);
-//
-//        return null;
-//    }
-
     /**
      * Load the module by name.  Upon loading the module it will be added
      * to sys.modules.
