@@ -392,9 +392,9 @@ public class imp {
             m.__dict__.__setitem__("__file__", filename);
         }
 
-        if (sourceFile.isFile() && caseok(sourceFile, sourceName, nlen)) {
+        if (sourceFile.isFile() && caseok(sourceFile, sourceName, sourceName.length())) {
             if (compiledFile.isFile()
-                    && caseok(compiledFile, compiledName, nlen)) {
+                    && caseok(compiledFile, compiledName, compiledName.length())) {
                 Py.writeDebug("import", "trying precompiled "
                         + compiledFile.getPath());
                 long pyTime = sourceFile.lastModified();
@@ -414,7 +414,7 @@ public class imp {
 
         // If no source, try loading precompiled
         Py.writeDebug("import", "trying " + compiledFile.getPath());
-        if (compiledFile.isFile() && caseok(compiledFile, compiledName, nlen)) {
+        if (compiledFile.isFile() && caseok(compiledFile, compiledName, compiledName.length())) {
             return createFromPyClass(modName, makeStream(compiledFile), false,
                     compiledFile.getPath());
         }
