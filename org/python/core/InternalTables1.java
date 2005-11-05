@@ -4,187 +4,207 @@ package org.python.core;
 
 import java.util.*;
 
-
+/**
+ * 
+ * @deprecated Java1 no longer supported.
+ *
+ */
 public class InternalTables1 extends InternalTables {
 
     protected static interface Table {
-        public Object put(Object key,Object obj);
+        public Object put(Object key, Object obj);
+
         public Object get(Object key);
+
         public Object remove(Object key);
+
         public void clear();
     }
 
     private static class TableProvid1 extends Hashtable implements Table {
     }
 
-    final protected static short JCLASS=0;
-    final protected static short LAZY_JCLASS=1;
-    final protected static short ADAPTER_CLASS=2;
+    final protected static short JCLASS = 0;
+
+    final protected static short LAZY_JCLASS = 1;
+
+    final protected static short ADAPTER_CLASS = 2;
+
     final protected static short ADAPTER = 3;
 
     protected Table classes;
+
     protected Table temp;
+
     protected Table counters;
+
     protected Table lazyClasses;
 
     protected Table adapterClasses;
 
-    protected final short GSTABLE=1;
-    protected final short JCSTABLE=2;
+    protected final short GSTABLE = 1;
+
+    protected final short JCSTABLE = 2;
 
     protected short keepstable;
 
     protected void beginStable(short lvl) {
-        keepstable = lvl;
+        this.keepstable = lvl;
     }
 
-    protected void classesPut(Class c,Object jc) {
-        if (keepstable == JCSTABLE) {
-            temp.put(c,jc);
+    protected void classesPut(Class c, Object jc) {
+        if (this.keepstable == this.JCSTABLE) {
+            this.temp.put(c, jc);
             // System.err.println("temp-defer-canonical: "+c.getName());
         } else {
-            classes.put(c,jc);
+            this.classes.put(c, jc);
         }
         String name = c.getName();
-        Integer cnt = (Integer)counters.get(name);
+        Integer cnt = (Integer) this.counters.get(name);
         if (cnt == null) {
-            counters.put(name,new Integer(1));
-            lazyClasses.remove(name);
+            this.counters.put(name, new Integer(1));
+            this.lazyClasses.remove(name);
         } else {
-            counters.put(name,new Integer(cnt.intValue()+1));
+            this.counters.put(name, new Integer(cnt.intValue() + 1));
         }
     }
 
     protected Object classesGet(Class c) {
-        Object o = classes.get(c);
-        if (o != null || keepstable != JCSTABLE) return o;
-        return temp.get(c);
+        Object o = this.classes.get(c);
+        if (o != null || this.keepstable != this.JCSTABLE)
+            return o;
+        return this.temp.get(c);
     }
 
     protected void endStable() {
-        if (keepstable == JCSTABLE)
-          commitTemp();
-        keepstable = 0;
+        if (this.keepstable == this.JCSTABLE)
+            commitTemp();
+        this.keepstable = 0;
     }
 
     protected void classesDec(String name) {
-        int c = ((Integer)counters.get(name)).intValue();
+        int c = ((Integer) this.counters.get(name)).intValue();
         if (c == 1)
-         counters.remove(name);
+            this.counters.remove(name);
         else
-         counters.put(name,new Integer(c-1));
+            this.counters.put(name, new Integer(c - 1));
     }
 
     protected void commitTemp() {
-        for(Enumeration e=((Hashtable)temp).keys();e.hasMoreElements();) {
+        for (Enumeration e = ((Hashtable) this.temp).keys(); e
+                .hasMoreElements();) {
             Object c = e.nextElement();
-            classes.put(c,temp.get(c));
+            this.classes.put(c, this.temp.get(c));
         }
-        temp.clear();
+        this.temp.clear();
     }
 
     protected boolean queryCanonical(String name) {
-        return counters.get(name) != null || lazyClasses.get(name) != null;
+        return this.counters.get(name) != null
+                || this.lazyClasses.get(name) != null;
     }
 
     protected PyJavaClass getCanonical(Class c) {
-        return (PyJavaClass)classesGet(c);
+        return (PyJavaClass) classesGet(c);
     }
 
     protected PyJavaClass getLazyCanonical(String name) {
-        return (PyJavaClass)lazyClasses.get(name);
+        return (PyJavaClass) this.lazyClasses.get(name);
     }
 
-    protected void putCanonical(Class c,PyJavaClass canonical) {
-        classesPut(c,canonical);
+    protected void putCanonical(Class c, PyJavaClass canonical) {
+        classesPut(c, canonical);
     }
 
-    protected void putLazyCanonical(String name,PyJavaClass canonical) {
-        lazyClasses.put(name,canonical);
+    protected void putLazyCanonical(String name, PyJavaClass canonical) {
+        this.lazyClasses.put(name, canonical);
     }
 
     protected Class getAdapterClass(Class c) {
-        return (Class)adapterClasses.get(c);
+        return (Class) this.adapterClasses.get(c);
     }
 
-    protected void putAdapterClass(Class c,Class ac) {
-        adapterClasses.put(c,ac);
+    protected void putAdapterClass(Class c, Class ac) {
+        this.adapterClasses.put(c, ac);
     }
 
     private Hashtable adapters;
 
-    protected Object getAdapter(Object o,String evc) {
-        return adapters.get(evc+'$'+System.identityHashCode(o));
+    protected Object getAdapter(Object o, String evc) {
+        return this.adapters.get(evc + '$' + System.identityHashCode(o));
     }
 
-    protected void putAdapter(Object o,String evc,Object ad) {
-        adapters.put(evc+'$'+System.identityHashCode(o),ad);
+    protected void putAdapter(Object o, String evc, Object ad) {
+        this.adapters.put(evc + '$' + System.identityHashCode(o), ad);
     }
 
     protected short iterType;
+
     protected Object cur;
 
     private Enumeration enumm;
+
     private Hashtable enumTable;
 
     public void _beginCanonical() {
-        beginStable(JCSTABLE);
-        enumm = ((TableProvid1)classes).keys();
-        enumTable = (TableProvid1)classes;
-        iterType = JCLASS;
+        beginStable(this.JCSTABLE);
+        this.enumm = ((TableProvid1) this.classes).keys();
+        this.enumTable = (TableProvid1) this.classes;
+        this.iterType = JCLASS;
     }
 
     public void _beginLazyCanonical() {
-        enumm = ((TableProvid1)lazyClasses).keys();
-        enumTable = (TableProvid1)lazyClasses;
-        iterType = LAZY_JCLASS;
+        this.enumm = ((TableProvid1) this.lazyClasses).keys();
+        this.enumTable = (TableProvid1) this.lazyClasses;
+        this.iterType = LAZY_JCLASS;
     }
 
     public void _beginOverAdapterClasses() {
-        enumm = ((TableProvid1)adapterClasses).keys();
-        enumTable = (TableProvid1)adapterClasses;
-        iterType = ADAPTER_CLASS;
+        this.enumm = ((TableProvid1) this.adapterClasses).keys();
+        this.enumTable = (TableProvid1) this.adapterClasses;
+        this.iterType = ADAPTER_CLASS;
 
     }
 
     public void _beginOverAdapters() {
-        enumm = adapters.keys();
-        enumTable = adapters;
-        iterType = ADAPTER;
+        this.enumm = this.adapters.keys();
+        this.enumTable = this.adapters;
+        this.iterType = ADAPTER;
     }
 
     public Object _next() {
-        if(enumm.hasMoreElements()) {
-            cur = enumm.nextElement();
-            switch(iterType) {
+        if (this.enumm.hasMoreElements()) {
+            this.cur = this.enumm.nextElement();
+            switch (this.iterType) {
             case JCLASS:
-                return (PyJavaClass)classes.get(cur);
+                return (PyJavaClass) this.classes.get(this.cur);
             case LAZY_JCLASS:
-                PyJavaClass lazy = (PyJavaClass)lazyClasses.get(cur);
-                return new _LazyRep(lazy.__name__,lazy.__mgr__);
+                PyJavaClass lazy = (PyJavaClass) this.lazyClasses.get(this.cur);
+                return new _LazyRep(lazy.__name__, lazy.__mgr__);
             case ADAPTER_CLASS:
-                return cur;
+                return this.cur;
             case ADAPTER:
-                return adapters.get(cur).getClass().getInterfaces()[0];
+                return this.adapters.get(this.cur).getClass().getInterfaces()[0];
             }
         }
-        cur = null;
-        enumm = null;
+        this.cur = null;
+        this.enumm = null;
         endStable();
         return null;
     }
 
     public void _flushCurrent() {
-       enumTable.remove(cur);
-       if (iterType == JCLASS) classesDec(((Class)cur).getName());
+        this.enumTable.remove(this.cur);
+        if (this.iterType == JCLASS)
+            classesDec(((Class) this.cur).getName());
     }
 
     public void _flush(PyJavaClass jc) {
         Class c = jc.proxyClass;
         if (c == null) {
-            lazyClasses.remove(jc.__name__);
+            this.lazyClasses.remove(jc.__name__);
         } else {
-            classes.remove(c);
+            this.classes.remove(c);
             classesDec(jc.__name__);
         }
     }
@@ -193,14 +213,13 @@ public class InternalTables1 extends InternalTables {
     }
 
     public InternalTables1() {
-        classes = new TableProvid1();
-        temp = new TableProvid1();
-        counters = new TableProvid1();
-        lazyClasses = new TableProvid1();
+        this.classes = new TableProvid1();
+        this.temp = new TableProvid1();
+        this.counters = new TableProvid1();
+        this.lazyClasses = new TableProvid1();
 
-        adapterClasses = new TableProvid1();
+        this.adapterClasses = new TableProvid1();
 
-        adapters = new Hashtable();
+        this.adapters = new Hashtable();
     }
 }
-
