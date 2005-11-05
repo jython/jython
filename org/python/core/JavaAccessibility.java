@@ -7,6 +7,7 @@ import java.lang.reflect.*;
  *
  * This class was formerly necessary for Java 1 compattibility.
  * In the future, this class may be removed.
+ * @deprecated Java 1 no longer supported.
  */
 
 class JavaAccessibility
@@ -42,21 +43,24 @@ class JavaAccessibility
     public static void setAccessible(Field field, boolean flag)
         throws SecurityException
     {
-        if (access != null)
+        if (access != null) {
             access.setAccess(field, flag);
+        }
     }
 
     public static void setAccessible(Method method, boolean flag)
         throws SecurityException
     {
-        if (access != null)
+        if (access != null) {
             access.setAccess(method, flag);
+        }
     }
 
     public static void setAccessible(Constructor constructor, boolean flag)
         throws SecurityException
     {
-        if (access != null)
+        if (access != null) {
             access.setAccess(constructor, flag);
+        }
     }
 }
