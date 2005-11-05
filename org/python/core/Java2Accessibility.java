@@ -1,15 +1,15 @@
 package org.python.core;
+
 import java.lang.reflect.*;
 
 /**
- * Provides the Java 2 {Field|Method|Constructor}.setAccessibility()
- * methods when compiled with, and running under Java 2.
- *
+ * Provides the Java 2 {Field|Method|Constructor}.setAccessibility() methods
+ * when compiled with, and running under Java 2.
+ * 
  * This class should not be compilied (and it won't compile) under Java 1.
  */
 
-class Java2Accessibility extends JavaAccessibility
-{
+class Java2Accessibility extends JavaAccessibility {
     void setAccess(Field field, boolean flag) throws SecurityException {
         field.setAccessible(flag);
     }
@@ -19,8 +19,7 @@ class Java2Accessibility extends JavaAccessibility
     }
 
     void setAccess(Constructor constructor, boolean flag)
-        throws SecurityException
-    {
+            throws SecurityException {
         constructor.setAccessible(flag);
     }
 }

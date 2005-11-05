@@ -10,16 +10,16 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 
 /**
- * Path package manager. Gathering classes info dynamically
- * from a set of directories in path {@link #searchPath}, and
- * statically from a set of jars, like {@link CachedJarsPackageManager}.
+ * Path package manager. Gathering classes info dynamically from a set of
+ * directories in path {@link #searchPath}, and statically from a set of jars,
+ * like {@link CachedJarsPackageManager}.
  */
 public abstract class PathPackageManager extends CachedJarsPackageManager {
 
     public PyList searchPath;
 
     public PathPackageManager() {
-        searchPath = new PyList();
+        this.searchPath = new PyList();
     }
 
     /**
@@ -27,24 +27,28 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
      * Scans for package pkg.name the directories in path.
      */
     protected boolean packageExists(PyList path, String pkg, String name) {
-        String child = pkg.replace('.', File.separatorChar) + File.separator + name;
+        String child = pkg.replace('.', File.separatorChar) + File.separator
+                + name;
 
-        for (int i=0; i < path.__len__(); i++) {
+        for (int i = 0; i < path.__len__(); i++) {
             String dir = path.pyget(i).__str__().toString();
-            if (dir.length() == 0) dir = null;
+            if (dir.length() == 0) {
+                dir = null;
+            }
 
-            File f = new File(dir,child);
+            File f = new File(dir, child);
             if (f.isDirectory() && imp.caseok(f, name, name.length())) {
                 /*
-                 Figure out if we have a directory a mixture of python and java
-                 or just an empty directory (which means Java) or a directory
-                 with only Python source (which means Python).
+                 * Figure out if we have a directory a mixture of python and
+                 * java or just an empty directory (which means Java) or a
+                 * directory with only Python source (which means Python).
                  */
                 PackageExistsFileFilter m = new PackageExistsFileFilter();
                 f.listFiles(m);
                 boolean exists = m.packageExists();
-                if(exists) {
-                    Py.writeComment("import", "java package as '" + f.getAbsolutePath() + "'");
+                if (exists) {
+                    Py.writeComment("import", "java package as '"
+                            + f.getAbsolutePath() + "'");
                 }
                 return exists;
             }
@@ -54,95 +58,110 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
 
     class PackageExistsFileFilter implements FilenameFilter {
         private boolean java;
+
         private boolean python;
+
         public boolean accept(File dir, String name) {
-            if(name.endsWith(".py") || name.endsWith("$py.class")) {
-                python = true;
-            } else if(name.endsWith(".class")) {
-                java = true;
+            if (name.endsWith(".py") || name.endsWith("$py.class")) {
+                this.python = true;
+            } else if (name.endsWith(".class")) {
+                this.java = true;
             }
             return false;
         }
 
         public boolean packageExists() {
-            if(python && !java) {
-               return false;
+            if (this.python && !this.java) {
+                return false;
             }
             return true;
         }
     }
 
     /**
-     * Helper for {@link #doDir(PyJavaPackage,boolean,boolean)}.
-     * Scans for package jpkg content over the directories in path.
-     * Add to ret the founded classes/pkgs.
-     * Filter out classes using {@link #filterByName},{@link #filterByAccess}.
+     * Helper for {@link #doDir(PyJavaPackage,boolean,boolean)}. Scans for
+     * package jpkg content over the directories in path. Add to ret the founded
+     * classes/pkgs. Filter out classes using {@link #filterByName},{@link #filterByAccess}.
      */
     protected void doDir(PyList path, PyList ret, PyJavaPackage jpkg,
-                         boolean instantiate,boolean exclpkgs)
-    {
-        String child=jpkg.__name__.replace('.',File.separatorChar);
+            boolean instantiate, boolean exclpkgs) {
+        String child = jpkg.__name__.replace('.', File.separatorChar);
 
-        for (int i=0; i < path.__len__(); i++) {
+        for (int i = 0; i < path.__len__(); i++) {
             String dir = path.pyget(i).__str__().toString();
-            if (dir.length() == 0) dir = null;
+            if (dir.length() == 0) {
+                dir = null;
+            }
 
-            File childFile = new File(dir,child);
+            File childFile = new File(dir, child);
 
-            String[] list=childFile.list();
-            if(list == null) continue;
+            String[] list = childFile.list();
+            if (list == null) {
+                continue;
+            }
 
-            doList:
-            for (int j=0; j < list.length; j++) {
+            doList: for (int j = 0; j < list.length; j++) {
                 String jname = list[j];
 
                 File cand = new File(childFile, jname);
 
                 int jlen = jname.length();
 
-                boolean pkgCand=false;
+                boolean pkgCand = false;
 
                 if (cand.isDirectory()) {
-                    if (!instantiate && exclpkgs) continue;
+                    if (!instantiate && exclpkgs) {
+                        continue;
+                    }
                     pkgCand = true;
                 } else {
-                    if(!jname.endsWith(".class")) continue;
-                    jlen-=6;
+                    if (!jname.endsWith(".class")) {
+                        continue;
+                    }
+                    jlen -= 6;
                 }
 
-                jname = jname.substring(0,jlen);
+                jname = jname.substring(0, jlen);
                 PyString name = new PyString(jname);
 
-                if (filterByName(jname,pkgCand)) continue;
+                if (filterByName(jname, pkgCand)) {
+                    continue;
+                }
 
                 // for opt maybe we should some hash-set for ret
-                if (jpkg.__dict__.has_key(name) ||
-                      jpkg.clsSet.has_key(name) ||
-                      ret.__contains__(name)) {
+                if (jpkg.__dict__.has_key(name) || jpkg.clsSet.has_key(name)
+                        || ret.__contains__(name)) {
                     continue;
                 }
 
-                if (!Character.isJavaIdentifierStart(jname.charAt(0)))
+                if (!Character.isJavaIdentifierStart(jname.charAt(0))) {
                     continue;
+                }
+
                 for (int k = 1; k < jlen; k++) {
-                    if (!Character.isJavaIdentifierPart(jname.charAt(k)))
+                    if (!Character.isJavaIdentifierPart(jname.charAt(k))) {
                         continue doList;
+                    }
                 }
 
-                if(!pkgCand) {
+                if (!pkgCand) {
                     try {
                         int acc = checkAccess(new BufferedInputStream(
-                                              new FileInputStream(cand)));
-                        if ((acc == -1) || filterByAccess(jname, acc))
+                                new FileInputStream(cand)));
+                        if ((acc == -1) || filterByAccess(jname, acc)) {
                             continue;
-                    } catch(IOException e) {
+                        }
+                    } catch (IOException e) {
                         continue;
                     }
                 }
 
                 if (instantiate) {
-                    if (pkgCand) jpkg.addPackage(jname);
-                    else jpkg.addLazyClass(jname);
+                    if (pkgCand) {
+                        jpkg.addPackage(jname);
+                    } else {
+                        jpkg.addLazyClass(jname);
+                    }
                 }
 
                 ret.append(name);
@@ -157,15 +176,15 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
      */
     public void addDirectory(File dir) {
         try {
-            if (dir.getPath().length() == 0)
-                searchPath.append(Py.EmptyString);
-            else
-                searchPath.append(new PyString(dir.getCanonicalPath()));
-        } catch(IOException e) {
-            warning("skipping bad directory, '" +dir+ "'");
+            if (dir.getPath().length() == 0) {
+                this.searchPath.append(Py.EmptyString);
+            } else {
+                this.searchPath.append(new PyString(dir.getCanonicalPath()));
+            }
+        } catch (IOException e) {
+            warning("skipping bad directory, '" + dir + "'");
         }
     }
-
 
     // ??pending:
     // Uses simply split and not a StringTokenizer+trim to adhere to
@@ -177,9 +196,9 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
     // Should cause no problem (?).
 
     /**
-     * Adds "classpath" entry. Calls {@link #addDirectory} if path
-     * refers to a dir, {@link #addJarToPackages(java.io.File, boolean)}
-     * with param cache true if path refers to a jar.
+     * Adds "classpath" entry. Calls {@link #addDirectory} if path refers to a
+     * dir, {@link #addJarToPackages(java.io.File, boolean)} with param cache
+     * true if path refers to a jar.
      */
     public void addClassPath(String path) {
         PyList paths = new PyString(path).split(java.io.File.pathSeparator);
@@ -187,26 +206,28 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         for (int i = 0; i < paths.__len__(); i++) {
             String entry = paths.pyget(i).toString();
             if (entry.endsWith(".jar") || entry.endsWith(".zip")) {
-                addJarToPackages(new File(entry),true);
+                addJarToPackages(new File(entry), true);
             } else {
                 File dir = new File(entry);
-                if (entry.length() == 0 || dir.isDirectory())
+                if (entry.length() == 0 || dir.isDirectory()) {
                     addDirectory(dir);
+                }
             }
         }
     }
 
-    public PyList doDir(PyJavaPackage jpkg, boolean instantiate, boolean exclpkgs) {
-        PyList basic = basicDoDir(jpkg,instantiate,exclpkgs);
+    public PyList doDir(PyJavaPackage jpkg, boolean instantiate,
+            boolean exclpkgs) {
+        PyList basic = basicDoDir(jpkg, instantiate, exclpkgs);
         PyList ret = new PyList();
 
-        doDir(searchPath,ret,jpkg,instantiate,exclpkgs);
+        doDir(this.searchPath, ret, jpkg, instantiate, exclpkgs);
 
-        return merge(basic,ret);
+        return merge(basic, ret);
     }
 
-    public boolean packageExists(String pkg,String name) {
-        return packageExists(searchPath,pkg,name);
+    public boolean packageExists(String pkg, String name) {
+        return packageExists(this.searchPath, pkg, name);
     }
 
 }

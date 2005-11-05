@@ -11,25 +11,29 @@ public class InternalTables2 extends InternalTables1 {
     }
 
     protected void commitTemp() {
-        ((TableProvid2)classes).putAll((TableProvid2)temp);
-        temp.clear();
+        ((TableProvid2)this.classes).putAll((TableProvid2)this.temp);
+        this.temp.clear();
     }
 
     protected WeakHashMap adapters;
 
     protected Object getAdapter(Object o,String evc) {
-        HashMap ads = (HashMap)adapters.get(o);
-        if (ads == null) return null;
+        HashMap ads = (HashMap)this.adapters.get(o);
+        if (ads == null) {
+            return null;
+        }
         WeakReference adw = (WeakReference) ads.get(evc);
-        if (adw == null) return null;
+        if (adw == null){
+            return null;
+        }
         return adw.get();
     }
 
     protected void putAdapter(Object o,String evc,Object ad) {
-        HashMap ads = (HashMap)adapters.get(o);
+        HashMap ads = (HashMap)this.adapters.get(o);
         if (ads == null) {
             ads = new HashMap();
-            adapters.put(o,ads);
+            this.adapters.put(o,ads);
         }
         ads.put(evc,new WeakReference(ad));
     }
@@ -38,90 +42,96 @@ public class InternalTables2 extends InternalTables1 {
     protected Iterator grand;
 
     public void _beginCanonical() {
-        beginStable(JCSTABLE);
-        iter = ((TableProvid2)classes).values().iterator();
-        iterType = JCLASS;
+        beginStable(this.JCSTABLE);
+        this.iter = ((TableProvid2)this.classes).values().iterator();
+        this.iterType = JCLASS;
     }
 
     public void _beginLazyCanonical() {
-        beginStable(GSTABLE);
-        iter = ((TableProvid2)lazyClasses).values().iterator();
-        iterType = LAZY_JCLASS;
+        beginStable(this.GSTABLE);
+        this.iter = ((TableProvid2)this.lazyClasses).values().iterator();
+        this.iterType = LAZY_JCLASS;
     }
 
     public void _beginOverAdapterClasses() {
-        beginStable(GSTABLE);
-        iter = ((TableProvid2)adapterClasses).entrySet().iterator();
-        iterType = ADAPTER_CLASS;
+        beginStable(this.GSTABLE);
+        this.iter = ((TableProvid2)this.adapterClasses).entrySet().iterator();
+        this.iterType = ADAPTER_CLASS;
 
     }
 
     public void _beginOverAdapters() {
         beginStable((short)0);
-        grand = adapters.values().iterator();
-        iter = null;
-        iterType = ADAPTER;
+        this.grand = this.adapters.values().iterator();
+        this.iter = null;
+        this.iterType = ADAPTER;
     }
 
     public Object _next() {
-        if (iterType == ADAPTER) {
+        if (this.iterType == ADAPTER) {
             for(;;) {
-                if (iter==null || !iter.hasNext() ) {
-                    if (grand.hasNext()) {
-                        cur = grand.next();
-                        iter = ((HashMap)cur).values().iterator();
-                    } else iter = null;
+                if (this.iter==null || !this.iter.hasNext() ) {
+                    if (this.grand.hasNext()) {
+                        this.cur = this.grand.next();
+                        this.iter = ((HashMap)this.cur).values().iterator();
+                    } else {
+                        this.iter = null;
+                    }
                 }
-                if (iter != null) {
-                    WeakReference adw = (WeakReference)iter.next();
+                if (this.iter != null) {
+                    WeakReference adw = (WeakReference)this.iter.next();
                     Object ad = adw.get();
-                    if (ad != null) return ad.getClass().getInterfaces()[0];
-                    else continue;
+                    if (ad != null) {
+                        return ad.getClass().getInterfaces()[0];
+                    }
+                    else { 
+                        continue;
+                    }
                 }
-                grand = null;
+                this.grand = null;
                 break;
             }
         }
-        else if (iter.hasNext()) {
-            cur = iter.next();
-            switch(iterType) {
+        else if (this.iter.hasNext()) {
+            this.cur = this.iter.next();
+            switch(this.iterType) {
             case JCLASS:
-                return (PyJavaClass)cur;
+                return (PyJavaClass)this.cur;
             case LAZY_JCLASS:
-                PyJavaClass lazy = (PyJavaClass)cur;
+                PyJavaClass lazy = (PyJavaClass)this.cur;
                 return new _LazyRep(lazy.__name__,lazy.__mgr__);
             case ADAPTER_CLASS:
-                Map.Entry entry = (Map.Entry)cur;
+                Map.Entry entry = (Map.Entry)this.cur;
                 return entry.getKey();
             }
         }
-        cur = null;
+        this.cur = null;
         endStable();
-        iter = null;
+        this.iter = null;
         return null;
     }
 
     public void _flushCurrent() {
-       iter.remove();
-       switch(iterType) {
+       this.iter.remove();
+       switch(this.iterType) {
        case JCLASS:
-           classesDec(((PyJavaClass)cur).__name__);
+           classesDec(((PyJavaClass)this.cur).__name__);
            break;
        case ADAPTER:
-           if (((HashMap)cur).size() == 0) grand.remove();
+           if (((HashMap)this.cur).size() == 0) this.grand.remove();
        }
     }
 
     public InternalTables2() {
         super(true);
 
-        classes = new TableProvid2();
-        temp = new TableProvid2();
-        counters = new TableProvid2();
-        lazyClasses = new TableProvid2();
+        this.classes = new TableProvid2();
+        this.temp = new TableProvid2();
+        this.counters = new TableProvid2();
+        this.lazyClasses = new TableProvid2();
 
-        adapterClasses = new TableProvid2();
+        this.adapterClasses = new TableProvid2();
 
-        adapters = new WeakHashMap();
+        this.adapters = new WeakHashMap();
     }
 }
