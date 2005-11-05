@@ -49,7 +49,7 @@ class MergeState {
     }
 
     public void sort() {
-        int nremaining = size;
+        int nremaining = this.size;
         if (nremaining < 2) {
             return;
         }
@@ -61,24 +61,24 @@ class MergeState {
         boolean[] descending = new boolean[1];
         do {
             /* Identify next run. */
-            int n = count_run(lo, hi, descending);
+            int localN = count_run(lo, hi, descending);
             if (descending[0])
-                reverse_slice(lo, lo + n);
+                reverse_slice(lo, lo + localN);
             /* If short, extend to min(minrun, nremaining). */
-            if (n < minrun) {
+            if (localN < minrun) {
                 int force = nremaining < minrun ?  nremaining : minrun;
-                binarysort(lo, lo + force, lo + n);
-                n = force;
+                binarysort(lo, lo + force, lo + localN);
+                localN = force;
             }
             /* Push run onto pending-runs stack, and maybe merge. */
             //ms.assert_(ms.n < ms.MAX_MERGE_PENDING);
-            base[this.n] = lo;
-            len[this.n] = n;
+            this.base[this.n] = lo;
+            this.len[this.n] = localN;
             ++this.n;
             merge_collapse();
             /* Advance to find next run */
-            lo += n;
-            nremaining -= n;
+            lo += localN;
+            nremaining -= localN;
         } while (nremaining != 0);
         //assert_(lo == hi);
 
@@ -89,9 +89,9 @@ class MergeState {
     }
 
     public void getmem(int need) {
-        if (need <= a.length)
+        if (need <= this.a.length)
             return;
-        a = new PyObject[need];
+        this.a = new PyObject[need];
     }
 
     int count_run(int lo, int hi, boolean[] descending) {
@@ -100,49 +100,46 @@ class MergeState {
         ++lo;
         if (lo == hi)
             return 1;
-        int n = 2;
-        if (iflt(data[lo], data[lo-1])) {
+        int localN = 2;
+        if (iflt(this.data[lo], this.data[lo-1])) {
             descending[0] = true;
-            for (lo = lo + 1; lo < hi; ++lo, ++n) {
-                if (! iflt(data[lo], data[lo-1]))
+            for (lo = lo + 1; lo < hi; ++lo, ++localN) {
+                if (! iflt(this.data[lo], this.data[lo-1]))
                     break;
             }
         } else {
-            for (lo = lo + 1; lo < hi; ++lo, ++n) {
-                if (iflt(data[lo], data[lo-1]))
+            for (lo = lo + 1; lo < hi; ++lo, ++localN) {
+                if (iflt(this.data[lo], this.data[lo-1]))
                     break;
             }
         }
-        return n;
+        return localN;
     }
 
 
     void merge_lo(int pa, int na, int pb, int nb) {
         //debug("merge_lo pa:" + pa + " na:" + na + " pb:" + pb + " nb:" + nb);
-        int cnt = nb + na;
-        int origpa = pa;
         //dump_data("padata", pa, na);
         //dump_data("pbdata", pb, nb);
 
         //assert_(na > 0 && nb > 0 && pa + na == pb);
         getmem(na);
-        System.arraycopy(data, pa, a, 0, na);
+        System.arraycopy(this.data, pa, this.a, 0, na);
         int dest = pa;
         pa = 0;
 
-        data[dest++] = data[pb++];
+        this.data[dest++] = this.data[pb++];
         --nb;
         if (nb == 0)
             return;
         if (na == 1) {
             // CopyB;
-            System.arraycopy(data, pb, data, dest, nb);
-            data[dest + nb] = a[pa];
+            System.arraycopy(this.data, pb, this.data, dest, nb);
+            this.data[dest + nb] = this.a[pa];
             return;
         }
 
         try {
-            PyObject compare = this.compare;
             for (;;) {
                 int acount = 0; /* # of time A won in a row */
                 int bcount = 0; /* # of time B won in a row */
@@ -151,9 +148,9 @@ class MergeState {
                  * appears to win consistently.
                  */
                 for (;;) {
-                    boolean k = iflt(data[pb], a[pa]);
+                    boolean k = iflt(this.data[pb], this.a[pa]);
                     if (k) {
-                        data[dest++] = data[pb++];
+                        this.data[dest++] = this.data[pb++];
                         ++bcount;
                         acount = 0;
                         --nb;
@@ -162,14 +159,14 @@ class MergeState {
                         if (bcount >= MIN_GALLOP)
                             break;
                     } else {
-                        data[dest++] = a[pa++];
+                        this.data[dest++] = this.a[pa++];
                         ++acount;
                         bcount = 0;
                         --na;
                         if (na == 1) {
                             // CopyB;
-                            System.arraycopy(data, pb, data, dest, nb);
-                            data[dest + nb] = a[pa];
+                            System.arraycopy(this.data, pb, this.data, dest, nb);
+                            this.data[dest + nb] = this.a[pa];
                             na = 0;
                             return;
                         }
@@ -184,17 +181,17 @@ class MergeState {
                  * anymore.
                  */
                 do {
-                    int k = gallop_right(data[pb], a, pa, na, 0);
+                    int k = gallop_right(this.data[pb], this.a, pa, na, 0);
                     acount = k;
                     if (k != 0) {
-                        System.arraycopy(a, pa, data, dest, k);
+                        System.arraycopy(this.a, pa, this.data, dest, k);
                         dest += k;
                         pa += k;
                         na -= k;
                         if (na == 1) {
                             // CopyB
-                            System.arraycopy(data, pb, data, dest, nb);
-                            data[dest + nb] = a[pa];
+                            System.arraycopy(this.data, pb, this.data, dest, nb);
+                            this.data[dest + nb] = this.a[pa];
                             na = 0;
                             return;
                         }
@@ -206,27 +203,27 @@ class MergeState {
                             return;
                     }
 
-                    data[dest++] = data[pb++];
+                    this.data[dest++] = this.data[pb++];
                     --nb;
                     if (nb == 0)
                         return;
 
-                    k = gallop_left(a[pa], data, pb, nb, 0);
+                    k = gallop_left(this.a[pa], this.data, pb, nb, 0);
                     bcount = k;
                     if (k != 0) {
-                        System.arraycopy(data, pb, data, dest, k);
+                        System.arraycopy(this.data, pb, this.data, dest, k);
                         dest += k;
                         pb += k;
                         nb -= k;
                         if (nb == 0)
                             return;
                     }
-                    data[dest++] = a[pa++];
+                    this.data[dest++] = this.a[pa++];
                     --na;
                     if (na == 1) {
                         // CopyB;
-                        System.arraycopy(data, pb, data, dest, nb);
-                        data[dest + nb] = a[pa];
+                        System.arraycopy(this.data, pb, this.data, dest, nb);
+                        this.data[dest + nb] = this.a[pa];
                         na = 0;
                         return;
                     }
@@ -234,7 +231,7 @@ class MergeState {
             }
         } finally {
             if (na != 0)
-                System.arraycopy(a, pa, data, dest, na);
+                System.arraycopy(this.a, pa, this.data, dest, na);
 
             //dump_data("result", origpa, cnt);
         }
@@ -244,8 +241,6 @@ class MergeState {
 
     void merge_hi(int pa, int na, int pb, int nb) {
         //debug("merge_hi pa:" + pa + " na:" + na + " pb:" + pb + " nb:" + nb);
-        int cnt = nb + na;
-        int origpa = pa;
         //dump_data("padata", pa, na);
         //dump_data("pbdata", pb, nb);
 
@@ -253,12 +248,12 @@ class MergeState {
         getmem(nb);
         int dest = pb + nb - 1;
         int basea = pa;
-        System.arraycopy(data, pb, a, 0, nb);
+        System.arraycopy(this.data, pb, this.a, 0, nb);
 
         pb = nb - 1;
         pa += na - 1;
 
-        data[dest--] = data[pa--];
+        this.data[dest--] = this.data[pa--];
         --na;
         if (na == 0)
             return;
@@ -266,14 +261,13 @@ class MergeState {
             // CopyA;
             dest -= na;
             pa -= na;
-            System.arraycopy(data, pa+1, data, dest+1, na);
-            data[dest] = a[pb];
+            System.arraycopy(this.data, pa+1, this.data, dest+1, na);
+            this.data[dest] = this.a[pb];
             nb = 0;
             return;
         }
 
         try {
-            PyObject compare = this.compare;
             for (;;) {
                 int acount = 0; /* # of time A won in a row */
                 int bcount = 0; /* # of time B won in a row */
@@ -282,9 +276,9 @@ class MergeState {
                  * appears to win consistently.
                  */
                 for (;;) {
-                    boolean k = iflt(a[pb], data[pa]);
+                    boolean k = iflt(this.a[pb], this.data[pa]);
                     if (k) {
-                        data[dest--] = data[pa--];
+                        this.data[dest--] = this.data[pa--];
                         ++acount;
                         bcount = 0;
                         --na;
@@ -293,7 +287,7 @@ class MergeState {
                         if (acount >= MIN_GALLOP)
                             break;
                     } else {
-                        data[dest--] = a[pb--];
+                        this.data[dest--] = this.a[pb--];
                         ++bcount;
                         acount = 0;
                         --nb;
@@ -301,8 +295,8 @@ class MergeState {
                             // CopyA
                             dest -= na;
                             pa -= na;
-                            System.arraycopy(data, pa+1, data, dest+1, na);
-                            data[dest] = a[pb];
+                            System.arraycopy(this.data, pa+1, this.data, dest+1, na);
+                            this.data[dest] = this.a[pb];
                             nb = 0;
                             return;
                         }
@@ -317,42 +311,42 @@ class MergeState {
                  * anymore.
                  */
                 do {
-                    int k = gallop_right(a[pb], data, basea, na, na-1);
+                    int k = gallop_right(this.a[pb], this.data, basea, na, na-1);
                     acount = k = na - k;
                     if (k != 0) {
                         dest -= k;
                         pa -= k;
-                        System.arraycopy(data, pa+1, data, dest+1, k);
+                        System.arraycopy(this.data, pa+1, this.data, dest+1, k);
                         na -= k;
                         if (na == 0)
                             return;
                     }
 
-                    data[dest--] = a[pb--];
+                    this.data[dest--] = this.a[pb--];
                     --nb;
                     if (nb == 1) {
                         // CopyA
                         dest -= na;
                         pa -= na;
-                        System.arraycopy(data, pa+1, data, dest+1, na);
-                        data[dest] = a[pb];
+                        System.arraycopy(this.data, pa+1, this.data, dest+1, na);
+                        this.data[dest] = this.a[pb];
                         nb = 0;
                         return;
                     }
 
-                    k = gallop_left(data[pa], a, 0, nb, nb-1);
+                    k = gallop_left(this.data[pa], this.a, 0, nb, nb-1);
                     bcount = k = nb - k;
                     if (k != 0) {
                         dest -= k;
                         pb -= k;
-                        System.arraycopy(a, pb+1, data, dest+1, k);
+                        System.arraycopy(this.a, pb+1, this.data, dest+1, k);
                         nb -= k;
                         if (nb == 1) {
                             // CopyA
                             dest -= na;
                             pa -= na;
-                            System.arraycopy(data, pa+1, data, dest+1, na);
-                            data[dest] = a[pb];
+                            System.arraycopy(this.data, pa+1, this.data, dest+1, na);
+                            this.data[dest] = this.a[pb];
                             nb = 0;
                             return;
                         }
@@ -363,7 +357,7 @@ class MergeState {
                         if (nb == 0)
                             return;
                     }
-                    data[dest--] = data[pa--];
+                    this.data[dest--] = this.data[pa--];
                     --na;
                     if (na == 0)
                         return;
@@ -371,7 +365,7 @@ class MergeState {
             }
         } finally {
             if (nb != 0)
-                System.arraycopy(a, 0, data, dest-(nb-1), nb);
+                System.arraycopy(this.a, 0, this.data, dest-(nb-1), nb);
 
             //dump_data("result", origpa, cnt);
         }
@@ -401,21 +395,21 @@ class MergeState {
     Returns -1 on error.  See listsort.txt for info on the method.
     */
 
-    private int gallop_left(PyObject key, PyObject[] data, int a, int n,
+    private int gallop_left(PyObject key, PyObject[] localData, int localA, int localN,
                             int hint)
     {
         //assert_(n > 0 && hint >= 0 && hint < n);
-        a += hint;
+        localA += hint;
         int ofs = 1;
         int lastofs = 0;
     
-        if (iflt(data[a], key)) {
+        if (iflt(localData[localA], key)) {
             /* a[hint] < key -- gallop right, until
              * a[hint + lastofs] < key <= a[hint + ofs]
              */
-            int maxofs = n - hint; // data[a + n - 1] is highest
+            int maxofs = localN - hint; // data[a + n - 1] is highest
             while (ofs < maxofs) {
-                if (iflt(data[a + ofs], key)) {
+                if (iflt(localData[localA + ofs], key)) {
                     lastofs = ofs;
                     ofs = (ofs << 1) + 1;
                     if (ofs <= 0) // int overflow
@@ -436,7 +430,7 @@ class MergeState {
              */
             int maxofs = hint + 1; // data[a] is lowest
             while (ofs < maxofs) {
-                if (iflt(data[a - ofs], key))
+                if (iflt(localData[localA - ofs], key))
                     break;
                 // key <= data[a + hint - ofs]
                 lastofs = ofs;
@@ -451,7 +445,7 @@ class MergeState {
             lastofs = hint - ofs;
             ofs = hint - k;
         }
-        a -= hint;
+        localA -= hint;
         //assert_(-1 <= lastofs && lastofs < ofs && ofs <= n);
         /* Now a[lastofs] < key <= a[ofs], so key belongs somewhere to the
          * right of lastofs but no farther right than ofs.  Do a binary
@@ -460,7 +454,7 @@ class MergeState {
         ++lastofs;
         while (lastofs < ofs) {
             int m = lastofs + ((ofs - lastofs) >> 1);
-            if (iflt(data[a + m], key))
+            if (iflt(localData[localA + m], key))
                 lastofs = m+1;  // data[a + m] < key
             else
                 ofs = m;        // key <= data[a + m]
@@ -483,21 +477,21 @@ class MergeState {
     * written as one routine with yet another "left or right?" flag.
     */
 
-    private int gallop_right(PyObject key, PyObject[] data, int a, int n,
+    private int gallop_right(PyObject key, PyObject[] aData, int localA, int localN,
                              int hint)
     {
         //assert_(n > 0 && hint >= 0 && hint < n);
-        a += hint;
+        localA += hint;
         int lastofs = 0;
         int ofs = 1;
 
-        if (iflt(key, data[a])) {
+        if (iflt(key, aData[localA])) {
             /* key < a[hint] -- gallop left, until
              * a[hint - ofs] <= key < a[hint - lastofs]
              */
             int maxofs = hint + 1;    /* data[a] is lowest */
             while (ofs < maxofs) {
-                if (iflt(key, data[a - ofs])) {
+                if (iflt(key, aData[localA - ofs])) {
                     lastofs = ofs;
                     ofs = (ofs << 1) + 1;
                     if (ofs <= 0)  // int overflow
@@ -517,9 +511,9 @@ class MergeState {
             /* a[hint] <= key -- gallop right, until
              * a[hint + lastofs] <= key < a[hint + ofs]
              */
-            int maxofs = n - hint; /* data[a + n - 1] is highest */
+            int maxofs = localN - hint; /* data[a + n - 1] is highest */
             while (ofs < maxofs) {
-                if (iflt(key, data[a + ofs]))
+                if (iflt(key, aData[localA + ofs]))
                     break;
                 /* a[hint + ofs] <= key */
                 lastofs = ofs;
@@ -533,7 +527,7 @@ class MergeState {
             lastofs += hint;
             ofs += hint;
         }
-        a -= hint;
+        localA -= hint;
 
         //assert_(-1 <= lastofs && lastofs < ofs && ofs <= n);
         
@@ -544,7 +538,7 @@ class MergeState {
         ++lastofs;
         while (lastofs < ofs) {
             int m = lastofs + ((ofs - lastofs) >> 1);
-            if (iflt(key, data[a + m]))
+            if (iflt(key, aData[localA + m]))
                 ofs = m;        // key < data[a + m]
             else
                 lastofs = m+1;  // data[a + m] <= key
@@ -559,10 +553,10 @@ class MergeState {
         //assert_(i >= 0);
         //assert_(i == n - 2 || i == n - 3);
 
-        int pa = base[i];
-        int pb = base[i+1];
-        int na = len[i];
-        int nb = len[i+1];
+        int pa = this.base[i];
+        int pb = this.base[i+1];
+        int na = this.len[i];
+        int nb = this.len[i+1];
 
         //assert_(na > 0 && nb > 0);
         //assert_(pa + na == pb);
@@ -570,16 +564,16 @@ class MergeState {
         // Record the length of the combined runs; if i is the 3rd-last
         // run now, also slide over the last run (which isn't involved
         // in this merge).  The current run i+1 goes away in any case.
-        if (i == n - 3) {
-            len[i+1] = len[i+2];
-            base[i+1] = base[i+2];
+        if (i == this.n - 3) {
+            this.len[i+1] = this.len[i+2];
+            this.base[i+1] = this.base[i+2];
         }
-        len[i] = na + nb;
-        --n;
+        this.len[i] = na + nb;
+        --this.n;
 
         // Where does b start in a?  Elements in a before that can be
         // ignored (already in place).
-        int k = gallop_right(data[pb], data, pa, na, 0);
+        int k = gallop_right(this.data[pb], this.data, pa, na, 0);
         pa += k;
         na -= k;
         if (na == 0)
@@ -587,7 +581,7 @@ class MergeState {
         
         // Where does a end in b?  Elements in b after that can be
         // ignored (already in place).
-        nb = gallop_left(data[pa + na - 1], data, pb, nb, nb-1);
+        nb = gallop_left(this.data[pa + na - 1], this.data, pb, nb, nb-1);
         if (nb == 0)
             return;
 
@@ -610,13 +604,13 @@ class MergeState {
      */
     void merge_collapse() {
         while (this.n > 1) {
-            int n = this.n - 2;
-            if (n > 0 && len[n-1] <= len[n] + len[n+1]) {
-                if (len[n-1] < len[n+1])
-                    --n;
-                merge_at(n);
-            } else if (len[n] <= len[n+1]) {
-                merge_at(n);
+            int localN = this.n - 2;
+            if (localN > 0 && this.len[localN-1] <= this.len[localN] + this.len[localN+1]) {
+                if (this.len[localN-1] < this.len[localN+1])
+                    --localN;
+                merge_at(localN);
+            } else if (this.len[localN] <= this.len[localN+1]) {
+                merge_at(localN);
             } else {
                 break;
             }
@@ -631,10 +625,10 @@ class MergeState {
      */
     void merge_force_collapse() {
         while (this.n > 1) {
-            int n = this.n - 2;
-            if (n > 0 && len[n-1] < len[n+1])
-                --n;
-            merge_at(n);
+            int localN = this.n - 2;
+            if (localN > 0 && this.len[localN-1] < this.len[localN+1])
+                --localN;
+            merge_at(localN);
         }
     }
 
@@ -649,15 +643,15 @@ class MergeState {
      *
      * See listsort.txt for more info.
      */
-    int merge_compute_minrun(int n) {
+    int merge_compute_minrun(int localN) {
         int r = 0;  // becomes 1 if any 1 bits are shifted off
 
         //assert_(n >= 0);
-        while (n >= 64) {
-             r |= n & 1;
-             n >>= 1;
+        while (localN >= 64) {
+             r |= localN & 1;
+             localN >>= 1;
         }
-        return n + r;
+        return localN + r;
     }
 
 
@@ -671,7 +665,7 @@ class MergeState {
         //assert_(x != null);
         //assert_(y != null);
 
-        if (compare == null) {
+        if (this.compare == null) {
             /* NOTE: we rely on the fact here that the sorting algorithm
                only ever checks whether k<0, i.e., whether x<y.  So we
                invoke the rich comparison function with _lt ('<'), and
@@ -680,7 +674,7 @@ class MergeState {
             return x._lt(y).__nonzero__();
         }
 
-        PyObject ret = compare.__call__(x, y);
+        PyObject ret = this.compare.__call__(x, y);
 
         if (ret instanceof PyInteger) {
             int v = ((PyInteger)ret).getValue();
@@ -693,9 +687,9 @@ class MergeState {
     void reverse_slice(int lo, int hi) {
         --hi;
         while (lo < hi) {
-            PyObject t = data[lo];
-            data[lo] = data[hi];
-            data[hi] = t;
+            PyObject t = this.data[lo];
+            this.data[lo] = this.data[hi];
+            this.data[hi] = t;
             ++lo;
             --hi;
         }
@@ -727,7 +721,7 @@ class MergeState {
             /* set l to where *start belongs */
             int l = lo;
             int r = start;
-            PyObject pivot = data[r];
+            PyObject pivot = this.data[r];
             // Invariants:
             // pivot >= all in [lo, l).
             // pivot  < all in [r, start).
@@ -735,7 +729,7 @@ class MergeState {
             //assert_(l < r);
             do {
                 p = l + ((r - l) >> 1);
-                if (iflt(pivot, data[p]))
+                if (iflt(pivot, this.data[p]))
                     r = p;
                 else
                     l = p+1;
@@ -747,23 +741,21 @@ class MergeState {
             // first slot after them -- that's why this sort is stable.
             // Slide over to make room.
             for (p = start; p > l; --p)
-                data[p] = data[p - 1];
-            data[l] = pivot;
+                this.data[p] = this.data[p - 1];
+            this.data[l] = pivot;
         }
         //dump_data("binsort", lo, hi - lo);
     }
 
-
+/*  //debugging methods.
     private void dump_data(String txt, int lo, int n) {
-/*
         System.out.print(txt + ":");
         for (int i = 0; i < n; i++)
             System.out.print(data[lo + i] + " ");
         System.out.println();
-*/
     }
-
     private void debug(String str) {
         //System.out.println(str);
     }
+*/
 }
