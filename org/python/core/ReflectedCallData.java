@@ -3,30 +3,35 @@ package org.python.core;
 
 class ReflectedCallData {
     public Object[] args;
+
     public int length;
+
     public Object self;
+
     public int errArg;
 
     public ReflectedCallData() {
-        args = Py.EmptyObjects;
-        length = 0;
-        self = null;
-        errArg = -2;
+        this.args = Py.EmptyObjects;
+        this.length = 0;
+        this.self = null;
+        this.errArg = -2;
     }
 
     public void setLength(int newLength) {
-        length = newLength;
-        if (newLength <= args.length)
+        this.length = newLength;
+        if (newLength <= this.args.length) {
             return;
-        args = new Object[newLength];
+        }
+        this.args = new Object[newLength];
     }
 
     public Object[] getArgsArray() {
-        if (length == args.length)
-            return args;
-        Object[] newArgs = new Object[length];
-        System.arraycopy(args, 0, newArgs, 0, length);
-        args = newArgs;
+        if (this.length == this.args.length) {
+            return this.args;
+        }
+        Object[] newArgs = new Object[this.length];
+        System.arraycopy(this.args, 0, newArgs, 0, this.length);
+        this.args = newArgs;
         return newArgs;
     }
 }

@@ -1,7 +1,12 @@
-
 package org.python.core;
 
+/**
+ * 
+ * @deprecated Java 1 support is deprecated -- remove.
+ *
+ */
 class ThreadStateMapping {
+    //Java 1 support is deprecated -- remove this check.
     private static boolean checkedJava2 = false;
 
     public static ThreadStateMapping makeMapping() {
@@ -10,19 +15,20 @@ class ThreadStateMapping {
             String version = System.getProperty("java.version");
             if (version.compareTo("1.2") >= 0) {
                 try {
-                    Class c = Class.forName(
-                                  "org.python.core.ThreadStateMapping2");
+                    Class c = Class
+                            .forName("org.python.core.ThreadStateMapping2");
                     return (ThreadStateMapping) c.newInstance();
-                } catch (Throwable t) { }
+                } catch (Throwable t) {
+                }
             }
         }
         return new ThreadStateMapping();
     }
 
-
     // There are hacks that could improve performance slightly in the
     // interim, but I'd rather wait for the right solution.
     private static java.util.Hashtable threads;
+
     private static ThreadState cachedThreadState;
 
     // Mechanism provided by Drew Morrissey and approved by JimH which
@@ -32,9 +38,9 @@ class ThreadStateMapping {
     //
     // counter of additions to the threads table
     private static int additionCounter = 0;
+
     // maximum number of thread additions before cleanup is triggered
     private static final int MAX_ADDITIONS = 25;
-
 
     public ThreadState getThreadState(PySystemState newSystemState) {
         Thread t = Thread.currentThread();
@@ -43,18 +49,19 @@ class ThreadStateMapping {
             return ts;
         }
 
-        if (threads == null)
+        if (threads == null) {
             threads = new java.util.Hashtable();
-
-        ts = (ThreadState)threads.get(t);
+        }
+        
+        ts = (ThreadState) threads.get(t);
         if (ts == null) {
             if (newSystemState == null) {
                 Py.writeDebug("threadstate", "no current system state");
-                //t.dumpStack();
+                // t.dumpStack();
                 newSystemState = Py.defaultSystemState;
             }
             ts = new ThreadState(t, newSystemState);
-            //System.err.println("new ts: "+ts+", "+ts.systemState);
+            // System.err.println("new ts: "+ts+", "+ts.systemState);
             threads.put(t, ts);
             // increase the counter each time a thread reference is added
             // to the table
@@ -65,30 +72,27 @@ class ThreadStateMapping {
             }
         }
         cachedThreadState = ts;
-        //System.err.println("returning ts: "+ts+", "+ts.systemState);
+        // System.err.println("returning ts: "+ts+", "+ts.systemState);
         return ts;
     }
 
     /**
-     * Enumerates through the thread table looking for dead thread
-     * references and removes them.  Called internally by
-     * getThreadState(PySystemState).
+     * Enumerates through the thread table looking for dead thread references
+     * and removes them. Called internally by getThreadState(PySystemState).
      */
     private void cleanupThreadTable() {
         // loop through thread table removing dead thread references
         for (java.util.Enumeration e = threads.keys(); e.hasMoreElements();) {
             try {
                 Object key = e.nextElement();
-                ThreadState tempThreadState = (ThreadState)threads.get(key);
-                if ((tempThreadState != null) &&
-                    (tempThreadState.thread != null) &&
-                    !tempThreadState.thread.isAlive())
-                {
+                ThreadState tempThreadState = (ThreadState) threads.get(key);
+                if ((tempThreadState != null)
+                        && (tempThreadState.thread != null)
+                        && !tempThreadState.thread.isAlive()) {
                     threads.remove(key);
                 }
-            }
-            catch (ClassCastException exc) {
-                // TBD: we should throw some type of exception here
+            } catch (ClassCastException exc) {
+                // XXX: we should throw some type of exception here
             }
         }
     }

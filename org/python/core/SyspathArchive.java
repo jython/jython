@@ -12,7 +12,7 @@ public class SyspathArchive extends PyString {
         if(archiveName == null) {
             throw new IOException("path '" + archiveName + "' not an archive");
         }
-        zipFile = new ZipFile(new File(archiveName));
+        this.zipFile = new ZipFile(new File(archiveName));
         PySystemState.packageManager.addJar(archiveName, false);
     }
 
@@ -42,7 +42,7 @@ public class SyspathArchive extends PyString {
     }
 
     public SyspathArchive makeSubfolder(String folder) {
-        return new SyspathArchive(zipFile, super.toString() + "/" + folder);
+        return new SyspathArchive(this.zipFile, super.toString() + "/" + folder);
     }
 
     private String makeEntry(String entry) {
@@ -56,11 +56,11 @@ public class SyspathArchive extends PyString {
     }
 
     ZipEntry getEntry(String entryName) {
-        return zipFile.getEntry(makeEntry(entryName));
+        return this.zipFile.getEntry(makeEntry(entryName));
     }
 
     InputStream getInputStream(ZipEntry entry) throws IOException {
-        InputStream istream = zipFile.getInputStream(entry);
+        InputStream istream = this.zipFile.getInputStream(entry);
 
         // Some jdk1.1 VMs have problems with detecting the end of a zip
         // stream correctly. If you read beyond the end, you get a

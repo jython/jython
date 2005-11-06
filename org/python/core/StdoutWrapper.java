@@ -4,17 +4,17 @@ package org.python.core;
 import java.io.OutputStream;
 import java.io.Writer;
 
-public class StdoutWrapper extends OutputStream
-{
+public class StdoutWrapper extends OutputStream {
     protected String name;
 
     public StdoutWrapper() {
-        name = "stdout";
+        this.name = "stdout";
     }
 
     protected PyObject getObject(PySystemState ss) {
         return ss.stdout;
     }
+
     protected void setObject(PySystemState ss, PyObject obj) {
         ss.stdout = obj;
     }
@@ -23,19 +23,19 @@ public class StdoutWrapper extends OutputStream
         PySystemState ss = Py.getSystemState();
         PyObject obj = getObject(ss);
         if (obj == null) {
-            throw Py.AttributeError("missing sys."+name);
+            throw Py.AttributeError("missing sys." + this.name);
         }
         if (obj instanceof PyJavaInstance) {
             PyFile f = null;
 
             Object tmp = obj.__tojava__(OutputStream.class);
             if ((tmp != Py.NoConversion) && (tmp != null)) {
-                OutputStream os = (OutputStream)tmp;
+                OutputStream os = (OutputStream) tmp;
                 f = new PyFile(os, "<java OutputStream>");
             } else {
                 tmp = obj.__tojava__(Writer.class);
                 if ((tmp != Py.NoConversion) && (tmp != null)) {
-                    Writer w = (Writer)tmp;
+                    Writer w = (Writer) tmp;
                     f = new PyFile(w, "<java Writer>");
                 }
             }
@@ -50,7 +50,7 @@ public class StdoutWrapper extends OutputStream
     public void flush() {
         PyObject obj = myFile();
         if (obj instanceof PyFile) {
-            ((PyFile)obj).flush();
+            ((PyFile) obj).flush();
         } else {
             obj.invoke("flush");
         }
@@ -60,27 +60,25 @@ public class StdoutWrapper extends OutputStream
         PyObject obj = myFile();
 
         if (obj instanceof PyFile) {
-            ((PyFile)obj).write(s);
+            ((PyFile) obj).write(s);
         } else {
             obj.invoke("write", new PyString(s));
         }
     }
 
-
     public void write(int i) {
-        write(new String(new char[] {(char)i}));
+        write(new String(new char[] { (char) i }));
     }
 
     public void write(byte[] data, int off, int len) {
         write(new String(data, off, len));
     }
 
-
     public void clearSoftspace() {
         PyObject obj = myFile();
 
         if (obj instanceof PyFile) {
-            PyFile file = (PyFile)obj;
+            PyFile file = (PyFile) obj;
             if (file.softspace) {
                 file.write("\n");
                 file.flush();
@@ -101,16 +99,19 @@ public class StdoutWrapper extends OutputStream
         PyObject obj = myFile();
 
         if (obj instanceof PyFile) {
-            PyFile file = (PyFile)obj;
+            PyFile file = (PyFile) obj;
             String s = string.toString();
-            if (newline)
-                s = s+"\n";
-            if (file.softspace)
-                s = " "+s;
+            if (newline) {
+                s = s + "\n";
+            }
+            if (file.softspace) {
+                s = " " + s;
+            }
             file.write(s);
             file.flush();
-            if (space && s.endsWith("\n"))
+            if (space && s.endsWith("\n")) {
                 space = false;
+            }
             file.softspace = space;
         } else {
             PyObject ss = obj.__findattr__("softspace");
@@ -118,16 +119,17 @@ public class StdoutWrapper extends OutputStream
                 obj.invoke("write", Py.Space);
             }
             obj.invoke("write", string);
-            if (newline)
+            if (newline) {
                 obj.invoke("write", Py.Newline);
-//          obj.invoke("flush");
+            }
+            // obj.invoke("flush");
 
-            if (space && string.toString().endsWith("\n"))
+            if (space && string.toString().endsWith("\n")) {
                 space = false;
+            }
             obj.__setattr__("softspace", space ? Py.One : Py.Zero);
         }
     }
-
 
     public void print(String s) {
         print(new PyString(s), false, false);
@@ -153,12 +155,11 @@ public class StdoutWrapper extends OutputStream
         PyObject obj = myFile();
 
         if (obj instanceof PyFile) {
-            PyFile file = (PyFile)obj;
+            PyFile file = (PyFile) obj;
             file.write("\n");
             file.flush();
             file.softspace = false;
-        }
-        else {
+        } else {
             obj.invoke("write", Py.Newline);
             obj.__setattr__("softspace", Py.Zero);
         }
