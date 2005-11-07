@@ -572,7 +572,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- wrap the build into the installer -->
     <target name="install" depends="copy-dist">
         <fail unless="cvs.tag" message="no cvs.tag specified" />
-        <property name="install.src.dir" value="${source.dir}/../installer" />
+        <property name="install.src.dir" value="${source.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
                includes="org/**"
