@@ -169,6 +169,12 @@ public abstract class PackageManager extends Object {
         java.io.DataInputStream istream = new java.io.DataInputStream(cstream);
 
         int magic = istream.readInt();
+        
+        //int minor = 
+        istream.readShort();
+        //int major =
+        istream.readShort();
+        
         if (magic != 0xcafebabe)
             return -1;
         // Check versions???
