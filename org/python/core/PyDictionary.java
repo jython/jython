@@ -1424,6 +1424,11 @@ public class PyDictionary extends PyObject {
         throw Py.TypeError("unhashable type");
     }
 
+    public boolean isSequenceType() {
+        return false;
+    }
+
+
 }
 
 class PyDictionaryIter extends PyIterator {
