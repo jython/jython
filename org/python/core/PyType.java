@@ -13,7 +13,7 @@ import java.util.Iterator;
  * first-class Python type.
  *
  */
-public class PyType extends PyObject {
+public class PyType extends PyObject implements Serializable {
     /* type info */
 
     public static final String exposed_name = "type";
@@ -298,6 +298,35 @@ public class PyType extends PyObject {
 
     }
 
+    private Object writeReplace() {
+        //System.err.println("replace type");
+        return new TypeResolver(underlying_class, getModule().toString(), name);
+    }
+    
+    static class TypeResolver implements Serializable   {
+        private Class underlying_class;
+        private String module;
+        private String name;
+        
+        TypeResolver(Class underlying_class, String module, String name) {
+            this.underlying_class = underlying_class;
+            this.module = module;
+            this.name = name;
+        }
+        
+        private Object readResolve() {
+            //System.err.println("resolve: "+module+"."+name);
+            if(underlying_class!=null)
+                return PyType.fromClass(underlying_class);
+            PyObject mod = imp.importName(module.intern(), false);
+            PyObject pytyp = mod.__getattr__(name.intern());
+            if (!(pytyp instanceof PyType)) {
+                throw Py.TypeError(module+"."+name+" must be a type for deserialization");
+            }
+            return (PyType)pytyp;
+        }
+        
+    }
 
     public PyObject getStatic() {
         PyType cur = this;
@@ -1268,7 +1297,8 @@ public class PyType extends PyObject {
     }
 
     public Object __tojava__(Class c) {
-        if (c == Object.class || c == Class.class || c == Serializable.class) {
+        if (underlying_class!= null &&(
+            c == Object.class || c == Class.class || c == Serializable.class)) {
             return underlying_class;
         }
         return super.__tojava__(c);

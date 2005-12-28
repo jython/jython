@@ -372,9 +372,8 @@ public class PyObject implements java.io.Serializable {
         // xxx
     }
 
-    // xxx this is likely not the final name/approach,
     // getType may become not necessary
-    private transient PyType objtype;
+    private PyType objtype;
 
     public PyType getType() {
         return objtype;
@@ -391,13 +390,6 @@ public class PyObject implements java.io.Serializable {
             return Py.None;
         }
         return doc;
-    }
-
-    /* must instantiate __class__ when de-serializing */
-    private void readObject(java.io.ObjectInputStream in)
-        throws java.io.IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        objtype = PyType.fromClass(getClass());
     }
 
     public PyObject(PyType objtype) {

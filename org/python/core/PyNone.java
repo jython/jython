@@ -1,10 +1,12 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.Serializable;
+
 /**
  * A class representing the singleton None object,
  */
-public class PyNone extends PyObject
+public class PyNone extends PyObject implements Serializable
 {
     
     /* type info */
@@ -76,6 +78,10 @@ public class PyNone extends PyObject
         super(NONETYPE);
     }
 
+    private Object writeReplace() {
+        return new Py.SingletonResolver("None");
+    }    
+    
     public boolean __nonzero__() {
         return NoneType___nonzero__();
     }

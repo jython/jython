@@ -14,6 +14,26 @@ public final class Py
 
     static boolean initialized;
 
+    static class SingletonResolver implements Serializable {
+        private String which;
+        
+        SingletonResolver(String which) {
+            this.which = which;
+        }
+        
+        private Object readResolve() throws ObjectStreamException {
+            if (which.equals("None")) {
+                return Py.None;
+            } else if (which.equals("Ellipsis")) {
+                return Py.Ellipsis;
+            } else if (which.equals("NotImplemented")) {
+                return Py.NotImplemented;
+            }
+            throw new StreamCorruptedException("unknown singleton: "+which);
+        }
+    }
+    
+    
     /* Holds the singleton None and Ellipsis objects */
     /** The singleton None Python object **/
     public static PyObject None;

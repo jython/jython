@@ -8,20 +8,6 @@ import org.python.core.*;
 public class PythonObjectInputStream extends ObjectInputStream {
     public PythonObjectInputStream(InputStream istr) throws IOException {
         super(istr);
-        enableResolveObject(true);
-    }
-
-    protected Object resolveObject(Object o) throws IOException {
-        Class cls = o.getClass();
-        if (cls == PyNone.class)
-            return Py.None;
-        else if (cls == PyEllipsis.class)
-            return Py.Ellipsis;
-        else if (cls == PyNotImplemented.class)
-            return Py.NotImplemented;
-        else if (o instanceof PySingleton)
-            throw new IOException("Unserializing a singleton");
-        return o;
     }
 
     protected Class resolveClass(ObjectStreamClass v)
