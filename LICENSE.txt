@@ -19,6 +19,10 @@ The zxJDBC package was written by Brian Zimmer and originally licensed
 under the GNU Public License.  The package is now covered by the Jython
 Software License.
 
+The command line interpreter is covered by the Apache Software License.
+See the org/apache/LICENSE file for details.
+
+ 
 Jython changes Software License.
 ================================
 
