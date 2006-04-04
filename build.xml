@@ -586,7 +586,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         />
         <echo>copy installer classes to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${output.dir}" includes="org/python/util/install/*.class" />
+            <fileset dir="${output.dir}" includes="org/python/util/install/**/*.class" />
             <fileset dir="${output.dir}" includes="org/apache/commons/cli/*.class" />
         </copy>
         <echo>copy installer icon to ${dist.dir}</echo>
