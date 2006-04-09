@@ -155,11 +155,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <pathelement path="${java.class.path}" />
         </path>
 
-        <available property="java2collection.present" classname="java.util.List" />
         <available property="threadlocal.present" classname="java.lang.ThreadLocal" />
         <available property="secureclassloader.present" classname="java.security.SecureClassLoader" />
-        <available property="java2accessible.present" classname="java.lang.reflect.AccessibleObject" />
-        <available property="weakref.present" classname="java.lang.ref.WeakReference" />
         <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />
         <available property="readline.present" classname="org.gnu.readline.Readline" classpath="${readline.jar}" />
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -175,7 +172,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- init properties for the developer build -->
     <target name="developer-init" depends="pre-init">
         <property name="work.dir" value="${basedir}" />
-        <property name="source.dir" value="${basedir}" />
+        <property name="source.dir" value="${basedir}/src" />
         <property name="python.lib" value="${python.home}/Lib" />
     </target>
 
@@ -191,7 +188,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
         <property name="work.dir" value="${basedir}/../full_build_${cvs.tag}" />
         <property name="cvs.checkout.dir" value="${work.dir}/checkout" />
-        <property name="source.dir" value="${cvs.checkout.dir}/jython" />
+        <property name="source.dir" value="${cvs.checkout.dir}/jython/src" />
         <property name="has.cvs.connection" value="true" />
         <property name="python.module" value="python/dist/src/Lib" />
         <property name="python.lib" value="${cvs.checkout.dir}/${python.module}" />
@@ -211,10 +208,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <echo>Build environment for ${ant.project.name}</echo>
         <echo>(Note: if ${propertyname} is displayed, then the property is not set)</echo>
         <echo>--- optional libraries ---</echo>
-        <echo>collections        = '${java2collection.present}'</echo>
-        <echo>weakref            = '${weakref.present}'</echo>
         <echo>threadlocal        = '${threadlocal.present}'</echo>
-        <echo>java2 access       = '${java2accessible.present}'</echo>
         <echo>secureclassloader  = '${secureclassloader.present}'</echo>
         <echo>servlet            = '${servlet.present}'</echo>
         <echo>readline           = '${readline.present}'</echo>
@@ -355,21 +349,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                deprecation="${deprecation}"
                nowarn="${nowarn}"
         >
-            <include name="org/**" />
             <exclude name="org/python/parser/python.java" />
-
-            <include name="com/ziclix/python/sql/**" if="java2collection.present" />
-            <!-- +++ TODO: the following java files could be removed from cvs since we are targeting jdk 1.2 -->
-            <exclude name="**/CollectionProxy2.java" unless="java2collection.present" />
-            <exclude name="**/Java2Accessibility.java" unless="java2accessible.present" />
-            <exclude name="**/BytecodeLoader2.java" unless="secureclassloader.present" />
-            <exclude name="**/ThreadStateMapping2.java" unless="threadlocal.present" />
-            <exclude name="**/InternalTables2.java" unless="weakref.present" />
-            <exclude name="**/WeakInternalTables.java" unless="weakref.present" />
-            <exclude name="**/AutoInternalTables.java" unless="weakref.present" />
-            <exclude name="**/SoftIInternalTables.java" unless="weakref.present" />
-            <exclude name="**/_weakref.java" unless="weakref.present" />
             <!-- end of java files to be removed from cvs -->
+
             <exclude name="**/PyServlet.java" unless="servlet.present" />
             <exclude name="**/ReadlineConsole.java" unless="readline.present" />
             <exclude name="**/handler/InformixDataHandler.java" unless="informix.present" />
@@ -383,7 +365,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <classpath refid="main.classpath" />
         </javac>
 
-        <javac srcdir="${source.dir}/Lib"
+        <javac srcdir="${basedir}/Lib"
                includes="jxxload_help/**"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
@@ -395,7 +377,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         />
 
         <!-- java files used by tests -->
-        <javac srcdir="${source.dir}/Lib/test/"
+        <javac srcdir="${basedir}/Lib/test/"
                includes="javatests/**"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
@@ -406,14 +388,14 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                nowarn="${nowarn}"
         />
 
-        <copy file="org/python/modules/ucnhash.dat"
+        <copy file="${source.dir}/org/python/modules/ucnhash.dat"
               todir="${output.dir}/org/python/modules"
               preservelastmodified="true"
         />
 
         <copy todir="${output.dir}/com" preservelastmodified="true">
             <fileset dir="${source.dir}/com">
-                <include name="**/*.properties" if="java2collection.present" />
+                <include name="**/*.properties" />
             </fileset>
         </copy>
     </target>
@@ -435,10 +417,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
               <section name="Build-Info">
                   <attribute name="version" value="${cvs.tag}" />
                   <attribute name="cvs-build" value="${do.checkout}" />
-                  <attribute name="collections" value="${java2collection.present}" />
-                  <attribute name="weakref" value="${weakref.present}" />
                   <attribute name="threadlocal" value="${threadlocal.present}" />
-                  <attribute name="java2-accessibility" value="${java2accessible.present}" />
                   <attribute name="secureclassloader" value="${secureclassloader.present}" />
                   <attribute name="servlet" value="${servlet.present}" />
                   <attribute name="readline" value="${readline.present}" />
@@ -467,7 +446,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         </copy>
         <!-- Create .html files in Doc -->
         <apply executable="${python.exe}" dir="Doc">
-            <env key="PYTHONPATH" path="${source.dir}/Misc/htgen" />
+            <env key="PYTHONPATH" path="${basedir}/Misc/htgen" />
             <arg line="${ht2html.dir}/ht2html.py" />
             <arg line="-s JyLocalGenerator" />
             <fileset dir="${dist.dir}/Doc">
@@ -499,9 +478,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- copy for full distribution -->
     <target name="copy-full" if="full-build">
         <!-- Misc files -->
-        <echo>copy misc files from ${source.dir}</echo>
+        <echo>copy misc files from ${basedir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${source.dir}"
+            <fileset dir="${basedir}"
                      includes="ACKNOWLEDGMENTS, build.xml, build.Lib.include.properties, NEWS, LICENSE.txt, README.txt, registry"
             />
         </copy>
@@ -512,24 +491,23 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <copy file="${python.home}/LICENSE.txt" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
 
         <!-- sources: todir has to correspond with installer/**/JarInstaller.java -->
-        <echo>copy sources from ${source.dir}</echo>
+        <echo>copy sources from ${basedir}</echo>
         <copy todir="${dist.dir}/src/java" preservelastmodified="true">
-            <fileset dir="${source.dir}">
-              <include name="org/**/*.java" />
-              <include name="com/**/*.java" />
-              <include name="com/**/*.properties" />
+            <fileset dir="${basedir}">
+              <include name="src/**/*.java" />
+              <include name="src/com/**/*.properties" />
               <include name="Lib/jxxload_help/*.java" />
               <include name="Lib/test/javatests/*.java" />
-              <include name="org/**/ucnhash.dat" />
-              <include name="org/python/parser/build.xml" />
-              <exclude name="org/python/parser/python.java" />
+              <include name="src/org/**/ucnhash.dat" />
+              <include name="src/org/python/parser/build.xml" />
+              <exclude name="src/org/python/parser/python.java" />
             </fileset>
         </copy>
 
         <!-- The demo files -->
-        <echo>copy the demo files from ${source.dir}/Demo</echo>
+        <echo>copy the demo files from ${basedir}/Demo</echo>
         <copy todir="${dist.dir}/Demo" preservelastmodified="true">
-            <fileset dir="${source.dir}/Demo">
+            <fileset dir="${basedir}/Demo">
               <include name="**/*.java" />
               <include name="**/*.html" />
               <include name="**/*.py" />
@@ -546,9 +524,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- copy for distribution -->
     <target name="copy-dist" depends="jar, doc, javadoc, copy-full">
         <!-- Tools: jythonc and freeze -->
-        <echo>copy Tools from ${source.dir}/Tools</echo>
+        <echo>copy Tools from ${basedir}/Tools</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${source.dir}" includes="Tools/**/*.py" />
+            <fileset dir="${basedir}" includes="Tools/**/*.py" />
         </copy>
 
         <!-- Copy the CPython standard library files -->
@@ -556,15 +534,15 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <copy todir="${dist.dir}/Lib" preservelastmodified="true">
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo">
                 <patternset>
-                    <includesfile name="${source.dir}/build.Lib.include.properties" />
+                    <includesfile name="${basedir}/build.Lib.include.properties" />
                 </patternset>
             </fileset>
         </copy>
 
         <!-- The jython .py modules: important to overwrite the above CPython .py files -->
-        <echo>copy the jython *.py modules from ${source.dir}/Lib</echo>
+        <echo>copy the jython *.py modules from ${basedir}/Lib</echo>
         <copy todir="${dist.dir}/Lib" preservelastmodified="true" overwrite="true">
-            <fileset dir="${source.dir}/Lib" excludes="**/*.class"/>
+            <fileset dir="${basedir}/Lib" excludes="**/*.class"/>
         </copy>
     </target>
 
@@ -572,7 +550,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- wrap the build into the installer -->
     <target name="install" depends="copy-dist">
         <fail unless="cvs.tag" message="no cvs.tag specified" />
-        <property name="install.src.dir" value="${source.dir}/../installer/src/java" />
+        <property name="install.src.dir" value="${basedir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
                includes="org/**"
@@ -608,10 +586,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                 <section name="Build-Info">
                     <attribute name="cvs-build" value="${do.checkout}" />
                     <attribute name="cpython-version" value="${python.cvs.tag}" />
-                    <attribute name="collections" value="${java2collection.present}" />
-                    <attribute name="weakref" value="${weakref.present}" />
                     <attribute name="threadlocal" value="${threadlocal.present}" />
-                    <attribute name="java2-accessibility" value="${java2accessible.present}" />
                     <attribute name="secureclassloader" value="${secureclassloader.present}" />
                     <attribute name="servlet" value="${servlet.present}" />
                     <attribute name="readline" value="${readline.present}" />
