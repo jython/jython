@@ -172,6 +172,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- init properties for the developer build -->
     <target name="developer-init" depends="pre-init">
         <property name="work.dir" value="${basedir}" />
+        <property name="jython.base.dir" value="${basedir}" />
         <property name="source.dir" value="${basedir}/src" />
         <property name="python.lib" value="${python.home}/Lib" />
     </target>
@@ -188,7 +189,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
         <property name="work.dir" value="${basedir}/../full_build_${cvs.tag}" />
         <property name="cvs.checkout.dir" value="${work.dir}/checkout" />
-        <property name="source.dir" value="${cvs.checkout.dir}/jython/src" />
+        <property name="jython.base.dir" value="${cvs.checkout.dir}/jython" />
+        <property name="source.dir" value="${jython.base.dir}/src" />
         <property name="has.cvs.connection" value="true" />
         <property name="python.module" value="python/dist/src/Lib" />
         <property name="python.lib" value="${cvs.checkout.dir}/${python.module}" />
@@ -221,6 +223,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <echo>jdbc3.0            = '${jdbc30.present}'</echo>
         <echo>--- properties ---</echo>
         <echo>work.dir           = '${work.dir}'</echo>
+        <echo>jython.base.dir    = '${jython.base.dir}'</echo>
         <echo>source.dir         = '${source.dir}'</echo>
         <echo>parser.dir         = '${parser.dir}'</echo>
         <echo>output.dir         = '${output.dir}'</echo>
@@ -253,7 +256,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             unless="developer-build-called"
             description="clean up build working directories"
     >
-        <!-- do not hard delete ${work.dir}, since it could be basedir -->
+        <!-- do not hard delete ${work.dir}, since it could be ${basedir} -->
         <!-- deletes all files and subdirectories of ${output.dir}, without ${output.dir} itself. -->
         <delete includeemptydirs="true" failonerror="false">
             <fileset dir="${output.dir}" includes="**/*" />
@@ -350,8 +353,6 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
                nowarn="${nowarn}"
         >
             <exclude name="org/python/parser/python.java" />
-            <!-- end of java files to be removed from cvs -->
-
             <exclude name="**/PyServlet.java" unless="servlet.present" />
             <exclude name="**/ReadlineConsole.java" unless="readline.present" />
             <exclude name="**/handler/InformixDataHandler.java" unless="informix.present" />
@@ -365,7 +366,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <classpath refid="main.classpath" />
         </javac>
 
-        <javac srcdir="${basedir}/Lib"
+        <javac srcdir="${jython.base.dir}/Lib"
                includes="jxxload_help/**"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
@@ -377,7 +378,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         />
 
         <!-- java files used by tests -->
-        <javac srcdir="${basedir}/Lib/test/"
+        <javac srcdir="${jython.base.dir}/Lib/test/"
                includes="javatests/**"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
@@ -446,7 +447,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         </copy>
         <!-- Create .html files in Doc -->
         <apply executable="${python.exe}" dir="Doc">
-            <env key="PYTHONPATH" path="${basedir}/Misc/htgen" />
+            <env key="PYTHONPATH" path="${jython.base.dir}/Misc/htgen" />
             <arg line="${ht2html.dir}/ht2html.py" />
             <arg line="-s JyLocalGenerator" />
             <fileset dir="${dist.dir}/Doc">
@@ -478,9 +479,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- copy for full distribution -->
     <target name="copy-full" if="full-build">
         <!-- Misc files -->
-        <echo>copy misc files from ${basedir}</echo>
+        <echo>copy misc files from ${jython.base.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${basedir}"
+            <fileset dir="${jython.base.dir}"
                      includes="ACKNOWLEDGMENTS, build.xml, build.Lib.include.properties, NEWS, LICENSE.txt, README.txt, registry"
             />
         </copy>
@@ -491,9 +492,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <copy file="${python.home}/LICENSE.txt" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
 
         <!-- sources: todir has to correspond with installer/**/JarInstaller.java -->
-        <echo>copy sources from ${basedir}</echo>
+        <echo>copy sources from ${jython.base.dir}</echo>
         <copy todir="${dist.dir}/src/java" preservelastmodified="true">
-            <fileset dir="${basedir}">
+            <fileset dir="${jython.base.dir}">
               <include name="src/**/*.java" />
               <include name="src/com/**/*.properties" />
               <include name="Lib/jxxload_help/*.java" />
@@ -505,9 +506,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         </copy>
 
         <!-- The demo files -->
-        <echo>copy the demo files from ${basedir}/Demo</echo>
+        <echo>copy the demo files from ${jython.base.dir}/Demo</echo>
         <copy todir="${dist.dir}/Demo" preservelastmodified="true">
-            <fileset dir="${basedir}/Demo">
+            <fileset dir="${jython.base.dir}/Demo">
               <include name="**/*.java" />
               <include name="**/*.html" />
               <include name="**/*.py" />
@@ -524,9 +525,9 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- copy for distribution -->
     <target name="copy-dist" depends="jar, doc, javadoc, copy-full">
         <!-- Tools: jythonc and freeze -->
-        <echo>copy Tools from ${basedir}/Tools</echo>
+        <echo>copy Tools from ${jython.base.dir}/Tools</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${basedir}" includes="Tools/**/*.py" />
+            <fileset dir="${jython.base.dir}" includes="Tools/**/*.py" />
         </copy>
 
         <!-- Copy the CPython standard library files -->
@@ -534,15 +535,15 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <copy todir="${dist.dir}/Lib" preservelastmodified="true">
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo">
                 <patternset>
-                    <includesfile name="${basedir}/build.Lib.include.properties" />
+                    <includesfile name="${jython.base.dir}/build.Lib.include.properties" />
                 </patternset>
             </fileset>
         </copy>
 
         <!-- The jython .py modules: important to overwrite the above CPython .py files -->
-        <echo>copy the jython *.py modules from ${basedir}/Lib</echo>
+        <echo>copy the jython *.py modules from ${jython.base.dir}/Lib</echo>
         <copy todir="${dist.dir}/Lib" preservelastmodified="true" overwrite="true">
-            <fileset dir="${basedir}/Lib" excludes="**/*.class"/>
+            <fileset dir="${jython.base.dir}/Lib" excludes="**/*.class"/>
         </copy>
     </target>
 
@@ -550,7 +551,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     <!-- wrap the build into the installer -->
     <target name="install" depends="copy-dist">
         <fail unless="cvs.tag" message="no cvs.tag specified" />
-        <property name="install.src.dir" value="${basedir}/../installer/src/java" />
+        <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
                includes="org/**"
