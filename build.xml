@@ -13,14 +13,19 @@ Use case 1: developer build (in your local jython copy)
 This build will create directories /build and /dist below basedir.
 
 
-Use case 2: full build for a release (using cvs checkout)
+Use case 2: full build for a release (using svn checkout)
 ---------------------------------------------------------
-  - make sure you have access to anonymous cvs
-  - override cvs.tag in ant.properties (if necessary)
+  - make sure you have access to the jython subversion repository (https://svn.sourceforge.net/svnroot/jython)
+  - make sure you have access and to cpython anonymous cvs (pserver:anonymous@cvs.sourceforge.net:/cvsroot/python)
+  - override svn.tag in ant.properties (if necessary)
   - call target 'full-build'
-This build will create a working directory named full_build_${cvs.tag} at the same
+This build will create a working directory named full_build_${svn.tag} at the same
 level as your local directories bugtests, jython, sandbox and installer.
-It will contain a big jython_${cvs.tag}.jar file suitable for installation.
+It will contain a big jython_${svn.tag}.jar file suitable for installation.
+
+Please be aware:
+To build older releases, it may be necessary to use an older build.xml, too (with the corresponding tag).
+For example it is not possible to build Release_2_2alpha1 with this version of build.xml.
 
 
 Use case 3: build only the parser (grammar)
@@ -54,16 +59,16 @@ The first setting of a property wins, further settings are ignored.
 
 Actions for a release
 ---------------------
-  1. determine the new cvs tag to be applied to jython
+  1. determine the new svn tag to be applied to jython
   2. determine the existing cvs tag of the CPython Lib files which should be included
   3. change the following properties in this build.xml, if necessary:
-       - cvs.tag             (target: full-init)
+       - svn.tag             (target: full-init)
        - python.cvs.tag      (target: full-init)
        - jdk.target.version  (target: pre-init)
   4. if new CPython .py files should be distributed, add them to build.Lib.include.properties
   5. adjust the public static String version in PySystemState.java
   6. check in all the changes
-  7. apply the new tag to the jython cvs (all projects)
+  7. apply the new tag to the jython svn (all projects)
   8. call target 'full-build'
 
 
@@ -101,10 +106,12 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 #optimize=off
 #deprecation=off
 
-# - the cvs tag to build from; only needed for full-build
-#cvs.tag=Release_2_2alpha0
-#cvs.tag=HEAD
-#cvs.tag=pep302
+# - the svn tag to build from; only needed for full-build
+#svn.tag=Release_2_2alpha2
+svn.tag=HEAD
+
+# - the directory containing javahl .dll (on windows) and .jar; only needed for full-build
+javahl.dir=C:/Programme/Subversion/javahl
         </echo>
     </target>
 
@@ -117,7 +124,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
 
     <!-- full build -->
-    <target name="full-build" depends="full-init, post-init, install" description="a full build from cvs" />
+    <target name="full-build" depends="full-init, post-init, install" description="a full build from svn" />
 
 
     <!-- set a property to indicate that target 'developer-build' was really called -->
@@ -183,20 +190,20 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <!-- use this property to distinguish a full-build from a developer-build -->
         <property name="full-build" value="true" />
 
-        <!-- predefined cvs tags for jython and cpython -->
-        <property name="cvs.tag" value="HEAD" />
+        <!-- predefined tags for jython and cpython -->
+        <property name="svn.tag" value="HEAD" />
         <property name="python.cvs.tag" value="r223" />
 
-        <property name="work.dir" value="${basedir}/../full_build_${cvs.tag}" />
-        <property name="cvs.checkout.dir" value="${work.dir}/checkout" />
-        <property name="jython.base.dir" value="${cvs.checkout.dir}/jython" />
+        <property name="work.dir" value="${basedir}/../full_build_${svn.tag}" />
+        <property name="svn.checkout.dir" value="${work.dir}/checkout" />
+        <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
         <property name="source.dir" value="${jython.base.dir}/src" />
-        <property name="has.cvs.connection" value="true" />
+        <property name="has.repositories.connection" value="true" />
         <property name="python.module" value="python/dist/src/Lib" />
-        <property name="python.lib" value="${cvs.checkout.dir}/${python.module}" />
+        <property name="python.lib" value="${svn.checkout.dir}/${python.module}" />
         <property name="python.exe" value="${python.home}/python" />
         <condition property="do.checkout" value="true">
-            <istrue value="${has.cvs.connection}" />
+            <istrue value="${has.repositories.connection}" />
         </condition>
     </target>
 
@@ -239,10 +246,10 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         <echo>debug              = '${debug}'</echo>
         <echo>optimize           = '${optimize}'</echo>
         <echo>nowarn             = '${nowarn}'</echo>
-        <echo>--- properties (used for full-build only )---</echo>
-        <echo>cvs.tag            = '${cvs.tag}'</echo>
+        <echo>--- properties (used for full-build only ) ---</echo>
+        <echo>svn.tag            = '${svn.tag}'</echo>
         <echo>python.cvs.tag     = '${python.cvs.tag}'</echo>
-        <echo>cvs.checkout.dir   = '${cvs.checkout.dir}'</echo>
+        <echo>svn.checkout.dir   = '${svn.checkout.dir}'</echo>
         <echo>do.checkout        = '${do.checkout}'</echo>
         <echo>python.exe         = '${python.exe}'</echo>
     </target>
@@ -272,10 +279,10 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
     </target>
 
 
-    <!-- clean cvs.checkout.dir if we really checkout -->
+    <!-- clean svn.checkout.dir if we really checkout -->
     <target name="clean-checkout-dir" if="do.checkout">
         <delete includeemptydirs="true" failonerror="false">
-            <fileset dir="${cvs.checkout.dir}" includes="**/*" defaultexcludes="no" />
+            <fileset dir="${svn.checkout.dir}" includes="**/*" defaultexcludes="no" />
         </delete>
     </target>
 
@@ -297,39 +304,31 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
     <!-- create checkout directory if necessary -->
     <target name="prepare-checkout" if="do.checkout">
-        <mkdir dir="${cvs.checkout.dir}" />
+        <mkdir dir="${svn.checkout.dir}" />
     </target>
 
 
-    <!-- checkout from cvs if so defined -->
+    <!-- checkout if so defined -->
     <target name="checkout" depends="prepare" if="do.checkout">
-        <!-- common properties -->
-        <property name="sf.cvs.root" value=":pserver:anonymous@cvs.sourceforge.net:/cvsroot" />
-
-        <!-- jython -->
-        <property name="jython.cvs.root" value="${sf.cvs.root}/jython" />
-        <echo>setting jython password for anonymous</echo>
-        <cvspass cvsroot="${jython.cvs.root}" password="" />
-        <!-- -r: use the cvs tag, -P: prune empty directories -->
-        <property name="jython.checkout.options" value="checkout -r ${cvs.tag} -P" />
-        <property name="jython.checkout.command" value="-z3 -d${jython.cvs.root} ${jython.checkout.options}" />
-        <echo>checking out jython with the following command: ${jython.checkout.command} jython</echo>
-        <cvs command="${jython.checkout.command} jython" dest="${cvs.checkout.dir}" />
-        <!-- -f: use HEAD if tag not found, -r: use the cvs tag, -P: prune empty directories -->
-        <property name="installer.checkout.options" value="checkout -f -r ${cvs.tag} -P" />
-        <property name="installer.checkout.command" value="-z3 -d${jython.cvs.root} ${installer.checkout.options}" />
-        <echo>checking out installer with the following command: ${installer.checkout.command} installer</echo>
-        <cvs command="${installer.checkout.command} installer" dest="${cvs.checkout.dir}" />
-
+    	<!-- jython and installer:  determine if to checkout from /tags/${svn.tag} (any tag), or /trunk (HEAD) -->
+    	<condition property="svn.main.dir" value="trunk">
+    		<equals arg1="${svn.tag}" arg2="HEAD" />
+    	</condition>
+    	<property name="svn.main.dir" value="tags/${svn.tag}" />
+        <svn javahl="${javahl.dir}" >
+        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" destPath="${svn.checkout.dir}/jython" />
+        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" destPath="${svn.checkout.dir}/installer" />
+        </svn> 
+    	
         <!-- cpython -->
-        <property name="python.cvs.root" value="${sf.cvs.root}/python" />
+        <property name="python.cvs.root" value=":pserver:anonymous@cvs.sourceforge.net:/cvsroot/python" />
         <echo>setting python password for anonymous</echo>
         <cvspass cvsroot="${python.cvs.root}" password="" />
         <!-- -r: use the cvs tag, -P: prune empty directories -->
         <property name="python.checkout.options" value="checkout -r ${python.cvs.tag} -P" />
         <property name="python.checkout.command" value="-z3 -d${python.cvs.root} ${python.checkout.options}" />
         <echo>checking out ${python.module} with the following command: ${python.checkout.command} ${python.module}</echo>
-        <cvs command="${python.checkout.command} ${python.module}" dest="${cvs.checkout.dir}" />
+        <cvs command="${python.checkout.command} ${python.module}" dest="${svn.checkout.dir}" />
     </target>
 
 
@@ -416,8 +415,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
               <attribute name="Built-By" value="${user.name}" />
               <!-- info section. ATTN: no blanks, no '.' in the names -->
               <section name="Build-Info">
-                  <attribute name="version" value="${cvs.tag}" />
-                  <attribute name="cvs-build" value="${do.checkout}" />
+                  <attribute name="version" value="${svn.tag}" />
+                  <attribute name="svn-build" value="${do.checkout}" />
                   <attribute name="threadlocal" value="${threadlocal.present}" />
                   <attribute name="secureclassloader" value="${secureclassloader.present}" />
                   <attribute name="servlet" value="${servlet.present}" />
@@ -550,7 +549,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
     <!-- wrap the build into the installer -->
     <target name="install" depends="copy-dist">
-        <fail unless="cvs.tag" message="no cvs.tag specified" />
+        <fail unless="svn.tag" message="no svn.tag specified" />
         <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
@@ -565,8 +564,10 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
         />
         <echo>copy installer classes to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${output.dir}" includes="org/python/util/install/**/*.class" />
-            <fileset dir="${output.dir}" includes="org/apache/commons/cli/*.class" />
+            <fileset dir="${output.dir}">
+            	<include name="org/python/util/install/**/*.class" />
+            	<include name="org/apache/commons/cli/*.class" />
+            </fileset>
         </copy>
         <echo>copy installer icon to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
@@ -574,18 +575,18 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
             <fileset dir="${install.src.dir}" includes="**/*.png" excludes="bin/**" />
         </copy>
         <echo>building installer .jar file</echo>
-        <jar destfile="${work.dir}/jython_${cvs.tag}.jar" basedir="${dist.dir}" update="true">
+        <jar destfile="${work.dir}/jython_${svn.tag}.jar" basedir="${dist.dir}" update="true">
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
                 <attribute name="Built-By" value="${user.name}" />
                 <!-- section for the install program -->
                 <section name="Jython">
-                    <attribute name="version" value="${cvs.tag}" />
+                    <attribute name="version" value="${svn.tag}" />
                     <attribute name="exclude-dirs" value="org;META-INF" />
                 </section>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
-                    <attribute name="cvs-build" value="${do.checkout}" />
+                    <attribute name="svn-build" value="${do.checkout}" />
                     <attribute name="cpython-version" value="${python.cvs.tag}" />
                     <attribute name="threadlocal" value="${threadlocal.present}" />
                     <attribute name="secureclassloader" value="${secureclassloader.present}" />
