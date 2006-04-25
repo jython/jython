@@ -246,12 +246,10 @@ class CommandLineOptions
 
     public void setProperty(String key, String value) {
         properties.put(key, value);
-        // This only works for Java 1.2.  There appears to be no portable
-        // way to support this under Java 1.1
-//         try {
-//             System.setProperty(key, value);
-//         }
-//         catch (SecurityException e) {}
+        try {
+            System.setProperty(key, value);
+        }
+        catch (SecurityException e) {}
     }
 
     public boolean parse(String[] args) {
