@@ -75,7 +75,7 @@ public class parser {
 
 
     public static Node parse(String string, String kind) {
-        return parse(new StringBufferInputStream(string),
+        return parse(new ByteArrayInputStream(string.getBytes()),
                      kind, "<string>", null);
     }
 
@@ -103,7 +103,7 @@ public class parser {
         modType node = null;        
         //System.err.println(new PyString(string).__repr__().toString());
 
-        BufferedReader bufreader = prepBufreader(new StringBufferInputStream(string),
+        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(string.getBytes()),
                                                  cflags);
         
         PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader),

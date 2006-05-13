@@ -1696,7 +1696,7 @@ public final class Py
                                        String type,CompilerFlags cflags)
     {
         return Py.compile_flags(
-            new java.io.StringBufferInputStream(data+"\n\n"),
+            new java.io.ByteArrayInputStream((data+"\n\n").getBytes()),
                           filename, type,cflags);
     }
 
