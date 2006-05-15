@@ -891,6 +891,8 @@ public final class Py
         Py.getSystemState().callExitFunc();
     }
 
+    //XXX: this needs review to make sure we are cutting out all of the Java
+    //     exceptions.
     private static String getStackTrace(Throwable javaError) {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         javaError.printStackTrace(new PrintStream(buf));
@@ -899,14 +901,14 @@ public final class Py
         int index = -1;
         if (index == -1)
             index = str.indexOf(
-                "at org.python.core.PyReflectedConstructor.call");
+                "at org.python.core.PyReflectedConstructor.__call__");
         if (index == -1)
-            index = str.indexOf("at org.python.core.PyReflectedMethod.call");
+            index = str.indexOf("at org.python.core.PyReflectedFunction.__call__");
         if (index == -1)
             index = str.indexOf(
-                "at org/python/core/PyReflectedConstructor.call");
+                "at org/python/core/PyReflectedConstructor.__call__");
         if (index == -1)
-            index = str.indexOf("at org/python/core/PyReflectedMethod.call");
+            index = str.indexOf("at org/python/core/PyReflectedFunction.__call__");
 
         if (index != -1)
             index = str.lastIndexOf("\n", index);
