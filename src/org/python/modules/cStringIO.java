@@ -47,8 +47,8 @@ public class cStringIO {
      */
     public static class StringIO extends PyObject {
         transient public boolean softspace = false;
-        transient public String name = "<cStringIO>";
-        transient public String mode = "w";
+        //transient public String name = "<cStringIO>";
+        //transient public String mode = "w";
         transient public boolean closed = false;
 
         transient private char[] buf;
@@ -117,7 +117,8 @@ public class cStringIO {
                 this.pos = (int)pos + this.pos;
             else if (mode == 2)
                 this.pos = (int)pos + count;
-            this.pos = Math.max(0, (int)pos);
+            else
+                this.pos = Math.max(0, (int)pos);
         }
 
         /**
