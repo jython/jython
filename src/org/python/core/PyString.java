@@ -3039,9 +3039,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     private byte[] getBytes() {
-        byte[] buf = new byte[string.length()];
-        string.getBytes(0, string.length(), buf, 0);
-        return buf;
+        return string.getBytes();
     }
 
     public Object __tojava__(Class c) {

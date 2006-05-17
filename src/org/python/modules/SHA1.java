@@ -496,7 +496,7 @@ public final class SHA1 {
     public String digest() {
         if (digestBits == null)
             digestBits = engineDigest();
-        return new String(digestBits, 0, 0, digestBits.length);
+        return new String(digestBits);
     }
 
     // XXX should become PyObject and use Py.idstr?
