@@ -6,8 +6,7 @@ package org.python.core;
  */
 public class PyString extends PyBaseString implements ClassDictInit
 {
-    //~ BEGIN GENERATED
-
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="str";
@@ -2628,7 +2627,7 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
         });
     }
-    //~ END GENERATED
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     private static final PyType STRTYPE = PyType.fromClass(PyString.class);
 
@@ -3039,7 +3038,12 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     private byte[] getBytes() {
-        return string.getBytes();
+        byte[] buf = new byte[string.length()];
+        string.getBytes(0, string.length(), buf, 0);
+        return buf;
+        //XXX: would rather not use above getBytes since it is deprecated,
+        //     but that breaks zlib.py -- need to figure out why and fix.
+        //return string.getBytes();
     }
 
     public Object __tojava__(Class c) {
