@@ -11,15 +11,14 @@ import java.text.MessageFormat;
  **/
 
 public class PyObject implements java.io.Serializable {
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
-    public static final String exposed_name = "object";
+    public static final String exposed_name="object";
 
-    public static void typeSetup(PyObject dict, PyType.Newstyle marker) {
-        dict.__setitem__("__class__", new PyGetSetDescr("__class__",
-                PyObject.class, "getType", null));
-        dict.__setitem__("__doc__", new PyGetSetDescr("__doc__",
-                PyObject.class, "getDoc", null));
+    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
+        dict.__setitem__("__class__",new PyGetSetDescr("__class__",PyObject.class,"getType",null));
+        dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyObject.class,"getDoc",null));
         class exposed___str__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -28,13 +27,13 @@ public class PyObject implements java.io.Serializable {
                 return self;
             }
 
-            exposed___str__(PyObject self, PyBuiltinFunction.Info info) {
+            exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
                 super(info);
-                this.self = self;
+                this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___str__((PyObject) self, info);
+                return new exposed___str__((PyObject)self,info);
             }
 
             public PyObject __call__() {
@@ -42,13 +41,12 @@ public class PyObject implements java.io.Serializable {
             }
 
             public PyObject inst_call(PyObject gself) {
-                PyObject self = (PyObject) gself;
+                PyObject self=(PyObject)gself;
                 return self.__repr__();
             }
 
         }
-        dict.__setitem__("__str__", new PyMethodDescr("__str__",
-                PyObject.class, 0, 0, new exposed___str__(null, null)));
+        dict.__setitem__("__str__",new PyMethodDescr("__str__",PyObject.class,0,0,new exposed___str__(null,null)));
         class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -57,60 +55,58 @@ public class PyObject implements java.io.Serializable {
                 return self;
             }
 
-            exposed___getattribute__(PyObject self, PyBuiltinFunction.Info info) {
+            exposed___getattribute__(PyObject self,PyBuiltinFunction.Info info) {
                 super(info);
-                this.self = self;
+                this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getattribute__((PyObject) self, info);
+                return new exposed___getattribute__((PyObject)self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    String name = (arg0.asName(0));
-                    PyObject ret = self.object___findattr__(name);
-                    if (ret == null)
+                    String name=(arg0.asName(0));
+                    PyObject ret=self.object___findattr__(name);
+                    if (ret==null)
                         self.noAttributeError(name);
                     return ret;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg = "attribute name must be string";
+                        msg="attribute name must be a string";
                         break;
                     default:
-                        msg = "xxx";
+                        msg="xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
-            public PyObject inst_call(PyObject gself, PyObject arg0) {
-                PyObject self = (PyObject) gself;
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyObject self=(PyObject)gself;
                 try {
-                    String name = (arg0.asName(0));
-                    PyObject ret = self.object___findattr__(name);
-                    if (ret == null)
+                    String name=(arg0.asName(0));
+                    PyObject ret=self.object___findattr__(name);
+                    if (ret==null)
                         self.noAttributeError(name);
                     return ret;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg = "attribute name must be string";
+                        msg="attribute name must be a string";
                         break;
                     default:
-                        msg = "xxx";
+                        msg="xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
         }
-        dict.__setitem__("__getattribute__", new PyMethodDescr(
-                "__getattribute__", PyObject.class, 1, 1,
-                new exposed___getattribute__(null, null)));
+        dict.__setitem__("__getattribute__",new PyMethodDescr("__getattribute__",PyObject.class,1,1,new exposed___getattribute__(null,null)));
         class exposed___setattr__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -119,54 +115,52 @@ public class PyObject implements java.io.Serializable {
                 return self;
             }
 
-            exposed___setattr__(PyObject self, PyBuiltinFunction.Info info) {
+            exposed___setattr__(PyObject self,PyBuiltinFunction.Info info) {
                 super(info);
-                this.self = self;
+                this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___setattr__((PyObject) self, info);
+                return new exposed___setattr__((PyObject)self,info);
             }
 
-            public PyObject __call__(PyObject arg0, PyObject arg1) {
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    self.object___setattr__(arg0.asName(0), arg1);
+                    self.object___setattr__(arg0.asName(0),arg1);
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg = "attribute name must be string";
+                        msg="attribute name must be a string";
                         break;
                     default:
-                        msg = "xxx";
+                        msg="xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
-            public PyObject inst_call(PyObject gself, PyObject arg0,
-                    PyObject arg1) {
-                PyObject self = (PyObject) gself;
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyObject self=(PyObject)gself;
                 try {
-                    self.object___setattr__(arg0.asName(0), arg1);
+                    self.object___setattr__(arg0.asName(0),arg1);
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg = "attribute name must be string";
+                        msg="attribute name must be a string";
                         break;
                     default:
-                        msg = "xxx";
+                        msg="xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
         }
-        dict.__setitem__("__setattr__", new PyMethodDescr("__setattr__",
-                PyObject.class, 2, 2, new exposed___setattr__(null, null)));
+        dict.__setitem__("__setattr__",new PyMethodDescr("__setattr__",PyObject.class,2,2,new exposed___setattr__(null,null)));
         class exposed___delattr__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -175,13 +169,13 @@ public class PyObject implements java.io.Serializable {
                 return self;
             }
 
-            exposed___delattr__(PyObject self, PyBuiltinFunction.Info info) {
+            exposed___delattr__(PyObject self,PyBuiltinFunction.Info info) {
                 super(info);
-                this.self = self;
+                this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___delattr__((PyObject) self, info);
+                return new exposed___delattr__((PyObject)self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
@@ -192,17 +186,17 @@ public class PyObject implements java.io.Serializable {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg = "attribute name must be string";
+                        msg="attribute name must be a string";
                         break;
                     default:
-                        msg = "xxx";
+                        msg="xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
-            public PyObject inst_call(PyObject gself, PyObject arg0) {
-                PyObject self = (PyObject) gself;
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyObject self=(PyObject)gself;
                 try {
                     self.object___delattr__(arg0.asName(0));
                     return Py.None;
@@ -210,18 +204,17 @@ public class PyObject implements java.io.Serializable {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg = "attribute name must be string";
+                        msg="attribute name must be a string";
                         break;
                     default:
-                        msg = "xxx";
+                        msg="xxx";
                     }
                     throw Py.TypeError(msg);
                 }
             }
 
         }
-        dict.__setitem__("__delattr__", new PyMethodDescr("__delattr__",
-                PyObject.class, 1, 1, new exposed___delattr__(null, null)));
+        dict.__setitem__("__delattr__",new PyMethodDescr("__delattr__",PyObject.class,1,1,new exposed___delattr__(null,null)));
         class exposed___hash__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -230,13 +223,13 @@ public class PyObject implements java.io.Serializable {
                 return self;
             }
 
-            exposed___hash__(PyObject self, PyBuiltinFunction.Info info) {
+            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
                 super(info);
-                this.self = self;
+                this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hash__((PyObject) self, info);
+                return new exposed___hash__((PyObject)self,info);
             }
 
             public PyObject __call__() {
@@ -244,13 +237,12 @@ public class PyObject implements java.io.Serializable {
             }
 
             public PyObject inst_call(PyObject gself) {
-                PyObject self = (PyObject) gself;
+                PyObject self=(PyObject)gself;
                 return new PyInteger(self.object_hashCode());
             }
 
         }
-        dict.__setitem__("__hash__", new PyMethodDescr("__hash__",
-                PyObject.class, 0, 0, new exposed___hash__(null, null)));
+        dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyObject.class,0,0,new exposed___hash__(null,null)));
         class exposed___repr__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -259,13 +251,13 @@ public class PyObject implements java.io.Serializable {
                 return self;
             }
 
-            exposed___repr__(PyObject self, PyBuiltinFunction.Info info) {
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
                 super(info);
-                this.self = self;
+                this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyObject) self, info);
+                return new exposed___repr__((PyObject)self,info);
             }
 
             public PyObject __call__() {
@@ -273,13 +265,12 @@ public class PyObject implements java.io.Serializable {
             }
 
             public PyObject inst_call(PyObject gself) {
-                PyObject self = (PyObject) gself;
+                PyObject self=(PyObject)gself;
                 return new PyString(self.object_toString());
             }
 
         }
-        dict.__setitem__("__repr__", new PyMethodDescr("__repr__",
-                PyObject.class, 0, 0, new exposed___repr__(null, null)));
+        dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyObject.class,0,0,new exposed___repr__(null,null)));
         class exposed___unicode__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -308,7 +299,6 @@ public class PyObject implements java.io.Serializable {
 
         }
         dict.__setitem__("__unicode__",new PyMethodDescr("__unicode__",PyObject.class,0,0,new exposed___unicode__(null,null)));
-
         class exposed___init__ extends PyBuiltinFunctionWide {
 
             private PyObject self;
@@ -317,56 +307,53 @@ public class PyObject implements java.io.Serializable {
                 return self;
             }
 
-            exposed___init__(PyObject self, PyBuiltinFunction.Info info) {
+            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
                 super(info);
-                this.self = self;
+                this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___init__((PyObject) self, info);
+                return new exposed___init__((PyObject)self,info);
             }
 
-            public PyObject inst_call(PyObject self, PyObject[] args) {
-                return inst_call(self, args, Py.NoKeywords);
+            public PyObject inst_call(PyObject self,PyObject[]args) {
+                return inst_call(self,args,Py.NoKeywords);
             }
 
-            public PyObject __call__(PyObject[] args) {
-                return __call__(args, Py.NoKeywords);
+            public PyObject __call__(PyObject[]args) {
+                return __call__(args,Py.NoKeywords);
             }
 
-            public PyObject __call__(PyObject[] args, String[] keywords) {
-                self.object_init(args, keywords);
+            public PyObject __call__(PyObject[]args,String[]keywords) {
+                self.object_init(args,keywords);
                 return Py.None;
             }
 
-            public PyObject inst_call(PyObject gself, PyObject[] args,
-                    String[] keywords) {
-                PyObject self = (PyObject) gself;
-                self.object_init(args, keywords);
+            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
+                PyObject self=(PyObject)gself;
+                self.object_init(args,keywords);
                 return Py.None;
             }
 
         }
-        dict.__setitem__("__init__", new PyMethodDescr("__init__",
-                PyObject.class, -1, -1, new exposed___init__(null, null)));
-        dict.__setitem__("__new__", new PyNewWrapper(PyObject.class, "__new__",
-                -1, -1) {
+        dict.__setitem__("__init__",new PyMethodDescr("__init__",PyObject.class,-1,-1,new exposed___init__(null,null)));
+        dict.__setitem__("__new__",new PyNewWrapper(PyObject.class,"__new__",-1,-1) {
 
-            public PyObject new_impl(boolean init, PyType subtype,
-                    PyObject[] args, String[] keywords) {
-                PyObject newobj;
-                if (for_type == subtype) {
-                    newobj = new PyObject();
-                    if (init)
-                        newobj.object_init(args, keywords);
-                } else {
-                    newobj = new PyObjectDerived(subtype);
-                }
-                return newobj;
-            }
+                                                                                        public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                            PyObject newobj;
+                                                                                            if (for_type==subtype) {
+                                                                                                newobj=new PyObject();
+                                                                                                if (init)
+                                                                                                    newobj.object_init(args,keywords);
+                                                                                            } else {
+                                                                                                newobj=new PyObjectDerived(subtype);
+                                                                                            }
+                                                                                            return newobj;
+                                                                                        }
 
-        });
+                                                                                    });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     final void object_init(PyObject[] args, String[] keywords) {
         // xxx
