@@ -2,6 +2,7 @@ package org.python.core;
 
 public class PyStaticMethod extends PyObject implements PyType.Newstyle {
 
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
     public final static String exposed_name = "staticmethod";
     
@@ -25,6 +26,7 @@ public class PyStaticMethod extends PyObject implements PyType.Newstyle {
             } // xxx subclassing
         });   
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     
     protected PyObject callable;
     
