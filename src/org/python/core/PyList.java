@@ -16,6 +16,7 @@ public class PyList extends PySequenceList {
 
     public static void classDictInit(PyObject dict) throws PyIgnoreMethodTag {}
 
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="list";
@@ -1038,6 +1039,7 @@ public class PyList extends PySequenceList {
 
         });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     public PyList() {
         this(Py.EmptyObjects);

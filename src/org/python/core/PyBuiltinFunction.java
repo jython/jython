@@ -2,6 +2,7 @@ package org.python.core;
 
 public abstract class PyBuiltinFunction extends PyObject implements PyType.Newstyle {
 
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="builtin_function_or_method";
@@ -14,6 +15,7 @@ public abstract class PyBuiltinFunction extends PyObject implements PyType.Newst
         dict.__setitem__("__doc__", new PyGetSetDescr("__doc__",
                 PyBuiltinFunction.class, "fastGetDoc", null));
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     public interface Info {
         String getName();

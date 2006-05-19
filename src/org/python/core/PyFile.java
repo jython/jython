@@ -596,7 +596,7 @@ public class PyFile extends PyObject
         }
     }
 
-    //~ BEGIN GENERATED
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="file";
@@ -1424,7 +1424,7 @@ public class PyFile extends PyObject
 
         });
     }
-    //~ END GENERATED
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     public String name;
     public String mode;

@@ -9,6 +9,7 @@ import java.io.Serializable;
 public class PyNone extends PyObject implements Serializable
 {
     
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="NoneType";
@@ -42,7 +43,6 @@ public class PyNone extends PyObject implements Serializable
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyNone.class,0,0,new exposed___repr__(null,null)));
-
         class exposed___nonzero__ extends PyBuiltinFunctionNarrow {
 
             private PyNone self;
@@ -72,6 +72,8 @@ public class PyNone extends PyObject implements Serializable
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyNone.class,0,0,new exposed___nonzero__(null,null)));
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
+
     private static final PyType NONETYPE = PyType.fromClass(PyNone.class);
 
     PyNone() {
