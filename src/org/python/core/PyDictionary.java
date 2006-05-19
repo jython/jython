@@ -10,6 +10,7 @@ import java.util.Enumeration;
 
 public class PyDictionary extends PyObject {
 
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="dict";
@@ -119,6 +120,40 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("__cmp__",new PyMethodDescr("__cmp__",PyDictionary.class,1,1,new exposed___cmp__(null,null)));
+        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
+
+            private PyDictionary self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getitem__(PyDictionary self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getitem__((PyDictionary)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=self.dict___finditem__(arg0);
+                if (ret==null)
+                    throw Py.KeyError(arg0.toString());
+                return ret;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyDictionary self=(PyDictionary)gself;
+                PyObject ret=self.dict___finditem__(arg0);
+                if (ret==null)
+                    throw Py.KeyError(arg0.toString());
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyDictionary.class,1,1,new exposed___getitem__(null,null)));
         class exposed_fromkeys extends PyBuiltinFunctionNarrow {
 
             private PyDictionary self;
@@ -156,42 +191,6 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("fromkeys",new PyMethodDescr("fromkeys",PyDictionary.class,1,2,new exposed_fromkeys(null,null)));
-
-
-        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
-
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___getitem__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getitem__((PyDictionary)self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.dict___finditem__(arg0);
-                if (ret==null)
-                    throw Py.KeyError(arg0.toString());
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                PyObject ret=self.dict___finditem__(arg0);
-                if (ret==null)
-                    throw Py.KeyError(arg0.toString());
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyDictionary.class,1,1,new exposed___getitem__(null,null)));
         class exposed_get extends PyBuiltinFunctionNarrow {
 
             private PyDictionary self;
@@ -303,7 +302,6 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("pop",new PyMethodDescr("pop",PyDictionary.class,1,2,new exposed_pop(null,null)));
-
         class exposed_popitem extends PyBuiltinFunctionNarrow {
 
             private PyDictionary self;
@@ -732,6 +730,34 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("copy",new PyMethodDescr("copy",PyDictionary.class,0,0,new exposed_copy(null,null)));
+        class exposed___iter__ extends PyBuiltinFunctionNarrow {
+
+            private PyDictionary self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___iter__(PyDictionary self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___iter__((PyDictionary)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.dict___iter__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyDictionary self=(PyDictionary)gself;
+                return self.dict___iter__();
+            }
+
+        }
+        dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyDictionary.class,0,0,new exposed___iter__(null,null)));
         class exposed___hash__ extends PyBuiltinFunctionNarrow {
 
             private PyDictionary self;
@@ -788,34 +814,6 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyDictionary.class,0,0,new exposed___repr__(null,null)));
-        class exposed___iter__ extends PyBuiltinFunctionNarrow {
-
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___iter__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___iter__((PyDictionary)self,info);
-            }
-
-            public PyObject __call__() {
-                return self.dict___iter__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict___iter__();
-            }
-
-        }
-        dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyDictionary.class,0,0,new exposed___iter__(null,null)));
         class exposed___init__ extends PyBuiltinFunctionWide {
 
             private PyDictionary self;
@@ -856,19 +854,21 @@ public class PyDictionary extends PyObject {
         dict.__setitem__("__init__",new PyMethodDescr("__init__",PyDictionary.class,-1,-1,new exposed___init__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyDictionary.class,"__new__",-1,-1) {
 
-        public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-            PyDictionary newobj;
-            if (for_type==subtype) {
-                newobj=new PyDictionary();
-                if (init)
-                    newobj.dict_init(args,keywords);
-            } else {
-                newobj=new PyDictionaryDerived(subtype);
-            }
-            return newobj;
-        }
-        });
+                                                                                            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                                PyDictionary newobj;
+                                                                                                if (for_type==subtype) {
+                                                                                                    newobj=new PyDictionary();
+                                                                                                    if (init)
+                                                                                                        newobj.dict_init(args,keywords);
+                                                                                                } else {
+                                                                                                    newobj=new PyDictionaryDerived(subtype);
+                                                                                                }
+                                                                                                return newobj;
+                                                                                            }
+
+                                                                                        });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     protected Hashtable table;
 
