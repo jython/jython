@@ -7,6 +7,7 @@ public class PyEnumerate extends PyIterator {
     private PyTuple en_result;      /* result tuple  */
     protected static PyObject __methods__;
     
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="enumerate";
@@ -71,11 +72,14 @@ public class PyEnumerate extends PyIterator {
         }
         dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyEnumerate.class,0,0,new exposed___iter__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyEnumerate.class,"__new__",-1,-1) {
-            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                return enumerate_new(this,init,subtype,args,keywords);
-            }
-       });
+
+                                                                                           public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                               return enumerate_new(this,init,subtype,args,keywords);
+                                                                                           }
+
+                                                                                       });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     
     public PyObject enumerate_next() {
         return next();
