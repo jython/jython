@@ -1,6 +1,7 @@
 package org.python.core;
 
 public class PyProperty extends PyObject implements PyType.Newstyle {
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name = "property";
@@ -182,6 +183,7 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
 
         });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     protected PyObject fget;
     protected PyObject fset;
