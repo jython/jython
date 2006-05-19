@@ -17,6 +17,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
     /** <i>Internal use only. Do not call this method explicit.</i> */
     public static void classDictInit(PyObject dict)throws PyIgnoreMethodTag {}
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="tuple";
@@ -292,6 +293,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
                 }
             });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     private static final PyType TUPLETYPE = PyType.fromClass(PyTuple.class);
 
