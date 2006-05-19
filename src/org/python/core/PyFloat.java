@@ -9,6 +9,7 @@ import java.io.Serializable;
 
 public class PyFloat extends PyObject
 {
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="float";
@@ -890,11 +891,14 @@ public class PyFloat extends PyObject
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyFloat.class,0,0,new exposed___hash__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyFloat.class,"__new__",-1,-1) {
-               public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                   return float_new(this,init,subtype,args,keywords);
-               }
-        });
+
+                                                                                       public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                           return float_new(this,init,subtype,args,keywords);
+                                                                                       }
+
+                                                                                   });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     public static PyObject float_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
