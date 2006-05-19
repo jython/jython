@@ -14,6 +14,7 @@ import java.util.Iterator;
  *
  */
 public class PyType extends PyObject implements Serializable {
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name = "type";
@@ -277,6 +278,7 @@ public class PyType extends PyObject implements Serializable {
 
         });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     public static PyObject type_new(PyObject new_, boolean init,
             PyType subtype, PyObject[] args, String[] keywords) {
