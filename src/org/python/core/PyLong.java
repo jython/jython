@@ -18,6 +18,7 @@ public class PyLong extends PyObject
     public static final BigInteger maxULong =
         BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));
 
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="long";
@@ -1130,6 +1131,7 @@ public class PyLong extends PyObject
             }
         });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     private BigInteger value;
 
