@@ -1,6 +1,7 @@
 package org.python.core;
 
 public class PySuper extends PyObject implements PyType.Newstyle {
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="super";
@@ -168,6 +169,7 @@ public class PySuper extends PyObject implements PyType.Newstyle {
 
                                                                                    });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
    
     protected PyType thisClass;
     protected PyObject self;
