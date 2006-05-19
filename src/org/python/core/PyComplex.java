@@ -10,6 +10,7 @@ public class PyComplex extends PyObject {
 
     static PyComplex J = new PyComplex(0, 1.);
 
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="complex";
@@ -457,7 +458,7 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rdiv__",new PyMethodDescr("__rdiv__",PyComplex.class,1,1,new exposed___rdiv__(null,null)));
-        class exposed__rdivmod__ extends PyBuiltinFunctionNarrow {
+        class exposed___rdivmod__ extends PyBuiltinFunctionNarrow {
 
             private PyComplex self;
 
@@ -465,13 +466,13 @@ public class PyComplex extends PyObject {
                 return self;
             }
 
-            exposed__rdivmod__(PyComplex self,PyBuiltinFunction.Info info) {
+            exposed___rdivmod__(PyComplex self,PyBuiltinFunction.Info info) {
                 super(info);
                 this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed__rdivmod__((PyComplex)self,info);
+                return new exposed___rdivmod__((PyComplex)self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
@@ -490,7 +491,7 @@ public class PyComplex extends PyObject {
             }
 
         }
-        dict.__setitem__("_rdivmod__",new PyMethodDescr("_rdivmod__",PyComplex.class,1,1,new exposed__rdivmod__(null,null)));
+        dict.__setitem__("__rdivmod__",new PyMethodDescr("__rdivmod__",PyComplex.class,1,1,new exposed___rdivmod__(null,null)));
         class exposed___rfloordiv__ extends PyBuiltinFunctionNarrow {
 
             private PyComplex self;
@@ -954,12 +955,13 @@ public class PyComplex extends PyObject {
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyComplex.class,0,0,new exposed___hash__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyComplex.class,"__new__",-1,-1) {
 
-            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                return complex_new(this,init,subtype,args,keywords);
-            }
+                                                                                         public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                             return complex_new(this,init,subtype,args,keywords);
+                                                                                         }
 
-        });
+                                                                                     });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     public static PyObject complex_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
