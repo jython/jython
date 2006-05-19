@@ -516,7 +516,6 @@ public class PyList extends PySequenceList {
 
         }
         dict.__setitem__("index",new PyMethodDescr("index",PyList.class,1,3,new exposed_index(null,null)));
-
         class exposed_insert extends PyBuiltinFunctionNarrow {
 
             private PyList self;
@@ -1025,19 +1024,19 @@ public class PyList extends PySequenceList {
         dict.__setitem__("__init__",new PyMethodDescr("__init__",PyList.class,-1,-1,new exposed___init__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyList.class,"__new__",-1,-1) {
 
-            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                PyList newobj;
-                if (for_type==subtype) {
-                    newobj=new PyList();
-                    if (init)
-                        newobj.list_init(args,keywords);
-                } else {
-                    newobj=new PyListDerived(subtype);
-                }
-                return newobj;
-            }
+                                                                                      public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                          PyList newobj;
+                                                                                          if (for_type==subtype) {
+                                                                                              newobj=new PyList();
+                                                                                              if (init)
+                                                                                                  newobj.list_init(args,keywords);
+                                                                                          } else {
+                                                                                              newobj=new PyListDerived(subtype);
+                                                                                          }
+                                                                                          return newobj;
+                                                                                      }
 
-        });
+                                                                                  });
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 

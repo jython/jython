@@ -1126,10 +1126,12 @@ public class PyLong extends PyObject
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyLong.class,0,0,new exposed___hash__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyLong.class,"__new__",-1,-1) {
-            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-              return long_new(this,init,subtype,args,keywords);
-            }
-        });
+
+                                                                                      public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                          return long_new(this,init,subtype,args,keywords);
+                                                                                      }
+
+                                                                                  });
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
