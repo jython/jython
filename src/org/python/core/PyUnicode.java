@@ -7,8 +7,7 @@ package org.python.core;
 public class PyUnicode extends PyString {
     public static final Class exposed_base=PyBaseString.class;
 
-    //~ BEGIN GENERATED
-
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="unicode";
@@ -2621,7 +2620,7 @@ public class PyUnicode extends PyString {
 
                                                                                      });
     }
-    //~ END GENERATED
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
     //XXX: probably don't need these.
     //private String string;
