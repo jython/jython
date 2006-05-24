@@ -270,8 +270,17 @@ public class PyList extends PySequenceList {
                 return self.seq___getslice__(arg0,arg1,arg2);
             }
 
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                return self.seq___getslice__(arg0,arg1);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyList self=(PyList)gself;
+                return self.seq___getslice__(arg0,arg1);
+            }
+
         }
-        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyList.class,3,3,new exposed___getslice__(null,null)));
+        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyList.class,2,3,new exposed___getslice__(null,null)));
         class exposed___delslice__ extends PyBuiltinFunctionNarrow {
 
             private PyList self;
@@ -330,8 +339,19 @@ public class PyList extends PySequenceList {
                 return Py.None;
             }
 
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                self.seq___setslice__(arg0,arg1,arg2);
+                return Py.None;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyList self=(PyList)gself;
+                self.seq___setslice__(arg0,arg1,arg2);
+                return Py.None;
+            }
+
         }
-        dict.__setitem__("__setslice__",new PyMethodDescr("__setslice__",PyList.class,4,4,new exposed___setslice__(null,null)));
+        dict.__setitem__("__setslice__",new PyMethodDescr("__setslice__",PyList.class,3,4,new exposed___setslice__(null,null)));
         class exposed_append extends PyBuiltinFunctionNarrow {
 
             private PyList self;

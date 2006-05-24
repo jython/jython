@@ -414,6 +414,12 @@ abstract public class PySequence extends PyObject {
     }
 
     final synchronized PyObject seq___getslice__(PyObject s_start,
+                                              PyObject s_stop)
+    {
+        return seq___getslice__(s_start,s_stop,null);
+    }
+
+    final synchronized PyObject seq___getslice__(PyObject s_start,
                                               PyObject s_stop,
                                               PyObject s_step)
     {
@@ -428,7 +434,11 @@ abstract public class PySequence extends PyObject {
                                           PyObject s_step, PyObject value) {
         seq___setslice__(s_start,s_stop,s_step,value);
     }
-
+    final synchronized void seq___setslice__(PyObject s_start, PyObject s_stop,
+                                          PyObject value)
+    {
+        seq___setslice__(s_start,s_stop,null,value);
+    }
     final synchronized void seq___setslice__(PyObject s_start, PyObject s_stop,
                                           PyObject s_step, PyObject value)
     {

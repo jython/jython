@@ -938,7 +938,7 @@ public class PyDictionary extends PyObject {
                     }
                     int n;
                     if ((n = pair.__len__()) != 2) {
-                        throw Py.TypeError("dictionary update sequence element #"+cnt+
+                        throw Py.ValueError("dictionary update sequence element #"+cnt+
                              " has length "+n+"; 2 is required");
                     }
                     this.__setitem__(pair.__getitem__(0),pair.__getitem__(1));

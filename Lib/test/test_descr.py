@@ -1,5 +1,11 @@
 # Test enhancements related to descriptors and new-style classes
 
+# modified from CPython version by:
+#    - removed the tests classmethods_in_c, staticmethods_in_c, spamlists, and spamdicts which
+#      depend on the c extension module xxsubtype 
+#    - merged code from the pypy version of this script to run all tests instead of stopping
+#      at the first failure
+
 from test.test_support import verify, vereq, verbose, TestFailed, TESTFN, get_original_stdout
 from copy import deepcopy
 import warnings
@@ -510,87 +516,6 @@ def complexes():
     a = Number(234.5)
     vereq(`a`, "234.5")
     vereq(a.prec, 12)
-
-def spamlists():
-    if verbose: print "Testing spamlist operations..."
-    import copy, xxsubtype as spam
-    def spamlist(l, memo=None):
-        import xxsubtype as spam
-        return spam.spamlist(l)
-    # This is an ugly hack:
-    copy._deepcopy_dispatch[spam.spamlist] = spamlist
-
-    testbinop(spamlist([1]), spamlist([2]), spamlist([1,2]), "a+b", "__add__")
-    testbinop(spamlist([1,2,3]), 2, 1, "b in a", "__contains__")
-    testbinop(spamlist([1,2,3]), 4, 0, "b in a", "__contains__")
-    testbinop(spamlist([1,2,3]), 1, 2, "a[b]", "__getitem__")
-    testternop(spamlist([1,2,3]), 0, 2, spamlist([1,2]),
-               "a[b:c]", "__getslice__")
-    testsetop(spamlist([1]), spamlist([2]), spamlist([1,2]),
-              "a+=b", "__iadd__")
-    testsetop(spamlist([1,2]), 3, spamlist([1,2,1,2,1,2]), "a*=b", "__imul__")
-    testunop(spamlist([1,2,3]), 3, "len(a)", "__len__")
-    testbinop(spamlist([1,2]), 3, spamlist([1,2,1,2,1,2]), "a*b", "__mul__")
-    testbinop(spamlist([1,2]), 3, spamlist([1,2,1,2,1,2]), "b*a", "__rmul__")
-    testset2op(spamlist([1,2]), 1, 3, spamlist([1,3]), "a[b]=c", "__setitem__")
-    testset3op(spamlist([1,2,3,4]), 1, 3, spamlist([5,6]),
-               spamlist([1,5,6,4]), "a[b:c]=d", "__setslice__")
-    # Test subclassing
-    class C(spam.spamlist):
-        def foo(self): return 1
-    a = C()
-    vereq(a, [])
-    vereq(a.foo(), 1)
-    a.append(100)
-    vereq(a, [100])
-    vereq(a.getstate(), 0)
-    a.setstate(42)
-    vereq(a.getstate(), 42)
-
-def spamdicts():
-    if verbose: print "Testing spamdict operations..."
-    import copy, xxsubtype as spam
-    def spamdict(d, memo=None):
-        import xxsubtype as spam
-        sd = spam.spamdict()
-        for k, v in d.items(): sd[k] = v
-        return sd
-    # This is an ugly hack:
-    copy._deepcopy_dispatch[spam.spamdict] = spamdict
-
-    testbinop(spamdict({1:2}), spamdict({2:1}), -1, "cmp(a,b)", "__cmp__")
-    testbinop(spamdict({1:2,3:4}), 1, 1, "b in a", "__contains__")
-    testbinop(spamdict({1:2,3:4}), 2, 0, "b in a", "__contains__")
-    testbinop(spamdict({1:2,3:4}), 1, 2, "a[b]", "__getitem__")
-    d = spamdict({1:2,3:4})
-    l1 = []
-    for i in d.keys(): l1.append(i)
-    l = []
-    for i in iter(d): l.append(i)
-    vereq(l, l1)
-    l = []
-    for i in d.__iter__(): l.append(i)
-    vereq(l, l1)
-    l = []
-    for i in type(spamdict({})).__iter__(d): l.append(i)
-    vereq(l, l1)
-    straightd = {1:2, 3:4}
-    spamd = spamdict(straightd)
-    testunop(spamd, 2, "len(a)", "__len__")
-    testunop(spamd, repr(straightd), "repr(a)", "__repr__")
-    testset2op(spamdict({1:2,3:4}), 2, 3, spamdict({1:2,2:3,3:4}),
-               "a[b]=c", "__setitem__")
-    # Test subclassing
-    class C(spam.spamdict):
-        def foo(self): return 1
-    a = C()
-    vereq(a.items(), [])
-    vereq(a.foo(), 1)
-    a['foo'] = 'bar'
-    vereq(a.items(), [('foo', 'bar')])
-    vereq(a.getstate(), 0)
-    a.setstate(100)
-    vereq(a.getstate(), 100)
 
 def pydicts():
     if verbose: print "Testing Python subclass of dict..."
@@ -1493,20 +1418,6 @@ def classmethods():
     else:
         raise TestFailed, "classmethod should check for callability"
 
-def classmethods_in_c():
-    if verbose: print "Testing C-based class methods..."
-    import xxsubtype as spam
-    a = (1, 2, 3)
-    d = {'abc': 123}
-    x, a1, d1 = spam.spamlist.classmeth(*a, **d)
-    veris(x, spam.spamlist)
-    vereq(a, a1)
-    vereq(d, d1)
-    x, a1, d1 = spam.spamlist().classmeth(*a, **d)
-    veris(x, spam.spamlist)
-    vereq(a, a1)
-    vereq(d, d1)
-
 def staticmethods():
     if verbose: print "Testing static methods..."
     class C(object):
@@ -1523,20 +1434,6 @@ def staticmethods():
     vereq(d.goo(1), (1,))
     vereq(d.foo(1), (d, 1))
     vereq(D.foo(d, 1), (d, 1))
-
-def staticmethods_in_c():
-    if verbose: print "Testing C-based static methods..."
-    import xxsubtype as spam
-    a = (1, 2, 3)
-    d = {"abc": 123}
-    x, a1, d1 = spam.spamlist.staticmeth(*a, **d)
-    veris(x, None)
-    vereq(a, a1)
-    vereq(d, d1)
-    x, a1, d2 = spam.spamlist().staticmeth(*a, **d)
-    veris(x, None)
-    vereq(a, a1)
-    vereq(d, d1)
 
 def classic():
     if verbose: print "Testing classic classes..."
@@ -3953,98 +3850,114 @@ def filefault():
         pass
 
 def test_main():
-    weakref_segfault() # Must be first, somehow
-    do_this_first()
-    class_docstrings()
-    lists()
-    dicts()
-    dict_constructor()
-    test_dir()
-    ints()
-    longs()
-    floats()
-    complexes()
-    spamlists()
-    spamdicts()
-    pydicts()
-    pylists()
-    metaclass()
-    pymods()
-    multi()
-    mro_disagreement()
-    diamond()
-    ex5()
-    monotonicity()
-    consistency_with_epg()
-    objects()
-    slots()
-    slotspecials()
-    dynamics()
-    errors()
-    classmethods()
-    classmethods_in_c()
-    staticmethods()
-    staticmethods_in_c()
-    classic()
-    compattr()
-    newslot()
-    altmro()
-    overloading()
-    methods()
-    specials()
-    weakrefs()
-    properties()
-    supers()
-    inherits()
-    keywords()
-    restricted()
-    str_subclass_as_dict_key()
-    classic_comparisons()
-    rich_comparisons()
-    coercions()
-    descrdoc()
-    setclass()
-    setdict()
-    pickles()
-    copies()
-    binopoverride()
-    subclasspropagation()
-    buffer_inherit()
-    str_of_str_subclass()
-    kwdargs()
-    delhook()
-    hashinherit()
-    strops()
-    deepcopyrecursive()
-    modules()
-    dictproxyiterkeys()
-    dictproxyitervalues()
-    dictproxyiteritems()
-    pickleslots()
-    funnynew()
-    imulbug()
-    docdescriptor()
-    string_exceptions()
-    copy_setstate()
-    slices()
-    subtype_resurrection()
-    slottrash()
-    slotmultipleinheritance()
-    testrmul()
-    testipow()
-    test_mutable_bases()
-    test_mutable_bases_with_failing_mro()
-    test_mutable_bases_catch_mro_conflict()
-    mutable_names()
-    subclass_right_op()
-    dict_type_with_metaclass()
-    meth_class_get()
-    isinst_isclass()
-    proxysuper()
-    carloverre()
-    filefault()
+    testfuncs = [
+    weakref_segfault, # Must be first, somehow
+    do_this_first,
+    class_docstrings,
+    lists,
+    dicts,
+    dict_constructor,
+    test_dir,
+    ints,
+    longs,
+    floats,
+    complexes,
+    pydicts,
+    pylists,
+    metaclass,
+    pymods,
+    multi,
+    mro_disagreement,
+    diamond,
+    ex5,
+    monotonicity,
+    consistency_with_epg,
+    objects,
+    slots,
+    slotspecials,
+    dynamics,
+    errors,
+    classmethods,
+    staticmethods,
+    classic,
+    compattr,
+    newslot,
+    altmro,
+    overloading,
+    methods,
+    specials,
+    weakrefs,
+    properties,
+    supers,
+    inherits,
+    keywords,
+    restricted,
+    str_subclass_as_dict_key,
+    classic_comparisons,
+    rich_comparisons,
+    coercions,
+    descrdoc,
+    setclass,
+    setdict,
+    pickles,
+    copies,
+    binopoverride,
+    subclasspropagation,
+    buffer_inherit,
+    str_of_str_subclass,
+    kwdargs,
+    delhook,
+    hashinherit,
+    strops,
+    deepcopyrecursive,
+    modules,
+    dictproxyiterkeys,
+    dictproxyitervalues,
+    dictproxyiteritems,
+    pickleslots,
+    funnynew,
+    imulbug,
+    docdescriptor,
+    string_exceptions,
+    copy_setstate,
+    slices,
+    subtype_resurrection,
+    slottrash,
+    slotmultipleinheritance,
+    testrmul,
+    testipow,
+    test_mutable_bases,
+    test_mutable_bases_with_failing_mro,
+    test_mutable_bases_catch_mro_conflict,
+    mutable_names,
+    subclass_right_op,
+    dict_type_with_metaclass,
+    meth_class_get,
+    isinst_isclass,
+    proxysuper,
+    carloverre,
+    filefault,
+    ]
 
-    if verbose: print "All OK"
+    n = len(testfuncs)
+    success = 0
+
+    for testfunc in testfuncs:
+        try:
+            print "*"*40
+            testfunc()
+        except Exception, e:
+            if isinstance(e, KeyboardInterrupt):
+                raise
+            print "-->", testfunc.__name__, "FAILURE(%d/%d)" % (success, n), str(e)
+        else:
+            success += 1
+            print "-->", testfunc.__name__, "OK(%d/%d)" % (success, n)
+
+    if n != success:
+        raise TestFailed, "%d/%d" % (success, n)
+    else:
+        if verbose: print "All OK"
 
 if __name__ == "__main__":
     test_main()
