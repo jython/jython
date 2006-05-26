@@ -12,9 +12,8 @@ public class PyIntegerDerived extends PyInteger {
         return dict;
     }
 
-    //XXX: hand modified to pass v into super
-    public PyIntegerDerived(PyType subtype, int v) {
-        super(subtype, v);
+    public PyIntegerDerived(PyType subtype,int v) {
+        super(subtype,v);
         dict=subtype.instDict();
     }
 
@@ -40,6 +39,18 @@ public class PyIntegerDerived extends PyInteger {
             throw Py.TypeError("__repr__"+" should return a "+"string");
         }
         return super.__repr__();
+    }
+
+    public PyUnicode __unicode__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__unicode__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyUnicode)
+                return(PyUnicode)res;
+            throw Py.TypeError("__unicode__"+" should return a "+"unicode");
+        }
+        return super.__unicode__();
     }
 
     public PyString __hex__() {
@@ -144,6 +155,19 @@ public class PyIntegerDerived extends PyInteger {
         if (impl!=null)
             return impl.__get__(this,self_type).__call__();
         return super.__invert__();
+    }
+
+    public PyObject __reduce__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__reduce__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__();
+        return new PyTuple(new PyObject[]{
+            getType(),
+            new PyTuple(new PyObject[]{
+                new PyString("x")
+            })
+        });
     }
 
     public PyObject __add__(PyObject other) {
@@ -777,6 +801,35 @@ public class PyIntegerDerived extends PyInteger {
             return;
         }
         super.__setitem__(key,value);
+    }
+
+    public PyObject __getitem__(PyObject key) { // ???
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getitem__");
+        if (impl!=null) {
+            try {
+                return impl.__get__(this,self_type).__call__(key);
+            } catch (PyException exc) {
+                if (Py.matchException(exc,Py.LookupError))
+                    return null;
+                throw exc;
+            }
+        }
+        return super.__getitem__(key);
+    }
+
+    public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getslice__");
+        if (impl!=null)
+            try {
+                return impl.__get__(this,self_type).__call__(start,stop);
+            } catch (PyException exc) {
+                if (Py.matchException(exc,Py.LookupError))
+                    return null;
+                throw exc;
+            }
+        return super.__getslice__(start,stop,step);
     }
 
     public void __delitem__(PyObject key) { // ???

@@ -128,7 +128,12 @@ class TestSubclasses(unittest.TestCase):
         self.assertEqual(SubSubStrSpam().eggs(), "I am eggs.")
         self.assertEqual(SubSubStrSpam2().eggs(), "I am eggs.")
 
+    def test_pickle_builtins(self):
+       class myint(int):
+            def __init__(self, x):
+                self.str = str(x)
 
+ 
 def test_suite():
     allsuites = [unittest.makeSuite(klass, 'test')
                  for klass in (TestSubclasses,
