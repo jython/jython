@@ -19,6 +19,34 @@ public class PyObject implements java.io.Serializable {
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
         dict.__setitem__("__class__",new PyGetSetDescr("__class__",PyObject.class,"getType",null));
         dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyObject.class,"getDoc",null));
+        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___reduce__((PyObject)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.object___reduce__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyObject self=(PyObject)gself;
+                return self.object___reduce__();
+            }
+
+        }
+        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyObject.class,0,0,new exposed___reduce__(null,null)));
         class exposed___str__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -2880,6 +2908,27 @@ public class PyObject implements java.io.Serializable {
             readonlyAttributeError(name);
 
         noAttributeError(name);
+    }
+
+    /**
+     * Used for pickling.
+     *
+     * @return a tuple of (class, tuple)
+     */
+    public PyObject __reduce__() {
+        return object___reduce__();
+    }
+
+    final PyObject object___reduce__() {
+        PyTuple newargs = __getnewargs__();
+        return new PyTuple(new PyObject[]{
+            getType(), newargs
+        });
+    }
+
+    public PyTuple __getnewargs__() {
+        //default is empty tuple
+        return new PyTuple();
     }
 
     /* arguments' conversion helpers */

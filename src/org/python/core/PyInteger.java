@@ -1820,7 +1820,7 @@ public class PyInteger extends PyObject {
         return int___reduce__();
     }
 
-    public PyObject int___reduce__() {
+    final PyObject int___reduce__() {
         return new PyTuple(new PyObject[]{
             getType(),
             new PyTuple(new PyObject[]{

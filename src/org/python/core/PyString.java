@@ -192,6 +192,34 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyString.class,1,1,new exposed___mul__(null,null)));
+        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___reduce__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___reduce__((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.str___reduce__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return self.str___reduce__();
+            }
+
+        }
+        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyString.class,0,0,new exposed___reduce__(null,null)));
         class exposed___rmul__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -1435,8 +1463,9 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
 
             public PyObject __call__(PyObject arg0) {
-                String result = self.str_join(arg0);
-                if (self instanceof PyUnicode || arg0 instanceof PyUnicode) {
+                String result=self.str_join(arg0);
+                //XXX: do we really need to check self?
+                if (self instanceof PyUnicode||arg0 instanceof PyUnicode) {
                     return new PyUnicode(result);
                 } else {
                     return new PyString(result);
@@ -1445,8 +1474,9 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyString self=(PyString)gself;
-                String result = self.str_join(arg0);
-                if (self instanceof PyUnicode || arg0 instanceof PyUnicode) {
+                String result=self.str_join(arg0);
+                //XXX: do we really need to check self?
+                if (self instanceof PyUnicode||arg0 instanceof PyUnicode) {
                     return new PyUnicode(result);
                 } else {
                     return new PyString(result);
@@ -2622,10 +2652,12 @@ public class PyString extends PyBaseString implements ClassDictInit
         }
         dict.__setitem__("zfill",new PyMethodDescr("zfill",PyString.class,1,1,new exposed_zfill(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyString.class,"__new__",-1,-1) {
-            public PyObject new_impl(boolean init, PyType subtype, PyObject[] args, String[] keywords) {
-                return str_new(this, init, subtype, args, keywords);
-            }
-        });
+
+                                                                                        public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                            return str_new(this,init,subtype,args,keywords);
+                                                                                        }
+
+                                                                                    });
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
@@ -3139,6 +3171,26 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
         }
         else return null;
+    }
+
+    /**
+     * Used for pickling.
+     *
+     * @return a tuple of (class, tuple)
+     */
+    public PyObject __reduce__() {
+        return str___reduce__();
+    }
+
+    final PyObject str___reduce__() {
+        return object___reduce__();
+    }
+
+    public PyTuple __getnewargs__() {
+        return new PyTuple(new PyObject[]{
+            new PyString(str_toString())
+            }
+        );
     }
 
     //XXX: PyUnicode?

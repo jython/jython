@@ -202,6 +202,7 @@ Instead, you can get the same information from the list type:
      '__new__',
      '__nonzero__',
      '__radd__',
+     '__reduce__',
      '__repr__',
      '__rmul__',
      '__setattr__',

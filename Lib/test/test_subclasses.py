@@ -1,4 +1,52 @@
 import test_support, unittest
+import pickle
+    
+#myint and its test taken from pickletester, the other "my" classes and tests
+#      are based on it.
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
+class mystr(str):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myobject(object):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
+class myint(int):
+    def __init__(self, x):
+        self.str = str(x)
+
 
 class TestSubclasses(unittest.TestCase):
 
@@ -128,12 +176,17 @@ class TestSubclasses(unittest.TestCase):
         self.assertEqual(SubSubStrSpam().eggs(), "I am eggs.")
         self.assertEqual(SubSubStrSpam2().eggs(), "I am eggs.")
 
-    def test_pickle_builtins(self):
-       class myint(int):
-            def __init__(self, x):
-                self.str = str(x)
-
+    def picklecheck(self, picklee):
+        s = pickle.dumps(picklee)
+        y = pickle.loads(s)
+        self.assertEqual(picklee, y)
  
+    def test_pickle_builtins(self):
+        #ignores cPickle for now.
+
+        self.picklecheck(myint(4))
+        self.picklecheck(mystr('x'))
+  
 def test_suite():
     allsuites = [unittest.makeSuite(klass, 'test')
                  for klass in (TestSubclasses,
