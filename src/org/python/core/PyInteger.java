@@ -1824,7 +1824,7 @@ public class PyInteger extends PyObject {
         return new PyTuple(new PyObject[]{
             getType(),
             new PyTuple(new PyObject[]{
-                new PyString(int_toString())
+                new PyInteger(getValue())
             })
         });
     }

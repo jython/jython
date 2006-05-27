@@ -11,7 +11,7 @@ class mystr(str):
     def __init__(self, x):
         self.str = str(x)
 
-class myobject(object):
+class mytuple(tuple):
     def __init__(self, x):
         self.str = str(x)
 
@@ -186,6 +186,7 @@ class TestSubclasses(unittest.TestCase):
 
         self.picklecheck(myint(4))
         self.picklecheck(mystr('x'))
+        self.picklecheck(mytuple([1,2]))
   
 def test_suite():
     allsuites = [unittest.makeSuite(klass, 'test')
