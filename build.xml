@@ -110,8 +110,23 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 #svn.tag=Release_2_2alpha2
 svn.tag=HEAD
 
-# - the directory containing javahl .dll (on windows) and .jar; only needed for full-build
+# - the directory containing libsvnjavahl-1.dll (on windows) and svnjavahl.jar; only needed for full-build
+# how to get these:
+#   - download http://subversion.tigris.org/files/documents/15/31073/svn-win32-1.3.1_javahl.zip (or newer)
+#   - unzip the .dll and .jar into javahl.dir
 javahl.dir=C:/Programme/Subversion/javahl
+
+# - the directory containing the svnant related .jar files; only needed for full-build
+# the following .jar files (probably) are needed:
+#   - commons-lang-2.0.jar
+#   - jakarta-regexp-1.3.jar
+#   - svnant.jar
+#   - svnClientAdapter.jar
+#   - svnjavahl.jar
+# how to get these:
+#   - download http://subclipse.tigris.org/files/documents/906/23927/svnant-1.0.0-rc1.zip (or newer)
+#   - unzip the jar files from /lib folder to svnant.jar.dir
+svnant.jar.dir=${basedir}/../externals/svnant-jars
         </echo>
     </target>
 
@@ -205,6 +220,17 @@ javahl.dir=C:/Programme/Subversion/javahl
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
         </condition>
+    	
+        <!-- classpath for svn ant task -->
+        <path id="svn.classpath">
+            <pathelement path="${java.class.path}" />
+            <fileset dir="${svnant.jar.dir}">
+              <include name="*.jar"/>
+            </fileset>
+        </path>
+    	<!-- taskdef for svn ant task -->
+    	<taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="svn.classpath" />
+
     </target>
 
 
@@ -247,11 +273,13 @@ javahl.dir=C:/Programme/Subversion/javahl
         <echo>optimize           = '${optimize}'</echo>
         <echo>nowarn             = '${nowarn}'</echo>
         <echo>--- properties (used for full-build only ) ---</echo>
+        <echo>python.exe         = '${python.exe}'</echo>
         <echo>svn.tag            = '${svn.tag}'</echo>
         <echo>python.cvs.tag     = '${python.cvs.tag}'</echo>
         <echo>svn.checkout.dir   = '${svn.checkout.dir}'</echo>
+    	<echo>javahl.dir         = '${javahl.dir}'</echo>
+    	<echo>svnant.jar.dir     = '${svnant.jar.dir}'</echo>
         <echo>do.checkout        = '${do.checkout}'</echo>
-        <echo>python.exe         = '${python.exe}'</echo>
     </target>
 
 
