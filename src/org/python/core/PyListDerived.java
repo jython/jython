@@ -41,18 +41,6 @@ public class PyListDerived extends PyList {
         return super.__repr__();
     }
 
-    public PyUnicode __unicode__() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__unicode__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyUnicode)
-                return(PyUnicode)res;
-            throw Py.TypeError("__unicode__"+" should return a "+"unicode");
-        }
-        return super.__unicode__();
-    }
-
     public PyString __hex__() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__hex__");
@@ -155,6 +143,14 @@ public class PyListDerived extends PyList {
         if (impl!=null)
             return impl.__get__(this,self_type).__call__();
         return super.__invert__();
+    }
+
+    public PyObject __reduce__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__reduce__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__();
+        return super.__reduce__();
     }
 
     public PyObject __add__(PyObject other) {
@@ -695,6 +691,20 @@ public class PyListDerived extends PyList {
         return super.hashCode();
     }
 
+    public PyUnicode __unicode__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__unicode__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyUnicode)
+                return(PyUnicode)res;
+            if (res instanceof PyString)
+                return new PyUnicode((PyString)res);
+            throw Py.TypeError("__unicode__"+" should return a "+"unicode");
+        }
+        return super.__unicode__();
+    }
+
     public int __cmp__(PyObject other) {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__cmp__");
@@ -768,7 +778,7 @@ public class PyListDerived extends PyList {
 
     public PyObject __finditem__(PyObject key) { // ???
         PyType self_type=getType();
-        PyObject impl=self_type.lookup("__finditem__");
+        PyObject impl=self_type.lookup("__getitem__");
         if (impl!=null)
             try {
                 return impl.__get__(this,self_type).__call__(key);
@@ -793,7 +803,7 @@ public class PyListDerived extends PyList {
     public PyObject __getitem__(PyObject key) { // ???
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getitem__");
-        if (impl!=null)
+        if (impl!=null) {
             try {
                 return impl.__get__(this,self_type).__call__(key);
             } catch (PyException exc) {
@@ -801,10 +811,11 @@ public class PyListDerived extends PyList {
                     return null;
                 throw exc;
             }
+        }
         return super.__getitem__(key);
     }
 
-    public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) {
+    public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getslice__");
         if (impl!=null)

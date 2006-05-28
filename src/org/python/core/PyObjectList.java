@@ -175,7 +175,7 @@ public class PyObjectList
          *
          * @return backing array object
          */
-    PyObject[] getArray() {
+    protected PyObject[] getArray() {
         return (PyObject[])array.getArray();
     }
 

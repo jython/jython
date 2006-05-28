@@ -869,6 +869,34 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyComplex.class,0,0,new exposed___nonzero__(null,null)));
+        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
+
+            private PyComplex self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___reduce__(PyComplex self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___reduce__((PyComplex)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.complex___reduce__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyComplex self=(PyComplex)gself;
+                return self.complex___reduce__();
+            }
+
+        }
+        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyComplex.class,0,0,new exposed___reduce__(null,null)));
         class exposed___repr__ extends PyBuiltinFunctionNarrow {
 
             private PyComplex self;
@@ -1593,6 +1621,24 @@ public class PyComplex extends PyObject {
 
     final PyComplex complex_conjugate() {
         return new PyComplex(real, -imag);
+    }
+
+    /**
+     * Used for pickling.
+     *
+     * @return a tuple of (class, (Integer))
+     */
+    public PyObject __reduce__() {
+        return complex___reduce__();
+    }
+
+    final PyObject complex___reduce__() {
+        return new PyTuple(new PyObject[]{
+            getType(),
+            new PyTuple(new PyObject[]{
+                getReal(), getImag()
+            })
+        });
     }
 
     public boolean isMappingType() { return false; }

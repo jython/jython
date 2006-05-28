@@ -47,7 +47,8 @@ public abstract class PySequenceList extends PySequence implements List {
         list = new PyObjectList(elements);
     }
 
-    public PySequenceList(Collection c) {
+    public PySequenceList(PyType type, Collection c) {
+        super(type);
         list = new PyObjectList(c);
     }
 

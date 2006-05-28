@@ -892,6 +892,34 @@ public class PyList extends PySequenceList {
 
         }
         dict.__setitem__("__imul__",new PyMethodDescr("__imul__",PyList.class,1,1,new exposed___imul__(null,null)));
+        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
+
+            private PyList self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___reduce__(PyList self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___reduce__((PyList)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.list___reduce__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyList self=(PyList)gself;
+                return self.list___reduce__();
+            }
+
+        }
+        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyList.class,0,0,new exposed___reduce__(null,null)));
         class exposed___mul__ extends PyBuiltinFunctionNarrow {
 
             private PyList self;
@@ -1060,31 +1088,37 @@ public class PyList extends PySequenceList {
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
+    private static final PyType LISTTYPE = PyType.fromClass(PyList.class);
+
     public PyList() {
-        this(Py.EmptyObjects);
+        this(LISTTYPE, Py.EmptyObjects);
     }
 
     public PyList(PyType type) {
         super(type);
     }
 
-    public PyList(Collection c) {
-        super(c);
+    public PyList(PyType type, PyObject[] elements) {
+        super(type, elements);
+    }
+
+    public PyList(PyType type, Collection c) {
+        super(type, c);
     }
 
     // TODO: fix dependency so it can be removed.
     // Shouldn't be required (see PyList(Collection c), but test_re.py fails 
     // without it.  Probably used by reflection.
     public PyList(Vector v) {
-        super(v);
+        super(LISTTYPE, v);
     }    
     
     public PyList(PyObject[] elements) {
-        super(elements);
+        this(LISTTYPE, elements);
     }
 
     public PyList(PyObject o) {
-        this();
+        this(LISTTYPE);
         PyObject iter = o.__iter__();
         for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
             append(item);
@@ -1675,5 +1709,27 @@ public class PyList extends PySequenceList {
 
     final int list_hashCode() {
         throw Py.TypeError("unhashable type");
+    }
+
+    /**
+     * Used for pickling.
+     *
+     * @return a tuple of (class, tuple)
+     */
+    public PyObject __reduce__() {
+        return list___reduce__();
+    }
+
+    final PyObject list___reduce__() {
+        PyTuple newargs = __getnewargs__();
+        return new PyTuple(new PyObject[]{
+            getType(), newargs
+        });
+    }
+
+    public PyTuple __getnewargs__() {
+        return new PyTuple(new PyObject[]
+            {new PyTuple(list.getArray())}
+        );
     }
 }
