@@ -1,9 +1,4 @@
-/*                           JHU/APL PROPRIETARY
- * Copyright © 2005 The Johns Hopkins University/Applied Physics Laboratory.
- * All rights reserved.  This software is for internal JHU/APL use only and
- * is not to be distributed outside of JHU/APL.  For all other permissions,
- * please contact the RMIS Development Team at JHU/APL.
- *
+/*
  * Created: Apr 18, 2005
  * By: updikca1
  */
