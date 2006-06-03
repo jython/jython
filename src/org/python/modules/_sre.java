@@ -26,8 +26,10 @@ import org.python.modules.sre.SRE_STATE;
 
 public class _sre {
     // update when constants are added or removed
-    public static int MAGIC = 20010701;
+    public static int MAGIC = 20030419;
 
+    //XXX: May not be the right size, but I suspect it is -- see sre_compile.py
+    public static int CODESIZE = 2;
 
     public static PatternObject compile(PyString pattern, int flags,
                                         PyObject code, int groups,

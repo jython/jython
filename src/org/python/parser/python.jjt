@@ -195,7 +195,7 @@ TOKEN_MGR_DECLS:
     // is expected,i.e. classic behavior at jython prompt (different from codeop behavior)
     public boolean stdprompt = false;
 
-    public boolean generator_allowed = false;
+    public boolean generator_allowed = true;
 
     static Token addDedent(Token previous) {
         Token t = new Token();
