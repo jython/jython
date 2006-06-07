@@ -880,12 +880,12 @@ public class PyFloat extends PyObject
             }
 
             public PyObject __call__() {
-                return Py.newFloat(self.float_hashCode());
+                return Py.newInteger(self.float_hashCode());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyFloat self=(PyFloat)gself;
-                return Py.newFloat(self.float_hashCode());
+                return Py.newInteger(self.float_hashCode());
             }
 
         }
@@ -1309,7 +1309,7 @@ public class PyFloat extends PyObject
     }
 
     final PyObject float___pos__() {
-        return this;
+        return Py.newFloat(value);
     }
 
     public PyObject __invert__() {
@@ -1322,7 +1322,7 @@ public class PyFloat extends PyObject
 
     final PyObject float___abs__() {
         if (value >= 0)
-            return this;
+            return Py.newFloat(value);
         else
             return __neg__();
     }
@@ -1351,7 +1351,7 @@ public class PyFloat extends PyObject
     }
 
     final PyFloat float___float__() {
-        return this;
+        return Py.newFloat(value);
     }
     public PyComplex __complex__() {
         return new PyComplex(value, 0.);

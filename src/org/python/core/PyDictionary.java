@@ -975,9 +975,13 @@ public class PyDictionary extends PyObject {
 
 
 
+    /* commenting this out -- PyObject.safeRepr() does the same thing, and this one
+       messes up subclasses of dict.  XXX: delete all of this if this turns out okay.
+
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'dict' object";
     }
+    */
 
     public int __len__() {
         return dict___len__();

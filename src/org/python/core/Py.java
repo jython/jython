@@ -462,6 +462,10 @@ public final class Py
         return new PyLong(i);
     }
 
+    public static PyLong newLong(int i) {
+        return new PyLong(i);
+    }
+
     public static PyComplex newImaginary(double v) {
         return new PyComplex(0, v);
     }

@@ -1570,7 +1570,7 @@ public class PyComplex extends PyObject {
     }
 
     final PyObject complex___pos__() {
-        return this;
+        return new PyComplex(real, imag);
     }
 
     public PyObject __invert__() {
@@ -1612,7 +1612,7 @@ public class PyComplex extends PyObject {
     }
 
     public PyComplex __complex__() {
-        return this;
+        return new PyComplex(real, imag);
     }
 
     public PyComplex conjugate() {

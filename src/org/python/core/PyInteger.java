@@ -1536,8 +1536,8 @@ public class PyInteger extends PyObject {
 
         int xdivy = divide(value, rightv);
         return new PyTuple(new PyObject[] {
-            new PyInteger(xdivy),
-            new PyInteger(modulo(value, rightv, xdivy))
+            Py.newInteger(xdivy),
+            Py.newInteger(modulo(value, rightv, xdivy))
         });
     }
 
@@ -1642,7 +1642,7 @@ public class PyInteger extends PyObject {
              return null;
 
         if (rightv > 31)
-            return new PyInteger(0);
+            return Py.newInteger(0);
         else if(rightv < 0)
             throw Py.ValueError("negative shift count");
         return Py.newInteger(value << rightv);
@@ -1723,7 +1723,7 @@ public class PyInteger extends PyObject {
     }
 
     final PyObject int___pos__() {
-        return this;
+        return Py.newInteger(value);
     }
 
     public PyObject __abs__() {
@@ -1732,7 +1732,7 @@ public class PyInteger extends PyObject {
 
     final PyObject int___abs__() {
         if (value >= 0)
-            return this;
+            return Py.newInteger(value);
         else
             return __neg__();
     }
@@ -1750,7 +1750,7 @@ public class PyInteger extends PyObject {
     }
 
     final PyInteger int___int__() {
-        return this;
+        return Py.newInteger(value);
     }
 
     public PyLong __long__() {
@@ -1824,7 +1824,7 @@ public class PyInteger extends PyObject {
         return new PyTuple(new PyObject[]{
             getType(),
             new PyTuple(new PyObject[]{
-                new PyInteger(getValue())
+                Py.newInteger(value)
             })
         });
     }
