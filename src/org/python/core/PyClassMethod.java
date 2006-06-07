@@ -35,8 +35,17 @@ public class PyClassMethod extends PyObject implements PyType.Newstyle {
                 return self.classmethod___get__(arg0,arg1);
             }
 
+            public PyObject __call__(PyObject arg0) {
+                return self.classmethod___get__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyClassMethod self=(PyClassMethod)gself;
+                return self.classmethod___get__(arg0);
+            }
+
         }
-        dict.__setitem__("__get__",new PyMethodDescr("__get__",PyClassMethod.class,2,2,new exposed___get__(null,null)));
+        dict.__setitem__("__get__",new PyMethodDescr("__get__",PyClassMethod.class,1,2,new exposed___get__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyClassMethod.class,"__new__",1,1) {
 
                                                                                            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
@@ -56,8 +65,16 @@ public class PyClassMethod extends PyObject implements PyType.Newstyle {
         this.callable = callable;
     }
 
+    public PyObject __get__(PyObject obj) {
+	return classmethod___get__(obj, null);
+    }
+
     public PyObject __get__(PyObject obj, PyObject type) {
         return classmethod___get__(obj, type);
+    }
+
+    final PyObject classmethod___get__(PyObject obj) {
+	return classmethod___get__(obj, null);
     }
 
     final PyObject classmethod___get__(PyObject obj, PyObject type) {

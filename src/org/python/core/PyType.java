@@ -25,6 +25,43 @@ public class PyType extends PyObject implements Serializable {
         dict.__setitem__("__base__",new PyGetSetDescr("__base__",PyType.class,"getBase",null));
         dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases",null));
         dict.__setitem__("__mro__",new PyGetSetDescr("__mro__",PyType.class,"getMro",null));
+        class exposed_mro extends PyBuiltinFunctionNarrow {
+
+            private PyType self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed_mro(PyType self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed_mro((PyType)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.type_mro(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyType self=(PyType)gself;
+                return self.type_mro(arg0);
+            }
+
+            public PyObject __call__() {
+                return self.type_mro();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyType self=(PyType)gself;
+                return self.type_mro();
+            }
+
+        }
+        dict.__setitem__("mro", new PyClassMethod(new PyMethodDescr("mro",PyType.class,0,1,new exposed_mro(null,null))));
         class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -468,7 +505,26 @@ public class PyType extends PyObject implements Serializable {
          System.out.println(new PyList(objs).toString());
       }
 
-    final PyObject[] type_mro() {
+      
+    final PyTuple type_mro() {
+        return getMro();
+    }
+
+    final PyTuple type_mro(PyObject o) {
+	//FIXME: PyMethDescr should be gaurding against args that are not the
+	//       correct type in the generated code, but that is not working.
+	//       fix and delete this instanceof check.
+	if (!(o instanceof PyType)) {
+	    throw Py.TypeError(
+            "descriptor 'mro' requires a 'type' object but received a '"
+                + o.getType().fastGetName()
+                + "'");
+	}
+	PyType type = (PyType)o;
+	return type.type_mro();
+    }
+
+    final PyObject[] compute_mro() {
         PyObject[] bases = this.bases;
         int n = bases.length;
         for (int i=0; i < n; i++) {
@@ -671,7 +727,7 @@ public class PyType extends PyObject implements Serializable {
             mro_meth = metatype.lookup("mro");
 
         if (mro_meth == null) {
-            newmro = newtype.type_mro();
+            newmro = newtype.compute_mro();
         } else {
             newmro = Py.make_array(mro_meth.__get__(newtype,metatype).__call__());
         }
