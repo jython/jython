@@ -259,6 +259,43 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyTuple.class,1,1,new exposed___rmul__(null,null)));
+        class exposed___getslice__ extends PyBuiltinFunctionNarrow {
+
+            private PyTuple self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getslice__(PyTuple self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getslice__((PyTuple)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                return self.tuple___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyTuple self=(PyTuple)gself;
+                return self.tuple___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                return self.tuple___getslice__(arg0,arg1);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyTuple self=(PyTuple)gself;
+                return self.tuple___getslice__(arg0,arg1);
+            }
+
+        }
+        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyTuple.class,2,3,new exposed___getslice__(null,null)));
         class exposed___hash__ extends PyBuiltinFunctionNarrow {
 
             private PyTuple self;
@@ -348,7 +385,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
                 return new PyTuple();
             }
             if (S instanceof PyTuple) {
-                return S;
+                return new PyTuple(((PyTuple)S).getArray());
             }
             PyObject iter = S.__iter__();
             // it's not always possible to know the length of the iterable
@@ -457,6 +494,14 @@ public class PyTuple extends PySequenceList implements ClassDictInit
             throw Py.TypeError("can't multiply sequence to non-int");
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
+    }
+
+    final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop) {
+        return seq___getslice__(s_start,s_stop,null);
+    }
+
+    final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
+        return seq___getslice__(s_start,s_stop,s_step);
     }
 
     /**

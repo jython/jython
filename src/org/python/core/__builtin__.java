@@ -422,6 +422,9 @@ public class __builtin__ implements ClassDictInit {
         if (ret != null) {
             return (PyString) ret;
         }
+        if (s instanceof PyStringDerived) {
+            s = s.__str__();
+        }
         internedStrings.__setitem__(istring, s);
         return s;
     }
