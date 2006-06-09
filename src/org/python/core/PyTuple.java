@@ -296,6 +296,34 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyTuple.class,2,3,new exposed___getslice__(null,null)));
+        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
+
+            private PyTuple self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getitem__(PyTuple self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getitem__((PyTuple)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.tuple___getitem__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyTuple self=(PyTuple)gself;
+                return self.tuple___getitem__(arg0);
+            }
+
+        }
+        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyTuple.class,1,1,new exposed___getitem__(null,null)));
         class exposed___hash__ extends PyBuiltinFunctionNarrow {
 
             private PyTuple self;
@@ -506,6 +534,11 @@ public class PyTuple extends PySequenceList implements ClassDictInit
     final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
         return seq___getslice__(s_start,s_stop,s_step);
     }
+
+    final PyObject tuple___getitem__(PyObject index) {
+        return seq___getitem__(index);
+    }
+
 
     /**
      * Used for pickling.

@@ -1,6 +1,6 @@
 package org.python.core;
 
-public class PyTupleDerived extends PyTuple {
+public class PySuperDerived extends PySuper {
 
     private PyObject dict;
 
@@ -12,8 +12,8 @@ public class PyTupleDerived extends PyTuple {
         return dict;
     }
 
-    public PyTupleDerived(PyType subtype,PyObject[]elements) {
-        super(subtype,elements);
+    public PySuperDerived(PyType subtype) {
+        super(subtype);
         dict=subtype.instDict();
     }
 
@@ -804,7 +804,6 @@ public class PyTupleDerived extends PyTuple {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getitem__");
         if (impl!=null) {
-            System.out.println("here");
             try {
                 return impl.__get__(this,self_type).__call__(key);
             } catch (PyException exc) {

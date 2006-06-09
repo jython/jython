@@ -38,7 +38,7 @@ public class PySuper extends PyObject implements PyType.Newstyle {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="attribute name must be string";
+                        msg="attribute name must be a string";
                         break;
                     default:
                         msg="xxx";
@@ -59,7 +59,7 @@ public class PySuper extends PyObject implements PyType.Newstyle {
                     String msg;
                     switch (e.index) {
                     case 0:
-                        msg="attribute name must be string";
+                        msg="attribute name must be a string";
                         break;
                     default:
                         msg="xxx";
@@ -162,7 +162,7 @@ public class PySuper extends PyObject implements PyType.Newstyle {
                                                                                                if (init)
                                                                                                    newobj.super_init(args,keywords);
                                                                                            } else {
-                                                                                               newobj=null; // xxx new PySuperDerived(subtype);
+                                                                                               newobj=new PySuperDerived(subtype);
                                                                                            }
                                                                                            return newobj;
                                                                                        }
@@ -170,6 +170,8 @@ public class PySuper extends PyObject implements PyType.Newstyle {
                                                                                    });
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
+
+    private static final PyType SUPERTYPE = PyType.fromClass(PySuper.class);
    
     protected PyType thisClass;
     protected PyObject self;
@@ -209,6 +211,11 @@ public class PySuper extends PyObject implements PyType.Newstyle {
     }
     
     public PySuper() {
+        this(SUPERTYPE);
+    }
+
+    public PySuper(PyType subType) {
+        super(subType);
     }
     
     public PyObject getSelf() {

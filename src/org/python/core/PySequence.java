@@ -362,6 +362,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public PyObject __getitem__(PyObject index) {
+        return seq___getitem__(index);
+    }
+
+    final PyObject seq___getitem__(PyObject index) {
         PyObject ret = __finditem__(index);
         if (ret == null) {
             throw Py.IndexError("index out of range: "+index);

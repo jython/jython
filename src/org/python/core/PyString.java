@@ -164,6 +164,34 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
+        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getitem__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getitem__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.str___getitem__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return self.str___getitem__(arg0);
+            }
+
+        }
+        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyString.class,1,1,new exposed___getitem__(null,null)));
         class exposed___getslice__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -2844,11 +2872,11 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public PyString __str__() {
-        return returnString(this);
+        return str___str__();
     }
 
     final PyString str___str__() {
-        return new PyString(this.toString());
+        return returnString(this);
     }
 
     public PyUnicode __unicode__() {
@@ -3334,6 +3362,10 @@ public class PyString extends PyBaseString implements ClassDictInit
 
     final PyObject str___iter__() {
         return seq___iter__();
+    }
+
+    final PyObject str___getitem__(PyObject index) {
+        return seq___getitem__(index);
     }
 
     /**
