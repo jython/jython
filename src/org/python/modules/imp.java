@@ -130,6 +130,21 @@ public class imp {
         return find_module(name, null);
     }
 
+    public static PyObject load_source(String modname, String filename) {
+        PyObject mod = Py.None;
+        //XXX: bufsize is ignored in PyFile now, but look 3rd arg if this ever changes.
+        PyFile file = new PyFile(filename, "r", 1024);
+        Object o = file.__tojava__(InputStream.class);
+        if (o == Py.NoConversion) {
+            throw Py.TypeError("must be a file-like object");
+        }
+        mod = org.python.core.imp.loadFromSource(
+             modname.intern(), (InputStream)o, filename.toString());
+        PyObject modules = Py.getSystemState().modules;
+        modules.__setitem__(modname.intern(), mod);
+        return mod;
+    }
+
     public static PyObject find_module(String name, PyObject path) {
         if (path == null || path == Py.None) {
             path = Py.getSystemState().path;
