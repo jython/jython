@@ -384,8 +384,11 @@ public class PyTuple extends PySequenceList implements ClassDictInit
             if (S == null) {
                 return new PyTuple();
             }
-            if (S instanceof PyTuple) {
+            if (S instanceof PyTupleDerived) {
                 return new PyTuple(((PyTuple)S).getArray());
+            }
+            if (S instanceof PyTuple) {
+                return S;
             }
             PyObject iter = S.__iter__();
             // it's not always possible to know the length of the iterable
