@@ -304,7 +304,7 @@ public class PyType extends PyObject implements Serializable {
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
-    public static PyObject type_new(PyObject new_, boolean init,
+    public static PyObject type_new(PyNewWrapper new_, boolean init,
             PyType subtype, PyObject[] args, String[] keywords) {
         if (args.length == 1 && keywords.length == 0) {
             return args[0].getType();
@@ -631,7 +631,7 @@ public class PyType extends PyObject implements Serializable {
         return base;
     }
 
-    public static PyObject newType(PyObject new_,PyType metatype,String name,PyTuple bases,PyObject dict) {
+    public static PyObject newType(PyNewWrapper new_,PyType metatype,String name,PyTuple bases,PyObject dict) {
         PyType object_type = fromClass(PyObject.class);
 
         PyObject[] bases_list = bases.getArray();
@@ -702,8 +702,12 @@ public class PyType extends PyObject implements Serializable {
 
         // xxx also __doc__ __module__
         // xxx __slots__!
-
-        PyType newtype = new PyType(); // xxx set metatype
+        PyType newtype;
+        if (new_.for_type == metatype) {
+            newtype = new PyType(); // xxx set metatype
+        } else {
+            newtype = new PyTypeDerived(metatype);
+        }
 
         newtype.name = name;
         newtype.base = base;
@@ -811,6 +815,10 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private PyType() {
+    }
+
+    PyType(PyType subtype) {
+        super(true);
     }
 
     private static String decapitalize(String s) {

@@ -2856,7 +2856,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         if (S == null) {
             return new PyString("");
         }
-        if (S instanceof PyStringDerived) {
+        if (S instanceof PyStringDerived || S instanceof PyUnicode) {
             return new PyString(S.toString());
         } if (S instanceof PyString) {
             return (PyString)S;
