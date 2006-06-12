@@ -55,11 +55,17 @@ public final class Py
     /** A tuple with zero elements **/
     public static PyTuple EmptyTuple;
 
-    /** The Python integer 0 - also used as false **/
+    /** The Python integer 0 **/
     public static PyInteger Zero;
 
-    /** The Python integer 1 - also used as true **/
+    /** The Python integer 1 **/
     public static PyInteger One;
+
+    /** The Python boolean False **/
+    public static PyBoolean False;
+
+    /** The Python boolean True **/
+    public static PyBoolean True;
 
     /** A zero-length Python string **/
     public static PyString EmptyString;
@@ -490,8 +496,8 @@ public final class Py
         return new PyUnicode(s);
     }
 
-    public static PyInteger newBoolean(boolean t) {
-        return t ? Py.One : Py.Zero;
+    public static PyBoolean newBoolean(boolean t) {
+        return t ? Py.True : Py.False;
     }
 
     // nested scopes:
@@ -1491,7 +1497,7 @@ public final class Py
             }
         }
         if (o instanceof Boolean) {
-            return ((Boolean)o).booleanValue() ? Py.One : Py.Zero;
+            return ((Boolean)o).booleanValue() ? Py.True : Py.False;
         }
         if (o == null) return Py.None;
         if (o instanceof String) return new PyString((String)o);

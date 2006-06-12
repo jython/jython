@@ -106,6 +106,7 @@ public class __builtin__ implements ClassDictInit {
 
         dict.__setitem__("object", PyType.fromClass(PyObject.class));
         dict.__setitem__("type", PyType.fromClass(PyType.class));
+        dict.__setitem__("bool", PyType.fromClass(PyBoolean.class));
         dict.__setitem__("int", PyType.fromClass(PyInteger.class));
         dict.__setitem__("enumerate", PyType.fromClass(PyEnumerate.class));
         dict.__setitem__("float", PyType.fromClass(PyFloat.class));
@@ -131,8 +132,8 @@ public class __builtin__ implements ClassDictInit {
         dict.__setitem__("None", Py.None);
         dict.__setitem__("NotImplemented", Py.NotImplemented);
         dict.__setitem__("Ellipsis", Py.Ellipsis);
-        dict.__setitem__("True", Py.One);
-        dict.__setitem__("False", Py.Zero);
+        dict.__setitem__("True", Py.True);
+        dict.__setitem__("False", Py.False);
 
         // Work in debug mode by default
         // Hopefully add -O option in the future to change this
@@ -190,9 +191,9 @@ public class __builtin__ implements ClassDictInit {
         }
     }
 
-    public static PyObject bool(PyObject o) {
-        return (o == null ? Py.Zero : o.__nonzero__() ? Py.One : Py.Zero);
-    }
+//    public static PyObject bool(PyObject o) {
+//        return (o == null ? Py.False : o.__nonzero__() ? Py.True : Py.False);
+//    }
 
     public static boolean callable(PyObject o) {
         return o.__findattr__("__call__") != null;

@@ -15,6 +15,8 @@ except ImportError:
 
 TYPE_NULL     = '0'
 TYPE_NONE     = 'N'
+TYPE_FALSE    = 'F'
+TYPE_TRUE     = 'T'
 TYPE_ELLIPSIS = '.'
 TYPE_INT      = 'i'
 TYPE_INT64    = 'I'
@@ -58,6 +60,13 @@ class Marshaller:
     def dump_none(self, x):
 	self.f.write(TYPE_NONE)
     dispatch[NoneType] = dump_none
+
+    def dump_bool(self, x):
+        if x:
+            self.f.write(TYPE_TRUE)
+        else:
+            self.f.write(TYPE_FALSE)
+    dispatch[BooleanType] = dump_bool
 
     def dump_ellipsis(self, x):
 	self.f.write(TYPE_ELLIPSIS)
@@ -209,6 +218,14 @@ class Unmarshaller:
     def load_none(self):
 	return None
     dispatch[TYPE_NONE] = load_none
+
+    def load_False(self):
+	return False
+    dispatch[TYPE_FALSE] = load_False
+
+    def load_True(self):
+	return True
+    dispatch[TYPE_TRUE] = load_True
 
     def load_ellipsis(self):
 	return EllipsisType

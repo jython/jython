@@ -14,6 +14,7 @@ public class types implements ClassDictInit {
     // xxx change some of these
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("ArrayType", PyType.fromClass(PyArray.class));
+        dict.__setitem__("BooleanType", PyType.fromClass(PyBoolean.class));
         dict.__setitem__("BuiltinFunctionType",
                          PyType.fromClass(PyReflectedFunction.class));
         dict.__setitem__("BuiltinMethodType",

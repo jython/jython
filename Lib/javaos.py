@@ -220,7 +220,9 @@ def _getEnvironment():
 
 environ = LazyDict( populate=_getEnvironment )
 putenv = environ.__setitem__
-getenv = environ.__getitem__
+
+def getenv(key, default=None):
+    return environ.get(key, default)
 
 def system( *args, **kwargs ):
     # allow lazy import of popen2 and javashell

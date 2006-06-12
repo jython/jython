@@ -94,9 +94,9 @@ public class PyJavaInstance
     public PyObject _is(PyObject o) {
         if (o instanceof PyJavaInstance) {
             return javaProxy == ((PyJavaInstance)o).javaProxy
-                ? Py.One : Py.Zero;
+                ? Py.True : Py.False;
         }
-        return Py.Zero;
+        return Py.False;
     }
 
     public PyObject _isnot(PyObject o) {

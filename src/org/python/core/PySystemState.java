@@ -434,6 +434,9 @@ public class PySystemState extends PyObject
 
         Py.Zero = new PyInteger(0);
         Py.One = new PyInteger(1);
+        
+        Py.False = new PyBoolean(false);
+        Py.True = new PyBoolean(true);
 
         Py.EmptyString = new PyString("");
         Py.Newline = new PyString("\n");

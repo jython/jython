@@ -11,6 +11,7 @@ import java.text.MessageFormat;
  **/
 
 public class PyObject implements java.io.Serializable {
+
     //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
@@ -1574,7 +1575,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__eq__(this);
             if (res != null)
                 return res;
-            return _cmpeq_unsafe(o) == 0 ? Py.One : Py.Zero;
+            return _cmpeq_unsafe(o) == 0 ? Py.True : Py.False;
         } catch (PyException e) {
             if (Py.matchException(e, Py.AttributeError)) {
                 return Py.Zero;
@@ -1607,7 +1608,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__ne__(this);
             if (res != null)
                 return res;
-            return _cmpeq_unsafe(o) != 0 ? Py.One : Py.Zero;
+            return _cmpeq_unsafe(o) != 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1635,7 +1636,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__ge__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) <= 0 ? Py.One : Py.Zero;
+            return _cmp_unsafe(o) <= 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1663,7 +1664,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__gt__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) < 0 ? Py.One : Py.Zero;
+            return _cmp_unsafe(o) < 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1691,7 +1692,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__le__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) >= 0 ? Py.One : Py.Zero;
+            return _cmp_unsafe(o) >= 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1719,7 +1720,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__lt__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) > 0 ? Py.One : Py.Zero;
+            return _cmp_unsafe(o) > 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1734,7 +1735,7 @@ public class PyObject implements java.io.Serializable {
      * @return the result of the comparison
      **/
     public PyObject _is(PyObject o) {
-        return this == o ? Py.One : Py.Zero;
+        return this == o ? Py.True : Py.False;
     }
 
     /**
@@ -1744,7 +1745,7 @@ public class PyObject implements java.io.Serializable {
      * @return the result of the comparison
      **/
     public PyObject _isnot(PyObject o) {
-        return this != o ? Py.One : Py.Zero;
+        return this != o ? Py.True : Py.False;
     }
 
     /**
@@ -1792,7 +1793,7 @@ public class PyObject implements java.io.Serializable {
      * @return not this.
      **/
     public PyObject __not__() {
-        return __nonzero__() ? Py.Zero : Py.One;
+        return __nonzero__() ? Py.False : Py.True;
     }
 
     /* The basic numeric operations */
