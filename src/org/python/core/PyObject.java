@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * All objects known to the Jython runtime system are represented
@@ -2820,14 +2821,25 @@ public class PyObject implements java.io.Serializable {
         throw Py.AttributeError("object internal __delete__ impl is abstract");
     }
 
+    private void slotscheck(String name) {
+        List slotnames = objtype.getSlotnames();
+        if (slotnames != null) {
+            if (!slotnames.contains(name) && !slotnames.contains("__dict__")) {
+                noAttributeError(name);
+            }
+        }
+    }
+
     // name must be interned
     final PyObject object___findattr__(String name) {
-
         PyObject descr = objtype.lookup(name);
         PyObject res;
 
         if (descr != null) {
             if (descr.isDataDescr()) {
+                if (objtype.hide_dict && name.equals("__dict__")) {
+                    noAttributeError(name);
+                }
                 res = descr.__get__(this, objtype);
                 if (res != null)
                     return res;
@@ -2856,6 +2868,7 @@ public class PyObject implements java.io.Serializable {
         if (descr != null) {
             set = descr.implementsDescrSet();
             if (set && descr.isDataDescr()) {
+                //slotscheck(name); 
                 descr.__set__(this, value);
                 return;
             }
@@ -2863,16 +2876,19 @@ public class PyObject implements java.io.Serializable {
 
         PyObject obj_dict = fastGetDict();
         if (obj_dict != null) {
+            slotscheck(name); 
             obj_dict.__setitem__(name, value);
             return;
         }
 
         if (set) {
+            //XXX: need slotscheck here?
             descr.__set__(this, value);
         }
 
-        if (descr != null)
+        if (descr != null) {
             readonlyAttributeError(name);
+        }
 
         noAttributeError(name);
     }

@@ -8,6 +8,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * first-class Python type.
@@ -61,7 +62,7 @@ public class PyType extends PyObject implements Serializable {
             }
 
         }
-        dict.__setitem__("mro", new PyClassMethod(new PyMethodDescr("mro",PyType.class,0,1,new exposed_mro(null,null))));
+        dict.__setitem__("mro",new PyClassMethod(new PyMethodDescr("mro",PyType.class,0,1,new exposed_mro(null,null))));
         class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -381,16 +382,22 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
+    public List getSlotnames() {
+        return slotnames;
+    }
+
+
     private String name;
     private PyType base;
     private PyObject[] bases;
     private PyObject dict;
     private PyObject[] mro;
     private Class underlying_class;
+    private List slotnames;
 
     private boolean non_instantiable = false;
 
-    boolean has_set, has_delete;
+    boolean has_set, has_delete, hide_dict;
 
     private boolean needs_finalizer;
 
@@ -701,7 +708,32 @@ public class PyType extends PyObject implements Serializable {
         }
 
         // xxx also __doc__ __module__
-        // xxx __slots__!
+        List slotnames = null;
+        boolean hide_dict = false;
+
+        PyObject slots = dict.__finditem__("__slots__");
+        if (slots != null) {
+            hide_dict = true;
+            if (base.nuserslots > 0) {
+                nuserslots = base.nuserslots;
+                slotnames = new ArrayList(base.getSlotnames());
+            }
+            else {
+                slotnames = new ArrayList();
+            }
+            PyObject iter = slots.__iter__();
+            PyObject slotname;
+            for (; (slotname = iter.__iternext__())!= null; ) {
+                confirmIdentifier(slotname);
+                String slotstring = slotname.toString();
+                if (slotstring.equals("__dict__")) {
+                    hide_dict = false;
+                }
+                slotnames.add(mangleName(name, slotstring));
+                nuserslots += 1;
+            }
+        }
+
         PyType newtype;
         if (new_.for_type == metatype) {
             newtype = new PyType(); // xxx set metatype
@@ -715,8 +747,11 @@ public class PyType extends PyObject implements Serializable {
 
         newtype.needs_userdict = needs_userdict;
         newtype.nuserslots = nuserslots;
+        newtype.hide_dict = hide_dict;
 
         newtype.dict = dict;
+
+        newtype.slotnames = slotnames;
 
         // special case __new__, if function => static method
         PyObject tmp = dict.__finditem__("__new__");
@@ -1441,6 +1476,42 @@ public class PyType extends PyObject implements Serializable {
         }
 
         return invoke_new_(new_,this,true,args,keywords);
+    }
+    //XXX: consider pulling this out into a generally accessible place
+    //     I bet this is duplicated more or less in other places.
+    private static void confirmIdentifier(PyObject o) {
+        String msg = "__slots__ must be identifiers";
+        if (o == Py.None) {
+            throw Py.TypeError(msg);
+        }
+        String identifier = o.toString();
+        if (identifier == null ||
+            identifier.length() < 1 ||
+            (!Character.isLetter(identifier.charAt(0)) && identifier.charAt(0) != '_')
+        ) {
+            throw Py.TypeError(msg);
+        }
+        char[] chars = identifier.toCharArray();
+        for(int i = 0; i < chars.length; i++) {
+            if (!Character.isLetterOrDigit(chars[i]) && chars[i] != '_') {
+                throw Py.TypeError(msg);
+            }
+        }
+    }
+
+    //XXX: copied from CodeCompiler.java and changed variable names.
+    //       Maybe this should go someplace for all classes to use.
+    private static String mangleName(String classname, String methodname) {
+        if (classname != null && methodname.startsWith("__") &&
+            !methodname.endsWith("__"))
+        {
+            //remove leading '_' from classname
+            int i = 0;
+            while (classname.charAt(i) == '_')
+                i++;
+            return "_"+classname.substring(i)+methodname;
+        }
+        return methodname;
     }
 
 }
