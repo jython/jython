@@ -31,10 +31,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 + name;
 
         for (int i = 0; i < path.__len__(); i++) {
-            String dir = path.pyget(i).__str__().toString();
-            if (dir.length() == 0) {
-                dir = null;
-            }
+            String dir = imp.defaultEmptyPathDirectory(path.pyget(i).__str__().toString());
 
             File f = new File(dir, child);
             if (f.isDirectory() && imp.caseok(f, name, name.length())) {

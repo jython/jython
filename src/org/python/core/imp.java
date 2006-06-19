@@ -354,21 +354,28 @@ public class imp {
         return createFromPyClass(name, stream, false, filename);
     }
 
+    /**
+     * If <code>directoryName</code> is empty, return a correct directory name for a path.
+     * If  <code>directoryName</code> is not an empty string, this method returns <code>directoryName</code> unchanged.
+     */
+    public static String defaultEmptyPathDirectory(String directoryName) {
+        // The empty string translates into the current working
+        // directory, which is usually provided on the system property
+        // "user.dir". Don't rely on File's constructor to provide
+        // this correctly.
+        if (directoryName.length() == 0) {
+            directoryName = System.getProperty("user.dir");
+        }
+        return directoryName;
+    }
+    
     static PyObject loadFromSource(String name, String modName, PyObject entry) {
         // System.err.println("load-from-source: "+name+" "+modName+" "+entry);
 
         int nlen = name.length();
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
-        String directoryName = entry.toString();
-
-        // The empty string translates into the current working
-        // directory, which is usually provided on the system property
-        // "user.dir". Don't rely on File's constructor to provide
-        // this correctly.
-        if (directoryName.length() == 0) {
-            directoryName = null;
-        }
+        String directoryName = defaultEmptyPathDirectory(entry.toString());
 
         // First check for packages
         File dir = new File(directoryName, name);
