@@ -1245,7 +1245,7 @@ public class PyInteger extends PyObject {
     }
 
     final String int_toString() {
-        return Integer.toString(value);
+        return Integer.toString(getValue());
     }
 
     public int hashCode() {
@@ -1253,7 +1253,7 @@ public class PyInteger extends PyObject {
     }
 
     final int int_hashCode() {
-        return value;
+        return getValue();
     }
 
     private static void err_ovf(String msg) {
@@ -1270,7 +1270,7 @@ public class PyInteger extends PyObject {
     }
 
     final boolean int___nonzero__() {
-        return value != 0;
+        return getValue() != 0;
     }
 
     public Object __tojava__(Class c) {
@@ -1278,22 +1278,22 @@ public class PyInteger extends PyObject {
             c == Object.class || c == Integer.class ||
             c == Serializable.class)
         {
-            return new Integer(value);
+            return new Integer(getValue());
         }
 
         if (c == Boolean.TYPE || c == Boolean.class)
-            return new Boolean(value != 0);
+            return new Boolean(getValue() != 0);
         if (c == Byte.TYPE || c == Byte.class)
-            return new Byte((byte)value);
+            return new Byte((byte)getValue());
         if (c == Short.TYPE || c == Short.class)
-            return new Short((short)value);
+            return new Short((short)getValue());
 
         if (c == Long.TYPE || c == Long.class)
-            return new Long(value);
+            return new Long(getValue());
         if (c == Float.TYPE || c == Float.class)
-            return new Float(value);
+            return new Float(getValue());
         if (c == Double.TYPE || c == Double.class)
-            return new Double(value);
+            return new Double(getValue());
         return super.__tojava__(c);
     }
 
@@ -1305,7 +1305,7 @@ public class PyInteger extends PyObject {
         if (!canCoerce(other))
              return -2;
         int v = coerce(other);
-        return value < v ? -1 : value > v ? 1 : 0;
+        return getValue() < v ? -1 : getValue() > v ? 1 : 0;
     }
 
     public Object __coerce_ex__(PyObject other) {
@@ -1321,7 +1321,7 @@ public class PyInteger extends PyObject {
 
     private static final int coerce(PyObject other) {
         if (other instanceof PyInteger)
-            return ((PyInteger) other).value;
+            return ((PyInteger) other).getValue();
         else
             throw Py.TypeError("xxx");
     }
@@ -1335,7 +1335,7 @@ public class PyInteger extends PyObject {
         if (!canCoerce(right))
             return null;
         int rightv = coerce(right);
-        int a = value;
+        int a = getValue();
         int b = rightv;
         int x = a + b;
         if ((x^a) >= 0 || (x^b) >= 0)
@@ -1367,7 +1367,7 @@ public class PyInteger extends PyObject {
     final PyObject int___sub__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return _sub(value, coerce(right));
+        return _sub(getValue(), coerce(right));
     }
 
     public PyObject __rsub__(PyObject left) {
@@ -1377,7 +1377,7 @@ public class PyInteger extends PyObject {
     final PyObject int___rsub__(PyObject left) {
         if (!canCoerce(left))
             return null;
-        return _sub(coerce(left), value);
+        return _sub(coerce(left), getValue());
     }
 
     public PyObject __mul__(PyObject right) {
@@ -1386,15 +1386,15 @@ public class PyInteger extends PyObject {
 
     final PyObject int___mul__(PyObject right) {
         if (right instanceof PySequence)
-            return ((PySequence) right).repeat(value);
+            return ((PySequence) right).repeat(getValue());
 
         if (!canCoerce(right))
             return null;
         int rightv = coerce(right);
 
-        double x = (double)value;
+        double x = (double)getValue();
         x *= rightv;
-        //long x = ((long)value)*((PyInteger)right).value;
+        //long x = ((long)getValue())*((PyInteger)right).getValue();
         //System.out.println("mul: "+this+" * "+right+" = "+x);
 
         if (x <= Integer.MAX_VALUE && x >= Integer.MIN_VALUE)
@@ -1444,7 +1444,7 @@ public class PyInteger extends PyObject {
             return null;
         if (Options.divisionWarning > 0)
             Py.warning(Py.DeprecationWarning, "classic int division");
-        return Py.newInteger(divide(value, coerce(right)));
+        return Py.newInteger(divide(getValue(), coerce(right)));
     }
 
     public PyObject __rdiv__(PyObject left) {
@@ -1456,7 +1456,7 @@ public class PyInteger extends PyObject {
             return null;
         if (Options.divisionWarning > 0)
             Py.warning(Py.DeprecationWarning, "classic int division");
-        return Py.newInteger(divide(coerce(left), value));
+        return Py.newInteger(divide(coerce(left), getValue()));
     }
 
     public PyObject __floordiv__(PyObject right) {
@@ -1466,7 +1466,7 @@ public class PyInteger extends PyObject {
     final PyObject int___floordiv__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return Py.newInteger(divide(value, coerce(right)));
+        return Py.newInteger(divide(getValue(), coerce(right)));
     }
 
     public PyObject __rfloordiv__(PyObject left) {
@@ -1476,7 +1476,7 @@ public class PyInteger extends PyObject {
     final PyObject int___rfloordiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
-        return Py.newInteger(divide(coerce(left), value));
+        return Py.newInteger(divide(coerce(left), getValue()));
     }
 
     public PyObject __truediv__(PyObject right) {
@@ -1511,7 +1511,8 @@ public class PyInteger extends PyObject {
         if (!canCoerce(right))
             return null;
         int rightv = coerce(right);
-        return Py.newInteger(modulo(value, rightv, divide(value, rightv)));
+        int v = getValue();
+        return Py.newInteger(modulo(v, rightv, divide(v, rightv)));
     }
 
     public PyObject __rmod__(PyObject left) {
@@ -1522,7 +1523,8 @@ public class PyInteger extends PyObject {
         if (!canCoerce(left))
             return null;
         int leftv = coerce(left);
-        return Py.newInteger(modulo(leftv, value, divide(leftv, value)));
+        int v = getValue();
+        return Py.newInteger(modulo(leftv, v, divide(leftv, v)));
     }
 
     public PyObject __divmod__(PyObject right) {
@@ -1534,10 +1536,11 @@ public class PyInteger extends PyObject {
             return null;
         int rightv = coerce(right);
 
-        int xdivy = divide(value, rightv);
+        int v = getValue();
+        int xdivy = divide(v, rightv);
         return new PyTuple(new PyObject[] {
             Py.newInteger(xdivy),
-            Py.newInteger(modulo(value, rightv, xdivy))
+            Py.newInteger(modulo(v, rightv, xdivy))
         });
     }
 
@@ -1552,7 +1555,7 @@ public class PyInteger extends PyObject {
         if (modulo != null && !canCoerce(modulo))
             return null;
 
-        return _pow(value, coerce(right), modulo, this, right);
+        return _pow(getValue(), coerce(right), modulo, this, right);
     }
 
     public PyObject __rpow__(PyObject left, PyObject modulo) {
@@ -1562,7 +1565,7 @@ public class PyInteger extends PyObject {
         if (modulo != null && !canCoerce(modulo))
             return null;
 
-        return _pow(coerce(left), value, modulo, left, this);
+        return _pow(coerce(left), getValue(), modulo, left, this);
     }
 
     private static PyObject _pow(int value, int pow, PyObject modulo,
@@ -1637,7 +1640,7 @@ public class PyInteger extends PyObject {
     final PyObject int___lshift__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).value;
+             rightv = ((PyInteger)right).getValue();
         else
              return null;
 
@@ -1645,7 +1648,7 @@ public class PyInteger extends PyObject {
             return Py.newInteger(0);
         else if(rightv < 0)
             throw Py.ValueError("negative shift count");
-        return Py.newInteger(value << rightv);
+        return Py.newInteger(getValue() << rightv);
     }
 
     public PyObject __rshift__(PyObject right) {
@@ -1655,14 +1658,14 @@ public class PyInteger extends PyObject {
     final PyObject int___rshift__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).value;
+             rightv = ((PyInteger)right).getValue();
         else
              return null;
 
         if(rightv < 0)
             throw Py.ValueError("negative shift count");
 
-        return Py.newInteger(value >> rightv);
+        return Py.newInteger(getValue() >> rightv);
     }
 
     public PyObject __and__(PyObject right) {
@@ -1672,11 +1675,11 @@ public class PyInteger extends PyObject {
     final PyObject int___and__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).value;
+             rightv = ((PyInteger)right).getValue();
         else
              return null;
 
-        return Py.newInteger(value & rightv);
+        return Py.newInteger(getValue() & rightv);
     }
 
     public PyObject __xor__(PyObject right) {
@@ -1686,11 +1689,11 @@ public class PyInteger extends PyObject {
     final PyObject int___xor__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).value;
+             rightv = ((PyInteger)right).getValue();
         else
              return null;
 
-        return Py.newInteger(value ^ rightv);
+        return Py.newInteger(getValue() ^ rightv);
     }
 
     public PyObject __or__(PyObject right) {
@@ -1700,11 +1703,11 @@ public class PyInteger extends PyObject {
     final PyObject int___or__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).value;
+             rightv = ((PyInteger)right).getValue();
         else
              return null;
 
-        return Py.newInteger(value | rightv);
+        return Py.newInteger(getValue() | rightv);
     }
 
     public PyObject __neg__() {
@@ -1712,8 +1715,8 @@ public class PyInteger extends PyObject {
     }
 
     final PyObject int___neg__() {
-        int x = -value;
-        if (value < 0 && x < 0)
+        int x = -getValue();
+        if (getValue() < 0 && x < 0)
             err_ovf("integer negation");
         return Py.newInteger(x);
     }
@@ -1723,7 +1726,7 @@ public class PyInteger extends PyObject {
     }
 
     final PyObject int___pos__() {
-        return Py.newInteger(value);
+        return Py.newInteger(getValue());
     }
 
     public PyObject __abs__() {
@@ -1731,8 +1734,8 @@ public class PyInteger extends PyObject {
     }
 
     final PyObject int___abs__() {
-        if (value >= 0)
-            return Py.newInteger(value);
+        if (getValue() >= 0)
+            return Py.newInteger(getValue());
         else
             return __neg__();
     }
@@ -1742,7 +1745,7 @@ public class PyInteger extends PyObject {
     }
 
     final PyObject int___invert__() {
-        return Py.newInteger(~value);
+        return Py.newInteger(~getValue());
     }
 
     public PyObject __int__() {
@@ -1750,7 +1753,7 @@ public class PyInteger extends PyObject {
     }
 
     final PyInteger int___int__() {
-        return Py.newInteger(value);
+        return Py.newInteger(getValue());
     }
 
     public PyLong __long__() {
@@ -1758,7 +1761,7 @@ public class PyInteger extends PyObject {
     }
 
     final PyLong int___long__() {
-        return new PyLong(value);
+        return new PyLong(getValue());
     }
 
     public PyFloat __float__() {
@@ -1766,11 +1769,11 @@ public class PyInteger extends PyObject {
     }
 
     final PyFloat int___float__() {
-        return new PyFloat((double)value);
+        return new PyFloat((double)getValue());
     }
 
     public PyComplex __complex__() {
-        return new PyComplex((double)value, 0.);
+        return new PyComplex((double)getValue(), 0.);
     }
 
     public PyString __oct__() {
@@ -1778,11 +1781,11 @@ public class PyInteger extends PyObject {
     }
 
     final PyString int___oct__() {
-        if (value < 0) {
+        if (getValue() < 0) {
             return new PyString(
-                "0"+Long.toString(0x100000000l+(long)value, 8));
-        } else if (value > 0) {
-            return new PyString("0"+Integer.toString(value, 8));
+                "0"+Long.toString(0x100000000l+(long)getValue(), 8));
+        } else if (getValue() > 0) {
+            return new PyString("0"+Integer.toString(getValue(), 8));
         } else
             return new PyString("0");
     }
@@ -1792,11 +1795,11 @@ public class PyInteger extends PyObject {
     }
 
     final PyString int___hex__() {
-        if (value < 0) {
+        if (getValue() < 0) {
             return new PyString(
-                "0x"+Long.toString(0x100000000l+(long)value, 16));
+                "0x"+Long.toString(0x100000000l+(long)getValue(), 16));
         } else {
-            return new PyString("0x"+Integer.toString(value, 16));
+            return new PyString("0x"+Integer.toString(getValue(), 16));
         }
     }
 
@@ -1824,7 +1827,7 @@ public class PyInteger extends PyObject {
         return new PyTuple(new PyObject[]{
             getType(),
             new PyTuple(new PyObject[]{
-                Py.newInteger(value)
+                Py.newInteger(getValue())
             })
         });
     }

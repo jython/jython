@@ -2908,8 +2908,9 @@ public class PyObject implements java.io.Serializable {
             descr.__delete__(this);
         }
 
-        if (descr != null)
+        if (descr != null) {
             readonlyAttributeError(name);
+        }
 
         noAttributeError(name);
     }
