@@ -401,11 +401,14 @@ public class PyObject implements java.io.Serializable {
     }
 
     public PyObject getDoc() {
-        PyObject doc = fastGetDict().__finditem__("__doc__");
-        if(doc == null) {
-            return Py.None;
+        PyObject d = fastGetDict();
+        if (d != null) {
+            PyObject doc = d.__finditem__("__doc__");
+            if(doc != null) {
+                return doc;
+            }
         }
-        return doc;
+        return Py.None;
     }
 
     public PyObject(PyType objtype) {
@@ -2869,8 +2872,9 @@ public class PyObject implements java.io.Serializable {
             descr.__set__(this, value);
         }
 
-        if (descr != null)
+        if (descr != null) {
             readonlyAttributeError(name);
+        }
 
         noAttributeError(name);
     }
@@ -2905,8 +2909,9 @@ public class PyObject implements java.io.Serializable {
             descr.__delete__(this);
         }
 
-        if (descr != null)
+        if (descr != null) {
             readonlyAttributeError(name);
+        }
 
         noAttributeError(name);
     }

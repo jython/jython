@@ -332,7 +332,6 @@ public class PySystemState extends PyObject
                                          ".jython");
                 addRegistryFile(homeFile);
             } catch (Exception exc) {
-                ;
             }
         }
         if (postProperties != null) {
@@ -349,17 +348,20 @@ public class PySystemState extends PyObject
 
     private static void addRegistryFile(File file) {
         if (file.exists()) {
-            registry = new Properties(registry);
-            try {
-                FileInputStream fp = new FileInputStream(file);
+            if (!file.isDirectory()) {
+                registry = new Properties(registry);
                 try {
-                    registry.load(fp);
-                } finally {
-                    fp.close();
+                    FileInputStream fp = new FileInputStream(file);
+                    try {
+                        registry.load(fp);
+                    } finally {
+                        fp.close();
+                    }
+                } catch (IOException e) {
+                    System.err.println("couldn't open registry file: " + file.toString());
                 }
-            } catch (IOException e) {
-                System.err.println("couldn't open registry file: " +
-                                   file.toString());
+            } else {
+                System.err.println("warning: " + file.toString() + " is a directory, not a file");
             }
         }
     }
@@ -434,7 +436,7 @@ public class PySystemState extends PyObject
 
         Py.Zero = new PyInteger(0);
         Py.One = new PyInteger(1);
-        
+
         Py.False = new PyBoolean(false);
         Py.True = new PyBoolean(true);
 
