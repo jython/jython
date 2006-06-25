@@ -14,6 +14,8 @@ import java.util.zip.ZipEntry;
 
 public class SyspathJavaLoader extends ClassLoader {
 
+    private static final char SLASH_CHAR = '/';
+    
     public InputStream getResourceAsStream(String res) {
         Py.writeDebug("resource", "trying resource: " + res);
         ClassLoader classLoader = Py.getSystemState().getClassLoader();
@@ -34,18 +36,21 @@ public class SyspathJavaLoader extends ClassLoader {
             return ret;
         }
 
-        if (res.charAt(0) == '/') {
+        if (res.charAt(0) == SLASH_CHAR) {
             res = res.substring(1);
         }
-
-        res.replace('/', File.separatorChar);
-
+        String entryRes = res;
+        if (File.separatorChar != SLASH_CHAR) {
+            res = res.replace(SLASH_CHAR, File.separatorChar);
+            entryRes = entryRes.replace(File.separatorChar, SLASH_CHAR);
+        }
+        
         PyList path = Py.getSystemState().path;
         for (int i = 0; i < path.__len__(); i++) {
             PyObject entry = path.__getitem__(i);
             if (entry instanceof SyspathArchive) {
                 SyspathArchive archive = (SyspathArchive) entry;
-                ZipEntry ze = archive.getEntry(res);
+                ZipEntry ze = archive.getEntry(entryRes);
                 if (ze != null) {
                     try {
                         return archive.getInputStream(ze);
@@ -105,8 +110,7 @@ public class SyspathJavaLoader extends ClassLoader {
                 PyObject entry = path.__getitem__(i);
                 if (entry instanceof SyspathArchive) {
                     SyspathArchive archive = (SyspathArchive) entry;
-                    String entryname = name.replace('.', File.separatorChar)
-                            + ".class";
+                    String entryname = name.replace('.', SLASH_CHAR) + ".class";
                     ZipEntry ze = archive.getEntry(entryname);
                     if (ze != null) {
                         try {

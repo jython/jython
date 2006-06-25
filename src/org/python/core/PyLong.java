@@ -1152,7 +1152,7 @@ public class PyLong extends PyObject
 
             Object o = x.__tojava__(BigInteger.class);
             if(o != Py.NoConversion) {
-                return new PyLong((BigInteger)o);
+                return Py.newLong((BigInteger)o);
             }
 
             if (base == -909) {
@@ -1333,7 +1333,7 @@ public class PyLong extends PyObject
             return other;
         else
             if (other instanceof PyInteger) {
-                return new PyLong(((PyInteger)other).getValue());
+                return Py.newLong(((PyInteger)other).getValue());
             } else {
                 return Py.None;
             }
@@ -1360,7 +1360,7 @@ public class PyLong extends PyObject
     final PyObject long___add__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyLong(value.add(coerce(right)));
+        return Py.newLong(value.add(coerce(right)));
     }
 
     public PyObject __radd__(PyObject left) {
@@ -1378,7 +1378,7 @@ public class PyLong extends PyObject
     final PyObject long___sub__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyLong(value.subtract(coerce(right)));
+        return Py.newLong(value.subtract(coerce(right)));
     }
 
     public PyObject __rsub__(PyObject left) {
@@ -1386,7 +1386,7 @@ public class PyLong extends PyObject
     }
 
     final PyObject long___rsub__(PyObject left) {
-        return new PyLong(coerce(left).subtract(value));
+        return Py.newLong(coerce(left).subtract(value));
     }
 
     public PyObject __mul__(PyObject right) {
@@ -1399,7 +1399,7 @@ public class PyLong extends PyObject
 
         if (!canCoerce(right))
             return null;
-        return new PyLong(value.multiply(coerce(right)));
+        return Py.newLong(value.multiply(coerce(right)));
     }
 
     public PyObject __rmul__(PyObject left) {
@@ -1411,7 +1411,7 @@ public class PyLong extends PyObject
             return ((PySequence) left).repeat(coerceInt(this));
         if (!canCoerce(left))
             return null;
-        return new PyLong(coerce(left).multiply(value));
+        return Py.newLong(coerce(left).multiply(value));
     }
 
     // Getting signs correct for integer division
@@ -1441,7 +1441,7 @@ public class PyLong extends PyObject
             return null;
         if (Options.divisionWarning > 0)
             Py.warning(Py.DeprecationWarning, "classic long division");
-        return new PyLong(divide(value, coerce(right)));
+        return Py.newLong(divide(value, coerce(right)));
     }
 
     public PyObject __rdiv__(PyObject left) {
@@ -1453,7 +1453,7 @@ public class PyLong extends PyObject
             return null;
         if (Options.divisionWarning > 0)
             Py.warning(Py.DeprecationWarning, "classic long division");
-        return new PyLong(divide(coerce(left), value));
+        return Py.newLong(divide(coerce(left), value));
     }
 
     public PyObject __floordiv__(PyObject right) {
@@ -1463,7 +1463,7 @@ public class PyLong extends PyObject
     final PyObject long___floordiv__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyLong(divide(value, coerce(right)));
+        return Py.newLong(divide(value, coerce(right)));
     }
 
     public PyObject __rfloordiv__(PyObject left) {
@@ -1473,7 +1473,7 @@ public class PyLong extends PyObject
     final PyObject long___rfloordiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
-        return new PyLong(divide(coerce(left), value));
+        return Py.newLong(divide(coerce(left), value));
     }
 
     private static final PyFloat true_divide(BigInteger a,BigInteger b) {
@@ -1536,7 +1536,7 @@ public class PyLong extends PyObject
         if (!canCoerce(right))
             return null;
         BigInteger rightv = coerce(right);
-        return new PyLong(modulo(value, rightv, divide(value, rightv)));
+        return Py.newLong(modulo(value, rightv, divide(value, rightv)));
     }
 
     public PyObject __rmod__(PyObject left) {
@@ -1547,7 +1547,7 @@ public class PyLong extends PyObject
         if (!canCoerce(left))
             return null;
         BigInteger leftv = coerce(left);
-        return new PyLong(modulo(leftv, value, divide(leftv, value)));
+        return Py.newLong(modulo(leftv, value, divide(leftv, value)));
     }
 
     public PyObject __divmod__(PyObject right) {
@@ -1561,8 +1561,8 @@ public class PyLong extends PyObject
 
         BigInteger xdivy = divide(value, rightv);
         return new PyTuple(new PyObject[] {
-            new PyLong(xdivy),
-            new PyLong(modulo(value, rightv, xdivy))
+            Py.newLong(xdivy),
+            Py.newLong(modulo(value, rightv, xdivy))
         });
     }
 
@@ -1577,8 +1577,8 @@ public class PyLong extends PyObject
 
         BigInteger xdivy = divide(leftv, value);
         return new PyTuple(new PyObject[] {
-            new PyLong(xdivy),
-            new PyLong(modulo(leftv, value, xdivy))
+            Py.newLong(xdivy),
+            Py.newLong(modulo(leftv, value, xdivy))
         });
     }
 
@@ -1614,7 +1614,7 @@ public class PyLong extends PyObject
                 throw Py.ZeroDivisionError("zero to a negative power");
         }
         if (modulo == null)
-            return new PyLong(value.pow(y.intValue()));
+            return Py.newLong(value.pow(y.intValue()));
         else {
             // This whole thing can be trivially rewritten after bugs
             // in modPow are fixed by SUN
@@ -1625,7 +1625,7 @@ public class PyLong extends PyObject
             if (zi == 0)
                 throw Py.ValueError("pow(x, y, z) with z == 0");
             if (zi == 1 || zi == -1)
-                return new PyLong(0);
+                return Py.newLong(0);
 
             if (z.compareTo(BigInteger.valueOf(0)) <= 0) {
                 // Handle negative modulo's specially
@@ -1634,16 +1634,16 @@ public class PyLong extends PyObject
                   }*/
                 y = value.modPow(y, z.negate());
                 if (y.compareTo(BigInteger.valueOf(0)) > 0) {
-                    return new PyLong(z.add(y));
+                    return Py.newLong(z.add(y));
                 } else {
-                    return new PyLong(y);
+                    return Py.newLong(y);
                 }
                 //return __pow__(right).__mod__(modulo);
             } else {
                 // XXX: 1.1 no longer supported so review this.
                 // This is buggy in SUN's jdk1.1.5
                 // Extra __mod__ improves things slightly
-                return new PyLong(value.modPow(y, z));
+                return Py.newLong(value.modPow(y, z));
                 //return __pow__(right).__mod__(modulo);
             }
         }
@@ -1669,7 +1669,7 @@ public class PyLong extends PyObject
         int rightv = coerceInt(right);
         if(rightv < 0)
             throw Py.ValueError("negative shift count");
-        return new PyLong(value.shiftLeft(rightv));
+        return Py.newLong(value.shiftLeft(rightv));
     }
 
     public PyObject __rshift__(PyObject right) {
@@ -1682,7 +1682,7 @@ public class PyLong extends PyObject
         int rightv = coerceInt(right);
         if(rightv < 0)
             throw Py.ValueError("negative shift count");
-        return new PyLong(value.shiftRight(rightv));
+        return Py.newLong(value.shiftRight(rightv));
     }
 
     public PyObject __and__(PyObject right) {
@@ -1692,7 +1692,7 @@ public class PyLong extends PyObject
     final PyObject long___and__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyLong(value.and(coerce(right)));
+        return Py.newLong(value.and(coerce(right)));
     }
 
     public PyObject __rand__(PyObject left) {
@@ -1702,7 +1702,7 @@ public class PyLong extends PyObject
     final PyObject long___rand__(PyObject left) {
         if (!canCoerce(left))
             return null;
-        return new PyLong(coerce(left).and(value));
+        return Py.newLong(coerce(left).and(value));
     }
 
     public PyObject __xor__(PyObject right) {
@@ -1712,7 +1712,7 @@ public class PyLong extends PyObject
     final PyObject long___xor__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyLong(value.xor(coerce(right)));
+        return Py.newLong(value.xor(coerce(right)));
     }
 
     public PyObject __rxor__(PyObject left) {
@@ -1722,7 +1722,7 @@ public class PyLong extends PyObject
     final PyObject long___rxor__(PyObject left) {
         if (!canCoerce(left))
             return null;
-        return new PyLong(coerce(left).xor(value));
+        return Py.newLong(coerce(left).xor(value));
     }
 
     public PyObject __or__(PyObject right) {
@@ -1732,7 +1732,7 @@ public class PyLong extends PyObject
     final PyObject long___or__(PyObject right) {
         if (!canCoerce(right))
             return null;
-        return new PyLong(value.or(coerce(right)));
+        return Py.newLong(value.or(coerce(right)));
     }
 
     public PyObject __ror__(PyObject left) {
@@ -1742,7 +1742,7 @@ public class PyLong extends PyObject
     final PyObject long___ror__(PyObject left) {
         if (!canCoerce(left))
             return null;
-        return new PyLong(coerce(left).or(value));
+        return Py.newLong(coerce(left).or(value));
     }
 
     public PyObject __neg__() {
@@ -1750,7 +1750,7 @@ public class PyLong extends PyObject
     }
 
     final PyObject long___neg__() {
-        return new PyLong(value.negate());
+        return Py.newLong(value.negate());
     }
 
     public PyObject __pos__() {
@@ -1758,14 +1758,14 @@ public class PyLong extends PyObject
     }
 
     final PyObject long___pos__() {
-        return this;
+        return Py.newLong(value);
     }
 
     public PyObject __abs__() {
         return long___abs__();
     }
     final PyObject long___abs__() {
-        return new PyLong(value.abs());
+        return Py.newLong(value.abs());
     }
 
     public PyObject __invert__() {
@@ -1773,7 +1773,7 @@ public class PyLong extends PyObject
     }
 
     final PyObject long___invert__() {
-        return new PyLong(value.not());
+        return Py.newLong(value.not());
     }
 
     public PyObject __int__() {
@@ -1783,9 +1783,9 @@ public class PyLong extends PyObject
     final PyObject long___int__() {
         long v = value.longValue();
         if (v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
-            return this;
+            return Py.newLong(value);
         }
-        return new PyInteger((int)getLong(Integer.MIN_VALUE,
+        return Py.newInteger((int)getLong(Integer.MIN_VALUE,
                                           Integer.MAX_VALUE));
     }
 
@@ -1795,7 +1795,7 @@ public class PyLong extends PyObject
     }
 
     final PyLong long___long__() {
-        return this;
+        return Py.newLong(value);
     }
 
     public PyFloat __float__() {

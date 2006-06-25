@@ -165,6 +165,71 @@ public class PyUnicode extends PyString {
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyUnicode.class,1,1,new exposed___add__(null,null)));
+        class exposed___getslice__ extends PyBuiltinFunctionNarrow {
+
+            private PyUnicode self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getslice__(PyUnicode self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getslice__((PyUnicode)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                return self.unicode___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyUnicode self=(PyUnicode)gself;
+                return self.unicode___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                return self.unicode___getslice__(arg0,arg1);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyUnicode self=(PyUnicode)gself;
+                return self.unicode___getslice__(arg0,arg1);
+            }
+
+        }
+        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyUnicode.class,2,3,new exposed___getslice__(null,null)));
+        class exposed___iter__ extends PyBuiltinFunctionNarrow {
+
+            private PyUnicode self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___iter__(PyUnicode self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___iter__((PyUnicode)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.unicode___iter__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyUnicode self=(PyUnicode)gself;
+                return self.unicode___iter__();
+            }
+
+        }
+        dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyUnicode.class,0,0,new exposed___iter__(null,null)));
         class exposed___mul__ extends PyBuiltinFunctionNarrow {
 
             private PyUnicode self;
@@ -221,6 +286,62 @@ public class PyUnicode extends PyString {
 
         }
         dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyUnicode.class,1,1,new exposed___rmul__(null,null)));
+        class exposed___str__ extends PyBuiltinFunctionNarrow {
+
+            private PyUnicode self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___str__(PyUnicode self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___str__((PyUnicode)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.unicode___str__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyUnicode self=(PyUnicode)gself;
+                return self.unicode___str__();
+            }
+
+        }
+        dict.__setitem__("__str__",new PyMethodDescr("__str__",PyUnicode.class,0,0,new exposed___str__(null,null)));
+        class exposed___unicode__ extends PyBuiltinFunctionNarrow {
+
+            private PyUnicode self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___unicode__(PyUnicode self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___unicode__((PyUnicode)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.unicode___unicode__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyUnicode self=(PyUnicode)gself;
+                return self.unicode___unicode__();
+            }
+
+        }
+        dict.__setitem__("__unicode__",new PyMethodDescr("__unicode__",PyUnicode.class,0,0,new exposed___unicode__(null,null)));
         class exposed___hash__ extends PyBuiltinFunctionNarrow {
 
             private PyUnicode self;
@@ -267,12 +388,12 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyUnicode(self.unicode_toString());
+                return new PyString(self.unicode_toString());
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyUnicode self=(PyUnicode)gself;
-                return new PyUnicode(self.unicode_toString());
+                return new PyString(self.unicode_toString());
             }
 
         }
@@ -2688,12 +2809,12 @@ public class PyUnicode extends PyString {
         return "'unicode' object";
     }
 
-    public PyUnicode __unicode__() {
-        return this;
+    final PyUnicode unicode___unicode__() {
+        return str___unicode__();
     }
 
-    public PyString __str__() {
-        return this;
+    public PyString unicode___str__() {
+        return str___str__();
     }
 
     final int unicode___len__() {
@@ -3006,4 +3127,21 @@ public class PyUnicode extends PyString {
     final String unicode_decode(String encoding, String errors) {
         return str_decode(encoding, errors);
     }
+
+    final PyObject unicode___getslice__(PyObject s_start, PyObject s_stop) {
+        return str___getslice__(s_start,s_stop,null);
+    }
+
+    final PyObject unicode___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
+        return str___getslice__(s_start,s_stop,s_step);
+    }
+
+    final PyObject unicode___iter__() {
+        return str___iter__();
+    }
+
+    final PyObject unicode___getitem__(PyObject index) {
+        return str___getitem__(index);
+    }
+
 }

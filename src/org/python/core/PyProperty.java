@@ -7,10 +7,10 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
     public static final String exposed_name="property";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("fget",new PyGetSetDescr("fget",PyProperty.class,"getFget",null));
-        dict.__setitem__("fset",new PyGetSetDescr("fset",PyProperty.class,"getFset",null));
-        dict.__setitem__("fdel",new PyGetSetDescr("fdel",PyProperty.class,"getFdel",null));
-        dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyProperty.class,"getDoc",null));
+        dict.__setitem__("fget",new PyGetSetDescr("fget",PyProperty.class,"getFget","setFget"));
+        dict.__setitem__("fset",new PyGetSetDescr("fset",PyProperty.class,"getFset","setFset"));
+        dict.__setitem__("fdel",new PyGetSetDescr("fdel",PyProperty.class,"getFdel","setFdel"));
+        dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyProperty.class,"getDoc","setDoc"));
         class exposed___get__ extends PyBuiltinFunctionNarrow {
 
             private PyProperty self;
@@ -29,28 +29,28 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                PyObject obj=(arg0==Py.None)?null:arg1;
-                PyObject type=(arg1==Py.None)?null:arg0;
+                PyObject obj=(arg0==Py.None)?null:arg0;
+                PyObject type=(arg1==null)?obj:arg1;
                 return self.property___get__(obj,type);
             }
 
             public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
                 PyProperty self=(PyProperty)gself;
-                PyObject obj=(arg0==Py.None)?null:arg1;
-                PyObject type=(arg1==Py.None)?null:arg0;
+                PyObject obj=(arg0==Py.None)?null:arg0;
+                PyObject type=(arg1==null)?obj:arg1;
                 return self.property___get__(obj,type);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject obj=(arg0==Py.None)?null:(null);
-                PyObject type=((null)==Py.None)?null:arg0;
+                PyObject obj=(arg0==Py.None)?null:arg0;
+                PyObject type=((null)==null)?obj:(null);
                 return self.property___get__(obj,type);
             }
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyProperty self=(PyProperty)gself;
-                PyObject obj=(arg0==Py.None)?null:(null);
-                PyObject type=((null)==Py.None)?null:arg0;
+                PyObject obj=(arg0==Py.None)?null:arg0;
+                PyObject type=((null)==null)?obj:(null);
                 return self.property___get__(obj,type);
             }
 
@@ -199,6 +199,25 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
 
     public PyObject getFget() {
         return fget;
+    }
+    // These methods are to conform to test_descr.py
+    // However I believe that this should be fixed through
+    // PyGetSetDescr.java instead
+    // Carlos Quiroz: 19.11.2005
+    public void setFget(PyObject py) {
+        throw Py.TypeError("readonly attribute");
+    }
+    
+    public void setFset(PyObject py) {
+        throw Py.TypeError("readonly attribute");
+    }
+   
+    public void setFdel(PyObject py) {
+        throw Py.TypeError("readonly attribute");
+    }
+    
+    public void setDoc(PyObject py) {
+        throw Py.TypeError("readonly attribute");
     }
 
     public void property_init(PyObject[] args, String[] keywords) {

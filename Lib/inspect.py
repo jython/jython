@@ -14,6 +14,9 @@ def isfunction(func):
 def ismodule(mod):
     return isinstance(mod, _core.PyModule)
 
+def ismethod(meth):
+    return isinstance(meth, _core.PyMethod)
+
 def classify_class_attrs(obj):
     return []
 

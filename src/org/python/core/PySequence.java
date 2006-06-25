@@ -182,6 +182,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public PyObject __iter__() {
+        return seq___iter__();
+    }
+
+    final PyObject seq___iter__() {
         return new PySequenceIter(this);
     }
 
@@ -190,8 +194,9 @@ abstract public class PySequence extends PyObject {
     }
 
     final synchronized PyObject seq___eq__(PyObject o) {
-        if (o.getType() != getType())
+        if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
+        }
         int tl = __len__();
         int ol = o.__len__();
         if (tl != ol)
@@ -205,8 +210,9 @@ abstract public class PySequence extends PyObject {
     }
 
     final synchronized PyObject seq___ne__(PyObject o) {
-        if (o.getType() != getType())
+        if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
+        }
         int tl = __len__();
         int ol = o.__len__();
         if (tl != ol)
@@ -216,8 +222,9 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized PyObject __lt__(PyObject o) {
-        if (o.getType() != getType())
+        if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
+        }
         int i = cmp(this, -1, o, -1);
         if (i < 0)
             return (i == -1) ? Py.One : Py.Zero;
@@ -225,8 +232,9 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized PyObject __le__(PyObject o) {
-        if (o.getType() != getType())
+        if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
+        }
         int i = cmp(this, -1, o, -1);
         if (i < 0)
             return (i == -1 || i == -2) ? Py.One : Py.Zero;
@@ -234,8 +242,9 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized PyObject __gt__(PyObject o) {
-        if (o.getType() != getType())
+        if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
+        }
         int i = cmp(this, -1, o, -1);
         if (i < 0)
             return (i == -3) ? Py.One : Py.Zero;
@@ -243,8 +252,9 @@ abstract public class PySequence extends PyObject {
     }
 
     public synchronized PyObject __ge__(PyObject o) {
-        if (o.getType() != getType())
+        if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
+        }
         int i = cmp(this, -1, o, -1);
         if (i < 0)
             return (i == -3 || i == -2) ? Py.One : Py.Zero;
@@ -352,6 +362,10 @@ abstract public class PySequence extends PyObject {
     }
 
     public PyObject __getitem__(PyObject index) {
+        return seq___getitem__(index);
+    }
+
+    final PyObject seq___getitem__(PyObject index) {
         PyObject ret = __finditem__(index);
         if (ret == null) {
             throw Py.IndexError("index out of range: "+index);
