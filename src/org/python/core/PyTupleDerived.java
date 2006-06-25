@@ -804,7 +804,6 @@ public class PyTupleDerived extends PyTuple {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__getitem__");
         if (impl!=null) {
-            System.out.println("here");
             try {
                 return impl.__get__(this,self_type).__call__(key);
             } catch (PyException exc) {
