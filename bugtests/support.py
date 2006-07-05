@@ -1,7 +1,15 @@
 
 import re, exceptions, thread, os, shutil
+import jarray
 
 import support_config as cfg
+
+from java.io import FileInputStream
+from java.io import FileOutputStream
+from java.util.jar import JarEntry
+from java.util.jar import JarFile
+from java.util.jar import JarInputStream
+from java.util.jar import JarOutputStream
 
 UNIX = os.pathsep == ":"
 WIN  = os.pathsep == ";"
@@ -22,16 +30,42 @@ def compare(s, pattern):
   if m is None:
     raise TestError("string compare error\n   '" + str(s) + "'\n   '" + pattern + "'")
 
-def execCmd(cmd):
-  #print cmd
+def StreamReader(instream, outstream):
+  while 1:
+    ch = instream.read()
+    if ch == -1: break
+    outstream.write(ch)
+
+def execCmd(cmd, kw):
+  __doc__ = """execute a command, and wait for its results
+returns 0 if everything was ok
+raises a TestError if the command did not end normally"""
+  if kw.has_key("verbose") and kw["verbose"]:
+    print cmd
   import java
   r = java.lang.Runtime.getRuntime()
   e = getattr(r, "exec")
   p = e(cmd)
-  return p
+
+  if kw.has_key("output"):
+    outstream = java.io.FileOutputStream(kw['output'])
+  else:
+    outstream = java.lang.System.out
+  if kw.has_key("error"):
+    errstream = java.io.FileOutputStream(kw['error'])
+  else:
+    errstream = java.lang.System.out
+
+  thread.start_new_thread(StreamReader, (p.inputStream, outstream))
+  thread.start_new_thread(StreamReader, (p.errorStream, errstream))
+
+  ret = p.waitFor()
+  if ret != 0 and not kw.has_key("expectError"):
+    raise TestError, "%s failed with %d" % (cmd, ret)
+
+  return ret
 
 def compileJava(src, **kw):
-
   classpath = cfg.classpath
   if "classpath" in kw:
     classpath = os.pathsep.join([cfg.classpath, kw["classpath"]])
@@ -40,22 +74,9 @@ def compileJava(src, **kw):
   elif WIN:
     src = src.replace("/", "\\")
     cmd = 'cmd /C "%s/bin/javac.exe -classpath %s %s"' % (cfg.java_home, classpath, src)
-  p = execCmd(cmd)
-
-  import java
-  if kw.has_key("output"):
-    outstream = java.io.FileOutputStream(kw['output'])
-  else:
-    outstream = java.lang.System.out
-
-  thread.start_new_thread(StreamReader, (p.inputStream, outstream))
-  thread.start_new_thread(StreamReader, (p.errorStream, outstream))
-  ret = p.waitFor()
-  if ret != 0:
-    raise TestError, "%s failed with %d" % (cmd, ret)
+  return execCmd(cmd, kw)
 
 def runJava(cls, **kw):
-
   classpath = cfg.classpath
   if "classpath" in kw:
     classpath = os.pathsep.join([cfg.classpath, kw["classpath"]])
@@ -67,29 +88,17 @@ def runJava(cls, **kw):
     cmd = ['/bin/sh', '-c', "%s/bin/java -classpath %s %s %s" % (cfg.java_home, classpath, defs, cls)]
   elif WIN:
     cmd = 'cmd /C "%s/bin/java.exe -classpath %s %s %s"' % (cfg.java_home, classpath, defs, cls)
-  p = execCmd(cmd)
+  return execCmd(cmd, kw)
 
-  import java
-  if kw.has_key("output"):
-    outstream = java.io.FileOutputStream(kw['output'])
-  else:
-    outstream = java.lang.System.out
-  if kw.has_key("error"):
-    errstream = java.io.FileOutputStream(kw['error'])
-  else:
-    errstream = java.lang.System.out
-
-  thread.start_new_thread(StreamReader, (p.inputStream, outstream))
-  thread.start_new_thread(StreamReader, (p.errorStream, errstream))
-
-  ret = p.waitFor()
-  if ret != 0 and not kw.has_key("expectError"):
-    raise TestError, "%s failed with %d" % (cmd, ret)
-
-  return ret
+def runJavaJar(jar, *args, **kw):
+  argString = " ".join(args)
+  if UNIX:
+    cmd = ['/bin/sh', '-c', "%s/bin/java -jar %s %s" % (cfg.java_home, jar, argString)]
+  elif WIN:
+    cmd = 'cmd /C "%s/bin/java.exe -jar %s %s"' % (cfg.java_home, jar, argString)
+  return execCmd(cmd, kw)
 
 def runJython(cls, **kw):
-
   classpath = cfg.classpath
   if "classpath" in kw:
     classpath = os.pathsep.join([cfg.classpath, kw["classpath"]])
@@ -97,33 +106,9 @@ def runJython(cls, **kw):
     cmd = "%s/bin/java -classpath %s -Dpython.home=%s org.python.util.jython %s" % (cfg.java_home, classpath, cfg.jython_home, cls)
   elif WIN:
     cmd = 'cmd /C "%s/bin/java.exe -classpath %s -Dpython.home=%s org.python.util.jython %s"' % (cfg.java_home, classpath, cfg.jython_home, cls)
-  p = execCmd(cmd)
-
-  import java
-  if kw.has_key("output"):
-    outstream = java.io.FileOutputStream(kw['output'])
-  else:
-    outstream = java.lang.System.out
-  if kw.has_key("error"):
-    errstream = java.io.FileOutputStream(kw['error'])
-  else:
-    errstream = java.lang.System.out
-
-  thread.start_new_thread(StreamReader, (p.inputStream, outstream))
-  thread.start_new_thread(StreamReader, (p.errorStream, errstream))
-  ret = p.waitFor()
-  if ret != 0 and not kw.has_key("expectError"):
-    raise TestError, "%s failed with %d" % (cmd, ret)
-  return ret
-
-def StreamReader(instream, outstream):
-  while 1:
-    ch = instream.read()
-    if ch == -1: break
-    outstream.write(ch);
+  return execCmd(cmd, kw)
 
 def compileJPythonc(*files, **kw):
-
   if os.path.isdir("jpywork") and not kw.has_key("keep"):
      shutil.rmtree("jpywork", 1) 
 
@@ -153,20 +138,7 @@ def compileJPythonc(*files, **kw):
     cmd = "%s/bin/java -classpath %s -Dpython.home=%s org.python.util.jython %s" % (cfg.java_home, classpath, cfg.jython_home, jythonc)
   elif WIN:
     cmd = 'cmd /C "%s/bin/java.exe -classpath \"%s\" -Dpython.home=%s org.python.util.jython %s"' % (cfg.java_home, classpath, cfg.jython_home, jythonc)
-  p = execCmd(cmd)
-
-  import java
-  if kw.has_key("output"):
-    outstream = java.io.FileOutputStream(kw['output'])
-  else:
-    outstream = java.lang.System.out
-
-  thread.start_new_thread(StreamReader, (p.inputStream, outstream))
-  thread.start_new_thread(StreamReader, (p.errorStream, outstream))
-  ret = p.waitFor()
-  if ret != 0 and not kw.has_key("expectError"):
-    raise TestError, "%s failed with %d" % (cmd, ret)
-  return ret
+  return execCmd(cmd, kw)
 
 def grep(file, text, count=0):
   f = open(file, "r")
@@ -182,3 +154,72 @@ def grep(file, text, count=0):
     return len(result)
   return result
 
+class JarPacker:
+  __doc__ = """helper class to pack stuff into a jar file -
+  the terms 'file' and 'dir' mean java.io.File here """
+  
+  def __init__(self, jarFile, bufsize=1024):
+    self._jarFile = jarFile
+    self._bufsize = bufsize
+    self._manifest = None
+    self._jarOutputStream = None
+
+  def close(self):
+    self.getJarOutputStream().close()
+    
+  def addFile(self, file, parentDirName=None):
+    buffer = jarray.zeros(self._bufsize, 'b')
+    inputStream = FileInputStream(file)
+    jarEntryName = file.getName()
+    if parentDirName:
+      jarEntryName = parentDirName + "/" + jarEntryName
+    self.getJarOutputStream().putNextEntry(JarEntry(jarEntryName))
+    read = inputStream.read(buffer)
+    while read <> -1:
+        self.getJarOutputStream().write(buffer, 0, read)
+        read = inputStream.read(buffer)
+    self.getJarOutputStream().closeEntry()
+    inputStream.close()
+    
+  def addDirectory(self, dir, parentDirName=None):
+    if not dir.isDirectory():
+      return
+    filesInDir = dir.listFiles()
+    for currentFile in filesInDir:
+      if currentFile.isFile():
+        if parentDirName:
+          self.addFile(currentFile, parentDirName + "/" + dir.getName())
+        else:
+          self.addFile(currentFile, dir.getName())
+      else:
+        if parentDirName:
+          newParentDirName = parentDirName + "/" + dir.getName()
+        else:
+          newParentDirName = dir.getName()
+        self.addDirectory(currentFile, newParentDirName)
+        
+  def addJarFile(self, jarFile):
+    __doc__ = """if you want to add a .jar file with a MANIFEST, add it first"""
+    jarJarFile = JarFile(jarFile)
+    self._manifest = jarJarFile.getManifest()
+    jarJarFile.close()
+
+    jarInputStream = JarInputStream(FileInputStream(jarFile))
+    jarEntry = jarInputStream.getNextJarEntry()
+    while jarEntry:
+      self.getJarOutputStream().putNextEntry(jarEntry)
+      buffer = jarray.zeros(self._bufsize, 'b')
+      read = jarInputStream.read(buffer)
+      while read <> -1:
+        self.getJarOutputStream().write(buffer, 0, read)
+        read = jarInputStream.read(buffer)
+      self.getJarOutputStream().closeEntry()
+      jarEntry = jarInputStream.getNextJarEntry()
+
+  def getJarOutputStream(self):
+    if not self._jarOutputStream:
+      if self._manifest:
+        self._jarOutputStream = JarOutputStream(FileOutputStream(self._jarFile), self._manifest)
+      else:
+        self._jarOutputStream = JarOutputStream(FileOutputStream(self._jarFile))
+    return self._jarOutputStream
