@@ -59,6 +59,7 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.taskdefs.Java;
 import org.apache.tools.ant.types.Path;
 import org.apache.tools.ant.DirectoryScanner;
+import org.python.core.PySystemState;
 
 import java.io.File;
 
@@ -414,7 +415,7 @@ public class JythoncAntTask extends MatchingTask {
       javaTask.createJvmarg().setValue( "-Dpython.home=" + getPythonHome() );
 
       // classpath
-      File aJythonJarFile = new File(getPythonHome(), "jython.jar" );
+      File aJythonJarFile = new File(getPythonHome(), PySystemState.JYTHON_JAR );
       createClasspath().setLocation(aJythonJarFile);
 
       javaTask.setClasspath(classpath);

@@ -4,8 +4,19 @@
 
 package org.python.core;
 
-import java.util.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
 import org.python.modules.Setup;
 
 /**
@@ -15,6 +26,12 @@ import org.python.modules.Setup;
 // xxx this should really be a module!
 public class PySystemState extends PyObject
 {
+    public static final String JYTHON_JAR = "jython.jar";
+
+    private static final String JAR_URL_PREFIX = "jar:file:";
+    private static final String JAR_SEPARATOR = "!";
+    private static final String URL_BLANK_REPLACEMENT = "%20";
+
     /**
      * The current version of Jython.
      */
@@ -297,12 +314,12 @@ public class PySystemState extends PyObject
         if (root != null)
             return root;
 
-        // If install.root is undefined find jpython.jar in class.path
+        // If install.root is undefined find JYTHON_JAR in class.path
         String classpath = preProperties.getProperty("java.class.path");
         if (classpath == null)
             return null;
 
-        int jpy = classpath.toLowerCase().indexOf("jython.jar");
+        int jpy = classpath.toLowerCase().indexOf(JYTHON_JAR);
         if (jpy == -1) {
             return null;
         }
@@ -566,9 +583,61 @@ public class PySystemState extends PyObject
 
             addPaths(path, props.getProperty("python.path", ""));
         }
+        addJarLibPath(path);
+        
         return path;
     }
+    
+    /**
+     * standalone jython: add the /Lib directory inside JYTHON_JAR to the path (if present)
+     * 
+     * @param path the sys.path to be updated eventually
+     */
+    private static void addJarLibPath(PyList path) {
+        String jarFileName = getJarFileName();
+        if (jarFileName != null) {
+            JarFile jarFile = null;
+            try {
+                jarFile = new JarFile(jarFileName);
+                JarEntry jarEntry = jarFile.getJarEntry("Lib/javaos.py");
+                if (jarEntry != null) {
+                    addPaths(path, jarFileName + "/Lib");
+                }
+            } catch (IOException ioe) {
+            } finally {
+                if (jarFile != null) {
+                    try {
+                        jarFile.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+    }
 
+    /**
+     * @return the full name of the jar file containing this class, <code>null</code> if not available.
+     */
+    private static String getJarFileName() {
+        String jarFileName = null;
+        Class thisClass = PySystemState.class;
+        String fullClassName = thisClass.getName();
+        String className = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
+        URL url = thisClass.getResource(className + ".class");
+        // we expect an URL like jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
+        if (url != null) {
+            String urlString = url.toString();
+            int jarSeparatorIndex = urlString.indexOf(JAR_SEPARATOR);
+            if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
+                jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
+                // handle directories containing blanks
+                if (jarFileName.indexOf(URL_BLANK_REPLACEMENT) >= 0) {
+                    jarFileName = jarFileName.replaceAll(URL_BLANK_REPLACEMENT, " ");
+                }
+            }
+        }
+        return jarFileName;
+    }
 
     private static void addPaths(PyList path, String pypath) {
         StringTokenizer tok = new StringTokenizer(pypath,
