@@ -10,57 +10,39 @@ use a unique java package name for the sake of this test
 """
 
 import support
-import java
 import sys
-import jarray
+import os
 
 from java.io import File
-from java.io import FileInputStream
-from java.io import FileOutputStream
-from java.util.jar import JarEntry
-from java.util.jar import JarOutputStream
 
 PACKAGE = "test385javapackage"
 CLAZZ = "test385j"
 JARDIR = "test385jar"
 JARFILE = "test385.jar"
 CLAZZ_FILE = File(PACKAGE, "%s.class" % CLAZZ) # java.io.File
-        
-def mkdir(dir):
-    file = File(dir)
-    if not file.exists():
-        file.mkdir()
-    else:
-        if not file.isDirectory():
-            file.mkdir()
 
+def mkdir(dir):
+  if not os.path.exists(dir):
+    os.mkdir(dir)
+  
 def mkjavaclass():
-    mkdir(PACKAGE)
-    f = open("%s/%s.java" % (PACKAGE, CLAZZ), "w")
-    f.write("""
+  mkdir(PACKAGE)
+  f = open("%s/%s.java" % (PACKAGE, CLAZZ), "w")
+  f.write("""
 package %s;
 public class %s {
 }
 """ % (PACKAGE, CLAZZ))
-    f.close()
-    support.compileJava("%s/%s.java" % (PACKAGE, CLAZZ))
-    
+  f.close()
+  support.compileJava("%s/%s.java" % (PACKAGE, CLAZZ))
+
 def mkjar():
-    mkdir(JARDIR)
-    jarFile = File(JARDIR, JARFILE)
-    jarOutputStream = JarOutputStream(FileOutputStream(jarFile))
-    buffer = jarray.zeros(128, 'b')
-    inputStream = FileInputStream(CLAZZ_FILE)
-    jarEntryName = PACKAGE + "/" + CLAZZ_FILE.getName()
-    jarOutputStream.putNextEntry(JarEntry(jarEntryName));
-    read = inputStream.read(buffer)
-    while read <> -1:
-        jarOutputStream.write(buffer, 0, read);
-        read = inputStream.read(buffer)
-    jarOutputStream.closeEntry();
-    inputStream.close()
-    jarOutputStream.close()
-    return jarFile
+  mkdir(JARDIR)
+  jarFile = File(JARDIR, JARFILE)
+  jarPacker = support.JarPacker(jarFile, bufsize=128)
+  jarPacker.addFile(CLAZZ_FILE, parentDirName=PACKAGE)
+  jarPacker.close()
+  return jarFile
 
     
 # create a .jar file containing a .class file
@@ -70,7 +52,7 @@ jarFile = mkjar()
 # important: delete the class file from the file system (otherwise it can be imported)
 CLAZZ_FILE.delete()
 if CLAZZ_FILE.exists():
-    raise AssertionError, "%s is still on the file system" % CLAZZ_FILE
+  raise AssertionError, "%s is still on the file system" % CLAZZ_FILE
 
 # append this jar file to sys.path
 sys.path.append(jarFile.getAbsolutePath())
