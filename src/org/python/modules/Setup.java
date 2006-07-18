@@ -53,6 +53,6 @@ public class Setup
         "errno",
         "array:org.python.modules.ArrayModule",
         "sets:org.python.modules.sets.Sets",
-        "_random:org.python.module.random.RandomModule"
+        "_random:org.python.modules.random.RandomModule"
     };
 }
