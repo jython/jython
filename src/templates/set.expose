@@ -1,0 +1,21 @@
+# setup
+type_name: Set
+type_class: PySet
+type_base_class: PyObject
+incl: baseset
+# exposed methods
+expose_meth: :- add o
+expose_meth: :- remove o
+expose_meth: :- discard o
+expose_meth: pop
+expose_meth: :- clear 
+expose_meth: :- update o
+expose_meth: :- union_update o
+expose_meth: :- intersection_update o
+expose_meth: :- symmetric_difference_update o
+expose_meth: :- difference_update o
+expose_meth: :o __reduce__
+expose_wide_meth: __init__ -1 -1
+  `vdeleg`(init);
+  `void;
+expose_new_mutable:

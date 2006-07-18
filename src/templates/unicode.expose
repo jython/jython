@@ -1,0 +1,60 @@
+# setup
+type_name: unicode
+type_class: PyUnicode
+# exposed methods
+expose_binary: __ne__ __eq__
+expose_meth: :b __contains__ o
+expose_meth: :i __len__
+expose_meth: __add__ o
+expose_meth: __getslice__ ooo?
+expose_meth: __iter__
+expose_meth: __mul__ o
+expose_meth: __rmul__ o
+expose_meth: __str__
+expose_meth: __unicode__
+expose_meth: __hash__
+ `ideleg`(hashCode);
+expose_meth: __repr__
+ `sdeleg`(toString);
+expose_meth: :u capitalize
+expose_meth: :u center i
+expose_meth: :i count s i? i?
+expose_meth: :u decode s? s?
+expose_meth: :u encode s? s?
+expose_meth: :b endswith s i? i?
+expose_meth: :u expandtabs i?
+expose_meth: :i find s i? i?
+expose_meth: :i index s i? i?
+expose_meth: :b isalnum
+expose_meth: :b isalpha
+expose_meth: :b isdecimal
+expose_meth: :b isdigit
+expose_meth: :b islower
+expose_meth: :b isnumeric
+expose_meth: :b isspace
+expose_meth: :b istitle
+expose_meth: :b isunicode
+expose_meth: :b isupper
+expose_meth: :u join o
+expose_meth: :u ljust i
+expose_meth: :u lower
+expose_meth: :u lstrip S?
+expose_meth: :u replace s s i?
+expose_meth: :i rfind s i? i?
+expose_meth: :i rindex s i? i?
+expose_meth: :u rjust i
+expose_meth: :u rstrip S?
+expose_meth: :o split S? i?
+expose_meth: :o splitlines b?
+expose_meth: :b startswith s i? i?
+expose_meth: :u strip S?
+expose_meth: :u swapcase
+expose_meth: :u title
+expose_meth: :u translate s s?
+expose_meth: :u upper
+expose_meth: :u zfill i
+expose_new_immutable:
+#TODO
+#expose_index_getitem:
+#expose_meth: :b __nonzero__
+#expose_meth: __reduce__

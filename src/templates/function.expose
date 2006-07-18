@@ -1,0 +1,17 @@
+# setup
+type_name: function
+type_class: PyFunction
+type_base_class: PyObject
+# exposed methods
+expose_getset: func_closure getFuncClosure
+expose_getset: func_globals getFuncGlobals
+expose_getset: func_name getFuncName
+expose_getset: func_dict getFuncDict setFuncDict
+expose_getset: func_code getFuncCode setFuncCode
+expose_getset: func_doc getFuncDoc setFuncDoc
+#todo: setFuncDefaults
+expose_getset: func_defaults getFuncDefaults
+expose_meth: __repr__
+ `sdeleg`(toString);
+expose_wide_meth: __call__ -1 -1
+expose_new_mutable:

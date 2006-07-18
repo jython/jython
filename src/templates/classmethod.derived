@@ -1,0 +1,4 @@
+base_class: PyClassMethod
+want_dict: true
+ctr:
+incl: object
