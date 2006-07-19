@@ -229,6 +229,49 @@ public final class Py
         return new PyException(Py.UnicodeError, message);
     }
 
+    public static PyObject UnicodeTranslateError;
+    public static PyException UnicodeTranslateError(String object,
+                                                 int start,
+                                                 int end,
+                                                 String reason) {
+        return new PyException(Py.UnicodeTranslateError,
+                               new PyTuple(new PyObject[] {
+                                                           new PyString(object),
+                                                           new PyInteger(start),
+                                                           new PyInteger(end),
+                                                           new PyString(reason)}));
+    }
+
+    public static PyObject UnicodeDecodeError;
+
+    public static PyException UnicodeDecodeError(String encoding,
+                                                 String object,
+                                                 int start,
+                                                 int end,
+                                                 String reason) {
+        return new PyException(Py.UnicodeDecodeError,
+                               new PyTuple(new PyObject[] {new PyString(encoding),
+                                                           new PyString(object),
+                                                           new PyInteger(start),
+                                                           new PyInteger(end),
+                                                           new PyString(reason)}));
+    }
+
+    public static PyObject UnicodeEncodeError;
+
+    public static PyException UnicodeEncodeError(String encoding,
+                                                 String object,
+                                                 int start,
+                                                 int end,
+                                                 String reason) {
+        return new PyException(Py.UnicodeEncodeError,
+                               new PyTuple(new PyObject[] {new PyString(encoding),
+                                                           new PyString(object),
+                                                           new PyInteger(start),
+                                                           new PyInteger(end),
+                                                           new PyString(reason)}));
+    }
+
     public static PyObject EOFError;
     public static PyException EOFError(String message) {
         return new PyException(Py.EOFError, message);
@@ -274,6 +317,11 @@ public final class Py
     public static void DeprecationWarning(String message) {
         warning(DeprecationWarning, message);
     }
+    
+    public static PyObject PendingDeprecationWarning;
+    public static void PendingDeprecationWarning(String message) {
+        warning( PendingDeprecationWarning, message);
+    }
 
     public static PyObject SyntaxWarning;
     public static void SyntaxWarning(String message) {
@@ -288,6 +336,11 @@ public final class Py
     public static PyObject RuntimeWarning;
     public static void RuntimeWarning(String message) {
         warning(RuntimeWarning, message);
+    }
+    
+    public static PyObject FutureWarning;
+    public static void FutureWarning(String message) {
+        warning(FutureWarning, message);
     }
 
     private static PyObject warnings_mod;
@@ -611,15 +664,20 @@ public final class Py
         FloatingPointError  = initExc("FloatingPointError", exc, dict);
         ValueError          = initExc("ValueError", exc, dict);
         UnicodeError        = initExc("UnicodeError", exc, dict);
+        UnicodeEncodeError  = initExc("UnicodeEncodeError", exc, dict);
+        UnicodeDecodeError  = initExc("UnicodeDecodeError", exc, dict);
+        UnicodeTranslateError  = initExc("UnicodeTranslateError", exc, dict);
         ReferenceError      = initExc("ReferenceError", exc, dict);
         SystemError         = initExc("SystemError", exc, dict);
         MemoryError         = initExc("MemoryError", exc, dict);
         Warning             = initExc("Warning", exc, dict);
         UserWarning         = initExc("UserWarning", exc, dict);
         DeprecationWarning  = initExc("DeprecationWarning", exc, dict);
+        PendingDeprecationWarning      = initExc("PendingDeprecationWarning", exc, dict);
         SyntaxWarning       = initExc("SyntaxWarning", exc, dict);
         OverflowWarning     = initExc("OverflowWarning", exc, dict);
         RuntimeWarning      = initExc("RuntimeWarning", exc, dict);
+        FutureWarning      = initExc("FutureWarning", exc, dict);        
     }
 
     public static PySystemState defaultSystemState;

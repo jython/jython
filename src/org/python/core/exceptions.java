@@ -64,6 +64,10 @@ public class exceptions implements ClassDictInit {
             + " |    +-- ValueError\n"
             + " |    |    |\n"
             + " |    |    +-- UnicodeError\n"
+            + " |    |        |\n"
+            + " |    |        +-- UnicodeEncodeError\n"
+            + " |    |        +-- UnicodeDecodeError\n"
+            + " |    |        +-- UnicodeTranslateError\n"
             + " |    |\n"
             + " |    +-- ReferenceError\n"
             + " |    +-- SystemError\n"
@@ -158,6 +162,15 @@ public class exceptions implements ClassDictInit {
         buildClass(dict, "UnicodeError", "ValueError", "empty__init__",
                 "Unicode related error.");
 
+        buildClass(dict, "UnicodeEncodeError", "UnicodeError", "UnicodeEncodeError",
+                "Unicode encoding error.");
+
+        buildClass(dict, "UnicodeDecodeError", "UnicodeError", "UnicodeDecodeError",
+                "Unicode decoding error.");
+
+        buildClass(dict, "UnicodeTranslateError", "UnicodeError", "UnicodeTranslateError",
+                "Unicode translation error.");
+
         buildClass(dict, "KeyboardInterrupt", "StandardError", "empty__init__",
                 "Program interrupted by user.");
 
@@ -213,6 +226,9 @@ public class exceptions implements ClassDictInit {
 
         buildClass(dict, "DeprecationWarning", "Warning", "empty__init__",
                 "Base class for warnings about deprecated features.");
+        
+        buildClass(dict, "PendingDeprecationWarning", "Warning", "empty__init__",
+                "Base class for warnings about features which will be deprecated in the future.");
 
         buildClass(dict, "SyntaxWarning", "Warning", "empty__init__",
                 "Base class for warnings about dubious syntax.");
@@ -222,6 +238,9 @@ public class exceptions implements ClassDictInit {
 
         buildClass(dict, "OverflowWarning", "Warning", "empty__init__",
                 "Base class for warnings about numeric overflow.");
+        
+        buildClass(dict, "FutureWarning", "Warning", "empty__init__",
+                "Base class for warnings about constructs that will change semantically in the future.");
 
         ts.frame = ts.frame.f_back;
     }
@@ -308,7 +327,7 @@ public class exceptions implements ClassDictInit {
     }
 
     public static PyString SyntaxError__str__(PyObject[] arg, String[] kws) {
-        ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
+        ArgParser ap = new ArgParser("__str__", arg, kws, "self", "args");
         PyObject self = ap.getPyObject(0);
         PyString str = self.__getattr__("msg").__str__();
         PyObject filename = basename(self.__findattr__("filename"));
@@ -376,7 +395,7 @@ public class exceptions implements ClassDictInit {
     }
 
     public static PyString EnvironmentError__str__(PyObject[] arg, String[] kws) {
-        ArgParser ap = new ArgParser("__init__", arg, kws, "self");
+        ArgParser ap = new ArgParser("__str__", arg, kws, "self");
         PyObject self = ap.getPyObject(0);
 
         if (self.__getattr__("filename") != Py.None) {
@@ -413,6 +432,176 @@ public class exceptions implements ClassDictInit {
         } else {
             self.__setattr__("code", args);
         }
+    }
+
+    public static PyObject UnicodeError(PyObject[] arg, String[] kws) {
+        PyObject dict = empty__init__(arg, kws);
+        dict.__setitem__("__init__", getJavaFunc("UnicodeError__init__"));
+        return dict;
+    }
+    
+    public static void UnicodeError__init__(PyObject[] arg, String[] kws, PyObject objectType) {
+        ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
+        PyObject self = ap.getPyObject(0);
+        PyObject args = ap.getList(1);
+        self.__setattr__("args", args);
+        if(args.__len__() != 5){
+            throw Py.TypeError("");
+        }
+        if(!isPyString(args.__getitem__(0))
+                || !Py.isInstance(args.__getitem__(1), objectType)||
+                !isPyInt(args.__getitem__(2)) ||
+                         !isPyInt(args.__getitem__(3))
+                         || !isPyString(args.__getitem__(4))){
+            throw Py.TypeError("");
+        }
+        self.__setattr__("encoding", args.__getitem__(0));
+        self.__setattr__("object", args.__getitem__(1));
+        self.__setattr__("start", args.__getitem__(2));
+        self.__setattr__("end", args.__getitem__(3));
+        self.__setattr__("reason", args.__getitem__(4));
+    }
+
+    private static boolean isPyInt(PyObject object) {
+        return Py.isInstance(object, PyType.fromClass(PyInteger.class));
+     }
+
+    private static boolean isPyString(PyObject item) {
+        return Py.isInstance(item, PyType.fromClass(PyString.class));
+    }
+    
+    public static void UnicodeDecodeError__init__(PyObject[] arg, String[] kws) {
+        UnicodeError__init__(arg, kws, PyType.fromClass(PyString.class));
+    }
+
+    public static PyString UnicodeDecodeError__str__(PyObject[] arg, String[] kws) {
+        ArgParser ap = new ArgParser("__str__", arg, kws, "self");
+        PyObject self = ap.getPyObject(0);
+        int start = ((PyInteger)self.__getattr__("start")).getValue();
+        int end = ((PyInteger)self.__getattr__("end")).getValue();
+
+        if(end == (start + 1)) {
+            PyInteger badByte = new PyInteger((int)(self.__getattr__("object")
+                    .toString().charAt(start)) & 0xff);
+            return Py.newString("'%.400s' codec can't decode byte 0x%02x in position %d: %.400s")
+                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
+                                                         badByte,
+                                                         self.__getattr__("start"),
+                                                         self.__getattr__("reason")}))
+                    .__str__();
+        } else {
+            return Py.newString("'%.400s' codec can't decode bytes in position %d-%d: %.400s")
+                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
+                                                         self.__getattr__("start"),
+                                                         new PyInteger(end - 1),
+                                                         self.__getattr__("reason")}))
+                    .__str__();
+        } 
+    }
+
+    public static PyObject UnicodeDecodeError(PyObject[] arg, String[] kws) {
+        PyObject dict = empty__init__(arg, kws);
+        dict.__setitem__("__init__", getJavaFunc("UnicodeDecodeError__init__"));
+        dict.__setitem__("__str__", getJavaFunc("UnicodeDecodeError__str__"));
+        return dict;
+    }
+    
+    public static void UnicodeEncodeError__init__(PyObject[] arg, String[] kws) {
+        UnicodeError__init__(arg, kws, PyType.fromClass(PyBaseString.class));
+    }
+
+    public static PyString UnicodeEncodeError__str__(PyObject[] arg, String[] kws) {
+        ArgParser ap = new ArgParser("__str__", arg, kws, "self");
+        PyObject self = ap.getPyObject(0);
+        int start = ((PyInteger)self.__getattr__("start")).getValue();
+        int end = ((PyInteger)self.__getattr__("end")).getValue();
+
+        if(end == (start + 1)) {
+            int badchar = (int)(self.__getattr__("object").toString().charAt(start));
+            String format;
+            if(badchar <= 0xff)
+                format = "'%.400s' codec can't encode character u'\\x%02x' in position %d: %.400s";
+            else if(badchar <= 0xffff)
+                format = "'%.400s' codec can't encode character u'\\u%04x' in position %d: %.400s";
+            else
+                format = "'%.400s' codec can't encode character u'\\U%08x' in position %d: %.400s";
+            return Py.newString(format)
+                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
+                                                         new PyInteger(badchar),
+                                                         self.__getattr__("start"),
+                                                         self.__getattr__("reason")}))
+                    .__str__();
+        } else {
+            return Py.newString("'%.400s' codec can't encode characters in position %d-%d: %.400s")
+                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
+                                                         self.__getattr__("start"),
+                                                         new PyInteger(end - 1),
+                                                         self.__getattr__("reason")}))
+                    .__str__();
+        } 
+    }
+
+    public static PyObject UnicodeEncodeError(PyObject[] arg, String[] kws) {
+        PyObject dict = empty__init__(arg, kws);
+        dict.__setitem__("__init__", getJavaFunc("UnicodeEncodeError__init__"));
+        dict.__setitem__("__str__", getJavaFunc("UnicodeEncodeError__str__"));
+        return dict;
+    }
+    
+    public static void UnicodeTranslateError__init__(PyObject[] arg, String[] kws) {
+        ArgParser ap = new ArgParser("__init__", arg, kws, "self", "args");
+        PyObject self = ap.getPyObject(0);
+        PyObject args = ap.getList(1);
+        if(args.__len__() != 4){
+            throw Py.TypeError("");
+        }
+        if(!Py.isInstance(args.__getitem__(0), PyType.fromClass(PyBaseString.class))||
+                !isPyInt(args.__getitem__(1)) ||
+                         !isPyInt(args.__getitem__(2))
+                         || !isPyString(args.__getitem__(3))){
+            throw Py.TypeError("");
+        }
+        self.__setattr__("args", args);
+        self.__setattr__("object", args.__getitem__(0));
+        self.__setattr__("start", args.__getitem__(1));
+        self.__setattr__("end", args.__getitem__(2));
+        self.__setattr__("reason", args.__getitem__(3));
+    }
+
+    public static PyString UnicodeTranslateError__str__(PyObject[] arg, String[] kws) {
+        ArgParser ap = new ArgParser("__str__", arg, kws, "self");
+        PyObject self = ap.getPyObject(0);
+        int start = ((PyInteger)self.__getattr__("start")).getValue();
+        int end = ((PyInteger)self.__getattr__("end")).getValue();
+
+        if(end == (start + 1)) {
+            int badchar = (int)(self.__getattr__("object").toString().charAt(start));
+            String format;
+            if(badchar <= 0xff)
+                format = "can't translate character u'\\x%02x' in position %d: %.400s";
+            else if(badchar <= 0xffff)
+                format = "can't translate character u'\\u%04x' in position %d: %.400s";
+            else
+                format = "can't translate character u'\\U%08x' in position %d: %.400s";
+            return Py.newString(format)
+                    .__mod__(new PyTuple(new PyObject[] {new PyInteger(badchar),
+                                                         self.__getattr__("start"),
+                                                         self.__getattr__("reason")}))
+                    .__str__();
+        } else {
+            return Py.newString("can't translate characters in position %d-%d: %.400s")
+                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("start"),
+                                                         new PyInteger(end - 1),
+                                                         self.__getattr__("reason")}))
+                    .__str__();
+        } 
+    }
+
+    public static PyObject UnicodeTranslateError(PyObject[] arg, String[] kws) {
+        PyObject dict = empty__init__(arg, kws);
+        dict.__setitem__("__init__", getJavaFunc("UnicodeTranslateError__init__"));
+        dict.__setitem__("__str__", getJavaFunc("UnicodeTranslateError__str__"));
+        return dict;
     }
 
     private static PyObject getJavaFunc(String name) {
