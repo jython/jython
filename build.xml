@@ -396,6 +396,19 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
                 verbose="true">
             <include name="*.expose" />
             <include name="*.derived" />
+
+            <!-- these have custom modifications -->
+            <exclude name="float.derived" />
+            <exclude name="long.derived" />
+            <exclude name="str.expose" />
+            <exclude name="random.derived" />
+
+            <!-- unfinished -->
+            <exclude name="function.expose" />
+
+            <!-- sequence.expose is to be used as a parent expose; extended,
+                but not used directly -->
+            <exclude name="sequence.expose" />
         </gentempl>
     </target>
 

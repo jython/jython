@@ -34,8 +34,7 @@ object.expose:org.python.core.PyObject
 property.derived:org.python.core.PyPropertyDerived
 property.expose:org.python.core.PyProperty
 sequence.expose:org.python.core.PySequence
-# XXX commented out; need a fix for different modules
-#random.derived:org.python.modules.random.PyRandomDerived
+random.derived:org.python.modules.random.PyRandomDerived
 random.expose:org.python.modules.random.PyRandom
 #set.expose
 str.expose:org.python.core.PyString
