@@ -543,17 +543,35 @@ public class PyStringMap extends PyObject
         }
         return l;
     }
+
+    /**
+     * return an iterator over (key, value) pairs
+     */
+    public synchronized PyObject iteritems() {
+        return new PyStringMapIter(keys, values, PyStringMapIter.ITEMS);
+    }
 }
 
+/* extended, based on PyDictionaryIter */
 class PyStringMapIter extends PyIterator {
     String[] keyTable;
     PyObject[] valTable;
     private int idx;
+    private int type;
+
+    public static final int KEYS    = 0;
+    public static final int VALUES  = 1;
+    public static final int ITEMS   = 2;
 
     public PyStringMapIter(String[] keys, PyObject[] values) {
+        this(keys, values, KEYS);
+    }
+
+    public PyStringMapIter(String[] keys, PyObject[] values, int type) {
         this.keyTable = keys;
         this.valTable = values;
         this.idx = 0;
+        this.type=type;
     }
 
     public PyObject __iternext__() {
@@ -561,10 +579,20 @@ class PyStringMapIter extends PyIterator {
 
         for (; idx < n; idx++) {
             String key = keyTable[idx];
-            if (key == null || key == "<deleted key>" || valTable[idx] == null)
+            PyObject val = valTable[idx];
+            if (key == null || key == "<deleted key>" || val == null)
                 continue;
             idx++;
-            return Py.newString(key);
+
+            switch(type) {
+                case VALUES:
+                    return val;
+                case ITEMS:
+                    return new PyTuple(new PyObject[] { Py.newString(key),
+                        val });
+                default:    // KEYS
+                    return Py.newString(key);
+            }
         }
         return null;
     }
