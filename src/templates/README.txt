@@ -4,9 +4,9 @@ script.  For the PyIntger class it is created thus:
 
   python gexpose.py int.expose ../../jython/src/org/python/core/PyInteger.java
 
-For each class their is an xxx.expose file describing what should be exposed.
+For each class there is an xxx.expose file describing what should be exposed.
 
-In addition their is an xxxDerived.java class that is completely generated 
+In addition there is an xxxDerived.java class that is completely generated 
 with the script gderived.py.  For the PyInteger class it is created thus:
 
   python gderived.py int.derived >../../jython/src/org/python/core/PyIntegerDerived.java
