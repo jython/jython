@@ -240,6 +240,23 @@ public class PyStringMap extends PyObject
         }
     }
 
+    public synchronized PyObject __getitem__(String key) {
+        PyObject o=__finditem__(key);
+        if (null == o) {
+            throw Py.KeyError("'"+key+"'");
+        } else {
+            return o;
+        }
+    }
+    
+    public PyObject __getitem__(PyObject key) {
+        if (key instanceof PyString) {
+            return __getitem__(((PyString)key).internedString());
+        } else {
+            throw Py.KeyError(key.toString());
+        }
+    }
+
     /**
      * Remove all items from the dictionary.
      */
