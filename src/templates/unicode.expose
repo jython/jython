@@ -50,7 +50,7 @@ expose_meth: :b startswith s i? i?
 expose_meth: :u strip S?
 expose_meth: :u swapcase
 expose_meth: :u title
-expose_meth: :u translate s s?
+expose_meth: :u translate o
 expose_meth: :u upper
 expose_meth: :u zfill i
 expose_new_immutable:
