@@ -443,6 +443,33 @@ public class PySystemState extends PyObject
         Py.EmptyString = new PyString("");
         Py.Newline = new PyString("\n");
         Py.Space = new PyString(" ");
+
+        Py.TPFLAGS_HAVE_GETCHARBUFFER = (1L<<0);
+        Py.TPFLAGS_HAVE_SEQUENCE_IN = (1L<<1);
+        Py.TPFLAGS_GC = 0;  /* used to be (1L<<2) */
+        Py.TPFLAGS_HAVE_INPLACEOPS = (1L<<3);
+        Py.TPFLAGS_CHECKTYPES = (1L<<4);
+        Py.TPFLAGS_HAVE_RICHCOMPARE = (1L<<5);
+        Py.TPFLAGS_HAVE_WEAKREFS = (1L<<6);
+        Py.TPFLAGS_HAVE_ITER = (1L<<7);
+        Py.TPFLAGS_HAVE_CLASS = (1L<<8);
+        Py.TPFLAGS_HEAPTYPE = (1L<<9);
+        Py.TPFLAGS_BASETYPE = (1L<<10);
+        Py.TPFLAGS_READY = (1L<<12);
+        Py.TPFLAGS_READYING = (1L<<13);
+        Py.TPFLAGS_HAVE_GC = (1L<<14);
+        Py.TPFLAGS_HAVE_STACKLESS_EXTENSION = 0;    /* if stackless, then (3L<<15); */
+        Py.TPFLAGS_DEFAULT = ( Py.TPFLAGS_HAVE_GETCHARBUFFER |
+                Py.TPFLAGS_HAVE_SEQUENCE_IN |
+                Py.TPFLAGS_HAVE_INPLACEOPS |
+                Py.TPFLAGS_HAVE_RICHCOMPARE |
+                Py.TPFLAGS_HAVE_WEAKREFS |
+                Py.TPFLAGS_HAVE_ITER |
+                Py.TPFLAGS_HAVE_CLASS |
+                Py.TPFLAGS_HAVE_STACKLESS_EXTENSION |
+                0);
+
+
         // xxx what to do about modules
         __builtin__class = PyJavaClass.lookup(__builtin__.class);
 

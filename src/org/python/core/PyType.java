@@ -26,6 +26,7 @@ public class PyType extends PyObject implements Serializable {
         dict.__setitem__("__base__",new PyGetSetDescr("__base__",PyType.class,"getBase",null));
         dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases",null));
         dict.__setitem__("__mro__",new PyGetSetDescr("__mro__",PyType.class,"getMro",null));
+        dict.__setitem__("__flags__",new PyGetSetDescr("__flags__",PyType.class,"getFlags",null));
         class exposed_mro extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -392,6 +393,7 @@ public class PyType extends PyObject implements Serializable {
     private PyObject[] bases;
     private PyObject dict;
     private PyObject[] mro;
+    private long tp_flags;
     private Class underlying_class;
     private List slotnames;
 
@@ -416,6 +418,10 @@ public class PyType extends PyObject implements Serializable {
 
     public PyTuple getMro() {
         return new PyTuple(mro);
+    }
+
+    public PyLong getFlags() {
+        return new PyLong(tp_flags);
     }
     
     public synchronized final PyObject type_getSubclasses() {
@@ -744,6 +750,17 @@ public class PyType extends PyObject implements Serializable {
         newtype.name = name;
         newtype.base = base;
         newtype.bases = bases_list;
+
+        /* initialize tp flags */
+        newtype.tp_flags=Py.TPFLAGS_DEFAULT | Py.TPFLAGS_HEAPTYPE |
+                Py.TPFLAGS_BASETYPE;
+        if ( (base.tp_flags & Py.TPFLAGS_HAVE_GC)>0 ) {
+            newtype.tp_flags|=Py.TPFLAGS_HAVE_GC;
+        }
+        if ( (base.tp_flags & Py.TPFLAGS_CHECKTYPES)>0 ) {
+                // || (base->tp_as_number == NULL)) {
+            newtype.tp_flags |= Py.TPFLAGS_CHECKTYPES;
+        }
 
         newtype.needs_userdict = needs_userdict;
         newtype.nuserslots = nuserslots;

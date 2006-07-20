@@ -7,6 +7,7 @@ expose_getset: __name__ fastGetName
 expose_getset: __base__ getBase
 expose_getset: __bases__ getBases
 expose_getset: __mro__ getMro
+expose_getset: __flags__ getFlags
 # classmethods
 expose_cmeth: :o mro o?
 # exposed methods

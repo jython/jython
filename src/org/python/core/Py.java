@@ -76,6 +76,59 @@ public final class Py
     /** A Python string containing ' ' **/
     public static PyString Space;
 
+    /** PyBufferProcs contains bf_getcharbuffer */
+    public static long TPFLAGS_HAVE_GETCHARBUFFER;
+
+    /** PySequenceMethods contains sq_contains */
+    public static long TPFLAGS_HAVE_SEQUENCE_IN;
+
+    /** This is here for backwards compatibility.  Extensions that use the old
+     * GC API will still compile but the objects will not be tracked by the
+     * GC. */
+    public static long TPFLAGS_GC;
+
+    /** PySequenceMethods and PyNumberMethods contain in-place operators */
+    public static long TPFLAGS_HAVE_INPLACEOPS;
+
+    /** PyNumberMethods do their own coercion */
+    public static long TPFLAGS_CHECKTYPES;
+
+    /** tp_richcompare is defined */
+    public static long TPFLAGS_HAVE_RICHCOMPARE;
+
+    /** Objects which are weakly referencable if their tp_weaklistoffset is
+     * &gt;0
+     */
+    public static long TPFLAGS_HAVE_WEAKREFS;
+
+    /** tp_iter is defined */
+    public static long TPFLAGS_HAVE_ITER;
+
+    /** New members introduced by Python 2.2 exist */
+    public static long TPFLAGS_HAVE_CLASS;
+
+    /** Set if the type object is dynamically allocated */
+    public static long TPFLAGS_HEAPTYPE;
+
+    /** Set if the type allows subclassing */
+    public static long TPFLAGS_BASETYPE;
+
+    /** Set if the type is 'ready' -- fully initialized */
+    public static long TPFLAGS_READY;
+
+    /** Set while the type is being 'readied', to prevent recursive ready calls
+     */
+    public static long TPFLAGS_READYING;
+
+    /** Objects support garbage collection (see objimp.h) */
+    public static long TPFLAGS_HAVE_GC;
+
+    /** These two bits are preserved for Stackless Python, next after this is
+     * 16 */
+    public static long TPFLAGS_HAVE_STACKLESS_EXTENSION;
+
+    public static long TPFLAGS_DEFAULT;
+
     /** A unique object to indicate no conversion is possible
         in __tojava__ methods **/
     public static Object NoConversion;
