@@ -25,7 +25,6 @@ import org.python.modules.sre.SRE_STATE;
 
 
 public class _sre {
-    // update when constants are added or removed
     public static int MAGIC = SRE_STATE.SRE_MAGIC;
 
     //XXX: May not be the right size, but I suspect it is -- see sre_compile.py

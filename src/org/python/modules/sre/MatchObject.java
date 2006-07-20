@@ -27,6 +27,15 @@ public class MatchObject extends PyObject {
     int groups; /* number of groups (start/end marks) */
     int[] mark;
 
+    
+    public PyObject expand(PyObject[] args) {
+        if(args.length == 0) {
+            throw Py.TypeError("expand() takes exactly 1 argument (0 given)");
+        }
+        PyObject mod = imp.importName("sre", true);
+        PyObject func = mod.__getattr__("_expand");
+        return func.__call__(new PyObject[] {pattern, this, args[0]});
+    }
 
     public PyObject group(PyObject[] args) {
         switch (args.length) {
@@ -182,6 +191,14 @@ public class MatchObject extends PyObject {
             return Py.newInteger(endpos);
         if (key == "lastindex")
             return lastindex == -1 ? Py.None : Py.newInteger(lastindex);
+        if (key == "lastgroup"){
+            if(pattern.indexgroup != null && lastindex >= 0)
+                return pattern.indexgroup.__getitem__(lastindex);
+            return Py.None;
+        }
+        if ( key == "regs" ){
+            return regs();
+        }
         return super.__findattr__(key);
     }
 }
