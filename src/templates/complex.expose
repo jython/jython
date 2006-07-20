@@ -16,7 +16,6 @@ expose_vanilla_pow
 expose_new_immutable:
 expose_meth: conjugate
 expose_meth: :b __nonzero__
-expose_meth: :o __reduce__
 expose_meth: __repr__
   return new PyString(self.complex_toString());
 expose_meth: __str__

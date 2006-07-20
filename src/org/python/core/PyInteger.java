@@ -1058,34 +1058,6 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyInteger.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
-
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___reduce__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___reduce__((PyInteger)self,info);
-            }
-
-            public PyObject __call__() {
-                return self.int___reduce__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___reduce__();
-            }
-
-        }
-        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyInteger.class,0,0,new exposed___reduce__(null,null)));
         class exposed___repr__ extends PyBuiltinFunctionNarrow {
 
             private PyInteger self;
@@ -1811,23 +1783,5 @@ public class PyInteger extends PyObject {
 
     public int asInt(int index) {
         return getValue();
-    }
-
-    /**
-     * Used for pickling.
-     *
-     * @return a tuple of (class, (Integer))
-     */
-    public PyObject __reduce__() {
-        return int___reduce__();
-    }
-
-    final PyObject int___reduce__() {
-        return new PyTuple(new PyObject[]{
-            getType(),
-            new PyTuple(new PyObject[]{
-                Py.newInteger(getValue())
-            })
-        });
     }
 }

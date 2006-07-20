@@ -48,6 +48,67 @@ public class PyObject implements java.io.Serializable {
 
         }
         dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyObject.class,0,0,new exposed___reduce__(null,null)));
+        class exposed___reduce_ex__ extends PyBuiltinFunctionNarrow {
+
+            private PyObject self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___reduce_ex__(PyObject self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___reduce_ex__((PyObject)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return self.object___reduce_ex__(arg0.asInt(0));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyObject self=(PyObject)gself;
+                try {
+                    return self.object___reduce_ex__(arg0.asInt(0));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return self.object___reduce_ex__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyObject self=(PyObject)gself;
+                return self.object___reduce_ex__();
+            }
+
+        }
+        dict.__setitem__("__reduce_ex__",new PyMethodDescr("__reduce_ex__",PyObject.class,0,1,new exposed___reduce_ex__(null,null)));
         class exposed___str__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -2917,7 +2978,7 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-     * Used for pickling.
+     * Used for pickling.  Default implementation calls __reduce_ex__(0).
      *
      * @return a tuple of (class, tuple)
      */
@@ -2926,10 +2987,149 @@ public class PyObject implements java.io.Serializable {
     }
 
     final PyObject object___reduce__() {
-        PyTuple newargs = __getnewargs__();
-        return new PyTuple(new PyObject[]{
-            getType(), newargs
-        });
+        return object___reduce_ex__(0);
+    }
+
+    /** Used for pickling.  If the subclass specifies __reduce__, it will
+     * override __reduce_ex__ in the base-class, even if __reduce_ex__ was
+     * called with an argument.
+     * 
+     * @param arg PyInteger specifying reduce algorithm (method without this
+     * argument defaults to 0).
+     * @return a tuple of (class, tuple)
+     */
+    public PyObject __reduce_ex__(int arg) {
+        return object___reduce_ex__(arg);
+    }
+    public PyObject __reduce_ex__() {
+        return object___reduce_ex__(0);
+    }
+    final PyObject object___reduce_ex__() {
+        return object___reduce_ex__(0);
+    }
+    final PyObject object___reduce_ex__(int arg) {
+        PyObject res;
+
+        PyObject clsreduce=this.getType().__findattr__("__reduce__");
+        PyObject objreduce=(new PyObject()).getType().__findattr__("__reduce__");
+
+        if (clsreduce!=objreduce) {
+            res=this.__reduce__();
+        } else if (arg>=2) {
+            res=reduce_2();
+        } else {
+            PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
+                    Py.EmptyTuple);
+            PyObject copyreg_reduce=copyreg.__findattr__("_reduce_ex");
+            res=copyreg_reduce.__call__(this, new PyInteger(arg));
+        }
+        return res;
+    }
+
+    private static PyObject slotnames(PyObject cls) {
+        PyObject slotnames;
+
+        slotnames=cls.__findattr__("__slotnames__");
+        if(null!=slotnames) {
+            return slotnames;
+        }
+
+        PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
+                Py.EmptyTuple);
+        PyObject copyreg_slotnames=copyreg.__findattr__("_slotnames");
+        slotnames=copyreg_slotnames.__call__(cls);
+        if (null!=slotnames && Py.None!=slotnames &&
+                (!(slotnames instanceof PyList))) {
+            throw Py.TypeError("copy_reg._slotnames didn't return a list or None");
+        }
+
+        return slotnames;
+    }
+
+    private PyObject reduce_2() {
+        PyObject args, state;
+        PyObject res=null;
+        int n,i;
+
+        PyObject cls=this.__findattr__("__class__");
+
+        PyObject getnewargs=this.__findattr__("__getnewargs__");
+        if (null!=getnewargs) {
+            args=getnewargs.__call__();
+            if (null!=args && !(args instanceof PyTuple)) {
+                throw Py.TypeError("__getnewargs__ should return a tuple");
+            }
+        } else {
+            args=Py.EmptyTuple;
+        }
+
+        PyObject getstate=this.__findattr__("__getstate__");
+        if (null!=getstate) {
+            state=getstate.__call__();
+            if (null==state) {
+                return res;
+            }
+        } else {
+            state=this.__findattr__("__dict__");
+            if (null==state) {
+                state=Py.None;
+            }
+
+            PyObject names=slotnames(cls);
+            if (null==names) {
+                return res;
+            }
+
+            if (names != Py.None) {
+                if (!(names instanceof PyList)) {
+                    throw Py.AssertionError("slots not a list");
+                }
+                PyObject slots=new PyDictionary();
+
+                n=0;
+                for (i=0;i<((PyList)names).size();i++) {
+                    PyObject name=((PyList)names).pyget(i);
+                    PyObject value=this.__findattr__(name.toString());
+                    if (null==value) {
+                        // do nothing
+                    } else {
+                        slots.__setitem__(name, value);
+                        n++;
+                    }
+                }
+                if (n>0) {
+                    state=new PyTuple(new PyObject[] {state, slots});
+                }
+            }
+        }
+        PyObject listitems;
+        PyObject dictitems;
+        if (!(this instanceof PyList)) {
+            listitems=Py.None;
+        } else {
+            listitems=((PyList)this).__iter__();
+        }
+        if (!(this instanceof PyDictionary)) {
+            dictitems=Py.None;
+        } else {
+            dictitems=((PyDictionary)this).iteritems();
+        }
+
+        PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
+                Py.EmptyTuple);
+        PyObject newobj=copyreg.__findattr__("__newobj__");
+
+        n=((PyTuple)args).size();
+        PyObject args2[]=new PyObject[n+1];
+        args2[0]=cls;
+        for(i=0;i<n;i++) {
+            args2[i+1]=((PyTuple)args).pyget(i);
+        }
+
+        res=new PyTuple(new PyObject[] {newobj,
+                new PyTuple(args2), state, listitems, dictitems});
+
+        return res;
     }
 
     public PyTuple __getnewargs__() {

@@ -285,34 +285,6 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyString.class,1,1,new exposed___mul__(null,null)));
-        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
-
-            private PyString self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___reduce__(PyString self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___reduce__((PyString)self,info);
-            }
-
-            public PyObject __call__() {
-                return self.str___reduce__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyString self=(PyString)gself;
-                return self.str___reduce__();
-            }
-
-        }
-        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyString.class,0,0,new exposed___reduce__(null,null)));
         class exposed___rmul__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -3478,19 +3450,6 @@ public class PyString extends PyBaseString implements ClassDictInit
 
     final PyObject str___getitem__(PyObject index) {
         return seq___getitem__(index);
-    }
-
-    /**
-     * Used for pickling.
-     *
-     * @return a tuple of (class, tuple)
-     */
-    public PyObject __reduce__() {
-        return str___reduce__();
-    }
-
-    final PyObject str___reduce__() {
-        return object___reduce__();
     }
 
     public PyTuple __getnewargs__() {

@@ -13,7 +13,6 @@ expose_vanilla_cmp
 expose_vanilla_pow
 expose_new_immutable:
 expose_meth: :b __nonzero__
-expose_meth: :o __reduce__
 expose_meth: __repr__
   return new PyString(self.int_toString());
 expose_meth: __str__

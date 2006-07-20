@@ -48,7 +48,7 @@ public class types implements ClassDictInit {
         dict.__setitem__("TracebackType",
                          PyType.fromClass(PyTraceback.class));
         dict.__setitem__("TupleType", PyType.fromClass(PyTuple.class));
-        dict.__setitem__("TypeType", PyType.fromClass(PyJavaClass.class));
+        dict.__setitem__("TypeType", PyType.fromClass(PyType.class));
         dict.__setitem__("UnboundMethodType",
                          PyType.fromClass(PyMethod.class));
         dict.__setitem__("UnicodeType", PyType.fromClass(PyString.class));

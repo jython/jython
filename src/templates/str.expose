@@ -10,7 +10,6 @@ expose_meth: __getitem__ o
 expose_meth: __getslice__ ooo?
 expose_meth: __iter__
 expose_meth: __mul__ o
-expose_meth: __reduce__
 expose_meth: __rmul__ o
 expose_meth: __str__
 expose_meth: __unicode__

@@ -343,6 +343,10 @@ public class cPickle implements ClassDictInit {
     public static final String[] compatible_formats =
                 new String[] { "1.0", "1.1", "1.2" };
 
+    /**
+     * Highest protocol version supported.
+     */
+    public static final int HIGHEST_PROTOCOL = 2;
 
     public static String[] __depends__ = new String[] {
         "copy_reg",
@@ -450,8 +454,8 @@ public class cPickle implements ClassDictInit {
         PyModule copyreg = (PyModule)importModule("copy_reg");
 
         dispatch_table = (PyDictionary)copyreg.__getattr__("dispatch_table");
-        safe_constructors = (PyDictionary)
-                                    copyreg.__getattr__("safe_constructors");
+        // safe_constructors = (PyDictionary)
+        //                             copyreg.__getattr__("safe_constructors");
 
         PickleError       = buildClass("PickleError", Py.Exception,
                                        "_PickleError", "");
