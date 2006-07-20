@@ -39,6 +39,7 @@ import org.python.core.PyInteger;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.PyType;
 
 class TimeFunctions extends PyBuiltinFunctionSet
 {
@@ -116,6 +117,7 @@ public class Time implements ClassDictInit
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("time", new TimeFunctions("time", 0, 0));
         dict.__setitem__("clock", new TimeFunctions("clock", 1, 0));
+        dict.__setitem__("struct_time", PyType.fromClass(PyTimeTuple.class));
 
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
@@ -230,11 +232,6 @@ public class Time implements ClassDictInit
                     dst * getDSTSavings(cal.getTimeZone()));
         }
         return (double)cal.getTime().getTime()/1000.0;
-    }
-
-    //XXX: simple tuple construction, needs error checking.
-    public static PyTuple struct_time(PyTuple vals) {
-        return new PyTimeTuple(vals);
     }
         
 
