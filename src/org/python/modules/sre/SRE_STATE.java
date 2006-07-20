@@ -19,166 +19,232 @@ package org.python.modules.sre;
 
 
 public class SRE_STATE {
-    /* illegal opcode */
+    
+    /*
+     * Generated from Python-2.3.5 like 'python headerToJava.py < Modules/sre_constants.h'
+     * where headerToJava.py contains the following code 
+import sys
+for line in sys.stdin:
+   if line.startswith('#define'):
+       line = line.replace('#define', 'public static final int').strip()
+       segs = line.split(' ')
+       print '%s = %s;' % (' '.join(segs[:-1]), segs[-1])                                                          
+     */
+    //BEGIN generated code
+    public static final int SRE_MAGIC = 20030419;
+    public static final int SRE_OP_FAILURE = 0;
+    public static final int SRE_OP_SUCCESS = 1;
+    public static final int SRE_OP_ANY = 2;
+    public static final int SRE_OP_ANY_ALL = 3;
+    public static final int SRE_OP_ASSERT = 4;
+    public static final int SRE_OP_ASSERT_NOT = 5;
+    public static final int SRE_OP_AT = 6;
+    public static final int SRE_OP_BRANCH = 7;
+    public static final int SRE_OP_CALL = 8;
+    public static final int SRE_OP_CATEGORY = 9;
+    public static final int SRE_OP_CHARSET = 10;
+    public static final int SRE_OP_BIGCHARSET = 11;
+    public static final int SRE_OP_GROUPREF = 12;
+    public static final int SRE_OP_GROUPREF_IGNORE = 13;
+    public static final int SRE_OP_IN = 14;
+    public static final int SRE_OP_IN_IGNORE = 15;
+    public static final int SRE_OP_INFO = 16;
+    public static final int SRE_OP_JUMP = 17;
+    public static final int SRE_OP_LITERAL = 18;
+    public static final int SRE_OP_LITERAL_IGNORE = 19;
+    public static final int SRE_OP_MARK = 20;
+    public static final int SRE_OP_MAX_UNTIL = 21;
+    public static final int SRE_OP_MIN_UNTIL = 22;
+    public static final int SRE_OP_NOT_LITERAL = 23;
+    public static final int SRE_OP_NOT_LITERAL_IGNORE = 24;
+    public static final int SRE_OP_NEGATE = 25;
+    public static final int SRE_OP_RANGE = 26;
+    public static final int SRE_OP_REPEAT = 27;
+    public static final int SRE_OP_REPEAT_ONE = 28;
+    public static final int SRE_OP_SUBPATTERN = 29;
+    public static final int SRE_OP_MIN_REPEAT_ONE = 30;
+    public static final int SRE_AT_BEGINNING = 0;
+    public static final int SRE_AT_BEGINNING_LINE = 1;
+    public static final int SRE_AT_BEGINNING_STRING = 2;
+    public static final int SRE_AT_BOUNDARY = 3;
+    public static final int SRE_AT_NON_BOUNDARY = 4;
+    public static final int SRE_AT_END = 5;
+    public static final int SRE_AT_END_LINE = 6;
+    public static final int SRE_AT_END_STRING = 7;
+    public static final int SRE_AT_LOC_BOUNDARY = 8;
+    public static final int SRE_AT_LOC_NON_BOUNDARY = 9;
+    public static final int SRE_AT_UNI_BOUNDARY = 10;
+    public static final int SRE_AT_UNI_NON_BOUNDARY = 11;
+    public static final int SRE_CATEGORY_DIGIT = 0;
+    public static final int SRE_CATEGORY_NOT_DIGIT = 1;
+    public static final int SRE_CATEGORY_SPACE = 2;
+    public static final int SRE_CATEGORY_NOT_SPACE = 3;
+    public static final int SRE_CATEGORY_WORD = 4;
+    public static final int SRE_CATEGORY_NOT_WORD = 5;
+    public static final int SRE_CATEGORY_LINEBREAK = 6;
+    public static final int SRE_CATEGORY_NOT_LINEBREAK = 7;
+    public static final int SRE_CATEGORY_LOC_WORD = 8;
+    public static final int SRE_CATEGORY_LOC_NOT_WORD = 9;
+    public static final int SRE_CATEGORY_UNI_DIGIT = 10;
+    public static final int SRE_CATEGORY_UNI_NOT_DIGIT = 11;
+    public static final int SRE_CATEGORY_UNI_SPACE = 12;
+    public static final int SRE_CATEGORY_UNI_NOT_SPACE = 13;
+    public static final int SRE_CATEGORY_UNI_WORD = 14;
+    public static final int SRE_CATEGORY_UNI_NOT_WORD = 15;
+    public static final int SRE_CATEGORY_UNI_LINEBREAK = 16;
+    public static final int SRE_CATEGORY_UNI_NOT_LINEBREAK = 17;
+    public static final int SRE_FLAG_TEMPLATE = 1;
+    public static final int SRE_FLAG_IGNORECASE = 2;
+    public static final int SRE_FLAG_LOCALE = 4;
+    public static final int SRE_FLAG_MULTILINE = 8;
+    public static final int SRE_FLAG_DOTALL = 16;
+    public static final int SRE_FLAG_UNICODE = 32;
+    public static final int SRE_FLAG_VERBOSE = 64;
+    public static final int SRE_INFO_PREFIX = 1;
+    public static final int SRE_INFO_LITERAL = 2;
+    public static final int SRE_INFO_CHARSET = 4;
+    //END generated code
+
+    //From here we're including things from _sre.c in the order they're defined there
+    public static final int USE_RECURSION_LIMIT = 5000;
+    
+    /* error codes */
     public static final int SRE_ERROR_ILLEGAL = -1;
-
-    /* illegal state */
     public static final int SRE_ERROR_STATE   = -2;
-
-    /* runaway recursion */
     public static final int SRE_ERROR_RECURSION_LIMIT = -3;
 
-    public static final int SRE_OP_FAILURE                 = 0;
-    public static final int SRE_OP_SUCCESS                 = 1;
-    public static final int SRE_OP_ANY                     = 2;
-    public static final int SRE_OP_ANY_ALL                 = 3;
-    public static final int SRE_OP_ASSERT                  = 4;
-    public static final int SRE_OP_ASSERT_NOT              = 5;
-    public static final int SRE_OP_AT                      = 6;
-    public static final int SRE_OP_BRANCH                  = 7;
-    public static final int SRE_OP_CALL                    = 8;
-    public static final int SRE_OP_CATEGORY                = 9;
-    public static final int SRE_OP_CHARSET                 = 10;
-    public static final int SRE_OP_BIGCHARSET              = 11;
-    public static final int SRE_OP_GROUPREF                = 12;
-    public static final int SRE_OP_GROUPREF_IGNORE         = 13;
-    public static final int SRE_OP_IN                      = 14;
-    public static final int SRE_OP_IN_IGNORE               = 15;
-    public static final int SRE_OP_INFO                    = 16;
-    public static final int SRE_OP_JUMP                    = 17;
-    public static final int SRE_OP_LITERAL                 = 18;
-    public static final int SRE_OP_LITERAL_IGNORE          = 19;
-    public static final int SRE_OP_MARK                    = 20;
-    public static final int SRE_OP_MAX_UNTIL               = 21;
-    public static final int SRE_OP_MIN_UNTIL               = 22;
-    public static final int SRE_OP_NOT_LITERAL             = 23;
-    public static final int SRE_OP_NOT_LITERAL_IGNORE      = 24;
-    public static final int SRE_OP_NEGATE                  = 25;
-    public static final int SRE_OP_RANGE                   = 26;
-    public static final int SRE_OP_REPEAT                  = 27;
-    public static final int SRE_OP_REPEAT_ONE              = 28;
-    public static final int SRE_OP_SUBPATTERN              = 29;
+    /* default character predicates (run sre_chars.py to regenerate tables) */
+    static final int SRE_DIGIT_MASK = 1;
+    static final int SRE_SPACE_MASK = 2;
+    static final int SRE_LINEBREAK_MASK = 4;
+    static final int SRE_ALNUM_MASK = 8;
+    static final int SRE_WORD_MASK  = 16;
 
-    public static final int SRE_AT_BEGINNING               = 0;
-    public static final int SRE_AT_BEGINNING_LINE          = 1;
-    public static final int SRE_AT_BEGINNING_STRING        = 2;
-    public static final int SRE_AT_BOUNDARY                = 3;
-    public static final int SRE_AT_NON_BOUNDARY            = 4;
-    public static final int SRE_AT_END                     = 5;
-    public static final int SRE_AT_END_LINE                = 6;
-    public static final int SRE_AT_END_STRING              = 7;
-    public static final int SRE_AT_LOC_BOUNDARY            = 8;
-    public static final int SRE_AT_LOC_NON_BOUNDARY        = 9;
-    public static final int SRE_AT_UNI_BOUNDARY            = 10;
-    public static final int SRE_AT_UNI_NON_BOUNDARY        = 11;
+    static byte[] sre_char_info = new byte[] {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 2,
+        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 25, 25, 25, 25, 25, 25, 25,
+        25, 25, 0, 0, 0, 0, 0, 0, 0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 0, 0,
+        0, 0, 16, 0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 0, 0, 0, 0, 0 };
 
-    public static final int SRE_CATEGORY_DIGIT             = 0;
-    public static final int SRE_CATEGORY_NOT_DIGIT         = 1;
-    public static final int SRE_CATEGORY_SPACE             = 2;
-    public static final int SRE_CATEGORY_NOT_SPACE         = 3;
-    public static final int SRE_CATEGORY_WORD              = 4;
-    public static final int SRE_CATEGORY_NOT_WORD          = 5;
-    public static final int SRE_CATEGORY_LINEBREAK         = 6;
-    public static final int SRE_CATEGORY_NOT_LINEBREAK     = 7;
-    public static final int SRE_CATEGORY_LOC_WORD          = 8;
-    public static final int SRE_CATEGORY_LOC_NOT_WORD      = 9;
-    public static final int SRE_CATEGORY_UNI_DIGIT         = 10;
-    public static final int SRE_CATEGORY_UNI_NOT_DIGIT     = 11;
-    public static final int SRE_CATEGORY_UNI_SPACE         = 12;
-    public static final int SRE_CATEGORY_UNI_NOT_SPACE     = 13;
-    public static final int SRE_CATEGORY_UNI_WORD          = 14;
-    public static final int SRE_CATEGORY_UNI_NOT_WORD      = 15;
-    public static final int SRE_CATEGORY_UNI_LINEBREAK     = 16;
-    public static final int SRE_CATEGORY_UNI_NOT_LINEBREAK = 17;
+    static byte[] sre_char_lower = new byte[] {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+        27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
+        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+        61, 62, 63, 64, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107,
+        108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
+        122, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105,
+        106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
+        120, 121, 122, 123, 124, 125, 126, 127 };
 
-    public static final int SRE_FLAG_TEMPLATE              = 1;
-    public static final int SRE_FLAG_IGNORECASE            = 2;
-    public static final int SRE_FLAG_LOCALE                = 4;
-    public static final int SRE_FLAG_MULTILINE             = 8;
-    public static final int SRE_FLAG_DOTALL                = 16;
-    public static final int SRE_FLAG_UNICODE               = 32;
-    public static final int SRE_FLAG_VERBOSE               = 64;
-
-    public static final int SRE_INFO_PREFIX                = 1;
-    public static final int SRE_INFO_LITERAL               = 2;
-    public static final int SRE_INFO_CHARSET               = 4;
-
-
-    public static final int USE_RECURSION_LIMIT = 2000;
-
-
-    /* string pointers */
-    int ptr; /* current position (also end of current slice) */
-    int beginning; /* start of original string */
-    int start; /* start of current slice */
-    int end; /* end of original string */
-
-    /* attributes for the match object */
-    char[] str;
-    int pos;
-    int endpos;
-
-    /* character size */
-    int charsize;
-
-    /* registers */
-    int lastindex;
-    int lastmark;
-
-    /* FIXME: <fl> should be dynamically allocated! */
-    int[] mark = new int[200];
-
-    /* dynamically allocated stuff */
-    int[] mark_stack;
-    int mark_stack_size;
-    int mark_stack_base;
-
-    SRE_REPEAT repeat; /* current repeat context */
-
-    /* debugging */
-    int maxlevel;
-
-    /* duplicated from the PatternObject */
-    int flags;
-
-
-
-
-    public SRE_STATE(String str, int start, int end, int flags) {
-        this.str = str.toCharArray();
-        int size = str.length();
-
-        this.charsize = 1;
-
-        /* adjust boundaries */
-        if (start < 0)
-            start = 0;
-        else if (start > size)
-            start = size;
-
-        if (end < 0)
-            end = 0;
-        else if (end > size)
-            end = size;
-
-        this.start = start;
-        this.end = end;
-
-        this.pos = start;
-        this.endpos = end;
-
-        state_reset();
-
-        this.flags = flags;
+    final boolean SRE_IS_DIGIT(char ch) {
+        return ((ch) < 128 ?
+                (sre_char_info[(ch)] & SRE_DIGIT_MASK) != 0 : false);
     }
 
+    final boolean SRE_IS_SPACE(char ch) {
+        return ((ch) < 128 ?
+                (sre_char_info[(ch)] & SRE_SPACE_MASK) != 0 : false);
+    }
 
+    final boolean SRE_IS_LINEBREAK(char ch) {
+        //TODO why is this different than _sre.c
+        return ch == '\n';
+    }
+
+    final boolean SRE_IS_WORD(char ch) {
+        return ((ch) < 128 ?
+                (sre_char_info[(ch)] & SRE_WORD_MASK) != 0 : false);
+    }
+
+    final char lower(char ch) {
+        if ((flags & SRE_FLAG_LOCALE) != 0)
+             return ((ch) < 256 ? Character.toLowerCase(ch) : ch);
+        if ((flags & SRE_FLAG_UNICODE) != 0)
+             return Character.toLowerCase(ch);
+        return ((ch) < 128 ? (char)sre_char_lower[ch] : ch);
+    }
+
+    final boolean SRE_LOC_IS_WORD(char ch) {
+        return Character.isLetterOrDigit(ch) || ch == '_';
+    }
+
+    final boolean SRE_UNI_IS_LINEBREAK(char ch) {
+        switch (ch) {
+        case 0x000A: /* LINE FEED */
+        case 0x000D: /* CARRIAGE RETURN */
+        case 0x001C: /* FILE SEPARATOR */
+        case 0x001D: /* GROUP SEPARATOR */
+        case 0x001E: /* RECORD SEPARATOR */
+        case 0x0085: /* NEXT LINE */
+        case 0x2028: /* LINE SEPARATOR */
+        case 0x2029: /* PARAGRAPH SEPARATOR */
+            return true;
+        default:
+            return false;
+        }
+    }
+    
+    final boolean sre_category(char category, char ch) {
+        switch (category) {
+
+        case SRE_CATEGORY_DIGIT:
+            return SRE_IS_DIGIT(ch);
+        case SRE_CATEGORY_NOT_DIGIT:
+            return ! SRE_IS_DIGIT(ch);
+
+        case SRE_CATEGORY_SPACE:
+            return SRE_IS_SPACE(ch);
+        case SRE_CATEGORY_NOT_SPACE:
+            return ! SRE_IS_SPACE(ch);
+
+        case SRE_CATEGORY_WORD:
+            return SRE_IS_WORD(ch);
+        case SRE_CATEGORY_NOT_WORD:
+            return ! SRE_IS_WORD(ch);
+
+        case SRE_CATEGORY_LINEBREAK:
+            return SRE_IS_LINEBREAK(ch);
+        case SRE_CATEGORY_NOT_LINEBREAK:
+            return ! SRE_IS_LINEBREAK(ch);
+
+        case SRE_CATEGORY_LOC_WORD:
+            return SRE_LOC_IS_WORD(ch);
+        case SRE_CATEGORY_LOC_NOT_WORD:
+            return ! SRE_LOC_IS_WORD(ch);
+
+
+        case SRE_CATEGORY_UNI_DIGIT:
+            return Character.isDigit(ch);
+        case SRE_CATEGORY_UNI_NOT_DIGIT:
+            return !Character.isDigit(ch);
+
+        case SRE_CATEGORY_UNI_SPACE:
+            return Character.isWhitespace(ch);
+        case SRE_CATEGORY_UNI_NOT_SPACE:
+            return !Character.isWhitespace(ch);
+
+        case SRE_CATEGORY_UNI_WORD:
+            return Character.isLetterOrDigit(ch) || ch == '_';
+        case SRE_CATEGORY_UNI_NOT_WORD:
+            return ! (Character.isLetterOrDigit(ch) || ch == '_');
+
+        case SRE_CATEGORY_UNI_LINEBREAK:
+           return SRE_UNI_IS_LINEBREAK(ch);
+        case SRE_CATEGORY_UNI_NOT_LINEBREAK:
+           return ! SRE_UNI_IS_LINEBREAK(ch);
+
+        }
+        return false;
+    }
 
     private void mark_fini() {
         mark_stack = null;
         mark_stack_size = mark_stack_base = 0;
     }
-
 
     private void mark_save(int lo, int hi) {
         if (hi <= lo)
@@ -231,12 +297,9 @@ public class SRE_STATE {
 
         System.arraycopy(mark_stack, mark_stack_base, mark, lo, size);
     }
-
-
-
+    
     final boolean SRE_AT(int ptr, char at) {
-        /* check if pointer is at given position.  return 1 if so, 0
-           otherwise */
+        /* check if pointer is at given position. */
 
         boolean thiS, that;
 
@@ -294,12 +357,8 @@ public class SRE_STATE {
         return false;
     }
 
-
-
-
     final boolean SRE_CHARSET(char[] set, int setidx, char ch) {
-        /* check if character is a member of the given set. return 1 if
-           so, 0 otherwise */
+        /* check if character is a member of the given set.  */
 
         boolean ok = true;
 
@@ -368,10 +427,7 @@ public class SRE_STATE {
             }
         }
     }
-
-
-
-
+    
     private int SRE_COUNT(char[] pattern, int pidx, int maxcount, int level) {
         char chr;
         int ptr = this.ptr;
@@ -452,8 +508,6 @@ public class SRE_STATE {
 
         return ptr - this.ptr;
     }
-
-
 
     final int SRE_MATCH(char[] pattern, int pidx, int level) {
         /* check if string matches the given pattern.  returns <0 for
@@ -771,7 +825,72 @@ public class SRE_STATE {
                     }
                 }
                 return 0;
+                
+            case SRE_OP_MIN_REPEAT_ONE:
+                /* match repeated sequence (minimizing regexp) */
 
+                /* this operator only works if the repeated item is
+                   exactly one character wide, and we're not already
+                   collecting backtracking points.  for other cases,
+                   use the MIN_REPEAT operator */
+
+                /* <MIN_REPEAT_ONE> <skip> <1=min> <2=max> item <SUCCESS> tail */
+
+                mincount = pattern[pidx+1];
+
+                //TRACE(("|%p|%p|MIN_REPEAT_ONE %d %d\n", pattern, ptr,
+                //       pattern[1], pattern[2]));
+
+                if (ptr + mincount > end)
+                    return 0; /* cannot match */
+
+                this.ptr = ptr;
+
+                if (pattern[pidx+1] == 0)
+                    count = 0;
+                else {
+
+                    count = SRE_COUNT(pattern, pidx + 3, pattern[pidx+1],
+                                      level + 1);
+
+                    if (count < 0)
+                        return count;   /* exception */
+                    if (count < (int) pattern[1])
+                        return 0;       /* did not match minimum number of times */
+                    ptr += count;       /* advance past minimum matches of repeat */
+                }
+
+                if (pattern[pidx + pattern[pidx]] == SRE_OP_SUCCESS) {
+                    /* tail is empty.  we're finished */
+                    this.ptr = ptr;
+                    return 1;
+
+                } else {
+                    /* general case */
+                    boolean matchmax = ((int)pattern[pidx + 2] == 65535);
+                    int c;
+                    lastmark = this.lastmark;
+                    while (matchmax || count <= (int) pattern[pidx + 2]) {
+                        this.ptr = ptr;
+                        i = SRE_MATCH(pattern, pidx + pattern[pidx], level + 1);
+                        if (i != 0)
+                            return i;
+                        this.ptr = ptr;
+                        c = SRE_COUNT(pattern, pidx+3, 1, level+1);
+                        if (c < 0)
+                            return c;
+                        if (c == 0)
+                            break;
+                        if(c != 1){
+                            throw new IllegalStateException("c should be 1!");
+                        }
+                        ptr++;
+                        count++;
+                        while (this.lastmark > lastmark)
+                            mark[this.lastmark--] = -1;
+                    }
+                }
+                return 0;
 
             case SRE_OP_REPEAT:
                 /* create repeat context.  all the hard work is done
@@ -900,17 +1019,13 @@ public class SRE_STATE {
 
 
             default:
-                //TRACE(pidx, ptr, "UNKNOWN " + (int) pattern[pidx-1]);
+                TRACE(pidx, ptr, "UNKNOWN " + (int) pattern[pidx-1]);
                 return SRE_ERROR_ILLEGAL;
             }
         }
 
         //return SRE_ERROR_ILLEGAL;
     }
-
-
-
-
     int SRE_SEARCH(char[] pattern, int pidx) {
         int ptr = this.start;
         int end = this.end;
@@ -1040,136 +1155,70 @@ public class SRE_STATE {
     }
 
 
-    final boolean sre_category(char category, char ch) {
-        switch (category) {
+    /* string pointers */
+    int ptr; /* current position (also end of current slice) */
+    int beginning; /* start of original string */
+    int start; /* start of current slice */
+    int end; /* end of original string */
 
-        case SRE_CATEGORY_DIGIT:
-            return SRE_IS_DIGIT(ch);
-        case SRE_CATEGORY_NOT_DIGIT:
-            return ! SRE_IS_DIGIT(ch);
+    /* attributes for the match object */
+    char[] str;
+    int pos;
+    int endpos;
 
-        case SRE_CATEGORY_SPACE:
-            return SRE_IS_SPACE(ch);
-        case SRE_CATEGORY_NOT_SPACE:
-            return ! SRE_IS_SPACE(ch);
+    /* character size */
+    int charsize;
 
-        case SRE_CATEGORY_WORD:
-            return SRE_IS_WORD(ch);
-        case SRE_CATEGORY_NOT_WORD:
-            return ! SRE_IS_WORD(ch);
+    /* registers */
+    int lastindex;
+    int lastmark;
 
-        case SRE_CATEGORY_LINEBREAK:
-            return SRE_IS_LINEBREAK(ch);
-        case SRE_CATEGORY_NOT_LINEBREAK:
-            return ! SRE_IS_LINEBREAK(ch);
+    /* FIXME: <fl> should be dynamically allocated! */
+    int[] mark = new int[200];
 
-        case SRE_CATEGORY_LOC_WORD:
-            return SRE_LOC_IS_WORD(ch);
-        case SRE_CATEGORY_LOC_NOT_WORD:
-            return ! SRE_LOC_IS_WORD(ch);
+    /* dynamically allocated stuff */
+    int[] mark_stack;
+    int mark_stack_size;
+    int mark_stack_base;
+
+    SRE_REPEAT repeat; /* current repeat context */
+
+    /* debugging */
+    int maxlevel;
+
+    /* duplicated from the PatternObject */
+    int flags;
 
 
-        case SRE_CATEGORY_UNI_DIGIT:
-            return Character.isDigit(ch);
-        case SRE_CATEGORY_UNI_NOT_DIGIT:
-            return !Character.isDigit(ch);
 
-        case SRE_CATEGORY_UNI_SPACE:
-            return Character.isWhitespace(ch);
-        case SRE_CATEGORY_UNI_NOT_SPACE:
-            return !Character.isWhitespace(ch);
 
-        case SRE_CATEGORY_UNI_WORD:
-            return Character.isLetterOrDigit(ch) || ch == '_';
-        case SRE_CATEGORY_UNI_NOT_WORD:
-            return ! (Character.isLetterOrDigit(ch) || ch == '_');
+    public SRE_STATE(String str, int start, int end, int flags) {
+        this.str = str.toCharArray();
+        int size = str.length();
 
-        case SRE_CATEGORY_UNI_LINEBREAK:
-           return SRE_UNI_IS_LINEBREAK(ch);
-        case SRE_CATEGORY_UNI_NOT_LINEBREAK:
-           return ! SRE_UNI_IS_LINEBREAK(ch);
+        this.charsize = 1;
 
-        }
-        return false;
+        /* adjust boundaries */
+        if (start < 0)
+            start = 0;
+        else if (start > size)
+            start = size;
+
+        if (end < 0)
+            end = 0;
+        else if (end > size)
+            end = size;
+
+        this.start = start;
+        this.end = end;
+
+        this.pos = start;
+        this.endpos = end;
+
+        state_reset();
+
+        this.flags = flags;
     }
-
-
-    /* default character predicates (run sre_chars.py to regenerate tables) */
-
-    static final int SRE_DIGIT_MASK = 1;
-    static final int SRE_SPACE_MASK = 2;
-    static final int SRE_LINEBREAK_MASK = 4;
-    static final int SRE_ALNUM_MASK = 8;
-    static final int SRE_WORD_MASK  = 16;
-
-    static byte[] sre_char_info = new byte[] {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6, 2,
-        2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 25, 25, 25, 25, 25, 25, 25,
-        25, 25, 0, 0, 0, 0, 0, 0, 0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 0, 0,
-        0, 0, 16, 0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,
-        24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 0, 0, 0, 0, 0 };
-
-    static byte[] sre_char_lower = new byte[] {
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-        10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
-        27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43,
-        44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
-        61, 62, 63, 64, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107,
-        108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
-        122, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105,
-        106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
-        120, 121, 122, 123, 124, 125, 126, 127 };
-
-    final boolean SRE_IS_DIGIT(char ch) {
-        return ((ch) < 128 ?
-                (sre_char_info[(ch)] & SRE_DIGIT_MASK) != 0 : false);
-    }
-
-    final boolean SRE_IS_SPACE(char ch) {
-        return ((ch) < 128 ?
-                (sre_char_info[(ch)] & SRE_SPACE_MASK) != 0 : false);
-    }
-
-    final boolean SRE_IS_WORD(char ch) {
-        return ((ch) < 128 ?
-                (sre_char_info[(ch)] & SRE_WORD_MASK) != 0 : false);
-    }
-
-    final boolean SRE_IS_LINEBREAK(char ch) {
-        return ch == '\n';
-    }
-
-    final boolean SRE_LOC_IS_WORD(char ch) {
-        return Character.isLetterOrDigit(ch) || ch == '_';
-    }
-
-    final boolean SRE_UNI_IS_LINEBREAK(char ch) {
-        switch (ch) {
-        case 0x000A: /* LINE FEED */
-        case 0x000D: /* CARRIAGE RETURN */
-        case 0x001C: /* FILE SEPARATOR */
-        case 0x001D: /* GROUP SEPARATOR */
-        case 0x001E: /* RECORD SEPARATOR */
-        case 0x0085: /* NEXT LINE */
-        case 0x2028: /* LINE SEPARATOR */
-        case 0x2029: /* PARAGRAPH SEPARATOR */
-            return true;
-        default:
-            return false;
-        }
-    }
-
-
-    final char lower(char ch) {
-        if ((flags & SRE_FLAG_LOCALE) != 0)
-             return ((ch) < 256 ? Character.toLowerCase(ch) : ch);
-        if ((flags & SRE_FLAG_UNICODE) != 0)
-             return Character.toLowerCase(ch);
-        return ((ch) < 128 ? (char)sre_char_lower[ch] : ch);
-    }
-
 
     public static int getlower(int ch, int flags) {
         if ((flags & SRE_FLAG_LOCALE) != 0)
@@ -1178,10 +1227,6 @@ public class SRE_STATE {
              return Character.toLowerCase((char)ch);
         return ((ch) < 128 ? (char)sre_char_lower[ch] : ch);
     }
-
-
-
-
 
     String getslice(int index, String string, boolean empty) {
         int i, j;
@@ -1203,9 +1248,6 @@ public class SRE_STATE {
         return string.substring(i, j);
     }
 
-
-
-
     void state_reset() {
         lastmark = 0;
 
@@ -1219,8 +1261,7 @@ public class SRE_STATE {
         mark_fini();
     }
 
-
     private void TRACE(int pidx, int ptr, String string) {
-        //System.out.println("      |" + pidx + "|" + ptr + ": " + string);
+        System.out.println("      |" + pidx + "|" + ptr + ": " + string);
     }
 }
