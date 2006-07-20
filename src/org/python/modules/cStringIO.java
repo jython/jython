@@ -9,7 +9,7 @@
 package org.python.modules;
 
 import org.python.core.Py;
-import org.python.core.PyCallIter;
+import org.python.core.PyIterator;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -45,7 +45,7 @@ public class cStringIO {
      * @see cStringIO#StringIO()
      * @see cStringIO#StringIO(String)
      */
-    public static class StringIO extends PyObject {
+    public static class StringIO extends PyIterator {
         transient public boolean softspace = false;
         //transient public String name = "<cStringIO>";
         //transient public String mode = "w";
@@ -76,8 +76,11 @@ public class cStringIO {
             super.__setattr__(name, value);
         }
 
-        public PyObject __iter__() {
-            return new PyCallIter(__getattr__("readline"), Py.newString(""));
+        public PyObject __iternext__() {
+            String r = readline();
+            if(r.equals(""))
+                return null;
+            return new PyString(r);
         }
 
         /**
