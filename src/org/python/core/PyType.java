@@ -752,15 +752,7 @@ public class PyType extends PyObject implements Serializable {
         newtype.bases = bases_list;
 
         /* initialize tp flags */
-        newtype.tp_flags=Py.TPFLAGS_DEFAULT | Py.TPFLAGS_HEAPTYPE |
-                Py.TPFLAGS_BASETYPE;
-        if ( (base.tp_flags & Py.TPFLAGS_HAVE_GC)>0 ) {
-            newtype.tp_flags|=Py.TPFLAGS_HAVE_GC;
-        }
-        if ( (base.tp_flags & Py.TPFLAGS_CHECKTYPES)>0 ) {
-                // || (base->tp_as_number == NULL)) {
-            newtype.tp_flags |= Py.TPFLAGS_CHECKTYPES;
-        }
+        newtype.tp_flags=Py.TPFLAGS_HEAPTYPE;
 
         newtype.needs_userdict = needs_userdict;
         newtype.nuserslots = nuserslots;
