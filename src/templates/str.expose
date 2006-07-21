@@ -8,6 +8,7 @@ expose_meth: :i __len__
 expose_meth: __add__ o
 expose_meth: __getitem__ o
 expose_meth: __getslice__ ooo?
+expose_meth: __getnewargs__
 expose_meth: __iter__
 expose_meth: __mul__ o
 expose_meth: __rmul__ o

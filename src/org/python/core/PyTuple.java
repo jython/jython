@@ -296,6 +296,34 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyTuple.class,2,3,new exposed___getslice__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinFunctionNarrow {
+
+            private PyTuple self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getnewargs__(PyTuple self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getnewargs__((PyTuple)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.tuple___getnewargs__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyTuple self=(PyTuple)gself;
+                return self.tuple___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyTuple.class,0,0,new exposed___getnewargs__(null,null)));
         class exposed___hash__ extends PyBuiltinFunctionNarrow {
 
             private PyTuple self;
@@ -511,10 +539,14 @@ public class PyTuple extends PySequenceList implements ClassDictInit
         return seq___getitem__(index);
     }
 
-    public PyTuple __getnewargs__() {
+    final PyTuple tuple___getnewargs__() {
         return new PyTuple(new PyObject[]
-            {new PyList(list.getArray())}
+            {new PyTuple(list.getArray())}
         );
+    }
+
+    public PyTuple __getnewargs__() {
+        return tuple___getnewargs__();
     }
 
     public int hashCode() {

@@ -10,6 +10,7 @@ expose_meth: __mul__ o
 expose_meth: __rmul__ o
 expose_meth: __getitem__ o
 expose_meth: __getslice__ ooo?
+expose_meth: __getnewargs__
 expose_meth: __hash__
  `ideleg`(hashCode);
 expose_meth: __repr__

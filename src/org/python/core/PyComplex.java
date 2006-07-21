@@ -953,6 +953,34 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyComplex.class,0,0,new exposed___hash__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinFunctionNarrow {
+
+            private PyComplex self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getnewargs__(PyComplex self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getnewargs__((PyComplex)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.complex___getnewargs__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyComplex self=(PyComplex)gself;
+                return self.complex___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyComplex.class,0,0,new exposed___getnewargs__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyComplex.class,"__new__",-1,-1) {
 
                                                                                          public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
@@ -1593,6 +1621,14 @@ public class PyComplex extends PyObject {
 
     final PyComplex complex_conjugate() {
         return new PyComplex(real, -imag);
+    }
+
+    final PyTuple complex___getnewargs__() {
+        return new PyTuple(new PyObject[] {new PyComplex(real, imag)});
+    }
+
+    public PyTuple __getnewargs__() {
+        return complex___getnewargs__();
     }
 
     public boolean isMappingType() { return false; }

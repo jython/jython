@@ -22,6 +22,7 @@ expose_meth: __str__
   return new PyString(self.complex_toString());
 expose_meth: __hash__
   return Py.newInteger(self.complex_hashCode());
+expose_meth: __getnewargs__
 # TODO
 # (__coerce__, __doc__)
 # (__eq__, __ge__, __gt__, __le__, __lt__, __ne__)

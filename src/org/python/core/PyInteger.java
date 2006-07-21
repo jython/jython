@@ -1114,6 +1114,34 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyInteger.class,0,0,new exposed___str__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinFunctionNarrow {
+
+            private PyInteger self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getnewargs__(PyInteger self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getnewargs__((PyInteger)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.int___getnewargs__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyInteger self=(PyInteger)gself;
+                return self.int___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyInteger.class,0,0,new exposed___getnewargs__(null,null)));
         class exposed___hash__ extends PyBuiltinFunctionNarrow {
 
             private PyInteger self;
@@ -1772,6 +1800,14 @@ public class PyInteger extends PyObject {
         } else {
             return new PyString("0x"+Integer.toString(getValue(), 16));
         }
+    }
+    
+    final PyTuple int___getnewargs__() {
+        return new PyTuple(new PyObject[]{new PyInteger(this.getValue())});
+    }
+
+    public PyTuple __getnewargs__() {
+        return int___getnewargs__();
     }
 
     public boolean isMappingType() { return false; }

@@ -229,6 +229,34 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyString.class,2,3,new exposed___getslice__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getnewargs__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getnewargs__((PyString)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.str___getnewargs__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyString self=(PyString)gself;
+                return self.str___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyString.class,0,0,new exposed___getnewargs__(null,null)));
         class exposed___iter__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -3452,11 +3480,12 @@ public class PyString extends PyBaseString implements ClassDictInit
         return seq___getitem__(index);
     }
 
+    final PyTuple str___getnewargs__() {
+        return new PyTuple(new PyObject[] {new PyString(this.string)});
+    }
+
     public PyTuple __getnewargs__() {
-        return new PyTuple(new PyObject[]{
-            new PyString(str_toString())
-            }
-        );
+        return str___getnewargs__();
     }
 
     //XXX: PyUnicode?

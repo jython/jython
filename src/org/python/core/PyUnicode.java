@@ -204,6 +204,34 @@ public class PyUnicode extends PyString {
 
         }
         dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyUnicode.class,2,3,new exposed___getslice__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinFunctionNarrow {
+
+            private PyUnicode self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getnewargs__(PyUnicode self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getnewargs__((PyUnicode)self,info);
+            }
+
+            public PyObject __call__() {
+                return self.unicode___getnewargs__();
+            }
+
+            public PyObject inst_call(PyObject gself) {
+                PyUnicode self=(PyUnicode)gself;
+                return self.unicode___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyUnicode.class,0,0,new exposed___getnewargs__(null,null)));
         class exposed___iter__ extends PyBuiltinFunctionNarrow {
 
             private PyUnicode self;
@@ -3080,6 +3108,14 @@ public class PyUnicode extends PyString {
 
     final PyObject unicode___getitem__(PyObject index) {
         return str___getitem__(index);
+    }
+    
+    final PyTuple unicode___getnewargs__() {
+        return new PyTuple(new PyObject[] {new PyUnicode(this.string)});
+    }
+
+    public PyTuple __getnewargs__() {
+        return unicode___getnewargs__();
     }
 
 }
