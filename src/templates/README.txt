@@ -11,5 +11,7 @@ with the script gderived.py.  For the PyInteger class it is created thus:
 
   python gderived.py int.derived >../../jython/src/org/python/core/PyIntegerDerived.java
 
-Note:  The above examples assume that the whole jython trunk is checked out so 
-that the trunk/sandbox directory is a sibling of the trunk/jython directory.
+There is an ant target to generate these automatically.  See the template
+target in the top-level build file, or the org.python.util.TemplateAntTask
+ant task.  In the future, the template generation will be linked into the
+main build targets.
