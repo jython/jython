@@ -600,6 +600,8 @@ public class PyInstance extends PyObject
         } catch (PyException e) {
             if (Py.matchException(e, Py.IndexError))
                 return null;
+            if (Py.matchException(e, Py.KeyError))
+                return null;
             throw e;
         }
     }
