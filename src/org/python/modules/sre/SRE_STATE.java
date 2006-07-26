@@ -458,7 +458,7 @@ for line in sys.stdin:
         case SRE_OP_LITERAL:
             /* repeated literal */
             chr = pattern[pidx+1];
-            //TRACE(pidx, ptr, "COUNT LITERAL " + (int) chr);
+            //TRACE(pidx, ptr, "COUNT LITERAL " + chr);
             while (ptr < end && str[ptr] == chr)
                 ptr++;
             break;
@@ -506,7 +506,6 @@ for line in sys.stdin:
             }
             return this.ptr - ptr;
         }
-
         return ptr - this.ptr;
     }
 
@@ -847,11 +846,10 @@ for line in sys.stdin:
 
                 /* <MIN_REPEAT_ONE> <skip> <1=min> <2=max> item <SUCCESS> tail */
 
-                mincount = pattern[pidx+1];
 
                 //TRACE(pidx, ptr, "MIN_REPEAT_ONE");
 
-                if (ptr + mincount > end)
+                if (ptr + pattern[pidx+1] > end)
                     return 0; /* cannot match */
 
                 this.ptr = ptr;
@@ -865,7 +863,7 @@ for line in sys.stdin:
 
                     if (count < 0)
                         return count;   /* exception */
-                    if (count < (int) pattern[1])
+                    if (count < (int) pattern[pidx+1])
                         return 0;       /* did not match minimum number of times */
                     ptr += count;       /* advance past minimum matches of repeat */
                 }
