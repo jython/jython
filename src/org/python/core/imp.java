@@ -177,14 +177,17 @@ public class imp {
 
     static PyObject createFromCode(String name, PyCode c) {
         PyModule module = addModule(name);
-
-        PyTableCode code = null;
-        if (c instanceof PyTableCode) {
-            code = (PyTableCode) c;
+        PyTableCode code = (PyTableCode)c;
+        try {
+            PyFrame f = new PyFrame(code,
+                                    module.__dict__,
+                                    module.__dict__,
+                                    null);
+            code.call(f);
+        } catch(RuntimeException t) {
+            Py.getSystemState().modules.__delitem__(name.intern());
+            throw t;
         }
-        PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
-        code.call(f);
-
         return module;
     }
 
@@ -501,7 +504,7 @@ public class imp {
             return ret;
         }
         if (mod == null) {
-            ret = find_module(fullName.intern(), name, null);
+            ret = find_module(fullName, name, null);
         } else {
             ret = mod.impAttr(name.intern());
         }
@@ -587,6 +590,7 @@ public class imp {
         StringBuffer parentNameBuffer = new StringBuffer(
                 pkgMod != null ? pkgName : "");
         PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName);
+        
         if (topMod == Py.None || topMod == null) {
             if (topMod == null) {
                 modules.__setitem__(parentNameBuffer.toString().intern(),
