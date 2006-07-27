@@ -19,7 +19,7 @@ import org.python.core.*;
 
 public class ScannerObject extends PyObject {
     public PatternObject pattern;
-    String string;
+    PyString string;
     SRE_STATE state;
 
     public MatchObject match() {

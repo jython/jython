@@ -2780,6 +2780,10 @@ public class PyUnicode extends PyString {
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'unicode' object";
     }
+    
+    public PyString createInstance(String str){
+    return new PyUnicode(str);
+    }
 
     final PyUnicode unicode___unicode__() {
         return str___unicode__();
