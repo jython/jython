@@ -15,4 +15,4 @@ expose_getset: tm_isdst getIsdst
 # exposed methods
 expose_binary: __ne__ __eq__
 expose_meth: :o __reduce__
-
+expose_new_immutable:
