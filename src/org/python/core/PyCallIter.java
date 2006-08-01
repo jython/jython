@@ -6,6 +6,9 @@ public class PyCallIter extends PyIterator {
     private int idx;
 
     public PyCallIter(PyObject callable, PyObject sentinel) {
+        if(!__builtin__.callable(callable)) {
+            throw Py.TypeError("iter(v, w): v must be callable");
+        }
         this.callable = callable;
         this.sentinel = sentinel;
     }
