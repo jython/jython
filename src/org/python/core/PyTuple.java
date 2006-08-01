@@ -22,6 +22,8 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
     public static final String exposed_name="tuple";
 
+    public static final Class exposed_base=PyObject.class;
+
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
         class exposed___ne__ extends PyBuiltinFunctionNarrow {
 

@@ -1,6 +1,7 @@
 # setup
 type_name: tuple
 type_class: PyTuple
+type_base_class: PyObject
 # exposed methods
 expose_binary: __ne__ __eq__
 expose_meth: :b __contains__ o
