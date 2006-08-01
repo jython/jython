@@ -219,6 +219,9 @@ public class PySystemState extends PyObject
     }
 
     public void setrecursionlimit(int recursionlimit) {
+        if(recursionlimit <= 0) {
+            throw Py.ValueError("Recursion limit must be positive");
+        }
         this.recursionlimit = recursionlimit;
     }
 
