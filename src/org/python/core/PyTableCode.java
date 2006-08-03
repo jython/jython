@@ -218,7 +218,14 @@ public class PyTableCode extends PyCode
 
             //Add another traceback object to the exception if needed
             if (e.traceback.tb_frame != frame) {
-                PyTraceback tb = new PyTraceback(e.traceback.tb_frame.f_back);
+                PyTraceback tb;
+                // If f_back is null, we've jumped threads so use the current
+                // threadstate's frame. Bug #1533624
+                if(e.traceback.tb_frame.f_back == null) {
+                    tb = new PyTraceback(ts.frame);
+                } else {
+                    tb = new PyTraceback(e.traceback.tb_frame.f_back);
+                }
                 tb.tb_next = e.traceback;
                 e.traceback = tb;
             }
