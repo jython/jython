@@ -1,5 +1,5 @@
 
-import sys, string, traceback, getopt, support, os
+import sys, string, traceback, getopt, support, os, glob
 
 failures = {}
 
@@ -50,7 +50,12 @@ def runTests(seq):
   print t
 
 if __name__ == '__main__':
-  runTests(["test%3.3d" % i for i in range(387)])  # upper bound: last test + 1
+  if len(sys.argv) > 1:
+    tests = [int(test) for test in sys.argv[1].split(',')]
+  else:
+    lastTest = glob.glob('test???.py')[-1]
+    tests = range(int(lastTest[4:7]) + 1)# upper bound: last test + 1
+  runTests(["test%3.3d" % i for i in tests])
   sys.exit(1)
 
 
