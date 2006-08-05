@@ -937,278 +937,221 @@ public class PyType extends PyObject implements Serializable {
     private final static Class[] O = { PyObject.class };
     private final static Class[] OO = { PyObject.class, PyObject.class };
 
-    private static void fillFromClass(
-        PyType newtype,
-        String name,
-        Class c,
-        Class base,
-        boolean newstyle,
-        Method setup,
-        String[] exposed_methods) {
+    private static void fillFromClass(PyType newtype,
+                                      String name,
+                                      Class c,
+                                      Class base,
+                                      boolean newstyle,
+                                      Method setup,
+                                      String[] exposed_methods) {
 
-        if (base == null) {
+        if(base == null) {
             base = c.getSuperclass();
         }
-
-        if (name == null) {
+        if(name == null) {
             name = c.getName();
         }
-
-        if (name.startsWith("org.python.core.Py")) {
+        if(name.startsWith("org.python.core.Py")) {
             name = name.substring("org.python.core.Py".length()).toLowerCase();
         } else {
             int lastdot = name.lastIndexOf('.');
-            if (lastdot != -1) {
-                name = name.substring(lastdot+1);
+            if(lastdot != -1) {
+                name = name.substring(lastdot + 1);
             }
         }
-
         newtype.name = name;
-
         newtype.underlying_class = c;
-
         boolean top = false;
-
         // basic mro, base, bases
         PyType[] mro = null;
-        if (base == Object.class) {
-            mro = new PyType[] { newtype };
+        if(base == Object.class) {
+            mro = new PyType[] {newtype};
             top = true;
         } else {
             PyType basetype = fromClass(base);
             mro = new PyType[basetype.mro.length + 1];
             System.arraycopy(basetype.mro, 0, mro, 1, basetype.mro.length);
             mro[0] = newtype;
-
             newtype.base = basetype;
-            newtype.bases = new PyObject[] { basetype };
+            newtype.bases = new PyObject[] {basetype};
         }
         newtype.mro = mro;
-
-        HashMap propnames = null;
-        if (!newstyle)
-            propnames = new HashMap();
-
-        boolean only_exposed_methods = newstyle;
-
         PyObject dict = new PyStringMap();
-
-        if (only_exposed_methods) {
-            for (int i = 0; i < exposed_methods.length; i++) {
-                String methname = exposed_methods[i];
-                dict.__setitem__(
-                    normalize_name(methname),
-                    new PyReflectedFunction(methname));
+        if(newstyle) {
+            fillInNewstyle(newtype, setup, exposed_methods, dict);
+        } else {
+            fillInClassic(c, base, dict);
+        }
+        boolean has_set = false, has_delete = false;
+        if(!top) {
+            if(get_descr_method(c, "__set__", OO) != null || /* backw comp */
+            get_descr_method(c, "_doset", OO) != null) {
+                has_set = true;
+            }
+            if(get_descr_method(c, "__delete__", O) != null || /* backw comp */
+            get_descr_method(c, "_dodel", O) != null) {
+                has_delete = true;
             }
         }
+        newtype.has_set = has_set;
+        newtype.has_delete = has_delete;
+        newtype.dict = dict;
+    }
 
+    private static void fillInClassic(Class c, Class base, PyObject dict) {
+        HashMap propnames = new HashMap();
         Method[] methods = c.getMethods();
-        for (int i = 0; i < methods.length; i++) {
+        for(int i = 0; i < methods.length; i++) {
             Method meth = methods[i];
-
             Class declaring = meth.getDeclaringClass();
-            if (declaring != base
-                && base.isAssignableFrom(declaring)
-                && !ignore(meth)) {
+            if(declaring != base && base.isAssignableFrom(declaring)
+                    && !ignore(meth)) {
                 String methname = meth.getName();
                 String nmethname = normalize_name(methname);
-                PyReflectedFunction reflfunc =
-                    (PyReflectedFunction) dict.__finditem__(nmethname);
+                PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
                 boolean added = false;
-                if (reflfunc == null) {
-                    if (!only_exposed_methods) {
-                        dict.__setitem__(
-                            nmethname,
-                            new PyReflectedFunction(meth));
-                        added = true;
-                    }
+                if(reflfunc == null) {
+                    dict.__setitem__(nmethname, new PyReflectedFunction(meth));
+                    added = true;
                 } else {
                     reflfunc.addMethod(meth);
                     added = true;
                 }
-                if (propnames != null
-                    && added
-                    && !Modifier.isStatic(meth.getModifiers())) {
+                if(added && !Modifier.isStatic(meth.getModifiers())) {
                     // check for xxxX.*
                     int n = meth.getParameterTypes().length;
-                    if (methname.startsWith("get") && n == 0) {
+                    if(methname.startsWith("get") && n == 0) {
                         propnames.put(methname.substring(3), "getter");
-                    } else if (
-                        methname.startsWith("is")
-                            && n == 0
+                    } else if(methname.startsWith("is") && n == 0
                             && meth.getReturnType() == Boolean.TYPE) {
                         propnames.put(methname.substring(2), "getter");
-                    } else if (methname.startsWith("set") && n == 1) {
+                    } else if(methname.startsWith("set") && n == 1) {
                         propnames.put(methname.substring(3), meth);
                     }
                 }
-
-            }
-
-        }
-
-        boolean has_set = false, has_delete = false;
-        if (!top) {
-            if (get_descr_method(c, "__set__", OO) != null || /*backw comp*/
-                get_descr_method(c, "_doset", OO) != null) {
-                has_set = true;
-            }
-
-            if (get_descr_method(c, "__delete__", O) != null || /*backw comp*/
-                get_descr_method(c, "_dodel", O) != null) {
-                has_delete = true;
             }
         }
-
-        for (int i = 0; i < methods.length; i++) {
+        for(int i = 0; i < methods.length; i++) {
             Method meth = methods[i];
-
             String nmethname = normalize_name(meth.getName());
-            PyReflectedFunction reflfunc =
-                (PyReflectedFunction) dict.__finditem__(nmethname);
-            if (reflfunc != null) {
+            PyReflectedFunction reflfunc = (PyReflectedFunction)dict.__finditem__(nmethname);
+            if(reflfunc != null) {
                 reflfunc.addMethod(meth);
             }
-
         }
-
-        if (!newstyle) { // backward compatibility
-            Field[] fields = c.getFields();
-
-            for (int i = 0; i < fields.length; i++) {
-                Field field = fields[i];
-                Class declaring = field.getDeclaringClass();
-                if (declaring != base && base.isAssignableFrom(declaring)) {
-                    String fldname = field.getName();
-                    int fldmods = field.getModifiers();
-                    Class fldtype = field.getType();
-                    if (Modifier.isStatic(fldmods)) {
-                        // ignore static PyClass __class__
-                        if (fldname.equals("__class__")
-                            && fldtype == PyClass.class) {
-                            continue;
-                        } else if (
-                            fldname.startsWith("__doc__")
-                                && fldname.length() > 7
-                                && fldtype == PyString.class) {
-                            String fname = fldname.substring(7).intern();
-                            PyObject memb = dict.__finditem__(fname);
-                            if (memb != null
-                                && memb instanceof PyReflectedFunction) {
-                                PyString doc = null;
-                                try {
-                                    doc = (PyString) field.get(null);
-                                } catch (IllegalAccessException e) {
-                                    throw error(e);
-                                }
-                                ((PyReflectedFunction) memb).__doc__ = doc;
+        Field[] fields = c.getFields();
+        for(int i = 0; i < fields.length; i++) {
+            Field field = fields[i];
+            Class declaring = field.getDeclaringClass();
+            if(declaring != base && base.isAssignableFrom(declaring)) {
+                String fldname = field.getName();
+                int fldmods = field.getModifiers();
+                Class fldtype = field.getType();
+                if(Modifier.isStatic(fldmods)) {
+                    // ignore static PyClass __class__
+                    if(fldname.equals("__class__") && fldtype == PyClass.class) {
+                        continue;
+                    } else if(fldname.startsWith("__doc__")
+                            && fldname.length() > 7
+                            && fldtype == PyString.class) {
+                        String fname = fldname.substring(7).intern();
+                        PyObject memb = dict.__finditem__(fname);
+                        if(memb != null && memb instanceof PyReflectedFunction) {
+                            PyString doc = null;
+                            try {
+                                doc = (PyString)field.get(null);
+                            } catch(IllegalAccessException e) {
+                                throw error(e);
                             }
-
+                            ((PyReflectedFunction)memb).__doc__ = doc;
                         }
                     }
-                    dict.__setitem__(
-                        normalize_name(fldname),
-                        new PyReflectedField(field));
                 }
-
+                dict.__setitem__(normalize_name(fldname),
+                                 new PyReflectedField(field));
             }
-
-            for (Iterator iter = propnames.keySet().iterator();
-                iter.hasNext();
-                ) {
-                String propname = (String) iter.next();
-                String npropname = normalize_name(decapitalize(propname));
-                PyObject prev = dict.__finditem__(npropname);
-                if (prev != null && prev instanceof PyReflectedFunction) {
-                    continue;
-                }
-                Method getter = null;
-                Method setter = null;
-                Class proptype = null;
-                getter =
-                    get_non_static_method(c, "get" + propname, new Class[] {
-                });
-                if (getter == null)
-                    getter =
-                        get_non_static_method(c, "is" + propname, new Class[] {
-                });
-                if (getter != null) {
-                    proptype = getter.getReturnType();
-                    setter =
-                        get_non_static_method(
-                            c,
-                            "set" + propname,
-                            new Class[] { proptype });
-                } else {
-                    Object o = propnames.get(propname);
-                    if (o instanceof Method) {
-                        setter = (Method) o;
-                        proptype = setter.getParameterTypes()[0];
-                    }
-                }
-                if (setter != null || getter != null) {
-                    dict.__setitem__(
-                        npropname,
-                        new PyBeanProperty(
-                            npropname,
-                            proptype,
-                            getter,
-                            setter));
-
-                } else {
-                    // xxx error
-                }
-            }
-
-            Constructor[] ctrs = c.getConstructors();
-            if (ctrs.length != 0) {
-                final PyReflectedConstructor reflctr =
-                    new PyReflectedConstructor("_new_impl");
-                for (int i = 0; i < ctrs.length; i++) {
-                    reflctr.addConstructor(ctrs[i]);
-                }
-                PyObject new_ = new PyNewWrapper(c, "__new__", -1, -1) {
-
-                    public PyObject new_impl(
-                        boolean init,
-                        PyType subtype,
-                        PyObject[] args,
-                        String[] keywords) {
-                        return reflctr.make(args, keywords);
-                    }
-                };
-
-                dict.__setitem__("__new__", new_);
-            }
-
-            if (ClassDictInit.class.isAssignableFrom(c)
-                && c != ClassDictInit.class) {
-                try {
-                    Method m =
-                        c.getMethod(
-                            "classDictInit",
-                            new Class[] { PyObject.class });
-                    m.invoke(null, new Object[] { dict });
-                } catch (Exception exc) {
-                    throw error(exc);
-                }
-            }
-
-        } else {
-            if (setup != null) {
-                try {
-                    setup.invoke(null, new Object[] { dict, null });
-                } catch (Exception e) {
-                    throw error(e);
-                }
-            }
-            newtype.non_instantiable = dict.__finditem__("__new__") == null;
-
         }
+        for(Iterator iter = propnames.keySet().iterator(); iter.hasNext();) {
+            String propname = (String)iter.next();
+            String npropname = normalize_name(decapitalize(propname));
+            PyObject prev = dict.__finditem__(npropname);
+            if(prev != null && prev instanceof PyReflectedFunction) {
+                continue;
+            }
+            Method getter = null;
+            Method setter = null;
+            Class proptype = null;
+            getter = get_non_static_method(c, "get" + propname, new Class[] {});
+            if(getter == null)
+                getter = get_non_static_method(c,
+                                               "is" + propname,
+                                               new Class[] {});
+            if(getter != null) {
+                proptype = getter.getReturnType();
+                setter = get_non_static_method(c,
+                                               "set" + propname,
+                                               new Class[] {proptype});
+            } else {
+                Object o = propnames.get(propname);
+                if(o instanceof Method) {
+                    setter = (Method)o;
+                    proptype = setter.getParameterTypes()[0];
+                }
+            }
+            if(setter != null || getter != null) {
+                dict.__setitem__(npropname, new PyBeanProperty(npropname,
+                                                               proptype,
+                                                               getter,
+                                                               setter));
+            } else {
+                // xxx error
+            }
+        }
+        Constructor[] ctrs = c.getConstructors();
+        if(ctrs.length != 0) {
+            final PyReflectedConstructor reflctr = new PyReflectedConstructor("_new_impl");
+            for(int i = 0; i < ctrs.length; i++) {
+                reflctr.addConstructor(ctrs[i]);
+            }
+            PyObject new_ = new PyNewWrapper(c, "__new__", -1, -1) {
 
-        newtype.has_set = has_set;
-        newtype.has_delete = has_delete;
-        newtype.dict = dict;
+                public PyObject new_impl(boolean init,
+                                         PyType subtype,
+                                         PyObject[] args,
+                                         String[] keywords) {
+                    return reflctr.make(args, keywords);
+                }
+            };
+            dict.__setitem__("__new__", new_);
+        }
+        if(ClassDictInit.class.isAssignableFrom(c) && c != ClassDictInit.class) {
+            try {
+                Method m = c.getMethod("classDictInit",
+                                       new Class[] {PyObject.class});
+                m.invoke(null, new Object[] {dict});
+            } catch(Exception exc) {
+                throw error(exc);
+            }
+        }
+    }
+
+    private static void fillInNewstyle(PyType newtype,
+                                       Method setup,
+                                       String[] exposed_methods,
+                                       PyObject dict) {
+        for(int i = 0; i < exposed_methods.length; i++) {
+            String methname = exposed_methods[i];
+            dict.__setitem__(normalize_name(methname),
+                             new PyReflectedFunction(methname));
+        }
+        if(setup != null) {
+            try {
+                setup.invoke(null, new Object[] {dict, null});
+            } catch(Exception e) {
+                throw error(e);
+            }
+        }
+        newtype.non_instantiable = dict.__finditem__("__new__") == null;
     }
 
     private static HashMap class_to_type;
