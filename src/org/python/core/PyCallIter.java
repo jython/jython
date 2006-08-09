@@ -18,8 +18,10 @@ public class PyCallIter extends PyIterator {
         try {
             val = callable.__call__();
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.StopIteration))
+            if (Py.matchException(exc, Py.StopIteration)){
+                stopException = exc;
                 return null;
+            }
             throw exc;
         }
         if (val._eq(sentinel).__nonzero__())

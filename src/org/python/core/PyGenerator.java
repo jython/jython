@@ -39,6 +39,13 @@ public class PyGenerator extends PyIterator {
         PyObject result = null;
         try {
             result = gi_frame.f_code.call(gi_frame, closure);
+        } catch(PyException e) {
+            if(!e.type.equals(Py.StopIteration)) {
+                throw e;
+            }else{
+                stopException = e;
+                return null;
+            }
         } finally {
             gi_running = false;
         }

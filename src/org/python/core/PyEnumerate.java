@@ -107,8 +107,12 @@ public class PyEnumerate extends PyIterator {
         PyObject next_index;
 
         next_item = en_sit.__iternext__();
-        if(next_item == null)
+        if(next_item == null){
+            if(en_sit instanceof PyIterator && ((PyIterator)en_sit).stopException != null){
+                stopException = ((PyIterator)en_sit).stopException;
+            }
             return null;
+        }
         next_index = new PyInteger((int)en_index);
         en_index++;
 
