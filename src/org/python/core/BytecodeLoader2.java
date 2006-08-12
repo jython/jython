@@ -17,7 +17,7 @@ class BytecodeLoader2 extends SecureClassLoader implements Loader {
 
     public void addParent(ClassLoader referent) {
         if (!this.parents.contains(referent)) {
-            this.parents.addElement(referent);
+            this.parents.add(0, referent);
         }
     }
 

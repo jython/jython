@@ -421,6 +421,10 @@ public class TreeBuilder implements PythonGrammarTreeConstants {
                 return new Slice(values[0], values[1], values[2]);
             }
         case JJTSUBSCRIPTLIST:
+            if (arity > 0 && peekNode().getId() == JJTCOMMA){
+                arity--;
+                popNode();
+            }
             sliceType[] dims = new sliceType[arity];
             for (int i = arity - 1; i >= 0; i--) {
                 dims[i] = (sliceType) popNode();

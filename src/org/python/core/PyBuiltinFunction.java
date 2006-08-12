@@ -2,9 +2,6 @@ package org.python.core;
 
 public abstract class PyBuiltinFunction extends PyObject implements PyType.Newstyle {
 
-    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-    /* type info */
-
     public static final String exposed_name="builtin_function_or_method";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
@@ -14,9 +11,10 @@ public abstract class PyBuiltinFunction extends PyObject implements PyType.Newst
                 PyBuiltinFunction.class, "getSelf", null));
         dict.__setitem__("__doc__", new PyGetSetDescr("__doc__",
                 PyBuiltinFunction.class, "fastGetDoc", null));
+        dict.__setitem__("__call__", new PyGetSetDescr("__call__",
+                                                      PyBuiltinFunction.class, "makeCall", null));
     }
-    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-
+    
     public interface Info {
         String getName();
         int getMaxargs();
@@ -155,5 +153,9 @@ public abstract class PyBuiltinFunction extends PyObject implements PyType.Newst
 
     public PyObject fastGetDoc() {
         return Py.None;
+    }
+    
+    public PyObject makeCall(){
+        return this;
     }
 }

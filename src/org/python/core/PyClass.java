@@ -360,7 +360,7 @@ public class PyClass extends PyObject {
         if (this == superclass) {
             return true;
         }
-        if (this.proxyClass != null && superclass.proxyClass != null) {
+        if (getProxyClass() != null && superclass.getProxyClass() != null) {
             if (superclass.proxyClass.isAssignableFrom(this.proxyClass)) {
                 return true;
             }

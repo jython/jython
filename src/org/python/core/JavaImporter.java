@@ -8,6 +8,13 @@ public class JavaImporter extends PyObject {
     public JavaImporter() {
         super();
     }
+    
+    public PyObject __call__(PyObject args[], String keywords[]) {
+        if(args[0].toString().endsWith("__classpath__")){
+            return this;
+        }
+        throw Py.ImportError("unable to handle");
+    }
 
     /**
      * Find the module for the fully qualified name.

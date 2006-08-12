@@ -236,6 +236,9 @@ public class PySystemState extends PyObject
     }
 
     public void setrecursionlimit(int recursionlimit) {
+        if(recursionlimit <= 0) {
+            throw Py.ValueError("Recursion limit must be positive");
+        }
         this.recursionlimit = recursionlimit;
     }
 
@@ -246,11 +249,12 @@ public class PySystemState extends PyObject
 
         argv = (PyList)defaultArgv.repeat(1);
         path = (PyList)defaultPath.repeat(1);
+        path.append(Py.newString("__classpath__"));
 
         meta_path = new PyList();
         meta_path.append(new PrecompiledImporter());
-        meta_path.append(new JavaImporter());
         path_hooks = new PyList();
+        path_hooks.append(new JavaImporter());
         path_hooks.append(PyJavaClass.lookup(ZipFileImporter.class));
         path_importer_cache = new PyDictionary();
 

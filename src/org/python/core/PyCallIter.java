@@ -6,6 +6,9 @@ public class PyCallIter extends PyIterator {
     private int idx;
 
     public PyCallIter(PyObject callable, PyObject sentinel) {
+        if(!__builtin__.callable(callable)) {
+            throw Py.TypeError("iter(v, w): v must be callable");
+        }
         this.callable = callable;
         this.sentinel = sentinel;
     }
@@ -15,8 +18,10 @@ public class PyCallIter extends PyIterator {
         try {
             val = callable.__call__();
         } catch (PyException exc) {
-            if (Py.matchException(exc, Py.StopIteration))
+            if (Py.matchException(exc, Py.StopIteration)){
+                stopException = exc;
                 return null;
+            }
             throw exc;
         }
         if (val._eq(sentinel).__nonzero__())
