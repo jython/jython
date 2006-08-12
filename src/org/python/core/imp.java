@@ -31,8 +31,12 @@ public class imp {
         ;
     }
 
+    /**
+     * If the given name is found in sys.modules, the entry from there is
+     * returned. Otherwise a new PyModule is created for the name and added to
+     * sys.modules
+     */
     public static PyModule addModule(String name) {
-        // System.err.println("AddModule:" + name);
         name = name.intern();
         PyObject modules = Py.getSystemState().modules;
         PyModule module = (PyModule) modules.__finditem__(name);
@@ -46,11 +50,15 @@ public class imp {
 
     private static byte[] readBytes(InputStream fp) {
         try {
-            byte[] buf = FileUtil.readBytes(fp);
-            fp.close();
-            return buf;
-        } catch (IOException ioe) {
+            return FileUtil.readBytes(fp);
+        } catch(IOException ioe) {
             throw Py.IOError(ioe);
+        } finally {
+            try {
+                fp.close();
+            } catch(IOException e) {
+                throw Py.IOError(e);
+            }
         }
     }
 
@@ -77,7 +85,6 @@ public class imp {
                         + APIVersion + ") in: " + name);
             }
         }
-        // System.err.println("APIVersion: "+api);
         PyCode code;
         try {
             code = BytecodeLoader.makeCode(name + "$py", data);
@@ -98,27 +105,28 @@ public class imp {
         return compileSource(name, file, null, null);
     }
 
-    public static byte[] compileSource(String name, File file, String filename,
-            String outFilename) {
-        if (filename == null) {
-            filename = file.toString();
+    public static byte[] compileSource(String name, File file, String sourceFilename,
+            String compiledFilename) {
+        if (sourceFilename == null) {
+            sourceFilename = file.toString();
         }
-
-        if (outFilename == null) {
-            outFilename = filename.substring(0, filename.length() - 3)
-                    + "$py.class";
+        if (compiledFilename == null) {
+            compiledFilename = makeCompiledFilename(sourceFilename);
         }
-
-        return compileSource(name, makeStream(file), filename, outFilename);
+        return compileSource(name, makeStream(file), sourceFilename, compiledFilename);
     }
 
-    static byte[] compileSource(String name, InputStream fp, String filename) {
-        String outFilename = null;
-        if (filename != null) {
-            outFilename = filename.substring(0, filename.length() - 3)
-                    + "$py.class";
+    static byte[] compileSource(String name, InputStream fp, String sourceFilename) {
+        String compiledFilename = null;
+        if (sourceFilename != null) {
+            compiledFilename = makeCompiledFilename(sourceFilename);
         }
-        return compileSource(name, fp, filename, outFilename);
+        return compileSource(name, fp, sourceFilename, compiledFilename);
+    }
+
+    private static String makeCompiledFilename(String filename) {
+        return filename.substring(0, filename.length() - 3)
+                + "$py.class";
     }
 
     static byte[] compileSource(String name, InputStream fp, String filename,
@@ -177,17 +185,14 @@ public class imp {
 
     static PyObject createFromCode(String name, PyCode c) {
         PyModule module = addModule(name);
-        PyTableCode code = (PyTableCode)c;
-        try {
-            PyFrame f = new PyFrame(code,
-                                    module.__dict__,
-                                    module.__dict__,
-                                    null);
-            code.call(f);
-        } catch(RuntimeException t) {
-            Py.getSystemState().modules.__delitem__(name.intern());
-            throw t;
+
+        PyTableCode code = null;
+        if (c instanceof PyTableCode) {
+            code = (PyTableCode) c;
         }
+        PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
+        code.call(f);
+
         return module;
     }
 
@@ -199,9 +204,8 @@ public class imp {
             if (interfaces[i] == PyRunnable.class) {
                 // System.err.println("is runnable");
                 try {
-                    PyObject o = createFromCode(name, ((PyRunnable) c
-                            .newInstance()).getMain());
-                    return o;
+                    return createFromCode(name,
+                                          ((PyRunnable)c.newInstance()).getMain());
                 } catch (InstantiationException e) {
                     throw Py.JavaError(e);
                 } catch (IllegalAccessException e) {
@@ -504,7 +508,7 @@ public class imp {
             return ret;
         }
         if (mod == null) {
-            ret = find_module(fullName, name, null);
+            ret = find_module(fullName.intern(), name, null);
         } else {
             ret = mod.impAttr(name.intern());
         }
@@ -590,7 +594,6 @@ public class imp {
         StringBuffer parentNameBuffer = new StringBuffer(
                 pkgMod != null ? pkgName : "");
         PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName);
-        
         if (topMod == Py.None || topMod == null) {
             if (topMod == null) {
                 modules.__setitem__(parentNameBuffer.toString().intern(),

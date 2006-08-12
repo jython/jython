@@ -128,11 +128,17 @@ public class SyspathJavaLoader extends ClassLoader {
                 }
                 try {
                     byte[] buffer = FileUtil.readBytes(fis);
-                    fis.close();
                     return loadClassFromBytes(name, buffer);
-                } catch (IOException e) {
+                } catch(IOException e) {
                     continue;
+                } finally {
+                    try {
+                        fis.close();
+                    } catch(IOException e) {
+                        continue;
+                    }
                 }
+                
             }
         }
 
