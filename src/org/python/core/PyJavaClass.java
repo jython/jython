@@ -159,9 +159,13 @@ public class PyJavaClass extends PyClass
             setBeanInfoCustom(proxyClass, methods);
             setFields(proxyClass);
             setMethods(proxyClass, methods);
-        } catch (SecurityException se) {}
+            Class[] intfs = proxyClass.getInterfaces();
+            for(int i = 0; i < intfs.length; i++) {
+                setMethods(intfs[i], intfs[i].getMethods());
+            }
+        } catch(SecurityException se) {}
     }
-
+    
     private synchronized void init__class__(Class c) {
         /* xxx disable opt, will need similar opt for types
         if (!PyObject.class.isAssignableFrom(c))
@@ -220,6 +224,7 @@ public class PyJavaClass extends PyClass
 
         __bases__ = new PyTuple(bases);
     }
+    
 
     private void init(Class c)  {
         init__class__(c);
@@ -342,7 +347,6 @@ public class PyJavaClass extends PyClass
         // See if any of my superclasses are using 'name' for something
         // else.  Or if I'm already using it myself
         PyObject o = lookup(name, false);
-
         // If it's being used as a function, then things get more
         // interesting...
         PyReflectedFunction func;
@@ -356,8 +360,9 @@ public class PyJavaClass extends PyClass
                some significant way, then return a duplicate and stick it in
                the __dict__ */
             if (o1 != o) {
-                if (func.handles(meth))
+                if (func.handles(meth)){
                     return;
+                }
                 func = func.copy();
             }
             func.addMethod(meth);
@@ -376,8 +381,7 @@ public class PyJavaClass extends PyClass
         }
         __dict__.__setitem__(name, func);
     }
-
-
+    
      /**
       * Return the list of all accessible methods for a class.  This will
       * only the public methods unless Options.respectJavaAccessibility is
@@ -415,7 +419,8 @@ public class PyJavaClass extends PyClass
                 continue;
             int mods = dc.getModifiers();
             if(!(Modifier.isPublic(mods) || Modifier.isPrivate(mods) || Modifier.isProtected(mods))) {
-                // skip package protected classes such as AbstractStringBuilder or UNIXProcess
+                // skip package protected classes such as AbstractStringBuilder
+                // or UNIXProcess
                 continue;
             }
             if (ignoreMethod(method))
@@ -551,7 +556,6 @@ public class PyJavaClass extends PyClass
                 getter = method;
                 pname = decapitalize(name.substring(3));
                 myType = ret;
-                //System.out.println("get: "+name+", "+myType);
             } else {
                 if (name.startsWith("is")) {
                     if (args.length != 0 || ret != Boolean.TYPE)
@@ -566,7 +570,6 @@ public class PyJavaClass extends PyClass
                         setter = method;
                         pname = decapitalize(name.substring(3));
                         myType = args[0];
-                        //System.out.println("set: "+name+", "+myType);
                     } else {
                         continue;
                     }
@@ -584,7 +587,6 @@ public class PyJavaClass extends PyClass
                         addProperty(pname, myType, getter, setter);
                     }
                 } else {
-                    //System.out.println("p: "+prop.myType+", "+myType);
                     if (getter != null) prop.getMethod = getter;
                     if (setter != null && (ret == Void.TYPE || prop.setMethod==null))
                         prop.setMethod = setter;
@@ -744,7 +746,7 @@ public class PyJavaClass extends PyClass
             if (newName != null)
                 name = newName;
         }
-        return super.lookupGivingClass(name, stop_at_java);
+        return super.lookupGivingClass(name, stop_at_java); 
     }
 
     public PyObject __dir__() {
