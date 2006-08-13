@@ -565,8 +565,12 @@ public class PyInstance extends PyObject
                 return null;
             }
         }
-
-        PyObject func = __findattr__(name);
+        PyObject func;
+        try{
+            func = __findattr__(name);
+        }catch(PyException e){
+            return null;
+        }
         if (func == null)
             return null;
 
@@ -595,8 +599,8 @@ public class PyInstance extends PyObject
             PyObject ret = trySlice(key, "__getslice__", null);
             if (ret != null)
                 return ret;
-
             return invoke("__getitem__", key);
+
         } catch (PyException e) {
             if (Py.matchException(e, Py.IndexError))
                 return null;
@@ -613,11 +617,9 @@ public class PyInstance extends PyObject
             }
             return ret;
         }
-
         PyObject ret = trySlice(key, "__getslice__", null);
-        if (ret != null)
+        if(ret != null)
             return ret;
-
         return invoke("__getitem__", key);
     }
 
