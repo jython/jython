@@ -11,5 +11,5 @@ f = Foo()
 try:
    f.hi() 
 except java.lang.IllegalAccessException:
-   raise support.TestWarning, "This should work. It works in pure java"
+   raise support.TestError, "This should work. It works in pure java"
 
