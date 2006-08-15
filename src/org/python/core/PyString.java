@@ -4870,7 +4870,16 @@ final class StringFormatter
         }
     }
 
+    private void checkPrecision(String type) {
+        if(precision > 250) {
+            // A magic number. Larger than in CPython.
+            throw Py.OverflowError("formatted " + type + " is too long (precision too long?)");
+        }
+        
+    }
+
     public String formatLong(PyString arg, char type, boolean altFlag) {
+        checkPrecision("long");
         String s = arg.toString();
         int end = s.length();
         int ptr = 0;
@@ -4928,6 +4937,7 @@ final class StringFormatter
     }
 
     public String formatInteger(long v, int radix, boolean unsigned) {
+        checkPrecision("integer");
         if (unsigned) {
             if (v < 0)
                 v = 0x100000000l + v;
@@ -4949,6 +4959,7 @@ final class StringFormatter
     }
 
     public String formatFloatDecimal(double v, boolean truncate) {
+        checkPrecision("decimal");
         java.text.NumberFormat format = java.text.NumberFormat.getInstance(
                                            java.util.Locale.US);
         int prec = precision;
@@ -5087,11 +5098,6 @@ final class StringFormatter
                 precision = getNumber();
                 if (precision < -1)
                     precision = 0;
-                if (precision > 250) {
-                    // A magic number. Larger than in CPython.
-                    throw Py.OverflowError(
-                         "formatted float is too long (precision too long?)");
-                }
 
                 c = pop();
             }
