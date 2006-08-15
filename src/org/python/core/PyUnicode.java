@@ -1,5 +1,7 @@
 package org.python.core;
 
+import org.python.modules._codecs;
+
 /**
  * a builtin python unicode string.
  */
@@ -2583,76 +2585,17 @@ public class PyUnicode extends PyString {
                 return new exposed_translate((PyUnicode)self,info);
             }
 
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return new PyUnicode(self.unicode_translate(arg0.asString(0),arg1.asString(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                    case 1:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyUnicode self=(PyUnicode)gself;
-                try {
-                    return new PyUnicode(self.unicode_translate(arg0.asString(0),arg1.asString(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                    case 1:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
             public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyUnicode(self.unicode_translate(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
+                return new PyUnicode(self.unicode_translate(arg0));
             }
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyUnicode self=(PyUnicode)gself;
-                try {
-                    return new PyUnicode(self.unicode_translate(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
+                return new PyUnicode(self.unicode_translate(arg0));
             }
 
         }
-        dict.__setitem__("translate",new PyMethodDescr("translate",PyUnicode.class,1,2,new exposed_translate(null,null)));
+        dict.__setitem__("translate",new PyMethodDescr("translate",PyUnicode.class,1,1,new exposed_translate(null,null)));
         class exposed_upper extends PyBuiltinFunctionNarrow {
 
             private PyUnicode self;
@@ -2846,8 +2789,7 @@ public class PyUnicode extends PyString {
     }
 
     protected PyObject pyget(int i) {
-        //FIXME: should pass unicode back.
-        return super.pyget(i);
+        return Py.makeCharacter(string.charAt(i), true);
     }
 
     final boolean unicode___contains__(PyObject o) {
@@ -3056,12 +2998,8 @@ public class PyUnicode extends PyString {
         return str_endswith(suffix, start, end);
     }
 
-    final String unicode_translate(String table) {
-        return str_translate(table);
-    }
-
-    final String unicode_translate(String table, String deletechars) {
-        return str_translate(table, deletechars);
+    final String unicode_translate(PyObject table) {
+        return _codecs.charmap_decode(string, "ignore", table).__getitem__(0).toString();
     }
 
     final boolean unicode_islower() {
