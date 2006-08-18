@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.AccessControlException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -576,9 +577,13 @@ public abstract class CachedJarsPackageManager extends PackageManager {
         if (aCachedir1 == null) {
             return false;
         }
-
-        if (!aCachedir1.isDirectory() && aCachedir1.mkdirs() == false) {
-            warning("can't create package cache dir, '" + aCachedir1 + "'");
+        try {
+            if(!aCachedir1.isDirectory() && aCachedir1.mkdirs() == false) {
+                warning("can't create package cache dir, '" + aCachedir1 + "'");
+                return false;
+            }
+        } catch(AccessControlException ace) {
+            warning("The java security manager isn't allowing access to the package cache dir, '" + aCachedir1 + "'");
             return false;
         }
 

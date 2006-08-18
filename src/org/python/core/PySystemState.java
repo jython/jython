@@ -10,13 +10,13 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
 import org.python.modules.Setup;
 
 /**
@@ -388,10 +388,18 @@ public class PySystemState extends PyObject
     }
 
     private static boolean initialized = false;
+    
+    public static Properties getBaseProperties(){
+        try{
+            return System.getProperties();
+        }catch(AccessControlException ace){
+            return new Properties();
+        }
+    }
     public static synchronized void initialize() {
         if (initialized)
             return;
-        initialize(System.getProperties(), null, new String[] {""});
+        initialize(getBaseProperties(), null, new String[] {""});
     }
 
     public static synchronized void initialize(Properties preProperties,

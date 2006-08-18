@@ -77,7 +77,7 @@ public class jython
         }
 
         // Setup the basic python system state from these options
-        PySystemState.initialize(System.getProperties(),
+        PySystemState.initialize(PySystemState.getBaseProperties(),
                                  opts.properties, opts.argv);
 
         if (opts.notice) {
