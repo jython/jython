@@ -25,9 +25,9 @@ import org.python.modules.sre.SRE_STATE;
 
 
 public class _sre {
-    // update when constants are added or removed
-    public static int MAGIC = 20010701;
-
+    public static int MAGIC = SRE_STATE.SRE_MAGIC;
+    
+    public static int CODESIZE = 2;
 
     public static PatternObject compile(PyString pattern, int flags,
                                         PyObject code, int groups,
@@ -55,7 +55,7 @@ public class _sre {
 
 
     public static int getcodesize() {
-        return 2;
+        return CODESIZE;
     }
 
 
