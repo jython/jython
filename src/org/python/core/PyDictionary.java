@@ -1049,15 +1049,15 @@ public class PyDictionary extends PyObject {
 
         java.util.Enumeration ek = table.keys();
         java.util.Enumeration ev = table.elements();
-        int n = table.size();
         StringBuffer buf = new StringBuffer("{");
-
-        for(int i=0; i<n; i++) {
+        while(ek.hasMoreElements() && ev.hasMoreElements()) {
             buf.append(((PyObject)ek.nextElement()).__repr__().toString());
             buf.append(": ");
             buf.append(((PyObject)ev.nextElement()).__repr__().toString());
-            if (i < n-1)
-                buf.append(", ");
+            buf.append(", ");
+        }
+        if(buf.length() > 1){
+            buf.delete(buf.length() - 2, buf.length());
         }
         buf.append("}");
 
@@ -1131,6 +1131,14 @@ public class PyDictionary extends PyObject {
 
             PyObject avalue = __finditem__(akey);
             PyObject bvalue = other.__finditem__(bkey);
+            if(avalue == null){
+                if(bvalue == null){
+                    continue;
+                }
+                return -3;
+            }else if(bvalue == null){
+                return -3;
+            }
             c = avalue._cmp(bvalue);
             if (c != 0)
                 return c;
