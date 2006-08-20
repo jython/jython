@@ -904,12 +904,12 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public int assert1, assert2;
+    public int asserttype;
     public Object visitAssert(Assert node) throws Exception {
         setline(node);
         Label end_of_assert = code.getLabel();
-
-        /* First do an if __debug__: */
+        
+	/* First do an if __debug__: */
         loadFrame();
         emitGetGlobal("__debug__");
 
@@ -921,26 +921,43 @@ public class CodeCompiler extends Visitor
 
         code.ifeq(end_of_assert);
 
-        /* Now do the body of the assert */
+        /* Now do the body of the assert. If PyObject.__nonzero__ is true,
+	   then the assertion succeeded, the message portion should not be
+	   processed. Otherwise, the message will be processed. */
         visit(node.test);
-        if (node.msg != null) {
-            visit(node.msg);
-            if (mrefs.assert2 == 0) {
-                mrefs.assert2 = code.pool.Methodref(
-                    "org/python/core/Py", "assert_",
-                    "(" + $pyObj + $pyObj + ")V");
-            }
-            code.invokestatic(mrefs.assert2);
-        } else {
-            if (mrefs.assert1 == 0) {
-                mrefs.assert1 = code.pool.Methodref(
-                    "org/python/core/Py", "assert_",
-                    "(" + $pyObj + ")V");
-            }
-            code.invokestatic(mrefs.assert1);
+	code.invokevirtual(mrefs.nonzero);
+
+	/* If evaluation is false, then branch to end of method */
+	code.ifne(end_of_assert);
+	
+	/* Push exception type onto stack(Py.AssertionError) */
+        if (mrefs.asserttype == 0) {
+            mrefs.asserttype = code.pool.Fieldref(
+                "org/python/core/Py", "AssertionError",
+                "Lorg/python/core/PyObject;");
         }
 
-        /* And finally set the label for the end of it all */
+        code.getstatic(mrefs.asserttype);
+
+	/* Visit the message part of the assertion, or pass Py.None */
+	if( node.msg != null ){
+ 	    visit(node.msg);
+        } else{
+	    getNone(); 
+  	}
+	
+	if (mrefs.makeException2 == 0) {
+            mrefs.makeException2 = code.pool.Methodref(
+                    "org/python/core/Py", "makeException",
+                    "(" + $pyObj + $pyObj + ")" + $pyExc);
+        }
+        code.invokestatic(mrefs.makeException2);
+	
+	/* Raise assertion error. Only executes this logic if assertion
+	   failed */
+        code.athrow();
+ 
+	/* And finally set the label for the end of it all */
         end_of_assert.setPosition();
 
         return null;
