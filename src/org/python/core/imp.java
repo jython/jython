@@ -7,6 +7,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Utility functions for "import" support.
@@ -494,7 +497,7 @@ public class imp {
      * @return null or None
      */
     private static PyObject import_next(PyObject mod,
-            StringBuffer parentNameBuffer, String name) {
+            StringBuffer parentNameBuffer, String name, String outerFullName, PyObject fromlist) {
         if (parentNameBuffer.length() > 0) {
             parentNameBuffer.append('.');
         }
@@ -513,6 +516,9 @@ public class imp {
             ret = mod.impAttr(name.intern());
         }
         if (ret == null || ret == Py.None) {
+            if (JavaImportHelper.tryAddPackage(outerFullName, fromlist)) {
+                ret = modules.__finditem__(fullName);
+            }
             return ret;
         }
         if (modules.__finditem__(fullName) == null) {
@@ -526,18 +532,33 @@ public class imp {
     // never returns null or None
     private static PyObject import_first(String name,
             StringBuffer parentNameBuffer) {
-        PyObject ret = import_next(null, parentNameBuffer, name);
+        PyObject ret = import_next(null, parentNameBuffer, name, null, null);
         if (ret == null || ret == Py.None) {
             throw Py.ImportError("no module named " + name);
         }
         return ret;
     }
+    
+    
+    private static PyObject import_first(String name, StringBuffer parentNameBuffer, String fullName, PyObject fromlist) {
+        PyObject ret = import_next(null, parentNameBuffer, name, fullName, fromlist);
+        if (ret == null || ret == Py.None) {
+            if (JavaImportHelper.tryAddPackage(fullName, fromlist)) {
+                ret = import_next(null, parentNameBuffer, name, fullName, fromlist);
+            }
+        }
+        if (ret == null || ret == Py.None) {
+            throw Py.ImportError("no module named " + name);
+        }
+        return ret;
+    }
+    
 
     // Hierarchy-recursively search for dotted name in mod;
     // never returns null or None
     // ??pending: check if result is really a module/jpkg/jclass?
     private static PyObject import_logic(PyObject mod,
-            StringBuffer parentNameBuffer, String dottedName) {
+            StringBuffer parentNameBuffer, String dottedName, String fullName, PyObject fromlist) {
         int dot = 0;
         int last_dot = 0;
 
@@ -549,9 +570,9 @@ public class imp {
             } else {
                 name = dottedName.substring(last_dot, dot);
             }
-            mod = import_next(mod, parentNameBuffer, name);
+            mod = import_next(mod, parentNameBuffer, name, fullName, fromlist);
             if (mod == null || mod == Py.None) {
-                throw Py.ImportError("No module named " + name);
+            	throw Py.ImportError("no module named " + name);
             }
             last_dot = dot + 1;
         } while (dot != -1);
@@ -568,7 +589,7 @@ public class imp {
      * @return a module
      */
     private static PyObject import_name(String name, boolean top,
-            PyObject modDict) {
+            PyObject modDict, PyObject fromlist) {
         // System.err.println("import_name " + name);
         if (name.length() == 0) {
             throw Py.ValueError("Empty module name");
@@ -593,7 +614,7 @@ public class imp {
         }
         StringBuffer parentNameBuffer = new StringBuffer(
                 pkgMod != null ? pkgName : "");
-        PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName);
+        PyObject topMod = import_next(pkgMod, parentNameBuffer, firstName, name, fromlist);
         if (topMod == Py.None || topMod == null) {
             if (topMod == null) {
                 modules.__setitem__(parentNameBuffer.toString().intern(),
@@ -601,13 +622,13 @@ public class imp {
             }
             parentNameBuffer = new StringBuffer("");
             // could throw ImportError
-            topMod = import_first(firstName, parentNameBuffer);
+            topMod = import_first(firstName, parentNameBuffer, name, fromlist);
         }
         PyObject mod = topMod;
         if (dot != -1) {
             // could throw ImportError
             mod = import_logic(topMod, parentNameBuffer, name
-                    .substring(dot + 1));
+                    .substring(dot + 1), name, fromlist);
         }
         if (top) {
             return topMod;
@@ -623,7 +644,7 @@ public class imp {
      * @return an imported module (Java or Python)
      */
     public static PyObject importName(String name, boolean top) {
-        return import_name(name, top, null);
+        return import_name(name, top, null, null);
     }
 
     /**
@@ -635,13 +656,13 @@ public class imp {
      * @param modDict the __dict__ of an already imported module
      * @return an imported module (Java or Python)
      */
-    public synchronized static PyObject importName(String name, boolean top,
-            PyObject modDict) {
-        return import_name(name, top, modDict);
+    public synchronized static PyObject importName(String name, boolean top, 
+            PyObject modDict, PyObject fromlist) {
+        return import_name(name, top, modDict, fromlist);
     }
 
     /**
-     * Called from jpython generated code when a statement like "import spam" is
+     * Called from jython generated code when a statement like "import spam" is
      * executed.
      */
     public static PyObject importOne(String mod, PyFrame frame) {
@@ -657,7 +678,7 @@ public class imp {
     }
 
     /**
-     * Called from jpython generated code when a statement like "import spam as
+     * Called from jython generated code when a statement like "import spam as
      * foo" is executed.
      */
     public static PyObject importOneAs(String mod, PyFrame frame) {
@@ -669,7 +690,7 @@ public class imp {
     }
 
     /**
-     * Called from jpython generated code when a stamenet like "from spam.eggs
+     * Called from jython generated code when a stamenet like "from spam.eggs
      * import foo, bar" is executed.
      */
     public static PyObject[] importFrom(String mod, String[] names,
@@ -678,7 +699,7 @@ public class imp {
     }
 
     /**
-     * Called from jpython generated code when a stamenet like "from spam.eggs
+     * Called from jython generated code when a statement like "from spam.eggs
      * import foo as spam" is executed.
      */
     public static PyObject[] importFromAs(String mod, String[] names,
@@ -695,12 +716,37 @@ public class imp {
         PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
                 .getf_locals(), new PyTuple(pynames));
         PyObject[] submods = new PyObject[names.length];
+        List wrongNames = new ArrayList(1);
         for (int i = 0; i < names.length; i++) {
             PyObject submod = module.__findattr__(names[i]);
             if (submod == null) {
-                throw Py.ImportError("cannot import name " + names[i]);
+                if (module instanceof PyJavaPackage) {
+                    if (JavaImportHelper.tryAddPackage(mod + "." + names[i], null)) {
+                        submod = module.__findattr__(names[i]);
+                    }
+                }
             }
-            submods[i] = submod;
+            if (submod == null) {
+                wrongNames.add(names[i]);
+            } else {
+                submods[i] = submod;
+            }
+        }
+        int size = wrongNames.size();
+        if (size > 0) {
+            StringBuffer buf = new StringBuffer(20);
+            buf.append("cannot import name");
+            if (size > 1) {
+                buf.append("s");
+            }
+            Iterator wrongNamesIterator = wrongNames.iterator();
+            buf.append(" ");
+            buf.append(wrongNamesIterator.next());
+            while (wrongNamesIterator.hasNext()) {
+                buf.append(", ");
+                buf.append(wrongNamesIterator.next());
+            }
+            throw Py.ImportError(buf.toString());
         }
         return submods;
     }

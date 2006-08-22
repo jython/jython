@@ -17,6 +17,7 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
 import org.python.modules.Setup;
 
 /**
@@ -32,6 +33,10 @@ public class PySystemState extends PyObject
     private static final String JAR_SEPARATOR = "!";
     private static final String URL_BLANK_REPLACEMENT = "%20";
 
+    private static final String PYTHON_CACHEDIR = "python.cachedir";
+    protected static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
+    protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
+    
     /**
      * The current version of Jython.
      */
@@ -331,8 +336,8 @@ public class PySystemState extends PyObject
         return classpath.substring(start, jpy);
     }
 
-    private static void initRegistry(Properties preProperties,
-                                     Properties postProperties)
+    private static void initRegistry(Properties preProperties, Properties postProperties, 
+                                       boolean standalone)
     {
         if (registry != null) {
             Py.writeError("systemState", "trying to reinitialize registry");
@@ -361,6 +366,12 @@ public class PySystemState extends PyObject
                 String key = (String)e.nextElement();
                 String value = (String)postProperties.get(key);
                 registry.put(key, value);
+            }
+        }
+        if (standalone) {
+            // set default standalone property (if not yet set)
+            if (!registry.containsKey(PYTHON_CACHEDIR_SKIP)) {
+                registry.put(PYTHON_CACHEDIR_SKIP, "true");
             }
         }
         // Set up options from registry
@@ -396,6 +407,7 @@ public class PySystemState extends PyObject
             return new Properties();
         }
     }
+
     public static synchronized void initialize() {
         if (initialized)
             return;
@@ -428,15 +440,21 @@ public class PySystemState extends PyObject
         }
         initialized = true;
 
+        boolean standalone = false;
+        String jarFileName = getJarFileName();
+        if (jarFileName != null) {
+            standalone = isStandalone(jarFileName);
+        }
+        
         // initialize the JPython registry
-        initRegistry(preProperties, postProperties);
+        initRegistry(preProperties, postProperties, standalone);
 
         // other initializations
         initBuiltins(registry);
         initStaticFields();
 
         // Initialize the path (and add system defaults)
-        defaultPath = initPath(registry);
+        defaultPath = initPath(registry, standalone, jarFileName);
         defaultArgv = initArgv(argv);
 
         // Set up the known Java packages
@@ -501,12 +519,12 @@ public class PySystemState extends PyObject
             cachedir = null;
             return;
         }
-        String skip = props.getProperty("python.cachedir.skip", "false");
+        String skip = props.getProperty(PYTHON_CACHEDIR_SKIP, "false");
         if (skip.equalsIgnoreCase("true")) {
             cachedir = null;
             return;
         }
-        cachedir = new File(props.getProperty("python.cachedir", "cachedir"));
+        cachedir = new File(props.getProperty(PYTHON_CACHEDIR, CACHEDIR_DEFAULT_NAME));
         if (!cachedir.isAbsolute()) {
             cachedir = new File(PySystemState.prefix, cachedir.getPath());
         }
@@ -583,7 +601,7 @@ public class PySystemState extends PyObject
         return (String)builtinNames.get(name);
     }
 
-    private static PyList initPath(Properties props) {
+    private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
         if (!Py.frozen) {
             addPaths(path, props.getProperty("python.prepath", "."));
@@ -595,26 +613,29 @@ public class PySystemState extends PyObject
 
             addPaths(path, props.getProperty("python.path", ""));
         }
-        addJarLibPath(path);
+        if (standalone) {
+            // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
+            addPaths(path, jarFileName + "/Lib");
+        }
         
         return path;
     }
     
     /**
-     * standalone jython: add the /Lib directory inside JYTHON_JAR to the path (if present)
+     * Check if we are in standalone mode.
      * 
-     * @param path the sys.path to be updated eventually
+     * @param jarFileName The name of the jar file
+     * 
+     * @return <code>true</code> if we have a standalone .jar file, <code>false</code> otherwise.
      */
-    private static void addJarLibPath(PyList path) {
-        String jarFileName = getJarFileName();
+    private static boolean isStandalone(String jarFileName) {
+        boolean standalone = false;
         if (jarFileName != null) {
             JarFile jarFile = null;
             try {
                 jarFile = new JarFile(jarFileName);
                 JarEntry jarEntry = jarFile.getJarEntry("Lib/javaos.py");
-                if (jarEntry != null) {
-                    addPaths(path, jarFileName + "/Lib");
-                }
+                standalone = jarEntry != null;
             } catch (IOException ioe) {
             } finally {
                 if (jarFile != null) {
@@ -625,6 +646,7 @@ public class PySystemState extends PyObject
                 }
             }
         }
+        return standalone;
     }
 
     /**

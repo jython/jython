@@ -977,7 +977,7 @@ class ImportFunction extends PyObject {
 
     private PyObject load(String module, PyObject globals, PyObject fromlist) {
         PyObject mod = imp.importName(module.intern(), fromlist.__len__() == 0,
-                globals);
+                globals, fromlist);
         return mod;
     }
 
