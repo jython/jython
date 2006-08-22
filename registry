@@ -16,6 +16,10 @@
 # (typically the directory of this file)
 python.cachedir = cachedir
 
+# Setting this property to true disables the package scan for the cachedir.
+# Please be aware that disabling this might break some java import statements
+#python.cachedir.skip = false
+
 # Properties to check for initializing and updating the package cache
 # Hopefully you won't have any need to change these
 python.packages.paths = java.class.path, sun.boot.class.path
