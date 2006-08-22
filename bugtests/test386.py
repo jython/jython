@@ -1,5 +1,5 @@
 """
-Test the stanalone starting (java -jar jython.jar some.py)
+Test the standalone starting (java -jar jython.jar some.py)
 """
 
 import support
@@ -12,33 +12,26 @@ from java.io import File
 
 TESTDIR = "test386jar"
 JYTHON_JAR = "jython.jar"
-TEST_PY = "test386.py"
+TEST_PY_NAME = TESTDIR +"/test386called.py"
 
-def mkdir(dir):
-  if not os.path.exists(dir):
-    os.mkdir(dir)
-
-def mkPy():
-  f = open("%s/%s" % (TESTDIR, TEST_PY), "w")
-  f.write("""
-import getopt # import a non-builtin module which is not imported by default on startup
-""")
-  f.close()
+def checkTestDir():
+  if not os.path.exists(TESTDIR):
+    raise AssertionError, TESTDIR + " does not exist"
+  if not os.path.exists(TEST_PY_NAME):
+    raise AssertionError, TEST_PY_NAME + " does not exist"
     
 # create a jython standalone jar file:
 # add the contents of jython.jar and /Lib files to an new jython.jar
 def mkjar():
-    jarFile = File(TESTDIR, JYTHON_JAR)
-    jarPacker = support.JarPacker(jarFile)
-    jarPacker.addJarFile(File(cfg.jython_home + "/%s" % JYTHON_JAR))
-    jarPacker.addDirectory(File(cfg.jython_home + "/Lib"))
-    jarPacker.close()
-    return jarFile
+  jarFile = File(TESTDIR, JYTHON_JAR)
+  jarPacker = support.JarPacker(jarFile)
+  jarPacker.addJarFile(File(cfg.jython_home + "/%s" % JYTHON_JAR))
+  jarPacker.addDirectory(File(cfg.jython_home + "/Lib"))
+  jarPacker.close()
+  return jarFile
 
 
-mkdir(TESTDIR)
-mkPy()
+checkTestDir()
 mkjar()
 jarFileName = "%s/%s" % (TESTDIR, JYTHON_JAR)
-testFileName = "%s/%s" % (TESTDIR, TEST_PY)
-support.runJavaJar(jarFileName, testFileName)
+support.runJavaJar(jarFileName, TEST_PY_NAME)
