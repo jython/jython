@@ -3275,7 +3275,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         if (step > 0 && stop < start)
             stop = start;
         if (step == 1)
-            return new PyString(string.substring(start, stop));
+            return fromSubstring(start, stop);
         else {
             int n = sliceLength(start, stop, step);
             char new_chars[] = new char[n];
@@ -3283,8 +3283,12 @@ public class PyString extends PyBaseString implements ClassDictInit
             for (int i=start; j<n; i+=step)
                 new_chars[j++] = string.charAt(i);
 
-            return new PyString(new String(new_chars));
+            return createInstance(new String(new_chars));
         }
+    }
+
+    public PyString createInstance(String str) {
+        return new PyString(str);
     }
 
     public boolean __contains__(PyObject o) {
@@ -3306,7 +3310,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         for (int i=0; i<count; i++) {
             string.getChars(0, s, new_chars, i*s);
         }
-        return new PyString(new String(new_chars));
+        return createInstance(new String(new_chars));
     }
 
     final PyObject str___mul__(PyObject o) {
@@ -3331,11 +3335,10 @@ public class PyString extends PyBaseString implements ClassDictInit
         if (generic_other instanceof PyString) {
             PyString other = (PyString)generic_other;
             String result = string.concat(other.string);
-            if (this instanceof PyUnicode || generic_other instanceof PyUnicode) {
+            if (generic_other instanceof PyUnicode) {
                 return new PyUnicode(result);
-            } else {
-                return new PyString(result);
             }
+            return createInstance(result);
         }
         else return null;
     }
@@ -3388,10 +3391,9 @@ public class PyString extends PyBaseString implements ClassDictInit
         );
     }
 
-    //XXX: PyUnicode?
     public PyObject __mod__(PyObject other) {
         StringFormatter fmt = new StringFormatter(string);
-        return new PyString(fmt.format(other));
+        return createInstance(fmt.format(other));
     }
 
     public PyObject __int__() {
@@ -3823,7 +3825,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     protected PyString fromSubstring(int begin, int end) {
-        return new PyString(string.substring(begin, end));
+        return createInstance(string.substring(begin, end));
     }
 
     public int index(String sub) {
@@ -4317,7 +4319,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final String str_replace(String oldPiece, String newPiece, int maxsplit) {
-        PyString newstr = new PyString(newPiece);
+        PyString newstr = createInstance(newPiece);
         return newstr.join(split(oldPiece, maxsplit));
     }
 

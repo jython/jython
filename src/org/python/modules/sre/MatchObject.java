@@ -15,11 +15,18 @@
 
 package org.python.modules.sre;
 
-import org.python.core.*;
+import org.python.core.ArgParser;
+import org.python.core.Py;
+import org.python.core.PyDictionary;
+import org.python.core.PyInteger;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyTuple;
+import org.python.core.imp;
 
 
 public class MatchObject extends PyObject {
-    public String string; /* link to the target string */
+    public PyString string; /* link to the target string */
     public PyObject regs; /* cached list of matching spans */
     PatternObject pattern; /* link to the regex (pattern) object */
     int pos, endpos; /* current target slice */
@@ -173,8 +180,8 @@ public class MatchObject extends PyObject {
 
         if (string == null || start < 0)
             return def;
+        return string.__getslice__(Py.newInteger(start), Py.newInteger(end));
 
-        return new PyString(string.substring(start, end));
     }
 
     public PyObject __findattr__(String key) {
