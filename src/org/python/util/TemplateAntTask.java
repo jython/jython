@@ -236,7 +236,7 @@ public class TemplateAntTask extends MatchingTask {
                 String fromFile=srcDir.getAbsolutePath()+File.separator+
                     files[j];
                 String mapFile=(String)mapping.get(files[j]);
-                String mapFileName=mapFile.replace(".", File.separator)+".java";
+                String mapFileName=mapFile.replace('.', File.separatorChar)+".java";
                 String toFile=destdir.getAbsolutePath()+File.separator+
                     mapFileName;
 
