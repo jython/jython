@@ -198,7 +198,7 @@ else:
                 try:
                     stream.write(c)
                 except UnicodeError:
-                    stream.write(u"&#%d;" % ord(c))
+                    stream.write("&#%d;" % ord(c))
 
 def writeattr(stream, text):
     countdouble = text.count('"')
