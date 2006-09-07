@@ -1,5 +1,6 @@
 package org.python.core;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
@@ -10,6 +11,7 @@ import java.util.zip.ZipEntry;
 public class ZipFileImporter extends PyObject {
 
     private SyspathArchive archive;
+    private String pathToArchive;
 
     /**
      * If this path is not an archive (.zip or .jar) then raise an ImportError,
@@ -22,6 +24,8 @@ public class ZipFileImporter extends PyObject {
             throw Py.ImportError(path.toString());
         }
         this.archive = (SyspathArchive) path;
+        String archiveName = SyspathArchive.getArchiveName(archive.string);
+        this.pathToArchive = new File(archiveName).getAbsolutePath() + File.separatorChar;
     }
 
     /**
@@ -162,15 +166,14 @@ public class ZipFileImporter extends PyObject {
                         + e.toString());
                 throw Py.ImportError("error loading from zipfile");
             }
+            String pathToEntry = pathToArchive + entry.getName();
+            PyObject o;
             if (this._info.compiled) {
-                PyObject o = imp.createFromPyClass(moduleName, is, true, entry
-                        .getName());
-                return (m == null) ? o : m;
-            } else {
-                PyObject o = imp.createFromSource(moduleName, is, entry
-                        .getName(), null);
-                return (m == null) ? o : m;
+                o = imp.createFromPyClass(moduleName, is, true, pathToEntry);
+            } else { 
+                o = imp.createFromSource(moduleName, is,pathToEntry, null);
             }
+            return (m == null) ? o : m;
         }
 
         /**
