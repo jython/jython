@@ -117,7 +117,7 @@ class Class(Namespace):
 class Module(Namespace):
     def __init__(self, mod=None, name=None, file=None, path=None):
         Namespace.__init__(self, mod)
-        if file is None and hasattr(mod, '__file__'):
+        if file is None and hasattr(mod, '__file__') and not mod.__name__ == '__main__':
             file = mod.__file__
         if name is not None:
             self.name = name
