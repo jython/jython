@@ -1,0 +1,7 @@
+assert __name__ == 'test307p', " __name__ should've been test307p but was %s" % __name__
+
+#compare("__file__", __file__, "test307p/__init__.py")
+#compare("__path__", __path__, ["test307.zip/test307p"])
+#import test307m
+__path__.append("test307.zip/foo/bar")
+import foobar
