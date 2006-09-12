@@ -1,5 +1,6 @@
 package org.python.modules.time;
 
+import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyBuiltinFunctionNarrow;
@@ -7,7 +8,9 @@ import org.python.core.PyGetSetDescr;
 import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyMethodDescr;
+import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PySequence;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 
@@ -135,6 +138,13 @@ public class PyTimeTuple extends PyTuple {
 
         }
         dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyTimeTuple.class,0,0,new exposed___reduce__(null,null)));
+        dict.__setitem__("__new__",new PyNewWrapper(PyTimeTuple.class,"__new__",-1,-1) {
+
+                                                                                           public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                               return timetuple_new(this,init,subtype,args,keywords);
+                                                                                           }
+
+                                                                                       });
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
@@ -266,5 +276,29 @@ public class PyTimeTuple extends PyTuple {
         return new PyTuple(new PyObject[]
             {new PyList(getArray())}
         );
+    }
+
+    private static PyObject timetuple_new(PyNewWrapper wrapper,
+                                            boolean init,
+                                            PyType subtype,
+                                            PyObject[] args,
+                                            String[] keywords) {
+        ArgParser ap = new ArgParser("struct_time", args, keywords,
+                                     new String[] { "tuple" }, 1);
+        PyObject obj = ap.getPyObject(0);
+        if(obj instanceof PyTuple) {
+            if(obj.__len__() != 9){
+                throw Py.TypeError("time.struct_time() takes a 9-sequence (1-sequence given)");
+            }
+            return new PyTimeTuple((PyTuple)obj);
+        } else if(obj instanceof PySequence) {
+            PySequence seq = (PySequence)obj;
+            if(seq.__len__() != 9){
+                throw Py.TypeError("time.struct_time() takes a 9-sequence (1-sequence given)");
+            }
+            return new PyTimeTuple((PyObject[])seq.__tojava__(PyObject[].class));
+            
+        }
+        throw Py.TypeError("constructor requires a sequence");
     }
 }
