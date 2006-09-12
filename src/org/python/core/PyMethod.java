@@ -14,6 +14,9 @@ public class PyMethod extends PyObject
     public PyObject __doc__;
 
     public PyMethod(PyObject self, PyObject f, PyObject wherefound) {
+        if(self == Py.None){
+            self = null;
+        }
         im_func = f;
         im_self = self;
         im_class = wherefound;
