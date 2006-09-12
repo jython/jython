@@ -1057,18 +1057,22 @@ public class PyObject implements java.io.Serializable {
     /*The basic functions to implement a namespace*/
 
     /**
-     * Very similar to the standard Python __getattr__ method.
-     * Instead of throwing a AttributeError if the item isn't found,
-     * this just returns null.
-     *
-     * Classes that wish to implement __getattr__ should
-     * override this method instead (with the appropriate
-     * semantics.
-     *
-     * @param name the name to lookup in this namespace
-     *
+     * Very similar to the standard Python __getattr__ method. Instead of
+     * throwing a AttributeError if the item isn't found, this just returns
+     * null.
+     * 
+     * By default, this method will call
+     * <code>__findattr__(name.internedString)</code> with the appropriate
+     * args. 
+     * 
+     * Classes that wish to implement __getattr__ should override this method
+     * instead (with the appropriate semantics.
+     * 
+     * @param name
+     *            the name to lookup in this namespace
+     * 
      * @return the value corresponding to name or null if name is not found
-     **/
+     */
     public final PyObject __findattr__(PyString name) {
         if (name == null) {
             return null;
@@ -1079,12 +1083,8 @@ public class PyObject implements java.io.Serializable {
     /**
      * A variant of the __findattr__ method which accepts a Java
      * <code>String</code> as the name.
-     *
-     * By default, this method will call <code>__findattr__(PyString
-     * name)</code> with the appropriate args.  The only reason to override
-     * this method is for performance.
-     *
-     * <b>Warning: name must be an interned string!!!!!!!!</b>
+     * 
+     * <b>Warning: name must be an interned string!</b>
      *
      * @param name the name to lookup in this namespace
      * <b> must be an interned string </b>.
