@@ -28,7 +28,7 @@ public class PyTimeTuple extends PyTuple {
     //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
-    public static final String exposed_name="timetuple";
+    public static final String exposed_name="struct_time";
 
     public static final Class exposed_base=PyTuple.class;
 
@@ -60,7 +60,7 @@ public class PyTimeTuple extends PyTuple {
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.timetuple___ne__(arg0);
+                PyObject ret=self.struct_time___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -68,7 +68,7 @@ public class PyTimeTuple extends PyTuple {
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyTimeTuple self=(PyTimeTuple)gself;
-                PyObject ret=self.timetuple___ne__(arg0);
+                PyObject ret=self.struct_time___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -94,7 +94,7 @@ public class PyTimeTuple extends PyTuple {
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.timetuple___eq__(arg0);
+                PyObject ret=self.struct_time___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -102,7 +102,7 @@ public class PyTimeTuple extends PyTuple {
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyTimeTuple self=(PyTimeTuple)gself;
-                PyObject ret=self.timetuple___eq__(arg0);
+                PyObject ret=self.struct_time___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -128,12 +128,12 @@ public class PyTimeTuple extends PyTuple {
             }
 
             public PyObject __call__() {
-                return self.timetuple___reduce__();
+                return self.struct_time___reduce__();
             }
 
             public PyObject inst_call(PyObject gself) {
                 PyTimeTuple self=(PyTimeTuple)gself;
-                return self.timetuple___reduce__();
+                return self.struct_time___reduce__();
             }
 
         }
@@ -141,7 +141,7 @@ public class PyTimeTuple extends PyTuple {
         dict.__setitem__("__new__",new PyNewWrapper(PyTimeTuple.class,"__new__",-1,-1) {
 
                                                                                            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                               return timetuple_new(this,init,subtype,args,keywords);
+                                                                                               return struct_time_new(this,init,subtype,args,keywords);
                                                                                            }
 
                                                                                        });
@@ -223,10 +223,10 @@ public class PyTimeTuple extends PyTuple {
     }
 
     public synchronized PyObject __eq__(PyObject o) {
-        return timetuple___eq__(o);
+        return struct_time___eq__(o);
     }
 
-    final synchronized PyObject timetuple___eq__(PyObject o) {
+    final synchronized PyObject struct_time___eq__(PyObject o) {
         if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -240,10 +240,10 @@ public class PyTimeTuple extends PyTuple {
     }
 
     public synchronized PyObject __ne__(PyObject o) {
-        return timetuple___ne__(o);
+        return struct_time___ne__(o);
     }
 
-    final synchronized PyObject timetuple___ne__(PyObject o) {
+    final synchronized PyObject struct_time___ne__(PyObject o) {
         if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
             return null;
         }
@@ -262,10 +262,10 @@ public class PyTimeTuple extends PyTuple {
      * @return a tuple of (class, tuple)
      */
     public PyObject __reduce__() {
-        return timetuple___reduce__();
+        return struct_time___reduce__();
     }
 
-    final PyObject timetuple___reduce__() {
+    final PyObject struct_time___reduce__() {
         PyTuple newargs = __getnewargs__();
         return new PyTuple(new PyObject[]{
             getType(), newargs
@@ -278,7 +278,7 @@ public class PyTimeTuple extends PyTuple {
         );
     }
 
-    private static PyObject timetuple_new(PyNewWrapper wrapper,
+    private static PyObject struct_time_new(PyNewWrapper wrapper,
                                             boolean init,
                                             PyType subtype,
                                             PyObject[] args,

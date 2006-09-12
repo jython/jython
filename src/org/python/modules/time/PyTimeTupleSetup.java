@@ -37,7 +37,7 @@ class PyTimeTupleSetup {
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.timetuple___ne__(arg0);
+                PyObject ret=self.struct_time___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -45,7 +45,7 @@ class PyTimeTupleSetup {
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyTimeTuple self=(PyTimeTuple)gself;
-                PyObject ret=self.timetuple___ne__(arg0);
+                PyObject ret=self.struct_time___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -71,7 +71,7 @@ class PyTimeTupleSetup {
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.timetuple___eq__(arg0);
+                PyObject ret=self.struct_time___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -79,7 +79,7 @@ class PyTimeTupleSetup {
 
             public PyObject inst_call(PyObject gself,PyObject arg0) {
                 PyTimeTuple self=(PyTimeTuple)gself;
-                PyObject ret=self.timetuple___eq__(arg0);
+                PyObject ret=self.struct_time___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
