@@ -289,8 +289,11 @@ public class DataHandler {
 
             case Types.FLOAT:
             case Types.REAL:
-            case Types.DOUBLE:
                 obj = Py.newFloat(set.getFloat(col));
+                break;
+
+            case Types.DOUBLE:
+                obj = Py.newFloat(set.getDouble(col));
                 break;
 
             case Types.TIME:
@@ -375,8 +378,11 @@ public class DataHandler {
 
             case Types.FLOAT:
             case Types.REAL:
-            case Types.DOUBLE:
                 obj = Py.newFloat(stmt.getFloat(col));
+                break;
+
+            case Types.DOUBLE:
+                obj = Py.newFloat(stmt.getDouble(col));
                 break;
 
             case Types.TIME:
