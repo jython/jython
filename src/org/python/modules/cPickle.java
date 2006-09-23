@@ -409,6 +409,8 @@ public class cPickle implements ClassDictInit {
                             PyType.fromClass(PyMethod.class);
     private static PyType ClassType =
                             PyType.fromClass(PyClass.class);
+    private static PyType TypeType =
+                            PyType.fromClass(PyType.class);
     private static PyType DictionaryType =
                             PyType.fromClass(PyDictionary.class);
     private static PyType StringMapType =
@@ -786,6 +788,15 @@ public class cPickle implements ClassDictInit {
         private boolean bin;
 
         /**
+         * The undocumented attribute fast of the C version of cPickle disables
+         * memoization. Since having memoization on won't break anything, having
+         * this dummy setter for fast here won't break any code expecting it to
+         * do something. However without it code that sets fast fails(ie
+         * test_cpickle.py), so it's worth having.
+         */
+         public boolean fast = false;
+
+        /**
          * Hmm, not documented, perhaps it shouldn't be public? XXX: fixme.
          */
         private PickleMemo memo = new PickleMemo();
@@ -1008,6 +1019,8 @@ public class cPickle implements ClassDictInit {
             else if (type == InstanceType)
                 save_inst((PyInstance)object);
             else if (type == ClassType)
+                save_global(object);
+            else if (type == TypeType)
                 save_global(object);
             else if (type == FunctionType)
                 save_global(object);
@@ -1317,6 +1330,7 @@ public class cPickle implements ClassDictInit {
             }
             list.append(obj);
         }
+
     }
 
 
@@ -1631,11 +1645,21 @@ public class cPickle implements ClassDictInit {
             push(Py.None);
         }
 
-
         final private void load_int() {
             String line = file.readlineNoNl();
-            // XXX: use strop instead?
-            push(new PyInteger(Integer.parseInt(line)));
+            PyObject value;
+            // The following could be abstracted into a common string
+            // -> int/long method.
+            try {
+                value = Py.newInteger(Integer.parseInt(line));
+            } catch(NumberFormatException e) {
+                try {
+                    value = Py.newLong(line);
+                } catch(NumberFormatException e2) {
+                    throw Py.ValueError("could not convert string to int");
+                }
+            }
+            push(value);
         }
 
 
@@ -1865,7 +1889,7 @@ public class cPickle implements ClassDictInit {
         final private void load_reduce() {
             PyObject arg_tup = pop();
             PyObject callable = pop();
-            if (!(callable instanceof PyClass)) {
+            if (!((callable instanceof PyClass) || (callable instanceof PyType))) {
                 if (safe_constructors.__finditem__(callable) == null) {
                     if (callable.__findattr__("__safe_for_unpickling__")
                                                               == null)
