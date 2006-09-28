@@ -23,12 +23,10 @@ del sys
 # get the necessary Java SAX classes
 try:
     from org.python.core import FilelikeInputStream
-    from org.xml.sax import ContentHandler, SAXException
     from org.xml.sax.helpers import XMLReaderFactory
-
-    from org.xml.sax import InputSource as JavaInputSource
+    from org.xml import sax as javasax
 except ImportError:
-    raise SAXReaderNotAvailable("SAX is not on the classpath", None)
+    raise _exceptions.SAXReaderNotAvailable("SAX is not on the classpath", None)
 
 # get some JAXP stuff
 try:
@@ -40,26 +38,66 @@ except ImportError:
     
 from java.lang import String
 
-class JyInputSourceWrapper(JavaInputSource):
+
+def _wrap_sax_exception(e):
+    return _exceptions.SAXParseException(e.message,
+					 e.exception,
+					 SimpleLocator(e.columnNumber,
+							      e.lineNumber,
+							      e.publicId,
+							      e.systemId))
+
+class JyErrorHandlerWrapper(javasax.ErrorHandler):
+    def __init__(self, err_handler):
+	self._err_handler = err_handler
+	
+    def error(self, exc):
+	self._err_handler.error(_wrap_sax_exception(exc))
+
+    def fatalError(self, exc):
+	self._err_handler.fatalError(_wrap_sax_exception(exc))
+
+    def warning(self, exc):
+	self._err_handler.warning(_wrap_sax_exception(exc))
+
+class JyInputSourceWrapper(javasax.InputSource):
     def __init__(self, source):
 	if isinstance(source, str):
-	    JavaInputSource.__init__(self, source)
+	    javasax.InputSource.__init__(self, source)
 	elif hasattr(source, "read"):#file like object
 	    f = source
-	    JavaInputSource.__init__(self, FilelikeInputStream(f))
+	    javasax.InputSource.__init__(self, FilelikeInputStream(f))
 	    if hasattr(f, "name"):
 		self.setSystemId(f.name)
 	else:#xml.sax.xmlreader.InputSource object
 	    #Use byte stream constructor if possible so that Xerces won't attempt to open
 	    #the url at systemId unless it's really there
 	    if source.getByteStream():
-	        JavaInputSource.__init__(self, FilelikeInputStream(source.getByteStream()))
+	        javasax.InputSource.__init__(self,
+					     FilelikeInputStream(source.getByteStream()))
 	    else:
-		JavaInputSource.__init__(self)
+		javasax.InputSource.__init__(self)
 	    if source.getSystemId():
 		self.setSystemId(source.getSystemId())
 	    self.setPublicId(source.getPublicId())
 	    self.setEncoding(source.getEncoding())
+
+class JyEntityResolverWrapper(javasax.EntityResolver):
+    def __init__(self, entityResolver):
+	self._resolver = entityResolver
+
+    def resolveEntity(self, pubId, sysId):
+	return JyInputSourceWrapper(self._resolver.resolveEntity(pubId, sysId))
+
+class JyDTDHandlerWrapper(javasax.DTDHandler):
+    def __init__(self, dtdHandler):
+	self._handler = dtdHandler
+
+    def notationDecl(self, name, publicId, systemId):
+	self._handler.notationDecl(name, publicId, systemId)
+
+    def unparsedEntityDecl(self, name, publicId, systemId, notationName):
+	self._handler.unparsedEntityDecl(name, publicId, systemId, notationName)
 
 class SimpleLocator(xmlreader.Locator):
     def __init__(self, colNum, lineNum, pubId, sysId):
@@ -81,30 +119,26 @@ class SimpleLocator(xmlreader.Locator):
         return self.sysId
 
 # --- JavaSAXParser
-class JavaSAXParser(xmlreader.XMLReader, ContentHandler):
+class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
     "SAX driver for the Java SAX parsers."
 
     def __init__(self, jdriver = None):
+	xmlreader.XMLReader.__init__(self)
         self._parser = create_java_parser(jdriver)
         self._parser.setFeature(feature_namespaces, 0)
 	self._parser.setFeature(feature_namespace_prefixes, 0)
         self._parser.setContentHandler(self)
         self._nsattrs = AttributesNSImpl()
         self._attrs = AttributesImpl()
+	self.setEntityResolver(self.getEntityResolver())
+	self.setErrorHandler(self.getErrorHandler())
+	self.setDTDHandler(self.getDTDHandler())
 
     # XMLReader methods
 
     def parse(self, source):
         "Parse an XML document from a URL or an InputSource."
-        try:
-            self._parser.parse(JyInputSourceWrapper(source))
-        except SAXException, e:
-            raise _exceptions.SAXParseException(e.message,
-						e.exception,
-						SimpleLocator(e.columnNumber,
-							      e.lineNumber,
-							      e.publicId,
-							      e.systemId))
+        self._parser.parse(JyInputSourceWrapper(source))
 
     def getFeature(self, name):
         return self._parser.getFeature(name)
@@ -117,6 +151,18 @@ class JavaSAXParser(xmlreader.XMLReader, ContentHandler):
 
     def setProperty(self, name, value):
         self._parser.setProperty(name, value)
+
+    def setEntityResolver(self, resolver):
+	self._parser.entityResolver = JyEntityResolverWrapper(resolver)
+	xmlreader.XMLReader.setEntityResolver(self, resolver)
+
+    def setErrorHandler(self, err_handler):
+	self._parser.errorHandler = JyErrorHandlerWrapper(err_handler)
+	xmlreader.XMLReader.setErrorHandler(self, err_handler)
+
+    def setDTDHandler(self, dtd_handler):
+	self._parser.setDTDHandler(JyDTDHandlerWrapper(dtd_handler))
+	xmlreader.XMLReader.setDTDHandler(self, dtd_handler)
 
     # ContentHandler methods
     def setDocumentLocator(self, locator):
@@ -279,9 +325,9 @@ def create_java_parser(jdriver = None):
         else:
             return XMLReaderFactory.createXMLReader()
     except ParserConfigurationException, e:
-        raise SAXReaderNotAvailable(e.getMessage())
-    except SAXException, e:
-        raise SAXReaderNotAvailable(e.getMessage())
+        raise _exceptions.SAXReaderNotAvailable(e.getMessage())
+    except javasax.SAXException, e:
+        raise _exceptions.SAXReaderNotAvailable(e.getMessage())
 
 def create_parser(jdriver = None):
     return JavaSAXParser(jdriver)
