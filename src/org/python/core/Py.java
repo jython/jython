@@ -1190,11 +1190,7 @@ public final class Py
     public static PyObject runCode(PyCode code, PyObject locals,
                                    PyObject globals)
     {
-        //System.out.println("run code");
         PyFrame f;
-        /*if (globals == null && locals == null) {
-          f = Py.getFrame();
-          } else {*/
         if (locals == null) {
             if (globals != null) {
                 locals = globals;
@@ -1212,15 +1208,18 @@ public final class Py
 
         f = new PyFrame(tc, locals, globals,
                         Py.getThreadState().systemState.builtins);
-        //}
         return code.call(f);
     }
 
     public static void exec(PyObject o, PyObject globals, PyObject locals) {
         PyCode code;
-        if (o instanceof PyCode)
+        if(o instanceof PyCode) {
             code = (PyCode)o;
-        else {
+            if(locals == null && o instanceof PyTableCode
+                    && ((PyTableCode)o).co_freevars.length > 0) {
+                throw Py.TypeError("code object passed to exec may not contain free variables");
+            }
+        }else {
             String contents = null;
             if (o instanceof PyString)
                 contents = o.toString();
@@ -1389,7 +1388,7 @@ public final class Py
     }
 
     public static long py2long(PyObject o) {
-        if (o instanceof PyInteger)
+        if(o instanceof PyInteger)
             return (long)((PyInteger)o).getValue();
 
         Object i = o.__tojava__(Long.TYPE);

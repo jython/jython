@@ -287,6 +287,9 @@ public class __builtin__ implements ClassDictInit {
     }
 
     public static PyObject eval(PyObject o) {
+        if(o instanceof PyTableCode && ((PyTableCode)o).co_freevars.length > 0) {
+            throw Py.TypeError("code object passed to eval() may not contain free variables");
+        }
         return eval(o, null, null);
     }
 
