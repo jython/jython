@@ -67,9 +67,10 @@ Actions for a release
        - jdk.target.version  (target: pre-init)
   4. if new CPython .py files should be distributed, add them to build.Lib.include.properties
   5. adjust the public static String version in PySystemState.java
-  6. check in all the changes
-  7. apply the new tag to the jython svn (all projects)
-  8. call target 'full-build'
+  6. adjust the version strings in target 'version' of this build.xml
+  7. check in all the changes
+  8. apply the new tag to the jython svn (all projects)
+  9. call target 'full-build'
 
 
 
@@ -109,6 +110,10 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 # - the svn tag to build from; only needed for full-build
 #svn.tag=Release_2_2alpha2
 svn.tag=HEAD
+
+# - the revision; defaults to svn.tag; only needed for full-build
+#   (uncomment and indicate the correct revision to do a snapshot build)
+#svn.revision=2948
 
 # - the directory containing libsvnjavahl-1.dll (on windows) and svnjavahl.jar; only needed for full-build
 # how to get these:
@@ -209,6 +214,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="svn.tag" value="HEAD" />
         <property name="python.cvs.tag" value="r223" />
 
+        <!-- revision handling -->
+    	<property name="svn.revison" value="${svn.tag}" />
+
         <property name="work.dir" value="${basedir}/../full_build_${svn.tag}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
@@ -220,6 +228,11 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
         </condition>
+        <condition property="do.snapshot.build" value="true">
+        	<not>
+                <equals arg1="${svn.revison}" arg2="${svn.tag}" />
+            </not>
+        </condition>
     	
         <!-- classpath for svn ant task -->
         <path id="svn.classpath">
@@ -230,7 +243,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </path>
     	<!-- taskdef for svn ant task -->
     	<taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="svn.classpath" />
-
     </target>
 
 
@@ -279,6 +291,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>svn.checkout.dir   = '${svn.checkout.dir}'</echo>
     	<echo>javahl.dir         = '${javahl.dir}'</echo>
     	<echo>svnant.jar.dir     = '${svnant.jar.dir}'</echo>
+    	<echo>svn.revison        = '${svn.revison}'</echo>
+        <echo>do.snapshot.build  = '${do.snapshot.build}'</echo>
         <echo>do.checkout        = '${do.checkout}'</echo>
     </target>
 
@@ -344,8 +358,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     	</condition>
     	<property name="svn.main.dir" value="tags/${svn.tag}" />
         <svn javahl="${javahl.dir}" >
-        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" destPath="${svn.checkout.dir}/jython" />
-        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" destPath="${svn.checkout.dir}/installer" />
+        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revison}" destPath="${svn.checkout.dir}/jython" />
+        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revison}" destPath="${svn.checkout.dir}/installer" />
         </svn> 
     	
         <!-- cpython -->
@@ -359,6 +373,15 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <cvs command="${python.checkout.command} ${python.module}" dest="${svn.checkout.dir}" />
     </target>
 
+	<!-- change the version string, if so defined: used for snapshot builds -->
+	<!-- the following replacements have to be updated if the version strings in PySystemState.java change -->
+	<target name="version" depends="checkout" if="do.snapshot.build" >
+		<property name="replace.value.version" value='version = "2.2a${svn.revison}"' />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2a1"' value="${replace.value.version}" />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_LEVEL = 0x0A" value="PY_RELEASE_LEVEL = 0xAA" />
+		<property name="replace.value.serial" value="PY_RELEASE_SERIAL = ${svn.revison}" />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 1" value="${replace.value.serial}" />
+	</target>
 
     <!-- separate build.xml for parser grammar -->
     <!-- we use settings as in developer-build - at the moment all properties will already be set if we do a full build -->
@@ -369,7 +392,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
 
     <!-- compile java sources -->
-    <target name="compile" depends="checkout, parser">
+    <target name="compile" depends="version, parser">
         <javac srcdir="${source.dir}/"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
@@ -443,7 +466,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
               <attribute name="Built-By" value="${user.name}" />
               <!-- info section. ATTN: no blanks, no '.' in the names -->
               <section name="Build-Info">
-                  <attribute name="version" value="${svn.tag}" />
+                  <attribute name="version" value="${svn.revison}" />
                   <attribute name="svn-build" value="${do.checkout}" />
                   <attribute name="threadlocal" value="${threadlocal.present}" />
                   <attribute name="secureclassloader" value="${secureclassloader.present}" />
@@ -603,13 +626,13 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <fileset dir="${install.src.dir}" includes="**/*.png" excludes="bin/**" />
         </copy>
         <echo>building installer .jar file</echo>
-        <jar destfile="${work.dir}/jython_${svn.tag}.jar" basedir="${dist.dir}" update="true">
+        <jar destfile="${work.dir}/jython_${svn.revison}.jar" basedir="${dist.dir}" update="true">
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
                 <attribute name="Built-By" value="${user.name}" />
                 <!-- section for the install program -->
                 <section name="Jython">
-                    <attribute name="version" value="${svn.tag}" />
+                    <attribute name="version" value="${svn.revison}" />
                     <attribute name="exclude-dirs" value="org;META-INF" />
                 </section>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
