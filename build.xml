@@ -360,6 +360,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <svn javahl="${javahl.dir}" >
         	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
         	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
+        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/bugtests" revision="${svn.revision}" destPath="${svn.checkout.dir}/bugtests" />
         </svn> 
     	
         <!-- cpython -->
@@ -373,6 +374,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <cvs command="${python.checkout.command} ${python.module}" dest="${svn.checkout.dir}" />
     </target>
 
+	
 	<!-- change the version string, if so defined: used for snapshot builds -->
 	<!-- the following replacements have to be updated if the version strings in PySystemState.java change -->
 	<target name="version" depends="checkout" if="do.snapshot.build" >
