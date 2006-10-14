@@ -1216,7 +1216,7 @@ public final class Py
         if(o instanceof PyCode) {
             code = (PyCode)o;
             if(locals == null && o instanceof PyTableCode
-                    && ((PyTableCode)o).co_freevars.length > 0) {
+                    && ((PyTableCode)o).hasFreevars()) {
                 throw Py.TypeError("code object passed to exec may not contain free variables");
             }
         }else {

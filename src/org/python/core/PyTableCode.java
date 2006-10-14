@@ -91,6 +91,10 @@ public class PyTableCode extends PyCode
         return new PyList(members);
     }
 
+    public boolean hasFreevars() {
+        return co_freevars != null && co_freevars.length > 0;
+    }
+
     private void throwReadonly(String name) {
         for (int i = 0; i < __members__.length; i++)
             if (__members__[i] == name)
