@@ -39,6 +39,9 @@ class WeakIdentityMapTests(unittest.TestCase):
         # white box test for weak referencing of keys
         del j
         java.lang.System.gc()
+        java.lang.System.runFinalization()
+        java.lang.System.gc()
+        java.lang.System.runFinalization()
 
         assert widmap.get(i) == 'i' # triggers stale weak refs cleanup
         assert widmap._internal_map_size() == 1        
