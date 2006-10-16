@@ -115,11 +115,16 @@ public class ScopeInfo extends Object implements ScopeConstants {
 
     public int jy_npurecell;
 
-    public int cell;
+    public int cell, distance;
+    
+    public ScopeInfo up;
 
-    public void cook(ScopeInfo up,CompilationContext ctxt) throws Exception {
-        if (up == null) return; // top level => nop
-
+    //Resolve the names used in the given scope, and mark any freevars used in the up scope
+    public void cook(ScopeInfo up, int distance, CompilationContext ctxt) throws Exception {
+        if(up == null)
+            return; // top level => nop
+        this.up = up;
+        this.distance = distance;
         boolean func = kind == FUNCSCOPE;
         Vector purecells = new Vector();
         cell = 0;
@@ -203,7 +208,19 @@ public class ScopeInfo extends Object implements ScopeConstants {
 
     public Vector freevars = new Vector();
 
-    public void setup_closure(ScopeInfo up) {
+    /**
+     * setup the closure on this scope using the scope passed into cook as up as
+     * the containing scope
+     */
+    public void setup_closure() {
+        setup_closure(up);
+    }
+    
+    /**
+     * setup the closure on this scope using the passed in scope. This is used
+     * by jythonc to setup its closures.
+     */
+    public void setup_closure(ScopeInfo up){
         int free = cell; // env = cell...,free...
         Hashtable up_tbl = up.tbl;
         boolean nested = up.kind != TOPSCOPE;

@@ -157,6 +157,16 @@ public class CodeCompiler extends Visitor
         code.iconst(idx);
         code.putfield(mrefs.f_lasti);
     }
+    
+    int f_back;
+
+    private void loadf_back() throws Exception {
+        if (mrefs.f_back == 0) {
+            mrefs.f_back = code.pool.Fieldref(
+                        "org/python/core/PyFrame", "f_back", $pyFrame);
+        }
+        code.getfield(f_back);
+    }
 
     public int storeTop() throws Exception {
         int tmp = code.getLocal("org/python/core/PyObject");
@@ -368,9 +378,10 @@ public class CodeCompiler extends Visitor
 
     int getclosure;
 
-    public boolean makeClosure(Vector freenames) throws Exception {
-        if (freenames == null) return false;
-        int n = freenames.size();
+    public boolean makeClosure(ScopeInfo scope) throws Exception {
+        Vector freevars = scope.freevars;
+        if (freevars == null) return false;
+        int n = freevars.size();
         if (n == 0) return false;
 
         if (mrefs.getclosure == 0) {
@@ -382,12 +393,20 @@ public class CodeCompiler extends Visitor
         code.iconst(n);
         code.anewarray(code.pool.Class("org/python/core/PyObject"));
         code.astore(tmp);
-
+        Hashtable containingSymbolTable = scope.tbl;
+        int distance = scope.distance;
+        for(int i = 0; i < distance; i++){
+            scope = scope.up;
+            containingSymbolTable = scope.tbl; 
+        }
         for(int i=0; i<n; i++) {
             code.aload(tmp);
             code.iconst(i);
-            code.aload(1); // get frame
-            code.iconst(((SymInfo)tbl.get(freenames.elementAt(i))).env_index);
+            loadFrame();
+            for(int j = 1; j < distance; j++) {
+                loadf_back();
+            }
+            code.iconst(((SymInfo)containingSymbolTable.get(freevars.elementAt(i))).env_index);
             code.invokevirtual(getclosure);
             code.aastore();
         }
@@ -420,16 +439,15 @@ public class CodeCompiler extends Visitor
 
         makeArray(scope.ac.getDefaults());
 
-        scope.setup_closure(my_scope);
+        scope.setup_closure();
         scope.dump();
         module.PyCode(new Suite(node.body, node), name, true,
                       className, false, false,
                       node.beginLine, scope, cflags).get(code);
-        Vector freenames = scope.freevars;
 
         getDocString(node.body);
 
-        if (!makeClosure(freenames)) {
+        if (!makeClosure(scope)) {
             if (mrefs.PyFunction_init == 0) {
                 mrefs.PyFunction_init = code.pool.Methodref(
                     "org/python/core/PyFunction", "<init>",
@@ -2087,13 +2105,12 @@ public class CodeCompiler extends Visitor
 
         makeArray(scope.ac.getDefaults());
 
-        scope.setup_closure(my_scope);
+        scope.setup_closure();
         scope.dump();
         module.PyCode(retSuite, name, true, className,
                       false, false, node.beginLine, scope).get(code);
-        Vector freenames = scope.freevars;
 
-        if (!makeClosure(freenames)) {
+        if (!makeClosure(scope)) {
             if (mrefs.PyFunction_init1 == 0) {
                 mrefs.PyFunction_init1 = code.pool.Methodref(
                 "org/python/core/PyFunction", "<init>",
@@ -2153,18 +2170,17 @@ public class CodeCompiler extends Visitor
 
         ScopeInfo scope = module.getScopeInfo(node);
 
-        scope.setup_closure(my_scope);
+        scope.setup_closure();
         scope.dump();
         //Make code object out of suite
         module.PyCode(new Suite(node.body, node), name, false, name,
                       true, false, node.beginLine, scope).get(code);
-        Vector freenames = scope.freevars;
 
         //Get doc string (if there)
         getDocString(node.body);
 
         //Make class out of name, bases, and code
-        if (!makeClosure(freenames)) {
+        if (!makeClosure(scope)) {
             if (mrefs.makeClass == 0) {
                 mrefs.makeClass = code.pool.Methodref(
                 "org/python/core/Py", "makeClass",
