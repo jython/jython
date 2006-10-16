@@ -80,6 +80,79 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyString.class,1,1,new exposed___eq__(null,null)));
+        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getitem__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getitem__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=self.seq___finditem__(arg0);
+                if (ret==null) {
+                    throw Py.IndexError("index out of range: "+arg0);
+                }
+                return ret;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                PyObject ret=self.seq___finditem__(arg0);
+                if (ret==null) {
+                    throw Py.IndexError("index out of range: "+arg0);
+                }
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyString.class,1,1,new exposed___getitem__(null,null)));
+        class exposed___getslice__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getslice__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getslice__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                return self.seq___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                return self.seq___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                return self.seq___getslice__(arg0,arg1);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                return self.seq___getslice__(arg0,arg1);
+            }
+
+        }
+        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyString.class,2,3,new exposed___getslice__(null,null)));
         class exposed___contains__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -164,99 +237,6 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
-        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
-
-            private PyString self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___getitem__(PyString self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getitem__((PyString)self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return self.str___getitem__(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyString self=(PyString)gself;
-                return self.str___getitem__(arg0);
-            }
-
-        }
-        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyString.class,1,1,new exposed___getitem__(null,null)));
-        class exposed___getslice__ extends PyBuiltinFunctionNarrow {
-
-            private PyString self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___getslice__(PyString self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getslice__((PyString)self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                return self.str___getslice__(arg0,arg1,arg2);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
-                PyString self=(PyString)gself;
-                return self.str___getslice__(arg0,arg1,arg2);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return self.str___getslice__(arg0,arg1);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyString self=(PyString)gself;
-                return self.str___getslice__(arg0,arg1);
-            }
-
-        }
-        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyString.class,2,3,new exposed___getslice__(null,null)));
-        class exposed___iter__ extends PyBuiltinFunctionNarrow {
-
-            private PyString self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___iter__(PyString self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___iter__((PyString)self,info);
-            }
-
-            public PyObject __call__() {
-                return self.str___iter__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyString self=(PyString)gself;
-                return self.str___iter__();
-            }
-
-        }
-        dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyString.class,0,0,new exposed___iter__(null,null)));
         class exposed___mul__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -3341,34 +3321,6 @@ public class PyString extends PyBaseString implements ClassDictInit
             return createInstance(result);
         }
         else return null;
-    }
-
-    public PyObject __getslice__(PyObject s_start, PyObject s_stop) {
-        return str___getslice__(s_start,s_stop,null);
-    }
-
-    public PyObject __getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
-        return str___getslice__(s_start,s_stop,s_step);
-    }
-
-    final PyObject str___getslice__(PyObject s_start, PyObject s_stop) {
-        return seq___getslice__(s_start,s_stop,null);
-    }
-
-    final PyObject str___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
-        return seq___getslice__(s_start,s_stop,s_step);
-    }
-
-    public PyObject __iter__() {
-        return str___iter__();
-    }
-
-    final PyObject str___iter__() {
-        return seq___iter__();
-    }
-
-    final PyObject str___getitem__(PyObject index) {
-        return seq___getitem__(index);
     }
 
     /**

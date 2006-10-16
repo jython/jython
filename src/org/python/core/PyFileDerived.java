@@ -65,18 +65,6 @@ public class PyFileDerived extends PyFile {
         return super.__oct__();
     }
 
-    public PyObject __int__() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__int__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyInteger)
-                return(PyInteger)res;
-            throw Py.TypeError("__int__"+" should return a "+"int");
-        }
-        return super.__int__();
-    }
-
     public PyFloat __float__() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__float__");
@@ -143,6 +131,14 @@ public class PyFileDerived extends PyFile {
         if (impl!=null)
             return impl.__get__(this,self_type).__call__();
         return super.__invert__();
+    }
+
+    public PyObject __reduce__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__reduce__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__();
+        return super.__reduce__();
     }
 
     public PyObject __add__(PyObject other) {
@@ -657,6 +653,18 @@ public class PyFileDerived extends PyFile {
         return super.__ixor__(other);
     }
 
+    public PyObject __int__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__int__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyInteger||res instanceof PyLong)
+                return(PyObject)res;
+            throw Py.TypeError("__int__"+" should return an integer");
+        }
+        return super.__int__();
+    }
+
     public String toString() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__repr__");
@@ -681,6 +689,20 @@ public class PyFileDerived extends PyFile {
         if (self_type.lookup("__eq__")!=null||self_type.lookup("__cmp__")!=null)
             throw Py.TypeError("unhashable type");
         return super.hashCode();
+    }
+
+    public PyUnicode __unicode__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__unicode__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyUnicode)
+                return(PyUnicode)res;
+            if (res instanceof PyString)
+                return new PyUnicode((PyString)res);
+            throw Py.TypeError("__unicode__"+" should return a "+"unicode");
+        }
+        return super.__unicode__();
     }
 
     public int __cmp__(PyObject other) {
@@ -776,6 +798,20 @@ public class PyFileDerived extends PyFile {
             return;
         }
         super.__setitem__(key,value);
+    }
+
+    public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getslice__");
+        if (impl!=null)
+            try {
+                return impl.__get__(this,self_type).__call__(start,stop);
+            } catch (PyException exc) {
+                if (Py.matchException(exc,Py.LookupError))
+                    return null;
+                throw exc;
+            }
+        return super.__getslice__(start,stop,step);
     }
 
     public void __delitem__(PyObject key) { // ???

@@ -1174,7 +1174,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyObject dict_get(PyObject key, PyObject default_object) {
-        PyObject o = __finditem__(key);
+        PyObject o = dict___finditem__(key);
         if (o == null)
             return default_object;
         else
