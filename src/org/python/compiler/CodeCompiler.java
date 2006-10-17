@@ -379,9 +379,8 @@ public class CodeCompiler extends Visitor
     int getclosure;
 
     public boolean makeClosure(ScopeInfo scope) throws Exception {
-        Vector freevars = scope.freevars;
-        if (freevars == null) return false;
-        int n = freevars.size();
+        if (scope == null || scope.freevars == null) return false;
+        int n = scope.freevars.size();
         if (n == 0) return false;
 
         if (mrefs.getclosure == 0) {
@@ -393,20 +392,16 @@ public class CodeCompiler extends Visitor
         code.iconst(n);
         code.anewarray(code.pool.Class("org/python/core/PyObject"));
         code.astore(tmp);
-        Hashtable containingSymbolTable = scope.tbl;
-        int distance = scope.distance;
-        for(int i = 0; i < distance; i++){
-            scope = scope.up;
-            containingSymbolTable = scope.tbl; 
-        }
+        Hashtable upTbl = scope.up.tbl;
         for(int i=0; i<n; i++) {
             code.aload(tmp);
             code.iconst(i);
             loadFrame();
-            for(int j = 1; j < distance; j++) {
+            for(int j = 1; j < scope.distance; j++) {
                 loadf_back();
             }
-            code.iconst(((SymInfo)containingSymbolTable.get(freevars.elementAt(i))).env_index);
+            SymInfo symInfo = (SymInfo)upTbl.get(scope.freevars.elementAt(i));
+            code.iconst(symInfo.env_index);
             code.invokevirtual(getclosure);
             code.aastore();
         }
