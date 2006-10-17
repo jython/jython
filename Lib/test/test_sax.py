@@ -442,6 +442,39 @@ def test_expat_inpsource_stream():
 
     return result.getvalue() == xml_test_out
 
+# ===== Locator support
+
+class LocatorTest(XMLGenerator):
+    def __init__(self, out=None, encoding="iso-8859-1"):
+        XMLGenerator.__init__(self, out, encoding)
+        self.location = None
+
+    def endDocument(self):
+        XMLGenerator.endDocument(self)
+        self.location = Location(self._locator)
+
+def test_expat_locator_noinfo():
+    result = StringIO()
+    xmlgen = LocatorTest(result)
+    parser = make_parser()
+    parser.setContentHandler(xmlgen)
+
+    parser.parse(StringIO("<doc></doc>"))
+
+    return xmlgen.location.getSystemId() is None and \
+           xmlgen.location.getPublicId() is None and \
+           xmlgen.location.getLineNumber() == 1
+
+def test_expat_locator_withinfo():
+    result = StringIO()
+    xmlgen = LocatorTest(result)
+    parser = make_parser()
+    parser.setContentHandler(xmlgen)
+    parser.parse(findfile("test.xml"))
+
+    return xmlgen.location.getSystemId().endswith(findfile("test.xml")) and \
+           xmlgen.location.getPublicId() is None
+
 
 # ===========================================================================
 #
