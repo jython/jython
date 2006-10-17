@@ -84,7 +84,7 @@ javaccHome=${basedir}/../externals/javacc-3.2
 ht2html.dir=${basedir}/../externals/ht2html-2.0
 
 # - define the home of the corresponding CPython version
-python.home=c:/Programme/Python/Python22
+python.home=/Users/groves/dev/src/Python-2.2.3
 
 # - javax.servlet
 servlet.jar=c:/workspace/HEAD/CH.obj.commons.core/make_lib/j2ee.jar
@@ -588,6 +588,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo">
                 <patternset>
                     <includesfile name="${jython.base.dir}/build.Lib.include.properties" />
+		    <exclude name="test/output/test_sax"/>
                 </patternset>
             </fileset>
         </copy>
