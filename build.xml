@@ -201,6 +201,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="work.dir" value="${basedir}" />
         <property name="jython.base.dir" value="${basedir}" />
         <property name="source.dir" value="${basedir}/src" />
+	<property name="templates.dir" value="${basedir}/../sandbox/jt" />
         <property name="python.lib" value="${python.home}/Lib" />
     </target>
 
@@ -390,6 +391,50 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="parser" depends="developer-init, post-init, prepare" if="javaccHome" description="the grammar build">
         <echo>processing ${parser.dir}/build.xml</echo>
         <ant dir="${parser.dir}" />
+    </target>
+
+
+    <!-- prepare template ant task -->
+    <target name="template-init" depends="prepare">
+        <javac srcdir="${source.dir}/"
+                destdir="${output.dir}/"
+                target="${jdk.target.version}"
+                source="${jdk.source.version}"
+                debug="${debug}"
+                optimize="${optimize}"
+                deprecation="${deprecation}"
+                nowarn="${nowarn}"
+        >
+            <include name="org/python/util/TemplateAntTask.java" />
+        </javac>
+    </target>
+
+
+    <!-- run templates -->
+    <target name="template" depends="checkout, template-init">
+        <taskdef name="gentempl" classname="org.python.util.TemplateAntTask"
+            classpath="${output.dir}" />
+        <gentempl mappingFile="${templates.dir}/mappings"
+                srcdir="${templates.dir}"
+                destdir="${source.dir}"
+                scriptdir="${templates.dir}"
+                verbose="true">
+            <include name="*.expose" />
+            <include name="*.derived" />
+
+            <!-- these have custom modifications -->
+            <exclude name="float.derived" />
+            <exclude name="long.derived" />
+            <exclude name="str.expose" />
+            <exclude name="random.derived" />
+
+            <!-- unfinished -->
+            <exclude name="function.expose" />
+
+            <!-- sequence.expose is to be used as a parent expose; extended,
+                but not used directly -->
+            <exclude name="sequence.expose" />
+        </gentempl>
     </target>
 
 
