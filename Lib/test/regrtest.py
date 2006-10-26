@@ -372,7 +372,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
 
             sys.path = saved_sys_path
 
-            test = test_spec
+#            test = test_spec
             
             if ok > 0:
                 good.append(test)
@@ -407,27 +407,14 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
         if verbose:
             print "CAUTION:  stdout isn't compared in verbose mode:  a test"
             print "that passes in verbose mode may fail without it."
+    if skipped and not quiet:
+	print count(len(skipped), "test"), "skipped:"
+	printlist(skipped)
+	printsurprises(_Expected(_skips), skipped, 'skip')
     if bad:
         print count(len(bad), "test"), "failed:"
         printlist(bad)
-    if skipped and not quiet:
-        print count(len(skipped), "test"), "skipped:"
-        printlist(skipped)
-
-        e = _ExpectedSkips()
-        plat = sys.platform
-        if e.isvalid():
-            surprise = _Set(skipped) - e.getexpected()
-            if surprise:
-                print count(len(surprise), "skip"), \
-                      "unexpected on", plat + ":"
-                printlist(surprise)
-            else:
-                print "Those skips are all expected on", plat + "."
-        else:
-            print "Ask someone to teach regrtest.py about which tests are"
-            print "expected to get skipped on", plat + "."
-
+	printsurprises(_Expected(_failures), bad, 'fail')
 ##     if single:
 ##         alltests = findtests(testdir, stdtests, nottests)
 ##         for i in range(len(alltests)):
@@ -644,6 +631,18 @@ def printlist(x, width=70, indent=4):
     if len(line) > indent:
         print line
 
+def printsurprises(e, actual, name):
+    plat = sys.platform
+    if e.isvalid():
+	surprise = _Set(actual) - e.getexpected()
+	if surprise:
+	    print count(len(surprise), name), \
+		  "unexpected on", plat + ":"
+	    printlist(surprise)
+    else:
+	print "Ask someone to teach regrtest.py about which tests are"
+	print "expected to %s on %s." % (name, plat)
+
 class _Set:
     def __init__(self, seq=[]):
         data = self.data = {}
@@ -672,7 +671,7 @@ class _Set:
             data.sort()
         return data
 
-_expectations = {
+_skips = {
     'win32':
         """
         test_al
@@ -983,18 +982,104 @@ _expectations = {
 	test_winreg
 	test_winsound
 	""",
+    'java':
+	"""
+	test_al
+	test_asynchat
+	test_audioop
+	test_bsddb
+	test_capi
+	test_cd
+	test_cl
+	test_cmath
+	test_commands
+	test_crypt
+	test_curses
+	test_dbm
+	test_dl
+	test_email
+	test_email_codecs
+	test_fcntl
+	test_fork1
+	test_gc
+	test_gdbm
+	test_gettext
+	test_gl
+	test_grp
+	test_hotshot
+	test_imageop
+	test_imgfile
+	test_linuxaudiodev
+	test_locale
+	test_longexp
+	test_mmap
+	test_nis
+	test_openpty
+	test_parser
+	test_poll
+	test_pty
+	test_pwd
+	test_pyexpat
+	test_regex
+	test_rgbimg
+	test_rotor
+	test_select
+	test_signal
+	test_socket_ssl
+	test_socketserver
+	test_strop
+	test_sunaudiodev
+	test_sundry
+	test_symtable
+	test_timing
+	test_ucn
+	test_unicode_file
+	test_unicodedata
+	test_wave
+	test_winreg
+	test_winsound
+	"""
 }
 
-class _ExpectedSkips:
-    def __init__(self):
+_failures = {
+    'java':
+    '''
+    test_atexit
+    test_class
+    test_cpickle
+    test_descr
+    test_descrtut
+    test_doctest2
+    test_frozen
+    test_long_future
+    test_marshal
+    test_new
+    test_pickle
+    test_pkgimport
+    test_profilehooks
+    test_pyclbr
+    test_sre
+    test_threaded_import
+    test_trace
+    test_uu
+    test_weakref
+    test_zlib
+    ''',
+}
+
+class _Expected:
+    def __init__(self, expect_dict):
         self.valid = 0
-        if _expectations.has_key(sys.platform):
-            s = _expectations[sys.platform]
+	platform = sys.platform
+	if platform[:4] == 'java':
+	    platform = 'java'
+        if expect_dict.has_key(platform):
+            s = expect_dict[platform]
             self.expected = _Set(s.split())
             self.valid = 1
 
     def isvalid(self):
-        "Return true iff _ExpectedSkips knows about the current platform."
+        "Return true iff _Expected knows about the current platform."
         return self.valid
 
     def getexpected(self):
