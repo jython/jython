@@ -407,9 +407,13 @@ def f1():
 for i in range(100):
     f1()
 
-#This fails in Jython because __del__ isn't called until the Foos are
-#garbage collected. 
-#verify(Foo.count == 0)
+import os
+if os.name == 'java':
+    from java.lang import System, Thread
+    System.gc()
+    Thread.sleep(100)
+    System.gc()
+verify(Foo.count == 0)
 
 print "17. class and global"
 
