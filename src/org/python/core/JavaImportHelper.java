@@ -25,52 +25,54 @@ public class JavaImportHelper {
      * otherwise.
      */
     protected static boolean tryAddPackage(String packageName, PyObject fromlist) {
-        // build the actual map with the packages known to the VM
-        Map packages = buildLoadedPackages();
-
         // make sure we do not turn off the added flag, once it is set
         boolean packageAdded = false;
 
-        // handle package name
-        if (isLoadedPackage(packageName, packages)) {
-            packageAdded = addPackage(packageName);
-        }
-        String parentPackageName = packageName;
-        int dotPos = 0;
-        do {
-            dotPos = parentPackageName.lastIndexOf(".");
-            if (dotPos > 0) {
-                parentPackageName = parentPackageName.substring(0, dotPos);
-                if (isLoadedPackage(parentPackageName, packages)) {
-                    boolean parentAdded = addPackage(parentPackageName);
-                    if (parentAdded) {
-                        packageAdded = true;
+        if (packageName != null) {
+            // build the actual map with the packages known to the VM
+            Map packages = buildLoadedPackages();
+
+            // handle package name
+            if (isLoadedPackage(packageName, packages)) {
+                packageAdded = addPackage(packageName);
+            }
+            String parentPackageName = packageName;
+            int dotPos = 0;
+            do {
+                dotPos = parentPackageName.lastIndexOf(".");
+                if (dotPos > 0) {
+                    parentPackageName = parentPackageName.substring(0, dotPos);
+                    if (isLoadedPackage(parentPackageName, packages)) {
+                        boolean parentAdded = addPackage(parentPackageName);
+                        if (parentAdded) {
+                            packageAdded = true;
+                        }
                     }
                 }
-            }
-        } while (dotPos > 0);
+            } while (dotPos > 0);
 
-        // handle fromlist
-        if (fromlist != null && fromlist != Py.EmptyTuple && fromlist instanceof PyTuple) {
-            Iterator iterator = ((PyTuple) fromlist).iterator();
-            while (iterator.hasNext()) {
-                Object obj = iterator.next();
-                if (obj instanceof String) {
-                    String fromName = (String) obj;
-                    if (!"*".equals(fromName)) {
-                        boolean fromAdded = false;
-                        if (isJavaClass(packageName, fromName)) {
-                            fromAdded = addPackage(packageName);
-                            if (fromAdded) {
-                                packageAdded = true;
-                            }
-                        } else {
-                            // handle cases like: from java import math
-                            String fromPackageName = packageName + "." + fromName;
-                            if (isLoadedPackage(fromPackageName, packages)) {
-                                fromAdded = addPackage(fromPackageName);
+            // handle fromlist
+            if (fromlist != null && fromlist != Py.EmptyTuple && fromlist instanceof PyTuple) {
+                Iterator iterator = ((PyTuple) fromlist).iterator();
+                while (iterator.hasNext()) {
+                    Object obj = iterator.next();
+                    if (obj instanceof String) {
+                        String fromName = (String) obj;
+                        if (!"*".equals(fromName)) {
+                            boolean fromAdded = false;
+                            if (isJavaClass(packageName, fromName)) {
+                                fromAdded = addPackage(packageName);
                                 if (fromAdded) {
                                     packageAdded = true;
+                                }
+                            } else {
+                                // handle cases like: from java import math
+                                String fromPackageName = packageName + "." + fromName;
+                                if (isLoadedPackage(fromPackageName, packages)) {
+                                    fromAdded = addPackage(fromPackageName);
+                                    if (fromAdded) {
+                                        packageAdded = true;
+                                    }
                                 }
                             }
                         }
@@ -108,7 +110,11 @@ public class JavaImportHelper {
      * otherwise.
      */
     private static boolean isLoadedPackage(String javaPackageName, Map packages) {
-        return packages.containsKey(javaPackageName);
+        boolean isLoaded = false;
+        if (javaPackageName != null) {
+            isLoaded = packages.containsKey(javaPackageName);
+        }
+        return isLoaded;
     }
 
     /**
