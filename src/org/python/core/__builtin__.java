@@ -288,6 +288,9 @@ public class __builtin__ implements ClassDictInit {
     }
 
     public static PyObject eval(PyObject o) {
+        if(o instanceof PyTableCode && ((PyTableCode)o).hasFreevars()) {
+            throw Py.TypeError("code object passed to eval() may not contain free variables");
+        }
         return eval(o, null, null);
     }
 
@@ -978,7 +981,7 @@ class ImportFunction extends PyObject {
 
     private PyObject load(String module, PyObject globals, PyObject fromlist) {
         PyObject mod = imp.importName(module.intern(), fromlist.__len__() == 0,
-                globals);
+                globals, fromlist);
         return mod;
     }
 

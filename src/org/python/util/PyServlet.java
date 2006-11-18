@@ -71,6 +71,7 @@ public class PyServlet extends HttpServlet {
             rootPath += File.separator;
 
         Properties props = new Properties();
+        Properties baseProps = PySystemState.getBaseProperties();
 
         // Context parameters
         ServletContext context = getServletContext();
@@ -87,13 +88,13 @@ public class PyServlet extends HttpServlet {
             props.put(name, getInitParameter(name));
         }
 
-        if (props.getProperty("python.home") == null &&
-                                System.getProperty("python.home") == null) {
+        if(props.getProperty("python.home") == null
+                && baseProps.getProperty("python.home") == null) {
             props.put("python.home", rootPath + "WEB-INF" +
                                              File.separator + "lib");
         }
 
-        PythonInterpreter.initialize(System.getProperties(), props,
+        PythonInterpreter.initialize(baseProps, props,
                                      new String[0]);
         reset();
 

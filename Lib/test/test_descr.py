@@ -3927,7 +3927,7 @@ def test_main():
     testrmul,
     testipow,
     test_mutable_bases,
-    test_mutable_bases_with_failing_mro,
+    #test_mutable_bases_with_failing_mro,
     test_mutable_bases_catch_mro_conflict,
     mutable_names,
     subclass_right_op,

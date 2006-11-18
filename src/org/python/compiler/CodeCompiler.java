@@ -157,6 +157,16 @@ public class CodeCompiler extends Visitor
         code.iconst(idx);
         code.putfield(mrefs.f_lasti);
     }
+    
+    int f_back;
+
+    private void loadf_back() throws Exception {
+        if (mrefs.f_back == 0) {
+            mrefs.f_back = code.pool.Fieldref(
+                        "org/python/core/PyFrame", "f_back", $pyFrame);
+        }
+        code.getfield(f_back);
+    }
 
     public int storeTop() throws Exception {
         int tmp = code.getLocal("org/python/core/PyObject");
@@ -368,9 +378,9 @@ public class CodeCompiler extends Visitor
 
     int getclosure;
 
-    public boolean makeClosure(Vector freenames) throws Exception {
-        if (freenames == null) return false;
-        int n = freenames.size();
+    public boolean makeClosure(ScopeInfo scope) throws Exception {
+        if (scope == null || scope.freevars == null) return false;
+        int n = scope.freevars.size();
         if (n == 0) return false;
 
         if (mrefs.getclosure == 0) {
@@ -382,12 +392,16 @@ public class CodeCompiler extends Visitor
         code.iconst(n);
         code.anewarray(code.pool.Class("org/python/core/PyObject"));
         code.astore(tmp);
-
+        Hashtable upTbl = scope.up.tbl;
         for(int i=0; i<n; i++) {
             code.aload(tmp);
             code.iconst(i);
-            code.aload(1); // get frame
-            code.iconst(((SymInfo)tbl.get(freenames.elementAt(i))).env_index);
+            loadFrame();
+            for(int j = 1; j < scope.distance; j++) {
+                loadf_back();
+            }
+            SymInfo symInfo = (SymInfo)upTbl.get(scope.freevars.elementAt(i));
+            code.iconst(symInfo.env_index);
             code.invokevirtual(getclosure);
             code.aastore();
         }
@@ -420,16 +434,15 @@ public class CodeCompiler extends Visitor
 
         makeArray(scope.ac.getDefaults());
 
-        scope.setup_closure(my_scope);
+        scope.setup_closure();
         scope.dump();
         module.PyCode(new Suite(node.body, node), name, true,
                       className, false, false,
                       node.beginLine, scope, cflags).get(code);
-        Vector freenames = scope.freevars;
 
         getDocString(node.body);
 
-        if (!makeClosure(freenames)) {
+        if (!makeClosure(scope)) {
             if (mrefs.PyFunction_init == 0) {
                 mrefs.PyFunction_init = code.pool.Methodref(
                     "org/python/core/PyFunction", "<init>",
@@ -904,12 +917,12 @@ public class CodeCompiler extends Visitor
         return null;
     }
 
-    public int assert1, assert2;
+    public int asserttype;
     public Object visitAssert(Assert node) throws Exception {
         setline(node);
         Label end_of_assert = code.getLabel();
-
-        /* First do an if __debug__: */
+        
+	/* First do an if __debug__: */
         loadFrame();
         emitGetGlobal("__debug__");
 
@@ -921,26 +934,43 @@ public class CodeCompiler extends Visitor
 
         code.ifeq(end_of_assert);
 
-        /* Now do the body of the assert */
+        /* Now do the body of the assert. If PyObject.__nonzero__ is true,
+	   then the assertion succeeded, the message portion should not be
+	   processed. Otherwise, the message will be processed. */
         visit(node.test);
-        if (node.msg != null) {
-            visit(node.msg);
-            if (mrefs.assert2 == 0) {
-                mrefs.assert2 = code.pool.Methodref(
-                    "org/python/core/Py", "assert_",
-                    "(" + $pyObj + $pyObj + ")V");
-            }
-            code.invokestatic(mrefs.assert2);
-        } else {
-            if (mrefs.assert1 == 0) {
-                mrefs.assert1 = code.pool.Methodref(
-                    "org/python/core/Py", "assert_",
-                    "(" + $pyObj + ")V");
-            }
-            code.invokestatic(mrefs.assert1);
+	code.invokevirtual(mrefs.nonzero);
+
+	/* If evaluation is false, then branch to end of method */
+	code.ifne(end_of_assert);
+	
+	/* Push exception type onto stack(Py.AssertionError) */
+        if (mrefs.asserttype == 0) {
+            mrefs.asserttype = code.pool.Fieldref(
+                "org/python/core/Py", "AssertionError",
+                "Lorg/python/core/PyObject;");
         }
 
-        /* And finally set the label for the end of it all */
+        code.getstatic(mrefs.asserttype);
+
+	/* Visit the message part of the assertion, or pass Py.None */
+	if( node.msg != null ){
+ 	    visit(node.msg);
+        } else{
+	    getNone(); 
+  	}
+	
+	if (mrefs.makeException2 == 0) {
+            mrefs.makeException2 = code.pool.Methodref(
+                    "org/python/core/Py", "makeException",
+                    "(" + $pyObj + $pyObj + ")" + $pyExc);
+        }
+        code.invokestatic(mrefs.makeException2);
+	
+	/* Raise assertion error. Only executes this logic if assertion
+	   failed */
+        code.athrow();
+ 
+	/* And finally set the label for the end of it all */
         end_of_assert.setPosition();
 
         return null;
@@ -2070,13 +2100,12 @@ public class CodeCompiler extends Visitor
 
         makeArray(scope.ac.getDefaults());
 
-        scope.setup_closure(my_scope);
+        scope.setup_closure();
         scope.dump();
         module.PyCode(retSuite, name, true, className,
                       false, false, node.beginLine, scope).get(code);
-        Vector freenames = scope.freevars;
 
-        if (!makeClosure(freenames)) {
+        if (!makeClosure(scope)) {
             if (mrefs.PyFunction_init1 == 0) {
                 mrefs.PyFunction_init1 = code.pool.Methodref(
                 "org/python/core/PyFunction", "<init>",
@@ -2136,18 +2165,17 @@ public class CodeCompiler extends Visitor
 
         ScopeInfo scope = module.getScopeInfo(node);
 
-        scope.setup_closure(my_scope);
+        scope.setup_closure();
         scope.dump();
         //Make code object out of suite
         module.PyCode(new Suite(node.body, node), name, false, name,
                       true, false, node.beginLine, scope).get(code);
-        Vector freenames = scope.freevars;
 
         //Get doc string (if there)
         getDocString(node.body);
 
         //Make class out of name, bases, and code
-        if (!makeClosure(freenames)) {
+        if (!makeClosure(scope)) {
             if (mrefs.makeClass == 0) {
                 mrefs.makeClass = code.pool.Methodref(
                 "org/python/core/Py", "makeClass",

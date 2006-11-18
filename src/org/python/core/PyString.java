@@ -80,6 +80,79 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyString.class,1,1,new exposed___eq__(null,null)));
+        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getitem__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getitem__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=self.seq___finditem__(arg0);
+                if (ret==null) {
+                    throw Py.IndexError("index out of range: "+arg0);
+                }
+                return ret;
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                PyObject ret=self.seq___finditem__(arg0);
+                if (ret==null) {
+                    throw Py.IndexError("index out of range: "+arg0);
+                }
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyString.class,1,1,new exposed___getitem__(null,null)));
+        class exposed___getslice__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___getslice__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___getslice__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
+                return self.seq___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
+                PyString self=(PyString)gself;
+                return self.seq___getslice__(arg0,arg1,arg2);
+            }
+
+            public PyObject __call__(PyObject arg0,PyObject arg1) {
+                return self.seq___getslice__(arg0,arg1);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
+                PyString self=(PyString)gself;
+                return self.seq___getslice__(arg0,arg1);
+            }
+
+        }
+        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyString.class,2,3,new exposed___getslice__(null,null)));
         class exposed___contains__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -164,127 +237,6 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
-        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
-
-            private PyString self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___getitem__(PyString self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getitem__((PyString)self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return self.str___getitem__(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyString self=(PyString)gself;
-                return self.str___getitem__(arg0);
-            }
-
-        }
-        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyString.class,1,1,new exposed___getitem__(null,null)));
-        class exposed___getslice__ extends PyBuiltinFunctionNarrow {
-
-            private PyString self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___getslice__(PyString self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getslice__((PyString)self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                return self.str___getslice__(arg0,arg1,arg2);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
-                PyString self=(PyString)gself;
-                return self.str___getslice__(arg0,arg1,arg2);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return self.str___getslice__(arg0,arg1);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyString self=(PyString)gself;
-                return self.str___getslice__(arg0,arg1);
-            }
-
-        }
-        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyString.class,2,3,new exposed___getslice__(null,null)));
-        class exposed___getnewargs__ extends PyBuiltinFunctionNarrow {
-
-            private PyString self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___getnewargs__(PyString self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getnewargs__((PyString)self,info);
-            }
-
-            public PyObject __call__() {
-                return self.str___getnewargs__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyString self=(PyString)gself;
-                return self.str___getnewargs__();
-            }
-
-        }
-        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyString.class,0,0,new exposed___getnewargs__(null,null)));
-        class exposed___iter__ extends PyBuiltinFunctionNarrow {
-
-            private PyString self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed___iter__(PyString self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___iter__((PyString)self,info);
-            }
-
-            public PyObject __call__() {
-                return self.str___iter__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyString self=(PyString)gself;
-                return self.str___iter__();
-            }
-
-        }
-        dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyString.class,0,0,new exposed___iter__(null,null)));
         class exposed___mul__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -1614,7 +1566,7 @@ public class PyString extends PyBaseString implements ClassDictInit
             public PyObject __call__(PyObject arg0) {
                 String result=self.str_join(arg0);
                 //XXX: do we really need to check self?
-                if (self instanceof PyUnicode||(arg0.__len__() > 0 && arg0.__getitem__(0) instanceof PyUnicode)) {
+                if (self instanceof PyUnicode||arg0 instanceof PyUnicode) {
                     return new PyUnicode(result);
                 } else {
                     return new PyString(result);
@@ -1625,7 +1577,7 @@ public class PyString extends PyBaseString implements ClassDictInit
                 PyString self=(PyString)gself;
                 String result=self.str_join(arg0);
                 //XXX: do we really need to check self?
-                if (self instanceof PyUnicode||(arg0.__len__() > 0 && arg0.__getitem__(0) instanceof PyUnicode)) {
+                if (self instanceof PyUnicode||arg0 instanceof PyUnicode) {
                     return new PyUnicode(result);
                 } else {
                     return new PyString(result);
@@ -3450,34 +3402,6 @@ public class PyString extends PyBaseString implements ClassDictInit
         else return null;
     }
 
-    public PyObject __getslice__(PyObject s_start, PyObject s_stop) {
-        return str___getslice__(s_start,s_stop,null);
-    }
-
-    public PyObject __getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
-        return str___getslice__(s_start,s_stop,s_step);
-    }
-
-    final PyObject str___getslice__(PyObject s_start, PyObject s_stop) {
-        return seq___getslice__(s_start,s_stop,null);
-    }
-
-    final PyObject str___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
-        return seq___getslice__(s_start,s_stop,s_step);
-    }
-
-    public PyObject __iter__() {
-        return str___iter__();
-    }
-
-    final PyObject str___iter__() {
-        return seq___iter__();
-    }
-
-    final PyObject str___getitem__(PyObject index) {
-        return seq___getitem__(index);
-    }
-
     final PyTuple str___getnewargs__() {
         return new PyTuple(new PyObject[] {new PyString(this.string)});
     }
@@ -4967,12 +4891,16 @@ final class StringFormatter
         }
     }
 
-    public String formatLong(PyString arg, char type, boolean altFlag) {
-        if(precision > 250){
-        // A magic number. Larger than in CPython.
-        throw Py.OverflowError(
-             "formatted long is too long (precision too long?)");
+    private void checkPrecision(String type) {
+        if(precision > 250) {
+            // A magic number. Larger than in CPython.
+            throw Py.OverflowError("formatted " + type + " is too long (precision too long?)");
         }
+        
+    }
+
+    public String formatLong(PyString arg, char type, boolean altFlag) {
+        checkPrecision("long");
         String s = arg.toString();
         int end = s.length();
         int ptr = 0;
@@ -5030,11 +4958,7 @@ final class StringFormatter
     }
 
     public String formatInteger(long v, int radix, boolean unsigned) {
-        if(precision > 250){
-            // A magic number. Larger than in CPython.
-            throw Py.OverflowError(
-                 "formatted integer is too long (precision too long?)");
-        }
+        checkPrecision("integer");
         if (unsigned) {
             if (v < 0)
                 v = 0x100000000l + v;
@@ -5056,11 +4980,7 @@ final class StringFormatter
     }
 
     public String formatFloatDecimal(double v, boolean truncate) {
-        if(precision > 250) {
-            // A magic number. Larger than in CPython.
-            throw Py.OverflowError(
-                 "formatted float is too long (precision too long?)");
-        }
+        checkPrecision("decimal");
         java.text.NumberFormat format = java.text.NumberFormat.getInstance(
                                            java.util.Locale.US);
         int prec = precision;

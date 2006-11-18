@@ -3,6 +3,7 @@ type_name: list
 type_class: PyList
 type_base_class: PyObject
 incl: sequence
+#expose_meth: seq_> __iter__
 # exposed methods
 expose_meth: :- append o
 expose_meth: :i count o

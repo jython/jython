@@ -2,13 +2,13 @@
 type_name: unicode
 type_class: PyUnicode
 # exposed methods
+expose_index_getitem: seq_>
+expose_meth: seq_> __getslice__ ooo?
+#
 expose_binary: __ne__ __eq__
 expose_meth: :b __contains__ o
 expose_meth: :i __len__
 expose_meth: __add__ o
-expose_meth: __getslice__ ooo?
-expose_meth: __getnewargs__
-expose_meth: __iter__
 expose_meth: __mul__ o
 expose_meth: __rmul__ o
 expose_meth: __str__
@@ -56,6 +56,5 @@ expose_meth: :u upper
 expose_meth: :u zfill i
 expose_new_immutable:
 #TODO
-#expose_index_getitem:
 #expose_meth: :b __nonzero__
 #expose_meth: __reduce__

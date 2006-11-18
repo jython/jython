@@ -159,10 +159,6 @@ public class PyJavaClass extends PyClass
             setBeanInfoCustom(proxyClass, methods);
             setFields(proxyClass);
             setMethods(proxyClass, methods);
-            Class[] intfs = proxyClass.getInterfaces();
-            for(int i = 0; i < intfs.length; i++) {
-                setMethods(intfs[i], intfs[i].getMethods());
-            }
         } catch(SecurityException se) {}
     }
     
@@ -417,16 +413,33 @@ public class PyJavaClass extends PyClass
             Class dc = method.getDeclaringClass();
             if (dc != c)
                 continue;
-            int mods = dc.getModifiers();
-            if(!(Modifier.isPublic(mods) || Modifier.isPrivate(mods) || Modifier.isProtected(mods))) {
-                // skip package protected classes such as AbstractStringBuilder
-                // or UNIXProcess
-                continue;
+            if(isPackagedProtected(dc) && Modifier.isPublic(method.getModifiers())) {
+                /*
+                 * Set public methods on package protected classes accessible so
+                 * that reflected calls to the method in subclasses of the
+                 * package protected class will succeed. Yes, it's convoluted.
+                 * 
+                 * This fails when done through reflection due to Sun JVM bug
+                 * 4071957(http://tinyurl.com/le9vo). 4533479 actually describes
+                 * the problem we're seeing, but there are a bevy of reflection
+                 * bugs that stem from 4071957. Supposedly it'll be fixed in
+                 * Dolphin but it's been promised in every version since Tiger
+                 * so don't hold your breath.
+                 * 
+                 */
+                try {
+                    method.setAccessible(true);
+                } catch(SecurityException se) {}
             }
             if (ignoreMethod(method))
                 continue;
             addMethod(method);
         }
+    }
+
+    public static boolean isPackagedProtected(Class c) {
+        int mods = c.getModifiers();
+        return !(Modifier.isPublic(mods) || Modifier.isPrivate(mods) || Modifier.isProtected(mods));
     }
 
     /* Adds a bean property to this class */

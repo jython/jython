@@ -396,8 +396,6 @@ public class Module implements ClassConstants, CompilationContext
         return true;
     }
 
-    private static final String[] emptyStringAr = new String[0];
-
     private String[] toNameAr(Vector names,boolean nullok) {
         int sz = names.size();
         if (sz ==0 && nullok) return null;

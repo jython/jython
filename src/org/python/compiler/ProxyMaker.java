@@ -767,6 +767,7 @@ public class ProxyMaker implements ClassConstants
         classfile.addInterface("org/python/core/PyProxy");
 
         Hashtable seenmethods = new Hashtable();
+        addMethods(superclass, seenmethods);
         for (int i=0; i<interfaces.length; i++) {
             if (interfaces[i].isAssignableFrom(superclass)) {
                 Py.writeWarning("compiler",
@@ -777,7 +778,6 @@ public class ProxyMaker implements ClassConstants
             classfile.addInterface(mapClass(interfaces[i]));
             addMethods(interfaces[i], seenmethods);
         }
-        addMethods(superclass, seenmethods);
         doConstants();
         addClassDictInit();
     }

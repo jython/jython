@@ -41,18 +41,6 @@ public class PyIntegerDerived extends PyInteger {
         return super.__repr__();
     }
 
-    public PyUnicode __unicode__() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__unicode__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyUnicode)
-                return(PyUnicode)res;
-            throw Py.TypeError("__unicode__"+" should return a "+"unicode");
-        }
-        return super.__unicode__();
-    }
-
     public PyString __hex__() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__hex__");
@@ -75,18 +63,6 @@ public class PyIntegerDerived extends PyInteger {
             throw Py.TypeError("__oct__"+" should return a "+"string");
         }
         return super.__oct__();
-    }
-
-    public PyObject __int__() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__int__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyObject)
-                return(PyObject)res;
-            throw Py.TypeError("__int__"+" should return a "+"int");
-        }
-        return super.__int__();
     }
 
     public PyFloat __float__() {
@@ -162,12 +138,7 @@ public class PyIntegerDerived extends PyInteger {
         PyObject impl=self_type.lookup("__reduce__");
         if (impl!=null)
             return impl.__get__(this,self_type).__call__();
-        return new PyTuple(new PyObject[]{
-            getType(),
-            new PyTuple(new PyObject[]{
-                new PyString("x")
-            })
-        });
+        return super.__reduce__();
     }
 
     public PyObject __add__(PyObject other) {
@@ -682,6 +653,18 @@ public class PyIntegerDerived extends PyInteger {
         return super.__ixor__(other);
     }
 
+    public PyObject __int__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__int__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyInteger||res instanceof PyLong)
+                return(PyObject)res;
+            throw Py.TypeError("__int__"+" should return an integer");
+        }
+        return super.__int__();
+    }
+
     public String toString() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__repr__");
@@ -706,6 +689,20 @@ public class PyIntegerDerived extends PyInteger {
         if (self_type.lookup("__eq__")!=null||self_type.lookup("__cmp__")!=null)
             throw Py.TypeError("unhashable type");
         return super.hashCode();
+    }
+
+    public PyUnicode __unicode__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__unicode__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyUnicode)
+                return(PyUnicode)res;
+            if (res instanceof PyString)
+                return new PyUnicode((PyString)res);
+            throw Py.TypeError("__unicode__"+" should return a "+"unicode");
+        }
+        return super.__unicode__();
     }
 
     public int __cmp__(PyObject other) {
@@ -801,21 +798,6 @@ public class PyIntegerDerived extends PyInteger {
             return;
         }
         super.__setitem__(key,value);
-    }
-
-    public PyObject __getitem__(PyObject key) { // ???
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__getitem__");
-        if (impl!=null) {
-            try {
-                return impl.__get__(this,self_type).__call__(key);
-            } catch (PyException exc) {
-                if (Py.matchException(exc,Py.LookupError))
-                    return null;
-                throw exc;
-            }
-        }
-        return super.__getitem__(key);
     }
 
     public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???

@@ -130,8 +130,9 @@ public class imp {
         if (o == Py.NoConversion) {
             throw Py.TypeError("must be a file-like object");
         }
-        mod = org.python.core.imp.loadFromSource(
-             modname.intern(), (InputStream)o, filename.toString());
+        mod = org.python.core.imp.createFromSource(modname.intern(),
+                                                   (InputStream)o,
+                                                   filename.toString());
         PyObject modules = Py.getSystemState().modules;
         modules.__setitem__(modname.intern(), mod);
         return mod;
@@ -171,7 +172,7 @@ public class imp {
             }
             switch (type) {
                 case PY_SOURCE:
-                    mod = org.python.core.imp.loadFromSource(
+                    mod = org.python.core.imp.createFromSource(
                         name.intern(), (InputStream)o, filename.toString());
                     break;
                 case PY_COMPILED:

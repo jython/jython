@@ -77,7 +77,7 @@ public class jython
         }
 
         // Setup the basic python system state from these options
-        PySystemState.initialize(System.getProperties(),
+        PySystemState.initialize(PySystemState.getBaseProperties(),
                                  opts.properties, opts.argv);
 
         if (opts.notice) {
@@ -177,14 +177,18 @@ public class jython
                 runJar(opts.filename);
             } else if (opts.filename.equals("-")) {
                 try {
+                    interp.locals.__setitem__(new PyString("__file__"),
+                                              new PyString("<stdin>"));
                     interp.execfile(System.in, "<stdin>");
                 } catch (Throwable t) {
                     Py.printException(t);
                 }
             } else {
                 try {
+                   interp.locals.__setitem__(new PyString("__file__"),
+                                             new PyString(opts.filename));
                     interp.execfile(opts.filename);
-                } catch (Throwable t) {
+                } catch(Throwable t) {
                     Py.printException(t);
                     if (!opts.interactive) {
                         interp.cleanup();

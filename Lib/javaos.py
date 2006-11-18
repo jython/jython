@@ -49,21 +49,30 @@ class stat_result:
 
   def __init__(self, results):
     if len(results) != 10:
-      raise TypeError("stat_result() takes an at least 10-sequence")
+      raise TypeError("stat_result() takes an a  10-sequence")
     for (name, index) in stat_result._stat_members:
       self.__dict__[name] = results[index]
+
   def __getitem__(self, i):
     if i < 0 or i > 9:
       raise IndexError(i)
     return getattr(self, stat_result._stat_members[i][0])
+  
   def __setitem__(self, x, value):
     raise TypeError("object doesn't support item assignment")
+  
   def __setattr__(self, name, value):
     if name in [x[0] for x in stat_result._stat_members]:
       raise TypeError(name)
     raise AttributeError("readonly attribute")
+  
   def __len__(self):
     return 10
+
+  def __cmp__(self, other):
+    if not isinstance(other, stat_result):
+      return 1
+    return cmp(self.__dict__, other.__dict__)
 
 error = OSError
 

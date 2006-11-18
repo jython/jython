@@ -65,18 +65,6 @@ public class PyObjectDerived extends PyObject {
         return super.__oct__();
     }
 
-    public PyObject __int__() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__int__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyObject)
-                return(PyObject)res;
-            throw Py.TypeError("__int__"+" should return a "+"int");
-        }
-        return super.__int__();
-    }
-
     public PyFloat __float__() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__float__");
@@ -665,6 +653,18 @@ public class PyObjectDerived extends PyObject {
         return super.__ixor__(other);
     }
 
+    public PyObject __int__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__int__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyInteger||res instanceof PyLong)
+                return(PyObject)res;
+            throw Py.TypeError("__int__"+" should return an integer");
+        }
+        return super.__int__();
+    }
+
     public String toString() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__repr__");
@@ -798,21 +798,6 @@ public class PyObjectDerived extends PyObject {
             return;
         }
         super.__setitem__(key,value);
-    }
-
-    public PyObject __getitem__(PyObject key) { // ???
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__getitem__");
-        if (impl!=null) {
-            try {
-                return impl.__get__(this,self_type).__call__(key);
-            } catch (PyException exc) {
-                if (Py.matchException(exc,Py.LookupError))
-                    return null;
-                throw exc;
-            }
-        }
-        return super.__getitem__(key);
     }
 
     public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???

@@ -1,4 +1,4 @@
 base_class: PyLong
 want_dict: true
-ctr:
+ctr: java.math.BigInteger v
 incl: object

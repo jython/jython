@@ -122,7 +122,7 @@ public class PyFrame extends PyObject
     public PyObject getf_locals() {
         if (f_locals == null)
             f_locals = new PyStringMap();
-        if (f_code!=null && f_code.co_nlocals>0) {
+        if (f_code!=null && (f_code.co_nlocals>0 || f_nfreevars > 0)) {
             int i;
             if (f_fastlocals != null) {
                 for (i=0; i<f_fastlocals.length; i++) {

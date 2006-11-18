@@ -1,5 +1,5 @@
 # setup
-type_name: timetuple
+type_name: struct_time
 type_class: PyTimeTuple
 type_base_class: PyTuple
 # getsets

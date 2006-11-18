@@ -4,8 +4,19 @@
 
 package org.python.core;
 
-import java.util.*;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.security.AccessControlException;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import org.python.modules.Setup;
 
 /**
@@ -15,15 +26,30 @@ import org.python.modules.Setup;
 // xxx this should really be a module!
 public class PySystemState extends PyObject
 {
+    private static final String PYTHON_CACHEDIR = "python.cachedir";
+    protected static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
+    protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
+    
+    public static final String JYTHON_JAR = "jython.jar";
+
+    private static final String JAR_URL_PREFIX = "jar:file:";
+    private static final String JAR_SEPARATOR = "!";
+    private static final String URL_BLANK_REPLACEMENT = "%20";
+
     /**
      * The current version of Jython.
+     * <p>
+     * Usually updated by hand.<br>
+     * Replaced by ant when doing a snapshot build.
+     * <p>
+     * This also applies for the <code>PY_*</code> integer values below
      */
     public static String version = "2.3a0";
 
     private static int PY_MAJOR_VERSION = 2;
     private static int PY_MINOR_VERSION = 3;
     private static int PY_MICRO_VERSION = 0;
-    private static int PY_RELEASE_LEVEL = 0xA;
+    private static int PY_RELEASE_LEVEL = 0x0A;
     private static int PY_RELEASE_SERIAL = 0;
 
     public static int hexversion = ((PY_MAJOR_VERSION << 24) |
@@ -301,12 +327,12 @@ public class PySystemState extends PyObject
         if (root != null)
             return root;
 
-        // If install.root is undefined find jpython.jar in class.path
+        // If install.root is undefined find JYTHON_JAR in class.path
         String classpath = preProperties.getProperty("java.class.path");
         if (classpath == null)
             return null;
 
-        int jpy = classpath.toLowerCase().indexOf("jython.jar");
+        int jpy = classpath.toLowerCase().indexOf(JYTHON_JAR);
         if (jpy == -1) {
             return null;
         }
@@ -314,8 +340,8 @@ public class PySystemState extends PyObject
         return classpath.substring(start, jpy);
     }
 
-    private static void initRegistry(Properties preProperties,
-                                     Properties postProperties)
+    private static void initRegistry(Properties preProperties, Properties postProperties, 
+                                       boolean standalone)
     {
         if (registry != null) {
             Py.writeError("systemState", "trying to reinitialize registry");
@@ -346,6 +372,12 @@ public class PySystemState extends PyObject
                 registry.put(key, value);
             }
         }
+        if (standalone) {
+            // set default standalone property (if not yet set)
+            if (!registry.containsKey(PYTHON_CACHEDIR_SKIP)) {
+                registry.put(PYTHON_CACHEDIR_SKIP, "true");
+            }
+        }
         // Set up options from registry
         Options.setFromRegistry();
     }
@@ -371,10 +403,19 @@ public class PySystemState extends PyObject
     }
 
     private static boolean initialized = false;
+    
+    public static Properties getBaseProperties(){
+        try{
+            return System.getProperties();
+        }catch(AccessControlException ace){
+            return new Properties();
+        }
+    }
+
     public static synchronized void initialize() {
         if (initialized)
             return;
-        initialize(System.getProperties(), null, new String[] {""});
+        initialize(getBaseProperties(), null, new String[] {""});
     }
 
     public static synchronized void initialize(Properties preProperties,
@@ -403,15 +444,21 @@ public class PySystemState extends PyObject
         }
         initialized = true;
 
+        boolean standalone = false;
+        String jarFileName = getJarFileName();
+        if (jarFileName != null) {
+            standalone = isStandalone(jarFileName);
+        }
+        
         // initialize the JPython registry
-        initRegistry(preProperties, postProperties);
+        initRegistry(preProperties, postProperties, standalone);
 
         // other initializations
         initBuiltins(registry);
         initStaticFields();
 
         // Initialize the path (and add system defaults)
-        defaultPath = initPath(registry);
+        defaultPath = initPath(registry, standalone, jarFileName);
         defaultArgv = initArgv(argv);
 
         // Set up the known Java packages
@@ -466,6 +513,8 @@ public class PySystemState extends PyObject
             s = "candidate";
         else if (PY_RELEASE_LEVEL == 0x0F)
             s = "final";
+        else if (PY_RELEASE_LEVEL == 0xAA) 
+            s = "snapshot";
         version_info = new PyTuple(new PyObject[] {
                             Py.newInteger(PY_MAJOR_VERSION),
                             Py.newInteger(PY_MINOR_VERSION),
@@ -482,12 +531,12 @@ public class PySystemState extends PyObject
             cachedir = null;
             return;
         }
-        String skip = props.getProperty("python.cachedir.skip", "false");
+        String skip = props.getProperty(PYTHON_CACHEDIR_SKIP, "false");
         if (skip.equalsIgnoreCase("true")) {
             cachedir = null;
             return;
         }
-        cachedir = new File(props.getProperty("python.cachedir", "cachedir"));
+        cachedir = new File(props.getProperty(PYTHON_CACHEDIR, CACHEDIR_DEFAULT_NAME));
         if (!cachedir.isAbsolute()) {
             cachedir = new File(PySystemState.prefix, cachedir.getPath());
         }
@@ -564,7 +613,7 @@ public class PySystemState extends PyObject
         return (String)builtinNames.get(name);
     }
 
-    private static PyList initPath(Properties props) {
+    private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
         if (!Py.frozen) {
             addPaths(path, props.getProperty("python.prepath", "."));
@@ -576,9 +625,65 @@ public class PySystemState extends PyObject
 
             addPaths(path, props.getProperty("python.path", ""));
         }
+        if (standalone) {
+            // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
+            addPaths(path, jarFileName + "/Lib");
+        }
+        
         return path;
     }
+    
+    /**
+     * Check if we are in standalone mode.
+     * 
+     * @param jarFileName The name of the jar file
+     * 
+     * @return <code>true</code> if we have a standalone .jar file, <code>false</code> otherwise.
+     */
+    private static boolean isStandalone(String jarFileName) {
+        boolean standalone = false;
+        if (jarFileName != null) {
+            JarFile jarFile = null;
+            try {
+                jarFile = new JarFile(jarFileName);
+                JarEntry jarEntry = jarFile.getJarEntry("Lib/javaos.py");
+                standalone = jarEntry != null;
+            } catch (IOException ioe) {
+            } finally {
+                if (jarFile != null) {
+                    try {
+                        jarFile.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        }
+        return standalone;
+    }
 
+    /**
+     * @return the full name of the jar file containing this class, <code>null</code> if not available.
+     */
+    private static String getJarFileName() {
+        String jarFileName = null;
+        Class thisClass = PySystemState.class;
+        String fullClassName = thisClass.getName();
+        String className = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
+        URL url = thisClass.getResource(className + ".class");
+        // we expect an URL like jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
+        if (url != null) {
+            String urlString = url.toString();
+            int jarSeparatorIndex = urlString.indexOf(JAR_SEPARATOR);
+            if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
+                jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
+                // handle directories containing blanks
+                if (jarFileName.indexOf(URL_BLANK_REPLACEMENT) >= 0) {
+                    jarFileName = jarFileName.replaceAll(URL_BLANK_REPLACEMENT, " ");
+                }
+            }
+        }
+        return jarFileName;
+    }
 
     private static void addPaths(PyList path, String pypath) {
         StringTokenizer tok = new StringTokenizer(pypath,

@@ -3,19 +3,20 @@ type_name: tuple
 type_class: PyTuple
 type_base_class: PyObject
 # exposed methods
+expose_index_getitem: seq_>
+expose_meth: seq_> __getslice__ ooo?
+#expose_meth: seq_> __iter__
+#
 expose_binary: __ne__ __eq__
 expose_meth: :b __contains__ o
 expose_meth: :i __len__
 expose_meth: __add__ o
 expose_meth: __mul__ o
 expose_meth: __rmul__ o
-expose_meth: __getitem__ o
-expose_meth: __getslice__ ooo?
 expose_meth: __getnewargs__
 expose_meth: __hash__
  `ideleg`(hashCode);
 expose_meth: __repr__
  `sdeleg`(toString);
 expose_new_immutable:
-#expose_index_getitem:
 #expose_meth: :b __nonzero__
