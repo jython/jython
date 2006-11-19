@@ -1,6 +1,16 @@
 package org.python.core;
 
-public class PyIntegerDerived extends PyInteger {
+public class PyIntegerDerived extends PyInteger implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -14,6 +24,7 @@ public class PyIntegerDerived extends PyInteger {
 
     public PyIntegerDerived(PyType subtype,int v) {
         super(subtype,v);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 

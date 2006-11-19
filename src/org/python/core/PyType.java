@@ -382,26 +382,21 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
-    public List getSlotnames() {
-        return slotnames;
-    }
-
-
     private String name;
     private PyType base;
     private PyObject[] bases;
     private PyObject dict;
     private PyObject[] mro;
     private Class underlying_class;
-    private List slotnames;
 
     private boolean non_instantiable = false;
 
-    boolean has_set, has_delete, hide_dict;
+    boolean has_set, has_delete;
 
     private boolean needs_finalizer;
 
-    private int nuserslots;
+    private int numSlots;
+    private PyObject userslots;
     private boolean needs_userdict;
 
     private java.lang.ref.ReferenceQueue subclasses_refq = new java.lang.ref.ReferenceQueue();
@@ -602,7 +597,7 @@ public class PyType extends PyObject implements Serializable {
             PyObject parent = mro[i];
             if (parent instanceof PyType) {
                 PyType parent_type =(PyType)parent;
-                if (parent_type.underlying_class != null || parent_type.nuserslots != 0)
+                if (parent_type.underlying_class != null || parent_type.numSlots != 0)
                     return parent_type;
             }
         }
@@ -679,22 +674,6 @@ public class PyType extends PyObject implements Serializable {
 
         // xxx can be subclassed ?
 
-        boolean needs_userdict = base.needs_userdict;
-        if (!needs_userdict) {
-            for (int i=0; i<bases_list.length;i++) {
-                PyObject cur = bases_list[i];
-                if (cur != base) {
-                    if ((cur instanceof PyType && ((PyType)cur).needs_userdict) || cur instanceof PyClass) {
-                        needs_userdict = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        int nuserslots = base.nuserslots;
-
-        needs_userdict = true;
 
         if (dict.__finditem__("__module__") == null) {
            PyFrame frame = Py.getFrame();
@@ -708,31 +687,6 @@ public class PyType extends PyObject implements Serializable {
         }
 
         // xxx also __doc__ __module__
-        List slotnames = null;
-        boolean hide_dict = false;
-
-        PyObject slots = dict.__finditem__("__slots__");
-        if (slots != null) {
-            hide_dict = true;
-            if (base.nuserslots > 0) {
-                nuserslots = base.nuserslots;
-                slotnames = new ArrayList(base.getSlotnames());
-            }
-            else {
-                slotnames = new ArrayList();
-            }
-            PyObject iter = slots.__iter__();
-            PyObject slotname;
-            for (; (slotname = iter.__iternext__())!= null; ) {
-                confirmIdentifier(slotname);
-                String slotstring = slotname.toString();
-                if (slotstring.equals("__dict__")) {
-                    hide_dict = false;
-                }
-                slotnames.add(mangleName(name, slotstring));
-                nuserslots += 1;
-            }
-        }
 
         PyType newtype;
         if (new_.for_type == metatype) {
@@ -740,18 +694,46 @@ public class PyType extends PyObject implements Serializable {
         } else {
             newtype = new PyTypeDerived(metatype);
         }
+        
+        int nuserslots = base.numSlots;
+        PyObject slots = dict.__finditem__("__slots__");
+        boolean needs_userdict = true;
+        if(slots != null) {
+            needs_userdict = false;
+            PyObject iter = slots.__iter__();
+            PyObject slotname;
+            for(; (slotname = iter.__iternext__()) != null;) {
+                confirmIdentifier(slotname);
+                String slotstring = mangleName(name, slotname.toString());
+                if(slotstring.equals("__dict__")) {
+                    needs_userdict = true;
+                } else {
+                    dict.__setitem__(slotstring, new PySlot(newtype,
+                                                            slotstring,
+                                                            nuserslots));
+                    nuserslots += 1;
+                }
+            }
+        }
+        if(!needs_userdict) {
+            for(int i = 0; i < bases_list.length; i++) {
+                PyObject cur = bases_list[i];
+                if((cur instanceof PyType && ((PyType)cur).needs_userdict)
+                        || cur instanceof PyClass) {
+                    needs_userdict = true;
+                    break;
+                }
+            }
+        }
 
         newtype.name = name;
         newtype.base = base;
         newtype.bases = bases_list;
 
         newtype.needs_userdict = needs_userdict;
-        newtype.nuserslots = nuserslots;
-        newtype.hide_dict = hide_dict;
+        newtype.numSlots = nuserslots;
 
         newtype.dict = dict;
-
-        newtype.slotnames = slotnames;
 
         // special case __new__, if function => static method
         PyObject tmp = dict.__finditem__("__new__");
@@ -788,7 +770,6 @@ public class PyType extends PyObject implements Serializable {
             if (cur instanceof PyType)
                 ((PyType)cur).attachSubclass(newtype);
         }
-
         return newtype;
     }
 
@@ -807,19 +788,18 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * INTERNAL
-     * lookup for name through mro objects' dicts
-     *
-     * @param name  attribute name (must be interned)
+     * INTERNAL lookup for name through mro objects' dicts
+     * 
+     * @param name
+     *            attribute name (must be interned)
      * @return found object or null
      */
     public PyObject lookup(String name) {
-        PyObject[] mro = this.mro;
-        for (int i = 0; i < mro.length; i++) {
+        for(int i = 0; i < mro.length; i++) {
             PyObject dict = mro[i].fastGetDict();
-            if (dict != null) {
+            if(dict != null) {
                 PyObject obj = dict.__finditem__(name);
-                if (obj != null)
+                if(obj != null)
                     return obj;
             }
         }
@@ -1343,6 +1323,10 @@ public class PyType extends PyObject implements Serializable {
         if (underlying_class != null)
             return new PyString("__builtin__");
         return dict.__finditem__("__module__");
+    }
+    
+    public int getNumSlots(){
+        return numSlots;
     }
 
     public String getFullName () {

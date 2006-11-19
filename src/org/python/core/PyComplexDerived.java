@@ -1,6 +1,16 @@
 package org.python.core;
 
-public class PyComplexDerived extends PyComplex {
+public class PyComplexDerived extends PyComplex implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -14,6 +24,7 @@ public class PyComplexDerived extends PyComplex {
 
     public PyComplexDerived(PyType subtype,double real,double imaginary) {
         super(subtype,real,imaginary);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 

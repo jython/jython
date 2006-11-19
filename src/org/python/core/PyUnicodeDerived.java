@@ -1,6 +1,16 @@
 package org.python.core;
 
-public class PyUnicodeDerived extends PyUnicode {
+public class PyUnicodeDerived extends PyUnicode implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -14,6 +24,7 @@ public class PyUnicodeDerived extends PyUnicode {
 
     public PyUnicodeDerived(PyType subtype,String string) {
         super(subtype,string);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 
