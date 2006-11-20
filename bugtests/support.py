@@ -10,6 +10,7 @@ from java.util.jar import JarEntry
 from java.util.jar import JarFile
 from java.util.jar import JarInputStream
 from java.util.jar import JarOutputStream
+from java.util.jar import Manifest
 
 UNIX = os.pathsep == ":"
 WIN  = os.pathsep == ";"
@@ -166,6 +167,14 @@ class JarPacker:
 
   def close(self):
     self.getJarOutputStream().close()
+
+  def addManifestFile(self, manifestFile):
+    __doc__ = """only one manifest file can be added"""
+    self.addManifest(Manifest(FileInputStream(manifestFile)))
+    
+  def addManifest(self, manifest):
+    if not self._manifest:
+      self._manifest = manifest
     
   def addFile(self, file, parentDirName=None):
     buffer = jarray.zeros(self._bufsize, 'b')
@@ -201,7 +210,7 @@ class JarPacker:
   def addJarFile(self, jarFile):
     __doc__ = """if you want to add a .jar file with a MANIFEST, add it first"""
     jarJarFile = JarFile(jarFile)
-    self._manifest = jarJarFile.getManifest()
+    self.addManifest(jarJarFile.getManifest())
     jarJarFile.close()
 
     jarInputStream = JarInputStream(FileInputStream(jarFile))
