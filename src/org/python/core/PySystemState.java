@@ -296,7 +296,8 @@ public class PySystemState extends PyObject
     public static String exec_prefix="";
 
     private static String findRoot(Properties preProperties,
-                                   Properties postProperties)
+                                     Properties postProperties,
+                                     String jarFileName)
     {
         String root = null;
         try {
@@ -324,25 +325,25 @@ public class PySystemState extends PyObject
         } catch (Exception exc) {
             return null;
         }
-        //System.err.println("root: "+root);
-        if (root != null)
-            return root;
-
         // If install.root is undefined find JYTHON_JAR in class.path
-        String classpath = preProperties.getProperty("java.class.path");
-        if (classpath == null)
-            return null;
-
-        int jpy = classpath.toLowerCase().indexOf(JYTHON_JAR);
-        if (jpy == -1) {
-            return null;
+        if (root == null) {
+            String classpath = preProperties.getProperty("java.class.path");
+            if (classpath != null) {
+                int jpy = classpath.toLowerCase().indexOf(JYTHON_JAR);
+                if (jpy >= 0) {
+                    int start = classpath.lastIndexOf(java.io.File.pathSeparator, jpy) + 1;
+                    root = classpath.substring(start, jpy);
+                } else {
+                    // in case JYTHON_JAR is referenced from a MANIFEST inside another jar on the classpath
+                    root = jarFileName;
+                }
+            }
         }
-        int start = classpath.lastIndexOf(java.io.File.pathSeparator, jpy)+1;
-        return classpath.substring(start, jpy);
+        return root;
     }
 
     private static void initRegistry(Properties preProperties, Properties postProperties, 
-                                       boolean standalone)
+                                       boolean standalone, String jarFileName)
     {
         if (registry != null) {
             Py.writeError("systemState", "trying to reinitialize registry");
@@ -350,7 +351,7 @@ public class PySystemState extends PyObject
         }
 
         registry = preProperties;
-        prefix = exec_prefix = findRoot(preProperties, postProperties);
+        prefix = exec_prefix = findRoot(preProperties, postProperties, jarFileName);
 
         // Load the default registry
         if (prefix != null) {
@@ -452,7 +453,7 @@ public class PySystemState extends PyObject
         }
         
         // initialize the JPython registry
-        initRegistry(preProperties, postProperties, standalone);
+        initRegistry(preProperties, postProperties, standalone, jarFileName);
 
         // other initializations
         initBuiltins(registry);
