@@ -202,7 +202,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="jython.base.dir" value="${basedir}" />
         <property name="source.dir" value="${basedir}/src" />
         <property name="templates.dir" value="${basedir}/src/templates" />
-        <property name="python.lib" value="${python.home}/Lib" />
+        <property name="python.lib" value="${basedir}/CPythonLib" />
     </target>
 
 
