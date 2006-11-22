@@ -394,10 +394,8 @@ public class PyType extends PyObject implements Serializable {
     boolean has_set, has_delete;
 
     private boolean needs_finalizer;
-
     private int numSlots;
-    private PyObject userslots;
-    private boolean needs_userdict;
+    private boolean needs_userdict = true;
 
     private java.lang.ref.ReferenceQueue subclasses_refq = new java.lang.ref.ReferenceQueue();
     private java.util.HashSet subclasses = new java.util.HashSet();
@@ -694,46 +692,37 @@ public class PyType extends PyObject implements Serializable {
         } else {
             newtype = new PyTypeDerived(metatype);
         }
+        newtype.dict = dict;
+        newtype.numSlots = base.numSlots;
+        newtype.name = name;
+        newtype.base = base;
+        newtype.bases = bases_list;
         
-        int nuserslots = base.numSlots;
         PyObject slots = dict.__finditem__("__slots__");
-        boolean needs_userdict = true;
         if(slots != null) {
-            needs_userdict = false;
-            PyObject iter = slots.__iter__();
-            PyObject slotname;
-            for(; (slotname = iter.__iternext__()) != null;) {
-                confirmIdentifier(slotname);
-                String slotstring = mangleName(name, slotname.toString());
-                if(slotstring.equals("__dict__")) {
-                    needs_userdict = true;
-                } else {
-                    dict.__setitem__(slotstring, new PySlot(newtype,
-                                                            slotstring,
-                                                            nuserslots));
-                    nuserslots += 1;
+            newtype.needs_userdict = false;
+            if(slots instanceof PyString) {
+                addSlot(newtype, slots);
+            } else {
+                PyObject iter = slots.__iter__();
+                PyObject slotname;
+                for(; (slotname = iter.__iternext__()) != null;) {
+                    addSlot(newtype, slotname);
                 }
             }
         }
-        if(!needs_userdict) {
+        if(!newtype.needs_userdict) {
             for(int i = 0; i < bases_list.length; i++) {
                 PyObject cur = bases_list[i];
                 if((cur instanceof PyType && ((PyType)cur).needs_userdict)
                         || cur instanceof PyClass) {
-                    needs_userdict = true;
+                    newtype.needs_userdict = true;
                     break;
                 }
             }
         }
 
-        newtype.name = name;
-        newtype.base = base;
-        newtype.bases = bases_list;
 
-        newtype.needs_userdict = needs_userdict;
-        newtype.numSlots = nuserslots;
-
-        newtype.dict = dict;
 
         // special case __new__, if function => static method
         PyObject tmp = dict.__finditem__("__new__");
@@ -756,7 +745,7 @@ public class PyType extends PyObject implements Serializable {
         newtype.mro = newmro;
 
         // __dict__ descriptor
-        if (needs_userdict && newtype.lookup("__dict__")==null) {
+        if (newtype.needs_userdict && newtype.lookup("__dict__")==null) {
             dict.__setitem__("__dict__",new PyGetSetDescr(newtype,"__dict__",PyObject.class,"getDict",null));
         }
 
@@ -771,6 +760,18 @@ public class PyType extends PyObject implements Serializable {
                 ((PyType)cur).attachSubclass(newtype);
         }
         return newtype;
+    }
+
+    private static void addSlot(PyType newtype, PyObject slotname) {
+        confirmIdentifier(slotname);
+        String slotstring = mangleName(newtype.name, slotname.toString());
+        if(slotstring.equals("__dict__")) {
+            newtype.needs_userdict = true;
+        } else {
+            newtype.dict.__setitem__(slotstring, new PySlot(newtype,
+                                                    slotstring,
+                                                    newtype.numSlots++));
+        }
     }
 
 
