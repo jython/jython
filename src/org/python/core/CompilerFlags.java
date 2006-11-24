@@ -19,7 +19,7 @@ public class CompilerFlags extends Object {
 
     public boolean nested_scopes = true;
     public boolean division;
-    public boolean generator_allowed;
+    public boolean generator_allowed = true;
 
     public String encoding;
 }
