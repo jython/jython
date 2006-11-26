@@ -506,22 +506,13 @@ public class PyType extends PyObject implements Serializable {
       }
 
       
-    final PyTuple type_mro() {
-        return getMro();
+    final PyList type_mro() {
+        return new PyList(compute_mro());
+        
     }
 
-    final PyTuple type_mro(PyObject o) {
-	//FIXME: PyMethDescr should be gaurding against args that are not the
-	//       correct type in the generated code, but that is not working.
-	//       fix and delete this instanceof check.
-	if (!(o instanceof PyType)) {
-	    throw Py.TypeError(
-            "descriptor 'mro' requires a 'type' object but received a '"
-                + o.getType().fastGetName()
-                + "'");
-	}
-	PyType type = (PyType)o;
-	return type.type_mro();
+    final PyList type_mro(PyObject o) {
+        return ((PyType)o).type_mro();
     }
 
     final PyObject[] compute_mro() {
@@ -709,18 +700,20 @@ public class PyType extends PyObject implements Serializable {
                 for(; (slotname = iter.__iternext__()) != null;) {
                     addSlot(newtype, slotname);
                 }
+                
             }
         }
         if(!newtype.needs_userdict) {
             for(int i = 0; i < bases_list.length; i++) {
                 PyObject cur = bases_list[i];
-                if((cur instanceof PyType && ((PyType)cur).needs_userdict)
+                if((cur instanceof PyType && ((PyType)cur).needs_userdict && ((PyType)cur).numSlots > 0)
                         || cur instanceof PyClass) {
                     newtype.needs_userdict = true;
                     break;
                 }
             }
         }
+        
 
 
 
@@ -729,21 +722,14 @@ public class PyType extends PyObject implements Serializable {
         if (tmp != null && tmp instanceof PyFunction) { // xxx java functions?
             dict.__setitem__("__new__",new PyStaticMethod(tmp));
         }
-
-        PyObject mro_meth = null;
-        PyObject[] newmro;
-
-        if (metatype.underlying_class != PyType.class)
-            mro_meth = metatype.lookup("mro");
-
-        if (mro_meth == null) {
-            newmro = newtype.compute_mro();
-        } else {
-            newmro = Py.make_array(mro_meth.__get__(newtype,metatype).__call__());
+        newtype.mro = newtype.compute_mro();
+        if(metatype.underlying_class != PyType.class
+                && metatype.lookup("mro") != null) {
+            newtype.mro = Py.make_array(metatype.lookup("mro")
+                    .__get__(newtype, metatype)
+                    .__call__());
         }
-
-        newtype.mro = newmro;
-
+        
         // __dict__ descriptor
         if (newtype.needs_userdict && newtype.lookup("__dict__")==null) {
             dict.__setitem__("__dict__",new PyGetSetDescr(newtype,"__dict__",PyObject.class,"getDict",null));
@@ -834,7 +820,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     PyType(PyType subtype) {
-        super(true);
+        super(subtype);
     }
 
     private static String decapitalize(String s) {
@@ -1147,15 +1133,14 @@ public class PyType extends PyObject implements Serializable {
         } catch (Exception e) {
             throw error(e);
         }
-        if (newstyle) { // newstyle
-            base = (Class) exposed_decl_get_object(c, "base");
-            name = (String) exposed_decl_get_object(c, "name");
-            if (base == null) {
+        if(newstyle) { // newstyle
+            base = (Class)exposed_decl_get_object(c, "base");
+            name = (String)exposed_decl_get_object(c, "name");
+            if(base == null) {
                 Class cur = c;
-                while (cur != PyObject.class) {
-                    Class exposed_as =
-                        (Class) exposed_decl_get_object(cur, "as");
-                    if (exposed_as != null) {
+                while(cur != PyObject.class) {
+                    Class exposed_as = (Class)exposed_decl_get_object(cur, "as");
+                    if(exposed_as != null) {
                         PyType exposed_as_type = fromClass(exposed_as);
                         class_to_type.put(c, exposed_as_type);
                         return exposed_as_type;
@@ -1437,7 +1422,7 @@ public class PyType extends PyObject implements Serializable {
             int i = 0;
             while (classname.charAt(i) == '_')
                 i++;
-            return "_"+classname.substring(i)+methodname;
+            return ("_"+classname.substring(i)+methodname).intern();
         }
         return methodname;
     }
