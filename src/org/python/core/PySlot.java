@@ -29,6 +29,11 @@ public class PySlot extends PyDescriptor {
         ((Slotted)obj).setSlot(index, value);
     }
 
+    public void __delete__(PyObject obj) {
+        checkType(obj.getType());
+        ((Slotted)obj).setSlot(index, null);
+    }
+
     public String toString() {
         return "<member '" + name + "' of '" + dtype.fastGetName()
                 + "' objects>";
