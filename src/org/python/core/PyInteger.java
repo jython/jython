@@ -1211,7 +1211,8 @@ public class PyInteger extends PyObject {
                     return new PyIntegerDerived(subtype, ((PyInteger)intOrLong).getValue());
                 }
                 else {
-                    err_ovf("long int too large to convert to int");
+                    throw Py
+                        .OverflowError("long int too large to convert to int");
                 }
             }
             if (!(x instanceof PyString)) {

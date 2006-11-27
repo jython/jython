@@ -2792,7 +2792,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
     final static PyObject str_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("str", args, keywords, new String[] { "S" }, 0);
+        ArgParser ap = new ArgParser("str", args, keywords, new String[] { "object" }, 0);
         PyObject S = ap.getPyObject(0, null);
         if (new_.for_type == subtype) {
             return returnString(S);
