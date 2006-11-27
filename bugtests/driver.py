@@ -3,11 +3,6 @@ import sys, string, traceback, getopt, support, os, glob
 
 failures = {}
 
-opts, argv = getopt.getopt(sys.argv[1:], 'w')
-warnings = ('-w',"") in opts
-
-if warnings: print "LOUD warnings"
-sys.path[:0] = ['classes']
 
 def runTests(seq):
   def reportError():
@@ -50,8 +45,14 @@ def runTests(seq):
   print t
 
 if __name__ == '__main__':
-  if len(sys.argv) > 1:
-    tests = [int(test) for test in sys.argv[1].split(',')]
+  opts, args = getopt.getopt(sys.argv[1:], 'w')
+  warnings = ('-w',"") in opts
+
+  if warnings: print "LOUD warnings"
+  sys.path[:0] = ['classes']
+
+  if len(args) > 1:
+    tests = [int(test) for test in args[1].split(',')]
   else:
     lastTest = glob.glob('test???.py')[-1]
     tests = range(int(lastTest[4:7]) + 1)# upper bound: last test + 1
