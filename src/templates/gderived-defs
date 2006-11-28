@@ -62,11 +62,13 @@ define: (ClassBodyDeclarations)userdict
 define: (ClassBodyDeclarations)ctr
   public `concat`(`base,Derived)(PyType subtype,`extraargs) {
     super(subtype,`extra);
+    slots = new PyObject[subtype.getNumSlots()];
   }
 
 define: (ClassBodyDeclarations)ctr_userdict
   public `concat`(`base,Derived)(PyType subtype,`extraargs) {
     super(subtype,`extra);
+    slots = new PyObject[subtype.getNumSlots()];
     dict = subtype.instDict();
   }
 
