@@ -1,6 +1,16 @@
 package org.python.core;
 
-public class PyListDerived extends PyList {
+public class PyListDerived extends PyList implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -14,6 +24,7 @@ public class PyListDerived extends PyList {
 
     public PyListDerived(PyType subtype) {
         super(subtype);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 

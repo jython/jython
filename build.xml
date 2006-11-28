@@ -16,7 +16,6 @@ This build will create directories /build and /dist below basedir.
 Use case 2: full build for a release (using svn checkout)
 ---------------------------------------------------------
   - make sure you have access to the jython subversion repository (https://svn.sourceforge.net/svnroot/jython)
-  - make sure you have access and to cpython anonymous cvs (pserver:anonymous@cvs.sourceforge.net:/cvsroot/python)
   - override svn.tag in ant.properties (if necessary)
   - call target 'full-build'
 This build will create a working directory named full_build_${svn.tag} at the same
@@ -60,14 +59,14 @@ The first setting of a property wins, further settings are ignored.
 Actions for a release
 ---------------------
   1. determine the new svn tag to be applied to jython
-  2. determine the existing cvs tag of the CPython Lib files which should be included
+  2. check the svn:externals property of project jython for an appropriate cpython maintenance branch
   3. change the following properties in this build.xml, if necessary:
        - svn.tag             (target: full-init)
-       - python.cvs.tag      (target: full-init)
        - jdk.target.version  (target: pre-init)
   4. if new CPython .py files should be distributed, add them to build.Lib.include.properties
   5. adjust the public static String version in PySystemState.java
   6. adjust the version strings in target 'version' of this build.xml
+       (this is for upcoming snapshot builds only)
   7. check in all the changes
   8. apply the new tag to the jython svn (all projects)
   9. call target 'full-build'
@@ -213,7 +212,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <!-- predefined tags for jython and cpython -->
         <property name="svn.tag" value="HEAD" />
-        <property name="python.cvs.tag" value="r223" />
 
         <!-- revision handling -->
     	<property name="svn.revision" value="${svn.tag}" />
@@ -223,8 +221,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
         <property name="source.dir" value="${jython.base.dir}/src" />
         <property name="has.repositories.connection" value="true" />
-        <property name="python.module" value="python/dist/src/Lib" />
-        <property name="python.lib" value="${svn.checkout.dir}/${python.module}" />
+        <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
         <property name="python.exe" value="${python.home}/python" />
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
@@ -288,7 +285,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>--- properties (used for full-build only ) ---</echo>
         <echo>python.exe         = '${python.exe}'</echo>
         <echo>svn.tag            = '${svn.tag}'</echo>
-        <echo>python.cvs.tag     = '${python.cvs.tag}'</echo>
         <echo>svn.checkout.dir   = '${svn.checkout.dir}'</echo>
     	<echo>javahl.dir         = '${javahl.dir}'</echo>
     	<echo>svnant.jar.dir     = '${svnant.jar.dir}'</echo>
@@ -353,7 +349,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- checkout if so defined -->
     <target name="checkout" depends="prepare" if="do.checkout">
-    	<!-- jython and installer:  determine if to checkout from /tags/${svn.tag} (any tag), or /trunk (HEAD) -->
+    	<!-- determine if to checkout from /tags/${svn.tag} (any tag), or /trunk (HEAD) -->
     	<condition property="svn.main.dir" value="trunk">
     		<equals arg1="${svn.tag}" arg2="HEAD" />
     	</condition>
@@ -363,16 +359,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
         	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/bugtests" revision="${svn.revision}" destPath="${svn.checkout.dir}/bugtests" />
         </svn> 
-    	
-        <!-- cpython -->
-        <property name="python.cvs.root" value=":pserver:anonymous@cvs.sourceforge.net:/cvsroot/python" />
-        <echo>setting python password for anonymous</echo>
-        <cvspass cvsroot="${python.cvs.root}" password="" />
-        <!-- -r: use the cvs tag, -P: prune empty directories -->
-        <property name="python.checkout.options" value="checkout -r ${python.cvs.tag} -P" />
-        <property name="python.checkout.command" value="-z3 -d${python.cvs.root} ${python.checkout.options}" />
-        <echo>checking out ${python.module} with the following command: ${python.checkout.command} ${python.module}</echo>
-        <cvs command="${python.checkout.command} ${python.module}" dest="${svn.checkout.dir}" />
     </target>
 
 	
@@ -421,12 +407,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
                 verbose="true">
             <include name="*.expose" />
             <include name="*.derived" />
-
-            <!-- these have custom modifications -->
-            <exclude name="float.derived" />
-            <exclude name="long.derived" />
-            <exclude name="str.expose" />
-            <exclude name="random.derived" />
 
             <!-- unfinished -->
             <exclude name="function.expose" />
@@ -633,7 +613,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo">
                 <patternset>
                     <includesfile name="${jython.base.dir}/build.Lib.include.properties" />
-		    <exclude name="test/output/test_sax"/>
+                    <exclude name="test/output/test_sax"/>
                 </patternset>
             </fileset>
         </copy>
@@ -686,7 +666,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="svn-build" value="${do.checkout}" />
-                    <attribute name="cpython-version" value="${python.cvs.tag}" />
                     <attribute name="threadlocal" value="${threadlocal.present}" />
                     <attribute name="secureclassloader" value="${secureclassloader.present}" />
                     <attribute name="servlet" value="${servlet.present}" />

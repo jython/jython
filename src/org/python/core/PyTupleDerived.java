@@ -1,6 +1,16 @@
 package org.python.core;
 
-public class PyTupleDerived extends PyTuple {
+public class PyTupleDerived extends PyTuple implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -14,6 +24,7 @@ public class PyTupleDerived extends PyTuple {
 
     public PyTupleDerived(PyType subtype,PyObject[]elements) {
         super(subtype,elements);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 

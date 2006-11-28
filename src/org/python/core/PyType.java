@@ -383,11 +383,6 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
-    public List getSlotnames() {
-        return slotnames;
-    }
-
-
     private String name;
     private PyType base;
     private PyObject[] bases;
@@ -395,16 +390,14 @@ public class PyType extends PyObject implements Serializable {
     private PyObject[] mro;
     private long tp_flags;
     private Class underlying_class;
-    private List slotnames;
 
     private boolean non_instantiable = false;
 
-    boolean has_set, has_delete, hide_dict;
+    boolean has_set, has_delete;
 
     private boolean needs_finalizer;
-
-    private int nuserslots;
-    private boolean needs_userdict;
+    private int numSlots;
+    private boolean needs_userdict = true;
 
     private java.lang.ref.ReferenceQueue subclasses_refq = new java.lang.ref.ReferenceQueue();
     private java.util.HashSet subclasses = new java.util.HashSet();
@@ -519,22 +512,13 @@ public class PyType extends PyObject implements Serializable {
       }
 
       
-    final PyTuple type_mro() {
-        return getMro();
+    final PyList type_mro() {
+        return new PyList(compute_mro());
+        
     }
 
-    final PyTuple type_mro(PyObject o) {
-	//FIXME: PyMethDescr should be gaurding against args that are not the
-	//       correct type in the generated code, but that is not working.
-	//       fix and delete this instanceof check.
-	if (!(o instanceof PyType)) {
-	    throw Py.TypeError(
-            "descriptor 'mro' requires a 'type' object but received a '"
-                + o.getType().fastGetName()
-                + "'");
-	}
-	PyType type = (PyType)o;
-	return type.type_mro();
+    final PyList type_mro(PyObject o) {
+        return ((PyType)o).type_mro();
     }
 
     final PyObject[] compute_mro() {
@@ -608,7 +592,7 @@ public class PyType extends PyObject implements Serializable {
             PyObject parent = mro[i];
             if (parent instanceof PyType) {
                 PyType parent_type =(PyType)parent;
-                if (parent_type.underlying_class != null || parent_type.nuserslots != 0)
+                if (parent_type.underlying_class != null || parent_type.numSlots != 0)
                     return parent_type;
             }
         }
@@ -685,22 +669,6 @@ public class PyType extends PyObject implements Serializable {
 
         // xxx can be subclassed ?
 
-        boolean needs_userdict = base.needs_userdict;
-        if (!needs_userdict) {
-            for (int i=0; i<bases_list.length;i++) {
-                PyObject cur = bases_list[i];
-                if (cur != base) {
-                    if ((cur instanceof PyType && ((PyType)cur).needs_userdict) || cur instanceof PyClass) {
-                        needs_userdict = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        int nuserslots = base.nuserslots;
-
-        needs_userdict = true;
 
         if (dict.__finditem__("__module__") == null) {
            PyFrame frame = Py.getFrame();
@@ -714,31 +682,6 @@ public class PyType extends PyObject implements Serializable {
         }
 
         // xxx also __doc__ __module__
-        List slotnames = null;
-        boolean hide_dict = false;
-
-        PyObject slots = dict.__finditem__("__slots__");
-        if (slots != null) {
-            hide_dict = true;
-            if (base.nuserslots > 0) {
-                nuserslots = base.nuserslots;
-                slotnames = new ArrayList(base.getSlotnames());
-            }
-            else {
-                slotnames = new ArrayList();
-            }
-            PyObject iter = slots.__iter__();
-            PyObject slotname;
-            for (; (slotname = iter.__iternext__())!= null; ) {
-                confirmIdentifier(slotname);
-                String slotstring = slotname.toString();
-                if (slotstring.equals("__dict__")) {
-                    hide_dict = false;
-                }
-                slotnames.add(mangleName(name, slotstring));
-                nuserslots += 1;
-            }
-        }
 
         PyType newtype;
         if (new_.for_type == metatype) {
@@ -746,44 +689,56 @@ public class PyType extends PyObject implements Serializable {
         } else {
             newtype = new PyTypeDerived(metatype);
         }
-
+        newtype.dict = dict;
+        newtype.numSlots = base.numSlots;
         newtype.name = name;
         newtype.base = base;
         newtype.bases = bases_list;
+        
+        PyObject slots = dict.__finditem__("__slots__");
+        if(slots != null) {
+            newtype.needs_userdict = false;
+            if(slots instanceof PyString) {
+                addSlot(newtype, slots);
+            } else {
+                PyObject iter = slots.__iter__();
+                PyObject slotname;
+                for(; (slotname = iter.__iternext__()) != null;) {
+                    addSlot(newtype, slotname);
+                }
+                
+            }
+        }
+        if(!newtype.needs_userdict) {
+            for(int i = 0; i < bases_list.length; i++) {
+                PyObject cur = bases_list[i];
+                if((cur instanceof PyType && ((PyType)cur).needs_userdict && ((PyType)cur).numSlots > 0)
+                        || cur instanceof PyClass) {
+                    newtype.needs_userdict = true;
+                    break;
+                }
+            }
+        }
+        
 
-        /* initialize tp flags */
         newtype.tp_flags=Py.TPFLAGS_HEAPTYPE;
 
-        newtype.needs_userdict = needs_userdict;
-        newtype.nuserslots = nuserslots;
-        newtype.hide_dict = hide_dict;
-
-        newtype.dict = dict;
-
-        newtype.slotnames = slotnames;
 
         // special case __new__, if function => static method
         PyObject tmp = dict.__finditem__("__new__");
         if (tmp != null && tmp instanceof PyFunction) { // xxx java functions?
             dict.__setitem__("__new__",new PyStaticMethod(tmp));
         }
-
-        PyObject mro_meth = null;
-        PyObject[] newmro;
-
-        if (metatype.underlying_class != PyType.class)
-            mro_meth = metatype.lookup("mro");
-
-        if (mro_meth == null) {
-            newmro = newtype.compute_mro();
-        } else {
-            newmro = Py.make_array(mro_meth.__get__(newtype,metatype).__call__());
+        newtype.mro = newtype.compute_mro();
+        if(metatype.underlying_class != PyType.class
+                && metatype.lookup("mro") != null) {
+            newtype.mro = Py.make_array(metatype.lookup("mro")
+                    .__get__(newtype, metatype)
+                    .__call__());
         }
-
-        newtype.mro = newmro;
-
+        
         // __dict__ descriptor
-        if (needs_userdict && newtype.lookup("__dict__")==null) {
+        if (newtype.needs_userdict && newtype.lookup("__dict__")==null) {
             dict.__setitem__("__dict__",new PyGetSetDescr(newtype,"__dict__",PyObject.class,"getDict",null));
         }
 
@@ -797,8 +752,19 @@ public class PyType extends PyObject implements Serializable {
             if (cur instanceof PyType)
                 ((PyType)cur).attachSubclass(newtype);
         }
-
         return newtype;
+    }
+
+    private static void addSlot(PyType newtype, PyObject slotname) {
+        confirmIdentifier(slotname);
+        String slotstring = mangleName(newtype.name, slotname.toString());
+        if(slotstring.equals("__dict__")) {
+            newtype.needs_userdict = true;
+        } else {
+            newtype.dict.__setitem__(slotstring, new PySlot(newtype,
+                                                    slotstring,
+                                                    newtype.numSlots++));
+        }
     }
 
 
@@ -816,19 +782,18 @@ public class PyType extends PyObject implements Serializable {
     }
 
     /**
-     * INTERNAL
-     * lookup for name through mro objects' dicts
-     *
-     * @param name  attribute name (must be interned)
+     * INTERNAL lookup for name through mro objects' dicts
+     * 
+     * @param name
+     *            attribute name (must be interned)
      * @return found object or null
      */
     public PyObject lookup(String name) {
-        PyObject[] mro = this.mro;
-        for (int i = 0; i < mro.length; i++) {
+        for(int i = 0; i < mro.length; i++) {
             PyObject dict = mro[i].fastGetDict();
-            if (dict != null) {
+            if(dict != null) {
                 PyObject obj = dict.__finditem__(name);
-                if (obj != null)
+                if(obj != null)
                     return obj;
             }
         }
@@ -862,7 +827,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     PyType(PyType subtype) {
-        super(true);
+        super(subtype);
     }
 
     private static String decapitalize(String s) {
@@ -1175,15 +1140,14 @@ public class PyType extends PyObject implements Serializable {
         } catch (Exception e) {
             throw error(e);
         }
-        if (newstyle) { // newstyle
-            base = (Class) exposed_decl_get_object(c, "base");
-            name = (String) exposed_decl_get_object(c, "name");
-            if (base == null) {
+        if(newstyle) { // newstyle
+            base = (Class)exposed_decl_get_object(c, "base");
+            name = (String)exposed_decl_get_object(c, "name");
+            if(base == null) {
                 Class cur = c;
-                while (cur != PyObject.class) {
-                    Class exposed_as =
-                        (Class) exposed_decl_get_object(cur, "as");
-                    if (exposed_as != null) {
+                while(cur != PyObject.class) {
+                    Class exposed_as = (Class)exposed_decl_get_object(cur, "as");
+                    if(exposed_as != null) {
                         PyType exposed_as_type = fromClass(exposed_as);
                         class_to_type.put(c, exposed_as_type);
                         return exposed_as_type;
@@ -1353,6 +1317,10 @@ public class PyType extends PyObject implements Serializable {
             return new PyString("__builtin__");
         return dict.__finditem__("__module__");
     }
+    
+    public int getNumSlots(){
+        return numSlots;
+    }
 
     public String getFullName () {
         if (underlying_class != null)
@@ -1461,7 +1429,7 @@ public class PyType extends PyObject implements Serializable {
             int i = 0;
             while (classname.charAt(i) == '_')
                 i++;
-            return "_"+classname.substring(i)+methodname;
+            return ("_"+classname.substring(i)+methodname).intern();
         }
         return methodname;
     }

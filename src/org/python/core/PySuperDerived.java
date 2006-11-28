@@ -1,6 +1,16 @@
 package org.python.core;
 
-public class PySuperDerived extends PySuper {
+public class PySuperDerived extends PySuper implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -14,6 +24,7 @@ public class PySuperDerived extends PySuper {
 
     public PySuperDerived(PyType subtype) {
         super(subtype);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 
