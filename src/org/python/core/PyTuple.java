@@ -416,7 +416,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
     final static PyObject tuple_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("tuple", args, keywords, new String[] { "S" }, 0);
+        ArgParser ap = new ArgParser("tuple", args, keywords, new String[] { "sequence" }, 0);
         PyObject S = ap.getPyObject(0, null);
         if (new_.for_type == subtype) {
             if (S == null) {

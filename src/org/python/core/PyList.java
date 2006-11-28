@@ -1126,20 +1126,17 @@ public class PyList extends PySequenceList {
     }
 
     final void list_init(PyObject[] args,String[] kwds) {
-        int nargs = args.length - kwds.length;
-        if (nargs > 1) {
-            throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs,false,exposed_name,0,1);
-        }
-        if (nargs == 0) {
+        ArgParser ap = new ArgParser("list", args, kwds, new String[] { "sequence"}, 0);
+        PyObject seq = ap.getPyObject(0, null);
+        if (seq == null) {
             return;
         }
 
-        PyObject o = args[0];
-        if (o instanceof PySequenceList) {
-            PySequenceList p = (PySequenceList) o.__getslice__(Py.None, Py.None, Py.One);
+        if (seq instanceof PySequenceList) {
+            PySequenceList p = (PySequenceList) seq.__getslice__(Py.None, Py.None, Py.One);
             this.list = p.list;
         } else {
-            PyObject iter = o.__iter__();
+            PyObject iter = seq.__iter__();
             for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
                 append(item);
             }
