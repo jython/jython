@@ -54,7 +54,9 @@ if __name__ == '__main__':
   if len(args) > 1:
     tests = [int(test) for test in args[1].split(',')]
   else:
-    lastTest = glob.glob('test???.py')[-1]
+    testfiles = glob.glob('test???.py')
+    testfiles.sort()
+    lastTest = testfiles[-1]
     tests = range(int(lastTest[4:7]) + 1)# upper bound: last test + 1
   runTests(["test%3.3d" % i for i in tests])
   sys.exit(1)
