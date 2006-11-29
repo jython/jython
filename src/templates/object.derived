@@ -1,0 +1,315 @@
+base_class: PyObject
+want_dict: true
+ctr:
+unary1: __str__ string
+unary1: __repr__ string
+unary1: __hex__ string
+unary1: __oct__ string
+unary1: __float__ float
+unary1: __long__ long
+unary1: __complex__ complex
+unary1: __pos__
+unary1: __neg__
+unary1: __abs__
+unary1: __invert__
+unary1: __reduce__
+binary: __add__ __radd__ \
+  __sub__ __rsub__ \
+  __mul__ __rmul__ \
+  __div__ __rdiv__ \
+  __floordiv__ __rfloordiv__ \
+  __truediv__ __rtruediv__ \
+  __mod__ __rmod__ \
+  __divmod__ __rdivmod__ \
+  __pow__ __rpow__ \
+  __lshift__ __rlshift__ \
+  __rshift__ __rrshift__ \
+  __and__ __rand__ \
+  __or__ __ror__  \
+  __xor__ __rxor__ \
+  __lt__ __le__ __gt__ __ge__ __eq__ __ne__
+ibinary: __iadd__ \
+  __isub__ \
+  __imul__ \
+  __idiv__ \
+  __ifloordiv__ \
+  __itruediv__ \
+  __imod__ \
+  __ipow__ \
+  __ilshift__ \
+  __irshift__ \
+  __iand__ \
+  __ior__ \
+  __ixor__
+rest:
+  public PyObject __int__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__int__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyInteger || res instanceof PyLong)
+                return(PyObject)res;
+            throw Py.TypeError("__int__"+" should return an integer");
+        }
+        return super.__int__();
+  }    
+
+  public String toString() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__repr__");
+    if (impl != null) {
+      PyObject res = impl.__get__(this,self_type).__call__();
+      if (!(res instanceof PyString))
+        throw Py.TypeError("__repr__ should return a string");
+      return ((PyString)res).toString();
+    }
+    return super.toString();
+  }
+
+  public int hashCode() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__hash__");
+    if (impl != null) {
+      PyObject res = impl.__get__(this,self_type).__call__();
+      if (res instanceof PyInteger)
+         return ((PyInteger)res).getValue();
+      throw Py.TypeError("__hash__ should return a int");
+    }
+    if (self_type.lookup("__eq__")!=null || 
+        self_type.lookup("__cmp__")!=null)
+      throw Py.TypeError("unhashable type");
+    return super.hashCode();
+  }
+
+  public PyUnicode __unicode__() {
+      PyType self_type=getType();
+      PyObject impl=self_type.lookup("__unicode__");
+      if (impl!=null) {
+          PyObject res=impl.__get__(this,self_type).__call__();
+          if (res instanceof PyUnicode)
+              return(PyUnicode)res;
+          if (res instanceof PyString)
+              return new PyUnicode((PyString)res);                                                                   
+          throw Py.TypeError("__unicode__"+" should return a "+"unicode");
+      }
+      return super.__unicode__();
+  }
+
+  public int __cmp__(PyObject other) {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__cmp__");
+    if (impl != null) {
+      PyObject res = impl.__get__(this,self_type).__call__(other);
+      if (res instanceof PyInteger) {
+         int v = ((PyInteger)res).getValue();
+         return v < 0 ? -1 : v > 0 ? 1 : 0;
+      }
+      throw Py.TypeError("__cmp__ should return a int");
+    }
+    return super.__cmp__(other);
+  }
+
+  public boolean __nonzero__() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__nonzero__");
+    if (impl == null) {
+      impl = self_type.lookup("__len__");
+      if (impl == null)
+         return super.__nonzero__();
+    }
+    return impl.__get__(this,self_type).__call__().__nonzero__();
+  }
+
+  public boolean __contains__(PyObject o) {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__contains__");
+    if (impl == null)
+      return super.__contains__(o);
+    return impl.__get__(this,self_type).__call__(o).__nonzero__();
+  }
+
+  public int __len__() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__len__");
+    if (impl != null) {
+      PyObject res = impl.__get__(this,self_type).__call__();
+      if (res instanceof PyInteger)
+         return ((PyInteger)res).getValue();
+      throw Py.TypeError("__len__ should return a int");
+    }
+    return super.__len__();
+  }
+
+  public PyObject __iter__() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__iter__");
+    if (impl != null)
+        return impl.__get__(this,self_type).__call__();
+    impl = self_type.lookup("__getitem__");
+    if (impl == null)
+      return super.__iter__();
+    return new PySequenceIter(this);
+  }
+
+  public PyObject __iternext__() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("next");
+    if (impl != null) {
+      try {
+        return impl.__get__(this,self_type).__call__();  
+      } catch (PyException exc) {
+        if (Py.matchException(exc, Py.StopIteration))
+          return null;
+        throw exc;
+      }
+    }
+    return super.__iternext__(); // ???
+  }
+
+  public PyObject __finditem__(PyObject key) { // ???
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__getitem__");
+    if (impl != null)
+      try {
+        return impl.__get__(this,self_type).__call__(key);  
+      } catch (PyException exc) {
+        if (Py.matchException(exc, Py.LookupError))
+          return null;
+        throw exc;
+      }
+    return super.__finditem__(key);
+  }
+
+  public void __setitem__(PyObject key, PyObject value) { // ???
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__setitem__");
+    if (impl != null) {
+       impl.__get__(this,self_type).__call__(key,value);
+       return;
+    }
+    super.__setitem__(key,value);
+  }
+
+  public PyObject __getslice__(PyObject start, PyObject stop, PyObject step) { // ???
+     PyType self_type=getType();
+     PyObject impl=self_type.lookup("__getslice__");
+     if (impl!=null)
+        try {
+           return impl.__get__(this,self_type).__call__(start, stop);
+        } catch (PyException exc) {
+           if (Py.matchException(exc,Py.LookupError))
+               return null;
+           throw exc;
+        }
+     return super.__getslice__(start, stop, step);
+  }
+
+  public void __delitem__(PyObject key) { // ???
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__delitem__");
+    if (impl != null) {
+       impl.__get__(this,self_type).__call__(key);
+       return;
+    }
+    super.__delitem__(key);
+  }
+
+  public PyObject __call__(PyObject args[], String keywords[]) {
+    ThreadState ts = Py.getThreadState();
+    if (ts.recursion_depth++ > ts.systemState.getrecursionlimit())
+      throw Py.RuntimeError("maximum __call__ recursion depth exceeded");
+    try {
+      PyType self_type = getType();
+      PyObject impl = self_type.lookup("__call__");
+      if (impl != null)
+        return impl.__get__(this,self_type).__call__(args,keywords);
+      return super.__call__(args,keywords);
+    } finally {
+      --ts.recursion_depth;
+    }
+  }
+
+  public PyObject __findattr__(String name) {
+    PyType self_type = getType();
+    PyObject getattribute = self_type.lookup("__getattribute__");
+    PyString py_name = null;
+    try {
+       if (getattribute != null) {
+         return getattribute.__get__(this,self_type).__call__(py_name = new PyString(name));
+       } else {
+          return super.__findattr__(name);
+       }
+    } catch(PyException e) {
+      if (Py.matchException(e,Py.AttributeError)) {
+          PyObject getattr = self_type.lookup("__getattr__");
+          if (getattr != null)
+             try {
+               return getattr.__get__(this,self_type).__call__(py_name!=null?py_name:new PyString(name));
+             } catch(PyException e1) {
+               if (!Py.matchException(e1,Py.AttributeError)) throw e1;
+             }
+          return null;
+      }
+      throw e;
+    }
+  }
+
+  public void __setattr__(String name,PyObject value) {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__setattr__");
+    if (impl != null) {
+      impl.__get__(this,self_type).__call__(new PyString(name),value);
+      return;
+    }
+    super.__setattr__(name,value);
+  }
+
+  public void __delattr__(String name) {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup("__delattr__");
+    if (impl != null) {
+      impl.__get__(this,self_type).__call__(new PyString(name));
+      return;
+    }
+    super.__delattr__(name);
+  }
+
+  public PyObject __get__(PyObject obj, PyObject type) {
+      PyType self_type = getType();
+      PyObject impl = self_type.lookup("__get__");
+      if (impl != null) {
+          if (obj == null) obj = Py.None;
+          if (type == null) type = Py.None;
+          return impl.__get__(this, self_type).__call__(obj, type);
+      }
+      return super.__get__(obj, type);
+  }
+
+  public void __set__(PyObject obj, PyObject value) {
+      PyType self_type = getType();
+      PyObject impl = self_type.lookup("__set__");
+      if (impl != null) {
+          impl.__get__(this, self_type).__call__(obj, value);
+          return;
+      }
+      super.__set__(obj, value);
+  }
+
+  public void __delete__(PyObject obj) {
+      PyType self_type = getType();
+      PyObject impl = self_type.lookup("__delete__");
+      if (impl != null) {
+          impl.__get__(this, self_type).__call__(obj);
+          return;
+      }
+      super.__delete__(obj);
+  }
+
+  public void dispatch__init__(PyType type,PyObject[] args,String[] keywords) {
+       PyType self_type = getType();
+       if (self_type.isSubType(type)) {
+         PyObject impl = self_type.lookup("__init__");
+         if (impl != null) 
+           impl.__get__(this,self_type).__call__(args,keywords);
+       }
+  }

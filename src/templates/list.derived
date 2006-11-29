@@ -1,0 +1,4 @@
+base_class: PyList
+want_dict: true
+ctr:
+incl: object

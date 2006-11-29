@@ -1,0 +1,4 @@
+base_class: PyString
+want_dict: true
+ctr: String v
+incl: object

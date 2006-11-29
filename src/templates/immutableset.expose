@@ -1,0 +1,10 @@
+# setup
+type_name: ImmutableSet
+type_class: PyImmutableSet
+type_base_class: PyObject
+incl: baseset
+# exposed methods
+expose_wide_meth: __init__ -1 -1
+  `vdeleg`(init);
+  `void;
+expose_new_mutable:

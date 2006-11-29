@@ -1,0 +1,4 @@
+base_class: PyFloat
+want_dict: true
+ctr: double v
+incl: object

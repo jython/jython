@@ -1,0 +1,98 @@
+
+ctrs, serialization, __tojava__
+
+__get__ oo  (slot_tp_descr_get)
+__set__ oo
+__delete__ o
+
+[
+__del__
+__setslice__
+__getslice__
+__delslice__
+]
+
+,__str__ 
+,__repr__ 
+,toString
+
+,hashCode (look slot_tp_hash)
+
+,__cmp__ o
+,__nonzero__ (look slot_nb_nonzero)
+,__contains__ o
+,__len__
+
+,__iter__ 
+,__iternext__ 
+
+,__finditem__ o
+(__getitem__ o)
+,__setitem__ oo
+,__delitem__ o
+
+,__call__ ?o[]s[]
+
+,__findattr__ s
+,__setattr__ so
+,__delattr__ s
+
+,__hex__ 
+,__oct__ 
+,__int__ 
+,__float__ 
+,__long__ 
+,__complex__ 
+,__pos__ 
+,__neg__ 
+,__abs__ 
+,__invert__
+ 
+,__lt__ o
+,__le__ o
+,__gt__ o
+,__ge__ o
+,__eq__ o
+,__ne__ o
+
+,__add__ o
+,__radd__ o
+,__iadd__ o
+,__sub__ o
+,__rsub__ o
+,__isub__ o
+,__mul__ o
+,__rmul__ o
+,__imul__ o
+,__div__ o
+,__rdiv__ o
+,__idiv__ o
+,__floordiv__ o
+,__rfloordiv__ o
+,__ifloordiv__ o
+,__truediv__ o
+,__rtruediv__ o
+,__itruediv__ o
+,__mod__ o
+,__rmod__ o
+,__imod__ o
+,__divmod__ o
+,__rdivmod__ o
+,__pow__ o
+,__rpow__ o
+,__ipow__ o
+,__lshift__ o
+,__rlshift__ o
+,__ilshift__ o
+,__rshift__ o
+,__rrshift__ o
+,__irshift__ o
+,__and__ o
+,__rand__ o
+,__iand__ o
+,__or__ o
+,__ror__ o
+,__ior__ o
+,__xor__ o
+,__rxor__ o
+,__ixor__ o

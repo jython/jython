@@ -1,0 +1,52 @@
+# mapping file; specifies how expose & derive filenames should map to classes
+# for instance, a line like:
+#
+#   str.expose:org.python.core.PyString
+#
+# will map str.expose to org.python.core.PyString.  Many classes will have 2
+# lines; one for their expose, and one for their derived class.
+
+#baseset.expose
+#bool.derived:org.python.core.PyBooleanDerived
+#bool.expose:org.python.core.PyBoolean
+classmethod.derived:org.python.core.PyClassMethodDerived
+classmethod.expose:org.python.core.PyClassMethod
+complex.derived:org.python.core.PyComplexDerived
+complex.expose:org.python.core.PyComplex
+dict.derived:org.python.core.PyDictionaryDerived
+dict.expose:org.python.core.PyDictionary
+enumerate.expose:org.python.core.PyEnumerate
+#file.derived
+#file.expose
+float.derived:org.python.core.PyFloatDerived
+float.expose:org.python.core.PyFloat
+function.expose:org.python.core.PyFunction
+#immutableset.expose
+int.derived:org.python.core.PyIntegerDerived
+int.expose:org.python.core.PyInteger
+list.derived:org.python.core.PyListDerived
+list.expose:org.python.core.PyList
+long.derived:org.python.core.PyLongDerived
+long.expose:org.python.core.PyLong
+None.expose:org.python.core.PyNone
+object.derived:org.python.core.PyObjectDerived
+object.expose:org.python.core.PyObject
+property.derived:org.python.core.PyPropertyDerived
+property.expose:org.python.core.PyProperty
+sequence.expose:org.python.core.PySequence
+random.derived:org.python.modules.random.PyRandomDerived
+random.expose:org.python.modules.random.PyRandom
+#set.expose
+str.expose:org.python.core.PyString
+str.derived:org.python.core.PyStringDerived
+super.derived:org.python.core.PySuperDerived
+super.expose:org.python.core.PySuper
+#test.derived
+#test.expose
+timetuple.expose:org.python.modules.time.PyTimeTuple
+tuple.derived:org.python.core.PyTupleDerived
+tuple.expose:org.python.core.PyTuple
+type.derived:org.python.core.PyTypeDerived
+type.expose:org.python.core.PyType
+unicode.derived:org.python.core.PyUnicodeDerived
+unicode.expose:org.python.core.PyUnicode

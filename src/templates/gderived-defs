@@ -1,0 +1,86 @@
+# copyright 2004-2005 Samuele Pedroni
+define: (CompilationUnit)derived_class
+  package org.python.core;
+
+  public class `concat`(`base,Derived) extends `base implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index, PyObject value) {
+        slots[index] = value;
+    }
+    
+    private PyObject[] slots;
+
+     `decls;
+  }
+define: (ClassBodyDeclarations)pair
+  `trailer;
+  `last;
+define: (ClassBodyDeclarations)binary
+  public PyObject `binary(PyObject other) {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup(`strfy`(`binary));
+    if (impl != null) {
+      PyObject res = impl.__get__(this,self_type).__call__(other);
+      if (res == Py.NotImplemented)
+	return null;
+      return res;
+    }
+    return super.`binary(other);
+  }
+define: (ClassBodyDeclarations)ibinary
+  public PyObject `binary(PyObject other) {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup(`strfy`(`binary));
+    if (impl != null)
+      return impl.__get__(this,self_type).__call__(other);
+    return super.`binary(other);
+  }
+define: (ClassBodyDeclarations)unary
+  public PyObject `unary() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup(`strfy`(`unary));
+    if (impl != null)
+      return impl.__get__(this,self_type).__call__();
+    return super.`unary();
+  }
+define: (ClassBodyDeclarations)typed_unary
+  public `rettype `unary() {
+    PyType self_type = getType();
+    PyObject impl = self_type.lookup(`strfy`(`unary));
+    if (impl != null) {
+      PyObject res = impl.__get__(this,self_type).__call__();
+      if (res instanceof `rettype)
+        return (`rettype)res;
+      throw Py.TypeError(`strfy`(`unary) + " should return a " + `strfy`(`rettype_name));
+    }
+    return super.`unary();
+  }
+define: (ClassBodyDeclarations)userdict
+  private PyObject dict;
+
+  public PyObject fastGetDict() {
+    return dict;
+  }
+
+  public PyObject getDict() {
+    return dict;
+  }
+
+define: (ClassBodyDeclarations)ctr
+  public `concat`(`base,Derived)(PyType subtype,`extraargs) {
+    super(subtype,`extra);
+    slots = new PyObject[subtype.getNumSlots()];
+  }
+
+define: (ClassBodyDeclarations)ctr_userdict
+  public `concat`(`base,Derived)(PyType subtype,`extraargs) {
+    super(subtype,`extra);
+    slots = new PyObject[subtype.getNumSlots()];
+    dict = subtype.instDict();
+  }
+
+                

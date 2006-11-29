@@ -1,0 +1,7 @@
+# setup
+type_name: NoneType
+type_class: PyNone
+expose_meth: __repr__
+ `sdeleg`(toString);
+# exposed methods
+expose_meth: :b __nonzero__

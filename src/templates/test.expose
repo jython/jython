@@ -1,0 +1,24 @@
+type_name: test
+type_class: Test
+expose_unary: __una__
+expose_binary: __bin__
+expose_vanilla_cmp: >
+expose_vanilla_pow: >
+expose_key_getitem: >
+expose_meth: meth o
+  `deleg`(meth);
+  `void;
+expose_meth: imeth
+  `ideleg`(imeth);
+expose_meth: prnt_> imeth2
+  `ideleg`(imeth2);
+expose_meth: imeth3
+  `ideleg`(imeth3,parent_);
+expose_meth: > imeth4
+  `ideleg`(imeth4);
+expose_cmeth: cmeth
+expose_binary: prnt_> __add__ __sub__
+expose_unary: prnt_> __hex__
+
+  
+   

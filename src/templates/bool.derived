@@ -1,0 +1,4 @@
+base_class: PyBoolean
+want_dict: true
+ctr:
+incl: object

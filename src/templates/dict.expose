@@ -1,0 +1,39 @@
+# setup
+type_name: dict
+type_class: PyDictionary
+# exposed methods
+expose_binary: __ne__ __eq__
+expose_vanilla_cmp:
+expose_meth: fromkeys o o?
+expose_key_getitem:
+expose_meth: get oo?
+expose_meth: setdefault oo?
+expose_meth: pop o o?
+expose_meth: popitem
+expose_meth: :b has_key o
+expose_meth: :b __contains__ o
+expose_meth: :i __len__
+expose_meth: :- __setitem__ oo
+expose_meth: :- __delitem__ o
+expose_meth: keys
+expose_meth: :- update o
+expose_meth: itervalues
+expose_meth: iteritems
+expose_meth: iterkeys
+expose_meth: items
+expose_meth: values
+expose_meth: :- clear
+expose_meth: copy
+expose_meth: __iter__
+expose_meth: __hash__
+ `ideleg`(hashCode);
+expose_meth: __repr__
+  `sdeleg`(toString);
+expose_new_mutable:
+expose_wide_meth: __init__ -1 -1
+  `vdeleg`(init);
+  `void;
+# TODO:
+#  ('__getattribute__'), 
+#  '__lt__', '__gt__', '__ge__', __le__' 
+# (__doc__)

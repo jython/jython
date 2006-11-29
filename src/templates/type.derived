@@ -1,0 +1,4 @@
+base_class: PyType
+want_dict: true
+ctr:
+incl: object
