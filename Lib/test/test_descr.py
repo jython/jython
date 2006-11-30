@@ -5,6 +5,7 @@
 #      depend on the c extension module xxsubtype 
 #    - merged code from the pypy version of this script to run all tests instead of stopping
 #      at the first failure
+#    - allow specific tests to be run by specifying them on the command line
 
 from test.test_support import verify, vereq, verbose, TestFailed, TESTFN, get_original_stdout
 from copy import deepcopy
@@ -3938,6 +3939,10 @@ def test_main():
     carloverre,
     filefault,
     ]
+    if __name__ == '__main__':
+        import sys
+        if len(sys.argv) > 1:
+            testfuncs = [globals()[arg] for arg in sys.argv[1:]]
 
     n = len(testfuncs)
     success = 0
@@ -3947,7 +3952,7 @@ def test_main():
             print "*"*40
             testfunc()
         except Exception, e:
-            if isinstance(e, KeyboardInterrupt):
+            if isinstance(e, KeyboardInterrupt) or n == 1:
                 raise
             print "-->", testfunc.__name__, "FAILURE(%d/%d)" % (success, n), str(e)
         else:
