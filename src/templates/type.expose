@@ -7,9 +7,8 @@ expose_getset: __name__ fastGetName
 expose_getset: __base__ getBase
 expose_getset: __bases__ getBases
 expose_getset: __mro__ getMro
-# classmethods
-expose_cmeth: :o mro o?
 # exposed methods
+expose_meth: :o mro o?
 expose_meth: __getattribute__ n{attribute name}
    String name = `arg0;
    PyObject ret = self.type___findattr__(name);

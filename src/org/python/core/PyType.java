@@ -62,7 +62,7 @@ public class PyType extends PyObject implements Serializable {
             }
 
         }
-        dict.__setitem__("mro",new PyClassMethod(new PyMethodDescr("mro",PyType.class,0,1,new exposed_mro(null,null))));
+        dict.__setitem__("mro",new PyMethodDescr("mro",PyType.class,0,1,new exposed_mro(null,null)));
         class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -726,8 +726,8 @@ public class PyType extends PyObject implements Serializable {
         if(metatype.underlying_class != PyType.class
                 && metatype.lookup("mro") != null) {
             newtype.mro = Py.make_array(metatype.lookup("mro")
-                    .__get__(newtype, metatype)
-                    .__call__());
+                    .__get__(null, metatype)
+                    .__call__(newtype));
         }
         
         // __dict__ descriptor
