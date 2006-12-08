@@ -1,6 +1,16 @@
 package org.python.core;
 
-public class PyLongDerived extends PyLong {
+public class PyLongDerived extends PyLong implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -14,6 +24,7 @@ public class PyLongDerived extends PyLong {
 
     public PyLongDerived(PyType subtype,java.math.BigInteger v) {
         super(subtype,v);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 
