@@ -16,8 +16,8 @@ public class PyComplex extends PyObject {
     public static final String exposed_name="complex";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("imag",new PyGetSetDescr("imag",PyComplex.class,"getImag",null));
-        dict.__setitem__("real",new PyGetSetDescr("real",PyComplex.class,"getReal",null));
+        dict.__setitem__("imag",new PyGetSetDescr("imag",PyComplex.class,"getImag",null,null));
+        dict.__setitem__("real",new PyGetSetDescr("real",PyComplex.class,"getReal",null,null));
         class exposed___abs__ extends PyBuiltinFunctionNarrow {
 
             private PyComplex self;

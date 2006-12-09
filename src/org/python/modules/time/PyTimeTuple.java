@@ -33,15 +33,15 @@ public class PyTimeTuple extends PyTuple {
     public static final Class exposed_base=PyTuple.class;
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("tm_year",new PyGetSetDescr("tm_year",PyTimeTuple.class,"getYear",null));
-        dict.__setitem__("tm_mon",new PyGetSetDescr("tm_mon",PyTimeTuple.class,"getMon",null));
-        dict.__setitem__("tm_mday",new PyGetSetDescr("tm_mday",PyTimeTuple.class,"getMday",null));
-        dict.__setitem__("tm_hour",new PyGetSetDescr("tm_hour",PyTimeTuple.class,"getHour",null));
-        dict.__setitem__("tm_min",new PyGetSetDescr("tm_min",PyTimeTuple.class,"getMin",null));
-        dict.__setitem__("tm_sec",new PyGetSetDescr("tm_sec",PyTimeTuple.class,"getSec",null));
-        dict.__setitem__("tm_wday",new PyGetSetDescr("tm_wday",PyTimeTuple.class,"getWday",null));
-        dict.__setitem__("tm_yday",new PyGetSetDescr("tm_yday",PyTimeTuple.class,"getYday",null));
-        dict.__setitem__("tm_isdst",new PyGetSetDescr("tm_isdst",PyTimeTuple.class,"getIsdst",null));
+        dict.__setitem__("tm_year",new PyGetSetDescr("tm_year",PyTimeTuple.class,"getYear",null,null));
+        dict.__setitem__("tm_mon",new PyGetSetDescr("tm_mon",PyTimeTuple.class,"getMon",null,null));
+        dict.__setitem__("tm_mday",new PyGetSetDescr("tm_mday",PyTimeTuple.class,"getMday",null,null));
+        dict.__setitem__("tm_hour",new PyGetSetDescr("tm_hour",PyTimeTuple.class,"getHour",null,null));
+        dict.__setitem__("tm_min",new PyGetSetDescr("tm_min",PyTimeTuple.class,"getMin",null,null));
+        dict.__setitem__("tm_sec",new PyGetSetDescr("tm_sec",PyTimeTuple.class,"getSec",null,null));
+        dict.__setitem__("tm_wday",new PyGetSetDescr("tm_wday",PyTimeTuple.class,"getWday",null,null));
+        dict.__setitem__("tm_yday",new PyGetSetDescr("tm_yday",PyTimeTuple.class,"getYday",null,null));
+        dict.__setitem__("tm_isdst",new PyGetSetDescr("tm_isdst",PyTimeTuple.class,"getIsdst",null,null));
         class exposed___ne__ extends PyBuiltinFunctionNarrow {
 
             private PyTimeTuple self;

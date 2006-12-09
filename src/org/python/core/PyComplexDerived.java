@@ -22,6 +22,19 @@ public class PyComplexDerived extends PyComplex implements Slotted {
         return dict;
     }
 
+    public void setDict(PyObject newDict) {
+        if (newDict instanceof PyStringMap||newDict instanceof PyDictionary) {
+            dict=newDict;
+        } else {
+            throw Py.TypeError("__dict__ must be set to a Dictionary "+newDict.getClass().getName());
+        }
+    }
+
+    public void delDict() {
+        // deleting an object's instance dict makes it grow a new one
+        dict=new PyStringMap();
+    }
+
     public PyComplexDerived(PyType subtype,double real,double imaginary) {
         super(subtype,real,imaginary);
         slots=new PyObject[subtype.getNumSlots()];

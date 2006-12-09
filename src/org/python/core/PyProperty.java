@@ -7,10 +7,10 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
     public static final String exposed_name="property";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("fget",new PyGetSetDescr("fget",PyProperty.class,"getFget","setFget"));
-        dict.__setitem__("fset",new PyGetSetDescr("fset",PyProperty.class,"getFset","setFset"));
-        dict.__setitem__("fdel",new PyGetSetDescr("fdel",PyProperty.class,"getFdel","setFdel"));
-        dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyProperty.class,"getDoc","setDoc"));
+        dict.__setitem__("fget",new PyGetSetDescr("fget",PyProperty.class,"getFget","setFget",null));
+        dict.__setitem__("fset",new PyGetSetDescr("fset",PyProperty.class,"getFset","setFset",null));
+        dict.__setitem__("fdel",new PyGetSetDescr("fdel",PyProperty.class,"getFdel","setFdel",null));
+        dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyProperty.class,"getDoc","setDoc",null));
         class exposed___get__ extends PyBuiltinFunctionNarrow {
 
             private PyProperty self;
