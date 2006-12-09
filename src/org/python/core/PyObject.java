@@ -1901,6 +1901,44 @@ public class PyObject implements java.io.Serializable {
     public PyObject __invert__() {
         throw Py.AttributeError("__invert__");
     }
+    
+    /**
+     * @param op the String form of the op (e.g. "+")
+     * @param o2 the right operand
+     */
+    protected final String _unsupportedop(String op, PyObject o2) {
+        Object[] args = {op, getType().fastGetName(), o2.getType().fastGetName()};
+        String msg = unsupportedopMessage(op, o2);
+        if (msg == null) {
+            msg = o2.runsupportedopMessage(op, o2);
+        }
+        if (msg == null) {
+            msg = "unsupported operand type(s) for {0}: ''{1}'' and ''{2}''";
+        }
+        return MessageFormat.format(msg, args);
+    }
+
+    /**
+     * Should return an error message suitable for substitution where.
+     *
+     * {0} is the op name.
+     * {1} is the left operand type.
+     * {2} is the right operand type.
+     */
+    protected String unsupportedopMessage(String op, PyObject o2) {
+        return null;
+    }
+    
+    /**
+     * Should return an error message suitable for substitution where.
+     *
+     * {0} is the op name.
+     * {1} is the left operand type.
+     * {2} is the right operand type.
+     */
+    protected String runsupportedopMessage(String op, PyObject o2) {
+        return null;
+    }
 
     /**
      * Implements the three argument power function.
@@ -1967,45 +2005,6 @@ public class PyObject implements java.io.Serializable {
         }
         throw Py.TypeError(_unsupportedop("+", o2));
     }
-
-    /**
-     * @param op the String form of the op (e.g. "+")
-     * @param o2 the right operand
-     */
-    protected final String _unsupportedop(String op, PyObject o2) {
-        Object[] args = {op, getType().fastGetName(), o2.getType().fastGetName()};
-        String msg = unsupportedopMessage(op, o2);
-        if (msg == null) {
-            msg = o2.runsupportedopMessage(op, o2);
-        }
-        if (msg == null) {
-            msg = "unsupported operand type(s) for {0}: ''{1}'' and ''{2}''";
-        }
-        return MessageFormat.format(msg, args);
-    }
-
-    /**
-     * Should return an error message suitable for substitution where.
-     *
-     * {0} is the op name.
-     * {1} is the left operand type.
-     * {2} is the right operand type.
-     */
-    protected String unsupportedopMessage(String op, PyObject o2) {
-        return null;
-    }
-    
-    /**
-     * Should return an error message suitable for substitution where.
-     *
-     * {0} is the op name.
-     * {1} is the left operand type.
-     * {2} is the right operand type.
-     */
-    protected String runsupportedopMessage(String op, PyObject o2) {
-        return null;
-    }
-
 
     /**
      * Equivalent to the standard Python __sub__ method
