@@ -1583,7 +1583,7 @@ public class PyObject implements java.io.Serializable {
         PyType t2 = o.getType();
         
         if (t1 != t2 && t2.isSubType(t1)) {
-        	return o._eq(this);
+            return o._eq(this);
         }
 
         ThreadState ts = Py.getThreadState();
@@ -1622,7 +1622,7 @@ public class PyObject implements java.io.Serializable {
         PyType t2 = o.getType();
         
         if (t1 != t2 && t2.isSubType(t1)) {
-        	return o._ne(this);
+            return o._ne(this);
         }
 
         ThreadState ts = Py.getThreadState();
@@ -1656,7 +1656,7 @@ public class PyObject implements java.io.Serializable {
         PyType t2 = o.getType();
         
         if (t1 != t2 && t2.isSubType(t1)) {
-        	return o._ge(this);
+            return o._ge(this);
         }
 
         ThreadState ts = Py.getThreadState();
@@ -1690,7 +1690,7 @@ public class PyObject implements java.io.Serializable {
         PyType t2 = o.getType();
         
         if (t1 != t2 && t2.isSubType(t1)) {
-        	return o._gt(this);
+            return o._gt(this);
         }
 
         ThreadState ts = Py.getThreadState();
@@ -1724,7 +1724,7 @@ public class PyObject implements java.io.Serializable {
         PyType t2 = o.getType();
         
         if (t1 != t2 && t2.isSubType(t1)) {
-        	return o._le(this);
+            return o._le(this);
         }
 
         ThreadState ts = Py.getThreadState();
@@ -1758,7 +1758,7 @@ public class PyObject implements java.io.Serializable {
         PyType t2 = o.getType();
         
         if (t1 != t2 && t2.isSubType(t1)) {
-        	return o._lt(this);
+            return o._lt(this);
         }
 
         ThreadState ts = Py.getThreadState();
@@ -2004,53 +2004,51 @@ public class PyObject implements java.io.Serializable {
     }
 
 
-	private PyObject _binop_rule(PyType t1, PyObject o2, PyType t2,
-			String left,
-			String right,
-			String op) {
-		/*  this is the general rule for binary operation dispatching
-		 *  try first __xxx__ with this and then __rxxx__ with o2
-		 *  unless o2 is an instance of subclass of the type of this,
-		 *  and further __xxx__ and __rxxx__ are unrelated (
-		 *  checked here by looking at where in the hierarchy they
-		 *  are defined), in that case try them in the reverse order.
-		 *  This is the same formulation as used by PyPy,
-		 *  see also test_descr.subclass_right_op.
-		 */
-		PyObject o1 = this;
-    	PyObject[] where = new PyObject[1];
-    	PyObject where1=null, where2=null;
-    	PyObject impl1 = t1.lookup_where(left, where);
-    	where1 = where[0];
-    	PyObject impl2 = t2.lookup_where(right, where);
-    	where2 = where[0];
-    	if (impl2 !=null && where1 != where2 && t2.isSubType(t1)) {
-    		PyObject tmp = o1;
-    		o1 = o2;
-    		o2 = tmp;
-    		tmp = impl1;
-    		impl1 = impl2;
-    		impl2 = tmp;
-    		PyType ttmp;
-    		ttmp = t1;
-    		t1 = t2;
-    		t2 = ttmp;
-    	}
-    	PyObject res = null;
-    	if (impl1 != null) {
-    		res = impl1.__get__(o1, t1).__call__(o2);
-    		if (res != Py.NotImplemented) {
-    			return res;
-    		}	
-    	}
-    	if (impl2 != null) {
-    		res = impl2.__get__(o2, t2).__call__(o1);
-    		if (res != Py.NotImplemented) {
-    			return res;
-    		}	
-    	}
-        throw Py.TypeError(_unsupportedop(op,o2));
-	}
+    private PyObject _binop_rule(PyType t1, PyObject o2, PyType t2,
+            String left, String right, String op) {
+        /*
+         * this is the general rule for binary operation dispatching try first
+         * __xxx__ with this and then __rxxx__ with o2 unless o2 is an instance
+         * of subclass of the type of this, and further __xxx__ and __rxxx__ are
+         * unrelated ( checked here by looking at where in the hierarchy they
+         * are defined), in that case try them in the reverse order. This is the
+         * same formulation as used by PyPy, see also
+         * test_descr.subclass_right_op.
+         */
+        PyObject o1 = this;
+        PyObject[] where = new PyObject[1];
+        PyObject where1 = null, where2 = null;
+        PyObject impl1 = t1.lookup_where(left, where);
+        where1 = where[0];
+        PyObject impl2 = t2.lookup_where(right, where);
+        where2 = where[0];
+        if (impl2 != null && where1 != where2 && t2.isSubType(t1)) {
+            PyObject tmp = o1;
+            o1 = o2;
+            o2 = tmp;
+            tmp = impl1;
+            impl1 = impl2;
+            impl2 = tmp;
+            PyType ttmp;
+            ttmp = t1;
+            t1 = t2;
+            t2 = ttmp;
+        }
+        PyObject res = null;
+        if (impl1 != null) {
+            res = impl1.__get__(o1, t1).__call__(o2);
+            if (res != Py.NotImplemented) {
+                return res;
+            }
+        }
+        if (impl2 != null) {
+            res = impl2.__get__(o2, t2).__call__(o1);
+            if (res != Py.NotImplemented) {
+                return res;
+            }
+        }
+        throw Py.TypeError(_unsupportedop(op, o2));
+    }
 
     // Generated by make_binops.py (Begin)
 
