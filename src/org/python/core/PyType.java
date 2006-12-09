@@ -21,11 +21,11 @@ public class PyType extends PyObject implements Serializable {
     public static final String exposed_name="type";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("__dict__",new PyGetSetDescr("__dict__",PyType.class,"getDict",null));
-        dict.__setitem__("__name__",new PyGetSetDescr("__name__",PyType.class,"fastGetName",null));
-        dict.__setitem__("__base__",new PyGetSetDescr("__base__",PyType.class,"getBase",null));
-        dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases",null));
-        dict.__setitem__("__mro__",new PyGetSetDescr("__mro__",PyType.class,"getMro",null));
+        dict.__setitem__("__dict__",new PyGetSetDescr("__dict__",PyType.class,"getDict","setDict","delDict"));
+        dict.__setitem__("__name__",new PyGetSetDescr("__name__",PyType.class,"fastGetName",null,null));
+        dict.__setitem__("__base__",new PyGetSetDescr("__base__",PyType.class,"getBase",null,null));
+        dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases",null,null));
+        dict.__setitem__("__mro__",new PyGetSetDescr("__mro__",PyType.class,"getMro",null,null));
         class exposed_mro extends PyBuiltinFunctionNarrow {
 
             private PyType self;
@@ -732,7 +732,7 @@ public class PyType extends PyObject implements Serializable {
         
         // __dict__ descriptor
         if (newtype.needs_userdict && newtype.lookup("__dict__")==null) {
-            dict.__setitem__("__dict__",new PyGetSetDescr(newtype,"__dict__",PyObject.class,"getDict",null));
+            dict.__setitem__("__dict__",new PyGetSetDescr(newtype,"__dict__",PyObject.class,"getDict","setDict","delDict"));
         }
 
         newtype.has_set = newtype.lookup("__set__") != null;
@@ -1295,6 +1295,14 @@ public class PyType extends PyObject implements Serializable {
 
     public PyObject getDict() { // xxx return dict-proxy
         return dict;
+    }
+    
+    public void setDict(PyObject newDict) {
+    	throw Py.TypeError("can't set attribute '__dict__' of type '" + name + "'");
+    }
+
+    public void delDict() {
+    	throw Py.TypeError("can't delete attribute '__dict__' of type '" + name + "'");
     }
 
     public Object __tojava__(Class c) {

@@ -17,8 +17,8 @@ public class PyObject implements java.io.Serializable {
     public static final String exposed_name="object";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("__class__",new PyGetSetDescr("__class__",PyObject.class,"getType",null));
-        dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyObject.class,"getDoc",null));
+        dict.__setitem__("__class__",new PyGetSetDescr("__class__",PyObject.class,"getType",null,null));
+        dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyObject.class,"getDoc",null,null));
         class exposed___reduce__ extends PyBuiltinFunctionNarrow {
 
             private PyObject self;
@@ -2791,6 +2791,15 @@ public class PyObject implements java.io.Serializable {
         return null;
     }
 
+    public void setDict(PyObject newDict) {
+    	// fallback if setDict not implemented in subclass
+    	throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().safeRepr());
+    }
+
+    public void delDict() {
+        // fallback to error
+        throw Py.TypeError("can't delete attribute '__dict__' of instance of '" + getType().safeRepr()+ "'");
+    }
 
     public boolean implementsDescrSet() {
         return objtype.has_set;

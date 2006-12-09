@@ -2,7 +2,7 @@
 type_name: type
 type_class: PyType
 # getsets
-expose_getset: __dict__ getDict
+expose_getset: __dict__ getDict setDict delDict
 expose_getset: __name__ fastGetName
 expose_getset: __base__ getBase
 expose_getset: __bases__ getBases
