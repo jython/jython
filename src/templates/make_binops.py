@@ -1,6 +1,6 @@
 """generates code for binops in PyObject and for all "simple" ops in PyInstance"""
 
-from java_templating import JavaTemplate as jt, concat, csub
+from java_templating import JavaTemplate as jt, concat, csub, strfy
 
 binops = \
 	[('add', '+'), ('sub', '-'), ('mul', '*'), ('div', '/'),
@@ -45,8 +45,8 @@ template = jt("""
     }
 
     `csub`(
-    /**
-     * Implements the Python expression <code>this %(bareop)s other</code>
+   /**
+     * Implements the Python expression <code>this %(bareop)s o2</code>
      * @param     o2 the object to perform this binary operation with.
      * @return    the result of the %(name)s.
      * @exception Py.TypeError if this operation can't be performed
@@ -54,6 +54,27 @@ template = jt("""
      **/
      );
     public final PyObject `concat`(_, `name)(PyObject o2) {
+    	PyType t1 = this.getType();
+    	PyType t2 = o2.getType();
+    	if (t1 == t2 || t1.builtin && t2.builtin) {
+    		return this.`concat`(_basic_, `name)(o2);
+    	}
+    	return _binop_rule(t1, o2, t2, `strfy`(`concat`(__,`name,__)),
+                                       `strfy`(`concat`(__r,`name,__)),
+                                       `op);
+    }
+
+    `csub`(
+    /**
+     * Implements the Python expression <code>this %(bareop)s o2</code>
+     * when this and o2 have the same type or are builtin types.
+     * @param     o2 the object to perform this binary operation with.
+     * @return    the result of the %(name)s.
+     * @exception Py.TypeError if this operation can't be performed
+     *            with these operands.
+     **/
+     );
+    final PyObject `concat`(_basic_, `name)(PyObject o2) {
         `divhook;
         PyObject x = `concat`(__,`name,__)(o2);
         if (x != null)
@@ -63,7 +84,9 @@ template = jt("""
             return x;
         throw Py.TypeError(_unsupportedop(`op, o2));
     }
-""", bindings={'csub': csub, 'concat': concat }, start='ClassBodyDeclarations')
+    
+""", bindings={'csub': csub, 'concat': concat,
+               'strfy': strfy}, start='ClassBodyDeclarations')
 
 def main():
     fp = open('binops.txt', 'w')
