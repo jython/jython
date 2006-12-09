@@ -82,9 +82,11 @@ class JavaPrinter(IndentPrinter):
             self.nl()
         self.nl(soft)
             
-    def emit_comment(self,comment): # doesn't write final \n!
+    def emit_comment(self,comment, subst): # doesn't write final \n!
         col = comment.col
         comment = comment.value
+        if subst is not None:
+            comment = comment % subst
         lines = comment.split('\n')
         first = lines[0]
         self.write(first)
@@ -98,27 +100,28 @@ class JavaPrinter(IndentPrinter):
             self.nl()
             self.write(line[tostrip:])
 
-    def emit_horizontal_comments(self,comments): # space + space separated comments...
+    def emit_horizontal_comments(self,comments, subst):
+        # space + space separated comments...
         for comment in comments:
             self.space()
-            self.emit_comment(comment)
+            self.emit_comment(comment, subst)
 
-    def emit_vertical_comments(self,comments):
+    def emit_vertical_comments(self,comments, subst):
         end = comments[0].end
-        self.emit_comment(comments[0])
+        self.emit_comment(comments[0], subst)
         for comment in comments[1:]:
             self.vertical_space(comment.start - end)
             end = comment.end
-            self.emit_comment(comment)
+            self.emit_comment(comment, subst)
 
-    def emit_infront_comments(self,tok):
+    def emit_infront_comments(self,tok, subst):
         if not self.linehome():
             self.nl()
         comments = tok.infront_comments
-        self.emit_vertical_comments(comments)
+        self.emit_vertical_comments(comments, subst)
         self.vertical_space(tok.lineno - comments[-1].end)
 
-    def emit_attached_comments(self,tok):
+    def emit_attached_comments(self,tok, subst):
         comments = tok.attached_comments
         start = comments[0].start
         horizontal = 1 # all on one line
@@ -127,11 +130,11 @@ class JavaPrinter(IndentPrinter):
                 horizontal = 0
                 break
         if horizontal:
-            self.emit_horizontal_comments(comments)
+            self.emit_horizontal_comments(comments, subst)
         else:
             self.space()
             self.here()
-            self.emit_vertical_comments(comments)
+            self.emit_vertical_comments(comments, subst)
             self.dedent()
         if comments[-1].value.startswith("//"): # // needs newline
             delta = 1
@@ -143,16 +146,17 @@ class JavaPrinter(IndentPrinter):
         else:
             self.vertical_space(delta,soft=1)
         
-    def emit_tok(self,tok,ctl='ika'): # ctl: i=>infront k=>token a=>attached
+    def emit_tok(self,tok,ctl='ika', subst=None):
+        # ctl: i=>infront k=>token a=>attached
 
         if 'i' in ctl and tok.infront_comments:
-            self.emit_infront_comments(tok)
+            self.emit_infront_comments(tok, subst)
 
         if 'k' in ctl:
             self.emit(tok.value)
 
         if 'a' in ctl and tok.attached_comments:
-            self.emit_attached_comments(tok)
+            self.emit_attached_comments(tok, subst)
 
 # ~~~
 
@@ -281,7 +285,7 @@ class JavaPretty:
         if tok is not None:
             self.printer.emit_tok(tok,'ia')
 
-    def emit_tok(self,tok,ctl='ika'):
+    def emit_tok(self,tok,ctl='ika', subst=None):
         if 'k' in ctl:
             seps = self._separators
             for i in range(len(seps)-1,-1,-1):
@@ -290,7 +294,7 @@ class JavaPretty:
                     seps[i] = None
                 else:
                     break
-        self.printer.emit_tok(tok,ctl)
+        self.printer.emit_tok(tok,ctl, subst)
 
     def default_visit(self,node,ctxt):
         if node is None: return

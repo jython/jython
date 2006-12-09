@@ -436,8 +436,9 @@ class CSub:
             raise Exception,"csub expects no arguments"
         if not paren:
             raise Exception,"csub expects parenthesis"
-        visitor.emit_tok(paren[0],'a')
-        visitor.emit_tok(paren[1],'i')
+        bindings = visitor.bindings
+        visitor.emit_tok(paren[0],'a', subst=bindings)
+        visitor.emit_tok(paren[1],'i', subst=bindings)
         return None,0
 
 csub = CSub()
@@ -637,7 +638,7 @@ def test():
  {
    `csub`(
    /*
-      ok
+      %(ok)s
    */);
  }
 }
@@ -648,7 +649,7 @@ def test():
  {
    `csub`(
    /*
-      ok
+      %(ok)s
    */);
    break;
  }
@@ -658,14 +659,14 @@ def test():
     with_comments.append(JavaTemplate("""
 {
  {
-   invoke(a,`csub`(/* ok */),b);
+   invoke(a,`csub`(/* %(ok)s */),b);
    break;
  }
 }
 """))
 
     for templ in with_comments:
-        print templ.texpand({'csub': csub})
+        print templ.texpand({'csub': csub, 'ok': "OK"})
 
     print (JavaTemplate("a(); b();")+JavaTemplate("c(); d();")).texpand({}) 
     print (JavaTemplate("a,b")+JavaTemplate("c,d")).texpand({})
