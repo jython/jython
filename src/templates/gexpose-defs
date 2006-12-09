@@ -17,8 +17,8 @@ define: (BlockStatements)pair
 define: getset
     dict.__setitem__(
             `strfy`(`name),
-            new PyGetSetDescr(`strfy`(`name), `typ.class, `get, `set));
-    
+            new PyGetSetDescr(`strfy`(`name), `typ.class, `get, `set, `del));
+
 define: (ClassBodyDeclarations)call_meths args body
     public PyObject __call__(`args) {
         `body;

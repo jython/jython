@@ -10,6 +10,8 @@ public class PyGetSetDescr extends PyDescriptor {
 
     private Method set_meth;
 
+    private Method del_meth;
+
     private Class getset_type;
 
     public PyGetSetDescr(PyType dtype,
@@ -17,6 +19,18 @@ public class PyGetSetDescr extends PyDescriptor {
                          Class c,
                          String get,
                          String set) {
+        this(dtype, name, c, get, set, null);
+    }
+    public PyGetSetDescr(String name, Class c, String get, String set) {
+        this(PyType.fromClass(c), name, c, get, set, null);
+    }
+
+    public PyGetSetDescr(PyType dtype,
+                         String name,
+                         Class c,
+                         String get,
+                         String set,
+                         String del) {
         this.name = name;
         this.dtype = dtype;
         try {
@@ -36,10 +50,19 @@ public class PyGetSetDescr extends PyDescriptor {
             if(Modifier.isStatic(set_meth.getModifiers()))
                 throw Py.SystemError("static getset not supported");
         }
-    }
+        if(del != null) {
+            try {
+                del_meth = c.getMethod(del, new Class[] {});
+            } catch(NoSuchMethodException e) {
+                throw Py.SystemError("bogus getset spec");
+            }
+            if(Modifier.isStatic(del_meth.getModifiers()))
+                throw Py.SystemError("static getset not supported");
+        }
+     }
 
-    public PyGetSetDescr(String name, Class c, String get, String set) {
-        this(PyType.fromClass(c), name, c, get, set);
+    public PyGetSetDescr(String name, Class c, String get, String set, String del) {
+        this(PyType.fromClass(c), name, c, get, set, del);
     }
 
     public String toString() {
@@ -97,11 +120,32 @@ public class PyGetSetDescr extends PyDescriptor {
         }
     }
 
+    public void __delete__(PyObject obj) {
+        try {
+            if(obj != null) {
+                PyType objtype = obj.getType();
+                if(objtype != dtype && !objtype.isSubType(dtype))
+                    throw get_wrongtype(objtype);
+                del_meth.invoke(obj, new Object[0]);
+            }
+        } catch(IllegalArgumentException e) {
+            throw Py.JavaError(e);
+        } catch(IllegalAccessException e) {
+            throw Py.JavaError(e); // unexpected
+        } catch(InvocationTargetException e) {
+            throw Py.JavaError(e);
+        }
+    }
+
     /**
      * @see org.python.core.PyObject#implementsDescrSet()
      */
     public boolean implementsDescrSet() {
         return set_meth != null;
+    }
+
+    public boolean implementsDescrDelete() {
+        return del_meth != null;
     }
 
     /**
@@ -110,4 +154,5 @@ public class PyGetSetDescr extends PyDescriptor {
     public boolean isDataDescr() {
         return true;
     }
+
 }
