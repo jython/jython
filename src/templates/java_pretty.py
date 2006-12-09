@@ -66,6 +66,16 @@ class IndentPrinter:
     def dedent(self):
         self.indent_level.pop()
         self.col = self.indent_level[-1]
+
+class substs:
+    def __init__(self, dic):
+        self.dic = dic
+        
+    def __getitem__(self, key):
+        try:
+            return self.dic[key]
+        except KeyError:
+            return "<%s>" % key
         
 class JavaPrinter(IndentPrinter):
 
@@ -86,7 +96,7 @@ class JavaPrinter(IndentPrinter):
         col = comment.col
         comment = comment.value
         if subst is not None:
-            comment = comment % subst
+            comment = comment % substs(subst)
         lines = comment.split('\n')
         first = lines[0]
         self.write(first)

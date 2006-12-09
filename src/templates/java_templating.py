@@ -331,6 +331,9 @@ class JavaTemplate:
             return output.getvalue()
         else:
             return None
+
+    def __str__(self):
+        return self.texpand({})
  
     def tvisit(self,visitor,args=None,paren=[],bindings=None,expect=None,ctxt=None):
         before = []
