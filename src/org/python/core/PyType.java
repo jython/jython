@@ -388,6 +388,8 @@ public class PyType extends PyObject implements Serializable {
     private PyObject dict;
     private PyObject[] mro;
     private Class underlying_class;
+    
+    boolean builtin = false;
 
     private boolean non_instantiable = false;
 
@@ -782,12 +784,29 @@ public class PyType extends PyObject implements Serializable {
      * @return found object or null
      */
     public PyObject lookup(String name) {
+        PyObject[] mro = this.mro;
         for(int i = 0; i < mro.length; i++) {
             PyObject dict = mro[i].fastGetDict();
             if(dict != null) {
                 PyObject obj = dict.__finditem__(name);
                 if(obj != null)
                     return obj;
+            }
+        }
+        return null;
+    }
+
+    public PyObject lookup_where(String name, PyObject[] where) {
+        PyObject[] mro = this.mro;
+        for(int i = 0; i < mro.length; i++) {
+        	PyObject t = mro[i];
+            PyObject dict = t.fastGetDict();
+            if(dict != null) {
+                PyObject obj = dict.__finditem__(name);
+                if(obj != null) {
+                	where[0] = t;
+                    return obj;
+                }
             }
         }
         return null;
@@ -919,6 +938,7 @@ public class PyType extends PyObject implements Serializable {
         }
         newtype.name = name;
         newtype.underlying_class = c;
+        newtype.builtin = true;
         boolean top = false;
         // basic mro, base, bases
         PyType[] mro = null;
