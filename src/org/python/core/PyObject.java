@@ -395,10 +395,8 @@ public class PyObject implements java.io.Serializable {
     }
 
     public void setType(PyType type) {
-        PyType objectType = PyType.fromClass(PyObject.class);
-        if(PyObjectDerived.class.isAssignableFrom(getClass()) 
-                && type.getStatic().equals(objectType) &&
-                !type.equals(objectType)) {
+        if(getType().layoutAligns(type) &&
+                !type.equals(PyType.fromClass(PyObject.class))){
             this.objtype = type;
         } else {
             throw Py.TypeError("Can only assign subtypes of object to __class__ on subclasses of object");

@@ -24,7 +24,7 @@ public class PyType extends PyObject implements Serializable {
         dict.__setitem__("__dict__",new PyGetSetDescr("__dict__",PyType.class,"getDict","setDict","delDict"));
         dict.__setitem__("__name__",new PyGetSetDescr("__name__",PyType.class,"fastGetName",null,null));
         dict.__setitem__("__base__",new PyGetSetDescr("__base__",PyType.class,"getBase",null,null));
-        dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases",null,null));
+        dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases","setBases","delBases"));
         dict.__setitem__("__mro__",new PyGetSetDescr("__mro__",PyType.class,"getMro",null,null));
         class exposed_mro extends PyBuiltinFunctionNarrow {
 
@@ -362,6 +362,29 @@ public class PyType extends PyObject implements Serializable {
         }
         return cur;
     }
+    
+    /**
+     * Checks that the physical layout between this type and <code>other</code>
+     * are compatible.
+     */
+    public boolean layoutAligns(PyType other) {
+        return getLayout().equals(other.getLayout())
+                && needs_userdict == other.needs_userdict
+                && needs_finalizer == other.needs_finalizer;
+    }
+    
+    /**
+     * Gets the most parent PyType that determines the layout of this type ie
+     * has slots or an underlying_class.  Can by this PyType.
+     */
+    private PyType getLayout(){
+        if(underlying_class != null){
+            return this;
+        }else if(numSlots != base.numSlots){
+            return this;
+        }
+        return base.getLayout();
+    }
 
     public PyObject getBase() {
         if (base == null)
@@ -375,6 +398,96 @@ public class PyType extends PyObject implements Serializable {
         return new PyTuple(bases);
     }
 
+    public void delBases() {
+        throw Py.TypeError("Can't delete __bases__ attribute");
+    }
+
+    public void setBases(PyObject newBasesTuple) {
+        if(!(newBasesTuple instanceof PyTuple)){
+            throw Py.TypeError("bases must be a tuple");
+        }
+        PyObject[] newBases = ((PyTuple)newBasesTuple).getArray();
+        if (newBases.length == 0) {
+            throw Py.TypeError("can only assign non-empty tuple to __bases__, not " + newBasesTuple);
+        }
+        for(int i = 0; i < newBases.length; i++) {
+            if(!(newBases[i] instanceof PyType)){
+                if(!(newBases[i] instanceof PyClass)){
+                    throw Py.TypeError(name + ".__bases__ must be  a tuple of old- or new-style classes, not " + newBases[i]);
+                }
+            }else{
+                if(((PyType)newBases[i]).isSubType(this)){
+                    throw Py.TypeError("a __bases__ item causes an inheritance cycle");
+                }
+            }
+        }
+        PyType newBase = best_base(newBases);
+        if(!newBase.layoutAligns(base)) {
+            throw Py.TypeError("'" + base + "' layout differs from '" + newBase
+                    + "'");
+        }
+        PyObject[] savedBases = bases;
+        PyType savedBase = base;
+        PyObject[] savedMro = mro;
+        List savedSubMros = new ArrayList();
+        try {
+            bases = newBases;
+            base = newBase;
+            mro_internal();
+            mro_subclasses(savedSubMros);
+            for(int i = 0; i < savedBases.length; i++) {
+                if(savedBases[i] instanceof PyType) {
+                    ((PyType)savedBases[i]).detachSubclass(this);
+                }
+            }
+            for(int i = 0; i < newBases.length; i++) {
+                if(newBases[i] instanceof PyType) {
+                    ((PyType)newBases[i]).attachSubclass(this);
+                }
+            }
+        } catch(PyException t) {
+            for(Iterator it = savedSubMros.iterator(); it.hasNext(); ){
+                PyType subtype = (PyType)it.next();
+                PyObject[] subtypeSavedMro = (PyObject[])it.next();
+                subtype.mro = subtypeSavedMro;
+            }
+            bases = savedBases;
+            base = savedBase;
+            mro = savedMro;
+            throw t;
+        }
+        
+    }
+
+    private void mro_internal() {
+        if(getType().underlying_class != PyType.class
+                && getType().lookup("mro") != null) {
+            mro = Py.make_array(getType().lookup("mro")
+                    .__get__(null, getType())
+                    .__call__(this));
+        }else{
+            mro = compute_mro();
+        }
+    }
+    
+    /**
+     * Collects the subclasses and current mro of this type in currentMroSaver.  If
+     * this type has subclasses C and D, and D has a subclass E current mro saver will equal
+     * [C, C.__mro__, D, D.__mro__, E, E.__mro__] after this call.
+     */
+    private void mro_subclasses(List mroCollector){
+        for (java.util.Iterator iter =subclasses.iterator(); iter.hasNext();) {
+            java.lang.ref.WeakReference type_ref = (java.lang.ref.WeakReference)iter.next();
+            PyType subtype = (PyType)type_ref.get();
+            if (subtype == null)
+                continue;
+            mroCollector.add(subtype);
+            mroCollector.add(subtype.mro);
+            subtype.mro_internal();
+            subtype.mro_subclasses(mroCollector);
+        }
+    }
+
     public PyObject instDict() {
         if (needs_userdict) {
             return new PyStringMap();
@@ -386,7 +499,7 @@ public class PyType extends PyObject implements Serializable {
     private PyType base;
     private PyObject[] bases;
     private PyObject dict;
-    private PyObject[] mro;
+    private PyObject[] mro = new PyObject[0];
     private Class underlying_class;
     
     boolean builtin = false;
@@ -432,6 +545,18 @@ public class PyType extends PyObject implements Serializable {
             new java.lang.ref.WeakReference(subtype, subclasses_refq));
     }
 
+    private synchronized void detachSubclass(PyType subtype) {
+        cleanup_subclasses();
+        for (java.util.Iterator iter =subclasses.iterator(); iter.hasNext();) {
+            java.lang.ref.WeakReference type_ref = (java.lang.ref.WeakReference)iter.next();
+            PyType refType = (PyType)type_ref.get();
+            if(refType == subtype){
+                subclasses.remove(type_ref);
+                break;
+            }
+        }
+    }
+    
     private interface OnType {
         boolean onType(PyType type);
     }
@@ -582,53 +707,165 @@ public class PyType extends PyObject implements Serializable {
         throw mro_error(to_merge,remain);
     }
 
+    /**
+     * Finds the parent of base with an underlying_class or with slots
+     * 
+     * @raises Py.TypeError if there is no solid base for base
+     */
     private static PyType solid_base(PyType base) {
         PyObject[] mro = base.mro;
         for (int i=0; i<mro.length; i++) {
             PyObject parent = mro[i];
             if (parent instanceof PyType) {
                 PyType parent_type =(PyType)parent;
-                if (parent_type.underlying_class != null || parent_type.numSlots != 0)
+                if (isSolidBase(parent_type))
                     return parent_type;
             }
         }
         throw Py.TypeError("base without solid base");
     }
 
-    private static PyType best_base(PyObject[] bases_list) {
+    private static boolean isSolidBase(PyType type) {
+        return type.underlying_class != null || type.numSlots != 0;
+    }
+
+    /**
+     * Finds the base in bases with the most derived solid_base, ie the most base type
+     * 
+     * @throws Py.TypeError if the bases don't all derive from the same solid_base
+     * @throws Py.TypeError if at least one of the bases isn't a new-style class
+     */
+    private static PyType best_base(PyObject[] bases) {
         PyType winner=null;
         PyType candidate=null;
-        PyType base=null;
-        for (int i=0; i < bases_list.length;i++) {
-            PyObject base_proto = bases_list[i];
+        PyType best=null;
+        for (int i=0; i < bases.length;i++) {
+            PyObject base_proto = bases[i];
             if (base_proto instanceof PyClass)
                 continue;
             if (!(base_proto instanceof PyType))
                 throw Py.TypeError("bases must be types");
-            PyType base_i = (PyType)base_proto;
-            candidate = solid_base(base_i);
+            PyType base = (PyType)base_proto;
+            candidate = solid_base(base);
             if (winner == null) {
                 winner = candidate;
-                base = base_i;
+                best = base;
             } else if (winner.isSubType(candidate)) {
                 ;
             } else if (candidate.isSubType(winner)) {
                 winner = candidate;
-                base = base_i;
+                best = base;
             } else {
                 throw Py.TypeError("multiple bases have instance lay-out conflict");
             }
         }
-        if (base == null)
+        if (best == null)
             throw Py.TypeError("a new-style class can't have only classic bases");
-        return base;
+        return best;
     }
 
     public static PyObject newType(PyNewWrapper new_,PyType metatype,String name,PyTuple bases,PyObject dict) {
         PyType object_type = fromClass(PyObject.class);
 
         PyObject[] bases_list = bases.getArray();
-        PyType winner = metatype;
+        PyType winner = findMostDerivedMetatype(bases_list, metatype);
+        if (winner != metatype) {
+            PyObject winner_new_ = winner.lookup("__new__");
+            if (winner_new_ !=null && winner_new_ != new_) {
+                return invoke_new_(new_,winner,false,new PyObject[] {new PyString(name),bases,dict},Py.NoKeywords);
+            }
+            metatype = winner;
+        }
+        if (bases_list.length == 0) {
+            bases_list = new PyObject[] {object_type};
+        }
+
+        // xxx can be subclassed ?
+        if (dict.__finditem__("__module__") == null) {
+           PyFrame frame = Py.getFrame();
+           if (frame != null) {
+               PyObject globals = frame.f_globals;
+               PyObject modname;
+               if ((modname = globals.__finditem__("__name__")) != null) {
+                   dict.__setitem__("__module__", modname);
+               }
+           }
+        }
+        // xxx also __doc__ __module__
+
+        PyType newtype;
+        if (new_.for_type == metatype) {
+            newtype = new PyType(); // xxx set metatype
+        } else {
+            newtype = new PyTypeDerived(metatype);
+        }
+        newtype.dict = dict;
+        newtype.name = name;
+        newtype.base = best_base(bases_list);
+        newtype.numSlots = newtype.base.numSlots;
+        newtype.bases = bases_list;
+        
+        PyObject slots = dict.__finditem__("__slots__");
+        if(slots != null) {
+            newtype.needs_userdict = false;
+            if(slots instanceof PyString) {
+                addSlot(newtype, slots);
+            } else {
+                PyObject iter = slots.__iter__();
+                PyObject slotname;
+                for(; (slotname = iter.__iternext__()) != null;) {
+                    addSlot(newtype, slotname);
+                }
+            }
+        }
+        if(!newtype.needs_userdict) {
+            newtype.needs_userdict = necessitatesUserdict(bases_list);
+        }
+
+        // special case __new__, if function => static method
+        PyObject tmp = dict.__finditem__("__new__");
+        if (tmp != null && tmp instanceof PyFunction) { // xxx java functions?
+            dict.__setitem__("__new__",new PyStaticMethod(tmp));
+        }
+        
+        newtype.mro_internal();
+        // __dict__ descriptor
+        if (newtype.needs_userdict && newtype.lookup("__dict__")==null) {
+            dict.__setitem__("__dict__",new PyGetSetDescr(newtype,"__dict__",PyObject.class,"getDict","setDict","delDict"));
+        }
+
+        newtype.has_set = newtype.lookup("__set__") != null;
+        newtype.has_delete = newtype.lookup("__delete__") != null;
+        newtype.needs_finalizer = newtype.lookup("__del__") != null;
+
+        for (int i=0; i<bases_list.length;i++) {
+            PyObject cur = bases_list[i];
+            if (cur instanceof PyType)
+                ((PyType)cur).attachSubclass(newtype);
+        }
+        return newtype;
+    }
+
+    private static boolean necessitatesUserdict(PyObject[] bases_list) {
+        for(int i = 0; i < bases_list.length; i++) {
+            PyObject cur = bases_list[i];
+            if((cur instanceof PyType && ((PyType)cur).needs_userdict && ((PyType)cur).numSlots > 0)
+                    || cur instanceof PyClass) {
+               return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Finds the most derived subtype of initialMetatype in the types of bases, or initialMetatype if 
+     * it is already the most derived.
+     * 
+     * @raises Py.TypeError if the all the metaclasses don't descend from the same base
+     * @raises Py.TypeError if one of the bases is a PyJavaClass or a PyClass with no proxyClass 
+     */
+    private static PyType findMostDerivedMetatype(PyObject[] bases_list, PyType initialMetatype) {
+        PyType winner = initialMetatype;
         for (int i=0; i<bases_list.length; i++) {
             PyObject bases_i = bases_list[i];
             if (bases_i instanceof PyJavaClass)
@@ -650,104 +887,7 @@ public class PyType extends PyObject implements Serializable {
                 "must be a (non-strict) subclass "+
                 "of the metaclasses of all its bases");
         }
-        if (winner != metatype) {
-            PyObject winner_new_ = winner.lookup("__new__");
-            if (winner_new_ !=null && winner_new_ != new_) {
-                return invoke_new_(new_,winner,false,new PyObject[] {new PyString(name),bases,dict},Py.NoKeywords);
-            }
-            metatype = winner;
-        }
-        if (bases_list.length == 0) {
-            bases_list = new PyObject[] {object_type};
-        }
-
-        PyType base = best_base(bases_list);
-
-        // xxx can be subclassed ?
-
-
-        if (dict.__finditem__("__module__") == null) {
-           PyFrame frame = Py.getFrame();
-           if (frame != null) {
-               PyObject globals = frame.f_globals;
-               PyObject modname;
-               if ((modname = globals.__finditem__("__name__")) != null) {
-                   dict.__setitem__("__module__", modname);
-               }
-           }
-        }
-
-        // xxx also __doc__ __module__
-
-        PyType newtype;
-        if (new_.for_type == metatype) {
-            newtype = new PyType(); // xxx set metatype
-        } else {
-            newtype = new PyTypeDerived(metatype);
-        }
-        newtype.dict = dict;
-        newtype.numSlots = base.numSlots;
-        newtype.name = name;
-        newtype.base = base;
-        newtype.bases = bases_list;
-        
-        PyObject slots = dict.__finditem__("__slots__");
-        if(slots != null) {
-            newtype.needs_userdict = false;
-            if(slots instanceof PyString) {
-                addSlot(newtype, slots);
-            } else {
-                PyObject iter = slots.__iter__();
-                PyObject slotname;
-                for(; (slotname = iter.__iternext__()) != null;) {
-                    addSlot(newtype, slotname);
-                }
-                
-            }
-        }
-        if(!newtype.needs_userdict) {
-            for(int i = 0; i < bases_list.length; i++) {
-                PyObject cur = bases_list[i];
-                if((cur instanceof PyType && ((PyType)cur).needs_userdict && ((PyType)cur).numSlots > 0)
-                        || cur instanceof PyClass) {
-                    newtype.needs_userdict = true;
-                    break;
-                }
-            }
-        }
-        
-
-
-
-        // special case __new__, if function => static method
-        PyObject tmp = dict.__finditem__("__new__");
-        if (tmp != null && tmp instanceof PyFunction) { // xxx java functions?
-            dict.__setitem__("__new__",new PyStaticMethod(tmp));
-        }
-        newtype.mro = newtype.compute_mro();
-        if(metatype.underlying_class != PyType.class
-                && metatype.lookup("mro") != null) {
-            newtype.mro = Py.make_array(metatype.lookup("mro")
-                    .__get__(null, metatype)
-                    .__call__(newtype));
-        }
-        
-        // __dict__ descriptor
-        if (newtype.needs_userdict && newtype.lookup("__dict__")==null) {
-            dict.__setitem__("__dict__",new PyGetSetDescr(newtype,"__dict__",PyObject.class,"getDict","setDict","delDict"));
-        }
-
-        newtype.has_set = newtype.lookup("__set__") != null;
-        newtype.has_delete = newtype.lookup("__delete__") != null;
-
-        newtype.needs_finalizer = newtype.lookup("__del__") != null;
-
-        for (int i=0; i<bases_list.length;i++) {
-            PyObject cur = bases_list[i];
-            if (cur instanceof PyType)
-                ((PyType)cur).attachSubclass(newtype);
-        }
-        return newtype;
+        return winner;
     }
 
     private static void addSlot(PyType newtype, PyObject slotname) {
