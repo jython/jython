@@ -122,7 +122,9 @@ public class ZipFileImporter extends PyObject {
                     info = new ZipModuleInfo(zipArchive, compiledEntry, true);
                 }
             }
-            info = new ZipModuleInfo(zipArchive, sourceEntry, false);
+            if (info == null) {
+                info = new ZipModuleInfo(zipArchive, sourceEntry, false);
+            }
         }
 
         if (pkg && info != null) {
