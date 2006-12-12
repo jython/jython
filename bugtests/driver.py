@@ -51,8 +51,8 @@ if __name__ == '__main__':
   if warnings: print "LOUD warnings"
   sys.path[:0] = ['classes']
 
-  if len(args) > 1:
-    tests = [int(test) for test in args[1].split(',')]
+  if len(args) > 0:
+    tests = [int(test) for test in args[0].split(',')]
   else:
     testfiles = glob.glob('test???.py')
     testfiles.sort()
