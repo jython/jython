@@ -20,7 +20,7 @@ Use case 2: full build for a release (using svn checkout)
   - call target 'full-build'
 This build will create a working directory named full_build_${svn.tag} at the same
 level as your local directories bugtests, jython, sandbox and installer.
-It will contain a big jython_${svn.tag}.jar file suitable for installation.
+It will contain a big jython_installer_${svn.tag}.jar file suitable for installation.
 
 Please be aware:
 To build older releases, it may be necessary to use an older build.xml, too (with the corresponding tag).
@@ -654,7 +654,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <fileset dir="${install.src.dir}" includes="**/*.png" excludes="bin/**" />
         </copy>
         <echo>building installer .jar file</echo>
-        <jar destfile="${work.dir}/jython_${svn.revision}.jar" basedir="${dist.dir}" update="true">
+        <jar destfile="${work.dir}/jython_installer_${svn.revision}.jar" basedir="${dist.dir}" update="true">
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
                 <attribute name="Built-By" value="${user.name}" />
