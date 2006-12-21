@@ -1312,9 +1312,12 @@ public class PyType extends PyObject implements Serializable {
             if (exposed_methods == null)
                 exposed_methods = EMPTY;
         }
-        PyType newtype = c == PyType.class ? new PyType(true) : new PyType();
-        class_to_type.put(c, newtype);
-        fillFromClass(newtype, name, c, base, newstyle, setup, exposed_methods);
+        PyType newtype = (PyType)class_to_type.get(c);
+        if (newtype == null) {
+            newtype = c == PyType.class ? new PyType(true) : new PyType();
+            class_to_type.put(c, newtype);
+            fillFromClass(newtype, name, c, base, newstyle, setup, exposed_methods);
+        }
         return newtype;
     }
 
