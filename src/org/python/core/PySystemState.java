@@ -673,8 +673,14 @@ public class PySystemState extends PyObject
             if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
                 jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
                 // handle directories containing blanks
-                if (jarFileName.indexOf(URL_BLANK_REPLACEMENT) >= 0) {
-                    jarFileName = jarFileName.replaceAll(URL_BLANK_REPLACEMENT, " ");
+                // we can't use String.replaceAll before java 1.4, so instead of the obvious:
+                //    jarFileName = jarFileName.replaceAll(URL_BLANK_REPLACEMENT, " ");
+                // apply repeated substitutions, which should be safe in this case
+                int URL_BLANK_LOCATION = jarFileName.indexOf(URL_BLANK_REPLACEMENT);
+                while (URL_BLANK_LOCATION >= 0) {
+                    jarFileName = jarFileName.substring(0, URL_BLANK_LOCATION) + " " + 
+                        jarFileName.substring(URL_BLANK_LOCATION + URL_BLANK_REPLACEMENT.length()); 
+                    URL_BLANK_LOCATION = jarFileName.indexOf(URL_BLANK_REPLACEMENT);
                 }
             }
         }
