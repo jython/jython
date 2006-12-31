@@ -57,6 +57,15 @@ class MaildirTestCase(unittest.TestCase):
             fp.close()
         self._msgfiles.append(newname)
 
+    def assert_msg_exists(self):
+	msg = self.mbox.next()
+	self.assert_(msg is not None)
+	#Force the file closed on Jython since Windows won't allow a file to 
+        #be deleted if something has an open handle on it and garbage collection
+        #doesn't happen quickly enough to make this occur naturally
+	if os.name == 'java':
+	    msg.fp.close() 
+
     def test_empty_maildir(self):
         """Test an empty maildir mailbox"""
         # Test for regression on bug #117490:
@@ -71,7 +80,7 @@ class MaildirTestCase(unittest.TestCase):
         self.createMessage("cur")
         self.mbox = mailbox.Maildir(test_support.TESTFN)
         self.assert_(len(self.mbox.boxes) == 1)
-        self.assert_(self.mbox.next() is not None)
+        self.assert_msg_exists()
         self.assert_(self.mbox.next() is None)
         self.assert_(self.mbox.next() is None)
 
@@ -79,7 +88,7 @@ class MaildirTestCase(unittest.TestCase):
         self.createMessage("new")
         self.mbox = mailbox.Maildir(test_support.TESTFN)
         self.assert_(len(self.mbox.boxes) == 1)
-        self.assert_(self.mbox.next() is not None)
+        self.assert_msg_exists()
         self.assert_(self.mbox.next() is None)
         self.assert_(self.mbox.next() is None)
 
@@ -88,8 +97,8 @@ class MaildirTestCase(unittest.TestCase):
         self.createMessage("new")
         self.mbox = mailbox.Maildir(test_support.TESTFN)
         self.assert_(len(self.mbox.boxes) == 2)
-        self.assert_(self.mbox.next() is not None)
-        self.assert_(self.mbox.next() is not None)
+        self.assert_msg_exists()
+        self.assert_msg_exists()
         self.assert_(self.mbox.next() is None)
         self.assert_(self.mbox.next() is None)
 
