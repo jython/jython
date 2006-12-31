@@ -470,9 +470,16 @@ def test_expat_locator_withinfo():
     xmlgen = LocatorTest(result)
     parser = make_parser()
     parser.setContentHandler(xmlgen)
-    parser.parse(findfile("test.xml"))
+    testfile = findfile("test.xml")
+    parser.parse(testfile)
+    #In Jython, the system id is a URL with forward slashes, and under Windows
+    #findfile returns a path with backslashes, so replace the backslashes with
+    #forward
+    import os
+    if os.name == 'java':
+	testfile = testfile.replace('\\', '/')
 
-    return xmlgen.location.getSystemId().endswith(findfile("test.xml")) and \
+    return xmlgen.location.getSystemId().endswith(testfile) and \
            xmlgen.location.getPublicId() is None
 
 
