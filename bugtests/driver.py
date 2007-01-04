@@ -2,17 +2,20 @@
 import sys, string, traceback, getopt, support, os, glob
 
 failures = {}
+warnings = {}
 
 
 def runTests(seq):
-  def reportError():
-      print n , "Failed!"
+  def report(msg, errors_dict, loud=1):
+    print n, msg
+    errors_dict[n] = 1
+    if loud:
       if m and hasattr(m, "__doc__"):
-         print  m.__doc__.strip()
+        print  m.__doc__.strip()
       print "   ", sys.exc_info()[0]
       print "   ", sys.exc_info()[1]
-      failures[n] = 1
-      traceback.print_tb(sys.exc_info()[2])
+      traceback.print_tb(sys.exc_info()[2], file=sys.stdout)
+
   for n in seq:
       m = None
       try:
@@ -20,35 +23,32 @@ def runTests(seq):
           if os.path.isfile(n + ".py"):
               m = __import__(n)
               sys.stdout = stdout
-              print n, "OK!"
+              print n, "OK"
           else:
               print n, "Skipped"
-  #    except ImportError, e:
-  #        sys.stdout = stdout
-  #        if string.lower(str(e)[:20]) == "no module named test":
-  #            break
-  #        print n, str(e)
       except support.TestWarning:
           sys.stdout = stdout
-          if warnings:
-              reportError()
-          else: 
-              print n, "Ok"
+          report("Warning", warnings, loud=loud_warnings)
       except:
           sys.stdout = stdout
-          reportError()
+          report("Failed", failures)
   
-  t = failures.keys()
-  t.sort()
-  print 
-  print "%d tests failed" % len(t)
-  print t
+  summarize(failures, "failures")
+  summarize(warnings, "warnings")
+
+def summarize(errors_dict, description):
+    t = errors_dict.keys()
+    t.sort()
+    print "%d %s" % (len(t), description)
+    print t
 
 if __name__ == '__main__':
   opts, args = getopt.getopt(sys.argv[1:], 'w')
-  warnings = ('-w',"") in opts
+  loud_warnings = ('-w',"") in opts
 
-  if warnings: print "LOUD warnings"
+  if loud_warnings: 
+      print "LOUD warnings"
+
   sys.path[:0] = ['classes']
 
   if len(args) > 0:
@@ -59,6 +59,11 @@ if __name__ == '__main__':
     lastTest = testfiles[-1]
     tests = range(int(lastTest[4:7]) + 1)# upper bound: last test + 1
   runTests(["test%3.3d" % i for i in tests])
-  sys.exit(1)
 
+  if len(failures) + len(warnings) > 0: 
+    rc = 1
+  else:
+    rc = 0
+
+  sys.exit(rc)
 
