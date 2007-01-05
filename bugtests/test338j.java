@@ -11,11 +11,8 @@ public class test338j implements Runnable {
 
     public void run() {
         String brob = "test338m";
-
         PythonInterpreter interp = new PythonInterpreter();
-        //Py.getSystemState().setClassLoader(this.getClass().getClassLoader());
         interp.set("test338j1", test338j1.class);
-        //interp.exec("mod = __import__('" + brob + "')");
         interp.execfile(brob + ".py");
         interp.exec("cl = " + brob + "()");
         Object newobj = interp.get("cl", Object.class);
@@ -23,7 +20,6 @@ public class test338j implements Runnable {
         //System.out.println(newobj.getClass().getSuperclass().hashCode() + " " + test338j1.class.hashCode());
         //System.out.println(newobj.getClass().getSuperclass().getClassLoader());
         test338j1 boobj = (test338j1) newobj;
-        //System.out.println(boobj.getDescription());
     }
 }
 

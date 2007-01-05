@@ -1,19 +1,15 @@
 """
-
+Bug #222847 - Can't access public member of package private base class
 """
 
 import support
 
 support.compileJava("classes/test232p/Foo.java")
 
-import java
-
 from test232p import Foo
 try:
-   f = Foo()
-   f.hi()
-except java.lang.IllegalAccessException:
-   pass
-else:
-   raise support.TestError("expected an access exception")
+   Foo().hi()
+except IllegalAccessException:
+   raise support.TestError('Should be able to call public method on package protected superclass')
+
 
