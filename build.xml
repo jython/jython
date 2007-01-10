@@ -67,9 +67,10 @@ Actions for a release
   5. adjust the public static String version in PySystemState.java
   6. adjust the version strings in target 'version' of this build.xml
        (this is for upcoming snapshot builds only)
-  7. check in all the changes
-  8. apply the new tag to the jython svn (all projects)
-  9. call target 'full-build'
+  7, adjust the url for the cpython maintenance branch in target 'checkout' of this build.xml
+  8. check in all the changes
+  9. apply the new tag to the jython svn (all projects)
+ 10. call target 'full-build'
 
 
 
@@ -359,6 +360,11 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
         	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
         </svn> 
+
+    	<!-- checkout cpython license from the correct python maintenance branch -->
+        <svn javahl="${javahl.dir}" >
+        	<checkout url="http://svn.python.org/projects/python/branches/release22-maint/" destPath="${svn.checkout.dir}/python" recurse="false" />
+        </svn> 
     </target>
 
 	
@@ -564,9 +570,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </copy>
 
         <!-- copy the CPython license -->
-        <echo>copy CPython LICENSE from ${python.home} to ${dist.dir}/LICENSE_CPython.txt</echo>
-        <!-- +++ TODO: checkout the CPython LICENSE (not: .txt) and copy from there -->
-        <copy file="${python.home}/LICENSE.txt" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
+        <echo>copy CPython LICENSE from ${svn.checkout.dir}/python</echo>
+        <copy file="${svn.checkout.dir}/python/LICENSE" tofile="${dist.dir}/LICENSE_CPython.txt" preservelastmodified="true" />
 
         <!-- sources: todir has to correspond with installer/**/JarInstaller.java -->
         <echo>copy sources from ${jython.base.dir}</echo>
