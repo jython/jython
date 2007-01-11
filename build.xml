@@ -19,7 +19,7 @@ Use case 2: full build for a release (using svn checkout)
   - override svn.tag in ant.properties (if necessary)
   - call target 'full-build'
 This build will create a working directory named full_build_${svn.tag} at the same
-level as your local directories bugtests, jython, sandbox and installer.
+level as your local directories jython, sandbox and installer.
 It will contain a big jython_${svn.tag}.jar file suitable for installation.
 
 Please be aware:
@@ -358,7 +358,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <svn javahl="${javahl.dir}" >
         	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
         	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
-        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/bugtests" revision="${svn.revision}" destPath="${svn.checkout.dir}/bugtests" />
         </svn> 
     </target>
 
