@@ -32,6 +32,10 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
             return __builtin__.range(Py.py2int(arg1,
                     "range(): 1st arg can't be coerced to int"));
         case 3:
+            if (!(arg1 instanceof PyString))
+                throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().getFullName() + " found");
+            if (arg1.__len__() > 1)
+                throw Py.TypeError("ord() expected a character, but string of length " + arg1.__len__() + " found");
             return Py.newInteger(__builtin__.ord(Py.py2char(arg1,
                     "ord(): 1st arg can't be coerced to char")));
         case 5:
@@ -398,7 +402,13 @@ public class __builtin__ implements ClassDictInit {
     }
 
     public static PyString hex(PyObject o) {
-        return o.__hex__();
+    	try {
+    		return o.__hex__();
+    	} catch (PyException e) {
+    	    if (Py.matchException(e, Py.AttributeError))
+    	        throw Py.TypeError("hex() argument can't be converted to hex");
+    	    throw e;
+    	}
     }
 
     public static long id(PyObject o) {
@@ -533,6 +543,9 @@ public class __builtin__ implements ClassDictInit {
     }
 
     public static PyObject min(PyObject[] l) {
+        if (l.length == 0) {
+            throw Py.TypeError("min expected 1 arguments, got 0");
+        }
         if (l.length == 1) {
             return min(l[0]);
         }
@@ -852,7 +865,13 @@ public class __builtin__ implements ClassDictInit {
     }
 
     public static PyObject vars(PyObject o) {
-        return o.__getattr__("__dict__");
+        try {
+            return o.__getattr__("__dict__");
+        } catch (PyException e) {
+            if (Py.matchException(e, Py.AttributeError))
+                throw Py.TypeError("vars() argument must have __dict__ attribute");
+            throw e;
+        }
     }
 
     public static PyObject vars() {

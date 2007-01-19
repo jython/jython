@@ -3416,7 +3416,16 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public PyObject __int__() {
-        return Py.newInteger(atoi(10));
+        try
+        {
+            return Py.newInteger(atoi(10));
+        }
+        catch (PyException e)
+        {
+            if (Py.matchException(e, Py.ValueError))
+                return atol(10);
+            throw e;
+        }
     }
 
     public PyLong __long__() {

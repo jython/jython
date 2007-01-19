@@ -1316,6 +1316,9 @@ public class PyFloat extends PyObject
             return new PyFloat(0);
         }
 
+        if (value < 0 && iw != Math.floor(iw))
+            throw Py.ValueError("negative number cannot be raised to a fractional power");
+            
         double ret = Math.pow(value, iw);
         if (modulo == null) {
             return new PyFloat(ret);
@@ -1359,11 +1362,11 @@ public class PyFloat extends PyObject
         return float___int__();
     }
 
-    final PyInteger float___int__() {
+    final PyObject float___int__() {
         if (value <= Integer.MAX_VALUE && value >= Integer.MIN_VALUE) {
             return new PyInteger((int)value);
         }
-        throw Py.OverflowError("float too large to convert");
+        return __long__();
     }
 
     public PyLong __long__() {
