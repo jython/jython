@@ -2741,7 +2741,7 @@ public class PyUnicode extends PyString {
     }
 
     public PyString unicode___str__() {
-        return str___str__();
+        return new PyString(toString());
     }
 
     final int unicode___len__() {

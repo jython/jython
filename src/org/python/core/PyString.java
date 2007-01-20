@@ -2822,26 +2822,17 @@ public class PyString extends PyBaseString implements ClassDictInit
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("str", args, keywords, new String[] { "object" }, 0);
         PyObject S = ap.getPyObject(0, null);
-        if (new_.for_type == subtype) {
-            return returnString(S);
+        if(new_.for_type == subtype) {
+            if(S == null) {
+                return new PyString("");
+            }
+            return S.__str__();
         } else {
             if (S == null) {
                 return new PyStringDerived(subtype, "");
             }
             return new PyStringDerived(subtype, S.__str__().toString());
         }
-    }
-
-    private static PyString returnString(PyObject S) {
-        if (S == null) {
-            return new PyString("");
-        }
-        if (S instanceof PyStringDerived || S instanceof PyUnicode) {
-            return new PyString(S.toString());
-        } if (S instanceof PyString) {
-            return (PyString)S;
-        }
-        return S.__str__();
     }
 
     /** <i>Internal use only. Do not call this method explicit.</i> */
@@ -2856,7 +2847,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final PyString str___str__() {
-        return returnString(this);
+        return this;
     }
 
     public PyUnicode __unicode__() {
