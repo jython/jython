@@ -627,6 +627,8 @@ checks = [[0,
    '__name__': 'd',
    '__repr__': 'm',
    '__self__': 'd'}]]
-print 'comparing with information from 2.2.3+'
-import make_checker
-make_checker.do_check(names, checks)
+source_version = '2.2.3'
+if __name__ == '__main__':
+    print 'comparing with information from %s' % source_version
+    import make_checker
+    make_checker.report(*make_checker.do_check(names, checks))

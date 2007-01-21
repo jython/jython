@@ -57,6 +57,7 @@ if 0:
                 print "%s," % n
 
 i = 0
+#Make types a mapping from an item in types_list to its index
 types = {}
 for t in types_list:
     if t is not None:
@@ -74,6 +75,7 @@ extra = {
 }
 
 def which(t):
+    '''Get the index of t in types_list or its str value in extra if it's not in types_list'''
     try:
         return types[t]
     except KeyError:
@@ -86,57 +88,75 @@ def do_check(names, checks):
         except KeyError:
             return "%s?" % t.__name__
     def n(fnd):
+	'''Gets the name of fnd if it's a single item, or its names if it's a tuple'''
         if isinstance(fnd, tuple):
             return tuple(map(n, fnd))
         r = names.get(fnd, fnd)
         if isinstance(r, int):
             return "%s?" % types_list[fnd].__name__
         return r
+    missing = []
+    bad_type = []
+    different = []
+    ok = []
     for check in checks:
         index, expected_type, expected_bases, expected_dict = check
         t = types_list[index]
-        print names[index], t
         if t is None:
-            print " Missing!"
+	    missing.append(t)
             continue
         which_type = swhich(type(t))
-        err = 0
         if which_type != expected_type:
-            print " type %s isn't %s" % ( type(t).__name__, n(expected_type))
-            err += 1
+	    bad_type.append((t, names[index], n(expected_type)))
         elif expected_bases:
+	    differences = {}
             which_bases = tuple(map(swhich, t.__bases__))
             if which_bases != expected_bases:
-                print " bases %s aren't %s" % (n(which_bases),
-                                               n(expected_bases))
-                err += 1
+	        differences['bases'] = ['had %s but expected %s' % (n(which_bases), n(expected_bases))]
             d = t.__dict__
+	    bad_types = []
             miss = []
             extra = []
             for name in d.keys():
                 if name not in expected_dict:
                     extra.append(name)
             if extra:
-                print " extra %s" % extra
-                err += len(extra)
+		differences['extra'] = extra
             for name, expected in expected_dict.items():
                 if name not in d:
                     miss.append(name)
                 else:
                     which_type = swhich(type(d[name]))
                     if which_type != expected:
-                        print "%r type %s isn't %s" % (name, n(which_type),
-                                                             n(expected))
-                        err += 1
+			bad_types.append("%r type %s isn't %s" % (name, n(which_type), n(expected)))
             if miss:
-                print " missing %s" % miss
-                err += len(miss)
-                
-        if not err:
-            print ' OK'
-        else:
-            print ' %d problems' % err
-    
+		differences['missing'] = miss
+	    if bad_types:
+		differences['bad_types'] = bad_types
+	    if differences:
+		different.append((t, names[index], differences))
+	    else:
+		ok.append(names[index])
+    return ok, missing, bad_type, different
+
+def report(ok, missing, bad_type, different):
+    if ok:
+        print 'OK: %s' % ', '.join(ok)
+    if missing:
+	print 'Missing: %s' % ', '.join(missing)
+    if bad_type:
+	print 'Bad Type:'
+	for t, name, expected_type in bad_type:
+	    print "    ", name, t, "type isn't", expected_type
+    if different:
+	print 'Different:'
+	for t, name, differences in different:
+	    print '    ', name, t
+	    for k, v in differences.items():
+		if not v: continue
+		print '        ', k
+		for val in v:
+		    print '            ', val
 
 if __name__ == '__main__':
     names = {}
@@ -167,7 +187,7 @@ if __name__ == '__main__':
 
 
     # sanity-check
-    do_check(names, checks)
+    report(*do_check(names, checks))
 
     ver = sys.version.split()[0]
     simple_ver = ver[:3].replace('.', '')
@@ -178,9 +198,11 @@ if __name__ == '__main__':
     pprint.pprint(names, stream=f)
     print >>f, "checks = ",
     pprint.pprint(checks, stream=f)
-    print >>f, "print 'comparing with information from %s'" % ver 
-    print >>f, "import make_checker"
-    print >>f, "make_checker.do_check(names, checks)"
+    print >>f, '''source_version = '%s'
+if __name__ == '__main__':
+    print 'comparing with information from %%s' %% source_version
+    import make_checker
+    make_checker.report(*make_checker.do_check(names, checks))''' % ver
     f.close()
 
     
