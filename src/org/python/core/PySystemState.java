@@ -9,7 +9,6 @@ import java.io.FileInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.security.AccessControlException;
@@ -669,14 +668,10 @@ public class PySystemState extends PyObject
         URL url = thisClass.getResource(className + ".class");
         // we expect an URL like jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
         if (url != null) {
-            try {
-                String urlString = URLDecoder.decode(url.toString(), "UTF-8");
-                int jarSeparatorIndex = urlString.indexOf(JAR_SEPARATOR);
-                if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
-                    jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
-                }
-            } catch (UnsupportedEncodingException e) {
-                // this is VERY unlikely - forget about standalone if it happens
+            String urlString = URLDecoder.decode(url.toString());
+            int jarSeparatorIndex = urlString.indexOf(JAR_SEPARATOR);
+            if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
+                jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
             }
         }
         return jarFileName;
