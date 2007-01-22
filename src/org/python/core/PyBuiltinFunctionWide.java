@@ -2,6 +2,8 @@ package org.python.core;
 
 public abstract class PyBuiltinFunctionWide extends PyBuiltinFunction {
 
+    public static final Class exposed_as = PyBuiltinFunction.class;
+
     public PyBuiltinFunctionWide(Info info) {
         super(info);
     }
