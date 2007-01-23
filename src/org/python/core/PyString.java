@@ -237,6 +237,34 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
+        class exposed___mod__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___mod__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___mod__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.str___mod__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return self.str___mod__(arg0);
+            }
+
+        }
+        dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyString.class,1,1,new exposed___mod__(null,null)));
         class exposed___mul__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -3343,6 +3371,10 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public PyObject __mod__(PyObject other) {
+        return str___mod__(other);
+    }
+    
+    public PyObject str___mod__(PyObject other){
         StringFormatter fmt = new StringFormatter(string);
         return createInstance(fmt.format(other));
     }
