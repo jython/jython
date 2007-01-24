@@ -1043,6 +1043,8 @@ _skips = {
 	test_winsound
 	"""
 }
+if test_support.is_jython and test_support.underlying_system.startswith('win'):
+    _skips['java'] += 'test_mhlib'
 
 _failures = {
     'java':
