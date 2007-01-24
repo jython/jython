@@ -7,13 +7,15 @@
 ###      mhlib.  It should.
 
 import unittest
-from test.test_support import run_unittest, TESTFN, TestSkipped
+from test.test_support import run_unittest, TESTFN, TestSkipped, underlying_system
 import os, StringIO
 import sys
 import mhlib
 
-if (sys.platform.startswith("win") or sys.platform=="riscos" or
-      sys.platform.startswith("atheos")):
+
+
+if (underlying_system.startswith("win") or underlying_system=="riscos" or
+      underlying_system.startswith("atheos")):
     # mhlib.updateline() renames a file to the name of a file that already
     # exists.  That causes a reasonable OS <wink> to complain in test_sequence
     # here, like the "OSError: [Errno 17] File exists" raised on Windows.
@@ -21,7 +23,7 @@ if (sys.platform.startswith("win") or sys.platform=="riscos" or
     # link counts, and that causes test_listfolders() here to get back
     # an empty list from its call of listallfolders().
     # The other tests here pass on Windows.
-    raise TestSkipped("skipped on %s -- " % sys.platform +
+    raise TestSkipped("skipped on %s -- " % underlying_system +
                       "too many Unix assumptions")
 
 _mhroot = TESTFN+"_MH"
