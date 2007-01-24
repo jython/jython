@@ -2,6 +2,9 @@
 package org.python.core;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * All objects known to the Jython runtime system are represented
@@ -699,14 +702,12 @@ public class PyObject implements java.io.Serializable {
     }
 
     /** @deprecated **/
-    public PyObject _callextra( // xxx fix, should work with iterators too
-        PyObject[] args,
-        String[] keywords,
-        PyObject starargs,
-        PyObject kwargs) {
+    public PyObject _callextra(PyObject[] args,
+                               String[] keywords,
+                               PyObject starargs,
+                               PyObject kwargs) {
 
         int argslen = args.length;
-        int nstar = 0;
 
         String name = "";
         if (this instanceof PyFunction) {
@@ -716,9 +717,9 @@ public class PyObject implements java.io.Serializable {
         }
         if (kwargs != null) {
             PyObject keys = kwargs.__findattr__("keys");
-            if (keys == null)
-                throw Py.TypeError(
-                    name + "argument after ** must be " + "a dictionary");
+            if(keys == null)
+                throw Py.TypeError(name
+                        + "argument after ** must be a dictionary");
             for (int i = 0; i < keywords.length; i++)
                 if (kwargs.__finditem__(keywords[i]) != null)
                     throw Py.TypeError(
@@ -729,49 +730,48 @@ public class PyObject implements java.io.Serializable {
                             + "'");
             argslen += kwargs.__len__();
         }
-        if (starargs != null) {
-            if (!(starargs instanceof PySequence
-                || starargs instanceof PyInstance)) // xxx
-                throw Py.TypeError(
-                    name + "argument after * must " + "be a sequence");
-            try {
-                nstar = starargs.__len__();
-            } catch (PyException e) {
-                if (Py.matchException(e, Py.AttributeError)) {
-                    throw Py.TypeError(
-                        name + "argument after * must " + "be a sequence");
+        List starObjs = null;
+        if(starargs != null) {
+            if(starargs.__findattr__("__iter__") != null){
+                PyObject iter = starargs.__iter__();
+                starObjs = new ArrayList();
+                PyObject cur;
+                while((cur = iter.__iternext__()) != null) {
+                    starObjs.add(cur);
                 }
-                throw e;
+            } else {
+                try {
+                    int nstar = starargs.__len__();
+                    PyObject cur;
+                    starObjs = new ArrayList(nstar);
+                    for(int i = 0; (cur = starargs.__finditem__(i)) != null
+                            && i < nstar; i++) {
+                        starObjs.add(cur);
+                    }
+                } catch(PyException e) {
+                    if(Py.matchException(e, Py.AttributeError)) {
+                        throw Py.TypeError(name + "argument after * must "
+                                + "be a sequence");
+                    }
+                    throw e;
+                }
             }
-            argslen += nstar;
+            argslen += starObjs.size();
         }
-
         PyObject[] newargs = new PyObject[argslen];
         int argidx = args.length - keywords.length;
         System.arraycopy(args, 0, newargs, 0, argidx);
-
-        if (starargs != null) {
-            PyObject a;
-            try {
-                for (int i = 0;
-                    (a = starargs.__finditem__(i)) != null && i < nstar;
-                    i++) {
-                    newargs[argidx++] = a;
-                }
-            } catch (PyException e) {
-                if (Py.matchException(e, Py.AttributeError)) {
-                    throw Py.TypeError(
-                        name + "argument after * must " + "be a sequence");
-                }
-                throw e;
+        if(starObjs != null) {
+            Iterator it = starObjs.iterator();
+            while(it.hasNext()) {
+                newargs[argidx++] = (PyObject)it.next();
             }
         }
-        System.arraycopy(
-            args,
-            args.length - keywords.length,
-            newargs,
-            argidx,
-            keywords.length);
+        System.arraycopy(args,
+                         args.length - keywords.length,
+                         newargs,
+                         argidx,
+                         keywords.length);
         argidx += keywords.length;
 
         if (kwargs != null) {
