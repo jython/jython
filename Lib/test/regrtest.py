@@ -407,14 +407,13 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
         if verbose:
             print "CAUTION:  stdout isn't compared in verbose mode:  a test"
             print "that passes in verbose mode may fail without it."
+    surprises = 0
     if skipped and not quiet:
 	print count(len(skipped), "test"), "skipped:"
-	printlist(skipped)
-	printsurprises(_Expected(_skips), skipped, 'skip')
+	surprises += countsurprises(_Expected(_skips), skipped, 'skip')
     if bad:
         print count(len(bad), "test"), "failed:"
-        printlist(bad)
-	printsurprises(_Expected(_failures), bad, 'fail')
+	surprises += countsurprises(_Expected(_failures), bad, 'fail')
 ##     if single:
 ##         alltests = findtests(testdir, stdtests, nottests)
 ##         for i in range(len(alltests)):
@@ -432,7 +431,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     if memo:
         savememo(memo,good,bad,skipped)
 
-    return len(bad) > 0
+    return surprises > 0
 
 
 STDTESTS = [
@@ -631,17 +630,21 @@ def printlist(x, width=70, indent=4):
     if len(line) > indent:
         print line
 
-def printsurprises(e, actual, name):
-    plat = sys.platform
-    if e.isvalid():
-	surprise = _Set(actual) - e.getexpected()
+def countsurprises(expected, actual, name):
+    """returns the number of items in actual that aren't in expected."""
+    
+    printlist(actual)
+    if expected.isvalid():
+	surprise = _Set(actual) - expected.getexpected()
 	if surprise:
 	    print count(len(surprise), name), \
-		  "unexpected on", plat + ":"
+		  "unexpected on", sys.platform + ":"
 	    printlist(surprise)
+	return len(surprise)
     else:
 	print "Ask someone to teach regrtest.py about which tests are"
-	print "expected to %s on %s." % (name, plat)
+	print "expected to %s on %s." % (name, sys.platform)
+	return 1#Surprising not to know what to expect....
 
 class _Set:
     def __init__(self, seq=[]):
