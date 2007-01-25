@@ -449,9 +449,9 @@ class LocatorTest(XMLGenerator):
         XMLGenerator.__init__(self, out, encoding)
         self.location = None
 
-    def endDocument(self):
-        XMLGenerator.endDocument(self)
-        self.location = Location(self._locator)
+    def setDocumentLocator(self, locator):
+	XMLGenerator.setDocumentLocator(self, locator)
+	self.location = Location(self._locator)
 
 def test_expat_locator_noinfo():
     result = StringIO()
