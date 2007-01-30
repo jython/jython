@@ -719,4 +719,4 @@ source_version = '2.3.5'
 if __name__ == '__main__':
     print 'comparing with information from %s' % source_version
     import make_checker
-    make_checker.do_check(names, checks)
+    make_checker.report(*make_checker.do_check(names, checks))
