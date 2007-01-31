@@ -20,6 +20,7 @@ from java.io import File
 from java.lang import System
 import os
 
+
 def _tostr(s, method):
     if isinstance(s, "".__class__):
         return s
@@ -238,6 +239,9 @@ def abspath(path):
     path = _tostr(path, "abspath")
     return File(path).getAbsolutePath()
 
+def realpath(path):
+    path = _tostr(path, "realpath")
+    return File(path).getCanonicalPath()
 
 def getsize(path):
     path = _tostr(path, "getsize")

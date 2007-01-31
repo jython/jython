@@ -88,6 +88,13 @@ if sep=='.':
     extsep = '/'
 else:
     extsep = '.'
+path.curdir = curdir
+path.pardir = pardir
+path.sep = sep
+path.altsep = altsep
+path.pathsep = pathsep
+path.defpath = defpath
+path.extsep = extsep
 
 def _exit(n=0):
     java.lang.System.exit(n)
