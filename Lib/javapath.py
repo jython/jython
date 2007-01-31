@@ -22,10 +22,10 @@ import os
 
 
 def _tostr(s, method):
-    if isinstance(s, "".__class__):
+    if isinstance(s, basestring):
         return s
     import org
-    raise TypeError, "%s() argument must be a string object, not %s" % (
+    raise TypeError, "%s() argument must be a str or unicode object, not %s" % (
                 method, org.python.core.Py.safeRepr(s))
         
 def dirname(path):
