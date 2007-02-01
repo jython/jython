@@ -237,7 +237,7 @@ def normpath(path):
 # Return an absolute path.
 def abspath(path):
     path = _tostr(path, "abspath")
-    return File(path).getAbsolutePath()
+    return File(path).getCanonicalPath()
 
 def realpath(path):
     path = _tostr(path, "realpath")
