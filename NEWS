@@ -12,7 +12,7 @@ Jython 2.2 beta1
     - xml modules from pyxml readded
     - comparison operations between subclasses of
         builtin types tries the subclass first even if it's on the right side 
-  Bugs fixes.
+  Bugs fixed.
     - Modules that throw exceptions while being imported aren't left
        in sys.modules
     - Don't allow sys.recursionlimit to be set below 0
