@@ -1,1 +1,1 @@
-assert __file__ == "test393.py"
+assert __file__ == "test393m.py"
