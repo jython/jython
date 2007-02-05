@@ -1,33 +1,62 @@
 Jython NEWS
 
-Jython 2.2 tip
+Jython 2.2 beta1
 
   New features
     - much improved support for __unicode__ especially in the parser (u"string" and
         friends now result in a PyUnicode object)
     - added datetime support using the pure python datetime.py from cpython non-dist.
-  Bug fixes.
-    - applied patch 906256: Follow spec for read modes of open()
-    - applied patch 868514: yield in finally block -- yield in nested try:except:
-    - fixed bug 1243049: Can't subclass str in 2.2a1
+    - new-style classes and their instances are Java serializable
+    - most new-style builtin types can be pickleds
+    - __slots__ for new-style classes
+    - xml modules from pyxml readded
+    - comparison operations between subclasses of
+        builtin types tries the subclass first even if it's on the right side 
+  Bugs fixes.
+    - Modules that throw exceptions while being imported aren't left
+       in sys.modules
+    - Don't allow sys.recursionlimit to be set below 0
+    - [ 1533624 ] NPE thrown building traceback for a call that jumps
+       threads
+    - [ 1531644 ] import * makes java exception uncatchable
+    - [1243049, 1218089] Can't subclass builtin types in 2.2a1
+    - [1256506] Importing directory module with 12+ char name fails
+    - [1512745] Allow arbitrary precision for formatted strings,
+        but only 250 chars for decimal, integer and long
+    - [1506749] Instance __dict__ are unassignable
+    - [1599004] several fixes to get the sha module up to speed
+    - [1616493] unicode objects can't be passed to os.path
+        methods
+    - [ 979157 ] Stack traces untrimmed
+    - [ 1299032 ] os.getenv out of sync with cpython
+    - [ 738951 ] jython slice behavior differs from python in __getattr__
+    - [ 610576 ] Impl of abstract method not found
+    - [ 1374088 ] keyword args to dict() constructor ignored
+    - [ 730082 ] new can't create unbound methods
+    - [ 1382581 ] double(s) read inaccurately from database
+    - [ 1603312 ] subclasses of int raise a TypeError when given large
+       value
+    - [1465476] bad parenthesis nesting terminates interpreter
+    - [ 1227282 ] Deadlock between PythonTraceFunction.safeCall() and
+       imp.import
+    - [ 1421812 ] Jython 2.2a and 2.1 imports directories as modules
+    - [ 480017 ] Proxy super classes are loaded from syspath, not the
+       proxy's classpath
+    - [ 628315 ] problem with Java synchronized lists
+    - [ 1284344 ] __file__ compiled into .py.class file
+    - [ 610576 ] Impl of abstract method not found
+  Patches applied.
+    - [906256] Follow spec for read modes of open()
+    - [868514] yield in finally block -- yield in nested try:except:
+    - [1542997] Only evaluate the second expression in an assert
+        if the first expression is false
+    - [1612711]: add iterkeys, itervalues and iteritems to
+        PyStringMap
+    - [ 1267425 ] make cStringIO work with gzip.py
+    - [ 1361317 ] __set__ failing on PyProperty
+    
 
-xx-jul-2005 Jython 2.2 alpha1 continued
-
-  New features
-    - finished long/int unification -- PyObject.__int__() now returns a
-      PyObject (which could be a PyInteger or a PyLong).
-    - dict and list conform to CPython 2.3 behaviors (such as the 3 arg 
-        list.index()).
-    - new-style conversion of tuple, float, file and str.
-    - Preliminary work on a unicode type.
-    - Imported tempfile.py and userlist.py from CPython 2.3 and applied some
-        small adjustments to get tests to pass.
-    - Reworked message construction for TypeError exceptions
-      (such as the exceptions generated from operations like [] + "").
-
-  Bug fixes.
-
-xx-xxx-2003 Jython 2.2 alpha1
+17-jul-2005 Jython 2.2 alpha1
 
   New features
    - Integrated patch (by Aleks Totic) that allows to use the Python parser
@@ -41,8 +70,16 @@ xx-xxx-2003 Jython 2.2 alpha1
    - New-style classes
    - PEP 302 implementation
    - Java collections integration
-
-  Bug fixes.
+    - finished long/int unification -- PyObject.__int__() now returns a
+      PyObject (which could be a PyInteger or a PyLong).
+    - dict and list conform to CPython 2.3 behaviors (such as the 3 arg 
+        list.index()).
+    - new-style conversion of tuple, float, file and str.
+    - Preliminary work on a unicode type.
+    - Imported tempfile.py and userlist.py from CPython 2.3 and applied some
+        small adjustments to get tests to pass.
+    - Reworked message construction for TypeError exceptions
+      (such as the exceptions generated from operations like [] + "").
 
 31-jul-2003 Jython 2.2 alpha0
 
