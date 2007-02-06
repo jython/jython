@@ -10,14 +10,14 @@ where it was renamed to Jython.  Jython 2.0 and on are licensed under
 the Jython specific license below. 
 
 The standard library is covered by the Python Software Foundation
-license. See the Lib/LICENSE file for details.
+license. See the LICENSE_CPython.txt file for details.
 
 The zxJDBC package was written by Brian Zimmer and originally licensed
 under the GNU Public License.  The package is now covered by the Jython
 Software License.
 
 The command line interpreter is covered by the Apache Software
-License.  See the org/apache/LICENSE file for details.
+License.  See the LICENSE_Apache.txt file for details.
  
 B. TERMS AND CONDITIONS FOR ACCESSING OR OTHERWISE USING JYTHON
 ================================

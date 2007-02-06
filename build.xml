@@ -660,6 +660,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             	<include name="org/apache/commons/cli/*.class" />
             </fileset>
         </copy>
+        <copy file="${install.src.dir}/org/apache/LICENSE.txt" tofile="${dist.dir}/LICENSE_Apache.txt" preservelastmodified="true" />
         <echo>copy installer icon to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
             <!-- check no /bin directory -->
