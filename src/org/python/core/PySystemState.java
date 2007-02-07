@@ -68,7 +68,7 @@ public class PySystemState extends PyObject
      */
     // TBD: should we use \u00a9 Unicode c-inside-circle?
     public static String copyright =
-        "Copyright (c) 2000, Jython Developers\n" +
+        "Copyright (c) 2000-2007, Jython Developers\n" +
         "All rights reserved.\n\n" +
 
         "Copyright (c) 2000 BeOpen.com.\n" +

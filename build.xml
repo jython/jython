@@ -15,7 +15,7 @@ This build will create directories /build and /dist below basedir.
 
 Use case 2: full build for a release (using svn checkout)
 ---------------------------------------------------------
-  - make sure you have access to the jython subversion repository (https://svn.sourceforge.net/svnroot/jython)
+  - make sure you have access to the jython subversion repository (https://jython.svn.sourceforge.net/svnroot/jython/trunk)
   - override svn.tag in ant.properties (if necessary)
   - call target 'full-build'
 This build will create a working directory named full_build_${svn.tag} at the same
@@ -67,7 +67,7 @@ Actions for a release
   5. adjust the public static String version in PySystemState.java
   6. adjust the version strings in target 'version' of this build.xml
        (this is for upcoming snapshot builds only)
-  7, adjust the url for the cpython maintenance branch in target 'checkout' of this build.xml
+  7. adjust the url for the cpython maintenance branch in target 'checkout' of this build.xml
   8. check in all the changes
   9. apply the new tag to the jython svn (all projects)
  10. call target 'full-build'
@@ -102,13 +102,13 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
 # - option for javac (build.compiler=modern is a global option to use standard jdk 1.3/1.4/1.5)
 #build.compiler=modern
-#jdk.target.version=1.2
+#jdk.target.version=1.4
 #debug=false
 #optimize=off
 #deprecation=off
 
 # - the svn tag to build from; only needed for full-build
-svn.tag=Release_2_2beta1
+#svn.tag=Release_2_2beta1
 #svn.tag=HEAD
 
 # - the revision; defaults to svn.tag; only needed for full-build
@@ -162,8 +162,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property file="${basedir}/ant.properties" />
 
         <property name="build.compiler" value="modern" />
-        <property name="jdk.target.version" value="1.2" />
-        <property name="jdk.source.version" value="1.3" />
+        <property name="jdk.target.version" value="1.4" />
+        <property name="jdk.source.version" value="1.4" />
         <property name="deprecation" value="off" />
         <property name="debug" value="off" />
         <property name="optimize" value="on" />
@@ -213,7 +213,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="full-build" value="true" />
 
         <!-- predefined tags for jython and cpython -->
-        <property name="svn.tag" value="HEAD" />
+        <property name="svn.tag" value="Release_2_2beta1" />
 
         <!-- revision handling -->
     	<property name="svn.revision" value="${svn.tag}" />
@@ -364,8 +364,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     	</condition>
     	<property name="svn.main.dir" value="tags/${svn.tag}" />
         <svn javahl="${javahl.dir}" >
-        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
-        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
+        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
+        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
         </svn> 
 
     	<!-- checkout cpython license from the correct python maintenance branch -->
@@ -378,8 +378,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 	<!-- change the version string, if so defined: used for snapshot builds -->
 	<!-- the following replacements have to be updated if the version strings in PySystemState.java change -->
 	<target name="version" depends="checkout" if="do.snapshot.build" >
-		<property name="replace.value.version" value='version = "2.2a${svn.revision}"' />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2a1"' value="${replace.value.version}" />
+		<property name="replace.value.version" value='version = "2.2b${svn.revision}"' />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2b1"' value="${replace.value.version}" />
 		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_LEVEL = 0x0B" value="PY_RELEASE_LEVEL = 0xAA" />
 		<property name="replace.value.serial" value="PY_RELEASE_SERIAL = ${svn.revision}" />
 		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 1" value="${replace.value.serial}" />
