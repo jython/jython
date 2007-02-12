@@ -343,29 +343,18 @@ public final class Py
 
     public static PyObject JavaError;
     public static PyException JavaError(Throwable t) {
-//         System.err.println("t: "+t);
-        if (t instanceof PyException) {
+        if(t instanceof PyException) {
             return (PyException)t;
-        }
-        else if (t instanceof InvocationTargetException) {
-            return JavaError(
-                ((InvocationTargetException)t).getTargetException());
-        }
-// Remove this automatic coercion, people want to see the real
-// exceptions!
-//      else if (t instanceof java.io.IOException) {
-//          return IOError((java.io.IOException)t);
-//      }
-// see corresponding logic in matchException
-        else if (t instanceof OutOfMemoryError) {
+        } else if(t instanceof InvocationTargetException) {
+            return JavaError(((InvocationTargetException)t).getTargetException());
+        } else if(t instanceof OutOfMemoryError) {
             memory_error((OutOfMemoryError)t);
         }
-        PyJavaInstance exc = (PyJavaInstance)Py.java2py(t);
+        PyJavaInstance exc = new PyJavaInstance(t);
         return new PyException(exc.instclass, exc);
-
     }
 
-    // Don't allow any constructors.  Class only provides static methods.
+    // Don't allow any constructors. Class only provides static methods.
     private Py() { ; }
 
     /** @deprecated **/
@@ -614,6 +603,11 @@ public final class Py
         SyntaxWarning       = initExc("SyntaxWarning", exc, dict);
         OverflowWarning     = initExc("OverflowWarning", exc, dict);
         RuntimeWarning      = initExc("RuntimeWarning", exc, dict);
+        
+        // Pre-initialize the PyJavaClass for OutOfMemoryError so when we need
+        // it it creating the pieces for it won't cause an additional out of
+        // memory error.  Fix for bug #1654484
+        PyJavaClass.lookup(java.lang.OutOfMemoryError.class);
     }
 
     public static PySystemState defaultSystemState;
@@ -1065,7 +1059,6 @@ public final class Py
 
     /* Helpers to implement except clauses */
     public static PyException setException(Throwable t, PyFrame frame) {
-        //System.out.println("Py.setException");
         PyException pye = Py.JavaError(t);
         pye.instantiate();
 
@@ -1088,44 +1081,28 @@ public final class Py
         // A special case for IOError's to allow them to also match
         // java.io.IOExceptions.  This is a hack for 1.0.x until I can do
         // it right in 1.1
-        if (e == Py.IOError) {
-            if (__builtin__.isinstance(
-                pye.value,
-                PyJavaClass.lookup(java.io.IOException.class)))
-            {
+        if(e == Py.IOError) {
+            if(__builtin__.isinstance(pye.value,
+                                      PyJavaClass.lookup(java.io.IOException.class))) {
                 return true;
             }
         }
         // FIXME too, same approach for OutOfMemoryError
-        if (e == Py.MemoryError) {
-            if (__builtin__.isinstance(
-                pye.value,
-                PyJavaClass.lookup(java.lang.OutOfMemoryError.class)))
-            {
-                return true;
-            }
-        }        
-        if (e == Py.IOError) {
-            if (__builtin__.isinstance(
-                pye.value,
-                PyJavaClass.lookup(java.io.IOException.class)))
-            {
+        if(e == Py.MemoryError) {
+            if(__builtin__.isinstance(pye.value,
+                                      PyJavaClass.lookup(java.lang.OutOfMemoryError.class))) {
                 return true;
             }
         }
-        // same approach for OutOfMemoryError
-                
-        if (e instanceof PyClass) {
+        if(e instanceof PyClass) {
             return __builtin__.isinstance(pye.value, (PyClass)e);
-        }
-        else {
-            if (e == pye.type)
+        } else {
+            if(e == pye.type)
                 return true;
-
-            if (e instanceof PyTuple) {
+            if(e instanceof PyTuple) {
                 PyObject[] l = ((PyTuple)e).getArray();
-                for (int i=0; i<l.length; i++) {
-                    if (matchException(pye, l[i]))
+                for(int i = 0; i < l.length; i++) {
+                    if(matchException(pye, l[i]))
                         return true;
                 }
             }
