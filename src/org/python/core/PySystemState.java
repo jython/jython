@@ -612,7 +612,7 @@ public class PySystemState extends PyObject
     private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
         if (!Py.frozen) {
-            addPaths(path, props.getProperty("python.prepath", "."));
+            addPaths(path, props.getProperty("python.prepath", ""));
 
             if (prefix != null) {
                 String libpath = new File(prefix, "Lib").toString();
