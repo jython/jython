@@ -90,9 +90,11 @@ class TestBasicOps(unittest.TestCase):
         self.assertEqual(list(izip()), [])
         self.assertRaises(TypeError, izip, 3)
         self.assertRaises(TypeError, izip, range(3), 3)
-        # Check tuple re-use (implementation detail)
+        # Check tuple re-use (CPython implementation detail)
+        if sys.platform.startswith('java'):
+            return
         self.assertEqual([tuple(list(pair)) for pair in izip('abc', 'def')],
-                         zip('abc', 'def'))
+		          zip('abc', 'def'))
         self.assertEqual([pair for pair in izip('abc', 'def')],
                          zip('abc', 'def'))
         ids = map(id, izip('abc', 'def'))
@@ -169,11 +171,14 @@ class TestBasicOps(unittest.TestCase):
         self.assertRaises(ValueError, islice, xrange(10), 1, -5, -1)
         self.assertRaises(ValueError, islice, xrange(10), 1, 10, -1)
         self.assertRaises(ValueError, islice, xrange(10), 1, 10, 0)
-        self.assertRaises(ValueError, islice, xrange(10), 'a')
-        self.assertRaises(ValueError, islice, xrange(10), 'a', 1)
-        self.assertRaises(ValueError, islice, xrange(10), 1, 'a')
-        self.assertRaises(ValueError, islice, xrange(10), 'a', 1, 1)
-        self.assertRaises(ValueError, islice, xrange(10), 1, 'a', 1)
+        error_type = ValueError
+        if sys.platform.startswith('java'):
+            error_type = TypeError
+        self.assertRaises(error_type, islice, xrange(10), 'a')
+        self.assertRaises(error_type, islice, xrange(10), 'a', 1)
+        self.assertRaises(error_type, islice, xrange(10), 1, 'a')
+        self.assertRaises(error_type, islice, xrange(10), 'a', 1, 1)
+        self.assertRaises(error_type, islice, xrange(10), 1, 'a', 1)
         self.assertEqual(len(list(islice(count(), 1, 10, sys.maxint))), 1)
 
     def test_takewhile(self):
