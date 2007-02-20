@@ -138,7 +138,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- developer build -->
     <target name="developer-build"
-            depends="developer-build-called, developer-init, post-init, copy-dist"
+            depends="developer-build-called, developer-init, post-init, template, copy-dist"
             description="a local build for developers"
     />
 
@@ -204,6 +204,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="templates.dir" value="${basedir}/src/templates" />
         <property name="python.lib" value="${basedir}/CPythonLib" />
         <property name="bugtests.dir" value="${basedir}/bugtests" />
+        <property name="templates.lazy" value="true" />
     </target>
 
 
@@ -395,6 +396,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- prepare template ant task -->
     <target name="template-init" depends="prepare">
+      
         <javac srcdir="${source.dir}/"
                 destdir="${output.dir}/"
                 target="${jdk.target.version}"
@@ -413,21 +415,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="template" depends="checkout, template-init">
         <taskdef name="gentempl" classname="org.python.util.TemplateAntTask"
             classpath="${output.dir}" />
-        <gentempl mappingFile="${templates.dir}/mappings"
-                srcdir="${templates.dir}"
-                destdir="${source.dir}"
-                scriptdir="${templates.dir}"
-                verbose="true">
-            <include name="*.expose" />
-            <include name="*.derived" />
-
-            <!-- unfinished -->
-            <exclude name="function.expose" />
-
-            <!-- sequence.expose is to be used as a parent expose; extended,
-                but not used directly -->
-            <exclude name="sequence.expose" />
-        </gentempl>
+        <gentempl srcdir="${templates.dir}" verbose="true"
+		  lazy="${templates.lazy}"/>
     </target>
 
 
