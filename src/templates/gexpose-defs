@@ -19,6 +19,11 @@ define: getset
             `strfy`(`name),
             new PyGetSetDescr(`strfy`(`name), `typ.class, `get, `set, `del));
 
+define: (ClassBodyDeclarations)call_cmeths args body
+    public PyObject __call__(`args) {
+        `body;
+    }
+
 define: (ClassBodyDeclarations)call_meths args body
     public PyObject __call__(`args) {
         `body;
@@ -28,6 +33,7 @@ define: (ClassBodyDeclarations)call_meths args body
         `typ self = (`typ)gself;
         `body;
     }
+
 define: expose_wide_meth
         class `concat`(exposed_,`name) extends PyBuiltinFunctionWide {
             private `typ self;
@@ -99,19 +105,19 @@ define: expose_narrow_meth typ name minargs maxargs call_meths
 
 define: expose_narrow_cmeth typ name minargs maxargs call_meths
         class `concat`(exposed_,`name) extends PyBuiltinFunctionNarrow {
-            private `typ self;
+            private PyType self;
 
             public PyObject getSelf() {
                 return self;
             }
 
-            `concat`(exposed_,`name)(`typ self, PyBuiltinFunction.Info info) {
+            `concat`(exposed_,`name)(PyType self, PyBuiltinFunction.Info info) {
                 super(info);
                 this.self = self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new `concat`(exposed_,`name)((`typ)self, info);
+                return new `concat`(exposed_,`name)((PyType)self, info);
             }
 
             `call_meths;
@@ -120,13 +126,12 @@ define: expose_narrow_cmeth typ name minargs maxargs call_meths
 
         dict.__setitem__(
             `strfy`(`name),
-            new PyClassMethod(
-            new PyMethodDescr(
+            new PyClassMethodDescr(
                 `strfy`(`name),
                 `typ.class,
                 `minargs,
                 `maxargs,
-                new `concat`(exposed_,`name)(null, null))));    
+                new `concat`(exposed_,`name)(null, null)));    
 
 define: conv_error_handling unsafe_body
      try {

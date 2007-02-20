@@ -34,27 +34,22 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
     }
 
     public PyObject __call__(PyObject[] args) {
-        PyObject self = args[0];
-        PyType objtype = self.getType();
-        if (objtype != dtype && !objtype.isSubType(dtype))
-            throw call_wrongtype(objtype);                
-        int n = args.length;
-        PyObject[] rest = new PyObject[n-1];
-        System.arraycopy(args,1,rest,0,n-1);
-        return func.inst_call(self,rest); 
+        return extractSelfAndCall(args); 
     }
 
     public PyObject __call__(PyObject[] args, String[] kws) {
-        int n = args.length;
         if (kws.length == args.length)
             throw Py.TypeError(blurb()+" needs an argument");
+        return extractSelfAndCall(args);
+    }
+
+    private PyObject extractSelfAndCall(PyObject[] args) {
         PyObject self = args[0];
-        PyType objtype = self.getType();
-        if (objtype != dtype && !objtype.isSubType(dtype))
-            throw call_wrongtype(objtype);        
+        checkCallerType(self);              
+        int n = args.length;
         PyObject[] rest = new PyObject[n-1];
         System.arraycopy(args,1,rest,0,n-1);
-        return func.inst_call(self,rest,kws);
+        return func.inst_call(self,rest);
     }
 
     public PyObject __call__() {
@@ -62,32 +57,24 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
     }
 
     public PyObject __call__(PyObject arg1) {
-        PyType objtype = arg1.getType();
-        if (objtype != dtype && !objtype.isSubType(dtype))
-            throw call_wrongtype(objtype);        
+        checkCallerType(arg1);     
         return func.inst_call(arg1);
     }
 
     public PyObject __call__(PyObject arg1, PyObject arg2) {
-        PyType objtype = arg1.getType();
-        if (objtype != dtype && !objtype.isSubType(dtype))
-            throw call_wrongtype(objtype);        
+        checkCallerType(arg1);
         return func.inst_call(arg1,arg2);
     }
 
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
-        PyType objtype = arg1.getType();
-        if (objtype != dtype && !objtype.isSubType(dtype))
-            throw call_wrongtype(objtype);                
+        checkCallerType(arg1);      
         return func.inst_call(arg1,arg2,arg3);
     }
 
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3,
                              PyObject arg4)
     {
-        PyType objtype = arg1.getType();
-        if (objtype != dtype && !objtype.isSubType(dtype))
-            throw call_wrongtype(objtype);        
+        checkCallerType(arg1);
         return func.inst_call(arg1,arg2,arg3,arg4);
     }
  
@@ -97,12 +84,16 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
 
     public PyObject __get__(PyObject obj, PyObject type) {
         if (obj != null) {
-            PyType objtype = obj.getType();
-            if (objtype != dtype && !objtype.isSubType(dtype))
-                throw get_wrongtype(objtype);
+            checkCallerType(obj);
             return func.makeBound(obj); 
         }
         return this;
+    }
+
+    protected void checkCallerType(PyObject obj) {
+        PyType objtype = obj.getType();
+        if (objtype != dtype && !objtype.isSubType(dtype))
+            throw get_wrongtype(objtype);
     }
 
 }
