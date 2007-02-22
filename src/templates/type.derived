@@ -1,4 +1,4 @@
 base_class: PyType
-want_dict: true
+want_dict: false
 ctr:
 incl: object

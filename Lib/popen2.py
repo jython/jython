@@ -295,7 +295,7 @@ def _test():
     r = p.fromchild.read()
     x = p.poll()
     assert x == 0
-    assert r == q 
+    assert r.strip() == q.strip()
 
 if __name__ == '__main__':
     _test()

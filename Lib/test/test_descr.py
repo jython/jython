@@ -2610,7 +2610,6 @@ def setclass():
     class Int(int): __slots__ = []
     cant(2, Int)
     cant(Int(), int)
-    cant(True, int)
     cant(2, bool)
     o = object()
     cant(o, type(1))

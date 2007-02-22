@@ -9,7 +9,9 @@ import java.io.FileInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.security.AccessControlException;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -34,7 +36,6 @@ public class PySystemState extends PyObject
 
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
-    private static final String URL_BLANK_REPLACEMENT = "%20";
 
     /**
      * The current version of Jython.
@@ -673,14 +674,14 @@ public class PySystemState extends PyObject
         URL url = thisClass.getResource(className + ".class");
         // we expect an URL like jar:file:/install_dir/jython.jar!/org/python/core/PySystemState.class
         if (url != null) {
-            String urlString = url.toString();
-            int jarSeparatorIndex = urlString.indexOf(JAR_SEPARATOR);
-            if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
-                jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
-                // handle directories containing blanks
-                if (jarFileName.indexOf(URL_BLANK_REPLACEMENT) >= 0) {
-                    jarFileName = jarFileName.replaceAll(URL_BLANK_REPLACEMENT, " ");
+            try {
+                String urlString = URLDecoder.decode(url.toString(), "UTF-8");
+                int jarSeparatorIndex = urlString.indexOf(JAR_SEPARATOR);
+                if (urlString.startsWith(JAR_URL_PREFIX) && jarSeparatorIndex > 0) {
+                    jarFileName = urlString.substring(JAR_URL_PREFIX.length(), jarSeparatorIndex);
                 }
+            } catch (UnsupportedEncodingException e) {
+                // this is VERY unlikely - forget about standalone if it happens
             }
         }
         return jarFileName;

@@ -9,6 +9,8 @@ public class MD5Object extends PyObject
 {
     private String data;
 
+    public int digest_size = 16;
+
     public MD5Object(String s) {
         data = s;
     }

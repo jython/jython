@@ -2,13 +2,10 @@
 
 package org.python.modules;
 
+import java.io.UnsupportedEncodingException;
 import org.python.core.*;
 
-public class sha {
-    public int blocksize = 1;
-    public int digestsize = 20;
-    public int digest_size = digestsize;
-
+public class sha implements ClassDictInit {
     public static String __doc__ =
         "* Cryptix General License\n" +
         "* Copyright (c) 1995, 1996, 1997, 1998, 1999, 2000 The Cryptix"+
@@ -45,15 +42,22 @@ public class sha {
     public static SHA1 new$(PyObject[] args, String[] kws) {
         ArgParser ap = new ArgParser("sha", args, kws, "string");
         String cp = ap.getString(0, null);
-
         SHA1 n = new SHA1();
-        if (cp != null)
-            n.update(cp.getBytes());
+        if(cp != null) {
+            n.update(PyString.to_bytes(cp));
+        }
         return n;
     }
 
 
     public static SHA1 sha$(PyObject[] args, String[] kws) {
         return new$(args, kws);
+    }
+
+    public static void classDictInit(PyObject dict) {
+        dict.__setitem__("digest_size", Py.newInteger(20));
+        dict.__setitem__("digestsize", Py.newInteger(20));
+        dict.__setitem__("blocksize", Py.newInteger(1));
+        dict.__setitem__("classDictInit", null);
     }
 }

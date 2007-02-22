@@ -3296,12 +3296,20 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     private byte[] getBytes() {
-        byte[] buf = new byte[string.length()];
-        string.getBytes(0, string.length(), buf, 0);
-        return buf;
-        //XXX: would rather not use above getBytes since it is deprecated,
-        //     but that breaks zlib.py -- need to figure out why and fix.
-        //return string.getBytes();
+       return to_bytes(string);
+    }
+    
+    public static byte[] to_bytes(String s){
+        byte[] bytes = new byte[s.length()];
+        for(int i = 0; i < bytes.length; i++) {
+            char c = s.charAt(i);
+            if(c < 256){
+                bytes[i] = (byte)c;
+            }else{
+                throw Py.ValueError("Strings added to sha hashes must not contain characters with value > 255");
+            }
+        }
+        return bytes;
     }
 
     public Object __tojava__(Class c) {

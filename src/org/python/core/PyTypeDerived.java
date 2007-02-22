@@ -12,33 +12,9 @@ public class PyTypeDerived extends PyType implements Slotted {
 
     private PyObject[]slots;
 
-    private PyObject dict;
-
-    public PyObject fastGetDict() {
-        return dict;
-    }
-
-    public PyObject getDict() {
-        return dict;
-    }
-
-    public void setDict(PyObject newDict) {
-        if (newDict instanceof PyStringMap||newDict instanceof PyDictionary) {
-            dict=newDict;
-        } else {
-            throw Py.TypeError("__dict__ must be set to a Dictionary "+newDict.getClass().getName());
-        }
-    }
-
-    public void delDict() {
-        // deleting an object's instance dict makes it grow a new one
-        dict=new PyStringMap();
-    }
-
     public PyTypeDerived(PyType subtype) {
         super(subtype);
         slots=new PyObject[subtype.getNumSlots()];
-        dict=subtype.instDict();
     }
 
     public PyString __str__() {

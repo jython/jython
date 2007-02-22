@@ -43,7 +43,8 @@
 
 package org.python.modules;
 
-import org.python.core.PyString;
+import java.io.UnsupportedEncodingException;
+import org.python.core.*;
 
 /**
  * This class implements the SHA-1 message digest algorithm.
@@ -89,7 +90,7 @@ public final class SHA1 {
      */
     private long count;
 
-
+    public int digest_size = 20;
 
 
     /**
@@ -161,9 +162,6 @@ public final class SHA1 {
     private int[] digest;
     private byte[] tmp;
     private int[] w;
-
-    private byte[] digestBits;
-
 
     /**
      * Constructs a SHA-1 message digest.
@@ -242,14 +240,14 @@ public final class SHA1 {
     protected byte[] engineDigest(byte[] in, int length)
     {
         byte b[] = java_digest(in, length);
-        engineReset();
         return b;
     }
 
     private byte[] java_digest(byte[] in, int pos)
     {
+	int[] digest_save = (int[]) digest.clone();
         if (pos != 0) System.arraycopy(in, 0, tmp, 0, pos);
-
+	
         tmp[pos++] = (byte)0x80;
 
         if (pos > DATA_LENGTH - 8)
@@ -287,6 +285,7 @@ public final class SHA1 {
             buf[off++] = (byte) (d>>>8);
             buf[off++] = (byte)  d;
         }
+	digest = digest_save;
         return buf;
     }
 
@@ -471,8 +470,7 @@ public final class SHA1 {
      * to the test vectors.
      */
     public String hexdigest() {
-        if (digestBits == null)
-            digestBits = engineDigest();
+	byte[] digestBits = engineDigest();
 
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < 20; i++) {
@@ -494,9 +492,12 @@ public final class SHA1 {
     );
 
     public String digest() {
-        if (digestBits == null)
-            digestBits = engineDigest();
-        return new String(digestBits);
+	byte[] digestBits = engineDigest();
+	try {
+	    return new String(digestBits, "ISO-8859-1");
+	} catch (UnsupportedEncodingException exc) {
+	    throw Py.ValueError("encoding not supported"); 
+	}
     }
 
     // XXX should become PyObject and use Py.idstr?
