@@ -148,26 +148,33 @@ class Gen:
 
         parms = parm.strip().split()
 
-        if len(parms) not in (2,3):
+        if len(parms) not in (2,3,4):
             self.invalid(name, parm)
         
         name = parms[0]
         get = '"%s"' % parms[1]
-        if len(parms) == 3:
+
+        if len(parms) >= 3:
             set = '"%s"' % parms[2]
         else:
             set = "null"
+
+        if len(parms) == 4:
+            del_meth = '"%s"' % parms[3]
+        else:
+            del_meth = "null"
 
         getset_bindings = self.global_bindings.copy()
 
         getset_bindings['name'] = JavaTemplate(make_id(name))
         getset_bindings['get'] = JavaTemplate(make_literal(get))
         getset_bindings['set'] = JavaTemplate(make_literal(set))
+        getset_bindings['del'] = JavaTemplate(make_literal(del_meth))
 
         getset = self.get_aux('getset')
 
         self.statements.append(getset.tbind(getset_bindings))
-        
+         
     NOARGS = JavaTemplate("void()")
     EMPTYALL = JavaTemplate(jast_make(jast.Expressions))
 

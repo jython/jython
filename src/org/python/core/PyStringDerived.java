@@ -22,6 +22,19 @@ public class PyStringDerived extends PyString implements Slotted {
         return dict;
     }
 
+    public void setDict(PyObject newDict) {
+        if (newDict instanceof PyStringMap||newDict instanceof PyDictionary) {
+            dict=newDict;
+        } else {
+            throw Py.TypeError("__dict__ must be set to a Dictionary "+newDict.getClass().getName());
+        }
+    }
+
+    public void delDict() {
+        // deleting an object's instance dict makes it grow a new one
+        dict=new PyStringMap();
+    }
+
     public PyStringDerived(PyType subtype,String v) {
         super(subtype,v);
         slots=new PyObject[subtype.getNumSlots()];

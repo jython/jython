@@ -78,10 +78,10 @@ public class PyClassMethod extends PyObject implements PyType.Newstyle {
     }
 
     final PyObject classmethod___get__(PyObject obj, PyObject type) {
-        if(obj == null) {
-            return new PyMethod(type, callable, type);
+        if(type == null) {
+            type = obj.getType();
         }
-        return new PyMethod(obj, callable, type);
+        return new PyMethod(type, callable, type.getType());
     }
 
     final static PyObject classmethod_new(PyNewWrapper new_, boolean init, PyType subtype,

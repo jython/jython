@@ -2,7 +2,7 @@
 type_name: object
 type_class: PyObject
 # getsets
-expose_getset: __class__ getType
+expose_getset: __class__ getType setType delType
 expose_getset: __doc__ getDoc
 
 # exposed methods

@@ -5,6 +5,7 @@
 #      depend on the c extension module xxsubtype 
 #    - merged code from the pypy version of this script to run all tests instead of stopping
 #      at the first failure
+#    - allow specific tests to be run by specifying them on the command line
 
 from test.test_support import verify, vereq, verbose, TestFailed, TESTFN, get_original_stdout
 from copy import deepcopy
@@ -3680,6 +3681,55 @@ def subclass_right_op():
     vereq(E() // C(), "C.__floordiv__")
     vereq(C() // E(), "C.__floordiv__") # This one would fail
 
+def subclass_cmp_right_op():
+    if verbose:
+        print "Testing correct dispatch of subclass overloading for comp ops"
+
+    # Case 1: subclass of int
+
+    class B(int):
+        def __ge__(self, other):
+            return "B.__ge__"
+        def __le__(self, other):
+            return "B.__le__"
+
+    vereq(B(1) >= 1, "B.__ge__")
+    vereq(1 >= B(1), "B.__le__")
+
+    # Case 2: subclass of object
+
+    class C(object):
+        def __ge__(self, other):
+            return "C.__ge__"
+        def __le__(self, other):
+            return "C.__le__"
+
+    vereq(C() >= 1, "C.__ge__")
+    vereq(1 >= C(), "C.__le__")
+
+    # Case 3: subclass of new-style class; here it gets interesting
+
+    class D(C):
+        def __ge__(self, other):
+            return "D.__ge__"
+        def __le__(self, other):
+            return "D.__le__"
+
+    vereq(D() >= C(), "D.__ge__")
+    vereq(C() >= D(), "D.__le__")
+
+    # Case 4: comparison is different than other binops
+
+    class E(C):
+        pass
+
+    vereq(E.__le__, C.__le__)
+
+    vereq(E() >= 1, "C.__ge__")
+    vereq(1 >= E(), "C.__le__")
+    vereq(E() >= C(), "C.__ge__")
+    vereq(C() >= E(), "C.__le__") # different
+
 def dict_type_with_metaclass():
     if verbose:
         print "Testing type of __dict__ when __metaclass__ set..."
@@ -3927,10 +3977,11 @@ def test_main():
     testrmul,
     testipow,
     test_mutable_bases,
-    #test_mutable_bases_with_failing_mro,
+    test_mutable_bases_with_failing_mro,
     test_mutable_bases_catch_mro_conflict,
     mutable_names,
     subclass_right_op,
+    subclass_cmp_right_op,
     dict_type_with_metaclass,
     meth_class_get,
     isinst_isclass,
@@ -3938,6 +3989,10 @@ def test_main():
     carloverre,
     filefault,
     ]
+    if __name__ == '__main__':
+        import sys
+        if len(sys.argv) > 1:
+            testfuncs = [globals()[arg] for arg in sys.argv[1:]]
 
     n = len(testfuncs)
     success = 0
@@ -3947,7 +4002,7 @@ def test_main():
             print "*"*40
             testfunc()
         except Exception, e:
-            if isinstance(e, KeyboardInterrupt):
+            if isinstance(e, KeyboardInterrupt) or n == 1:
                 raise
             print "-->", testfunc.__name__, "FAILURE(%d/%d)" % (success, n), str(e)
         else:

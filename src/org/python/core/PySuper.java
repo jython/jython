@@ -7,9 +7,9 @@ public class PySuper extends PyObject implements PyType.Newstyle {
     public static final String exposed_name="super";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("__thisclass__",new PyGetSetDescr("__thisclass__",PySuper.class,"getThisClass",null));
-        dict.__setitem__("__self__",new PyGetSetDescr("__self__",PySuper.class,"getSelf",null));
-        dict.__setitem__("__self_class__",new PyGetSetDescr("__self_class__",PySuper.class,"getSelfClass",null));
+        dict.__setitem__("__thisclass__",new PyGetSetDescr("__thisclass__",PySuper.class,"getThisClass",null,null));
+        dict.__setitem__("__self__",new PyGetSetDescr("__self__",PySuper.class,"getSelf",null,null));
+        dict.__setitem__("__self_class__",new PyGetSetDescr("__self_class__",PySuper.class,"getSelfClass",null,null));
         class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
 
             private PySuper self;

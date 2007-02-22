@@ -2,15 +2,14 @@
 type_name: type
 type_class: PyType
 # getsets
-expose_getset: __dict__ getDict
+expose_getset: __dict__ getDict setDict delDict
 expose_getset: __name__ fastGetName
 expose_getset: __base__ getBase
-expose_getset: __bases__ getBases
+expose_getset: __bases__ getBases setBases delBases
 expose_getset: __mro__ getMro
 expose_getset: __flags__ getFlags
-# classmethods
-expose_cmeth: :o mro o?
 # exposed methods
+expose_meth: :o mro o?
 expose_meth: __getattribute__ n{attribute name}
    String name = `arg0;
    PyObject ret = self.type___findattr__(name);
