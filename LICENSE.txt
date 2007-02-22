@@ -1,32 +1,28 @@
-HISTORY OF THE SOFTWARE
+A. HISTORY OF THE SOFTWARE
 =======================
 
 JPython was created in late 1997 by Jim Hugunin. Jim was also the
 primary developer while he was at CNRI. In February 1999 Barry Warsaw
 took over as primary developer and released JPython version 1.1.
+
 In October 2000 Barry helped move the software to SourceForge
-where it was renamed to Jython. Jython is developed by a group
-of volunteers.
+where it was renamed to Jython.  Jython 2.0 and on are licensed under
+the Jython specific license below. 
 
-
-The standard library is covered by the BeOpen / CNRI license. See the
-Lib/LICENSE file for details.
-
-The oro regular expresion matcher is covered by the apache license.
-See the org/apache/LICENSE file for details.
+The standard library is covered by the Python Software Foundation
+license. See the LICENSE_CPython.txt file for details.
 
 The zxJDBC package was written by Brian Zimmer and originally licensed
 under the GNU Public License.  The package is now covered by the Jython
 Software License.
 
-The command line interpreter is covered by the Apache Software License.
-See the org/apache/LICENSE file for details.
-
+The command line interpreter is covered by the Apache Software
+License.  See the LICENSE_Apache.txt file for details.
  
-Jython changes Software License.
+B. TERMS AND CONDITIONS FOR ACCESSING OR OTHERWISE USING JYTHON
 ================================
 
-Copyright (c) 2000, Jython Developers
+Copyright (c) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007 Jython Developers
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -59,7 +55,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-JPython Software License.
+JPython 1.1.x Software License.
 =========================
 
 ______________________________________________________________________

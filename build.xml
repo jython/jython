@@ -243,6 +243,13 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </path>
     	<!-- taskdef for svn ant task -->
     	<taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="svn.classpath" />
+	<!-- Require all of the optional jars for a full build -->
+        <fail unless="readline.present" message="readline jar not present" />
+        <fail unless="servlet.present" message="servlet jar not present" />
+        <fail unless="informix.present" message="informix jar not present" />
+        <fail unless="mysql.present" message="mysql jar not present" />
+        <fail unless="postgresql.present" message="postgres jar not present" />
+        <fail unless="oracle.present" message="oracle jar not present" />
     </target>
 
 
@@ -653,6 +660,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             	<include name="org/apache/commons/cli/*.class" />
             </fileset>
         </copy>
+        <copy file="${install.src.dir}/org/apache/LICENSE.txt" tofile="${dist.dir}/LICENSE_Apache.txt" preservelastmodified="true" />
         <echo>copy installer icon to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
             <!-- check no /bin directory -->
