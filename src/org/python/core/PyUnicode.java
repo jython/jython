@@ -2727,10 +2727,15 @@ public class PyUnicode extends PyString {
         this(UNICODETYPE,String.valueOf(c));
     }
 
-    final static PyObject unicode_new(PyNewWrapper new_, boolean init,
-            PyType subtype, PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("unicode", args, keywords,
-                new String[] { "S", "encoding", "errors" }, 0);
+    final static PyObject unicode_new(PyNewWrapper new_, boolean init, PyType subtype,
+            PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("unicode",
+                                     args,
+                                     keywords,
+                                     new String[] {"string",
+                                                   "encoding",
+                                                   "errors"},
+                                     0);
         PyObject S = ap.getPyObject(0, null);
         String encoding = ap.getString(1, null);
         String errors = ap.getString(2, null);
