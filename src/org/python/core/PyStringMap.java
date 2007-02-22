@@ -560,12 +560,26 @@ public class PyStringMap extends PyObject
         }
         return l;
     }
-
+    
     /**
      * return an iterator over (key, value) pairs
      */
     public synchronized PyObject iteritems() {
         return new PyStringMapIter(keys, values, PyStringMapIter.ITEMS);
+    }
+    
+    /**
+     * return an iterator over the keys
+     */
+    public synchronized PyObject iterkeys() {
+        return new PyStringMapIter(keys, values, PyStringMapIter.KEYS);
+    }
+    
+    /**
+     * return an iterator over the values
+     */
+    public synchronized PyObject itervalues() {
+        return new PyStringMapIter(keys, values, PyStringMapIter.VALUES);
     }
 }
 
@@ -613,7 +627,6 @@ class PyStringMapIter extends PyIterator {
         }
         return null;
     }
-
 }
 
 
