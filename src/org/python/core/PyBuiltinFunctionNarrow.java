@@ -1,6 +1,8 @@
 package org.python.core;
 
 public abstract class PyBuiltinFunctionNarrow extends PyBuiltinFunction {
+
+    public static final Class exposed_as = PyBuiltinFunction.class;
     
     public PyBuiltinFunctionNarrow(Info info) {
         super(info);

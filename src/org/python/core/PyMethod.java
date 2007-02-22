@@ -78,18 +78,21 @@ public class PyMethod extends PyObject
 
     public PyObject _doget(PyObject container, PyObject wherefound) {
         /* Only if classes are compatible */
-        if (container == null)
+        if(container == null || im_self != null) {
             return this;
-        if (__builtin__.issubclass(container.fastGetClass(), im_class))
-             if (im_func instanceof PyFunction)
-                 return new PyMethod(container, (PyFunction)im_func,
-                                     im_class);
-             else if (im_func instanceof PyReflectedFunction)
-                 return new PyMethod(container, (PyReflectedFunction)im_func,
-                                     im_class);
-             else
-                 return new PyMethod(container, im_func, im_class);
-        return this;
+        } else if(__builtin__.issubclass(container.fastGetClass(), im_class)) {
+           if(im_func instanceof PyFunction) {
+                return new PyMethod(container, (PyFunction)im_func, im_class);
+            } else if(im_func instanceof PyReflectedFunction) {
+                return new PyMethod(container,
+                                    (PyReflectedFunction)im_func,
+                                    im_class);
+            } else {
+                return new PyMethod(container, im_func, im_class);
+            }
+        } else {
+            return this;
+        }
     }
 
 

@@ -9,6 +9,7 @@ expose_binary: __ne__ __eq__
 expose_meth: :b __contains__ o
 expose_meth: :i __len__
 expose_meth: __add__ o
+expose_meth: __mod__ o
 expose_meth: __mul__ o
 expose_meth: __rmul__ o
 expose_meth: __str__

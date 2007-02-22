@@ -237,6 +237,34 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
+        class exposed___mod__ extends PyBuiltinFunctionNarrow {
+
+            private PyString self;
+
+            public PyObject getSelf() {
+                return self;
+            }
+
+            exposed___mod__(PyString self,PyBuiltinFunction.Info info) {
+                super(info);
+                this.self=self;
+            }
+
+            public PyBuiltinFunction makeBound(PyObject self) {
+                return new exposed___mod__((PyString)self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return self.str___mod__(arg0);
+            }
+
+            public PyObject inst_call(PyObject gself,PyObject arg0) {
+                PyString self=(PyString)gself;
+                return self.str___mod__(arg0);
+            }
+
+        }
+        dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyString.class,1,1,new exposed___mod__(null,null)));
         class exposed___mul__ extends PyBuiltinFunctionNarrow {
 
             private PyString self;
@@ -2794,26 +2822,17 @@ public class PyString extends PyBaseString implements ClassDictInit
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("str", args, keywords, new String[] { "object" }, 0);
         PyObject S = ap.getPyObject(0, null);
-        if (new_.for_type == subtype) {
-            return returnString(S);
+        if(new_.for_type == subtype) {
+            if(S == null) {
+                return new PyString("");
+            }
+            return S.__str__();
         } else {
             if (S == null) {
                 return new PyStringDerived(subtype, "");
             }
             return new PyStringDerived(subtype, S.__str__().toString());
         }
-    }
-
-    private static PyString returnString(PyObject S) {
-        if (S == null) {
-            return new PyString("");
-        }
-        if (S instanceof PyStringDerived || S instanceof PyUnicode) {
-            return new PyString(S.toString());
-        } if (S instanceof PyString) {
-            return (PyString)S;
-        }
-        return S.__str__();
     }
 
     /** <i>Internal use only. Do not call this method explicit.</i> */
@@ -2828,7 +2847,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final PyString str___str__() {
-        return returnString(this);
+        return this;
     }
 
     public PyUnicode __unicode__() {
@@ -3419,6 +3438,10 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public PyObject __mod__(PyObject other) {
+        return str___mod__(other);
+    }
+    
+    public PyObject str___mod__(PyObject other){
         StringFormatter fmt = new StringFormatter(string);
         return createInstance(fmt.format(other));
     }

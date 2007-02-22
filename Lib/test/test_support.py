@@ -113,6 +113,11 @@ except NameError:
 
 is_jython = sys.platform.startswith('java')
 
+underlying_system = sys.platform
+if is_jython:
+    import java.lang.System
+    underlying_system = java.lang.System.getProperty('os.name').lower()
+
 import os
 # Filename used for testing
 if os.name == 'java':

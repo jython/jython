@@ -20,11 +20,12 @@ from java.io import File
 from java.lang import System
 import os
 
+
 def _tostr(s, method):
-    if isinstance(s, "".__class__):
+    if isinstance(s, basestring):
         return s
     import org
-    raise TypeError, "%s() argument must be a string object, not %s" % (
+    raise TypeError, "%s() argument must be a str or unicode object, not %s" % (
                 method, org.python.core.Py.safeRepr(s))
         
 def dirname(path):
@@ -236,8 +237,11 @@ def normpath(path):
 # Return an absolute path.
 def abspath(path):
     path = _tostr(path, "abspath")
-    return File(path).getAbsolutePath()
+    return File(path).getCanonicalPath()
 
+def realpath(path):
+    path = _tostr(path, "realpath")
+    return File(path).getCanonicalPath()
 
 def getsize(path):
     path = _tostr(path, "getsize")
