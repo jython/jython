@@ -156,41 +156,31 @@ public class PyDictionary extends PyObject {
         dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyDictionary.class,1,1,new exposed___getitem__(null,null)));
         class exposed_fromkeys extends PyBuiltinFunctionNarrow {
 
-            private PyDictionary self;
+            private PyType self;
 
             public PyObject getSelf() {
                 return self;
             }
 
-            exposed_fromkeys(PyDictionary self,PyBuiltinFunction.Info info) {
+            exposed_fromkeys(PyType self,PyBuiltinFunction.Info info) {
                 super(info);
                 this.self=self;
             }
 
             public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_fromkeys((PyDictionary)self,info);
+                return new exposed_fromkeys((PyType)self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return self.dict_fromkeys(arg0,arg1);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_fromkeys(arg0,arg1);
+                return dict_fromkeys(self,arg0,arg1);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.dict_fromkeys(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_fromkeys(arg0);
+                return dict_fromkeys(self,arg0);
             }
 
         }
-        dict.__setitem__("fromkeys",new PyMethodDescr("fromkeys",PyDictionary.class,1,2,new exposed_fromkeys(null,null)));
+        dict.__setitem__("fromkeys",new PyClassMethodDescr("fromkeys",PyDictionary.class,1,2,new exposed_fromkeys(null,null)));
         class exposed_get extends PyBuiltinFunctionNarrow {
 
             private PyDictionary self;
@@ -950,22 +940,22 @@ public class PyDictionary extends PyObject {
         }        
     }
     public PyObject fromkeys(PyObject keys) {
-        return dict_fromkeys(keys, null);
+        return fromkeys(keys, null);
     }
 
     public PyObject fromkeys(PyObject keys, PyObject value) {
-        return dict_fromkeys(keys, value);
+        return dict_fromkeys(PyType.fromClass(PyDictionary.class), keys, value);
     }
 
-    final PyObject dict_fromkeys(PyObject keys) {
-        return dict_fromkeys(keys, null);
+    final static PyObject dict_fromkeys(PyType type, PyObject keys) {
+        return dict_fromkeys(type, keys, null);
     }
 
-    final PyObject dict_fromkeys(PyObject keys, PyObject value) {
+    final static PyObject dict_fromkeys(PyType type, PyObject keys, PyObject value) {
         if (value == null) {
             value = Py.None;
         }
-        PyDictionary d = new PyDictionary();
+        PyObject d = type.__call__();
         PyIterator iter = (PyIterator)keys.__iter__();
         for (PyObject o = iter.__iternext__();o != null;o = iter.__iternext__()) {
             d.__setitem__(o, value);

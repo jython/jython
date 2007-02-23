@@ -4,7 +4,7 @@ type_class: PyDictionary
 # exposed methods
 expose_binary: __ne__ __eq__
 expose_vanilla_cmp:
-expose_meth: fromkeys o o?
+expose_cmeth: fromkeys o o?
 expose_key_getitem:
 expose_meth: get oo?
 expose_meth: setdefault oo?

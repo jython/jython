@@ -78,9 +78,10 @@ else:
 
 print_test('get/set bean properties')
 
-b1 = awt.Button()
+from javax import swing
+b1 = swing.JButton()
 b1.label = 'foo'
-b2 = awt.Button(label='foo')
+b2 = swing.JButton(label='foo')
 assert b1.label == b2.label == 'foo', 'Button label bean property'
 
 print_test('bean event properties')
@@ -94,17 +95,17 @@ doit = awt.event.ActionEvent(b1, awt.event.ActionEvent.ACTION_PERFORMED, "")
 
 b1.actionPerformed = testAction
 flag = 0
-b1.dispatchEvent(doit)
-assert flag == 1, 'one action per event'
+b1.doClick()
+assert flag == 1, 'expected one action per event but got %s' % flag
 
 b1.actionPerformed.append(testAction)
 flag = 0
-b1.dispatchEvent(doit)
+b1.doClick()
 assert flag == 2, 'two actions per event'
 
 b1.actionPerformed = testAction
 flag = 0
-b1.dispatchEvent(doit)
+b1.doClick()
 assert flag == 1, 'one actions per event - again'
 
 # TBD: JPython does not properly exit after this code!

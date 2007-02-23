@@ -177,21 +177,37 @@ class Gen:
         derived_templ = self.get_aux('derived_class')
         return derived_templ.texpand({'base': self.base_class, 'decls': self.decls })
 
-def process(fn, outfile=sys.stdout):
+def process(fn, outfile, lazy=False):
+    if lazy and os.stat(fn).st_mtime < os.stat(outfile).st_mtime:
+	return
+    print 'Processing %s into %s' % (fn, outfile)
     gen = Gen()
     directives.execute(directives.load(fn),gen)
     result = gen.generate()
-    print >> outfile, result
+    print >> open(outfile, 'w'), result
     #gen.debug()
-    
-def usage():
-    print "Usage: python %s infile [outfile]" % sys.argv[0]
 
 if __name__ == '__main__':
-    if (len(sys.argv) < 2 or len(sys.argv) > 3):
+    from gexpose import load_mappings, usage
+    lazy = False
+    if len(sys.argv) > 4:
         usage()
-    elif (len(sys.argv) == 2):
-        process(sys.argv[1])
-    elif (len(sys.argv) == 3):
-        process(sys.argv[1], file(sys.argv[2], 'w'))
+	sys.exit(1)
+    if len(sys.argv) >= 2:
+	if '--help' in sys.argv:
+	    usage()
+	    sys.exit(0)
+	elif '--lazy' in sys.argv:
+	    lazy = True
+	    sys.argv.remove('--lazy')
+    if len(sys.argv) == 1:
+	for template, mapping in load_mappings().items():
+	    if template.endswith('derived'):
+		process(mapping[0], mapping[1], lazy)
+    elif len(sys.argv) == 2:
+	mapping = load_mappings()[sys.argv[1]]
+        process(mapping[0], mapping[1], lazy)
+    else:
+        process(sys.argv[1], sys.argv[2], lazy)
+
 

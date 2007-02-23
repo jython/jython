@@ -15,12 +15,12 @@ This build will create directories /build and /dist below basedir.
 
 Use case 2: full build for a release (using svn checkout)
 ---------------------------------------------------------
-  - make sure you have access to the jython subversion repository (https://svn.sourceforge.net/svnroot/jython)
+  - make sure you have access to the jython subversion repository (https://jython.svn.sourceforge.net/svnroot/jython/trunk)
   - override svn.tag in ant.properties (if necessary)
   - call target 'full-build'
 This build will create a working directory named full_build_${svn.tag} at the same
 level as your local directories jython, sandbox and installer.
-It will contain a big jython_installer_${svn.tag}.jar file suitable for installation.
+It will contain a big jython_installer-${jython.version}.jar file suitable for installation.
 
 Please be aware:
 To build older releases, it may be necessary to use an older build.xml, too (with the corresponding tag).
@@ -67,7 +67,7 @@ Actions for a release
   5. adjust the public static String version in PySystemState.java
   6. adjust the version strings in target 'version' of this build.xml
        (this is for upcoming snapshot builds only)
-  7, adjust the url for the cpython maintenance branch in target 'checkout' of this build.xml
+  7. adjust the url for the cpython maintenance branch in target 'checkout' of this build.xml
   8. check in all the changes
   9. apply the new tag to the jython svn (all projects)
  10. call target 'full-build'
@@ -102,7 +102,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 
 # - option for javac (build.compiler=modern is a global option to use standard jdk 1.3/1.4/1.5)
 #build.compiler=modern
-#jdk.target.version=1.2
+#jdk.target.version=1.4
 #debug=false
 #optimize=off
 #deprecation=off
@@ -138,7 +138,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- developer build -->
     <target name="developer-build"
-            depends="developer-build-called, developer-init, post-init, copy-dist"
+            depends="developer-build-called, developer-init, post-init, template, copy-dist"
             description="a local build for developers"
     />
 
@@ -162,8 +162,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property file="${basedir}/ant.properties" />
 
         <property name="build.compiler" value="modern" />
-        <property name="jdk.target.version" value="1.2" />
-        <property name="jdk.source.version" value="1.3" />
+        <property name="jdk.target.version" value="1.4" />
+        <property name="jdk.source.version" value="1.4" />
         <property name="deprecation" value="off" />
         <property name="debug" value="off" />
         <property name="optimize" value="on" />
@@ -204,6 +204,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="templates.dir" value="${basedir}/src/templates" />
         <property name="python.lib" value="${basedir}/CPythonLib" />
         <property name="bugtests.dir" value="${basedir}/bugtests" />
+        <property name="templates.lazy" value="true" />
     </target>
 
 
@@ -213,10 +214,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="full-build" value="true" />
 
         <!-- predefined tags for jython and cpython -->
-        <property name="svn.tag" value="HEAD" />
-
-        <!-- revision handling -->
-    	<property name="svn.revision" value="${svn.tag}" />
+        <property name="svn.tag" value="Release_2_2beta1" />
 
         <property name="work.dir" value="${basedir}/../full_build_${svn.tag}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
@@ -228,11 +226,14 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
         </condition>
-        <condition property="do.snapshot.build" value="true">
-        	<not>
-                <equals arg1="${svn.revision}" arg2="${svn.tag}" />
-            </not>
+        <condition property="do.snapshot.build">
+            <isset property="svn.revision" />
         </condition>
+        <condition property="jython.version" value="${svn.revision}">
+            <isset property="svn.revision" />
+        </condition>
+        <property name="jython.version" value="2.2b1" />
+	<property name="svn.revision" value="HEAD"/>
     	
         <!-- classpath for svn ant task -->
         <path id="svn.classpath">
@@ -364,13 +365,13 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     	</condition>
     	<property name="svn.main.dir" value="tags/${svn.tag}" />
         <svn javahl="${javahl.dir}" >
-        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
-        	<checkout url="https://svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
+        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
+        	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
         </svn> 
 
-    	<!-- checkout cpython license from the correct python maintenance branch -->
+        <!-- checkout cpython license from the correct python maintenance branch -->
         <svn javahl="${javahl.dir}" >
-        	<checkout url="http://svn.python.org/projects/python/branches/release22-maint/" destPath="${svn.checkout.dir}/python" recurse="false" />
+               <checkout url="http://svn.python.org/projects/python/branches/release22-maint/" destPath="${svn.checkout.dir}/python" recurse="false" />
         </svn> 
     </target>
 
@@ -378,8 +379,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 	<!-- change the version string, if so defined: used for snapshot builds -->
 	<!-- the following replacements have to be updated if the version strings in PySystemState.java change -->
 	<target name="version" depends="checkout" if="do.snapshot.build" >
-		<property name="replace.value.version" value='version = "2.2a${svn.revision}"' />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2a1"' value="${replace.value.version}" />
+		<property name="replace.value.version" value='version = "2.2b${svn.revision}"' />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2b1"' value="${replace.value.version}" />
 		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_LEVEL = 0x0A" value="PY_RELEASE_LEVEL = 0xAA" />
 		<property name="replace.value.serial" value="PY_RELEASE_SERIAL = ${svn.revision}" />
 		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 1" value="${replace.value.serial}" />
@@ -395,6 +396,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- prepare template ant task -->
     <target name="template-init" depends="prepare">
+      
         <javac srcdir="${source.dir}/"
                 destdir="${output.dir}/"
                 target="${jdk.target.version}"
@@ -413,21 +415,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="template" depends="checkout, template-init">
         <taskdef name="gentempl" classname="org.python.util.TemplateAntTask"
             classpath="${output.dir}" />
-        <gentempl mappingFile="${templates.dir}/mappings"
-                srcdir="${templates.dir}"
-                destdir="${source.dir}"
-                scriptdir="${templates.dir}"
-                verbose="true">
-            <include name="*.expose" />
-            <include name="*.derived" />
-
-            <!-- unfinished -->
-            <exclude name="function.expose" />
-
-            <!-- sequence.expose is to be used as a parent expose; extended,
-                but not used directly -->
-            <exclude name="sequence.expose" />
-        </gentempl>
+        <gentempl srcdir="${templates.dir}" verbose="true"
+		  lazy="${templates.lazy}"/>
     </target>
 
 
@@ -506,7 +495,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
               <attribute name="Built-By" value="${user.name}" />
               <!-- info section. ATTN: no blanks, no '.' in the names -->
               <section name="Build-Info">
-                  <attribute name="version" value="${svn.revision}" />
+                  <attribute name="version" value="${jython.version}" />
                   <attribute name="svn-build" value="${do.checkout}" />
                   <attribute name="threadlocal" value="${threadlocal.present}" />
                   <attribute name="secureclassloader" value="${secureclassloader.present}" />
@@ -667,13 +656,13 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <fileset dir="${install.src.dir}" includes="**/*.png" excludes="bin/**" />
         </copy>
         <echo>building installer .jar file</echo>
-        <jar destfile="${work.dir}/jython_installer_${svn.revision}.jar" basedir="${dist.dir}" update="true">
+        <jar destfile="${work.dir}/jython_installer-${jython.version}.jar" basedir="${dist.dir}" update="true">
             <manifest>
                 <attribute name="Main-Class" value="org.python.util.install.Installation" />
                 <attribute name="Built-By" value="${user.name}" />
                 <!-- section for the install program -->
                 <section name="Jython">
-                    <attribute name="version" value="${svn.revision}" />
+                    <attribute name="version" value="${jython.version}" />
                     <attribute name="exclude-dirs" value="org;META-INF" />
                 </section>
                 <!-- info section. ATTN: no blanks, no '.' in the names -->

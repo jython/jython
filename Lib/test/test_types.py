@@ -596,10 +596,9 @@ class FailingUserDict:
 try: d.update(FailingUserDict())
 except ValueError: pass
 else: raise TestFailed, 'dict.update(), __getitem__ expected ValueError'
-#XXX fromkeys not a classmethod yet.
 # dict.fromkeys()
-#if dict.fromkeys('abc') != {'a':None, 'b':None, 'c':None}:
-#    raise TestFailed, 'dict.fromkeys did not work as a class method'
+if dict.fromkeys('abc') != {'a':None, 'b':None, 'c':None}:
+    raise TestFailed, 'dict.fromkeys did not work as a class method'
 d = {}
 if d.fromkeys('abc') is d:
     raise TestFailed, 'dict.fromkeys did not return a new dict'
@@ -616,21 +615,19 @@ if d.fromkeys(g()) != {1:None}:
 try: {}.fromkeys(3)
 except TypeError: pass
 else: raise TestFailed, 'dict.fromkeys failed to raise TypeError'
-#XXX fromkeys in a subclass doesn't work yet.
 class dictlike(dict): pass
 #if dictlike.fromkeys('a') != {'a':None}:
 #    raise TestFailed, 'dictsubclass.fromkeys did not inherit'
-if dictlike().fromkeys('a') != {'a':None}:
-    raise TestFailed, 'dictsubclass.fromkeys did not inherit'
-#if type(dictlike.fromkeys('a')) is not dictlike:
-#    raise TestFailed, 'dictsubclass.fromkeys created wrong type'
-#if type(dictlike().fromkeys('a')) is not dictlike:
-#    raise TestFailed, 'dictsubclass.fromkeys created wrong type'
+#if dictlike().fromkeys('a') != {'a':None}:
+#    raise TestFailed, 'dictsubclass.fromkeys did not inherit'
+if type(dictlike.fromkeys('a')) is not dictlike:
+    raise TestFailed, 'dictsubclass.fromkeys created wrong type'
+if type(dictlike().fromkeys('a')) is not dictlike:
+    raise TestFailed, 'dictsubclass.fromkeys created wrong type'
 from UserDict import UserDict
 class mydict(dict):
     def __new__(cls):
         return UserDict()
-#XXX fromkeys in a subclass doesn't work yet.
 #ud = mydict.fromkeys('ab')
 #if ud != {'a':None, 'b':None} or not isinstance(ud,UserDict):
 #    raise TestFailed, 'fromkeys did not instantiate using  __new__'

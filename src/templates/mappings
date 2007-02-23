@@ -22,7 +22,7 @@ file.derived:org.python.core.PyFileDerived
 #file.expose:org.python.core.PyFile
 float.derived:org.python.core.PyFloatDerived
 float.expose:org.python.core.PyFloat
-function.expose:org.python.core.PyFunction
+#function.expose:org.python.core.PyFunction
 #immutableset.expose
 int.derived:org.python.core.PyIntegerDerived
 int.expose:org.python.core.PyInteger
@@ -35,9 +35,9 @@ object.derived:org.python.core.PyObjectDerived
 object.expose:org.python.core.PyObject
 property.derived:org.python.core.PyPropertyDerived
 property.expose:org.python.core.PyProperty
-sequence.expose:org.python.core.PySequence
-random.derived:org.python.modules.random.PyRandomDerived
-random.expose:org.python.modules.random.PyRandom
+#sequence.expose:org.python.core.PySequence
+#random.derived:org.python.modules.random.PyRandomDerived
+#random.expose:org.python.modules.random.PyRandom
 #set.expose
 str.expose:org.python.core.PyString
 str.derived:org.python.core.PyStringDerived

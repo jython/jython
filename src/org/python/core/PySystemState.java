@@ -67,7 +67,7 @@ public class PySystemState extends PyObject
      */
     // TBD: should we use \u00a9 Unicode c-inside-circle?
     public static String copyright =
-        "Copyright (c) 2000, Jython Developers\n" +
+        "Copyright (c) 2000-2007, Jython Developers\n" +
         "All rights reserved.\n\n" +
 
         "Copyright (c) 2000 BeOpen.com.\n" +
@@ -617,7 +617,7 @@ public class PySystemState extends PyObject
     private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
         if (!Py.frozen) {
-            addPaths(path, props.getProperty("python.prepath", "."));
+            addPaths(path, props.getProperty("python.prepath", ""));
 
             if (prefix != null) {
                 String libpath = new File(prefix, "Lib").toString();
