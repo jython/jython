@@ -16,7 +16,7 @@ import org.python.core.PyUnicode;
 import org.python.core.Slotted;
 import org.python.core.ThreadState;
 
-public class PySetDerived extends PySet implements Slotted {
+public class PyImmutableSetDerived extends PyImmutableSet implements Slotted {
 
     public PyObject getSlot(int index) {
         return slots[index];
@@ -51,7 +51,7 @@ public class PySetDerived extends PySet implements Slotted {
         dict=new PyStringMap();
     }
 
-    public PySetDerived(PyType subtype) {
+    public PyImmutableSetDerived(PyType subtype) {
         super(subtype);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();

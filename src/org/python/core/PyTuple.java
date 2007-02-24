@@ -25,33 +25,18 @@ public class PyTuple extends PySequenceList implements ClassDictInit
     public static final Class exposed_base=PyObject.class;
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___ne__ extends PyBuiltinFunctionNarrow {
+        class exposed___ne__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___ne__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___ne__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___ne__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ne__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.tuple___ne__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTuple self=(PyTuple)gself;
-                PyObject ret=self.tuple___ne__(arg0);
+                PyObject ret=((PyTuple)self).tuple___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -59,33 +44,18 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__ne__",new PyMethodDescr("__ne__",PyTuple.class,1,1,new exposed___ne__(null,null)));
-        class exposed___eq__ extends PyBuiltinFunctionNarrow {
+        class exposed___eq__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___eq__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___eq__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___eq__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___eq__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.tuple___eq__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTuple self=(PyTuple)gself;
-                PyObject ret=self.tuple___eq__(arg0);
+                PyObject ret=((PyTuple)self).tuple___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -93,34 +63,18 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyTuple.class,1,1,new exposed___eq__(null,null)));
-        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
+        class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___getitem__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getitem__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getitem__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.seq___finditem__(arg0);
-                if (ret==null) {
-                    throw Py.IndexError("index out of range: "+arg0);
-                }
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTuple self=(PyTuple)gself;
-                PyObject ret=self.seq___finditem__(arg0);
+                PyObject ret=((PyTuple)self).seq___finditem__(arg0);
                 if (ret==null) {
                     throw Py.IndexError("index out of range: "+arg0);
                 }
@@ -129,263 +83,150 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyTuple.class,1,1,new exposed___getitem__(null,null)));
-        class exposed___getslice__ extends PyBuiltinFunctionNarrow {
+        class exposed___getslice__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___getslice__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___getslice__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getslice__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getslice__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                return self.seq___getslice__(arg0,arg1,arg2);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1,PyObject arg2) {
-                PyTuple self=(PyTuple)gself;
-                return self.seq___getslice__(arg0,arg1,arg2);
+                return((PyTuple)self).seq___getslice__(arg0,arg1,arg2);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return self.seq___getslice__(arg0,arg1);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyTuple self=(PyTuple)gself;
-                return self.seq___getslice__(arg0,arg1);
+                return((PyTuple)self).seq___getslice__(arg0,arg1);
             }
 
         }
         dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyTuple.class,2,3,new exposed___getslice__(null,null)));
-        class exposed___contains__ extends PyBuiltinFunctionNarrow {
+        class exposed___contains__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___contains__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___contains__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___contains__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___contains__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return Py.newBoolean(self.tuple___contains__(arg0));
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTuple self=(PyTuple)gself;
-                return Py.newBoolean(self.tuple___contains__(arg0));
+                return Py.newBoolean(((PyTuple)self).tuple___contains__(arg0));
             }
 
         }
         dict.__setitem__("__contains__",new PyMethodDescr("__contains__",PyTuple.class,1,1,new exposed___contains__(null,null)));
-        class exposed___len__ extends PyBuiltinFunctionNarrow {
+        class exposed___len__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___len__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___len__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___len__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___len__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newInteger(self.tuple___len__());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyTuple self=(PyTuple)gself;
-                return Py.newInteger(self.tuple___len__());
+                return Py.newInteger(((PyTuple)self).tuple___len__());
             }
 
         }
         dict.__setitem__("__len__",new PyMethodDescr("__len__",PyTuple.class,0,0,new exposed___len__(null,null)));
-        class exposed___add__ extends PyBuiltinFunctionNarrow {
+        class exposed___add__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___add__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___add__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___add__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.tuple___add__(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTuple self=(PyTuple)gself;
-                return self.tuple___add__(arg0);
+                return((PyTuple)self).tuple___add__(arg0);
             }
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyTuple.class,1,1,new exposed___add__(null,null)));
-        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
+        class exposed___reduce__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___reduce__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___reduce__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___reduce__(self,info);
             }
 
             public PyObject __call__() {
-                return self.tuple___reduce__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyTuple self=(PyTuple)gself;
-                return self.tuple___reduce__();
+                return((PyTuple)self).tuple___reduce__();
             }
 
         }
         dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyTuple.class,0,0,new exposed___reduce__(null,null)));
-        class exposed___mul__ extends PyBuiltinFunctionNarrow {
+        class exposed___mul__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___mul__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___mul__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mul__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.tuple___mul__(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTuple self=(PyTuple)gself;
-                return self.tuple___mul__(arg0);
+                return((PyTuple)self).tuple___mul__(arg0);
             }
 
         }
         dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyTuple.class,1,1,new exposed___mul__(null,null)));
-        class exposed___rmul__ extends PyBuiltinFunctionNarrow {
+        class exposed___rmul__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rmul__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rmul__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmul__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.tuple___rmul__(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTuple self=(PyTuple)gself;
-                return self.tuple___rmul__(arg0);
+                return((PyTuple)self).tuple___rmul__(arg0);
             }
 
         }
         dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyTuple.class,1,1,new exposed___rmul__(null,null)));
-        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+        class exposed___hash__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___hash__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hash__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___hash__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newInteger(self.tuple_hashCode());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyTuple self=(PyTuple)gself;
-                return Py.newInteger(self.tuple_hashCode());
+                return Py.newInteger(((PyTuple)self).tuple_hashCode());
             }
 
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyTuple.class,0,0,new exposed___hash__(null,null)));
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
-            private PyTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___repr__(PyTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.tuple_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyTuple self=(PyTuple)gself;
-                return new PyString(self.tuple_toString());
+                return new PyString(((PyTuple)self).tuple_toString());
             }
 
         }

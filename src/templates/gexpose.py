@@ -358,7 +358,7 @@ class Gen:
 
     def dire_expose_cmeth(self,name,parm,body):
 	if body is None:
-	    body = 'return `concat`(`deleg_prefix,`name)(self,`all);'
+	    body = 'return `concat`(`deleg_prefix,`name)((PyType)getSelf(),`all);'
         parm, prefix, body = self.expose_meth_body(name, parm, body)
         expose = self.get_aux('expose_narrow_cmeth')
 	type_class = getattr(self, 'type_class', None)

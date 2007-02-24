@@ -1,0 +1,4 @@
+base_class: PyImmutableSet
+want_dict: true
+ctr:
+incl: object

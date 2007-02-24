@@ -335,6 +335,10 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
      * @return a tuple of (constructor, (elements))
      */
     public PyObject __reduce__() {
+        return baseset___reduce__();
+    }
+    
+    final PyObject baseset___reduce__(){
         String name = getType().getFullName();
         PyObject factory = __builtin__.__import__("setsfactory");
         PyObject func = factory.__getattr__(name);

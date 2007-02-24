@@ -15,201 +15,114 @@ public class PyFloat extends PyObject
     public static final String exposed_name="float";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___abs__ extends PyBuiltinFunctionNarrow {
+        class exposed___abs__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___abs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___abs__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___abs__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___abs__(self,info);
             }
 
             public PyObject __call__() {
-                return self.float___abs__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return self.float___abs__();
+                return((PyFloat)self).float___abs__();
             }
 
         }
         dict.__setitem__("__abs__",new PyMethodDescr("__abs__",PyFloat.class,0,0,new exposed___abs__(null,null)));
-        class exposed___float__ extends PyBuiltinFunctionNarrow {
+        class exposed___float__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___float__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___float__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___float__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___float__(self,info);
             }
 
             public PyObject __call__() {
-                return self.float___float__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return self.float___float__();
+                return((PyFloat)self).float___float__();
             }
 
         }
         dict.__setitem__("__float__",new PyMethodDescr("__float__",PyFloat.class,0,0,new exposed___float__(null,null)));
-        class exposed___int__ extends PyBuiltinFunctionNarrow {
+        class exposed___int__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___int__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___int__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___int__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___int__(self,info);
             }
 
             public PyObject __call__() {
-                return self.float___int__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return self.float___int__();
+                return((PyFloat)self).float___int__();
             }
 
         }
         dict.__setitem__("__int__",new PyMethodDescr("__int__",PyFloat.class,0,0,new exposed___int__(null,null)));
-        class exposed___long__ extends PyBuiltinFunctionNarrow {
+        class exposed___long__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___long__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___long__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___long__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___long__(self,info);
             }
 
             public PyObject __call__() {
-                return self.float___long__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return self.float___long__();
+                return((PyFloat)self).float___long__();
             }
 
         }
         dict.__setitem__("__long__",new PyMethodDescr("__long__",PyFloat.class,0,0,new exposed___long__(null,null)));
-        class exposed___neg__ extends PyBuiltinFunctionNarrow {
+        class exposed___neg__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___neg__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___neg__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___neg__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___neg__(self,info);
             }
 
             public PyObject __call__() {
-                return self.float___neg__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return self.float___neg__();
+                return((PyFloat)self).float___neg__();
             }
 
         }
         dict.__setitem__("__neg__",new PyMethodDescr("__neg__",PyFloat.class,0,0,new exposed___neg__(null,null)));
-        class exposed___pos__ extends PyBuiltinFunctionNarrow {
+        class exposed___pos__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___pos__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___pos__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___pos__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___pos__(self,info);
             }
 
             public PyObject __call__() {
-                return self.float___pos__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return self.float___pos__();
+                return((PyFloat)self).float___pos__();
             }
 
         }
         dict.__setitem__("__pos__",new PyMethodDescr("__pos__",PyFloat.class,0,0,new exposed___pos__(null,null)));
-        class exposed___add__ extends PyBuiltinFunctionNarrow {
+        class exposed___add__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___add__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___add__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___add__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___add__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___add__(arg0);
+                PyObject ret=((PyFloat)self).float___add__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -217,33 +130,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyFloat.class,1,1,new exposed___add__(null,null)));
-        class exposed___div__ extends PyBuiltinFunctionNarrow {
+        class exposed___div__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___div__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___div__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___div__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___div__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___div__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___div__(arg0);
+                PyObject ret=((PyFloat)self).float___div__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -251,33 +149,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__div__",new PyMethodDescr("__div__",PyFloat.class,1,1,new exposed___div__(null,null)));
-        class exposed___divmod__ extends PyBuiltinFunctionNarrow {
+        class exposed___divmod__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___divmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___divmod__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___divmod__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___divmod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___divmod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___divmod__(arg0);
+                PyObject ret=((PyFloat)self).float___divmod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -285,33 +168,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__divmod__",new PyMethodDescr("__divmod__",PyFloat.class,1,1,new exposed___divmod__(null,null)));
-        class exposed___floordiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___floordiv__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___floordiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___floordiv__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___floordiv__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___floordiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___floordiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___floordiv__(arg0);
+                PyObject ret=((PyFloat)self).float___floordiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -319,33 +187,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__floordiv__",new PyMethodDescr("__floordiv__",PyFloat.class,1,1,new exposed___floordiv__(null,null)));
-        class exposed___mod__ extends PyBuiltinFunctionNarrow {
+        class exposed___mod__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___mod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___mod__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___mod__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___mod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___mod__(arg0);
+                PyObject ret=((PyFloat)self).float___mod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -353,33 +206,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyFloat.class,1,1,new exposed___mod__(null,null)));
-        class exposed___mul__ extends PyBuiltinFunctionNarrow {
+        class exposed___mul__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___mul__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___mul__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mul__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___mul__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___mul__(arg0);
+                PyObject ret=((PyFloat)self).float___mul__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -387,33 +225,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyFloat.class,1,1,new exposed___mul__(null,null)));
-        class exposed___radd__ extends PyBuiltinFunctionNarrow {
+        class exposed___radd__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___radd__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___radd__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___radd__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___radd__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___radd__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___radd__(arg0);
+                PyObject ret=((PyFloat)self).float___radd__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -421,33 +244,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__radd__",new PyMethodDescr("__radd__",PyFloat.class,1,1,new exposed___radd__(null,null)));
-        class exposed___rdiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rdiv__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rdiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rdiv__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rdiv__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rdiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___rdiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___rdiv__(arg0);
+                PyObject ret=((PyFloat)self).float___rdiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -455,33 +263,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__rdiv__",new PyMethodDescr("__rdiv__",PyFloat.class,1,1,new exposed___rdiv__(null,null)));
-        class exposed___rfloordiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rfloordiv__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rfloordiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rfloordiv__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rfloordiv__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rfloordiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___rfloordiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___rfloordiv__(arg0);
+                PyObject ret=((PyFloat)self).float___rfloordiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -489,33 +282,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__rfloordiv__",new PyMethodDescr("__rfloordiv__",PyFloat.class,1,1,new exposed___rfloordiv__(null,null)));
-        class exposed___rmod__ extends PyBuiltinFunctionNarrow {
+        class exposed___rmod__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rmod__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rmod__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___rmod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___rmod__(arg0);
+                PyObject ret=((PyFloat)self).float___rmod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -523,33 +301,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__rmod__",new PyMethodDescr("__rmod__",PyFloat.class,1,1,new exposed___rmod__(null,null)));
-        class exposed___rmul__ extends PyBuiltinFunctionNarrow {
+        class exposed___rmul__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rmul__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rmul__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmul__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___rmul__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___rmul__(arg0);
+                PyObject ret=((PyFloat)self).float___rmul__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -557,33 +320,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyFloat.class,1,1,new exposed___rmul__(null,null)));
-        class exposed___rsub__ extends PyBuiltinFunctionNarrow {
+        class exposed___rsub__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rsub__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rsub__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rsub__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rsub__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___rsub__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___rsub__(arg0);
+                PyObject ret=((PyFloat)self).float___rsub__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -591,33 +339,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__rsub__",new PyMethodDescr("__rsub__",PyFloat.class,1,1,new exposed___rsub__(null,null)));
-        class exposed___rtruediv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rtruediv__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rtruediv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rtruediv__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rtruediv__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rtruediv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___rtruediv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___rtruediv__(arg0);
+                PyObject ret=((PyFloat)self).float___rtruediv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -625,33 +358,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__rtruediv__",new PyMethodDescr("__rtruediv__",PyFloat.class,1,1,new exposed___rtruediv__(null,null)));
-        class exposed___sub__ extends PyBuiltinFunctionNarrow {
+        class exposed___sub__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___sub__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___sub__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___sub__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___sub__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___sub__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___sub__(arg0);
+                PyObject ret=((PyFloat)self).float___sub__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -659,33 +377,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__sub__",new PyMethodDescr("__sub__",PyFloat.class,1,1,new exposed___sub__(null,null)));
-        class exposed___truediv__ extends PyBuiltinFunctionNarrow {
+        class exposed___truediv__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___truediv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___truediv__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___truediv__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___truediv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___truediv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___truediv__(arg0);
+                PyObject ret=((PyFloat)self).float___truediv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -693,34 +396,18 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__truediv__",new PyMethodDescr("__truediv__",PyFloat.class,1,1,new exposed___truediv__(null,null)));
-        class exposed___cmp__ extends PyBuiltinFunctionNarrow {
+        class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___cmp__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___cmp__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___cmp__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                int ret=self.float___cmp__(arg0);
-                if (ret==-2) {
-                    throw Py.TypeError("float"+".__cmp__(x,y) requires y to be '"+"float"+"', not a '"+(arg0).getType().fastGetName()+"'");
-                }
-                return Py.newInteger(ret);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                int ret=self.float___cmp__(arg0);
+                int ret=((PyFloat)self).float___cmp__(arg0);
                 if (ret==-2) {
                     throw Py.TypeError("float"+".__cmp__(x,y) requires y to be '"+"float"+"', not a '"+(arg0).getType().fastGetName()+"'");
                 }
@@ -729,48 +416,25 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__cmp__",new PyMethodDescr("__cmp__",PyFloat.class,1,1,new exposed___cmp__(null,null)));
-        class exposed___pow__ extends PyBuiltinFunctionNarrow {
+        class exposed___pow__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___pow__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___pow__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___pow__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___pow__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                PyObject ret=self.float___pow__(arg0,arg1);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___pow__(arg0,arg1);
+                PyObject ret=((PyFloat)self).float___pow__(arg0,arg1);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.float___pow__(arg0,null);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFloat self=(PyFloat)gself;
-                PyObject ret=self.float___pow__(arg0,null);
+                PyObject ret=((PyFloat)self).float___pow__(arg0,null);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -778,114 +442,66 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__pow__",new PyMethodDescr("__pow__",PyFloat.class,1,2,new exposed___pow__(null,null)));
-        class exposed___nonzero__ extends PyBuiltinFunctionNarrow {
+        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___nonzero__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___nonzero__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___nonzero__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newBoolean(self.float___nonzero__());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return Py.newBoolean(self.float___nonzero__());
+                return Py.newBoolean(((PyFloat)self).float___nonzero__());
             }
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyFloat.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___repr__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.float_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return new PyString(self.float_toString());
+                return new PyString(((PyFloat)self).float_toString());
             }
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyFloat.class,0,0,new exposed___repr__(null,null)));
-        class exposed___str__ extends PyBuiltinFunctionNarrow {
+        class exposed___str__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___str__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___str__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___str__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.float_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return new PyString(self.float_toString());
+                return new PyString(((PyFloat)self).float_toString());
             }
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyFloat.class,0,0,new exposed___str__(null,null)));
-        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+        class exposed___hash__ extends PyBuiltinMethodNarrow {
 
-            private PyFloat self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___hash__(PyFloat self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hash__((PyFloat)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___hash__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newInteger(self.float_hashCode());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFloat self=(PyFloat)gself;
-                return Py.newInteger(self.float_hashCode());
+                return Py.newInteger(((PyFloat)self).float_hashCode());
             }
 
         }

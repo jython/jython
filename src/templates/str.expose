@@ -39,7 +39,7 @@ expose_meth: :b istitle
 expose_meth: :b isunicode
 expose_meth: :b isupper
 expose_meth: join o
-    String result = self.str_join(arg0);
+    String result = ((PyString)self).str_join(arg0);
     //XXX: do we really need to check self?
     if (self instanceof PyUnicode || arg0 instanceof PyUnicode) {
         return new PyUnicode(result);

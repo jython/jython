@@ -11,13 +11,13 @@ expose_getset: __mro__ getMro
 expose_meth: :o mro o?
 expose_meth: __getattribute__ n{attribute name}
    String name = `arg0;
-   PyObject ret = self.type___findattr__(name);
-   if (ret == null) self.noAttributeError(name);
+   PyObject ret = ((`typ)self).type___findattr__(name);
+   if (ret == null) ((`typ)self).noAttributeError(name);
    return ret;
 expose_meth: :- __setattr__ n{attribute name}o
 expose_meth: :- __delattr__ n{attribute name}
 expose_meth: __subclasses__
-   return self.type_getSubclasses();
+   return ((`typ)self).type_getSubclasses();
 expose_wide_meth: __call__ -1 -1
 expose_new_immutable:
 # TODO:

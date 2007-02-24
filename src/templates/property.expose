@@ -10,7 +10,7 @@ expose_getset: __doc__ getDoc setDoc
 expose_meth: __get__ oo?(null)
   PyObject obj = (`arg0==Py.None)?null:`arg0;
   PyObject type = (`arg1==null)?obj:`arg1;
-  return self.property___get__(obj, type);
+  return ((`typ)self).property___get__(obj, type);
 expose_meth: :- __set__ oo
 expose_meth: :- __delete__ o
 expose_new_mutable:

@@ -16,33 +16,18 @@ public class PyDictionary extends PyObject {
     public static final String exposed_name="dict";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___ne__ extends PyBuiltinFunctionNarrow {
+        class exposed___ne__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___ne__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___ne__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___ne__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ne__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.dict___ne__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                PyObject ret=self.dict___ne__(arg0);
+                PyObject ret=((PyDictionary)self).dict___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -50,33 +35,18 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("__ne__",new PyMethodDescr("__ne__",PyDictionary.class,1,1,new exposed___ne__(null,null)));
-        class exposed___eq__ extends PyBuiltinFunctionNarrow {
+        class exposed___eq__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___eq__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___eq__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___eq__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___eq__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.dict___eq__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                PyObject ret=self.dict___eq__(arg0);
+                PyObject ret=((PyDictionary)self).dict___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -84,34 +54,18 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyDictionary.class,1,1,new exposed___eq__(null,null)));
-        class exposed___cmp__ extends PyBuiltinFunctionNarrow {
+        class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___cmp__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___cmp__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___cmp__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                int ret=self.dict___cmp__(arg0);
-                if (ret==-2) {
-                    throw Py.TypeError("dict"+".__cmp__(x,y) requires y to be '"+"dict"+"', not a '"+(arg0).getType().fastGetName()+"'");
-                }
-                return Py.newInteger(ret);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                int ret=self.dict___cmp__(arg0);
+                int ret=((PyDictionary)self).dict___cmp__(arg0);
                 if (ret==-2) {
                     throw Py.TypeError("dict"+".__cmp__(x,y) requires y to be '"+"dict"+"', not a '"+(arg0).getType().fastGetName()+"'");
                 }
@@ -120,33 +74,18 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("__cmp__",new PyMethodDescr("__cmp__",PyDictionary.class,1,1,new exposed___cmp__(null,null)));
-        class exposed___getitem__ extends PyBuiltinFunctionNarrow {
+        class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___getitem__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getitem__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getitem__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.dict___finditem__(arg0);
-                if (ret==null)
-                    throw Py.KeyError(arg0.toString());
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                PyObject ret=self.dict___finditem__(arg0);
+                PyObject ret=((PyDictionary)self).dict___finditem__(arg0);
                 if (ret==null)
                     throw Py.KeyError(arg0.toString());
                 return ret;
@@ -154,675 +93,386 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyDictionary.class,1,1,new exposed___getitem__(null,null)));
-        class exposed_fromkeys extends PyBuiltinFunctionNarrow {
+        class exposed_fromkeys extends PyBuiltinMethodNarrow {
 
-            private PyType self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_fromkeys(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_fromkeys(PyType self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_fromkeys((PyType)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_fromkeys(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return dict_fromkeys(self,arg0,arg1);
+                return dict_fromkeys((PyType)getSelf(),arg0,arg1);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return dict_fromkeys(self,arg0);
+                return dict_fromkeys((PyType)getSelf(),arg0);
             }
 
         }
         dict.__setitem__("fromkeys",new PyClassMethodDescr("fromkeys",PyDictionary.class,1,2,new exposed_fromkeys(null,null)));
-        class exposed_get extends PyBuiltinFunctionNarrow {
+        class exposed_get extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_get(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_get(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_get((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_get(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return self.dict_get(arg0,arg1);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_get(arg0,arg1);
+                return((PyDictionary)self).dict_get(arg0,arg1);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.dict_get(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_get(arg0);
+                return((PyDictionary)self).dict_get(arg0);
             }
 
         }
         dict.__setitem__("get",new PyMethodDescr("get",PyDictionary.class,1,2,new exposed_get(null,null)));
-        class exposed_setdefault extends PyBuiltinFunctionNarrow {
+        class exposed_setdefault extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_setdefault(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_setdefault(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_setdefault((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_setdefault(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return self.dict_setdefault(arg0,arg1);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_setdefault(arg0,arg1);
+                return((PyDictionary)self).dict_setdefault(arg0,arg1);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.dict_setdefault(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_setdefault(arg0);
+                return((PyDictionary)self).dict_setdefault(arg0);
             }
 
         }
         dict.__setitem__("setdefault",new PyMethodDescr("setdefault",PyDictionary.class,1,2,new exposed_setdefault(null,null)));
-        class exposed_pop extends PyBuiltinFunctionNarrow {
+        class exposed_pop extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_pop(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_pop(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_pop((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_pop(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return self.dict_pop(arg0,arg1);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_pop(arg0,arg1);
+                return((PyDictionary)self).dict_pop(arg0,arg1);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.dict_pop(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_pop(arg0);
+                return((PyDictionary)self).dict_pop(arg0);
             }
 
         }
         dict.__setitem__("pop",new PyMethodDescr("pop",PyDictionary.class,1,2,new exposed_pop(null,null)));
-        class exposed_popitem extends PyBuiltinFunctionNarrow {
+        class exposed_popitem extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_popitem(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_popitem(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_popitem((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_popitem(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict_popitem();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_popitem();
+                return((PyDictionary)self).dict_popitem();
             }
 
         }
         dict.__setitem__("popitem",new PyMethodDescr("popitem",PyDictionary.class,0,0,new exposed_popitem(null,null)));
-        class exposed_has_key extends PyBuiltinFunctionNarrow {
+        class exposed_has_key extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_has_key(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_has_key(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_has_key((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_has_key(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return Py.newBoolean(self.dict_has_key(arg0));
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                return Py.newBoolean(self.dict_has_key(arg0));
+                return Py.newBoolean(((PyDictionary)self).dict_has_key(arg0));
             }
 
         }
         dict.__setitem__("has_key",new PyMethodDescr("has_key",PyDictionary.class,1,1,new exposed_has_key(null,null)));
-        class exposed___contains__ extends PyBuiltinFunctionNarrow {
+        class exposed___contains__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___contains__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___contains__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___contains__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___contains__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return Py.newBoolean(self.dict___contains__(arg0));
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                return Py.newBoolean(self.dict___contains__(arg0));
+                return Py.newBoolean(((PyDictionary)self).dict___contains__(arg0));
             }
 
         }
         dict.__setitem__("__contains__",new PyMethodDescr("__contains__",PyDictionary.class,1,1,new exposed___contains__(null,null)));
-        class exposed___len__ extends PyBuiltinFunctionNarrow {
+        class exposed___len__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___len__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___len__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___len__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___len__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newInteger(self.dict___len__());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return Py.newInteger(self.dict___len__());
+                return Py.newInteger(((PyDictionary)self).dict___len__());
             }
 
         }
         dict.__setitem__("__len__",new PyMethodDescr("__len__",PyDictionary.class,0,0,new exposed___len__(null,null)));
-        class exposed___setitem__ extends PyBuiltinFunctionNarrow {
+        class exposed___setitem__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___setitem__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___setitem__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___setitem__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___setitem__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                self.dict___setitem__(arg0,arg1);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyDictionary self=(PyDictionary)gself;
-                self.dict___setitem__(arg0,arg1);
+                ((PyDictionary)self).dict___setitem__(arg0,arg1);
                 return Py.None;
             }
 
         }
         dict.__setitem__("__setitem__",new PyMethodDescr("__setitem__",PyDictionary.class,2,2,new exposed___setitem__(null,null)));
-        class exposed___delitem__ extends PyBuiltinFunctionNarrow {
+        class exposed___delitem__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___delitem__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___delitem__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___delitem__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___delitem__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.dict___delitem__(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                self.dict___delitem__(arg0);
+                ((PyDictionary)self).dict___delitem__(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("__delitem__",new PyMethodDescr("__delitem__",PyDictionary.class,1,1,new exposed___delitem__(null,null)));
-        class exposed_keys extends PyBuiltinFunctionNarrow {
+        class exposed_keys extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_keys(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_keys(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_keys((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_keys(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict_keys();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_keys();
+                return((PyDictionary)self).dict_keys();
             }
 
         }
         dict.__setitem__("keys",new PyMethodDescr("keys",PyDictionary.class,0,0,new exposed_keys(null,null)));
-        class exposed_update extends PyBuiltinFunctionNarrow {
+        class exposed_update extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_update(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_update(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_update((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_update(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.dict_update(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyDictionary self=(PyDictionary)gself;
-                self.dict_update(arg0);
+                ((PyDictionary)self).dict_update(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("update",new PyMethodDescr("update",PyDictionary.class,1,1,new exposed_update(null,null)));
-        class exposed_itervalues extends PyBuiltinFunctionNarrow {
+        class exposed_itervalues extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_itervalues(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_itervalues(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_itervalues((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_itervalues(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict_itervalues();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_itervalues();
+                return((PyDictionary)self).dict_itervalues();
             }
 
         }
         dict.__setitem__("itervalues",new PyMethodDescr("itervalues",PyDictionary.class,0,0,new exposed_itervalues(null,null)));
-        class exposed_iteritems extends PyBuiltinFunctionNarrow {
+        class exposed_iteritems extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_iteritems(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_iteritems(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_iteritems((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_iteritems(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict_iteritems();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_iteritems();
+                return((PyDictionary)self).dict_iteritems();
             }
 
         }
         dict.__setitem__("iteritems",new PyMethodDescr("iteritems",PyDictionary.class,0,0,new exposed_iteritems(null,null)));
-        class exposed_iterkeys extends PyBuiltinFunctionNarrow {
+        class exposed_iterkeys extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_iterkeys(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_iterkeys(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_iterkeys((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_iterkeys(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict_iterkeys();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_iterkeys();
+                return((PyDictionary)self).dict_iterkeys();
             }
 
         }
         dict.__setitem__("iterkeys",new PyMethodDescr("iterkeys",PyDictionary.class,0,0,new exposed_iterkeys(null,null)));
-        class exposed_items extends PyBuiltinFunctionNarrow {
+        class exposed_items extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_items(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_items(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_items((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_items(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict_items();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_items();
+                return((PyDictionary)self).dict_items();
             }
 
         }
         dict.__setitem__("items",new PyMethodDescr("items",PyDictionary.class,0,0,new exposed_items(null,null)));
-        class exposed_values extends PyBuiltinFunctionNarrow {
+        class exposed_values extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_values(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_values(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_values((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_values(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict_values();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_values();
+                return((PyDictionary)self).dict_values();
             }
 
         }
         dict.__setitem__("values",new PyMethodDescr("values",PyDictionary.class,0,0,new exposed_values(null,null)));
-        class exposed_clear extends PyBuiltinFunctionNarrow {
+        class exposed_clear extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_clear(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_clear(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_clear((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_clear(self,info);
             }
 
             public PyObject __call__() {
-                self.dict_clear();
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                self.dict_clear();
+                ((PyDictionary)self).dict_clear();
                 return Py.None;
             }
 
         }
         dict.__setitem__("clear",new PyMethodDescr("clear",PyDictionary.class,0,0,new exposed_clear(null,null)));
-        class exposed_copy extends PyBuiltinFunctionNarrow {
+        class exposed_copy extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_copy(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_copy(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_copy((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_copy(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict_copy();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict_copy();
+                return((PyDictionary)self).dict_copy();
             }
 
         }
         dict.__setitem__("copy",new PyMethodDescr("copy",PyDictionary.class,0,0,new exposed_copy(null,null)));
-        class exposed___iter__ extends PyBuiltinFunctionNarrow {
+        class exposed___iter__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___iter__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___iter__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___iter__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___iter__(self,info);
             }
 
             public PyObject __call__() {
-                return self.dict___iter__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return self.dict___iter__();
+                return((PyDictionary)self).dict___iter__();
             }
 
         }
         dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyDictionary.class,0,0,new exposed___iter__(null,null)));
-        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+        class exposed___hash__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___hash__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hash__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___hash__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newInteger(self.dict_hashCode());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return Py.newInteger(self.dict_hashCode());
+                return Py.newInteger(((PyDictionary)self).dict_hashCode());
             }
 
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyDictionary.class,0,0,new exposed___hash__(null,null)));
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___repr__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyDictionary)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.dict_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyDictionary self=(PyDictionary)gself;
-                return new PyString(self.dict_toString());
+                return new PyString(((PyDictionary)self).dict_toString());
             }
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyDictionary.class,0,0,new exposed___repr__(null,null)));
-        class exposed___init__ extends PyBuiltinFunctionWide {
+        class exposed___init__ extends PyBuiltinMethod {
 
-            private PyDictionary self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___init__(PyDictionary self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___init__((PyDictionary)self,info);
-            }
-
-            public PyObject inst_call(PyObject self,PyObject[]args) {
-                return inst_call(self,args,Py.NoKeywords);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___init__(self,info);
             }
 
             public PyObject __call__(PyObject[]args) {
@@ -830,13 +480,7 @@ public class PyDictionary extends PyObject {
             }
 
             public PyObject __call__(PyObject[]args,String[]keywords) {
-                self.dict_init(args,keywords);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
-                PyDictionary self=(PyDictionary)gself;
-                self.dict_init(args,keywords);
+                ((PyDictionary)self).dict_init(args,keywords);
                 return Py.None;
             }
 
@@ -939,11 +583,11 @@ public class PyDictionary extends PyObject {
             this.__setitem__(kwds[i],args[nargs+i]);
         }        
     }
-    public PyObject fromkeys(PyObject keys) {
+    public static PyObject fromkeys(PyObject keys) {
         return fromkeys(keys, null);
     }
 
-    public PyObject fromkeys(PyObject keys, PyObject value) {
+    public static PyObject fromkeys(PyObject keys, PyObject value) {
         return dict_fromkeys(PyType.fromClass(PyDictionary.class), keys, value);
     }
 

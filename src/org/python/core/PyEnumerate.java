@@ -15,58 +15,34 @@ public class PyEnumerate extends PyIterator {
     public static final Class exposed_base=PyObject.class;
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed_next extends PyBuiltinFunctionNarrow {
+        class exposed_next extends PyBuiltinMethodNarrow {
 
-            private PyEnumerate self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_next(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_next(PyEnumerate self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_next((PyEnumerate)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_next(self,info);
             }
 
             public PyObject __call__() {
-                return self.enumerate_next();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyEnumerate self=(PyEnumerate)gself;
-                return self.enumerate_next();
+                return((PyEnumerate)self).enumerate_next();
             }
 
         }
         dict.__setitem__("next",new PyMethodDescr("next",PyEnumerate.class,0,0,new exposed_next(null,null)));
-        class exposed___iter__ extends PyBuiltinFunctionNarrow {
+        class exposed___iter__ extends PyBuiltinMethodNarrow {
 
-            private PyEnumerate self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___iter__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___iter__(PyEnumerate self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___iter__((PyEnumerate)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___iter__(self,info);
             }
 
             public PyObject __call__() {
-                return self.enumerate___iter__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyEnumerate self=(PyEnumerate)gself;
-                return self.enumerate___iter__();
+                return((PyEnumerate)self).enumerate___iter__();
             }
 
         }

@@ -15,58 +15,34 @@ public class PyNone extends PyObject implements Serializable
     public static final String exposed_name="NoneType";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
-            private PyNone self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___repr__(PyNone self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyNone)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.NoneType_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyNone self=(PyNone)gself;
-                return new PyString(self.NoneType_toString());
+                return new PyString(((PyNone)self).NoneType_toString());
             }
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyNone.class,0,0,new exposed___repr__(null,null)));
-        class exposed___nonzero__ extends PyBuiltinFunctionNarrow {
+        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
 
-            private PyNone self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___nonzero__(PyNone self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___nonzero__((PyNone)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___nonzero__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newBoolean(self.NoneType___nonzero__());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyNone self=(PyNone)gself;
-                return Py.newBoolean(self.NoneType___nonzero__());
+                return Py.newBoolean(((PyNone)self).NoneType___nonzero__());
             }
 
         }
