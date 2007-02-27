@@ -6,6 +6,8 @@
 # will map str.expose to org.python.core.PyString.  Many classes will have 2
 # lines; one for their expose, and one for their derived class.
 
+array.expose:org.python.core.PyArray
+array.derived:org.python.core.PyArrayDerived
 #baseset.expose
 #bool.derived:org.python.core.PyBooleanDerived
 #bool.expose:org.python.core.PyBoolean
