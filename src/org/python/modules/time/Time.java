@@ -44,7 +44,7 @@ import org.python.core.PyType;
 class TimeFunctions extends PyBuiltinFunctionSet
 {
     public TimeFunctions(String name, int index, int argcount) {
-        super(name, index, argcount, argcount, false, null);
+        super(name, index, argcount);
     }
 
     public PyObject __call__() {
@@ -54,7 +54,7 @@ class TimeFunctions extends PyBuiltinFunctionSet
         case 1:
             return Py.newFloat(Time.clock());
         default:
-            throw argCountError(0);
+            throw info.unexpectedCall(0, false);
         }
     }
 }

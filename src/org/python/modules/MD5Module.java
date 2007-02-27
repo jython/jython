@@ -16,7 +16,7 @@ import org.python.core.PyString;
 class MD5Functions extends PyBuiltinFunctionSet
 {
     public MD5Functions(String name, int index, int minargs, int maxargs) {
-        super(name, index, minargs, maxargs, false, null);
+        super(name, index, minargs, maxargs);
     }
 
     public PyObject __call__() {
@@ -24,7 +24,7 @@ class MD5Functions extends PyBuiltinFunctionSet
         case 0:
             return new MD5Object("");
         default:
-            throw argCountError(0);
+            throw info.unexpectedCall(0, false);
         }
     }
 
@@ -33,7 +33,7 @@ class MD5Functions extends PyBuiltinFunctionSet
         case 0:
             return new MD5Object(arg1);
         default:
-            throw argCountError(1);
+            throw info.unexpectedCall(1, false);
         }
     }
 }

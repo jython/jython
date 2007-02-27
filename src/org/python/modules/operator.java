@@ -6,12 +6,12 @@ import org.python.core.*;
 class OperatorFunctions extends PyBuiltinFunctionSet
 {
     public OperatorFunctions(String name, int index, int argcount) {
-        super(name, index, argcount, argcount, false, null);
+        this(name, index, argcount, argcount);
     }
 
     public OperatorFunctions(String name, int index, int minargs, int maxargs)
     {
-        super(name, index, minargs, maxargs, false, null);
+        super(name, index, minargs, maxargs);
     }
 
     public PyObject __call__(PyObject arg1) {
@@ -28,7 +28,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 19: return Py.newBoolean(arg1.isSequenceType());
         case 32: return arg1.__invert__();
         default:
-            throw argCountError(1);
+            throw info.unexpectedCall(1, false);
         }
     }
 
@@ -58,7 +58,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 34: return arg1._ne(arg2);
         case 35: return arg1._truediv(arg2);
         default:
-            throw argCountError(2);
+            throw info.unexpectedCall(2, false);
         }
     }
 
@@ -68,7 +68,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 24: return arg1.__getslice__(arg2, arg3);
         case 25: arg1.__setitem__(arg2, arg3); return Py.None;
         default:
-            throw argCountError(3);
+            throw info.unexpectedCall(3, false);
         }
     }
 
@@ -80,7 +80,7 @@ class OperatorFunctions extends PyBuiltinFunctionSet
             arg1.__setslice__(arg2, arg3, arg4);
             return Py.None;
         default:
-            throw argCountError(4);
+            throw info.unexpectedCall(4, false);
         }
     }
 }

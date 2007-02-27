@@ -120,7 +120,7 @@ public abstract class PyBuiltinFunction extends PyObject implements
     abstract protected PyBuiltinFunction bind(PyObject self);
 
     public PyObject getSelf() {
-        return null;
+        return Py.None;
     }
 
     public String toString() {

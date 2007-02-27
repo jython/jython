@@ -6,7 +6,7 @@ import org.python.core.*;
 class JythonInternalFunctions extends PyBuiltinFunctionSet
 {
     public JythonInternalFunctions(String name, int index, int argcount) {
-        super(name, index, argcount, argcount, false, null);
+        super(name, index, argcount);
     }
 
     public PyObject __call__(PyObject arg) {
@@ -16,7 +16,7 @@ class JythonInternalFunctions extends PyBuiltinFunctionSet
                 throw Py.TypeError("is_lazy(): arg is not a jclass");
             return Py.newBoolean(((PyJavaClass)arg).isLazy());
         default:
-            throw argCountError(1);
+            throw info.unexpectedCall(1, false);
         }
     }
 }

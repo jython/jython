@@ -8,22 +8,21 @@
  */
 package com.ziclix.python.sql;
 
-import com.ziclix.python.sql.util.PyArgParser;
-import org.python.core.ClassDictInit;
-import org.python.core.Py;
-import org.python.core.PyBuiltinFunctionSet;
-import org.python.core.PyClass;
-import org.python.core.PyInteger;
-import org.python.core.PyList;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import org.python.core.ClassDictInit;
+import org.python.core.Py;
+import org.python.core.PyBuiltinMethodSet;
+import org.python.core.PyClass;
+import org.python.core.PyInteger;
+import org.python.core.PyList;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import com.ziclix.python.sql.util.PyArgParser;
 
 /**
  * A connection to the database.
@@ -460,9 +459,9 @@ public class PyConnection extends PyObject implements ClassDictInit {
     }
 }
 
-class ConnectionFunc extends PyBuiltinFunctionSet {
+class ConnectionFunc extends PyBuiltinMethodSet {
     ConnectionFunc(String name, int index, int minargs, int maxargs, String doc) {
-        super(name, index, minargs, maxargs, true, doc);
+        super(name, index, minargs, maxargs, doc);
     }
 
     public PyObject __call__() {
@@ -480,7 +479,7 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
                 c.rollback();
                 return Py.None;
             default :
-                throw argCountError(0);
+                throw info.unexpectedCall(0, false);
         }
     }
 
@@ -492,7 +491,7 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
             case 4:
                 return c.nativesql(arg);
             default :
-                throw argCountError(1);
+                throw info.unexpectedCall(1, false);
         }
     }
 
@@ -502,7 +501,7 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
             case 2:
                 return c.cursor(arg1.__nonzero__(), arg2, arg3);
             default :
-                throw argCountError(3);
+                throw info.unexpectedCall(3, false);
         }
     }
 
@@ -522,7 +521,7 @@ class ConnectionFunc extends PyBuiltinFunctionSet {
                 return c.cursor(dynamic.__nonzero__(), rstype, rsconcur);
 
             default :
-                throw argCountError(args.length);
+                throw info.unexpectedCall(args.length, true);
         }
     }
 }

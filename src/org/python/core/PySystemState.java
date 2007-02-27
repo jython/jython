@@ -857,7 +857,7 @@ class PollingInputStream extends FilterInputStream {
 class PySystemStateFunctions extends PyBuiltinFunctionSet
 {
     PySystemStateFunctions(String name, int index, int minargs, int maxargs) {
-        super(name, index, minargs, maxargs, false, null);
+        super(name, index, minargs, maxargs);
     }
 
     public PyObject __call__(PyObject arg) {
@@ -866,7 +866,7 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet
             PySystemState.displayhook(arg);
             return Py.None;
         default:
-            throw argCountError(1);
+            throw info.unexpectedCall(1, false);
         }
     }
     public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
@@ -875,7 +875,7 @@ class PySystemStateFunctions extends PyBuiltinFunctionSet
             PySystemState.excepthook(arg1, arg2, arg3);
             return Py.None;
         default:
-            throw argCountError(3);
+            throw info.unexpectedCall(3, false);
         }
     }
 }

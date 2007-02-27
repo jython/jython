@@ -9,10 +9,14 @@
  */
 package com.ziclix.python.sql;
 
-import com.ziclix.python.sql.util.PyArgParser;
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
+import java.util.List;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
-import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyBuiltinMethodSet;
 import org.python.core.PyClass;
 import org.python.core.PyDictionary;
 import org.python.core.PyException;
@@ -21,12 +25,7 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
-
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
-import java.util.List;
+import com.ziclix.python.sql.util.PyArgParser;
 
 /**
  * These objects represent a database cursor, which is used to manage the
@@ -874,12 +873,12 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
   }
 }
 
-class CursorFunc extends PyBuiltinFunctionSet {
+class CursorFunc extends PyBuiltinMethodSet {
   CursorFunc(String name, int index, int argcount, String doc) {
-    super(name, index, argcount, argcount, true, doc);
+    super(name, index, argcount, argcount, doc);
   }
   CursorFunc(String name, int index, int minargs, int maxargs, String doc) {
-    super(name, index, minargs, maxargs, true, doc);
+    super(name, index, minargs, maxargs, doc);
   }
 
   public PyObject __call__() {
@@ -897,7 +896,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
       case 4 :
         return cursor.nextset();
       default :
-        throw argCountError(0);
+        throw info.unexpectedCall(0, false);
     }
   }
 
@@ -927,7 +926,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
       case 12 :
         return cursor.prepare(arg);
       default :
-        throw argCountError(1);
+        throw info.unexpectedCall(1, false);
     }
   }
 
@@ -949,7 +948,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
         cursor.scroll(((PyInteger)arga.__int__()).getValue(), argb.toString());
         return Py.None;
       default :
-        throw argCountError(2);
+        throw info.unexpectedCall(2, false);
     }
   }
 
@@ -966,7 +965,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
         cursor.executemany(arga, argb, argc, Py.None);
         return Py.None;
       default :
-        throw argCountError(3);
+        throw info.unexpectedCall(3, false);
     }
   }
 
@@ -994,7 +993,7 @@ class CursorFunc extends PyBuiltinFunctionSet {
         cursor.executemany(sql, params, bindings, maxrows);
         return Py.None;
       default :
-        throw argCountError(args.length);
+        throw info.unexpectedCall(args.length, true);
     }
   }
 }
