@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one
+   or more contributor license agreements.  See the NOTICE file
+   distributed with this work for additional information
+   regarding copyright ownership.  The ASF licenses this file
+   to you under the Apache License, Version 2.0 (the
+   "License"); you may not use this file except in compliance
+   with the License.  You may obtain a copy of the License at
+	 
+     http://www.apache.org/licenses/LICENSE-2.0
+	 
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on an
+   "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied.  See the License for the
+   specific language governing permissions and limitations
+   under the License.
+-->
+ 
+<!-- 
+	This file was modified from the Apache Cayenne project's build system
+	to suit the needs of the Jython project's build system.
+-->
+
+<!-- ================================================= -->
+<!--            Maven Bundle Buildfile                 -->
+<!-- ================================================= -->
+<project name="jython-maven" default="bundle-all" basedir="..">
+	
+	<property file="${basedir}/default.properties"/>
+	
+	<property name="m2.repo" value="${user.home}/.m2/repository"/>
+	<property name="build.base" value="${basedir}/build"/>
+	<property name="build" value="${build.base}/maven"/>
+	<property name="dist.base" value="${basedir}/dist"/>
+	<property name="dist"
+		value="${dist.base}/${project.name}-${project.version}"/>
+	<property name="src.dir" value="${basedir}/src"/>
+	
+	<property name="m2.groupDir" value="org.jython"/>
+	<property name="m2.artifactId" value="jython"/>
+	
+	
+	<target name="bundle-all" depends="build-jython">
+		
+		<antcall target="bundle">
+			<param name="stage-target" value="stage"/>
+			<param name="m2.groupDir" value="org.jython"/>
+			<param name="m2.artifactId" value="jython"/>
+		</antcall>
+		
+	</target>
+	
+	<!-- 
+		Removes staging dir.
+	-->
+	<target name="clean">
+		<delete dir="${build}"/>
+		
+		<delete>
+			<fileset dir="${dist.base}" includes="*-bundle.jar"/>
+		</delete>
+	</target>
+	
+	<!-- 
+		Installs artifact to the local repo specified.
+	-->
+	<target name="install" depends="stage">
+		
+		<property name="install.dir"
+			value="${m2.groupDir}/${m2.artifactId}/${project.version}"/>
+		<property name="install.name"
+			value="${m2.artifactId}-${project.version}"/>
+		<property name="stage" value="${build}"/>
+		
+		<mkdir dir="${install.dir}"/>
+		<copy file="maven/pom.xml"
+			tofile="${install.dir}/${install.name}.pom">
+			<filterset>
+				<filter token="PROJECT-VERSION" value="${project.version}"/>
+			</filterset>
+		</copy>
+		
+		<move file="${stage}/${install.name}.jar"
+			tofile="${install.dir}/${install.name}.jar"/>
+		<move file="${stage}/${install.name}-sources.jar"
+			tofile="${install.dir}/${install.name}-sources.jar"/>
+		
+		<checksum algorithm="SHA1" fileext=".sha1">
+			<fileset dir="${install.dir}" excludes="*.sha1,*.md5,*.tmp"/>
+		</checksum>
+		
+		<checksum algorithm="MD5" fileext=".md5">
+			<fileset dir="${install.dir}" excludes="*.sha1,*.md5,*.tmp"/>
+		</checksum>
+	</target>
+	
+	<!-- 
+		Bundles staged artifact to release to ibiblio
+	-->
+	<target name="bundle">
+		<antcall target="${stage-target}"/>
+		
+		<property name="stage" value="${build}"/>
+		
+		<jar
+			jarfile="${dist.base}/${m2.artifactId}-${project.version}-bundle.jar">
+			<fileset dir="${stage}"/>
+		</jar>
+	</target>
+	
+	<!-- 
+		Performs Maven build staging
+	-->
+	<target name="stage" depends="validate-pom">
+		<property name="stage" value="${build}/"/>
+		<mkdir dir="${stage}"/>
+		
+		<copy file="maven/pom.xml" tofile="${stage}/pom.xml">
+			<filterset>
+				<filter token="PROJECT-VERSION" value="${project.version}"/>
+			</filterset>
+		</copy>
+		
+		<copy file="LICENSE.txt" tofile="${stage}/LICENSE.txt"/>
+		
+		<copy
+			file="${dist.base}/jython.jar"
+			tofile="${stage}/${m2.artifactId}-${project.version}.jar"/>
+		
+		<jar jarfile="${stage}/${m2.artifactId}-${project.version}-sources.jar">
+			<fileset dir="${src.dir}" includes="**/*.java"/>
+		</jar>
+	</target>
+
+	<!-- 
+		Performs POM Schema validation.
+	-->
+	<target name="validate-pom">
+		<xmlvalidate failonerror="true" file="maven/pom.xml">
+			<attribute name="http://xml.org/sax/features/validation"
+				value="true"/>
+			<attribute name="http://apache.org/xml/features/validation/schema"
+				value="true"/>
+			<attribute name="http://xml.org/sax/features/namespaces"
+				value="true"/>
+			<property
+				name="http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation"
+				value="maven/maven-v4_0_0.xsd"/>
+		</xmlvalidate>
+	</target>
+	
+	<target name="build-jython" depends="clean">
+		<ant antfile="build.xml" target="developer-build"/>
+	</target>
+</project>

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.python</groupId>
+	<artifactId>jython</artifactId>
+	<packaging>jar</packaging>
+	<name>Jython</name>
+	<version>@PROJECT-VERSION@</version>
+	<url>http://www.jython.org/</url>
+	<description>
+		Jython is an implementation of the high-level, dynamic, object-oriented
+		language Python written in 100% Pure Java, and seamlessly integrated with
+		the Java platform. It thus allows you to run Python on any Java platform.
+	</description>
+	<licenses>
+    	<license>
+      		<name>Jython Software License</name>
+      		<url>http://www.jython.org/Project/license.html</url>
+      		<distribution>repo</distribution>
+    	</license>
+  	</licenses>
+  	<scm>
+  		<url>http://jython.svn.sourceforge.net/viewvc/jython/</url>
+  	</scm>
+</project>
