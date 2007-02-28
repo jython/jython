@@ -943,16 +943,12 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
                 try {
-                    return new PyUnicode(((PyUnicode)self).unicode_replace(arg0.asString(0),arg1.asString(1),arg2.asInt(2)));
+                    return((PyUnicode)self).unicode_replace(arg0,arg1,arg2.asInt(2));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 2:
                         msg="expected an integer";
-                        break;
-                    case 0:
-                    case 1:
-                        msg="expected a string";
                         break;
                     default:
                         msg="xxx";
@@ -962,20 +958,7 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return new PyUnicode(((PyUnicode)self).unicode_replace(arg0.asString(0),arg1.asString(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                    case 1:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
+                return((PyUnicode)self).unicode_replace(arg0,arg1);
             }
 
         }
@@ -1710,15 +1693,15 @@ public class PyUnicode extends PyString {
         return str_capitalize();
     }
 
-    final String unicode_replace(String oldPiece, String newPiece) {
+    final PyObject unicode_replace(PyObject oldPiece, PyObject newPiece) {
         return str_replace(oldPiece, newPiece);
     }
 
-    final String unicode_replace(String oldPiece, String newPiece, int maxsplit) {
+    final PyObject unicode_replace(PyObject oldPiece, PyObject newPiece, int maxsplit) {
         return str_replace(oldPiece, newPiece, maxsplit);
     }
 
-    final String unicode_join(PyObject seq) {
+    final PyString unicode_join(PyObject seq) {
         return str_join(seq);
     }
 

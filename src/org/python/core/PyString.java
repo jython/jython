@@ -879,13 +879,7 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
 
             public PyObject __call__(PyObject arg0) {
-                String result=((PyString)self).str_join(arg0);
-                //XXX: do we really need to check self?
-                if (self instanceof PyUnicode||arg0 instanceof PyUnicode) {
-                    return new PyUnicode(result);
-                } else {
-                    return new PyString(result);
-                }
+                return((PyString)self).str_join(arg0);
             }
 
         }
@@ -978,16 +972,12 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
                 try {
-                    return new PyString(((PyString)self).str_replace(arg0.asString(0),arg1.asString(1),arg2.asInt(2)));
+                    return((PyString)self).str_replace(arg0,arg1,arg2.asInt(2));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
                     case 2:
                         msg="expected an integer";
-                        break;
-                    case 0:
-                    case 1:
-                        msg="expected a string";
                         break;
                     default:
                         msg="xxx";
@@ -997,20 +987,7 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return new PyString(((PyString)self).str_replace(arg0.asString(0),arg1.asString(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                    case 1:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
+                return((PyString)self).str_replace(arg0,arg1);
             }
 
         }
@@ -2981,42 +2958,45 @@ public class PyString extends PyBaseString implements ClassDictInit
         return first.concat(string.substring(1).toLowerCase());
     }
 
-    public String replace(String oldPiece, String newPiece) {
-        return str_replace(oldPiece, newPiece);
-    }
-
-    final String str_replace(String oldPiece, String newPiece) {
+    final PyString str_replace(PyObject oldPiece, PyObject newPiece) {
         return str_replace(oldPiece, newPiece, string.length());
     }
-
-    public String replace(String oldPiece, String newPiece, int maxsplit) {
-        return str_replace(oldPiece, newPiece, maxsplit);
-    }
-
-    final String str_replace(String oldPiece, String newPiece, int maxsplit) {
-        PyString newstr = createInstance(newPiece);
-        return newstr.join(split(oldPiece, maxsplit));
+    
+    final PyString str_replace(PyObject oldPiece, PyObject newPiece, int maxsplit) {
+        if(!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)){
+            throw Py.TypeError("str or unicode required for replace");
+        }
+        return ((PyString)newPiece).str_join(str_split(((PyString)oldPiece).string, maxsplit));
     }
 
     public String join(PyObject seq) {
-        return str_join(seq);
+        return str_join(seq).string;
     }
 
-    final String str_join(PyObject seq) {
+    final PyString str_join(PyObject seq) {
         StringBuffer buf = new StringBuffer();
 
         PyObject iter = seq.__iter__();
         PyObject obj = null;
+        boolean needsUnicode = false;
         for (int i = 0; (obj = iter.__iternext__()) != null; i++) {
-            if (!(obj instanceof PyString))
+            if (!(obj instanceof PyString)){
                  throw Py.TypeError(
                         "sequence item " + i + ": expected string, " +
                         obj.safeRepr() + " found");
-            if (i > 0)
+            }
+            if(obj instanceof PyUnicode){
+                needsUnicode = true;
+            }
+            if (i > 0){
                 buf.append(string);
+            }
             buf.append(obj.__str__());
         }
-        return buf.toString();
+        if(needsUnicode || this instanceof PyUnicode){
+            return new PyUnicode(buf.toString());
+        }
+        return new PyString(buf.toString());
     }
 
 

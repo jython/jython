@@ -39,17 +39,10 @@ expose_meth: :b istitle
 expose_meth: :b isunicode
 expose_meth: :b isupper
 expose_meth: join o
-    String result = ((PyString)self).str_join(arg0);
-    //XXX: do we really need to check self?
-    if (self instanceof PyUnicode || arg0 instanceof PyUnicode) {
-        return new PyUnicode(result);
-    } else {
-        return new PyString(result);
-    }
 expose_meth: :s ljust i
 expose_meth: :s lower
 expose_meth: :s lstrip S?
-expose_meth: :s replace s s i?
+expose_meth: replace o o i?
 expose_meth: :i rfind s i? i?
 expose_meth: :i rindex s i? i?
 expose_meth: :s rjust i

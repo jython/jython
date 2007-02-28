@@ -40,7 +40,7 @@ expose_meth: :u join o
 expose_meth: :u ljust i
 expose_meth: :u lower
 expose_meth: :u lstrip S?
-expose_meth: :u replace s s i?
+expose_meth: replace o o i?
 expose_meth: :i rfind s i? i?
 expose_meth: :i rindex s i? i?
 expose_meth: :u rjust i
