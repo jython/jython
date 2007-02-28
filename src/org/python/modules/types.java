@@ -50,7 +50,7 @@ public class types implements ClassDictInit {
         dict.__setitem__("TypeType", PyType.fromClass(PyJavaClass.class));
         dict.__setitem__("UnboundMethodType",
                          PyType.fromClass(PyMethod.class));
-        dict.__setitem__("UnicodeType", PyType.fromClass(PyString.class));
+        dict.__setitem__("UnicodeType", PyType.fromClass(PyUnicode.class));
         dict.__setitem__("XRangeType", PyType.fromClass(PyXRange.class));
 
         dict.__setitem__("StringTypes", new PyTuple(new PyObject[] {
