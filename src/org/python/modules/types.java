@@ -15,15 +15,16 @@ public class types implements ClassDictInit {
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("ArrayType", PyType.fromClass(PyArray.class));
         dict.__setitem__("BuiltinFunctionType",
-                         PyType.fromClass(PyReflectedFunction.class));
+                         PyType.fromClass(PyBuiltinFunction.class));
         dict.__setitem__("BuiltinMethodType",
-                         PyType.fromClass(PyMethod.class));
+                         PyType.fromClass(PyBuiltinFunction.class));
         dict.__setitem__("ClassType", PyType.fromClass(PyClass.class));
         dict.__setitem__("CodeType", PyType.fromClass(PyCode.class));
         dict.__setitem__("ComplexType", PyType.fromClass(PyComplex.class));
         dict.__setitem__("DictType", PyType.fromClass(PyDictionary.class));
         dict.__setitem__("DictionaryType",
                          PyType.fromClass(PyDictionary.class));
+        dict.__setitem__("DictProxyType", PyType.fromClass(PyStringMap.class));
         dict.__setitem__("EllipsisType",
                          PyType.fromClass(PyEllipsis.class));
         dict.__setitem__("FileType", PyType.fromClass(PyFile.class));
@@ -42,12 +43,13 @@ public class types implements ClassDictInit {
         dict.__setitem__("MethodType", PyType.fromClass(PyMethod.class));
         dict.__setitem__("ModuleType", PyType.fromClass(PyModule.class));
         dict.__setitem__("NoneType", PyType.fromClass(PyNone.class));
+        dict.__setitem__("ObjectType", PyType.fromClass(PyObject.class));
         dict.__setitem__("SliceType", PyType.fromClass(PySlice.class));
         dict.__setitem__("StringType", PyType.fromClass(PyString.class));
         dict.__setitem__("TracebackType",
                          PyType.fromClass(PyTraceback.class));
         dict.__setitem__("TupleType", PyType.fromClass(PyTuple.class));
-        dict.__setitem__("TypeType", PyType.fromClass(PyJavaClass.class));
+        dict.__setitem__("TypeType", PyType.fromClass(PyType.class));
         dict.__setitem__("UnboundMethodType",
                          PyType.fromClass(PyMethod.class));
         dict.__setitem__("UnicodeType", PyType.fromClass(PyUnicode.class));
