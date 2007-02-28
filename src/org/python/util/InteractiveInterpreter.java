@@ -6,13 +6,16 @@ import org.python.core.*;
 
 public class InteractiveInterpreter extends PythonInterpreter {
     public InteractiveInterpreter() {
-        super();
-        cflags = new CompilerFlags();
+        this(null);
     }
     public InteractiveInterpreter(PyObject locals) {
-        super(locals);
-        cflags = new CompilerFlags();
+        this(locals, null);
+
     }
+        public InteractiveInterpreter(PyObject locals, PySystemState systemState) {
+            super(locals, systemState);
+            cflags = new CompilerFlags();
+        }
 
     /**
      * Compile and run some source in the interpreter.
