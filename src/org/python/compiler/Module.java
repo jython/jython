@@ -604,6 +604,8 @@ public class Module implements ClassConstants, CompilationContext
             "(I" + $pyFrame + ")" + $pyObj,
             ClassFile.PUBLIC);
 
+        code.aload(0);
+        code.aload(2);
         Label def = code.getLabel();
         Label[] labels = new Label[codes.size()];
         int i;
@@ -616,13 +618,12 @@ public class Module implements ClassConstants, CompilationContext
         code.tableswitch(def, 0, labels);
         for(i=0; i<labels.length; i++) {
             labels[i].setPosition();
-            code.aload(0);
-            code.aload(2);
             code.invokevirtual(
                 classfile.name,
                 ((PyCodeConstant)codes.elementAt(i)).fname,
                 "(" + $pyFrame + ")" + $pyObj);
             code.areturn();
+            code.stack += 2;
         }
         def.setPosition();
 
