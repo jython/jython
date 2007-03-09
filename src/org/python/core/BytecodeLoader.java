@@ -95,11 +95,13 @@ public class BytecodeLoader {
      * @param name the name of the class
      * @param data the java byte code.
      */
-    public static PyCode makeCode(String name, byte[] data) {
+    public static PyCode makeCode(String name, byte[] data, String filename) {
         try {
             Class c = makeClass(name, null, data);
-            return ((PyRunnable) c.newInstance()).getMain();
-        } catch (Exception e) {
+            Object o = c.getConstructor(new Class[] {String.class})
+                    .newInstance(new Object[] {filename});
+            return ((PyRunnable)o).getMain();
+        } catch(Exception e) {
             throw Py.JavaError(e);
         }
     }

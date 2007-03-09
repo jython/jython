@@ -1657,7 +1657,7 @@ public final class Py
 
             saveClassFile(name, ostream);
 
-            return BytecodeLoader.makeCode(name, ostream.toByteArray());
+            return BytecodeLoader.makeCode(name, ostream.toByteArray(), filename);
         } catch (Throwable t) {
             throw parser.fixParseError(null, t, filename);
         }

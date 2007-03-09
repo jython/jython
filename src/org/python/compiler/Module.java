@@ -252,7 +252,7 @@ class PyCodeConstant extends Constant implements ClassConstants
              CodeCompiler.makeStrings(c, null, 0);
         }
 
-        c.ldc(((PyStringConstant)module.filename).value);
+        c.aload(1);
         c.ldc(co_name);
         c.iconst(co_firstlineno);
 
@@ -538,12 +538,12 @@ public class Module implements ClassConstants, CompilationContext
 
     //This block of code writes out the various standard methods
     public void addInit() throws IOException {
-        Code c = classfile.addMethod("<init>", "()V", ClassFile.PUBLIC);
+        Code c = classfile.addMethod("<init>", "(Ljava/lang/String;)V", ClassFile.PUBLIC);
         c.aload(0);
         c.invokespecial(c.pool.Methodref("org/python/core/PyFunctionTable",
                                          "<init>",
                                          "()V"));
-        c.return_();
+        addConstants(c);
     }
 
     public void addRunnable() throws IOException {
@@ -571,14 +571,10 @@ public class Module implements ClassConstants, CompilationContext
         c.return_();
     }
 
-    public void addConstants() throws IOException {
-        Code c = classfile.addMethod("<clinit>", "()V", ClassFile.STATIC);
-
+    public void addConstants(Code c) throws IOException {
         classfile.addField("self", "L"+classfile.name+";",
                            ClassFile.STATIC|ClassFile.FINAL);
-        c.new_(c.pool.Class(classfile.name));
-        c.dup();
-        c.invokespecial(c.pool.Methodref(classfile.name, "<init>", "()V"));
+        c.aload(0);
         c.putstatic(c.pool.Fieldref(classfile.name,
                                     "self",
                                     "L"+classfile.name+";"));
@@ -638,7 +634,6 @@ public class Module implements ClassConstants, CompilationContext
         addRunnable();
         //addMain();
 
-        addConstants();
         addFunctions();
 
         classfile.addInterface("org/python/core/PyRunnable");

@@ -94,7 +94,7 @@ public class imp {
         }
         PyCode code;
         try {
-            code = BytecodeLoader.makeCode(name + "$py", data);
+            code = BytecodeLoader.makeCode(name + "$py", data, fileName);
         } catch (Throwable t) {
             if (testing) {
                 return null;
@@ -206,7 +206,7 @@ public class imp {
 
         Py.writeComment(IMPORT_LOG, "'" + name + "' as " + filename);
 
-        PyCode code = BytecodeLoader.makeCode(name + "$py", bytes);
+        PyCode code = BytecodeLoader.makeCode(name + "$py", bytes, filename);
         return createFromCode(name, code, filename);
     }
     
