@@ -636,7 +636,7 @@ public class imp {
         PyObject modules = Py.getSystemState().modules;
         PyObject pkgMod = null;
         String pkgName = null;
-        if (modDict != null) {
+        if (modDict != null && !(modDict instanceof PyNone)) {
             pkgName = getParent(modDict);
             pkgMod = modules.__finditem__(pkgName);
             // System.err.println("GetParent: " + pkgName + " => " + pkgMod);
