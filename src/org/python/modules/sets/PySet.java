@@ -1,17 +1,16 @@
 package org.python.modules.sets;
 
-import org.python.core.Py;
-import org.python.core.PyException;
-import org.python.core.PyObject;
-import org.python.core.PyType;
-import org.python.core.PyBuiltinFunctionNarrow;
-import org.python.core.PyBuiltinFunction;
-import org.python.core.PyMethodDescr;
-import org.python.core.PyString;
-import org.python.core.PyBuiltinFunctionWide;
-import org.python.core.PyNewWrapper;
-
 import java.util.Iterator;
+import org.python.core.Py;
+import org.python.core.PyBuiltinFunction;
+import org.python.core.PyBuiltinMethod;
+import org.python.core.PyBuiltinMethodNarrow;
+import org.python.core.PyException;
+import org.python.core.PyMethodDescr;
+import org.python.core.PyNewWrapper;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyType;
 
 public class PySet extends BaseSet {
 
@@ -28,6 +27,7 @@ public class PySet extends BaseSet {
 
     }
 
+    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
     public static final String exposed_name="Set";
@@ -35,33 +35,18 @@ public class PySet extends BaseSet {
     public static final Class exposed_base=PyObject.class;
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___ne__ extends PyBuiltinFunctionNarrow {
+        class exposed___ne__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___ne__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___ne__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___ne__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ne__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___ne__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___ne__(arg0);
+                PyObject ret=((PySet)self).baseset___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -69,33 +54,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__ne__",new PyMethodDescr("__ne__",PySet.class,1,1,new exposed___ne__(null,null)));
-        class exposed___eq__ extends PyBuiltinFunctionNarrow {
+        class exposed___eq__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___eq__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___eq__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___eq__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___eq__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___eq__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___eq__(arg0);
+                PyObject ret=((PySet)self).baseset___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -103,33 +73,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PySet.class,1,1,new exposed___eq__(null,null)));
-        class exposed___or__ extends PyBuiltinFunctionNarrow {
+        class exposed___or__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___or__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___or__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___or__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___or__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___or__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___or__(arg0);
+                PyObject ret=((PySet)self).baseset___or__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -137,33 +92,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__or__",new PyMethodDescr("__or__",PySet.class,1,1,new exposed___or__(null,null)));
-        class exposed___xor__ extends PyBuiltinFunctionNarrow {
+        class exposed___xor__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___xor__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___xor__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___xor__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___xor__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___xor__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___xor__(arg0);
+                PyObject ret=((PySet)self).baseset___xor__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -171,33 +111,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__xor__",new PyMethodDescr("__xor__",PySet.class,1,1,new exposed___xor__(null,null)));
-        class exposed___sub__ extends PyBuiltinFunctionNarrow {
+        class exposed___sub__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___sub__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___sub__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___sub__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___sub__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___sub__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___sub__(arg0);
+                PyObject ret=((PySet)self).baseset___sub__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -205,33 +130,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__sub__",new PyMethodDescr("__sub__",PySet.class,1,1,new exposed___sub__(null,null)));
-        class exposed___and__ extends PyBuiltinFunctionNarrow {
+        class exposed___and__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___and__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___and__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___and__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___and__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___and__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___and__(arg0);
+                PyObject ret=((PySet)self).baseset___and__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -239,33 +149,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__and__",new PyMethodDescr("__and__",PySet.class,1,1,new exposed___and__(null,null)));
-        class exposed___gt__ extends PyBuiltinFunctionNarrow {
+        class exposed___gt__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___gt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___gt__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___gt__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___gt__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___gt__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___gt__(arg0);
+                PyObject ret=((PySet)self).baseset___gt__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -273,33 +168,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__gt__",new PyMethodDescr("__gt__",PySet.class,1,1,new exposed___gt__(null,null)));
-        class exposed___ge__ extends PyBuiltinFunctionNarrow {
+        class exposed___ge__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___ge__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___ge__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___ge__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ge__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___ge__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___ge__(arg0);
+                PyObject ret=((PySet)self).baseset___ge__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -307,33 +187,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PySet.class,1,1,new exposed___ge__(null,null)));
-        class exposed___le__ extends PyBuiltinFunctionNarrow {
+        class exposed___le__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___le__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___le__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___le__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___le__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___le__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___le__(arg0);
+                PyObject ret=((PySet)self).baseset___le__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -341,33 +206,18 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__le__",new PyMethodDescr("__le__",PySet.class,1,1,new exposed___le__(null,null)));
-        class exposed___lt__ extends PyBuiltinFunctionNarrow {
+        class exposed___lt__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___lt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___lt__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___lt__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___lt__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.baseset___lt__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                PyObject ret=self.baseset___lt__(arg0);
+                PyObject ret=((PySet)self).baseset___lt__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -375,687 +225,423 @@ public class PySet extends BaseSet {
 
         }
         dict.__setitem__("__lt__",new PyMethodDescr("__lt__",PySet.class,1,1,new exposed___lt__(null,null)));
-        class exposed___contains__ extends PyBuiltinFunctionNarrow {
+        class exposed___contains__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___contains__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___contains__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___contains__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___contains__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return Py.newBoolean(self.baseset___contains__(arg0));
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                return Py.newBoolean(self.baseset___contains__(arg0));
+                return Py.newBoolean(((PySet)self).baseset___contains__(arg0));
             }
 
         }
         dict.__setitem__("__contains__",new PyMethodDescr("__contains__",PySet.class,1,1,new exposed___contains__(null,null)));
-        class exposed___deepcopy__ extends PyBuiltinFunctionNarrow {
+        class exposed___deepcopy__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___deepcopy__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___deepcopy__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___deepcopy__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___deepcopy__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.baseset___deepcopy__(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                return self.baseset___deepcopy__(arg0);
+                return((PySet)self).baseset___deepcopy__(arg0);
             }
 
         }
         dict.__setitem__("__deepcopy__",new PyMethodDescr("__deepcopy__",PySet.class,1,1,new exposed___deepcopy__(null,null)));
-        class exposed___nonzero__ extends PyBuiltinFunctionNarrow {
+        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___nonzero__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___nonzero__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___nonzero__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newBoolean(self.baseset___nonzero__());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PySet self=(PySet)gself;
-                return Py.newBoolean(self.baseset___nonzero__());
+                return Py.newBoolean(((PySet)self).baseset___nonzero__());
             }
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PySet.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed_copy extends PyBuiltinFunctionNarrow {
+        class exposed_copy extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_copy(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_copy(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_copy((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_copy(self,info);
             }
 
             public PyObject __call__() {
-                return self.baseset_copy();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PySet self=(PySet)gself;
-                return self.baseset_copy();
+                return((PySet)self).baseset_copy();
             }
 
         }
         dict.__setitem__("copy",new PyMethodDescr("copy",PySet.class,0,0,new exposed_copy(null,null)));
-        class exposed__as_immutable extends PyBuiltinFunctionNarrow {
+        class exposed_union extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_union(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed__as_immutable(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed__as_immutable((PySet)self,info);
-            }
-
-            public PyObject __call__() {
-                return self.set__as_immutable();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PySet self=(PySet)gself;
-                return self.set__as_immutable();
-            }
-
-        }
-        dict.__setitem__("_as_immutable",new PyMethodDescr("_as_immutable",PySet.class,0,0,new exposed__as_immutable(null,null)));
-        class exposed_union extends PyBuiltinFunctionNarrow {
-
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
-            }
-
-            exposed_union(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_union((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_union(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.baseset_union(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                return self.baseset_union(arg0);
+                return((PySet)self).baseset_union(arg0);
             }
 
         }
         dict.__setitem__("union",new PyMethodDescr("union",PySet.class,1,1,new exposed_union(null,null)));
-        class exposed_difference extends PyBuiltinFunctionNarrow {
+        class exposed_difference extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_difference(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_difference(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_difference((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_difference(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.baseset_difference(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                return self.baseset_difference(arg0);
+                return((PySet)self).baseset_difference(arg0);
             }
 
         }
         dict.__setitem__("difference",new PyMethodDescr("difference",PySet.class,1,1,new exposed_difference(null,null)));
-        class exposed_symmetric_difference extends PyBuiltinFunctionNarrow {
+        class exposed_symmetric_difference extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_symmetric_difference(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_symmetric_difference(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_symmetric_difference((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_symmetric_difference(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.baseset_symmetric_difference(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                return self.baseset_symmetric_difference(arg0);
+                return((PySet)self).baseset_symmetric_difference(arg0);
             }
 
         }
         dict.__setitem__("symmetric_difference",new PyMethodDescr("symmetric_difference",PySet.class,1,1,new exposed_symmetric_difference(null,null)));
-        class exposed_intersection extends PyBuiltinFunctionNarrow {
+        class exposed_intersection extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_intersection(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_intersection(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_intersection((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_intersection(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.baseset_intersection(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                return self.baseset_intersection(arg0);
+                return((PySet)self).baseset_intersection(arg0);
             }
 
         }
         dict.__setitem__("intersection",new PyMethodDescr("intersection",PySet.class,1,1,new exposed_intersection(null,null)));
-        class exposed_issubset extends PyBuiltinFunctionNarrow {
+        class exposed_issubset extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_issubset(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_issubset(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_issubset((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_issubset(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.baseset_issubset(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                return self.baseset_issubset(arg0);
+                return((PySet)self).baseset_issubset(arg0);
             }
 
         }
         dict.__setitem__("issubset",new PyMethodDescr("issubset",PySet.class,1,1,new exposed_issubset(null,null)));
-        class exposed_issuperset extends PyBuiltinFunctionNarrow {
+        class exposed_issuperset extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_issuperset(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_issuperset(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_issuperset((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_issuperset(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.baseset_issuperset(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                return self.baseset_issuperset(arg0);
+                return((PySet)self).baseset_issuperset(arg0);
             }
 
         }
         dict.__setitem__("issuperset",new PyMethodDescr("issuperset",PySet.class,1,1,new exposed_issuperset(null,null)));
-        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+        class exposed___len__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___len__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___hash__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hash__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___len__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newInteger(self.set_hashCode());
+                return Py.newInteger(((PySet)self).baseset___len__());
             }
 
-            public PyObject inst_call(PyObject gself) {
-                PySet self=(PySet)gself;
-                return Py.newInteger(self.set_hashCode());
+        }
+        dict.__setitem__("__len__",new PyMethodDescr("__len__",PySet.class,0,0,new exposed___len__(null,null)));
+        class exposed___reduce__ extends PyBuiltinMethodNarrow {
+
+            exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___reduce__(self,info);
+            }
+
+            public PyObject __call__() {
+                return((PySet)self).baseset___reduce__();
+            }
+
+        }
+        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PySet.class,0,0,new exposed___reduce__(null,null)));
+        class exposed___hash__ extends PyBuiltinMethodNarrow {
+
+            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___hash__(self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newInteger(((PySet)self).Set_hashCode());
             }
 
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PySet.class,0,0,new exposed___hash__(null,null)));
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___repr__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.baseset_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PySet self=(PySet)gself;
-                return new PyString(self.baseset_toString());
+                return new PyString(((PySet)self).baseset_toString());
             }
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PySet.class,0,0,new exposed___repr__(null,null)));
-        class exposed_add extends PyBuiltinFunctionNarrow {
+        class exposed_add extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_add(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_add(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_add((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_add(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.set_add(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                self.set_add(arg0);
+                ((PySet)self).Set_add(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("add",new PyMethodDescr("add",PySet.class,1,1,new exposed_add(null,null)));
-        class exposed_remove extends PyBuiltinFunctionNarrow {
+        class exposed_remove extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_remove(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_remove(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_remove((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_remove(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.set_remove(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                self.set_remove(arg0);
+                ((PySet)self).Set_remove(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("remove",new PyMethodDescr("remove",PySet.class,1,1,new exposed_remove(null,null)));
-        class exposed_discard extends PyBuiltinFunctionNarrow {
+        class exposed_discard extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_discard(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_discard(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_discard((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_discard(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.set_discard(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                self.set_discard(arg0);
+                ((PySet)self).Set_discard(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("discard",new PyMethodDescr("discard",PySet.class,1,1,new exposed_discard(null,null)));
-        class exposed_pop extends PyBuiltinFunctionNarrow {
+        class exposed_pop extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_pop(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_pop(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_pop((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_pop(self,info);
             }
 
             public PyObject __call__() {
-                return self.set_pop();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PySet self=(PySet)gself;
-                return self.set_pop();
+                return((PySet)self).Set_pop();
             }
 
         }
         dict.__setitem__("pop",new PyMethodDescr("pop",PySet.class,0,0,new exposed_pop(null,null)));
-        class exposed_clear extends PyBuiltinFunctionNarrow {
+        class exposed_clear extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_clear(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_clear(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_clear((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_clear(self,info);
             }
 
             public PyObject __call__() {
-                self.set_clear();
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PySet self=(PySet)gself;
-                self.set_clear();
+                ((PySet)self).Set_clear();
                 return Py.None;
             }
 
         }
         dict.__setitem__("clear",new PyMethodDescr("clear",PySet.class,0,0,new exposed_clear(null,null)));
-        class exposed_update extends PyBuiltinFunctionNarrow {
+        class exposed_update extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_update(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_update(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_update((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_update(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.set_update(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                self.set_update(arg0);
+                ((PySet)self).Set_update(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("update",new PyMethodDescr("update",PySet.class,1,1,new exposed_update(null,null)));
-        class exposed_union_update extends PyBuiltinFunctionNarrow {
+        class exposed_union_update extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_union_update(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_union_update(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_union_update((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_union_update(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.set_union_update(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                self.set_union_update(arg0);
+                ((PySet)self).Set_union_update(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("union_update",new PyMethodDescr("union_update",PySet.class,1,1,new exposed_union_update(null,null)));
-        class exposed_intersection_update extends PyBuiltinFunctionNarrow {
+        class exposed_intersection_update extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_intersection_update(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_intersection_update(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_intersection_update((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_intersection_update(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.set_intersection_update(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                self.set_intersection_update(arg0);
+                ((PySet)self).Set_intersection_update(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("intersection_update",new PyMethodDescr("intersection_update",PySet.class,1,1,new exposed_intersection_update(null,null)));
-        class exposed_symmetric_difference_update extends PyBuiltinFunctionNarrow {
+        class exposed_symmetric_difference_update extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_symmetric_difference_update(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_symmetric_difference_update(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_symmetric_difference_update((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_symmetric_difference_update(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.set_symmetric_difference_update(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                self.set_symmetric_difference_update(arg0);
+                ((PySet)self).Set_symmetric_difference_update(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("symmetric_difference_update",new PyMethodDescr("symmetric_difference_update",PySet.class,1,1,new exposed_symmetric_difference_update(null,null)));
-        class exposed_difference_update extends PyBuiltinFunctionNarrow {
+        class exposed_difference_update extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_difference_update(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_difference_update(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_difference_update((PySet)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_difference_update(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.set_difference_update(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySet self=(PySet)gself;
-                self.set_difference_update(arg0);
+                ((PySet)self).Set_difference_update(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("difference_update",new PyMethodDescr("difference_update",PySet.class,1,1,new exposed_difference_update(null,null)));
-        class exposed___init__ extends PyBuiltinFunctionWide {
+        class exposed__as_immutable extends PyBuiltinMethodNarrow {
 
-            private PySet self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed__as_immutable(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___init__(PySet self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed__as_immutable(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___init__((PySet)self,info);
+            public PyObject __call__() {
+                return((PySet)self).Set__as_immutable();
             }
 
-            public PyObject inst_call(PyObject self,PyObject[]args) {
-                return inst_call(self,args,Py.NoKeywords);
+        }
+        dict.__setitem__("_as_immutable",new PyMethodDescr("_as_immutable",PySet.class,0,0,new exposed__as_immutable(null,null)));
+        class exposed___init__ extends PyBuiltinMethod {
+
+            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___init__(self,info);
             }
 
             public PyObject __call__(PyObject[]args) {
@@ -1063,13 +649,7 @@ public class PySet extends BaseSet {
             }
 
             public PyObject __call__(PyObject[]args,String[]keywords) {
-                self.set_init(args,keywords);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
-                PySet self=(PySet)gself;
-                self.set_init(args,keywords);
+                ((PySet)self).Set_init(args,keywords);
                 return Py.None;
             }
 
@@ -1077,22 +657,23 @@ public class PySet extends BaseSet {
         dict.__setitem__("__init__",new PyMethodDescr("__init__",PySet.class,-1,-1,new exposed___init__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PySet.class,"__new__",-1,-1) {
 
-             public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                 PySet newobj;
-                 if (for_type==subtype) {
-                     newobj=new PySet();
-                     if (init)
-                         newobj.set_init(args,keywords);
-                 } else {
-                     newobj=new PySetDerived(subtype);
-                 }
-                 return newobj;
-             }
+                                                                                     public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                         PySet newobj;
+                                                                                         if (for_type==subtype) {
+                                                                                             newobj=new PySet();
+                                                                                             if (init)
+                                                                                                 newobj.Set_init(args,keywords);
+                                                                                         } else {
+                                                                                             newobj=new PySetDerived(subtype);
+                                                                                         }
+                                                                                         return newobj;
+                                                                                     }
 
-         });
+                                                                                 });
     }
+    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
-    final void set_init(PyObject[] args, String[] kwds) {
+    final void Set_init(PyObject[] args, String[] kwds) {
         int nargs = args.length - kwds.length;
         if (nargs > 1) {
             throw PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, false, exposed_name, 0, 1);
@@ -1106,54 +687,54 @@ public class PySet extends BaseSet {
     }
 
     public PyObject __ior__(PyObject other) {
-        return set___ior__(other);
+        return Set___ior__(other);
     }
 
-    final PyObject set___ior__(PyObject other) {
+    final PyObject Set___ior__(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         this._set.addAll(bs._set);
         return this;
     }
 
     public PyObject __ixor__(PyObject other) {
-        return set___ixor__(other);
+        return Set___ixor__(other);
     }
 
-    final PyObject set___ixor__(PyObject other) {
+    final PyObject Set___ixor__(PyObject other) {
         this._binary_sanity_check(other);
-        set_symmetric_difference_update(other);
+        Set_symmetric_difference_update(other);
         return this;
     }
 
     public PyObject __iand__(PyObject other) {
-        return set___iand__(other);
+        return Set___iand__(other);
     }
 
-    final PyObject set___iand__(PyObject other) {
+    final PyObject Set___iand__(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         this._set = ((BaseSet) this.__and__(bs))._set;
         return this;
     }
 
     public PyObject __isub__(PyObject other) {
-        return set___isub__(other);
+        return Set___isub__(other);
     }
 
-    final PyObject set___isub__(PyObject other) {
+    final PyObject Set___isub__(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         this._set.removeAll(bs._set);
         return this;
     }
 
     public int hashCode() {
-        return set_hashCode();
+        return Set_hashCode();
     }
 
-    final int set_hashCode() {
+    final int Set_hashCode() {
         throw Py.TypeError("Can't hash a Set, only an ImmutableSet.");
     }
 
-    final void set_add(PyObject o) {
+    final void Set_add(PyObject o) {
         try {
             this._set.add(o);
         } catch (PyException e) {
@@ -1162,7 +743,7 @@ public class PySet extends BaseSet {
         }
     }
 
-    final void set_remove(PyObject o) {
+    final void Set_remove(PyObject o) {
         boolean b = false;
         try {
             b = this._set.remove(o);
@@ -1175,7 +756,7 @@ public class PySet extends BaseSet {
         }
     }
 
-    final void set_discard(PyObject o) {
+    final void Set_discard(PyObject o) {
         try {
             this._set.remove(o);
         } catch (PyException e) {
@@ -1184,26 +765,26 @@ public class PySet extends BaseSet {
         }
     }
 
-    final PyObject set_pop() {
+    final PyObject Set_pop() {
         Iterator iterator = this._set.iterator();
         Object first = iterator.next();
         this._set.remove(first);
         return (PyObject) first;
     }
 
-    final void set_clear() {
+    final void Set_clear() {
         this._set.clear();
     }
 
-    final void set_update(PyObject data) {
+    final void Set_update(PyObject data) {
         this._update(data);
     }
 
-    final void set_union_update(PyObject other) {
+    final void Set_union_update(PyObject other) {
         this._update(other);
     }
 
-    final void set_intersection_update(PyObject other) {
+    final void Set_intersection_update(PyObject other) {
         if (other instanceof BaseSet) {
             this.__iand__(other);
         } else {
@@ -1212,7 +793,7 @@ public class PySet extends BaseSet {
         }
     }
 
-    final void set_symmetric_difference_update(PyObject other) {
+    final void Set_symmetric_difference_update(PyObject other) {
         BaseSet bs = (other instanceof BaseSet) ? (BaseSet) other : new PySet(other);
         for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
             Object o = iterator.next();
@@ -1224,7 +805,7 @@ public class PySet extends BaseSet {
         }
     }
 
-    final void set_difference_update(PyObject other) {
+    final void Set_difference_update(PyObject other) {
         if (other instanceof BaseSet) {
             this.__isub__(other);
             return;
@@ -1237,7 +818,7 @@ public class PySet extends BaseSet {
         }
     }
 
-    final PyObject set__as_immutable() {
+    final PyObject Set__as_immutable() {
         return new PyImmutableSet(this);
     }
 }

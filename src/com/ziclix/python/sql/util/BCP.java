@@ -8,18 +8,18 @@
  */
 package com.ziclix.python.sql.util;
 
-import com.ziclix.python.sql.PyConnection;
-import com.ziclix.python.sql.pipe.Pipe;
-import com.ziclix.python.sql.pipe.db.DBSink;
-import com.ziclix.python.sql.pipe.db.DBSource;
-import com.ziclix.python.sql.zxJDBC;
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
-import org.python.core.PyBuiltinFunctionSet;
+import org.python.core.PyBuiltinMethodSet;
 import org.python.core.PyClass;
 import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import com.ziclix.python.sql.PyConnection;
+import com.ziclix.python.sql.zxJDBC;
+import com.ziclix.python.sql.pipe.Pipe;
+import com.ziclix.python.sql.pipe.db.DBSink;
+import com.ziclix.python.sql.pipe.db.DBSource;
 
 /**
  * A class to perform efficient Bulk CoPy of database tables.
@@ -204,40 +204,19 @@ public class BCP extends PyObject implements ClassDictInit {
 }
 
 /**
- * Class BCPFunc
- *
- * @author
  * @author last modified by $Author$
  * @version $Revision$
- * @date $today.date$
  * @date last modified on $Date$
  * @copyright 2001 brian zimmer
  */
-class BCPFunc extends PyBuiltinFunctionSet {
+class BCPFunc extends PyBuiltinMethodSet {
 
-    /**
-     * Constructor BCPFunc
-     *
-     * @param name
-     * @param index
-     * @param argcount
-     * @param doc
-     */
     BCPFunc(String name, int index, int argcount, String doc) {
-        super(name, index, argcount, argcount, true, doc);
+        super(name, index, argcount, argcount, doc);
     }
 
-    /**
-     * Constructor BCPFunc
-     *
-     * @param name
-     * @param index
-     * @param minargs
-     * @param maxargs
-     * @param doc
-     */
     BCPFunc(String name, int index, int minargs, int maxargs, String doc) {
-        super(name, index, minargs, maxargs, true, doc);
+        super(name, index, minargs, maxargs, doc);
     }
 
     /**
@@ -264,7 +243,7 @@ class BCPFunc extends PyBuiltinFunctionSet {
                 return count;
 
             default :
-                throw argCountError(1);
+                throw info.unexpectedCall(1, false);
         }
     }
 
@@ -287,7 +266,7 @@ class BCPFunc extends PyBuiltinFunctionSet {
                 return count;
 
             default :
-                throw argCountError(2);
+                throw info.unexpectedCall(2, false);
         }
     }
 
@@ -310,7 +289,7 @@ class BCPFunc extends PyBuiltinFunctionSet {
                 return count;
 
             default :
-                throw argCountError(3);
+                throw info.unexpectedCall(3, false);
         }
     }
 
@@ -361,7 +340,7 @@ class BCPFunc extends PyBuiltinFunctionSet {
                 return count;
 
             default :
-                throw argCountError(3);
+                throw info.unexpectedCall(3, false);
         }
     }
 }

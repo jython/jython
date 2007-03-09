@@ -5,11 +5,11 @@ import java.util.Hashtable;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
     public BuiltinFunctions(String name, int index, int argcount) {
-        super(name, index, argcount, argcount, false, null);
+        this(name, index, argcount, argcount);
     }
 
     public BuiltinFunctions(String name, int index, int minargs, int maxargs) {
-        super(name, index, minargs, maxargs, false, null);
+        super(name, index, minargs, maxargs);
     }
 
     public PyObject __call__() {
@@ -17,7 +17,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         case 4:
             return __builtin__.globals();
         default:
-            throw argCountError(0);
+            throw info.unexpectedCall(0, false);
         }
     }
 
@@ -47,7 +47,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         case 12:
             return __builtin__.sum(arg1);
         default:
-            throw argCountError(1);
+            throw info.unexpectedCall(1, false);
         }
     }
 
@@ -66,7 +66,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
         case 12:
             return __builtin__.sum(arg1, arg2);
         default:
-            throw argCountError(2);
+            throw info.unexpectedCall(2, false);
         }
     }
 
@@ -95,7 +95,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                         + "dictionary with string keys");
             }
         default:
-            throw argCountError(3);
+            throw info.unexpectedCall(3, false);
         }
     }
 }
@@ -104,7 +104,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
  * The builtin module. All builtin functions are defined here
  */
 public class __builtin__ implements ClassDictInit {
-    /** <i>Internal use only. Do not call this method explicit.</i> */
+    /** <i>Internal use only. Do not call this method explicitly.</i> */
     public static void classDictInit(PyObject dict) {
         /* newstyle */
 

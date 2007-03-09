@@ -16,15 +16,16 @@ public class types implements ClassDictInit {
         dict.__setitem__("ArrayType", PyType.fromClass(PyArray.class));
         dict.__setitem__("BooleanType", PyType.fromClass(PyBoolean.class));
         dict.__setitem__("BuiltinFunctionType",
-                         PyType.fromClass(PyReflectedFunction.class));
+                         PyType.fromClass(PyBuiltinFunction.class));
         dict.__setitem__("BuiltinMethodType",
-                         PyType.fromClass(PyMethod.class));
+                         PyType.fromClass(PyBuiltinFunction.class));
         dict.__setitem__("ClassType", PyType.fromClass(PyClass.class));
         dict.__setitem__("CodeType", PyType.fromClass(PyCode.class));
         dict.__setitem__("ComplexType", PyType.fromClass(PyComplex.class));
         dict.__setitem__("DictType", PyType.fromClass(PyDictionary.class));
         dict.__setitem__("DictionaryType",
                          PyType.fromClass(PyDictionary.class));
+        dict.__setitem__("DictProxyType", PyType.fromClass(PyStringMap.class));
         dict.__setitem__("EllipsisType",
                          PyType.fromClass(PyEllipsis.class));
         dict.__setitem__("FileType", PyType.fromClass(PyFile.class));
@@ -43,6 +44,7 @@ public class types implements ClassDictInit {
         dict.__setitem__("MethodType", PyType.fromClass(PyMethod.class));
         dict.__setitem__("ModuleType", PyType.fromClass(PyModule.class));
         dict.__setitem__("NoneType", PyType.fromClass(PyNone.class));
+        dict.__setitem__("ObjectType", PyType.fromClass(PyObject.class));
         dict.__setitem__("SliceType", PyType.fromClass(PySlice.class));
         dict.__setitem__("StringType", PyType.fromClass(PyString.class));
         dict.__setitem__("TracebackType",

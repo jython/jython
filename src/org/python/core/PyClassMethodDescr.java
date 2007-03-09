@@ -6,8 +6,8 @@ public class PyClassMethodDescr extends PyMethodDescr {
                               Class c,
                               int minargs,
                               int maxargs,
-                              PyBuiltinFunction func) {
-        super(name, c, minargs, maxargs, func);
+                              PyBuiltinFunction meth) {
+        super(name, c, minargs, maxargs, meth);
     }
 
     protected void checkCallerType(PyObject obj) {
@@ -18,10 +18,10 @@ public class PyClassMethodDescr extends PyMethodDescr {
     public PyObject __get__(PyObject obj, PyObject type) {
         if (obj != null) {
             checkCallerType(obj.getType());
-            return func.makeBound(obj.getType()); 
+            return meth.bind(obj.getType()); 
         }else if(type != null){
             checkCallerType(type);
-            return func.makeBound(type);
+            return meth.bind(type);
         }
         return this;
     }

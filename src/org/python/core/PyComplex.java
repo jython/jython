@@ -18,201 +18,114 @@ public class PyComplex extends PyObject {
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
         dict.__setitem__("imag",new PyGetSetDescr("imag",PyComplex.class,"getImag",null,null));
         dict.__setitem__("real",new PyGetSetDescr("real",PyComplex.class,"getReal",null,null));
-        class exposed___abs__ extends PyBuiltinFunctionNarrow {
+        class exposed___abs__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___abs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___abs__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___abs__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___abs__(self,info);
             }
 
             public PyObject __call__() {
-                return self.complex___abs__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return self.complex___abs__();
+                return((PyComplex)self).complex___abs__();
             }
 
         }
         dict.__setitem__("__abs__",new PyMethodDescr("__abs__",PyComplex.class,0,0,new exposed___abs__(null,null)));
-        class exposed___float__ extends PyBuiltinFunctionNarrow {
+        class exposed___float__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___float__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___float__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___float__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___float__(self,info);
             }
 
             public PyObject __call__() {
-                return self.complex___float__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return self.complex___float__();
+                return((PyComplex)self).complex___float__();
             }
 
         }
         dict.__setitem__("__float__",new PyMethodDescr("__float__",PyComplex.class,0,0,new exposed___float__(null,null)));
-        class exposed___int__ extends PyBuiltinFunctionNarrow {
+        class exposed___int__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___int__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___int__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___int__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___int__(self,info);
             }
 
             public PyObject __call__() {
-                return self.complex___int__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return self.complex___int__();
+                return((PyComplex)self).complex___int__();
             }
 
         }
         dict.__setitem__("__int__",new PyMethodDescr("__int__",PyComplex.class,0,0,new exposed___int__(null,null)));
-        class exposed___long__ extends PyBuiltinFunctionNarrow {
+        class exposed___long__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___long__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___long__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___long__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___long__(self,info);
             }
 
             public PyObject __call__() {
-                return self.complex___long__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return self.complex___long__();
+                return((PyComplex)self).complex___long__();
             }
 
         }
         dict.__setitem__("__long__",new PyMethodDescr("__long__",PyComplex.class,0,0,new exposed___long__(null,null)));
-        class exposed___neg__ extends PyBuiltinFunctionNarrow {
+        class exposed___neg__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___neg__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___neg__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___neg__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___neg__(self,info);
             }
 
             public PyObject __call__() {
-                return self.complex___neg__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return self.complex___neg__();
+                return((PyComplex)self).complex___neg__();
             }
 
         }
         dict.__setitem__("__neg__",new PyMethodDescr("__neg__",PyComplex.class,0,0,new exposed___neg__(null,null)));
-        class exposed___pos__ extends PyBuiltinFunctionNarrow {
+        class exposed___pos__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___pos__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___pos__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___pos__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___pos__(self,info);
             }
 
             public PyObject __call__() {
-                return self.complex___pos__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return self.complex___pos__();
+                return((PyComplex)self).complex___pos__();
             }
 
         }
         dict.__setitem__("__pos__",new PyMethodDescr("__pos__",PyComplex.class,0,0,new exposed___pos__(null,null)));
-        class exposed___add__ extends PyBuiltinFunctionNarrow {
+        class exposed___add__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___add__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___add__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___add__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___add__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___add__(arg0);
+                PyObject ret=((PyComplex)self).complex___add__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -220,33 +133,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyComplex.class,1,1,new exposed___add__(null,null)));
-        class exposed___div__ extends PyBuiltinFunctionNarrow {
+        class exposed___div__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___div__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___div__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___div__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___div__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___div__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___div__(arg0);
+                PyObject ret=((PyComplex)self).complex___div__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -254,33 +152,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__div__",new PyMethodDescr("__div__",PyComplex.class,1,1,new exposed___div__(null,null)));
-        class exposed___divmod__ extends PyBuiltinFunctionNarrow {
+        class exposed___divmod__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___divmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___divmod__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___divmod__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___divmod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___divmod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___divmod__(arg0);
+                PyObject ret=((PyComplex)self).complex___divmod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -288,33 +171,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__divmod__",new PyMethodDescr("__divmod__",PyComplex.class,1,1,new exposed___divmod__(null,null)));
-        class exposed___floordiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___floordiv__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___floordiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___floordiv__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___floordiv__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___floordiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___floordiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___floordiv__(arg0);
+                PyObject ret=((PyComplex)self).complex___floordiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -322,33 +190,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__floordiv__",new PyMethodDescr("__floordiv__",PyComplex.class,1,1,new exposed___floordiv__(null,null)));
-        class exposed___mod__ extends PyBuiltinFunctionNarrow {
+        class exposed___mod__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___mod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___mod__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___mod__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___mod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___mod__(arg0);
+                PyObject ret=((PyComplex)self).complex___mod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -356,33 +209,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyComplex.class,1,1,new exposed___mod__(null,null)));
-        class exposed___mul__ extends PyBuiltinFunctionNarrow {
+        class exposed___mul__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___mul__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___mul__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mul__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___mul__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___mul__(arg0);
+                PyObject ret=((PyComplex)self).complex___mul__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -390,33 +228,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyComplex.class,1,1,new exposed___mul__(null,null)));
-        class exposed___radd__ extends PyBuiltinFunctionNarrow {
+        class exposed___radd__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___radd__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___radd__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___radd__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___radd__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___radd__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___radd__(arg0);
+                PyObject ret=((PyComplex)self).complex___radd__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -424,33 +247,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__radd__",new PyMethodDescr("__radd__",PyComplex.class,1,1,new exposed___radd__(null,null)));
-        class exposed___rdiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rdiv__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rdiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rdiv__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rdiv__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rdiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___rdiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___rdiv__(arg0);
+                PyObject ret=((PyComplex)self).complex___rdiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -458,33 +266,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rdiv__",new PyMethodDescr("__rdiv__",PyComplex.class,1,1,new exposed___rdiv__(null,null)));
-        class exposed___rdivmod__ extends PyBuiltinFunctionNarrow {
+        class exposed___rdivmod__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rdivmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rdivmod__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rdivmod__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rdivmod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___rdivmod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___rdivmod__(arg0);
+                PyObject ret=((PyComplex)self).complex___rdivmod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -492,33 +285,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rdivmod__",new PyMethodDescr("__rdivmod__",PyComplex.class,1,1,new exposed___rdivmod__(null,null)));
-        class exposed___rfloordiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rfloordiv__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rfloordiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rfloordiv__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rfloordiv__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rfloordiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___rfloordiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___rfloordiv__(arg0);
+                PyObject ret=((PyComplex)self).complex___rfloordiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -526,33 +304,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rfloordiv__",new PyMethodDescr("__rfloordiv__",PyComplex.class,1,1,new exposed___rfloordiv__(null,null)));
-        class exposed___rmod__ extends PyBuiltinFunctionNarrow {
+        class exposed___rmod__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rmod__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rmod__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___rmod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___rmod__(arg0);
+                PyObject ret=((PyComplex)self).complex___rmod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -560,33 +323,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rmod__",new PyMethodDescr("__rmod__",PyComplex.class,1,1,new exposed___rmod__(null,null)));
-        class exposed___rmul__ extends PyBuiltinFunctionNarrow {
+        class exposed___rmul__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rmul__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rmul__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmul__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___rmul__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___rmul__(arg0);
+                PyObject ret=((PyComplex)self).complex___rmul__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -594,33 +342,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyComplex.class,1,1,new exposed___rmul__(null,null)));
-        class exposed___rpow__ extends PyBuiltinFunctionNarrow {
+        class exposed___rpow__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rpow__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rpow__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rpow__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rpow__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___rpow__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___rpow__(arg0);
+                PyObject ret=((PyComplex)self).complex___rpow__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -628,33 +361,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rpow__",new PyMethodDescr("__rpow__",PyComplex.class,1,1,new exposed___rpow__(null,null)));
-        class exposed___rsub__ extends PyBuiltinFunctionNarrow {
+        class exposed___rsub__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rsub__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rsub__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rsub__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rsub__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___rsub__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___rsub__(arg0);
+                PyObject ret=((PyComplex)self).complex___rsub__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -662,33 +380,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rsub__",new PyMethodDescr("__rsub__",PyComplex.class,1,1,new exposed___rsub__(null,null)));
-        class exposed___rtruediv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rtruediv__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rtruediv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rtruediv__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rtruediv__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rtruediv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___rtruediv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___rtruediv__(arg0);
+                PyObject ret=((PyComplex)self).complex___rtruediv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -696,33 +399,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__rtruediv__",new PyMethodDescr("__rtruediv__",PyComplex.class,1,1,new exposed___rtruediv__(null,null)));
-        class exposed___sub__ extends PyBuiltinFunctionNarrow {
+        class exposed___sub__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___sub__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___sub__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___sub__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___sub__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___sub__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___sub__(arg0);
+                PyObject ret=((PyComplex)self).complex___sub__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -730,33 +418,18 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__sub__",new PyMethodDescr("__sub__",PyComplex.class,1,1,new exposed___sub__(null,null)));
-        class exposed___truediv__ extends PyBuiltinFunctionNarrow {
+        class exposed___truediv__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___truediv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___truediv__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___truediv__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___truediv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___truediv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___truediv__(arg0);
+                PyObject ret=((PyComplex)self).complex___truediv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -764,48 +437,25 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__truediv__",new PyMethodDescr("__truediv__",PyComplex.class,1,1,new exposed___truediv__(null,null)));
-        class exposed___pow__ extends PyBuiltinFunctionNarrow {
+        class exposed___pow__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___pow__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___pow__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___pow__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___pow__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                PyObject ret=self.complex___pow__(arg0,arg1);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___pow__(arg0,arg1);
+                PyObject ret=((PyComplex)self).complex___pow__(arg0,arg1);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.complex___pow__(arg0,null);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyComplex self=(PyComplex)gself;
-                PyObject ret=self.complex___pow__(arg0,null);
+                PyObject ret=((PyComplex)self).complex___pow__(arg0,null);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -813,170 +463,98 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__pow__",new PyMethodDescr("__pow__",PyComplex.class,1,2,new exposed___pow__(null,null)));
-        class exposed_conjugate extends PyBuiltinFunctionNarrow {
+        class exposed_conjugate extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_conjugate(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_conjugate(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_conjugate((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_conjugate(self,info);
             }
 
             public PyObject __call__() {
-                return self.complex_conjugate();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return self.complex_conjugate();
+                return((PyComplex)self).complex_conjugate();
             }
 
         }
         dict.__setitem__("conjugate",new PyMethodDescr("conjugate",PyComplex.class,0,0,new exposed_conjugate(null,null)));
-        class exposed___nonzero__ extends PyBuiltinFunctionNarrow {
+        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___nonzero__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___nonzero__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___nonzero__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newBoolean(self.complex___nonzero__());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return Py.newBoolean(self.complex___nonzero__());
+                return Py.newBoolean(((PyComplex)self).complex___nonzero__());
             }
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyComplex.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___repr__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.complex_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return new PyString(self.complex_toString());
+                return new PyString(((PyComplex)self).complex_toString());
             }
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyComplex.class,0,0,new exposed___repr__(null,null)));
-        class exposed___str__ extends PyBuiltinFunctionNarrow {
+        class exposed___str__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___str__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___str__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___str__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.complex_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return new PyString(self.complex_toString());
+                return new PyString(((PyComplex)self).complex_toString());
             }
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyComplex.class,0,0,new exposed___str__(null,null)));
-        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+        class exposed___hash__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___hash__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hash__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___hash__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newInteger(self.complex_hashCode());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return Py.newInteger(self.complex_hashCode());
+                return Py.newInteger(((PyComplex)self).complex_hashCode());
             }
 
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyComplex.class,0,0,new exposed___hash__(null,null)));
-        class exposed___getnewargs__ extends PyBuiltinFunctionNarrow {
+        class exposed___getnewargs__ extends PyBuiltinMethodNarrow {
 
-            private PyComplex self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___getnewargs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___getnewargs__(PyComplex self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getnewargs__((PyComplex)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getnewargs__(self,info);
             }
 
             public PyObject __call__() {
-                return self.complex___getnewargs__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyComplex self=(PyComplex)gself;
-                return self.complex___getnewargs__();
+                return((PyComplex)self).complex___getnewargs__();
             }
 
         }

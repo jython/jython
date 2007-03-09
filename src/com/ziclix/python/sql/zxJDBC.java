@@ -122,13 +122,13 @@ public class zxJDBC extends PyObject implements ClassDictInit {
         dict.__setitem__("threadsafety", new PyInteger(1));
         dict.__setitem__("paramstyle", new PyString("qmark"));
         dict.__setitem__("__version__", Py.newString("$Revision$").__getslice__(Py.newInteger(11), Py.newInteger(-2), null));
-        dict.__setitem__("Date", new zxJDBCFunc("Date", 1, 3, 3, false, "construct a Date from year, month, day"));
-        dict.__setitem__("Time", new zxJDBCFunc("Time", 2, 3, 3, false, "construct a Date from hour, minute, second"));
-        dict.__setitem__("Timestamp", new zxJDBCFunc("Timestamp", 3, 6, 6, false, "construct a Timestamp from year, month, day, hour, minute, second"));
-        dict.__setitem__("DateFromTicks", new zxJDBCFunc("DateFromTicks", 4, 1, 1, false, "construct a Date from seconds since the epoch"));
-        dict.__setitem__("TimeFromTicks", new zxJDBCFunc("TimeFromTicks", 5, 1, 1, false, "construct a Time from seconds since the epoch"));
-        dict.__setitem__("TimestampFromTicks", new zxJDBCFunc("TimestampFromTicks", 6, 1, 1, false, "construct a Timestamp from seconds since the epoch"));
-        dict.__setitem__("Binary", new zxJDBCFunc("Binary", 7, 1, 1, false, "construct an object capable of holding binary data"));
+        dict.__setitem__("Date", new zxJDBCFunc("Date", 1, 3, 3, "construct a Date from year, month, day"));
+        dict.__setitem__("Time", new zxJDBCFunc("Time", 2, 3, 3, "construct a Date from hour, minute, second"));
+        dict.__setitem__("Timestamp", new zxJDBCFunc("Timestamp", 3, 6, 6, "construct a Timestamp from year, month, day, hour, minute, second"));
+        dict.__setitem__("DateFromTicks", new zxJDBCFunc("DateFromTicks", 4, 1, 1, "construct a Date from seconds since the epoch"));
+        dict.__setitem__("TimeFromTicks", new zxJDBCFunc("TimeFromTicks", 5, 1, 1, "construct a Time from seconds since the epoch"));
+        dict.__setitem__("TimestampFromTicks", new zxJDBCFunc("TimestampFromTicks", 6, 1, 1, "construct a Timestamp from seconds since the epoch"));
+        dict.__setitem__("Binary", new zxJDBCFunc("Binary", 7, 1, 1, "construct an object capable of holding binary data"));
         zxJDBC._addSqlTypes(dict);
         zxJDBC._addConnectors(dict);
         zxJDBC._buildExceptions(dict);
@@ -417,8 +417,8 @@ public class zxJDBC extends PyObject implements ClassDictInit {
 
 class zxJDBCFunc extends PyBuiltinFunctionSet {
 
-    zxJDBCFunc(String name, int index, int minargs, int maxargs, boolean func, String doc) {
-        super(name, index, minargs, maxargs, func, doc);
+    zxJDBCFunc(String name, int index, int minargs, int maxargs, String doc) {
+        super(name, index, minargs, maxargs, doc);
     }
 
     public PyObject __call__(PyObject arg) {
@@ -436,7 +436,7 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
             case 7:
                 return arg;
             default :
-                throw argCountError(1);
+                throw info.unexpectedCall(1, false);
         }
     }
 
@@ -453,7 +453,7 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
                 int second = ((Number) argc.__tojava__(Number.class)).intValue();
                 return zxJDBC.datefactory.Time(hour, minute, second);
             default :
-                throw argCountError(3);
+                throw info.unexpectedCall(3, false);
         }
     }
 
@@ -468,7 +468,7 @@ class zxJDBCFunc extends PyBuiltinFunctionSet {
                 int second = ((Number) args[5].__tojava__(Number.class)).intValue();
                 return zxJDBC.datefactory.Timestamp(year, month, day, hour, minute, second);
             default :
-                throw argCountError(args.length);
+                throw info.unexpectedCall(args.length, false);
         }
     }
 }

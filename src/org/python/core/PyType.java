@@ -26,88 +26,43 @@ public class PyType extends PyObject implements Serializable {
         dict.__setitem__("__base__",new PyGetSetDescr("__base__",PyType.class,"getBase",null,null));
         dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases","setBases","delBases"));
         dict.__setitem__("__mro__",new PyGetSetDescr("__mro__",PyType.class,"getMro",null,null));
-        dict.__setitem__("__flags__",new PyGetSetDescr("__flags__",PyType.class,"getFlags",null));
-        class exposed_mro extends PyBuiltinFunctionNarrow {
+        dict.__setitem__("__flags__",new PyGetSetDescr("__flags__",PyType.class,"getFlags",null,null));
+        class exposed_mro extends PyBuiltinMethodNarrow {
 
-            private PyType self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_mro(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_mro(PyType self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_mro((PyType)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_mro(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.type_mro(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyType self=(PyType)gself;
-                return self.type_mro(arg0);
+                return((PyType)self).type_mro(arg0);
             }
 
             public PyObject __call__() {
-                return self.type_mro();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyType self=(PyType)gself;
-                return self.type_mro();
+                return((PyType)self).type_mro();
             }
 
         }
         dict.__setitem__("mro",new PyMethodDescr("mro",PyType.class,0,1,new exposed_mro(null,null)));
-        class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
+        class exposed___getattribute__ extends PyBuiltinMethodNarrow {
 
-            private PyType self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___getattribute__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___getattribute__(PyType self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getattribute__((PyType)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getattribute__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
                     String name=(arg0.asName(0));
-                    PyObject ret=self.type___findattr__(name);
+                    PyObject ret=((PyType)self).type___findattr__(name);
                     if (ret==null)
-                        self.noAttributeError(name);
-                    return ret;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyType self=(PyType)gself;
-                try {
-                    String name=(arg0.asName(0));
-                    PyObject ret=self.type___findattr__(name);
-                    if (ret==null)
-                        self.noAttributeError(name);
+                        ((PyType)self).noAttributeError(name);
                     return ret;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -124,44 +79,19 @@ public class PyType extends PyObject implements Serializable {
 
         }
         dict.__setitem__("__getattribute__",new PyMethodDescr("__getattribute__",PyType.class,1,1,new exposed___getattribute__(null,null)));
-        class exposed___setattr__ extends PyBuiltinFunctionNarrow {
+        class exposed___setattr__ extends PyBuiltinMethodNarrow {
 
-            private PyType self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___setattr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___setattr__(PyType self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___setattr__((PyType)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___setattr__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    self.type___setattr__(arg0.asName(0),arg1);
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyType self=(PyType)gself;
-                try {
-                    self.type___setattr__(arg0.asName(0),arg1);
+                    ((PyType)self).type___setattr__(arg0.asName(0),arg1);
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -178,44 +108,19 @@ public class PyType extends PyObject implements Serializable {
 
         }
         dict.__setitem__("__setattr__",new PyMethodDescr("__setattr__",PyType.class,2,2,new exposed___setattr__(null,null)));
-        class exposed___delattr__ extends PyBuiltinFunctionNarrow {
+        class exposed___delattr__ extends PyBuiltinMethodNarrow {
 
-            private PyType self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___delattr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___delattr__(PyType self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___delattr__((PyType)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___delattr__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    self.type___delattr__(arg0.asName(0));
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyType self=(PyType)gself;
-                try {
-                    self.type___delattr__(arg0.asName(0));
+                    ((PyType)self).type___delattr__(arg0.asName(0));
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -232,53 +137,30 @@ public class PyType extends PyObject implements Serializable {
 
         }
         dict.__setitem__("__delattr__",new PyMethodDescr("__delattr__",PyType.class,1,1,new exposed___delattr__(null,null)));
-        class exposed___subclasses__ extends PyBuiltinFunctionNarrow {
+        class exposed___subclasses__ extends PyBuiltinMethodNarrow {
 
-            private PyType self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___subclasses__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___subclasses__(PyType self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___subclasses__((PyType)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___subclasses__(self,info);
             }
 
             public PyObject __call__() {
-                return self.type_getSubclasses();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyType self=(PyType)gself;
-                return self.type_getSubclasses();
+                return((PyType)self).type_getSubclasses();
             }
 
         }
         dict.__setitem__("__subclasses__",new PyMethodDescr("__subclasses__",PyType.class,0,0,new exposed___subclasses__(null,null)));
-        class exposed___call__ extends PyBuiltinFunctionWide {
+        class exposed___call__ extends PyBuiltinMethod {
 
-            private PyType self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___call__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___call__(PyType self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___call__((PyType)self,info);
-            }
-
-            public PyObject inst_call(PyObject self,PyObject[]args) {
-                return inst_call(self,args,Py.NoKeywords);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___call__(self,info);
             }
 
             public PyObject __call__(PyObject[]args) {
@@ -286,12 +168,7 @@ public class PyType extends PyObject implements Serializable {
             }
 
             public PyObject __call__(PyObject[]args,String[]keywords) {
-                return self.type___call__(args,keywords);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
-                PyType self=(PyType)gself;
-                return self.type___call__(args,keywords);
+                return((PyType)self).type___call__(args,keywords);
             }
 
         }

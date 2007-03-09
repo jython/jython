@@ -8,17 +8,16 @@
  */
 package com.ziclix.python.sql;
 
-import org.python.core.Py;
-import org.python.core.PyBuiltinFunctionSet;
-import org.python.core.PyClass;
-import org.python.core.PyList;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
+import org.python.core.Py;
+import org.python.core.PyBuiltinMethodSet;
+import org.python.core.PyClass;
+import org.python.core.PyList;
+import org.python.core.PyObject;
+import org.python.core.PyString;
 
 /**
  * A cursor with extensions to the DB API 2.0.
@@ -487,14 +486,14 @@ public class PyExtendedCursor extends PyCursor {
     }
 }
 
-class ExtendedCursorFunc extends PyBuiltinFunctionSet {
+class ExtendedCursorFunc extends PyBuiltinMethodSet {
 
     ExtendedCursorFunc(String name, int index, int argcount, String doc) {
-        super(name, index, argcount, argcount, true, doc);
+        super(name, index, argcount, argcount, doc);
     }
 
     ExtendedCursorFunc(String name, int index, int minargs, int maxargs, String doc) {
-        super(name, index, minargs, maxargs, true, doc);
+        super(name, index, minargs, maxargs, doc);
     }
 
     public PyObject __call__() {
@@ -514,7 +513,7 @@ class ExtendedCursorFunc extends PyBuiltinFunctionSet {
                 return Py.None;
 
             default :
-                throw argCountError(0);
+                throw info.unexpectedCall(0, false);
         }
     }
 
@@ -530,7 +529,7 @@ class ExtendedCursorFunc extends PyBuiltinFunctionSet {
                 return Py.None;
 
             default :
-                throw argCountError(1);
+                throw info.unexpectedCall(1, false);
         }
     }
 
@@ -561,7 +560,7 @@ class ExtendedCursorFunc extends PyBuiltinFunctionSet {
                 return Py.None;
 
             default :
-                throw argCountError(3);
+                throw info.unexpectedCall(3, false);
         }
     }
 
@@ -582,7 +581,7 @@ class ExtendedCursorFunc extends PyBuiltinFunctionSet {
                 return Py.None;
 
             default :
-                throw argCountError(args.length);
+                throw info.unexpectedCall(args.length, true);
         }
     }
 
@@ -608,7 +607,7 @@ class ExtendedCursorFunc extends PyBuiltinFunctionSet {
                 return Py.None;
 
             default :
-                throw argCountError(4);
+                throw info.unexpectedCall(4, false);
         }
     }
 }

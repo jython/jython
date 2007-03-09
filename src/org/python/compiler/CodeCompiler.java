@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
-
 import org.python.core.CompilerFlags;
 import org.python.core.PyComplex;
 import org.python.core.PyFloat;
@@ -1648,7 +1647,7 @@ public class CodeCompiler extends Visitor
         }
 
         // Detect a method invocation with no keywords
-        if (node.keywords == null && node.starargs == null &&
+        if ((node.keywords == null || node.keywords.length == 0)&& node.starargs == null &&
             node.kwargs == null && node.func instanceof Attribute)
         {
             return Invoke((Attribute) node.func, values);

@@ -94,7 +94,7 @@ public class imp {
         }
         PyCode code;
         try {
-            code = BytecodeLoader.makeCode(name + "$py", data);
+            code = BytecodeLoader.makeCode(name + "$py", data, fileName);
         } catch (Throwable t) {
             if (testing) {
                 return null;
@@ -206,7 +206,7 @@ public class imp {
 
         Py.writeComment(IMPORT_LOG, "'" + name + "' as " + filename);
 
-        PyCode code = BytecodeLoader.makeCode(name + "$py", bytes);
+        PyCode code = BytecodeLoader.makeCode(name + "$py", bytes, filename);
         return createFromCode(name, code, filename);
     }
     
@@ -636,7 +636,7 @@ public class imp {
         PyObject modules = Py.getSystemState().modules;
         PyObject pkgMod = null;
         String pkgName = null;
-        if (modDict != null) {
+        if (modDict != null && !(modDict instanceof PyNone)) {
             pkgName = getParent(modDict);
             pkgMod = modules.__finditem__(pkgName);
             // System.err.println("GetParent: " + pkgName + " => " + pkgMod);

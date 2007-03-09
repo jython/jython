@@ -252,7 +252,7 @@ class PyCodeConstant extends Constant implements ClassConstants
              CodeCompiler.makeStrings(c, null, 0);
         }
 
-        c.ldc(((PyStringConstant)module.filename).value);
+        c.aload(1);
         c.ldc(co_name);
         c.iconst(co_firstlineno);
 
@@ -538,12 +538,12 @@ public class Module implements ClassConstants, CompilationContext
 
     //This block of code writes out the various standard methods
     public void addInit() throws IOException {
-        Code c = classfile.addMethod("<init>", "()V", ClassFile.PUBLIC);
+        Code c = classfile.addMethod("<init>", "(Ljava/lang/String;)V", ClassFile.PUBLIC);
         c.aload(0);
         c.invokespecial(c.pool.Methodref("org/python/core/PyFunctionTable",
                                          "<init>",
                                          "()V"));
-        c.return_();
+        addConstants(c);
     }
 
     public void addRunnable() throws IOException {
@@ -571,14 +571,10 @@ public class Module implements ClassConstants, CompilationContext
         c.return_();
     }
 
-    public void addConstants() throws IOException {
-        Code c = classfile.addMethod("<clinit>", "()V", ClassFile.STATIC);
-
+    public void addConstants(Code c) throws IOException {
         classfile.addField("self", "L"+classfile.name+";",
                            ClassFile.STATIC|ClassFile.FINAL);
-        c.new_(c.pool.Class(classfile.name));
-        c.dup();
-        c.invokespecial(c.pool.Methodref(classfile.name, "<init>", "()V"));
+        c.aload(0);
         c.putstatic(c.pool.Fieldref(classfile.name,
                                     "self",
                                     "L"+classfile.name+";"));
@@ -604,6 +600,8 @@ public class Module implements ClassConstants, CompilationContext
             "(I" + $pyFrame + ")" + $pyObj,
             ClassFile.PUBLIC);
 
+        code.aload(0);
+        code.aload(2);
         Label def = code.getLabel();
         Label[] labels = new Label[codes.size()];
         int i;
@@ -616,13 +614,12 @@ public class Module implements ClassConstants, CompilationContext
         code.tableswitch(def, 0, labels);
         for(i=0; i<labels.length; i++) {
             labels[i].setPosition();
-            code.aload(0);
-            code.aload(2);
             code.invokevirtual(
                 classfile.name,
                 ((PyCodeConstant)codes.elementAt(i)).fname,
                 "(" + $pyFrame + ")" + $pyObj);
             code.areturn();
+            code.stack += 2;
         }
         def.setPosition();
 
@@ -637,7 +634,6 @@ public class Module implements ClassConstants, CompilationContext
         addRunnable();
         //addMain();
 
-        addConstants();
         addFunctions();
 
         classfile.addInterface("org/python/core/PyRunnable");

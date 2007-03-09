@@ -9,39 +9,22 @@ public class PyClassMethod extends PyObject implements PyType.Newstyle {
     public static final String exposed_name="classmethod";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___get__ extends PyBuiltinFunctionNarrow {
+        class exposed___get__ extends PyBuiltinMethodNarrow {
 
-            private PyClassMethod self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___get__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___get__(PyClassMethod self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___get__((PyClassMethod)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___get__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return self.classmethod___get__(arg0,arg1);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyClassMethod self=(PyClassMethod)gself;
-                return self.classmethod___get__(arg0,arg1);
+                return((PyClassMethod)self).classmethod___get__(arg0,arg1);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.classmethod___get__(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyClassMethod self=(PyClassMethod)gself;
-                return self.classmethod___get__(arg0);
+                return((PyClassMethod)self).classmethod___get__(arg0);
             }
 
         }

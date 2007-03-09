@@ -1,12 +1,16 @@
 //Copyright (c) Corporation for National Research Initiatives
 package org.python.modules;
 
-import org.python.core.*;
+import org.python.core.ClassDictInit;
+import org.python.core.PyArray;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyType;
 
 /**
  * The python array module, plus jython extensions from jarray.
  */
-public class ArrayModule {
+public class ArrayModule implements ClassDictInit {
     
     public static PyString __doc__ = new PyString(
         "This module defines a new object type which can efficiently represent\n" +
@@ -39,38 +43,16 @@ public class ArrayModule {
         "ArrayType -- type object for array objects\n"
     );
     
-    public static PyString __name__ = new PyString("array");
-    
-    /*
-     * These are python array methods.  
-     */
-    
-    public static PyArray ArrayType(char TypeCode) {
-            return PyArray.array(new PyList(), TypeCode);
+    public static void classDictInit(PyObject dict){
+        dict.__setitem__("array", PyType.fromClass(PyArray.class));
+        dict.__setitem__("ArrayType", PyType.fromClass(PyArray.class));
     }
     
-    public static PyObject ArrayType(char TypeCode, PyObject sequence) {
-            return PyArray.array(sequence, TypeCode);
-    }
-
-    public static PyObject array(char TypeCode) {
-            return PyArray.array(new PyList(), TypeCode);
-    }
-    
-    public static PyObject array(char TypeCode, PyObject sequence) {
-             return PyArray.array(sequence, TypeCode);
-    }
-
     /*
      * These are jython extensions (from jarray module). 
      * Note that the argument order is consistent with
      * python array module, but is reversed from jarray module. 
      */
-
-    public static PyArray array(Class type, PyObject seq) {
-        return PyArray.array(seq, type);
-    }
-    
     public static PyArray zeros(char typecode, int n) {
         return PyArray.zeros(n, typecode);
     }

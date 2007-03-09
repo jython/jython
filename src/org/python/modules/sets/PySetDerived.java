@@ -1,18 +1,32 @@
 package org.python.modules.sets;
 
-import org.python.core.PyObject;
-import org.python.core.PyFloat;
-import org.python.core.PyComplex;
-import org.python.core.PyType;
 import org.python.core.Py;
-import org.python.core.PyString;
+import org.python.core.PyComplex;
+import org.python.core.PyDictionary;
 import org.python.core.PyException;
-import org.python.core.PyLong;
+import org.python.core.PyFloat;
 import org.python.core.PyInteger;
-import org.python.core.ThreadState;
+import org.python.core.PyLong;
+import org.python.core.PyObject;
 import org.python.core.PySequenceIter;
+import org.python.core.PyString;
+import org.python.core.PyStringMap;
+import org.python.core.PyType;
+import org.python.core.PyUnicode;
+import org.python.core.Slotted;
+import org.python.core.ThreadState;
 
-public class PySetDerived extends PySet {
+public class PySetDerived extends PySet implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -24,8 +38,22 @@ public class PySetDerived extends PySet {
         return dict;
     }
 
+    public void setDict(PyObject newDict) {
+        if (newDict instanceof PyStringMap||newDict instanceof PyDictionary) {
+            dict=newDict;
+        } else {
+            throw Py.TypeError("__dict__ must be set to a Dictionary "+newDict.getClass().getName());
+        }
+    }
+
+    public void delDict() {
+        // deleting an object's instance dict makes it grow a new one
+        dict=new PyStringMap();
+    }
+
     public PySetDerived(PyType subtype) {
         super(subtype);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 
@@ -75,18 +103,6 @@ public class PySetDerived extends PySet {
             throw Py.TypeError("__oct__"+" should return a "+"string");
         }
         return super.__oct__();
-    }
-
-    public PyObject __int__() {
-        PyType self_type=getType();
-        PyObject impl=self_type.lookup("__int__");
-        if (impl!=null) {
-            PyObject res=impl.__get__(this,self_type).__call__();
-            if (res instanceof PyInteger)
-                return(PyInteger)res;
-            throw Py.TypeError("__int__"+" should return a "+"int");
-        }
-        return super.__int__();
     }
 
     public PyFloat __float__() {
@@ -155,6 +171,14 @@ public class PySetDerived extends PySet {
         if (impl!=null)
             return impl.__get__(this,self_type).__call__();
         return super.__invert__();
+    }
+
+    public PyObject __reduce__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__reduce__");
+        if (impl!=null)
+            return impl.__get__(this,self_type).__call__();
+        return super.__reduce__();
     }
 
     public PyObject __add__(PyObject other) {
@@ -669,7 +693,18 @@ public class PySetDerived extends PySet {
         return super.__ixor__(other);
     }
 
-    /*
+    public PyObject __int__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__int__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyInteger||res instanceof PyLong)
+                return(PyObject)res;
+            throw Py.TypeError("__int__"+" should return an integer");
+        }
+        return super.__int__();
+    }
+
     public String toString() {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__repr__");
@@ -681,7 +716,6 @@ public class PySetDerived extends PySet {
         }
         return super.toString();
     }
-    */
 
     public int hashCode() {
         PyType self_type=getType();
@@ -695,6 +729,20 @@ public class PySetDerived extends PySet {
         if (self_type.lookup("__eq__")!=null||self_type.lookup("__cmp__")!=null)
             throw Py.TypeError("unhashable type");
         return super.hashCode();
+    }
+
+    public PyUnicode __unicode__() {
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__unicode__");
+        if (impl!=null) {
+            PyObject res=impl.__get__(this,self_type).__call__();
+            if (res instanceof PyUnicode)
+                return(PyUnicode)res;
+            if (res instanceof PyString)
+                return new PyUnicode((PyString)res);
+            throw Py.TypeError("__unicode__"+" should return a "+"unicode");
+        }
+        return super.__unicode__();
     }
 
     public int __cmp__(PyObject other) {
@@ -790,6 +838,20 @@ public class PySetDerived extends PySet {
             return;
         }
         super.__setitem__(key,value);
+    }
+
+    public PyObject __getslice__(PyObject start,PyObject stop,PyObject step) { // ???
+        PyType self_type=getType();
+        PyObject impl=self_type.lookup("__getslice__");
+        if (impl!=null)
+            try {
+                return impl.__get__(this,self_type).__call__(start,stop);
+            } catch (PyException exc) {
+                if (Py.matchException(exc,Py.LookupError))
+                    return null;
+                throw exc;
+            }
+        return super.__getslice__(start,stop,step);
     }
 
     public void __delitem__(PyObject key) { // ???

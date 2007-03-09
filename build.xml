@@ -212,6 +212,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name="full-init" depends="pre-init">
         <!-- use this property to distinguish a full-build from a developer-build -->
         <property name="full-build" value="true" />
+        <property name="do.templates" value="true" />
 
         <!-- predefined tags for jython and cpython -->
         <property name="svn.tag" value="Release_2_2beta1" />
@@ -301,6 +302,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     	<echo>svn.revision       = '${svn.revision}'</echo>
         <echo>do.snapshot.build  = '${do.snapshot.build}'</echo>
         <echo>do.checkout        = '${do.checkout}'</echo>
+        <echo>do.templates        = '${do.templates}'</echo>
     </target>
 
 
@@ -395,7 +397,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
 
     <!-- prepare template ant task -->
-    <target name="template-init" depends="prepare">
+    <target name="template-init" depends="prepare" if="do.templates">
       
         <javac srcdir="${source.dir}/"
                 destdir="${output.dir}/"
@@ -412,7 +414,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
 
     <!-- run templates -->
-    <target name="template" depends="checkout, template-init">
+    <target name="template" depends="checkout, template-init" if="do.templates">
         <taskdef name="gentempl" classname="org.python.util.TemplateAntTask"
             classpath="${output.dir}" />
         <gentempl srcdir="${templates.dir}" verbose="true"

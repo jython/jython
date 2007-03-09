@@ -29,31 +29,15 @@ define: (ClassBodyDeclarations)call_meths args body
         `body;
     }
 
-    public PyObject inst_call(PyObject gself,`args) {
-        `typ self = (`typ)gself;
-        `body;
-    }
-
 define: expose_wide_meth
-        class `concat`(exposed_,`name) extends PyBuiltinFunctionWide {
-            private `typ self;
+        class `concat`(exposed_,`name) extends PyBuiltinMethod {
 
-            public PyObject getSelf() {
-                return self;
+            `concat`(exposed_,`name)(PyObject self, PyBuiltinFunction.Info info) {
+                super(self, info);
             }
 
-            `concat`(exposed_,`name)(`typ self, PyBuiltinFunction.Info info) {
-                super(info);
-                this.self = self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new `concat`(exposed_,`name)((`typ)self, info);
-            }
-
-    
-            public PyObject inst_call(PyObject self, PyObject[] args) {
-                return inst_call(self,args,Py.NoKeywords);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new `concat`(exposed_,`name)(self, info);
             }
 
             public PyObject __call__(PyObject[] args) {
@@ -74,20 +58,14 @@ define: expose_wide_meth
                 new `concat`(exposed_,`name)(null, null)));
 
 define: expose_narrow_meth typ name minargs maxargs call_meths
-        class `concat`(exposed_,`name) extends PyBuiltinFunctionNarrow {
-            private `typ self;
+        class `concat`(exposed_,`name) extends PyBuiltinMethodNarrow {
 
-            public PyObject getSelf() {
-                return self;
+            `concat`(exposed_,`name)(PyObject self, PyBuiltinFunction.Info info) {
+                super(self, info);
             }
 
-            `concat`(exposed_,`name)(`typ self, PyBuiltinFunction.Info info) {
-                super(info);
-                this.self = self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new `concat`(exposed_,`name)((`typ)self, info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new `concat`(exposed_,`name)(self, info);
             }
 
             `call_meths;
@@ -104,20 +82,14 @@ define: expose_narrow_meth typ name minargs maxargs call_meths
                 new `concat`(exposed_,`name)(null, null)));    
 
 define: expose_narrow_cmeth typ name minargs maxargs call_meths
-        class `concat`(exposed_,`name) extends PyBuiltinFunctionNarrow {
-            private PyType self;
+        class `concat`(exposed_,`name) extends PyBuiltinMethodNarrow {
 
-            public PyObject getSelf() {
-                return self;
+            `concat`(exposed_,`name)(PyObject self, PyBuiltinFunction.Info info) {
+                super(self, info);
             }
 
-            `concat`(exposed_,`name)(PyType self, PyBuiltinFunction.Info info) {
-                super(info);
-                this.self = self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new `concat`(exposed_,`name)((PyType)self, info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new `concat`(exposed_,`name)(self, info);
             }
 
             `call_meths;
@@ -157,26 +129,26 @@ define: index_getitem
    }
    return ret;
 define: vanilla_cmp deleg_prefix
-  int ret = self.`concat`(`deleg_prefix,__cmp__)(`arg0); 
+  int ret = ((`typ)self).`concat`(`deleg_prefix,__cmp__)(`arg0); 
   if (ret == -2) {
     throw Py.TypeError(`strfy`(`typname)+".__cmp__(x,y) requires y to be '"+
                        `strfy`(`typname)+"', not a '"+(`arg0).getType().fastGetName()+"'");
   }
   return Py.newInteger(ret);
 define: vanilla_pow deleg_prefix
-  PyObject ret =  self.`concat`(`deleg_prefix,__pow__)(`arg0,`arg1);  
+  PyObject ret =  ((`typ)self).`concat`(`deleg_prefix,__pow__)(`arg0,`arg1);  
   if (ret == null)
     return Py.NotImplemented;
   return ret;
 define: unary deleg_prefix
-  return self.`concat`(`deleg_prefix,`name)();
+  return ((`typ)self).`concat`(`deleg_prefix,`name)();
 define: binary deleg_prefix
-  PyObject ret =  self.`concat`(`deleg_prefix,`name)(`arg0);  
+  PyObject ret =  ((`typ)self).`concat`(`deleg_prefix,`name)(`arg0);  
   if (ret == null)
     return Py.NotImplemented;
   return ret;
 define: (Expression)deleg name deleg_prefix
-  self.`concat`(`deleg_prefix,`name)(`all)
+  ((`typ)self).`concat`(`deleg_prefix,`name)(`all)
 define: vdeleg: name deleg_prefix
   `deleg`(`name,`deleg_prefix);
 define: rdeleg: name deleg_prefix

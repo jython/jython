@@ -3,7 +3,7 @@ package org.python.modules.time;
 import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
-import org.python.core.PyBuiltinFunctionNarrow;
+import org.python.core.PyBuiltinMethodNarrow;
 import org.python.core.PyGetSetDescr;
 import org.python.core.PyInteger;
 import org.python.core.PyList;
@@ -42,33 +42,18 @@ public class PyTimeTuple extends PyTuple {
         dict.__setitem__("tm_wday",new PyGetSetDescr("tm_wday",PyTimeTuple.class,"getWday",null,null));
         dict.__setitem__("tm_yday",new PyGetSetDescr("tm_yday",PyTimeTuple.class,"getYday",null,null));
         dict.__setitem__("tm_isdst",new PyGetSetDescr("tm_isdst",PyTimeTuple.class,"getIsdst",null,null));
-        class exposed___ne__ extends PyBuiltinFunctionNarrow {
+        class exposed___ne__ extends PyBuiltinMethodNarrow {
 
-            private PyTimeTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___ne__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___ne__(PyTimeTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___ne__((PyTimeTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ne__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.struct_time___ne__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTimeTuple self=(PyTimeTuple)gself;
-                PyObject ret=self.struct_time___ne__(arg0);
+                PyObject ret=((PyTimeTuple)self).struct_time___ne__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -76,33 +61,18 @@ public class PyTimeTuple extends PyTuple {
 
         }
         dict.__setitem__("__ne__",new PyMethodDescr("__ne__",PyTimeTuple.class,1,1,new exposed___ne__(null,null)));
-        class exposed___eq__ extends PyBuiltinFunctionNarrow {
+        class exposed___eq__ extends PyBuiltinMethodNarrow {
 
-            private PyTimeTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___eq__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___eq__(PyTimeTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___eq__((PyTimeTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___eq__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.struct_time___eq__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyTimeTuple self=(PyTimeTuple)gself;
-                PyObject ret=self.struct_time___eq__(arg0);
+                PyObject ret=((PyTimeTuple)self).struct_time___eq__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -110,30 +80,18 @@ public class PyTimeTuple extends PyTuple {
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyTimeTuple.class,1,1,new exposed___eq__(null,null)));
-        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
+        class exposed___reduce__ extends PyBuiltinMethodNarrow {
 
-            private PyTimeTuple self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___reduce__(PyTimeTuple self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___reduce__((PyTimeTuple)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___reduce__(self,info);
             }
 
             public PyObject __call__() {
-                return self.struct_time___reduce__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyTimeTuple self=(PyTimeTuple)gself;
-                return self.struct_time___reduce__();
+                return((PyTimeTuple)self).struct_time___reduce__();
             }
 
         }

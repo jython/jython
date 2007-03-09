@@ -13,285 +13,162 @@ public class PyInteger extends PyObject {
     public static final String exposed_name="int";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___abs__ extends PyBuiltinFunctionNarrow {
+        class exposed___abs__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___abs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___abs__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___abs__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___abs__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___abs__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___abs__();
+                return((PyInteger)self).int___abs__();
             }
 
         }
         dict.__setitem__("__abs__",new PyMethodDescr("__abs__",PyInteger.class,0,0,new exposed___abs__(null,null)));
-        class exposed___float__ extends PyBuiltinFunctionNarrow {
+        class exposed___float__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___float__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___float__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___float__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___float__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___float__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___float__();
+                return((PyInteger)self).int___float__();
             }
 
         }
         dict.__setitem__("__float__",new PyMethodDescr("__float__",PyInteger.class,0,0,new exposed___float__(null,null)));
-        class exposed___hex__ extends PyBuiltinFunctionNarrow {
+        class exposed___hex__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___hex__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___hex__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hex__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___hex__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___hex__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___hex__();
+                return((PyInteger)self).int___hex__();
             }
 
         }
         dict.__setitem__("__hex__",new PyMethodDescr("__hex__",PyInteger.class,0,0,new exposed___hex__(null,null)));
-        class exposed___int__ extends PyBuiltinFunctionNarrow {
+        class exposed___int__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___int__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___int__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___int__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___int__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___int__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___int__();
+                return((PyInteger)self).int___int__();
             }
 
         }
         dict.__setitem__("__int__",new PyMethodDescr("__int__",PyInteger.class,0,0,new exposed___int__(null,null)));
-        class exposed___invert__ extends PyBuiltinFunctionNarrow {
+        class exposed___invert__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___invert__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___invert__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___invert__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___invert__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___invert__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___invert__();
+                return((PyInteger)self).int___invert__();
             }
 
         }
         dict.__setitem__("__invert__",new PyMethodDescr("__invert__",PyInteger.class,0,0,new exposed___invert__(null,null)));
-        class exposed___long__ extends PyBuiltinFunctionNarrow {
+        class exposed___long__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___long__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___long__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___long__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___long__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___long__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___long__();
+                return((PyInteger)self).int___long__();
             }
 
         }
         dict.__setitem__("__long__",new PyMethodDescr("__long__",PyInteger.class,0,0,new exposed___long__(null,null)));
-        class exposed___neg__ extends PyBuiltinFunctionNarrow {
+        class exposed___neg__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___neg__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___neg__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___neg__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___neg__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___neg__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___neg__();
+                return((PyInteger)self).int___neg__();
             }
 
         }
         dict.__setitem__("__neg__",new PyMethodDescr("__neg__",PyInteger.class,0,0,new exposed___neg__(null,null)));
-        class exposed___oct__ extends PyBuiltinFunctionNarrow {
+        class exposed___oct__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___oct__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___oct__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___oct__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___oct__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___oct__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___oct__();
+                return((PyInteger)self).int___oct__();
             }
 
         }
         dict.__setitem__("__oct__",new PyMethodDescr("__oct__",PyInteger.class,0,0,new exposed___oct__(null,null)));
-        class exposed___pos__ extends PyBuiltinFunctionNarrow {
+        class exposed___pos__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___pos__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___pos__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___pos__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___pos__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___pos__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___pos__();
+                return((PyInteger)self).int___pos__();
             }
 
         }
         dict.__setitem__("__pos__",new PyMethodDescr("__pos__",PyInteger.class,0,0,new exposed___pos__(null,null)));
-        class exposed___add__ extends PyBuiltinFunctionNarrow {
+        class exposed___add__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___add__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___add__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___add__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___add__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___add__(arg0);
+                PyObject ret=((PyInteger)self).int___add__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -299,33 +176,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyInteger.class,1,1,new exposed___add__(null,null)));
-        class exposed___and__ extends PyBuiltinFunctionNarrow {
+        class exposed___and__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___and__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___and__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___and__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___and__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___and__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___and__(arg0);
+                PyObject ret=((PyInteger)self).int___and__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -333,33 +195,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__and__",new PyMethodDescr("__and__",PyInteger.class,1,1,new exposed___and__(null,null)));
-        class exposed___div__ extends PyBuiltinFunctionNarrow {
+        class exposed___div__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___div__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___div__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___div__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___div__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___div__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___div__(arg0);
+                PyObject ret=((PyInteger)self).int___div__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -367,33 +214,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__div__",new PyMethodDescr("__div__",PyInteger.class,1,1,new exposed___div__(null,null)));
-        class exposed___divmod__ extends PyBuiltinFunctionNarrow {
+        class exposed___divmod__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___divmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___divmod__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___divmod__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___divmod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___divmod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___divmod__(arg0);
+                PyObject ret=((PyInteger)self).int___divmod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -401,33 +233,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__divmod__",new PyMethodDescr("__divmod__",PyInteger.class,1,1,new exposed___divmod__(null,null)));
-        class exposed___floordiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___floordiv__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___floordiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___floordiv__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___floordiv__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___floordiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___floordiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___floordiv__(arg0);
+                PyObject ret=((PyInteger)self).int___floordiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -435,33 +252,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__floordiv__",new PyMethodDescr("__floordiv__",PyInteger.class,1,1,new exposed___floordiv__(null,null)));
-        class exposed___lshift__ extends PyBuiltinFunctionNarrow {
+        class exposed___lshift__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___lshift__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___lshift__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___lshift__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___lshift__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___lshift__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___lshift__(arg0);
+                PyObject ret=((PyInteger)self).int___lshift__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -469,33 +271,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__lshift__",new PyMethodDescr("__lshift__",PyInteger.class,1,1,new exposed___lshift__(null,null)));
-        class exposed___mod__ extends PyBuiltinFunctionNarrow {
+        class exposed___mod__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___mod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___mod__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___mod__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___mod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___mod__(arg0);
+                PyObject ret=((PyInteger)self).int___mod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -503,33 +290,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyInteger.class,1,1,new exposed___mod__(null,null)));
-        class exposed___mul__ extends PyBuiltinFunctionNarrow {
+        class exposed___mul__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___mul__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___mul__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mul__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___mul__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___mul__(arg0);
+                PyObject ret=((PyInteger)self).int___mul__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -537,33 +309,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyInteger.class,1,1,new exposed___mul__(null,null)));
-        class exposed___or__ extends PyBuiltinFunctionNarrow {
+        class exposed___or__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___or__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___or__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___or__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___or__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___or__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___or__(arg0);
+                PyObject ret=((PyInteger)self).int___or__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -571,33 +328,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__or__",new PyMethodDescr("__or__",PyInteger.class,1,1,new exposed___or__(null,null)));
-        class exposed___radd__ extends PyBuiltinFunctionNarrow {
+        class exposed___radd__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___radd__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___radd__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___radd__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___radd__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___radd__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___radd__(arg0);
+                PyObject ret=((PyInteger)self).int___radd__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -605,33 +347,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__radd__",new PyMethodDescr("__radd__",PyInteger.class,1,1,new exposed___radd__(null,null)));
-        class exposed___rdiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rdiv__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rdiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rdiv__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rdiv__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rdiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___rdiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___rdiv__(arg0);
+                PyObject ret=((PyInteger)self).int___rdiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -639,33 +366,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__rdiv__",new PyMethodDescr("__rdiv__",PyInteger.class,1,1,new exposed___rdiv__(null,null)));
-        class exposed___rfloordiv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rfloordiv__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rfloordiv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rfloordiv__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rfloordiv__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rfloordiv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___rfloordiv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___rfloordiv__(arg0);
+                PyObject ret=((PyInteger)self).int___rfloordiv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -673,33 +385,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__rfloordiv__",new PyMethodDescr("__rfloordiv__",PyInteger.class,1,1,new exposed___rfloordiv__(null,null)));
-        class exposed___rmod__ extends PyBuiltinFunctionNarrow {
+        class exposed___rmod__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rmod__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rmod__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmod__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___rmod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___rmod__(arg0);
+                PyObject ret=((PyInteger)self).int___rmod__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -707,33 +404,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__rmod__",new PyMethodDescr("__rmod__",PyInteger.class,1,1,new exposed___rmod__(null,null)));
-        class exposed___rmul__ extends PyBuiltinFunctionNarrow {
+        class exposed___rmul__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rmul__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rmul__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmul__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___rmul__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___rmul__(arg0);
+                PyObject ret=((PyInteger)self).int___rmul__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -741,33 +423,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyInteger.class,1,1,new exposed___rmul__(null,null)));
-        class exposed___rshift__ extends PyBuiltinFunctionNarrow {
+        class exposed___rshift__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rshift__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rshift__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rshift__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rshift__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___rshift__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___rshift__(arg0);
+                PyObject ret=((PyInteger)self).int___rshift__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -775,33 +442,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__rshift__",new PyMethodDescr("__rshift__",PyInteger.class,1,1,new exposed___rshift__(null,null)));
-        class exposed___rsub__ extends PyBuiltinFunctionNarrow {
+        class exposed___rsub__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rsub__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rsub__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rsub__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rsub__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___rsub__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___rsub__(arg0);
+                PyObject ret=((PyInteger)self).int___rsub__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -809,33 +461,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__rsub__",new PyMethodDescr("__rsub__",PyInteger.class,1,1,new exposed___rsub__(null,null)));
-        class exposed___rtruediv__ extends PyBuiltinFunctionNarrow {
+        class exposed___rtruediv__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___rtruediv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___rtruediv__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___rtruediv__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rtruediv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___rtruediv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___rtruediv__(arg0);
+                PyObject ret=((PyInteger)self).int___rtruediv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -843,33 +480,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__rtruediv__",new PyMethodDescr("__rtruediv__",PyInteger.class,1,1,new exposed___rtruediv__(null,null)));
-        class exposed___sub__ extends PyBuiltinFunctionNarrow {
+        class exposed___sub__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___sub__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___sub__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___sub__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___sub__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___sub__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___sub__(arg0);
+                PyObject ret=((PyInteger)self).int___sub__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -877,33 +499,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__sub__",new PyMethodDescr("__sub__",PyInteger.class,1,1,new exposed___sub__(null,null)));
-        class exposed___truediv__ extends PyBuiltinFunctionNarrow {
+        class exposed___truediv__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___truediv__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___truediv__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___truediv__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___truediv__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___truediv__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___truediv__(arg0);
+                PyObject ret=((PyInteger)self).int___truediv__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -911,33 +518,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__truediv__",new PyMethodDescr("__truediv__",PyInteger.class,1,1,new exposed___truediv__(null,null)));
-        class exposed___xor__ extends PyBuiltinFunctionNarrow {
+        class exposed___xor__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___xor__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___xor__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___xor__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___xor__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___xor__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___xor__(arg0);
+                PyObject ret=((PyInteger)self).int___xor__(arg0);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -945,34 +537,18 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__xor__",new PyMethodDescr("__xor__",PyInteger.class,1,1,new exposed___xor__(null,null)));
-        class exposed___cmp__ extends PyBuiltinFunctionNarrow {
+        class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___cmp__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___cmp__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___cmp__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                int ret=self.int___cmp__(arg0);
-                if (ret==-2) {
-                    throw Py.TypeError("int"+".__cmp__(x,y) requires y to be '"+"int"+"', not a '"+(arg0).getType().fastGetName()+"'");
-                }
-                return Py.newInteger(ret);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                int ret=self.int___cmp__(arg0);
+                int ret=((PyInteger)self).int___cmp__(arg0);
                 if (ret==-2) {
                     throw Py.TypeError("int"+".__cmp__(x,y) requires y to be '"+"int"+"', not a '"+(arg0).getType().fastGetName()+"'");
                 }
@@ -981,48 +557,25 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__cmp__",new PyMethodDescr("__cmp__",PyInteger.class,1,1,new exposed___cmp__(null,null)));
-        class exposed___pow__ extends PyBuiltinFunctionNarrow {
+        class exposed___pow__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___pow__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___pow__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___pow__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___pow__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                PyObject ret=self.int___pow__(arg0,arg1);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___pow__(arg0,arg1);
+                PyObject ret=((PyInteger)self).int___pow__(arg0,arg1);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
             }
 
             public PyObject __call__(PyObject arg0) {
-                PyObject ret=self.int___pow__(arg0,null);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyInteger self=(PyInteger)gself;
-                PyObject ret=self.int___pow__(arg0,null);
+                PyObject ret=((PyInteger)self).int___pow__(arg0,null);
                 if (ret==null)
                     return Py.NotImplemented;
                 return ret;
@@ -1030,142 +583,82 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__pow__",new PyMethodDescr("__pow__",PyInteger.class,1,2,new exposed___pow__(null,null)));
-        class exposed___nonzero__ extends PyBuiltinFunctionNarrow {
+        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___nonzero__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___nonzero__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___nonzero__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newBoolean(self.int___nonzero__());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return Py.newBoolean(self.int___nonzero__());
+                return Py.newBoolean(((PyInteger)self).int___nonzero__());
             }
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyInteger.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___repr__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.int_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return new PyString(self.int_toString());
+                return new PyString(((PyInteger)self).int_toString());
             }
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyInteger.class,0,0,new exposed___repr__(null,null)));
-        class exposed___str__ extends PyBuiltinFunctionNarrow {
+        class exposed___str__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___str__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___str__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___str__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.int_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return new PyString(self.int_toString());
+                return new PyString(((PyInteger)self).int_toString());
             }
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyInteger.class,0,0,new exposed___str__(null,null)));
-        class exposed___getnewargs__ extends PyBuiltinFunctionNarrow {
+        class exposed___getnewargs__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___getnewargs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___getnewargs__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getnewargs__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getnewargs__(self,info);
             }
 
             public PyObject __call__() {
-                return self.int___getnewargs__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return self.int___getnewargs__();
+                return((PyInteger)self).int___getnewargs__();
             }
 
         }
         dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyInteger.class,0,0,new exposed___getnewargs__(null,null)));
-        class exposed___hash__ extends PyBuiltinFunctionNarrow {
+        class exposed___hash__ extends PyBuiltinMethodNarrow {
 
-            private PyInteger self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___hash__(PyInteger self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hash__((PyInteger)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___hash__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newInteger(self.int_hashCode());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyInteger self=(PyInteger)gself;
-                return Py.newInteger(self.int_hashCode());
+                return Py.newInteger(((PyInteger)self).int_hashCode());
             }
 
         }

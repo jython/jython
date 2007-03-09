@@ -23,71 +23,35 @@ public class PyObject implements java.io.Serializable {
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
         dict.__setitem__("__class__",new PyGetSetDescr("__class__",PyObject.class,"getType","setType","delType"));
         dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyObject.class,"getDoc",null,null));
-        class exposed___reduce__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___reduce__ extends PyBuiltinMethodNarrow {
 
             exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___reduce__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___reduce__(self,info);
             }
 
             public PyObject __call__() {
-                return self.object___reduce__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyObject self=(PyObject)gself;
-                return self.object___reduce__();
+                return((PyObject)self).object___reduce__();
             }
 
         }
         dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyObject.class,0,0,new exposed___reduce__(null,null)));
-        class exposed___reduce_ex__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___reduce_ex__ extends PyBuiltinMethodNarrow {
 
             exposed___reduce_ex__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___reduce_ex__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___reduce_ex__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return self.object___reduce_ex__(arg0.asInt(0));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyObject self=(PyObject)gself;
-                try {
-                    return self.object___reduce_ex__(arg0.asInt(0));
+                    return((PyObject)self).object___reduce_ex__(arg0.asInt(0));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -102,83 +66,38 @@ public class PyObject implements java.io.Serializable {
             }
 
             public PyObject __call__() {
-                return self.object___reduce_ex__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyObject self=(PyObject)gself;
-                return self.object___reduce_ex__();
+                return((PyObject)self).object___reduce_ex__();
             }
 
         }
         dict.__setitem__("__reduce_ex__",new PyMethodDescr("__reduce_ex__",PyObject.class,0,1,new exposed___reduce_ex__(null,null)));
-        class exposed___str__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___str__ extends PyBuiltinMethodNarrow {
 
             exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___str__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___str__(self,info);
             }
 
             public PyObject __call__() {
-                return self.__repr__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyObject self=(PyObject)gself;
                 return self.__repr__();
             }
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyObject.class,0,0,new exposed___str__(null,null)));
-        class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___getattribute__ extends PyBuiltinMethodNarrow {
 
             exposed___getattribute__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getattribute__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getattribute__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                try {
-                    String name=(arg0.asName(0));
-                    PyObject ret=self.object___findattr__(name);
-                    if (ret==null)
-                        self.noAttributeError(name);
-                    return ret;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyObject self=(PyObject)gself;
                 try {
                     String name=(arg0.asName(0));
                     PyObject ret=self.object___findattr__(name);
@@ -200,44 +119,19 @@ public class PyObject implements java.io.Serializable {
 
         }
         dict.__setitem__("__getattribute__",new PyMethodDescr("__getattribute__",PyObject.class,1,1,new exposed___getattribute__(null,null)));
-        class exposed___setattr__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___setattr__ extends PyBuiltinMethodNarrow {
 
             exposed___setattr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___setattr__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___setattr__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    self.object___setattr__(arg0.asName(0),arg1);
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyObject self=(PyObject)gself;
-                try {
-                    self.object___setattr__(arg0.asName(0),arg1);
+                    ((PyObject)self).object___setattr__(arg0.asName(0),arg1);
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -254,44 +148,19 @@ public class PyObject implements java.io.Serializable {
 
         }
         dict.__setitem__("__setattr__",new PyMethodDescr("__setattr__",PyObject.class,2,2,new exposed___setattr__(null,null)));
-        class exposed___delattr__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___delattr__ extends PyBuiltinMethodNarrow {
 
             exposed___delattr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___delattr__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___delattr__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    self.object___delattr__(arg0.asName(0));
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyObject self=(PyObject)gself;
-                try {
-                    self.object___delattr__(arg0.asName(0));
+                    ((PyObject)self).object___delattr__(arg0.asName(0));
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -308,109 +177,62 @@ public class PyObject implements java.io.Serializable {
 
         }
         dict.__setitem__("__delattr__",new PyMethodDescr("__delattr__",PyObject.class,1,1,new exposed___delattr__(null,null)));
-        class exposed___hash__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___hash__ extends PyBuiltinMethodNarrow {
 
             exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___hash__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___hash__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyInteger(self.object_hashCode());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyObject self=(PyObject)gself;
                 return new PyInteger(self.object_hashCode());
             }
 
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyObject.class,0,0,new exposed___hash__(null,null)));
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
             exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.object_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyObject self=(PyObject)gself;
                 return new PyString(self.object_toString());
             }
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyObject.class,0,0,new exposed___repr__(null,null)));
-        class exposed___unicode__ extends PyBuiltinFunctionNarrow {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___unicode__ extends PyBuiltinMethodNarrow {
 
             exposed___unicode__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___unicode__((PyObject)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___unicode__(self,info);
             }
 
             public PyObject __call__() {
                 return new PyUnicode(self.__str__());
             }
 
-            public PyObject inst_call(PyObject gself) {
-                PyObject self=(PyObject)gself;
-                return new PyUnicode(self.__str__());
-            }
-
         }
         dict.__setitem__("__unicode__",new PyMethodDescr("__unicode__",PyObject.class,0,0,new exposed___unicode__(null,null)));
-        class exposed___init__ extends PyBuiltinFunctionWide {
-
-            private PyObject self;
-
-            public PyObject getSelf() {
-                return self;
-            }
+        class exposed___init__ extends PyBuiltinMethod {
 
             exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
+                super(self,info);
             }
 
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___init__((PyObject)self,info);
-            }
-
-            public PyObject inst_call(PyObject self,PyObject[]args) {
-                return inst_call(self,args,Py.NoKeywords);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___init__(self,info);
             }
 
             public PyObject __call__(PyObject[]args) {
@@ -418,13 +240,7 @@ public class PyObject implements java.io.Serializable {
             }
 
             public PyObject __call__(PyObject[]args,String[]keywords) {
-                self.object_init(args,keywords);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
-                PyObject self=(PyObject)gself;
-                self.object_init(args,keywords);
+                ((PyObject)self).object_init(args,keywords);
                 return Py.None;
             }
 

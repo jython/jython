@@ -604,37 +604,21 @@ public class PyFile extends PyObject
     public static final Class exposed_base=PyObject.class;
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("mode",new PyGetSetDescr("mode",PyFile.class,"getMode",null));
-        dict.__setitem__("name",new PyGetSetDescr("name",PyFile.class,"getName",null));
-        dict.__setitem__("closed",new PyGetSetDescr("closed",PyFile.class,"getClosed",null));
-        class exposed___cmp__ extends PyBuiltinFunctionNarrow {
+        dict.__setitem__("mode",new PyGetSetDescr("mode",PyFile.class,"getMode",null,null));
+        dict.__setitem__("name",new PyGetSetDescr("name",PyFile.class,"getName",null,null));
+        dict.__setitem__("closed",new PyGetSetDescr("closed",PyFile.class,"getClosed",null,null));
+        class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___cmp__(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___cmp__((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___cmp__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                int ret=self.file___cmp__(arg0);
-                if (ret==-2) {
-                    throw Py.TypeError("file"+".__cmp__(x,y) requires y to be '"+"file"+"', not a '"+(arg0).getType().fastGetName()+"'");
-                }
-                return Py.newInteger(ret);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFile self=(PyFile)gself;
-                int ret=self.file___cmp__(arg0);
+                int ret=((PyFile)self).file___cmp__(arg0);
                 if (ret==-2) {
                     throw Py.TypeError("file"+".__cmp__(x,y) requires y to be '"+"file"+"', not a '"+(arg0).getType().fastGetName()+"'");
                 }
@@ -643,243 +627,133 @@ public class PyFile extends PyObject
 
         }
         dict.__setitem__("__cmp__",new PyMethodDescr("__cmp__",PyFile.class,1,1,new exposed___cmp__(null,null)));
-        class exposed___iter__ extends PyBuiltinFunctionNarrow {
+        class exposed___iter__ extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___iter__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___iter__(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___iter__((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___iter__(self,info);
             }
 
             public PyObject __call__() {
-                return self.file___iter__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return self.file___iter__();
+                return((PyFile)self).file___iter__();
             }
 
         }
         dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyFile.class,0,0,new exposed___iter__(null,null)));
-        class exposed___iternext__ extends PyBuiltinFunctionNarrow {
+        class exposed___iternext__ extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___iternext__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___iternext__(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___iternext__((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___iternext__(self,info);
             }
 
             public PyObject __call__() {
-                return self.file___iternext__();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return self.file___iternext__();
+                return((PyFile)self).file___iternext__();
             }
 
         }
         dict.__setitem__("__iternext__",new PyMethodDescr("__iternext__",PyFile.class,0,0,new exposed___iternext__(null,null)));
-        class exposed___nonzero__ extends PyBuiltinFunctionNarrow {
+        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___nonzero__(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___nonzero__((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___nonzero__(self,info);
             }
 
             public PyObject __call__() {
-                return Py.newBoolean(self.file___nonzero__());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return Py.newBoolean(self.file___nonzero__());
+                return Py.newBoolean(((PyFile)self).file___nonzero__());
             }
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyFile.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed___repr__ extends PyBuiltinFunctionNarrow {
+        class exposed___repr__ extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___repr__(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___repr__((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___repr__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.file_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return new PyString(self.file_toString());
+                return new PyString(((PyFile)self).file_toString());
             }
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyFile.class,0,0,new exposed___repr__(null,null)));
-        class exposed___str__ extends PyBuiltinFunctionNarrow {
+        class exposed___str__ extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___str__(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___str__((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___str__(self,info);
             }
 
             public PyObject __call__() {
-                return new PyString(self.file_toString());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return new PyString(self.file_toString());
+                return new PyString(((PyFile)self).file_toString());
             }
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyFile.class,0,0,new exposed___str__(null,null)));
-        class exposed_close extends PyBuiltinFunctionNarrow {
+        class exposed_close extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_close(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_close(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_close((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_close(self,info);
             }
 
             public PyObject __call__() {
-                self.file_close();
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                self.file_close();
+                ((PyFile)self).file_close();
                 return Py.None;
             }
 
         }
         dict.__setitem__("close",new PyMethodDescr("close",PyFile.class,0,0,new exposed_close(null,null)));
-        class exposed_flush extends PyBuiltinFunctionNarrow {
+        class exposed_flush extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_flush(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_flush(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_flush((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_flush(self,info);
             }
 
             public PyObject __call__() {
-                self.file_flush();
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                self.file_flush();
+                ((PyFile)self).file_flush();
                 return Py.None;
             }
 
         }
         dict.__setitem__("flush",new PyMethodDescr("flush",PyFile.class,0,0,new exposed_flush(null,null)));
-        class exposed_read extends PyBuiltinFunctionNarrow {
+        class exposed_read extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_read(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_read(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_read((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_read(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.file_read(arg0.asInt(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFile self=(PyFile)gself;
-                try {
-                    return new PyString(self.file_read(arg0.asInt(0)));
+                    return new PyString(((PyFile)self).file_read(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -894,53 +768,24 @@ public class PyFile extends PyObject
             }
 
             public PyObject __call__() {
-                return new PyString(self.file_read());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return new PyString(self.file_read());
+                return new PyString(((PyFile)self).file_read());
             }
 
         }
         dict.__setitem__("read",new PyMethodDescr("read",PyFile.class,0,1,new exposed_read(null,null)));
-        class exposed_readline extends PyBuiltinFunctionNarrow {
+        class exposed_readline extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_readline(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_readline(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_readline((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_readline(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(self.file_readline(arg0.asInt(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFile self=(PyFile)gself;
-                try {
-                    return new PyString(self.file_readline(arg0.asInt(0)));
+                    return new PyString(((PyFile)self).file_readline(arg0.asInt(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -955,53 +800,24 @@ public class PyFile extends PyObject
             }
 
             public PyObject __call__() {
-                return new PyString(self.file_readline());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return new PyString(self.file_readline());
+                return new PyString(((PyFile)self).file_readline());
             }
 
         }
         dict.__setitem__("readline",new PyMethodDescr("readline",PyFile.class,0,1,new exposed_readline(null,null)));
-        class exposed_readlines extends PyBuiltinFunctionNarrow {
+        class exposed_readlines extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_readlines(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_readlines(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_readlines((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_readlines(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return self.file_readlines(arg0.asInt(0));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFile self=(PyFile)gself;
-                try {
-                    return self.file_readlines(arg0.asInt(0));
+                    return((PyFile)self).file_readlines(arg0.asInt(0));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -1016,57 +832,24 @@ public class PyFile extends PyObject
             }
 
             public PyObject __call__() {
-                return self.file_readlines();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return self.file_readlines();
+                return((PyFile)self).file_readlines();
             }
 
         }
         dict.__setitem__("readlines",new PyMethodDescr("readlines",PyFile.class,0,1,new exposed_readlines(null,null)));
-        class exposed_seek extends PyBuiltinFunctionNarrow {
+        class exposed_seek extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_seek(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_seek(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_seek((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_seek(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    self.file_seek(arg0.asLong(0),arg1.asInt(1));
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a long";
-                        break;
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyFile self=(PyFile)gself;
-                try {
-                    self.file_seek(arg0.asLong(0),arg1.asInt(1));
+                    ((PyFile)self).file_seek(arg0.asLong(0),arg1.asInt(1));
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -1086,25 +869,7 @@ public class PyFile extends PyObject
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    self.file_seek(arg0.asLong(0));
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a long";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFile self=(PyFile)gself;
-                try {
-                    self.file_seek(arg0.asLong(0));
+                    ((PyFile)self).file_seek(arg0.asLong(0));
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -1121,100 +886,51 @@ public class PyFile extends PyObject
 
         }
         dict.__setitem__("seek",new PyMethodDescr("seek",PyFile.class,1,2,new exposed_seek(null,null)));
-        class exposed_tell extends PyBuiltinFunctionNarrow {
+        class exposed_tell extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_tell(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_tell(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_tell((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_tell(self,info);
             }
 
             public PyObject __call__() {
-                return new PyLong(self.file_tell());
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return new PyLong(self.file_tell());
+                return new PyLong(((PyFile)self).file_tell());
             }
 
         }
         dict.__setitem__("tell",new PyMethodDescr("tell",PyFile.class,0,0,new exposed_tell(null,null)));
-        class exposed_next extends PyBuiltinFunctionNarrow {
+        class exposed_next extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_next(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_next(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_next((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_next(self,info);
             }
 
             public PyObject __call__() {
-                return self.file_next();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return self.file_next();
+                return((PyFile)self).file_next();
             }
 
         }
         dict.__setitem__("next",new PyMethodDescr("next",PyFile.class,0,0,new exposed_next(null,null)));
-        class exposed_truncate extends PyBuiltinFunctionNarrow {
+        class exposed_truncate extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_truncate(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_truncate(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_truncate((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_truncate(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    self.file_truncate(arg0.asLong(0));
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a long";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFile self=(PyFile)gself;
-                try {
-                    self.file_truncate(arg0.asLong(0));
+                    ((PyFile)self).file_truncate(arg0.asLong(0));
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -1230,56 +946,25 @@ public class PyFile extends PyObject
             }
 
             public PyObject __call__() {
-                self.file_truncate();
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                self.file_truncate();
+                ((PyFile)self).file_truncate();
                 return Py.None;
             }
 
         }
         dict.__setitem__("truncate",new PyMethodDescr("truncate",PyFile.class,0,1,new exposed_truncate(null,null)));
-        class exposed_write extends PyBuiltinFunctionNarrow {
+        class exposed_write extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_write(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_write(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_write((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_write(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    self.file_write(arg0.asString(0));
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFile self=(PyFile)gself;
-                try {
-                    self.file_write(arg0.asString(0));
+                    ((PyFile)self).file_write(arg0.asString(0));
                     return Py.None;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -1296,83 +981,47 @@ public class PyFile extends PyObject
 
         }
         dict.__setitem__("write",new PyMethodDescr("write",PyFile.class,1,1,new exposed_write(null,null)));
-        class exposed_writelines extends PyBuiltinFunctionNarrow {
+        class exposed_writelines extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_writelines(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_writelines(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_writelines((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_writelines(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.file_writelines(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyFile self=(PyFile)gself;
-                self.file_writelines(arg0);
+                ((PyFile)self).file_writelines(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("writelines",new PyMethodDescr("writelines",PyFile.class,1,1,new exposed_writelines(null,null)));
-        class exposed_xreadlines extends PyBuiltinFunctionNarrow {
+        class exposed_xreadlines extends PyBuiltinMethodNarrow {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_xreadlines(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_xreadlines(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_xreadlines((PyFile)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_xreadlines(self,info);
             }
 
             public PyObject __call__() {
-                return self.file_xreadlines();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyFile self=(PyFile)gself;
-                return self.file_xreadlines();
+                return((PyFile)self).file_xreadlines();
             }
 
         }
         dict.__setitem__("xreadlines",new PyMethodDescr("xreadlines",PyFile.class,0,0,new exposed_xreadlines(null,null)));
-        class exposed___init__ extends PyBuiltinFunctionWide {
+        class exposed___init__ extends PyBuiltinMethod {
 
-            private PyFile self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___init__(PyFile self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___init__((PyFile)self,info);
-            }
-
-            public PyObject inst_call(PyObject self,PyObject[]args) {
-                return inst_call(self,args,Py.NoKeywords);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___init__(self,info);
             }
 
             public PyObject __call__(PyObject[]args) {
@@ -1380,49 +1029,44 @@ public class PyFile extends PyObject
             }
 
             public PyObject __call__(PyObject[]args,String[]keywords) {
-                self.file_init(args,keywords);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
-                PyFile self=(PyFile)gself;
-                self.file_init(args,keywords);
+                ((PyFile)self).file_init(args,keywords);
                 return Py.None;
             }
 
         }
         dict.__setitem__("__init__",new PyMethodDescr("__init__",PyFile.class,-1,-1,new exposed___init__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyFile.class,"__new__",-1,-1) {
-            public PyObject new_impl(boolean init, PyType subtype, PyObject[] args, String[] keywords) {
-                PyFile newobj;
-                if (for_type == subtype) {
-                    newobj = null;
-                    if (init) {
-                        if (args.length == 0) {
-                            newobj = new PyFile();
-                            newobj.file_init(args, keywords);
-                        } else if (args[0] instanceof PyString ||
-                                (args[0] instanceof PyJavaInstance &&
-                                ((PyJavaInstance) args[0]).javaProxy == String.class)) {
-                            // If first arg is a PyString or String, assume its being 
-                            // called as a builtin.
-                            newobj = new PyFile();
-                            newobj.file_init(args, keywords);
-                        } else {
-                            // assume it's being called as a java class
-                            PyJavaClass pjc = new PyJavaClass(PyFile.class);
-                            newobj = (PyFile) pjc.__call__(args, keywords);
-                        }
-                    } else {
-                        newobj = new PyFile();
-                    }
-                } else {
-                    newobj = new PyFileDerived(subtype);
-                }
-                return newobj;
-            }
 
-        });
+                                                                                      public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
+                                                                                          PyFile newobj;
+                                                                                          if (for_type == subtype) {
+                                                                                              newobj = null;
+                                                                                              if (init) {
+                                                                                                  if (args.length == 0) {
+                                                                                                      newobj = new PyFile();
+                                                                                                      newobj.file_init(args, keywords);
+                                                                                                  } else if (args[0] instanceof PyString ||
+                                                                                                          (args[0] instanceof PyJavaInstance &&
+                                                                                                          ((PyJavaInstance) args[0]).javaProxy == String.class)) {
+                                                                                                      // If first arg is a PyString or String, assume its being 
+                                                                                                      // called as a builtin.
+                                                                                                      newobj = new PyFile();
+                                                                                                      newobj.file_init(args, keywords);
+                                                                                                  } else {
+                                                                                                      // assume it's being called as a java class
+                                                                                                      PyJavaClass pjc = new PyJavaClass(PyFile.class);
+                                                                                                      newobj = (PyFile) pjc.__call__(args, keywords);
+                                                                                                  }
+                                                                                              } else {
+                                                                                                  newobj = new PyFile();
+                                                                                              }
+                                                                                          } else {
+                                                                                              newobj = new PyFileDerived(subtype);
+                                                                                          }
+                                                                                          return newobj;
+                                                                                      }
+
+                                                                                  });
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 

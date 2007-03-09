@@ -11,130 +11,72 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
         dict.__setitem__("fset",new PyGetSetDescr("fset",PyProperty.class,"getFset","setFset",null));
         dict.__setitem__("fdel",new PyGetSetDescr("fdel",PyProperty.class,"getFdel","setFdel",null));
         dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",PyProperty.class,"getDoc","setDoc",null));
-        class exposed___get__ extends PyBuiltinFunctionNarrow {
+        class exposed___get__ extends PyBuiltinMethodNarrow {
 
-            private PyProperty self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___get__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___get__(PyProperty self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___get__((PyProperty)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___get__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 PyObject obj=(arg0==Py.None)?null:arg0;
                 PyObject type=(arg1==null)?obj:arg1;
-                return self.property___get__(obj,type);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyProperty self=(PyProperty)gself;
-                PyObject obj=(arg0==Py.None)?null:arg0;
-                PyObject type=(arg1==null)?obj:arg1;
-                return self.property___get__(obj,type);
+                return((PyProperty)self).property___get__(obj,type);
             }
 
             public PyObject __call__(PyObject arg0) {
                 PyObject obj=(arg0==Py.None)?null:arg0;
                 PyObject type=((null)==null)?obj:(null);
-                return self.property___get__(obj,type);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyProperty self=(PyProperty)gself;
-                PyObject obj=(arg0==Py.None)?null:arg0;
-                PyObject type=((null)==null)?obj:(null);
-                return self.property___get__(obj,type);
+                return((PyProperty)self).property___get__(obj,type);
             }
 
         }
         dict.__setitem__("__get__",new PyMethodDescr("__get__",PyProperty.class,1,2,new exposed___get__(null,null)));
-        class exposed___set__ extends PyBuiltinFunctionNarrow {
+        class exposed___set__ extends PyBuiltinMethodNarrow {
 
-            private PyProperty self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___set__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___set__(PyProperty self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___set__((PyProperty)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___set__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
-                self.property___set__(arg0,arg1);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PyProperty self=(PyProperty)gself;
-                self.property___set__(arg0,arg1);
+                ((PyProperty)self).property___set__(arg0,arg1);
                 return Py.None;
             }
 
         }
         dict.__setitem__("__set__",new PyMethodDescr("__set__",PyProperty.class,2,2,new exposed___set__(null,null)));
-        class exposed___delete__ extends PyBuiltinFunctionNarrow {
+        class exposed___delete__ extends PyBuiltinMethodNarrow {
 
-            private PyProperty self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___delete__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___delete__(PyProperty self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___delete__((PyProperty)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___delete__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                self.property___delete__(arg0);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyProperty self=(PyProperty)gself;
-                self.property___delete__(arg0);
+                ((PyProperty)self).property___delete__(arg0);
                 return Py.None;
             }
 
         }
         dict.__setitem__("__delete__",new PyMethodDescr("__delete__",PyProperty.class,1,1,new exposed___delete__(null,null)));
-        class exposed___init__ extends PyBuiltinFunctionWide {
+        class exposed___init__ extends PyBuiltinMethod {
 
-            private PyProperty self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___init__(PyProperty self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___init__((PyProperty)self,info);
-            }
-
-            public PyObject inst_call(PyObject self,PyObject[]args) {
-                return inst_call(self,args,Py.NoKeywords);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___init__(self,info);
             }
 
             public PyObject __call__(PyObject[]args) {
@@ -142,13 +84,7 @@ public class PyProperty extends PyObject implements PyType.Newstyle {
             }
 
             public PyObject __call__(PyObject[]args,String[]keywords) {
-                self.property_init(args,keywords);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
-                PyProperty self=(PyProperty)gself;
-                self.property_init(args,keywords);
+                ((PyProperty)self).property_init(args,keywords);
                 return Py.None;
             }
 

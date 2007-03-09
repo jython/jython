@@ -10,50 +10,22 @@ public class PySuper extends PyObject implements PyType.Newstyle {
         dict.__setitem__("__thisclass__",new PyGetSetDescr("__thisclass__",PySuper.class,"getThisClass",null,null));
         dict.__setitem__("__self__",new PyGetSetDescr("__self__",PySuper.class,"getSelf",null,null));
         dict.__setitem__("__self_class__",new PyGetSetDescr("__self_class__",PySuper.class,"getSelfClass",null,null));
-        class exposed___getattribute__ extends PyBuiltinFunctionNarrow {
+        class exposed___getattribute__ extends PyBuiltinMethodNarrow {
 
-            private PySuper self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___getattribute__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___getattribute__(PySuper self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___getattribute__((PySuper)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getattribute__(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
                 try {
                     String name=(arg0.asName(0));
-                    PyObject ret=self.super___findattr__(name);
+                    PyObject ret=((PySuper)self).super___findattr__(name);
                     if (ret==null)
-                        self.noAttributeError(name);
-                    return ret;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySuper self=(PySuper)gself;
-                try {
-                    String name=(arg0.asName(0));
-                    PyObject ret=self.super___findattr__(name);
-                    if (ret==null)
-                        self.noAttributeError(name);
+                        ((PySuper)self).noAttributeError(name);
                     return ret;
                 } catch (PyObject.ConversionException e) {
                     String msg;
@@ -70,70 +42,38 @@ public class PySuper extends PyObject implements PyType.Newstyle {
 
         }
         dict.__setitem__("__getattribute__",new PyMethodDescr("__getattribute__",PySuper.class,1,1,new exposed___getattribute__(null,null)));
-        class exposed___get__ extends PyBuiltinFunctionNarrow {
+        class exposed___get__ extends PyBuiltinMethodNarrow {
 
-            private PySuper self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___get__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___get__(PySuper self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___get__((PySuper)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___get__(self,info);
             }
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 PyObject obj=(arg0==Py.None)?null:arg1;
                 PyObject type=(arg1==Py.None)?null:arg0;
-                return self.super___get__(obj,type);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0,PyObject arg1) {
-                PySuper self=(PySuper)gself;
-                PyObject obj=(arg0==Py.None)?null:arg1;
-                PyObject type=(arg1==Py.None)?null:arg0;
-                return self.super___get__(obj,type);
+                return((PySuper)self).super___get__(obj,type);
             }
 
             public PyObject __call__(PyObject arg0) {
                 PyObject obj=(arg0==Py.None)?null:(null);
                 PyObject type=((null)==Py.None)?null:arg0;
-                return self.super___get__(obj,type);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PySuper self=(PySuper)gself;
-                PyObject obj=(arg0==Py.None)?null:(null);
-                PyObject type=((null)==Py.None)?null:arg0;
-                return self.super___get__(obj,type);
+                return((PySuper)self).super___get__(obj,type);
             }
 
         }
         dict.__setitem__("__get__",new PyMethodDescr("__get__",PySuper.class,1,2,new exposed___get__(null,null)));
-        class exposed___init__ extends PyBuiltinFunctionWide {
+        class exposed___init__ extends PyBuiltinMethod {
 
-            private PySuper self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___init__(PySuper self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___init__((PySuper)self,info);
-            }
-
-            public PyObject inst_call(PyObject self,PyObject[]args) {
-                return inst_call(self,args,Py.NoKeywords);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___init__(self,info);
             }
 
             public PyObject __call__(PyObject[]args) {
@@ -141,13 +81,7 @@ public class PySuper extends PyObject implements PyType.Newstyle {
             }
 
             public PyObject __call__(PyObject[]args,String[]keywords) {
-                self.super_init(args,keywords);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
-                PySuper self=(PySuper)gself;
-                self.super_init(args,keywords);
+                ((PySuper)self).super_init(args,keywords);
                 return Py.None;
             }
 

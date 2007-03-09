@@ -1,0 +1,30 @@
+# setup
+type_name: array
+type_class: PyArray
+type_base_class: PyObject
+incl: sequence
+#expose_meth: seq_> __iter__
+# exposed methods
+expose_meth: :- append o
+expose_meth: :- byteswap
+expose_meth: :i count o
+expose_meth: :- extend o
+expose_meth: :- fromfile oi
+expose_meth: :- fromlist o
+expose_meth: :i index o
+expose_meth: :- insert io
+expose_meth: pop i?
+expose_meth: :- remove o
+expose_meth: :- reverse
+expose_meth: :- tofile o
+expose_meth: tolist
+expose_meth: tostring
+expose_meth: :- write o
+#exposed fields
+expose_getset: itemsize getItemsize
+expose_getset: typecode getTypecode
+expose_wide_meth: __init__ -1 -1
+  `vdeleg`(init);
+  `void;
+expose_new_mutable:
+

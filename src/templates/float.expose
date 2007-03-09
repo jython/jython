@@ -14,12 +14,12 @@ expose_vanilla_pow
 expose_new_immutable:
 expose_meth: :b __nonzero__
 expose_meth: __repr__
-  return new PyString(self.float_toString());
+  return new PyString(((PyFloat)self).float_toString());
 expose_meth: __str__
-  return new PyString(self.float_toString());
+  return new PyString(((PyFloat)self).float_toString());
 expose_meth: __getnewargs__
 expose_meth: __hash__
-  return Py.newInteger(self.float_hashCode());
+  return Py.newInteger(((PyFloat)self).float_hashCode());
 # TODO
 # (__coerce__, __doc__)
 #

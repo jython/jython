@@ -186,7 +186,7 @@ class ImportHooksTestCase(ImportHooksBaseTestCase):
         else:
             self.fail("'%s' was not supposed to be importable" % mname)
 
-    def testImpWrapper(self):
+    def doTestImpWrapper(self, globals_func=globals, locals_func=locals):
         i = ImpWrapper()
         sys.meta_path.append(i)
         sys.path_hooks.append(ImpWrapper)
@@ -198,8 +198,14 @@ class ImportHooksTestCase(ImportHooksBaseTestCase):
                 if n.startswith(parent):
                     del sys.modules[n]
         for mname in mnames:
-            m = __import__(mname, globals(), locals(), ["__dummy__"])
+            m = __import__(mname, globals_func(), locals_func(), ["__dummy__"])
             m.__loader__  # to make sure we actually handled the import
+
+    def testImpWrapper(self):
+        self.doTestImpWrapper()
+
+    def testImpWrapperNoContext(self):
+        self.doTestImpWrapper(lambda: None, lambda: None)
 
 def test_main():
     test_support.run_unittest(ImportHooksTestCase)

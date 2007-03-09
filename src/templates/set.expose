@@ -14,7 +14,7 @@ expose_meth: :- union_update o
 expose_meth: :- intersection_update o
 expose_meth: :- symmetric_difference_update o
 expose_meth: :- difference_update o
-expose_meth: :o __reduce__
+expose_meth: _as_immutable
 expose_wide_meth: __init__ -1 -1
   `vdeleg`(init);
   `void;
