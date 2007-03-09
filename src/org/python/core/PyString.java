@@ -2045,7 +2045,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     
     public PyObject str___mod__(PyObject other){
         StringFormatter fmt = new StringFormatter(string);
-        return createInstance(fmt.format(other));
+        return fmt.format(other);
     }
 
     public PyObject __int__() {
@@ -3535,7 +3535,7 @@ final class StringFormatter
         
     }
 
-    public String formatLong(PyString arg, char type, boolean altFlag) {
+    private String formatLong(PyString arg, char type, boolean altFlag) {
         checkPrecision("long");
         String s = arg.toString();
         int end = s.length();
@@ -3589,11 +3589,11 @@ final class StringFormatter
         return s;
     }
 
-    public String formatInteger(PyObject arg, int radix, boolean unsigned) {
+    private String formatInteger(PyObject arg, int radix, boolean unsigned) {
         return formatInteger(((PyInteger)arg.__int__()).getValue(), radix, unsigned);
     }
 
-    public String formatInteger(long v, int radix, boolean unsigned) {
+    private String formatInteger(long v, int radix, boolean unsigned) {
         checkPrecision("integer");
         if (unsigned) {
             if (v < 0)
@@ -3611,11 +3611,11 @@ final class StringFormatter
         return s;
     }
 
-    public String formatFloatDecimal(PyObject arg, boolean truncate) {
+    private String formatFloatDecimal(PyObject arg, boolean truncate) {
         return formatFloatDecimal(arg.__float__().getValue(), truncate);
     }
 
-    public String formatFloatDecimal(double v, boolean truncate) {
+    private String formatFloatDecimal(double v, boolean truncate) {
         checkPrecision("decimal");
         java.text.NumberFormat format = java.text.NumberFormat.getInstance(
                                            java.util.Locale.US);
@@ -3638,7 +3638,7 @@ final class StringFormatter
         return ret;
     }
 
-    public String formatFloatExponential(PyObject arg, char e,
+    private String formatFloatExponential(PyObject arg, char e,
                                          boolean truncate)
     {
         StringBuffer buf = new StringBuffer();
@@ -3681,9 +3681,10 @@ final class StringFormatter
         return buf.toString();
     }
 
-    public String format(PyObject args) {
+    public PyString format(PyObject args) {
         PyObject dict = null;
         this.args = args;
+        boolean needUnicode = false;
         if (args instanceof PyTuple) {
             argIndex = 0;
         } else {
@@ -3786,6 +3787,9 @@ final class StringFormatter
                 if (precision >= 0 && string.length() > precision) {
                     string = string.substring(0, precision);
                 }
+                if (arg instanceof PyUnicode) {
+                    needUnicode = true;
+                }
                 break;
             case 'i':
             case 'd':
@@ -3877,6 +3881,9 @@ final class StringFormatter
                     string = ((PyString)arg).toString();
                     if (string.length() != 1)
                         throw Py.TypeError("%c requires int or char");
+                    if (arg instanceof PyUnicode) {
+                        needUnicode = true;
+                    }
                     break;
                 }
                 char tmp = (char)((PyInteger)arg.__int__()).getValue();
@@ -3949,7 +3956,10 @@ final class StringFormatter
         {
             throw Py.TypeError("not all arguments converted");
         }
-        return buffer.toString();
+        if (needUnicode) {
+            return new PyUnicode(buffer.toString());
+        }
+        return new PyString(buffer.toString());
     }
 
 }

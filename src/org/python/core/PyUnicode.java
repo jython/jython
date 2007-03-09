@@ -1483,6 +1483,10 @@ public class PyUnicode extends PyString {
        return new PyUnicode(str);
     }
 
+    public PyObject __mod__(PyObject other) {
+        return str___mod__(other).__unicode__();
+    }
+
     final PyUnicode unicode___unicode__() {
         return str___unicode__();
     }
