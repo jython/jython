@@ -78,67 +78,72 @@ public class SyspathJavaLoader extends ClassLoader {
     // override from abstract base class
     protected Class loadClass(String name, boolean resolve)
             throws ClassNotFoundException {
-        // System.err.println("loadClass("+name+", "+resolve+")");
         // First, if the Python runtime system has a default class loader,
         // defer to it.
         ClassLoader classLoader = Py.getSystemState().getClassLoader();
         if (classLoader != null) {
             return classLoader.loadClass(name);
         }
+        
         // Search the sys.path for a .class file matching the named class.
-        // TBD: This registry option is temporary.
         try {
             return Class.forName(name);
-        } catch (ClassNotFoundException e) {
-        }
+        } catch(ClassNotFoundException e) {}
 
         Class c = findLoadedClass(name);
-        if (c != null) {
+        if(c != null) {
             return c;
         }
-
-        /*
-         * previously: if Options.extendedClassLoader && // KLUDGE ALERT:
-         * without this test, running jpython // interactively from the build
-         * directory will fail with // ClassCircularityError or LinkageError.
-         * There's gotta be a // better way. !name.startsWith("org.python")
-         */
-        {
-            PyList path = Py.getSystemState().path;
-            for (int i = 0; i < path.__len__(); i++) {
-                InputStream fis = null;
-                PyObject entry = path.__getitem__(i);
-                if (entry instanceof SyspathArchive) {
-                    SyspathArchive archive = (SyspathArchive) entry;
-                    String entryname = name.replace('.', SLASH_CHAR) + ".class";
-                    ZipEntry ze = archive.getEntry(entryname);
-                    if (ze != null) {
-                        try {
-                            fis = archive.getInputStream(ze);
-                        } catch (IOException exc) {
-                            ;
-                        }
+        
+        PyList path = Py.getSystemState().path;
+        for(int i = 0; i < path.__len__(); i++) {
+            InputStream fis = null;
+            File file = null;
+            int size = 0;
+            PyObject entry = path.__getitem__(i);
+            if(entry instanceof SyspathArchive) {
+                SyspathArchive archive = (SyspathArchive)entry;
+                String entryname = name.replace('.', SLASH_CHAR) + ".class";
+                ZipEntry ze = archive.getEntry(entryname);
+                if(ze != null) {
+                    try {
+                        fis = archive.getInputStream(ze);
+                        size = (int)ze.getSize();
+                    } catch(IOException exc) {
+                        ;
                     }
-                } else {
-                    String dir = entry.__str__().toString();
-                    fis = open(dir, name);
                 }
-                if (fis == null) {
-                    continue;
+            } else {
+                String dir = entry.__str__().toString();
+                file = getFile(dir, name);
+                if(file != null) {
+                    size = (int)file.length();
+                    try {
+                        fis = new FileInputStream(file);
+                    } catch(FileNotFoundException e) {
+                        ;
+                    }
                 }
+            }
+            if(fis == null) {
+                continue;
+            }
+            try {
+                byte[] buffer = new byte[size];
+                int nread = 0;
+                while(nread < size) {
+                    nread += fis.read(buffer, nread, size - nread);
+                }
+                fis.close();
+                return loadClassFromBytes(name, buffer);
+            } catch(IOException e) {
+                continue;
+            } finally {
                 try {
-                    byte[] buffer = FileUtil.readBytes(fis);
-                    return loadClassFromBytes(name, buffer);
+                    fis.close();
                 } catch(IOException e) {
                     continue;
-                } finally {
-                    try {
-                        fis.close();
-                    } catch(IOException e) {
-                        continue;
-                    }
                 }
-                
             }
         }
 
@@ -146,7 +151,7 @@ public class SyspathJavaLoader extends ClassLoader {
         throw new ClassNotFoundException(name);
     }
 
-    private FileInputStream open(String dir, String name) {
+    private File getFile(String dir, String name) {
         String accum = "";
         boolean first = true;
         for (StringTokenizer t = new StringTokenizer(name, "."); t
@@ -158,14 +163,10 @@ public class SyspathJavaLoader extends ClassLoader {
             accum += token;
             first = false;
         }
-        try {
-            if (dir.length() == 0) {
-                dir = null;
-            }
-            return new FileInputStream(new File(dir, accum + ".class"));
-        } catch (FileNotFoundException e) {
-            return null;
+        if (dir.length() == 0) {
+            dir = null;
         }
+        return new File(dir, accum + ".class");
     }
 
     private Class loadClassFromBytes(String name, byte[] data) {
