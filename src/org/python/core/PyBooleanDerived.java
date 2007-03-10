@@ -1,6 +1,16 @@
 package org.python.core;
 
-public class PyBooleanDerived extends PyBoolean {
+public class PyBooleanDerived extends PyBoolean implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index,PyObject value) {
+        slots[index]=value;
+    }
+
+    private PyObject[]slots;
 
     private PyObject dict;
 
@@ -12,8 +22,22 @@ public class PyBooleanDerived extends PyBoolean {
         return dict;
     }
 
+    public void setDict(PyObject newDict) {
+        if (newDict instanceof PyStringMap||newDict instanceof PyDictionary) {
+            dict=newDict;
+        } else {
+            throw Py.TypeError("__dict__ must be set to a Dictionary "+newDict.getClass().getName());
+        }
+    }
+
+    public void delDict() {
+        // deleting an object's instance dict makes it grow a new one
+        dict=new PyStringMap();
+    }
+
     public PyBooleanDerived(PyType subtype,boolean v) {
         super(subtype,v);
+        slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
 

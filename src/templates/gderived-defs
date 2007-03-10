@@ -2,7 +2,18 @@
 define: (CompilationUnit)derived_class
   package org.python.core;
 
-  public class `concat`(`base,Derived) extends `base {
+  public class `concat`(`base,Derived) extends `base implements Slotted {
+
+    public PyObject getSlot(int index) {
+        return slots[index];
+    }
+
+    public void setSlot(int index, PyObject value) {
+        slots[index] = value;
+    }
+    
+    private PyObject[] slots;
+
      `decls;
   }
 define: (ClassBodyDeclarations)pair

@@ -22,8 +22,8 @@ import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyMethodDescr;
 import org.python.core.PyBuiltinFunction;
-import org.python.core.PyBuiltinFunctionNarrow;
-import org.python.core.PyBuiltinFunctionWide;
+import org.python.core.PyBuiltinMethod;
+import org.python.core.PyBuiltinMethodNarrow;
 
 
 public class PyRandom extends PyObject {
@@ -33,174 +33,98 @@ public class PyRandom extends PyObject {
     public static final String exposed_name="random";
 
     public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed_random extends PyBuiltinFunctionNarrow {
+        class exposed_random extends PyBuiltinMethodNarrow {
 
-            private PyRandom self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_random(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_random(PyRandom self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_random((PyRandom)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_random(self,info);
             }
 
             public PyObject __call__() {
-                return self.random_random();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyRandom self=(PyRandom)gself;
-                return self.random_random();
+                return((PyRandom)self).random_random();
             }
 
         }
         dict.__setitem__("random",new PyMethodDescr("random",PyRandom.class,0,0,new exposed_random(null,null)));
-        class exposed_seed extends PyBuiltinFunctionNarrow {
+        class exposed_seed extends PyBuiltinMethodNarrow {
 
-            private PyRandom self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_seed(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_seed(PyRandom self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_seed((PyRandom)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_seed(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.random_seed(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyRandom self=(PyRandom)gself;
-                return self.random_seed(arg0);
+                return((PyRandom)self).random_seed(arg0);
             }
 
             public PyObject __call__() {
-                return self.random_seed();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyRandom self=(PyRandom)gself;
-                return self.random_seed();
+                return((PyRandom)self).random_seed();
             }
 
         }
         dict.__setitem__("seed",new PyMethodDescr("seed",PyRandom.class,0,1,new exposed_seed(null,null)));
-        class exposed_getstate extends PyBuiltinFunctionNarrow {
+        class exposed_getstate extends PyBuiltinMethodNarrow {
 
-            private PyRandom self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_getstate(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_getstate(PyRandom self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_getstate((PyRandom)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_getstate(self,info);
             }
 
             public PyObject __call__() {
-                return self.random_getstate();
-            }
-
-            public PyObject inst_call(PyObject gself) {
-                PyRandom self=(PyRandom)gself;
-                return self.random_getstate();
+                return((PyRandom)self).random_getstate();
             }
 
         }
         dict.__setitem__("getstate",new PyMethodDescr("getstate",PyRandom.class,0,0,new exposed_getstate(null,null)));
-        class exposed_setstate extends PyBuiltinFunctionNarrow {
+        class exposed_setstate extends PyBuiltinMethodNarrow {
 
-            private PyRandom self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_setstate(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_setstate(PyRandom self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_setstate((PyRandom)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_setstate(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.random_setstate(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyRandom self=(PyRandom)gself;
-                return self.random_setstate(arg0);
+                return((PyRandom)self).random_setstate(arg0);
             }
 
         }
         dict.__setitem__("setstate",new PyMethodDescr("setstate",PyRandom.class,1,1,new exposed_setstate(null,null)));
-        class exposed_jumpahead extends PyBuiltinFunctionNarrow {
+        class exposed_jumpahead extends PyBuiltinMethodNarrow {
 
-            private PyRandom self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed_jumpahead(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed_jumpahead(PyRandom self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed_jumpahead((PyRandom)self,info);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_jumpahead(self,info);
             }
 
             public PyObject __call__(PyObject arg0) {
-                return self.random_jumpahead(arg0);
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject arg0) {
-                PyRandom self=(PyRandom)gself;
-                return self.random_jumpahead(arg0);
+                return((PyRandom)self).random_jumpahead(arg0);
             }
 
         }
         dict.__setitem__("jumpahead",new PyMethodDescr("jumpahead",PyRandom.class,1,1,new exposed_jumpahead(null,null)));
-        class exposed___init__ extends PyBuiltinFunctionWide {
+        class exposed___init__ extends PyBuiltinMethod {
 
-            private PyRandom self;
-
-            public PyObject getSelf() {
-                return self;
+            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
             }
 
-            exposed___init__(PyRandom self,PyBuiltinFunction.Info info) {
-                super(info);
-                this.self=self;
-            }
-
-            public PyBuiltinFunction makeBound(PyObject self) {
-                return new exposed___init__((PyRandom)self,info);
-            }
-
-            public PyObject inst_call(PyObject self,PyObject[]args) {
-                return inst_call(self,args,Py.NoKeywords);
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___init__(self,info);
             }
 
             public PyObject __call__(PyObject[]args) {
@@ -208,13 +132,7 @@ public class PyRandom extends PyObject {
             }
 
             public PyObject __call__(PyObject[]args,String[]keywords) {
-                self.random_init(args,keywords);
-                return Py.None;
-            }
-
-            public PyObject inst_call(PyObject gself,PyObject[]args,String[]keywords) {
-                PyRandom self=(PyRandom)gself;
-                self.random_init(args,keywords);
+                ((PyRandom)self).random_init(args,keywords);
                 return Py.None;
             }
 
