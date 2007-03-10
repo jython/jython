@@ -1206,6 +1206,8 @@ public class PyType extends PyObject implements Serializable {
         return newtype;
     }
 
+    static PyType TypeType = fromClass(PyType.class);
+
     /*
      * considers:
      *   if c implements Newstyle => c and all subclasses
@@ -1424,6 +1426,10 @@ public class PyType extends PyObject implements Serializable {
             System.arraycopy(args, 0, type_prepended, 1, n);
             type_prepended[0] = type;
             newobj = new_.__get__(null, type).__call__(type_prepended, keywords);
+        }
+        /* special case type(x) */
+        if (type == TypeType && args.length==1 && keywords.length==0) {
+            return newobj;
         }
         newobj.dispatch__init__(type,args,keywords);
         return newobj;
