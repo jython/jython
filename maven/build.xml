@@ -39,7 +39,7 @@
 		value="${dist.base}/${project.name}-${project.version}"/>
 	<property name="src.dir" value="${basedir}/src"/>
 	
-	<property name="m2.groupDir" value="org.jython"/>
+	<property name="m2.groupDir" value="org.python"/>
 	<property name="m2.artifactId" value="jython"/>
 	
 	
@@ -47,7 +47,7 @@
 		
 		<antcall target="bundle">
 			<param name="stage-target" value="stage"/>
-			<param name="m2.groupDir" value="org.jython"/>
+			<param name="m2.groupDir" value="org.python"/>
 			<param name="m2.artifactId" value="jython"/>
 		</antcall>
 		
