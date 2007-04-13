@@ -1090,10 +1090,10 @@ public class PyFile extends PyObject
 
     final void file_init(PyObject[] args,String[] kwds) {
 
-        ArgParser ap = new ArgParser("file", args, kwds, new String[] { "name", "mode" }, 1);
+        ArgParser ap = new ArgParser("file", args, kwds, new String[] { "name", "mode", "bufsize" }, 1);
         String nameArg = ap.getString(0, null);
         String modeArg = ap.getString(1, "r");
-        int buffArg = 0;//ap.getInt(2, 0);
+        int buffArg = ap.getInt(2, 0);
         FileWrapper fw = _setup(nameArg, modeArg, buffArg);
 
         //xxx: c&p'ed from one of the constructors.

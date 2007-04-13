@@ -1,7 +1,11 @@
 Jython NEWS
 
+Jython 2.2 beta2
+  New features
+    - All functions in __builtin__ are new style functions instead of reflected
+      functions
+  
 Jython 2.2 beta1
-
   New features
     - much improved support for __unicode__ especially in the parser (u"string" and
         friends now result in a PyUnicode object)
