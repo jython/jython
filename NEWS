@@ -4,6 +4,25 @@ Jython 2.2 beta2
   New features
     - All functions in __builtin__ are new style functions instead of reflected
       functions
+    - Classmethods added to newstyle classes
+    - array is a newstyle class
+  
+  Bugs fixed
+    - [ 1599012 ] current directory is prepended to entries in sys.path
+    - [ 1654484 ] Initializing PyJavaClass for java.lang.OutOfMemory causes a further OutOfMemory problem
+    - [ 1661679 ] types.UnicodeType is str
+    - [ 1659819 ] Joining unicode items with string doesn't create unicode
+    - [ 1603253 ] Thread's setDaemon setting does not work
+    - types module uses newstyle classes
+    - [ 1671134 ] '%s' % u'x' returns str object
+    - [ 1672800 ] __import__('module', None) raises AttributeError
+    - [ 1576036 ] Fix: SyspathJavaLoader file reader causes importerror
+    - [ 1605847 ] co_filename set in bytecode doesn't match __file__
+    - [ 1603312 ] subclasses of int raise a TypeError when given large value
+    - [ 1603315 ] str missing object keyword arg
+    - [ 1603747 ] Multiple InteractiveInterpreter share same setErr/Out
+    - [ 1619040 ] dict.fromkeys() should take iterable
+    - [ 1658647 ] type(x) calls x.__class__.__init__
   
 Jython 2.2 beta1
   New features
