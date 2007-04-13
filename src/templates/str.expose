@@ -5,7 +5,7 @@ type_class: PyString
 expose_index_getitem: seq_>
 expose_meth: seq_> __getslice__ ooo?
 #
-expose_binary: __ne__ __eq__
+expose_binary: __ne__ __eq__ __lt__ __le__ __gt__ __ge__
 expose_meth: :b __contains__ o
 expose_meth: :i __len__
 expose_meth: __add__ o

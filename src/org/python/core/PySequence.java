@@ -137,6 +137,10 @@ abstract public class PySequence extends PyObject {
             return (i == -1) ? Py.One : Py.Zero;
         return __finditem__(i)._lt(o.__finditem__(i));
     }
+    
+    final synchronized PyObject seq___lt__(PyObject o){
+    	return __lt__(o);
+    }
 
     public synchronized PyObject __le__(PyObject o) {
         if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
@@ -146,6 +150,10 @@ abstract public class PySequence extends PyObject {
         if (i < 0)
             return (i == -1 || i == -2) ? Py.One : Py.Zero;
         return __finditem__(i)._le(o.__finditem__(i));
+    }
+    
+    final synchronized PyObject seq___le__(PyObject o){
+    	return __le__(o);
     }
 
     public synchronized PyObject __gt__(PyObject o) {
@@ -157,6 +165,10 @@ abstract public class PySequence extends PyObject {
             return (i == -3) ? Py.One : Py.Zero;
         return __finditem__(i)._gt(o.__finditem__(i));
     }
+    
+    final synchronized PyObject seq___gt__(PyObject o){
+    	return __gt__(o);
+    }
 
     public synchronized PyObject __ge__(PyObject o) {
         if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
@@ -166,6 +178,10 @@ abstract public class PySequence extends PyObject {
         if (i < 0)
             return (i == -3 || i == -2) ? Py.One : Py.Zero;
         return __finditem__(i)._ge(o.__finditem__(i));
+    }
+    
+    final synchronized PyObject seq___ge__(PyObject o){
+    	return __ge__(o);
     }
 
     // Return value >= 0 is the index where the sequences differs.

@@ -54,6 +54,82 @@ public class PyDictionary extends PyObject {
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyDictionary.class,1,1,new exposed___eq__(null,null)));
+        class exposed___lt__ extends PyBuiltinMethodNarrow {
+
+            exposed___lt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___lt__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyDictionary)self).dict___lt__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__lt__",new PyMethodDescr("__lt__",PyDictionary.class,1,1,new exposed___lt__(null,null)));
+        class exposed___gt__ extends PyBuiltinMethodNarrow {
+
+            exposed___gt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___gt__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyDictionary)self).dict___gt__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__gt__",new PyMethodDescr("__gt__",PyDictionary.class,1,1,new exposed___gt__(null,null)));
+        class exposed___ge__ extends PyBuiltinMethodNarrow {
+
+            exposed___ge__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ge__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyDictionary)self).dict___ge__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PyDictionary.class,1,1,new exposed___ge__(null,null)));
+        class exposed___le__ extends PyBuiltinMethodNarrow {
+
+            exposed___le__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___le__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyDictionary)self).dict___le__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__le__",new PyMethodDescr("__le__",PyDictionary.class,1,1,new exposed___le__(null,null)));
         class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
             exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
@@ -734,6 +810,38 @@ public class PyDictionary extends PyObject {
         PyObject eq_result = __eq__(ob_other);
         if (eq_result == null) return null;
         return  eq_result == Py.One?Py.Zero:Py.One;
+    }
+    
+    final PyObject dict___lt__(PyObject ob_other){
+    	int result = __cmp__(ob_other);
+    	if(result == -2){
+    		return null;
+    	}
+    	return result < 0 ? Py.One : Py.Zero;
+    }
+    
+    final PyObject dict___gt__(PyObject ob_other){
+    	int result = __cmp__(ob_other);
+    	if(result == -2){
+    		return null;
+    	}
+    	return result > 0 ? Py.One : Py.Zero;
+    }
+    
+    final PyObject dict___le__(PyObject ob_other){
+    	int result = __cmp__(ob_other);
+    	if(result == -2){
+    		return null;
+    	}
+    	return result <= 0 ? Py.One : Py.Zero;
+    }
+    
+    final PyObject dict___ge__(PyObject ob_other){
+    	int result = __cmp__(ob_other);
+    	if(result == -2){
+    		return null;
+    	}
+    	return result >= 0 ? Py.One : Py.Zero;
     }
 
     public int __cmp__(PyObject ob_other) {

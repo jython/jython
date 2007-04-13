@@ -2,7 +2,7 @@
 type_name: dict
 type_class: PyDictionary
 # exposed methods
-expose_binary: __ne__ __eq__
+expose_binary: __ne__ __eq__ __lt__ __gt__ __ge__ __le__ 
 expose_vanilla_cmp:
 expose_cmeth: fromkeys o o?
 expose_key_getitem:
@@ -35,5 +35,4 @@ expose_wide_meth: __init__ -1 -1
   `void;
 # TODO:
 #  ('__getattribute__'), 
-#  '__lt__', '__gt__', '__ge__', __le__' 
 # (__doc__)
