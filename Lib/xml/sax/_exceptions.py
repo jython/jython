@@ -1,5 +1,4 @@
 """Different kinds of SAX Exceptions"""
-import sys
 
 # ===== SAXEXCEPTION =====
 
