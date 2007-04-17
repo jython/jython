@@ -816,27 +816,24 @@ public class PyInteger extends PyObject {
             if (x == null) {
                 return Py.Zero;
             }
-            if (base == -909) {
-                return x.__int__();
-            }
-            if (!(x instanceof PyString)) {
-                throw Py
-                        .TypeError("int: can't convert non-string with explicit base");
-            }
+			if (base == -909) {
+				return asPyInteger(x);
+			}
+			if (!(x instanceof PyString)) {
+				throw Py.TypeError("int: can't convert non-string with explicit base");
+			}
             return Py.newInteger(((PyString) x).atoi(base));
         } else {
             if (x == null) {
                 return new PyIntegerDerived(subtype, 0);
             }
             if (base == -909) {
-                PyObject intOrLong = x.__int__();
-                if (intOrLong instanceof PyInteger) {
-                    return new PyIntegerDerived(subtype, ((PyInteger)intOrLong).getValue());
-                }
-                else {
-                    throw Py
-                        .OverflowError("long int too large to convert to int");
-                }
+				PyObject intOrLong = asPyInteger(x);
+				if (intOrLong instanceof PyInteger) {
+					return new PyIntegerDerived(subtype, ((PyInteger) intOrLong).getValue());
+				} else {
+					throw Py.OverflowError("long int too large to convert to int");
+				}
             }
             if (!(x instanceof PyString)) {
                 throw Py
@@ -845,6 +842,20 @@ public class PyInteger extends PyObject {
             return new PyIntegerDerived(subtype, ((PyString) x).atoi(base));
         }
     } // xxx
+
+    /**
+     * @return the result of x.__int__ 
+     * @throws Py.Type error if x.__int__ throws an Py.AttributeError
+     */
+	private static PyObject asPyInteger(PyObject x) {
+		try {
+			return x.__int__();
+		} catch (PyException pye) {
+			if (!Py.matchException(pye, Py.AttributeError))
+				throw pye;
+			throw Py.TypeError("int() argument must be a string or a number");
+		}
+	}
     
     private static final PyType INTTYPE = PyType.fromClass(PyInteger.class);
     

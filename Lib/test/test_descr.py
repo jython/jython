@@ -479,6 +479,18 @@ def ints():
         pass
     else:
         raise TestFailed, "should have raised OverflowError"
+    try:
+        foo = int(None)
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "should have raised TypeError"
+    try:
+        foo = C(None)
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "should have raised TypeError"
 
 def longs():
     if verbose: print "Testing long operations..."
