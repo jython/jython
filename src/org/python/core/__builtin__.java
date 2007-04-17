@@ -306,6 +306,7 @@ public class __builtin__  {
 	
 		dict.__setitem__("object", PyType.fromClass(PyObject.class));
 		dict.__setitem__("type", PyType.fromClass(PyType.class));
+		dict.__setitem__("bool", PyType.fromClass(PyBoolean.class));
 		dict.__setitem__("int", PyType.fromClass(PyInteger.class));
 		dict.__setitem__("enumerate", PyType.fromClass(PyEnumerate.class));
 		dict.__setitem__("float", PyType.fromClass(PyFloat.class));
@@ -339,7 +340,6 @@ public class __builtin__  {
 	
 		dict.__setitem__("abs", new BuiltinFunctions("abs", 7, 1));
 		dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
-		dict.__setitem__("bool", new BuiltinFunctions("bool", 8, 1));
 		dict.__setitem__("callable", new BuiltinFunctions("callable", 14, 1));
 		dict.__setitem__("coerce", new BuiltinFunctions("coerce", 13, 2));
 		dict.__setitem__("chr", new BuiltinFunctions("chr", 0, 1));
