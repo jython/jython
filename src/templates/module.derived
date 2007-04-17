@@ -1,0 +1,4 @@
+base_class: PyModule
+want_dict: false
+ctr:
+incl: object

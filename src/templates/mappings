@@ -33,6 +33,8 @@ list.derived:org.python.core.PyListDerived
 list.expose:org.python.core.PyList
 long.derived:org.python.core.PyLongDerived
 long.expose:org.python.core.PyLong
+module.derived:org.python.core.PyModuleDerived
+module.expose:org.python.core.PyModule
 None.expose:org.python.core.PyNone
 object.derived:org.python.core.PyObjectDerived
 object.expose:org.python.core.PyObject
