@@ -409,7 +409,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyUnicode(((PyUnicode)self).unicode_encode(arg0.asString(0),arg1.asString(1)));
+                    return new PyString(((PyUnicode)self).unicode_encode(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -426,7 +426,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyUnicode(((PyUnicode)self).unicode_encode(arg0.asString(0)));
+                    return new PyString(((PyUnicode)self).unicode_encode(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -441,7 +441,7 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyUnicode(((PyUnicode)self).unicode_encode());
+                return new PyString(((PyUnicode)self).unicode_encode());
             }
 
         }
@@ -1489,6 +1489,10 @@ public class PyUnicode extends PyString {
 
     final PyUnicode unicode___unicode__() {
         return str___unicode__();
+    }
+
+    public PyString __str__() {
+        return unicode___str__();
     }
 
     public PyString unicode___str__() {

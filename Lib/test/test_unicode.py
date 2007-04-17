@@ -485,6 +485,10 @@ verify('%i %*.*s' % (10, 5,3,u'abc',) == u'10   abc')
 verify('%i%s %*.*s' % (10, 3, 5,3,u'abc',) == u'103   abc')
 print 'done.'
 
+print 'Testing builtin str()...',
+verify(str(u"") == "")
+verify(isinstance(str(u""), str))
+
 print 'Testing builtin unicode()...',
 
 # unicode(obj) tests (this maps to PyObject_Unicode() at C level)
@@ -584,9 +588,8 @@ if not sys.platform.startswith('java'):
 # UTF-8 specific encoding tests:
 verify(u''.encode('utf-8') == '')
 verify(u'\u20ac'.encode('utf-8') == '\xe2\x82\xac')
-#XXX: ?
-if not sys.platform.startswith('java'):
-    verify(u'\ud800\udc02'.encode('utf-8') == '\xf0\x90\x80\x82')
+verify(u'\ud800\udc02'.encode('utf-8') == '\xf0\x90\x80\x82')
+verify(isinstance(u'\ud800\udc02'.encode('utf-8'), str))
 verify(u'\ud84d\udc56'.encode('utf-8') == '\xf0\xa3\x91\x96')
 #XXX: ?
 if not sys.platform.startswith('java'):
@@ -655,15 +658,14 @@ else:
 verify(unicode('Andr\202 x','ascii','ignore') == u"Andr x")
 verify(unicode('Andr\202 x','ascii','replace') == u'Andr\uFFFD x')
 
-# XXX: ?
-if not sys.platform.startswith('java'):
-    verify("\\N{foo}xx".decode("unicode-escape", "ignore") == u"xx")
-    try:
-        "\\".decode("unicode-escape")
-    except ValueError:
-        pass
-    else:
-        raise TestFailed, '"\\".decode("unicode-escape") should fail'
+verify("\\N{foo}xx".decode("unicode-escape", "ignore") == u"xx")
+verify(isinstance("\\N{foo}xx".decode("unicode-escape", "ignore"), unicode))
+try:
+    "\\".decode("unicode-escape")
+except ValueError:
+    pass
+else:
+    raise TestFailed, '"\\".decode("unicode-escape") should fail'
 
 verify(u'hello'.encode('ascii') == 'hello')
 # XXX: Jython does not support utf-7 yet.

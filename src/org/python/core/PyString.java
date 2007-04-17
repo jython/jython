@@ -465,7 +465,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyString(((PyString)self).str_decode(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(((PyString)self).str_decode(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -482,7 +482,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(((PyString)self).str_decode(arg0.asString(0)));
+                    return new PyUnicode(((PyString)self).str_decode(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -497,7 +497,7 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
 
             public PyObject __call__() {
-                return new PyString(((PyString)self).str_decode());
+                return new PyUnicode(((PyString)self).str_decode());
             }
 
         }

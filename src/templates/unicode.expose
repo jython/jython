@@ -21,7 +21,7 @@ expose_meth: :u capitalize
 expose_meth: :u center i
 expose_meth: :i count s i? i?
 expose_meth: :u decode s? s?
-expose_meth: :u encode s? s?
+expose_meth: :s encode s? s?
 expose_meth: :b endswith s i? i?
 expose_meth: :u expandtabs i?
 expose_meth: :i find s i? i?

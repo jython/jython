@@ -22,7 +22,7 @@ expose_meth: __repr__
 expose_meth: :s capitalize
 expose_meth: :s center i
 expose_meth: :i count s i? i?
-expose_meth: :s decode s? s?
+expose_meth: :u decode s? s?
 expose_meth: :s encode s? s?
 expose_meth: :b endswith s i? i?
 expose_meth: :s expandtabs i?

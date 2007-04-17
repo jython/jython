@@ -24,6 +24,8 @@ Jython 2.2 beta2
     - [ 1619040 ] dict.fromkeys() should take iterable
     - [ 1658647 ] type(x) calls x.__class__.__init__
     - [ 1699556 ] SAXException descends from Java's Exception instead of Python's
+  Patches applied
+    - [ 1681774 ] str.decode, unicode.encode and str(u'') fixes
   
 Jython 2.2 beta1
   New features
