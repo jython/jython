@@ -92,7 +92,7 @@ public class TemplateAntTask extends MatchingTask {
      * Source paths.
      */
     public void setSrcdir(String in) {
-        srcDir = new File(project.replaceProperties(in));
+        srcDir = new File(getProject().replaceProperties(in));
     }
 
     /**

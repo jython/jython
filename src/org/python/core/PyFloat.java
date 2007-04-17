@@ -396,6 +396,44 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__truediv__",new PyMethodDescr("__truediv__",PyFloat.class,1,1,new exposed___truediv__(null,null)));
+        class exposed___rdivmod__ extends PyBuiltinMethodNarrow {
+
+            exposed___rdivmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rdivmod__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyFloat)self).float___rdivmod__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rdivmod__",new PyMethodDescr("__rdivmod__",PyFloat.class,1,1,new exposed___rdivmod__(null,null)));
+        class exposed___rpow__ extends PyBuiltinMethodNarrow {
+
+            exposed___rpow__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rpow__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyFloat)self).float___rpow__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rpow__",new PyMethodDescr("__rpow__",PyFloat.class,1,1,new exposed___rpow__(null,null)));
         class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
             exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
@@ -882,6 +920,10 @@ public class PyFloat extends PyObject
             );
     }
 
+    final PyObject float___rdivmod__(PyObject left) {
+    	return __rdivmod__(left);
+    }
+
 
     public PyObject __pow__(PyObject right, PyObject modulo) {
         return float___pow__(right, modulo);
@@ -898,7 +940,11 @@ public class PyFloat extends PyObject
 
         return _pow(value, coerce(right), modulo);
     }
-
+    
+    final PyObject float___rpow__(PyObject left) {
+    	return __rpow__(left);
+    }
+    
     public PyObject __rpow__(PyObject left) {
         if (!canCoerce(left))
             return null;

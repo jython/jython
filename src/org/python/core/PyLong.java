@@ -548,6 +548,139 @@ public class PyLong extends PyObject
 
         }
         dict.__setitem__("__xor__",new PyMethodDescr("__xor__",PyLong.class,1,1,new exposed___xor__(null,null)));
+        class exposed___rxor__ extends PyBuiltinMethodNarrow {
+
+            exposed___rxor__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rxor__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyLong)self).long___rxor__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rxor__",new PyMethodDescr("__rxor__",PyLong.class,1,1,new exposed___rxor__(null,null)));
+        class exposed___rrshift__ extends PyBuiltinMethodNarrow {
+
+            exposed___rrshift__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rrshift__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyLong)self).long___rrshift__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rrshift__",new PyMethodDescr("__rrshift__",PyLong.class,1,1,new exposed___rrshift__(null,null)));
+        class exposed___ror__ extends PyBuiltinMethodNarrow {
+
+            exposed___ror__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ror__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyLong)self).long___ror__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__ror__",new PyMethodDescr("__ror__",PyLong.class,1,1,new exposed___ror__(null,null)));
+        class exposed___rand__ extends PyBuiltinMethodNarrow {
+
+            exposed___rand__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rand__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyLong)self).long___rand__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rand__",new PyMethodDescr("__rand__",PyLong.class,1,1,new exposed___rand__(null,null)));
+        class exposed___rpow__ extends PyBuiltinMethodNarrow {
+
+            exposed___rpow__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rpow__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyLong)self).long___rpow__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rpow__",new PyMethodDescr("__rpow__",PyLong.class,1,1,new exposed___rpow__(null,null)));
+        class exposed___rlshift__ extends PyBuiltinMethodNarrow {
+
+            exposed___rlshift__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rlshift__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyLong)self).long___rlshift__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rlshift__",new PyMethodDescr("__rlshift__",PyLong.class,1,1,new exposed___rlshift__(null,null)));
+        class exposed___rdivmod__ extends PyBuiltinMethodNarrow {
+
+            exposed___rdivmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rdivmod__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyLong)self).long___rdivmod__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rdivmod__",new PyMethodDescr("__rdivmod__",PyLong.class,1,1,new exposed___rdivmod__(null,null)));
         class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
             exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
@@ -594,6 +727,22 @@ public class PyLong extends PyObject
 
         }
         dict.__setitem__("__pow__",new PyMethodDescr("__pow__",PyLong.class,1,2,new exposed___pow__(null,null)));
+        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
+
+            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___nonzero__(self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(((PyLong)self).long___nonzero__());
+            }
+
+        }
+        dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyLong.class,0,0,new exposed___nonzero__(null,null)));
         class exposed___repr__ extends PyBuiltinMethodNarrow {
 
             exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
@@ -761,6 +910,10 @@ public class PyLong extends PyObject
 
     public boolean __nonzero__() {
         return !value.equals(BigInteger.valueOf(0));
+    }
+
+    public boolean long___nonzero__() {
+        return __nonzero__();
     }
 
     public double doubleValue() {
@@ -1205,6 +1358,14 @@ public class PyLong extends PyObject
         return Py.newLong(value.shiftLeft(rightv));
     }
 
+    final PyObject long___rlshift__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        if(value.intValue() < 0)
+            throw Py.ValueError("negative shift count");
+        return Py.newLong(coerce(left).shiftLeft(coerceInt(this)));
+    }
+
     public PyObject __rshift__(PyObject right) {
         return long___rshift__(right);
     }
@@ -1216,6 +1377,14 @@ public class PyLong extends PyObject
         if(rightv < 0)
             throw Py.ValueError("negative shift count");
         return Py.newLong(value.shiftRight(rightv));
+    }
+
+    final PyObject long___rrshift__(PyObject left) {
+        if (!canCoerce(left))
+            return null;
+        if(value.intValue() < 0)
+            throw Py.ValueError("negative shift count");
+        return Py.newLong(coerce(left).shiftRight(coerceInt(this)));
     }
 
     public PyObject __and__(PyObject right) {

@@ -8,7 +8,9 @@ expose_binary: __add__ __and__  __div__ __divmod__ \
  __floordiv__ __lshift__ __mod__ __mul__ __or__ \
  __radd__ __rdiv__ __rfloordiv__ __rmod__ \
  __rmul__  __rshift__ __rsub__ __rtruediv__ \
- __sub__ __truediv__ __xor__
+ __sub__ __truediv__ __xor__ __rxor__ __rrshift__ \
+ __ror__ __rand__ __rpow__ __rlshift__ __rdivmod__
+expose_meth: :b __nonzero__
 expose_vanilla_cmp
 expose_vanilla_pow
 expose_new_immutable:
@@ -21,5 +23,8 @@ expose_meth: __hash__
   return Py.newInteger(((`typ)self).long_hashCode());
 # TODO
 # (__coerce__, __doc__)
+<<<<<<< .working
 #
 # (( __rand__, __rdivmod__, __rlshift__,  __ror__, __rrshift__, __rxor__, __rpow__ ))
+=======
+>>>>>>> .merge-right.r3159

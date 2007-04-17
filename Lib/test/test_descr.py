@@ -345,8 +345,8 @@ def test_dir():
     verify('im_self' in dir(a.Amethod))
 
     # Try a module subclass.
-    import sys
-    class M(type(sys)):
+    from types import ModuleType
+    class M(ModuleType):
         pass
     minstance = M("m")
     minstance.b = 2
@@ -479,6 +479,18 @@ def ints():
         pass
     else:
         raise TestFailed, "should have raised OverflowError"
+    try:
+        foo = int(None)
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "should have raised TypeError"
+    try:
+        foo = C(None)
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "should have raised TypeError"
 
 def longs():
     if verbose: print "Testing long operations..."
@@ -749,8 +761,7 @@ def metaclass():
 def pymods():
     if verbose: print "Testing Python subclass of module..."
     log = []
-    import sys
-    MT = type(sys)
+    from types import ModuleType as MT
     class MM(MT):
         def __init__(self, name):
             MT.__init__(self, name)

@@ -62,6 +62,82 @@ public class PyList extends PySequenceList {
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyList.class,1,1,new exposed___eq__(null,null)));
+        class exposed___lt__ extends PyBuiltinMethodNarrow {
+
+            exposed___lt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___lt__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyList)self).seq___lt__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__lt__",new PyMethodDescr("__lt__",PyList.class,1,1,new exposed___lt__(null,null)));
+        class exposed___le__ extends PyBuiltinMethodNarrow {
+
+            exposed___le__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___le__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyList)self).seq___le__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__le__",new PyMethodDescr("__le__",PyList.class,1,1,new exposed___le__(null,null)));
+        class exposed___gt__ extends PyBuiltinMethodNarrow {
+
+            exposed___gt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___gt__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyList)self).seq___gt__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__gt__",new PyMethodDescr("__gt__",PyList.class,1,1,new exposed___gt__(null,null)));
+        class exposed___ge__ extends PyBuiltinMethodNarrow {
+
+            exposed___ge__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ge__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyList)self).seq___ge__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PyList.class,1,1,new exposed___ge__(null,null)));
         class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
             exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {

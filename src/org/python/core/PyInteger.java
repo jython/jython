@@ -537,6 +537,139 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__xor__",new PyMethodDescr("__xor__",PyInteger.class,1,1,new exposed___xor__(null,null)));
+        class exposed___rxor__ extends PyBuiltinMethodNarrow {
+
+            exposed___rxor__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rxor__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyInteger)self).int___rxor__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rxor__",new PyMethodDescr("__rxor__",PyInteger.class,1,1,new exposed___rxor__(null,null)));
+        class exposed___rrshift__ extends PyBuiltinMethodNarrow {
+
+            exposed___rrshift__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rrshift__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyInteger)self).int___rrshift__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rrshift__",new PyMethodDescr("__rrshift__",PyInteger.class,1,1,new exposed___rrshift__(null,null)));
+        class exposed___ror__ extends PyBuiltinMethodNarrow {
+
+            exposed___ror__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ror__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyInteger)self).int___ror__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__ror__",new PyMethodDescr("__ror__",PyInteger.class,1,1,new exposed___ror__(null,null)));
+        class exposed___rand__ extends PyBuiltinMethodNarrow {
+
+            exposed___rand__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rand__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyInteger)self).int___rand__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rand__",new PyMethodDescr("__rand__",PyInteger.class,1,1,new exposed___rand__(null,null)));
+        class exposed___rpow__ extends PyBuiltinMethodNarrow {
+
+            exposed___rpow__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rpow__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyInteger)self).int___rpow__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rpow__",new PyMethodDescr("__rpow__",PyInteger.class,1,1,new exposed___rpow__(null,null)));
+        class exposed___rlshift__ extends PyBuiltinMethodNarrow {
+
+            exposed___rlshift__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rlshift__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyInteger)self).int___rlshift__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rlshift__",new PyMethodDescr("__rlshift__",PyInteger.class,1,1,new exposed___rlshift__(null,null)));
+        class exposed___rdivmod__ extends PyBuiltinMethodNarrow {
+
+            exposed___rdivmod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rdivmod__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyInteger)self).int___rdivmod__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rdivmod__",new PyMethodDescr("__rdivmod__",PyInteger.class,1,1,new exposed___rdivmod__(null,null)));
         class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
             exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
@@ -683,30 +816,27 @@ public class PyInteger extends PyObject {
             if (x == null) {
                 return Py.Zero;
             }
-            if (base == -909) {
+			if (base == -909) {
             	if (x instanceof PyBoolean) {
             		return (coerce(x) == 0) ? Py.Zero : Py.One;
             	}
-                return x.__int__();
-            }
-            if (!(x instanceof PyString)) {
-                throw Py
-                        .TypeError("int: can't convert non-string with explicit base");
-            }
+				return asPyInteger(x);
+			}
+			if (!(x instanceof PyString)) {
+				throw Py.TypeError("int: can't convert non-string with explicit base");
+			}
             return Py.newInteger(((PyString) x).atoi(base));
         } else {
             if (x == null) {
                 return new PyIntegerDerived(subtype, 0);
             }
             if (base == -909) {
-                PyObject intOrLong = x.__int__();
-                if (intOrLong instanceof PyInteger) {
-                    return new PyIntegerDerived(subtype, ((PyInteger)intOrLong).getValue());
-                }
-                else {
-                    throw Py
-                        .OverflowError("long int too large to convert to int");
-                }
+				PyObject intOrLong = asPyInteger(x);
+				if (intOrLong instanceof PyInteger) {
+					return new PyIntegerDerived(subtype, ((PyInteger) intOrLong).getValue());
+				} else {
+					throw Py.OverflowError("long int too large to convert to int");
+				}
             }
             if (!(x instanceof PyString)) {
                 throw Py
@@ -715,6 +845,20 @@ public class PyInteger extends PyObject {
             return new PyIntegerDerived(subtype, ((PyString) x).atoi(base));
         }
     } // xxx
+
+    /**
+     * @return the result of x.__int__ 
+     * @throws Py.Type error if x.__int__ throws an Py.AttributeError
+     */
+	private static PyObject asPyInteger(PyObject x) {
+		try {
+			return x.__int__();
+		} catch (PyException pye) {
+			if (!Py.matchException(pye, Py.AttributeError))
+				throw pye;
+			throw Py.TypeError("int() argument must be a string or a number");
+		}
+	}
     
     private static final PyType INTTYPE = PyType.fromClass(PyInteger.class);
     
@@ -1040,6 +1184,19 @@ public class PyInteger extends PyObject {
             Py.newInteger(modulo(v, rightv, xdivy))
         });
     }
+    
+    final PyObject int___rdivmod__(PyObject left){
+        if (!canCoerce(left))
+            return null;
+        int leftv = coerce(left);
+
+        int v = getValue();
+        int xdivy = divide(leftv, v);
+        return new PyTuple(new PyObject[] {
+            Py.newInteger(xdivy),
+            Py.newInteger(modulo(leftv, v, xdivy))
+        });
+    }
 
     public PyObject __pow__(PyObject right, PyObject modulo) {
         return int___pow__(right,modulo);
@@ -1063,6 +1220,10 @@ public class PyInteger extends PyObject {
             return null;
 
         return _pow(coerce(left), getValue(), modulo, left, this);
+    }
+    
+    final PyObject int___rpow__(PyObject left){
+    	return __rpow__(left, null);
     }
 
     private static PyObject _pow(int value, int pow, PyObject modulo,
@@ -1147,6 +1308,20 @@ public class PyInteger extends PyObject {
             throw Py.ValueError("negative shift count");
         return Py.newInteger(getValue() << rightv);
     }
+    
+    final PyObject int___rlshift__(PyObject left){
+        int leftv;
+        if (left instanceof PyInteger)
+        	leftv = ((PyInteger)left).getValue();
+        else
+             return null;
+
+        if (getValue() > 31)
+            return Py.newInteger(0);
+        else if(getValue() < 0)
+            throw Py.ValueError("negative shift count");
+        return Py.newInteger(leftv << getValue());
+    }
 
     public PyObject __rshift__(PyObject right) {
         return int___rshift__(right);
@@ -1165,6 +1340,19 @@ public class PyInteger extends PyObject {
         return Py.newInteger(getValue() >> rightv);
     }
 
+    final PyObject int___rrshift__(PyObject left) {
+        int leftv;
+        if (left instanceof PyInteger)
+        	leftv = ((PyInteger)left).getValue();
+        else
+             return null;
+
+        if(getValue() < 0)
+            throw Py.ValueError("negative shift count");
+
+        return Py.newInteger(leftv >> getValue());
+    }
+
     public PyObject __and__(PyObject right) {
         return int___and__(right);
     }
@@ -1173,6 +1361,10 @@ public class PyInteger extends PyObject {
         if (!canCoerce(right))
             return null;
         return Py.newInteger(getValue() & coerce(right));
+    }
+    
+    final PyObject int___rand__(PyObject left){
+    	return int___and__(left);
     }
 
     public PyObject __xor__(PyObject right) {
@@ -1188,6 +1380,16 @@ public class PyInteger extends PyObject {
 
         return Py.newInteger(getValue() ^ rightv);
     }
+    
+	final PyObject int___rxor__(PyObject left){
+        int leftv;
+        if (left instanceof PyInteger)
+        	leftv = ((PyInteger)left).getValue();
+        else
+             return null;
+
+        return Py.newInteger(leftv ^ getValue());
+    }
 
     public PyObject __or__(PyObject right) {
         return int___or__(right);
@@ -1201,6 +1403,10 @@ public class PyInteger extends PyObject {
              return null;
 
         return Py.newInteger(getValue() | rightv);
+    }
+    
+    final PyObject int___ror__(PyObject left){
+    	return int___or__(left);
     }
 
     public PyObject __neg__() {

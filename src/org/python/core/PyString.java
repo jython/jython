@@ -50,6 +50,82 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyString.class,1,1,new exposed___eq__(null,null)));
+        class exposed___lt__ extends PyBuiltinMethodNarrow {
+
+            exposed___lt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___lt__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyString)self).str___lt__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__lt__",new PyMethodDescr("__lt__",PyString.class,1,1,new exposed___lt__(null,null)));
+        class exposed___le__ extends PyBuiltinMethodNarrow {
+
+            exposed___le__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___le__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyString)self).str___le__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__le__",new PyMethodDescr("__le__",PyString.class,1,1,new exposed___le__(null,null)));
+        class exposed___gt__ extends PyBuiltinMethodNarrow {
+
+            exposed___gt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___gt__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyString)self).str___gt__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__gt__",new PyMethodDescr("__gt__",PyString.class,1,1,new exposed___gt__(null,null)));
+        class exposed___ge__ extends PyBuiltinMethodNarrow {
+
+            exposed___ge__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ge__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyString)self).str___ge__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PyString.class,1,1,new exposed___ge__(null,null)));
         class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
             exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
@@ -373,7 +449,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyString(((PyString)self).str_decode(arg0.asString(0),arg1.asString(1)));
+                    return new PyUnicode(((PyString)self).str_decode(arg0.asString(0),arg1.asString(1)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -390,7 +466,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyString(((PyString)self).str_decode(arg0.asString(0)));
+                    return new PyUnicode(((PyString)self).str_decode(arg0.asString(0)));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -405,7 +481,7 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
 
             public PyObject __call__() {
-                return new PyString(((PyString)self).str_decode());
+                return new PyUnicode(((PyString)self).str_decode());
             }
 
         }
@@ -1950,12 +2026,16 @@ public class PyString extends PyBaseString implements ClassDictInit
             return null;
         return string.equals(s) ? Py.Zero : Py.One;
     }
-
+    
     public PyObject __lt__(PyObject other) {
         String s = coerce(other);
         if (s == null)
             return null;
         return string.compareTo(s) < 0 ? Py.One : Py.Zero;
+    }
+    
+    final PyObject str___lt__(PyObject other){
+    	return __lt__(other);
     }
 
     public PyObject __le__(PyObject other) {
@@ -1964,6 +2044,10 @@ public class PyString extends PyBaseString implements ClassDictInit
             return null;
         return string.compareTo(s) <= 0 ? Py.One : Py.Zero;
     }
+    
+    final PyObject str___le__(PyObject other){
+    	return __le__(other);
+    }
 
     public PyObject __gt__(PyObject other) {
         String s = coerce(other);
@@ -1971,12 +2055,20 @@ public class PyString extends PyBaseString implements ClassDictInit
             return null;
         return string.compareTo(s) > 0 ? Py.One : Py.Zero;
     }
+    
+    final PyObject str___gt__(PyObject other){
+    	return __gt__(other);
+    }
 
     public PyObject __ge__(PyObject other) {
         String s = coerce(other);
         if (s == null)
             return null;
         return string.compareTo(s) >= 0 ? Py.One : Py.Zero;
+    }
+    
+    final PyObject str___ge__(PyObject other){
+    	return __ge__(other);
     }
 
     private static String coerce(PyObject o) {

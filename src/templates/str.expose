@@ -5,7 +5,7 @@ type_class: PyString
 expose_index_getitem: seq_>
 expose_meth: seq_> __getslice__ ooo?
 #
-expose_binary: __ne__ __eq__
+expose_binary: __ne__ __eq__ __lt__ __le__ __gt__ __ge__
 expose_meth: :b __contains__ o
 expose_meth: :i __len__
 expose_meth: __add__ o
@@ -21,7 +21,7 @@ expose_meth: __repr__
 expose_meth: :s capitalize
 expose_meth: :s center i
 expose_meth: :i count s i? i?
-expose_meth: :s decode s? s?
+expose_meth: :u decode s? s?
 expose_meth: :s encode s? s?
 expose_meth: :b endswith s i? i?
 expose_meth: :s expandtabs i?

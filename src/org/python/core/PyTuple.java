@@ -63,6 +63,82 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyTuple.class,1,1,new exposed___eq__(null,null)));
+        class exposed___lt__ extends PyBuiltinMethodNarrow {
+
+            exposed___lt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___lt__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyTuple)self).tuple___lt__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__lt__",new PyMethodDescr("__lt__",PyTuple.class,1,1,new exposed___lt__(null,null)));
+        class exposed___le__ extends PyBuiltinMethodNarrow {
+
+            exposed___le__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___le__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyTuple)self).tuple___le__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__le__",new PyMethodDescr("__le__",PyTuple.class,1,1,new exposed___le__(null,null)));
+        class exposed___gt__ extends PyBuiltinMethodNarrow {
+
+            exposed___gt__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___gt__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyTuple)self).tuple___gt__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__gt__",new PyMethodDescr("__gt__",PyTuple.class,1,1,new exposed___gt__(null,null)));
+        class exposed___ge__ extends PyBuiltinMethodNarrow {
+
+            exposed___ge__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___ge__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyTuple)self).tuple___ge__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PyTuple.class,1,1,new exposed___ge__(null,null)));
         class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
             exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
@@ -342,6 +418,22 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
     final PyObject tuple___eq__(PyObject o) {
         return super.__eq__(o);
+    }
+
+    final PyObject tuple___gt__(PyObject o) {
+        return super.__gt__(o);
+    }
+
+    final PyObject tuple___ge__(PyObject o) {
+        return super.__ge__(o);
+    }
+
+    final PyObject tuple___lt__(PyObject o) {
+        return super.__lt__(o);
+    }
+
+    final PyObject tuple___le__(PyObject o) {
+        return super.__le__(o);
     }
 
     public PyObject __add__(PyObject generic_other) {
