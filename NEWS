@@ -27,6 +27,7 @@ Jython 2.2 beta2
   Patches applied
     - [ 1681774 ] str.decode, unicode.encode and str(u'') fixes
     - [ 1682423 ] Convert PyModule to a new-style class
+    - [ 1682498 ] Fix int(None) raising an AttributeError
   
 Jython 2.2 beta1
   New features
