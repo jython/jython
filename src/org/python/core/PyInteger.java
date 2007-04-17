@@ -1531,12 +1531,4 @@ public class PyInteger extends PyObject {
             })
         });
     }
-    
-    //PLACEHOLDER R METHODS
-    // These r methods just exist to fill out our exposed methods. They return
-	// null to signify that they can't operate on this object, because if they
-	// could, it would be a PyInteger and would've been handled by the left operand
-	// version of this method
-    
-    //END PLACEHOLDER R METHODS
 }
