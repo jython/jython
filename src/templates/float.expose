@@ -8,7 +8,7 @@ expose_binary: __add__ __div__ __divmod__ \
  __floordiv__ __mod__ __mul__ \
  __radd__ __rdiv__ __rfloordiv__ __rmod__ \
  __rmul__ __rsub__ __rtruediv__ \
- __sub__ __truediv__ 
+ __sub__ __truediv__ __rdivmod__ __rpow__
 expose_vanilla_cmp
 expose_vanilla_pow
 expose_new_immutable:
@@ -21,5 +21,3 @@ expose_meth: __hash__
   return Py.newInteger(((PyFloat)self).float_hashCode());
 # TODO
 # (__coerce__, __doc__)
-#
-# (( __rdivmod__, __rpow__ ))

@@ -1050,7 +1050,6 @@ _failures = {
     'java':
     '''
     test_atexit
-    test_class
     test_cpickle
     test_descr
     test_descrtut
@@ -1066,7 +1065,6 @@ _failures = {
     test_sre
     test_threaded_import
     test_trace
-    test_uu
     test_weakref
     test_zlib
     ''',

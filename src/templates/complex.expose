@@ -6,11 +6,12 @@ expose_getset: imag getImag
 expose_getset: real getReal
 # exposed methods
 expose_unary: __abs__ __float__ __int__ __long__ \
- __neg__ __pos__
+ __neg__ __pos__ 
 expose_binary: __add__ __div__ __divmod__ __floordiv__ \
  __mod__ __mul__ __radd__ __rdiv__ __rdivmod__ \
  __rfloordiv__ __rmod__ __rmul__  __rpow__ __rsub__ \
- __rtruediv__ __sub__ __truediv__
+ __rtruediv__ __sub__ __truediv__ __eq__ __ne__ __ge__ \
+ __le__ __gt__ __lt__
 #expose_vanilla_cmp
 expose_vanilla_pow
 expose_new_immutable:
@@ -25,5 +26,4 @@ expose_meth: __hash__
   return Py.newInteger(((`typ)self).complex_hashCode());
 # TODO
 # (__coerce__, __doc__)
-# (__eq__, __ge__, __gt__, __le__, __lt__, __ne__)
 # (__reduce__ ?)
