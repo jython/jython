@@ -1736,6 +1736,10 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             /* \ - Escapes */
             s++;
+			if (s == end) {
+				codecs.decoding_error("unicode escape", v, errors, "\\ at end of string");
+				break;
+			}
             ch = str.charAt(s++);
             switch (ch) {
 
@@ -1847,41 +1851,36 @@ public class PyString extends PyBaseString implements ClassDictInit
                          if (value < 0) {
                              codecs.decoding_error("unicode escape", v,
                                   errors, "Invalid Unicode Character Name");
-                             v.append('\\');
-                             v.append(str.charAt(s-1));
-                             break;
-                         }
-
-                         if (value < 1<<16) {
-                             /* In UCS-2 range, easy solution.. */
-                             v.append((char) value);
                          } else {
-                             /* Oops, its in UCS-4 space, */
-                             /*  compute and append the two surrogates: */
-                             /*  translate from 10000..10FFFF to 0..FFFFF */
-                             value -= 0x10000;
 
-                             /* high surrogate = top 10 bits added to D800 */
-                             v.append((char) (0xD800 + (value >> 10)));
+							if (value < 1 << 16) {
+								/* In UCS-2 range, easy solution.. */
+								v.append((char) value);
+							} else {
+								/* Oops, its in UCS-4 space, */
+								/* compute and append the two surrogates: */
+								/* translate from 10000..10FFFF to 0..FFFFF */
+								value -= 0x10000;
 
-                             /* low surrogate = bottom 10 bits added to DC00*/
-                             v.append((char) (0xDC00 + (value & ~0xFC00)));
-                        }
+								/* high surrogate = top 10 bits added to D800 */
+								v.append((char) (0xD800 + (value >> 10)));
+
+								/* low surrogate = bottom 10 bits added to DC00 */
+								v.append((char) (0xDC00 + (value & ~0xFC00)));
+							}
+						}
                         s = endBrace + 1;
+                        break;
                     } else {
                          codecs.decoding_error("unicode escape", v, errors,
                               "Unicode name missing closing brace");
-                         v.append('\\');
-                         v.append(str.charAt(s-1));
-                         break;
                     }
-                    break;
-                }
-                codecs.decoding_error("unicode escape", v, errors,
-                                      "Missing opening brace for Unicode " +
-                                      "Character Name escape");
+                } else {
+					codecs.decoding_error("unicode escape", v, errors, "Missing opening brace for Unicode "
+							+ "Character Name escape");
+				}
+                break;
 
-                /* fall through on purpose */
            default:
                v.append('\\');
                v.append(str.charAt(s-1));
