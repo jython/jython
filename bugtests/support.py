@@ -14,6 +14,7 @@ from java.util.jar import Manifest
 
 UNIX = os.pathsep == ":"
 WIN  = os.pathsep == ";"
+test_jythonc = 1
 
 if not UNIX ^ WIN:
   raise TestError("Unknown platform")
@@ -23,6 +24,10 @@ class TestError(exceptions.Exception):
     exceptions.Exception.__init__(self, args)
 
 class TestWarning(exceptions.Exception):
+  def __init__(self, args):
+    exceptions.Exception.__init__(self, args)
+
+class TestSkip(exceptions.Exception):
   def __init__(self, args):
     exceptions.Exception.__init__(self, args)
 
@@ -67,6 +72,9 @@ raises a TestError if the command did not end normally"""
   return ret
 
 def compileJava(src, **kw):
+  classfile = src.replace('.java', '.class')
+  if os.path.exists(classfile) and os.stat(src).st_mtime < os.stat(classfile).st_mtime:
+    return 0
   classpath = cfg.classpath
   if "classpath" in kw:
     classpath = os.pathsep.join([cfg.classpath, kw["classpath"]])
@@ -110,6 +118,8 @@ def runJython(cls, **kw):
   return execCmd(cmd, kw)
 
 def compileJPythonc(*files, **kw):
+  if not test_jythonc:
+     raise TestSkip('Skipping pythonc')
   if os.path.isdir("jpywork") and not kw.has_key("keep"):
      shutil.rmtree("jpywork", 1) 
 

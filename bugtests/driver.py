@@ -3,6 +3,7 @@ import sys, string, traceback, getopt, support, os, glob
 
 failures = {}
 warnings = {}
+skipped = {}
 
 
 def runTests(seq):
@@ -29,12 +30,15 @@ def runTests(seq):
       except support.TestWarning:
           sys.stdout = stdout
           report("Warning", warnings, loud=loud_warnings)
+      except support.TestSkip:
+          report("Skipped", skipped, loud=0)
       except:
           sys.stdout = stdout
           report("Failed", failures)
   
   summarize(failures, "failures")
   summarize(warnings, "warnings")
+  summarize(skipped, "skipped")
 
 def summarize(errors_dict, description):
     t = errors_dict.keys()
@@ -43,11 +47,14 @@ def summarize(errors_dict, description):
     print t
 
 if __name__ == '__main__':
-  opts, args = getopt.getopt(sys.argv[1:], 'w')
+  opts, args = getopt.getopt(sys.argv[1:], 'wc', 'skipjythonc')
   loud_warnings = ('-w',"") in opts
+  support.test_jythonc = not ('--skipjythonc', '') in opts
 
   if loud_warnings: 
       print "LOUD warnings"
+  if not support.test_jythonc:
+      print 'Skipping jythonc tests'
 
   sys.path[:0] = ['classes']
 
