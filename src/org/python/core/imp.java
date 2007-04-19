@@ -133,7 +133,7 @@ public class imp {
      *         compiledFilename couldn't be determined of if an error was thrown
      *         while writing to the cache file.
      */
-    private static String cacheCompiledSource(String sourceFilename,
+    public static String cacheCompiledSource(String sourceFilename,
                                               String compiledFilename,
                                               byte[] compiledSource) {
         if(compiledFilename == null){
