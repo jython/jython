@@ -387,37 +387,38 @@ public final class Py
 
     /* Helper functions for PyProxy's */
 
-    /** @deprecated **/
-    public static PyObject jfindattr(PyProxy proxy, String name) {
-        PyInstance o = proxy._getPyInstance();
-        if (o == null) {
-            proxy.__initProxy__(new Object[0]);
-            o = proxy._getPyInstance();
-        }
-        PyObject ret = o.__jfindattr__(name);
-        if (ret == null)
-            return null;
+    /** @deprecated * */
+	public static PyObject jfindattr(PyProxy proxy, String name) {
+		PyInstance o = proxy._getPyInstance();
+		if (o == null) {
+			proxy.__initProxy__(new Object[0]);
+			o = proxy._getPyInstance();
+		}
+		PyObject ret = o.__jfindattr__(name);
+		if (ret == null)
+			return null;
 
-        // Set the current system state to match proxy -- usually
-        // this is a waste of time :-(
-        Py.setSystemState(proxy._getPySystemState());
-        return ret;
-    }
-    /** @deprecated **/
-    public static PyObject jgetattr(PyProxy proxy, String name) {
-        PyInstance o = proxy._getPyInstance();
-        PyObject ret = null;
-        if (o != null) {
-            ret = o.__jfindattr__(name);
-        }
-        if (ret == null)
-            throw Py.AttributeError("abstract method \""+name+
-                                    "\" not implemented");
-        // Set the current system state to match proxy -- usually this is a
-        // waste of time :-(
-        Py.setSystemState(proxy._getPySystemState());
-        return ret;
-    }
+		// Set the current system state to match proxy -- usually
+		// this is a waste of time :-(
+		Py.setSystemState(proxy._getPySystemState());
+		return ret;
+	}
+
+	/** @deprecated * */
+	public static PyObject jgetattr(PyProxy proxy, String name) {
+		PyInstance o = proxy._getPyInstance();
+		if (o == null) {
+			proxy.__initProxy__(new Object[0]);
+			o = proxy._getPyInstance();
+		}
+		PyObject ret = o.__jfindattr__(name);
+		if (ret == null)
+			throw Py.AttributeError("abstract method \"" + name + "\" not implemented");
+		// Set the current system state to match proxy -- usually this is a
+		// waste of time :-(
+		Py.setSystemState(proxy._getPySystemState());
+		return ret;
+	}
 
     /* Convenience methods to create new constants without using "new" */
     private static PyInteger[] integerCache = null;
