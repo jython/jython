@@ -10,7 +10,6 @@ class mythread(java.lang.Thread):
     def __init__( self, name="bla" ):
         self.name = name
     def run( self ):
-        print self.name
         pass
 
 mythread().start()
