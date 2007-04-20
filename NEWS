@@ -25,10 +25,14 @@ Jython 2.2 beta2
     - [ 1658647 ] type(x) calls x.__class__.__init__
     - [ 1699556 ] SAXException descends from Java's Exception instead of Python's
     - [ 1603686 ] Unmarshaling long-error
+    - [ 1230674 ] eval with from future does not work through import
+    - [ 663592 ] Problems calling an overriden class in the constructor
   Patches applied
     - [ 1681774 ] str.decode, unicode.encode and str(u'') fixes
     - [ 1682423 ] Convert PyModule to a new-style class
     - [ 1682498 ] Fix int(None) raising an AttributeError
+    - [ 1684172 ] Changes to make compileall work
+
   
 Jython 2.2 beta1
   New features

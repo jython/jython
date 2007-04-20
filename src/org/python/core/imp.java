@@ -176,7 +176,7 @@ public class imp {
             }
             org.python.parser.ast.modType node;
             try {
-                node = parser.parse(fp, "exec", filename, null);
+                node = parser.parse(fp, "exec", filename, Py.getCompilerFlags());
             } finally {
                 fp.close();
             }
@@ -187,7 +187,7 @@ public class imp {
                                                true,
                                                false,
                                                true,
-                                               null);
+                                               Py.getCompilerFlags());
             return ofp.toByteArray();
         } catch(Throwable t) {
             throw parser.fixParseError(null, t, filename);
