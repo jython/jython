@@ -1359,6 +1359,22 @@ public class PyUnicode extends PyString {
 
         }
         dict.__setitem__("title",new PyMethodDescr("title",PyUnicode.class,0,0,new exposed_title(null,null)));
+        class exposed_translate extends PyBuiltinMethodNarrow {
+
+            exposed_translate(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_translate(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                return new PyUnicode(((PyUnicode)self).unicode_translate(arg0));
+            }
+
+        }
+        dict.__setitem__("translate",new PyMethodDescr("translate",PyUnicode.class,1,1,new exposed_translate(null,null)));
         class exposed_upper extends PyBuiltinMethodNarrow {
 
             exposed_upper(PyObject self,PyBuiltinFunction.Info info) {
