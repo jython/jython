@@ -6,6 +6,8 @@ Jython 2.2 beta2
       functions
     - Classmethods added to newstyle classes
     - array is a newstyle class
+    - org.python.util.JLineConsole provides readline-like functionality with 
+      JLine without requiring native readline
   
   Bugs fixed
     - [ 1599012 ] current directory is prepended to entries in sys.path

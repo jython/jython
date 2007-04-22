@@ -91,6 +91,9 @@ servlet.jar=c:/workspace/HEAD/CH.obj.commons.core/make_lib/j2ee.jar
 
 # - org.gnu.readline
 readline.jar=${basedir}/../externals/external-jars/readline.jar
+# - jline
+jline.jar=${basedir}/../externals/external-jars/jline-0.9.91.jar
+
 
 # - zxJDBC
 # (for mysql, see www.mysql.com/downloads/api-jdbc-stable.html)
@@ -172,6 +175,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- classpaths -->
         <path id="main.classpath">
             <pathelement path="${readline.jar}" />
+            <pathelement path="${jline.jar}" />
             <pathelement path="${servlet.jar}" />
             <pathelement path="${informix.jar}" />
             <pathelement path="${oracle.jar}" />
@@ -186,6 +190,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <available property="secureclassloader.present" classname="java.security.SecureClassLoader" />
         <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />
         <available property="readline.present" classname="org.gnu.readline.Readline" classpath="${readline.jar}" />
+        <available property="jline.present" classname="jline.Terminal" classpath="${jline.jar}" />
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
         <available property="mysql.present" classname="org.gjt.mm.mysql.Driver" classpath="${mysql.jar}" />
         <available property="postgresql.present" classname="org.postgresql.Driver" classpath="${postgresql.jar}" />
@@ -247,6 +252,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     	<taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="svn.classpath" />
 	<!-- Require all of the optional jars for a full build -->
         <fail unless="readline.present" message="readline jar not present" />
+        <fail unless="jline.present" message="jline jar not present" />
         <fail unless="servlet.present" message="servlet jar not present" />
         <fail unless="informix.present" message="informix jar not present" />
         <fail unless="mysql.present" message="mysql jar not present" />
@@ -268,6 +274,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>secureclassloader  = '${secureclassloader.present}'</echo>
         <echo>servlet            = '${servlet.present}'</echo>
         <echo>readline           = '${readline.present}'</echo>
+        <echo>jline              = '${jline.present}'</echo>
         <echo>oracle             = '${oracle.present}'</echo>
         <echo>informix           = '${informix.present}'</echo>
         <echo>mysql              = '${mysql.present}'</echo>
@@ -436,6 +443,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <exclude name="org/python/parser/python.java" />
             <exclude name="**/PyServlet.java" unless="servlet.present" />
             <exclude name="**/ReadlineConsole.java" unless="readline.present" />
+            <exclude name="**/JLineConsole.java" unless="jline.present" />
             <exclude name="**/handler/InformixDataHandler.java" unless="informix.present" />
             <exclude name="**/handler/MySQLDataHandler.java" unless="mysql.present" />
             <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present" />
@@ -503,6 +511,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
                   <attribute name="secureclassloader" value="${secureclassloader.present}" />
                   <attribute name="servlet" value="${servlet.present}" />
                   <attribute name="readline" value="${readline.present}" />
+                  <attribute name="jline" value="${jline.present}" />
                   <attribute name="oracle" value="${oracle.present}" />
                   <attribute name="informix" value="${informix.present}" />
                   <attribute name="mysql" value="${mysql.present}" />
@@ -674,6 +683,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
                     <attribute name="secureclassloader" value="${secureclassloader.present}" />
                     <attribute name="servlet" value="${servlet.present}" />
                     <attribute name="readline" value="${readline.present}" />
+                    <attribute name="jline" value="${jline.present}" />
                     <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="informix" value="${informix.present}" />
                     <attribute name="mysql" value="${mysql.present}" />
