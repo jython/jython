@@ -1,7 +1,12 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.LinkedList;
 
 // To do:
 // - readinto(array)
@@ -13,7 +18,6 @@ import java.io.*;
 /**
  * A python file wrapper around a java stream, reader/writer or file.
  */
-
 public class PyFile extends PyObject
 {
 
@@ -1094,18 +1098,7 @@ public class PyFile extends PyObject
         String nameArg = ap.getString(0, null);
         String modeArg = ap.getString(1, "r");
         int buffArg = ap.getInt(2, 0);
-        FileWrapper fw = _setup(nameArg, modeArg, buffArg);
-
-        //xxx: c&p'ed from one of the constructors.
-        fw.setMode(modeArg);
-        this.name = nameArg;
-        this.mode = modeArg;
-        this.softspace = false;
-        this.closed = false;
-        if (modeArg.indexOf('b') < 0)
-            this.file = new TextWrapper(fw);
-        else
-            this.file = fw;
+        file_init(_setup(nameArg, modeArg, buffArg), nameArg, modeArg);
     }
 
     public PyFile() {
@@ -1117,15 +1110,21 @@ public class PyFile extends PyObject
     }
 
     public PyFile(FileWrapper file, String name, String mode) {
+        file_init(file, name, mode);
+    }
+    
+    private void file_init(FileWrapper file, String name, String mode){
         file.setMode(mode);
         this.name = name;
         this.mode = mode;
         this.softspace = false;
         this.closed = false;
-        if (mode.indexOf('b') < 0)
+        if (mode.indexOf('b') < 0){
             this.file = new TextWrapper(file);
-        else
+        }else{
             this.file = file;
+        }
+        closer = new Closer(this.file);
     }
 
     public PyFile(java.io.InputStream istream, java.io.OutputStream ostream,
@@ -1483,10 +1482,9 @@ public class PyFile extends PyObject
     }
 
     final void file_close() {
-        try {
-            file.close();
-        } catch (java.io.IOException e) {
-            throw Py.IOError(e);
+        if(closer != null){
+            closer.close();
+            closer = null;
         }
         closed = true;
         file = new FileWrapper();
@@ -1570,4 +1568,86 @@ public class PyFile extends PyObject
     public boolean getClosed() {
         return closed;
     }
+
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if(closer != null) {
+            closer.close();
+        }
+    }
+
+    /**
+     * A mechanism to make sure PyFiles are closed on exit. On creation Closer
+     * adds itself to a list of Closers that will be run by PyFileCloser on JVM
+     * shutdown. When a PyFile's close or finalize methods are called, PyFile calls
+     * its Closer.close which clears Closer out of the shutdown queue.
+     * 
+     * We use a regular object here rather than WeakReferences and their
+     * ilk as they may be collected before the shutdown hook runs. There's no
+     * guarantee that finalize will be called during shutdown, so we can't use
+     * it. It's vital that this Closer has no reference to the PyFile it's
+     * closing so the PyFile remains garbage collectable.
+     */
+    private static class Closer {
+        
+        public Closer(FileWrapper fw){
+            this.fw = fw;
+            //Add ourselves to the queue of Closers to be run on shutdown
+            synchronized(closers) {
+                closers.add(this);
+            }
+        }
+
+        public void close() {
+            synchronized(closers) {
+                if(!closers.remove(this)){
+                    return;
+                }
+            }
+            _close();
+        }
+        
+        public void _close(){
+            try {
+                fw.close();
+            } catch(java.io.IOException e) {
+                throw Py.IOError(e);
+            } finally {
+                fw = null;
+            }
+        }
+        
+        private FileWrapper fw;
+    }
+
+
+    private Closer closer;
+
+    private static LinkedList closers = new LinkedList();
+    static {
+        try {
+            Runtime.getRuntime().addShutdownHook(new PyFileCloser());
+        } catch(SecurityException e) {
+            Py.writeDebug("PyFile", "Can't register file closer hook");
+        }
+    }
+
+    private static class PyFileCloser extends Thread {
+
+        public PyFileCloser() {
+            super("Jython Shutdown File Closer");
+        }
+
+        public void run() {
+            synchronized(closers) {
+                while(closers.size() > 0) {
+                    try {
+                        ((Closer)closers.pop())._close();
+                    } catch(PyException e) {}
+                }
+            }
+        }
+    }
+
+
 }

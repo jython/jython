@@ -29,6 +29,7 @@ Jython 2.2 beta2
     - [ 1603686 ] Unmarshaling long-error
     - [ 1230674 ] eval with from future does not work through import
     - [ 663592 ] Problems calling an overriden class in the constructor
+    - [ 448398 ] open('test.txt', 'w').write('test') fails
   Patches applied
     - [ 1681774 ] str.decode, unicode.encode and str(u'') fixes
     - [ 1682423 ] Convert PyModule to a new-style class
