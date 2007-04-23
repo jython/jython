@@ -1642,7 +1642,7 @@ public class PyFile extends PyObject
             synchronized(closers) {
                 while(closers.size() > 0) {
                     try {
-                        ((Closer)closers.pop())._close();
+                        ((Closer)closers.removeFirst())._close();
                     } catch(PyException e) {}
                 }
             }
