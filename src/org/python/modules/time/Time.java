@@ -290,6 +290,27 @@ public class Time implements ClassDictInit
     protected static String[] shortdays = null;
     protected static String[] shortmonths = null;
 
+    private static String[] enshortdays = new String[] {"Mon",
+                                                        "Tue",
+                                                        "Wed",
+                                                        "Thu",
+                                                        "Fri",
+                                                        "Sat",
+                                                        "Sun"};
+
+    private static String[] enshortmonths = new String[] {"Jan",
+                                                          "Feb",
+                                                          "Mar",
+                                                          "Apr",
+                                                          "May",
+                                                          "Jun",
+                                                          "Jul",
+                                                          "Aug",
+                                                          "Sep",
+                                                          "Oct",
+                                                          "Nov",
+                                                          "Dec"};
+
     private static String _shortday(int dow) {
         // we need to hand craft shortdays[] because Java and Python have
         // different specifications.  Java (undocumented) appears to be
@@ -357,6 +378,21 @@ public class Time implements ClassDictInit
     }
 
     public static String asctime(PyTuple tup) {
+        StringBuffer buf = new StringBuffer(25);
+        buf.append(enshortdays[item(tup, 6)]).append(' ');
+        buf.append(enshortmonths[item(tup, 1)]).append(' ');
+        int dayOfMonth = item(tup, 2);
+        if(dayOfMonth < 10){
+            buf.append(' ');
+        }
+        buf.append(dayOfMonth).append(' ');
+        buf.append(_twodigit(item(tup, 3))).append(':');
+        buf.append(_twodigit(item(tup, 4))).append(':');
+        buf.append(_twodigit(item(tup, 5))).append(' ');
+        return buf.append(item(tup, 0)).toString();
+    }
+
+    public static String locale_asctime(PyTuple tup) {
         checkLocale();
         int day = item(tup, 6);
         int mon = item(tup, 1);
@@ -444,8 +480,7 @@ public class Time implements ClassDictInit
                 s = s + syms[j];
                 break;
             case 'c':
-                // locale's date and time repr (essentially asctime()?)
-                s = s + asctime(tup);
+                s = s + locale_asctime(tup);
                 break;
             case 'd':
                 // day of month (01-31)
