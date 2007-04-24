@@ -13,6 +13,7 @@ from datetime import timedelta
 from datetime import tzinfo
 from datetime import time
 from datetime import date, datetime
+from test import test_support
 
 # Before Python 2.3, proto=2 was taken as a synonym for proto=1.
 # cPickle not updated in Jython so commenting out.
@@ -2934,11 +2935,10 @@ def test_main():
     #import gc
     import sys
 
-    r = unittest.TextTestRunner()
     s = test_suite()
     lastrc = None
     while True:
-        r.run(s)
+        test_support.run_suite(s)
         if 1:       # change to 0, under a debug build, for some leak detection
             break
         gc.collect()

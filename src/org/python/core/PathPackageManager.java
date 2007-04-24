@@ -59,10 +59,10 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
         private boolean python;
 
         public boolean accept(File dir, String name) {
-            if (name.endsWith(".py") || name.endsWith("$py.class")) {
-                this.python = true;
-            } else if (name.endsWith(".class")) {
-                this.java = true;
+            if(name.endsWith(".py") || name.endsWith("$py.class") || name.endsWith("$_PyInner.class")) {
+                python = true;
+            }else if (name.endsWith(".class")) {
+                java = true;
             }
             return false;
         }
