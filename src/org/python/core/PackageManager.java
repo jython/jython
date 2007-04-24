@@ -3,6 +3,8 @@
 
 package org.python.core;
 
+import java.io.EOFException;
+
 /**
  * Abstract package manager.
  */
@@ -168,15 +170,20 @@ public abstract class PackageManager extends Object {
             throws java.io.IOException {
         java.io.DataInputStream istream = new java.io.DataInputStream(cstream);
 
-        int magic = istream.readInt();
-        
+        try {
+            int magic = istream.readInt();
+            if (magic != 0xcafebabe) {
+                return -1;
+            }
+        } catch (EOFException eof) {
+            //Empty or 1 byte file.
+            return -1;
+        }
         //int minor = 
         istream.readShort();
         //int major =
         istream.readShort();
         
-        if (magic != 0xcafebabe)
-            return -1;
         // Check versions???
         // System.out.println("magic: "+magic+", "+major+", "+minor);
         int nconstants = istream.readShort();
