@@ -9,7 +9,7 @@ import time
 
 class Foo:
     def __repr__(self):
-        time.sleep(2.0)
+        time.sleep(0.5)
         return 'Foo instance'
 
 foo = Foo()

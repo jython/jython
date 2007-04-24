@@ -1050,6 +1050,7 @@ _failures = {
     'java':
     '''
     test_atexit
+    test_class
     test_cpickle
     test_descr
     test_descrtut

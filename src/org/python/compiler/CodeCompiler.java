@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
+
 import org.python.core.CompilerFlags;
 import org.python.core.PyComplex;
 import org.python.core.PyFloat;
@@ -2102,7 +2103,7 @@ public class CodeCompiler extends Visitor
         scope.setup_closure();
         scope.dump();
         module.PyCode(retSuite, name, true, className,
-                      false, false, node.beginLine, scope).get(code);
+                      false, false, node.beginLine, scope, cflags).get(code);
 
         if (!makeClosure(scope)) {
             if (mrefs.PyFunction_init1 == 0) {
@@ -2168,7 +2169,7 @@ public class CodeCompiler extends Visitor
         scope.dump();
         //Make code object out of suite
         module.PyCode(new Suite(node.body, node), name, false, name,
-                      true, false, node.beginLine, scope).get(code);
+                      true, false, node.beginLine, scope, cflags).get(code);
 
         //Get doc string (if there)
         getDocString(node.body);

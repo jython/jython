@@ -1127,7 +1127,10 @@ public class PyInteger extends PyObject {
     final PyObject int___truediv__(PyObject right) {
         if (right instanceof PyInteger)
             return __float__().__truediv__(right);
-        return null;
+        else if(right instanceof PyLong)
+            return int___long__().__truediv__(right);
+	else
+            return null;
     }
 
     public PyObject __rtruediv__(PyObject left) {
@@ -1137,7 +1140,10 @@ public class PyInteger extends PyObject {
     final PyObject int___rtruediv__(PyObject left) {
         if (left instanceof PyInteger)
             return left.__float__().__truediv__(this);
-        return null;
+        else if(left instanceof PyLong)
+            return left.__truediv__(int___long__());
+        else
+            return null;
     }
 
     private static int modulo(int x, int y, int xdivy) {
@@ -1296,11 +1302,13 @@ public class PyInteger extends PyObject {
     }
 
     final PyObject int___lshift__(PyObject right) {
-        int rightv;
-        if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).getValue();
-        else
-             return null;
+		int rightv;
+		if (right instanceof PyInteger)
+			rightv = ((PyInteger) right).getValue();
+		else if (right instanceof PyLong)
+			return int___long__().__lshift__(right);
+		else
+			return null;
 
         if (rightv > 31)
             return Py.newInteger(0);
@@ -1309,12 +1317,14 @@ public class PyInteger extends PyObject {
         return Py.newInteger(getValue() << rightv);
     }
     
-    final PyObject int___rlshift__(PyObject left){
-        int leftv;
-        if (left instanceof PyInteger)
-        	leftv = ((PyInteger)left).getValue();
-        else
-             return null;
+    final PyObject int___rlshift__(PyObject left) {
+		int leftv;
+		if (left instanceof PyInteger)
+			leftv = ((PyInteger) left).getValue();
+		else if (left instanceof PyLong)
+			return left.__rlshift__(int___long__());
+		else
+			return null;
 
         if (getValue() > 31)
             return Py.newInteger(0);
@@ -1327,23 +1337,27 @@ public class PyInteger extends PyObject {
         return int___rshift__(right);
     }
 
-    final PyObject int___rshift__(PyObject right) {
-        int rightv;
-        if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).getValue();
-        else
-             return null;
+	final PyObject int___rshift__(PyObject right) {
+		int rightv;
+		if (right instanceof PyInteger)
+			rightv = ((PyInteger) right).getValue();
+		else if (right instanceof PyLong)
+			return int___long__().__rshift__(right);
+		else
+			return null;
 
-        if(rightv < 0)
-            throw Py.ValueError("negative shift count");
+		if (rightv < 0)
+			throw Py.ValueError("negative shift count");
 
-        return Py.newInteger(getValue() >> rightv);
-    }
+		return Py.newInteger(getValue() >> rightv);
+	}
 
     final PyObject int___rrshift__(PyObject left) {
         int leftv;
         if (left instanceof PyInteger)
         	leftv = ((PyInteger)left).getValue();
+        else if(left instanceof PyLong)
+        	return left.__rshift__(int___long__());
         else
              return null;
 
@@ -1358,9 +1372,15 @@ public class PyInteger extends PyObject {
     }
 
     final PyObject int___and__(PyObject right) {
-        if (!canCoerce(right))
-            return null;
-        return Py.newInteger(getValue() & coerce(right));
+        int rightv;
+        if (right instanceof PyInteger)
+             rightv = ((PyInteger) right).getValue();
+		else if (right instanceof PyLong)
+			return int___long__().__and__(right);
+        else
+             return null;
+
+        return Py.newInteger(getValue() & rightv);
     }
     
     final PyObject int___rand__(PyObject left){
@@ -1371,20 +1391,24 @@ public class PyInteger extends PyObject {
         return int___xor__(right);
     }
 
-    final PyObject int___xor__(PyObject right) {
-        int rightv;
-        if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).getValue();
-        else
-             return null;
+	final PyObject int___xor__(PyObject right) {
+		int rightv;
+		if (right instanceof PyInteger)
+			rightv = ((PyInteger) right).getValue();
+		else if (right instanceof PyLong)
+			return int___long__().__xor__(right);
+		else
+			return null;
 
-        return Py.newInteger(getValue() ^ rightv);
+		return Py.newInteger(getValue() ^ rightv);
     }
     
 	final PyObject int___rxor__(PyObject left){
         int leftv;
         if (left instanceof PyInteger)
         	leftv = ((PyInteger)left).getValue();
+        else if(left instanceof PyLong)
+        	return left.__rxor__(int___long__());
         else
              return null;
 
@@ -1395,14 +1419,16 @@ public class PyInteger extends PyObject {
         return int___or__(right);
     }
 
-    final PyObject int___or__(PyObject right) {
-        int rightv;
-        if (right instanceof PyInteger)
-             rightv = ((PyInteger)right).getValue();
-        else
-             return null;
+	final PyObject int___or__(PyObject right) {
+		int rightv;
+		if (right instanceof PyInteger)
+			rightv = ((PyInteger) right).getValue();
+		else if (right instanceof PyLong)
+			return int___long__().__or__(right);
+		else
+			return null;
 
-        return Py.newInteger(getValue() | rightv);
+		return Py.newInteger(getValue() | rightv);
     }
     
     final PyObject int___ror__(PyObject left){

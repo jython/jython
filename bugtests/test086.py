@@ -15,5 +15,4 @@ class mythread(java.lang.Thread):
 mythread().start()
 mythread("pipo 1").start()
 mythread("pipo 2").start()
-java.lang.Thread.sleep(15000)
 
