@@ -1086,8 +1086,9 @@ public class PyObject implements java.io.Serializable {
             for (; (name = lst_iter.__iternext__())!= null; ) {
                 accum.__setitem__(name, Py.None);
             }
+        } else {
+            accum.update(obj);
         }
-        accum.update(obj);
     }
 
     protected void __rawdir__(PyDictionary accum) {
