@@ -24,9 +24,20 @@ public class py_compile {
         if (dot != -1) {
             name = name.substring(0, dot);
         }
+        // Make the compiled classfile's name the fully qualified with a package by
+        // walking up the directory tree looking for __init__.py files. Don't
+        // check for __init__$py.class since we're compiling source here and the
+        // existence of a class file without corresponding source probably doesn't
+        // indicate a package.
+        File dir = file.getParentFile();
+        while (dir != null && (new File(dir, "__init__.py").exists())) {
+            name = dir.getName() + "." + name;
+            dir = dir.getParentFile();
+        }
         byte[] bytes = org.python.core.imp.compileSource(name, file, dfile, cfile);
         org.python.core.imp.cacheCompiledSource(filename, null, bytes);
 
         return bytes.length > 0;
     }
+    
 }
