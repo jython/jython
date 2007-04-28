@@ -1,9 +1,20 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.parser.ast.modType;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.ObjectStreamException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.Serializable;
+import java.io.StreamCorruptedException;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
-import java.io.*;
+
+import org.python.compiler.Module;
+import org.python.parser.ast.modType;
 
 public final class Py
 {
@@ -860,6 +871,27 @@ public final class Py
         Py.runCode(code, dict, dict);
     }
 
+    /**
+     * Initializes a default PythonInterpreter and runs the code from
+     * {@link PyRunnable#getMain} as __main__
+     * 
+     * Called by the code generated in {@link Module#addMain()}
+     */
+    public static void runMain(PyRunnable main, String[] args) throws Exception
+    {
+        initProperties(args, null, null, null, null, main.getClass()
+                .getClassLoader());
+        try {
+            imp.createFromCode("__main__", main.getMain());
+        } catch (PyException e) {
+            Py.getSystemState().callExitFunc();
+            if (Py.matchException(e, Py.SystemExit))
+                return;
+            throw e;
+        }
+        Py.getSystemState().callExitFunc();
+    }
+
     public static void runMain(Class mainClass, String[] args,
                                String[] packages,
                                String[] props,
@@ -1652,9 +1684,8 @@ public final class Py
     {
         try {
             ByteArrayOutputStream ostream = new ByteArrayOutputStream();
-            org.python.compiler.Module.compile(node, ostream, name, filename,
-                                               linenumbers, printResults,
-                                               false,cflags);
+            Module.compile(node, ostream, name, filename, linenumbers,
+                    printResults, false, cflags);
 
             saveClassFile(name, ostream);
 
@@ -1686,8 +1717,8 @@ public final class Py
     public static PyObject compile_command_flags(String string,
                     String filename, String kind, CompilerFlags cflags,boolean stdprompt)
     {
-        org.python.parser.ast.modType node =
-            parser.partialParse(string+"\n", kind, filename, cflags, stdprompt);
+        modType node = parser.partialParse(string + "\n", kind, filename,
+                cflags, stdprompt);
     
         if (node == null)
             return Py.None;
