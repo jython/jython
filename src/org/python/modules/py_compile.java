@@ -18,7 +18,6 @@ public class py_compile {
     }
 
     public static boolean compile(String filename, String cfile, String dfile) {
-        System.out.println(cfile);
         File file = new File(filename);
         String name = file.getName();
         int dot = name.lastIndexOf('.');
