@@ -302,7 +302,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 public class __builtin__  {
 	public static void fillWithBuiltins(PyObject dict) {
 		/* newstyle */
-	
 		dict.__setitem__("object", PyType.fromClass(PyObject.class));
 		dict.__setitem__("type", PyType.fromClass(PyType.class));
 		dict.__setitem__("int", PyType.fromClass(PyInteger.class));
