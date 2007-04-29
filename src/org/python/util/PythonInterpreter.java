@@ -19,20 +19,19 @@ public class PythonInterpreter {
     protected CompilerFlags cflags = null;
 
     /**
-     * Initialize the jython runtime. This method should only be
-     * called once, and should be call before any other python objects
-     * are created (included a PythonInterpreter).
-     *
-     * @param preProperties   A set of properties. Typically
-     *                        System.getProperties() is used.
-     * @param postProperties  An other set of properties. Values like
-     *                        python.home, python.path and all other
-     *                        values from the registry files can be
-     *                        added to this property set. PostProperties
-     *                        will override system properties and
-     *                        registry properties.
-     * @param argv            Command line argument. These values will
-     *                        assigned to sys.argv.
+     * Initializes the jython runtime. This should only be called once, and
+     * should be called before any other python objects are created (including a
+     * PythonInterpreter).
+     * 
+     * @param preProperties
+     *            A set of properties. Typically System.getProperties() is used.
+     * @param postProperties
+     *            An other set of properties. Values like python.home,
+     *            python.path and all other values from the registry files can
+     *            be added to this property set. PostProperties will override
+     *            system properties and registry properties.
+     * @param argv
+     *            Command line argument. These values will assigned to sys.argv.
      */
     public static void initialize(Properties preProperties,
                                   Properties postProperties,
@@ -60,7 +59,6 @@ public class PythonInterpreter {
     }
 
     public PythonInterpreter(PyObject dict, PySystemState systemState) {
-        PySystemState.initialize();
         if (dict == null)
             dict = new PyStringMap();
         if (systemState == null) {

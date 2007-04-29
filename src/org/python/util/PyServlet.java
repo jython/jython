@@ -94,20 +94,17 @@ public class PyServlet extends HttpServlet {
                                              File.separator + "lib");
         }
 
-        PythonInterpreter.initialize(baseProps, props,
-                                     new String[0]);
+        PySystemState.initialize(baseProps, props, new String[0]);
         reset();
 
-        PySystemState sys = Py.getSystemState();
-        sys.add_package("javax.servlet");
-        sys.add_package("javax.servlet.http");
-        sys.add_package("javax.servlet.jsp");
-        sys.add_package("javax.servlet.jsp.tagext");
+        PySystemState.add_package("javax.servlet");
+        PySystemState.add_package("javax.servlet.http");
+        PySystemState.add_package("javax.servlet.jsp");
+        PySystemState.add_package("javax.servlet.jsp.tagext");
 
-        sys.add_classdir(rootPath + "WEB-INF" +
-                          File.separator + "classes");
+        PySystemState.add_classdir(rootPath + "WEB-INF" + File.separator + "classes");
 
-        sys.add_extdir(rootPath + "WEB-INF" + File.separator + "lib", true);
+        PySystemState.add_extdir(rootPath + "WEB-INF" + File.separator + "lib", true);
     }
 
     /**
@@ -122,8 +119,7 @@ public class PyServlet extends HttpServlet {
     {
         req.setAttribute("pyservlet", this);
 
-        String spath = (String)req.getAttribute(
-                                    "javax.servlet.include.servlet_path");
+        String spath = (String) req.getAttribute("javax.servlet.include.servlet_path");
         if (spath == null) {
             spath = ((HttpServletRequest) req).getServletPath();
             if (spath == null || spath.length() == 0) {
@@ -147,11 +143,11 @@ public class PyServlet extends HttpServlet {
         destroyCache();
         interp = new PythonInterpreter(null, new PySystemState());
         cache.clear();
+        
         PySystemState sys = Py.getSystemState();
         sys.path.append(new PyString(rootPath));
 
-        String modulesDir = rootPath + "WEB-INF" +
-                            File.separator + "jython";
+        String modulesDir = rootPath + "WEB-INF" + File.separator + "jython";
         sys.path.append(new PyString(modulesDir));
     }
 
@@ -187,21 +183,20 @@ public class PyServlet extends HttpServlet {
         try {
             interp.execfile(path);
             PyObject cls = interp.get(name);
-            if (cls == null)
-                throw new ServletException("No callable (class or function) "+
-                                       "named " + name + " in " + path);
-
+            if (cls == null) {
+                throw new ServletException("No callable (class or function) named " + name + " in "
+                        + path);
+            }
             PyObject pyServlet = cls.__call__();
             Object o = pyServlet.__tojava__(HttpServlet.class);
-            if (o == Py.NoConversion)
-                throw new ServletException("The value from " + name +
-                                       "must extend HttpServlet");
+            if (o == Py.NoConversion) {
+                throw new ServletException("The value from " + name + " must extend HttpServlet");
+            }
             servlet = (HttpServlet)o;
             servlet.init(getServletConfig());
 
         } catch (PyException e) {
-            throw new ServletException("Could not create "+
-                                       "Jython servlet" + e.toString());
+            throw new ServletException(e);
         }
         CacheEntry entry = new CacheEntry(servlet, file.lastModified());
         cache.put(path, entry);
