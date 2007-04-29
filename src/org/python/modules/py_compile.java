@@ -18,6 +18,7 @@ public class py_compile {
     }
 
     public static boolean compile(String filename, String cfile, String dfile) {
+        System.out.println(cfile);
         File file = new File(filename);
         String name = file.getName();
         int dot = name.lastIndexOf('.');
@@ -35,7 +36,7 @@ public class py_compile {
             dir = dir.getParentFile();
         }
         byte[] bytes = org.python.core.imp.compileSource(name, file, dfile, cfile);
-        org.python.core.imp.cacheCompiledSource(filename, null, bytes);
+        org.python.core.imp.cacheCompiledSource(filename, cfile, bytes);
 
         return bytes.length > 0;
     }
