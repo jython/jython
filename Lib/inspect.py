@@ -27,7 +27,7 @@ Here are some of the useful functions provided by this module:
 __author__ = 'Ka-Ping Yee <ping@lfw.org>'
 __date__ = '1 Jan 2001'
 
-import sys, os, types, string, re, dis, imp, tokenize
+import sys, os, types, string, re, imp, tokenize
 
 # ----------------------------------------------------------- type-checking
 def ismodule(object):
@@ -571,37 +571,39 @@ def getargs(co):
     'varargs' and 'varkw' are the names of the * and ** arguments or None."""
     if not iscode(co): raise TypeError, 'arg is not a code object'
 
-    code = co.co_code
     nargs = co.co_argcount
     names = co.co_varnames
     args = list(names[:nargs])
     step = 0
 
     # The following acrobatics are for anonymous (tuple) arguments.
-    for i in range(nargs):
-        if args[i][:1] in ['', '.']:
-            stack, remain, count = [], [], []
-            while step < len(code):
-                op = ord(code[step])
-                step = step + 1
-                if op >= dis.HAVE_ARGUMENT:
-                    opname = dis.opname[op]
-                    value = ord(code[step]) + ord(code[step+1])*256
-                    step = step + 2
-                    if opname in ['UNPACK_TUPLE', 'UNPACK_SEQUENCE']:
-                        remain.append(value)
-                        count.append(value)
-                    elif opname == 'STORE_FAST':
-                        stack.append(names[value])
-                        remain[-1] = remain[-1] - 1
-                        while remain[-1] == 0:
-                            remain.pop()
-                            size = count.pop()
-                            stack[-size:] = [stack[-size:]]
-                            if not remain: break
+    if not sys.platform.startswith('java'):#Jython doesn't have co_code
+        code = co.co_code
+        import dis
+        for i in range(nargs):
+            if args[i][:1] in ['', '.']:
+                stack, remain, count = [], [], []
+                while step < len(code):
+                    op = ord(code[step])
+                    step = step + 1
+                    if op >= dis.HAVE_ARGUMENT:
+                        opname = dis.opname[op]
+                        value = ord(code[step]) + ord(code[step+1])*256
+                        step = step + 2
+                        if opname in ['UNPACK_TUPLE', 'UNPACK_SEQUENCE']:
+                            remain.append(value)
+                            count.append(value)
+                        elif opname == 'STORE_FAST':
+                            stack.append(names[value])
                             remain[-1] = remain[-1] - 1
-                        if not remain: break
-            args[i] = stack[0]
+                            while remain[-1] == 0:
+                                remain.pop()
+                                size = count.pop()
+                                stack[-size:] = [stack[-size:]]
+                                if not remain: break
+                                remain[-1] = remain[-1] - 1
+                            if not remain: break
+                args[i] = stack[0]
 
     varargs = None
     if co.co_flags & CO_VARARGS:

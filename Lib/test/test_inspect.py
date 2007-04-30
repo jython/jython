@@ -62,7 +62,7 @@ class FesteringGob(MalodorousPervert, ParrotDroppings):
 # getsourcefile, getcomments, getsource, getclasstree, getargspec,
 # getargvalues, formatargspec, formatargvalues, currentframe, stack, trace
 
-from test_support import TestFailed, TESTFN
+from test_support import TestFailed, TESTFN, is_jython
 import sys, imp, os, string
 
 def test(assertion, message, *args):
@@ -94,7 +94,7 @@ try:
 except:
     tb = sys.exc_traceback
 
-istest(inspect.isbuiltin, 'sys.exit')
+istest(inspect.isbuiltin, 'ord')
 istest(inspect.isbuiltin, '[].append')
 istest(inspect.isclass, 'mod.StupidGit')
 istest(inspect.iscode, 'mod.spam.func_code')
@@ -155,14 +155,15 @@ test(varkw == None, 'mod.eggs varkw')
 test(defaults == None, 'mod.eggs defaults')
 test(inspect.formatargspec(args, varargs, varkw, defaults) ==
      '(x, y)', 'mod.eggs formatted argspec')
-args, varargs, varkw, defaults = inspect.getargspec(mod.spam)
-test(args == ['a', 'b', 'c', 'd', ['e', ['f']]], 'mod.spam args')
-test(varargs == 'g', 'mod.spam varargs')
-test(varkw == 'h', 'mod.spam varkw')
-test(defaults == (3, (4, (5,))), 'mod.spam defaults')
-test(inspect.formatargspec(args, varargs, varkw, defaults) ==
-     '(a, b, c, d=3, (e, (f,))=(4, (5,)), *g, **h)',
-     'mod.spam formatted argspec')
+if not is_jython:#Jython can't handle this without co_code
+    args, varargs, varkw, defaults = inspect.getargspec(mod.spam)
+    test(args == ['a', 'b', 'c', 'd', ['e', ['f']]], 'mod.spam args')
+    test(varargs == 'g', 'mod.spam varargs')
+    test(varkw == 'h', 'mod.spam varkw')
+    test(defaults == (3, (4, (5,))), 'mod.spam defaults')
+    test(inspect.formatargspec(args, varargs, varkw, defaults) ==
+         '(a, b, c, d=3, (e, (f,))=(4, (5,)), *g, **h)',
+         'mod.spam formatted argspec')
 
 git.abuse(7, 8, 9)
 
@@ -200,13 +201,14 @@ test(locals == {'x': 11, 'p': 11, 'y': 14}, 'mod.fr locals')
 test(inspect.formatargvalues(args, varargs, varkw, locals) ==
      '(x=11, y=14)', 'mod.fr formatted argvalues')
 
-args, varargs, varkw, locals = inspect.getargvalues(mod.fr.f_back)
-test(args == ['a', 'b', 'c', 'd', ['e', ['f']]], 'mod.fr.f_back args')
-test(varargs == 'g', 'mod.fr.f_back varargs')
-test(varkw == 'h', 'mod.fr.f_back varkw')
-test(inspect.formatargvalues(args, varargs, varkw, locals) ==
-     '(a=7, b=8, c=9, d=3, (e=4, (f=5,)), *g=(), **h={})',
-     'mod.fr.f_back formatted argvalues')
+if not is_jython:
+    args, varargs, varkw, locals = inspect.getargvalues(mod.fr.f_back)
+    test(args == ['a', 'b', 'c', 'd', ['e', ['f']]], 'mod.fr.f_back args')
+    test(varargs == 'g', 'mod.fr.f_back varargs')
+    test(varkw == 'h', 'mod.fr.f_back varkw')
+    test(inspect.formatargvalues(args, varargs, varkw, locals) ==
+         '(a=7, b=8, c=9, d=3, (e=4, (f=5,)), *g=(), **h={})',
+         'mod.fr.f_back formatted argvalues')
 
 for fname in files_to_clean_up:
     try:
