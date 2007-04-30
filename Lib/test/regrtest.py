@@ -1065,7 +1065,6 @@ _failures = {
     test_threaded_import
     test_trace
     test_weakref
-    test_zlib
     ''',
 }
 
