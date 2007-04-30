@@ -1054,7 +1054,6 @@ _failures = {
     test_cpickle
     test_descr
     test_descrtut
-    test_doctest2
     test_frozen
     test_marshal
     test_new
