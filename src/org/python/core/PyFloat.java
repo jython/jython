@@ -950,6 +950,9 @@ public class PyFloat extends PyObject
             return new PyFloat(0);
         }
 
+        if (value < 0 && iw != Math.floor(iw))
+            throw Py.ValueError("negative number cannot be raised to a fractional power");
+            
         double ret = Math.pow(value, iw);
         if (modulo == null) {
             return new PyFloat(ret);

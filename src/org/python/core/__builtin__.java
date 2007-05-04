@@ -627,7 +627,13 @@ public class __builtin__  {
 	}
 
 	public static PyString hex(PyObject o) {
-		return o.__hex__();
+		try {
+			return o.__hex__();
+		} catch (PyException e) {
+			if (Py.matchException(e, Py.AttributeError))
+				throw Py.TypeError("hex() argument can't be converted to hex");
+			throw e;
+		}
 	}
 
 	public static long id(PyObject o) {
@@ -1035,7 +1041,13 @@ public class __builtin__  {
 	}
 
 	public static PyObject vars(PyObject o) {
-		return o.__getattr__("__dict__");
+		try {
+			return o.__getattr__("__dict__");
+		} catch (PyException e) {
+			if (Py.matchException(e, Py.AttributeError))
+				throw Py.TypeError("vars() argument must have __dict__ attribute");
+			throw e;
+		}
 	}
 
 	public static PyObject vars() {
