@@ -32,6 +32,7 @@ Jython 2.2 beta2
     - [ 448398 ] open('test.txt', 'w').write('test') fails
     - [ 1671373 ] A "$_PyInner.class" file in a package causes import to fail
     - [ 1671431 ] dir function does not work with database connection object
+    - [ 1713513 ] os.environ fails in Windows Vista JDK 1.6_01
   Patches applied
     - [ 1681774 ] str.decode, unicode.encode and str(u'') fixes
     - [ 1682423 ] Convert PyModule to a new-style class
