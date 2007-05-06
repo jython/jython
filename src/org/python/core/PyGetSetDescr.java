@@ -36,28 +36,28 @@ public class PyGetSetDescr extends PyDescriptor {
         try {
             get_meth = c.getMethod(get, new Class[] {});
         } catch(NoSuchMethodException e) {
-            throw Py.SystemError("bogus getset spec");
+            throw Py.SystemError("method "+get+" doesn't exist: "+c.getName());
         }
         if(Modifier.isStatic(get_meth.getModifiers()))
-            throw Py.SystemError("static getset not supported");
+            throw Py.SystemError("static "+get+" not supported: "+c.getName());
         getset_type = get_meth.getReturnType();
         if(set != null) {
             try {
                 set_meth = c.getMethod(set, new Class[] {getset_type});
             } catch(NoSuchMethodException e) {
-                throw Py.SystemError("bogus getset spec");
+                throw Py.SystemError("method "+set+" doesn't exist: "+c.getName());
             }
             if(Modifier.isStatic(set_meth.getModifiers()))
-                throw Py.SystemError("static getset not supported");
+                throw Py.SystemError("static "+set+" not supported: "+c.getName());
         }
         if(del != null) {
             try {
                 del_meth = c.getMethod(del, new Class[] {});
             } catch(NoSuchMethodException e) {
-                throw Py.SystemError("bogus getset spec");
+                throw Py.SystemError("method "+set+" doesn't exist: "+c.getName());
             }
             if(Modifier.isStatic(del_meth.getModifiers()))
-                throw Py.SystemError("static getset not supported");
+                throw Py.SystemError("static "+del+" not supported: "+c.getName());
         }
      }
 
