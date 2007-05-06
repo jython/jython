@@ -1,5 +1,6 @@
 package org.python.util;
 
+import java.io.File;
 import java.io.IOException;
 import jline.ConsoleReader;
 import jline.Terminal;
@@ -19,6 +20,13 @@ public class JLineConsole extends InteractiveConsole {
 
     public JLineConsole(PyObject locals) {
         this(locals, CONSOLE_FILENAME);
+        try {
+            File historyFile = new File(System.getProperty("user.home"),
+                                        ".jline-jython.history");
+            reader.getHistory().setHistoryFile(historyFile);
+        } catch(IOException e) {
+            // oh well, no history from file 
+        }
     }
 
     public JLineConsole(PyObject locals, String filename) {
