@@ -19,6 +19,8 @@ import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.python.core.adapter.ClassicPyObjectAdapter;
+import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.modules.Setup;
 
 /**
@@ -433,6 +435,14 @@ public class PySystemState extends PyObject
                                                String[] argv,
                                                ClassLoader classLoader)
     {
+        initialize(preProperties, postProperties, argv, classLoader, new ClassicPyObjectAdapter());
+    }
+        public static synchronized void initialize(Properties preProperties,
+                                                   Properties postProperties,
+                                                   String[] argv,
+                                                   ClassLoader classLoader,
+                                                   ExtensiblePyObjectAdapter adapter)
+        {
 
         //System.err.println("initializing system state");
         //Thread.currentThread().dumpStack();
@@ -447,6 +457,7 @@ public class PySystemState extends PyObject
         }
         initialized = true;
 
+        Py.adapter = adapter;
         boolean standalone = false;
         String jarFileName = getJarFileName();
         if (jarFileName != null) {
