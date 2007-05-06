@@ -9,14 +9,10 @@
 package org.python.modules;
 
 
-import java.util.regex.Pattern;
-
-import org.python.core.ArgParser;
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PyString;
-import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
 
 /**
@@ -128,21 +124,11 @@ public class binascii {
 
     public static String __doc__ = "Conversion between binary data and ASCII";
 
-    public static final PyObject Error = Py.makeClass("Error",
-            new PyObject[] { Py.Exception },
-            Py.newJavaCode(binascii.class, "empty__init__"),
-            Py.None);
+    public static final PyString Error = new PyString("binascii.Error");
 
-    public static PyObject empty__init__(PyObject[] arg, String[] kws) {
-        PyObject dict = new PyStringMap();
-        dict.__setitem__("__module__", new PyString("binascii"));
-        return dict;
-    }
+    public static final PyString Incomplete =
+                                     new PyString("binascii.Incomplete");
 
-    public static final PyObject Incomplete = Py.makeClass("Incomplete",
-            new PyObject[] { Py.Exception },
-            Py.newJavaCode(binascii.class, "empty__init__"),
-            Py.None);
 
     // hqx lookup table, ascii->binary.
     private static char RUNCHAR = 0x90;
@@ -291,7 +277,7 @@ public class binascii {
 
         int bin_len = (ascii_data.charAt(0) - ' ') & 077;
 
-        for (i = 0; bin_len > 0 && ascii_len > 0; i++, ascii_len--) {
+        for (i = 0; bin_len > 0; i++, ascii_len--) {
             this_ch = ascii_data.charAt(i+1);
             if (this_ch == '\n' || this_ch == '\r' || ascii_len <= 0) {
                 // Whitespace. Assume some spaces got eaten at
@@ -318,7 +304,6 @@ public class binascii {
                 bin_len--;
             }
         }
-        
         // Finally, check that if there's anything left on the line
         // that it's whitespace only.
         while (ascii_len-- > 0) {
@@ -329,11 +314,6 @@ public class binascii {
                 throw new PyException(Error, "Trailing garbage");
             }
         }
-        
-        // finally, if we haven't decoded enough stuff, fill it up with zeros
-        for (; i<bin_len; i++)
-        	bin_data.append((char)0);
-        
         return bin_data.toString();
     }
 
@@ -835,6 +815,7 @@ static long[] crc_32_tab = new long[] {
 
     private static char[] hexdigit = "0123456789abcdef".toCharArray();
 
+
     public static PyString __doc__b2a_hex = new PyString(
         "b2a_hex(data) -> s; Hexadecimal representation of binary data.\n" +
         "\n" +
@@ -898,139 +879,7 @@ static long[] crc_32_tab = new long[] {
         return a2b_hex(argbuf);
     }
 
-    final private static char[] upper_hexdigit = "0123456789ABCDEF".toCharArray();
-    
-    private static StringBuffer qpEscape(StringBuffer sb, char c)
-    {
-    	sb.append('=');
-        sb.append(upper_hexdigit[(c >>> 4) & 0xF]);
-        sb.append(upper_hexdigit[c & 0xF]);
-        return sb;
-    }
 
-    final private static Pattern WS = Pattern.compile("=\r?\n|[\t ]+$");
-    final private static Pattern UNDERSCORE = Pattern.compile("_");
-
-    final public static PyString __doc__a2b_qp = new PyString("Decode a string of qp-encoded data");
-
-    public static boolean getIntFlagAsBool(ArgParser ap, int index, int dflt, String errMsg) {
-        boolean val;
-        try {
-        	val = ap.getInt(index, dflt) != 0;
-        } catch (PyException e) {
-        	if (Py.matchException(e, Py.AttributeError) || Py.matchException(e, Py.ValueError))
-			throw Py.TypeError(errMsg);
-        	throw e;
-        }
-        return val;
-    }
-
-    public static String a2b_qp(PyObject[] arg, String[] kws)
-    {
-        ArgParser ap = new ArgParser("a2b_qp", arg, kws, new String[] {"s", "header"});
-        String s = ap.getString(0);
-        StringBuffer sb = new StringBuffer();
-        boolean header = getIntFlagAsBool(ap, 1, 0, "an integer is required");
-
-        if (header)
-        	s = UNDERSCORE.matcher(s).replaceAll(" ");
-
-        s = WS.matcher(s).replaceAll("");
-        
-        for (int i=0, m=s.length(); i<m;) {
-        	char c = s.charAt(i++);
-        	if (c == '=') {
-        		if (i < m) {
-        			c = s.charAt(i++);
-        			if (c == '=') {
-        				sb.append(c);
-        			} else if ((c >= '0' && c <= '9' || c >= 'A' && c <= 'F') && i < m) {
-        				char nc = s.charAt(i++);
-        				if ((nc >= '0' && nc <= '9' || nc >= 'A' && nc <= 'F')) {
-        					sb.append((char)(Character.digit(c, 16) << 4 | Character.digit(nc, 16)));
-        				} else {
-        					sb.append('=').append(c).append(nc);
-        				}
-        			} else if (c != '\n') {
-        				sb.append('=').append(c);
-        			}
-        		}
-        	} else {
-        		sb.append(c);
-        	}
-        }
-
-        return sb.toString();
-    }
-
-    final private static Pattern RN_TO_N = Pattern.compile("\r\n");
-    final private static Pattern N_TO_RN = Pattern.compile("(?<!\r)\n");
-    
-    final public static PyString __doc__b2a_qp = new PyString("b2a_qp(data, quotetabs=0, istext=1, header=0) -> s;\n"
-    		+ "Encode a string using quoted-printable encoding.\n\n"
-    		+ "On encoding, when istext is set, newlines are not encoded, and white\n"
-    		+ "space at end of lines is.  When istext is not set, \r and \n (CR/LF) are\n"
-    		+ "both encoded.  When quotetabs is set, space and tabs are encoded.");
-
-    public static String b2a_qp(PyObject[] arg, String[] kws) {
-        ArgParser ap = new ArgParser("b2a_qp", arg, kws, new String[] {"s", "quotetabs", "istext", "header"});
-        String s = ap.getString(0);
-        boolean quotetabs = getIntFlagAsBool(ap, 1, 0, "an integer is required");
-        boolean istext = getIntFlagAsBool(ap, 2, 1, "an integer is required");
-        boolean header = getIntFlagAsBool(ap, 3, 0, "an integer is required");
-
-        String lineEnd;
-        int pos = s.indexOf('\n');
-        if (pos > 0 && s.charAt(pos-1) == '\r') {
-        	lineEnd = "\r\n";
-        	s = N_TO_RN.matcher(s).replaceAll("\r\n");
-        } else {
-        	lineEnd = "\n";
-        	s = RN_TO_N.matcher(s).replaceAll("\n");
-        }
-        StringBuffer sb = new StringBuffer();
-        int count = 0;
-        for (int i=0, m=s.length(); i<m; i++) {
-        	char c = s.charAt(i);
-        	if (('!' <= c && c <= '<')
-        		|| ('>' <= c && c <= '^')
-        		|| ('`' <= c && c <= '~')
-        		|| (c == '_' && !header)
-        		|| (c == '\n' || c == '\r' && istext)) {
-        		if (count == 75) {
-        			sb.append("=").append(lineEnd);
-        			count = 0;
-        		}
-        		sb.append(c);
-        		count++;
-        	}
-        	else if (!quotetabs && (c == '\t' || c == ' ')) {
-        		if (count >= 72) {
-        			sb.append("=").append(lineEnd);
-        			count = 0;
-        		}
-        		
-        		if (count >= 71) {
-        			count += 3;
-        			qpEscape(sb, c);
-        		} else {
-        			if (c == ' ' && header)
-        				sb.append('_');
-        			else
-        				sb.append(c);
-        			count += 1;
-        		}
-        	} else {
-        		if (count >= 72) {
-        			sb.append("=").append(lineEnd);
-        			count = 0;
-        		}
-        		count += 3;
-        		qpEscape(sb, c);
-        	}
-        }
-    	return sb.toString();
-    }
 
 /*
     public static void main(String[] args) {
