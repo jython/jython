@@ -1462,7 +1462,7 @@ public final class Py
     private static PyString[] letters=null;
 
 
-    static final PyString makeCharacter(Character o) {
+    public static final PyString makeCharacter(Character o) {
         return makeCharacter(o.charValue());
     }
 
