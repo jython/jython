@@ -111,7 +111,7 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 #deprecation=off
 
 # - the svn tag to build from; only needed for full-build
-#svn.tag=Release_2_2beta1
+#svn.tag=Release_2_2beta2
 #svn.tag=HEAD
 
 # - the revision; defaults to svn.tag; only needed for full-build
@@ -220,7 +220,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="do.templates" value="true" />
 
         <!-- predefined tags for jython and cpython -->
-        <property name="svn.tag" value="Release_2_2beta1" />
+        <property name="svn.tag" value="Release_2_2beta2" />
 
         <property name="work.dir" value="${basedir}/../full_build_${svn.tag}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
@@ -238,7 +238,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="jython.version" value="${svn.revision}">
             <isset property="svn.revision" />
         </condition>
-        <property name="jython.version" value="2.2b1" />
+        <property name="jython.version" value="2.2b2" />
 	<property name="svn.revision" value="HEAD"/>
     	
         <!-- classpath for svn ant task -->
@@ -389,10 +389,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 	<!-- the following replacements have to be updated if the version strings in PySystemState.java change -->
 	<target name="version" depends="checkout" if="do.snapshot.build" >
 		<property name="replace.value.version" value='version = "2.2b${svn.revision}"' />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2b1"' value="${replace.value.version}" />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2b2"' value="${replace.value.version}" />
 		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_LEVEL = 0x0B" value="PY_RELEASE_LEVEL = 0xAA" />
 		<property name="replace.value.serial" value="PY_RELEASE_SERIAL = ${svn.revision}" />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 1" value="${replace.value.serial}" />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 2" value="${replace.value.serial}" />
 	</target>
 
     <!-- separate build.xml for parser grammar -->
