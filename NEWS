@@ -5,6 +5,7 @@ Jython 2.2 rc1
     - [ 1708080 ] float("1d") -> 1.0 (not ValueError as expected)
     - [ 1661700 ] os.path.abspath raises IOException if drive not accessible
     - [ 1662689 ] os.path.abspath eliminates symlinks
+    - [ 1717498 ] os.path.splitdrive does nothing for Windows drives
 
 Jython 2.2 beta2
   New features

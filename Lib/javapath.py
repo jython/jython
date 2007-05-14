@@ -8,7 +8,6 @@ module as os.path.
 # Incompletely implemented:
 # islink -- How?
 # ismount -- How?
-# splitdrive -- How?
 # normcase -- How?
 
 # Missing:
@@ -72,13 +71,15 @@ def splitext(path):
         return (path[:n], path[n:])
 
 def splitdrive(path):
-    """Split a pathname into drive and path.
+    """Split a pathname into drive and path specifiers. 
 
-    On JDK, drive is always empty.
-    XXX This isn't correct for JDK on DOS/Windows!
-
+    Returns a 2-tuple "(drive,path)"; either part may be empty.
     """
-    return ("", path)
+    # Algorithm based on CPython's ntpath.splitdrive and ntpath.isabs.
+    if path[1:2] == ':' and path[0].lower() in 'abcdefghijklmnopqrstuvwxyz' \
+            and (path[2:] == '' or path[2] in '/\\'):
+        return path[:2], path[2:]
+    return '', path
 
 def exists(path):
     """Test whether a path exists.
