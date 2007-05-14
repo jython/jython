@@ -1,5 +1,11 @@
 Jython NEWS
 
+Jython 2.2 rc1
+  Bugs fixed
+    - [ 1708080 ] float("1d") -> 1.0 (not ValueError as expected)
+    - [ 1661700 ] os.path.abspath raises IOException if drive not accessible
+    - [ 1662689 ] os.path.abspath eliminates symlinks
+
 Jython 2.2 beta2
   New features
     - All functions in __builtin__ are new style functions instead of reflected

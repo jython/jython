@@ -150,9 +150,7 @@ def samefile(path, path2):
     """Test whether two pathnames reference the same actual file"""
     path = _tostr(path, "samefile")
     path2 = _tostr(path2, "samefile")
-    f = File(path)
-    f2 = File(path2)
-    return f.getCanonicalPath() == f2.getCanonicalPath()
+    return _realpath(path) == _realpath(path2)
 
 def ismount(path):
     """Test whether a path is a mount point.
@@ -161,7 +159,6 @@ def ismount(path):
 
     """
     return 0
-
 
 def walk(top, func, arg):
     """Walk a directory tree.
@@ -234,14 +231,26 @@ def normpath(path):
         comps.append(curdir)
     return slashes + string.joinfields(comps, sep)
 
-# Return an absolute path.
 def abspath(path):
+    """Return an absolute path normalized but symbolic links not eliminated"""
     path = _tostr(path, "abspath")
-    return File(path).getCanonicalPath()
+    return _abspath(path)
+
+def _abspath(path):
+    # Must use normpath separately because getAbsolutePath doesn't normalize
+    # and getCanonicalPath would eliminate symlinks.
+    return normpath(File(path).getAbsolutePath())
 
 def realpath(path):
+    """Return an absolute path normalized and symbolic links eliminated"""
     path = _tostr(path, "realpath")
-    return File(path).getCanonicalPath()
+    return _realpath(path)
+    
+def _realpath(path):
+    try:
+        return File(path).getCanonicalPath()
+    except java.io.IOException:
+        return _abspath(path)
 
 def getsize(path):
     path = _tostr(path, "getsize")
