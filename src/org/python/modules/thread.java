@@ -42,11 +42,17 @@ public class thread implements ClassDictInit
     public static void start_new_thread(PyObject func, PyTuple args) {
         Thread pt = new FunctionThread(func, args.getArray());
         PyObject currentThread = func.__findattr__("im_self");
-        if(currentThread != null) {
-            PyObject isDaemon = currentThread.__getattr__("isDaemon");
-            pt.setDaemon(Py.py2boolean(isDaemon.__call__()));
-            PyObject getName = currentThread.__getattr__("getName");
-            pt.setName(getName.__call__().toString());
+        if (currentThread != null) {
+            PyObject isDaemon = currentThread.__findattr__("isDaemon");
+            if (isDaemon != null && isDaemon.isCallable()) {
+                PyObject po = isDaemon.__call__();
+                pt.setDaemon(po.__nonzero__());
+            }
+            PyObject getName = currentThread.__findattr__("getName");
+            if (getName != null && getName.isCallable()) {
+                PyObject pname = getName.__call__();
+                pt.setName(String.valueOf(pname));
+            }
         }
         pt.start();
 	}
