@@ -14,7 +14,7 @@ public class Options {
      * when an exception occurs in Java code, and it is not caught, should the
      * interpreter print out the Java exception in the traceback?
      */
-    public static boolean showJavaExceptions = true;
+    public static boolean showJavaExceptions = false;
 
     /**
      * When true, python exception raised in overriden methods will be shown on

@@ -626,7 +626,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
                 <patternset>
                     <includesfile name="${jython.base.dir}/build.Lib.include.properties" />
                     <exclude name="test/output/test_sax"/>
-                    <exclude name="test/test_cpickle.py"/>
                 </patternset>
             </fileset>
         </copy>
