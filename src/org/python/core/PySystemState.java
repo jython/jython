@@ -4,6 +4,9 @@
 
 package org.python.core;
 
+import org.python.core.packagecache.PackageManager;
+import org.python.core.packagecache.SysPackageManager;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilterInputStream;

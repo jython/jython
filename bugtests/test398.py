@@ -16,7 +16,7 @@ import os
 from java.io import File
 from java.lang import String
 from java.util import Properties
-from org.python.core import SysPackageManager
+from org.python.core.packagecache import SysPackageManager
 
 PACKAGE = "test398javapackage"
 CACHEDIR = "test398cache"

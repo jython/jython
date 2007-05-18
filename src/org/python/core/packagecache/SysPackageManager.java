@@ -1,7 +1,12 @@
 // Copyright (c) Corporation for National Research Initiatives
 // Copyright 2000 Samuele Pedroni
 
-package org.python.core;
+package org.python.core.packagecache;
+
+import org.python.core.Py;
+import org.python.core.PyJavaPackage;
+import org.python.core.PyList;
+import org.python.core.PySystemState;
 
 import java.util.Properties;
 import java.util.StringTokenizer;

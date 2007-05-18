@@ -1,7 +1,9 @@
 // Copyright (c) Corporation for National Research Initiatives
 // Copyright 2000 Samuele Pedroni
 
-package org.python.core;
+package org.python.core.packagecache;
+
+import org.python.core.Options;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
