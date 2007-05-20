@@ -891,7 +891,7 @@ public class PyObject implements java.io.Serializable {
      * done with code like this:
      * <pre>
      *    PyObject iter = seq.__iter__();
-     *    for (PyObject item; (item = iter.__next__()) != null;  {
+     *    for (PyObject item; (item = iter.__iternext__()) != null;)  {
      *        // Do somting with item
      *    }
      * </pre>
