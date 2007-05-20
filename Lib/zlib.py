@@ -1,6 +1,7 @@
-
-from java import util, lang
 import jarray, binascii
+
+from java.util.zip import Adler32, Deflater, Inflater
+from java.lang import Long, String, StringBuffer
 
 class error(Exception):
     pass
@@ -29,9 +30,9 @@ _valid_flush_modes = (Z_FINISH,)
 def adler32(string, value=1):
     if value != 1: 
         raise ValueError, "adler32 only support start value of 1"
-    checksum = util.zip.Adler32()
-    checksum.update(lang.String.getBytes(string))
-    return lang.Long(checksum.getValue()).intValue()
+    checksum = Adler32()
+    checksum.update(String.getBytes(string))
+    return Long(checksum.getValue()).intValue()
 
 def crc32(string, value=0):
     return binascii.crc32(string, value)
@@ -40,13 +41,13 @@ def crc32(string, value=0):
 def compress(string, level=6):
     if level < Z_BEST_SPEED or level > Z_BEST_COMPRESSION:
         raise error, "Bad compression level"
-    deflater = util.zip.Deflater(level, 0)
+    deflater = Deflater(level, 0)
     deflater.setInput(string, 0, len(string))
     deflater.finish()
     return _get_deflate_data(deflater)
 
 def decompress(string, wbits=0, bufsize=16384):
-    inflater = util.zip.Inflater(wbits < 0)
+    inflater = Inflater(wbits < 0)
     inflater.setInput(string)
     return _get_inflate_data(inflater)
     
@@ -57,7 +58,7 @@ class compressobj:
                        memLevel=0, strategy=0):
         if abs(wbits) > MAX_WBITS or abs(wbits) < 8:
             raise ValueError, "Invalid initialization option"
-        self.deflater = util.zip.Deflater(level, wbits < 0)
+        self.deflater = Deflater(level, wbits < 0)
         self.deflater.setStrategy(strategy)
         if wbits < 0:
             _get_deflate_data(self.deflater)
@@ -86,7 +87,7 @@ class decompressobj:
     def __init__(self, wbits=MAX_WBITS):
         if abs(wbits) > MAX_WBITS or abs(wbits) < 8:
             raise ValueError, "Invalid initialization option"
-        self.inflater = util.zip.Inflater(wbits < 0)
+        self.inflater = Inflater(wbits < 0)
         self.unused_data = ""
         self._ended = False
 
@@ -127,18 +128,18 @@ class decompressobj:
 
 def _get_deflate_data(deflater):
     buf = jarray.zeros(1024, 'b')
-    sb = lang.StringBuffer()
+    sb = StringBuffer()
     while not deflater.finished():
         l = deflater.deflate(buf)
         if l == 0:
             break
-        sb.append(lang.String(buf, 0, 0, l))
+        sb.append(String(buf, 0, 0, l))
     return sb.toString()
 
         
 def _get_inflate_data(inflater, max_length=0):
     buf = jarray.zeros(1024, 'b')
-    sb = lang.StringBuffer()
+    sb = StringBuffer()
     total = 0
     while not inflater.finished():
         if max_length:
@@ -149,7 +150,7 @@ def _get_inflate_data(inflater, max_length=0):
             break
 
         total += l
-        sb.append(lang.String(buf, 0, 0, l))
+        sb.append(String(buf, 0, 0, l))
         if max_length and total == max_length:
             break
     return sb.toString()
