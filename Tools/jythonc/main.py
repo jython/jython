@@ -180,10 +180,11 @@ def addCore(extraPackages):
                  #'org.python.core.BytecodeLoader',
                 ]
     extraPackages.append(('org.python.core', skiplist))
+    extraPackages.append(('org.python.core.adapter', []))
 
 
 def addAll(extraPackages):
-    for name in ('core', 'compiler', 'parser'):
+    for name in ('core', 'core.adapter', 'compiler', 'parser'):
         extraPackages.append(('org.python.'+name, []))
                 
                       
