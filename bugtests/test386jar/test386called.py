@@ -38,3 +38,6 @@ from javax.imageio.event import IIOReadProgressListener
 # importing this twice was a problem
 from org.python.core import PySystemState
 from org.python.core import PySystemState
+# verify explicit imports of the form 'import java.net.URL'
+import javax.security.auth.Policy
+assert javax.security.auth.Policy

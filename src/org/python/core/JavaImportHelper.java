@@ -34,18 +34,23 @@ public class JavaImportHelper {
 
             // handle package name
             if (isLoadedPackage(packageName, packages)) {
-                packageAdded = addPackage(packageName);
+                packageAdded = addPackage(packageName, packageAdded);
             }
             String parentPackageName = packageName;
             int dotPos = 0;
+            String lastDottedName = null;
             do {
                 dotPos = parentPackageName.lastIndexOf(".");
                 if (dotPos > 0) {
                     parentPackageName = parentPackageName.substring(0, dotPos);
                     if (isLoadedPackage(parentPackageName, packages)) {
-                        boolean parentAdded = addPackage(parentPackageName);
-                        if (parentAdded) {
-                            packageAdded = true;
+                        packageAdded = addPackage(parentPackageName, packageAdded);
+                    }
+                    // handle 'import java.net.URL' style explicit imports
+                    if (lastDottedName == null) {
+                        lastDottedName = packageName.substring(dotPos + 1);
+                        if (isJavaClass(parentPackageName, lastDottedName)) {
+                            packageAdded = addPackage(parentPackageName, packageAdded);
                         }
                     }
                 }
@@ -59,20 +64,13 @@ public class JavaImportHelper {
                     if (obj instanceof String) {
                         String fromName = (String) obj;
                         if (!"*".equals(fromName)) {
-                            boolean fromAdded = false;
                             if (isJavaClass(packageName, fromName)) {
-                                fromAdded = addPackage(packageName);
-                                if (fromAdded) {
-                                    packageAdded = true;
-                                }
+                                packageAdded = addPackage(packageName, packageAdded);
                             } else {
                                 // handle cases like: from java import math
                                 String fromPackageName = packageName + "." + fromName;
                                 if (isLoadedPackage(fromPackageName, packages)) {
-                                    fromAdded = addPackage(fromPackageName);
-                                    if (fromAdded) {
-                                        packageAdded = true;
-                                    }
+                                    packageAdded = addPackage(fromPackageName, packageAdded);
                                 }
                             }
                         }
@@ -163,7 +161,7 @@ public class JavaImportHelper {
      * 
      * @return <code>true</code> if something was really added, <code>false</code> otherwise
      */
-    private static boolean addPackage(String packageName) {
+    private static boolean addPackage(String packageName, boolean packageAdded) {
         boolean added = false;
         PyObject module = Py.getSystemState().modules.__finditem__(packageName.intern());
         if (module == null || module == Py.None) {
@@ -184,7 +182,11 @@ public class JavaImportHelper {
                 }
             } while (dotPos > 0);
         }
-        return added;
+        // make sure not to turn off the packageAdded flag
+        if (added && !packageAdded) {
+            packageAdded = true;
+        }
+        return packageAdded;
     }
 
 }
