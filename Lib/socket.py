@@ -9,9 +9,15 @@ XXX Restrictions:
 - 20050527: updated by Alan Kennedy to support socket timeouts.
 """
 
-import java.io
-import java.net
-import org.python.core
+import java.io.InterruptedIOException
+import java.net.DatagramSocket
+import java.net.DatagramPacket
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.Socket
+import java.net.SocketTimeoutException
+import org.python.core.PyFile
 import jarray
 import string
 

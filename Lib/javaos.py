@@ -26,8 +26,8 @@ __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
            "popen", "popen2", "popen3", "popen4", "getlogin"
            ]
 
-import java
 from java.io import File
+import java.lang.System
 import javapath as path
 from UserDict import UserDict
 
