@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.modules.sets.PySet;
+import org.python.modules.sets.PyImmutableSet;
 import java.util.Hashtable;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
@@ -315,6 +317,8 @@ public class __builtin__  {
 		dict.__setitem__("dict", PyType.fromClass(PyDictionary.class));
 		dict.__setitem__("list", PyType.fromClass(PyList.class));
 		dict.__setitem__("tuple", PyType.fromClass(PyTuple.class));
+		dict.__setitem__("set", PyType.fromClass(PySet.class));
+		dict.__setitem__("frozenset", PyType.fromClass(PyImmutableSet.class));
 	
 		dict.__setitem__("property", PyType.fromClass(PyProperty.class));
 		dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
