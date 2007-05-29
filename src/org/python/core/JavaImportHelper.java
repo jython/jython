@@ -1,6 +1,8 @@
 package org.python.core;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -8,6 +10,8 @@ import java.util.TreeMap;
  * Helper class handling the VM specific java package detection.
  */
 public class JavaImportHelper {
+
+    private static final String DOT = ".";
 
     /**
      * Try to add the java package.
@@ -24,56 +28,62 @@ public class JavaImportHelper {
      * @return <code>true</code> if a java package was doubtlessly identified and added, <code>false</code>
      * otherwise.
      */
-    protected static boolean tryAddPackage(String packageName, PyObject fromlist) {
+    protected static boolean tryAddPackage(final String packageName, PyObject fromlist) {
         // make sure we do not turn off the added flag, once it is set
         boolean packageAdded = false;
 
         if (packageName != null) {
-            // build the actual map with the packages known to the VM
-            Map packages = buildLoadedPackages();
+            // check explicit imports first (performance optimization)
 
-            // handle package name
-            if (isLoadedPackage(packageName, packages)) {
-                packageAdded = addPackage(packageName, packageAdded);
+            // handle 'from java.net import URL' like explicit imports
+            List stringFromlist = getFromListAsStrings(fromlist);
+            Iterator fromlistIterator = stringFromlist.iterator();
+            while (fromlistIterator.hasNext()) {
+                String fromName = (String) fromlistIterator.next();
+                if (isJavaClass(packageName, fromName)) {
+                    packageAdded = addPackage(packageName, packageAdded);
+
+                }
             }
-            String parentPackageName = packageName;
-            int dotPos = 0;
-            String lastDottedName = null;
-            do {
-                dotPos = parentPackageName.lastIndexOf(".");
-                if (dotPos > 0) {
-                    parentPackageName = parentPackageName.substring(0, dotPos);
-                    if (isLoadedPackage(parentPackageName, packages)) {
-                        packageAdded = addPackage(parentPackageName, packageAdded);
-                    }
-                    // handle 'import java.net.URL' style explicit imports
-                    if (lastDottedName == null) {
-                        lastDottedName = packageName.substring(dotPos + 1);
-                        if (isJavaClass(parentPackageName, lastDottedName)) {
+
+            // handle 'import java.net.URL' style explicit imports
+            int dotPos = packageName.lastIndexOf(DOT);
+            if (dotPos > 0) {
+                String lastDottedName = packageName.substring(dotPos + 1);
+                String packageCand = packageName.substring(0, dotPos);
+                if (isJavaClass(packageCand, lastDottedName)) {
+                    packageAdded = addPackage(packageCand, packageAdded);
+                }
+            }
+
+            // if all else fails, check already loaded packages
+            if (!packageAdded) {
+                // build the actual map with the packages known to the VM
+                Map packages = buildLoadedPackages();
+
+                // add known packages
+                String parentPackageName = packageName;
+                if (isLoadedPackage(packageName, packages)) {
+                    packageAdded = addPackage(packageName, packageAdded);
+                }
+                dotPos = 0;
+                do {
+                    dotPos = parentPackageName.lastIndexOf(DOT);
+                    if (dotPos > 0) {
+                        parentPackageName = parentPackageName.substring(0, dotPos);
+                        if (isLoadedPackage(parentPackageName, packages)) {
                             packageAdded = addPackage(parentPackageName, packageAdded);
                         }
                     }
-                }
-            } while (dotPos > 0);
+                } while (dotPos > 0);
 
-            // handle fromlist
-            if (fromlist != null && fromlist != Py.EmptyTuple && fromlist instanceof PyTuple) {
-                Iterator iterator = ((PyTuple) fromlist).iterator();
-                while (iterator.hasNext()) {
-                    Object obj = iterator.next();
-                    if (obj instanceof String) {
-                        String fromName = (String) obj;
-                        if (!"*".equals(fromName)) {
-                            if (isJavaClass(packageName, fromName)) {
-                                packageAdded = addPackage(packageName, packageAdded);
-                            } else {
-                                // handle cases like: from java import math
-                                String fromPackageName = packageName + "." + fromName;
-                                if (isLoadedPackage(fromPackageName, packages)) {
-                                    packageAdded = addPackage(fromPackageName, packageAdded);
-                                }
-                            }
-                        }
+                // handle package imports like 'from java import math'
+                fromlistIterator = stringFromlist.iterator();
+                while (fromlistIterator.hasNext()) {
+                    String fromName = (String) fromlistIterator.next();
+                    String fromPackageName = packageName + DOT + fromName;
+                    if (isLoadedPackage(fromPackageName, packages)) {
+                        packageAdded = addPackage(fromPackageName, packageAdded);
                     }
                 }
             }
@@ -93,6 +103,32 @@ public class JavaImportHelper {
      */
     protected static boolean isLoadedPackage(String packageName) {
         return isLoadedPackage(packageName, buildLoadedPackages());
+    }
+
+    /**
+     * Convert the fromlist into a java.lang.String based list.
+     * <p>
+     * Do some sanity checks: filter out '*' and empty tuples, as well as non tuples.
+     * 
+     * @param fromlist
+     * @return a list containing java.lang.String entries
+     */
+    private static final List getFromListAsStrings(PyObject fromlist) {
+        List stringFromlist = new ArrayList();
+
+        if (fromlist != null && fromlist != Py.EmptyTuple && fromlist instanceof PyTuple) {
+            Iterator iterator = ((PyTuple) fromlist).iterator();
+            while (iterator.hasNext()) {
+                Object obj = iterator.next();
+                if (obj instanceof String) {
+                    String fromName = (String) obj;
+                    if (!"*".equals(fromName)) {
+                        stringFromlist.add(fromName);
+                    }
+                }
+            }
+        }
+        return stringFromlist;
     }
 
     /**
@@ -129,7 +165,7 @@ public class JavaImportHelper {
             packageMap.put(packageName, "");
             int dotPos = 0;
             do {
-                dotPos = packageName.lastIndexOf(".");
+                dotPos = packageName.lastIndexOf(DOT);
                 if (dotPos > 0) {
                     packageName = packageName.substring(0, dotPos);
                     packageMap.put(packageName, "");
@@ -176,7 +212,7 @@ public class JavaImportHelper {
                 PyJavaPackage p = PySystemState.add_package(packageName);
                 Py.getSystemState().modules.__setitem__(internedPackageName, p);
                 added = true;
-                dotPos = packageName.lastIndexOf(".");
+                dotPos = packageName.lastIndexOf(DOT);
                 if (dotPos > 0) {
                     packageName = packageName.substring(0, dotPos);
                 }
