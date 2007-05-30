@@ -489,11 +489,11 @@ public class PyExtendedCursor extends PyCursor {
 class ExtendedCursorFunc extends PyBuiltinMethodSet {
 
     ExtendedCursorFunc(String name, int index, int argcount, String doc) {
-        super(name, index, argcount, argcount, doc);
+        this(name, index, argcount, argcount, doc);
     }
 
     ExtendedCursorFunc(String name, int index, int minargs, int maxargs, String doc) {
-        super(name, index, minargs, maxargs, doc);
+        super(name, index, minargs, maxargs, doc, PyExtendedCursor.class);
     }
 
     public PyObject __call__() {

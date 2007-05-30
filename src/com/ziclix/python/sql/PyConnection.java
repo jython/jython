@@ -461,7 +461,7 @@ public class PyConnection extends PyObject implements ClassDictInit {
 
 class ConnectionFunc extends PyBuiltinMethodSet {
     ConnectionFunc(String name, int index, int minargs, int maxargs, String doc) {
-        super(name, index, minargs, maxargs, doc);
+        super(name, index, minargs, maxargs, doc, PyConnection.class);
     }
 
     public PyObject __call__() {

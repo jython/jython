@@ -875,10 +875,10 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 
 class CursorFunc extends PyBuiltinMethodSet {
   CursorFunc(String name, int index, int argcount, String doc) {
-    super(name, index, argcount, argcount, doc);
+    this(name, index, argcount, argcount, doc);
   }
   CursorFunc(String name, int index, int minargs, int maxargs, String doc) {
-    super(name, index, minargs, maxargs, doc);
+    super(name, index, minargs, maxargs, doc, PyCursor.class);
   }
 
   public PyObject __call__() {
