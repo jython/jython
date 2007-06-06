@@ -555,19 +555,15 @@ public class Module implements ClassConstants, CompilationContext
     }
 
     public void addMain() throws IOException {
-        Code c = classfile.addMethod("main", "(" + $str + ")V",
-                                     ClassFile.PUBLIC | ClassFile.STATIC);
-
-
-        int mref_self = c.pool.Fieldref(classfile.name,
-                                        "self",
-                                        "L"+classfile.name+";");
-        c.getstatic(mref_self);
+        Code c = classfile.addMethod("main", "(" + $strArr + ")V",
+                ClassFile.PUBLIC | ClassFile.STATIC);
+        c.new_(c.pool.Class(classfile.name));
+        c.dup();
+        c.ldc(classfile.name);
+        c.invokespecial(c.pool.Methodref(classfile.name, "<init>", "(" + $str + ")V"));
         c.aload(0);
-        c.invokestatic(c.pool.Methodref(
-            "org/python/core/Py",
-            "do_main",
-            "(" + $pyRunnable + $strArr + ")V"));
+        c.invokestatic(c.pool.Methodref("org/python/core/Py", "runMain", "("
+                + $pyRunnable + $strArr + ")V"));
         c.return_();
     }
 
@@ -632,7 +628,7 @@ public class Module implements ClassConstants, CompilationContext
     public void write(OutputStream stream) throws IOException {
         addInit();
         addRunnable();
-        //addMain();
+        addMain();
 
         addFunctions();
 

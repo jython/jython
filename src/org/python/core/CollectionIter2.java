@@ -2,7 +2,10 @@
 
 package org.python.core;
 
-import java.util.*;
+import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 
 class CollectionIter2 extends CollectionIter {
     CollectionIter2() throws Exception {
@@ -19,7 +22,18 @@ class CollectionIter2 extends CollectionIter {
         if (object instanceof Iterator) {
             return new IteratorIter(((Iterator) object));
         }
-
+        try {
+            // TODO - Once we depend on Java 5 we can replace this with a check
+            // for the Iterable interface
+            Method m = object.getClass().getMethod("iterator", new Class[0]);
+            if (Iterator.class.isAssignableFrom(m.getReturnType())) {
+                return new IteratorIter((Iterator) m.invoke(object,
+                        new Object[0]));
+            }
+        } catch (Exception e) {
+            // Looks like one of the many reflection based exceptions ocurred so
+            // we won't get an Iterator this way
+        }
         return null;
     }
 }

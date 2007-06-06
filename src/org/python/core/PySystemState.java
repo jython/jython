@@ -110,9 +110,9 @@ public class PySystemState extends PyObject
         exit(Py.None);
     }
 
-    public PyObject modules; // = new PyStringMap();
+    public PyObject modules;
     public PyList path;
-    public PyObject builtins;
+    public static PyObject builtins;
 
     public PyList meta_path;
     public PyList path_hooks;
@@ -279,8 +279,6 @@ public class PySystemState extends PyObject
         if(builtins == null){
         	builtins = new PyStringMap();
         	__builtin__.fillWithBuiltins(builtins);
-        }else{
-        	builtins = Py.defaultSystemState.builtins;
         }
         PyModule __builtin__ = new PyModule("__builtin__", builtins);
         modules.__setitem__("__builtin__", __builtin__);
@@ -477,7 +475,7 @@ public class PySystemState extends PyObject
 
         if (classLoader != null)
             Py.defaultSystemState.setClassLoader(classLoader);
-        Py.initClassExceptions(Py.defaultSystemState.builtins);
+        Py.initClassExceptions(PySystemState.builtins);
         // Make sure that Exception classes have been loaded
         new PySyntaxError("", 1,1,"", "");
     }

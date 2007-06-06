@@ -44,5 +44,5 @@ public class JLineConsole extends InteractiveConsole {
         return line.endsWith("\n") ? line.substring(0, line.length() - 1) : line;
     }
 
-    private ConsoleReader reader;
+    protected ConsoleReader reader;
 }

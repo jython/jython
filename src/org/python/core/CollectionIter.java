@@ -2,7 +2,9 @@
 
 package org.python.core;
 
-import java.util.*;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.Vector;
 
 class CollectionIter extends PyObject {
     PyObject findCollection(Object object) {

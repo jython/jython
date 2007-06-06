@@ -1054,7 +1054,6 @@ _failures = {
     test_cpickle
     test_descr
     test_descrtut
-    test_doctest2
     test_frozen
     test_marshal
     test_new
@@ -1066,7 +1065,6 @@ _failures = {
     test_threaded_import
     test_trace
     test_weakref
-    test_zlib
     ''',
 }
 
