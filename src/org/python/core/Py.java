@@ -14,6 +14,8 @@ import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 
 import org.python.compiler.Module;
+import org.python.core.adapter.ClassicPyObjectAdapter;
+import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.parser.ast.modType;
 
 public final class Py
@@ -1527,7 +1529,7 @@ public final class Py
     private static PyString[] letters=null;
 
 
-    static final PyString makeCharacter(Character o) {
+    public static final PyString makeCharacter(Character o) {
         return makeCharacter(o.charValue());
     }
 
@@ -1547,49 +1549,27 @@ public final class Py
         }
         return letters[c];
     }
-
-    // Needs rewriting for efficiency and extensibility
-    public static PyObject java2py(Object o) {
-        if (o instanceof PyObject)
-            return (PyObject)o;
-
-        if (o instanceof PyProxy)
-            return ((PyProxy)o)._getPyInstance();
-
-        if (o instanceof Number) {
-            if (o instanceof Double || o instanceof Float) {
-                return new PyFloat(((Number)o).doubleValue());
-            }
-            else if (o instanceof Long) {
-                return new PyLong(((Number)o).longValue());
-            }
-            else if (o instanceof Integer ||
-                     o instanceof Byte ||
-                     o instanceof Short)
-            {
-                return new PyInteger(((Number)o).intValue());
-            }
-        }
-        if (o instanceof Boolean) {
-            return ((Boolean)o).booleanValue() ? Py.True : Py.False;
-        }
-        if (o == null) return Py.None;
-        if (o instanceof String) return new PyString((String)o);
-        if (o instanceof Character) return makeCharacter((Character)o);
-        if (o instanceof Class) {
-            Class cls = (Class)o;
-            if (PyObject.class.isAssignableFrom(cls)) {
-                return PyType.fromClass(cls);
-            }
-            return PyJavaClass.lookup(cls);
-        } 
-
-        Class c = o.getClass();
-        if (c.isArray()) {
-            return new PyArray(c.getComponentType(), o);
-        }
-        return new PyJavaInstance(o);
+    
+    /**
+     * Uses the PyObjectAdapter passed to {@link PySystemState#initialize} to turn o into a PyObject.
+     * 
+     * @see ClassicPyObjectAdapter - default PyObjectAdapter type
+     */
+	public static PyObject java2py(Object o) {
+		return adapter.adapt(o);
+	}
+    
+    /**
+     * @return the ExtensiblePyObjectAdapter used by java2py.
+     */
+    public static ExtensiblePyObjectAdapter getAdapter(){
+        return adapter;
     }
+	
+	/**
+	 * Handles wrapping Java objects in PyObject to expose them to jython.
+	 */
+	protected static ExtensiblePyObjectAdapter adapter;
 
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc)

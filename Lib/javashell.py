@@ -138,7 +138,8 @@ def _getOsType( os=None ):
         
     _osTypeMap = (
         ( "nt", ( 'nt', 'Windows NT', 'Windows NT 4.0', 'WindowsNT',
-                  'Windows 2000', 'Windows 2003', 'Windows XP', 'Windows CE' )),
+                  'Windows 2000', 'Windows 2003', 'Windows XP', 'Windows CE',
+                  'Windows Vista' )),
         ( "dos", ( 'dos', 'Windows 95', 'Windows 98', 'Windows ME' )),
         ( "mac", ( 'mac', 'MacOS', 'Darwin' )),
         ( "None", ( 'None', )),
