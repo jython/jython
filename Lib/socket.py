@@ -1,4 +1,7 @@
-"""Preliminary socket module.
+"""
+This is an updated socket module for use on JVMs > 1.4; it is derived from the
+old jython socket module.
+The primary extra it provides is non-blocking support.
 
 XXX Restrictions:
 
@@ -6,28 +9,236 @@ XXX Restrictions:
 - No asynchronous behavior
 - No socket options
 - Can't do a very good gethostbyaddr() right...
-- 20050527: updated by Alan Kennedy to support socket timeouts.
+AMAK: 20050527: added socket timeouts
+AMAK: 20070515: Added non-blocking (asynchronous) support
+AMAK: 20070515: Added client-side SSL support
 """
 
+_defaulttimeout = None
+
+import threading
+import time
+import types
+import jarray
+import string
+import sys
+
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
 import java.io.InterruptedIOException
-import java.net.DatagramSocket
+import java.lang.Exception
+import java.lang.String
+import java.net.BindException
+import java.net.ConnectException
 import java.net.DatagramPacket
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
+import java.nio.ByteBuffer
+import java.nio.channels.DatagramChannel
+import java.nio.channels.IllegalBlockingModeException
+import java.nio.channels.ServerSocketChannel
+import java.nio.channels.SocketChannel
+import javax.net.ssl.SSLSocketFactory
 import org.python.core.PyFile
-import jarray
-import string
+
+# Some errno constants, until we establish a separate errno module.
+
+ERRNO_EACCESS      = 10035
+ERRNO_EWOULDBLOCK  = 10035
+ERRNO_EINPROGRESS  = 10036
+ERRNO_ECONNREFUSED = 10061
+
+class error(Exception): pass
+class herror(error): pass
+class gaierror(error): pass
+class timeout(error): pass
+
+ALL = None
+
+exception_map = {
+
+# (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
+
+(java.io.InterruptedIOException, ALL) : lambda exc: timeout('timed out'),
+(java.net.BindException, ALL) : lambda exc: error(ERRNO_EACCESS, 'Permission denied'),
+(java.net.ConnectException, ALL) : lambda exc: error( (ERRNO_ECONNREFUSED, 'Connection refused') ),
+(java.net.SocketTimeoutException, ALL) : lambda exc: timeout('timed out'),
+
+}
+
+def would_block_error(exc=None):
+    return error( (ERRNO_EWOULDBLOCK, 'The socket operation could not complete without blocking') )
+
+def map_exception(exc, circumstance=ALL):
+    try:
+#        print "Mapping exception: %s" % str(exc)
+        return exception_map[(exc.__class__, circumstance)](exc)
+    except KeyError:
+        return error('Unmapped java exception: %s' % exc.toString())
+
+exception_map.update({
+        (java.nio.channels.IllegalBlockingModeException, ALL) : would_block_error,
+    })
+
+MODE_BLOCKING    = 'block'
+MODE_NONBLOCKING = 'nonblock'
+MODE_TIMEOUT     = 'timeout'
+
+_permitted_modes = (MODE_BLOCKING, MODE_NONBLOCKING, MODE_TIMEOUT)
+
+class _nio_impl:
+
+    timeout = None
+    mode = MODE_BLOCKING
+
+    def read(self, buf):
+        bytebuf = java.nio.ByteBuffer.wrap(buf)
+        count = self.jchannel.read(bytebuf)
+        return count
+
+    def write(self, buf):
+        bytebuf = java.nio.ByteBuffer.wrap(buf)
+        count = self.jchannel.write(bytebuf)
+        return count
+
+    def _setreuseaddress(self, flag):
+        self.jsocket.setReuseAddress(flag)
+
+    def _getreuseaddress(self, flag):
+        return self.jsocket.getReuseAddress()
+
+    def getpeername(self):
+        return (self.jsocket.getInetAddress().getHostName(), self.jsocket.getPort() )
+
+    def config(self, mode, timeout):
+        self.mode = mode
+        if self.mode == MODE_BLOCKING:
+            self.jchannel.configureBlocking(1)
+        if self.mode == MODE_NONBLOCKING:
+            self.jchannel.configureBlocking(0)
+        if self.mode == MODE_TIMEOUT:
+            # self.channel.configureBlocking(0)
+            self.jsocket.setSoTimeout(int(timeout*1000))
+
+    def close1(self):
+        self.jsocket.close()
+
+    def close2(self):
+        self.jchannel.close()
+
+    def close3(self):
+        if not self.jsocket.isClosed():
+            self.jsocket.close()
+
+    def close4(self):
+        if not self.jsocket.isClosed():
+            if hasattr(self.jsocket, 'shutdownInput') and not self.jsocket.isInputShutdown():
+                self.jsocket.shutdownInput()
+            if hasattr(self.jsocket, 'shutdownOutput') and not self.jsocket.isOutputShutdown():
+                self.jsocket.shutdownOutput()
+            self.jsocket.close()
+
+    close = close1
+#    close = close2
+#    close = close3
+#    close = close4
+
+    def getchannel(self):
+        return self.jchannel
+
+    fileno = getchannel
+
+class _client_socket_impl(_nio_impl):
+
+    def __init__(self, socket=None):
+        if socket:
+            self.jchannel = socket.getChannel()
+            self.host = socket.getInetAddress().getHostName()
+            self.port = socket.getPort()
+        else:
+            self.jchannel = java.nio.channels.SocketChannel.open()
+            self.host = None
+            self.port = None
+        self.jsocket = self.jchannel.socket()
+
+    def bind(self, host, port):
+        self.jsocket.bind(java.net.InetSocketAddress(host, port))
+
+    def connect(self, host, port):
+        self.host = host
+        self.port = port
+        self.jchannel.connect(java.net.InetSocketAddress(self.host, self.port))
+
+    def finish_connect(self):
+        return self.jchannel.finishConnect()
+
+    def close(self):
+        _nio_impl.close(self)
+
+class _server_socket_impl(_nio_impl):
+
+    def __init__(self, host, port, backlog, reuse_addr):
+        self.jchannel = java.nio.channels.ServerSocketChannel.open()
+        self.jsocket = self.jchannel.socket()
+        if host:
+            bindaddr = java.net.InetSocketAddress(host, port)
+        else:
+            bindaddr = java.net.InetSocketAddress(port)
+        self._setreuseaddress(reuse_addr)
+        self.jsocket.bind(bindaddr, backlog)
+
+    def accept(self):
+        try:
+            if self.mode in (MODE_BLOCKING, MODE_NONBLOCKING):
+                new_cli_chan = self.jchannel.accept()
+                if new_cli_chan != None:
+                    return _client_socket_impl(new_cli_chan.socket())
+                else:
+                    return None
+            else:
+                # In timeout mode now
+                new_cli_sock = self.jsocket.accept()
+                return _client_socket_impl(new_cli_sock)
+        except java.lang.Exception, jlx:
+            raise map_exception(jlx)
+        
+    def close(self):
+        _nio_impl.close(self)
+
+class _datagram_socket_impl(_nio_impl):
+
+    def __init__(self, port=None, address=None, reuse_addr=0):
+        self.jchannel = java.nio.channels.DatagramChannel.open()
+        self.jsocket = self.jchannel.socket()
+        if port:
+            if address is not None:
+                local_address = java.net.InetSocketAddress(address, port)
+            else:
+                local_address = java.net.InetSocketAddress(port)
+            self.jsocket.bind(local_address)
+        self._setreuseaddress(reuse_addr)
+
+    def connect(self, host, port):
+        self.jchannel.connect(java.net.InetSocketAddress(host, port))
+
+    def finish_connect(self):
+        return self.jchannel.finishConnect()
+
+    def receive(self, packet):
+        self.jsocket.receive(packet)
+
+    def send(self, packet):
+        self.jsocket.send(packet)
 
 __all__ = [ 'AF_INET', 'SO_REUSEADDR', 'SOCK_DGRAM', 'SOCK_RAW',
-            'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
-            'SocketType', 'error', 'getfqdn', 'gethostbyaddr',
-            'gethostbyname', 'gethostname', 'socket', 'getaddrinfo']
-
-error = IOError
-class timeout(error): pass
+        'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
+        'SocketType', 'SocketTypes', 'error', 'herror', 'gaierror', 'timeout',
+        'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
+        'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
+        'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
+        ]
 
 AF_INET = 2
 
@@ -76,6 +287,19 @@ def gethostbyaddr(name):
     names, addrs = _gethostbyaddr(name)
     return (names[0], names, addrs)
 
+def getservbyname(servicename, protocolname=None):
+    # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4071389
+    # How complex is the structure of /etc/services?
+    raise NotImplementedError("getservbyname not yet supported on jython.")
+
+def getservbyport(port, protocolname=None):
+    # Same situation as above
+    raise NotImplementedError("getservbyport not yet supported on jython.")
+
+def getprotobyname(protocolname=None):
+    # Same situation as above
+    raise NotImplementedError("getprotobyname not yet supported on jython.")
+
 def socket(family = AF_INET, type = SOCK_STREAM, flags=0):
     assert family == AF_INET
     assert type in (SOCK_DGRAM, SOCK_STREAM)
@@ -87,155 +311,231 @@ def socket(family = AF_INET, type = SOCK_STREAM, flags=0):
 
 def getaddrinfo(host, port, family=0, socktype=SOCK_STREAM, proto=0, flags=0):
     return ( (AF_INET, socktype, 0, "", (gethostbyname(host), port)), )
-    
-_defaulttimeout = None
+
+has_ipv6 = 1
+
+def getnameinfo(sock_addr, flags):
+    raise NotImplementedError("getnameinfo not yet supported on jython.")
 
 def getdefaulttimeout():
     return _defaulttimeout
 
-def _get_timeout_value(value):
+def _calctimeoutvalue(value):
     if value is None:
         return None
     try:
-        floatval = float(value)
-    except ValueError:
-        raise TypeError('A float is required')    
-    if floatval < 0:
-        raise ValueError('Timeout value out of range')
-    if floatval < 0.001: # 1 millisecond
-        # java interprets a zero timeout as an infinite timeout
-        # python interprets a zero timeout as equivalent to non-blocking
-        # we cannot represent python semantics for a zero timeout on
-        # java (if we want it to work on pre 1.4 JVMs)
-        # so we use the shortest timeout possible, 1.1 millisecond
-        return 0.0011
-    return floatval
+        floatvalue = float(value)
+    except:
+        raise TypeError('Socket timeout value must be a number or None')
+    if floatvalue < 0:
+        raise ValueError("Socket timeout value cannot be negative")
+    if floatvalue < 0.000001:
+        return 0.0
+    return floatvalue
 
 def setdefaulttimeout(timeout):
+    global _defaulttimeout
     try:
-        global _defaulttimeout
-        _defaulttimeout = _get_timeout_value(timeout)
+        _defaulttimeout = _calctimeoutvalue(timeout)
     finally:
-        _tcpsocket.timeout = _defaulttimeout
-        
-class _tcpsocket:
+        _nonblocking_api_mixin.timeout = _defaulttimeout
 
-    sock = None
+def htons(x): return x
+def htonl(x): return x
+def ntohs(x): return x
+def ntohl(x): return x
+
+class _nonblocking_api_mixin:
+
+    timeout = _defaulttimeout
+    mode = MODE_BLOCKING
+
+    def gettimeout(self):
+        return self.timeout
+
+    def settimeout(self, timeout):
+        self.timeout = _calctimeoutvalue(timeout)
+        if self.timeout is None:
+            self.mode = MODE_BLOCKING
+        elif self.timeout < 0.000001:
+            self.mode = MODE_NONBLOCKING
+        else:
+            self.mode = MODE_TIMEOUT
+        self._config()
+
+    def setblocking(self, flag):
+        if flag:
+            self.mode = MODE_BLOCKING
+            self.timeout = None
+        else:
+            self.mode = MODE_NONBLOCKING
+            self.timeout = 0.0
+        self._config()
+
+    def _config(self):
+        assert self.mode in _permitted_modes
+        if self.sock_impl: self.sock_impl.config(self.mode, self.timeout)
+
+    def getchannel(self):
+        if not self.sock_impl:
+            return None
+        return self.sock_impl.getchannel()
+#        if hasattr(self.sock_impl, 'getchannel'):
+#            return self.sock_impl.getchannel()
+#        raise error('Operation not implemented on this JVM')            
+
+    fileno = getchannel
+
+    def _get_jsocket(self):
+        return self.sock_impl.jsocket
+
+def _unpack_address_tuple(address_tuple):
+    error_message = "Address must be a tuple of (hostname, port)"
+    if type(address_tuple) is not type( () ) \
+            or type(address_tuple[0]) is not type("") \
+            or type(address_tuple[1]) is not type(0):
+        raise TypeError(error_message)
+    return address_tuple[0], address_tuple[1]
+
+class _tcpsocket(_nonblocking_api_mixin):
+
+    sock_impl = None
     istream = None
     ostream = None
-    addr = None
+    local_addr = None
     server = 0
     file_count = 0
+    #reuse_addr = 1
     reuse_addr = 0
 
-    def __init__(self):
-        self.timeout = _defaulttimeout
-
-    def bind(self, addr, port=None):
-        if port is not None:
-            addr = (addr, port)
-        assert not self.sock
-        assert not self.addr
-        host, port = addr # format check
-        self.addr = addr
+    def bind(self, addr):
+        assert not self.sock_impl
+        assert not self.local_addr
+        # Do the address format check
+        host, port = _unpack_address_tuple(addr)
+        self.local_addr = addr
 
     def listen(self, backlog=50):
         "This signifies a server socket"
-        assert not self.sock
-        self.server = 1
-        if self.addr:
-            host, port = self.addr
-        else:
-            host, port = "", 0
-        if host:
-            a = java.net.InetAddress.getByName(host)
-            self.sock = java.net.ServerSocket(port, backlog, a)
-        else:
-            self.sock = java.net.ServerSocket(port, backlog)
-        if hasattr(self.sock, "setReuseAddress"):
-            self.sock.setReuseAddress(self.reuse_addr)
+        try:
+            assert not self.sock_impl
+            self.server = 1
+            if self.local_addr:
+                host, port = self.local_addr
+            else:
+                host, port = "", 0
+            self.sock_impl = _server_socket_impl(host, port, backlog, self.reuse_addr)
+            self._config()
+        except java.lang.Exception, jlx:
+            raise map_exception(jlx)
+
+#
+# The following has information on a java.lang.NullPointerException problem I'm having
+#
+# http://developer.java.sun.com/developer/bugParade/bugs/4801882.html
 
     def accept(self):
         "This signifies a server socket"
-        if not self.sock:
-            self.listen()
-        assert self.server
-        if self.timeout:
-            self.sock.setSoTimeout(int(self.timeout*1000))
         try:
-            sock = self.sock.accept()
-        except java.net.SocketTimeoutException, jnste:
-            raise timeout('timed out')
-        host = sock.getInetAddress().getHostName()
-        port = sock.getPort()
-        conn = _tcpsocket()
-        conn._setup(sock)
-        return conn, (host, port)
+            if not self.sock_impl:
+                self.listen()
+            assert self.server
+            new_sock = self.sock_impl.accept()
+            if not new_sock:
+                raise would_block_error()
+            cliconn = _tcpsocket()
+            cliconn._setup(new_sock)
+            return cliconn, new_sock.getpeername()
+        except java.lang.Exception, jlx:
+            raise map_exception(jlx)
 
-    def connect(self, addr, port=None):
-        "This signifies a client socket"
-        if port is not None:
-            addr = (addr, port)
-        assert not self.sock
-        host, port = addr
+    def _get_host_port(self, addr):
+        host, port = _unpack_address_tuple(addr)
         if host == "":
             host = java.net.InetAddress.getLocalHost()
+        return host, port
+
+    def _do_connect(self, addr):
         try:
-            cli_sock = java.net.Socket()
-            addr = java.net.InetSocketAddress(host, port)
-            if self.timeout:
-                cli_sock.connect(addr, int(self.timeout*1000))
-            else:
-                cli_sock.connect(addr)
-            self._setup(cli_sock)
-        except java.net.SocketTimeoutException, jnste:
-            raise timeout('timed out')
+            assert not self.sock_impl
+            host, port = self._get_host_port(addr)
+            self.sock_impl = _client_socket_impl()
+            if self.local_addr: # Has the socket been bound to a local address?
+                bind_host, bind_port = self.local_addr
+                self.sock_impl.bind(bind_host, bind_port)
+            self._config() # Configure timeouts, etc, now that the socket exists
+            self.sock_impl.connect(host, port)
+            self._setup(self.sock_impl)
+        except java.lang.Exception, jlx:
+            raise map_exception(jlx)
+
+    def connect(self, addr):
+        "This signifies a client socket"
+        self._do_connect(addr)
+        self._setup(self.sock_impl)
+
+    def connect_ex(self, addr):
+        "This signifies a client socket"
+        self._do_connect(addr)
+        if self.sock_impl.finish_connect():
+            self._setup(self.sock_impl)
+            return 0
+        return ERRNO_EINPROGRESS
 
     def _setup(self, sock):
-        self.sock = sock
-        if hasattr(self.sock, "setReuseAddress"):
-            self.sock.setReuseAddress(self.reuse_addr)
-        self.istream = sock.getInputStream()
-        self.ostream = sock.getOutputStream()
+        self.sock_impl = sock
+        self.sock_impl._setreuseaddress(self.reuse_addr)
+        if self.mode != MODE_NONBLOCKING:
+            self.istream = self.sock_impl.jsocket.getInputStream()
+            self.ostream = self.sock_impl.jsocket.getOutputStream()
 
     def recv(self, n):
-        assert self.sock
-        data = jarray.zeros(n, 'b')
         try:
-            m = self.istream.read(data)
-        except java.io.InterruptedIOException , jiiie:
-            raise timeout('timed out')
-        if m <= 0:
-            return ""
-        if m < n:
-            data = data[:m]
-        return data.tostring()
+            if not self.sock_impl: raise error('Socket not open')
+            if self.sock_impl.jchannel.isConnectionPending():
+                self.sock_impl.jchannel.finishConnect()
+            data = jarray.zeros(n, 'b')
+            m = self.sock_impl.read(data)
+            if m <= 0:
+                if self.mode == MODE_NONBLOCKING:
+                    raise would_block_error()
+                return ""
+            if m < n:
+                data = data[:m]
+            return data.tostring()
+        except java.lang.Exception, jlx:
+            raise map_exception(jlx)
+
+    def recvfrom(self, n):
+        return self.recv(n), None
 
     def send(self, s):
-        assert self.sock
-        n = len(s)
-        self.ostream.write(s)
-        return n
+        if not self.sock_impl: raise error('Socket not open')
+        if self.sock_impl.jchannel.isConnectionPending():
+            self.sock_impl.jchannel.finishConnect()
+        #n = len(s)
+        numwritten = self.sock_impl.write(s)
+        return numwritten
 
     sendall = send
 
     def getsockname(self):
-        if not self.sock:
-            host, port = self.addr or ("", 0)
+        if not self.sock_impl:
+            host, port = self.local_addr or ("", 0)
             host = java.net.InetAddress.getByName(host).getHostAddress()
         else:
             if self.server:
-                host = self.sock.getInetAddress().getHostAddress()
+                host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
             else:
-                host = self.sock.getLocalAddress().getHostAddress()
-            port = self.sock.getLocalPort()
+                host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
+            port = self.sock_impl.jsocket.getLocalPort()
         return (host, port)
 
     def getpeername(self):
-        assert self.sock
+        assert self.sock_impl
         assert not self.server
-        host = self.sock.getInetAddress().getHostAddress()
-        port = self.sock.getPort()
+        host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
+        port = self.sock_impl.jsocket.getPort()
         return (host, port)
         
     def setsockopt(self, level, optname, value):
@@ -264,7 +564,7 @@ class _tcpsocket:
     class FileWrapper:
         def __init__(self, socket, file):
             self.socket = socket
-            self.sock = socket.sock
+            self.sock = socket.sock_impl
             self.istream = socket.istream
             self.ostream = socket.ostream
 
@@ -277,6 +577,7 @@ class _tcpsocket:
             self.flush      = file.flush
             self.seek       = file.seek
             self.tell       = file.tell
+            self.closed     = file.closed
 
             self.socket.file_count += 1
 
@@ -287,8 +588,9 @@ class _tcpsocket:
 
             self.socket.file_count -= 1
             self.file.close()
+            self.closed = self.file.closed
 
-            if self.socket.file_count == 0 and self.socket.sock == 0:
+            if self.socket.file_count == 0 and self.socket.sock_impl == 0:
                 # This is the last file Only close the socket and streams 
                 # if there are no outstanding files left.
                 if self.sock:
@@ -300,19 +602,19 @@ class _tcpsocket:
 
     def shutdown(self, how):
         assert how in (0, 1, 2)
-        assert self.sock
+        assert self.sock_impl
         if how in (0, 2):
             self.istream = None
         if how in (1, 2):
             self.ostream = None
 
     def close(self):
-        if not self.sock:
+        if not self.sock_impl:
             return
-        sock = self.sock
+        sock = self.sock_impl
         istream = self.istream
         ostream = self.ostream
-        self.sock = 0
+        self.sock_impl = 0
         self.istream = 0
         self.ostream = 0
         # Only close the socket and streams if there are no 
@@ -325,49 +627,54 @@ class _tcpsocket:
             if sock:
                 sock.close()
 
-    def gettimeout(self):
-        return self.timeout
-
-    def settimeout(self, timeout):
-        self.timeout = _get_timeout_value(timeout)
-        if self.timeout and self.sock:
-            self.sock.setSoTimeout(int(self.timeout*1000))
-
-class _udpsocket:
+class _udpsocket(_nonblocking_api_mixin):
 
     def __init__(self):
-        self.sock = None
+        self.sock_impl = None
         self.addr = None
+        self.reuse_addr = 0
 
-    def bind(self, addr, port=None):
-        if port is not None:
-            addr = (addr, port)
-        assert not self.sock
-        host, port = addr
-        if host == "":
-            self.sock = java.net.DatagramSocket(port)
-        else:
-            a = java.net.InetAddress.getByName(host)
-            self.sock = java.net.DatagramSocket(port, a)
+    def bind(self, addr):
+        assert not self.sock_impl
+        host, port = _unpack_address_tuple(addr)
+        host_address = java.net.InetAddress.getByName(host)
+        self.sock_impl = _datagram_socket_impl(port, host_address, reuse_addr = self.reuse_addr)
+        self._config()
 
-    def connect(self, addr, port=None):
-        if port is not None:
-            addr = (addr, port)
-        host, port = addr # format check
+    def connect(self, addr):
+        host, port = _unpack_address_tuple(addr)
         assert not self.addr
-        if not self.sock:
-            self.sock = java.net.DatagramSocket()
+        if not self.sock_impl:
+            self.sock_impl = _datagram_socket_impl()
+            self._config()
+            self.sock_impl.connect(host, port)
         self.addr = addr # convert host to InetAddress instance?
 
-    def sendto(self, data, addr):
+    def connect_ex(self, addr):
+        host, port = _unpack_address_tuple(addr)
+        assert not self.addr
+        self.addr = addr
+        if not self.sock_impl:
+            self.sock_impl = _datagram_socket_impl()
+            self._config()
+            self.sock_impl.connect(host, port)
+            if self.sock_impl.finish_connect():
+                return 0
+            return ERRNO_EINPROGRESS
+
+    def sendto(self, data, p1, p2=None):
+        if not p2:
+            flags, addr = 0, p1
+        else:
+            flags, addr = 0, p2
         n = len(data)
-        if not self.sock:
-            self.sock = java.net.DatagramSocket()
+        if not self.sock_impl:
+            self.sock_impl = _datagram_socket_impl()
         host, port = addr
-        bytes = jarray.array(map(ord, data), 'b')
+        bytes = java.lang.String(data).getBytes('iso-8859-1')
         a = java.net.InetAddress.getByName(host)
         packet = java.net.DatagramPacket(bytes, n, a, port)
-        self.sock.send(packet)
+        self.sock_impl.send(packet)
         return n
 
     def send(self, data):
@@ -375,50 +682,116 @@ class _udpsocket:
         return self.sendto(data, self.addr)
 
     def recvfrom(self, n):
-        assert self.sock
-        bytes = jarray.zeros(n, 'b')
-        packet = java.net.DatagramPacket(bytes, n)
-        self.sock.receive(packet)
-        host = packet.getAddress().getHostName()
-        port = packet.getPort()
-        m = packet.getLength()
-        if m < n:
-            bytes = bytes[:m]
-        return bytes.tostring(), (host, port)
+        try:
+            assert self.sock_impl
+            bytes = jarray.zeros(n, 'b')
+            packet = java.net.DatagramPacket(bytes, n)
+            self.sock_impl.receive(packet)
+            host = None
+            if packet.getAddress():
+                host = packet.getAddress().getHostName()
+            port = packet.getPort()
+            m = packet.getLength()
+            if m < n:
+                bytes = bytes[:m]
+            return bytes.tostring(), (host, port)
+        except java.lang.Exception, jlx:
+            raise map_exception(jlx)
 
     def recv(self, n):
-        assert self.sock
-        bytes = jarray.zeros(n, 'b')
-        packet = java.net.DatagramPacket(bytes, n)
-        self.sock.receive(packet)
-        m = packet.getLength()
-        if m < n:
-            bytes = bytes[:m]
-        return bytes.tostring()
+        try:
+            assert self.sock_impl
+            bytes = jarray.zeros(n, 'b')
+            packet = java.net.DatagramPacket(bytes, n)
+            self.sock_impl.receive(packet)
+            m = packet.getLength()
+            if m < n:
+                bytes = bytes[:m]
+            return bytes.tostring()
+        except java.lang.Exception, jlx:
+            raise map_exception(jlx)
 
     def getsockname(self):
-        assert self.sock
-        host = self.sock.getLocalAddress().getHostName()
-        port = self.sock.getLocalPort()
+        assert self.sock_impl
+        host = self.sock_impl.jsocket.getLocalAddress().getHostName()
+        port = self.sock_impl.jsocket.getLocalPort()
         return (host, port)
 
     def getpeername(self):
         assert self.sock
-        host = self.sock.getInetAddress().getHostName()
-        port = self.sock.getPort()
+        host = self.sock_impl.jsocket.getInetAddress().getHostName()
+        port = self.sock_impl.jsocket.getPort()
         return (host, port)
 
     def __del__(self):
         self.close()
 
     def close(self):
-        if not self.sock:
+        if not self.sock_impl:
             return
-        sock = self.sock
-        self.sock = 0
+        sock = self.sock_impl
+        self.sock_impl = None
         sock.close()
 
+    def setsockopt(self, level, optname, value):
+        if optname == SO_REUSEADDR:
+            self.reuse_addr = value
+#            self.sock._setreuseaddress(value)
+
+    def getsockopt(self, level, optname):
+        if optname == SO_REUSEADDR:
+            return self.sock_impl._getreuseaddress()
+        else:
+            return None
+
 SocketType = _tcpsocket
+SocketTypes = [_tcpsocket, _udpsocket]
+
+# Define the SSL support
+
+class ssl:
+
+    def __init__(self, plain_sock, keyfile=None, certfile=None):
+        self.ssl_sock = self.make_ssl_socket(plain_sock)
+
+    def make_ssl_socket(self, plain_socket, auto_close=0):
+        java_net_socket = plain_socket._get_jsocket()
+        assert isinstance(java_net_socket, java.net.Socket)
+        host = java_net_socket.getInetAddress().getHostName()
+        port = java_net_socket.getPort()
+        factory = javax.net.ssl.SSLSocketFactory.getDefault();
+        ssl_socket = factory.createSocket(java_net_socket, host, port, auto_close)
+        ssl_socket.setEnabledCipherSuites(ssl_socket.getSupportedCipherSuites())
+        ssl_socket.startHandshake()
+        return ssl_socket
+
+    def read(self, n=4096):
+        # Probably needs some work on efficency
+        in_buf = java.io.BufferedInputStream(self.ssl_sock.getInputStream())
+        data = jarray.zeros(n, 'b')
+        m = in_buf.read(data, 0, n)
+        if m <= 0:
+            return ""
+        if m < n:
+            data = data[:m]
+        return data.tostring()
+
+    def write(self, s):
+        # Probably needs some work on efficency
+        out = java.io.BufferedOutputStream(self.ssl_sock.getOutputStream())
+        out.write(s)
+        out.flush()
+
+    def _get_server_cert(self):
+        return self.ssl_sock.getSession().getPeerCertificates()[0]
+
+    def server(self):
+        cert = self._get_server_cert()
+        return cert.getSubjectDN().toString()
+
+    def issuer(self):
+        cert = self._get_server_cert()
+        return cert.getIssuerDN().toString()
 
 def test():
     s = socket(AF_INET, SOCK_STREAM)
