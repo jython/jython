@@ -43,12 +43,18 @@ import java.nio.channels.SocketChannel
 import javax.net.ssl.SSLSocketFactory
 import org.python.core.PyFile
 
-# Some errno constants, until we establish a separate errno module.
-
-ERRNO_EACCESS      = 10035
-ERRNO_EWOULDBLOCK  = 10035
-ERRNO_EINPROGRESS  = 10036
-ERRNO_ECONNREFUSED = 10061
+try:
+    import errno
+    ERRNO_EWOULDBLOCK  = errno.EWOULDBLOCK
+    ERRNO_EACCES       = errno.EACCES
+    ERRNO_ECONNREFUSED = errno.ECONNREFUSED
+    ERRNO_EINPROGRESS  = errno.EINPROGRESS
+except ImportError:
+    # Support jython 2.1
+    ERRNO_EWOULDBLOCK  = 11
+    ERRNO_EACCES       = 13
+    ERRNO_ECONNREFUSED = 111
+    ERRNO_EINPROGRESS  = 115
 
 class error(Exception): pass
 class herror(error): pass
@@ -62,7 +68,7 @@ exception_map = {
 # (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
 
 (java.io.InterruptedIOException, ALL) : lambda exc: timeout('timed out'),
-(java.net.BindException, ALL) : lambda exc: error(ERRNO_EACCESS, 'Permission denied'),
+(java.net.BindException, ALL) : lambda exc: error(ERRNO_EACCES, 'Permission denied'),
 (java.net.ConnectException, ALL) : lambda exc: error( (ERRNO_ECONNREFUSED, 'Connection refused') ),
 (java.net.SocketTimeoutException, ALL) : lambda exc: timeout('timed out'),
 
