@@ -160,7 +160,7 @@ def getOptions():
             options.ignorewarning = 1
 
     if not options.ignorewarning:
-        print '''Warning: jythonc is unmaintained and will not be included in Jython-2.3.  See http://jython.org/Projects/jythonc.html for alternatives to jythonc.  Add '-i' to your invocation of jythonc to turn off this warning''' 
+        print '''Warning: jythonc is unmaintained and will not be included in Jython-2.3.  See http://jython.org/Project/jythonc.html for alternatives to jythonc.  Add '-i' to your invocation of jythonc to turn off this warning''' 
     # there should be at least one module to compile
     if not args:
         usage(0, 'nothing to compile')
