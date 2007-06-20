@@ -7,8 +7,22 @@ public class PyBuiltinMethodSet extends PyBuiltinFunctionSet implements
                               int index,
                               int minargs,
                               int maxargs,
-                              String doc) {
+                              String doc,
+                              Class type) {
         super(name, index, minargs, maxargs, doc);
+        this.type = type;
+    }
+
+    public PyObject __get__(PyObject obj, PyObject type) {
+        if(obj != null) {
+            if(this.type.isAssignableFrom(obj.getClass())) {
+                return bind(obj);
+            } else {
+                throw Py.TypeError("descriptor '" + info.getName() + "' for '" + PyType.fromClass(this.type)
+                        + "' objects doesn't apply to '" + obj.getType() + "' object");
+            }
+        }
+        return this;
     }
 
     public PyBuiltinFunction bind(PyObject bindTo) {
@@ -34,5 +48,7 @@ public class PyBuiltinMethodSet extends PyBuiltinFunctionSet implements
         return "<built-in method "+info.getName()+">";
     }
 
+    private Class type;
+    
     protected PyObject __self__ = Py.None;
 }

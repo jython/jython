@@ -75,8 +75,14 @@ public class TreeBuilder implements PythonGrammarTreeConstants {
         new SimpleNode[PythonGrammarTreeConstants.jjtNodeName.length];
 
     public SimpleNode openNode(int id) {
-        if (nodes[id] == null)
+        if (nodes[id] == null) {
+            if (id == JJTNAME || id == JJTSTRING || id == JJTNUM) {
+                // Names, strings and numbers are stored in the image field of
+                // their Node, so don't statically share nodes of those types.
+                return new IdentityNode(id);
+            }
             nodes[id] = new IdentityNode(id);
+        }
         return nodes[id];
     }
 

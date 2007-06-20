@@ -9,6 +9,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 
 /**
@@ -20,7 +21,6 @@ import java.lang.reflect.Array;
  * See also the jarray module.
  */
 public class PyArray extends PySequence implements Cloneable {
-
     //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
@@ -1806,6 +1806,12 @@ public class PyArray extends PySequence implements Cloneable {
         } catch(IOException e) {
             throw Py.IOError(e);
         }
-        return new String(bos.toByteArray());
+        try {
+            // The returned string is used as a Python str with values
+            // from 0-255.  iso-8859-1 maps the byte values into that range.
+            return new String(bos.toByteArray(), "iso-8859-1");
+        } catch (UnsupportedEncodingException e) {
+            throw Py.JavaError(e);
+        }
     }
 }

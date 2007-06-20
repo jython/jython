@@ -11,9 +11,9 @@ if not "true" == sys.registry.getProperty(skipName):
 # this fixes bug [ 1194650 ]
 import getopt
 
-# an early java import
+# an early java import # (only works since java.util is an already loaded package)
 from java import util
-util # used give a NameError
+util # used to give a NameError
 
 # import java specific py modules
 import os
@@ -21,12 +21,14 @@ import javaos
 
 # now do some java imports which previously failed without a package scan
 # this (most of the time) solves the famous 'no module named java' problem
-import java
-import java.lang
-from java import util
+import java            # (only works since java is an already loaded package)
+import java.lang       # (only works since java.lang is an already loaded package)
+
+# explicit imports
 from java.math import BigDecimal
 from java.math import BigDecimal, BigInteger
 from java.lang.reflect import Method
+
 # verify the self healing
 try:
   # assume package javax.imageio.event was never touched before
@@ -35,6 +37,14 @@ try:
 except ImportError:
   pass
 from javax.imageio.event import IIOReadProgressListener
+
 # importing this twice was a problem
 from org.python.core import PySystemState
 from org.python.core import PySystemState
+
+# verify explicit imports of the form 'import java.net.URL'
+import javax.security.auth.Policy
+javax
+javax.security
+javax.security.auth
+javax.security.auth.Policy

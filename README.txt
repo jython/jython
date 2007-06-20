@@ -1,27 +1,28 @@
-Welcome to Jython 2.2a1
+Welcome to Jython 2.2b2
 =======================
 
-This release includes many major changes since the last full release:
-
+This is the second beta release towards the 2.2 version of Jython. It
+contains all of the new features for the 2.2 release:
  - new-style classes
- - Java Collections integration
- - PEP 302 implementation
+ - Java List integration
+ - a PEP 302 implementation
  - iterators
  - generators
  - __future__ division
- - support for running on JDK1.5
- - new installer
- - a significant number of features to bring Jython in line with CPython
- - many, many bugfixes
+ - support for running on modern JVMs
+ - a new installer
 
-It was compiled a OS X with JDK1.4 but should run on JDK 1.2 +.
+In addition to these major features, many bugs have been fixed from 2.2b1.  See
+the NEWS file for a more complete list of changes.
 
-The full set of changes are too numerous to list in detail.  Please consult
-the sourceforge tracker for all closed issues since the last release.
+The release was compiled on Windows XP with JDK 6 but it should run on
+1.4.2+.
 
-Please email jython-dev@lists.sourceforge.net with questions.
+This release exists to solicit feedback about any bugs or missing
+features; if you can provide it, it is greatly appreciated.  Bug
+reports can be created at http://jython.org/bugs whereas more general
+questions can be sent to the Jython-dev mailing list,
+jython-dev@lists.sourceforge.net.
 
-thanks,
-
-The Jython Development Team
-
+The current plan calls for a release candiate in a few weeks, and if it proves
+stable, the final release of 2.2 a few weeks after that.

@@ -4,7 +4,11 @@
 
 where options include:
 
-  --package package
+  --ignore-warning
+  -i
+      silence the jythonc deprecation warning
+
+   --package package
   -p package
       put all compiled code into the named Java package
 
@@ -94,6 +98,7 @@ def getOptions():
         compiler = None
         jopts = None
         addpackages = ''
+        ignorewarning = 0
         
     options = Opts()
 
@@ -114,8 +119,8 @@ def getOptions():
 
     try:
         opts, args = getopt.getopt(
-            sysargs, 'p:j:dcab:A:w:s:C:f:J:h',
-            ['package=', 'jar=', 'deep', 'core', 'all', 'bean=',
+            sysargs, 'ip:j:dcab:A:w:s:C:f:J:h',
+            ['ignore-warning', 'package=', 'jar=', 'deep', 'core', 'all', 'bean=',
              'addpackages=', 'workdir=', 'skip=', 'compiler=',
              'falsenames=', 'compileropts=', 'help'])
     except getopt.error, msg:
@@ -151,7 +156,11 @@ def getOptions():
             options.jopts = arg.split()
         elif opt in ('-f', '--falsenames'):
             options.falsenames = arg.split(',')
+        elif opt in ('-i', '--ignore-warning'):
+            options.ignorewarning = 1
 
+    if not options.ignorewarning:
+        print '''Warning: jythonc is unmaintained and will not be included in Jython-2.3.  See http://jython.org/Project/jythonc.html for alternatives to jythonc.  Add '-i' to your invocation of jythonc to turn off this warning''' 
     # there should be at least one module to compile
     if not args:
         usage(0, 'nothing to compile')
@@ -171,10 +180,11 @@ def addCore(extraPackages):
                  #'org.python.core.BytecodeLoader',
                 ]
     extraPackages.append(('org.python.core', skiplist))
+    extraPackages.append(('org.python.core.adapter', []))
 
 
 def addAll(extraPackages):
-    for name in ('core', 'compiler', 'parser'):
+    for name in ('core', 'core.adapter', 'compiler', 'parser'):
         extraPackages.append(('org.python.'+name, []))
                 
                       

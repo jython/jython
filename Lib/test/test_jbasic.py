@@ -60,10 +60,10 @@ assert s.regionMatches(1, 'ell', 0, 3), 'method call no boolean'
 assert s.regionMatches(1, 1, 'eLl', 0, 3), 'method call ignore case'
 assert not s.regionMatches(1, 'eLl', 0, 3), 'should ignore case'
 
-from java import awt
+from java.awt import Dimension
 
 print_test('get/set fields')
-d = awt.Dimension(3,9)
+d = Dimension(3,9)
 assert d.width == 3 and d.height == 9, 'getting fields'
 d.width = 42
 assert d.width == 42 and d.height == 9, 'setting fields'
@@ -91,7 +91,9 @@ def testAction(event):
 	global flag
 	flag = flag + 1
 
-doit = awt.event.ActionEvent(b1, awt.event.ActionEvent.ACTION_PERFORMED, "")
+from java.awt.event import ActionEvent
+
+doit = ActionEvent(b1, ActionEvent.ACTION_PERFORMED, "")
 
 b1.actionPerformed = testAction
 flag = 0

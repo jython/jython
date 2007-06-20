@@ -123,7 +123,7 @@ def compileJPythonc(*files, **kw):
   if os.path.isdir("jpywork") and not kw.has_key("keep"):
      shutil.rmtree("jpywork", 1) 
 
-  cmd = ""
+  cmd = "-i "
   if kw.has_key("core"):
     cmd = cmd + "--core "
   if kw.has_key("deep"):

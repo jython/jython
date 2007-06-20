@@ -2884,6 +2884,11 @@ public class PyString extends PyBaseString implements ClassDictInit
         if (s != null)
             sval = s.toString();
         try {
+            // Double.valueOf allows format specifier ("d" or "f") at the end
+            String lowSval = sval.toLowerCase();
+            if (lowSval.endsWith("d") || lowSval.endsWith("f")) {
+                throw new NumberFormatException("format specifiers not allowed");
+            }
             return Double.valueOf(sval).doubleValue();
         }
         catch (NumberFormatException exc) {

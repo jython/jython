@@ -22,8 +22,11 @@ child processes to terminate.
 
 import jarray
 from java.lang import System
-from java.util import *
-from java.io import *
+from java.util import Vector
+from java.io import BufferedOutputStream
+from java.io import BufferedInputStream
+from java.io import PipedOutputStream
+from java.io import PipedInputStream
 from org.python.core import PyFile
 from javashell import shellexecute
 

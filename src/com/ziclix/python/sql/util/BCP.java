@@ -212,11 +212,11 @@ public class BCP extends PyObject implements ClassDictInit {
 class BCPFunc extends PyBuiltinMethodSet {
 
     BCPFunc(String name, int index, int argcount, String doc) {
-        super(name, index, argcount, argcount, doc);
+        this(name, index, argcount, argcount, doc);
     }
 
     BCPFunc(String name, int index, int minargs, int maxargs, String doc) {
-        super(name, index, minargs, maxargs, doc);
+        super(name, index, minargs, maxargs, doc, BCP.class);
     }
 
     /**

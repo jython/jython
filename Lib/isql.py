@@ -28,7 +28,7 @@ class Prompt:
 		return prompt
 	if os.name == 'java':
 		def __tojava__(self, cls):
-			import java
+			import java.lang.String
 			if cls == java.lang.String:
 				return self.__str__()
 			return False

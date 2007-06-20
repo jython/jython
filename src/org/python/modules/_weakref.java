@@ -121,15 +121,36 @@ public class _weakref implements ClassDictInit {
     public static class GlobalRef extends WeakReference {
         private Vector references = new Vector();
         private int hash;
-
+        private boolean realHash; // If the hash value was calculated by the underlying object
+        
         public GlobalRef(PyObject object) {
             super(object);
-            hash = object.hashCode();
+            calcHash(object);
         }
 
         public GlobalRef(PyObject object, ReferenceQueue queue) {
             super(object, queue);
-            hash = object.hashCode();
+            calcHash(object);
+        }
+        
+        /**
+         * Calculate a hash code to use for this object.  If the PyObject we're
+         * referencing implements hashCode, we use that value.  If not, we use
+         * System.identityHashCode(refedObject).  This allows this object to be 
+         * used in a Map while allowing Python ref objects to tell if the 
+         * hashCode is actually valid for the object.
+         */
+        private void calcHash (PyObject object) {
+            try {
+                hash = object.hashCode();
+                realHash = true;
+            } catch (PyException e) {
+                if (Py.matchException(e, Py.TypeError)) {
+                    hash = System.identityHashCode(object);
+                } else {
+                    throw e;
+                }
+            }
         }
 
         public synchronized void add(AbstractReference ref) {
@@ -149,9 +170,9 @@ public class _weakref implements ClassDictInit {
         synchronized AbstractReference find(Class cls) {
             for (int i = references.size() - 1; i >= 0; i--) {
                 AbstractReference r = getReferenceAt(i);
-                if (r == null)
+                if (r == null) {
                     references.removeElementAt(i);
-                else if (r.callback == null && r.getClass() == cls) {
+                } else if (r.callback == null && r.getClass() == cls) {
                     return r;
                 }
             }
@@ -245,7 +266,10 @@ public class _weakref implements ClassDictInit {
         }
 
         public int hashCode() {
-            return gref.hash;
+            if (gref.realHash) {
+                return gref.hash;
+            }
+            throw Py.TypeError("unhashable instance");
         }
 
         public PyObject __eq__(PyObject other) {
