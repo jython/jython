@@ -47,13 +47,13 @@ public class PySystemState extends PyObject
      * <p>
      * This also applies for the <code>PY_*</code> integer values below
      */
-    public static String version = "2.2b2";
+    public static String version = "2.2rc1";
 
     private static int PY_MAJOR_VERSION = 2;
     private static int PY_MINOR_VERSION = 2;
     private static int PY_MICRO_VERSION = 0;
-    private static int PY_RELEASE_LEVEL = 0x0B;
-    private static int PY_RELEASE_SERIAL = 2;
+    private static int PY_RELEASE_LEVEL = 0x0C;
+    private static int PY_RELEASE_SERIAL = 1;
 
     public static int hexversion = ((PY_MAJOR_VERSION << 24) |
                                     (PY_MINOR_VERSION << 16) |
