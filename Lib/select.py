@@ -9,6 +9,14 @@ from java.nio.channels.SelectionKey import OP_ACCEPT, OP_CONNECT, OP_WRITE, OP_R
 
 import socket
 
+try:
+    import errno
+    ERRNO_EINVAL      = errno.EINVAL
+    ERRNO_ENOTSOCK    = errno.ENOTSOCK
+except ImportError:
+    ERRNO_EINVAL      = 22
+    ERRNO_ENOTSOCK    = 88
+
 class error(Exception): pass
 
 POLLIN   = 1
@@ -37,7 +45,7 @@ class poll:
                     return socket_object.getchannel()
                 except:
                     return None
-        raise error("Object '%s' is not watchable" % socket_object, 10038)
+        raise error("Object '%s' is not watchable" % socket_object, ERRNO_ENOTSOCK)
 
     def _register_channel(self, socket_object, channel, mask):
         jmask = 0
@@ -78,14 +86,19 @@ class poll:
         self.chanmap[channel][1].cancel()
         del self.chanmap[channel]
 
-    def _dopoll(self, timeout=None):
+    def _dopoll(self, timeout):
         if timeout is None or timeout < 0:
             self.selector.select()
-        elif timeout == 0:
-            self.selector.selectNow()
         else:
-            # No multiplication required: both cpython and java use millisecond timeouts
-            self.selector.select(timeout)
+            try:
+                timeout = int(timeout)
+                if timeout == 0:
+                    self.selector.selectNow()
+                else:
+                    # No multiplication required: both cpython and java use millisecond timeouts
+                    self.selector.select(timeout)
+            except ValueError, vx:
+                raise error("poll timeout must be a number of milliseconds or None", ERRNO_EINVAL)
         # The returned selectedKeys cannot be used from multiple threads!
         return self.selector.selectedKeys()
 
@@ -117,7 +130,7 @@ def _calcselecttimeoutvalue(value):
     except Exception, x:
         raise TypeError("Select timeout value must be a number or None")
     if value < 0:
-        raise error("Select timeout value cannot be negative", 10022)
+        raise error("Select timeout value cannot be negative", ERRNO_EINVAL)
     if floatvalue < 0.000001:
         return 0
     return int(floatvalue * 1000) # Convert to milliseconds

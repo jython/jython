@@ -116,45 +116,11 @@ class TestSelectClientSocket(unittest.TestCase):
                 self.failIf(s in rfd)
                 self.failIf(s in wfd)
 
-def check_server_running_on_localhost_port(port_number):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.connect( ('localhost', port_number) )
-        s.close()
-    except:
-        return 0
-    return 1
-
 class TestPollClientSocket(unittest.TestCase):
 
     def testEventConstants(self):
         for event_name in ['IN', 'OUT', 'PRI', 'ERR', 'HUP', 'NVAL', ]:
             self.failUnless(hasattr(select, 'POLL%s' % event_name))
-
-    def testSocketRegisteredBeforeConnected(self):
-        # You MUST be running a server on port 80 for this one to work
-        if not check_server_running_on_localhost_port(80):
-            print "Unable to run testSocketRegisteredBeforeConnected: no server on port 80"
-            return
-        sockets = [socket.socket(socket.AF_INET, socket.SOCK_STREAM) for x in range(5)]
-        timeout = 1 # Can't wait forever
-        poll_object = select.poll()
-        for s in sockets:
-            # Register the sockets before they are connected
-            poll_object.register(s, select.POLLOUT)
-        result_list = poll_object.poll(timeout)
-        result_sockets = [r[0] for r in result_list]
-        for s in sockets:
-            self.failIf(s in result_sockets)
-        # Now connect the sockets, but DO NOT register them again
-        for s in sockets:
-            s.setblocking(0)
-            s.connect( ('localhost', 80) )
-        # Now poll again, to see if the poll object has recognised that the sockets are now connected
-        result_list = poll_object.poll(timeout)
-        result_sockets = [r[0] for r in result_list]
-        for s in sockets:
-            self.failUnless(s in result_sockets)
 
     def testUnregisterRaisesKeyError(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -165,6 +131,33 @@ class TestPollClientSocket(unittest.TestCase):
             pass
         else:
             self.fail("Unregistering socket that is not registered should have raised KeyError")
+
+#
+# using the test_socket thread based server/client management, for convenience.
+#
+
+import test_socket
+
+class ThreadedPollClientSocket(test_socket.ThreadedTCPSocketTest):
+
+    def testSocketRegisteredBeforeConnected(self):
+        self.cli_conn = self.serv.accept()
+
+    def _testSocketRegisteredBeforeConnected(self):
+        timeout = 1000 # milliseconds
+        poll_object = select.poll()
+        # Register the socket before it is connected
+        poll_object.register(self.cli, select.POLLOUT)
+        result_list = poll_object.poll(timeout)
+        result_sockets = [r[0] for r in result_list]
+        self.failIf(self.cli in result_sockets, "Unconnected client socket should not have been selectable")
+        # Now connect the socket, but DO NOT register it again
+        self.cli.setblocking(0)
+        self.cli.connect( (test_socket.HOST, test_socket.PORT) )
+        # Now poll again, to check that the poll object has recognised that the socket is now connected
+        result_list = poll_object.poll(timeout)
+        result_sockets = [r[0] for r in result_list]
+        self.failUnless(self.cli in result_sockets, "Connected client socket should have been selectable")
 
 class TestPipes(unittest.TestCase):
 
@@ -202,6 +195,7 @@ def test_main():
         TestSelectInvalidParameters,
         TestSelectClientSocket,
         TestPollClientSocket,
+        ThreadedPollClientSocket,
     ]
     if sys.platform[:4] != 'java':
         tests.append(TestPipes)
