@@ -457,7 +457,7 @@ public class PySystemState extends PyObject
         }
         initialized = true;
 
-        Py.adapter = adapter;
+        Py.setAdapter(adapter);
         boolean standalone = false;
         String jarFileName = getJarFileName();
         if (jarFileName != null) {
