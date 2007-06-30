@@ -86,7 +86,21 @@ public class TreeBuilder implements PythonGrammarTreeConstants {
         return nodes[id];
     }
 
-    
+    /**
+     * @return the image of the SimpleNode as a String, not throwing a NullPointerException when image is null
+     * @param n The SimpleNode
+     */
+    public static String getImageAsString(SimpleNode n) {
+        String imageAsString;
+        Object image = n.getImage();
+        if (image == null) {
+            imageAsString = "Incomplete node";
+        } else {
+            imageAsString = image.toString();
+        }
+        return imageAsString;
+    }
+
     public SimpleNode closeNode(SimpleNode n, int arity) throws Exception {
         exprType value;
         exprType[] exprs;
@@ -102,13 +116,13 @@ public class TreeBuilder implements PythonGrammarTreeConstants {
             return new Expression(makeExpr());
 
         case JJTNAME:
-            return new Name(n.getImage().toString(), Name.Load);
+            return new Name(getImageAsString(n), Name.Load);
         case JJTNUM:
             return new Num((PyObject) n.getImage());
         case JJTSTRING:
-            return new Str(n.getImage().toString());
+            return new Str(getImageAsString(n));
         case JJTUNICODE:
-            return new Unicode(n.getImage().toString());
+            return new Unicode(getImageAsString(n));
 
         case JJTSUITE:
             stmtType[] stmts = new stmtType[arity];
