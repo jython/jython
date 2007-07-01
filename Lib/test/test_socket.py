@@ -7,6 +7,7 @@ AMAK: 20050515: This module is the test_socket.py from cpython 2.4, ported to jy
 import unittest
 #from test import test_support
 
+import errno
 import socket
 import select
 import time
@@ -920,6 +921,14 @@ class TestExceptions(unittest.TestCase):
         self.assert_(issubclass(socket.herror, socket.error))
         self.assert_(issubclass(socket.gaierror, socket.error))
         self.assert_(issubclass(socket.timeout, socket.error))
+
+    def testHostNotFound(self):
+        try:
+            socket.gethostbyname("doesnotexist")
+        except socket.gaierror, gaix:
+            self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
+        except Exception, x:
+            self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
 
 class TestAddressParameters:
 

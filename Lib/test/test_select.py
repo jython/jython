@@ -7,7 +7,9 @@ try:
 except NameError:
     class object: pass
 
-import socket, select
+import errno
+import select
+import socket
 
 import os
 import sys
@@ -158,6 +160,23 @@ class ThreadedPollClientSocket(test_socket.ThreadedTCPSocketTest):
         result_list = poll_object.poll(timeout)
         result_sockets = [r[0] for r in result_list]
         self.failUnless(self.cli in result_sockets, "Connected client socket should have been selectable")
+
+    def testSocketMustBeNonBlocking(self):
+        self.cli_conn = self.serv.accept()
+
+    def _testSocketMustBeNonBlocking(self):
+        self.cli.setblocking(1)
+        self.cli.connect( (test_socket.HOST, test_socket.PORT) )
+        timeout = 1000 # milliseconds
+        poll_object = select.poll()
+        try:
+            poll_object.register(self.cli)
+        except select.error, se:
+            self.failUnlessEqual(se[0], errno.ESOCKISBLOCKING)
+        except Exception, x:
+            self.fail("Registering blocking socket should have raised select.error, not %s" % str(x))
+        else:
+            self.fail("Registering blocking socket should have raised select.error")
 
 class TestPipes(unittest.TestCase):
 

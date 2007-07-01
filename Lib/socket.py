@@ -35,6 +35,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import java.nio.channels.IllegalBlockingModeException
@@ -45,16 +46,18 @@ import org.python.core.PyFile
 
 try:
     import errno
-    ERRNO_EWOULDBLOCK  = errno.EWOULDBLOCK
-    ERRNO_EACCES       = errno.EACCES
-    ERRNO_ECONNREFUSED = errno.ECONNREFUSED
-    ERRNO_EINPROGRESS  = errno.EINPROGRESS
+    ERRNO_EWOULDBLOCK        = errno.EWOULDBLOCK
+    ERRNO_EACCES             = errno.EACCES
+    ERRNO_ECONNREFUSED       = errno.ECONNREFUSED
+    ERRNO_EINPROGRESS        = errno.EINPROGRESS
+    ERRNO_EGETADDRINFOFAILED = errno.EGETADDRINFOFAILED
 except ImportError:
     # Support jython 2.1
-    ERRNO_EWOULDBLOCK  = 11
-    ERRNO_EACCES       = 13
-    ERRNO_ECONNREFUSED = 111
-    ERRNO_EINPROGRESS  = 115
+    ERRNO_EWOULDBLOCK        = 11
+    ERRNO_EACCES             = 13
+    ERRNO_ECONNREFUSED       = 111
+    ERRNO_EINPROGRESS        = 115
+    ERRNO_EGETADDRINFOFAILED = 20001
 
 class error(Exception): pass
 class herror(error): pass
@@ -63,7 +66,7 @@ class timeout(error): pass
 
 ALL = None
 
-exception_map = {
+_exception_map = {
 
 # (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
 
@@ -71,22 +74,17 @@ exception_map = {
 (java.net.BindException, ALL) : lambda exc: error(ERRNO_EACCES, 'Permission denied'),
 (java.net.ConnectException, ALL) : lambda exc: error( (ERRNO_ECONNREFUSED, 'Connection refused') ),
 (java.net.SocketTimeoutException, ALL) : lambda exc: timeout('timed out'),
-
+(java.net.UnknownHostException, ALL) : lambda exc: gaierror(ERRNO_EGETADDRINFOFAILED, 'getaddrinfo failed'),
 }
 
 def would_block_error(exc=None):
     return error( (ERRNO_EWOULDBLOCK, 'The socket operation could not complete without blocking') )
 
-def map_exception(exc, circumstance=ALL):
+def _map_exception(exc, circumstance=ALL):
     try:
-#        print "Mapping exception: %s" % str(exc)
-        return exception_map[(exc.__class__, circumstance)](exc)
+        return _exception_map[(exc.__class__, circumstance)](exc)
     except KeyError:
         return error('Unmapped java exception: %s' % exc.toString())
-
-exception_map.update({
-        (java.nio.channels.IllegalBlockingModeException, ALL) : would_block_error,
-    })
 
 MODE_BLOCKING    = 'block'
 MODE_NONBLOCKING = 'nonblock'
@@ -208,7 +206,7 @@ class _server_socket_impl(_nio_impl):
                 new_cli_sock = self.jsocket.accept()
                 return _client_socket_impl(new_cli_sock)
         except java.lang.Exception, jlx:
-            raise map_exception(jlx)
+            raise _map_exception(jlx)
         
     def close(self):
         _nio_impl.close(self)
@@ -284,10 +282,16 @@ def getfqdn(name=None):
     return name
 
 def gethostname():
-    return java.net.InetAddress.getLocalHost().getHostName()
+    try:
+        return java.net.InetAddress.getLocalHost().getHostName()
+    except java.lang.Exception, jlx:
+        raise _map_exception(jlx)
 
 def gethostbyname(name):
-    return java.net.InetAddress.getByName(name).getHostAddress()
+    try:
+        return java.net.InetAddress.getByName(name).getHostAddress()
+    except java.lang.Exception, jlx:
+        raise _map_exception(jlx)
 
 def gethostbyaddr(name):
     names, addrs = _gethostbyaddr(name)
@@ -433,7 +437,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             self.sock_impl = _server_socket_impl(host, port, backlog, self.reuse_addr)
             self._config()
         except java.lang.Exception, jlx:
-            raise map_exception(jlx)
+            raise _map_exception(jlx)
 
 #
 # The following has information on a java.lang.NullPointerException problem I'm having
@@ -453,7 +457,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             cliconn._setup(new_sock)
             return cliconn, new_sock.getpeername()
         except java.lang.Exception, jlx:
-            raise map_exception(jlx)
+            raise _map_exception(jlx)
 
     def _get_host_port(self, addr):
         host, port = _unpack_address_tuple(addr)
@@ -471,9 +475,8 @@ class _tcpsocket(_nonblocking_api_mixin):
                 self.sock_impl.bind(bind_host, bind_port)
             self._config() # Configure timeouts, etc, now that the socket exists
             self.sock_impl.connect(host, port)
-            self._setup(self.sock_impl)
         except java.lang.Exception, jlx:
-            raise map_exception(jlx)
+            raise _map_exception(jlx)
 
     def connect(self, addr):
         "This signifies a client socket"
@@ -510,7 +513,7 @@ class _tcpsocket(_nonblocking_api_mixin):
                 data = data[:m]
             return data.tostring()
         except java.lang.Exception, jlx:
-            raise map_exception(jlx)
+            raise _map_exception(jlx)
 
     def recvfrom(self, n):
         return self.recv(n), None
@@ -702,7 +705,7 @@ class _udpsocket(_nonblocking_api_mixin):
                 bytes = bytes[:m]
             return bytes.tostring(), (host, port)
         except java.lang.Exception, jlx:
-            raise map_exception(jlx)
+            raise _map_exception(jlx)
 
     def recv(self, n):
         try:
@@ -715,7 +718,7 @@ class _udpsocket(_nonblocking_api_mixin):
                 bytes = bytes[:m]
             return bytes.tostring()
         except java.lang.Exception, jlx:
-            raise map_exception(jlx)
+            raise _map_exception(jlx)
 
     def getsockname(self):
         assert self.sock_impl
