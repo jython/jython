@@ -41,6 +41,7 @@ import java.nio.channels.DatagramChannel
 import java.nio.channels.IllegalBlockingModeException
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import java.nio.channels.UnresolvedAddressException
 import javax.net.ssl.SSLSocketFactory
 import org.python.core.PyFile
 
@@ -72,9 +73,11 @@ _exception_map = {
 
 (java.io.InterruptedIOException, ALL) : lambda exc: timeout('timed out'),
 (java.net.BindException, ALL) : lambda exc: error(ERRNO_EACCES, 'Permission denied'),
-(java.net.ConnectException, ALL) : lambda exc: error( (ERRNO_ECONNREFUSED, 'Connection refused') ),
+(java.net.ConnectException, ALL) : lambda exc: error(ERRNO_ECONNREFUSED, 'Connection refused'),
 (java.net.SocketTimeoutException, ALL) : lambda exc: timeout('timed out'),
 (java.net.UnknownHostException, ALL) : lambda exc: gaierror(ERRNO_EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.nio.channels.UnresolvedAddressException, ALL) : lambda exc: gaierror(ERRNO_EGETADDRINFOFAILED, 'getaddrinfo failed'),
+
 }
 
 def would_block_error(exc=None):
@@ -84,7 +87,7 @@ def _map_exception(exc, circumstance=ALL):
     try:
         return _exception_map[(exc.__class__, circumstance)](exc)
     except KeyError:
-        return error('Unmapped java exception: %s' % exc.toString())
+        return error(-1, 'Unmapped java exception: %s' % exc.toString())
 
 MODE_BLOCKING    = 'block'
 MODE_NONBLOCKING = 'nonblock'
@@ -123,8 +126,8 @@ class _nio_impl:
         if self.mode == MODE_NONBLOCKING:
             self.jchannel.configureBlocking(0)
         if self.mode == MODE_TIMEOUT:
-            # self.channel.configureBlocking(0)
-            self.jsocket.setSoTimeout(int(timeout*1000))
+            self._timeout_millis = int(timeout*1000)
+            self.jsocket.setSoTimeout(self._timeout_millis)
 
     def close1(self):
         self.jsocket.close()
@@ -173,7 +176,10 @@ class _client_socket_impl(_nio_impl):
     def connect(self, host, port):
         self.host = host
         self.port = port
-        self.jchannel.connect(java.net.InetSocketAddress(self.host, self.port))
+        if self.mode == MODE_TIMEOUT:
+            self.jsocket.connect(java.net.InetSocketAddress(self.host, self.port), self._timeout_millis)
+        else:
+            self.jchannel.connect(java.net.InetSocketAddress(self.host, self.port))
 
     def finish_connect(self):
         return self.jchannel.finishConnect()

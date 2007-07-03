@@ -711,7 +711,7 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
 
     def _testConnectWithLocalBind(self):
         # Testing blocking connect with local bind
-        self.cli.settimeout(10)
+        self.cli.settimeout(1)
         self.cli.bind( (HOST, PORT-1) )
         self.cli.connect((HOST, PORT))
         bound_host, bound_port = self.cli.getsockname()
@@ -886,6 +886,22 @@ class TCPTimeoutTest(SocketTCPTest):
         if not ok:
             self.fail("accept() returned success when we did not expect it")
 
+class TCPClientTimeoutTest(ThreadedTCPSocketTest):
+
+    def testTCPClientTimeout(self):
+        pass # i.e. do not accept
+
+    def _testTCPClientTimeout(self):
+        try:
+            self.cli.settimeout(0.1)
+            self.cli.connect( (HOST, PORT) )
+        except socket.timeout, st:
+            pass
+        except Exception, x:
+            self.fail("Client socket timeout should have raised socket.timeout, not %s" % str(x))
+        else:
+            self.fail("Client socket timeout should have raised socket.timeout")
+
 #
 # AMAK: 20070307
 # Corrected the superclass of UDPTimeoutTest
@@ -922,6 +938,8 @@ class TestExceptions(unittest.TestCase):
         self.assert_(issubclass(socket.gaierror, socket.error))
         self.assert_(issubclass(socket.timeout, socket.error))
 
+class TestJythonExceptions(unittest.TestCase):
+
     def testHostNotFound(self):
         try:
             socket.gethostbyname("doesnotexist")
@@ -929,6 +947,49 @@ class TestExceptions(unittest.TestCase):
             self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
         except Exception, x:
             self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
+
+    def testConnectionRefused(self):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # This port should not be open at this time
+            s.connect( (HOST, PORT) )
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ECONNREFUSED)
+        except Exception, x:
+            self.fail("Connection to non-existent host/port raised wrong exception: %s" % x)
+        else:
+            self.fail("Socket (%s,%s) should not have been listening at this time" % (HOST, PORT))
+
+    def testBindException(self):
+        # First bind to the target port
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind( (HOST, PORT) )
+        s.listen()
+        try:
+            try:
+                # And then try to bind again
+                t = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                t.bind( (HOST, PORT) )
+                t.listen()
+            except socket.error, se:
+                self.failUnlessEqual(se[0], errno.EACCES)
+            except Exception, x:
+                self.fail("Binding to already bound host/port raised wrong exception: %s" % x)
+            else:
+                self.fail("Binding to already bound host/port should have raised exception")
+        finally:
+            s.close()
+
+    def testUnresolvedAddress(self):
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect( ('non.existent.server', PORT) )
+        except socket.gaierror, gaix:
+            self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
+        except Exception, x:
+            self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
+        else:
+            self.fail("Get host name for non-existent host should have raised exception")
 
 class TestAddressParameters:
 
@@ -971,6 +1032,7 @@ def test_main():
         GeneralModuleTests, 
         BasicTCPTest, 
         TCPTimeoutTest, 
+        TCPClientTimeoutTest,
         TestExceptions,
         TestTCPAddressParameters,
         TestUDPAddressParameters,
@@ -985,6 +1047,8 @@ def test_main():
     ]
     if hasattr(socket, "socketpair"):
         tests.append(BasicSocketPairTest)
+    if sys.platform[:4] == 'java':
+        tests.append(TestJythonExceptions)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
     main_suite = unittest.TestSuite(suites)
     runner = unittest.TextTestRunner(verbosity=100)

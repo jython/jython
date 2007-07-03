@@ -34,7 +34,7 @@ def _map_exception(exc, circumstance=ALL):
     try:
         return _exception_map[(exc.__class__, circumstance)](exc)
     except KeyError:
-        return error('Unmapped java exception: %s' % exc.toString())
+        return error(-1, 'Unmapped java exception: %s' % exc.toString())
 
 POLLIN   = 1
 POLLOUT  = 2
