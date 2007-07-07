@@ -47,6 +47,15 @@ public class jython
                 throw Py.ValueError("jar file missing '__run__.py'");
 
             PyStringMap locals = new PyStringMap();
+            
+            // Stripping the stuff before the last File.separator fixes Bug 
+            // #931129 by keeping illegal characters out of the generated 
+            // proxy class name 
+            int beginIndex;
+            if ((beginIndex = filename.lastIndexOf(File.separator)) != -1) {
+                filename = filename.substring(beginIndex + 1);
+            }
+            
             locals.__setitem__("__name__", new PyString(filename));
             locals.__setitem__("zipfile", Py.java2py(zip));
 

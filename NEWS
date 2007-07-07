@@ -1,5 +1,9 @@
 Jython NEWS
 
+Jython 2.2 rc2
+  Bugs fixed
+    - [ 931129 ] jython -jar some-path/test.jar fails
+
 Jython 2.2 rc1
   New features
     - Completely rewritten socket module and new select module using java.nio 
