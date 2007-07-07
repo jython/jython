@@ -168,14 +168,6 @@ public class jython
             }
         }
 
-        if (opts.command != null) {
-            try {
-                interp.exec(opts.command);
-            } catch (Throwable t) {
-                Py.printException(t);
-            }
-        }
-
         // was there a filename on the command line?
         if (opts.filename != null) {
             String path = new java.io.File(opts.filename).getParent();
@@ -213,6 +205,14 @@ public class jython
             // was given, sys.path[0] will have gotten filled in with the
             // dir of the argument filename.
             Py.getSystemState().path.insert(0, new PyString(""));
+
+            if (opts.command != null) {
+                try {
+                    interp.exec(opts.command);
+                } catch (Throwable t) {
+                    Py.printException(t);
+                }
+            }
         }
 
         if (opts.interactive) {
