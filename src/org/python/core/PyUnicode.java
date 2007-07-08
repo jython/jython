@@ -1520,11 +1520,11 @@ public class PyUnicode extends PyString {
     }
 
     public PyString __repr__() {
-        return new PyUnicode("u" + encode_UnicodeEscape(string, true));
+        return new PyString('u' + encode_UnicodeEscape(string, true, true));
     }
 
     public String unicode_toString() {
-        return "u" + str_toString();
+        return str_toString();
     }
 
     final int unicode___cmp__(PyObject other) {

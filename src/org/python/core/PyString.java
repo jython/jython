@@ -1666,11 +1666,17 @@ public class PyString extends PyBaseString implements ClassDictInit
     public static String encode_UnicodeEscape(String str,
                                               boolean use_quotes)
     {
+        return encode_UnicodeEscape(str, use_quotes, false);
+    }
+    
+    public static String encode_UnicodeEscape(String str,
+                                              boolean use_quotes,
+                                              boolean unicodeDesignatorPresent)
+    {
         int size = str.length();
         StringBuffer v = new StringBuffer(str.length());
 
         char quote = 0;
-        boolean unicode = false;
 
         if (use_quotes) {
             quote = str.indexOf('\'') >= 0 &&
@@ -1687,9 +1693,9 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
             /* Map 16-bit characters to '\\uxxxx' */
             else if (ch >= 256) {
-                if (use_quotes && !unicode) {
+                if (use_quotes && !unicodeDesignatorPresent) {
                    v.insert(0, 'u');
-                   unicode = true;
+                   unicodeDesignatorPresent = true;
                 }
                 v.append('\\');
                 v.append('u');
