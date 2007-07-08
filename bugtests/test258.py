@@ -8,7 +8,7 @@ except:
 
 import sys
 
-if not sys.modules.has_key('test258m1'):
-   raise support.TestError, "Module should exists in sys.modules"
+if sys.modules.has_key('test258m1'):
+   raise support.TestError, "Module should not exist in sys.modules"
 
 

@@ -5,6 +5,7 @@ Jython 2.2 rc2
     - [ 931129 ] jython -jar some-path/test.jar fails
     - [ 1719528 ] -c doesn't put the empty string in sys.path
     - [ 1746957 ] Weird 'uu' prefix for unicode
+    - [ 1747092 ] Failed imports should not be "cached"
 
 Jython 2.2 rc1
   New features

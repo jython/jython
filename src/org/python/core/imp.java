@@ -233,8 +233,13 @@ public class imp {
         if (c instanceof PyTableCode) {
             code = (PyTableCode) c;
         }
-        PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
-        code.call(f);
+        try {
+            PyFrame f = new PyFrame(code, module.__dict__, module.__dict__, null);
+            code.call(f);
+        } catch (RuntimeException t) {
+            Py.getSystemState().modules.__delitem__(name.intern());
+            throw t;
+        }
         if(moduleLocation != null) {
             module.__setattr__("__file__",
                                new PyString(moduleLocation));
