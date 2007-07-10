@@ -220,7 +220,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="do.templates" value="true" />
 
         <!-- predefined tags for jython and cpython -->
-        <property name="svn.tag" value="Release_2_2rc1" />
+        <property name="svn.tag" value="Release_2_2rc2" />
 
         <property name="work.dir" value="${basedir}/../full_build_${svn.tag}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
@@ -238,7 +238,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="jython.version" value="${svn.revision}">
             <isset property="svn.revision" />
         </condition>
-        <property name="jython.version" value="2.2rc1" />
+        <property name="jython.version" value="2.2rc2" />
 	<property name="svn.revision" value="HEAD"/>
     	
         <!-- classpath for svn ant task -->
@@ -390,13 +390,13 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 	     in PySystemState.java and README.txt change -->
 	<target name="version" depends="checkout" if="do.snapshot.build" >
 		<property name="replace.value.version" value='version = "2.2rc${svn.revision}"' />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2rc1"' value="${replace.value.version}" />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_LEVEL = 0x0B" value="PY_RELEASE_LEVEL = 0xAA" />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2rc2"' value="${replace.value.version}" />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_LEVEL = 0x0C" value="PY_RELEASE_LEVEL = 0xAA" />
 		<property name="replace.value.serial" value="PY_RELEASE_SERIAL = ${svn.revision}" />
 		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 2" value="${replace.value.serial}" />
 
     	<!-- change README.txt -->
-		<replace file="${jython.base.dir}/README.txt" token='2.2rc1' value='2.2rc${svn.revision}' />
+		<replace file="${jython.base.dir}/README.txt" token='2.2rc2' value='2.2rc${svn.revision}' />
 		<replace file="${jython.base.dir}/README.txt">
 			<replacetoken>=======================</replacetoken>
 			<replacevalue>--------------------------

@@ -1,7 +1,7 @@
-Welcome to Jython 2.2rc1
+Welcome to Jython 2.2rc2
 =======================
 
-This is the first release candidate of the 2.2 version of Jython. It
+This is the second release candidate of the 2.2 version of Jython. It
 contains all of the new features for the 2.2 release:
  - new-style classes
  - Java List integration
@@ -13,8 +13,8 @@ contains all of the new features for the 2.2 release:
  - a new installer
  - ssl and non-blocking support for socket
 
-In addition to these major features, many bugs have been fixed from 2.2b2.  See
-the NEWS file for a more complete list of changes.
+In addition to these major features, several bugs have been fixed from 2.2rc1.
+See the NEWS file for a more complete list of changes.
 
 The release was compiled on Mac OS X with JDK 5 but it should run on
 1.4.2+.
