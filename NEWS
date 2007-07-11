@@ -6,6 +6,11 @@ Jython 2.2 rc2
     - [ 1719528 ] -c doesn't put the empty string in sys.path
     - [ 1746957 ] Weird 'uu' prefix for unicode
     - [ 1747092 ] Failed imports should not be "cached"
+    - [ 1742770 ] urllib.urlopen('http://inv') -> UnknownHostException
+    - [ 1745068 ] select gives confusing message when given blocking sockets
+    - [ 1744775 ] umlauts displayed incorrectly in installer
+    - timeouts on socket client connects were not being honoured
+    - a float could not be passed as milliseconds to select.poll.poll
 
 Jython 2.2 rc1
   New features
