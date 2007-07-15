@@ -16,7 +16,6 @@ public class TestSupport {
             super(message);
         }
         
-        /* not until java 1.4
         public AssertionError(String message, Throwable cause) {
             super(message, cause);
         }
@@ -24,7 +23,6 @@ public class TestSupport {
         public AssertionError(Throwable cause) {
             super(cause);
         }
-        */
     }
     
     public static void assertThat(boolean test, String message) {

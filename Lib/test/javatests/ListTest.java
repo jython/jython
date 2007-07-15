@@ -534,17 +534,13 @@ public abstract class ListTest {
             TestSupport.assertThat(false, "expected NoSuchElementException");
         } catch (NoSuchElementException e) {}
         
-        // Appears bug was fixed from 1.3 to 1.4.  Code it to pass either way.
         int nextIndex = li.nextIndex();
-        TestSupport.assertThat(nextIndex == -1 || nextIndex == 0, 
-        		"ListIterator.nextIndex() on empty List did not return 0 " +
-        		"(java 1.4) or did not return -1 (java 1.3)");
+        TestSupport.assertThat(nextIndex == 0, 
+        		"ListIterator.nextIndex() on empty List did not return 0");
         
-        // Likewise...
         int prevIndex = li.previousIndex();
-        TestSupport.assertThat(prevIndex == -1 || prevIndex == -2,
-        		"ListIterator.previousIndex() on empty List did not return -1 " +
-        		"(java 1.4) or -2 (java 1.3)");
+        TestSupport.assertThat(prevIndex == -1,
+            "ListIterator.previousIndex() on empty List did not return -1");
         
         List l = new ArrayList();
         l.add(new Integer(1)); 
