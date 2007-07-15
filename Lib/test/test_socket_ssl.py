@@ -28,6 +28,8 @@ def test_basic():
     f.close()
 
 def test_rude_shutdown():
+    if test_support.is_jython:#see http://jython.org/bugs/1754222
+        return
     try:
         import thread
     except ImportError:
