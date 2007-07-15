@@ -78,7 +78,7 @@ An example ant.properties file:
 -------------------------------
 
 # - define the home for javacc (only used for parser grammar)
-javaccHome=${basedir}/../externals/javacc-3.2
+javaccHome=${basedir}/../externals/javacc-4.0
 
 # - ht2html tool for the doc target (only needed for full-build)
 ht2html.dir=${basedir}/../externals/ht2html-2.0

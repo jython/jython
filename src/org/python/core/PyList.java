@@ -6,7 +6,6 @@ package org.python.core;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * A builtin python list.
@@ -700,16 +699,14 @@ public class PyList extends PySequenceList {
         super(type, c);
     }
 
-    // TODO: fix dependency so it can be removed.
-    // Shouldn't be required (see PyList(Collection c), but test_re.py fails 
-    // without it.  Probably used by reflection.
-    public PyList(Vector v) {
-        super(LISTTYPE, v);
-    }    
-    
     public PyList(PyObject[] elements) {
         this(LISTTYPE, elements);
     }
+
+    public PyList(Collection c) {
+        super(LISTTYPE, c);
+    }
+
 
     public PyList(PyObject o) {
         this(LISTTYPE);
