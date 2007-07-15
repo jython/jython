@@ -258,7 +258,7 @@ public class PyJavaClass extends PyClass
       * false, in which case all fields are returned.
       */
     private static Field[] getAccessibleFields(Class c) {
-        if (!JavaAccessibility.accessIsMutable())
+        if (Options.respectJavaAccessibility)
             // returns just the public fields
             return c.getFields();
         java.util.ArrayList fields = new java.util.ArrayList();
@@ -269,7 +269,7 @@ public class PyJavaClass extends PyClass
             for (int i=0; i < declared.length; i++) {
                 // TBD: this is a permanent change.  Should we provide a
                 // way to restore the original accessibility flag?
-                JavaAccessibility.setAccessible(declared[i], true);
+                declared[i].setAccessible(true);
                 fields.add(declared[i]);
             }
             // walk down superclass chain.  no need to deal specially with
@@ -386,14 +386,14 @@ public class PyJavaClass extends PyClass
       * false, in which case all methods are returned.
       */
     private static Method[] getAccessibleMethods(Class c) {
-        if (!JavaAccessibility.accessIsMutable())
+        if (Options.respectJavaAccessibility)
             // returns just the public methods
             return c.getMethods();
         Method[] declared = c.getDeclaredMethods();
         for (int i=0; i < declared.length; i++) {
             // TBD: this is a permanent change.  Should we provide a way to
             // restore the original accessibility flag?
-            JavaAccessibility.setAccessible(declared[i], true);
+            declared[i].setAccessible(true);
         }
         return declared;
     }
@@ -670,7 +670,7 @@ public class PyJavaClass extends PyClass
       * inherited like methods or fields.
       */
     private static Constructor[] getAccessibleConstructors(Class c) {
-        if (!JavaAccessibility.accessIsMutable())
+        if (Options.respectJavaAccessibility)
             // returns just the public fields
             return c.getConstructors();
         // return all constructors
@@ -680,7 +680,7 @@ public class PyJavaClass extends PyClass
         for (int i=0; i < declared.length; i++) {
             // TBD: this is a permanent change.  Should we provide a way to
             // restore the original accessibility flag?
-            JavaAccessibility.setAccessible(declared[i], true);
+            declared[i].setAccessible(true);
         }
         return declared;
     }

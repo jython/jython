@@ -30,7 +30,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
     public void addConstructor(Constructor m) {
         int mods = m.getModifiers();
         // Only add public methods unless we're overriding
-        if (!Modifier.isPublic(mods) && !JavaAccessibility.accessIsMutable())
+        if (!Modifier.isPublic(mods) && Options.respectJavaAccessibility)
             return;
         addArgs(makeArgs(m));
     }

@@ -172,8 +172,5 @@ public class Options {
                         + "setting: '" + prop + "'");
             }
         }
-        // additional initializations which must happen after the registry
-        // is guaranteed to be initialized.
-        JavaAccessibility.initialize();
     }
 }
