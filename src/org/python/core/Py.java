@@ -1328,7 +1328,7 @@ public final class Py
         if (threadStateMapping == null) {
             synchronized (Py.class) {
                 if (threadStateMapping == null)
-                    threadStateMapping = ThreadStateMapping.makeMapping();
+                    threadStateMapping = new ThreadStateMapping();
             }
         }
         return threadStateMapping.getThreadState(newSystemState);
