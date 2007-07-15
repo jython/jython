@@ -2,23 +2,22 @@
 
 package org.python.core;
 
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.WeakHashMap;
+
 import org.python.core.packagecache.PackageManager;
 
-import java.util.StringTokenizer;
-
-public abstract class InternalTables {
+public class InternalTables {
 
     // x__ --> org.python.core.X__InternalTables
     // (x|X)__> --> org.python.core.X__InternalTables
     // >(x|X)__ --> org.python.core.InternalTablesX__
     // other (X__|__.__) --> other
     //
-    /**
-     * XXX: These contortions are here to decide between InternalTables1 and
-     * InternalTables2. Since we have deprecated support for JDK 1.1 -- this
-     * should go away and InternalTables1 and InternalTables2 should be merged
-     * and replace this class.
-     */
     static private InternalTables tryImpl(String id) {
         try {
             if (id.indexOf('.') < 0) {
@@ -64,18 +63,10 @@ public abstract class InternalTables {
                             + "You need to call PySystemState.initialize or "
                             + "PythonInterpreter.initialize.");
         }
-        String cands = registry
-                .getProperty("python.options.internalTablesImpl");
+        String cands = registry.getProperty("python.options.internalTablesImpl");
         if (cands == null) {
-            String version = System.getProperty("java.version");
-            if (version.compareTo("1.2") >= 0) {
-                cands = ">2:>1";
-            } else {
-                cands = ">1";
-            }
-        } else {
-            cands = cands + ":>2:>1";
-        }
+            return new InternalTables();
+        } 
         StringTokenizer candEnum = new StringTokenizer(cands, ":");
         while (candEnum.hasMoreTokens()) {
             InternalTables tbl = tryImpl(candEnum.nextToken().trim());
@@ -83,47 +74,227 @@ public abstract class InternalTables {
                 return tbl;
             }
         }
-        return null; // XXX: never reached -- throw exception instead?
+        return new InternalTables();
+    }
+    
+    final protected static short JCLASS = 0;
+
+    final protected static short LAZY_JCLASS = 1;
+
+    final protected static short ADAPTER_CLASS = 2;
+
+    final protected static short ADAPTER = 3;
+
+    protected Map classes = new HashMap();
+
+    protected Map temp = new HashMap();;
+
+    protected Map counters = new HashMap();;
+
+    protected Map lazyClasses = new HashMap();;
+
+    protected Map adapterClasses = new HashMap();;
+
+    protected final short GSTABLE = 1;
+
+    protected final short JCSTABLE = 2;
+
+    protected short keepstable;
+
+    protected void commitTemp() {
+        this.classes.putAll(this.temp);
+        this.temp.clear();
     }
 
-    protected abstract boolean queryCanonical(String name);
+    protected WeakHashMap adapters = new WeakHashMap();;
 
-    protected abstract PyJavaClass getCanonical(Class c);
-
-    protected abstract PyJavaClass getLazyCanonical(String name);
-
-    protected abstract void putCanonical(Class c, PyJavaClass canonical);
-
-    protected abstract void putLazyCanonical(String name, PyJavaClass canonical);
-
-    protected abstract Class getAdapterClass(Class c);
-
-    protected abstract void putAdapterClass(Class c, Class ac);
-
-    protected abstract Object getAdapter(Object o, String evc);
-
-    protected abstract void putAdapter(Object o, String evc, Object ad);
-
-    public boolean _doesSomeAutoUnload() {
-        return false;
+    protected Object getAdapter(Object o,String evc) {
+        HashMap ads = (HashMap)this.adapters.get(o);
+        if (ads == null) {
+            return null;
+        }
+        WeakReference adw = (WeakReference) ads.get(evc);
+        if (adw == null){
+            return null;
+        }
+        return adw.get();
     }
 
-    public void _forceCleanup() {
+    protected void putAdapter(Object o,String evc,Object ad) {
+        HashMap ads = (HashMap)this.adapters.get(o);
+        if (ads == null) {
+            ads = new HashMap();
+            this.adapters.put(o,ads);
+        }
+        ads.put(evc,new WeakReference(ad));
     }
 
-    public abstract void _beginCanonical();
+    protected Iterator iter;
+    protected Iterator grand;
+    protected short iterType;
+    protected Object cur;
 
-    public abstract void _beginLazyCanonical();
+    protected void beginStable(short lvl) {
+        this.keepstable = lvl;
+    }
 
-    public abstract void _beginOverAdapterClasses();
+    protected void endStable() {
+        if (this.keepstable == this.JCSTABLE)
+            commitTemp();
+        this.keepstable = 0;
+    }
 
-    public abstract void _beginOverAdapters();
+    protected void classesPut(Class c, Object jc) {
+        if (this.keepstable == this.JCSTABLE) {
+            this.temp.put(c, jc);
+            // System.err.println("temp-defer-canonical: "+c.getName());
+        } else {
+            this.classes.put(c, jc);
+        }
+        String name = c.getName();
+        Integer cnt = (Integer) this.counters.get(name);
+        if (cnt == null) {
+            this.counters.put(name, new Integer(1));
+            this.lazyClasses.remove(name);
+        } else {
+            this.counters.put(name, new Integer(cnt.intValue() + 1));
+        }
+    }
 
-    public abstract Object _next();
+    protected Object classesGet(Class c) {
+        Object o = this.classes.get(c);
+        if (o != null || this.keepstable != this.JCSTABLE)
+            return o;
+        return this.temp.get(c);
+    }
 
-    public abstract void _flushCurrent();
+    public void _beginCanonical() {
+        beginStable(this.JCSTABLE);
+        this.iter = this.classes.values().iterator();
+        this.iterType = JCLASS;
+    }
 
-    public abstract void _flush(PyJavaClass jc);
+    public void _beginLazyCanonical() {
+        beginStable(this.GSTABLE);
+        this.iter = this.lazyClasses.values().iterator();
+        this.iterType = LAZY_JCLASS;
+    }
+
+    public void _beginOverAdapterClasses() {
+        beginStable(this.GSTABLE);
+        this.iter = this.adapterClasses.entrySet().iterator();
+        this.iterType = ADAPTER_CLASS;
+
+    }
+
+    public void _beginOverAdapters() {
+        beginStable((short)0);
+        this.grand = this.adapters.values().iterator();
+        this.iter = null;
+        this.iterType = ADAPTER;
+    }
+
+    public Object _next() {
+        if (this.iterType == ADAPTER) {
+            for(;;) {
+                if (this.iter==null || !this.iter.hasNext() ) {
+                    if (this.grand.hasNext()) {
+                        this.cur = this.grand.next();
+                        this.iter = ((HashMap)this.cur).values().iterator();
+                    } else {
+                        this.iter = null;
+                    }
+                }
+                if (this.iter != null) {
+                    WeakReference adw = (WeakReference)this.iter.next();
+                    Object ad = adw.get();
+                    if (ad != null) {
+                        return ad.getClass().getInterfaces()[0];
+                    }
+                    else { 
+                        continue;
+                    }
+                }
+                this.grand = null;
+                break;
+            }
+        }
+        else if (this.iter.hasNext()) {
+            this.cur = this.iter.next();
+            switch(this.iterType) {
+            case JCLASS:
+                return this.cur;
+            case LAZY_JCLASS:
+                PyJavaClass lazy = (PyJavaClass)this.cur;
+                return new _LazyRep(lazy.__name__,lazy.__mgr__);
+            case ADAPTER_CLASS:
+                Map.Entry entry = (Map.Entry)this.cur;
+                return entry.getKey();
+            }
+        }
+        this.cur = null;
+        endStable();
+        this.iter = null;
+        return null;
+    }
+
+    public void _flushCurrent() {
+       this.iter.remove();
+       switch(this.iterType) {
+       case JCLASS:
+           classesDec(((PyJavaClass)this.cur).__name__);
+           break;
+       case ADAPTER:
+           if (((HashMap)this.cur).size() == 0) this.grand.remove();
+       }
+    }
+
+    public void _flush(PyJavaClass jc) {
+        Class c = jc.proxyClass;
+        if (c == null) {
+            this.lazyClasses.remove(jc.__name__);
+        } else {
+            this.classes.remove(c);
+            classesDec(jc.__name__);
+        }
+    }
+
+    protected Class getAdapterClass(Class c) {
+        return (Class) this.adapterClasses.get(c);
+    }
+
+    protected PyJavaClass getCanonical(Class c) {
+        return (PyJavaClass) classesGet(c);
+    }
+
+    protected PyJavaClass getLazyCanonical(String name) {
+        return (PyJavaClass) this.lazyClasses.get(name);
+    }
+
+    protected void putAdapterClass(Class c, Class ac) {
+        this.adapterClasses.put(c, ac);
+    }
+
+    protected void putCanonical(Class c, PyJavaClass canonical) {
+        classesPut(c, canonical);
+    }
+
+    protected void putLazyCanonical(String name, PyJavaClass canonical) {
+        this.lazyClasses.put(name, canonical);
+    }
+
+    protected boolean queryCanonical(String name) {
+        return this.counters.get(name) != null
+                || this.lazyClasses.get(name) != null;
+    }
+
+    protected void classesDec(String name) {
+        int c = ((Integer) this.counters.get(name)).intValue();
+        if (c == 1)
+            this.counters.remove(name);
+        else
+            this.counters.put(name, new Integer(c - 1));
+    }
 
     static public class _LazyRep {
         public String name;
