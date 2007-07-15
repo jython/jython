@@ -10,15 +10,6 @@
 // tools for creating those formats don't always map to C's strftime()
 // function.
 //
-// NOTE: This file is prepared for the JDK 1.2 APIs, however it is
-// currently set up to compile cleanly under 1.1.
-//
-// If you would like to enable the JDK 1.2 behavior (perhaps because you
-// are running under JDK 1.2 and would like to actually have stuff like
-// time.tzname or time.altzone work correctly, just search for the string
-// "XXXAPI" and stick a couple of double slashes at the beginning of each
-// matching line.
-
 // see org/python/modules/time.java for previous history.
 package org.python.modules.time;
 
@@ -124,13 +115,13 @@ public class Time implements ClassDictInit
 
         tzname = new PyTuple(
             new PyObject[] {
-                new PyString(getDisplayName(tz, false, 0)),
-                new PyString(getDisplayName(tz, true, 0))
+                new PyString(tz.getDisplayName(false, 0)),
+                new PyString(tz.getDisplayName(true, 0))
             });
 
         daylight = tz.useDaylightTime() ? 1 : 0;
         timezone = -tz.getRawOffset() / 1000;
-        altzone = timezone - getDSTSavings(tz) / 1000;
+        altzone = timezone - tz.getDSTSavings() / 1000;
     }
 
     public static double time() {
@@ -227,11 +218,10 @@ public class Time implements ClassDictInit
             throw e;
         }
         int dst = item(tup, 8);
-        if (dst == 0 || dst == 1) {
-            cal.set(Calendar.DST_OFFSET,
-                    dst * getDSTSavings(cal.getTimeZone()));
+        if(dst == 0 || dst == 1) {
+            cal.set(Calendar.DST_OFFSET, dst * cal.getTimeZone().getDSTSavings());
         }
-        return (double)cal.getTime().getTime()/1000.0;
+        return cal.getTime().getTime()/1000.0;
     }
 
     protected static PyTimeTuple _timefields(double secs, TimeZone tz) {
@@ -530,10 +520,10 @@ public class Time implements ClassDictInit
                 // week 0
                 if (cal == null)
                     cal = _tupletocal(tup);
-                cal.setFirstDayOfWeek(cal.SUNDAY);
+                cal.setFirstDayOfWeek(Calendar.SUNDAY);
                 cal.setMinimalDaysInFirstWeek(7);
-                j = cal.get(cal.WEEK_OF_YEAR);
-                if (cal.get(cal.MONTH) == cal.JANUARY && j >= 52)
+                j = cal.get(Calendar.WEEK_OF_YEAR);
+                if (cal.get(Calendar.MONTH) == Calendar.JANUARY && j >= 52)
                     j = 0;
                 s = s + _twodigit(j);
                 break;
@@ -549,11 +539,11 @@ public class Time implements ClassDictInit
                 // week 0
                 if (cal == null)
                     cal = _tupletocal(tup);
-                cal.setFirstDayOfWeek(cal.MONDAY);
+                cal.setFirstDayOfWeek(Calendar.MONDAY);
                 cal.setMinimalDaysInFirstWeek(7);
-                j = cal.get(cal.WEEK_OF_YEAR);
+                j = cal.get(Calendar.WEEK_OF_YEAR);
 
-                if (cal.get(cal.MONTH) == cal.JANUARY && j >= 52)
+                if (cal.get(Calendar.MONTH) == Calendar.JANUARY && j >= 52)
                     j = 0;
                 s = s + _twodigit(j);
                 break;
@@ -596,11 +586,9 @@ public class Time implements ClassDictInit
                 // timezone name
                 if (cal == null)
                     cal = _tupletocal(tup);
-                s = s + getDisplayName(cal.getTimeZone(),
-                        // in daylight savings time?  true if == 1 -1
-                        // means the information was not available;
-                        // treat this as if not in dst
-                        item(tup, 8) > 0, 0);
+                // If item(tup, 8) == 1, we're in daylight savings time.
+                // -1 means the information was not available; treat this as if not in dst.
+                s = s + cal.getTimeZone().getDisplayName(item(tup, 8) > 0, 0);
                 break;
             case '%':
                 // %
@@ -627,31 +615,4 @@ public class Time implements ClassDictInit
             shortmonths = null;
         }
     }
-
-    private static String getDisplayName(TimeZone tz, boolean dst,
-                                         int style)
-    {
-        String version = System.getProperty("java.version");
-        if (version.compareTo("1.2") >= 0) {
-            try {
-                Method m = tz.getClass().getMethod("getDisplayName",
-                            new Class[] { Boolean.TYPE, Integer.TYPE });
-                return (String) m.invoke(tz, new Object[] {
-                            new Boolean(dst), new Integer(style) });
-            } catch (Exception exc) { }
-        }
-        return tz.getID();
-    }
-
-    private static int getDSTSavings(TimeZone tz) {
-        String version = System.getProperty("java.version");
-        if (version.compareTo("1.2") >= 0) {
-            try {
-                Method m = tz.getClass().getMethod("getDSTSavings", (Class[])null);
-                return ((Integer) m.invoke(tz, (Object[])null)).intValue();
-             } catch (Exception exc) { }
-        }
-        return 0;
-    }
-
 }
