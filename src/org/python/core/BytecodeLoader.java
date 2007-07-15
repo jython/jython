@@ -2,6 +2,7 @@
 
 package org.python.core;
 
+import java.security.SecureClassLoader;
 import java.util.Vector;
 
 /**
@@ -28,39 +29,12 @@ public class BytecodeLoader {
         throw new ClassNotFoundException(name);
     }
 
-    static void compileClass(Class c) {
-        // This method has caused much trouble. Using it breaks jdk1.2rc1
-        // Not using it can make SUN's jdk1.1.6 JIT slightly unhappy.
-        // Don't use by default, but allow python.options.compileClass to
-        // override
-        if (!Options.skipCompile) {
-            // System.err.println("compile: "+name);
-            Compiler.compileClass(c);
-        }
+    static void compileClass (Class c) {
+        Compiler.compileClass(c);
     }
 
-    private static Class loaderClass = null;
-
     private static Loader makeLoader() {
-        if (loaderClass == null) {
-            synchronized (BytecodeLoader.class) {
-                String version = System.getProperty("java.version");
-                if (version.compareTo("1.2") >= 0) {
-                    try {
-                        loaderClass = Class
-                                .forName("org.python.core.BytecodeLoader2");
-                    } catch (Throwable e) {
-                        loaderClass = BytecodeLoader1.class;
-                    }
-                } else
-                    loaderClass = BytecodeLoader1.class;
-            }
-        }
-        try {
-            return (Loader) loaderClass.newInstance();
-        } catch (Exception e) {
-            return new BytecodeLoader1();
-        }
+            return new Loader();
     }
 
     /**
@@ -103,6 +77,38 @@ public class BytecodeLoader {
             return ((PyRunnable)o).getMain();
         } catch(Exception e) {
             throw Py.JavaError(e);
+        }
+    }
+    
+    private static class Loader extends SecureClassLoader {
+        private Vector parents;
+
+        public Loader() {
+            this.parents = BytecodeLoader.init();
+        }
+
+        public void addParent(ClassLoader referent) {
+            if (!this.parents.contains(referent)) {
+                this.parents.add(0, referent);
+            }
+        }
+
+        // override from abstract base class
+        protected Class loadClass(String name, boolean resolve)
+                throws ClassNotFoundException {
+            Class c = findLoadedClass(name);
+            if (c != null) {
+                return c;
+            }
+            return BytecodeLoader.findParentClass(this.parents, name);
+        }
+
+        public Class loadClassFromBytes(String name, byte[] data) {
+            Class c = defineClass(name, data, 0, data.length, this.getClass()
+                    .getProtectionDomain());
+            resolveClass(c);
+            BytecodeLoader.compileClass(c);
+            return c;
         }
     }
 }

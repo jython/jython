@@ -26,12 +26,6 @@ public class Options {
     public static boolean showPythonProxyExceptions = false;
 
     /**
-     * To force JIT compilation of Jython code -- should be unnecessary Setting
-     * this to true will cause jdk1.2rc1 to core dump on Windows
-     */
-    public static boolean skipCompile = true;
-
-    /**
      * Setting this to true will cause the console to poll standard in. This
      * might be helpful on systems without system-level threads.
      */
@@ -128,9 +122,6 @@ public class Options {
         Options.showPythonProxyExceptions = getBooleanOption(
                 "options.showPythonProxyExceptions",
                 Options.showPythonProxyExceptions);
-
-        Options.skipCompile = getBooleanOption("options.skipCompile",
-                Options.skipCompile);
 
         Options.deprecatedKeywordMangling = getBooleanOption(
                 "deprecated.keywordMangling", Options.deprecatedKeywordMangling);

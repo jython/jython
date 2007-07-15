@@ -40,9 +40,7 @@ public class PathVFSJavaLoader extends ClassLoader {
         Class c = defineClass(name, data, 0, data.length);
         resolveClass(c);
         if (c.isInterface()) interfaces.addElement(c);
-        if (!org.python.core.Options.skipCompile) {
-            Compiler.compileClass(c);
-        }
+        Compiler.compileClass(c);
         return c;
     }
   
