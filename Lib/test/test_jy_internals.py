@@ -10,9 +10,7 @@ import jarray
 class WeakIdentityMapTests(unittest.TestCase):
 
     def test_functionality(self):
-        if java.lang.System.getProperty("java.version")<"1.2":
-            return        
-        from org.python.core import IdImpl2
+        from org.python.core import IdImpl
 
         i = java.lang.Integer(2)
         j = java.lang.Integer(2)
@@ -20,7 +18,7 @@ class WeakIdentityMapTests(unittest.TestCase):
         assert i == j and i is not j
         h = java.lang.Integer(2)
 
-        widmap = IdImpl2.WeakIdentityMap()
+        widmap = IdImpl.WeakIdentityMap()
         widmap.put(i,'i')
         widmap.put(j,'j')
         widmap.put(h,'h')
