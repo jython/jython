@@ -1828,7 +1828,7 @@ public final class Py
         }
     }
 
-    private static IdImpl idimpl = IdImpl.getInstance();
+    private static IdImpl idimpl = new IdImpl();
 
     public static long id(PyObject o) {
         return idimpl.id(o);
