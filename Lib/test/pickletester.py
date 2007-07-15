@@ -4,7 +4,7 @@ import cPickle
 import pickletools
 import copy_reg
 
-from test.test_support import TestFailed, have_unicode, TESTFN
+from test.test_support import TestFailed, have_unicode, TESTFN, is_jython
 
 # Tests that try a number of pickle protocols should have a
 #     for proto in protocols:
@@ -525,6 +525,8 @@ class AbstractPickleTests(unittest.TestCase):
                         self.assertEqual(n, got)
         # Try a monster.  This is quadratic-time in protos 0 & 1, so don't
         # bother with those.
+        if is_jython:#see http://jython.org/bugs/1754225
+            return
         nbase = long("deadbeeffeedface", 16)
         nbase += nbase << 1000000
         for n in nbase, -nbase:
