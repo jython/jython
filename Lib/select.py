@@ -9,7 +9,32 @@ from java.nio.channels.SelectionKey import OP_ACCEPT, OP_CONNECT, OP_WRITE, OP_R
 
 import socket
 
+try:
+    import errno
+    ERRNO_EINVAL             = errno.EINVAL
+    ERRNO_ENOTSOCK           = errno.ENOTSOCK
+    ERRNO_ESOCKISBLOCKING    = errno.ESOCKISBLOCKING
+except ImportError:
+    ERRNO_EINVAL             = 22
+    ERRNO_ENOTSOCK           = 88
+    ERRNO_ESOCKISBLOCKING    = 20000
+
 class error(Exception): pass
+
+ALL = None
+
+_exception_map = {
+
+# (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
+
+(java.nio.channels.IllegalBlockingModeException, ALL) : lambda exc: error(ERRNO_ESOCKISBLOCKING, 'socket must be in non-blocking mode'),
+}
+
+def _map_exception(exc, circumstance=ALL):
+    try:
+        return _exception_map[(exc.__class__, circumstance)](exc)
+    except KeyError:
+        return error(-1, 'Unmapped java exception: %s' % exc.toString())
 
 POLLIN   = 1
 POLLOUT  = 2
@@ -37,7 +62,7 @@ class poll:
                     return socket_object.getchannel()
                 except:
                     return None
-        raise error("Object '%s' is not watchable" % socket_object, 10038)
+        raise error("Object '%s' is not watchable" % socket_object, ERRNO_ENOTSOCK)
 
     def _register_channel(self, socket_object, channel, mask):
         jmask = 0
@@ -65,49 +90,66 @@ class poll:
         self.unconnected_sockets = temp_list
 
     def register(self, socket_object, mask = POLLIN|POLLOUT|POLLPRI):
-        channel = self._getselectable(socket_object)
-        if channel is None:
-            # The socket is not yet connected, and thus has no channel
-            # Add it to a pending list, and return
-            self.unconnected_sockets.append( (socket_object, mask) )
-            return
-        self._register_channel(socket_object, channel, mask)
+        try:
+            channel = self._getselectable(socket_object)
+            if channel is None:
+                # The socket is not yet connected, and thus has no channel
+                # Add it to a pending list, and return
+                self.unconnected_sockets.append( (socket_object, mask) )
+                return
+            self._register_channel(socket_object, channel, mask)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def unregister(self, socket_object):
-        channel = self._getselectable(socket_object)
-        self.chanmap[channel][1].cancel()
-        del self.chanmap[channel]
+        try:
+            channel = self._getselectable(socket_object)
+            self.chanmap[channel][1].cancel()
+            del self.chanmap[channel]
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
-    def _dopoll(self, timeout=None):
+    def _dopoll(self, timeout):
         if timeout is None or timeout < 0:
             self.selector.select()
-        elif timeout == 0:
-            self.selector.selectNow()
         else:
-            # No multiplication required: both cpython and java use millisecond timeouts
-            self.selector.select(timeout)
+            try:
+                timeout = int(timeout)
+                if timeout == 0:
+                    self.selector.selectNow()
+                else:
+                    # No multiplication required: both cpython and java use millisecond timeouts
+                    self.selector.select(timeout)
+            except ValueError, vx:
+                raise error("poll timeout must be a number of milliseconds or None", ERRNO_EINVAL)
         # The returned selectedKeys cannot be used from multiple threads!
         return self.selector.selectedKeys()
 
     def poll(self, timeout=None):
-        self._check_unconnected_sockets()
-        selectedkeys = self._dopoll(timeout)
-        results = []
-        for k in selectedkeys.iterator():
-            jmask = k.readyOps()
-            pymask = 0
-            if jmask & OP_READ: pymask |= POLLIN
-            if jmask & OP_WRITE: pymask |= POLLOUT
-            if jmask & OP_ACCEPT: pymask |= POLLIN
-            if jmask & OP_CONNECT: pymask |= POLLOUT
-            # Now return the original userobject, and the return event mask
-            results.append( (self.chanmap[k.channel()][0], pymask) )
-        return results
+        try:
+            self._check_unconnected_sockets()
+            selectedkeys = self._dopoll(timeout)
+            results = []
+            for k in selectedkeys.iterator():
+                jmask = k.readyOps()
+                pymask = 0
+                if jmask & OP_READ: pymask |= POLLIN
+                if jmask & OP_WRITE: pymask |= POLLOUT
+                if jmask & OP_ACCEPT: pymask |= POLLIN
+                if jmask & OP_CONNECT: pymask |= POLLOUT
+                # Now return the original userobject, and the return event mask
+                results.append( (self.chanmap[k.channel()][0], pymask) )
+            return results
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def close(self):
-        for k in self.selector.keys():
-            k.cancel()
-        self.selector.close()
+        try:
+            for k in self.selector.keys():
+                k.cancel()
+            self.selector.close()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
 def _calcselecttimeoutvalue(value):
     if value is None:
@@ -117,7 +159,7 @@ def _calcselecttimeoutvalue(value):
     except Exception, x:
         raise TypeError("Select timeout value must be a number or None")
     if value < 0:
-        raise error("Select timeout value cannot be negative", 10022)
+        raise error("Select timeout value cannot be negative", ERRNO_EINVAL)
     if floatvalue < 0.000001:
         return 0
     return int(floatvalue * 1000) # Convert to milliseconds

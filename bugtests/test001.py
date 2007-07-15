@@ -11,5 +11,5 @@ v = util.Vector
 
 support.compare(str(v.size), "<java function size")
 
-if type(v.size) != BuiltinFunctionType:
-   raise support.TestError('Wrong type for v.size' + `type(v.size)`)
+if not callable(v.size):
+   raise support.TestError('v.size should be callable')

@@ -137,6 +137,10 @@ public final class errno implements ClassDictInit {
     public static final int EREMOTEIO                 = 121;
     public static final int EDQUOT                    = 122;
 
+    // AMAK: Starting a new series of jython specific error numbers
+    public static final int ESOCKISBLOCKING           = 20000;
+    public static final int EGETADDRINFOFAILED        = 20001;
+
     public static final PyObject errorcode = new PyDictionary();
     private static final PyObject strerror = new PyDictionary();
 
@@ -264,6 +268,9 @@ public final class errno implements ClassDictInit {
         addcode(dict, EREMOTEIO, "EREMOTEIO", "Remote I/O error");
         addcode(dict, EDQUOT, "EDQUOT", "Disk quota exceeded");
 
+        // AMAK: starting a new series of jython specific errors
+        addcode(dict, ESOCKISBLOCKING, "ESOCKISBLOCKING", "Socket is in blocking mode");
+        addcode(dict, EGETADDRINFOFAILED, "EGETADDRINFOFAILED", "getaddrinfo failed");
     }
 
     public static PyObject strerror(PyObject error) {

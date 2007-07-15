@@ -47,6 +47,15 @@ public class jython
                 throw Py.ValueError("jar file missing '__run__.py'");
 
             PyStringMap locals = new PyStringMap();
+            
+            // Stripping the stuff before the last File.separator fixes Bug 
+            // #931129 by keeping illegal characters out of the generated 
+            // proxy class name 
+            int beginIndex;
+            if ((beginIndex = filename.lastIndexOf(File.separator)) != -1) {
+                filename = filename.substring(beginIndex + 1);
+            }
+            
             locals.__setitem__("__name__", new PyString(filename));
             locals.__setitem__("zipfile", Py.java2py(zip));
 
@@ -159,14 +168,6 @@ public class jython
             }
         }
 
-        if (opts.command != null) {
-            try {
-                interp.exec(opts.command);
-            } catch (Throwable t) {
-                Py.printException(t);
-            }
-        }
-
         // was there a filename on the command line?
         if (opts.filename != null) {
             String path = new java.io.File(opts.filename).getParent();
@@ -204,6 +205,14 @@ public class jython
             // was given, sys.path[0] will have gotten filled in with the
             // dir of the argument filename.
             Py.getSystemState().path.insert(0, new PyString(""));
+
+            if (opts.command != null) {
+                try {
+                    interp.exec(opts.command);
+                } catch (Throwable t) {
+                    Py.printException(t);
+                }
+            }
         }
 
         if (opts.interactive) {

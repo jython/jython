@@ -1,7 +1,7 @@
-Welcome to Jython 2.2b2
+Welcome to Jython 2.2rc2
 =======================
 
-This is the second beta release towards the 2.2 version of Jython. It
+This is the second release candidate of the 2.2 version of Jython. It
 contains all of the new features for the 2.2 release:
  - new-style classes
  - Java List integration
@@ -11,18 +11,20 @@ contains all of the new features for the 2.2 release:
  - __future__ division
  - support for running on modern JVMs
  - a new installer
+ - ssl and non-blocking support for socket
 
-In addition to these major features, many bugs have been fixed from 2.2b1.  See
-the NEWS file for a more complete list of changes.
+In addition to these major features, several bugs have been fixed from 2.2rc1.
+See the NEWS file for a more complete list of changes.
 
-The release was compiled on Windows XP with JDK 6 but it should run on
+The release was compiled on Mac OS X with JDK 5 but it should run on
 1.4.2+.
 
-This release exists to solicit feedback about any bugs or missing
-features; if you can provide it, it is greatly appreciated.  Bug
-reports can be created at http://jython.org/bugs whereas more general
-questions can be sent to the Jython-dev mailing list,
-jython-dev@lists.sourceforge.net.
+This release is intended to find any major bugs before releasing 2.2.  If none
+are found, this will become the 2.2 release.  If you can run this and check for
+bugs, it will be greatly appreciated.  Bug reports can be created at
+http://jython.org/bugs whereas more general questions can be sent to the
+Jython-users mailing list, jython-users@lists.sourceforge.net.
 
-The current plan calls for a release candiate in a few weeks, and if it proves
-stable, the final release of 2.2 a few weeks after that.
+If this release proves stable, the final release of 2.2 will be in a couple
+weeks.  If not, successive release candidates will be made until all the major
+bugs are ironed out.

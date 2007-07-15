@@ -1556,20 +1556,32 @@ public final class Py
      * @see ClassicPyObjectAdapter - default PyObjectAdapter type
      */
 	public static PyObject java2py(Object o) {
-		return adapter.adapt(o);
+		return getAdapter().adapt(o);
 	}
     
     /**
      * @return the ExtensiblePyObjectAdapter used by java2py.
      */
     public static ExtensiblePyObjectAdapter getAdapter(){
+        if(adapter == null) {
+            adapter = new ClassicPyObjectAdapter();
+        }
         return adapter;
     }
 	
+    /**
+     * Set the ExtensiblePyObjectAdapter used by java2py.
+     * 
+     * @param adapter The new ExtensiblePyObjectAdapter
+     */
+    protected static void setAdapter(ExtensiblePyObjectAdapter adapter) {
+        Py.adapter = adapter;
+    }
+    
 	/**
 	 * Handles wrapping Java objects in PyObject to expose them to jython.
 	 */
-	protected static ExtensiblePyObjectAdapter adapter;
+	private static ExtensiblePyObjectAdapter adapter;
 
     public static PyObject makeClass(String name, PyObject[] bases,
                                      PyCode code, PyObject doc)
