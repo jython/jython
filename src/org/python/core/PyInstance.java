@@ -674,7 +674,7 @@ public class PyInstance extends PyObject
         throw Py.TypeError("instance has no next() method");
     }
 
-    private static CollectionIter[] iterFactories = null;
+    private static CollectionIter[] iterFactories;
 
     private PyObject getCollectionIter() {
         if (iterFactories == null)
@@ -690,19 +690,16 @@ public class PyInstance extends PyObject
     private static synchronized void initializeIterators() {
         if (iterFactories != null)
             return;
-        String factories = "org.python.core.CollectionIter," +
-                           "org.python.core.CollectionIter2," +
-                           Py.getSystemState().registry.getProperty(
-                                "python.collections", "");
+        String factories = PySystemState.registry.getProperty("python.collections", "");
         int i = 0;
         StringTokenizer st = new StringTokenizer(factories, ",");
-        iterFactories = new CollectionIter[st.countTokens() + 1];
+        iterFactories = new CollectionIter[st.countTokens() + 2];
+        iterFactories[0] = new CollectionIter();
         while (st.hasMoreTokens()) {
             String s = st.nextToken();
             try {
                 Class factoryClass = Class.forName(s);
-                CollectionIter factory =
-                        (CollectionIter)factoryClass.newInstance();
+                CollectionIter factory = (CollectionIter)factoryClass.newInstance();
                 iterFactories[i++] = factory;
             } catch (Throwable t) { }
         }
