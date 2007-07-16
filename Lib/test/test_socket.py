@@ -566,6 +566,21 @@ class BasicTCPTest(SocketConnectedTest):
         self.serv_conn.send(MSG)
         self.serv_conn.shutdown(2)
 
+    def testSendAfterRemoteClose(self):
+        self.cli_conn.close()
+
+    def _testSendAfterRemoteClose(self):
+        for x in range(5):
+            try:
+                self.serv_conn.send("spam")
+            except socket.error, se:
+                self.failUnlessEqual(se[0], errno.ECONNRESET)
+                return
+            except Exception, x:
+                self.fail("Sending on remotely closed socket raised wrong exception: %s" % x)
+            time.sleep(0.5)
+        self.fail("Sending on remotely closed socket should have raised exception")
+
 class BasicUDPTest(ThreadedUDPSocketTest):
 
     def __init__(self, methodName='runTest'):
@@ -752,6 +767,33 @@ class NonBlockingUDPTests(ThreadedUDPSocketTest): pass
 #
 # TODO: Write some non-blocking UDP tests
 #
+
+class FileObjectClassOpenCloseTests(SocketConnectedTest):
+
+    def testCloseFileDoesNotCloseSocket(self):
+        # This test is necessary on java/jython
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+
+    def _testCloseFileDoesNotCloseSocket(self):
+        self.cli_file = self.serv_conn.makefile('wb')
+        self.cli_file.close()
+        try:
+            self.serv_conn.send(MSG)
+        except Exception, x:
+            self.fail("Closing file wrapper appears to have closed underlying socket: %s" % str(x))
+
+    def testCloseSocketDoesNotCloseFile(self):
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+
+    def _testCloseSocketDoesNotCloseFile(self):
+        self.cli_file = self.serv_conn.makefile('wb')
+        self.serv_conn.close()
+        try:
+            self.cli_file.write(MSG)
+        except Exception, x:
+            self.fail("Closing socket appears to have closed file wrapper: %s" % str(x))
 
 class FileObjectClassTestCase(SocketConnectedTest):
 
@@ -972,7 +1014,7 @@ class TestJythonExceptions(unittest.TestCase):
                 t.bind( (HOST, PORT) )
                 t.listen()
             except socket.error, se:
-                self.failUnlessEqual(se[0], errno.EACCES)
+                self.failUnlessEqual(se[0], errno.EADDRINUSE)
             except Exception, x:
                 self.fail("Binding to already bound host/port raised wrong exception: %s" % x)
             else:
@@ -990,6 +1032,25 @@ class TestJythonExceptions(unittest.TestCase):
             self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
         else:
             self.fail("Get host name for non-existent host should have raised exception")
+
+    def testSocketNotConnected(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ENOTCONN)
+        except Exception, x:
+            self.fail("Send on unconnected socket raised wrong exception: %s" % x)
+        else:
+            self.fail("Send on unconnected socket raised exception")
+        try:
+            result = s.recv(1024)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ENOTCONN)
+        except Exception, x:
+            self.fail("Receive on unconnected socket raised wrong exception: %s" % x)
+        else:
+            self.fail("Receive on unconnected socket raised exception")
 
 class TestAddressParameters:
 
@@ -1040,6 +1101,7 @@ def test_main():
         UDPTimeoutTest,
         NonBlockingTCPTests,
         NonBlockingUDPTests,
+        FileObjectClassOpenCloseTests,
         FileObjectClassTestCase,
         UnbufferedFileObjectClassTestCase,
         LineBufferedFileObjectClassTestCase,
