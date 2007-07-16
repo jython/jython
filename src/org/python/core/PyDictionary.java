@@ -1091,13 +1091,13 @@ public class PyDictionary extends PyObject {
         java.util.Enumeration ek = table.keys();
         java.util.Enumeration ev = table.elements();
         int n = table.size();
-        java.util.Vector l = new java.util.Vector(n);
-
-        for (int i=0; i<n; i++)
-            l.addElement(new PyTuple(new PyObject[] {
+        PyObject[] elements = new PyObject[n];
+        for (int i=0; i<n; i++) {
+            elements[i] = new PyTuple(new PyObject[] {
                 (PyObject)ek.nextElement(), (PyObject)ev.nextElement()
-            }));
-        return new PyList(l);
+            });
+        }
+        return new PyList(elements);
     }
 
     /**
@@ -1110,11 +1110,12 @@ public class PyDictionary extends PyObject {
     final PyList dict_keys() {
         java.util.Enumeration e = table.keys();
         int n = table.size();
-        java.util.Vector l = new java.util.Vector(n);
+        PyObject[] elements = new PyObject[n];
 
-        for (int i=0; i<n; i++)
-            l.addElement(e.nextElement());
-        return new PyList(l);
+        for (int i=0; i<n; i++) {
+            elements[i] = (PyObject)e.nextElement();
+        }
+        return new PyList(elements);
     }
 
     /**
@@ -1127,11 +1128,11 @@ public class PyDictionary extends PyObject {
     final PyList dict_values() {
         java.util.Enumeration e = table.elements();
         int n = table.size();
-        java.util.Vector l = new java.util.Vector(n);
-
-        for (int i=0; i<n; i++)
-            l.addElement(e.nextElement());
-        return new PyList(l);
+        PyObject[] elements = new PyObject[n];
+        for (int i=0; i<n; i++) {
+            elements[i] = (PyObject)e.nextElement();
+        }
+        return new PyList(elements);
     }
 
     /**
