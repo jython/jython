@@ -987,60 +987,91 @@ _skips = {
 	""",
     'java':
 	"""
-	test_al
-	test_asynchat
-	test_audioop
-	test_bsddb
-	test_capi
-	test_cd
-	test_cl
-	test_cmath
-	test_commands
-	test_crypt
-	test_curses
-	test_dbm
-	test_dl
-	test_email
-	test_email_codecs
-	test_fcntl
-	test_fork1
-	test_gc
-	test_gdbm
-	test_gettext
-	test_gl
-	test_grp
-	test_hotshot
-	test_imageop
-	test_imgfile
-	test_linuxaudiodev
-	test_locale
-	test_longexp
-	test_mmap
-	test_nis
-	test_openpty
-	test_parser
-	test_poll
-	test_pty
-	test_pwd
-	test_pyexpat
-	test_regex
-	test_rgbimg
-	test_rotor
-	test_select
-	test_signal
-	test_socket_ssl
-	test_socketserver
-	test_strop
-	test_sunaudiodev
-	test_sundry
-	test_symtable
-	test_timing
-	test_ucn
-	test_unicode_file
-	test_unicodedata
-	test_wave
-	test_winreg
-	test_winsound
+        test_aepack
+        test_al
+        test_asynchat
+        test_audioop
+        test_bsddb
+        test_bsddb185
+        test_bsddb3
+        test_bz2
+        test_capi
+        test_cd
+        test_cl
+        test_codeccallbacks
+        test_codeop
+        test_commands
+        test_crypt
+        test_csv
+        test_curses
+        test_dbm
+        test_dl
+        test_dummy_thread
+        test_dummy_threading
+        test_email
+        test_email_codecs
+        test_fcntl
+        test_filecmp
+        test_fork1
+        test_gc
+        test_gdbm
+        test_getargs2
+        test_gettext
+        test_gl
+        test_grp
+        test_heapq
+        test_hotshot
+        test_imageop
+        test_imgfile
+        test_import
+        test_ioctl
+        test_largefile
+        test_linuxaudiodev
+        test_locale
+        test_logging
+        test_longexp
+        test_macfs
+        test_macostools
+        test_mmap
+        test_mpz
+        test_nis
+        test_normalization
+        test_openpty
+        test_optparse
+        test_ossaudiodev
+        test_parser
+        test_plistlib
+        test_poll
+        test_posix
+        test_pty
+        test_pwd
+        test_pyexpat
+        test_regex
+        test_resource
+        test_rgbimg
+        test_robotparser
+        test_rotor
+        test_scriptpackages
+        test_signal
+        test_socket_ssl
+        test_socketserver
+        test_stringprep
+        test_strop
+        test_strptime
+        test_sunaudiodev
+        test_sundry
+        test_symtable
+        test_tarfile
+        test_timeout
+        test_timing
+        test_unicode_file
+        test_univnewlines
+        test_urllibnet
+        test_wave
+        test_weakref
+        test_winreg
+        test_winsound
+        test_zipimport
 	"""
 }
 if test_support.is_jython and test_support.underlying_system.startswith('win'):
@@ -1055,12 +1086,15 @@ _failures = {
     test_descr
     test_descrtut
     test_frozen
+    test_imp
     test_marshal
     test_new
+    test_pep263
     test_pickle
     test_pkgimport
     test_profilehooks
     test_pyclbr
+    test_shutil
     test_sre
     test_threaded_import
     test_trace
