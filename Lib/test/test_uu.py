@@ -141,8 +141,9 @@ class UUFileTest(unittest.TestCase):
             f = open(self.tmpin, 'rb')
             uu.decode(f)
             f.close()
-
-            f = open(self.tmpout, 'rU')
+            #This was using rU but Jython lacks universal newline support
+            #See http://jython.org/bugs/1755361
+            f = open(self.tmpout, 'r')
             s = f.read()
             f.close()
             self.assertEqual(s, plaintext)
