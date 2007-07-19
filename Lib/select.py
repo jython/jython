@@ -9,15 +9,7 @@ from java.nio.channels.SelectionKey import OP_ACCEPT, OP_CONNECT, OP_WRITE, OP_R
 
 import socket
 
-try:
-    import errno
-    ERRNO_EINVAL             = errno.EINVAL
-    ERRNO_ENOTSOCK           = errno.ENOTSOCK
-    ERRNO_ESOCKISBLOCKING    = errno.ESOCKISBLOCKING
-except ImportError:
-    ERRNO_EINVAL             = 22
-    ERRNO_ENOTSOCK           = 88
-    ERRNO_ESOCKISBLOCKING    = 20000
+import errno
 
 class error(Exception): pass
 
@@ -27,14 +19,16 @@ _exception_map = {
 
 # (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
 
-(java.nio.channels.IllegalBlockingModeException, ALL) : lambda exc: error(ERRNO_ESOCKISBLOCKING, 'socket must be in non-blocking mode'),
+(java.nio.channels.IllegalBlockingModeException, ALL) : error(errno.ESOCKISBLOCKING, 'socket must be in non-blocking mode'),
 }
 
 def _map_exception(exc, circumstance=ALL):
     try:
-        return _exception_map[(exc.__class__, circumstance)](exc)
+        mapped_exception = _exception_map[(exc.__class__, circumstance)]
+        mapped_exception.java_exception = exc
+        return mapped_exception
     except KeyError:
-        return error(-1, 'Unmapped java exception: %s' % exc.toString())
+        return error(-1, 'Unmapped java exception: <%s:%s>' % (exc.toString(), circumstance))
 
 POLLIN   = 1
 POLLOUT  = 2
@@ -48,21 +42,23 @@ POLLERR  = 8
 POLLHUP  = 16
 POLLNVAL = 32
 
+def _getselectable(selectable_object):
+    for method in ['getchannel', 'fileno']:
+        try:
+            channel = getattr(selectable_object, method)()
+            if channel and not isinstance(channel, java.nio.channels.SelectableChannel):
+                raise TypeError("Object '%s' is not watchable" % selectable_object, errno.ENOTSOCK)
+            return channel
+        except:
+            pass
+    raise TypeError("Object '%s' is not watchable" % selectable_object, errno.ENOTSOCK)
+
 class poll:
 
     def __init__(self):
         self.selector = java.nio.channels.Selector.open()
         self.chanmap = {}
         self.unconnected_sockets = []
-
-    def _getselectable(self, socket_object):
-        for st in socket.SocketTypes:
-            if isinstance(socket_object, st):
-                try:
-                    return socket_object.getchannel()
-                except:
-                    return None
-        raise error("Object '%s' is not watchable" % socket_object, ERRNO_ENOTSOCK)
 
     def _register_channel(self, socket_object, channel, mask):
         jmask = 0
@@ -82,7 +78,7 @@ class poll:
     def _check_unconnected_sockets(self):
         temp_list = []
         for socket_object, mask in self.unconnected_sockets:
-            channel = self._getselectable(socket_object)
+            channel = _getselectable(socket_object)
             if channel is not None:
                 self._register_channel(socket_object, channel, mask)
             else:
@@ -91,7 +87,7 @@ class poll:
 
     def register(self, socket_object, mask = POLLIN|POLLOUT|POLLPRI):
         try:
-            channel = self._getselectable(socket_object)
+            channel = _getselectable(socket_object)
             if channel is None:
                 # The socket is not yet connected, and thus has no channel
                 # Add it to a pending list, and return
@@ -103,7 +99,7 @@ class poll:
 
     def unregister(self, socket_object):
         try:
-            channel = self._getselectable(socket_object)
+            channel = _getselectable(socket_object)
             self.chanmap[channel][1].cancel()
             del self.chanmap[channel]
         except java.lang.Exception, jlx:
@@ -121,7 +117,7 @@ class poll:
                     # No multiplication required: both cpython and java use millisecond timeouts
                     self.selector.select(timeout)
             except ValueError, vx:
-                raise error("poll timeout must be a number of milliseconds or None", ERRNO_EINVAL)
+                raise error("poll timeout must be a number of milliseconds or None", errno.EINVAL)
         # The returned selectedKeys cannot be used from multiple threads!
         return self.selector.selectedKeys()
 
@@ -159,41 +155,57 @@ def _calcselecttimeoutvalue(value):
     except Exception, x:
         raise TypeError("Select timeout value must be a number or None")
     if value < 0:
-        raise error("Select timeout value cannot be negative", ERRNO_EINVAL)
+        raise error("Select timeout value cannot be negative", errno.EINVAL)
     if floatvalue < 0.000001:
         return 0
     return int(floatvalue * 1000) # Convert to milliseconds
 
-def select ( read_fd_list, write_fd_list, outofband_fd_list, timeout=None):
+def native_select(read_fd_list, write_fd_list, outofband_fd_list, timeout=None):
     timeout = _calcselecttimeoutvalue(timeout)
     # First create a poll object to do the actual watching.
     pobj = poll()
-    already_registered = {}
-    # Check the read list
     try:
-        # AMAK: Need to remove all this list searching, change to a dictionary?
+        registered_for_read = {}
+        # Check the read list
         for fd in read_fd_list:
-            mask = POLLIN
-            if fd in write_fd_list:
-                mask |= POLLOUT
-            pobj.register(fd, mask)
-            already_registered[fd] = 1
+            pobj.register(fd, POLLIN)
+            registered_for_read[fd] = 1
         # And now the write list
         for fd in write_fd_list:
-            if not already_registered.has_key(fd):
+            if registered_for_read.has_key(fd):
+            	# registering a second time overwrites the first
+                pobj.register(fd, POLLIN|POLLOUT)
+            else:
                 pobj.register(fd, POLLOUT)
         results = pobj.poll(timeout)
-    except AttributeError, ax:
-        if str(ax) == "__getitem__":
-            raise TypeError(ax)
-        raise ax
-    # Now start preparing the results
-    read_ready_list, write_ready_list, oob_ready_list = [], [], []
-    for fd, mask in results:
-        if mask & POLLIN:
-            read_ready_list.append(fd)
-        if mask & POLLOUT:
-            write_ready_list.append(fd)
-    pobj.close()
-    return read_ready_list, write_ready_list, oob_ready_list
+        # Now start preparing the results
+        read_ready_list, write_ready_list, oob_ready_list = [], [], []
+        for fd, mask in results:
+            if mask & POLLIN:
+                read_ready_list.append(fd)
+            if mask & POLLOUT:
+                write_ready_list.append(fd)
+        return read_ready_list, write_ready_list, oob_ready_list
+    finally:
+        # Need to close the poll object no matter what happened
+        # If it is left open, it may still have references to sockets
+        # That were registered before any exceptions occurred
+        pobj.close()
 
+select = native_select
+
+def cpython_compatible_select(read_fd_list, write_fd_list, outofband_fd_list, timeout=None):
+    # First turn all sockets to non-blocking
+    # keeping track of which ones have changed
+    modified_channels = []
+    try:
+        for socket_list in [read_fd_list, write_fd_list, outofband_fd_list]:
+            for s in socket_list:
+                channel = _getselectable(s)
+                if channel.isBlocking():
+                    modified_channels.append(channel)
+                    channel.configureBlocking(0)
+        return native_select(read_fd_list, write_fd_list, outofband_fd_list, timeout)
+    finally:
+        for channel in modified_channels:
+            channel.configureBlocking(1)

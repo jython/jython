@@ -648,6 +648,16 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
     def _testSetBlocking(self):
         pass
 
+    def testGetBlocking(self):
+        # Testing whether set blocking works
+        self.serv.setblocking(0)
+        self.failUnless(not self.serv.getblocking(), "Getblocking return true instead of false")
+        self.serv.setblocking(1)
+        self.failUnless(self.serv.getblocking(), "Getblocking return false instead of true")
+
+    def _testGetBlocking(self):
+        pass
+
     #
     # AMAK: 20070307
     # Split testAccept into two separate tests

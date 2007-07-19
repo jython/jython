@@ -61,8 +61,10 @@ class TestSelectInvalidParameters(unittest.TestCase):
                 try:
                     timeout = 0 # Can't wait forever
                     rfd, wfd, xfd = select.select(args[0], args[1], args[2], timeout)
-                except TypeError:
+                except (select.error, TypeError):
                     pass
+                except Exception, x:
+                    self.fail("Selecting on '%s' raised wrong exception %s" % (str(bad_select_set), str(x)))
                 else:
                     self.fail("Selecting on '%s' should have raised TypeError" % str(bad_select_set))
 

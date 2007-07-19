@@ -432,6 +432,9 @@ class _nonblocking_api_mixin:
             self.timeout = 0.0
         self._config()
 
+    def getblocking(self):
+        return self.mode == MODE_BLOCKING
+
     def _config(self):
         assert self.mode in _permitted_modes
         if self.sock_impl: self.sock_impl.config(self.mode, self.timeout)
