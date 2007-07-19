@@ -4138,7 +4138,7 @@ final class StringFormatter
         if (argIndex == -1 ||
             (argIndex >= 0 && args.__finditem__(argIndex) != null))
         {
-            throw Py.TypeError("not all arguments converted");
+            throw Py.TypeError("not all arguments converted during string formatting");
         }
         if (needUnicode) {
             return new PyUnicode(buffer.toString());
