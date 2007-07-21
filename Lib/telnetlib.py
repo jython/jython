@@ -36,7 +36,14 @@ To do:
 # Imported modules
 import sys
 import socket
-import select
+import os
+if os.name == 'java':
+  from select import cpython_compatible_select as select
+else:
+  from select import select
+del os
+
+
 
 __all__ = ["Telnet"]
 
@@ -311,7 +318,7 @@ class Telnet:
         s_args = s_reply
         if timeout is not None:
             s_args = s_args + (timeout,)
-        while not self.eof and select.select(*s_args) == s_reply:
+        while not self.eof and select(*s_args) == s_reply:
             i = max(0, len(self.cookedq)-n)
             self.fill_rawq()
             self.process_rawq()
@@ -525,7 +532,7 @@ class Telnet:
 
     def sock_avail(self):
         """Test whether data is available on the socket."""
-        return select.select([self], [], [], 0) == ([self], [], [])
+        return select([self], [], [], 0) == ([self], [], [])
 
     def interact(self):
         """Interaction function, emulates a very dumb telnet client."""
@@ -533,7 +540,7 @@ class Telnet:
             self.mt_interact()
             return
         while 1:
-            rfd, wfd, xfd = select.select([self, sys.stdin], [], [])
+            rfd, wfd, xfd = select([self, sys.stdin], [], [])
             if self in rfd:
                 try:
                     text = self.read_eager()
@@ -613,7 +620,7 @@ class Telnet:
             if self.eof:
                 break
             if timeout is not None:
-                r, w, x = select.select([self.fileno()], [], [], timeout)
+                r, w, x = select([self.fileno()], [], [], timeout)
                 if not r:
                     break
             self.fill_rawq()
