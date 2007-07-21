@@ -549,7 +549,9 @@ class _tcpsocket(_nonblocking_api_mixin):
                 self.sock_impl.jchannel.finishConnect()
             data = jarray.zeros(n, 'b')
             m = self.sock_impl.read(data)
-            if m <= 0:
+            if m == -1:#indicates EOF has been reached, so we just return the empty string
+                return ""
+            elif m <= 0:
                 if self.mode == MODE_NONBLOCKING:
                     raise would_block_error()
                 return ""
