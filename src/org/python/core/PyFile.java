@@ -1056,9 +1056,7 @@ public class PyFile extends PyObject
                                                                                                       // called as a builtin.
                                                                                                       newobj = new PyFile();
                                                                                                       newobj.file_init(args, keywords);
-                                                                                                      if(args[0] instanceof PyString){
-                                                                                                          newobj.closer = new Closer(newobj.file);
-                                                                                                      }
+                                                                                                      newobj.closer = new Closer(newobj.file);
                                                                                                   } else {
                                                                                                       // assume it's being called as a java class
                                                                                                       PyJavaClass pjc = new PyJavaClass(PyFile.class);
@@ -1484,9 +1482,15 @@ public class PyFile extends PyObject
     }
 
     final void file_close() {
-        if(closer != null){
+        if (closer != null) {
             closer.close();
             closer = null;
+        } else {
+            try {
+                file.close();
+            } catch (java.io.IOException e) {
+                throw Py.IOError(e);
+            }
         }
         closed = true;
         file = new FileWrapper();
