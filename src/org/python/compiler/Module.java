@@ -465,24 +465,20 @@ public class Module implements ClassConstants, CompilationContext
         if (ac != null && ac.init_code.size() > 0) {
             ac.appendInitCode((Suite) tree);
         }
-
-        if (scope != null) {
-          int nparamcell = scope.jy_paramcells.size();
-          if (nparamcell > 0) {
-            if (to_cell == 0) {
-                to_cell = classfile.pool.Methodref("org/python/core/PyFrame",
-                    "to_cell","(II)V");
+        int nparamcell = scope.jy_paramcells.size();
+        if(nparamcell > 0) {
+            if(to_cell == 0) {
+                to_cell = classfile.pool.Methodref("org/python/core/PyFrame", "to_cell", "(II)V");
             }
             Hashtable tbl = scope.tbl;
             Vector paramcells = scope.jy_paramcells;
-            for (int i = 0; i < nparamcell; i++) {
+            for(int i = 0; i < nparamcell; i++) {
                 c.aload(1);
                 SymInfo syminf = (SymInfo)tbl.get(paramcells.elementAt(i));
                 c.iconst(syminf.locals_index);
                 c.iconst(syminf.env_index);
                 c.invokevirtual(to_cell);
             }
-          }
         }
 
         compiler.parse(tree, c, fast_locals, className, classBody,
@@ -510,11 +506,9 @@ public class Module implements ClassConstants, CompilationContext
         // !classdef only
         if (!classBody) code.names = toNameAr(compiler.names,false);
 
-        if (scope != null) {
-            code.cellvars = toNameAr(scope.cellvars,true);
-            code.freevars = toNameAr(scope.freevars,true);
-            code.jy_npurecell = scope.jy_npurecell;
-        }
+        code.cellvars = toNameAr(scope.cellvars, true);
+        code.freevars = toNameAr(scope.freevars, true);
+        code.jy_npurecell = scope.jy_npurecell;
 
         if (compiler.optimizeGlobals) {
             code.moreflags |= org.python.core.PyTableCode.CO_OPTIMIZED;

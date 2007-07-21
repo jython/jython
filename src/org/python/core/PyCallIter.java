@@ -3,7 +3,6 @@ package org.python.core;
 public class PyCallIter extends PyIterator {
     private PyObject callable;
     private PyObject sentinel;
-    private int idx;
 
     public PyCallIter(PyObject callable, PyObject sentinel) {
         if(!__builtin__.callable(callable)) {

@@ -362,15 +362,15 @@ public class cStringIO {
 
     private static String[]   strings = new String[256];
     static String getString(char ch) {
-        if ((int)ch > 255) {
+        if (ch > 255) {
             return new String(new char[] { ch });
         }
 
-      String s = strings[(int)ch];
+      String s = strings[ch];
 
       if (s == null) {
           s = new String(new char[] { ch });
-          strings[(int)ch] = s;
+          strings[ch] = s;
       }
       return s;
    }

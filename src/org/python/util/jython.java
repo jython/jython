@@ -2,6 +2,7 @@
 package org.python.util;
 
 import org.python.core.*;
+
 import java.util.zip.*;
 import java.io.*;
 
@@ -121,7 +122,7 @@ public class jython
                 imp.load("site");
 
                 if (opts.notice) {
-                    PyObject builtins = Py.getSystemState().builtins;
+                    PyObject builtins = PySystemState.builtins;
                     boolean copyright =
                                 builtins.__finditem__("copyright") != null;
                     boolean credits =

@@ -186,11 +186,11 @@ public final class SHA1 {
      */
     private SHA1 (SHA1 md) {
         this();
-        data = (int[])md.data.clone();
-        digest = (int[])md.digest.clone();
-        tmp = (byte[])md.tmp.clone();
-        w = (int[])md.w.clone();
-        buffer = (byte[])md.buffer.clone();
+        data = md.data.clone();
+        digest = md.digest.clone();
+        tmp = md.tmp.clone();
+        w = md.w.clone();
+        buffer = md.buffer.clone();
         buffered = md.buffered;
         count = md.count;
     }
@@ -245,7 +245,7 @@ public final class SHA1 {
 
     private byte[] java_digest(byte[] in, int pos)
     {
-	int[] digest_save = (int[]) digest.clone();
+	int[] digest_save = digest.clone();
         if (pos != 0) System.arraycopy(in, 0, tmp, 0, pos);
 	
         tmp[pos++] = (byte)0x80;

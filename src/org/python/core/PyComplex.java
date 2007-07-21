@@ -921,7 +921,7 @@ public class PyComplex extends PyObject {
         if (other instanceof PyFloat)
             return new PyComplex(((PyFloat)other).getValue(), 0);
         if (other instanceof PyInteger)
-            return new PyComplex((double)((PyInteger)other).getValue(), 0);
+            return new PyComplex(((PyInteger)other).getValue(), 0);
         if (other instanceof PyLong)
             return new PyComplex(((PyLong)other).doubleValue(), 0);
         return Py.None;
@@ -940,7 +940,7 @@ public class PyComplex extends PyObject {
         if (other instanceof PyFloat)
             return new PyComplex(((PyFloat)other).getValue(), 0);
         if (other instanceof PyInteger)
-            return new PyComplex((double)((PyInteger)other).getValue(), 0);
+            return new PyComplex(((PyInteger)other).getValue(), 0);
         if (other instanceof PyLong)
             return new PyComplex(((PyLong)other).doubleValue(), 0);
         throw Py.TypeError("xxx");
@@ -1233,7 +1233,7 @@ public class PyComplex extends PyObject {
 
         // Check for integral powers
         int iexp = (int)yr;
-        if (yi == 0 && yr == (double)iexp && iexp >= -128 && iexp <= 128) {
+        if (yi == 0 && yr == iexp && iexp >= -128 && iexp <= 128) {
             return ipow(value, iexp);
         }
 

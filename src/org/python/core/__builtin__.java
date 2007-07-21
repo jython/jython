@@ -743,7 +743,7 @@ public class __builtin__  {
 				if (n == 1) {
 					list.append(args[0]);
 				} else {
-					list.append(new PyTuple((PyObject[]) args.clone()));
+					list.append(new PyTuple(args.clone()));
 				}
 			} else {
 				list.append(f.__call__(args));
@@ -1133,7 +1133,7 @@ public class __builtin__  {
 		}
 		PyObject builtins = frame.f_builtins;
 		if (builtins == null) {
-			builtins = Py.getSystemState().builtins;
+			builtins = PySystemState.builtins;
 		}
 
 		PyObject __import__ = builtins.__finditem__("__import__");

@@ -3026,6 +3026,18 @@ public class PyObject implements java.io.Serializable {
     // can return null meaning set-only or throw exception
 
     // backward comp impls.
+    /**
+     * Get descriptor for this PyObject.
+     * 
+     * @param obj -
+     *            the instance accessing this descriptor. Can be null if this is
+     *            being accessed by a type.
+     * @param type -
+     *            the type accessing this descriptor. Will be null if obj exists
+     *            as obj is of the type accessing the descriptor.
+     * @return - the object defined for this descriptor for the given obj and
+     *         type.
+     */
     public PyObject __get__(PyObject obj, PyObject type) {
         return _doget(obj, type);
     }

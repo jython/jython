@@ -396,7 +396,7 @@ public class binascii {
         int ret = -1;
 
         while ((slen > 0) && (ret == -1)) {
-            int c = (int)s.charAt(offset);
+            int c = s.charAt(offset);
             short b64val = table_a2b_base64[c & 0x7f];
             if (((c <= 0x7f) && (b64val != -1)) ) {
                 if (num == 0)
@@ -434,7 +434,7 @@ public class binascii {
         for(int i = 0; ascii_len > 0 ; ascii_len--, i++) {
             // Skip some punctuation
             this_ch = ascii_data.charAt(i);
-            if ((int) this_ch > 0x7F || this_ch == '\r' ||
+            if (this_ch > 0x7F || this_ch == '\r' ||
                       this_ch == '\n' || this_ch == ' ')
                 continue;
 
@@ -451,7 +451,7 @@ public class binascii {
                 }
             }
 
-            short this_v = table_a2b_base64[(int) this_ch];
+            short this_v = table_a2b_base64[this_ch];
             if (this_v == -1)
                 continue;
 

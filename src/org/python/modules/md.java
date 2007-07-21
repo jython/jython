@@ -355,8 +355,6 @@ class md {
    }
 
     public String toString() {
-        String s;
-
         return(tohex(A) + tohex(B) + tohex(C) + tohex(D));
     }
     int[] getregs() {

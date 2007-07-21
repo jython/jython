@@ -345,7 +345,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         return new PyTuple(new PyObject[]{
             func,
             new PyTuple(new PyObject[]{
-                new PyList((PyObject)this)
+                new PyList(this)
             })
         });
     }

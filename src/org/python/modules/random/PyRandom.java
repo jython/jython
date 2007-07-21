@@ -1,9 +1,6 @@
 package org.python.modules.random;
 
-import java.util.Random;
 import java.lang.System;
-import java.lang.Math;
-
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectOutputStream;

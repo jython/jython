@@ -508,8 +508,6 @@ public class PyJavaClass extends PyClass
     void addEvent(String name, Class eventClass, Method addMethod,
                   Method[] meths)
     {
-        String eventName = eventClass.getName();
-
         for (int i=0; i<meths.length; i++) {
             PyBeanEventProperty prop;
             prop = new PyBeanEventProperty(name, eventClass, addMethod,
@@ -629,8 +627,6 @@ public class PyJavaClass extends PyClass
 
             Class[] args = method.getParameterTypes();
             Class ret = method.getReturnType();
-            String pname="";
-
             if (args.length != 1 || ret != Void.TYPE)
                 continue;
 

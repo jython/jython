@@ -227,7 +227,7 @@ public class ucnhash implements ucnhashAPI {
         long lengths = ((long) rawindex[tmp++] << 48) |
                        ((long) rawindex[tmp++] << 32) |
                        ((long) rawindex[tmp++] << 16) |
-                       ((long) rawindex[tmp++]);
+                       rawindex[tmp++];
 
         floor *= 12;
         for (int i = 0; i < 12; i++) {
@@ -325,7 +325,7 @@ public class ucnhash implements ucnhashAPI {
         if (debug) {
             System.out.println("idx:" + idx);
             System.out.println("codepoint:" + codepoint[idx] + " " +
-                               Integer.toHexString((int)codepoint[idx]));
+                               Integer.toHexString(codepoint[idx]));
         }
         return codepoint[idx];
     }

@@ -101,7 +101,7 @@ public class exceptions implements ClassDictInit {
             if (frame.f_back != null) {
                 frame.f_builtins = frame.f_back.f_builtins;
             } else {
-                frame.f_builtins = ts.systemState.builtins;
+                frame.f_builtins = PySystemState.builtins;
             }
         }
         ts.frame = frame;
@@ -481,7 +481,7 @@ public class exceptions implements ClassDictInit {
         int end = ((PyInteger)self.__getattr__("end")).getValue();
 
         if(end == (start + 1)) {
-            PyInteger badByte = new PyInteger((int)(self.__getattr__("object")
+            PyInteger badByte = new PyInteger((self.__getattr__("object")
                     .toString().charAt(start)) & 0xff);
             return Py.newString("'%.400s' codec can't decode byte 0x%02x in position %d: %.400s")
                     .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
@@ -517,7 +517,7 @@ public class exceptions implements ClassDictInit {
         int end = ((PyInteger)self.__getattr__("end")).getValue();
 
         if(end == (start + 1)) {
-            int badchar = (int)(self.__getattr__("object").toString().charAt(start));
+            int badchar = self.__getattr__("object").toString().charAt(start);
             String format;
             if(badchar <= 0xff)
                 format = "'%.400s' codec can't encode character u'\\x%02x' in position %d: %.400s";
@@ -575,7 +575,7 @@ public class exceptions implements ClassDictInit {
         int end = ((PyInteger)self.__getattr__("end")).getValue();
 
         if(end == (start + 1)) {
-            int badchar = (int)(self.__getattr__("object").toString().charAt(start));
+            int badchar = (self.__getattr__("object").toString().charAt(start));
             String format;
             if(badchar <= 0xff)
                 format = "can't translate character u'\\x%02x' in position %d: %.400s";

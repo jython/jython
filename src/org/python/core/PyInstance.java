@@ -51,13 +51,13 @@ public class PyInstance extends PyObject
         //System.out.println("writing: "+getClass().getName());
         out.defaultWriteObject();
         PyObject name = instclass.__findattr__("__module__");
-        if (!(name instanceof PyString) || name == Py.None || name == null) {
+        if (!(name instanceof PyString) || name == Py.None) {
             throw Py.ValueError("Can't find module for class: "+
                                 instclass.__name__);
         }
         out.writeUTF(name.toString());
         name = instclass.__findattr__("__name__");
-        if (!(name instanceof PyString) || name == Py.None || name == null) {
+        if (!(name instanceof PyString) || name == Py.None) {
             throw Py.ValueError("Can't find module for class with no name");
         }
 
@@ -757,7 +757,7 @@ public class PyInstance extends PyObject
     public PyObject __int__() {
         PyObject ret = invoke("__int__");
         if (ret instanceof PyInteger)
-            return (PyInteger)ret;
+            return ret;
         throw Py.TypeError("__int__() should return a int");
     }
 

@@ -477,7 +477,7 @@ public class PyStringMap extends PyObject
 
         popfinger = index + 1;
         PyObject key = Py.newString(table[index]);
-        PyObject val = (PyObject) values[index];
+        PyObject val = values[index];
 
         table[index] = "<deleted key>";
         values[index] = null;

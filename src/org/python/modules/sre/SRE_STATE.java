@@ -615,7 +615,7 @@ for line in sys.stdin:
                 //TRACE(pidx, ptr, "IN");
                 if (ptr >= end || !SRE_CHARSET(pattern, pidx + 1, str[ptr]))
                     return 0;
-                pidx += (int)pattern[pidx];
+                pidx += pattern[pidx];
                 ptr++;
                 break;
 
@@ -674,7 +674,7 @@ for line in sys.stdin:
                 if (ptr >= end ||
                         !SRE_CHARSET(pattern, pidx + 1, lower(str[ptr])))
                     return 0;
-                pidx += (int)pattern[pidx];
+                pidx += pattern[pidx];
                 ptr++;
                 break;
 
@@ -696,7 +696,7 @@ for line in sys.stdin:
                 /* jump forward */
                 /* <JUMP> <offset> */
                 //TRACE(pidx, ptr, "JUMP " + (int) pattern[pidx]);
-                pidx += (int)pattern[pidx];
+                pidx += pattern[pidx];
                 break;
 
             case SRE_OP_ASSERT:
@@ -863,7 +863,7 @@ for line in sys.stdin:
 
                     if (count < 0)
                         return count;   /* exception */
-                    if (count < (int) pattern[pidx+1])
+                    if (count < pattern[pidx+1])
                         return 0;       /* did not match minimum number of times */
                     ptr += count;       /* advance past minimum matches of repeat */
                 }
@@ -875,11 +875,11 @@ for line in sys.stdin:
 
                 } else {
                     /* general case */
-                    boolean matchmax = ((int)pattern[pidx + 2] == 65535);
+                    boolean matchmax = (pattern[pidx + 2] == 65535);
                     int c;
                     lastmark = this.lastmark;
                     lastindex = this.lastindex;
-                    while (matchmax || count <= (int) pattern[pidx + 2]) {
+                    while (matchmax || count <= pattern[pidx + 2]) {
                         this.ptr = ptr;
                         i = SRE_MATCH(pattern, pidx + pattern[pidx], level + 1);
                         if (i != 0)

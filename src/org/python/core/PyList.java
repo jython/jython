@@ -846,7 +846,7 @@ public class PyList extends PySequenceList {
                     PySequenceList seqList = (PySequenceList)value;
                     otherArray = seqList.getArray();
                     if (otherArray == array) {
-                        otherArray = (PyObject[])otherArray.clone();
+                        otherArray = otherArray.clone();
                     }
                     list.replaceSubArray(start, stop, otherArray, 0, seqList.size());
                 } else {

@@ -48,7 +48,7 @@ public class codecs {
         if(handlerName == null){
             handlerName = "strict";
         }
-        PyObject handler =  (PyObject)errorHandlers.__finditem__(handlerName.intern());
+        PyObject handler =  errorHandlers.__finditem__(handlerName.intern());
         if(handler == null){
             throw new PyException(Py.LookupError,
                                   "unknown error handler name '" + handlerName + "'");
@@ -619,7 +619,7 @@ public class codecs {
                     }
                     inShift = bitsleft > 0;
                 } else {
-                    v.append((char) ch);
+                    v.append(ch);
                 }
             } else {
                 if (!SPECIAL(ch, encodeSetO, encodeWhiteSpace)) {

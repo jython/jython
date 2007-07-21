@@ -277,7 +277,7 @@ public class itertools implements ClassDictInit {
                     if (n == 1) {
                         return args[0];
                     } else {
-                        return new PyTuple((PyObject[]) args.clone());
+                        return new PyTuple(args.clone());
                     }
                 } else {
                     return callable.__call__(args);

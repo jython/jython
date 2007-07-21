@@ -35,7 +35,7 @@ public class PyException extends RuntimeException
             }
             if (type instanceof PyClass &&
                 (!(value instanceof PyInstance &&
-                   __builtin__.isinstance(value, (PyClass)type))))
+                   __builtin__.isinstance(value, type))))
             {
                 //System.out.println("value: "+value);
                 if (value instanceof PyTuple) {

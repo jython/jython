@@ -13,7 +13,6 @@
 // see org/python/modules/time.java for previous history.
 package org.python.modules.time;
 
-import java.lang.reflect.Method;
 import java.text.DateFormatSymbols;
 import java.util.Arrays;
 import java.util.Calendar;

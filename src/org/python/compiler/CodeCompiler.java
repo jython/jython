@@ -1389,7 +1389,6 @@ public class CodeCompiler extends Visitor
     public Object visitCompare(Compare node) throws Exception {
         int tmp1 = code.getLocal("org/python/core/PyObject");
         int tmp2 = code.getLocal("org/python/core/PyObject");
-        int op;
 
         if (mrefs.nonzero == 0) {
             mrefs.nonzero = code.pool.Methodref("org/python/core/PyObject",
@@ -1756,9 +1755,9 @@ public class CodeCompiler extends Visitor
     public int getslice, setslice, delslice;
     public Object Slice(Subscript node, Slice slice) throws Exception {
         int ctx = node.ctx;
-        if (ctx == node.AugStore && augmode == node.Store) {
+        if (ctx == expr_contextType.AugStore && augmode == expr_contextType.Store) {
             restoreAugTmps(node, 4);
-            ctx = node.Store;
+            ctx = expr_contextType.Store;
         } else {
             visit(node.value);
             if (slice.lower != null)
@@ -1774,9 +1773,9 @@ public class CodeCompiler extends Visitor
             else
                 code.aconst_null();
 
-            if (node.ctx == node.AugStore && augmode == node.Load) {
+            if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Load) {
                 saveAugTmps(node, 4);
-                ctx = node.Load;
+                ctx = expr_contextType.Load;
             }
         }
 
@@ -1818,16 +1817,16 @@ public class CodeCompiler extends Visitor
         }
 
         int ctx = node.ctx;
-        if (node.ctx == node.AugStore && augmode == node.Store) {
+        if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Store) {
             restoreAugTmps(node, 2);
-            ctx = node.Store;
+            ctx = expr_contextType.Store;
         } else {
             visit(node.value);
             visit(node.slice);
 
-            if (node.ctx == node.AugStore && augmode == node.Load) {
+            if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Load) {
                 saveAugTmps(node, 2);
-                ctx = node.Load;
+                ctx = expr_contextType.Load;
             }
         }
 
@@ -1883,16 +1882,16 @@ public class CodeCompiler extends Visitor
     public Object visitAttribute(Attribute node) throws Exception {
 
         int ctx = node.ctx;
-        if (node.ctx == node.AugStore && augmode == node.Store) {
+        if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Store) {
             restoreAugTmps(node, 2);
-            ctx = node.Store;
+            ctx = expr_contextType.Store;
         } else {
             visit(node.value);
             code.ldc(getName(node.attr));
 
-            if (node.ctx == node.AugStore && augmode == node.Load) {
+            if (node.ctx == expr_contextType.AugStore && augmode == expr_contextType.Load) {
                 saveAugTmps(node, 2);
-                ctx = node.Load;
+                ctx = expr_contextType.Load;
             }
         }
 
@@ -1965,8 +1964,8 @@ public class CodeCompiler extends Visitor
         /* if (mode ==AUGSET)
             throw new ParseException(
                       "augmented assign to tuple not possible", node); */
-        if (node.ctx == node.Store) return seqSet(node.elts);
-        if (node.ctx == node.Del) return seqDel(node.elts);
+        if (node.ctx == expr_contextType.Store) return seqSet(node.elts);
+        if (node.ctx == expr_contextType.Del) return seqDel(node.elts);
 
         code.new_(code.pool.Class("org/python/core/PyTuple"));
         code.dup();
@@ -1992,8 +1991,8 @@ public class CodeCompiler extends Visitor
             throw new ParseException(
                       "augmented assign to list not possible", node); */
 
-        if (node.ctx == node.Store) return seqSet(node.elts);
-        if (node.ctx == node.Del) return seqDel(node.elts);
+        if (node.ctx == expr_contextType.Store) return seqSet(node.elts);
+        if (node.ctx == expr_contextType.Del) return seqDel(node.elts);
 
         code.new_(code.pool.Class("org/python/core/PyList"));
         code.dup();
@@ -2248,7 +2247,7 @@ public class CodeCompiler extends Visitor
         SymInfo syminf = (SymInfo)tbl.get(name);
 
         int ctx = node.ctx;
-        if (ctx == node.AugStore) {
+        if (ctx == expr_contextType.AugStore) {
             ctx = augmode;
         }        
 

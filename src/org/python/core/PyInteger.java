@@ -1033,7 +1033,7 @@ public class PyInteger extends PyObject {
             return null;
         int rightv = coerce(right);
 
-        double x = (double)getValue();
+        double x = getValue();
         x *= rightv;
         //long x = ((long)getValue())*((PyInteger)right).getValue();
         //System.out.println("mul: "+this+" * "+right+" = "+x);
@@ -1263,7 +1263,7 @@ public class PyInteger extends PyObject {
             if ((pow & 0x1) != 0) {
                 result *= tmp;
                 if (mod != 0) {
-                    result %= (long)mod;
+                    result %= mod;
                 }
 
                 if (result > Integer.MAX_VALUE) {
@@ -1277,7 +1277,7 @@ public class PyInteger extends PyObject {
             tmp *= tmp;
 
             if (mod != 0) {
-                tmp %= (long)mod;
+                tmp %= mod;
             }
 
             if (tmp > Integer.MAX_VALUE) {
@@ -1498,7 +1498,7 @@ public class PyInteger extends PyObject {
     }
 
     public PyComplex __complex__() {
-        return new PyComplex((double)getValue(), 0.);
+        return new PyComplex(getValue(), 0.);
     }
 
     public PyString __oct__() {
@@ -1508,7 +1508,7 @@ public class PyInteger extends PyObject {
     final PyString int___oct__() {
         if (getValue() < 0) {
             return new PyString(
-                "0"+Long.toString(0x100000000l+(long)getValue(), 8));
+                "0"+Long.toString(0x100000000l+getValue(), 8));
         } else if (getValue() > 0) {
             return new PyString("0"+Integer.toString(getValue(), 8));
         } else
@@ -1522,7 +1522,7 @@ public class PyInteger extends PyObject {
     final PyString int___hex__() {
         if (getValue() < 0) {
             return new PyString(
-                "0x"+Long.toString(0x100000000l+(long)getValue(), 16));
+                "0x"+Long.toString(0x100000000l+getValue(), 16));
         } else {
             return new PyString("0x"+Integer.toString(getValue(), 16));
         }

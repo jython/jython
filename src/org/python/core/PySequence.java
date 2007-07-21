@@ -235,7 +235,7 @@ abstract public class PySequence extends PyObject {
             return defaultValue;
         if (index instanceof PyLong) {
             try {
-                index = ((PyInteger)index.__int__());
+                index = (index.__int__());
             } catch (PyException exc) {
                 if (Py.matchException(exc, Py.OverflowError)) {
                     if (new PyLong(0L).__cmp__(index) < 0)

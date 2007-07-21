@@ -6,7 +6,6 @@ package org.python.core.packagecache;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
 import org.python.core.PyObject;
-import org.python.core.PyString;
 import org.python.core.PyStringMap;
 
 import java.io.EOFException;

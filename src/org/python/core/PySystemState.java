@@ -325,8 +325,7 @@ public class PySystemState extends PyObject
             }
             if (version.equals("12"))
                 version = "1.2";
-            if (version != null)
-                platform = "java"+version;
+            platform = "java"+version;
         } catch (Exception exc) {
             return null;
         }
@@ -815,9 +814,9 @@ public class PySystemState extends PyObject
              return;
 
         PySystemState sys = Py.getThreadState().systemState;
-        sys.builtins.__setitem__("_", Py.None);
+        PySystemState.builtins.__setitem__("_", Py.None);
         Py.stdout.println(o.__repr__());
-        sys.builtins.__setitem__("_", o);
+        PySystemState.builtins.__setitem__("_", o);
     }
 
     static void excepthook(PyObject type, PyObject val, PyObject tb) {

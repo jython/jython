@@ -1,7 +1,5 @@
 package org.python.core;
 
-import java.util.Arrays;
-
 public class PyMethodDescr extends PyDescriptor implements
         PyBuiltinFunction.Info {
 

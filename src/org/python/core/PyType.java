@@ -228,7 +228,7 @@ public class PyType extends PyObject implements Serializable {
             if (!(pytyp instanceof PyType)) {
                 throw Py.TypeError(module+"."+name+" must be a type for deserialization");
             }
-            return (PyType)pytyp;
+            return pytyp;
         }
         
     }

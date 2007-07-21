@@ -981,7 +981,7 @@ public final class Py
                                    "$py");
                 System.exit(-1);
             }
-            PyObject mod = imp.createFromCode("__main__", code);
+            imp.createFromCode("__main__", code);
         } catch (PyException e) {
             Py.getSystemState().callExitFunc();
             if (Py.matchException(e, Py.SystemExit))
@@ -1093,7 +1093,7 @@ public final class Py
 
         if (tb instanceof PyTraceback)
             stderr.print(((PyTraceback) tb).dumpStack());
-        if (__builtin__.isinstance(value, (PyClass) Py.SyntaxError)) {
+        if (__builtin__.isinstance(value, Py.SyntaxError)) {
             stderr.println("  File \""+value.__findattr__("filename")+
                            "\", line "+value.__findattr__("lineno"));
             PyObject text = value.__findattr__("text");
@@ -1120,7 +1120,6 @@ public final class Py
     static String formatException(PyObject type, PyObject value, PyObject tb) {
         StringBuffer buf = new StringBuffer();
 
-        PyObject typeName;
         if (type instanceof PyClass) {
             buf.append(((PyClass) type).__name__);
         } else {
@@ -1128,7 +1127,7 @@ public final class Py
         }
         if (value != Py.None) {
             buf.append(": ");
-            if (__builtin__.isinstance(value, (PyClass) Py.SyntaxError)) {
+            if (__builtin__.isinstance(value, Py.SyntaxError)) {
                 buf.append(value.__getitem__(0).__str__());
             } else {
                 buf.append(value.__str__());
@@ -1197,7 +1196,7 @@ public final class Py
             }
         }
         if(e instanceof PyClass) {
-            return __builtin__.isinstance(pye.value, (PyClass)e);
+            return __builtin__.isinstance(pye.value, e);
         } else {
             if(e == pye.type)
                 return true;
@@ -1286,7 +1285,7 @@ public final class Py
             tc = (PyTableCode)code;
 
         f = new PyFrame(tc, locals, globals,
-                        Py.getThreadState().systemState.builtins);
+                        PySystemState.builtins);
         return code.call(f);
     }
 
@@ -1459,7 +1458,7 @@ public final class Py
 
     public static int py2int(PyObject o, String msg) {
         if (o instanceof PyInteger)
-            return (int)((PyInteger)o).getValue();
+            return ((PyInteger)o).getValue();
         Object obj = o.__tojava__(Integer.TYPE);
         if (obj == Py.NoConversion)
             throw Py.TypeError(msg);
@@ -1468,7 +1467,7 @@ public final class Py
 
     public static long py2long(PyObject o) {
         if(o instanceof PyInteger)
-            return (long)((PyInteger)o).getValue();
+            return ((PyInteger)o).getValue();
 
         Object i = o.__tojava__(Long.TYPE);
         if (i == null || i == Py.NoConversion)
@@ -1480,7 +1479,7 @@ public final class Py
         if (o instanceof PyFloat)
             return (float)((PyFloat)o).getValue();
         if (o instanceof PyInteger)
-            return (float)((PyInteger)o).getValue();
+            return ((PyInteger)o).getValue();
 
         Object i = o.__tojava__(Float.TYPE);
         if (i == null || i == Py.NoConversion)
@@ -1489,9 +1488,9 @@ public final class Py
     }
     public static double py2double(PyObject o) {
         if (o instanceof PyFloat)
-            return (double)((PyFloat)o).getValue();
+            return ((PyFloat)o).getValue();
         if (o instanceof PyInteger)
-            return (double)((PyInteger)o).getValue();
+            return ((PyInteger)o).getValue();
 
         Object i = o.__tojava__(Double.TYPE);
         if (i == null || i == Py.NoConversion)
