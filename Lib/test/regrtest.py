@@ -1042,6 +1042,7 @@ _skips = {
         test_parser
         test_plistlib
         test_poll
+        test_popen
         test_posix
         test_pty
         test_pwd
@@ -1065,6 +1066,7 @@ _skips = {
         test_timeout
         test_timing
         test_unicode_file
+        test_unicodedata
         test_univnewlines
         test_urllibnet
         test_wave
@@ -1095,6 +1097,7 @@ _failures = {
     test_profilehooks
     test_pyclbr
     test_shutil
+    test_softspace
     test_sre
     test_threaded_import
     test_trace
