@@ -1227,7 +1227,7 @@ public class PyComplex extends PyObject {
 
         if (xr == 0 && xi == 0) {
             if (yi != 0 || yr < 0) {
-                throw Py.ValueError("0.0 to a negative or complex power");
+                throw Py.ZeroDivisionError("0.0 to a negative or complex power");
             }
         }
 
