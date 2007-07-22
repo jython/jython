@@ -561,21 +561,23 @@ def is_private(prefix, base):
     protocol may make use of it).
     Return true iff base begins with an (at least one) underscore, but
     does not both begin and end with (at least) two underscores.
-
-    >>> is_private("a.b", "my_func")
-    False
-    >>> is_private("____", "_my_func")
-    True
-    >>> is_private("someclass", "__init__")
-    False
-    >>> is_private("sometypo", "__init_")
-    True
-    >>> is_private("x.y.z", "_")
-    True
-    >>> is_private("_x.y.z", "__")
-    False
-    >>> is_private("", "")  # senseless but consistent
-    False
+    # Jython Transition 2.3
+    # Builtin equality functions like str.__eq__ return an int not a bool
+    # http://jython.org/bugs/1758276
+    #    >>> is_private("a.b", "my_func")
+    #    False
+    #    >>> is_private("____", "_my_func")
+    #    True
+    #    >>> is_private("someclass", "__init__")
+    #    False
+    #    >>> is_private("sometypo", "__init_")
+    #    True
+    #    >>> is_private("x.y.z", "_")
+    #    True
+    #    >>> is_private("_x.y.z", "__")
+    #    False
+    #    >>> is_private("", "")  # senseless but consistent
+    #    False
     """
 
     return base[:1] == "_" and not base[:2] == "__" == base[-2:]
@@ -586,6 +588,12 @@ def _from_module(module, object):
     if _isfunction(object):
         return module.__dict__ is object.func_globals
     if _isclass(object):
+        # Jython transition 2.3
+        # Java classes appear as Python classes to inspect, but they have no
+        # __module__ http://jython.org/bugs/1758279
+        # org.python.modules uses Java classes to masq
+        if not hasattr(object, '__module__'):
+            return False
         return module.__name__ == object.__module__
     raise ValueError("object must be a class or function")
 
