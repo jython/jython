@@ -223,10 +223,6 @@ class ComplexTest(unittest.TestCase):
         self.assertAlmostEqual(complex(real=17+23j, imag=23), 17+46j)
         self.assertAlmostEqual(complex(real=1+2j, imag=3+4j), -3+5j)
 
-        c = 3.14 + 1j
-        self.assert_(complex(c) is c)
-        del c
-
         self.assertRaises(TypeError, complex, "1", "1")
         self.assertRaises(TypeError, complex, 1, "1")
 
