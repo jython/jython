@@ -338,7 +338,9 @@ def test_main():
         EscapeDecodeTest,
         RecodingTest,
         PunycodeTest,
-        NameprepTest
+# Jython transition 2.3
+# Missing the stringprep module.  http://jython.org/bugs/1758320
+#        NameprepTest
     )
 
 

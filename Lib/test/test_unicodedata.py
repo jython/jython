@@ -5,6 +5,7 @@
     (c) Copyright CNRI, All Rights Reserved. NO WARRANTY.
 
 """#"
+import unicodedata
 import unittest, test.test_support
 import sha
 

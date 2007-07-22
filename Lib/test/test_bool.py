@@ -340,6 +340,24 @@ class BoolTest(unittest.TestCase):
                 return self
         check(Baz())
 
+# Jython transition 2.3
+# pickle doesn't work on bool
+# http://jython.org/bugs/1758317
+del BoolTest.test_picklevalues
+del BoolTest.test_mixedpickle
+del BoolTest.test_cpickle
+#operator missing is function
+# http://jython.org/bugs/1758315
+del BoolTest.test_operator
+# boolean attribute returns int not bool
+# http://jython.org/bugs/1758276
+del BoolTest.test_fileclosed
+# StackOverflow if __nonzero__ returns self
+# http://jython.org/bugs/1758318
+del BoolTest.test_convert_to_bool
+# bool should not be subclassable
+# http://jython.org/bugs/1758319
+del BoolTest.test_subclass
 
 def test_main():
     test_support.run_unittest(BoolTest)

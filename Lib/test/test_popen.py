@@ -15,6 +15,8 @@ from os import popen
 # This results in Python being spawned and printing the sys.argv list.
 # We can then eval() the result of this, and see what each argv was.
 python = sys.executable
+if not sys.executable:
+    raise TestSkipped, 'sys.executable undefined on this platform'
 if ' ' in python:
     python = '"' + python + '"'     # quote embedded space for cmdline
 def _do_test_commandline(cmdline, expected):
