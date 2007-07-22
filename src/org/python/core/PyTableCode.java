@@ -356,8 +356,7 @@ public class PyTableCode extends PyCode
         if (plain_args > 0)
             System.arraycopy(call_args, 0, actual_args, 0, plain_args);
 
-        if(call_keywords.length != 0 && call_args.length == co_argcount && !keywords && !args)
-        {
+        if(call_keywords.length != 0 || call_args.length != co_argcount || keywords || args) {
             if (keywords)
                 extra_keywords = new PyDictionary();
 
