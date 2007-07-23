@@ -1,5 +1,22 @@
 Jython NEWS
 
+Jython 2.2 rc3
+  New Features
+    - Added telnetlib from CPython
+    - Added cpython_compatible_select to select.  See
+    http://wiki.python.org/jython/SelectModule for information on when
+    to use it.
+    - Several more java.nio exceptions are mapped to their corresponding
+    Python error codes when thrown.
+  Bugs fixed
+    - recv on closed sockets threw an exception instead returning the
+    empty string
+    -  A PySystemState being garbage collected caused System.out and
+    System.in to be closed.  This would cause 'print' to stop working.
+    - Closing a FileWrapper on a socket closes its underlying socket
+    - Sockets just have their [In|Out]putStreams closed instead of being
+    properly shutdown by shutdown()
+    
 Jython 2.2 rc2
   Bugs fixed
     - [ 931129 ] jython -jar some-path/test.jar fails
