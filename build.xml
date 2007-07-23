@@ -641,6 +641,7 @@ The readme text for the next release will be like:
                 <patternset>
                     <includesfile name="${jython.base.dir}/build.Lib.include.properties" />
                     <exclude name="test/output/test_sax"/>
+                    <exclude name="test/output/test_socket"/>
                     <exclude name="test/output/test_zlib"/>
                 </patternset>
             </fileset>
