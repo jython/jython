@@ -5,7 +5,7 @@ AMAK: 20050515: This module is the test_socket.py from cpython 2.4, ported to jy
 """
 
 import unittest
-#from test import test_support
+import test_support
 
 import errno
 import socket
@@ -1122,10 +1122,7 @@ def test_main():
     if sys.platform[:4] == 'java':
         tests.append(TestJythonExceptions)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
-    main_suite = unittest.TestSuite(suites)
-    runner = unittest.TextTestRunner(verbosity=100)
-    runner.run(main_suite)
-    # unittest.run_unittest(*tests)
+    test_support.run_suite(unittest.TestSuite(suites))
 
 if __name__ == "__main__":
     test_main()

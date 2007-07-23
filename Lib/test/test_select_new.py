@@ -4,6 +4,7 @@ AMAK: 20050515: This module is a brand new test_select module, which gives much 
 
 import sys
 import time
+import test_support
 import unittest
 
 import socket
@@ -272,5 +273,8 @@ class TestSelect(unittest.TestCase):
         TestSelect.handler_socket.close()
         TestSelect.server_socket.close()
 
+def test_main():
+    test_support.run_unittest(TestSelect)    
+
 if __name__ == "__main__":
-    unittest.main()
+    test_main()
