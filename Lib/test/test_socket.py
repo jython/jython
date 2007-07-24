@@ -941,7 +941,10 @@ class TCPTimeoutTest(SocketTCPTest):
 class TCPClientTimeoutTest(ThreadedTCPSocketTest):
 
     def testTCPClientTimeout(self):
-        pass # i.e. do not accept
+        # Don't accept the client connection, but wait for it to finish timing
+        # out.
+        self.done.wait()
+        pass
 
     def _testTCPClientTimeout(self):
         try:
@@ -991,6 +994,12 @@ class TestExceptions(unittest.TestCase):
         self.assert_(issubclass(socket.timeout, socket.error))
 
 class TestJythonExceptions(unittest.TestCase):
+    def setUp(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def tearDown(self):
+        self.s.close()
+        self.s = None
 
     def testHostNotFound(self):
         try:
@@ -1002,9 +1011,8 @@ class TestJythonExceptions(unittest.TestCase):
 
     def testConnectionRefused(self):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # This port should not be open at this time
-            s.connect( (HOST, PORT) )
+            self.s.connect( (HOST, PORT) )
         except socket.error, se:
             self.failUnlessEqual(se[0], errno.ECONNREFUSED)
         except Exception, x:
@@ -1014,28 +1022,24 @@ class TestJythonExceptions(unittest.TestCase):
 
     def testBindException(self):
         # First bind to the target port
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind( (HOST, PORT) )
-        s.listen()
+        self.s.bind( (HOST, PORT) )
+        self.s.listen()
         try:
-            try:
-                # And then try to bind again
-                t = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                t.bind( (HOST, PORT) )
-                t.listen()
-            except socket.error, se:
-                self.failUnlessEqual(se[0], errno.EADDRINUSE)
-            except Exception, x:
-                self.fail("Binding to already bound host/port raised wrong exception: %s" % x)
-            else:
-                self.fail("Binding to already bound host/port should have raised exception")
-        finally:
-            s.close()
+            # And then try to bind again
+            t = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            t.bind( (HOST, PORT) )
+            t.listen()
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EADDRINUSE)
+        except Exception, x:
+            self.fail("Binding to already bound host/port raised wrong exception: %s" % x)
+        else:
+            self.fail("Binding to already bound host/port should have raised exception")
+
 
     def testUnresolvedAddress(self):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect( ('non.existent.server', PORT) )
+            self.s.connect( ('non.existent.server', PORT) )
         except socket.gaierror, gaix:
             self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
         except Exception, x:
@@ -1044,9 +1048,8 @@ class TestJythonExceptions(unittest.TestCase):
             self.fail("Get host name for non-existent host should have raised exception")
 
     def testSocketNotConnected(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            s.send(MSG)
+            self.s.send(MSG)
         except socket.error, se:
             self.failUnlessEqual(se[0], errno.ENOTCONN)
         except Exception, x:
@@ -1054,7 +1057,7 @@ class TestJythonExceptions(unittest.TestCase):
         else:
             self.fail("Send on unconnected socket raised exception")
         try:
-            result = s.recv(1024)
+            result = self.s.recv(1024)
         except socket.error, se:
             self.failUnlessEqual(se[0], errno.ENOTCONN)
         except Exception, x:
