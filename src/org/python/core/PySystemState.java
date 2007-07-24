@@ -801,11 +801,11 @@ public class PySystemState extends PyObject
     // a reflected function is inserted in the class dict.
 
     static void displayhook(PyObject o) {
-        /* Print value except if None */
+        /* Print value except if null or None */
         /* After printing, also assign to '_' */
         /* Before, set '_' to None to avoid recursion */
-        if (o == Py.None)
-             return;
+        if (o == null || o == Py.None)
+            return;
 
         PySystemState sys = Py.getThreadState().systemState;
         sys.builtins.__setitem__("_", Py.None);
