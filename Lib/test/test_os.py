@@ -306,7 +306,7 @@ def test_main():
         TemporaryFileTests,
         StatAttributeTests,
 #LazyDict in javaos doesn't conform to the mapping protocol http://jython.org/1755354      EnvironTests,
-#Jython is missing walk.  http://jython.org/bugs/1755351        WalkTests 
+        WalkTests 
     )
 
 if __name__ == "__main__":
