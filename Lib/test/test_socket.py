@@ -938,24 +938,23 @@ class TCPTimeoutTest(SocketTCPTest):
         if not ok:
             self.fail("accept() returned success when we did not expect it")
 
-class TCPClientTimeoutTest(ThreadedTCPSocketTest):
-
-    def testTCPClientTimeout(self):
-        # Don't accept the client connection, but wait for it to finish timing
-        # out.
-        self.done.wait()
-        pass
-
-    def _testTCPClientTimeout(self):
+class TCPClientTimeoutTest(unittest.TestCase):
+    def testClientTimeout(self):
+        cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        cli.settimeout(0.1)
+        host = '192.168.192.168'
         try:
-            self.cli.settimeout(0.1)
-            self.cli.connect( (HOST, PORT) )
+            cli.connect((host, 5000))
         except socket.timeout, st:
             pass
         except Exception, x:
             self.fail("Client socket timeout should have raised socket.timeout, not %s" % str(x))
         else:
-            self.fail("Client socket timeout should have raised socket.timeout")
+            self.fail('''Client socket timeout should have raised
+socket.timeout.  This tries to connect to %s in the assumption that it isn't
+used, but if it is on your network this failure is bogus.''' % host)
+
+        
 
 #
 # AMAK: 20070307
@@ -996,6 +995,7 @@ class TestExceptions(unittest.TestCase):
 class TestJythonExceptions(unittest.TestCase):
     def setUp(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def tearDown(self):
         self.s.close()
