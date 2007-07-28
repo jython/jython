@@ -1,6 +1,6 @@
 test_math
-math (test_math.py)
-constants: e, pi
+math module, testing with eps 1e-05
+constants
 acos
 asin
 atan
@@ -8,6 +8,7 @@ atan2
 ceil
 cos
 cosh
+degrees
 exp
 fabs
 floor
@@ -19,6 +20,7 @@ log
 log10
 modf
 pow
+radians
 sin
 sinh
 sqrt
