@@ -498,6 +498,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             if not new_sock:
                 raise would_block_error()
             cliconn = _tcpsocket()
+            cliconn.reuse_addr = new_sock.jsocket.getReuseAddress()
             cliconn._setup(new_sock)
             return cliconn, new_sock.getpeername()
         except java.lang.Exception, jlx:
