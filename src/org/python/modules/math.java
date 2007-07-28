@@ -56,13 +56,37 @@ public class math implements ClassDictInit {
     }
 
     public static double log(PyObject v) {
+        return log(v, null);
+    }
+
+    public static double log(PyObject v, PyObject base) {
+        double doubleValue;
         if (v instanceof PyLong) {
-            int e[] = new int[1];
-            double x = ((PyLong)v).scaledDoubleValue(e);
-            if (x <= 0.0) throw Py.ValueError("math domain error");
-            return log(x) + (e[0]*8.0)*log(2.0);
+            doubleValue = calculateLongLog((PyLong)v);
+        } else {
+            doubleValue = log(v.__float__().getValue());
         }
-        return log(v.__float__().getValue());
+        if (base != null) {
+            return check(applyLoggedBase(doubleValue, base));
+        }
+        return doubleValue;
+    }
+
+    private static double calculateLongLog(PyLong v) {
+        int e[] = new int[1];
+        double x = ((PyLong)v).scaledDoubleValue(e);
+        if (x <= 0.0) throw Py.ValueError("math domain error");
+        return log(x) + (e[0]*8.0)*log(2.0);
+    }
+
+    private static double applyLoggedBase(double loggedValue, PyObject base) {
+        double loggedBase;
+        if (base instanceof PyLong) {
+            loggedBase = calculateLongLog((PyLong)base);
+        } else {
+            loggedBase = log(base.__float__().getValue());
+        }
+        return check(loggedValue / loggedBase);
     }
 
     private static double log(double v) {
@@ -161,5 +185,13 @@ public class math implements ClassDictInit {
 
     public static double hypot(double v, double w) {
         return check(ExtraMath.hypot(v, w));
+    }
+
+    public static double radians(double v) {
+    	return check(Math.toRadians(v));
+    }
+
+    public static double degrees(double v) {
+    	return check(Math.toDegrees(v));
     }
 }
