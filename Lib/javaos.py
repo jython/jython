@@ -212,6 +212,9 @@ class LazyDict( UserDict ):
     def has_key(self, key):
         self.__populate()
         return UserDict.has_key( self, self._keyTransform(key) )
+    def __iter__(self):
+        self.__populate()
+        return iter( self.data )
     def update(self, dict):
         self.__populate()
         UserDict.update( self, dict )
