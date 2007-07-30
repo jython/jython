@@ -2,7 +2,6 @@
 AMAK: 20050515: This module is a brand new test_select module, which gives much wider coverage.
 """
 
-import sys
 import time
 import test_support
 import unittest
@@ -14,7 +13,8 @@ NOT_READY, READY = 0, 1
 
 SERVER_ADDRESS = ("localhost", 54321)
 
-DATA_CHUNK_SIZE = 1000 ; DATA_CHUNK = "." * DATA_CHUNK_SIZE
+DATA_CHUNK_SIZE = 1000
+DATA_CHUNK = "." * DATA_CHUNK_SIZE
 
 #
 # The timing of these tests depends on the how the unerlying OS socket library
@@ -23,7 +23,7 @@ DATA_CHUNK_SIZE = 1000 ; DATA_CHUNK = "." * DATA_CHUNK_SIZE
 # The fundamental problem is that there is no reliable way to fill a socket with bytes
 #
 
-if sys.platform[:4] == 'java':
+if test_support.is_jython:
     SELECT_TIMEOUT = 0
 else:
     # zero select timeout fails these tests on cpython (on windows 2003 anyway)
@@ -46,12 +46,14 @@ class AsynchronousServer:
         except socket.error:
             pass
 
-    def verify_acceptable_status(self, expected_acceptability):
-        actual_acceptability = NOT_READY
+    def verify_acceptable_status(self, expected):
         rfds, wfds, xfds = select.select([self.server_socket], [], [], SELECT_TIMEOUT)
         if self.server_socket in rfds:
-            actual_acceptability = READY
-        assert actual_acceptability == expected_acceptability, "Server socket should %sbe acceptable" % {NOT_READY:'not ',READY:''}[expected_acceptability]
+            actual = READY
+        else:
+            actual = NOT_READY
+        assert actual == expected, \
+            "Server socket should %sbe acceptable" % {NOT_READY:'not ',READY:''}[expected]
 
     def accept_connection(self):
         rfds, wfds, xfds = select.select([self.server_socket], [], [], SELECT_TIMEOUT)
@@ -77,6 +79,7 @@ class PeerImpl:
                     bytes_sent = self.socket.send(DATA_CHUNK)
                     total_bytes += bytes_sent
                 else:
+                    self.verify_not_writable()
                     return total_bytes
             except socket.error, se:
                 if se.value == 10035:
@@ -84,7 +87,9 @@ class PeerImpl:
                 raise se
 
     def read_inchannel(self, expected):
-        buf_size = expected ; results = "" ; start = time.time()
+        buf_size = expected
+        results = ""
+        start = time.time()
         while 1:
             if (expected - len(results)) < buf_size:
                 buf_size = expected - len(results)
@@ -99,16 +104,28 @@ class PeerImpl:
                 stop = time.time()
                 if (stop - start) > READ_TIMEOUT:
                     raise Exception("Exceeded alloted time (%1.3lf > %1.3lf) to read %d bytes: got %d" % ((stop-start), READ_TIMEOUT, expected, len(results)))
+                elif expected > len(results):
+                    raise Exception("Got %d but expected %d" % (len(results), expected))
 
-    def verify_status(self, expected_readability, expected_writability):
-        actual_readability, actual_writability = NOT_READY, NOT_READY
-        rfds, wfds, xfds = select.select([self.socket], [self.socket], [], SELECT_TIMEOUT)
-        if self.socket in rfds:
-            actual_readability = READY
-        if self.socket in wfds:
-            actual_writability = READY
-        assert actual_readability == expected_readability, "Socket should %sbe ready for reading: %s" % ({NOT_READY:'not ',READY:''}[expected_readability], rfds)
-        assert actual_writability == expected_writability, "Socket should %sbe ready for writing: %s" % ({NOT_READY:'not ',READY:''}[expected_writability], wfds)
+    def verify_readable(self):
+        rfds, wfds, xfds = select.select([self.socket], [], [], SELECT_TIMEOUT)
+        assert self.socket in rfds, "Socket should be ready for reading"
+
+    def verify_not_readable(self):
+        rfds, wfds, xfds = select.select([self.socket], [], [], SELECT_TIMEOUT)
+        assert not self.socket in rfds, "Socket should not be ready for reading"
+
+    def verify_writable(self):
+        rfds, wfds, xfds = select.select([], [self.socket], [], SELECT_TIMEOUT)
+        assert self.socket in wfds, "Socket should be ready for writing"
+
+    def verify_not_writable(self):
+        rfds, wfds, xfds = select.select([], [self.socket], [], SELECT_TIMEOUT)
+        assert not self.socket in wfds, "Socket should not be ready for writing"
+
+    def verify_only_writable(self):
+        self.verify_writable()
+        self.verify_not_readable()
 
     def fileno(self):
         return self.socket.fileno()
@@ -181,27 +198,24 @@ class TestSelect(unittest.TestCase):
 
     def test200_EmptyChannel(self):
         # And now test the status of both end of the socket
-        TestSelect.client_socket.verify_status(NOT_READY, READY)
-        TestSelect.handler_socket.verify_status(NOT_READY, READY)
+        TestSelect.client_socket.verify_only_writable()
+        TestSelect.handler_socket.verify_only_writable()
 
     def test210_FullChannel(self):
         TestSelect.num_bytes_outstanding = TestSelect.client_socket.fill_outchannel()
-        TestSelect.client_socket.verify_status(NOT_READY, NOT_READY)
-        TestSelect.handler_socket.verify_status(READY, READY)
+        TestSelect.handler_socket.verify_readable()
 
     def test220_PartiallyFullChannel(self):
         # Half empty the channel
         num_bytes_to_retrieve = TestSelect.num_bytes_outstanding / 2
         bytes_retrieved = TestSelect.handler_socket.read_inchannel(num_bytes_to_retrieve)
         TestSelect.num_bytes_outstanding -= len(bytes_retrieved)
-        TestSelect.client_socket.verify_status(NOT_READY, READY)
-        TestSelect.handler_socket.verify_status(READY, READY)
+        TestSelect.handler_socket.verify_readable()
 
     def test230_EmptyChannel(self):
         # Empty the channel
         bytes_retrieved = TestSelect.handler_socket.read_inchannel(TestSelect.num_bytes_outstanding)
-        TestSelect.client_socket.verify_status(NOT_READY, READY)
-        TestSelect.handler_socket.verify_status(NOT_READY, READY)
+        TestSelect.handler_socket.verify_not_readable()
 
     #
     # Test the handler-out -> client-in channel on its own
@@ -209,27 +223,24 @@ class TestSelect(unittest.TestCase):
 
     def test300_EmptyChannel(self):
         # And now test the status of both end of the socket
-        TestSelect.client_socket.verify_status(NOT_READY, READY)
-        TestSelect.handler_socket.verify_status(NOT_READY, READY)
+        TestSelect.client_socket.verify_only_writable()
+        TestSelect.handler_socket.verify_only_writable()
 
     def test310_FullChannel(self):
         TestSelect.num_bytes_outstanding = TestSelect.handler_socket.fill_outchannel()
-        TestSelect.client_socket.verify_status(READY, READY)
-        TestSelect.handler_socket.verify_status(NOT_READY, NOT_READY)
+        TestSelect.client_socket.verify_readable()
 
     def test320_PartiallyFullChannel(self):
         # Half empty the channel
         num_bytes_to_retrieve = TestSelect.num_bytes_outstanding / 2
         bytes_retrieved = TestSelect.client_socket.read_inchannel(num_bytes_to_retrieve)
         TestSelect.num_bytes_outstanding -= len(bytes_retrieved)
-        TestSelect.client_socket.verify_status(READY, READY)
-        TestSelect.handler_socket.verify_status(NOT_READY, READY)
+        TestSelect.client_socket.verify_readable()
 
     def test330_EmptyChannel(self):
         # Empty the channel
         TestSelect.client_socket.read_inchannel(TestSelect.num_bytes_outstanding)
-        TestSelect.client_socket.verify_status(NOT_READY, READY)
-        TestSelect.handler_socket.verify_status(NOT_READY, READY)
+        TestSelect.client_socket.verify_not_readable()
 
     #
     # Test both channels active at the same time
@@ -237,16 +248,16 @@ class TestSelect(unittest.TestCase):
 
     def test400_EmptyChannels(self):
         # And now test the status of both end of the socket
-        TestSelect.client_socket.verify_status(NOT_READY, READY)
-        TestSelect.handler_socket.verify_status(NOT_READY, READY)
+        TestSelect.client_socket.verify_only_writable()
+        TestSelect.handler_socket.verify_only_writable()
 
     def test410_FullChannels(self):
         TestSelect.num_bytes_outstanding_c = TestSelect.client_socket.fill_outchannel()
         TestSelect.num_bytes_outstanding_h = TestSelect.handler_socket.fill_outchannel()
-        TestSelect.client_socket.verify_status(READY, NOT_READY)
-        TestSelect.handler_socket.verify_status(READY, NOT_READY)
+        TestSelect.client_socket.verify_readable()
+        TestSelect.handler_socket.verify_readable()
 
-    def est420_PartiallyFullChannels(self):
+    def test420_PartiallyFullChannels(self):
         # Half empty the channel
         num_bytes_to_retrieve_c = TestSelect.num_bytes_outstanding_c / 2
         num_bytes_to_retrieve_h = TestSelect.num_bytes_outstanding_h / 2
@@ -254,15 +265,15 @@ class TestSelect(unittest.TestCase):
         bytes_retrieved_h = TestSelect.handler_socket.read_inchannel(num_bytes_to_retrieve_h)
         TestSelect.num_bytes_outstanding_c -= len(bytes_retrieved_c)
         TestSelect.num_bytes_outstanding_h -= len(bytes_retrieved_h)
-        TestSelect.client_socket.verify_status(READY, READY)
-        TestSelect.handler_socket.verify_status(READY, READY)
+        TestSelect.client_socket.verify_readable()
+        TestSelect.handler_socket.verify_readable()
 
     def test430_EmptyChannels(self):
         # Empty the channel
         TestSelect.client_socket.read_inchannel(TestSelect.num_bytes_outstanding_c)
         TestSelect.handler_socket.read_inchannel(TestSelect.num_bytes_outstanding_h)
-        TestSelect.client_socket.verify_status(NOT_READY, READY)
-        TestSelect.handler_socket.verify_status(NOT_READY, READY)
+        TestSelect.client_socket.verify_only_writable()
+        TestSelect.handler_socket.verify_only_writable()
 
     #
     # Now close the whole lot down
