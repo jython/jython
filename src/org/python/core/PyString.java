@@ -2013,7 +2013,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         String s = coerce(other);
         if (s == null)
             return null;
-        return string.equals(s) ? Py.One : Py.Zero;
+        return string.equals(s) ? Py.True : Py.False;
     }
 
     public PyObject __ne__(PyObject other) {
@@ -2024,14 +2024,14 @@ public class PyString extends PyBaseString implements ClassDictInit
         String s = coerce(other);
         if (s == null)
             return null;
-        return string.equals(s) ? Py.Zero : Py.One;
+        return string.equals(s) ? Py.False : Py.True;
     }
     
     public PyObject __lt__(PyObject other) {
         String s = coerce(other);
         if (s == null)
             return null;
-        return string.compareTo(s) < 0 ? Py.One : Py.Zero;
+        return string.compareTo(s) < 0 ? Py.True : Py.False;
     }
     
     final PyObject str___lt__(PyObject other){
@@ -2042,7 +2042,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         String s = coerce(other);
         if (s == null)
             return null;
-        return string.compareTo(s) <= 0 ? Py.One : Py.Zero;
+        return string.compareTo(s) <= 0 ? Py.True : Py.False;
     }
     
     final PyObject str___le__(PyObject other){
@@ -2053,7 +2053,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         String s = coerce(other);
         if (s == null)
             return null;
-        return string.compareTo(s) > 0 ? Py.One : Py.Zero;
+        return string.compareTo(s) > 0 ? Py.True : Py.False;
     }
     
     final PyObject str___gt__(PyObject other){
@@ -2064,7 +2064,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         String s = coerce(other);
         if (s == null)
             return null;
-        return string.compareTo(s) >= 0 ? Py.One : Py.Zero;
+        return string.compareTo(s) >= 0 ? Py.True : Py.False;
     }
     
     final PyObject str___ge__(PyObject other){

@@ -561,23 +561,20 @@ def is_private(prefix, base):
     protocol may make use of it).
     Return true iff base begins with an (at least one) underscore, but
     does not both begin and end with (at least) two underscores.
-    # Jython Transition 2.3
-    # Builtin equality functions like str.__eq__ return an int not a bool
-    # http://jython.org/bugs/1758276
-    #    >>> is_private("a.b", "my_func")
-    #    False
-    #    >>> is_private("____", "_my_func")
-    #    True
-    #    >>> is_private("someclass", "__init__")
-    #    False
-    #    >>> is_private("sometypo", "__init_")
-    #    True
-    #    >>> is_private("x.y.z", "_")
-    #    True
-    #    >>> is_private("_x.y.z", "__")
-    #    False
-    #    >>> is_private("", "")  # senseless but consistent
-    #    False
+    >>> is_private("a.b", "my_func")
+    False
+    >>> is_private("____", "_my_func")
+    True
+    >>> is_private("someclass", "__init__")
+    False
+    >>> is_private("sometypo", "__init_")
+    True
+    >>> is_private("x.y.z", "_")
+    True
+    >>> is_private("_x.y.z", "__")
+    False
+    >>> is_private("", "")  # senseless but consistent
+    False
     """
 
     return base[:1] == "_" and not base[:2] == "__" == base[-2:]
