@@ -110,6 +110,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			return fancyCall(new PyObject[] { arg1 });
 		case 43:
 			return fancyCall(new PyObject[] { arg1 });
+		case 45:
+			return __builtin__.reversed(arg1);
 		default:
 			throw info.unexpectedCall(1, false);
 		}
@@ -386,9 +388,8 @@ public class __builtin__  {
 		dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
 		dict.__setitem__("xrange", new BuiltinFunctions("xrange", 42, 1, 3));
 		dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 1, -1));
-	
+		dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
 		dict.__setitem__("__import__", new ImportFunction());
-	
 	}
 
 	public static PyObject abs(PyObject o) {
@@ -1016,7 +1017,16 @@ public class __builtin__  {
 		}
 		return result;
 	}
-
+	
+	public static PyObject reversed(PyObject seq) {
+        if(hasattr(seq, "__getitem__") && hasattr(seq, "__len__") && 
+                !hasattr(seq, "keys")) {
+            return new PyReversedIterator(seq);
+        } else {
+            throw Py.TypeError("argument to reversed() must be a sequence");
+        }
+	}
+	
 	public static PyObject sum(PyObject seq) {
 		return sum(seq, Py.Zero);
 	}
