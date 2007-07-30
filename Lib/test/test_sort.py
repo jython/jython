@@ -164,10 +164,7 @@ def cmpNone():
         if L != range(50):
             print "    Passing None as cmpfunc failed."
             nerrors += 1
-# Jython transition
-# Passing None as cmp in sort fails with a TypeError.  It should function as if no cmp was passed.
-# http://jython.org/bugs/1758323
-#cmpNone()
+cmpNone()
 
 if nerrors:
     print "Test failed", nerrors
