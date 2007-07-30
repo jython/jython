@@ -385,22 +385,31 @@ public class PyInstance extends PyObject
     public PyString __repr__() {
         PyObject ret = invoke_ex("__repr__");
         if (ret == null) {
-            PyObject mod = instclass.__dict__.__finditem__("__module__");
-            String smod;
-            if (mod == Py.None) smod = "";
-            else {
-                if (mod == null || !(mod instanceof PyString))
-                    smod = "<unknown>.";
-                else
-                    smod = ((PyString)mod).toString()+'.';
-            }
-            return new PyString("<"+smod+instclass.__name__+
-                                " instance "+Py.idstr(this)+">");
+            return makeDefaultRepr();
         }
-
         if (!(ret instanceof PyString))
             throw Py.TypeError("__repr__ method must return a string");
         return (PyString)ret;
+    }
+
+    /**
+     * If a class doesn't define a __repr__ method of its own, the return
+     * value from this method is used.
+     */
+    protected PyString makeDefaultRepr() {
+        PyObject mod = instclass.__dict__.__finditem__("__module__");
+        String smod;
+        if(mod == Py.None) {
+            smod = "";
+        } else {
+            if(mod == null || !(mod instanceof PyString)) {
+                smod = "<unknown>.";
+            } else {
+                smod = ((PyString)mod).toString() + '.';
+            }
+        }
+        return new PyString("<" + smod + instclass.__name__ + " instance " + 
+                            Py.idstr(this) + ">");
     }
 
     public PyString __str__() {
