@@ -1,9 +1,12 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.modules.sets.PySet;
-import org.python.modules.sets.PyImmutableSet;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
+
+import org.python.modules.sets.PyImmutableSet;
+import org.python.modules.sets.PySet;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
 
@@ -41,7 +44,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 		case 1:
 			return Py.newInteger(__builtin__.len(arg1));
 		case 2:
-			return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
+			return __builtin__.range(Py.py2long(arg1));
 		case 3:
 	        if (!(arg1 instanceof PyString))
 	            throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().getFullName() + " found");
@@ -120,8 +123,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 	public PyObject __call__(PyObject arg1, PyObject arg2) {
 		switch (this.index) {
 		case 2:
-			return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"), Py.py2int(arg2,
-					"range(): 2nd arg can't be coerced to int"));
+			return __builtin__.range(Py.py2long(arg1), Py.py2long(arg2));
 		case 6:
 			return Py.newInteger(__builtin__.cmp(arg1, arg2));
 		case 9:
@@ -182,9 +184,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 	public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
 		switch (this.index) {
 		case 2:
-			return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"), Py.py2int(arg2,
-					"range(): 2nd arg can't be coerced to int"), Py.py2int(arg3,
-					"range(): 3rd arg can't be coerced to int"));
+			return __builtin__.range(Py.py2long(arg1), Py.py2long(arg2), Py.py2long(arg3));
 		case 9:
 			try {
 				if (arg3 instanceof PyStringMap) {
@@ -877,33 +877,38 @@ public class __builtin__  {
 		throw Py.TypeError("__pow__ not defined for these operands");
 	}
 
-	public static PyObject range(int start, int stop, int step) {
-		if (step == 0) {
-			throw Py.ValueError("zero step for range()");
-		}
-		int n;
-		if (step > 0) {
-			n = (stop - start + step - 1) / step;
-		} else {
-			n = (stop - start + step + 1) / step;
-		}
-		if (n <= 0) {
-			return new PyList();
-		}
-		PyObject[] l = new PyObject[n];
-		int j = start;
-		for (int i = 0; i < n; i++) {
-			l[i] = Py.newInteger(j);
-			j += step;
-		}
-		return new PyList(l);
-	}
+	public static PyObject range(long start, long stop, long step) {
+        if(step == 0) {
+            throw Py.ValueError("zero step for range()");
+        }
+        
+        long n;
+        if(step > 0) {
+            n = (stop - start + step - 1) / step;
+        } else {
+            n = (stop - start + step + 1) / step;
+        }
+        if(n <= 0) {
+            return new PyList();
+        }
+        if(n > Integer.MAX_VALUE) {
+            throw Py.TypeError("Can't use range for more than " + Integer.MAX_VALUE
+                    + " items.  Try xrange instead.");
+        }
+        
+        PyObject[] objs = new PyObject[(int)n];
+        long j = start;
+        for(int i = 0; i < n; i++, j += step) {
+            objs[i] = Py.newInteger(j);
+        }
+        return new PyList(objs);
+    }
 
-	public static PyObject range(int n) {
+	public static PyObject range(long n) {
 		return range(0, n, 1);
 	}
 
-	public static PyObject range(int start, int stop) {
+	public static PyObject range(long start, long stop) {
 		return range(start, stop, 1);
 	}
 
