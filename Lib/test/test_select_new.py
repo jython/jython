@@ -24,7 +24,7 @@ DATA_CHUNK = "." * DATA_CHUNK_SIZE
 #
 
 if test_support.is_jython:
-    SELECT_TIMEOUT = 0
+    SELECT_TIMEOUT = .2
 else:
     # zero select timeout fails these tests on cpython (on windows 2003 anyway)
     SELECT_TIMEOUT = 0.001
@@ -74,12 +74,10 @@ class PeerImpl:
         total_bytes = 0
         while 1:
             try:
-                rfds, wfds, xfds = select.select([], [self.socket], [], SELECT_TIMEOUT)
-                if self.socket in wfds:
+                if self.select_writable():
                     bytes_sent = self.socket.send(DATA_CHUNK)
                     total_bytes += bytes_sent
                 else:
-                    self.verify_not_writable()
                     return total_bytes
             except socket.error, se:
                 if se.value == 10035:
@@ -87,15 +85,11 @@ class PeerImpl:
                 raise se
 
     def read_inchannel(self, expected):
-        buf_size = expected
         results = ""
         start = time.time()
         while 1:
-            if (expected - len(results)) < buf_size:
-                buf_size = expected - len(results)
-            rfds, wfds, xfds = select.select([self.socket], [], [], SELECT_TIMEOUT)
-            if self.socket in rfds:
-                recvd_bytes = self.socket.recv(buf_size)
+            if self.select_readable():
+                recvd_bytes = self.socket.recv(expected - len(results))
                 if len(recvd_bytes):
                     results += recvd_bytes
                 if len(results) == expected:
@@ -103,25 +97,26 @@ class PeerImpl:
             else:
                 stop = time.time()
                 if (stop - start) > READ_TIMEOUT:
-                    raise Exception("Exceeded alloted time (%1.3lf > %1.3lf) to read %d bytes: got %d" % ((stop-start), READ_TIMEOUT, expected, len(results)))
-                elif expected > len(results):
-                    raise Exception("Got %d but expected %d" % (len(results), expected))
+                    raise Exception("Got %d bytes but %d bytes were written."  %
+                                    (len(results), expected))
+
+    def select_readable(self):
+        return select.select([self.socket], [], [], SELECT_TIMEOUT)[0]
 
     def verify_readable(self):
-        rfds, wfds, xfds = select.select([self.socket], [], [], SELECT_TIMEOUT)
-        assert self.socket in rfds, "Socket should be ready for reading"
+        assert self.select_readable(), "Socket should be ready for reading"
 
     def verify_not_readable(self):
-        rfds, wfds, xfds = select.select([self.socket], [], [], SELECT_TIMEOUT)
-        assert not self.socket in rfds, "Socket should not be ready for reading"
+        assert not self.select_readable(), "Socket should not be ready for reading"
+
+    def select_writable(self):
+        return select.select([], [self.socket], [], SELECT_TIMEOUT)[1]
 
     def verify_writable(self):
-        rfds, wfds, xfds = select.select([], [self.socket], [], SELECT_TIMEOUT)
-        assert self.socket in wfds, "Socket should be ready for writing"
+        assert self.select_writable(), "Socket should be ready for writing"
 
     def verify_not_writable(self):
-        rfds, wfds, xfds = select.select([], [self.socket], [], SELECT_TIMEOUT)
-        assert not self.socket in wfds, "Socket should not be ready for writing"
+        assert not self.select_writable(), "Socket should not be ready for writing"
 
     def verify_only_writable(self):
         self.verify_writable()
