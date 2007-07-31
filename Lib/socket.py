@@ -499,7 +499,8 @@ class _tcpsocket(_nonblocking_api_mixin):
                 raise would_block_error()
             cliconn = _tcpsocket()
             cliconn.reuse_addr = new_sock.jsocket.getReuseAddress()
-            cliconn._setup(new_sock)
+            cliconn.sock_impl = new_sock
+            cliconn._setup()
             return cliconn, new_sock.getpeername()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -515,6 +516,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             assert not self.sock_impl
             host, port = self._get_host_port(addr)
             self.sock_impl = _client_socket_impl()
+            self.sock_impl._setreuseaddress(self.reuse_addr)
             if self.local_addr: # Has the socket been bound to a local address?
                 bind_host, bind_port = self.local_addr
                 self.sock_impl.bind(bind_host, bind_port)
@@ -526,19 +528,17 @@ class _tcpsocket(_nonblocking_api_mixin):
     def connect(self, addr):
         "This signifies a client socket"
         self._do_connect(addr)
-        self._setup(self.sock_impl)
+        self._setup()
 
     def connect_ex(self, addr):
         "This signifies a client socket"
         self._do_connect(addr)
         if self.sock_impl.finish_connect():
-            self._setup(self.sock_impl)
+            self._setup()
             return 0
         return errno.EINPROGRESS
 
-    def _setup(self, sock):
-        self.sock_impl = sock
-        self.sock_impl._setreuseaddress(self.reuse_addr)
+    def _setup(self):
         if self.mode != MODE_NONBLOCKING:
             self.istream = self.sock_impl.jsocket.getInputStream()
             self.ostream = self.sock_impl.jsocket.getOutputStream()
