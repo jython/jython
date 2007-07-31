@@ -159,6 +159,7 @@ class ThreadedTCPSocketTest(SocketTCPTest, ThreadableTest):
 
     def clientSetUp(self):
         self.cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.cli.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def clientTearDown(self):
         self.cli.close()
@@ -173,6 +174,7 @@ class ThreadedUDPSocketTest(SocketUDPTest, ThreadableTest):
 
     def clientSetUp(self):
         self.cli = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.cli.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 class SocketConnectedTest(ThreadedTCPSocketTest):
 
@@ -629,11 +631,7 @@ class BasicSocketPairTest(SocketPairTest):
         msg = self.cli.recv(1024)
         self.assertEqual(msg, MSG)
 
-class NonBlockingTCPTests(ThreadedTCPSocketTest):
-
-    def __init__(self, methodName='runTest'):
-        ThreadedTCPSocketTest.__init__(self, methodName=methodName)
-
+class NonBlockingTCPServerTests(SocketTCPTest):
     def testSetBlocking(self):
         # Testing whether set blocking works
         self.serv.setblocking(0)
@@ -645,28 +643,12 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
         end = time.time()
         self.assert_((end - start) < 1.0, "Error setting non-blocking mode.")
 
-    def _testSetBlocking(self):
-        pass
-
     def testGetBlocking(self):
         # Testing whether set blocking works
         self.serv.setblocking(0)
         self.failUnless(not self.serv.getblocking(), "Getblocking return true instead of false")
         self.serv.setblocking(1)
         self.failUnless(self.serv.getblocking(), "Getblocking return false instead of true")
-
-    def _testGetBlocking(self):
-        pass
-
-    #
-    # AMAK: 20070307
-    # Split testAccept into two separate tests
-    # 1. A test for non-blocking accept when there is NO connection pending
-    # 2. A test for non-blocking accept when there is A connection pending
-    # I think that perhaps the only reason the original combined test passes
-    # on cpython is because of thread timing and sychronization parameters
-    # of that platform. 
-    # 
 
     def testAcceptNoConnection(self):
         # Testing non-blocking accept returns immediately when no connection
@@ -677,10 +659,12 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
             pass
         else:
             self.fail("Error trying to do non-blocking accept.")
+    
 
-    def _testAcceptNoConnection(self):
-        # Client side does nothing
-        pass
+class NonBlockingTCPTests(ThreadedTCPSocketTest):
+
+    def __init__(self, methodName='runTest'):
+        ThreadedTCPSocketTest.__init__(self, methodName=methodName)
 
     def testAcceptConnection(self):
         # Testing non-blocking accept works when connection present
