@@ -16,7 +16,13 @@ Jython 2.2 rc3
     - Closing a FileWrapper on a socket closes its underlying socket
     - Sockets just have their [In|Out]putStreams closed instead of being
     properly shutdown by shutdown()
-    
+    - SO_REUSEADDR is reset on sockets from a server socket's accept call 
+    causing later binds to the server socket's port to fail.
+    - Client sockets that have bind called before connect don't respect 
+    SO_REUSEADDR
+    - [ 1758838 ] execfile() throws a NullPointerException in the interactive
+    console
+
 Jython 2.2 rc2
   Bugs fixed
     - [ 931129 ] jython -jar some-path/test.jar fails
