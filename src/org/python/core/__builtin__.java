@@ -66,7 +66,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			} catch (ConversionException e) {
 				throw Py.TypeError("execfile's first argument must be str");
 			}
-			return null;
+			return Py.None;
 		case 23:
 			return __builtin__.hex(arg1);
 		case 24:
@@ -127,7 +127,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			return __builtin__.coerce(arg1, arg2);
 		case 15:
 			__builtin__.delattr(arg1, asString(arg2, "delattr(): attribute name must be string"));
-			return null;
+			return Py.None;
 		case 17:
 			return __builtin__.divmod(arg1, arg2);
 		case 18:
@@ -138,7 +138,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			} catch (ConversionException e) {
 				throw Py.TypeError("execfile's first argument must be str");
 			}
-			return null;
+			return Py.None;
 		case 20:
 			return __builtin__.filter(arg1, arg2);
 		case 21:
@@ -197,7 +197,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			return __builtin__.eval(arg1, arg2, arg3);
 		case 19:
 			__builtin__.execfile(asString(arg1, "execfile's first argument must be str", false), arg2, arg3);
-			return null;
+			return Py.None;
 		case 21:
 			return __builtin__.getattr(arg1, asString(arg2, "getattr(): attribute name must be string"), arg3);
 		case 33:
@@ -206,7 +206,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			return __builtin__.reduce(arg1, arg2, arg3);
 		case 39:
 			__builtin__.setattr(arg1, asString(arg2, "setattr(): attribute name must be string"), arg3);
-			return null;
+			return Py.None;
 		case 40:
 			return __builtin__.slice(arg1, arg2, arg3);
 		case 42:

@@ -804,7 +804,7 @@ public class PySystemState extends PyObject
         /* Print value except if null or None */
         /* After printing, also assign to '_' */
         /* Before, set '_' to None to avoid recursion */
-        if (o == null || o == Py.None)
+        if (o == Py.None)
             return;
 
         PySystemState sys = Py.getThreadState().systemState;
