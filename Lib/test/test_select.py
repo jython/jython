@@ -13,6 +13,7 @@ import socket
 
 import os
 import sys
+import test_support
 import unittest
 
 class SelectWrapper:
@@ -61,8 +62,10 @@ class TestSelectInvalidParameters(unittest.TestCase):
                 try:
                     timeout = 0 # Can't wait forever
                     rfd, wfd, xfd = select.select(args[0], args[1], args[2], timeout)
-                except TypeError:
+                except (select.error, TypeError):
                     pass
+                except Exception, x:
+                    self.fail("Selecting on '%s' raised wrong exception %s" % (str(bad_select_set), str(x)))
                 else:
                     self.fail("Selecting on '%s' should have raised TypeError" % str(bad_select_set))
 
@@ -219,9 +222,7 @@ def test_main():
     if sys.platform[:4] != 'java':
         tests.append(TestPipes)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
-    main_suite = unittest.TestSuite(suites)
-    runner = unittest.TextTestRunner(verbosity=100)
-    runner.run(main_suite)
+    test_support.run_suite(unittest.TestSuite(suites))
 
 if __name__ == "__main__":
     test_main()

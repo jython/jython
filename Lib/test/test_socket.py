@@ -5,7 +5,7 @@ AMAK: 20050515: This module is the test_socket.py from cpython 2.4, ported to jy
 """
 
 import unittest
-#from test import test_support
+import test_support
 
 import errno
 import socket
@@ -159,6 +159,7 @@ class ThreadedTCPSocketTest(SocketTCPTest, ThreadableTest):
 
     def clientSetUp(self):
         self.cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.cli.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def clientTearDown(self):
         self.cli.close()
@@ -173,6 +174,7 @@ class ThreadedUDPSocketTest(SocketUDPTest, ThreadableTest):
 
     def clientSetUp(self):
         self.cli = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.cli.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 class SocketConnectedTest(ThreadedTCPSocketTest):
 
@@ -566,6 +568,21 @@ class BasicTCPTest(SocketConnectedTest):
         self.serv_conn.send(MSG)
         self.serv_conn.shutdown(2)
 
+    def testSendAfterRemoteClose(self):
+        self.cli_conn.close()
+
+    def _testSendAfterRemoteClose(self):
+        for x in range(5):
+            try:
+                self.serv_conn.send("spam")
+            except socket.error, se:
+                self.failUnlessEqual(se[0], errno.ECONNRESET)
+                return
+            except Exception, x:
+                self.fail("Sending on remotely closed socket raised wrong exception: %s" % x)
+            time.sleep(0.5)
+        self.fail("Sending on remotely closed socket should have raised exception")
+
 class BasicUDPTest(ThreadedUDPSocketTest):
 
     def __init__(self, methodName='runTest'):
@@ -614,11 +631,7 @@ class BasicSocketPairTest(SocketPairTest):
         msg = self.cli.recv(1024)
         self.assertEqual(msg, MSG)
 
-class NonBlockingTCPTests(ThreadedTCPSocketTest):
-
-    def __init__(self, methodName='runTest'):
-        ThreadedTCPSocketTest.__init__(self, methodName=methodName)
-
+class NonBlockingTCPServerTests(SocketTCPTest):
     def testSetBlocking(self):
         # Testing whether set blocking works
         self.serv.setblocking(0)
@@ -630,18 +643,12 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
         end = time.time()
         self.assert_((end - start) < 1.0, "Error setting non-blocking mode.")
 
-    def _testSetBlocking(self):
-        pass
-
-    #
-    # AMAK: 20070307
-    # Split testAccept into two separate tests
-    # 1. A test for non-blocking accept when there is NO connection pending
-    # 2. A test for non-blocking accept when there is A connection pending
-    # I think that perhaps the only reason the original combined test passes
-    # on cpython is because of thread timing and sychronization parameters
-    # of that platform. 
-    # 
+    def testGetBlocking(self):
+        # Testing whether set blocking works
+        self.serv.setblocking(0)
+        self.failUnless(not self.serv.getblocking(), "Getblocking return true instead of false")
+        self.serv.setblocking(1)
+        self.failUnless(self.serv.getblocking(), "Getblocking return false instead of true")
 
     def testAcceptNoConnection(self):
         # Testing non-blocking accept returns immediately when no connection
@@ -652,10 +659,12 @@ class NonBlockingTCPTests(ThreadedTCPSocketTest):
             pass
         else:
             self.fail("Error trying to do non-blocking accept.")
+    
 
-    def _testAcceptNoConnection(self):
-        # Client side does nothing
-        pass
+class NonBlockingTCPTests(ThreadedTCPSocketTest):
+
+    def __init__(self, methodName='runTest'):
+        ThreadedTCPSocketTest.__init__(self, methodName=methodName)
 
     def testAcceptConnection(self):
         # Testing non-blocking accept works when connection present
@@ -752,6 +761,33 @@ class NonBlockingUDPTests(ThreadedUDPSocketTest): pass
 #
 # TODO: Write some non-blocking UDP tests
 #
+
+class FileObjectClassOpenCloseTests(SocketConnectedTest):
+
+    def testCloseFileDoesNotCloseSocket(self):
+        # This test is necessary on java/jython
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+
+    def _testCloseFileDoesNotCloseSocket(self):
+        self.cli_file = self.serv_conn.makefile('wb')
+        self.cli_file.close()
+        try:
+            self.serv_conn.send(MSG)
+        except Exception, x:
+            self.fail("Closing file wrapper appears to have closed underlying socket: %s" % str(x))
+
+    def testCloseSocketDoesNotCloseFile(self):
+        msg = self.cli_conn.recv(1024)
+        self.assertEqual(msg, MSG)
+
+    def _testCloseSocketDoesNotCloseFile(self):
+        self.cli_file = self.serv_conn.makefile('wb')
+        self.serv_conn.close()
+        try:
+            self.cli_file.write(MSG)
+        except Exception, x:
+            self.fail("Closing socket appears to have closed file wrapper: %s" % str(x))
 
 class FileObjectClassTestCase(SocketConnectedTest):
 
@@ -886,21 +922,23 @@ class TCPTimeoutTest(SocketTCPTest):
         if not ok:
             self.fail("accept() returned success when we did not expect it")
 
-class TCPClientTimeoutTest(ThreadedTCPSocketTest):
-
-    def testTCPClientTimeout(self):
-        pass # i.e. do not accept
-
-    def _testTCPClientTimeout(self):
+class TCPClientTimeoutTest(unittest.TestCase):
+    def testClientTimeout(self):
+        cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        cli.settimeout(0.1)
+        host = '192.168.192.168'
         try:
-            self.cli.settimeout(0.1)
-            self.cli.connect( (HOST, PORT) )
+            cli.connect((host, 5000))
         except socket.timeout, st:
             pass
         except Exception, x:
             self.fail("Client socket timeout should have raised socket.timeout, not %s" % str(x))
         else:
-            self.fail("Client socket timeout should have raised socket.timeout")
+            self.fail('''Client socket timeout should have raised
+socket.timeout.  This tries to connect to %s in the assumption that it isn't
+used, but if it is on your network this failure is bogus.''' % host)
+
+        
 
 #
 # AMAK: 20070307
@@ -939,6 +977,13 @@ class TestExceptions(unittest.TestCase):
         self.assert_(issubclass(socket.timeout, socket.error))
 
 class TestJythonExceptions(unittest.TestCase):
+    def setUp(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def tearDown(self):
+        self.s.close()
+        self.s = None
 
     def testHostNotFound(self):
         try:
@@ -950,9 +995,8 @@ class TestJythonExceptions(unittest.TestCase):
 
     def testConnectionRefused(self):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             # This port should not be open at this time
-            s.connect( (HOST, PORT) )
+            self.s.connect( (HOST, PORT) )
         except socket.error, se:
             self.failUnlessEqual(se[0], errno.ECONNREFUSED)
         except Exception, x:
@@ -962,34 +1006,48 @@ class TestJythonExceptions(unittest.TestCase):
 
     def testBindException(self):
         # First bind to the target port
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind( (HOST, PORT) )
-        s.listen()
+        self.s.bind( (HOST, PORT) )
+        self.s.listen()
         try:
-            try:
-                # And then try to bind again
-                t = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                t.bind( (HOST, PORT) )
-                t.listen()
-            except socket.error, se:
-                self.failUnlessEqual(se[0], errno.EACCES)
-            except Exception, x:
-                self.fail("Binding to already bound host/port raised wrong exception: %s" % x)
-            else:
-                self.fail("Binding to already bound host/port should have raised exception")
-        finally:
-            s.close()
+            # And then try to bind again
+            t = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            t.bind( (HOST, PORT) )
+            t.listen()
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EADDRINUSE)
+        except Exception, x:
+            self.fail("Binding to already bound host/port raised wrong exception: %s" % x)
+        else:
+            self.fail("Binding to already bound host/port should have raised exception")
+
 
     def testUnresolvedAddress(self):
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect( ('non.existent.server', PORT) )
+            self.s.connect( ('non.existent.server', PORT) )
         except socket.gaierror, gaix:
             self.failUnlessEqual(gaix[0], errno.EGETADDRINFOFAILED)
         except Exception, x:
             self.fail("Get host name for non-existent host raised wrong exception: %s" % x)
         else:
             self.fail("Get host name for non-existent host should have raised exception")
+
+    def testSocketNotConnected(self):
+        try:
+            self.s.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ENOTCONN)
+        except Exception, x:
+            self.fail("Send on unconnected socket raised wrong exception: %s" % x)
+        else:
+            self.fail("Send on unconnected socket raised exception")
+        try:
+            result = self.s.recv(1024)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.ENOTCONN)
+        except Exception, x:
+            self.fail("Receive on unconnected socket raised wrong exception: %s" % x)
+        else:
+            self.fail("Receive on unconnected socket raised exception")
 
 class TestAddressParameters:
 
@@ -1040,6 +1098,7 @@ def test_main():
         UDPTimeoutTest,
         NonBlockingTCPTests,
         NonBlockingUDPTests,
+        FileObjectClassOpenCloseTests,
         FileObjectClassTestCase,
         UnbufferedFileObjectClassTestCase,
         LineBufferedFileObjectClassTestCase,
@@ -1050,10 +1109,7 @@ def test_main():
     if sys.platform[:4] == 'java':
         tests.append(TestJythonExceptions)
     suites = [unittest.makeSuite(klass, 'test') for klass in tests]
-    main_suite = unittest.TestSuite(suites)
-    runner = unittest.TextTestRunner(verbosity=100)
-    runner.run(main_suite)
-    # unittest.run_unittest(*tests)
+    test_support.run_suite(unittest.TestSuite(suites))
 
 if __name__ == "__main__":
     test_main()

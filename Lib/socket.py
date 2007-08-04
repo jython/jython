@@ -16,49 +16,66 @@ AMAK: 20070515: Added client-side SSL support
 
 _defaulttimeout = None
 
-import threading
-import time
-import types
+import errno
 import jarray
 import string
 import sys
+import threading
+import time
+import types
 
+# Java.io classes 
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
+# Java.io exceptions
 import java.io.InterruptedIOException
-import java.lang.Exception
+import java.io.IOException
+
+# Java.lang classes
 import java.lang.String
-import java.net.BindException
-import java.net.ConnectException
+# Java.lang exceptions
+import java.lang.Exception
+
+# Java.net classes
 import java.net.DatagramPacket
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
+# Java.net exceptions
+import java.net.BindException
+import java.net.ConnectException
+import java.net.NoRouteToHostException
+import java.net.PortUnreachableException
+import java.net.ProtocolException
+import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+
+# Java.nio classes
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
-import java.nio.channels.IllegalBlockingModeException
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+# Java.nio exceptions
+import java.nio.channels.AlreadyConnectedException
+import java.nio.channels.AsynchronousCloseException
+import java.nio.channels.CancelledKeyException
+import java.nio.channels.ClosedByInterruptException
+import java.nio.channels.ClosedChannelException
+import java.nio.channels.ClosedSelectorException
+import java.nio.channels.ConnectionPendingException
+import java.nio.channels.IllegalBlockingModeException
+import java.nio.channels.IllegalSelectorException
+import java.nio.channels.NoConnectionPendingException
+import java.nio.channels.NonReadableChannelException
+import java.nio.channels.NonWritableChannelException
+import java.nio.channels.NotYetBoundException
+import java.nio.channels.NotYetConnectedException
 import java.nio.channels.UnresolvedAddressException
+import java.nio.channels.UnsupportedAddressTypeException
+
 import javax.net.ssl.SSLSocketFactory
 import org.python.core.PyFile
-
-try:
-    import errno
-    ERRNO_EWOULDBLOCK        = errno.EWOULDBLOCK
-    ERRNO_EACCES             = errno.EACCES
-    ERRNO_ECONNREFUSED       = errno.ECONNREFUSED
-    ERRNO_EINPROGRESS        = errno.EINPROGRESS
-    ERRNO_EGETADDRINFOFAILED = errno.EGETADDRINFOFAILED
-except ImportError:
-    # Support jython 2.1
-    ERRNO_EWOULDBLOCK        = 11
-    ERRNO_EACCES             = 13
-    ERRNO_ECONNREFUSED       = 111
-    ERRNO_EINPROGRESS        = 115
-    ERRNO_EGETADDRINFOFAILED = 20001
 
 class error(Exception): pass
 class herror(error): pass
@@ -71,29 +88,58 @@ _exception_map = {
 
 # (<javaexception>, <circumstance>) : lambda: <code that raises the python equivalent>
 
-(java.io.InterruptedIOException, ALL) : lambda exc: timeout('timed out'),
-(java.net.BindException, ALL) : lambda exc: error(ERRNO_EACCES, 'Permission denied'),
-(java.net.ConnectException, ALL) : lambda exc: error(ERRNO_ECONNREFUSED, 'Connection refused'),
-(java.net.SocketTimeoutException, ALL) : lambda exc: timeout('timed out'),
-(java.net.UnknownHostException, ALL) : lambda exc: gaierror(ERRNO_EGETADDRINFOFAILED, 'getaddrinfo failed'),
-(java.nio.channels.UnresolvedAddressException, ALL) : lambda exc: gaierror(ERRNO_EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.io.IOException, ALL)            : error(errno.ECONNRESET, 'Software caused connection abort'),
+(java.io.InterruptedIOException, ALL) : timeout('timed out'),
+
+(java.net.BindException, ALL)            : error(errno.EADDRINUSE, 'Address already in use'),
+(java.net.ConnectException, ALL)         : error(errno.ECONNREFUSED, 'Connection refused'),
+(java.net.NoRouteToHostException, ALL)   : error(-1, 'Unmapped exception: java.net.NoRouteToHostException'),
+(java.net.PortUnreachableException, ALL) : error(-1, 'Unmapped exception: java.net.PortUnreachableException'),
+(java.net.ProtocolException, ALL)        : error(-1, 'Unmapped exception: java.net.ProtocolException'),
+(java.net.SocketException, ALL)          : error(-1, 'Unmapped exception: java.net.SocketException'),
+(java.net.SocketTimeoutException, ALL)   : timeout('timed out'),
+(java.net.UnknownHostException, ALL)     : gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
+
+(java.nio.channels.AlreadyConnectedException, ALL)       : error(errno.EISCONN, 'Socket is already connected'),
+(java.nio.channels.AsynchronousCloseException, ALL)      : error(-1, 'Unmapped exception: java.nio.AsynchronousCloseException'),
+(java.nio.channels.CancelledKeyException, ALL)           : error(-1, 'Unmapped exception: java.nio.CancelledKeyException'),
+(java.nio.channels.ClosedByInterruptException, ALL)      : error(-1, 'Unmapped exception: java.nio.ClosedByInterruptException'),
+(java.nio.channels.ClosedChannelException, ALL)          : error(errno.EPIPE, 'Socket closed'),
+(java.nio.channels.ClosedSelectorException, ALL)         : error(-1, 'Unmapped exception: java.nio.ClosedSelectorException'),
+(java.nio.channels.ConnectionPendingException, ALL)      : error(-1, 'Unmapped exception: java.nio.ConnectionPendingException'),
+(java.nio.channels.IllegalBlockingModeException, ALL)    : error(-1, 'Unmapped exception: java.nio.IllegalBlockingModeException'),
+(java.nio.channels.IllegalSelectorException, ALL)        : error(-1, 'Unmapped exception: java.nio.IllegalSelectorException'),
+(java.nio.channels.NoConnectionPendingException, ALL)    : error(-1, 'Unmapped exception: java.nio.NoConnectionPendingException'),
+(java.nio.channels.NonReadableChannelException, ALL)     : error(-1, 'Unmapped exception: java.nio.NonReadableChannelException'),
+(java.nio.channels.NonWritableChannelException, ALL)     : error(-1, 'Unmapped exception: java.nio.NonWritableChannelException'),
+(java.nio.channels.NotYetBoundException, ALL)            : error(-1, 'Unmapped exception: java.nio.NotYetBoundException'),
+(java.nio.channels.NotYetConnectedException, ALL)        : error(-1, 'Unmapped exception: java.nio.NotYetConnectedException'),
+(java.nio.channels.UnresolvedAddressException, ALL)      : gaierror(errno.EGETADDRINFOFAILED, 'getaddrinfo failed'),
+(java.nio.channels.UnsupportedAddressTypeException, ALL) : error(-1, 'Unmapped exception: java.nio.UnsupportedAddressTypeException'),
 
 }
 
 def would_block_error(exc=None):
-    return error( (ERRNO_EWOULDBLOCK, 'The socket operation could not complete without blocking') )
+    return error(errno.EWOULDBLOCK, 'The socket operation could not complete without blocking')
 
 def _map_exception(exc, circumstance=ALL):
+#    print "Mapping exception: %s" % exc
     try:
-        return _exception_map[(exc.__class__, circumstance)](exc)
+        mapped_exception = _exception_map[(exc.__class__, circumstance)]
+        mapped_exception.java_exception = exc
+        return mapped_exception
     except KeyError:
-        return error(-1, 'Unmapped java exception: %s' % exc.toString())
+        return error(-1, 'Unmapped java exception: <%s:%s>' % (exc.toString(), circumstance))
 
 MODE_BLOCKING    = 'block'
 MODE_NONBLOCKING = 'nonblock'
 MODE_TIMEOUT     = 'timeout'
 
 _permitted_modes = (MODE_BLOCKING, MODE_NONBLOCKING, MODE_TIMEOUT)
+
+SHUT_RD   = 0
+SHUT_WR   = 1
+SHUT_RDWR = 2
 
 class _nio_impl:
 
@@ -152,6 +198,12 @@ class _nio_impl:
 #    close = close3
 #    close = close4
 
+    def shutdownInput(self):
+        self.jsocket.shutdownInput()
+
+    def shutdownOutput(self):
+        self.jsocket.shutdownOutput()
+
     def getchannel(self):
         return self.jchannel
 
@@ -184,9 +236,6 @@ class _client_socket_impl(_nio_impl):
     def finish_connect(self):
         return self.jchannel.finishConnect()
 
-    def close(self):
-        _nio_impl.close(self)
-
 class _server_socket_impl(_nio_impl):
 
     def __init__(self, host, port, backlog, reuse_addr):
@@ -200,23 +249,17 @@ class _server_socket_impl(_nio_impl):
         self.jsocket.bind(bindaddr, backlog)
 
     def accept(self):
-        try:
-            if self.mode in (MODE_BLOCKING, MODE_NONBLOCKING):
-                new_cli_chan = self.jchannel.accept()
-                if new_cli_chan != None:
-                    return _client_socket_impl(new_cli_chan.socket())
-                else:
-                    return None
+        if self.mode in (MODE_BLOCKING, MODE_NONBLOCKING):
+            new_cli_chan = self.jchannel.accept()
+            if new_cli_chan != None:
+                return _client_socket_impl(new_cli_chan.socket())
             else:
-                # In timeout mode now
-                new_cli_sock = self.jsocket.accept()
-                return _client_socket_impl(new_cli_sock)
-        except java.lang.Exception, jlx:
-            raise _map_exception(jlx)
+                return None
+        else:
+            # In timeout mode now
+            new_cli_sock = self.jsocket.accept()
+            return _client_socket_impl(new_cli_sock)
         
-    def close(self):
-        _nio_impl.close(self)
-
 class _datagram_socket_impl(_nio_impl):
 
     def __init__(self, port=None, address=None, reuse_addr=0):
@@ -248,6 +291,7 @@ __all__ = [ 'AF_INET', 'SO_REUSEADDR', 'SOCK_DGRAM', 'SOCK_RAW',
         'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
         'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
         'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
+        'SHUT_RD', 'SHUT_WR', 'SHUT_RDWR',
         ]
 
 AF_INET = 2
@@ -343,7 +387,7 @@ def _calctimeoutvalue(value):
         floatvalue = float(value)
     except:
         raise TypeError('Socket timeout value must be a number or None')
-    if floatvalue < 0:
+    if floatvalue < 0.0:
         raise ValueError("Socket timeout value cannot be negative")
     if floatvalue < 0.000001:
         return 0.0
@@ -388,6 +432,9 @@ class _nonblocking_api_mixin:
             self.timeout = 0.0
         self._config()
 
+    def getblocking(self):
+        return self.mode == MODE_BLOCKING
+
     def _config(self):
         assert self.mode in _permitted_modes
         if self.sock_impl: self.sock_impl.config(self.mode, self.timeout)
@@ -396,9 +443,6 @@ class _nonblocking_api_mixin:
         if not self.sock_impl:
             return None
         return self.sock_impl.getchannel()
-#        if hasattr(self.sock_impl, 'getchannel'):
-#            return self.sock_impl.getchannel()
-#        raise error('Operation not implemented on this JVM')            
 
     fileno = getchannel
 
@@ -421,7 +465,6 @@ class _tcpsocket(_nonblocking_api_mixin):
     local_addr = None
     server = 0
     file_count = 0
-    #reuse_addr = 1
     reuse_addr = 0
 
     def bind(self, addr):
@@ -445,11 +488,6 @@ class _tcpsocket(_nonblocking_api_mixin):
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
-#
-# The following has information on a java.lang.NullPointerException problem I'm having
-#
-# http://developer.java.sun.com/developer/bugParade/bugs/4801882.html
-
     def accept(self):
         "This signifies a server socket"
         try:
@@ -460,7 +498,9 @@ class _tcpsocket(_nonblocking_api_mixin):
             if not new_sock:
                 raise would_block_error()
             cliconn = _tcpsocket()
-            cliconn._setup(new_sock)
+            cliconn.reuse_addr = new_sock.jsocket.getReuseAddress()
+            cliconn.sock_impl = new_sock
+            cliconn._setup()
             return cliconn, new_sock.getpeername()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
@@ -476,6 +516,7 @@ class _tcpsocket(_nonblocking_api_mixin):
             assert not self.sock_impl
             host, port = self._get_host_port(addr)
             self.sock_impl = _client_socket_impl()
+            self.sock_impl._setreuseaddress(self.reuse_addr)
             if self.local_addr: # Has the socket been bound to a local address?
                 bind_host, bind_port = self.local_addr
                 self.sock_impl.bind(bind_host, bind_port)
@@ -487,31 +528,31 @@ class _tcpsocket(_nonblocking_api_mixin):
     def connect(self, addr):
         "This signifies a client socket"
         self._do_connect(addr)
-        self._setup(self.sock_impl)
+        self._setup()
 
     def connect_ex(self, addr):
         "This signifies a client socket"
         self._do_connect(addr)
         if self.sock_impl.finish_connect():
-            self._setup(self.sock_impl)
+            self._setup()
             return 0
-        return ERRNO_EINPROGRESS
+        return errno.EINPROGRESS
 
-    def _setup(self, sock):
-        self.sock_impl = sock
-        self.sock_impl._setreuseaddress(self.reuse_addr)
+    def _setup(self):
         if self.mode != MODE_NONBLOCKING:
             self.istream = self.sock_impl.jsocket.getInputStream()
             self.ostream = self.sock_impl.jsocket.getOutputStream()
 
     def recv(self, n):
         try:
-            if not self.sock_impl: raise error('Socket not open')
+            if not self.sock_impl: raise error(errno.ENOTCONN, 'Socket is not connected')
             if self.sock_impl.jchannel.isConnectionPending():
                 self.sock_impl.jchannel.finishConnect()
             data = jarray.zeros(n, 'b')
             m = self.sock_impl.read(data)
-            if m <= 0:
+            if m == -1:#indicates EOF has been reached, so we just return the empty string
+                return ""
+            elif m <= 0:
                 if self.mode == MODE_NONBLOCKING:
                     raise would_block_error()
                 return ""
@@ -525,33 +566,41 @@ class _tcpsocket(_nonblocking_api_mixin):
         return self.recv(n), None
 
     def send(self, s):
-        if not self.sock_impl: raise error('Socket not open')
-        if self.sock_impl.jchannel.isConnectionPending():
-            self.sock_impl.jchannel.finishConnect()
-        #n = len(s)
-        numwritten = self.sock_impl.write(s)
-        return numwritten
+        try:
+            if not self.sock_impl: raise error(errno.ENOTCONN, 'Socket is not connected')
+            if self.sock_impl.jchannel.isConnectionPending():
+                self.sock_impl.jchannel.finishConnect()
+            numwritten = self.sock_impl.write(s)
+            return numwritten
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     sendall = send
 
     def getsockname(self):
-        if not self.sock_impl:
-            host, port = self.local_addr or ("", 0)
-            host = java.net.InetAddress.getByName(host).getHostAddress()
-        else:
-            if self.server:
-                host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
+        try:
+            if not self.sock_impl:
+                host, port = self.local_addr or ("", 0)
+                host = java.net.InetAddress.getByName(host).getHostAddress()
             else:
-                host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
-            port = self.sock_impl.jsocket.getLocalPort()
-        return (host, port)
+                if self.server:
+                    host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
+                else:
+                    host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
+                port = self.sock_impl.jsocket.getLocalPort()
+            return (host, port)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def getpeername(self):
-        assert self.sock_impl
-        assert not self.server
-        host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
-        port = self.sock_impl.jsocket.getPort()
-        return (host, port)
+        try:
+            assert self.sock_impl
+            assert not self.server
+            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
+            port = self.sock_impl.jsocket.getPort()
+            return (host, port)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
         
     def setsockopt(self, level, optname, value):
         if optname == SO_REUSEADDR:
@@ -578,12 +627,11 @@ class _tcpsocket(_nonblocking_api_mixin):
 
     class FileWrapper:
         def __init__(self, socket, file):
-            self.socket = socket
-            self.sock = socket.sock_impl
+            self.socket  = socket
             self.istream = socket.istream
             self.ostream = socket.ostream
 
-            self.file = file
+            self.file       = file
             self.read       = file.read
             self.readline   = file.readline
             self.readlines  = file.readlines
@@ -597,50 +645,61 @@ class _tcpsocket(_nonblocking_api_mixin):
             self.socket.file_count += 1
 
         def close(self):
-            if self.file.closed:
+            if self.closed:
                 # Already closed
                 return
 
             self.socket.file_count -= 1
-            self.file.close()
-            self.closed = self.file.closed
+            # AMAK: 20070715: Cannot close the PyFile, because closing 
+            # it causes the InputStream and OutputStream to be closed.
+            # This in turn causes the underlying socket to be closed.
+            # This was always true for java.net sockets
+            # And continues to be true for java.nio sockets
+            # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4717638
+#            self.file.close()
+            istream = self.istream
+            ostream = self.ostream
+            self.istream = None
+            self.ostream = None
+#            self.closed = self.file.closed
+            self.closed = 1
 
-            if self.socket.file_count == 0 and self.socket.sock_impl == 0:
+            if self.socket.file_count == 0 and self.socket.sock_impl is None:
                 # This is the last file Only close the socket and streams 
                 # if there are no outstanding files left.
-                if self.sock:
-                     self.sock.close()
-                if self.istream:
-                     self.istream.close()
-                if self.ostream:
-                     self.ostream.close()
+                istream.close()
+                ostream.close()
 
     def shutdown(self, how):
-        assert how in (0, 1, 2)
+        assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
         assert self.sock_impl
-        if how in (0, 2):
-            self.istream = None
-        if how in (1, 2):
-            self.ostream = None
+        if how in (SHUT_RD, SHUT_RDWR):
+            self.sock_impl.shutdownInput()
+        if how in (SHUT_WR, SHUT_RDWR):
+            self.sock_impl.shutdownOutput()
 
     def close(self):
-        if not self.sock_impl:
-            return
-        sock = self.sock_impl
-        istream = self.istream
-        ostream = self.ostream
-        self.sock_impl = 0
-        self.istream = 0
-        self.ostream = 0
-        # Only close the socket and streams if there are no 
-        # outstanding files left.
-        if self.file_count == 0:
-            if istream:
-                istream.close()
-            if ostream:
-                ostream.close()
-            if sock:
-                sock.close()
+        try:
+            if not self.sock_impl:
+                return
+            sock_impl = self.sock_impl
+            istream = self.istream
+            ostream = self.ostream
+            self.sock_impl = None
+            self.istream = None
+            self.ostream = None
+            # Only close the socket and streams if there are no 
+            # outstanding files left.
+            if self.file_count == 0:
+                if istream:
+                    istream.close()
+                if ostream:
+                    ostream.close()
+                if sock_impl:
+                    sock_impl.close()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+        
 
 class _udpsocket(_nonblocking_api_mixin):
 
@@ -650,50 +709,56 @@ class _udpsocket(_nonblocking_api_mixin):
         self.reuse_addr = 0
 
     def bind(self, addr):
-        assert not self.sock_impl
-        host, port = _unpack_address_tuple(addr)
-        host_address = java.net.InetAddress.getByName(host)
-        self.sock_impl = _datagram_socket_impl(port, host_address, reuse_addr = self.reuse_addr)
-        self._config()
+        try:
+            assert not self.sock_impl
+            host, port = _unpack_address_tuple(addr)
+            host_address = java.net.InetAddress.getByName(host)
+            self.sock_impl = _datagram_socket_impl(port, host_address, reuse_addr = self.reuse_addr)
+            self._config()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
+
+    def _do_connect(self, addr):
+        try:
+            host, port = _unpack_address_tuple(addr)
+            assert not self.addr
+            self.addr = addr
+            if not self.sock_impl:
+                self.sock_impl = _datagram_socket_impl()
+                self._config()
+                self.sock_impl.connect(host, port)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def connect(self, addr):
-        host, port = _unpack_address_tuple(addr)
-        assert not self.addr
-        if not self.sock_impl:
-            self.sock_impl = _datagram_socket_impl()
-            self._config()
-            self.sock_impl.connect(host, port)
-        self.addr = addr # convert host to InetAddress instance?
+        self._do_connect(addr)
 
     def connect_ex(self, addr):
-        host, port = _unpack_address_tuple(addr)
-        assert not self.addr
-        self.addr = addr
-        if not self.sock_impl:
-            self.sock_impl = _datagram_socket_impl()
-            self._config()
-            self.sock_impl.connect(host, port)
-            if self.sock_impl.finish_connect():
-                return 0
-            return ERRNO_EINPROGRESS
+        self._do_connect(addr)
+        if self.sock_impl.finish_connect():
+            return 0
+        return errno.EINPROGRESS
 
     def sendto(self, data, p1, p2=None):
-        if not p2:
-            flags, addr = 0, p1
-        else:
-            flags, addr = 0, p2
-        n = len(data)
-        if not self.sock_impl:
-            self.sock_impl = _datagram_socket_impl()
-        host, port = addr
-        bytes = java.lang.String(data).getBytes('iso-8859-1')
-        a = java.net.InetAddress.getByName(host)
-        packet = java.net.DatagramPacket(bytes, n, a, port)
-        self.sock_impl.send(packet)
-        return n
+        try:
+            if not p2:
+                flags, addr = 0, p1
+            else:
+                flags, addr = 0, p2
+            n = len(data)
+            if not self.sock_impl:
+                self.sock_impl = _datagram_socket_impl()
+            host, port = addr
+            bytes = java.lang.String(data).getBytes('iso-8859-1')
+            a = java.net.InetAddress.getByName(host)
+            packet = java.net.DatagramPacket(bytes, n, a, port)
+            self.sock_impl.send(packet)
+            return n
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def send(self, data):
-        assert self.addr
+        if not self.addr: raise error(errno.ENOTCONN, "Socket is not connected")
         return self.sendto(data, self.addr)
 
     def recvfrom(self, n):
@@ -727,37 +792,52 @@ class _udpsocket(_nonblocking_api_mixin):
             raise _map_exception(jlx)
 
     def getsockname(self):
-        assert self.sock_impl
-        host = self.sock_impl.jsocket.getLocalAddress().getHostName()
-        port = self.sock_impl.jsocket.getLocalPort()
-        return (host, port)
+        try:
+            assert self.sock_impl
+            host = self.sock_impl.jsocket.getLocalAddress().getHostName()
+            port = self.sock_impl.jsocket.getLocalPort()
+            return (host, port)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def getpeername(self):
-        assert self.sock
-        host = self.sock_impl.jsocket.getInetAddress().getHostName()
-        port = self.sock_impl.jsocket.getPort()
-        return (host, port)
+        try:
+            assert self.sock
+            host = self.sock_impl.jsocket.getInetAddress().getHostName()
+            port = self.sock_impl.jsocket.getPort()
+            return (host, port)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def __del__(self):
         self.close()
 
     def close(self):
-        if not self.sock_impl:
-            return
-        sock = self.sock_impl
-        self.sock_impl = None
-        sock.close()
+        try:
+            if not self.sock_impl:
+                return
+            sock = self.sock_impl
+            self.sock_impl = None
+            sock.close()
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def setsockopt(self, level, optname, value):
-        if optname == SO_REUSEADDR:
-            self.reuse_addr = value
-#            self.sock._setreuseaddress(value)
+        try:
+            if optname == SO_REUSEADDR:
+                self.reuse_addr = value
+#                self.sock._setreuseaddress(value)
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
     def getsockopt(self, level, optname):
-        if optname == SO_REUSEADDR:
-            return self.sock_impl._getreuseaddress()
-        else:
-            return None
+        try:
+            if optname == SO_REUSEADDR:
+                return self.sock_impl._getreuseaddress()
+            else:
+                return None
+        except java.lang.Exception, jlx:
+            raise _map_exception(jlx)
 
 SocketType = _tcpsocket
 SocketTypes = [_tcpsocket, _udpsocket]
