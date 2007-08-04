@@ -1,0 +1,334 @@
+lexer grammar Python;
+options {
+  language=Java;
+
+}
+@members {
+/** Handles context-sensitive lexing of implicit line joining such as
+ *  the case where newline is ignored in cases like this:
+ *  a = [3,
+ *       4]
+ */
+int implicitLineJoiningLevel = 0;
+int startPos=-1;
+}
+@header { 
+package org.python.antlr;
+}
+
+T124 : 'def' ;
+T125 : 'print  ' ;
+T126 : 'del' ;
+T127 : 'pass' ;
+T128 : 'break' ;
+T129 : 'continue' ;
+T130 : 'return' ;
+T131 : 'yield' ;
+T132 : 'raise' ;
+T133 : 'import' ;
+T134 : 'from' ;
+T135 : 'as' ;
+T136 : 'global' ;
+T137 : 'exec' ;
+T138 : 'in' ;
+T139 : 'assert' ;
+T140 : 'for' ;
+T141 : 'else' ;
+T142 : 'while' ;
+T143 : 'if' ;
+T144 : 'elif' ;
+T145 : 'with' ;
+T146 : 'try' ;
+T147 : 'finally' ;
+T148 : 'except' ;
+T149 : 'or' ;
+T150 : 'and' ;
+T151 : 'not' ;
+T152 : 'is' ;
+T153 : 'lambda' ;
+T154 : 'class' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 576
+LPAREN	: '(' {implicitLineJoiningLevel++;} ;
+
+// $ANTLR src "org/python/antlr/Python.g" 578
+RPAREN	: ')' {implicitLineJoiningLevel--;} ;
+
+// $ANTLR src "org/python/antlr/Python.g" 580
+LBRACK	: '[' {implicitLineJoiningLevel++;} ;
+
+// $ANTLR src "org/python/antlr/Python.g" 582
+RBRACK	: ']' {implicitLineJoiningLevel--;} ;
+
+// $ANTLR src "org/python/antlr/Python.g" 584
+ATSIGN  : '@' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 586
+COLON 	: ':' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 588
+COMMA	: ',' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 590
+SEMI	: ';' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 592
+PLUS	: '+' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 594
+MINUS	: '-' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 596
+STAR	: '*' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 598
+SLASH	: '/' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 600
+VBAR	: '|' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 602
+AMPER	: '&' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 604
+LESS	: '<' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 606
+GREATER	: '>' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 608
+ASSIGN	: '=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 610
+PERCENT	: '%' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 612
+BACKQUOTE	: '`' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 614
+LCURLY	: '{' {implicitLineJoiningLevel++;} ;
+
+// $ANTLR src "org/python/antlr/Python.g" 616
+RCURLY	: '}' {implicitLineJoiningLevel--;} ;
+
+// $ANTLR src "org/python/antlr/Python.g" 618
+CIRCUMFLEX	: '^' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 620
+TILDE	: '~' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 622
+EQUAL	: '==' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 624
+NOTEQUAL	: '!=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 626
+ALT_NOTEQUAL: '<>' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 628
+LESSEQUAL	: '<=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 630
+LEFTSHIFT	: '<<' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 632
+GREATEREQUAL	: '>=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 634
+RIGHTSHIFT	: '>>' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 636
+PLUSEQUAL	: '+=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 638
+MINUSEQUAL	: '-=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 640
+DOUBLESTAR	: '**' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 642
+STAREQUAL	: '*=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 644
+DOUBLESLASH	: '//' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 646
+SLASHEQUAL	: '/=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 648
+VBAREQUAL	: '|=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 650
+PERCENTEQUAL	: '%=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 652
+AMPEREQUAL	: '&=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 654
+CIRCUMFLEXEQUAL	: '^=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 656
+LEFTSHIFTEQUAL	: '<<=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 658
+RIGHTSHIFTEQUAL	: '>>=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 660
+DOUBLESTAREQUAL	: '**=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 662
+DOUBLESLASHEQUAL	: '//=' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 664
+DOT : '.' ;
+
+// $ANTLR src "org/python/antlr/Python.g" 666
+FLOAT
+	:	'.' DIGITS (Exponent)?
+    |   DIGITS ('.' (DIGITS (Exponent)?)? | Exponent)
+    ;
+
+// $ANTLR src "org/python/antlr/Python.g" 675
+LONGINT
+    :   INT ('l'|'L')
+    ;
+
+
+
+// $ANTLR src "org/python/antlr/Python.g" 681
+fragment
+Exponent
+	:	('e' | 'E') ( '+' | '-' )? DIGITS
+	;
+
+// $ANTLR src "org/python/antlr/Python.g" 686
+INT :   // Hex
+        '0' ('x' | 'X') ( '0' .. '9' | 'a' .. 'f' | 'A' .. 'F' )+
+        ('l' | 'L')?
+    |   // Octal
+        '0' DIGITS*
+    |   '1'..'9' DIGITS*
+    ;
+
+// $ANTLR src "org/python/antlr/Python.g" 694
+COMPLEX
+    :   INT ('j'|'J')
+    |   FLOAT ('j'|'J')
+    ;
+
+// $ANTLR src "org/python/antlr/Python.g" 699
+fragment
+DIGITS : ( '0' .. '9' )+ ;
+
+// $ANTLR src "org/python/antlr/Python.g" 702
+NAME:	( 'a' .. 'z' | 'A' .. 'Z' | '_')
+        ( 'a' .. 'z' | 'A' .. 'Z' | '_' | '0' .. '9' )*
+    ;
+
+// $ANTLR src "org/python/antlr/Python.g" 706
+/** Match various string types.  Note that greedy=false implies '''
+ *  should make us exit loop not continue.
+ */
+STRING
+    :   ('r'|'u'|'ur')?
+        (   '\'\'\'' (options {greedy=false;}:.)* '\'\'\''
+        |   '"""' (options {greedy=false;}:.)* '"""'
+        |   '"' (ESC|~('\\'|'\n'|'"'))* '"'
+        |   '\'' (ESC|~('\\'|'\n'|'\''))* '\''
+        )
+	;
+
+// $ANTLR src "org/python/antlr/Python.g" 718
+fragment
+ESC
+	:	'\\' .
+	;
+
+// $ANTLR src "org/python/antlr/Python.g" 723
+/** Consume a newline and any whitespace at start of next line */
+CONTINUED_LINE
+	:	'\\' ('\r')? '\n' (' '|'\t')* { $channel=HIDDEN; }
+	;
+
+// $ANTLR src "org/python/antlr/Python.g" 728
+/** Treat a sequence of blank lines as a single blank line.  If
+ *  nested within a (..), {..}, or [..], then ignore newlines.
+ *  If the first newline starts in column one, they are to be ignored.
+ */
+NEWLINE
+    :   (('\r')? '\n' )+
+        {if ( startPos==0 || implicitLineJoiningLevel>0 )
+            $channel=HIDDEN;
+        }
+    ;
+
+// $ANTLR src "org/python/antlr/Python.g" 739
+WS	:	{startPos>0}?=> (' '|'\t')+ {$channel=HIDDEN;}
+	;
+	
+// $ANTLR src "org/python/antlr/Python.g" 742
+/** Grab everything before a real symbol.  Then if newline, kill it
+ *  as this is a blank line.  If whitespace followed by comment, kill it
+ *  as it's a comment on a line by itself.
+ *
+ *  Ignore leading whitespace when nested in [..], (..), {..}.
+ */
+LEADING_WS
+@init {
+    int spaces = 0;
+}
+    :   {startPos==0}?=>
+    	(   {implicitLineJoiningLevel>0}? ( ' ' | '\t' )+ {$channel=HIDDEN;}
+       	|	( 	' '  { spaces++; }
+        	|	'\t' { spaces += 8; spaces -= (spaces \% 8); }
+       		)+
+        	{
+            // make a string of n spaces where n is column number - 1
+            char[] indentation = new char[spaces];
+            for (int i=0; i<spaces; i++) {
+                indentation[i] = ' ';
+            }
+            String s = new String(indentation);
+            emit(new ClassicToken(LEADING_WS,new String(indentation)));
+        	}
+        	// kill trailing newline if present and then ignore
+        	( ('\r')? '\n' {if (token!=null) token.setChannel(99); else $channel=HIDDEN;})*
+           // {token.setChannel(99); }
+        )
+
+/*
+        |   // if comment, then only thing on a line; kill so we
+            // ignore totally also wack any following newlines as
+            // they cannot be terminating a statement
+            '#' (~'\n')* ('\n')+ 
+            {if (token!=null) token.setChannel(99); else $channel=HIDDEN;}
+        )?
+        */
+    ;
+
+// $ANTLR src "org/python/antlr/Python.g" 781
+/** Comments not on line by themselves are turned into newlines.
+
+    b = a # end of line comment
+
+    or
+
+    a = [1, # weird
+         2]
+
+    This rule is invoked directly by nextToken when the comment is in
+    first column or when comment is on end of nonwhitespace line.
+
+	Only match \n here if we didn't start on left edge; let NEWLINE return that.
+	Kill if newlines if we live on a line by ourselves
+	
+	Consume any leading whitespace if it starts on left edge.
+ */
+COMMENT
+@init {
+    $channel=HIDDEN;
+}
+    :	{startPos==0}?=> (' '|'\t')* '#' (~'\n')* '\n'+
+    |	{startPos>0}?=> '#' (~'\n')* // let NEWLINE handle \n unless char pos==0 for '#'
+    ;
