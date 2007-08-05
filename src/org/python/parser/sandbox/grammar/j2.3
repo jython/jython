@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# From http://wiki.python.org/jython/JythonDeveloperGuide,
-# placeholders filled in
-
-export CLASSPATH=$CLASSPATH:~/develop/soc/jython_dev/jython/dist/jython.jar:$JYTHON_PATH/grammar.jar
-exec java -Dpython.home=~/develop/soc/jython_dev/jython/dist/ -cp $CLASSPATH org.python.util.jython $*
