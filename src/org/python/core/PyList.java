@@ -913,7 +913,21 @@ public class PyList extends PySequenceList {
     }
 
     public PyObject __imul__(PyObject o) {
-        return list___imul__(o);
+        try {
+            return list___imul__(o);
+        } catch(PyException e) {
+            if(Py.matchException(e, Py.TypeError)) {
+                // We can't perform an in-place multiplication on o's type, so 
+                // let o try to rmul this list.  A new list will be created 
+                // instead of modifying this one, but that's preferable to just
+                // blowing up on this operation.
+                PyObject result = o.__rmul__(this);
+                if(result != null) {
+                    return result;
+                }
+            }
+            throw e;
+        }
     }
 
     final PyObject list___imul__(PyObject o) {
@@ -923,13 +937,11 @@ public class PyList extends PySequenceList {
         int count = ((PyInteger)o.__int__()).getValue();
 
         int newSize = l * count;
-        list.ensureCapacity(newSize);
         list.setSize(newSize);
-        //resize(l * count);
         
         PyObject[] array = getArray();
-        for (int i=1; i<count; i++) {
-            System.arraycopy(array, 0, array, i*l, l);
+        for(int i = 1; i < count; i++) {
+            System.arraycopy(array, 0, array, i * l, l);
         }
         return this;
     }
