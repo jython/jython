@@ -3191,25 +3191,24 @@ public class PyString extends PyBaseString implements ClassDictInit
     } 
 
     /**
-     * Turns the possibly negative Python slice start and end into valid
-     * indices into this string.
+     * Turns the possibly negative Python slice start and end into valid indices
+     * into this string.
      * 
      * @return a 2 element array of indices into this string describing a
      *         substring from [0] to [1]. [0] <= [1], [0] >= 0 and [1] <=
      *         string.length()
      * 
      */
-    private int[] translateIndices(int start, int end){
+    private int[] translateIndices(int start, int end) {
         int n = string.length();
         if(end < 0) {
             end = n + end;
-            if(end < 0){
+            if(end < 0) {
                 end = 0;
             }
         } else if(end > n) {
             end = n;
         }
-        
         if(start < 0) {
             start = n + start;
             if(start < 0) {
@@ -3219,7 +3218,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         if(start > end) {
             start = end;
         }
-        return new int[]{start, end};
+        return new int[] {start, end};
     }
 
     public String translate(String table) {
@@ -4000,6 +3999,7 @@ final class StringFormatter
                 string = formatFloatExponential(arg, c, false);
                 break;
             case 'f':
+            case 'F':    
                 string = formatFloatDecimal(arg, false);
 //                 if (altFlag && string.indexOf('.') == -1)
 //                     string += '.';
@@ -4044,8 +4044,16 @@ final class StringFormatter
                     }
                     break;
                 }
-                char tmp = (char)((PyInteger)arg.__int__()).getValue();
-                string = new Character(tmp).toString();
+                PyInteger val;
+                try {
+                    val = (PyInteger)arg.__int__();
+                } catch(PyException e){
+                    if(Py.matchException(e, Py.AttributeError)) {
+                        throw Py.TypeError("%c requires int or char");
+                    }
+                    throw e;
+                }
+                string = new Character((char)val.getValue()).toString();
                 break;
 
             default:
