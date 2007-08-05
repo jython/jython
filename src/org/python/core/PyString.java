@@ -2162,12 +2162,20 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     protected PyObject repeat(int count) {
-        if (count < 0)
+        if(count < 0) {
             count = 0;
+        }
         int s = string.length();
-        char new_chars[] = new char[s*count];
-        for (int i=0; i<count; i++) {
-            string.getChars(0, s, new_chars, i*s);
+        if((long)s * count > Integer.MAX_VALUE) {
+            // Since Strings store their data in an array, we can't make one
+            // longer than Integer.MAX_VALUE. Without this check we get
+            // NegativeArraySize exceptions when we create the array on the
+            // line with a wrapped int.
+            throw Py.OverflowError("max str len is " + Integer.MAX_VALUE);
+        }
+        char new_chars[] = new char[s * count];
+        for(int i = 0; i < count; i++) {
+            string.getChars(0, s, new_chars, i * s);
         }
         return createInstance(new String(new_chars));
     }
