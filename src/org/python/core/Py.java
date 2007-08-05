@@ -229,6 +229,13 @@ public final class Py
     public static PyException StopIteration(String message) {
         return new PyException(Py.StopIteration, message);
     }
+    
+    // begin newcompiler
+    public static PyObject GeneratorExit;
+    public static PyException GeneratorExit(String message) {
+        return new PyException(Py.GeneratorExit, message);
+    }
+    // end newcompiler
 
     public static PyObject ImportError;
     public static PyException ImportError(String message) {
@@ -644,6 +651,9 @@ public final class Py
         Exception           = initExc("Exception", exc, dict);
         SystemExit          = initExc("SystemExit", exc, dict);
         StopIteration       = initExc("StopIteration", exc, dict);
+        // begin newcompiler
+        GeneratorExit       = initExc("GeneratorExit", exc, dict);
+        // end newcompiler
         StandardError       = initExc("StandardError", exc, dict);
         KeyboardInterrupt   = initExc("KeyboardInterrupt", exc, dict);
         ImportError         = initExc("ImportError", exc, dict);

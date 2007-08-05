@@ -78,7 +78,32 @@ public class PyFrame extends PyObject
             members[i] = new PyString(__members__[i]);
         return new PyList(members);
     }
+    
+    // begin newcompiler
+    
+    private PyException exception = null;
+    private PyObject generatorInput = null;
+    
+    public void setGeneratorException(PyException ex) {
+        exception = ex;
+        generatorInput = null;
+    }
+    
+    public void setGeneratorInput(PyObject value) {
+        exception = null;
+        generatorInput = value;
+    }
+    
+    public PyObject getGeneratorInput() {
+        if( exception != null ) {
+            throw exception;
+        } else {
+            return generatorInput;
+        }
+    }
 
+    // end newcompiler
+    
     private void throwReadonly(String name) {
         for (int i = 0; i < __members__.length; i++)
             if (__members__[i] == name)
