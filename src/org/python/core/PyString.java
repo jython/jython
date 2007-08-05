@@ -2689,19 +2689,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final int str_index(String sub, int start, int end) {
-        int n = string.length();
-
-        if (start < 0)
-            start = n+start;
-        if (end < 0)
-            end = n+end;
-
-        int index;
-        if (end < n) {
-            index = string.substring(start, end).indexOf(sub);
-        } else {
-            index = string.indexOf(sub, start);
-        }
+        int index = str_find(sub, start, end);
         if (index == -1)
             throw Py.ValueError("substring not found in string.index");
         return index;
@@ -2728,19 +2716,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final int str_rindex(String sub, int start, int end) {
-        int n = string.length();
-
-        if (start < 0)
-            start = n+start;
-        if (end < 0)
-            end = n+end;
-
-        int index;
-        if (start > 0) {
-            index = string.substring(start, end).lastIndexOf(sub);
-        } else {
-            index = string.lastIndexOf(sub, end);
-        }
+        int index = str_rfind(sub, start, end);
         if (index == -1)
             throw Py.ValueError("substring not found in string.rindex");
         return index;
@@ -2767,30 +2743,18 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final int str_count(String sub, int start, int end) {
-        int len = string.length();
-        if (end > len)
-            end = len;
-        if (end < 0)
-            end += len;
-        if (end < 0)
-            end = 0;
-        if (start < 0)
-            start += len;
-        if (start < 0)
-            start = 0;
-
+        int[] indices = translateIndices(start, end);
         int n = sub.length();
-        end = end + 1 - n;
-        if (n == 0)
-            return end-start;
-
-        int count=0;
-        while (start < end) {
-            int index = string.indexOf(sub, start);
-            if (index >= end || index == -1)
+        if(n == 0) {
+            return indices[1] - indices[0];
+        }
+        int count = 0;
+        for(; indices[0] < indices[1]; count++) {
+            int index = string.indexOf(sub, indices[0]);
+            if(index >= indices[1] || index == -1) {
                 break;
-            count++;
-            start = index + n;
+            }
+            indices[0] = index + n;
         }
         return count;
     }
@@ -2816,20 +2780,9 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final int str_find(String sub, int start, int end) {
-        int n = string.length();
-        if (start < 0)
-            start = n+start;
-        if (end < 0)
-            end = n+end;
-        if (end > n)
-            end = n;
-        if (start > end)
-            start = end;
-        int slen = sub.length();
-        end = end-slen;
-
-        int index = string.indexOf(sub, start);
-        if (index > end)
+        int[] indices = translateIndices(start, end);
+        int index = string.indexOf(sub, indices[0]);
+        if (index > indices[1])
             return -1;
         return index;
     }
@@ -2855,20 +2808,9 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final int str_rfind(String sub, int start, int end) {
-        int n = string.length();
-        if (start < 0)
-            start = n+start;
-        if (end < 0)
-            end = n+end;
-        if (end > n)
-            end = n;
-        if (start > end)
-            start = end;
-        int slen = sub.length();
-        end = end-slen;
-
-        int index = string.lastIndexOf(sub, end);
-        if (index < start)
+        int[] indices = translateIndices(start, end);
+        int index = string.lastIndexOf(sub, indices[1] - sub.length());
+        if(index < indices[0])
             return -1;
         return index;
     }
@@ -3206,7 +3148,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final boolean str_startswith(String prefix, int offset) {
-        return string.startsWith(prefix, offset);
+        return str_startswith(prefix, offset, string.length());
     }
 
     public boolean startswith(String prefix, int start, int end) {
@@ -3214,12 +3156,11 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final boolean str_startswith(String prefix, int start, int end) {
-        if (start < 0 || start + prefix.length() > string.length())
+        int[] indices = translateIndices(start, end);
+        if(indices[1] - indices[0] < prefix.length()){
             return false;
-        if (end > string.length())
-            end = string.length();
-        String substr = string.substring(start, end);
-        return substr.startsWith(prefix);
+        }
+        return string.startsWith(prefix, indices[0]);
     }
 
     public boolean endswith(String suffix) {
@@ -3243,17 +3184,42 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final boolean str_endswith(String suffix, int start, int end) {
-        int len = string.length();
+        int[] indices = translateIndices(start, end);
 
-        if (start < 0 || start > len || suffix.length() > len)
-            return false;
-
-        end = (end <= len ? end : len);
-        if (end < start)
-            return false;
-
-        String substr = string.substring(start, end);
+        String substr = string.substring(indices[0], indices[1]);
         return substr.endsWith(suffix);
+    } 
+
+    /**
+     * Turns the possibly negative Python slice start and end into valid
+     * indices into this string.
+     * 
+     * @return a 2 element array of indices into this string describing a
+     *         substring from [0] to [1]. [0] <= [1], [0] >= 0 and [1] <=
+     *         string.length()
+     * 
+     */
+    private int[] translateIndices(int start, int end){
+        int n = string.length();
+        if(end < 0) {
+            end = n + end;
+            if(end < 0){
+                end = 0;
+            }
+        } else if(end > n) {
+            end = n;
+        }
+        
+        if(start < 0) {
+            start = n + start;
+            if(start < 0) {
+                start = 0;
+            }
+        }
+        if(start > end) {
+            start = end;
+        }
+        return new int[]{start, end};
     }
 
     public String translate(String table) {
