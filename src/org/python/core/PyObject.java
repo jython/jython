@@ -1240,7 +1240,7 @@ public class PyObject implements java.io.Serializable {
      * Equivalent to the standard Python __cmp__ method.
      *
      * @param other the object to compare this with.
-     * @return -1 if this < 0; 0 if this == o; +1 if this > o; -2 if no
+     * @return -1 if this < o; 0 if this == o; +1 if this > o; -2 if no
      * comparison is implemented
      **/
     public int __cmp__(PyObject other) {
