@@ -267,6 +267,12 @@ def blowstack(fxn, arg, compare_to):
 
 
 def test_main():
+    if test_support.is_jython:
+# Jython transition 2.3
+# isinstance and issubclass don't prevent a StackOverflow with a deeply nested tuple 
+# http://jython.org/bugs/1768988
+        del TestIsInstanceIsSubclass.test_isinstance_recursion_limit
+        del TestIsInstanceIsSubclass.test_subclass_recursion_limit
     test_support.run_unittest(
         TestIsInstanceExceptions,
         TestIsSubclassExceptions,

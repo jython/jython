@@ -160,7 +160,10 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(chr(65), 'A')
         self.assertEqual(chr(97), 'a')
         self.assertEqual(chr(0xff), '\xff')
-        self.assertRaises(ValueError, chr, 256)
+        if test.test_support.is_jython:
+            self.assertRaises(ValueError, chr, 65536)
+        else:
+            self.assertRaises(ValueError, chr, 256)
         self.assertRaises(TypeError, chr)
 
     def test_cmp(self):
@@ -257,7 +260,10 @@ class BuiltinTest(unittest.TestCase):
             self.assertEqual(eval(unicode('b'), globals, locals), 200)
             self.assertEqual(eval(unicode('c'), globals, locals), 300)
             bom = '\xef\xbb\xbf'
-            self.assertEqual(eval(bom + 'a', globals, locals), 1)
+# Jython transition 2.3
+# unicode bom isn't recognized to indicate unicode for parsing
+# http://jython.org/1768968            
+#            self.assertEqual(eval(bom + 'a', globals, locals), 1)
             self.assertEqual(eval(unicode('u"\xc3\xa5"', 'utf8'), globals),
                              unicode('\xc3\xa5', 'utf8'))
         self.assertRaises(TypeError, eval)
@@ -317,6 +323,11 @@ class BuiltinTest(unittest.TestCase):
         self.assertEqual(filter(None, "12"), "12")
         self.assertEqual(filter(lambda x: x>="3", "1234"), "34")
         self.assertRaises(TypeError, filter, 42, "12")
+        # Jython transition 2.3
+        # Jython uses special pyget method instead of __getitem__ for filter, __iter__
+        # http://jython.org/1768970
+        if test.test_support.is_jython:
+            return
         class badstr(str):
             def __getitem__(self, index):
                 raise ValueError
@@ -414,14 +425,20 @@ class BuiltinTest(unittest.TestCase):
         self.assertRaises(TypeError, getattr, sys, 1)
         self.assertRaises(TypeError, getattr, sys, 1, "foo")
         self.assertRaises(TypeError, getattr)
-        self.assertRaises(UnicodeError, getattr, sys, unichr(sys.maxunicode))
+# Jython transition 2.3
+# hasattr, getattr allow unicode identifiers
+# http://jython.org/bugs/1768979
+#        self.assertRaises(UnicodeError, getattr, sys, unichr(sys.maxunicode))
 
     def test_hasattr(self):
         import sys
         self.assert_(hasattr(sys, 'stdout'))
         self.assertRaises(TypeError, hasattr, sys, 1)
         self.assertRaises(TypeError, hasattr)
-        self.assertRaises(UnicodeError, hasattr, sys, unichr(sys.maxunicode))
+# Jython transition 2.3
+# hasattr, getattr allow unicode identifiers
+# http://jython.org/bugs/1768979
+#        self.assertRaises(UnicodeError, hasattr, sys, unichr(sys.maxunicode))
 
     def test_hash(self):
         hash(None)
@@ -933,10 +950,13 @@ class BuiltinTest(unittest.TestCase):
             self.assertEqual(input(), 'whitespace')
             sys.stdin = cStringIO.StringIO()
             self.assertRaises(EOFError, input)
-            del sys.stdout
-            self.assertRaises(RuntimeError, input, 'prompt')
-            del sys.stdin
-            self.assertRaises(RuntimeError, input, 'prompt')
+            # Depends on del immediately removing sys.stdout which isn't the
+            # case on Jython
+            if not test.test_support.is_jython:
+                del sys.stdout
+                self.assertRaises(RuntimeError, input, 'prompt')
+                del sys.stdin
+                self.assertRaises(RuntimeError, input, 'prompt')
         finally:
             sys.stdin = savestdin
             sys.stdout = savestdout
@@ -1155,6 +1175,15 @@ class BuiltinTest(unittest.TestCase):
         self.assertRaises(ValueError, zip, BadSeq(), BadSeq())
 
 def test_main():
+    if test.test_support.is_jython:
+# Jython transition 2.3
+# unicode bom isn't recognized to indicate unicode for parsing
+# http://jython.org/1768968            
+        del BuiltinTest.test_compile
+#Jython transition 2.3        
+# filter doesn't respect subclass type
+# http://jython.org/1768969
+        del BuiltinTest.test_filter_subclasses
     test.test_support.run_unittest(BuiltinTest)
 
 if __name__ == "__main__":
