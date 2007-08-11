@@ -4,6 +4,9 @@
 
 package org.python.core;
 
+import org.python.core.packagecache.PackageManager;
+import org.python.core.packagecache.SysPackageManager;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilterInputStream;
@@ -18,7 +21,6 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.modules.Setup;
@@ -30,15 +32,15 @@ import org.python.modules.Setup;
 // xxx this should really be a module!
 public class PySystemState extends PyObject
 {
+    private static final String PYTHON_CACHEDIR = "python.cachedir";
+    protected static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
+    protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
+    
     public static final String JYTHON_JAR = "jython.jar";
 
     private static final String JAR_URL_PREFIX = "jar:file:";
     private static final String JAR_SEPARATOR = "!";
 
-    private static final String PYTHON_CACHEDIR = "python.cachedir";
-    protected static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
-    protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
-    
     /**
      * The current version of Jython.
      * <p>
@@ -47,13 +49,13 @@ public class PySystemState extends PyObject
      * <p>
      * This also applies for the <code>PY_*</code> integer values below
      */
-    public static String version = "2.2rc3";
+    public static String version = "2.3a0";
 
     private static int PY_MAJOR_VERSION = 2;
-    private static int PY_MINOR_VERSION = 2;
+    private static int PY_MINOR_VERSION = 3;
     private static int PY_MICRO_VERSION = 0;
-    private static int PY_RELEASE_LEVEL = 0x0C;
-    private static int PY_RELEASE_SERIAL = 3;
+    private static int PY_RELEASE_LEVEL = 0x0A;
+    private static int PY_RELEASE_SERIAL = 0;
 
     public static int hexversion = ((PY_MAJOR_VERSION << 24) |
                                     (PY_MINOR_VERSION << 16) |
@@ -323,8 +325,7 @@ public class PySystemState extends PyObject
             }
             if (version.equals("12"))
                 version = "1.2";
-            if (version != null)
-                platform = "java"+version;
+            platform = "java"+version;
         } catch (Exception exc) {
             return null;
         }
@@ -502,9 +503,14 @@ public class PySystemState extends PyObject
         Py.Zero = new PyInteger(0);
         Py.One = new PyInteger(1);
 
+        Py.False = new PyBoolean(false);
+        Py.True = new PyBoolean(true);
+
         Py.EmptyString = new PyString("");
         Py.Newline = new PyString("\n");
         Py.Space = new PyString(" ");
+
+        Py.TPFLAGS_HEAPTYPE = (1L<<9);
 
         // Setup standard wrappers for stdout and stderr...
         Py.stderr = new StderrWrapper();
@@ -801,16 +807,16 @@ public class PySystemState extends PyObject
     // a reflected function is inserted in the class dict.
 
     static void displayhook(PyObject o) {
-        /* Print value except if null or None */
+        /* Print value except if None */
         /* After printing, also assign to '_' */
         /* Before, set '_' to None to avoid recursion */
         if (o == Py.None)
-            return;
+             return;
 
         PySystemState sys = Py.getThreadState().systemState;
-        sys.builtins.__setitem__("_", Py.None);
+        PySystemState.builtins.__setitem__("_", Py.None);
         Py.stdout.println(o.__repr__());
-        sys.builtins.__setitem__("_", o);
+        PySystemState.builtins.__setitem__("_", o);
     }
 
     static void excepthook(PyObject type, PyObject val, PyObject tb) {

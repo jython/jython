@@ -47,14 +47,14 @@ def summarize(errors_dict, description):
     print t
 
 if __name__ == '__main__':
-  opts, args = getopt.getopt(sys.argv[1:], 'wc', 'skipjythonc')
+  opts, args = getopt.getopt(sys.argv[1:], 'wc', 'runjythonc')
   loud_warnings = ('-w',"") in opts
-  support.test_jythonc = not ('--skipjythonc', '') in opts
+  support.test_jythonc = ('--runjythonc', '') in opts
 
   if loud_warnings: 
       print "LOUD warnings"
-  if not support.test_jythonc:
-      print 'Skipping jythonc tests'
+  if support.test_jythonc:
+      print 'Running jythonc tests'
 
   sys.path[:0] = ['classes']
 

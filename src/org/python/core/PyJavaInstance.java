@@ -6,8 +6,7 @@ import java.lang.reflect.Modifier;
  * A wrapper around a java instance.
  */
 
-public class PyJavaInstance
-    extends PyInstance
+public class PyJavaInstance extends PyInstance
     implements java.io.Externalizable
 {
     public PyJavaInstance() {
@@ -79,8 +78,8 @@ public class PyJavaInstance
     }
 
     protected void unassignableField(String name, PyObject value) {
-        throw Py.TypeError("can't assign to this attribute in java " +
-                           "instance: " + name);
+        throw Py.TypeError("can't assign to this attribute in java instance: "
+            + name);
     }
 
     public int hashCode() {
@@ -94,9 +93,9 @@ public class PyJavaInstance
     public PyObject _is(PyObject o) {
         if (o instanceof PyJavaInstance) {
             return javaProxy == ((PyJavaInstance)o).javaProxy
-                ? Py.One : Py.Zero;
+                ? Py.True : Py.False;
         }
-        return Py.Zero;
+        return Py.False;
     }
 
     public PyObject _isnot(PyObject o) {
@@ -112,12 +111,8 @@ public class PyJavaInstance
         return -2;
     }
 
-    public PyString __str__() {
+    protected PyString makeDefaultRepr() {
         return new PyString(javaProxy.toString());
-    }
-
-    public PyString __repr__() {
-        return __str__();
     }
 
     public void __delattr__(String attr) {

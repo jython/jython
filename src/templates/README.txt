@@ -4,12 +4,14 @@ script.  For the PyIntger class it is created thus:
 
   python gexpose.py int.expose ../../jython/src/org/python/core/PyInteger.java
 
-For each class their is an xxx.expose file describing what should be exposed.
+For each class there is an xxx.expose file describing what should be exposed.
 
-In addition their is an xxxDerived.java class that is completely generated 
+In addition there is an xxxDerived.java class that is completely generated 
 with the script gderived.py.  For the PyInteger class it is created thus:
 
   python gderived.py int.derived >../../jython/src/org/python/core/PyIntegerDerived.java
 
-Note:  The above examples assume that the whole jython trunk is checked out so 
-that the trunk/sandbox directory is a sibling of the trunk/jython directory.
+There is an ant target to generate these automatically.  See the template
+target in the top-level build file, or the org.python.util.TemplateAntTask
+ant task.  In the future, the template generation will be linked into the
+main build targets.

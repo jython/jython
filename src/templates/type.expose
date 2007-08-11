@@ -7,6 +7,7 @@ expose_getset: __name__ fastGetName
 expose_getset: __base__ getBase
 expose_getset: __bases__ getBases setBases delBases
 expose_getset: __mro__ getMro
+expose_getset: __flags__ getFlags
 # exposed methods
 expose_meth: :o mro o?
 expose_meth: __getattribute__ n{attribute name}

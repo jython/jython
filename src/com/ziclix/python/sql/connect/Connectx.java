@@ -78,7 +78,6 @@ public class Connectx extends PyObject {
         }
 
         String[] kws = parser.kws();
-        Class clazz = datasource.getClass();
 
         for (int i = 0; i < kws.length; i++) {
             String methodName = kws[i];

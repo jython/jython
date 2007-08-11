@@ -51,13 +51,13 @@ public class PyInstance extends PyObject
         //System.out.println("writing: "+getClass().getName());
         out.defaultWriteObject();
         PyObject name = instclass.__findattr__("__module__");
-        if (!(name instanceof PyString) || name == Py.None || name == null) {
+        if (!(name instanceof PyString) || name == Py.None) {
             throw Py.ValueError("Can't find module for class: "+
                                 instclass.__name__);
         }
         out.writeUTF(name.toString());
         name = instclass.__findattr__("__name__");
-        if (!(name instanceof PyString) || name == Py.None || name == null) {
+        if (!(name instanceof PyString) || name == Py.None) {
             throw Py.ValueError("Can't find module for class with no name");
         }
 
@@ -385,22 +385,31 @@ public class PyInstance extends PyObject
     public PyString __repr__() {
         PyObject ret = invoke_ex("__repr__");
         if (ret == null) {
-            PyObject mod = instclass.__dict__.__finditem__("__module__");
-            String smod;
-            if (mod == Py.None) smod = "";
-            else {
-                if (mod == null || !(mod instanceof PyString))
-                    smod = "<unknown>.";
-                else
-                    smod = ((PyString)mod).toString()+'.';
-            }
-            return new PyString("<"+smod+instclass.__name__+
-                                " instance "+Py.idstr(this)+">");
+            return makeDefaultRepr();
         }
-
         if (!(ret instanceof PyString))
             throw Py.TypeError("__repr__ method must return a string");
         return (PyString)ret;
+    }
+
+    /**
+     * If a class doesn't define a __repr__ method of its own, the return
+     * value from this method is used.
+     */
+    protected PyString makeDefaultRepr() {
+        PyObject mod = instclass.__dict__.__finditem__("__module__");
+        String smod;
+        if(mod == Py.None) {
+            smod = "";
+        } else {
+            if(mod == null || !(mod instanceof PyString)) {
+                smod = "<unknown>.";
+            } else {
+                smod = ((PyString)mod).toString() + '.';
+            }
+        }
+        return new PyString("<" + smod + instclass.__name__ + " instance " + 
+                            Py.idstr(this) + ">");
     }
 
     public PyString __str__() {
@@ -565,12 +574,8 @@ public class PyInstance extends PyObject
                 return null;
             }
         }
-        PyObject func;
-        try{
-            func = __findattr__(name);
-        }catch(PyException e){
-            return null;
-        }
+
+        PyObject func = __findattr__(name);
         if (func == null)
             return null;
 
@@ -599,10 +604,12 @@ public class PyInstance extends PyObject
             PyObject ret = trySlice(key, "__getslice__", null);
             if (ret != null)
                 return ret;
-            return invoke("__getitem__", key);
 
+            return invoke("__getitem__", key);
         } catch (PyException e) {
             if (Py.matchException(e, Py.IndexError))
+                return null;
+            if (Py.matchException(e, Py.KeyError))
                 return null;
             throw e;
         }
@@ -617,9 +624,11 @@ public class PyInstance extends PyObject
             }
             return ret;
         }
+
         PyObject ret = trySlice(key, "__getslice__", null);
-        if(ret != null)
+        if (ret != null)
             return ret;
+
         return invoke("__getitem__", key);
     }
 
@@ -674,7 +683,7 @@ public class PyInstance extends PyObject
         throw Py.TypeError("instance has no next() method");
     }
 
-    private static CollectionIter[] iterFactories = null;
+    private static CollectionIter[] iterFactories;
 
     private PyObject getCollectionIter() {
         if (iterFactories == null)
@@ -690,19 +699,16 @@ public class PyInstance extends PyObject
     private static synchronized void initializeIterators() {
         if (iterFactories != null)
             return;
-        String factories = "org.python.core.CollectionIter," +
-                           "org.python.core.CollectionIter2," +
-                           Py.getSystemState().registry.getProperty(
-                                "python.collections", "");
+        String factories = PySystemState.registry.getProperty("python.collections", "");
         int i = 0;
         StringTokenizer st = new StringTokenizer(factories, ",");
-        iterFactories = new CollectionIter[st.countTokens() + 1];
+        iterFactories = new CollectionIter[st.countTokens() + 2];
+        iterFactories[0] = new CollectionIter();
         while (st.hasMoreTokens()) {
             String s = st.nextToken();
             try {
                 Class factoryClass = Class.forName(s);
-                CollectionIter factory =
-                        (CollectionIter)factoryClass.newInstance();
+                CollectionIter factory = (CollectionIter)factoryClass.newInstance();
                 iterFactories[i++] = factory;
             } catch (Throwable t) { }
         }
@@ -760,7 +766,7 @@ public class PyInstance extends PyObject
     public PyObject __int__() {
         PyObject ret = invoke("__int__");
         if (ret instanceof PyInteger)
-            return (PyInteger)ret;
+            return ret;
         throw Py.TypeError("__int__() should return a int");
     }
 

@@ -30,7 +30,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
     public void addConstructor(Constructor m) {
         int mods = m.getModifiers();
         // Only add public methods unless we're overriding
-        if (!Modifier.isPublic(mods) && !JavaAccessibility.accessIsMutable())
+        if (!Modifier.isPublic(mods) && Options.respectJavaAccessibility)
             return;
         addArgs(makeArgs(m));
     }
@@ -104,9 +104,6 @@ public class PyReflectedConstructor extends PyReflectedFunction
 
         PyInstance iself = (PyInstance)self;
         Class javaClass = iself.instclass.proxyClass;
-        //Class[] javaClasses = iself.__class__.proxyClasses;
-        //int myIndex = -1;
-        boolean proxyConstructor=false;
         Class declaringClass = argsl[0].declaringClass;
 
         // If this is the constructor for a proxy class or not...
@@ -120,7 +117,6 @@ public class PyReflectedConstructor extends PyReflectedFunction
             if (!(iself instanceof PyJavaInstance)) {
                 // Get proxy constructor and call it
                 if (declaringClass.isAssignableFrom(javaClass)) {
-                    proxyConstructor = true;
                 } else {
                     throw Py.TypeError("invalid self argument");
                 }
@@ -133,7 +129,6 @@ public class PyReflectedConstructor extends PyReflectedFunction
 
 
         if (declaringClass.isAssignableFrom(javaClass)) {
-            proxyConstructor = true;
         } else {
             throw Py.TypeError("self invalid - must implement: "+
                                declaringClass.getName());
@@ -170,7 +165,7 @@ public class PyReflectedConstructor extends PyReflectedFunction
 
         // Throw an error if no valid set of arguments
         if (method == null) {
-            throwError(callData.errArg, args.length, self != null, false);
+            throwError(callData.errArg, args.length, false, false);
         }
 
         // Do the actual constructor call

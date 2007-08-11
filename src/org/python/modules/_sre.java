@@ -26,7 +26,8 @@ import org.python.modules.sre.SRE_STATE;
 
 public class _sre {
     public static int MAGIC = SRE_STATE.SRE_MAGIC;
-    
+
+    //XXX: May not be the right size, but I suspect it is -- see sre_compile.py
     public static int CODESIZE = 2;
 
     public static PatternObject compile(PyString pattern, int flags,

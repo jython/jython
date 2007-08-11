@@ -91,7 +91,6 @@ Jython 2.2 beta2
     - [ 1682423 ] Convert PyModule to a new-style class
     - [ 1682498 ] Fix int(None) raising an AttributeError
     - [ 1684172 ] Changes to make compileall work
-    - [ 1628469 ] fixes for failing builtin tests
 
   
 Jython 2.2 beta1

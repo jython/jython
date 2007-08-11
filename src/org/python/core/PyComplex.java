@@ -609,22 +609,6 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyComplex.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed___reduce__ extends PyBuiltinMethodNarrow {
-
-            exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___reduce__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyComplex)self).complex___reduce__();
-            }
-
-        }
-        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyComplex.class,0,0,new exposed___reduce__(null,null)));
         class exposed___repr__ extends PyBuiltinMethodNarrow {
 
             exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
@@ -673,6 +657,22 @@ public class PyComplex extends PyObject {
 
         }
         dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyComplex.class,0,0,new exposed___hash__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinMethodNarrow {
+
+            exposed___getnewargs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getnewargs__(self,info);
+            }
+
+            public PyObject __call__() {
+                return((PyComplex)self).complex___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyComplex.class,0,0,new exposed___getnewargs__(null,null)));
         dict.__setitem__("__new__",new PyNewWrapper(PyComplex.class,"__new__",-1,-1) {
 
                                                                                          public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
@@ -921,7 +921,7 @@ public class PyComplex extends PyObject {
         if (other instanceof PyFloat)
             return new PyComplex(((PyFloat)other).getValue(), 0);
         if (other instanceof PyInteger)
-            return new PyComplex((double)((PyInteger)other).getValue(), 0);
+            return new PyComplex(((PyInteger)other).getValue(), 0);
         if (other instanceof PyLong)
             return new PyComplex(((PyLong)other).doubleValue(), 0);
         return Py.None;
@@ -940,7 +940,7 @@ public class PyComplex extends PyObject {
         if (other instanceof PyFloat)
             return new PyComplex(((PyFloat)other).getValue(), 0);
         if (other instanceof PyInteger)
-            return new PyComplex((double)((PyInteger)other).getValue(), 0);
+            return new PyComplex(((PyInteger)other).getValue(), 0);
         if (other instanceof PyLong)
             return new PyComplex(((PyLong)other).doubleValue(), 0);
         throw Py.TypeError("xxx");
@@ -1227,13 +1227,13 @@ public class PyComplex extends PyObject {
 
         if (xr == 0 && xi == 0) {
             if (yi != 0 || yr < 0) {
-                throw Py.ValueError("0.0 to a negative or complex power");
+                throw Py.ZeroDivisionError("0.0 to a negative or complex power");
             }
         }
 
         // Check for integral powers
         int iexp = (int)yr;
-        if (yi == 0 && yr == (double)iexp && iexp >= -128 && iexp <= 128) {
+        if (yi == 0 && yr == iexp && iexp >= -128 && iexp <= 128) {
             return ipow(value, iexp);
         }
 
@@ -1315,22 +1315,12 @@ public class PyComplex extends PyObject {
         return new PyComplex(real, -imag);
     }
 
-    /**
-     * Used for pickling.
-     *
-     * @return a tuple of (class, (Integer))
-     */
-    public PyObject __reduce__() {
-        return complex___reduce__();
+    final PyTuple complex___getnewargs__() {
+        return new PyTuple(new PyObject[] {new PyComplex(real, imag)});
     }
 
-    final PyObject complex___reduce__() {
-        return new PyTuple(new PyObject[]{
-            getType(),
-            new PyTuple(new PyObject[]{
-                getReal(), getImag()
-            })
-        });
+    public PyTuple __getnewargs__() {
+        return complex___getnewargs__();
     }
 
     public boolean isMappingType() { return false; }

@@ -2,7 +2,6 @@
 
 package org.python.modules;
 
-import java.io.UnsupportedEncodingException;
 import org.python.core.*;
 
 public class sha implements ClassDictInit {

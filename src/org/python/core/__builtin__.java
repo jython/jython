@@ -1,7 +1,12 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
+
+import org.python.modules.sets.PyImmutableSet;
+import org.python.modules.sets.PySet;
 
 class BuiltinFunctions extends PyBuiltinFunctionSet {
 
@@ -39,17 +44,20 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 		case 1:
 			return Py.newInteger(__builtin__.len(arg1));
 		case 2:
-			return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"));
+			return __builtin__.range(arg1);
 		case 3:
-			return Py.newInteger(__builtin__.ord(Py.py2char(arg1, "ord(): 1st arg can't be coerced to char")));
+	        if (!(arg1 instanceof PyString))
+	            throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().getFullName() + " found");
+	        if (arg1.__len__() > 1)
+	            throw Py.TypeError("ord() expected a character, but string of length " + arg1.__len__() + " found");
+	        return Py.newInteger(__builtin__.ord(Py.py2char(arg1,
+	                "ord(): 1st arg can't be coerced to char")));
 		case 5:
 			return __builtin__.hash(arg1);
 		case 6:
 			return Py.newUnicode(__builtin__.chr(Py.py2int(arg1, "unichr(): 1st arg can't be coerced to int")));
 		case 7:
 			return __builtin__.abs(arg1);
-		case 8:
-			return __builtin__.bool(arg1);
 		case 11:
 			return Py.newInteger(__builtin__.id(arg1));
 		case 12:
@@ -105,6 +113,8 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			return fancyCall(new PyObject[] { arg1 });
 		case 43:
 			return fancyCall(new PyObject[] { arg1 });
+		case 45:
+			return __builtin__.reversed(arg1);
 		default:
 			throw info.unexpectedCall(1, false);
 		}
@@ -113,8 +123,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 	public PyObject __call__(PyObject arg1, PyObject arg2) {
 		switch (this.index) {
 		case 2:
-			return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"), Py.py2int(arg2,
-					"range(): 2nd arg can't be coerced to int"));
+			return __builtin__.range(arg1, arg2);
 		case 6:
 			return Py.newInteger(__builtin__.cmp(arg1, arg2));
 		case 9:
@@ -175,9 +184,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 	public PyObject __call__(PyObject arg1, PyObject arg2, PyObject arg3) {
 		switch (this.index) {
 		case 2:
-			return __builtin__.range(Py.py2int(arg1, "range(): 1st arg can't be coerced to int"), Py.py2int(arg2,
-					"range(): 2nd arg can't be coerced to int"), Py.py2int(arg3,
-					"range(): 3rd arg can't be coerced to int"));
+			return __builtin__.range(arg1, arg2, arg3);
 		case 9:
 			try {
 				if (arg3 instanceof PyStringMap) {
@@ -233,9 +240,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 		return asString(arg, message, true);
 	}
 
-
 	/**
-	 * 
 	 * @param intern - should the resulting string be interned
 	 * @return arg as a String, or throws TypeError with message if asString throws a ConversionException.  
 	 */
@@ -304,6 +309,7 @@ public class __builtin__  {
 		/* newstyle */
 		dict.__setitem__("object", PyType.fromClass(PyObject.class));
 		dict.__setitem__("type", PyType.fromClass(PyType.class));
+		dict.__setitem__("bool", PyType.fromClass(PyBoolean.class));
 		dict.__setitem__("int", PyType.fromClass(PyInteger.class));
 		dict.__setitem__("enumerate", PyType.fromClass(PyEnumerate.class));
 		dict.__setitem__("float", PyType.fromClass(PyFloat.class));
@@ -312,6 +318,8 @@ public class __builtin__  {
 		dict.__setitem__("dict", PyType.fromClass(PyDictionary.class));
 		dict.__setitem__("list", PyType.fromClass(PyList.class));
 		dict.__setitem__("tuple", PyType.fromClass(PyTuple.class));
+		dict.__setitem__("set", PyType.fromClass(PySet.class));
+		dict.__setitem__("frozenset", PyType.fromClass(PyImmutableSet.class));
 	
 		dict.__setitem__("property", PyType.fromClass(PyProperty.class));
 		dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
@@ -324,12 +332,12 @@ public class __builtin__  {
 		dict.__setitem__("open", PyType.fromClass(PyFile.class));
 	
 		/* - */
-	
-		dict.__setitem__("None", Py.None);
-		dict.__setitem__("NotImplemented", Py.NotImplemented);
-		dict.__setitem__("Ellipsis", Py.Ellipsis);
-		dict.__setitem__("True", Py.One);
-		dict.__setitem__("False", Py.Zero);
+
+        dict.__setitem__("None", Py.None);
+        dict.__setitem__("NotImplemented", Py.NotImplemented);
+        dict.__setitem__("Ellipsis", Py.Ellipsis);
+        dict.__setitem__("True", Py.True);
+        dict.__setitem__("False", Py.False);
 	
 		// Work in debug mode by default
 		// Hopefully add -O option in the future to change this
@@ -337,7 +345,6 @@ public class __builtin__  {
 	
 		dict.__setitem__("abs", new BuiltinFunctions("abs", 7, 1));
 		dict.__setitem__("apply", new BuiltinFunctions("apply", 9, 2, 3));
-		dict.__setitem__("bool", new BuiltinFunctions("bool", 8, 1));
 		dict.__setitem__("callable", new BuiltinFunctions("callable", 14, 1));
 		dict.__setitem__("coerce", new BuiltinFunctions("coerce", 13, 2));
 		dict.__setitem__("chr", new BuiltinFunctions("chr", 0, 1));
@@ -381,9 +388,8 @@ public class __builtin__  {
 		dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
 		dict.__setitem__("xrange", new BuiltinFunctions("xrange", 42, 1, 3));
 		dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 1, -1));
-	
+		dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
 		dict.__setitem__("__import__", new ImportFunction());
-	
 	}
 
 	public static PyObject abs(PyObject o) {
@@ -420,11 +426,7 @@ public class __builtin__  {
 			return apply(o, args);
 		}
 	}
-
-	public static PyObject bool(PyObject o) {
-		return (o == null ? Py.Zero : o.__nonzero__() ? Py.One : Py.Zero);
-	}
-
+	
 	public static boolean callable(PyObject o) {
 		return o.__findattr__("__call__") != null;
 	}
@@ -627,14 +629,14 @@ public class __builtin__  {
 	}
 
 	public static PyString hex(PyObject o) {
-		try {
-			return o.__hex__();
-		} catch (PyException e) {
-			if (Py.matchException(e, Py.AttributeError))
-				throw Py.TypeError("hex() argument can't be converted to hex");
-			throw e;
-		}
+	try {
+		return o.__hex__();
+	} catch (PyException e) {
+	    if (Py.matchException(e, Py.AttributeError))
+	        throw Py.TypeError("hex() argument can't be converted to hex");
+	    throw e;
 	}
+}
 
 	public static long id(PyObject o) {
 		return Py.id(o);
@@ -742,7 +744,7 @@ public class __builtin__  {
 				if (n == 1) {
 					list.append(args[0]);
 				} else {
-					list.append(new PyTuple((PyObject[]) args.clone()));
+					list.append(new PyTuple(args.clone()));
 				}
 			} else {
 				list.append(f.__call__(args));
@@ -750,8 +752,6 @@ public class __builtin__  {
 		}
 		return list;
 	}
-
-	// I've never been happy with max and min builtin's...
 
 	public static PyObject max(PyObject[] l) {
 		if (l.length == 1) {
@@ -773,13 +773,15 @@ public class __builtin__  {
 		}
 		return max;
 	}
-
-	public static PyObject min(PyObject[] l) {
-		if (l.length == 1) {
-			return min(l[0]);
-		}
-		return min(new PyTuple(l));
-	}
+    public static PyObject min(PyObject[] l) {
+        if (l.length == 0) {
+            throw Py.TypeError("min expected 1 arguments, got 0");
+        }
+        if (l.length == 1) {
+            return min(l[0]);
+        }
+        return min(new PyTuple(l));
+    }
 
 	private static PyObject min(PyObject o) {
 		PyObject min = null;
@@ -795,9 +797,16 @@ public class __builtin__  {
 		return min;
 	}
 
-	public static PyString oct(PyObject o) {
-		return o.__oct__();
-	}
+    public static PyString oct(PyObject o) {
+        try {
+            return o.__oct__();
+        } catch(PyException e) {
+            if(Py.matchException(e, Py.AttributeError)) {
+                throw Py.TypeError("oct() argument can't be converted to oct");
+            }
+            throw e;
+        }
+    }
 
 	public static final int ord(char c) {
 		return c;
@@ -875,34 +884,58 @@ public class __builtin__  {
 		throw Py.TypeError("__pow__ not defined for these operands");
 	}
 
-	public static PyObject range(int start, int stop, int step) {
-		if (step == 0) {
-			throw Py.ValueError("zero step for range()");
-		}
-		int n;
-		if (step > 0) {
-			n = (stop - start + step - 1) / step;
-		} else {
-			n = (stop - start + step + 1) / step;
-		}
-		if (n <= 0) {
-			return new PyList();
-		}
-		PyObject[] l = new PyObject[n];
-		int j = start;
-		for (int i = 0; i < n; i++) {
-			l[i] = Py.newInteger(j);
-			j += step;
-		}
-		return new PyList(l);
+    public static PyObject range(PyObject start, PyObject stop, PyObject step) {
+        // Check that step is valid.
+        int stepCmp = step.__cmp__(Py.Zero);
+        if(stepCmp == -2) {
+            throw Py.TypeError("non-integer type for step in range()");
+        } else if(stepCmp == 0) {
+            throw Py.ValueError("zero step for range()");
+        }
+        
+        // Calculate the number of values in the range.
+        PyObject n = stop.__sub__(start);
+        if(n == null) {
+            throw Py.TypeError("non-integer type for start or stop in range()");
+        }
+        n = n.__add__(step);
+        if(stepCmp == 1) { // step is positive
+            n = n.__sub__(Py.One).__div__(step);
+        } else { // step is negative
+            n = n.__add__(Py.One).__div__(step);
+        }
+        
+        // Check that the number of values is valid.
+        if(n.__cmp__(Py.Zero) <= 0) {
+            return new PyList();
+        }
+        Object nAsInteger = n.__tojava__(Integer.TYPE);
+        if(nAsInteger == Py.NoConversion) {
+            if(n instanceof PyLong) {
+                throw Py.OverflowError("Can't use range for more than " + Integer.MAX_VALUE
+                        + " items.  Try xrange instead.");
+            } else {
+                throw Py.TypeError("non-integer type for start or stop in range()");
+            }
+        }
+        
+        // Fill in the range.
+        int nAsInt = ((Integer)nAsInteger).intValue();
+        PyObject j = start;
+        PyObject[] objs = new PyObject[nAsInt];
+        for(int i = 0; i < nAsInt; i++) {
+            objs[i] = j;
+            j = j.__add__(step);
+        }
+        return new PyList(objs);
+    }
+
+	public static PyObject range(PyObject n) {
+		return range(Py.Zero, n, Py.One);
 	}
 
-	public static PyObject range(int n) {
-		return range(0, n, 1);
-	}
-
-	public static PyObject range(int start, int stop) {
-		return range(start, stop, 1);
+	public static PyObject range(PyObject start, PyObject stop) {
+		return range(start, stop, Py.One);
 	}
 
 	private static PyString readline(PyObject file) {
@@ -1015,7 +1048,16 @@ public class __builtin__  {
 		}
 		return result;
 	}
-
+	
+	public static PyObject reversed(PyObject seq) {
+        if(hasattr(seq, "__getitem__") && hasattr(seq, "__len__") && 
+                !hasattr(seq, "keys")) {
+            return new PyReversedIterator(seq);
+        } else {
+            throw Py.TypeError("argument to reversed() must be a sequence");
+        }
+	}
+	
 	public static PyObject sum(PyObject seq) {
 		return sum(seq, Py.Zero);
 	}
@@ -1040,20 +1082,20 @@ public class __builtin__  {
 		return o.getType();
 	}
 
-	public static PyObject vars(PyObject o) {
-		try {
-			return o.__getattr__("__dict__");
-		} catch (PyException e) {
-			if (Py.matchException(e, Py.AttributeError))
-				throw Py.TypeError("vars() argument must have __dict__ attribute");
-			throw e;
-		}
-	}
-
 	public static PyObject vars() {
 		return locals();
 	}
 
+    public static PyObject vars(PyObject o) {
+        try {
+            return o.__getattr__("__dict__");
+        } catch (PyException e) {
+            if (Py.matchException(e, Py.AttributeError))
+                throw Py.TypeError("vars() argument must have __dict__ attribute");
+            throw e;
+        }
+    }
+    
 	public static PyObject xrange(int start, int stop, int step) {
 		return new PyXRange(start, stop, step);
 	}
@@ -1132,7 +1174,7 @@ public class __builtin__  {
 		}
 		PyObject builtins = frame.f_builtins;
 		if (builtins == null) {
-			builtins = Py.getSystemState().builtins;
+			builtins = PySystemState.builtins;
 		}
 
 		PyObject __import__ = builtins.__finditem__("__import__");

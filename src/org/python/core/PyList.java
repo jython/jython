@@ -6,7 +6,6 @@ package org.python.core;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * A builtin python list.
@@ -579,22 +578,6 @@ public class PyList extends PySequenceList {
 
         }
         dict.__setitem__("__imul__",new PyMethodDescr("__imul__",PyList.class,1,1,new exposed___imul__(null,null)));
-        class exposed___reduce__ extends PyBuiltinMethodNarrow {
-
-            exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___reduce__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyList)self).list___reduce__();
-            }
-
-        }
-        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyList.class,0,0,new exposed___reduce__(null,null)));
         class exposed___mul__ extends PyBuiltinMethodNarrow {
 
             exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
@@ -716,16 +699,14 @@ public class PyList extends PySequenceList {
         super(type, c);
     }
 
-    // TODO: fix dependency so it can be removed.
-    // Shouldn't be required (see PyList(Collection c), but test_re.py fails 
-    // without it.  Probably used by reflection.
-    public PyList(Vector v) {
-        super(LISTTYPE, v);
-    }    
-    
     public PyList(PyObject[] elements) {
         this(LISTTYPE, elements);
     }
+
+    public PyList(Collection c) {
+        super(LISTTYPE, c);
+    }
+
 
     public PyList(PyObject o) {
         this(LISTTYPE);
@@ -865,7 +846,7 @@ public class PyList extends PySequenceList {
                     PySequenceList seqList = (PySequenceList)value;
                     otherArray = seqList.getArray();
                     if (otherArray == array) {
-                        otherArray = (PyObject[])otherArray.clone();
+                        otherArray = otherArray.clone();
                     }
                     list.replaceSubArray(start, stop, otherArray, 0, seqList.size());
                 } else {
@@ -932,7 +913,21 @@ public class PyList extends PySequenceList {
     }
 
     public PyObject __imul__(PyObject o) {
-        return list___imul__(o);
+        try {
+            return list___imul__(o);
+        } catch(PyException e) {
+            if(Py.matchException(e, Py.TypeError)) {
+                // We can't perform an in-place multiplication on o's type, so 
+                // let o try to rmul this list.  A new list will be created 
+                // instead of modifying this one, but that's preferable to just
+                // blowing up on this operation.
+                PyObject result = o.__rmul__(this);
+                if(result != null) {
+                    return result;
+                }
+            }
+            throw e;
+        }
     }
 
     final PyObject list___imul__(PyObject o) {
@@ -942,13 +937,11 @@ public class PyList extends PySequenceList {
         int count = ((PyInteger)o.__int__()).getValue();
 
         int newSize = l * count;
-        list.ensureCapacity(newSize);
         list.setSize(newSize);
-        //resize(l * count);
         
         PyObject[] array = getArray();
-        for (int i=1; i<count; i++) {
-            System.arraycopy(array, 0, array, i*l, l);
+        for(int i = 1; i < count; i++) {
+            System.arraycopy(array, 0, array, i * l, l);
         }
         return this;
     }
@@ -1316,22 +1309,6 @@ public class PyList extends PySequenceList {
 
     final int list_hashCode() {
         throw Py.TypeError("unhashable type");
-    }
-
-    /**
-     * Used for pickling.
-     *
-     * @return a tuple of (class, tuple)
-     */
-    public PyObject __reduce__() {
-        return list___reduce__();
-    }
-
-    final PyObject list___reduce__() {
-        PyTuple newargs = __getnewargs__();
-        return new PyTuple(new PyObject[]{
-            getType(), newargs
-        });
     }
 
     public PyTuple __getnewargs__() {

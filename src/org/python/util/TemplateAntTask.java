@@ -49,17 +49,8 @@ package org.python.util;
 import org.apache.tools.ant.taskdefs.MatchingTask;
 import org.apache.tools.ant.taskdefs.Execute;
 import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.taskdefs.Java;
-import org.apache.tools.ant.types.Path;
-import org.apache.tools.ant.DirectoryScanner;
 import java.io.File;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.FileInputStream;
-import java.io.Reader;
 import java.io.IOException;
-import java.util.Map;
-import java.util.HashMap;
 
 /**
  * Template is an Ant task for generating new-style object definitions based on

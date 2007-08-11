@@ -74,7 +74,7 @@ public class PyReflectedFunction extends PyObject
     public void addMethod(Method m) {
         int mods = m.getModifiers();
         // Only add public methods unless we're overriding
-        if (!Modifier.isPublic(mods) && !JavaAccessibility.accessIsMutable())
+        if (!Modifier.isPublic(mods) && Options.respectJavaAccessibility)
             return;
         addArgs(makeArgs(m));
     }

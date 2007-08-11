@@ -1,4 +1,4 @@
 base_class: PyBoolean
 want_dict: true
-ctr:
+ctr: boolean v
 incl: object

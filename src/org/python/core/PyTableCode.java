@@ -148,7 +148,7 @@ public class PyTableCode extends PyCode
             } else {
                 //System.err.println("ts: "+ts);
                 //System.err.println("ss: "+ts.systemState);
-                frame.f_builtins = ts.systemState.builtins;
+                frame.f_builtins = PySystemState.builtins;
             }
         }
         // nested scopes: setup env with closure
@@ -328,7 +328,7 @@ public class PyTableCode extends PyCode
                          PyObject[] defaults, PyObject closure)
     {
         PyObject[] os = new PyObject[call_args.length+1];
-        os[0] = (PyObject)self;
+        os[0] = self;
         System.arraycopy(call_args, 0, os, 1, call_args.length);
         return call(os, call_keywords, globals, defaults, closure);
     }
@@ -356,9 +356,7 @@ public class PyTableCode extends PyCode
         if (plain_args > 0)
             System.arraycopy(call_args, 0, actual_args, 0, plain_args);
 
-        if (!((call_keywords == null || call_keywords.length == 0) &&
-              call_args.length == co_argcount && !keywords && !args))
-        {
+        if(call_keywords.length != 0 || call_args.length != co_argcount || keywords || args) {
             if (keywords)
                 extra_keywords = new PyDictionary();
 

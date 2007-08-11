@@ -26,6 +26,7 @@ public class PyType extends PyObject implements Serializable {
         dict.__setitem__("__base__",new PyGetSetDescr("__base__",PyType.class,"getBase",null,null));
         dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases","setBases","delBases"));
         dict.__setitem__("__mro__",new PyGetSetDescr("__mro__",PyType.class,"getMro",null,null));
+        dict.__setitem__("__flags__",new PyGetSetDescr("__flags__",PyType.class,"getFlags",null,null));
         class exposed_mro extends PyBuiltinMethodNarrow {
 
             exposed_mro(PyObject self,PyBuiltinFunction.Info info) {
@@ -227,7 +228,7 @@ public class PyType extends PyObject implements Serializable {
             if (!(pytyp instanceof PyType)) {
                 throw Py.TypeError(module+"."+name+" must be a type for deserialization");
             }
-            return (PyType)pytyp;
+            return pytyp;
         }
         
     }
@@ -377,6 +378,7 @@ public class PyType extends PyObject implements Serializable {
     private PyObject[] bases;
     private PyObject dict;
     private PyObject[] mro = new PyObject[0];
+    private long tp_flags;
     private Class underlying_class;
     
     boolean builtin = false;
@@ -401,6 +403,10 @@ public class PyType extends PyObject implements Serializable {
 
     public PyTuple getMro() {
         return new PyTuple(mro);
+    }
+
+    public PyLong getFlags() {
+        return new PyLong(tp_flags);
     }
     
     public synchronized final PyObject type_getSubclasses() {
@@ -698,6 +704,8 @@ public class PyType extends PyObject implements Serializable {
         if(!newtype.needs_userdict) {
             newtype.needs_userdict = necessitatesUserdict(bases_list);
         }
+
+        newtype.tp_flags=Py.TPFLAGS_HEAPTYPE;
 
         // special case __new__, if function => static method
         PyObject tmp = dict.__finditem__("__new__");
@@ -1199,7 +1207,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
     static PyType TypeType = fromClass(PyType.class);
-    
+
     /*
      * considers:
      *   if c implements Newstyle => c and all subclasses

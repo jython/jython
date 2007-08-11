@@ -11,9 +11,9 @@ expose_binary: __ne__ __eq__ __lt__ __le__ __gt__ __ge__
 expose_meth: :b __contains__ o
 expose_meth: :i __len__
 expose_meth: __add__ o
-expose_meth: __reduce__
 expose_meth: __mul__ o
 expose_meth: __rmul__ o
+expose_meth: __getnewargs__
 expose_meth: __hash__
  `ideleg`(hashCode);
 expose_meth: __repr__

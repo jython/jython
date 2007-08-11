@@ -227,22 +227,6 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__add__",new PyMethodDescr("__add__",PyTuple.class,1,1,new exposed___add__(null,null)));
-        class exposed___reduce__ extends PyBuiltinMethodNarrow {
-
-            exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___reduce__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyTuple)self).tuple___reduce__();
-            }
-
-        }
-        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyTuple.class,0,0,new exposed___reduce__(null,null)));
         class exposed___mul__ extends PyBuiltinMethodNarrow {
 
             exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
@@ -275,6 +259,22 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyTuple.class,1,1,new exposed___rmul__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinMethodNarrow {
+
+            exposed___getnewargs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getnewargs__(self,info);
+            }
+
+            public PyObject __call__() {
+                return((PyTuple)self).tuple___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyTuple.class,0,0,new exposed___getnewargs__(null,null)));
         class exposed___hash__ extends PyBuiltinMethodNarrow {
 
             exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
@@ -470,26 +470,26 @@ public class PyTuple extends PySequenceList implements ClassDictInit
         return repeat(count);
     }
 
-    /**
-     * Used for pickling.
-     *
-     * @return a tuple of (class, tuple)
-     */
-    public PyObject __reduce__() {
-        return tuple___reduce__();
+    final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop) {
+        return seq___getslice__(s_start,s_stop,null);
     }
 
-    final PyObject tuple___reduce__() {
-        PyTuple newargs = __getnewargs__();
-        return new PyTuple(new PyObject[]{
-            getType(), newargs
-        });
+    final PyObject tuple___getslice__(PyObject s_start, PyObject s_stop, PyObject s_step) {
+        return seq___getslice__(s_start,s_stop,s_step);
+    }
+
+    final PyObject tuple___getitem__(PyObject index) {
+        return seq___getitem__(index);
+    }
+
+    final PyTuple tuple___getnewargs__() {
+        return new PyTuple(new PyObject[]
+            {new PyTuple(list.getArray())}
+        );
     }
 
     public PyTuple __getnewargs__() {
-        return new PyTuple(new PyObject[]
-            {new PyList(list.getArray())}
-        );
+        return tuple___getnewargs__();
     }
 
     public int hashCode() {

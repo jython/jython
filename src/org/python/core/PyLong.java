@@ -775,6 +775,22 @@ public class PyLong extends PyObject
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyLong.class,0,0,new exposed___str__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinMethodNarrow {
+
+            exposed___getnewargs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getnewargs__(self,info);
+            }
+
+            public PyObject __call__() {
+                return((PyLong)self).long___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyLong.class,0,0,new exposed___getnewargs__(null,null)));
         class exposed___hash__ extends PyBuiltinMethodNarrow {
 
             exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
@@ -1533,6 +1549,14 @@ public class PyLong extends PyObject
     
     public PyUnicode __unicode__() {
         return new PyUnicode(value.toString());
+    }
+
+    final PyTuple long___getnewargs__() {
+        return new PyTuple(new PyObject[]{new PyLong(this.getValue())});
+    }
+
+    public PyTuple __getnewargs__() {
+        return long___getnewargs__();
     }
 
 

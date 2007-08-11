@@ -1,5 +1,5 @@
 
-__all__ = [ "match", "search", "sub", "subn", "split", "findall",
+__all__ = [ "match", "search", "sub", "subn", "split", "findall", "finditer",
     "compile", "purge", "template", "escape", "I", "L", "M", "S", "X",
     "U", "IGNORECASE", "LOCALE", "MULTILINE", "DOTALL", "VERBOSE",
     "UNICODE", "error" ]

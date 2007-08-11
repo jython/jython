@@ -68,11 +68,17 @@ public final class Py
     /** A tuple with zero elements **/
     public static PyTuple EmptyTuple;
 
-    /** The Python integer 0 - also used as false **/
+    /** The Python integer 0 **/
     public static PyInteger Zero;
 
-    /** The Python integer 1 - also used as true **/
+    /** The Python integer 1 **/
     public static PyInteger One;
+
+    /** The Python boolean False **/
+    public static PyBoolean False;
+
+    /** The Python boolean True **/
+    public static PyBoolean True;
 
     /** A zero-length Python string **/
     public static PyString EmptyString;
@@ -82,6 +88,9 @@ public final class Py
 
     /** A Python string containing ' ' **/
     public static PyString Space;
+
+    /** Set if the type object is dynamically allocated */
+    public static long TPFLAGS_HEAPTYPE;
 
     /** A unique object to indicate no conversion is possible
         in __tojava__ methods **/
@@ -236,6 +245,49 @@ public final class Py
         return new PyException(Py.UnicodeError, message);
     }
 
+    public static PyObject UnicodeTranslateError;
+    public static PyException UnicodeTranslateError(String object,
+                                                 int start,
+                                                 int end,
+                                                 String reason) {
+        return new PyException(Py.UnicodeTranslateError,
+                               new PyTuple(new PyObject[] {
+                                                           new PyString(object),
+                                                           new PyInteger(start),
+                                                           new PyInteger(end),
+                                                           new PyString(reason)}));
+    }
+
+    public static PyObject UnicodeDecodeError;
+
+    public static PyException UnicodeDecodeError(String encoding,
+                                                 String object,
+                                                 int start,
+                                                 int end,
+                                                 String reason) {
+        return new PyException(Py.UnicodeDecodeError,
+                               new PyTuple(new PyObject[] {new PyString(encoding),
+                                                           new PyString(object),
+                                                           new PyInteger(start),
+                                                           new PyInteger(end),
+                                                           new PyString(reason)}));
+    }
+
+    public static PyObject UnicodeEncodeError;
+
+    public static PyException UnicodeEncodeError(String encoding,
+                                                 String object,
+                                                 int start,
+                                                 int end,
+                                                 String reason) {
+        return new PyException(Py.UnicodeEncodeError,
+                               new PyTuple(new PyObject[] {new PyString(encoding),
+                                                           new PyString(object),
+                                                           new PyInteger(start),
+                                                           new PyInteger(end),
+                                                           new PyString(reason)}));
+    }
+
     public static PyObject EOFError;
     public static PyException EOFError(String message) {
         return new PyException(Py.EOFError, message);
@@ -281,6 +333,11 @@ public final class Py
     public static void DeprecationWarning(String message) {
         warning(DeprecationWarning, message);
     }
+    
+    public static PyObject PendingDeprecationWarning;
+    public static void PendingDeprecationWarning(String message) {
+        warning( PendingDeprecationWarning, message);
+    }
 
     public static PyObject SyntaxWarning;
     public static void SyntaxWarning(String message) {
@@ -295,6 +352,11 @@ public final class Py
     public static PyObject RuntimeWarning;
     public static void RuntimeWarning(String message) {
         warning(RuntimeWarning, message);
+    }
+    
+    public static PyObject FutureWarning;
+    public static void FutureWarning(String message) {
+        warning(FutureWarning, message);
     }
 
     private static PyObject warnings_mod;
@@ -497,8 +559,8 @@ public final class Py
         return new PyUnicode(s);
     }
 
-    public static PyInteger newBoolean(boolean t) {
-        return t ? Py.One : Py.Zero;
+    public static PyBoolean newBoolean(boolean t) {
+        return t ? Py.True : Py.False;
     }
 
     // nested scopes:
@@ -608,15 +670,20 @@ public final class Py
         FloatingPointError  = initExc("FloatingPointError", exc, dict);
         ValueError          = initExc("ValueError", exc, dict);
         UnicodeError        = initExc("UnicodeError", exc, dict);
+        UnicodeEncodeError  = initExc("UnicodeEncodeError", exc, dict);
+        UnicodeDecodeError  = initExc("UnicodeDecodeError", exc, dict);
+        UnicodeTranslateError  = initExc("UnicodeTranslateError", exc, dict);
         ReferenceError      = initExc("ReferenceError", exc, dict);
         SystemError         = initExc("SystemError", exc, dict);
         MemoryError         = initExc("MemoryError", exc, dict);
         Warning             = initExc("Warning", exc, dict);
         UserWarning         = initExc("UserWarning", exc, dict);
         DeprecationWarning  = initExc("DeprecationWarning", exc, dict);
+        PendingDeprecationWarning      = initExc("PendingDeprecationWarning", exc, dict);
         SyntaxWarning       = initExc("SyntaxWarning", exc, dict);
         OverflowWarning     = initExc("OverflowWarning", exc, dict);
         RuntimeWarning      = initExc("RuntimeWarning", exc, dict);
+        FutureWarning      = initExc("FutureWarning", exc, dict);   
         
         // Pre-initialize the PyJavaClass for OutOfMemoryError so when we need
         // it it creating the pieces for it won't cause an additional out of
@@ -914,7 +981,7 @@ public final class Py
                                    "$py");
                 System.exit(-1);
             }
-            PyObject mod = imp.createFromCode("__main__", code);
+            imp.createFromCode("__main__", code);
         } catch (PyException e) {
             Py.getSystemState().callExitFunc();
             if (Py.matchException(e, Py.SystemExit))
@@ -1026,7 +1093,7 @@ public final class Py
 
         if (tb instanceof PyTraceback)
             stderr.print(((PyTraceback) tb).dumpStack());
-        if (__builtin__.isinstance(value, (PyClass) Py.SyntaxError)) {
+        if (__builtin__.isinstance(value, Py.SyntaxError)) {
             stderr.println("  File \""+value.__findattr__("filename")+
                            "\", line "+value.__findattr__("lineno"));
             PyObject text = value.__findattr__("text");
@@ -1053,7 +1120,6 @@ public final class Py
     static String formatException(PyObject type, PyObject value, PyObject tb) {
         StringBuffer buf = new StringBuffer();
 
-        PyObject typeName;
         if (type instanceof PyClass) {
             buf.append(((PyClass) type).__name__);
         } else {
@@ -1061,7 +1127,7 @@ public final class Py
         }
         if (value != Py.None) {
             buf.append(": ");
-            if (__builtin__.isinstance(value, (PyClass) Py.SyntaxError)) {
+            if (__builtin__.isinstance(value, Py.SyntaxError)) {
                 buf.append(value.__getitem__(0).__str__());
             } else {
                 buf.append(value.__str__());
@@ -1130,7 +1196,7 @@ public final class Py
             }
         }
         if(e instanceof PyClass) {
-            return __builtin__.isinstance(pye.value, (PyClass)e);
+            return __builtin__.isinstance(pye.value, e);
         } else {
             if(e == pye.type)
                 return true;
@@ -1219,7 +1285,7 @@ public final class Py
             tc = (PyTableCode)code;
 
         f = new PyFrame(tc, locals, globals,
-                        Py.getThreadState().systemState.builtins);
+                        PySystemState.builtins);
         return code.call(f);
     }
 
@@ -1261,7 +1327,7 @@ public final class Py
         if (threadStateMapping == null) {
             synchronized (Py.class) {
                 if (threadStateMapping == null)
-                    threadStateMapping = ThreadStateMapping.makeMapping();
+                    threadStateMapping = new ThreadStateMapping();
             }
         }
         return threadStateMapping.getThreadState(newSystemState);
@@ -1392,7 +1458,7 @@ public final class Py
 
     public static int py2int(PyObject o, String msg) {
         if (o instanceof PyInteger)
-            return (int)((PyInteger)o).getValue();
+            return ((PyInteger)o).getValue();
         Object obj = o.__tojava__(Integer.TYPE);
         if (obj == Py.NoConversion)
             throw Py.TypeError(msg);
@@ -1401,7 +1467,7 @@ public final class Py
 
     public static long py2long(PyObject o) {
         if(o instanceof PyInteger)
-            return (long)((PyInteger)o).getValue();
+            return ((PyInteger)o).getValue();
 
         Object i = o.__tojava__(Long.TYPE);
         if (i == null || i == Py.NoConversion)
@@ -1413,7 +1479,7 @@ public final class Py
         if (o instanceof PyFloat)
             return (float)((PyFloat)o).getValue();
         if (o instanceof PyInteger)
-            return (float)((PyInteger)o).getValue();
+            return ((PyInteger)o).getValue();
 
         Object i = o.__tojava__(Float.TYPE);
         if (i == null || i == Py.NoConversion)
@@ -1422,9 +1488,9 @@ public final class Py
     }
     public static double py2double(PyObject o) {
         if (o instanceof PyFloat)
-            return (double)((PyFloat)o).getValue();
+            return ((PyFloat)o).getValue();
         if (o instanceof PyInteger)
-            return (double)((PyInteger)o).getValue();
+            return ((PyInteger)o).getValue();
 
         Object i = o.__tojava__(Double.TYPE);
         if (i == null || i == Py.NoConversion)
@@ -1761,7 +1827,7 @@ public final class Py
         }
     }
 
-    private static IdImpl idimpl = IdImpl.getInstance();
+    private static IdImpl idimpl = new IdImpl();
 
     public static long id(PyObject o) {
         return idimpl.id(o);

@@ -557,6 +557,7 @@ class Gen:
 def process(fn, mergefile=None, lazy=False):
     if lazy and mergefile and os.stat(fn).st_mtime < os.stat(mergefile).st_mtime:
 	return
+    print mergefile
     gen = Gen()
     directives.execute(directives.load(fn),gen)
     result = gen.generate()

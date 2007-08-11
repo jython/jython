@@ -1,26 +1,91 @@
 package org.python.core;
 
-public abstract class IdImpl {
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
 
-    public static IdImpl getInstance() {
-        if (System.getProperty("java.version").compareTo("1.2") >= 0) {
-            try {
-                return (IdImpl) Class.forName("org.python.core.IdImpl2")
-                        .newInstance();
-            } catch (Throwable e) {
-                return null;
+public class IdImpl {
+
+    public static class WeakIdentityMap {
+        
+        private ReferenceQueue refqueue = new ReferenceQueue();
+        private HashMap hashmap = new HashMap();
+        
+        private void cleanup() {
+            Object k;
+            while ((k = this.refqueue.poll()) != null) {
+                this.hashmap.remove(k);
             }
-        } else {
-            return new IdImpl1();
+        }
+                
+        private class WeakIdKey extends WeakReference {
+            private int hashcode;
+            
+            WeakIdKey(Object obj) {
+                super(obj,WeakIdentityMap.this.refqueue);
+                this.hashcode = System.identityHashCode(obj);                
+            }
+            
+            public int hashCode() {
+                return this.hashcode;
+            }
+            
+            public boolean equals(Object other) {
+                Object obj = this.get();
+                if (obj != null) {
+                    return obj == ((WeakIdKey)other).get();
+                } else {
+                    return this == other;
+                }                
+            }
+        }
+        
+        public int _internal_map_size() {
+            return this.hashmap.size();
+        }
+        
+        public void put(Object key,Object val) {
+            cleanup();
+            this.hashmap.put(new WeakIdKey(key),val);
+        }
+        
+        public Object get(Object key) {
+            cleanup();
+            return this.hashmap.get(new WeakIdKey(key));
+        }
+
+        public void remove(Object key) {
+            cleanup();
+            this.hashmap.remove(new WeakIdKey(key));        
         }
 
     }
 
-    public abstract long id(PyObject o);
+    private WeakIdentityMap id_map = new WeakIdentityMap();
+    private long sequential_id = 0; 
 
-    public abstract String idstr(PyObject o);
+    public long id(PyObject o) {
+        if (o instanceof PyJavaInstance) {
+            return java_obj_id(((PyJavaInstance)o).javaProxy);
+        } else {
+            return java_obj_id(o);
+        }            
+    }
 
-    // o should not be an instance of a subclass of PyObject
-    public abstract long java_obj_id(Object o);
+    // XXX maybe should display both this id and identityHashCode
+    // XXX preserve the old "at ###" style?
+    public String idstr(PyObject o) {
+        return Long.toString(id(o));
+    }
 
+    public synchronized long java_obj_id(Object o) {
+        Long cand = (Long)this.id_map.get(o);
+        if (cand == null) {
+            this.sequential_id++;
+            long new_id = this.sequential_id;           
+            this.id_map.put(o,new Long(new_id));
+            return new_id;            
+        }
+        return cand.longValue();
+    }
 }

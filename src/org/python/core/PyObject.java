@@ -14,6 +14,7 @@ import java.util.List;
  **/
 
 public class PyObject implements java.io.Serializable {
+
     //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
@@ -38,6 +39,38 @@ public class PyObject implements java.io.Serializable {
 
         }
         dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyObject.class,0,0,new exposed___reduce__(null,null)));
+        class exposed___reduce_ex__ extends PyBuiltinMethodNarrow {
+
+            exposed___reduce_ex__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___reduce_ex__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                try {
+                    return((PyObject)self).object___reduce_ex__(arg0.asInt(0));
+                } catch (PyObject.ConversionException e) {
+                    String msg;
+                    switch (e.index) {
+                    case 0:
+                        msg="expected an integer";
+                        break;
+                    default:
+                        msg="xxx";
+                    }
+                    throw Py.TypeError(msg);
+                }
+            }
+
+            public PyObject __call__() {
+                return((PyObject)self).object___reduce_ex__();
+            }
+
+        }
+        dict.__setitem__("__reduce_ex__",new PyMethodDescr("__reduce_ex__",PyObject.class,0,1,new exposed___reduce_ex__(null,null)));
         class exposed___str__ extends PyBuiltinMethodNarrow {
 
             exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
@@ -1207,7 +1240,7 @@ public class PyObject implements java.io.Serializable {
      * Equivalent to the standard Python __cmp__ method.
      *
      * @param other the object to compare this with.
-     * @return -1 if this < 0; 0 if this == o; +1 if this > o; -2 if no
+     * @return -1 if this < o; 0 if this == o; +1 if this > o; -2 if no
      * comparison is implemented
      **/
     public int __cmp__(PyObject other) {
@@ -1442,7 +1475,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__eq__(this);
             if (res != null)
                 return res;
-            return _cmpeq_unsafe(o) == 0 ? Py.One : Py.Zero;
+            return _cmpeq_unsafe(o) == 0 ? Py.True : Py.False;
         } catch (PyException e) {
             if (Py.matchException(e, Py.AttributeError)) {
                 return Py.Zero;
@@ -1481,7 +1514,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__ne__(this);
             if (res != null)
                 return res;
-            return _cmpeq_unsafe(o) != 0 ? Py.One : Py.Zero;
+            return _cmpeq_unsafe(o) != 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1515,7 +1548,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__ge__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) <= 0 ? Py.One : Py.Zero;
+            return _cmp_unsafe(o) <= 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1549,7 +1582,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__gt__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) < 0 ? Py.One : Py.Zero;
+            return _cmp_unsafe(o) < 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1583,7 +1616,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__le__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) >= 0 ? Py.One : Py.Zero;
+            return _cmp_unsafe(o) >= 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1617,7 +1650,7 @@ public class PyObject implements java.io.Serializable {
             res = o.__lt__(this);
             if (res != null)
                 return res;
-            return _cmp_unsafe(o) > 0 ? Py.One : Py.Zero;
+            return _cmp_unsafe(o) > 0 ? Py.True : Py.False;
         } finally {
             delete_token(ts, token);
             ts.compareStateNesting--;
@@ -1632,7 +1665,7 @@ public class PyObject implements java.io.Serializable {
      * @return the result of the comparison
      **/
     public PyObject _is(PyObject o) {
-        return this == o ? Py.One : Py.Zero;
+        return this == o ? Py.True : Py.False;
     }
 
     /**
@@ -1642,7 +1675,7 @@ public class PyObject implements java.io.Serializable {
      * @return the result of the comparison
      **/
     public PyObject _isnot(PyObject o) {
-        return this != o ? Py.One : Py.Zero;
+        return this != o ? Py.True : Py.False;
     }
 
     /**
@@ -1690,7 +1723,7 @@ public class PyObject implements java.io.Serializable {
      * @return not this.
      **/
     public PyObject __not__() {
-        return __nonzero__() ? Py.Zero : Py.One;
+        return __nonzero__() ? Py.False : Py.True;
     }
 
     /* The basic numeric operations */
@@ -2993,6 +3026,18 @@ public class PyObject implements java.io.Serializable {
     // can return null meaning set-only or throw exception
 
     // backward comp impls.
+    /**
+     * Get descriptor for this PyObject.
+     * 
+     * @param obj -
+     *            the instance accessing this descriptor. Can be null if this is
+     *            being accessed by a type.
+     * @param type -
+     *            the type accessing this descriptor. Will be null if obj exists
+     *            as obj is of the type accessing the descriptor.
+     * @return - the object defined for this descriptor for the given obj and
+     *         type.
+     */
     public PyObject __get__(PyObject obj, PyObject type) {
         return _doget(obj, type);
     }
@@ -3101,7 +3146,7 @@ public class PyObject implements java.io.Serializable {
     }
 
     /**
-     * Used for pickling.
+     * Used for pickling.  Default implementation calls __reduce_ex__(0).
      *
      * @return a tuple of (class, tuple)
      */
@@ -3110,10 +3155,149 @@ public class PyObject implements java.io.Serializable {
     }
 
     final PyObject object___reduce__() {
-        PyTuple newargs = __getnewargs__();
-        return new PyTuple(new PyObject[]{
-            getType(), newargs
-        });
+        return object___reduce_ex__(0);
+    }
+
+    /** Used for pickling.  If the subclass specifies __reduce__, it will
+     * override __reduce_ex__ in the base-class, even if __reduce_ex__ was
+     * called with an argument.
+     * 
+     * @param arg PyInteger specifying reduce algorithm (method without this
+     * argument defaults to 0).
+     * @return a tuple of (class, tuple)
+     */
+    public PyObject __reduce_ex__(int arg) {
+        return object___reduce_ex__(arg);
+    }
+    public PyObject __reduce_ex__() {
+        return object___reduce_ex__(0);
+    }
+    final PyObject object___reduce_ex__() {
+        return object___reduce_ex__(0);
+    }
+    final PyObject object___reduce_ex__(int arg) {
+        PyObject res;
+
+        PyObject clsreduce=this.getType().__findattr__("__reduce__");
+        PyObject objreduce=(new PyObject()).getType().__findattr__("__reduce__");
+
+        if (clsreduce!=objreduce) {
+            res=this.__reduce__();
+        } else if (arg>=2) {
+            res=reduce_2();
+        } else {
+            PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
+                    Py.EmptyTuple);
+            PyObject copyreg_reduce=copyreg.__findattr__("_reduce_ex");
+            res=copyreg_reduce.__call__(this, new PyInteger(arg));
+        }
+        return res;
+    }
+
+    private static PyObject slotnames(PyObject cls) {
+        PyObject slotnames;
+
+        slotnames=cls.__findattr__("__slotnames__");
+        if(null!=slotnames) {
+            return slotnames;
+        }
+
+        PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
+                Py.EmptyTuple);
+        PyObject copyreg_slotnames=copyreg.__findattr__("_slotnames");
+        slotnames=copyreg_slotnames.__call__(cls);
+        if (null!=slotnames && Py.None!=slotnames &&
+                (!(slotnames instanceof PyList))) {
+            throw Py.TypeError("copy_reg._slotnames didn't return a list or None");
+        }
+
+        return slotnames;
+    }
+
+    private PyObject reduce_2() {
+        PyObject args, state;
+        PyObject res=null;
+        int n,i;
+
+        PyObject cls=this.__findattr__("__class__");
+
+        PyObject getnewargs=this.__findattr__("__getnewargs__");
+        if (null!=getnewargs) {
+            args=getnewargs.__call__();
+            if (null!=args && !(args instanceof PyTuple)) {
+                throw Py.TypeError("__getnewargs__ should return a tuple");
+            }
+        } else {
+            args=Py.EmptyTuple;
+        }
+
+        PyObject getstate=this.__findattr__("__getstate__");
+        if (null!=getstate) {
+            state=getstate.__call__();
+            if (null==state) {
+                return res;
+            }
+        } else {
+            state=this.__findattr__("__dict__");
+            if (null==state) {
+                state=Py.None;
+            }
+
+            PyObject names=slotnames(cls);
+            if (null==names) {
+                return res;
+            }
+
+            if (names != Py.None) {
+                if (!(names instanceof PyList)) {
+                    throw Py.AssertionError("slots not a list");
+                }
+                PyObject slots=new PyDictionary();
+
+                n=0;
+                for (i=0;i<((PyList)names).size();i++) {
+                    PyObject name=((PyList)names).pyget(i);
+                    PyObject value=this.__findattr__(name.toString());
+                    if (null==value) {
+                        // do nothing
+                    } else {
+                        slots.__setitem__(name, value);
+                        n++;
+                    }
+                }
+                if (n>0) {
+                    state=new PyTuple(new PyObject[] {state, slots});
+                }
+            }
+        }
+        PyObject listitems;
+        PyObject dictitems;
+        if (!(this instanceof PyList)) {
+            listitems=Py.None;
+        } else {
+            listitems=((PyList)this).__iter__();
+        }
+        if (!(this instanceof PyDictionary)) {
+            dictitems=Py.None;
+        } else {
+            dictitems=((PyDictionary)this).iteritems();
+        }
+
+        PyObject copyreg=__builtin__.__import__("copy_reg", null, null,
+                Py.EmptyTuple);
+        PyObject newobj=copyreg.__findattr__("__newobj__");
+
+        n=((PyTuple)args).size();
+        PyObject args2[]=new PyObject[n+1];
+        args2[0]=cls;
+        for(i=0;i<n;i++) {
+            args2[i+1]=((PyTuple)args).pyget(i);
+        }
+
+        res=new PyTuple(new PyObject[] {newobj,
+                new PyTuple(args2), state, listitems, dictitems});
+
+        return res;
     }
 
     public PyTuple __getnewargs__() {

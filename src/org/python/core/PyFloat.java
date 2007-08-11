@@ -528,6 +528,22 @@ public class PyFloat extends PyObject
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyFloat.class,0,0,new exposed___str__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinMethodNarrow {
+
+            exposed___getnewargs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getnewargs__(self,info);
+            }
+
+            public PyObject __call__() {
+                return((PyFloat)self).float___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyFloat.class,0,0,new exposed___getnewargs__(null,null)));
         class exposed___hash__ extends PyBuiltinMethodNarrow {
 
             exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
@@ -996,11 +1012,11 @@ public class PyFloat extends PyObject
         return float___int__();
     }
 
-    final PyInteger float___int__() {
+    final PyObject float___int__() {
         if (value <= Integer.MAX_VALUE && value >= Integer.MIN_VALUE) {
             return new PyInteger((int)value);
         }
-        throw Py.OverflowError("float too large to convert");
+        return __long__();
     }
 
     public PyLong __long__() {
@@ -1020,6 +1036,14 @@ public class PyFloat extends PyObject
     }
     public PyComplex __complex__() {
         return new PyComplex(value, 0.);
+    }
+
+    final PyTuple float___getnewargs__() {
+        return new PyTuple(new PyObject[] {new PyFloat(getValue())});
+    }
+
+    public PyTuple __getnewargs__() {
+        return float___getnewargs__();
     }
 
     public boolean isMappingType() throws PyIgnoreMethodTag { return false; }

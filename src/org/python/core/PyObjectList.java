@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.RandomAccess;
 
 /**
  * <CODE>java.util.List</CODE> implementation using an underlying PyObject
@@ -19,8 +20,7 @@ import java.util.Iterator;
  * @author Clark Updike
  */
 public class PyObjectList
-        //RandomAcces is jdk 1.4 -- restore when 1.4 becomes the min
-        extends AbstractList implements /*RandomAccess,*/ Cloneable, Serializable {
+        extends AbstractList implements RandomAccess, Cloneable, Serializable {
 
     /* Design note:
      * This class let's PySequenceList implement java.util.List by delegating

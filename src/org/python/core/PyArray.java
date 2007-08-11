@@ -711,9 +711,7 @@ public class PyArray extends PySequence implements Cloneable {
 
     public static PyArray zeros(int n, char typecode) {
         PyArray array = zeros(n, char2class(typecode));
-        // Character.toString(char) is jdk 1.4
-        // array.typecode = Character.toString(typecode);
-        array.typecode = "" + typecode;
+        array.typecode = Character.toString(typecode);
         return array;
     }
 

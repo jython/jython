@@ -343,6 +343,10 @@ public class cPickle implements ClassDictInit {
     public static final String[] compatible_formats =
                 new String[] { "1.0", "1.1", "1.2" };
 
+    /**
+     * Highest protocol version supported.
+     */
+    public static final int HIGHEST_PROTOCOL = 2;
 
     public static String[] __depends__ = new String[] {
         "copy_reg",
@@ -452,8 +456,8 @@ public class cPickle implements ClassDictInit {
         PyModule copyreg = (PyModule)importModule("copy_reg");
 
         dispatch_table = (PyDictionary)copyreg.__getattr__("dispatch_table");
-        safe_constructors = (PyDictionary)
-                                    copyreg.__getattr__("safe_constructors");
+        // safe_constructors = (PyDictionary)
+        //                             copyreg.__getattr__("safe_constructors");
 
         PickleError       = buildClass("PickleError", Py.Exception,
                                        "_PickleError", "");
@@ -652,7 +656,7 @@ public class cPickle implements ClassDictInit {
     private static IOFile createIOFile(PyObject file) {
         Object f = file.__tojava__(cStringIO.StringIO.class);
         if (f != Py.NoConversion)
-            return new cStringIOFile((cStringIO.StringIO)file);
+            return new cStringIOFile(file);
         else if (__builtin__.isinstance(file, FileType))
             return new FileIOFile(file);
         else
@@ -1674,13 +1678,13 @@ public class cPickle implements ClassDictInit {
 
 
         final private void load_binint1() {
-            int val = (int)file.read(1).charAt(0);
+            int val = file.read(1).charAt(0);
             push(new PyInteger(val));
         }
 
         final private void load_binint2() {
             String s = file.read(2);
-            int val = ((int)s.charAt(1)) << 8 | ((int)s.charAt(0));
+            int val = (s.charAt(1)) << 8 | (s.charAt(0));
             push(new PyInteger(val));
         }
 
@@ -1697,7 +1701,7 @@ public class cPickle implements ClassDictInit {
 
         final private void load_binfloat() {
             String s = file.read(8);
-            long bits = (long)s.charAt(7) |
+            long bits = s.charAt(7) |
                         ((long)s.charAt(6) << 8) |
                         ((long)s.charAt(5) << 16) |
                         ((long)s.charAt(4) << 24) |
@@ -1754,7 +1758,7 @@ public class cPickle implements ClassDictInit {
 
 
         final private void load_short_binstring() {
-            int len = (int)file.read(1).charAt(0);
+            int len = file.read(1).charAt(0);
             push(new PyString(file.read(len)));
         }
 
@@ -1966,7 +1970,7 @@ public class cPickle implements ClassDictInit {
 
 
         final private void load_binput() {
-            int i = (int)file.read(1).charAt(0);
+            int i = file.read(1).charAt(0);
             memo.put(String.valueOf(i), peek());
         }
 

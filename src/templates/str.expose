@@ -11,7 +11,6 @@ expose_meth: :i __len__
 expose_meth: __add__ o
 expose_meth: __mod__ o
 expose_meth: __mul__ o
-expose_meth: __reduce__
 expose_meth: __rmul__ o
 expose_meth: __str__
 expose_meth: __unicode__

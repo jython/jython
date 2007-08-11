@@ -19,7 +19,6 @@ expose_meth: __add__ o
 expose_meth: __radd__ o
 expose_meth: __iadd__ o
 expose_meth: __imul__ o
-expose_meth: __reduce__
 expose_meth: __mul__ o
 expose_meth: __rmul__ o
 expose_meth: __hash__

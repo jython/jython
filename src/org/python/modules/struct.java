@@ -357,17 +357,17 @@ public class struct {
 
 
         void BEwriteInt(ByteStream buf, int v) {
-            buf.writeByte((int)(v >>> 24) & 0xFF);
-            buf.writeByte((int)(v >>> 16) & 0xFF);
-            buf.writeByte((int)(v >>>  8) & 0xFF);
-            buf.writeByte((int)(v >>>  0) & 0xFF);
+            buf.writeByte((v >>> 24) & 0xFF);
+            buf.writeByte((v >>> 16) & 0xFF);
+            buf.writeByte((v >>>  8) & 0xFF);
+            buf.writeByte((v >>>  0) & 0xFF);
         }
 
         void LEwriteInt(ByteStream buf, int v) {
-            buf.writeByte((int)(v >>>  0) & 0xFF);
-            buf.writeByte((int)(v >>>  8) & 0xFF);
-            buf.writeByte((int)(v >>> 16) & 0xFF);
-            buf.writeByte((int)(v >>> 24) & 0xFF);
+            buf.writeByte((v >>>  0) & 0xFF);
+            buf.writeByte((v >>>  8) & 0xFF);
+            buf.writeByte((v >>> 16) & 0xFF);
+            buf.writeByte((v >>> 24) & 0xFF);
         }
 
         int BEreadInt(ByteStream buf) {

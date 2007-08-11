@@ -43,7 +43,9 @@ class MergeState {
 
     MergeState(PyObject[] data, int size, PyObject compare) {
         this.data = data;
-        this.compare = compare;
+        if(compare != Py.None) {
+            this.compare = compare;
+        }
         this.size = size;
         this.n = 0;
     }

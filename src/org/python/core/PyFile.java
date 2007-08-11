@@ -349,7 +349,7 @@ public class PyFile extends PyObject
         public int read() throws java.io.IOException {
             // If the file position is within the data, return the byte...
             if (filePosition < dataEnd) {
-                return (int)(buffer[(int)(filePosition++ - bufferStart)]
+                return (buffer[(int)(filePosition++ - bufferStart)]
                                    & 0xff);
             } else if (endOfFile) {
                // ...or should we indicate EOF...
@@ -472,7 +472,7 @@ public class PyFile extends PyObject
         public void close() throws java.io.IOException {
             if (writing && bufferModified) {
                 file.seek(bufferStart);
-                file.write(buffer, 0, (int)dataSize);
+                file.write(buffer, 0, dataSize);
             }
 
             file.close();

@@ -34,7 +34,7 @@ name = test_support.TESTFN
 # a long time to build the >2GB file and takes >2GB of disk space
 # therefore the resource must be enabled to run this test.  If not,
 # nothing after this line stanza will be executed.
-if sys.platform[:3] == 'win' or sys.platform == 'darwin':
+if sys.platform[:3] == 'win' or sys.platform == 'darwin' or test_support.is_jython:
     test_support.requires(
         'largefile',
         'test requires %s bytes and a long time to run' % str(size))

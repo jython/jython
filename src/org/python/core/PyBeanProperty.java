@@ -31,7 +31,7 @@ public class PyBeanProperty extends PyReflectedField {
         Object iself = Py.tojava(self, getMethod.getDeclaringClass());
 
         try {
-            Object value = getMethod.invoke(iself, (Object[])Py.EmptyObjects);
+            Object value = getMethod.invoke(iself, Py.EmptyObjects);
             return Py.java2py(value);
         } catch (Exception e) {
             throw Py.JavaError(e);
@@ -52,10 +52,7 @@ public class PyBeanProperty extends PyReflectedField {
 
         Object iself = Py.tojava(self, setMethod.getDeclaringClass());
 
-        Object jvalue=null;
-
-        // Special handling of tuples
-        // try to call a class constructor
+        // Special handling of tuples - try to call a class constructor
         if (value instanceof PyTuple) {
             try {
                 PyTuple vtup = (PyTuple)value;
@@ -64,9 +61,7 @@ public class PyBeanProperty extends PyReflectedField {
                 // If something goes wrong ignore it?
             }
         }
-        if (jvalue == null) {
-            jvalue = Py.tojava(value, myType);
-        }
+        Object jvalue = Py.tojava(value, myType);
 
         try {
             setMethod.invoke(iself, new Object[] {jvalue});

@@ -9,8 +9,8 @@
 array.expose:org.python.core.PyArray
 array.derived:org.python.core.PyArrayDerived
 #baseset.expose
-#bool.derived:org.python.core.PyBooleanDerived
-#bool.expose:org.python.core.PyBoolean
+bool.derived:org.python.core.PyBooleanDerived
+bool.expose:org.python.core.PyBoolean
 classmethod.derived:org.python.core.PyClassMethodDerived
 classmethod.expose:org.python.core.PyClassMethod
 complex.derived:org.python.core.PyComplexDerived

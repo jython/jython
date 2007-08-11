@@ -732,22 +732,6 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyInteger.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed___reduce__ extends PyBuiltinMethodNarrow {
-
-            exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___reduce__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyInteger)self).int___reduce__();
-            }
-
-        }
-        dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyInteger.class,0,0,new exposed___reduce__(null,null)));
         class exposed___repr__ extends PyBuiltinMethodNarrow {
 
             exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
@@ -780,6 +764,22 @@ public class PyInteger extends PyObject {
 
         }
         dict.__setitem__("__str__",new PyMethodDescr("__str__",PyInteger.class,0,0,new exposed___str__(null,null)));
+        class exposed___getnewargs__ extends PyBuiltinMethodNarrow {
+
+            exposed___getnewargs__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___getnewargs__(self,info);
+            }
+
+            public PyObject __call__() {
+                return((PyInteger)self).int___getnewargs__();
+            }
+
+        }
+        dict.__setitem__("__getnewargs__",new PyMethodDescr("__getnewargs__",PyInteger.class,0,0,new exposed___getnewargs__(null,null)));
         class exposed___hash__ extends PyBuiltinMethodNarrow {
 
             exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
@@ -817,6 +817,9 @@ public class PyInteger extends PyObject {
                 return Py.Zero;
             }
 			if (base == -909) {
+            	if (x instanceof PyBoolean) {
+            		return (coerce(x) == 0) ? Py.Zero : Py.One;
+            	}
 				return asPyInteger(x);
 			}
 			if (!(x instanceof PyString)) {
@@ -1030,7 +1033,7 @@ public class PyInteger extends PyObject {
             return null;
         int rightv = coerce(right);
 
-        double x = (double)getValue();
+        double x = getValue();
         x *= rightv;
         //long x = ((long)getValue())*((PyInteger)right).getValue();
         //System.out.println("mul: "+this+" * "+right+" = "+x);
@@ -1260,7 +1263,7 @@ public class PyInteger extends PyObject {
             if ((pow & 0x1) != 0) {
                 result *= tmp;
                 if (mod != 0) {
-                    result %= (long)mod;
+                    result %= mod;
                 }
 
                 if (result > Integer.MAX_VALUE) {
@@ -1274,7 +1277,7 @@ public class PyInteger extends PyObject {
             tmp *= tmp;
 
             if (mod != 0) {
-                tmp %= (long)mod;
+                tmp %= mod;
             }
 
             if (tmp > Integer.MAX_VALUE) {
@@ -1495,7 +1498,7 @@ public class PyInteger extends PyObject {
     }
 
     public PyComplex __complex__() {
-        return new PyComplex((double)getValue(), 0.);
+        return new PyComplex(getValue(), 0.);
     }
 
     public PyString __oct__() {
@@ -1505,7 +1508,7 @@ public class PyInteger extends PyObject {
     final PyString int___oct__() {
         if (getValue() < 0) {
             return new PyString(
-                "0"+Long.toString(0x100000000l+(long)getValue(), 8));
+                "0"+Long.toString(0x100000000l+getValue(), 8));
         } else if (getValue() > 0) {
             return new PyString("0"+Integer.toString(getValue(), 8));
         } else
@@ -1519,38 +1522,28 @@ public class PyInteger extends PyObject {
     final PyString int___hex__() {
         if (getValue() < 0) {
             return new PyString(
-                "0x"+Long.toString(0x100000000l+(long)getValue(), 16));
+                "0x"+Long.toString(0x100000000l+getValue(), 16));
         } else {
             return new PyString("0x"+Integer.toString(getValue(), 16));
         }
+    }
+    
+    final PyTuple int___getnewargs__() {
+        return new PyTuple(new PyObject[]{new PyInteger(this.getValue())});
+    }
+
+    public PyTuple __getnewargs__() {
+        return int___getnewargs__();
     }
 
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }
 
-    public long asLong(int index) throws PyObject.ConversionException {
+    public long asLong(int index) {
         return getValue();
     }
 
-    public int asInt(int index) throws PyObject.ConversionException {
+    public int asInt(int index) {
         return getValue();
-    }
-
-    /**
-     * Used for pickling.
-     *
-     * @return a tuple of (class, (Integer))
-     */
-    public PyObject __reduce__() {
-        return int___reduce__();
-    }
-
-    final PyObject int___reduce__() {
-        return new PyTuple(new PyObject[]{
-            getType(),
-            new PyTuple(new PyObject[]{
-                Py.newInteger(getValue())
-            })
-        });
     }
 }

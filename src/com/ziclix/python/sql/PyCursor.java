@@ -480,7 +480,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
 
         // overwrite with any user specific bindings
         if (bindings instanceof PyDictionary) {
-          callableBindings.update((PyDictionary)bindings);
+          callableBindings.update(bindings);
         }
 
         this.statement = new PyStatement(stmt, procedure);

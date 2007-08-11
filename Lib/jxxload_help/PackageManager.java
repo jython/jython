@@ -2,7 +2,7 @@
 
 package jxxload_help;
 
-public class PackageManager extends org.python.core.PathPackageManager {
+public class PackageManager extends org.python.core.packagecache.PathPackageManager {
     
     private JavaLoaderFactory factory;
     private ClassLoader loader;

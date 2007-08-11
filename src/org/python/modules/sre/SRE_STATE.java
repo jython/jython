@@ -21,7 +21,7 @@ package org.python.modules.sre;
 public class SRE_STATE {
     
     /*
-     * Generated from Python-2.2.3 like 'python headerToJava.py < Modules/sre_constants.h'
+     * Generated from Python-2.3.5 like 'python headerToJava.py < Modules/sre_constants.h'
      * where headerToJava.py contains the following code 
 import sys
 for line in sys.stdin:
@@ -31,7 +31,7 @@ for line in sys.stdin:
        print '%s = %s;' % (' '.join(segs[:-1]), segs[-1])                                                          
      */
     //BEGIN generated code
-    public static final int SRE_MAGIC = 20010701;
+    public static final int SRE_MAGIC = 20030419;
     public static final int SRE_OP_FAILURE = 0;
     public static final int SRE_OP_SUCCESS = 1;
     public static final int SRE_OP_ANY = 2;
@@ -62,6 +62,7 @@ for line in sys.stdin:
     public static final int SRE_OP_REPEAT = 27;
     public static final int SRE_OP_REPEAT_ONE = 28;
     public static final int SRE_OP_SUBPATTERN = 29;
+    public static final int SRE_OP_MIN_REPEAT_ONE = 30;
     public static final int SRE_AT_BEGINNING = 0;
     public static final int SRE_AT_BEGINNING_LINE = 1;
     public static final int SRE_AT_BEGINNING_STRING = 2;
@@ -245,9 +246,9 @@ for line in sys.stdin:
         mark_stack_size = mark_stack_base = 0;
     }
 
-    private void mark_save(int lo, int hi) {
+    private int mark_save(int lo, int hi) {
         if (hi <= lo)
-            return;
+            return mark_stack_base;
 
         int size = (hi - lo) + 1;
 
@@ -281,20 +282,21 @@ for line in sys.stdin:
         System.arraycopy(mark, lo, mark_stack, mark_stack_base, size);
 
         mark_stack_base += size;
+        return mark_stack_base;
     }
 
-
-    private void mark_restore(int lo, int hi) {
+    private void mark_restore(int lo, int hi, int mark_stack_base) {
+        
         if (hi <= lo)
             return;
 
         int size = (hi - lo) + 1;
 
-        mark_stack_base -= size;
+        this.mark_stack_base = mark_stack_base - size;
 
         //TRACE(0, ptr, "copy " + lo + ":" + hi +  " from " + mark_stack_base);
 
-        System.arraycopy(mark_stack, mark_stack_base, mark, lo, size);
+        System.arraycopy(mark_stack, this.mark_stack_base, mark, lo, size);
     }
     
     final boolean SRE_AT(int ptr, char at) {
@@ -456,7 +458,7 @@ for line in sys.stdin:
         case SRE_OP_LITERAL:
             /* repeated literal */
             chr = pattern[pidx+1];
-            //TRACE(pidx, ptr, "COUNT LITERAL " + (int) chr);
+            //TRACE(pidx, ptr, "COUNT LITERAL " + chr);
             while (ptr < end && str[ptr] == chr)
                 ptr++;
             break;
@@ -504,7 +506,6 @@ for line in sys.stdin:
             }
             return this.ptr - ptr;
         }
-
         return ptr - this.ptr;
     }
 
@@ -517,7 +518,7 @@ for line in sys.stdin:
         int i, count;
         char chr;
 
-        int lastmark;
+        int lastmark, lastindex, mark_stack_base = 0;
 
         //TRACE(pidx, ptr, "ENTER " + level);
 
@@ -614,7 +615,7 @@ for line in sys.stdin:
                 //TRACE(pidx, ptr, "IN");
                 if (ptr >= end || !SRE_CHARSET(pattern, pidx + 1, str[ptr]))
                     return 0;
-                pidx += (int)pattern[pidx];
+                pidx += pattern[pidx];
                 ptr++;
                 break;
 
@@ -673,7 +674,7 @@ for line in sys.stdin:
                 if (ptr >= end ||
                         !SRE_CHARSET(pattern, pidx + 1, lower(str[ptr])))
                     return 0;
-                pidx += (int)pattern[pidx];
+                pidx += pattern[pidx];
                 ptr++;
                 break;
 
@@ -683,7 +684,7 @@ for line in sys.stdin:
                 //TRACE(pidx, ptr, "MARK " + (int) pattern[pidx]);
                 i = pattern[pidx];
                 if ((i & 1) != 0)
-                    lastindex = i / 2 + 1;
+                    this.lastindex = i / 2 + 1;
                 if (i > this.lastmark)
                     this.lastmark = i;
                 mark[i] = ptr;
@@ -695,7 +696,7 @@ for line in sys.stdin:
                 /* jump forward */
                 /* <JUMP> <offset> */
                 //TRACE(pidx, ptr, "JUMP " + (int) pattern[pidx]);
-                pidx += (int)pattern[pidx];
+                pidx += pattern[pidx];
                 break;
 
             case SRE_OP_ASSERT:
@@ -729,25 +730,32 @@ for line in sys.stdin:
 
             case SRE_OP_BRANCH:
                 /* try an alternate branch */
-                /* <BRANCH> <0=skip> code <JUMP> ... <NULL> */
-                //TRACE(pidx, ptr, "BRANCH");
-                lastmark = this.lastmark;
-                for (; pattern[pidx] != 0; pidx += pattern[pidx]) {
-                    if (pattern[pidx+1] == SRE_OP_LITERAL &&
-                        (ptr >= end || str[ptr] != pattern[pidx+2]))
-                        continue;
-                    if (pattern[pidx+1] == SRE_OP_IN && (ptr >= end ||
-                                !SRE_CHARSET(pattern, pidx + 3, str[ptr])))
-                        continue;
-                    this.ptr = ptr;
-                    i = SRE_MATCH(pattern, pidx + 1, level + 1);
-                    if (i != 0)
-                        return i;
-                    while (this.lastmark > lastmark)
-                        mark[this.lastmark--] = -1;
-                }
-
-                return 0;
+                    /* <BRANCH> <0=skip> code <JUMP> ... <NULL> */
+                    // TRACE(pidx, ptr, "BRANCH");
+                    lastmark = this.lastmark;
+                    lastindex = this.lastindex;
+                    if(this.repeat != null) {
+                        mark_stack_base = mark_save(0, lastmark);
+                    }
+                    for(; pattern[pidx] != 0; pidx += pattern[pidx]) {
+                        if(pattern[pidx + 1] == SRE_OP_LITERAL
+                                && (ptr >= end || str[ptr] != pattern[pidx + 2]))
+                            continue;
+                        if(pattern[pidx + 1] == SRE_OP_IN
+                                && (ptr >= end || !SRE_CHARSET(pattern,
+                                                               pidx + 3,
+                                                               str[ptr])))
+                            continue;
+                        this.ptr = ptr;
+                        i = SRE_MATCH(pattern, pidx + 1, level + 1);
+                        if(i != 0)
+                            return i;
+                        if(this.repeat != null) {
+                            mark_restore(0, lastmark, mark_stack_base);
+                        }
+                        LASTMARK_RESTORE(lastmark, lastindex);
+                    }
+                    return 0;
 
             case SRE_OP_REPEAT_ONE:
                 /* match repeated sequence (maximizing regexp) */
@@ -786,8 +794,11 @@ for line in sys.stdin:
                     /* tail is empty.  we're finished */
                     this.ptr = ptr;
                     return 1;
-
-                } else if (pattern[pidx + pattern[pidx]] == SRE_OP_LITERAL) {
+                }
+                lastmark = this.lastmark;
+                lastindex = this.lastindex;
+                
+                if (pattern[pidx + pattern[pidx]] == SRE_OP_LITERAL) {
                     /* tail starts with a literal. skip positions where
                        the rest of the pattern cannot possibly match */
                     chr = pattern[pidx + pattern[pidx]+1];
@@ -806,6 +817,7 @@ for line in sys.stdin:
                             return 1;
                         ptr--;
                         count--;
+                        LASTMARK_RESTORE(lastmark, lastindex);
                     }
 
                 } else {
@@ -819,8 +831,71 @@ for line in sys.stdin:
                             return i;
                         ptr--;
                         count--;
-                        while (this.lastmark > lastmark)
-                            mark[this.lastmark--] = -1;
+                        LASTMARK_RESTORE(lastmark, lastindex);
+                    }
+                }
+                return 0;
+                
+            case SRE_OP_MIN_REPEAT_ONE:
+                /* match repeated sequence (minimizing regexp) */
+
+                /* this operator only works if the repeated item is
+                   exactly one character wide, and we're not already
+                   collecting backtracking points.  for other cases,
+                   use the MIN_REPEAT operator */
+
+                /* <MIN_REPEAT_ONE> <skip> <1=min> <2=max> item <SUCCESS> tail */
+
+
+                //TRACE(pidx, ptr, "MIN_REPEAT_ONE");
+
+                if (ptr + pattern[pidx+1] > end)
+                    return 0; /* cannot match */
+
+                this.ptr = ptr;
+
+                if (pattern[pidx+1] == 0)
+                    count = 0;
+                else {
+
+                    count = SRE_COUNT(pattern, pidx + 3, pattern[pidx+1],
+                                      level + 1);
+
+                    if (count < 0)
+                        return count;   /* exception */
+                    if (count < pattern[pidx+1])
+                        return 0;       /* did not match minimum number of times */
+                    ptr += count;       /* advance past minimum matches of repeat */
+                }
+
+                if (pattern[pidx + pattern[pidx]] == SRE_OP_SUCCESS) {
+                    /* tail is empty.  we're finished */
+                    this.ptr = ptr;
+                    return 1;
+
+                } else {
+                    /* general case */
+                    boolean matchmax = (pattern[pidx + 2] == 65535);
+                    int c;
+                    lastmark = this.lastmark;
+                    lastindex = this.lastindex;
+                    while (matchmax || count <= pattern[pidx + 2]) {
+                        this.ptr = ptr;
+                        i = SRE_MATCH(pattern, pidx + pattern[pidx], level + 1);
+                        if (i != 0)
+                            return i;
+                        this.ptr = ptr;
+                        c = SRE_COUNT(pattern, pidx+3, 1, level+1);
+                        if (c < 0)
+                            return c;
+                        if (c == 0)
+                            break;
+                        if(c != 1){
+                            throw new IllegalStateException("c should be 1!");
+                        }
+                        ptr++;
+                        count++;
+                        LASTMARK_RESTORE(lastmark, lastindex);
                     }
                 }
                 return 0;
@@ -880,13 +955,14 @@ for line in sys.stdin:
                        match another item, do so */
                     rp.count = count;
                     lastmark = this.lastmark;
-                    mark_save(0, lastmark);
+                    lastindex = this.lastindex;
+                    mark_stack_base = mark_save(0, lastmark);
                     /* RECURSIVE */
                     i = SRE_MATCH(pattern, rp.pidx + 3, level + 1);
                     if (i != 0)
                         return i;
-                    mark_restore(0, lastmark);
-                    this.lastmark = lastmark;
+                    mark_restore(0, lastmark, mark_stack_base);
+                    LASTMARK_RESTORE(lastmark, lastindex);
                     rp.count = count - 1;
                     this.ptr = ptr;
                 }
@@ -910,11 +986,11 @@ for line in sys.stdin:
                 if (rp == null)
                     return SRE_ERROR_STATE;
 
+                this.ptr = ptr;
+
                 count = rp.count + 1;
 
-                //TRACE(pidx, ptr, "MIN_UNTIL " + count + " " + rp.pidx);
-
-                this.ptr = ptr;
+               //TRACE(pidx, ptr, "MIN_UNTIL " + count + " " + rp.pidx);
 
                 if (count < pattern[rp.pidx + 1]) {
                     /* not enough matches */
@@ -927,6 +1003,9 @@ for line in sys.stdin:
                     this.ptr = ptr;
                     return 0;
                 }
+                
+                lastmark = this.lastmark;
+                lastindex = this.lastindex;
 
                 /* see if the tail matches */
                 this.repeat = rp.prev;
@@ -940,6 +1019,7 @@ for line in sys.stdin:
                 if (count >= pattern[rp.pidx+2] &&
                                                 pattern[rp.pidx+2] != 65535)
                     return 0;
+                LASTMARK_RESTORE(lastmark, lastindex);
 
                 rp.count = count;
                 /* RECURSIVE */
@@ -952,13 +1032,23 @@ for line in sys.stdin:
 
 
             default:
-                TRACE(pidx, ptr, "UNKNOWN " + (int) pattern[pidx-1]);
+                //TRACE(pidx, ptr, "UNKNOWN " + (int) pattern[pidx-1]);
                 return SRE_ERROR_ILLEGAL;
             }
         }
 
-        //return SRE_ERROR_ILLEGAL;
+        /* can't end up here */
+        /* return SRE_ERROR_ILLEGAL; -- see python-dev discussion */
     }
+
+    private void LASTMARK_RESTORE(int lastmark, int lastindex) {
+        if(this.lastmark > lastmark) {
+            while(this.lastmark > lastmark)
+                mark[this.lastmark--] = -1;
+            this.lastindex = lastindex;
+        }
+    }
+    
     int SRE_SEARCH(char[] pattern, int pidx) {
         int ptr = this.start;
         int end = this.end;
@@ -976,7 +1066,7 @@ for line in sys.stdin:
 
             flags = pattern[pidx+2];
 
-            if (pattern[pidx+3] > 0) {
+            if (pattern[pidx+3] > 1) {
                 /* adjust end point (but make sure we leave at least one
                    character in there, so literal search will work) */
                 end -= pattern[pidx+3]-1;

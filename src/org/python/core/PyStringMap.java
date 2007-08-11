@@ -240,6 +240,23 @@ public class PyStringMap extends PyObject
         }
     }
 
+    public synchronized PyObject __getitem__(String key) {
+        PyObject o=__finditem__(key);
+        if (null == o) {
+            throw Py.KeyError("'"+key+"'");
+        } else {
+            return o;
+        }
+    }
+    
+    public PyObject __getitem__(PyObject key) {
+        if (key instanceof PyString) {
+            return __getitem__(((PyString)key).internedString());
+        } else {
+            throw Py.KeyError(key.toString());
+        }
+    }
+
     /**
      * Remove all items from the dictionary.
      */
@@ -460,7 +477,7 @@ public class PyStringMap extends PyObject
 
         popfinger = index + 1;
         PyObject key = Py.newString(table[index]);
-        PyObject val = (PyObject) values[index];
+        PyObject val = values[index];
 
         table[index] = "<deleted key>";
         values[index] = null;
@@ -543,6 +560,7 @@ public class PyStringMap extends PyObject
         }
         return l;
     }
+    
     /**
      * return an iterator over (key, value) pairs
      */

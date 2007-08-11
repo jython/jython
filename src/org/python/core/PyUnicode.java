@@ -1464,7 +1464,13 @@ public class PyUnicode extends PyString {
 
     final static PyObject unicode_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("unicode", args, keywords, new String[] { "string", "encoding", "errors" }, 0);
+        ArgParser ap = new ArgParser("unicode",
+                                     args,
+                                     keywords,
+                                     new String[] {"string",
+                                                   "encoding",
+                                                   "errors"},
+                                     0);
         PyObject S = ap.getPyObject(0, null);
         String encoding = ap.getString(1, null);
         String errors = ap.getString(2, null);
@@ -1473,7 +1479,7 @@ public class PyUnicode extends PyString {
                 return new PyUnicode("");
             }
             if (S instanceof PyUnicode) {
-                return S;
+                return new PyUnicode( (String)S.__tojava__(String.class) );
             }
             if (S instanceof PyString) {
                 return new PyUnicode(codecs.decode((PyString)S, encoding, errors));
@@ -1520,11 +1526,11 @@ public class PyUnicode extends PyString {
     }
 
     public PyString __repr__() {
-        return new PyString('u' + encode_UnicodeEscape(string, true, true));
+        return new PyUnicode("u" + encode_UnicodeEscape(string, true));
     }
 
     public String unicode_toString() {
-        return str_toString();
+        return "u" + str_toString();
     }
 
     final int unicode___cmp__(PyObject other) {
@@ -1754,7 +1760,7 @@ public class PyUnicode extends PyString {
     }
 
     final String unicode_translate(PyObject table) {
-        return _codecs.charmap_decode(string, "ignore", table).__getitem__(0).toString();
+        return _codecs.charmap_decode(string, "ignore", table, true).__getitem__(0).toString();
     }
 
     final boolean unicode_islower() {
@@ -1820,6 +1826,9 @@ public class PyUnicode extends PyString {
     final String unicode_decode(String encoding, String errors) {
         return str_decode(encoding, errors);
     }
-
+    
+    final PyTuple unicode___getnewargs__() {
+        return new PyTuple(new PyObject[] {new PyUnicode(this.string)});
+    }
 
 }

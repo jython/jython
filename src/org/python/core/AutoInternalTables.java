@@ -2,10 +2,11 @@
 
 package org.python.core;
 
-import java.lang.ref.*;
-import java.util.*;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.util.Map;
 
-public abstract class AutoInternalTables extends InternalTables2 {
+public abstract class AutoInternalTables extends InternalTables {
 
     protected ReferenceQueue queue = new ReferenceQueue();
 
