@@ -404,7 +404,6 @@ public class cPickle implements ClassDictInit {
     final static char BINFLOAT        = 'G';
 
     private static PyDictionary dispatch_table = null;
-    private static PyDictionary safe_constructors = null;
 
 
     private static PyType BuiltinFunctionType =
@@ -458,8 +457,6 @@ public class cPickle implements ClassDictInit {
         PyModule copyreg = (PyModule)importModule("copy_reg");
 
         dispatch_table = (PyDictionary)copyreg.__getattr__("dispatch_table");
-        // safe_constructors = (PyDictionary)
-        //                             copyreg.__getattr__("safe_constructors");
 
         PickleError       = buildClass("PickleError", Py.Exception,
                                        "_PickleError", "");
@@ -1912,15 +1909,6 @@ public class cPickle implements ClassDictInit {
         final private void load_reduce() {
             PyObject arg_tup = pop();
             PyObject callable = pop();
-            if (!((callable instanceof PyClass) || (callable instanceof PyType))) {
-                if (safe_constructors.__finditem__(callable) == null) {
-                    if (callable.__findattr__("__safe_for_unpickling__")
-                                                              == null)
-                        throw new PyException(UnpicklingError,
-                                callable + " is not safe for unpickling");
-                }
-            }
-
             PyObject value = null;
             if (arg_tup == Py.None) {
                 // XXX __basicnew__ ?
