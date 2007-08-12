@@ -341,11 +341,6 @@ class BoolTest(unittest.TestCase):
         check(Baz())
 
 # Jython transition 2.3
-# pickle doesn't work on bool
-# http://jython.org/bugs/1758317
-del BoolTest.test_picklevalues
-del BoolTest.test_mixedpickle
-del BoolTest.test_cpickle
 #operator missing is function
 # http://jython.org/bugs/1758315
 del BoolTest.test_operator

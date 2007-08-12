@@ -439,6 +439,8 @@ public class cPickle implements ClassDictInit {
                             PyType.fromClass(PyTuple.class);
     private static PyType FileType =
                             PyType.fromClass(PyFile.class);
+    private static PyType BoolType =
+                            PyType.fromClass(PyBoolean.class);
 
 
     private static PyObject dict;
@@ -1030,6 +1032,8 @@ public class cPickle implements ClassDictInit {
                 save_global(object);
             else if (type == BuiltinFunctionType)
                 save_global(object);
+            else if (type == BoolType)
+                save_bool(object);
             else
                 return false;
             return true;
@@ -1070,6 +1074,13 @@ public class cPickle implements ClassDictInit {
                 file.write(object.toString());
                 file.write("\n");
             }
+        }
+
+        private void save_bool(PyObject object) {
+            int value = ((PyBoolean) object).getValue();
+            file.write(INT);
+            file.write(value != 0 ? "01" : "00");
+            file.write("\n");
         }
 
 
@@ -1654,13 +1665,21 @@ public class cPickle implements ClassDictInit {
             PyObject value;
             // The following could be abstracted into a common string
             // -> int/long method.
-            try {
-                value = Py.newInteger(Integer.parseInt(line));
-            } catch(NumberFormatException e) {
+            if (line.equals("01")) {
+                value = Py.newBoolean(true);
+            }
+            else if (line.equals("00")) {
+                value = Py.newBoolean(false);
+            }
+            else {
                 try {
-                    value = Py.newLong(line);
-                } catch(NumberFormatException e2) {
-                    throw Py.ValueError("could not convert string to int");
+                    value = Py.newInteger(Integer.parseInt(line));
+                } catch(NumberFormatException e) {
+                    try {
+                        value = Py.newLong(line);
+                    } catch(NumberFormatException e2) {
+                        throw Py.ValueError("could not convert string to int");
+                    }
                 }
             }
             push(value);
