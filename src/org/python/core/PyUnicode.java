@@ -360,7 +360,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyUnicode(((PyUnicode)self).unicode_decode(arg0.asString(0),arg1.asString(1)));
+                    return((PyUnicode)self).unicode_decode(arg0.asString(0),arg1.asString(1));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -377,7 +377,7 @@ public class PyUnicode extends PyString {
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyUnicode(((PyUnicode)self).unicode_decode(arg0.asString(0)));
+                    return((PyUnicode)self).unicode_decode(arg0.asString(0));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -392,7 +392,7 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__() {
-                return new PyUnicode(((PyUnicode)self).unicode_decode());
+                return((PyUnicode)self).unicode_decode();
             }
 
         }
@@ -1482,7 +1482,7 @@ public class PyUnicode extends PyString {
                 return new PyUnicode( (String)S.__tojava__(String.class) );
             }
             if (S instanceof PyString) {
-                return new PyUnicode(codecs.decode((PyString)S, encoding, errors));
+                return new PyUnicode(codecs.decode((PyString)S, encoding, errors).toString());
             }
             return S.__unicode__();
         } else {
@@ -1815,15 +1815,15 @@ public class PyUnicode extends PyString {
         return str_encode(encoding, errors);
     }
 
-    final String unicode_decode() {
+    final PyObject unicode_decode() {
         return str_decode();
     }
 
-    final String unicode_decode(String encoding) {
+    final PyObject unicode_decode(String encoding) {
         return str_decode(encoding);
     }
 
-    final String unicode_decode(String encoding, String errors) {
+    final PyObject unicode_decode(String encoding, String errors) {
         return str_decode(encoding, errors);
     }
     

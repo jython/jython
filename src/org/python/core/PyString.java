@@ -449,7 +449,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             public PyObject __call__(PyObject arg0,PyObject arg1) {
                 try {
-                    return new PyUnicode(((PyString)self).str_decode(arg0.asString(0),arg1.asString(1)));
+                    return((PyString)self).str_decode(arg0.asString(0),arg1.asString(1));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -466,7 +466,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
             public PyObject __call__(PyObject arg0) {
                 try {
-                    return new PyUnicode(((PyString)self).str_decode(arg0.asString(0)));
+                    return((PyString)self).str_decode(arg0.asString(0));
                 } catch (PyObject.ConversionException e) {
                     String msg;
                     switch (e.index) {
@@ -481,7 +481,7 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
 
             public PyObject __call__() {
-                return new PyUnicode(((PyString)self).str_decode());
+                return((PyString)self).str_decode();
             }
 
         }
@@ -3571,27 +3571,27 @@ public class PyString extends PyBaseString implements ClassDictInit
         return codecs.encode(this, encoding, errors);
     }
 
-    public String decode() {
+    public PyObject decode() {
         return str_decode();
     }
 
-    final String str_decode() {
+    final PyObject str_decode() {
         return str_decode(null, null); // xxx
     }
 
-    public String decode(String encoding) {
+    public PyObject decode(String encoding) {
         return str_decode(encoding);
     }
 
-    final String str_decode(String encoding) {
+    final PyObject str_decode(String encoding) {
         return str_decode(encoding, null);
     }
 
-    public String decode(String encoding, String errors) {
+    public PyObject decode(String encoding, String errors) {
         return str_decode(encoding, errors);
     }
 
-    final String str_decode(String encoding, String errors) {
+    final PyObject str_decode(String encoding, String errors) {
         return codecs.decode(this, encoding, errors);
     }
 

@@ -130,7 +130,7 @@ public class codecs {
 
 
 
-    public static String decode(PyString v, String encoding,
+    public static PyObject decode(PyString v, String encoding,
                                   String errors)
     {
         if (encoding == null) {
@@ -145,8 +145,8 @@ public class codecs {
 
         /* Shortcut for ascii encoding */
         if (encoding.equals("ascii")) {
-            return PyUnicode_DecodeASCII(v.toString(),
-                                                      v.__len__(), errors);
+            return new PyUnicode(PyUnicode_DecodeASCII(v.toString(),
+                                                      v.__len__(), errors));
         }
 
         /* Decode via the codec registry */
@@ -162,7 +162,7 @@ public class codecs {
             throw Py.TypeError("decoder must return a tuple " +
                                "(object,integer)");
         }
-        return result.__getitem__(0).toString();
+        return result.__getitem__(0);
     }
 
 

@@ -44,6 +44,13 @@ public class _codecs {
         });
     }
 
+    private static PyTuple decode_tuple_str(String s, int len) {
+        return new PyTuple(new PyObject[] {
+            new PyString(s),
+            Py.newInteger(len)
+        });
+    }
+
     private static PyTuple encode_tuple(String s, int len) {
         return new PyTuple(new PyObject[] {
             Py.java2py(s),
@@ -100,7 +107,7 @@ public class _codecs {
     }
 
     public static PyTuple escape_decode(String str, String errors) {
-        return decode_tuple(PyString.decode_UnicodeEscape(str,
+        return decode_tuple_str(PyString.decode_UnicodeEscape(str,
                                                           0,
                                                           str.length(),
                                                           errors,

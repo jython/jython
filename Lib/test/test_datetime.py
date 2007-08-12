@@ -2931,16 +2931,6 @@ def test_suite():
                 ]
     return unittest.TestSuite(allsuites)
 
-# Jython transition 2.3
-# pickling doesn't work on any of the types in datetime
-# http://jython.org/bugs/1758312
-del TestDate.test_pickling
-del TestDateTime.test_pickling
-del TestDateTime.test_more_pickling
-del TestTime.test_pickling
-del TestDateTimeTZ.test_pickling
-del TestTimeTZ.test_pickling
-
 def test_main():
     #import gc
     import sys
