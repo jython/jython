@@ -227,7 +227,21 @@ class LazyDict( UserDict ):
     def popitem(self):
         self.__populate()
         return UserDict.popitem( self )
-
+    def pop(self):
+      self.__populate()
+      return UserDict.pop(self)
+    def iteritems(self):
+      self.__populate()
+      return UserDict.iteritems(self)
+    def iterkeys(self):
+      self.__populate()
+      return UserDict.iterkeys(self)
+    def itervalues(self):
+      self.__populate()
+      return UserDict.itervalues(self)
+    def __contains__(self, key):
+      self.__populate()
+      return UserDict.__contains__(self, key)
 
 # Provide lazy environ, popen*, and system objects
 # Do these lazily, as most jython programs don't need them,
