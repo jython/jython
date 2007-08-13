@@ -2746,15 +2746,16 @@ public class PyString extends PyBaseString implements ClassDictInit
         int[] indices = translateIndices(start, end);
         int n = sub.length();
         if(n == 0) {
-            return indices[1] - indices[0];
+            return indices[1] - indices[0] + 1;
         }
         int count = 0;
-        for(; indices[0] < indices[1]; count++) {
+        while(true){
             int index = string.indexOf(sub, indices[0]);
-            if(index >= indices[1] || index == -1) {
+            indices[0] = index + n;
+            if(indices[0] > indices[1] || index == -1) {
                 break;
             }
-            indices[0] = index + n;
+            count++;
         }
         return count;
     }
