@@ -23,8 +23,5 @@ expose_meth: __hash__
   return Py.newInteger(((`typ)self).long_hashCode());
 # TODO
 # (__coerce__, __doc__)
-<<<<<<< .working
 #
 # (( __rand__, __rdivmod__, __rlshift__,  __ror__, __rrshift__, __rxor__, __rpow__ ))
-=======
->>>>>>> .merge-right.r3159
