@@ -341,9 +341,6 @@ class BoolTest(unittest.TestCase):
         check(Baz())
 
 # Jython transition 2.3
-#operator missing is function
-# http://jython.org/bugs/1758315
-del BoolTest.test_operator
 # boolean attribute returns int not bool
 # http://jython.org/bugs/1758276
 del BoolTest.test_fileclosed

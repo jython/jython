@@ -58,6 +58,8 @@ class OperatorFunctions extends PyBuiltinFunctionSet
         case 34: return arg1._ne(arg2);
         case 35: return arg1._truediv(arg2);
         case 36: return arg1._pow(arg2);
+        case 37: return arg1._is(arg2);
+        case 38: return arg1._isnot(arg2);
         default:
             throw info.unexpectedCall(2, false);
         }
@@ -201,6 +203,10 @@ public class operator implements ClassDictInit
                         new OperatorFunctions("__truediv__", 35, 2));
         dict.__setitem__("pow", new OperatorFunctions("pow", 36, 2));
         dict.__setitem__("__pow__", new OperatorFunctions("pow", 36, 2));
+        dict.__setitem__("is_", new OperatorFunctions("is_", 37, 2));
+        dict.__setitem__("__is__", new OperatorFunctions("__is__", 37, 2));
+        dict.__setitem__("is_not", new OperatorFunctions("is_not", 38, 2));
+        dict.__setitem__("__is_not__", new OperatorFunctions("__is_not__", 38, 2));
     }
 
     public static int countOf(PyObject seq, PyObject item) {
