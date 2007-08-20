@@ -18,13 +18,13 @@ public class CodeReader implements PythonOpCodes {
     private interface VisitableInstruction {
 
         /**
-         * Let a {@link CodeVisitor} visit the instruction held by this
+         * Let a {@link BytecodeVisitor} visit the instruction held by this
          * {@link VisitableInstruction}.
          * 
-         * @param codeVisitor The {@link CodeVisitor} that should visit the
+         * @param codeVisitor The {@link BytecodeVisitor} that should visit the
          *            instruction.
          */
-        public void accept(CodeVisitor codeVisitor);
+        public void accept(BytecodeVisitor codeVisitor);
 
     }
 
@@ -36,7 +36,7 @@ public class CodeReader implements PythonOpCodes {
             this.label = label;
         }
 
-        public void accept(CodeVisitor codeVisitor) {
+        public void accept(BytecodeVisitor codeVisitor) {
             codeVisitor.visitLabel(label);
         }
 
@@ -53,7 +53,7 @@ public class CodeReader implements PythonOpCodes {
             this.lineNumber = lineNumber;
         }
 
-        public void accept(CodeVisitor codeVisitor) {
+        public void accept(BytecodeVisitor codeVisitor) {
             codeVisitor.visitLineNumber(lineNumber);
         }
     }
@@ -80,7 +80,7 @@ public class CodeReader implements PythonOpCodes {
             this(inCase ? JUMP_IF_TRUE : JUMP_IF_FALSE, label);
         }
 
-        public void accept(CodeVisitor codeVisitor) {
+        public void accept(BytecodeVisitor codeVisitor) {
             switch (kind) {
             case REGULAR_JUMP:
                 codeVisitor.visitJump(label);
@@ -129,7 +129,7 @@ public class CodeReader implements PythonOpCodes {
                     resume[i] = (Label) labels.next();
                 }
                 result.add(new VisitableInstruction() {
-                    public void accept(CodeVisitor codeVisitor) {
+                    public void accept(BytecodeVisitor codeVisitor) {
                         codeVisitor.visitResumeTable(start, resume);
                         codeVisitor.visitLabel(start);
                     }
@@ -162,7 +162,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitStopCode() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitStopCode();
                 }
             });
@@ -171,7 +171,7 @@ public class CodeReader implements PythonOpCodes {
         // Simple stack operations
         void visitNOP() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitNOP();
                 }
             });
@@ -179,7 +179,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitPop() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitPop();
                 }
             });
@@ -187,7 +187,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitDup() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitDup(1);
                 }
             });
@@ -195,7 +195,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitRotTwo() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitRot(2);
                 }
             });
@@ -203,7 +203,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitRotThree() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitRot(3);
                 }
             });
@@ -211,7 +211,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitRotFour() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitRot(4);
                 }
             });
@@ -219,7 +219,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitDupTopX(final int x) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitDup(x);
                 }
             });
@@ -252,7 +252,7 @@ public class CodeReader implements PythonOpCodes {
             }
 
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitUnaryOperator(operator);
                 }
             });
@@ -310,7 +310,7 @@ public class CodeReader implements PythonOpCodes {
             }
 
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitBinaryOperator(operator);
                 }
             });
@@ -366,7 +366,7 @@ public class CodeReader implements PythonOpCodes {
             }
 
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitInplaceOperator(operator);
                 }
             });
@@ -374,7 +374,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitCompareOperator(final int opid) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitCompareOperator(opid);
                 }
             });
@@ -384,7 +384,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitListAppend() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitListAppend();
                 }
             });
@@ -392,7 +392,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitStoreSubscript() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitStoreSubscript();
                 }
             });
@@ -400,7 +400,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitDeleteSubscript() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitDeleteSubscript();
                 }
             });
@@ -408,7 +408,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitSlice(final int plus) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitLoadSlice(plus);
                 }
             });
@@ -416,7 +416,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitStoreSlice(final int plus) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitStoreSlice(plus);
                 }
             });
@@ -424,7 +424,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitDeleteSlice(final int plus) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitDeleteSlice(plus);
                 }
             });
@@ -432,7 +432,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitBuildSlice(final int numargs) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitBuildSlice(numargs);
                 }
             });
@@ -442,7 +442,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitPrintExpression() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitPrintExpression();
                 }
             });
@@ -450,7 +450,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitPrintItem() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitPrintItem();
                 }
             });
@@ -458,7 +458,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitPrintNewline() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitPrintNewline();
                 }
             });
@@ -466,7 +466,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitPrintItemTo() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitPrintItemTo();
                 }
             });
@@ -474,7 +474,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitPrintNewlineTo() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitPrintNewlineTo();
                 }
             });
@@ -484,7 +484,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitReturnValue() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitReturnValue();
                 }
             });
@@ -495,7 +495,7 @@ public class CodeReader implements PythonOpCodes {
             generatorLabels.add(resume);
             final int index = generatorLabels.size();
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitYieldValue(index, resume);
                 }
             });
@@ -503,7 +503,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitRaiseVarargs(final int count) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitRaiseVarargs(count);
                 }
             });
@@ -513,7 +513,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitWithCleanup() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitWithCleanup();
                 }
             });
@@ -521,7 +521,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitExecStatement() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitExecStatement();
                 }
             });
@@ -529,7 +529,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitUnpackSequence(final int count) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitUnpackSequence(count);
                 }
             });
@@ -539,7 +539,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitImportName(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitImportName(codeVisitor.getName(index));
                 }
             });
@@ -547,7 +547,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitImportFrom(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitImportFrom(codeVisitor.getName(index));
                 }
             });
@@ -555,7 +555,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitImportStar() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitImportStar();
                 }
             });
@@ -565,7 +565,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitLoadLocals() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitLoadLocals();
                 }
             });
@@ -573,15 +573,15 @@ public class CodeReader implements PythonOpCodes {
 
         void visitLoadConstant(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
-                    codeVisitor.visitLoadConstant(index);
+                public void accept(BytecodeVisitor codeVisitor) {
+                    codeVisitor.visitLoadConstant(codeVisitor.getConstant(index));
                 }
             });
         }
 
         void visitLoadName(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitLoadName(codeVisitor.getName(index));
                 }
             });
@@ -589,7 +589,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitStoreName(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitStoreName(codeVisitor.getName(index));
                 }
             });
@@ -597,7 +597,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitDeleteName(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitDeleteName(codeVisitor.getName(index));
                 }
             });
@@ -605,7 +605,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitLoadFast(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitLoadFast(codeVisitor.getVariableName(index));
                 }
             });
@@ -613,7 +613,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitStoreFast(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitStoreFast(codeVisitor.getVariableName(index));
                 }
             });
@@ -621,7 +621,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitDeleteFast(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitDeleteFast(codeVisitor.getVariableName(index));
                 }
             });
@@ -629,7 +629,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitLoadGlobal(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitLoadGlobal(codeVisitor.getName(index));
                 }
             });
@@ -637,7 +637,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitStoreGlobal(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitStoreGlobal(codeVisitor.getName(index));
                 }
             });
@@ -645,7 +645,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitDeleteGlobal(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitDeleteGlobal(codeVisitor.getName(index));
                 }
             });
@@ -653,7 +653,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitLoadAttribute(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitLoadAttribute(codeVisitor.getName(index));
                 }
             });
@@ -661,7 +661,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitStoreAttribute(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitStoreAttribute(codeVisitor.getName(index));
                 }
             });
@@ -669,7 +669,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitDeleteAttribute(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitDeleteAttribute(codeVisitor.getName(index));
                 }
             });
@@ -679,7 +679,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitBuildTuple(final int size) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitBuildTuple(size);
                 }
             });
@@ -687,7 +687,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitBuildList(final int size) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitBuildList(size);
                 }
             });
@@ -695,7 +695,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitBuildMap(final int size) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitBuildMap(size);
                 }
             });
@@ -703,7 +703,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitBuildClass() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitBuildClass();
                 }
             });
@@ -713,7 +713,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitMakeFunction(final int num_default) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitMakeFunction(num_default);
                 }
             });
@@ -721,7 +721,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitMakeClosure(final int num_default) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitMakeClosure(num_default);
                 }
             });
@@ -729,7 +729,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitLoadClosure(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitLoadClosure(codeVisitor.getOuterName(index));
                 }
             });
@@ -737,7 +737,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitLoadDeref(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitLoadDeref(codeVisitor.getOuterName(index));
                 }
             });
@@ -745,7 +745,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitStoreDeref(final int index) {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitStoreDeref(codeVisitor.getOuterName(index));
                 }
             });
@@ -757,7 +757,7 @@ public class CodeReader implements PythonOpCodes {
             final int num_positional = arg & 255;
             final int num_keyword = (arg >> 8) & 255;
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitCallFunction(num_positional, num_keyword);
                 }
             });
@@ -767,7 +767,7 @@ public class CodeReader implements PythonOpCodes {
             final int num_positional = arg & 255;
             final int num_keyword = (arg >> 8) & 255;
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitCallFunctionVararg(num_positional,
                             num_keyword);
                 }
@@ -778,7 +778,7 @@ public class CodeReader implements PythonOpCodes {
             final int num_positional = arg & 255;
             final int num_keyword = (arg >> 8) & 255;
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitCallFunctionKeyword(num_positional,
                             num_keyword);
                 }
@@ -789,7 +789,7 @@ public class CodeReader implements PythonOpCodes {
             final int num_positional = arg & 255;
             final int num_keyword = (arg >> 8) & 255;
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitCallFunctionVarargKeyword(num_positional,
                             num_keyword);
                 }
@@ -800,7 +800,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitGetIterator() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitGetIterator();
                 }
             });
@@ -808,7 +808,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitBreakLoop() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitBreakLoop();
                 }
             });
@@ -818,7 +818,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitPopBlock() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitPopBlock();
                 }
             });
@@ -826,7 +826,7 @@ public class CodeReader implements PythonOpCodes {
 
         void visitEndFinally() {
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitEndFinally();
                 }
             });
@@ -835,7 +835,7 @@ public class CodeReader implements PythonOpCodes {
         void visitForIteration(int arg) {
             final Label label = newLabel(getAbsoluteAddress(arg));
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitForIteration(label);
                 }
             });
@@ -844,7 +844,7 @@ public class CodeReader implements PythonOpCodes {
         void visitContinueLoop(int arg) {
             final Label label = newLabel(arg);
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitContinueLoop(label);
                 }
             });
@@ -853,7 +853,7 @@ public class CodeReader implements PythonOpCodes {
         void visitSetupLoop(int arg) {
             final Label label = newLabel(getAbsoluteAddress(arg));
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitSetupLoop(label);
                 }
             });
@@ -862,7 +862,7 @@ public class CodeReader implements PythonOpCodes {
         void visitSetupExcept(int arg) {
             final Label label = newLabel(getAbsoluteAddress(arg));
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitSetupExcept(label);
                 }
             });
@@ -871,7 +871,7 @@ public class CodeReader implements PythonOpCodes {
         void visitSetupFinally(int arg) {
             final Label label = newLabel(getAbsoluteAddress(arg));
             addInstruction(new VisitableInstruction() {
-                public void accept(CodeVisitor codeVisitor) {
+                public void accept(BytecodeVisitor codeVisitor) {
                     codeVisitor.visitSetupFinally(label);
                 }
             });
@@ -915,7 +915,7 @@ public class CodeReader implements PythonOpCodes {
      * correct behaviour. This can be fixed in a number of ways:
      * 
      * 1. The interpretation can be started at the first invocation of
-     * {@link #accept(CodeVisitor)}.
+     * {@link #accept(BytecodeVisitor)}.
      * 
      * 2. The interpretatin method can be made <code>protected</code>, and a
      * protected empty constructor could be provided.
@@ -928,8 +928,9 @@ public class CodeReader implements PythonOpCodes {
      *            object.
      * @param lineNumberTable The line number increment table. (Documented in
      *            compile.c in the Python source)
+     * @throws BytecodeError when errors are found in the bytecode.
      */
-    public CodeReader(char[] bytes, int firstLineNumber, char[] lineNumberTable) {
+    public CodeReader(char[] bytes, int firstLineNumber, char[] lineNumberTable) throws BytecodeError {
         this.bytes = bytes;
         pos = 0;
 
@@ -969,13 +970,13 @@ public class CodeReader implements PythonOpCodes {
     }
 
     /**
-     * Let a {@link CodeVisitor} visit the instructions in the code read by this
+     * Let a {@link BytecodeVisitor} visit the instructions in the code read by this
      * {@link CodeReader}.
      * 
-     * @param visitor The {@link CodeVisitor} that should visit the
+     * @param visitor The {@link BytecodeVisitor} that should visit the
      *            instructions.
      */
-    public final void accept(CodeVisitor visitor) {
+    public final void accept(BytecodeVisitor visitor) {
         for (Iterator iter = instructions.iterator(); iter.hasNext();) {
             ((VisitableInstruction) iter.next()).accept(visitor);
         }
@@ -987,7 +988,7 @@ public class CodeReader implements PythonOpCodes {
      * create a {@link CodeReader} that reads from annother kind of source.
      * 
      * These are the only methods needed for reading since the code is read only
-     * once, regardless of the number of {@link CodeVisitor}s that visit the
+     * once, regardless of the number of {@link BytecodeVisitor}s that visit the
      * code.
      * 
      * @return The next byte in the sequence.
@@ -1001,7 +1002,7 @@ public class CodeReader implements PythonOpCodes {
      * create a {@link CodeReader} that reads from annother kind of source.
      * 
      * These are the only methods needed for reading since the code is read only
-     * once, regardless of the number of {@link CodeVisitor}s that visit the
+     * once, regardless of the number of {@link BytecodeVisitor}s that visit the
      * code.
      * 
      * @return <code>true</code> if there are more bytes in the code that can
@@ -1021,7 +1022,7 @@ public class CodeReader implements PythonOpCodes {
         return pos + relative;
     }
 
-    private Iterable interpret() {
+    private Iterable interpret() throws BytecodeError {
         RawVisitor visitor = new RawVisitor();
 
         while (hasData()) {
@@ -1345,11 +1346,11 @@ public class CodeReader implements PythonOpCodes {
                 break;
             case EXTENDED_ARG:
                 // FIXME: annother exception type ?
-                throw new RuntimeException(
+                throw new BytecodeError(
                         "Arugment extension two times in a row!");
             default:
                 // FIXME: annother exception type ?
-                throw new RuntimeException("Illegal opcode '" + op + "'.");
+                throw new BytecodeError("Illegal opcode '" + op + "'.");
             }
         }
         return visitor.compile();

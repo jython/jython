@@ -1,6 +1,8 @@
 // (C) Copyright 2007 Tobias Ivarsson
 package org.python.newcompiler.pyasm;
 
+import org.python.core.PyObject;
+
 /**
  * @author Tobias Ivarsson
  * 
@@ -14,44 +16,37 @@ package org.python.newcompiler.pyasm;
 public interface CodeVisitor {
 
     /**
-     * Visit a nested chunk of code.
+     * Define the code object that that this {@link ConstantStore} belongs to.
      * 
-     * FIXME: the set of parameters isn't worked out yet...
-     * 
-     * @param stuff Just some parameters...
-     * @return A {@link CodeVisitor} to visit the instructions of the nested
-     *         code object.
+     * @param argcount The number of arguments the code this
+     *            {@link ConstantStore} belongs to accepts.
+     * @param nlocals The number of local variables in the code this
+     *            {@link ConstantStore} belongs to.
+     * @param stacksize The size of the stack for the code this
+     *            {@link ConstantStore} belongs to.
+     * @param flags The compiler flags for the code this {@link ConstantStore}
+     *            belongs to.
+     * @param constants The constants used by the code this
+     *            {@link ConstantStore} belongs to.
+     * @param names The names accessed in the code this {@link ConstantStore}
+     *            belongs to.
+     * @param varnames The variable names used in the code this
+     *            {@link ConstantStore} belongs to.
+     * @param freevars The names of the free variables in the code this
+     *            {@link ConstantStore} belongs to.
+     * @param cellvars The names of the scoped variables in the code this
+     *            {@link ConstantStore} belongs to.
+     * @param filename The filename where the code this {@link ConstantStore}
+     *            belongs to is defined.
+     * @param name The name of the code object this {@link ConstantStore}
+     *            belongs to.
+     * @param firstlnno The first line number of the code block in the source
+     *            file.
      */
-    public CodeVisitor visitCode(Object[] stuff);
-
-    /* Name handling methods */
-
-    /**
-     * Get the name of a something the scope, given its index.
-     * 
-     * Used for everything but vaiables, for variables
-     * {@link #getVariableName(int)} is used.
-     * 
-     * @param index The index of the name.
-     * @return The name of the item.
-     */
-    public String getName(int index);
-
-    /**
-     * Get the name of a variable in the scope, given its index.
-     * 
-     * @param index The index of the name.
-     * @return The name of the variable.
-     */
-    public String getVariableName(int index);
-
-    /**
-     * Get the name of a variable in an enclosing scope, given its index.
-     * 
-     * @param index The index of the name.
-     * @return The name of the variable.
-     */
-    public String getOuterName(int index);
+    public void visitCode(long argcount, long nlocals, long stacksize,
+            long flags, PyObject[] constants, String[] names,
+            String[] varnames, String[] freevars, String[] cellvars,
+            String filename, String name, long firstlnno);
 
     /**
      * Indicates a change of line number in the source of the code.
@@ -304,6 +299,7 @@ public interface CodeVisitor {
     /**
      * Yield the value on the top of the stack from the generator this code
      * block implements.
+     * 
      * @param index The index of the yield point.
      * @param resume The label that marks the resume point after the yield.
      */
@@ -563,9 +559,9 @@ public interface CodeVisitor {
     /**
      * Load the constant with the given index onto the stack.
      * 
-     * @param index The index of the constant to load.
+     * @param constant The constant to load.
      */
-    public void visitLoadConstant(int index);
+    public void visitLoadConstant(PyObject constant);
 
     /*
      * NOTE: These methods could be folded into three: visitLoad, visitStore and

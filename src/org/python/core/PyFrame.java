@@ -20,6 +20,8 @@ public class PyFrame extends PyObject
     public int f_nfreevars;
     public int f_lasti;
     public Object[] f_savedlocals;
+    public PyObject[] f_stackstate; // newcompiler uses this to allow yield in loops
+    public int[] f_blockstate; // newcompiler uses this to allow yield in finally
 
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
@@ -81,24 +83,25 @@ public class PyFrame extends PyObject
     
     // begin newcompiler
     
-    private PyException exception = null;
-    private PyObject generatorInput = null;
+    private PyException generatorException = null;
+    private PyObject generatorInput = Py.None;
     
     public void setGeneratorException(PyException ex) {
-        exception = ex;
-        generatorInput = null;
+        generatorException = ex;
     }
     
     public void setGeneratorInput(PyObject value) {
-        exception = null;
+        generatorException = null;
         generatorInput = value;
     }
     
     public PyObject getGeneratorInput() {
-        if( exception != null ) {
-            throw exception;
+        if( generatorException != null ) {
+            throw Py.setException(generatorException, this);
         } else {
-            return generatorInput;
+            PyObject input = generatorInput;
+            generatorInput = Py.None;
+            return input;
         }
     }
 
