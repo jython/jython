@@ -232,10 +232,7 @@ class SysModuleTest(unittest.TestCase):
             self.assert_(isinstance(sys.api_version, int))
         self.assert_(isinstance(sys.argv, list))
         self.assert_(sys.byteorder in ("little", "big"))
-# Jython transition 2.3
-# sys.builtin_module_names is missing.
-# http://jython.org/bugs/1768984
-#        self.assert_(isinstance(sys.builtin_module_names, tuple))
+        self.assert_(isinstance(sys.builtin_module_names, tuple))
         self.assert_(isinstance(sys.copyright, basestring))
         self.assert_(isinstance(sys.exec_prefix, basestring))
         if test.test_support.is_jython:

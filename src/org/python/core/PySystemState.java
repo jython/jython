@@ -576,7 +576,7 @@ public class PySystemState extends PyObject
     }
 
     private static Hashtable builtinNames;
-    public static String[] builtin_module_names = null;
+    public static PyTuple builtin_module_names = null;
 
     private static void addBuiltin(String name) {
         String classname;
@@ -615,10 +615,11 @@ public class PySystemState extends PyObject
             addBuiltin(tok.nextToken());
 
         int n = builtinNames.size();
-        builtin_module_names = new String[n];
+        PyObject [] built_mod = new PyObject[n];        
         Enumeration keys = builtinNames.keys();
         for (int i=0; i<n; i++)
-            builtin_module_names[i] = (String)keys.nextElement();
+        	built_mod[i] = Py.newString((String)keys.nextElement());
+        builtin_module_names = new PyTuple(built_mod);
     }
 
     static String getBuiltin(String name) {
