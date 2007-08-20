@@ -1915,8 +1915,12 @@ public final class Py
         }
         return false;
     }
-        
+
     public static boolean isInstance(PyObject obj, PyObject cls) {
+        return isInstance(obj, cls, 0);
+    }
+    
+    private static boolean isInstance(PyObject obj, PyObject cls, int recursionDepth){
         if (cls instanceof PyType) {
             PyType objtype = obj.getType();
             if (objtype == cls)
@@ -1927,9 +1931,13 @@ public final class Py
                 return false;
             return ((PyClass) obj.fastGetClass()).isSubClass((PyClass) cls);
         } else if (cls.getClass() == PyTuple.class) {
+            if(recursionDepth > Py.getSystemState().getrecursionlimit()) {
+                throw Py.RuntimeError("nest level of tuple too deep");
+            }
             for (int i = 0; i < cls.__len__(); i++) {
-                if (isInstance(obj, cls.__getitem__(i)))
+                if (isInstance(obj, cls.__getitem__(i), recursionDepth + 1)) {
                     return true;
+                }
             }
             return false;
         } else {
@@ -1943,17 +1951,26 @@ public final class Py
             return abstract_issubclass(ocls, cls);
         }
     }
+	
     
     public static boolean isSubClass(PyObject derived,PyObject cls) {
+        return isSubClass(derived, cls, 0);
+    }
+     
+    private static boolean isSubClass(PyObject derived,PyObject cls, int recursionDepth) {
         if (derived instanceof PyType && cls instanceof PyType) {
             if (derived == cls) return true;
             return ((PyType)derived).isSubType((PyType)cls);
         } else if (cls instanceof PyClass && derived instanceof PyClass) {
             return ((PyClass)derived).isSubClass((PyClass)cls);            
         } else if (cls.getClass() == PyTuple.class) {
+            if(recursionDepth > Py.getSystemState().getrecursionlimit()) {
+                throw Py.RuntimeError("nest level of tuple too deep");
+            }
             for (int i = 0; i < cls.__len__(); i++) {
-                if (isSubClass(derived, cls.__getitem__(i)))
+                if (isSubClass(derived, cls.__getitem__(i), recursionDepth + 1)) {
                     return true;
+				}	
             }
             return false;
         } else {
