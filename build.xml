@@ -455,6 +455,8 @@ The readme text for the next release will be like:
                deprecation="${deprecation}"
                nowarn="${nowarn}"
         >
+            <exclude name="org/python/antlr/**" /><!-- this should be removed
+once the antlr dependancies are included or documented -->
             <exclude name="org/python/parser/python.java" />
             <exclude name="**/PyServlet.java" unless="servlet.present" />
             <exclude name="**/ReadlineConsole.java" unless="readline.present" />

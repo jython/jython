@@ -1,28 +1,38 @@
-Welcome to Jython 2.2b2
-=======================
+Welcome to Jython NewCompiler branch
+====================================
 
-This is the second beta release towards the 2.2 version of Jython. It
-contains all of the new features for the 2.2 release:
- - new-style classes
- - Java List integration
- - a PEP 302 implementation
- - iterators
- - generators
- - __future__ division
- - support for running on modern JVMs
- - a new installer
+This branch is forked from the 2.3 branch (at revision 3287) of Jython.
 
-In addition to these major features, many bugs have been fixed from 2.2b1.  See
-the NEWS file for a more complete list of changes.
+The new features in this branch has been developed by Damien Lejeune and
+Tobias Ivarsson during the Google Summer of Code 2007.
 
-The release was compiled on Windows XP with JDK 6 but it should run on
-1.4.2+.
+External Dependancis
+--------------------
 
-This release exists to solicit feedback about any bugs or missing
-features; if you can provide it, it is greatly appreciated.  Bug
-reports can be created at http://jython.org/bugs whereas more general
-questions can be sent to the Jython-dev mailing list,
-jython-dev@lists.sourceforge.net.
+The changes in this branch introduce dependancies on some external libraries.
+These have to be installed prior to building this branch of Jython.
 
-The current plan calls for a release candiate in a few weeks, and if it proves
-stable, the final release of 2.2 a few weeks after that.
+ * ASM 3.0 - The new bytecode generation framework depends on the main ASM jar
+   and the asm-commons jar from version 3 of the ASM project. It also depends
+   on the asm-tree jar and the asm-util jar for debugging.
+   These jars can be obtained from the ASM website: http://asm.objectweb.org/
+   There is also one jar (asm-all) that contains all the various parts of ASM.
+
+
+QuickStart for PyASM
+--------------------
+
+1. Add asm-all-3.0.jar from http://asm.objectweb.org/ to your java classpath
+2. Build Jython useing ant
+3. Try PyASM on <your_python_source_file>.py with:
+.../JythonNewcompilerBranch/PyASM $ jython test.py <your_python_source_file>.py
+
+
+Further Documentation
+---------------------
+
+For further reading about how to use the new ASM based bytecode generation
+framework (PyASM), and how this framework works, please refer to the file
+PyASM/README.txt
+
+

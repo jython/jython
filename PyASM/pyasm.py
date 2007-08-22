@@ -1,8 +1,3 @@
-# Open issues:
-# * Line number reporting on exceptions does not wor, jython uses a separate
-#   system for line numbers, and not javas debug-info. It should be possible
-#   to replace this though.
-
 import opcode, re
 try:
     from org.python.newcompiler.pyasm import BytecodeVisitor as Visitor,\

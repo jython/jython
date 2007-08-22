@@ -163,7 +163,7 @@ public class PythonDis extends CodeAdapter {
     public void visitBuildList(int size) {
         super.visitBuildList(size);
 
-        instruction("BUILD LIST", 3, size);
+        instruction("BUILD LIST", 3, new Integer(size));
     }
 
     public void visitBuildMap(int zero) {
@@ -173,19 +173,19 @@ public class PythonDis extends CodeAdapter {
             throw new RuntimeException("BUILD MAP received non-zero argument "
                     + zero);
         }
-        instruction("BUILD MAP", 3, zero);
+        instruction("BUILD MAP", 3, new Integer(zero));
     }
 
     public void visitBuildSlice(int numargs) {
         super.visitBuildSlice(numargs);
 
-        instruction("BUILD SLICE", 3, numargs);
+        instruction("BUILD SLICE", 3, new Integer(numargs));
     }
 
     public void visitBuildTuple(int size) {
         super.visitBuildTuple(size);
 
-        instruction("BUILD TUPLE", 3, size);
+        instruction("BUILD TUPLE", 3, new Integer(size));
     }
 
     public void visitCallFunction(int num_positional, int num_keyword) {
@@ -309,7 +309,7 @@ public class PythonDis extends CodeAdapter {
         if (num_elements == 1) {
             instruction("DUP TOP");
         } else {
-            instruction("DUP TOPX", 3, num_elements);
+            instruction("DUP TOPX", 3, new Integer(num_elements));
         }
     }
 
@@ -556,7 +556,7 @@ public class PythonDis extends CodeAdapter {
     public void visitRaiseVarargs(int count) {
         super.visitRaiseVarargs(count);
 
-        instruction("RAISE VARARGS", 3, count);
+        instruction("RAISE VARARGS", 3, new Integer(count));
     }
 
     public void visitReturnValue() {
@@ -676,7 +676,7 @@ public class PythonDis extends CodeAdapter {
     public void visitUnpackSequence(int count) {
         super.visitUnpackSequence(count);
 
-        instruction("UNPACK SEQUENCE", 3, count);
+        instruction("UNPACK SEQUENCE", 3, new Integer(count));
     }
 
     public void visitWithCleanup() {
