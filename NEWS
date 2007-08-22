@@ -1,5 +1,7 @@
 Jython NEWS
 
+Jython 2.2
+  Identical to 2.2 rc3
 Jython 2.2 rc3
   New Features
     - Added telnetlib from CPython
