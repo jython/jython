@@ -2,7 +2,7 @@ import opcode, re
 try:
     from org.python.newcompiler.pyasm import BytecodeVisitor as Visitor,\
         Operator, CodeFlags as Flags
-    from org.python.newcompiler.asm import OffsetTracer, InlineingClassVisitor
+    from org.python.newcompiler.asm import OffsetTracer #, InlineingClassVisitor
     from org.python.core.BytecodeLoader import makeCode
     from org.objectweb import asm
     from org.objectweb.asm import Type, Opcodes as Op
@@ -15,7 +15,8 @@ try:
     from java.io import PrintWriter
     from java.lang.System import out
     stdout = PrintWriter(out)
-except:
+except Exception, err:
+    # print err
     # mock code to be able to import the module from CPython, an easy way
     # to compile it...
     Visitor = object
