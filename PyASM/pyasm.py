@@ -134,7 +134,7 @@ class ClassKeeper(object):
                                     )
         self.cv = self.__cw
         #self.cv = InlineingClassVisitor(self.cv)
-        #self.cv = asm.util.TraceClassVisitor(self.cv, stdout)
+        self.cv = asm.util.TraceClassVisitor(self.cv, stdout)
         #self.cv = OffsetTracer(self.cv, stdout)
         self.cv = asm.util.CheckClassAdapter(self.cv)
         self.cv.visit(Op.V1_4, Op.ACC_PUBLIC, name, None,
@@ -888,6 +888,8 @@ class ASMVisitor(Visitor):
             self.push(num_pos + i)
             self.asm.swap()
             self.asm.arrayStore(pyObjectType)
+            self.asm.invokeVirtual(pyObjectType, Method.getMethod(
+                    "String toString ()"))
             keywords.load()
             self.asm.swap()
             self.push(i)
