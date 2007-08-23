@@ -2,7 +2,7 @@ import opcode, re
 try:
     from org.python.newcompiler.pyasm import BytecodeVisitor as Visitor,\
         Operator, CodeFlags as Flags
-    from org.python.newcompiler.asm import OffsetTracer #, InlineingClassVisitor
+    from org.python.newcompiler.asm import OffsetTracer
     from org.python.core.BytecodeLoader import makeCode
     from org.objectweb import asm
     from org.objectweb.asm import Type, Opcodes as Op
@@ -130,13 +130,17 @@ class ClassKeeper(object):
     def __init__(self, name):
         self.__name = name
         self.__cw = asm.ClassWriter(asm.ClassWriter.COMPUTE_MAXS
+                                    # Frames need to be computed for
+                                    # jvm1.6 features
                                     #+ asm.ClassWriter.COMPUTE_FRAMES
                                     )
         self.cv = self.__cw
-        #self.cv = InlineingClassVisitor(self.cv)
-        self.cv = asm.util.TraceClassVisitor(self.cv, stdout)
+        ## add this line to get a printout of the generated java bytecode
+        #self.cv = asm.util.TraceClassVisitor(self.cv, stdout)
+        ## add this line to get a printout of the java bytecode with offsets
         #self.cv = OffsetTracer(self.cv, stdout)
-        self.cv = asm.util.CheckClassAdapter(self.cv)
+        ## add this line to verify that the code generation is well behaved
+        #self.cv = asm.util.CheckClassAdapter(self.cv)
         self.cv.visit(Op.V1_4, Op.ACC_PUBLIC, name, None,
                       "org/python/core/PyFunctionTable",
                       stringArray("org/python/core/PyRunnable"))
@@ -215,16 +219,20 @@ class ClassKeeper(object):
         self.cv.visitEnd()
         byteArray = self.__cw.toByteArray()
         cn = asm.tree.ClassNode()
-        #asm.ClassReader(byteArray).accept(OffsetTracer(cn, stdout), 0)
+        ## add this line to verify the generated java bytecode
         #asm.ClassReader(byteArray).accept(cn, 0)
 
         error = False
 
+        # Choose the level of error checking in the bytecode verification
         #analyzer = analysis.Analyzer(analysis.BasicInterpreter())
         analyzer = analysis.Analyzer(analysis.BasicVerifier())
+        #### These don't seem to work
         ###analyzer = analysis.Analyzer(analysis.SimpleVerifier())
         ###analyzer = analysis.Analyzer(analysis.SourceInterpreter())
         for m in cn.methods:
+            # analyze the bytecode of each method and output the bytecode,
+            # with offsets, when an error is detected.
             try:
                 analyzer.analyze(self.__name, m)
             except analysis.AnalyzerException, ae:
@@ -1007,7 +1015,7 @@ class ASMVisitor(Visitor):
 
     def setupSlice(self, plus):
         """help method for (Load|Store|Delete)Slice"""
-        if plus > 3:
+        if plus > 3: # CPython limit that we don't have to obey
             raise TypeError("Slices only support pluses in range(4).")
         if plus == 0: # stack: -
             self.push(None)
@@ -1126,7 +1134,6 @@ class ASMVisitor(Visitor):
 
     def visitImportFrom(self, name):
         """module -- module module.name"""
-        # not the most beautiful implementation
         self.asm.dup()
         self.push(name)
         self.asm.invokeVirtual(pyObjectType, Method.getMethod(
@@ -1687,10 +1694,12 @@ class ASMVisitor(Visitor):
         self.asm.returnValue()
         self.asm.visitLabel(self.label(resume))
         self.loadStackState()
-        end = self.label()#
-        for block in self.__blocks:#
-            block.exclude(self.label(resume), end)#
-        self.asm.visitLabel(end)#
+        # escape any try/catch blocks to make it possible to restore state
+        # after yield
+        end = self.label()
+        for block in self.__blocks:
+            block.exclude(self.label(resume), end)
+        self.asm.visitLabel(end)
         self.loadFrame()
         self.asm.invokeVirtual(pyFrameType, Method.getMethod(
                 "org.python.core.PyObject getGeneratorInput ()"))
