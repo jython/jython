@@ -1,6 +1,6 @@
 from __future__ import with_statement
 
-print "with_statement:", with_statement
+#print "with_statement:", with_statement
 
 class ContextGuard(object):
     def __init__(self, name, ret):
