@@ -6,4 +6,5 @@ eq = base_op.eq
 def itemgetter(*args):
     def f(item):
         return item[args[0]]
+    return f
 

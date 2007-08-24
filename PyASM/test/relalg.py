@@ -78,8 +78,11 @@ code can make this useful feature less mysterious.
 
 """
 
-import new_operator as operator
-import sets.Set as set
+import os
+if os.name == 'java':
+    import new_operator as operator
+else:
+    import operator
 
 def sorted(X):
     temp = list(X)
@@ -186,7 +189,10 @@ def merge_join(R, S, predicate=identity, join=inner, combine=operator.concat):
     http://en.wikipedia.org/wiki/Sort-Merge_Join
     """
 
-    from new_itertools import groupby
+    if os.name == 'java':
+        from new_itertools import groupby
+    else:
+        from itertools import groupby
 
     def advancer(Xp):
         """A simple wrapper of itertools.groupby, we simply need
@@ -204,7 +210,7 @@ def merge_join(R, S, predicate=identity, join=inner, combine=operator.concat):
     rk, R_matched = R_grouped.next()
     sk, S_matched = S_grouped.next()
 
-    while R_grouped and S_grouped:
+    while True:
         comparison = cmp(rk, sk)
         if comparison == 0:
             # standard Cartesian join here on the matched tuples, as
