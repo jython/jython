@@ -47,7 +47,7 @@ public class PyGenerator extends PyIterator {
     }
 
     private PyObject raiseException(PyException ex) {
-        gi_frame.setGeneratorException(ex);
+        gi_frame.setGeneratorInput(ex);
         return next();
     }
 

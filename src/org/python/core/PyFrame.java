@@ -1,13 +1,11 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-
 /**
  * A python frame object.
  */
 
-public class PyFrame extends PyObject
-{
+public class PyFrame extends PyObject {
     public PyFrame f_back;
     public PyTableCode f_code;
     public PyObject f_locals;
@@ -20,20 +18,19 @@ public class PyFrame extends PyObject
     public int f_nfreevars;
     public int f_lasti;
     public Object[] f_savedlocals;
-    public PyObject[] f_stackstate; // newcompiler uses this to allow yield in loops
-    public int[] f_blockstate; // newcompiler uses this to allow yield in finally
+    public PyObject[] f_stackstate; // newcompiler uses this to allow yield in
+                                    // loops
+    public int[] f_blockstate; // newcompiler uses this to allow yield in
+                                // finally
 
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
 
-    private static final String[] __members__ = {
-        "f_back", "f_code", "f_locals", "f_globals", "f_lineno",
-        "f_builtins", "f_trace"
-    };
+    private static final String[] __members__ = { "f_back", "f_code",
+            "f_locals", "f_globals", "f_lineno", "f_builtins", "f_trace" };
 
     public PyFrame(PyTableCode code, PyObject locals, PyObject globals,
-                   PyObject builtins)
-    {
+            PyObject builtins) {
         f_code = code;
         f_locals = locals;
         f_globals = globals;
@@ -41,12 +38,12 @@ public class PyFrame extends PyObject
         // This needs work to be efficient with multiple interpreter states
         if (locals == null && code != null) {
             // ! f_fastlocals needed for arg passing too
-            if ((code.co_flags&PyTableCode.CO_OPTIMIZED)!=0 ||
-                                        code.nargs > 0) {
+            if ((code.co_flags & PyTableCode.CO_OPTIMIZED) != 0
+                    || code.nargs > 0) {
                 if (code.co_nlocals > 0) {
                     // internal: may change
-                    f_fastlocals = new PyObject[
-                                code.co_nlocals-code.jy_npurecell];
+                    f_fastlocals = new PyObject[code.co_nlocals
+                            - code.jy_npurecell];
                 }
             } else
                 f_locals = new PyStringMap();
@@ -68,9 +65,10 @@ public class PyFrame extends PyObject
 
     public String toString() {
         if (f_code == null) {
-            return "<frame (unknown code) at line "+f_lineno+">";
+            return "<frame (unknown code) at line " + f_lineno + ">";
         } else {
-            return "<frame in \""+f_code.co_name+"\" at line "+f_lineno+">";
+            return "<frame in \"" + f_code.co_name + "\" at line " + f_lineno
+                    + ">";
         }
     }
 
@@ -80,33 +78,23 @@ public class PyFrame extends PyObject
             members[i] = new PyString(__members__[i]);
         return new PyList(members);
     }
-    
+
     // begin newcompiler
-    
-    private PyException generatorException = null;
-    private PyObject generatorInput = Py.None;
-    
-    public void setGeneratorException(PyException ex) {
-        generatorException = ex;
-    }
-    
-    public void setGeneratorInput(PyObject value) {
-        generatorException = null;
+
+    private Object generatorInput = Py.None;
+
+    void setGeneratorInput(Object value) {
         generatorInput = value;
     }
-    
-    public PyObject getGeneratorInput() {
-        if( generatorException != null ) {
-            throw Py.setException(generatorException, this);
-        } else {
-            PyObject input = generatorInput;
-            generatorInput = Py.None;
-            return input;
-        }
+
+    public Object getGeneratorInput() {
+        Object input = generatorInput;
+        generatorInput = Py.None;
+        return input;
     }
 
     // end newcompiler
-    
+
     private void throwReadonly(String name) {
         for (int i = 0; i < __members__.length; i++)
             if (__members__[i] == name)
@@ -122,7 +110,8 @@ public class PyFrame extends PyObject
         // f_exc_type
         // f_exc_value
         // f_exc_traceback
-        else throwReadonly(name);
+        else
+            throwReadonly(name);
     }
 
     public void __delattr__(String name) {
@@ -132,7 +121,8 @@ public class PyFrame extends PyObject
         // f_exc_type
         // f_exc_value
         // f_exc_traceback
-        else throwReadonly(name);
+        else
+            throwReadonly(name);
     }
 
     public PyObject __findattr__(String name) {
@@ -140,7 +130,7 @@ public class PyFrame extends PyObject
             return getf_locals();
         else if (name == "f_trace") {
             if (tracefunc instanceof PythonTraceFunction) {
-                return ((PythonTraceFunction)tracefunc).tracefunc;
+                return ((PythonTraceFunction) tracefunc).tracefunc;
             }
             return Py.None;
         }
@@ -150,25 +140,27 @@ public class PyFrame extends PyObject
     public PyObject getf_locals() {
         if (f_locals == null)
             f_locals = new PyStringMap();
-        if (f_code!=null && (f_code.co_nlocals>0 || f_nfreevars > 0)) {
+        if (f_code != null && (f_code.co_nlocals > 0 || f_nfreevars > 0)) {
             int i;
             if (f_fastlocals != null) {
-                for (i=0; i<f_fastlocals.length; i++) {
+                for (i = 0; i < f_fastlocals.length; i++) {
                     PyObject o = f_fastlocals[i];
                     if (o != null)
                         f_locals.__setitem__(f_code.co_varnames[i], o);
                 }
-                if ((f_code.co_flags&PyTableCode.CO_OPTIMIZED) == 0)
+                if ((f_code.co_flags & PyTableCode.CO_OPTIMIZED) == 0)
                     f_fastlocals = null;
             }
             int j = 0;
-            for (i=0; i<f_ncells; i++,j++) {
+            for (i = 0; i < f_ncells; i++, j++) {
                 PyObject v = f_env[j].ob_ref;
-                if (v != null) f_locals.__setitem__(f_code.co_cellvars[i],v);
+                if (v != null)
+                    f_locals.__setitem__(f_code.co_cellvars[i], v);
             }
-            for (i=0; i<f_nfreevars; i++,j++) {
+            for (i = 0; i < f_nfreevars; i++, j++) {
                 PyObject v = f_env[j].ob_ref;
-                if (v != null) f_locals.__setitem__(f_code.co_freevars[i],v);
+                if (v != null)
+                    f_locals.__setitem__(f_code.co_freevars[i], v);
             }
         }
         return f_locals;
@@ -201,16 +193,19 @@ public class PyFrame extends PyObject
         if (ret != null)
             return ret;
 
-        throw Py.UnboundLocalError("local: '"+index+"'");
-        //return getglobal(index);
+        throw Py.UnboundLocalError("local: '" + index + "'");
+        // return getglobal(index);
     }
 
     public PyObject getname(String index) {
-        if (f_locals == null) getf_locals();
-        if (f_locals == f_globals) return getglobal(index);
+        if (f_locals == null)
+            getf_locals();
+        if (f_locals == f_globals)
+            return getglobal(index);
 
         PyObject ret = f_locals.__finditem__(index);
-        if (ret != null) return ret;
+        if (ret != null)
+            return ret;
         return getglobal(index);
     }
 
@@ -225,7 +220,8 @@ public class PyFrame extends PyObject
             f_builtins = Py.getSystemState().builtins;
         }
         ret = f_builtins.__finditem__(index);
-        if (ret != null) return ret;
+        if (ret != null)
+            return ret;
 
         throw Py.NameError(index);
     }
@@ -250,8 +246,8 @@ public class PyFrame extends PyObject
     public void dellocal(int index) {
         if (f_fastlocals != null) {
             if (f_fastlocals[index] == null) {
-              throw Py.UnboundLocalError("local: '"+
-                                         f_code.co_varnames[index]+"'");
+                throw Py.UnboundLocalError("local: '"
+                        + f_code.co_varnames[index] + "'");
             }
             f_fastlocals[index] = null;
         } else
@@ -263,9 +259,10 @@ public class PyFrame extends PyObject
             getf_locals();
         try {
             f_locals.__delitem__(index);
-        } catch(PyException e) {
-          if (!Py.matchException(e,Py.KeyError)) throw e;
-          throw Py.UnboundLocalError("local: '"+index+"'");
+        } catch (PyException e) {
+            if (!Py.matchException(e, Py.KeyError))
+                throw e;
+            throw Py.UnboundLocalError("local: '" + index + "'");
         }
     }
 
@@ -280,19 +277,22 @@ public class PyFrame extends PyObject
     }
 
     public PyObject getderef(int index) {
-        PyObject obj=f_env[index].ob_ref;
-        if (obj != null) return obj;
+        PyObject obj = f_env[index].ob_ref;
+        if (obj != null)
+            return obj;
         String name;
-        if (index >= f_ncells) name = f_code.co_freevars[index-f_ncells];
-        else name = f_code.co_cellvars[index];
-        throw Py.UnboundLocalError("local: '"+name+"'");
+        if (index >= f_ncells)
+            name = f_code.co_freevars[index - f_ncells];
+        else
+            name = f_code.co_cellvars[index];
+        throw Py.UnboundLocalError("local: '" + name + "'");
     }
 
-    public void setderef(int index,PyObject value) {
+    public void setderef(int index, PyObject value) {
         f_env[index].ob_ref = value;
     }
 
-    public void to_cell(int parm_index,int env_index) {
-        f_env[env_index].ob_ref=f_fastlocals[parm_index];
+    public void to_cell(int parm_index, int env_index) {
+        f_env[env_index].ob_ref = f_fastlocals[parm_index];
     }
 }

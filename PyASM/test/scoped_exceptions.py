@@ -1,4 +1,5 @@
 from __future__ import with_statement
+import sys
 
 class FooException(Exception): pass
 class BarException(Exception): pass
@@ -105,6 +106,3 @@ except Exception, err:
     # for now we just observe that FooException has been rethrown
     # as BarException
     print FooException, 'was rethrown as ', type(err)
-
-
-    

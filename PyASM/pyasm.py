@@ -1681,7 +1681,14 @@ class ASMVisitor(Visitor):
             into the generator at the beginning works as expected."""
             self.loadFrame()
             self.asm.invokeVirtual(pyFrameType, Method.getMethod(
-                    "org.python.core.PyObject getGeneratorInput ()"))
+                    "Object getGeneratorInput ()"))
+            self.asm.dup()
+            self.asm.instanceOf(pyExceptionType)
+            done = self.label()
+            self.asm.visitJumpInsn(Op.IFEQ, done)
+            self.asm.checkCast(throwableType)
+            self.asm.throwException()
+            self.asm.visitLabel(done)
             self.asm.pop()
         self.scheduleCode(start, code)
 
@@ -1702,7 +1709,15 @@ class ASMVisitor(Visitor):
         self.asm.visitLabel(end)
         self.loadFrame()
         self.asm.invokeVirtual(pyFrameType, Method.getMethod(
-                "org.python.core.PyObject getGeneratorInput ()"))
+                "Object getGeneratorInput ()"))
+        self.asm.dup()
+        self.asm.instanceOf(pyExceptionType)
+        done = self.label()
+        self.asm.visitJumpInsn(Op.IFEQ, done)
+        self.asm.checkCast(throwableType)
+        self.asm.throwException()
+        self.asm.visitLabel(done)
+        self.asm.checkCast(pyObjectType)
 
     def storeStackState(self):
         count = 0
