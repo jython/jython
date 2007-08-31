@@ -302,7 +302,7 @@ abstract public class PySequence extends PyObject {
     protected static final int getStep(PyObject s_step) {
         int step = getIndex(s_step, 1);
         if (step == 0) {
-            throw Py.TypeError("slice step of zero not allowed");
+            throw Py.ValueError("slice step cannot be zero");
         }
         return step;
     }

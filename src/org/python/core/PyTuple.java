@@ -390,7 +390,12 @@ public class PyTuple extends PySequenceList implements ClassDictInit
     }
 
     protected PyObject repeat(int count) {
-
+        if (count < 0) {
+            count = 0;
+        }
+        if (size() == 0 || count == 1) {
+            return this;
+        }
         PyObject[] array = getArray();
         int l = size();
         PyObject[] newArray = new PyObject[l*count];
