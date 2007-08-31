@@ -80,6 +80,9 @@ public class imp {
     static PyObject createFromPyClass(String name, InputStream fp,
             boolean testing, String fileName) {
         byte[] data = unmarshalCode(name, fp, testing);
+        if (testing && data == null) {
+            return null;
+        }
         PyCode code;
         try {
             code = BytecodeLoader.makeCode(name + "$py", data, fileName);
