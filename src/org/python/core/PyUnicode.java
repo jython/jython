@@ -53,6 +53,63 @@ public class PyUnicode extends PyString {
 
         }
         dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyUnicode.class,1,1,new exposed___eq__(null,null)));
+        class exposed___add__ extends PyBuiltinMethodNarrow {
+
+            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___add__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyUnicode)self).unicode___add__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyUnicode.class,1,1,new exposed___add__(null,null)));
+        class exposed___mul__ extends PyBuiltinMethodNarrow {
+
+            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mul__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyUnicode)self).unicode___mul__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyUnicode.class,1,1,new exposed___mul__(null,null)));
+        class exposed___rmul__ extends PyBuiltinMethodNarrow {
+
+            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmul__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyUnicode)self).unicode___rmul__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyUnicode.class,1,1,new exposed___rmul__(null,null)));
         class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
             exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
@@ -125,54 +182,6 @@ public class PyUnicode extends PyString {
 
         }
         dict.__setitem__("__len__",new PyMethodDescr("__len__",PyUnicode.class,0,0,new exposed___len__(null,null)));
-        class exposed___add__ extends PyBuiltinMethodNarrow {
-
-            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___add__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyUnicode)self).unicode___add__(arg0);
-            }
-
-        }
-        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyUnicode.class,1,1,new exposed___add__(null,null)));
-        class exposed___mul__ extends PyBuiltinMethodNarrow {
-
-            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___mul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyUnicode)self).unicode___mul__(arg0);
-            }
-
-        }
-        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyUnicode.class,1,1,new exposed___mul__(null,null)));
-        class exposed___rmul__ extends PyBuiltinMethodNarrow {
-
-            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___rmul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyUnicode)self).unicode___rmul__(arg0);
-            }
-
-        }
-        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyUnicode.class,1,1,new exposed___rmul__(null,null)));
         class exposed___str__ extends PyBuiltinMethodNarrow {
 
             exposed___str__(PyObject self,PyBuiltinFunction.Info info) {

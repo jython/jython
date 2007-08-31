@@ -282,6 +282,82 @@ public class PyList extends PySequenceList {
 
         }
         dict.__setitem__("__setslice__",new PyMethodDescr("__setslice__",PyList.class,3,4,new exposed___setslice__(null,null)));
+        class exposed___add__ extends PyBuiltinMethodNarrow {
+
+            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___add__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyList)self).list___add__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyList.class,1,1,new exposed___add__(null,null)));
+        class exposed___radd__ extends PyBuiltinMethodNarrow {
+
+            exposed___radd__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___radd__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyList)self).list___radd__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__radd__",new PyMethodDescr("__radd__",PyList.class,1,1,new exposed___radd__(null,null)));
+        class exposed___mul__ extends PyBuiltinMethodNarrow {
+
+            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mul__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyList)self).list___mul__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyList.class,1,1,new exposed___mul__(null,null)));
+        class exposed___rmul__ extends PyBuiltinMethodNarrow {
+
+            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmul__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyList)self).list___rmul__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyList.class,1,1,new exposed___rmul__(null,null)));
         class exposed_append extends PyBuiltinMethodNarrow {
 
             exposed_append(PyObject self,PyBuiltinFunction.Info info) {
@@ -514,38 +590,6 @@ public class PyList extends PySequenceList {
 
         }
         dict.__setitem__("__len__",new PyMethodDescr("__len__",PyList.class,0,0,new exposed___len__(null,null)));
-        class exposed___add__ extends PyBuiltinMethodNarrow {
-
-            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___add__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyList)self).list___add__(arg0);
-            }
-
-        }
-        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyList.class,1,1,new exposed___add__(null,null)));
-        class exposed___radd__ extends PyBuiltinMethodNarrow {
-
-            exposed___radd__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___radd__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyList)self).list___radd__(arg0);
-            }
-
-        }
-        dict.__setitem__("__radd__",new PyMethodDescr("__radd__",PyList.class,1,1,new exposed___radd__(null,null)));
         class exposed___iadd__ extends PyBuiltinMethodNarrow {
 
             exposed___iadd__(PyObject self,PyBuiltinFunction.Info info) {
@@ -578,38 +622,6 @@ public class PyList extends PySequenceList {
 
         }
         dict.__setitem__("__imul__",new PyMethodDescr("__imul__",PyList.class,1,1,new exposed___imul__(null,null)));
-        class exposed___mul__ extends PyBuiltinMethodNarrow {
-
-            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___mul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyList)self).list___mul__(arg0);
-            }
-
-        }
-        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyList.class,1,1,new exposed___mul__(null,null)));
-        class exposed___rmul__ extends PyBuiltinMethodNarrow {
-
-            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___rmul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyList)self).list___rmul__(arg0);
-            }
-
-        }
-        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyList.class,1,1,new exposed___rmul__(null,null)));
         class exposed___hash__ extends PyBuiltinMethodNarrow {
 
             exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
@@ -902,26 +914,23 @@ public class PyList extends PySequenceList {
     }
 
     public PyObject __imul__(PyObject o) {
-        try {
-            return list___imul__(o);
-        } catch(PyException e) {
-            if(Py.matchException(e, Py.TypeError)) {
-                // We can't perform an in-place multiplication on o's type, so 
-                // let o try to rmul this list.  A new list will be created 
-                // instead of modifying this one, but that's preferable to just
-                // blowing up on this operation.
-                PyObject result = o.__rmul__(this);
-                if(result != null) {
-                    return result;
-                }
+        PyObject result = list___imul__(o);
+        if (result == null) {
+            // We can't perform an in-place multiplication on o's
+            // type, so let o try to rmul this list.  A new list will
+            // be created instead of modifying this one, but that's
+            // preferable to just blowing up on this operation.
+            result = o.__rmul__(this);
+            if (result == null) {
+                throw Py.TypeError(_unsupportedop("*", o));
             }
-            throw e;
         }
+        return result;
     }
 
     final PyObject list___imul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply sequence to non-int");
+            return null;
         int l = size();
         int count = ((PyInteger)o.__int__()).getValue();
 
@@ -937,14 +946,14 @@ public class PyList extends PySequenceList {
 
     final PyObject list___mul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply sequence to non-int");
+            return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
 
     final PyObject list___rmul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply sequence to non-int");
+            return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
@@ -1002,14 +1011,7 @@ public class PyList extends PySequenceList {
         if (op.equals("+")) {
             return "can only concatenate list (not \"{2}\") to list";
         }
-        return null;
-    }
-
-    protected String runsupportedopMessage(String op, PyObject o2) {
-        if (op.equals("+")) {
-            return "can only concatenate list (not \"{1}\") to list";
-        }
-        return null;
+        return super.unsupportedopMessage(op, o2);
     }
     
     public String toString() {

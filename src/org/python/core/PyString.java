@@ -126,6 +126,82 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PyString.class,1,1,new exposed___ge__(null,null)));
+        class exposed___add__ extends PyBuiltinMethodNarrow {
+
+            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___add__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyString)self).str___add__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
+        class exposed___mod__ extends PyBuiltinMethodNarrow {
+
+            exposed___mod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mod__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyString)self).str___mod__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyString.class,1,1,new exposed___mod__(null,null)));
+        class exposed___mul__ extends PyBuiltinMethodNarrow {
+
+            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mul__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyString)self).str___mul__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyString.class,1,1,new exposed___mul__(null,null)));
+        class exposed___rmul__ extends PyBuiltinMethodNarrow {
+
+            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmul__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyString)self).str___rmul__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyString.class,1,1,new exposed___rmul__(null,null)));
         class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
             exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
@@ -198,70 +274,6 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         }
         dict.__setitem__("__len__",new PyMethodDescr("__len__",PyString.class,0,0,new exposed___len__(null,null)));
-        class exposed___add__ extends PyBuiltinMethodNarrow {
-
-            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___add__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyString)self).str___add__(arg0);
-            }
-
-        }
-        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
-        class exposed___mod__ extends PyBuiltinMethodNarrow {
-
-            exposed___mod__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___mod__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyString)self).str___mod__(arg0);
-            }
-
-        }
-        dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyString.class,1,1,new exposed___mod__(null,null)));
-        class exposed___mul__ extends PyBuiltinMethodNarrow {
-
-            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___mul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyString)self).str___mul__(arg0);
-            }
-
-        }
-        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyString.class,1,1,new exposed___mul__(null,null)));
-        class exposed___rmul__ extends PyBuiltinMethodNarrow {
-
-            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___rmul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyString)self).str___rmul__(arg0);
-            }
-
-        }
-        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyString.class,1,1,new exposed___rmul__(null,null)));
         class exposed___str__ extends PyBuiltinMethodNarrow {
 
             exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
@@ -2182,14 +2194,14 @@ public class PyString extends PyBaseString implements ClassDictInit
 
     final PyObject str___mul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply sequence to non-int");
+            return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
 
     final PyObject str___rmul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply sequence to non-int");
+            return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
@@ -3606,6 +3618,12 @@ public class PyString extends PyBaseString implements ClassDictInit
         return internedString();
     }
 
+    protected String unsupportedopMessage(String op, PyObject o2) {
+        if (op.equals("+")) {
+            return "cannot concatenate ''{1}'' and ''{2}'' objects";
+        }
+        return super.unsupportedopMessage(op, o2);
+    }
 }
 
 final class StringFormatter

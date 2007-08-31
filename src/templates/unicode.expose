@@ -5,12 +5,9 @@ type_class: PyUnicode
 expose_index_getitem: seq_>
 expose_meth: seq_> __getslice__ ooo?
 #
-expose_binary: __ne__ __eq__
+expose_binary: __ne__ __eq__ __add__ __mul__ __rmul__
 expose_meth: :b __contains__ o
 expose_meth: :i __len__
-expose_meth: __add__ o
-expose_meth: __mul__ o
-expose_meth: __rmul__ o
 expose_meth: __str__
 expose_meth: __unicode__
 expose_meth: __hash__

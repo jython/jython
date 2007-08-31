@@ -5,6 +5,7 @@ type_base_class: PyObject
 incl: sequence
 #expose_meth: seq_> __iter__
 # exposed methods
+expose_binary: __add__ __radd__ __mul__ __rmul__
 expose_meth: :- append o
 expose_meth: :i count o
 expose_meth: :- extend o
@@ -15,12 +16,8 @@ expose_meth: :- remove o
 expose_meth: :- reverse
 expose_meth: :- sort o?
 expose_meth: :i __len__
-expose_meth: __add__ o
-expose_meth: __radd__ o
 expose_meth: __iadd__ o
 expose_meth: __imul__ o
-expose_meth: __mul__ o
-expose_meth: __rmul__ o
 expose_meth: __hash__
  `ideleg`(hashCode);
 expose_meth: __repr__

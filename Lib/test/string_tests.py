@@ -505,7 +505,12 @@ class MixinStrUnicodeUserStringTest:
         self.checkequal('abc', 'abc', '__mul__', 1)
         self.checkequal('abcabcabc', 'abc', '__mul__', 3)
         self.checkraises(TypeError, 'abc', '__mul__')
-        self.checkraises(TypeError, 'abc', '__mul__', '')
+        # CPython specific; pypy tests via the operator module instead
+        if not test_support.is_jython:
+            self.checkraises(TypeError, 'abc', '__mul__', '')
+        else:
+            import operator
+            self.checkraises(TypeError, operator, '__mul__', 'abc', '')
         self.checkraises(OverflowError, 10000*'abc', '__mul__', 2000000000)
 
     def test_join(self):
