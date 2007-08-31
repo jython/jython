@@ -55,6 +55,7 @@ public class Setup
         "sets:org.python.modules.sets.Sets",
         "_random:org.python.modules.random.RandomModule",
         "cmath",
-        "itertools"
+        "itertools",
+        "zipimport:org.python.modules.zipimport.zipimport"
     };
 }

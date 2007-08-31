@@ -24,6 +24,7 @@ import java.util.jar.JarFile;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.modules.Setup;
+import org.python.modules.zipimport.zipimporter;
 
 /**
  * The "sys" module.
@@ -267,7 +268,7 @@ public class PySystemState extends PyObject
         meta_path.append(new PrecompiledImporter());
         path_hooks = new PyList();
         path_hooks.append(new JavaImporter());
-        path_hooks.append(PyJavaClass.lookup(ZipFileImporter.class));
+        path_hooks.append(PyJavaClass.lookup(zipimporter.class));
         path_importer_cache = new PyDictionary();
 
         // Set up the initial standard ins and outs

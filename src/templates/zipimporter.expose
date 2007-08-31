@@ -1,0 +1,20 @@
+type_name: zipimporter
+type_class: zipimporter
+# getsets
+expose_getset: archive getArchive
+expose_getset: prefix getPrefix
+expose_getset: _files getFiles
+expose_getset: __doc__ getDoc
+# exposed methods
+expose_meth: :o find_module s s?
+expose_meth: :o load_module s
+expose_meth: :s get_data s
+expose_meth: :b is_package s
+expose_meth: :o get_code s
+expose_meth: :s get_source s
+expose_meth: __repr__
+  `sdeleg`(toString);
+expose_new_mutable:
+expose_wide_meth: __init__ -1 -1
+  `vdeleg`(init);
+  `void;

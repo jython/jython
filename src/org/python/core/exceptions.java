@@ -1,6 +1,7 @@
 // Copyright 2001 Finn Bock
 
 package org.python.core;
+import org.python.modules.zipimport.zipimport;
 
 /**
  * The builtin exceptions module. The entire module should be imported from
@@ -241,6 +242,10 @@ public class exceptions implements ClassDictInit {
         
         buildClass(dict, "FutureWarning", "Warning", "empty__init__",
                 "Base class for warnings about constructs that will change semantically in the future.");
+
+        // Initialize ZipImportError here, where it's safe to; it's
+        // needed immediately
+        zipimport.initClassExceptions(dict);
 
         ts.frame = ts.frame.f_back;
     }
