@@ -79,19 +79,7 @@ public class imp {
 
     static PyObject createFromPyClass(String name, InputStream fp,
             boolean testing, String fileName) {
-        byte[] data = readBytes(fp);
-        int n = data.length;
-
-        int api = (data[n - 4] << 24) + (data[n - 3] << 16)
-                + (data[n - 2] << 8) + data[n - 1];
-        if (api != APIVersion) {
-            if (testing) {
-                return null;
-            } else {
-                throw Py.ImportError("invalid api version(" + api + " != "
-                        + APIVersion + ") in: " + name);
-            }
-        }
+        byte[] data = unmarshalCode(name, fp, testing);
         PyCode code;
         try {
             code = BytecodeLoader.makeCode(name + "$py", data, fileName);
@@ -107,7 +95,25 @@ public class imp {
 
         return createFromCode(name, code, fileName);
     }
+    
+    public static byte[] unmarshalCode(String name, InputStream fp,
+            boolean testing) {
+        byte[] data = readBytes(fp);
+        int n = data.length;
 
+        int api = (data[n - 4] << 24) + (data[n - 3] << 16)
+                + (data[n - 2] << 8) + data[n - 1];
+        if (api != APIVersion) {
+            if (testing) {
+                return null;
+            } else {
+                throw Py.ImportError("invalid api version(" + api + " != "
+                        + APIVersion + ") in: " + name);
+            }
+        }
+        return data;
+    }
+    
     public static byte[] compileSource(String name, File file, String sourceFilename,
             String compiledFilename) {
         if (sourceFilename == null) {
@@ -166,7 +172,7 @@ public class imp {
         }
     }
 
-    static byte[] compileSource(String name,
+    public static byte[] compileSource(String name,
                                 InputStream fp,
                                 String filename) {
         ByteArrayOutputStream ofp = new ByteArrayOutputStream();
@@ -214,7 +220,7 @@ public class imp {
      * Returns a module with the given name whose contents are the results of
      * running c. __file__ is set to whatever is in c.
      */
-    static PyObject createFromCode(String name, PyCode c){
+    public static PyObject createFromCode(String name, PyCode c){
         return createFromCode(name, c, null);
     }
     
@@ -226,7 +232,7 @@ public class imp {
      * File(moduleLocation).getAbsoultePath(). If c comes from a remote file or
      * is a jar moduleLocation should be the full uri for c.
      */
-    static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
+    public static PyObject createFromCode(String name, PyCode c, String moduleLocation) {
         PyModule module = addModule(name);
 
         PyTableCode code = null;
