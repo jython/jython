@@ -963,11 +963,15 @@ public class PyLong extends PyObject
             if (v >= min && v <= max)
                 return v;
         }
-        throw Py.OverflowError("long int too long to convert");
+        throw Py.OverflowError("long int too large to convert");
     }
 
     public long asLong(int index) {
         return getLong(Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+
+    public int asInt(int index) {
+        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     public Object __tojava__(Class c) {
