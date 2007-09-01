@@ -318,10 +318,10 @@ public class zipimporter extends PyObject {
     private String archive;
 
     /** File prefix: "a/sub/directory/" */
-	private String prefix;
+    private String prefix;
 
     /** Dict with file info {path: tocEntry} */
-	private PyObject files;
+    private PyObject files;
 
     public zipimporter() {
         super();
