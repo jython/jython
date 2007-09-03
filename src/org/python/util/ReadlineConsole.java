@@ -42,8 +42,13 @@ public class ReadlineConsole extends InteractiveConsole {
         }
         Readline.initReadline("jython");
 
-        // Force rebind of TAB to insert a tab instead of complete
-        Readline.parseAndBind("tab: tab-insert");
+        try {
+            // Force rebind of tab to insert a tab instead of complete
+            Readline.parseAndBind("tab: tab-insert");
+        }
+        catch (UnsupportedOperationException uoe) {
+            // parseAndBind not supported by this readline
+        }
     }
 
     /**
