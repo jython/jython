@@ -1,8 +1,12 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.util;
 
+import java.io.EOFException;
+import java.io.IOException;
+
 import org.gnu.readline.Readline;
 import org.gnu.readline.ReadlineLibrary;
+
 import org.python.core.Py;
 import org.python.core.PyException;
 import org.python.core.PyObject;
@@ -37,6 +41,9 @@ public class ReadlineConsole extends InteractiveConsole {
             // Will use a pure java fallback.
         }
         Readline.initReadline("jython");
+
+        // Force rebind of TAB to insert a tab instead of complete
+        Readline.parseAndBind("tab: tab-insert");
     }
 
     /**
@@ -51,9 +58,9 @@ public class ReadlineConsole extends InteractiveConsole {
         try {
             String line = Readline.readline(prompt == null ? "" : prompt.toString());
             return (line == null ? "" : line);
-        } catch(java.io.EOFException eofe) {
+        } catch(EOFException eofe) {
             throw new PyException(Py.EOFError);
-        } catch(java.io.IOException e) {
+        } catch(IOException ioe) {
             throw new PyException(Py.IOError);
         }
     }
