@@ -16,9 +16,9 @@ This build will create directories /build and /dist below basedir.
 Use case 2: full build for a release (using svn checkout)
 ---------------------------------------------------------
   - make sure you have access to the jython subversion repository (https://jython.svn.sourceforge.net/svnroot/jython/trunk)
-  - override svn.tag in ant.properties (if necessary)
+  - override svn.main.dir in ant.properties (if necessary)
   - call target 'full-build'
-This build will create a working directory named full_build_${svn.tag} at the same
+This build will create a working directory named full_build/${svn.main.dir} at the same
 level as your local directories jython, sandbox and installer.
 It will contain a big jython_installer-${jython.version}.jar file suitable for installation.
 
@@ -61,7 +61,8 @@ Actions for a release
   1. determine the new svn tag to be applied to jython
   2. check the svn:externals property of project jython for an appropriate cpython maintenance branch
   3. change the following properties in this build.xml, if necessary:
-       - svn.tag             (target: full-init)
+       - svn.main.dir        (target: full-init)
+       - jython.version      (target: full-init)
        - jdk.target.version  (target: pre-init)
   4. if new CPython .py files should be distributed, add them to build.Lib.include.properties
   5. adjust the public static String version in PySystemState.java
@@ -110,13 +111,21 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 #optimize=off
 #deprecation=off
 
-# - the svn tag to build from; only needed for full-build
-#svn.tag=Release_2_2beta2
-#svn.tag=HEAD
+# - the svn main directory to build from; only needed for full-build
+# This e.g. could be one of:
+#   trunk
+#   branches/Release_2_2maint
+#   tags/Release_2_2rc3
+# meaning any directory just above the two directories:
+#   /installer
+#   /jython
+# svn.main.dir defaults to branches/Release_2_2maint
+#svn.main.dir=branches/Release_2_2maint
 
-# - the revision; defaults to svn.tag; only needed for full-build
-#   (uncomment and indicate the correct revision to do a snapshot build)
-#svn.revision=3245
+# - the revision; only needed for a snapshot full-build
+# To create a snapshot build: uncomment and indicate the correct revision (it has to be a number)
+# For 'normal' builds, this defaults to the latest revision on svn.main.dir (HEAD)
+#svn.revision=3444
 
 # - the directory containing libsvnjavahl-1.dll (on windows) and svnjavahl.jar; only needed for full-build
 # how to get these:
@@ -219,10 +228,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="full-build" value="true" />
         <property name="do.templates" value="true" />
 
-        <!-- predefined tags for jython and cpython -->
-        <property name="svn.tag" value="Release_2_2" />
+        <!-- predefined main directory for checkout -->
+        <property name="svn.main.dir" value="branches/Release_2_2maint" />
 
-        <property name="work.dir" value="${basedir}/../full_build_${svn.tag}" />
+        <property name="work.dir" value="${basedir}/../full_build/${svn.main.dir}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
         <property name="source.dir" value="${jython.base.dir}/src" />
@@ -239,7 +248,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <isset property="svn.revision" />
         </condition>
         <property name="jython.version" value="2.2" />
-	<property name="svn.revision" value="HEAD"/>
+    	<!-- if not set so far, default svn.revision to HEAD, since we always want
+    	     the latest revision on the specified subversion main directory -->
+    	<property name="svn.revision" value="HEAD"/>
     	
         <!-- classpath for svn ant task -->
         <path id="svn.classpath">
@@ -250,7 +261,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </path>
     	<!-- taskdef for svn ant task -->
     	<taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="svn.classpath" />
-	<!-- Require all of the optional jars for a full build -->
+    	<!-- Require all of the optional jars for a full build -->
         <fail unless="readline.present" message="readline jar not present" />
         <fail unless="jline.present" message="jline jar not present" />
         <fail unless="servlet.present" message="servlet jar not present" />
@@ -302,14 +313,14 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>nowarn             = '${nowarn}'</echo>
         <echo>--- properties (used for full-build only ) ---</echo>
         <echo>python.exe         = '${python.exe}'</echo>
-        <echo>svn.tag            = '${svn.tag}'</echo>
+        <echo>svn.main.dir       = '${svn.main.dir}'</echo>
+    	<echo>svn.revision       = '${svn.revision}'</echo>
         <echo>svn.checkout.dir   = '${svn.checkout.dir}'</echo>
     	<echo>javahl.dir         = '${javahl.dir}'</echo>
     	<echo>svnant.jar.dir     = '${svnant.jar.dir}'</echo>
-    	<echo>svn.revision       = '${svn.revision}'</echo>
         <echo>do.snapshot.build  = '${do.snapshot.build}'</echo>
         <echo>do.checkout        = '${do.checkout}'</echo>
-        <echo>do.templates        = '${do.templates}'</echo>
+        <echo>do.templates       = '${do.templates}'</echo>
     </target>
 
 
@@ -368,11 +379,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- checkout if so defined -->
     <target name="checkout" depends="prepare" if="do.checkout">
-    	<!-- determine if to checkout from /tags/${svn.tag} (any tag), or /trunk (HEAD) -->
-    	<condition property="svn.main.dir" value="trunk">
-    		<equals arg1="${svn.tag}" arg2="HEAD" />
-    	</condition>
-    	<property name="svn.main.dir" value="tags/${svn.tag}" />
         <svn javahl="${javahl.dir}" >
         	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
         	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
@@ -657,7 +663,6 @@ The readme text for the next release will be like:
 
     <!-- wrap the build into the installer -->
     <target name="install" depends="copy-dist">
-        <fail unless="svn.tag" message="no svn.tag specified" />
         <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
