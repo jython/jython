@@ -581,6 +581,25 @@ public class PyStringMap extends PyObject
     public synchronized PyObject itervalues() {
         return new PyStringMapIter(keys, values, PyStringMapIter.VALUES);
     }
+    
+    public synchronized PyObject pop(PyObject key) {
+        if (size == 0)
+            throw Py.KeyError("pop(): dictionary is empty");
+        return pop(key, null);
+    }
+
+    public synchronized PyObject pop(PyObject key, PyObject failobj) {
+        PyObject value = __finditem__(key);
+        if(value == null) {
+            if (failobj == null) {
+                throw Py.KeyError(key.__repr__().toString());
+            } else {
+                return failobj;
+            }
+        }
+        __delitem__(key);
+        return value;
+    }
 }
 
 /* extended, based on PyDictionaryIter */
