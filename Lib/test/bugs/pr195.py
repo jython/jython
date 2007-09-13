@@ -3,7 +3,7 @@
 
 from javax.swing import AbstractListModel, ComboBoxModel
 # Note that AbstractListModel implements ListModel, ComboBoxModel extends
-# ListModel.  This would cause JPython to include
+# ListModel.  This would cause Jython to include
 # (Object)ListModel.getElementAt(int) twice in the proxy class, which is
 # illegal.
 

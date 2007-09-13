@@ -8,7 +8,7 @@ package org.python.core;
  */
 public class Options {
     // Jython options. Some of these can be set from the command line
-    // options, but all can be controlled through the JPython registry
+    // options, but all can be controlled through the Jython registry
 
     /**
      * when an exception occurs in Java code, and it is not caught, should the
@@ -32,7 +32,7 @@ public class Options {
     public static boolean pollStandardIn = false;
 
     /**
-     * If true, JPython respects Java the accessibility flag for fields,
+     * If true, Jython respects Java the accessibility flag for fields,
      * methods, and constructors. This means you can only access public members.
      * Set this to false to access all members by toggling the accessible flag
      * on the member.

@@ -1,4 +1,4 @@
-# PR#235, JPython crashes (i.e. uncaught Java exception) under strange
+# PR#235, Jython crashes (i.e. uncaught Java exception) under strange
 # (illegal) input.
 
 bogus = '''\

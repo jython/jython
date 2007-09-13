@@ -78,7 +78,7 @@ public class PyFunction extends PyObject
     public void __setattr__(String name, PyObject value) {
         // TBD: in CPython, func_defaults, func_doc, __doc__ are
         // writable.  For now, only func_doc, __doc__ are writable in
-        // JPython.
+        // Jython.
         if (name == "func_doc" || name == "__doc__")
             __doc__ = value;
         else if (name == "func_closure") {

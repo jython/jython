@@ -165,7 +165,7 @@ class JavaArchive:
 
 
 if __name__ == '__main__':
-    root = "c:\\jpython\\tools\\jpythonc2"
+    root = "c:\\jython\\tools\\jythonc2"
     ja = JavaArchive()
     ja.addFile(root, "jar.py")
     ja.addFile(root, "proxies.py")

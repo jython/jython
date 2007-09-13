@@ -4,7 +4,7 @@ import org.python.core.*;
 import java.util.*;
 
 /**
- * The PythonInterpreter class is a standard wrapper for a JPython
+ * The PythonInterpreter class is a standard wrapper for a Jython
  * interpreter for use embedding in a Java application.
  *
  * @author  Jim Hugunin

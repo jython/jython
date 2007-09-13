@@ -22,7 +22,7 @@ def compile(module, directory):
 	
 if __name__ == '__main__':
 	if len(sys.argv) != 4:
-		print 'usage: jpython mkjava.py java_name python_name directory'
+		print 'usage: jython mkjava.py java_name python_name directory'
 		sys.exit(-1)
 	
 	directory = sys.argv[-1]

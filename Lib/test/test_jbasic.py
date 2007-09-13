@@ -110,4 +110,4 @@ flag = 0
 b1.doClick()
 assert flag == 1, 'one actions per event - again'
 
-# TBD: JPython does not properly exit after this code!
+# TBD: Jython does not properly exit after this code!

@@ -84,9 +84,9 @@ except AttributeError:
 	pass
 		
 if __name__ == '__main__':
-	for of in [CabOutput('c:\\jpython\\test.cab')]: #DirectoryOutput('c:\\jpython\\dtest'), ZipOutput('c:\\jpython\\test.jar')]:
-		of.write('org.python.core.PyInteger', 'c:\\jpython\\JavaCode\\org\\python\\core\\PyInteger.class')
-		of.write('org.python.core.PyFloat', 'c:\\jpython\\JavaCode\\org\\python\\core\\PyFloat.class')
+	for of in [CabOutput('c:\\jython\\test.cab')]: #DirectoryOutput('c:\\jython\\dtest'), ZipOutput('c:\\jython\\test.jar')]:
+		of.write('org.python.core.PyInteger', 'c:\\jython\\JavaCode\\org\\python\\core\\PyInteger.class')
+		of.write('org.python.core.PyFloat', 'c:\\jython\\JavaCode\\org\\python\\core\\PyFloat.class')
 		bytes = ByteArrayOutputStream()
 		bytes.write(jarray.array([10]*500, 'b'))
 		of.write('hi.there', bytes)

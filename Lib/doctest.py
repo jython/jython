@@ -401,7 +401,7 @@ class _SpoofOut:
         if hasattr(self, "softspace"):
             del self.softspace
     def flush(self):
-        # JPython calls flush
+        # Jython calls flush
         pass
 
 # Display some tag-and-msg pairs nicely, keeping the tag and its msg

@@ -1532,7 +1532,7 @@ public class PyFile extends PyObject
     // TBD: should this be removed?  I think it's better to raise an
     // AttributeError than an IOError here.
     public PyObject fileno() {
-        throw Py.IOError("fileno() is not supported in jpython");
+        throw Py.IOError("fileno() is not supported in jython");
     }
 
     final String file_toString() {
