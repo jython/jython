@@ -1,11 +1,6 @@
 <!-- Copyright 2000 Dj Walker-Morgan -->
-
-
 <project name="jython" default="developer-build" basedir=".">
-
-
-    <!-- print out some usage hints -->
-    <target name="usage" description="prints a short usage">
+    <target name="usage" description="prints usage hints">
         <echo>
 Use case 1: developer build (in your local jython copy)
 -------------------------------------------------------
@@ -45,6 +40,7 @@ The following targets are designed for direct invocation:
   - full-build
   - clean (uses developer-build settings if called directly)
   - parser (uses developer-build settings if called directly)
+  - copy-lib
 Following an ant convention, the callable targets have a description attribute.
 All other targets may give unpredicted results if called directly.
 
@@ -58,20 +54,7 @@ The first setting of a property wins, further settings are ignored.
 
 Actions for a release
 ---------------------
-  1. determine the new svn tag to be applied to jython
-  2. check the svn:externals property of project jython for an appropriate cpython maintenance branch
-  3. change the following properties in this build.xml, if necessary:
-       - svn.tag             (target: full-init)
-       - jdk.target.version  (target: pre-init)
-  4. if new CPython .py files should be distributed, add them to build.Lib.include.properties
-  5. adjust the public static String version in PySystemState.java
-  6. adjust the version strings in target 'version' of this build.xml
-       (this is for upcoming snapshot builds only)
-  7. adjust the url for the cpython maintenance branch in target 'checkout' of this build.xml
-  8. check in all the changes
-  9. apply the new tag to the jython svn (all projects)
- 10. call target 'full-build'
-
+ http://wiki.python.org/jython/JythonDeveloperGuide/HowToReleaseJython
 
 
 An example ant.properties file:
@@ -140,7 +123,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="developer-build" depends="jar, copy-lib" description="a local build for developers" />
 
-    <target name="full-build" depends="full-init, dump-env, install" description="a full build from svn" />
+    <target name="full-build" depends="full-init, dump-env, install" description="a full build with svn checkout" />
 
     <target name="common-init">
         <property file="${user.home}/ant.properties" />
@@ -568,7 +551,7 @@ The readme text for the next release will be like:
         </copy>
     </target>
 
-    <target name="copy-lib" depends="init">
+    <target name="copy-lib" depends="init" description="Copies the files from CPythonLib and Lib to dist">
         <copy todir="${dist.dir}" preservelastmodified="true">
             <fileset dir="${jython.base.dir}" includes="Tools/**/*.py" />
         </copy>
