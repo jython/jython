@@ -14,26 +14,18 @@ Command line options:
 -a: all       -- execute tests in all test(/regrtest.py) dirs on sys.path
   : broad     -- execute tests in all test(/regrtest.py) dirs on sys.path
 -x: exclude   -- arguments are tests to *exclude*
-[NOT SUPPORTED -s: single    -- run only a single test (see below)]
 -r: random    -- randomize test execution order
 -m: memo      -- save results to file
 -l: findleaks -- if GC is available detect tests that leak memory
 -u: use       -- specify which special resource intensive tests to run
 -h: help      -- print this text and exit
+-e: expected  -- run only tests that are expected to run and pass
 
 If non-option arguments are present, they are names for tests to run,
 unless -x is given, in which case they are names for tests not to run.
 If no test names are given, all tests are run.
 
 -v is incompatible with -g and does not compare test output files.
-
--s means to run only a single test and exit.  This is useful when
-doing memory analysis on the Python interpreter (which tend to consume
-too many resources to run the full regression test non-stop).  The
-file /tmp/pynexttest is read to find the next test to run.  If this
-file is missing, the first test_*.py file in testdir or on the command
-line is used.  (actually tempfile.gettempdir() is used instead of
-/tmp).
 
 -u is used to specify which special resource intensive tests to run,
 such as those requiring large file support or network connectivity.
@@ -69,7 +61,6 @@ sys.modules['test.test_support'] = test_support
 
 # interim stuff
 
-# !!! what about single
 # !!! minimal (std) tests?
 
 def clean_sys_path():
@@ -199,7 +190,7 @@ def usage(code, msg=''):
 
 def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
          exclude=0, single=0, randomize=0, findleaks=0,
-         use_resources=None):
+         use_resources=None, expected=0, allran=1):
     """Execute a test suite.
 
     This also parses command-line options and modifies its behavior
@@ -217,7 +208,7 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     files beginning with test_ will be used.
 
     The other default arguments (verbose, quiet, generate, exclude,
-    single, randomize, findleaks, and use_resources) allow programmers
+    randomize, findleaks, and use_resources) allow programmers
     calling main() directly to set the values that would normally be
     set by flags on the command line.
 
@@ -226,9 +217,9 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     test_support.record_original_stdout(sys.stdout)
     try:
         args = with_indirect_args(sys.argv[1:])
-        opts, args = getopt.getopt(args, 'hvgqxrlu:am:', # 's'
+        opts, args = getopt.getopt(args, 'hvgqxrlu:am:e',
                                    ['help', 'verbose', 'quiet', 'generate',
-                                    'exclude', 'random', # 'single',
+                                    'exclude', 'random', 'expected',
                                     'findleaks', 'use=','all','memo=',
                                     'broad','oneonly='])
     except getopt.error, msg:
@@ -266,10 +257,13 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
         elif o in ('--oneonly',):
             oneonly = a.split(',')
             strip_py(oneonly)
+            allran = 0
         elif o in ('-x', '--exclude'):
             exclude = 1
-##         elif o in ('-s', '--single'):
-##             single = 1
+            allran = 0
+        elif o in ('-e', '--expected'):
+            expected = 1
+            allran = 0
         elif o in ('-r', '--randomize'):
             randomize = 1
         elif o in ('-l', '--findleaks'):
@@ -313,17 +307,6 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
             #gc.set_debug(gc.DEBUG_SAVEALL)
             found_garbage = []
 
-##     if single:
-##         from tempfile import gettempdir
-##         filename = os.path.join(gettempdir(), 'pynexttest')
-##         try:
-##             fp = open(filename, 'r')
-##             next = fp.read().strip()
-##             tests = [next]
-##             fp.close()
-##         except IOError:
-##             pass
-
     strip_py(args)
 
     stdtests = STDTESTS[:]
@@ -332,16 +315,17 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
         for arg in args:
             if arg in stdtests:
                 stdtests.remove(arg)
+                allran = 0
         nottests[:0] = args
         args = []
 
     clean_sys_path()
         
+    if args:
+        allran = 0
     tests = tests or args or findalltests(testdir, stdtests, nottests,all=all)
     testdirs = findtestdirs(all)
     
-##    if single:
-##         tests = tests[:1]
     if randomize:
         random.shuffle(tests)
     test_support.verbose = verbose      # Tell tests to be moderately quiet
@@ -349,8 +333,11 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     save_modules = sys.modules.keys()
 
     saved_sys_path = sys.path
-  
+    skips = _Expected(_skips)
+    failures = _Expected(_failures)
     for test in tests:
+        if expected and (test in skips or test in failures):
+            continue
         test_basename = test
         consider_dirs = testdirs
         if test_basename in oneonly:
@@ -410,23 +397,10 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
     surprises = 0
     if skipped and not quiet:
 	print count(len(skipped), "test"), "skipped:"
-	surprises += countsurprises(_Expected(_skips), skipped, 'skip')
+	surprises += countsurprises(skips, skipped, 'skip', 'ran', allran)
     if bad:
         print count(len(bad), "test"), "failed:"
-	surprises += countsurprises(_Expected(_failures), bad, 'fail')
-##     if single:
-##         alltests = findtests(testdir, stdtests, nottests)
-##         for i in range(len(alltests)):
-##             if tests[0] == alltests[i]:
-##                 if i == len(alltests) - 1:
-##                     os.unlink(filename)
-##                 else:
-##                     fp = open(filename, 'w')
-##                     fp.write(alltests[i+1] + '\n')
-##                     fp.close()
-##                 break
-##         else:
-##             os.unlink(filename)
+	surprises += countsurprises(failures, bad, 'fail', 'passed', allran)
 
     if memo:
         savememo(memo,good,bad,skipped)
@@ -630,49 +604,22 @@ def printlist(x, width=70, indent=4):
     if len(line) > indent:
         print line
 
-def countsurprises(expected, actual, name):
+def countsurprises(expected, actual, action, antiaction, allran):
     """returns the number of items in actual that aren't in expected."""
-    
     printlist(actual)
-    if expected.isvalid():
-	surprise = _Set(actual) - expected.getexpected()
-	if surprise:
-	    print count(len(surprise), name), \
-		  "unexpected on", sys.platform + ":"
-	    printlist(surprise)
-	return len(surprise)
-    else:
+    if not expected.isvalid():
 	print "Ask someone to teach regrtest.py about which tests are"
-	print "expected to %s on %s." % (name, sys.platform)
-	return 1#Surprising not to know what to expect....
-
-class _Set:
-    def __init__(self, seq=[]):
-        data = self.data = {}
-        for x in seq:
-            data[x] = 1
-
-    def __len__(self):
-        return len(self.data)
-
-    def __sub__(self, other):
-        "Return set of all elements in self not in other."
-        result = _Set()
-        data = result.data = self.data.copy()
-        for x in other.data:
-            if x in data:
-                del data[x]
-        return result
-
-    def __iter__(self):
-        return iter(self.data)
-
-    def tolist(self, sorted=1):
-        "Return _Set elements as a list."
-        data = self.data.keys()
-        if sorted:
-            data.sort()
-        return data
+        print "expected to %s on %s." % (action, sys.platform)
+        return 1#Surprising not to know what to expect....
+    good_surprise = expected.getexpected() - set(actual)
+    if allran and good_surprise:
+        print count(len(good_surprise), 'test'), antiaction, 'unexpectedly:'
+        printlist(good_surprise)
+    bad_surprise = set(actual) - expected.getexpected()
+    if bad_surprise:
+        print count(len(bad_surprise), action), "unexpected:"
+        printlist(bad_surprise)
+    return len(bad_surprise)
 
 _skips = {
     'win32':
@@ -1073,7 +1020,6 @@ _skips = {
         test_weakref
         test_winreg
         test_winsound
-        test_zipimport
 	"""
 }
 if test_support.is_jython and test_support.underlying_system.startswith('win'):
@@ -1082,26 +1028,46 @@ if test_support.is_jython and test_support.underlying_system.startswith('win'):
 _failures = {
     'java':
     '''
+    test___all__
     test_atexit
     test_class
+    test_copy
     test_cpickle
+    test_dis
     test_descr
     test_descrtut
+    test_dumbdbm
+    test_eof
+    test_file
     test_frozen
+    test_hexoct
+    test_inspect
     test_imp
     test_marshal
     test_new
     test_pep263
+    test_pep277
     test_pickle
+    test_pickletools
+    test_pkg
     test_pkgimport
+    test_posixpath
     test_profilehooks
     test_pyclbr
+    test_quopri
+    test_random
     test_shutil
+    test_slice
     test_softspace
-    test_sre
+    test_syntax
+    test_tempfile
     test_threaded_import
     test_trace
-    test_weakref
+    test_ucn
+    test_unicode
+    test_urllib
+    test_xpickle
+    test_zipimport
     ''',
 }
 
@@ -1113,7 +1079,7 @@ class _Expected:
 	    platform = 'java'
         if expect_dict.has_key(platform):
             s = expect_dict[platform]
-            self.expected = _Set(s.split())
+            self.expected = set(s.split())
             self.valid = 1
 
     def isvalid(self):
@@ -1128,6 +1094,9 @@ class _Expected:
 
         assert self.isvalid()
         return self.expected
+
+    def __contains__(self, key):
+        return key in self.expected
 
 if __name__ == '__main__':
     sys.exit(main())
