@@ -227,9 +227,9 @@ class LazyDict( UserDict ):
     def popitem(self):
         self.__populate()
         return UserDict.popitem( self )
-    def pop(self):
+    def pop(self, *args):
       self.__populate()
-      return UserDict.pop(self)
+      return UserDict.pop(self, *args)
     def iteritems(self):
       self.__populate()
       return UserDict.iteritems(self)
