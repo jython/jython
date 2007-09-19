@@ -37,6 +37,6 @@ if swing is not None:
 	sys.modules['pawt.swing'] = swing
 	swing.__dict__['test'] = test
 	
-	#These two lines help out jpythonc to figure out this very strange module
+	#These two lines help out jythonc to figure out this very strange module
 	swing.__dict__['__file__'] = __file__
 	swing.__dict__['__jpythonc_name__'] = 'pawt.swing'

@@ -11,6 +11,7 @@ package com.ziclix.python.sql.handler;
 import com.ziclix.python.sql.DataHandler;
 import org.python.core.PyFile;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -59,7 +60,7 @@ public class MySQLDataHandler extends RowIdHandler {
         } else {
           varchar = (String) object.__tojava__(String.class);
         }
-        InputStream stream = new ByteArrayInputStream(varchar.getBytes());
+        InputStream stream = new ByteArrayInputStream(PyString.to_bytes(varchar));
 
         stream = new BufferedInputStream(stream);
 

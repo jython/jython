@@ -334,4 +334,4 @@ if __name__ == '__main__':
     print mod.attributes.keys()
     print mod.imports.keys()
     print mod
-    mod.dump("c:\\jpython\\tools\\jpythonc2\\test")
+    mod.dump("c:\\jython\\tools\\jythonc2\\test")

@@ -1,11 +1,15 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PushbackInputStream;
+import java.io.RandomAccessFile;
+import java.io.Writer;
 import java.util.LinkedList;
 
 // To do:
@@ -32,66 +36,48 @@ public class PyFile extends PyObject
                       mode.indexOf('a') >= 0;
             binary  = mode.indexOf('b') >= 0;
         }
-        public String read(int n) throws java.io.IOException {
-            throw new java.io.IOException("file not open for reading");
+        public String read(int n) throws IOException {
+            throw new IOException("file not open for reading");
         }
-        public int read() throws java.io.IOException {
-            throw new java.io.IOException("file not open for reading");
+        public int read() throws IOException {
+            throw new IOException("file not open for reading");
         }
-        public int available() throws java.io.IOException {
-            throw new java.io.IOException("file not open for reading");
+        public int available() throws IOException {
+            throw new IOException("file not open for reading");
         }
-        public void unread(int c) throws java.io.IOException {
-            throw new java.io.IOException("file doesn't support unread");
+        public void unread(int c) throws IOException {
+            throw new IOException("file doesn't support unread");
         }
-        public void write(String s) throws java.io.IOException {
-            throw new java.io.IOException("file not open for writing");
+        public void write(String s) throws IOException {
+            throw new IOException("file not open for writing");
         }
-        public long tell() throws java.io.IOException {
-            throw new java.io.IOException("file doesn't support tell/seek");
+        public long tell() throws IOException {
+            throw new IOException("file doesn't support tell/seek");
         }
-        public void seek(long pos, int how) throws java.io.IOException {
-            throw new java.io.IOException("file doesn't support tell/seek");
+        public void seek(long pos, int how) throws IOException {
+            throw new IOException("file doesn't support tell/seek");
         }
-        public void flush() throws java.io.IOException {
+        public void flush() throws IOException {
         }
-        public void close() throws java.io.IOException {
+        public void close() throws IOException {
         }
-        public void truncate(long position) throws java.io.IOException {
-            throw new java.io.IOException("file doesn't support truncate");
+        public void truncate(long position) throws IOException {
+            throw new IOException("file doesn't support truncate");
         }
 
         public Object __tojava__(Class cls) throws IOException {
             return null;
         }
-        protected byte[] getBytes(String s) {
-            // Yes, I known the method is depricated, but it is the fastest
-            // way of converting between between byte[] and String
-            if (binary) {
-                byte[] buf = new byte[s.length()];
-                s.getBytes(0, s.length(), buf, 0);
-                return buf;
-            } else
-                return s.getBytes();
-        }
-        protected String getString(byte[] buf, int offset, int len) {
-            // Yes, I known the method is depricated, but it is the fastest
-            // way of converting between between byte[] and String
-            if (binary) {
-                return new String(buf, 0, offset, len);
-            } else
-                return new String(buf, offset, len);
-        }
     }
 
     private static class InputStreamWrapper extends FileWrapper {
-        java.io.InputStream istream;
+        InputStream istream;
 
-        public InputStreamWrapper(java.io.InputStream s) {
+        public InputStreamWrapper(InputStream s) {
             istream = s;
         }
 
-        public String read(int n) throws java.io.IOException {
+        public String read(int n) throws IOException {
             if (n == 0)
                 // nothing to do
                 return "";
@@ -100,7 +86,7 @@ public class PyFile extends PyObject
                 byte buf[] = new byte[1024];
                 StringBuffer sbuf = new StringBuffer();
                 for (int read=0; read >= 0; read=istream.read(buf))
-                    sbuf.append(getString(buf, 0, read));
+                    sbuf.append(PyString.from_bytes(buf, 0, read));
                 return sbuf.toString();
             }
             // read the next chunk available, but make sure it's at least
@@ -113,22 +99,22 @@ public class PyFile extends PyObject
             if (read < 0)
                 // EOF encountered
                 return "";
-            return new String(buf, 0, 0, read);
+            return PyString.from_bytes(buf, 0, read);
         }
 
-        public int read() throws java.io.IOException {
+        public int read() throws IOException {
             return istream.read();
         }
 
-        public int available() throws java.io.IOException {
+        public int available() throws IOException {
             return istream.available();
         }
 
-        public void unread(int c) throws java.io.IOException {
-            ((java.io.PushbackInputStream)istream).unread(c);
+        public void unread(int c) throws IOException {
+            ((PushbackInputStream)istream).unread(c);
         }
 
-        public void close() throws java.io.IOException {
+        public void close() throws IOException {
             istream.close();
         }
 
@@ -140,16 +126,16 @@ public class PyFile extends PyObject
     }
 
     private static class OutputStreamWrapper extends FileWrapper {
-        private java.io.OutputStream ostream;
+        private OutputStream ostream;
 
-        public OutputStreamWrapper(java.io.OutputStream s) {
+        public OutputStreamWrapper(OutputStream s) {
             ostream = s;
         }
 
         private static final int MAX_WRITE = 30000;
 
-        public void write(String s) throws java.io.IOException {
-            byte[] bytes = getBytes(s);
+        public void write(String s) throws IOException {
+            byte[] bytes = PyString.to_bytes(s);
             int n = bytes.length;
             int i = 0;
             while (i < n) {
@@ -160,11 +146,11 @@ public class PyFile extends PyObject
             }
         }
 
-        public void flush() throws java.io.IOException {
+        public void flush() throws IOException {
             ostream.flush();
         }
 
-        public void close() throws java.io.IOException {
+        public void close() throws IOException {
             ostream.close();
         }
 
@@ -176,23 +162,23 @@ public class PyFile extends PyObject
     }
 
     private static class IOStreamWrapper extends InputStreamWrapper {
-        private java.io.OutputStream ostream;
+        private OutputStream ostream;
 
-        public IOStreamWrapper(java.io.InputStream istream,
-                               java.io.OutputStream ostream) {
+        public IOStreamWrapper(InputStream istream,
+                               OutputStream ostream) {
             super(istream);
             this.ostream = ostream;
         }
 
-        public void write(String s) throws java.io.IOException {
-            ostream.write(getBytes(s));
+        public void write(String s) throws IOException {
+            ostream.write(PyString.to_bytes(s));
         }
 
-        public void flush() throws java.io.IOException {
+        public void flush() throws IOException {
             ostream.flush();
         }
 
-        public void close() throws java.io.IOException {
+        public void close() throws IOException {
             ostream.close();
             istream.close();
         }
@@ -205,23 +191,23 @@ public class PyFile extends PyObject
     }
 
     private static class WriterWrapper extends FileWrapper {
-        private java.io.Writer writer;
+        private Writer writer;
 
-        public WriterWrapper(java.io.Writer s) {
+        public WriterWrapper(Writer s) {
             writer = s;
         }
 
         //private static final int MAX_WRITE = 30000;
 
-        public void write(String s) throws java.io.IOException {
+        public void write(String s) throws IOException {
             writer.write(s);
         }
 
-        public void flush() throws java.io.IOException {
+        public void flush() throws IOException {
             writer.flush();
         }
 
-        public void close() throws java.io.IOException {
+        public void close() throws IOException {
             writer.close();
         }
     }
@@ -230,8 +216,8 @@ public class PyFile extends PyObject
         /** The default buffer size, in bytes. */
         protected static final int defaultBufferSize = 4096;
 
-        /** The underlying java.io.RandomAccessFile. */
-        protected java.io.RandomAccessFile file;
+        /** The underlying RandomAccessFile. */
+        protected RandomAccessFile file;
 
         /** The offset in bytes from the file start, of the next read or
          *  write operation. */
@@ -260,11 +246,11 @@ public class PyFile extends PyObject
         /** True if the data in the buffer has been modified. */
         boolean bufferModified = false;
 
-        public RFileWrapper(java.io.RandomAccessFile file) {
+        public RFileWrapper(RandomAccessFile file) {
             this(file, 8092);
         }
 
-        public RFileWrapper(java.io.RandomAccessFile file, int bufferSize) {
+        public RFileWrapper(RandomAccessFile file, int bufferSize) {
             this.file = file;
             bufferStart = 0;
             dataEnd = 0;
@@ -274,7 +260,7 @@ public class PyFile extends PyObject
             endOfFile = false;
         }
 
-        public String read(int n) throws java.io.IOException {
+        public String read(int n) throws IOException {
             if (n < 0) {
                 n = (int)(file.length() - filePosition);
                 if (n < 0)
@@ -284,7 +270,7 @@ public class PyFile extends PyObject
             n = readBytes(buf, 0, n);
             if (n < 0)
                 n = 0;
-            return getString(buf, 0, n);
+            return PyString.from_bytes(buf, 0, n);
         }
 
 
@@ -346,7 +332,7 @@ public class PyFile extends PyObject
         }
 
 
-        public int read() throws java.io.IOException {
+        public int read() throws IOException {
             // If the file position is within the data, return the byte...
             if (filePosition < dataEnd) {
                 return (int)(buffer[(int)(filePosition++ - bufferStart)]
@@ -361,16 +347,16 @@ public class PyFile extends PyObject
             }
         }
 
-        public int available() throws java.io.IOException {
+        public int available() throws IOException {
             return 1;
         }
 
-        public void unread(int c) throws java.io.IOException {
+        public void unread(int c) throws IOException {
             filePosition--;
         }
 
-        public void write(String s) throws java.io.IOException {
-            byte[] b = getBytes(s);
+        public void write(String s) throws IOException {
+            byte[] b = PyString.to_bytes(s);
             int len = b.length;
 
             // If the amount of data is small (less than a full buffer)...
@@ -421,11 +407,11 @@ public class PyFile extends PyObject
             }
         }
 
-        public long tell() throws java.io.IOException {
+        public long tell() throws IOException {
             return filePosition;
         }
 
-        public void seek(long pos, int how) throws java.io.IOException {
+        public void seek(long pos, int how) throws IOException {
             if (how == 1)
                 pos += filePosition;
             else if (how == 2)
@@ -462,14 +448,14 @@ public class PyFile extends PyObject
             dataEnd = bufferStart + dataSize;
         }
 
-        public void flush() throws java.io.IOException {
+        public void flush() throws IOException {
             file.seek(bufferStart);
             file.write(buffer, 0, dataSize);
             bufferModified = false;
             file.getFD().sync();
         }
 
-        public void close() throws java.io.IOException {
+        public void close() throws IOException {
             if (writing && bufferModified) {
                 file.seek(bufferStart);
                 file.write(buffer, 0, (int)dataSize);
@@ -478,7 +464,7 @@ public class PyFile extends PyObject
             file.close();
         }
 
-        public void truncate(long position) throws java.io.IOException {
+        public void truncate(long position) throws IOException {
             flush();
             try {
                 // file.setLength(position);
@@ -519,7 +505,7 @@ public class PyFile extends PyObject
             sep_is_nl = (sep == "\n");
         }
 
-        public String read(int n) throws java.io.IOException {
+        public String read(int n) throws IOException {
             String s = this.file.read(n);
             int index = s.indexOf('\r');
             if (index < 0)
@@ -544,7 +530,7 @@ public class PyFile extends PyObject
             return buf.toString();
         }
 
-        public int read() throws java.io.IOException {
+        public int read() throws IOException {
             int c = file.read();
             if (c != '\r')
                 return c;
@@ -556,7 +542,7 @@ public class PyFile extends PyObject
             return '\n';
         }
 
-        public void write(String s) throws java.io.IOException {
+        public void write(String s) throws IOException {
             if (!sep_is_nl) {
                 int index = s.indexOf('\n');
                 if (index >= 0) {
@@ -575,23 +561,23 @@ public class PyFile extends PyObject
             this.file.write(s);
         }
 
-        public long tell() throws java.io.IOException {
+        public long tell() throws IOException {
             return file.tell();
         }
 
-        public void seek(long pos, int how) throws java.io.IOException {
+        public void seek(long pos, int how) throws IOException {
             file.seek(pos, how);
         }
 
-        public void flush() throws java.io.IOException {
+        public void flush() throws IOException {
             file.flush();
         }
 
-        public void close() throws java.io.IOException {
+        public void close() throws IOException {
             file.close();
         }
 
-        public void truncate(long position) throws java.io.IOException {
+        public void truncate(long position) throws IOException {
             file.truncate(position);
         }
 
@@ -1082,13 +1068,13 @@ public class PyFile extends PyObject
 
     private FileWrapper file;
 
-    private static java.io.InputStream _pb(java.io.InputStream s, String mode)
+    private static InputStream _pb(InputStream s, String mode)
     {
         if (mode.indexOf('b') < 0) {
-            if(s instanceof java.io.PushbackInputStream) {
+            if(s instanceof PushbackInputStream) {
                 return s;
             }
-            return new java.io.PushbackInputStream(s);
+            return new PushbackInputStream(s);
         }
         return s;
     }
@@ -1127,67 +1113,67 @@ public class PyFile extends PyObject
         }
     }
 
-    public PyFile(java.io.InputStream istream, java.io.OutputStream ostream,
+    public PyFile(InputStream istream, OutputStream ostream,
                   String name, String mode)
     {
         this(new IOStreamWrapper(_pb(istream, mode), ostream), name, mode);
     }
 
-    public PyFile(java.io.InputStream istream, java.io.OutputStream ostream,
+    public PyFile(InputStream istream, OutputStream ostream,
                   String name)
     {
         this(istream, ostream, name, "r+");
     }
 
-    public PyFile(java.io.InputStream istream, java.io.OutputStream ostream) {
+    public PyFile(InputStream istream, OutputStream ostream) {
         this(istream, ostream, "<???>", "r+");
     }
 
-    public PyFile(java.io.InputStream istream, String name, String mode) {
+    public PyFile(InputStream istream, String name, String mode) {
         this(new InputStreamWrapper(_pb(istream, mode)), name, mode);
     }
 
-    public PyFile(java.io.InputStream istream, String name) {
+    public PyFile(InputStream istream, String name) {
         this(istream, name, "r");
     }
 
-    public PyFile(java.io.InputStream istream) {
+    public PyFile(InputStream istream) {
         this(istream, "<???>", "r");
     }
 
-    public PyFile(java.io.OutputStream ostream, String name, String mode) {
+    public PyFile(OutputStream ostream, String name, String mode) {
         this(new OutputStreamWrapper(ostream), name, mode);
     }
 
-    public PyFile(java.io.OutputStream ostream, String name) {
+    public PyFile(OutputStream ostream, String name) {
         this(ostream, name, "w");
     }
 
-    public PyFile(java.io.OutputStream ostream) {
+    public PyFile(OutputStream ostream) {
         this(ostream, "<???>", "w");
     }
 
-    public PyFile(java.io.Writer ostream, String name, String mode) {
+    public PyFile(Writer ostream, String name, String mode) {
         this(new WriterWrapper(ostream), name, mode);
     }
 
-    public PyFile(java.io.Writer ostream, String name) {
+    public PyFile(Writer ostream, String name) {
         this(ostream, name, "w");
     }
 
-    public PyFile(java.io.Writer ostream) {
+    public PyFile(Writer ostream) {
         this(ostream, "<???>", "w");
     }
 
-    public PyFile(java.io.RandomAccessFile file, String name, String mode) {
+    public PyFile(RandomAccessFile file, String name, String mode) {
         this(new RFileWrapper(file), name, mode);
     }
 
-    public PyFile(java.io.RandomAccessFile file, String name) {
+    public PyFile(RandomAccessFile file, String name) {
         this(file, name, "r+");
     }
 
-    public PyFile(java.io.RandomAccessFile file) {
+    public PyFile(RandomAccessFile file) {
         this(file, "<???>", "r+");
     }
 
@@ -1209,7 +1195,7 @@ public class PyFile extends PyObject
         Object o = null;
         try {
             o = file.__tojava__(cls);
-        } catch (java.io.IOException exc) { }
+        } catch (IOException exc) { }
         if (o == null)
             o = super.__tojava__(cls);
         return o;
@@ -1239,27 +1225,27 @@ public class PyFile extends PyObject
         }
         else if (c1 == 'w' || c1 == 'a') jmode = "rw";
         try {
-            java.io.File f = new java.io.File(name);
+            File f = new File(name);
             if (c1 == 'r') {
                 if (!f.exists()) {
-                    throw new java.io.IOException("No such file or directory: " + name);
+                    throw new IOException("No such file or directory: " + name);
                 }
             }
             if (c1 == 'w') {
                 // Hack to truncate the file without deleting it:
                 // create a FileOutputStream for it and close it again.
-                java.io.FileOutputStream fo = new java.io.FileOutputStream(f);
+                FileOutputStream fo = new FileOutputStream(f);
                 fo.close();
                 fo = null;
             }
             // What about bufsize?
-            java.io.RandomAccessFile rfile =
-                new java.io.RandomAccessFile(f, jmode);
+            RandomAccessFile rfile =
+                new RandomAccessFile(f, jmode);
             RFileWrapper iofile = new RFileWrapper(rfile);
             if (c1 == 'a')
                 iofile.seek(0, 2);
             return iofile;
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw Py.IOError(e);
         }
     }
@@ -1281,7 +1267,7 @@ public class PyFile extends PyObject
                         break;
                 }
             }
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw Py.IOError(e);
         }
         return data.toString();
@@ -1307,7 +1293,7 @@ public class PyFile extends PyObject
             int c;
             try {
                 c = file.read();
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 throw Py.IOError(e);
             }
             if (c < 0)
@@ -1406,7 +1392,7 @@ public class PyFile extends PyObject
         try {
             file.write(s);
             softspace = false;
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw Py.IOError(e);
         }
     }
@@ -1436,7 +1422,7 @@ public class PyFile extends PyObject
             err_closed();
         try {
             return file.tell();
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw Py.IOError(e);
         }
     }
@@ -1450,7 +1436,7 @@ public class PyFile extends PyObject
             err_closed();
         try {
             file.seek(pos, how);
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw Py.IOError(e);
         }
     }
@@ -1472,7 +1458,7 @@ public class PyFile extends PyObject
             err_closed();
         try {
             file.flush();
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw Py.IOError(e);
         }
     }
@@ -1488,7 +1474,7 @@ public class PyFile extends PyObject
         } else {
             try {
                 file.close();
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 throw Py.IOError(e);
             }
         }
@@ -1503,7 +1489,7 @@ public class PyFile extends PyObject
     final void file_truncate() {
           try {
               file.truncate(file.tell());
-          } catch (java.io.IOException e) {
+          } catch (IOException e) {
               throw Py.IOError(e);
           }
      }
@@ -1515,7 +1501,7 @@ public class PyFile extends PyObject
     final void file_truncate(long position) {
          try {
               file.truncate(position);
-         } catch (java.io.IOException e) {
+         } catch (IOException e) {
               throw Py.IOError(e);
          }
      }
@@ -1527,7 +1513,7 @@ public class PyFile extends PyObject
     // TBD: should this be removed?  I think it's better to raise an
     // AttributeError than an IOError here.
     public PyObject fileno() {
-        throw Py.IOError("fileno() is not supported in jpython");
+        throw Py.IOError("fileno() is not supported in jython");
     }
 
     final String file_toString() {
@@ -1616,7 +1602,7 @@ public class PyFile extends PyObject
         public void _close(){
             try {
                 fw.close();
-            } catch(java.io.IOException e) {
+            } catch(IOException e) {
                 throw Py.IOError(e);
             } finally {
                 fw = null;
@@ -1654,6 +1640,4 @@ public class PyFile extends PyObject
             }
         }
     }
-
-
 }

@@ -14,7 +14,7 @@ from org.python.compiler import Future
 
 """
 class foo
-    class py -- what gets imported by jpython
+    class py -- what gets imported by jython
         holds all py constants
         One of these no matter how many classes
         maybe have static inner classes as well
@@ -478,4 +478,4 @@ if __name__ == '__main__':
     pm.packages = ['java.lang', 'java.awt']
     pm.getIntegerConstant(22)
     pm.getStringConstant("hello world")
-    pm.dump("c:\\jpython\\tools\\jpythonc2")
+    pm.dump("c:\\jython\\tools\\jythonc2")

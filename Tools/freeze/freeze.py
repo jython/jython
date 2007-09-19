@@ -108,7 +108,7 @@ for name in names:
 f.finish(opts.main)
 
 if opts.core:
-	skiplist = ['org.python.core.parser', 'org.python.core.BytecodeLoader', 'org.python.core.jpython']
+	skiplist = ['org.python.core.parser', 'org.python.core.BytecodeLoader', 'org.python.core.jython']
 	f.addPackage(os.path.join(sys.prefix, 'JavaCode', 'org', 'python', 'core'), skiplist)
 
 f.out.close()

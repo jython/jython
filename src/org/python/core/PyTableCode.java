@@ -169,7 +169,7 @@ public class PyTableCode extends PyCode
         // Handle trace function for debugging
         PySystemState ss = ts.systemState;
         if (ss.tracefunc != null) {
-            // JPython and CPython differ here.  CPython actually lays down
+            // Jython and CPython differ here.  CPython actually lays down
             // an extra SET_LINENO bytecode for function definition line.
             // This is ostensibly so that a tuple unpacking failure in
             // argument passing gets the right line number in the
@@ -177,7 +177,7 @@ public class PyTableCode extends PyCode
             // you'll see two 'line' events, one for the def line and then
             // immediately after, one for the first line of the function.
             //
-            // JPython on the other hand only lays down a call in the
+            // Jython on the other hand only lays down a call in the
             // generated Java function to set the line number for the first
             // line of the function (i.e. not the def line).  This
             // difference in behavior doesn't seem to affect arg tuple

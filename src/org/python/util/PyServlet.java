@@ -9,8 +9,8 @@ import org.python.core.*;
 
 
 /**
- * This servlet is used to re-serve JPython servlets.  It stores
- * bytecode for JPython servlets and re-uses it if the underlying .py
+ * This servlet is used to re-serve Jython servlets.  It stores
+ * bytecode for Jython servlets and re-uses it if the underlying .py
  * file has not changed.
  * <p>
  * Many people have been involved with this class:

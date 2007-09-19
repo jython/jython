@@ -464,7 +464,7 @@ public class PySystemState extends PyObject
             standalone = isStandalone(jarFileName);
         }
         
-        // initialize the JPython registry
+        // initialize the Jython registry
         initRegistry(preProperties, postProperties, standalone, jarFileName);
 
         // other initializations

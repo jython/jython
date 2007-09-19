@@ -480,5 +480,5 @@ if __name__ == '__main__':
     ja = JavaArchive([('org.python.core', []),])
     for jc in javaclasses:
         ja.addClass(outdir, jc)
-    outjar = "c:\\jpython\\tools\\jpythonc2\\test\\t.jar"       
+    outjar = "c:\\jython\\tools\\jythonc2\\test\\t.jar"       
     ja.dump(outjar)

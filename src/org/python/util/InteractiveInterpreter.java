@@ -113,7 +113,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
     }
 
     /** Pause the current code, sneak an exception raiser into
-     * sys.trace_func, and then continue the code hoping that JPython will
+     * sys.trace_func, and then continue the code hoping that Jython will
      * get control to do the break;
      **/
     public void interrupt(ThreadState ts) {

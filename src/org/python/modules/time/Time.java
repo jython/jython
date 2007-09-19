@@ -565,7 +565,7 @@ public class Time implements ClassDictInit
                 // properties and is "en_US" by default, at least around
                 // here!  Locale "en_US" differs from locale "C" in the way
                 // it represents dates and times.  Eventually we might want
-                // to craft a "C" locale for Java and set JPython to use
+                // to craft a "C" locale for Java and set Jython to use
                 // this by default, but that's too much work right now.
                 //
                 // For now, we hard code %x and %X to return values

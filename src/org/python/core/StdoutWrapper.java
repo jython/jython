@@ -71,7 +71,7 @@ public class StdoutWrapper extends OutputStream {
     }
 
     public void write(byte[] data, int off, int len) {
-        write(new String(data, off, len));
+        write(PyString.from_bytes(data, off, len));
     }
 
     public void clearSoftspace() {

@@ -1,6 +1,6 @@
 # Copyright (c) Corporation for National Research Initiatives
 
-"""Usage: jpythonc [options] [module]*
+"""Usage: jythonc [options] [module]*
 
 where options include:
 
@@ -22,11 +22,11 @@ where options include:
 
   --core
   -c
-      Include the core JPython libraries (implies --deep)
+      Include the core Jython libraries (implies --deep)
       
   --all
   -a
-      Include all of the JPython libraries (implies --deep)
+      Include all of the Jython libraries (implies --deep)
 
   --bean jarfile
   -b jarfile
@@ -49,12 +49,12 @@ where options include:
   -C path
       Use a different compiler than `standard' javac.  If this is set to
       `NONE' then compile ends with .java.  Alternatively, you can set the
-      property python.jpythonc.compiler in the registry.
+      property python.jythonc.compiler in the registry.
 
   --compileropts options
   -J options
       Options passed directly to the Java compiler.  Alternatively, you can
-      set the property python.jpythonc.compileropts in the registry.
+      set the property python.jythonc.compileropts in the registry.
 
   --falsenames names
   -f names

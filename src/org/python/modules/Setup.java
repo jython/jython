@@ -21,7 +21,7 @@ public class Setup
     //     The module `name' is removed from the list of builtin modules
     //
     // That isn't very useful here, but you can add additional builtin
-    // modules by editing the JPython registry file.  See the property
+    // modules by editing the Jython registry file.  See the property
     // python.modules.builtin for details.
 
     public static String[] builtinModules = {

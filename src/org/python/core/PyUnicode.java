@@ -1473,7 +1473,7 @@ public class PyUnicode extends PyString {
                 return new PyUnicode("");
             }
             if (S instanceof PyUnicode) {
-                return S;
+                return new PyUnicode(((PyUnicode)S).string);
             }
             if (S instanceof PyString) {
                 return new PyUnicode(codecs.decode((PyString)S, encoding, errors));
@@ -1512,7 +1512,7 @@ public class PyUnicode extends PyString {
     }
 
     public PyString unicode___str__() {
-        return new PyString(toString());
+        return new PyString(encode());
     }
 
     final int unicode___len__() {

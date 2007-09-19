@@ -492,12 +492,7 @@ public final class SHA1 {
     );
 
     public String digest() {
-	byte[] digestBits = engineDigest();
-	try {
-	    return new String(digestBits, "ISO-8859-1");
-	} catch (UnsupportedEncodingException exc) {
-	    throw Py.ValueError("encoding not supported"); 
-	}
+        return PyString.from_bytes(engineDigest());
     }
 
     // XXX should become PyObject and use Py.idstr?

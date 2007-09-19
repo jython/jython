@@ -1,6 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 
-// This is a JPython module wrapper around Harry Mantakos' md.java class,
+// This is a Jython module wrapper around Harry Mantakos' md.java class,
 // which provides the basic MD5 algorithm.  See also MD5Object.java which
 // is the implementation of the md5 object returned by new() and md.java
 // which provides the md5 implementation.

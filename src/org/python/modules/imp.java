@@ -19,7 +19,7 @@ import java.io.InputStream;
  * A bogus implementation of the CPython builtin module "imp".
  * Only the functions required by IDLE and PMW are implemented.
  * Luckily these function are also the only function that IMO can
- * be implemented under JPython.
+ * be implemented under Jython.
  */
 
 public class imp {

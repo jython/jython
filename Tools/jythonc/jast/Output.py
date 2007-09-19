@@ -13,7 +13,7 @@ class SourceFile:
 	self.classname = classname
 	self.filename = classname+'.java'
 
-    def dump(self, directory="c:\\jpython\\test\\comp"):
+    def dump(self, directory="c:\\jython\\test\\comp"):
 	fp = open(os.path.join(directory, self.filename), 'w')
 	for bit in self.text:
 	    fp.write(bit)

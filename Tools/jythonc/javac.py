@@ -109,8 +109,8 @@ the property python.jythonc.compiler in the registry.''' % e
 
 
 if __name__ == '__main__':
-    files = ["c:\\jpython\\tools\\jpythonc2\\test\\ButtonDemo.java",
-            "c:\\jpython\\tools\\jpythonc2\\test\\pawt.java",]
+    files = ["c:\\jython\\tools\\jythonc2\\test\\ButtonDemo.java",
+            "c:\\jython\\tools\\jythonc2\\test\\pawt.java",]
 
     print compile(files)
     print compile(files, ["-foo", "bar"])

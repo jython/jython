@@ -1,9 +1,23 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.parser.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.FilterReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+
+import org.python.parser.IParserHost;
+import org.python.parser.Node;
+import org.python.parser.ParseException;
+import org.python.parser.PythonGrammar;
+import org.python.parser.ReaderCharStream;
+import org.python.parser.Token;
+import org.python.parser.TokenMgrError;
 import org.python.parser.ast.modType;
-import java.io.*;
 
 /**
  * Facade for the classes in the org.python.parser package.
@@ -75,7 +89,7 @@ public class parser {
 
 
     public static Node parse(String string, String kind) {
-        return parse(new ByteArrayInputStream(string.getBytes()),
+        return parse(new ByteArrayInputStream(PyString.to_bytes(string)),
                      kind, "<string>", null);
     }
 
@@ -103,7 +117,7 @@ public class parser {
         modType node = null;        
         //System.err.println(new PyString(string).__repr__().toString());
 
-        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(string.getBytes()),
+        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(PyString.to_bytes(string)),
                                                  cflags);
         
         PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader),
