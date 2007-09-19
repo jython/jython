@@ -1488,7 +1488,7 @@ public class PyUnicode extends PyString {
                 return new PyUnicode("");
             }
             if (S instanceof PyUnicode) {
-                return new PyUnicode( (String)S.__tojava__(String.class) );
+                return new PyUnicode(((PyUnicode)S).string);
             }
             if (S instanceof PyString) {
                 return new PyUnicode(codecs.decode((PyString)S, encoding, errors).toString());
@@ -1527,7 +1527,7 @@ public class PyUnicode extends PyString {
     }
 
     public PyString unicode___str__() {
-        return new PyString(toString());
+        return new PyString(encode());
     }
 
     final int unicode___len__() {

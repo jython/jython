@@ -203,8 +203,7 @@ public class binascii {
     };
 
     private static byte[] table_b2a_hqx =
-        "!\"#$%&'()*+,-012345689@ABCDEFGHIJKLMNPQRSTUVXYZ[`abcdefhijklmpqr".
-           getBytes();
+        PyString.to_bytes("!\"#$%&'()*+,-012345689@ABCDEFGHIJKLMNPQRSTUVXYZ[`abcdefhijklmpqr");
 
 
 
@@ -226,8 +225,7 @@ public class binascii {
     private static int BASE64_MAXBIN = 57;
 
     private static byte[] table_b2a_base64 =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".
-            getBytes();
+        PyString.to_bytes("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
 
 

@@ -34,7 +34,7 @@ public class FilelikeInputStream extends InputStream {
         if(result.length() == 0) {
             return -1;
         }
-        System.arraycopy(result.getBytes(), 0, b, off, result.length());
+        System.arraycopy(PyString.to_bytes(result), 0, b, off, result.length());
         return result.length();
     }
 

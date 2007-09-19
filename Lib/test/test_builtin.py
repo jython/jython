@@ -264,8 +264,8 @@ class BuiltinTest(unittest.TestCase):
 # unicode bom isn't recognized to indicate unicode for parsing
 # http://jython.org/1768968            
 #            self.assertEqual(eval(bom + 'a', globals, locals), 1)
-            self.assertEqual(eval(unicode('u"\xc3\xa5"', 'utf8'), globals),
-                             unicode('\xc3\xa5', 'utf8'))
+#            self.assertEqual(eval(unicode('u"\xc3\xa5"', 'utf8'), globals),
+#                             unicode('\xc3\xa5', 'utf8'))
         self.assertRaises(TypeError, eval)
         self.assertRaises(TypeError, eval, ())
 

@@ -4,13 +4,12 @@ package org.python.core;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.io.RandomAccessFile;
 import java.io.Writer;
-
 import java.util.LinkedList;
 
 // To do:
@@ -69,24 +68,6 @@ public class PyFile extends PyObject
         public Object __tojava__(Class cls) throws IOException {
             return null;
         }
-        protected byte[] getBytes(String s) {
-            // Yes, I known the method is depricated, but it is the fastest
-            // way of converting between between byte[] and String
-            if (binary) {
-                byte[] buf = new byte[s.length()];
-                s.getBytes(0, s.length(), buf, 0);
-                return buf;
-            } else
-                return s.getBytes();
-        }
-        protected String getString(byte[] buf, int offset, int len) {
-            // Yes, I known the method is depricated, but it is the fastest
-            // way of converting between between byte[] and String
-            if (binary) {
-                return new String(buf, 0, offset, len);
-            } else
-                return new String(buf, offset, len);
-        }
     }
 
     private static class InputStreamWrapper extends FileWrapper {
@@ -105,7 +86,7 @@ public class PyFile extends PyObject
                 byte buf[] = new byte[1024];
                 StringBuffer sbuf = new StringBuffer();
                 for (int read=0; read >= 0; read=istream.read(buf))
-                    sbuf.append(getString(buf, 0, read));
+                    sbuf.append(PyString.from_bytes(buf, 0, read));
                 return sbuf.toString();
             }
             // read the next chunk available, but make sure it's at least
@@ -118,7 +99,7 @@ public class PyFile extends PyObject
             if (read < 0)
                 // EOF encountered
                 return "";
-            return new String(buf, 0, 0, read);
+            return PyString.from_bytes(buf, 0, read);
         }
 
         public int read() throws IOException {
@@ -154,7 +135,7 @@ public class PyFile extends PyObject
         private static final int MAX_WRITE = 30000;
 
         public void write(String s) throws IOException {
-            byte[] bytes = getBytes(s);
+            byte[] bytes = PyString.to_bytes(s);
             int n = bytes.length;
             int i = 0;
             while (i < n) {
@@ -190,7 +171,7 @@ public class PyFile extends PyObject
         }
 
         public void write(String s) throws IOException {
-            ostream.write(getBytes(s));
+            ostream.write(PyString.to_bytes(s));
         }
 
         public void flush() throws IOException {
@@ -289,7 +270,7 @@ public class PyFile extends PyObject
             n = readBytes(buf, 0, n);
             if (n < 0)
                 n = 0;
-            return getString(buf, 0, n);
+            return PyString.from_bytes(buf, 0, n);
         }
 
 
@@ -375,7 +356,7 @@ public class PyFile extends PyObject
         }
 
         public void write(String s) throws IOException {
-            byte[] b = getBytes(s);
+            byte[] b = PyString.to_bytes(s);
             int len = b.length;
 
             // If the amount of data is small (less than a full buffer)...
@@ -1659,6 +1640,4 @@ public class PyFile extends PyObject
             }
         }
     }
-
-
 }

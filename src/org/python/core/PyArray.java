@@ -1270,7 +1270,7 @@ public class PyArray extends PySequence implements Cloneable {
         if((strlen % itemsize) != 0) {
             throw Py.ValueError("string length not a multiple of item size");
         }
-        ByteArrayInputStream bis = new ByteArrayInputStream(input.getBytes());
+        ByteArrayInputStream bis = new ByteArrayInputStream(PyString.to_bytes(input));
         int origsize = delegate.getSize();
         try {
             fromStream(bis);
@@ -1674,7 +1674,7 @@ public class PyArray extends PySequence implements Cloneable {
             delegate.replaceSubArray(chars, start);
         } else {
             if(value instanceof PyString && type == Byte.TYPE) {
-                byte[] chars = value.toString().getBytes();
+                byte[] chars = ((PyString)value).getBytes();
                 if(chars.length == stop - start && step == 1) {
                     System.arraycopy(chars, 0, data, start, chars.length);
                 } else {
@@ -1724,8 +1724,7 @@ public class PyArray extends PySequence implements Cloneable {
             throw Py.TypeError("file needs to be in write or append mode");
         }
         // write via the PyFile
-        String buffer = tostring();
-        file.write(buffer);
+        file.write(tostring());
     }
     
     public PyObject array_tolist(){
@@ -1804,12 +1803,6 @@ public class PyArray extends PySequence implements Cloneable {
         } catch(IOException e) {
             throw Py.IOError(e);
         }
-        try {
-            // The returned string is used as a Python str with values
-            // from 0-255.  iso-8859-1 maps the byte values into that range.
-            return new String(bos.toByteArray(), "iso-8859-1");
-        } catch (UnsupportedEncodingException e) {
-            throw Py.JavaError(e);
-        }
+        return PyString.from_bytes(bos.toByteArray());
     }
 }

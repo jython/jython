@@ -493,13 +493,7 @@ public class zipimporter extends PyObject {
                 // continue
             }
         }
-        try {
-            return new String(data, "iso-8859-1");
-        }
-        catch (UnsupportedEncodingException uee) {
-            // should never happen
-            throw new RuntimeException(uee);
-        }
+        return PyString.from_bytes(data);
     }
 
     public boolean is_package(String fullname) {

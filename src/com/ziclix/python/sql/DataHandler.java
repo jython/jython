@@ -250,7 +250,7 @@ public class DataHandler {
                         byte[] bytes = DataHandler.read(longvarchar);
 
                         if (bytes != null) {
-                            obj = Py.newString(new String(bytes));
+                            obj = Py.newString(PyString.from_bytes(bytes));
                         }
                     } finally {
                         try {

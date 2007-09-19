@@ -1,6 +1,7 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -1764,12 +1765,14 @@ public final class Py
                                 cflags);
     }
 
-    public static PyCode compile_flags(String data, String filename,
-                                       String type,CompilerFlags cflags)
-    {
-        return Py.compile_flags(
-            new java.io.ByteArrayInputStream((data+"\n\n").getBytes()),
-                          filename, type,cflags);
+    public static PyCode compile_flags(String data,
+                                       String filename,
+                                       String type,
+                                       CompilerFlags cflags) {
+        return Py.compile_flags(new ByteArrayInputStream(PyString.to_bytes(data + "\n\n")),
+                                filename,
+                                type,
+                                cflags);
     }
 
     public static PyObject compile_command_flags(String string,

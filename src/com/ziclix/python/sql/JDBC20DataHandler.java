@@ -66,7 +66,7 @@ public class JDBC20DataHandler extends FilterDataHandler {
 
                 String clob = (String) object.__tojava__(String.class);
                 int length = clob.length();
-                InputStream stream = new ByteArrayInputStream(clob.getBytes());
+                InputStream stream = new ByteArrayInputStream(PyString.to_bytes(clob));
 
                 stream = new BufferedInputStream(stream);
 
