@@ -3909,6 +3909,71 @@ def filefault():
     except RuntimeError:
         pass
 
+def subclass_binop():
+    if verbose:
+        print "Testing binary ops with subclasses"
+
+    def raises(exc, expected, callable, *args):
+        try:
+            callable(*args)
+        except exc, msg:
+            if str(msg) != expected:
+                raise TestFailed, "Message %r, expected %r" % (str(msg),
+                                                               expected)
+        else:
+            raise TestFailed, "Expected %s" % exc
+
+    class B(object):
+        pass
+
+    class C(object):
+        def __radd__(self, o):
+            return '%r + C()' % (o,)
+
+        def __rmul__(self, o):
+            return '%r * C()' % (o,)
+
+    # Test strs, unicode, lists and tuples
+    mapping = []
+
+    # + binop
+    mapping.append((lambda o: 'foo' + o,
+                    TypeError, "cannot concatenate 'str' and 'B' objects",
+                    "'foo' + C()"))
+    # XXX: There's probably work to be done here besides just emulating this
+    # message
+    #mapping.append((lambda o: u'foo' + o,
+    #                TypeError,
+    #                'coercing to Unicode: need string or buffer, B found',
+    #                "u'foo' + C()"))
+    mapping.append((lambda o: u'foo' + o,
+                    TypeError, "cannot concatenate 'unicode' and 'B' objects",
+                    "u'foo' + C()"))
+    mapping.append((lambda o: [1, 2] + o,
+                    TypeError, 'can only concatenate list (not "B") to list',
+                    '[1, 2] + C()'))
+    mapping.append((lambda o: ('foo', 'bar') + o,
+                    TypeError, 'can only concatenate tuple (not "B") to tuple',
+                    "('foo', 'bar') + C()"))
+
+    # * binop
+    mapping.append((lambda o: 'foo' * o,
+                    TypeError, "can't multiply sequence by non-int of type 'B'",
+                    "'foo' * C()"))
+    mapping.append((lambda o: u'foo' * o,
+                    TypeError, "can't multiply sequence by non-int of type 'B'",
+                    "u'foo' * C()"))
+    mapping.append((lambda o: [1, 2] * o,
+                    TypeError, "can't multiply sequence by non-int of type 'B'",
+                    '[1, 2] * C()'))
+    mapping.append((lambda o: ('foo', 'bar') * o,
+                    TypeError, "can't multiply sequence by non-int of type 'B'",
+                    "('foo', 'bar') * C()"))
+
+    for func, bexc, bexc_msg, cresult in mapping:
+        raises(bexc, bexc_msg, lambda : func(B()))
+        vereq(func(C()), cresult)
+
 def test_main():
     testfuncs = [
     weakref_segfault, # Must be first, somehow
@@ -3998,6 +4063,7 @@ def test_main():
     proxysuper,
     carloverre,
     filefault,
+    subclass_binop,
     ]
     if __name__ == '__main__':
         import sys

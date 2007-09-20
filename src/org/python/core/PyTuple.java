@@ -139,6 +139,63 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PyTuple.class,1,1,new exposed___ge__(null,null)));
+        class exposed___add__ extends PyBuiltinMethodNarrow {
+
+            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___add__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyTuple)self).tuple___add__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyTuple.class,1,1,new exposed___add__(null,null)));
+        class exposed___mul__ extends PyBuiltinMethodNarrow {
+
+            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mul__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyTuple)self).tuple___mul__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyTuple.class,1,1,new exposed___mul__(null,null)));
+        class exposed___rmul__ extends PyBuiltinMethodNarrow {
+
+            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___rmul__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyTuple)self).tuple___rmul__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyTuple.class,1,1,new exposed___rmul__(null,null)));
         class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
             exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
@@ -211,22 +268,6 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__len__",new PyMethodDescr("__len__",PyTuple.class,0,0,new exposed___len__(null,null)));
-        class exposed___add__ extends PyBuiltinMethodNarrow {
-
-            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___add__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyTuple)self).tuple___add__(arg0);
-            }
-
-        }
-        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyTuple.class,1,1,new exposed___add__(null,null)));
         class exposed___reduce__ extends PyBuiltinMethodNarrow {
 
             exposed___reduce__(PyObject self,PyBuiltinFunction.Info info) {
@@ -243,38 +284,6 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
         }
         dict.__setitem__("__reduce__",new PyMethodDescr("__reduce__",PyTuple.class,0,0,new exposed___reduce__(null,null)));
-        class exposed___mul__ extends PyBuiltinMethodNarrow {
-
-            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___mul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyTuple)self).tuple___mul__(arg0);
-            }
-
-        }
-        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyTuple.class,1,1,new exposed___mul__(null,null)));
-        class exposed___rmul__ extends PyBuiltinMethodNarrow {
-
-            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___rmul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyTuple)self).tuple___rmul__(arg0);
-            }
-
-        }
-        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyTuple.class,1,1,new exposed___rmul__(null,null)));
         class exposed___hash__ extends PyBuiltinMethodNarrow {
 
             exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
@@ -458,14 +467,14 @@ public class PyTuple extends PySequenceList implements ClassDictInit
 
     final PyObject tuple___mul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply sequence to non-int");
+            return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
 
     final PyObject tuple___rmul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
-            throw Py.TypeError("can't multiply sequence to non-int");
+            return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
@@ -615,5 +624,12 @@ public class PyTuple extends PySequenceList implements ClassDictInit
                 throw new UnsupportedOperationException();
             }
         };
+    }
+
+    protected String unsupportedopMessage(String op, PyObject o2) {
+        if (op.equals("+")) {
+            return "can only concatenate tuple (not \"{2}\") to tuple";
+        }
+        return super.unsupportedopMessage(op, o2);
     }
 }

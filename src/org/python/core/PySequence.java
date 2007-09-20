@@ -474,4 +474,32 @@ abstract public class PySequence extends PyObject {
         }
         return super.__tojava__(c);
     }
+
+    /**
+     * Return sequence-specific error messages suitable for substitution.
+     *
+     * {0} is the op name.
+     * {1} is the left operand type.
+     * {2} is the right operand type.
+     */
+    protected String unsupportedopMessage(String op, PyObject o2) {
+        if (op.equals("*")) {
+            return "can''t multiply sequence by non-int of type ''{2}''";
+        }
+        return null;
+    }
+    
+    /**
+     * Return sequence-specific error messages suitable for substitution.
+     *
+     * {0} is the op name.
+     * {1} is the left operand type.
+     * {2} is the right operand type.
+     */
+    protected String runsupportedopMessage(String op, PyObject o2) {
+        if (op.equals("*")) {
+            return "can''t multiply sequence by non-int of type ''{1}''";
+        }
+        return null;
+    }
 }
