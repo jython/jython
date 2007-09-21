@@ -2104,7 +2104,7 @@ public class PyString extends PyBaseString implements ClassDictInit
      *         underlying String. Each byte contains the low-order bits of its
      *         corresponding char.
      */
-    public byte[] getBytes() {
+    public byte[] toBytes() {
         return to_bytes(string);
     }
 
@@ -2147,7 +2147,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
         if (c.isArray()) {
             if (c.getComponentType() == Byte.TYPE)
-                return getBytes();
+                return toBytes();
             if (c.getComponentType() == Character.TYPE)
                 return string.toCharArray();
         }

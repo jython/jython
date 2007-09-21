@@ -1674,7 +1674,7 @@ public class PyArray extends PySequence implements Cloneable {
             delegate.replaceSubArray(chars, start);
         } else {
             if(value instanceof PyString && type == Byte.TYPE) {
-                byte[] chars = ((PyString)value).getBytes();
+                byte[] chars = ((PyString)value).toBytes();
                 if(chars.length == stop - start && step == 1) {
                     System.arraycopy(chars, 0, data, start, chars.length);
                 } else {
