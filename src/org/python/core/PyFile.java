@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.io.RandomAccessFile;
 import java.io.Writer;
+
 import java.util.LinkedList;
 
 // To do:
@@ -24,568 +25,6 @@ import java.util.LinkedList;
  */
 public class PyFile extends PyObject
 {
-
-    private static class FileWrapper {
-        protected boolean reading;
-        protected boolean writing;
-        protected boolean binary;
-
-        void setMode(String mode) {
-            reading = mode.indexOf('r') >= 0;
-            writing = mode.indexOf('w') >= 0 || mode.indexOf("+") >= 0 ||
-                      mode.indexOf('a') >= 0;
-            binary  = mode.indexOf('b') >= 0;
-        }
-        public String read(int n) throws IOException {
-            throw new IOException("file not open for reading");
-        }
-        public int read() throws IOException {
-            throw new IOException("file not open for reading");
-        }
-        public int available() throws IOException {
-            throw new IOException("file not open for reading");
-        }
-        public void unread(int c) throws IOException {
-            throw new IOException("file doesn't support unread");
-        }
-        public void write(String s) throws IOException {
-            throw new IOException("file not open for writing");
-        }
-        public long tell() throws IOException {
-            throw new IOException("file doesn't support tell/seek");
-        }
-        public void seek(long pos, int how) throws IOException {
-            throw new IOException("file doesn't support tell/seek");
-        }
-        public void flush() throws IOException {
-        }
-        public void close() throws IOException {
-        }
-        public void truncate(long position) throws IOException {
-            throw new IOException("file doesn't support truncate");
-        }
-
-        public Object __tojava__(Class cls) throws IOException {
-            return null;
-        }
-    }
-
-    private static class InputStreamWrapper extends FileWrapper {
-        InputStream istream;
-
-        public InputStreamWrapper(InputStream s) {
-            istream = s;
-        }
-
-        public String read(int n) throws IOException {
-            if (n == 0)
-                // nothing to do
-                return "";
-            if (n < 0) {
-                // read until we hit EOF
-                byte buf[] = new byte[1024];
-                StringBuffer sbuf = new StringBuffer();
-                for (int read=0; read >= 0; read=istream.read(buf))
-                    sbuf.append(PyString.from_bytes(buf, 0, read));
-                return sbuf.toString();
-            }
-            // read the next chunk available, but make sure it's at least
-            // one byte so as not to trip the `empty string' return value
-            // test done by the caller
-            //int avail = istream.available();
-            //n = (n > avail) ? n : avail;
-            byte buf[] = new byte[n];
-            int read = istream.read(buf);
-            if (read < 0)
-                // EOF encountered
-                return "";
-            return PyString.from_bytes(buf, 0, read);
-        }
-
-        public int read() throws IOException {
-            return istream.read();
-        }
-
-        public int available() throws IOException {
-            return istream.available();
-        }
-
-        public void unread(int c) throws IOException {
-            ((PushbackInputStream)istream).unread(c);
-        }
-
-        public void close() throws IOException {
-            istream.close();
-        }
-
-        public Object __tojava__(Class cls) throws IOException {
-            if (InputStream.class.isAssignableFrom(cls))
-                return istream;
-            return null;
-        }
-    }
-
-    private static class OutputStreamWrapper extends FileWrapper {
-        private OutputStream ostream;
-
-        public OutputStreamWrapper(OutputStream s) {
-            ostream = s;
-        }
-
-        private static final int MAX_WRITE = 30000;
-
-        public void write(String s) throws IOException {
-            byte[] bytes = PyString.to_bytes(s);
-            int n = bytes.length;
-            int i = 0;
-            while (i < n) {
-                int sz = n-i;
-                sz = sz > MAX_WRITE ? MAX_WRITE : sz;
-                ostream.write(bytes, i, sz);
-                i += sz;
-            }
-        }
-
-        public void flush() throws IOException {
-            ostream.flush();
-        }
-
-        public void close() throws IOException {
-            ostream.close();
-        }
-
-        public Object __tojava__(Class cls) throws IOException {
-            if (OutputStream.class.isAssignableFrom(cls))
-                return ostream;
-            return null;
-        }
-    }
-
-    private static class IOStreamWrapper extends InputStreamWrapper {
-        private OutputStream ostream;
-
-        public IOStreamWrapper(InputStream istream,
-                               OutputStream ostream) {
-            super(istream);
-            this.ostream = ostream;
-        }
-
-        public void write(String s) throws IOException {
-            ostream.write(PyString.to_bytes(s));
-        }
-
-        public void flush() throws IOException {
-            ostream.flush();
-        }
-
-        public void close() throws IOException {
-            ostream.close();
-            istream.close();
-        }
-
-        public Object __tojava__(Class cls) throws IOException {
-            if (OutputStream.class.isAssignableFrom(cls))
-                return ostream;
-            return super.__tojava__(cls);
-        }
-    }
-
-    private static class WriterWrapper extends FileWrapper {
-        private Writer writer;
-
-        public WriterWrapper(Writer s) {
-            writer = s;
-        }
-
-        //private static final int MAX_WRITE = 30000;
-
-        public void write(String s) throws IOException {
-            writer.write(s);
-        }
-
-        public void flush() throws IOException {
-            writer.flush();
-        }
-
-        public void close() throws IOException {
-            writer.close();
-        }
-    }
-
-    private static class RFileWrapper extends FileWrapper {
-        /** The default buffer size, in bytes. */
-        protected static final int defaultBufferSize = 4096;
-
-        /** The underlying RandomAccessFile. */
-        protected RandomAccessFile file;
-
-        /** The offset in bytes from the file start, of the next read or
-         *  write operation. */
-        protected long filePosition;
-
-        /** The buffer used to load the data. */
-        protected byte buffer[];
-
-        /** The offset in bytes of the start of the buffer, from the start
-         *  of the file. */
-        protected long bufferStart;
-
-        /** The offset in bytes of the end of the data in the buffer, from
-         *  the start of the file. This can be calculated from
-         *  <code>bufferStart + dataSize</code>, but it is cached to speed
-         *  up the read( ) method. */
-        protected long dataEnd;
-
-        /** The size of the data stored in the buffer, in bytes. This may be
-         *  less than the size of the buffer.*/
-        protected int dataSize;
-
-        /** True if we are at the end of the file. */
-        protected boolean endOfFile;
-
-        /** True if the data in the buffer has been modified. */
-        boolean bufferModified = false;
-
-        public RFileWrapper(RandomAccessFile file) {
-            this(file, 8092);
-        }
-
-        public RFileWrapper(RandomAccessFile file, int bufferSize) {
-            this.file = file;
-            bufferStart = 0;
-            dataEnd = 0;
-            dataSize = 0;
-            filePosition = 0;
-            buffer = new byte[bufferSize];
-            endOfFile = false;
-        }
-
-        public String read(int n) throws IOException {
-            if (n < 0) {
-                n = (int)(file.length() - filePosition);
-                if (n < 0)
-                    n = 0;
-            }
-            byte[] buf = new byte[n];
-            n = readBytes(buf, 0, n);
-            if (n < 0)
-                n = 0;
-            return PyString.from_bytes(buf, 0, n);
-        }
-
-
-        private int readBytes( byte b[], int off, int len )
-             throws IOException
-        {
-            // Check for end of file.
-            if( endOfFile )
-                return -1;
-
-            // See how many bytes are available in the buffer - if none,
-            // seek to the file position to update the buffer and try again.
-            int bytesAvailable = (int)(dataEnd - filePosition);
-            if (bytesAvailable < 1) {
-                seek(filePosition, 0);
-                return readBytes( b, off, len );
-            }
-
-            // Copy as much as we can.
-            int copyLength = (bytesAvailable >= len) ? len : bytesAvailable;
-            System.arraycopy(buffer, (int)(filePosition - bufferStart),
-                             b, off, copyLength);
-            filePosition += copyLength;
-
-            // If there is more to copy...
-            if (copyLength < len) {
-                int extraCopy = len - copyLength;
-
-                // If the amount remaining is more than a buffer's
-                // length, read it directly from the file.
-                if (extraCopy > buffer.length) {
-                    file.seek(filePosition);
-                    extraCopy = file.read(b, off + copyLength,
-                                          len - copyLength);
-                } else {
-                    // ...or read a new buffer full, and copy as much
-                    // as possible...
-                    seek(filePosition, 0);
-                    if (!endOfFile) {
-                        extraCopy = (extraCopy > dataSize) ?
-                                        dataSize : extraCopy;
-                        System.arraycopy(buffer, 0, b, off + copyLength,
-                                         extraCopy);
-                    } else {
-                        extraCopy = -1;
-                    }
-                }
-
-                // If we did manage to copy any more, update the file
-                // position and return the amount copied.
-                if (extraCopy > 0) {
-                    filePosition += extraCopy;
-                    return copyLength + extraCopy;
-                }
-            }
-
-            // Return the amount copied.
-            return copyLength;
-        }
-
-
-        public int read() throws IOException {
-            // If the file position is within the data, return the byte...
-            if (filePosition < dataEnd) {
-                return (buffer[(int)(filePosition++ - bufferStart)]
-                                   & 0xff);
-            } else if (endOfFile) {
-               // ...or should we indicate EOF...
-                return -1;
-            } else {
-                // ...or seek to fill the buffer, and try again.
-                seek(filePosition, 0);
-                return read();
-            }
-        }
-
-        public int available() throws IOException {
-            return 1;
-        }
-
-        public void unread(int c) throws IOException {
-            filePosition--;
-        }
-
-        public void write(String s) throws IOException {
-            byte[] b = PyString.to_bytes(s);
-            int len = b.length;
-
-            // If the amount of data is small (less than a full buffer)...
-            if (len < buffer.length) {
-                // If any of the data fits within the buffer...
-                int spaceInBuffer = 0;
-                int copyLength = 0;
-                if (filePosition >= bufferStart)
-                    spaceInBuffer = (int)((bufferStart + buffer.length) -
-                                          filePosition);
-                if (spaceInBuffer > 0) {
-                    // Copy as much as possible to the buffer.
-                    copyLength = (spaceInBuffer > len) ?
-                                       len : spaceInBuffer;
-                    System.arraycopy(b, 0, buffer,
-                                     (int)(filePosition - bufferStart),
-                                     copyLength );
-                    bufferModified = true;
-                    long myDataEnd = filePosition + copyLength;
-                    dataEnd = myDataEnd > dataEnd ? myDataEnd : dataEnd;
-                    dataSize = (int)(dataEnd - bufferStart);
-                    filePosition += copyLength;
-                }
-
-                // If there is any data remaining, move to the
-                // new position and copy to the new buffer.
-                if (copyLength < len) {
-                    seek(filePosition, 0);
-                    System.arraycopy(b, copyLength, buffer,
-                                     (int)(filePosition - bufferStart),
-                                     len - copyLength);
-                    bufferModified = true;
-                    long myDataEnd = filePosition + (len - copyLength);
-                    dataEnd = myDataEnd > dataEnd ? myDataEnd : dataEnd;
-                    dataSize = (int)(dataEnd - bufferStart);
-                    filePosition += (len - copyLength);
-                }
-            } else {
-                // ...or write a lot of data...
-
-                // Flush the current buffer, and write this data to the file.
-                if (bufferModified) {
-                    flush( );
-                    bufferStart = dataEnd = dataSize = 0;
-                }
-                file.write( b, 0, len );
-                filePosition += len;
-            }
-        }
-
-        public long tell() throws IOException {
-            return filePosition;
-        }
-
-        public void seek(long pos, int how) throws IOException {
-            if (how == 1)
-                pos += filePosition;
-            else if (how == 2)
-                pos += file.length();
-            if (pos < 0)
-                pos = 0;
-
-            // If the seek is into the buffer, just update the file pointer.
-            if (pos >= bufferStart && pos < dataEnd) {
-                filePosition = pos;
-                endOfFile = false;
-                return;
-            }
-
-            // If the current buffer is modified, write it to disk.
-            if (bufferModified)
-                flush();
-
-            // Move to the position on the disk.
-            file.seek(pos);
-            filePosition = file.getFilePointer();
-            bufferStart = filePosition;
-
-            // Fill the buffer from the disk.
-            dataSize = file.read(buffer);
-            if (dataSize < 0) {
-                dataSize = 0;
-                endOfFile = true;
-            } else {
-                endOfFile = false;
-            }
-
-            // Cache the position of the buffer end.
-            dataEnd = bufferStart + dataSize;
-        }
-
-        public void flush() throws IOException {
-            file.seek(bufferStart);
-            file.write(buffer, 0, dataSize);
-            bufferModified = false;
-            file.getFD().sync();
-        }
-
-        public void close() throws IOException {
-            if (writing && bufferModified) {
-                file.seek(bufferStart);
-                file.write(buffer, 0, dataSize);
-            }
-
-            file.close();
-        }
-
-        public void truncate(long position) throws IOException {
-            flush();
-            try {
-                // file.setLength(position);
-                java.lang.reflect.Method m = file.getClass().getMethod(
-                        "setLength", new Class[] { Long.TYPE });
-                m.invoke(file, new Object[] { new Long(position) });
-            } catch (NoSuchMethodException exc) {
-                super.truncate(position);
-            } catch (SecurityException exc) {
-                super.truncate(position);
-            } catch (IllegalAccessException exc) {
-                super.truncate(position);
-            } catch (java.lang.reflect.InvocationTargetException exc) {
-                if (exc.getTargetException() instanceof IOException)
-                    throw (IOException) exc.getTargetException();
-                super.truncate(position);
-            }
-        }
-
-        public Object __tojava__(Class cls) throws IOException {
-            if (OutputStream.class.isAssignableFrom(cls) && writing)
-                return new FileOutputStream(file.getFD());
-            else if (InputStream.class.isAssignableFrom(cls) && reading)
-                return new FileInputStream(file.getFD());
-            return super.__tojava__(cls);
-        }
-
-    }
-
-    private static class TextWrapper extends FileWrapper {
-        private FileWrapper file;
-        private String sep;
-        private boolean sep_is_nl;
-
-        public TextWrapper(FileWrapper file) {
-            this.file = file;
-            sep = System.getProperty("line.separator");
-            sep_is_nl = (sep == "\n");
-        }
-
-        public String read(int n) throws IOException {
-            String s = this.file.read(n);
-            int index = s.indexOf('\r');
-            if (index < 0)
-                return s;
-            StringBuffer buf = new StringBuffer();
-            int start = 0;
-            int end = s.length();
-            do {
-                buf.append(s.substring(start, index));
-                buf.append('\n');
-                start = index + 1;
-                if (start < end && s.charAt(start) == '\n')
-                    start++;
-                index = s.indexOf('\r', start);
-            } while (index >= 0);
-            buf.append(s.substring(start));
-            if (s.endsWith("\r") && file.available() > 0) {
-                int c = file.read();
-                if (c != -1 && c != '\n')
-                    file.unread(c);
-            }
-            return buf.toString();
-        }
-
-        public int read() throws IOException {
-            int c = file.read();
-            if (c != '\r')
-                return c;
-            if (file.available() > 0) {
-                c = file.read();
-                if (c != -1 && c != '\n')
-                    file.unread(c);
-            }
-            return '\n';
-        }
-
-        public void write(String s) throws IOException {
-            if (!sep_is_nl) {
-                int index = s.indexOf('\n');
-                if (index >= 0) {
-                    StringBuffer buf = new StringBuffer();
-                    int start = 0;
-                    do {
-                        buf.append(s.substring(start, index));
-                        buf.append(sep);
-                        start = index + 1;
-                        index = s.indexOf('\n', start);
-                    } while (index >= 0);
-                    buf.append(s.substring(start));
-                    s = buf.toString();
-                }
-            }
-            this.file.write(s);
-        }
-
-        public long tell() throws IOException {
-            return file.tell();
-        }
-
-        public void seek(long pos, int how) throws IOException {
-            file.seek(pos, how);
-        }
-
-        public void flush() throws IOException {
-            file.flush();
-        }
-
-        public void close() throws IOException {
-            file.close();
-        }
-
-        public void truncate(long position) throws IOException {
-            file.truncate(position);
-        }
-
-        public Object __tojava__(Class cls) throws IOException {
-            return file.__tojava__(cls);
-        }
-    }
-
     //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
 
@@ -1068,10 +507,20 @@ public class PyFile extends PyObject
 
     private FileWrapper file;
 
+    private Closer closer;
+    private static LinkedList closers = new LinkedList();
+    static {
+        try {
+            Runtime.getRuntime().addShutdownHook(new PyFileCloser());
+        } catch(SecurityException e) {
+            Py.writeDebug("PyFile", "Can't register file closer hook");
+        }
+    }
+
     private static InputStream _pb(InputStream s, String mode)
     {
         if (mode.indexOf('b') < 0) {
-            if(s instanceof PushbackInputStream) {
+            if (s instanceof PushbackInputStream) {
                 return s;
             }
             return new PushbackInputStream(s);
@@ -1081,7 +530,8 @@ public class PyFile extends PyObject
 
     final void file_init(PyObject[] args,String[] kwds) {
 
-        ArgParser ap = new ArgParser("file", args, kwds, new String[] { "name", "mode", "bufsize" }, 1);
+        ArgParser ap = new ArgParser("file", args, kwds,
+                                     new String[] { "name", "mode", "bufsize" }, 1);
         String nameArg = ap.getString(0, null);
         String modeArg = ap.getString(1, "r");
         int buffArg = ap.getInt(2, 0);
@@ -1089,7 +539,7 @@ public class PyFile extends PyObject
     }
 
     public PyFile() {
-        //xxx: this constructor should only be used in conjunction with file_init
+        // xxx: this constructor should only be used in conjunction with file_init
     }
 
     public PyFile(PyType subType) {
@@ -1100,27 +550,26 @@ public class PyFile extends PyObject
         file_init(file, name, mode);
     }
     
-    private void file_init(FileWrapper file, String name, String mode){
+    private void file_init(FileWrapper file, String name, String mode) {
         file.setMode(mode);
         this.name = name;
         this.mode = mode;
         this.softspace = false;
         this.closed = false;
-        if (mode.indexOf('b') < 0){
+        if (mode.indexOf('b') < 0) {
             this.file = new TextWrapper(file);
         }else{
             this.file = file;
         }
     }
 
-    public PyFile(InputStream istream, OutputStream ostream,
-                  String name, String mode)
+    public PyFile(InputStream istream, OutputStream ostream, String name,
+                  String mode)
     {
         this(new IOStreamWrapper(_pb(istream, mode), ostream), name, mode);
     }
 
-    public PyFile(InputStream istream, OutputStream ostream,
-                  String name)
+    public PyFile(InputStream istream, OutputStream ostream, String name)
     {
         this(istream, ostream, name, "r+");
     }
@@ -1239,8 +688,7 @@ public class PyFile extends PyObject
                 fo = null;
             }
             // What about bufsize?
-            RandomAccessFile rfile =
-                new RandomAccessFile(f, jmode);
+            RandomAccessFile rfile = new RandomAccessFile(f, jmode);
             RFileWrapper iofile = new RFileWrapper(rfile);
             if (c1 == 'a')
                 iofile.seek(0, 2);
@@ -1563,28 +1011,597 @@ public class PyFile extends PyObject
 
     protected void finalize() throws Throwable {
         super.finalize();
-        if(closer != null) {
+        if (closer != null) {
             closer.close();
         }
     }
 
+    private static class FileWrapper {
+        protected boolean reading;
+        protected boolean writing;
+        protected boolean binary;
+
+        void setMode(String mode) {
+            reading = mode.indexOf('r') >= 0;
+            writing = mode.indexOf('w') >= 0 || mode.indexOf("+") >= 0 ||
+                      mode.indexOf('a') >= 0;
+            binary  = mode.indexOf('b') >= 0;
+        }
+
+        public String read(int n) throws IOException {
+            throw new IOException("file not open for reading");
+        }
+
+        public int read() throws IOException {
+            throw new IOException("file not open for reading");
+        }
+
+        public int available() throws IOException {
+            throw new IOException("file not open for reading");
+        }
+
+        public void unread(int c) throws IOException {
+            throw new IOException("file doesn't support unread");
+        }
+
+        public void write(String s) throws IOException {
+            throw new IOException("file not open for writing");
+        }
+
+        public long tell() throws IOException {
+            throw new IOException("file doesn't support tell/seek");
+        }
+
+        public void seek(long pos, int how) throws IOException {
+            throw new IOException("file doesn't support tell/seek");
+        }
+
+        public void flush() throws IOException {
+        }
+
+        public void close() throws IOException {
+        }
+
+        public void truncate(long position) throws IOException {
+            throw new IOException("file doesn't support truncate");
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            return null;
+        }
+    }
+
+    private static class InputStreamWrapper extends FileWrapper {
+        InputStream istream;
+
+        public InputStreamWrapper(InputStream s) {
+            istream = s;
+        }
+
+        public String read(int n) throws IOException {
+            if (n == 0)
+                // nothing to do
+                return "";
+            if (n < 0) {
+                // read until we hit EOF
+                byte buf[] = new byte[1024];
+                StringBuffer sbuf = new StringBuffer();
+                for (int read=0; read >= 0; read=istream.read(buf))
+                    sbuf.append(PyString.from_bytes(buf, 0, read));
+                return sbuf.toString();
+            }
+            // read the next chunk available, but make sure it's at least
+            // one byte so as not to trip the `empty string' return value
+            // test done by the caller
+            //int avail = istream.available();
+            //n = (n > avail) ? n : avail;
+            byte buf[] = new byte[n];
+            int read = istream.read(buf);
+            if (read < 0)
+                // EOF encountered
+                return "";
+            return PyString.from_bytes(buf, 0, read);
+        }
+
+        public int read() throws IOException {
+            return istream.read();
+        }
+
+        public int available() throws IOException {
+            return istream.available();
+        }
+
+        public void unread(int c) throws IOException {
+            ((PushbackInputStream)istream).unread(c);
+        }
+
+        public void close() throws IOException {
+            istream.close();
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            if (InputStream.class.isAssignableFrom(cls))
+                return istream;
+            return null;
+        }
+    }
+
+    private static class OutputStreamWrapper extends FileWrapper {
+        private OutputStream ostream;
+
+        public OutputStreamWrapper(OutputStream s) {
+            ostream = s;
+        }
+
+        private static final int MAX_WRITE = 30000;
+
+        public void write(String s) throws IOException {
+            byte[] bytes = PyString.to_bytes(s);
+            int n = bytes.length;
+            int i = 0;
+            while (i < n) {
+                int sz = n-i;
+                sz = sz > MAX_WRITE ? MAX_WRITE : sz;
+                ostream.write(bytes, i, sz);
+                i += sz;
+            }
+        }
+
+        public void flush() throws IOException {
+            ostream.flush();
+        }
+
+        public void close() throws IOException {
+            ostream.close();
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            if (OutputStream.class.isAssignableFrom(cls))
+                return ostream;
+            return null;
+        }
+    }
+
+    private static class IOStreamWrapper extends InputStreamWrapper {
+        private OutputStream ostream;
+
+        public IOStreamWrapper(InputStream istream, OutputStream ostream) {
+            super(istream);
+            this.ostream = ostream;
+        }
+
+        public void write(String s) throws IOException {
+            ostream.write(PyString.to_bytes(s));
+        }
+
+        public void flush() throws IOException {
+            ostream.flush();
+        }
+
+        public void close() throws IOException {
+            ostream.close();
+            istream.close();
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            if (OutputStream.class.isAssignableFrom(cls))
+                return ostream;
+            return super.__tojava__(cls);
+        }
+    }
+
+    private static class WriterWrapper extends FileWrapper {
+        private Writer writer;
+
+        public WriterWrapper(Writer s) {
+            writer = s;
+        }
+
+        //private static final int MAX_WRITE = 30000;
+
+        public void write(String s) throws IOException {
+            writer.write(s);
+        }
+
+        public void flush() throws IOException {
+            writer.flush();
+        }
+
+        public void close() throws IOException {
+            writer.close();
+        }
+    }
+
+    private static class RFileWrapper extends FileWrapper {
+        /** The default buffer size, in bytes. */
+        protected static final int defaultBufferSize = 4096;
+
+        /** The underlying RandomAccessFile. */
+        protected RandomAccessFile file;
+
+        /** The offset in bytes from the file start, of the next read or
+         *  write operation. */
+        protected long filePosition;
+
+        /** The buffer used to load the data. */
+        protected byte buffer[];
+
+        /** The offset in bytes of the start of the buffer, from the start
+         *  of the file. */
+        protected long bufferStart;
+
+        /** The offset in bytes of the end of the data in the buffer, from
+         *  the start of the file. This can be calculated from
+         *  <code>bufferStart + dataSize</code>, but it is cached to speed
+         *  up the read() method. */
+        protected long dataEnd;
+
+        /** The size of the data stored in the buffer, in bytes. This may be
+         *  less than the size of the buffer.*/
+        protected int dataSize;
+
+        /** True if we are at the end of the file. */
+        protected boolean endOfFile;
+
+        /** True if the data in the buffer has been modified. */
+        boolean bufferModified = false;
+
+        public RFileWrapper(RandomAccessFile file) {
+            this(file, 8092);
+        }
+
+        public RFileWrapper(RandomAccessFile file, int bufferSize) {
+            this.file = file;
+            bufferStart = 0;
+            dataEnd = 0;
+            dataSize = 0;
+            filePosition = 0;
+            buffer = new byte[bufferSize];
+            endOfFile = false;
+        }
+
+        public String read(int n) throws IOException {
+            if (n < 0) {
+                n = (int)(file.length() - filePosition);
+                if (n < 0)
+                    n = 0;
+            }
+            byte[] buf = new byte[n];
+            n = readBytes(buf, 0, n);
+            if (n < 0)
+                n = 0;
+            return PyString.from_bytes(buf, 0, n);
+        }
+
+
+        private int readBytes(byte b[], int off, int len) throws IOException {
+            // Check for end of file.
+            if (endOfFile)
+                return -1;
+
+            // See how many bytes are available in the buffer - if none,
+            // seek to the file position to update the buffer and try again.
+            int bytesAvailable = (int)(dataEnd - filePosition);
+            if (bytesAvailable < 1) {
+                seek(filePosition, 0);
+                return readBytes(b, off, len);
+            }
+
+            // Copy as much as we can.
+            int copyLength = (bytesAvailable >= len) ? len : bytesAvailable;
+            System.arraycopy(buffer, (int)(filePosition - bufferStart), b, off,
+                             copyLength);
+            filePosition += copyLength;
+
+            // If there is more to copy...
+            if (copyLength < len) {
+                int extraCopy = len - copyLength;
+
+                // If the amount remaining is more than a buffer's
+                // length, read it directly from the file.
+                if (extraCopy > buffer.length) {
+                    file.seek(filePosition);
+                    extraCopy = file.read(b, off + copyLength,
+                                          len - copyLength);
+                } else {
+                    // ...or read a new buffer full, and copy as much
+                    // as possible...
+                    seek(filePosition, 0);
+                    if (!endOfFile) {
+                        extraCopy = (extraCopy > dataSize) ?
+                                        dataSize : extraCopy;
+                        System.arraycopy(buffer, 0, b, off + copyLength,
+                                         extraCopy);
+                    } else {
+                        extraCopy = -1;
+                    }
+                }
+
+                // If we did manage to copy any more, update the file
+                // position and return the amount copied.
+                if (extraCopy > 0) {
+                    filePosition += extraCopy;
+                    return copyLength + extraCopy;
+                }
+            }
+
+            // Return the amount copied.
+            return copyLength;
+        }
+
+
+        public int read() throws IOException {
+            // If the file position is within the data, return the byte...
+            if (filePosition < dataEnd) {
+                return (buffer[(int)(filePosition++ - bufferStart)] & 0xff);
+            } else if (endOfFile) {
+               // ...or should we indicate EOF...
+                return -1;
+            } else {
+                // ...or seek to fill the buffer, and try again.
+                seek(filePosition, 0);
+                return read();
+            }
+        }
+
+        public int available() throws IOException {
+            return 1;
+        }
+
+        public void unread(int c) throws IOException {
+            filePosition--;
+        }
+
+        public void write(String s) throws IOException {
+            byte[] b = PyString.to_bytes(s);
+            int len = b.length;
+
+            // If the amount of data is small (less than a full buffer)...
+            if (len < buffer.length) {
+                // If any of the data fits within the buffer...
+                int spaceInBuffer = 0;
+                int copyLength = 0;
+                if (filePosition >= bufferStart)
+                    spaceInBuffer = (int)((bufferStart + buffer.length) -
+                                          filePosition);
+                if (spaceInBuffer > 0) {
+                    // Copy as much as possible to the buffer.
+                    copyLength = (spaceInBuffer > len) ?
+                                       len : spaceInBuffer;
+                    System.arraycopy(b, 0, buffer,
+                                     (int)(filePosition - bufferStart),
+                                     copyLength);
+                    bufferModified = true;
+                    long myDataEnd = filePosition + copyLength;
+                    dataEnd = myDataEnd > dataEnd ? myDataEnd : dataEnd;
+                    dataSize = (int)(dataEnd - bufferStart);
+                    filePosition += copyLength;
+                }
+
+                // If there is any data remaining, move to the
+                // new position and copy to the new buffer.
+                if (copyLength < len) {
+                    seek(filePosition, 0);
+                    System.arraycopy(b, copyLength, buffer,
+                                     (int)(filePosition - bufferStart),
+                                     len - copyLength);
+                    bufferModified = true;
+                    long myDataEnd = filePosition + (len - copyLength);
+                    dataEnd = myDataEnd > dataEnd ? myDataEnd : dataEnd;
+                    dataSize = (int)(dataEnd - bufferStart);
+                    filePosition += (len - copyLength);
+                }
+            } else {
+                // ...or write a lot of data...
+
+                // Flush the current buffer, and write this data to the file.
+                if (bufferModified) {
+                    flush();
+                    bufferStart = dataEnd = dataSize = 0;
+                }
+                file.write(b, 0, len);
+                filePosition += len;
+            }
+        }
+
+        public long tell() throws IOException {
+            return filePosition;
+        }
+
+        public void seek(long pos, int how) throws IOException {
+            if (how == 1)
+                pos += filePosition;
+            else if (how == 2)
+                pos += file.length();
+            if (pos < 0)
+                pos = 0;
+
+            // If the seek is into the buffer, just update the file pointer.
+            if (pos >= bufferStart && pos < dataEnd) {
+                filePosition = pos;
+                endOfFile = false;
+                return;
+            }
+
+            // If the current buffer is modified, write it to disk.
+            if (bufferModified)
+                flush();
+
+            // Move to the position on the disk.
+            file.seek(pos);
+            filePosition = file.getFilePointer();
+            bufferStart = filePosition;
+
+            // Fill the buffer from the disk.
+            dataSize = file.read(buffer);
+            if (dataSize < 0) {
+                dataSize = 0;
+                endOfFile = true;
+            } else {
+                endOfFile = false;
+            }
+
+            // Cache the position of the buffer end.
+            dataEnd = bufferStart + dataSize;
+        }
+
+        public void flush() throws IOException {
+            file.seek(bufferStart);
+            file.write(buffer, 0, dataSize);
+            bufferModified = false;
+            file.getFD().sync();
+        }
+
+        public void close() throws IOException {
+            if (writing && bufferModified) {
+                file.seek(bufferStart);
+                file.write(buffer, 0, dataSize);
+            }
+
+            file.close();
+        }
+
+        public void truncate(long position) throws IOException {
+            flush();
+            try {
+                // file.setLength(position);
+                java.lang.reflect.Method m = file.getClass().getMethod(
+                        "setLength", new Class[] { Long.TYPE });
+                m.invoke(file, new Object[] { new Long(position) });
+            } catch (NoSuchMethodException exc) {
+                super.truncate(position);
+            } catch (SecurityException exc) {
+                super.truncate(position);
+            } catch (IllegalAccessException exc) {
+                super.truncate(position);
+            } catch (java.lang.reflect.InvocationTargetException exc) {
+                if (exc.getTargetException() instanceof IOException)
+                    throw (IOException) exc.getTargetException();
+                super.truncate(position);
+            }
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            if (OutputStream.class.isAssignableFrom(cls) && writing)
+                return new FileOutputStream(file.getFD());
+            else if (InputStream.class.isAssignableFrom(cls) && reading)
+                return new FileInputStream(file.getFD());
+            return super.__tojava__(cls);
+        }
+
+    }
+
+    private static class TextWrapper extends FileWrapper {
+        private FileWrapper file;
+        private String sep;
+        private boolean sep_is_nl;
+
+        public TextWrapper(FileWrapper file) {
+            this.file = file;
+            sep = System.getProperty("line.separator");
+            sep_is_nl = (sep == "\n");
+        }
+
+        public String read(int n) throws IOException {
+            String s = this.file.read(n);
+            int index = s.indexOf('\r');
+            if (index < 0)
+                return s;
+            StringBuffer buf = new StringBuffer();
+            int start = 0;
+            int end = s.length();
+            do {
+                buf.append(s.substring(start, index));
+                buf.append('\n');
+                start = index + 1;
+                if (start < end && s.charAt(start) == '\n')
+                    start++;
+                index = s.indexOf('\r', start);
+            } while (index >= 0);
+            buf.append(s.substring(start));
+            if (s.endsWith("\r") && file.available() > 0) {
+                int c = file.read();
+                if (c != -1 && c != '\n')
+                    file.unread(c);
+            }
+            return buf.toString();
+        }
+
+        public int read() throws IOException {
+            int c = file.read();
+            if (c != '\r')
+                return c;
+            if (file.available() > 0) {
+                c = file.read();
+                if (c != -1 && c != '\n')
+                    file.unread(c);
+            }
+            return '\n';
+        }
+
+        public void write(String s) throws IOException {
+            if (!sep_is_nl) {
+                int index = s.indexOf('\n');
+                if (index >= 0) {
+                    StringBuffer buf = new StringBuffer();
+                    int start = 0;
+                    do {
+                        buf.append(s.substring(start, index));
+                        buf.append(sep);
+                        start = index + 1;
+                        index = s.indexOf('\n', start);
+                    } while (index >= 0);
+                    buf.append(s.substring(start));
+                    s = buf.toString();
+                }
+            }
+            this.file.write(s);
+        }
+
+        public long tell() throws IOException {
+            return file.tell();
+        }
+
+        public void seek(long pos, int how) throws IOException {
+            file.seek(pos, how);
+        }
+
+        public void flush() throws IOException {
+            file.flush();
+        }
+
+        public void close() throws IOException {
+            file.close();
+        }
+
+        public void truncate(long position) throws IOException {
+            file.truncate(position);
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            return file.__tojava__(cls);
+        }
+    }
+
     /**
-     * A mechanism to make sure PyFiles are closed on exit. On creation Closer
-     * adds itself to a list of Closers that will be run by PyFileCloser on JVM
-     * shutdown. When a PyFile's close or finalize methods are called, PyFile calls
-     * its Closer.close which clears Closer out of the shutdown queue.
+     * A mechanism to make sure PyFiles are closed on exit. On
+     * creation Closer adds itself to a list of Closers that will be
+     * run by PyFileCloser on JVM shutdown. When a PyFile's close or
+     * finalize methods are called, PyFile calls its Closer.close
+     * which clears Closer out of the shutdown queue.
      * 
-     * We use a regular object here rather than WeakReferences and their
-     * ilk as they may be collected before the shutdown hook runs. There's no
-     * guarantee that finalize will be called during shutdown, so we can't use
-     * it. It's vital that this Closer has no reference to the PyFile it's
-     * closing so the PyFile remains garbage collectable.
+     * We use a regular object here rather than WeakReferences and
+     * their ilk as they may be collected before the shutdown hook
+     * runs. There's no guarantee that finalize will be called during
+     * shutdown, so we can't use it. It's vital that this Closer has
+     * no reference to the PyFile it's closing so the PyFile remains
+     * garbage collectable.
      */
     private static class Closer {
         
-        public Closer(FileWrapper fw){
+        public Closer(FileWrapper fw) {
             this.fw = fw;
-            //Add ourselves to the queue of Closers to be run on shutdown
+            // Add ourselves to the queue of Closers to be run on shutdown
             synchronized(closers) {
                 closers.add(this);
             }
@@ -1592,14 +1609,14 @@ public class PyFile extends PyObject
 
         public void close() {
             synchronized(closers) {
-                if(!closers.remove(this)){
+                if (!closers.remove(this)) {
                     return;
                 }
             }
             _close();
         }
         
-        public void _close(){
+        public void _close() {
             try {
                 fw.close();
             } catch(IOException e) {
@@ -1610,18 +1627,6 @@ public class PyFile extends PyObject
         }
         
         private FileWrapper fw;
-    }
-
-
-    private Closer closer;
-
-    private static LinkedList closers = new LinkedList();
-    static {
-        try {
-            Runtime.getRuntime().addShutdownHook(new PyFileCloser());
-        } catch(SecurityException e) {
-            Py.writeDebug("PyFile", "Can't register file closer hook");
-        }
     }
 
     private static class PyFileCloser extends Thread {
