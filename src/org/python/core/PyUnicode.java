@@ -110,6 +110,25 @@ public class PyUnicode extends PyString {
 
         }
         dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyUnicode.class,1,1,new exposed___rmul__(null,null)));
+        class exposed___mod__ extends PyBuiltinMethodNarrow {
+
+            exposed___mod__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___mod__(self,info);
+            }
+
+            public PyObject __call__(PyObject arg0) {
+                PyObject ret=((PyUnicode)self).unicode___mod__(arg0);
+                if (ret==null)
+                    return Py.NotImplemented;
+                return ret;
+            }
+
+        }
+        dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyUnicode.class,1,1,new exposed___mod__(null,null)));
         class exposed___getitem__ extends PyBuiltinMethodNarrow {
 
             exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
@@ -1515,7 +1534,12 @@ public class PyUnicode extends PyString {
     }
 
     public PyObject __mod__(PyObject other) {
-        return str___mod__(other).__unicode__();
+        return unicode___mod__(other);
+    }
+
+    final PyObject unicode___mod__(PyObject other){
+        StringFormatter fmt = new StringFormatter(string, true);
+        return fmt.format(other).__unicode__();
     }
 
     final PyUnicode unicode___unicode__() {

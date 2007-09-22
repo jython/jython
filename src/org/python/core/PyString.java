@@ -3655,6 +3655,7 @@ final class StringFormatter
     int precision;
     int argIndex;
     PyObject args;
+    boolean unicodeCoercion;
 
     final char pop() {
         try {
@@ -3673,8 +3674,13 @@ final class StringFormatter
     }
 
     public StringFormatter(String format) {
+        this(format, false);
+    }
+
+    public StringFormatter(String format, boolean unicodeCoercion) {
         index = 0;
         this.format = format;
+        this.unicodeCoercion = unicodeCoercion;
         buffer = new StringBuffer(format.length()+100);
     }
 
@@ -3977,7 +3983,10 @@ final class StringFormatter
             case 'r':
                 fill = ' ';
                 if (c == 's')
-                    string = arg.__str__().toString();
+                    if (unicodeCoercion)
+                        string = arg.__unicode__().toString();
+                    else
+                        string = arg.__str__().toString();
                 else
                     string = arg.__repr__().toString();
                 if (precision >= 0 && string.length() > precision) {
