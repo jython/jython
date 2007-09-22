@@ -73,7 +73,7 @@ raises a TestError if the command did not end normally"""
 
 def compileJava(src, **kw):
   classfile = src.replace('.java', '.class')
-  if os.path.exists(classfile) and os.stat(src).st_mtime < os.stat(classfile).st_mtime:
+  if not 'force' in kw and os.path.exists(classfile) and os.stat(src).st_mtime < os.stat(classfile).st_mtime:
     return 0
   classpath = cfg.classpath
   if "classpath" in kw:

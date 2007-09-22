@@ -1,7 +1,7 @@
 
 import support, os
 
-support.compileJava("classes/test236j1.java")
+support.compileJava("classes/test236j1.java", force=1)
 os.remove("classes/test236j2.class")
 
 onimport = 1
