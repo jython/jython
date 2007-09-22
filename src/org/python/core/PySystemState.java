@@ -544,6 +544,10 @@ public class PySystemState extends PyObject
 
     public static PackageManager packageManager;
     public static File cachedir;
+    
+    public static boolean isPackageCacheEnabled() {
+        return cachedir != null;
+    }
 
     private static void initCacheDirectory(Properties props) {
         if (Py.frozen) {

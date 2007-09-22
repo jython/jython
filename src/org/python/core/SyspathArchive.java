@@ -13,7 +13,9 @@ public class SyspathArchive extends PyString {
             throw new IOException("path '" + archiveName + "' not an archive");
         }
         this.zipFile = new ZipFile(new File(archiveName));
-        PySystemState.packageManager.addJar(archiveName, false);
+        if(PySystemState.isPackageCacheEnabled()) {
+            PySystemState.packageManager.addJar(archiveName, true);
+        }
     }
 
     SyspathArchive(ZipFile zipFile, String archiveName) {

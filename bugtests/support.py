@@ -108,13 +108,16 @@ def runJavaJar(jar, *args, **kw):
   return execCmd(cmd, kw)
 
 def runJython(cls, **kw):
+  javaargs = ''
+  if 'javaargs' in kw:
+      javaargs = kw['javaargs']
   classpath = cfg.classpath
   if "classpath" in kw:
     classpath = os.pathsep.join([cfg.classpath, kw["classpath"]])
   if UNIX:
-    cmd = "%s/bin/java -classpath %s -Dpython.home=%s org.python.util.jython %s" % (cfg.java_home, classpath, cfg.jython_home, cls)
+    cmd = "%s/bin/java -classpath %s %s -Dpython.home=%s org.python.util.jython %s" % (cfg.java_home, classpath, javaargs, cfg.jython_home, cls)
   elif WIN:
-    cmd = 'cmd /C "%s/bin/java.exe -classpath %s -Dpython.home=%s org.python.util.jython %s"' % (cfg.java_home, classpath, cfg.jython_home, cls)
+    cmd = 'cmd /C "%s/bin/java.exe -classpath %s %s -Dpython.home=%s org.python.util.jython %s"' % (cfg.java_home, classpath, javaargs, cfg.jython_home, cls)
   return execCmd(cmd, kw)
 
 def compileJPythonc(*files, **kw):
