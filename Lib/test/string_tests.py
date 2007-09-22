@@ -261,13 +261,10 @@ class CommonTest(unittest.TestCase):
         self.checkequal('one@two@three@', 'one!two!three!', 'replace', '!', '@')
         self.checkequal('one!two!three!', 'one!two!three!', 'replace', 'x', '@')
         self.checkequal('one!two!three!', 'one!two!three!', 'replace', 'x', '@', 2)
-# Jython transition 2.3
-# str.replace doesn't handle an empty string to be replaced. 
-# http://jython.org/bugs/1768074
-#        self.checkequal('-a-b-c-', 'abc', 'replace', '', '-')
-#        self.checkequal('-a-b-c', 'abc', 'replace', '', '-', 3)
-#        self.checkequal('abc', 'abc', 'replace', '', '-', 0)
-#        self.checkequal('', '', 'replace', '', '')
+        self.checkequal('-a-b-c-', 'abc', 'replace', '', '-')
+        self.checkequal('-a-b-c', 'abc', 'replace', '', '-', 3)
+        self.checkequal('abc', 'abc', 'replace', '', '-', 0)
+        self.checkequal('', '', 'replace', '', '')
         self.checkequal('abc', 'abc', 'replace', 'ab', '--', 0)
         self.checkequal('abc', 'abc', 'replace', 'xy', '--')
         # Next three for SF bug 422088: [OSF1 alpha] string.replace(); died with

@@ -2625,23 +2625,27 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     private PyList splitfields(String sep, int maxsplit) {
-        if (sep.length() == 0) {
-            throw Py.ValueError("empty separator");
-        }
-
         PyList list = new PyList();
 
         int length = string.length();
         if (maxsplit < 0)
-            maxsplit = length;
+            maxsplit = length + 1;
 
         int lastbreak = 0;
         int splits = 0;
         int sepLength = sep.length();
+        int index;
+        if((sep.length() == 0) && (maxsplit != 0)) {
+            index = string.indexOf(sep, lastbreak);
+            list.append(fromSubstring(lastbreak, index));
+            splits++;
+        }
         while (splits < maxsplit) {
-            int index = string.indexOf(sep, lastbreak);
+            index = string.indexOf(sep, lastbreak);
             if (index == -1)
                 break;
+            if(sep.length() == 0)
+                index++;
             splits += 1;
             list.append(fromSubstring(lastbreak, index));
             lastbreak = index + sepLength;
@@ -3127,12 +3131,22 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final PyString str_replace(PyObject oldPiece, PyObject newPiece) {
-        return str_replace(oldPiece, newPiece, string.length());
+        if(!(oldPiece instanceof PyString)) {
+            throw Py.TypeError("str or unicode required for replace");
+        }
+        if(oldPiece.__len__() == 0) {
+            return str_replace(oldPiece, newPiece, string.length() + 1);
+        } else {
+            return str_replace(oldPiece, newPiece, string.length());
+        }
     }
     
     final PyString str_replace(PyObject oldPiece, PyObject newPiece, int maxsplit) {
         if(!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)){
             throw Py.TypeError("str or unicode required for replace");
+        }
+        if(string.length() == 0) {
+            return new PyString(string);
         }
         return ((PyString)newPiece).str_join(str_split(((PyString)oldPiece).string, maxsplit));
     }
