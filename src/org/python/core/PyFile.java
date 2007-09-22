@@ -1711,7 +1711,7 @@ public class PyFile extends PyObject
                     newlineTypes.add(Newline.CRLF);
                 } else if (next != -1) {
                     // Not a CRLF; rewind unless EOF
-                    file.seek(file.tell() -1, 0);
+                    file.seek(file.tell() - 1, 0);
                 }
             }
             return pos;
