@@ -176,20 +176,12 @@ public class JavaImportHelper {
     }
 
     /**
-     * Check a java class on VM level.
-     * 
-     * @param packageName
-     * @param className
-     * 
-     * @return <code>true</code> if the java class can be doubtlessly identified, <code>false</code> otherwise.
+     * @return <code>true</code> if the java class can be found by the current
+     *         Py classloader setup
      */
     private static boolean isJavaClass(String packageName, String className) {
-        if (className != null && className.length() > 0) {
-            className = packageName.replace('.', '/') + "/" + className + ".class";
-            return Thread.currentThread().getContextClassLoader().getResource(className) != null;
-        } else {
-            return false;
-        }
+        return className != null && className.length() > 0
+                && Py.findClass(packageName + "." + className) != null;
     }
 
     /**

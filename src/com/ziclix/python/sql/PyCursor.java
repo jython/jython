@@ -553,7 +553,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
    * @param maxRows integer value of max rows
    */
   public void execute(final PyObject sql, PyObject params, PyObject bindings, PyObject maxRows) {
-
+    int rowIndex = -1;
     this.clear();
 
     boolean hasParams = hasParams(params);
@@ -573,10 +573,12 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
           if (isSeqSeq(params)) {
 
             // [(3, 4)] or [(3, 4), (5, 6)]
+            rowIndex = 0;
             for (int i = 0, len = params.__len__(); i < len; i++) {
               PyObject param = params.__getitem__(i);
 
               this.execute(param, bindings);
+              rowIndex++;
             }
           } else {
             this.execute(params, bindings);
@@ -590,7 +592,7 @@ public class PyCursor extends PyObject implements ClassDictInit, WarningListener
     } catch (PyException e) {
       throw e;
     } catch (Throwable e) {
-      throw zxJDBC.makeException(e);
+      throw zxJDBC.makeException(zxJDBC.Error, e, rowIndex);
     } finally {
       if (this.statement != null) {
 
