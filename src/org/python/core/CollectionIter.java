@@ -6,7 +6,7 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Vector;
 
-class CollectionIter extends PyObject {
+class CollectionIter {
     PyObject findCollection(Object object) {
         if (object instanceof Vector) {
             return new EnumerationIter(((Vector) object).elements());
@@ -21,17 +21,9 @@ class CollectionIter extends PyObject {
         return null;
     }
 
-    public PyObject next() {
-        PyObject ret = __iternext__();
-        if (ret == null) {
-            throw Py.StopIteration(null);
-        }
-        return ret;
-    }
-
 }
 
-class EnumerationIter extends CollectionIter {
+class EnumerationIter extends PyIterator {
     private Enumeration proxy;
 
     public EnumerationIter(Enumeration proxy) {

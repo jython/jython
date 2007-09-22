@@ -38,7 +38,7 @@ class CollectionIter2 extends CollectionIter {
     }
 }
 
-class IteratorIter extends CollectionIter {
+class IteratorIter extends PyIterator {
     private Iterator proxy;
 
     public IteratorIter(Iterator proxy) {
