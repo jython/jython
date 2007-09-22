@@ -395,20 +395,8 @@ public class PyFile extends PyObject
             }
 
             public PyObject __call__(PyObject arg0) {
-                try {
-                    ((PyFile)self).file_write(arg0.asString(0));
+                    ((PyFile)self).file_write(arg0);
                     return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
             }
 
         }
@@ -856,6 +844,17 @@ public class PyFile extends PyObject
 
     public PyObject xreadlines() {
         return file_xreadlines();
+    }
+
+    final void file_write(PyObject o) {
+        if(o instanceof PyUnicode) {
+            // Call __str__ on unicode objects to encode them before writing
+            file_write(o.__str__().string);
+        } else if(o instanceof PyString) {
+            file_write(((PyString)o).string);
+        } else {
+            throw Py.TypeError("write requires a string as its argument");
+        }
     }
 
     final void file_write(String s) {

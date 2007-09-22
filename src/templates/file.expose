@@ -25,7 +25,7 @@ expose_meth: :- seek l i?
 expose_meth: :l tell
 expose_meth: :o next
 expose_meth: :- truncate l?
-expose_meth: :- write s
+expose_meth: :- write o
 expose_meth: :- writelines o
 expose_meth: :o xreadlines
 expose_wide_meth: __init__ -1 -1
