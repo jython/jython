@@ -31,7 +31,7 @@ public class PyBuiltinMethodSet extends PyBuiltinFunctionSet implements
             try {
                 bindable = (PyBuiltinMethodSet)clone();
             } catch(CloneNotSupportedException e) {
-                throw new RuntimeException("Didn't expect PyBuiltinMethodSet to throw CloneNotSupported since it implements Cloneable",
+                throw new RuntimeException("Didn't expect PyBuiltinMethodSet to throw CloneNotSupported since it implements Cloneable: " +
                                            e);
             }
             bindable.__self__ = bindTo;
