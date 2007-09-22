@@ -311,20 +311,7 @@ public class PySystemState extends PyObject
             if (root == null)
                 root = preProperties.getProperty("install.root");
 
-            String version = preProperties.getProperty("java.version");
-            if (version == null)
-                version = "???";
-            String lversion = version.toLowerCase();
-            if (lversion.startsWith("java"))
-                version = version.substring(4, version.length());
-
-            if (lversion.startsWith("jdk") || lversion.startsWith("jre")) {
-                version = version.substring(3, version.length());
-            }
-            if (version.equals("12"))
-                version = "1.2";
-            if (version != null)
-                platform = "java"+version;
+            determinePlatform(preProperties);
         } catch (Exception exc) {
             return null;
         }
@@ -343,6 +330,26 @@ public class PySystemState extends PyObject
             }
         }
         return root;
+    }
+
+    public static void determinePlatform(Properties props) {
+        String version = props.getProperty("java.version");
+        if (version == null) {
+            version = "???";
+        }
+        String lversion = version.toLowerCase();
+        if (lversion.startsWith("java")) {
+            version = version.substring(4, version.length());
+        }
+        if (lversion.startsWith("jdk") || lversion.startsWith("jre")) {
+            version = version.substring(3, version.length());
+        }
+        if (version.equals("12")) {
+            version = "1.2";
+        }
+        if (version != null) {
+            platform = "java" + version;
+        }
     }
 
     private static void initRegistry(Properties preProperties, Properties postProperties, 

@@ -77,6 +77,7 @@ public class jython
         CommandLineOptions opts = new CommandLineOptions();
         if (!opts.parse(args)) {
             if (opts.version) {
+                PySystemState.determinePlatform(System.getProperties());
                 System.err.println(InteractiveConsole.getDefaultBanner());
                 System.exit(0);
             }
