@@ -6,6 +6,7 @@ type_base_class: PyObject
 expose_getset: mode getMode
 expose_getset: name getName
 expose_getset: closed getClosed
+expose_getset: newlines getNewlines
 # exposed methods
 expose_vanilla_cmp
 expose_meth: __iter__

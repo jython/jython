@@ -11,6 +11,8 @@ import java.io.PushbackInputStream;
 import java.io.RandomAccessFile;
 import java.io.Writer;
 
+import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 // To do:
@@ -36,6 +38,7 @@ public class PyFile extends PyObject
         dict.__setitem__("mode",new PyGetSetDescr("mode",PyFile.class,"getMode",null,null));
         dict.__setitem__("name",new PyGetSetDescr("name",PyFile.class,"getName",null,null));
         dict.__setitem__("closed",new PyGetSetDescr("closed",PyFile.class,"getClosed",null,null));
+        dict.__setitem__("newlines",new PyGetSetDescr("newlines",PyFile.class,"getNewlines",null,null));
         class exposed___cmp__ extends PyBuiltinMethodNarrow {
 
             exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
@@ -507,6 +510,9 @@ public class PyFile extends PyObject
 
     private FileWrapper file;
 
+    private boolean universal = false;
+    private boolean binary = false;
+
     private Closer closer;
     private static LinkedList closers = new LinkedList();
     static {
@@ -519,7 +525,7 @@ public class PyFile extends PyObject
 
     private static InputStream _pb(InputStream s, String mode)
     {
-        if (mode.indexOf('b') < 0) {
+        if (mode.contains("b")) {
             if (s instanceof PushbackInputStream) {
                 return s;
             }
@@ -546,19 +552,17 @@ public class PyFile extends PyObject
         super(subType);
     }
 
-    public PyFile(FileWrapper file, String name, String mode) {
-        file_init(file, name, mode);
-    }
-    
     private void file_init(FileWrapper file, String name, String mode) {
         file.setMode(mode);
         this.name = name;
         this.mode = mode;
         this.softspace = false;
         this.closed = false;
-        if (mode.indexOf('b') < 0) {
+        if (binary) {
             this.file = new TextWrapper(file);
-        }else{
+        } else if (universal) {
+            this.file = new UniversalWrapper(file);
+        } else {
             this.file = file;
         }
     }
@@ -566,7 +570,7 @@ public class PyFile extends PyObject
     public PyFile(InputStream istream, OutputStream ostream, String name,
                   String mode)
     {
-        this(new IOStreamWrapper(_pb(istream, mode), ostream), name, mode);
+        file_init(new IOStreamWrapper(_pb(istream, mode), ostream), name, mode);
     }
 
     public PyFile(InputStream istream, OutputStream ostream, String name)
@@ -579,7 +583,7 @@ public class PyFile extends PyObject
     }
 
     public PyFile(InputStream istream, String name, String mode) {
-        this(new InputStreamWrapper(_pb(istream, mode)), name, mode);
+        file_init(new InputStreamWrapper(_pb(istream, mode)), name, mode);
     }
 
     public PyFile(InputStream istream, String name) {
@@ -591,7 +595,7 @@ public class PyFile extends PyObject
     }
 
     public PyFile(OutputStream ostream, String name, String mode) {
-        this(new OutputStreamWrapper(ostream), name, mode);
+        file_init(new OutputStreamWrapper(ostream), name, mode);
     }
 
     public PyFile(OutputStream ostream, String name) {
@@ -603,7 +607,7 @@ public class PyFile extends PyObject
     }
 
     public PyFile(Writer ostream, String name, String mode) {
-        this(new WriterWrapper(ostream), name, mode);
+        file_init(new WriterWrapper(ostream), name, mode);
     }
 
     public PyFile(Writer ostream, String name) {
@@ -615,7 +619,7 @@ public class PyFile extends PyObject
     }
 
     public PyFile(RandomAccessFile file, String name, String mode) {
-        this(new RFileWrapper(file), name, mode);
+        file_init(new RFileWrapper(file), name, mode);
     }
 
     public PyFile(RandomAccessFile file, String name) {
@@ -627,7 +631,7 @@ public class PyFile extends PyObject
     }
 
     public PyFile(String name, String mode, int bufsize) {
-        this(_setup(name, mode, bufsize), name, mode);
+        file_init(_setup(name, mode, bufsize), name, mode);
     }
 
     public void __setattr__(String name, PyObject value) {
@@ -650,34 +654,14 @@ public class PyFile extends PyObject
         return o;
     }
 
-    private static FileWrapper _setup(String name, String mode, int bufsize) {
-        char c1 = ' ';
-        char c2 = ' ';
-        char c3 = ' ';
-        int n = mode.length();
-        for (int i = 0; i < n; i++) {
-            if ("awrtb+".indexOf(mode.charAt(i)) < 0)
-                throw Py.IOError("Unknown open mode:" + mode);
-        }
-        if (n > 0) {
-            c1 = mode.charAt(0);
-            if (n > 1) {
-                c2 = mode.charAt(1);
-                if (n > 2)
-                    c3 = mode.charAt(2);
-            }
-        }
-        String jmode = "r";
-        if (c1 == 'r') {
-            if (c2 == '+' || c3 == '+') jmode = "rw";
-            else jmode = "r";
-        }
-        else if (c1 == 'w' || c1 == 'a') jmode = "rw";
+    private FileWrapper _setup(String name, String mode, int bufsize) {
+        String jmode = sanitizeMode(mode);
+        char c1 = mode.charAt(0);
         try {
             File f = new File(name);
             if (c1 == 'r') {
                 if (!f.exists()) {
-                    throw new IOException("No such file or directory: " + name);
+                    throw Py.IOError("No such file or directory: '" + name + "'");
                 }
             }
             if (c1 == 'w') {
@@ -696,6 +680,46 @@ public class PyFile extends PyObject
         } catch (IOException e) {
             throw Py.IOError(e);
         }
+    }
+
+    /**
+     * Parse and validate the python file mode, returning a cleaned
+     * file mode suitable for RandomAccessFile
+     *
+     * @param mode a python file mode String
+     * @return a RandomAccessFile mode String
+     */
+    private String sanitizeMode(String mode) {
+        if (mode.length() == 0) {
+            throw Py.IOError("invalid mode: ");
+        }
+
+        String origMode = mode;
+        if (mode.contains("U")) {
+            universal = true;
+            mode = mode.replace("U", "");
+            if (mode.length() == 0) {
+                mode = "r";
+            } else if ("wa+".indexOf(mode.charAt(0)) > -1) {
+                throw Py.ValueError("universal newline mode can only be used with " +
+                                    "modes starting with 'r'");
+            }
+        }
+        if ("rwa".indexOf(mode.charAt(0)) == -1) {
+            throw Py.ValueError("mode string must begin with one of 'r', 'w', 'a' or " +
+                                "'U', not '" + origMode + "'");
+        }
+
+        binary = mode.indexOf('b') > -1;
+
+        String cleanMode;
+        if ("wa".indexOf(mode.charAt(0)) > -1 || (mode.length() > 1 &&
+                                                  mode.charAt(1) == '+')) {
+            cleanMode = "rw";
+        } else {
+            cleanMode = "r";
+        }
+        return cleanMode;
     }
 
     final String file_read(int n) {
@@ -1007,6 +1031,29 @@ public class PyFile extends PyObject
 
     public boolean getClosed() {
         return closed;
+    }
+
+    public PyObject getNewlines() {
+        if (!universal) {
+            return Py.None;
+        }
+        EnumSet newlineTypes = ((UniversalWrapper)file).getNewlineTypes();
+        int size = newlineTypes.size();
+        if (size == 0) {
+            return Py.None;
+        } else if (size == 1) {
+            String newline = ((Newline)newlineTypes.iterator().next()).getValue();
+            return new PyString(newline);
+        }
+
+        PyObject[] newlines = new PyObject[size];
+        int i = 0;
+        for (Iterator newlineIter = newlineTypes.iterator(); newlineIter.hasNext();) {
+            String newline = ((Newline)newlineIter.next()).getValue();
+            newlines[i] = new PyString(newline);
+            i++;
+        }
+        return new PyTuple(newlines);
     }
 
     protected void finalize() throws Throwable {
@@ -1499,10 +1546,14 @@ public class PyFile extends PyObject
         public TextWrapper(FileWrapper file) {
             this.file = file;
             sep = System.getProperty("line.separator");
-            sep_is_nl = (sep == "\n");
+            sep_is_nl = sep.equals("\n");
         }
 
         public String read(int n) throws IOException {
+            if (sep_is_nl) {
+                return this.file.read(n);
+            }
+            // Convert CRLF to LF
             String s = this.file.read(n);
             int index = s.indexOf('\r');
             if (index < 0)
@@ -1512,10 +1563,13 @@ public class PyFile extends PyObject
             int end = s.length();
             do {
                 buf.append(s.substring(start, index));
-                buf.append('\n');
-                start = index + 1;
-                if (start < end && s.charAt(start) == '\n')
-                    start++;
+                if (index < end - 1 && s.charAt(index + 1) == '\n') {
+                    buf.append('\n');
+                    start = index + 2;
+                } else {
+                    buf.append('\r');
+                    start = index + 1;
+                }
                 index = s.indexOf('\r', start);
             } while (index >= 0);
             buf.append(s.substring(start));
@@ -1523,18 +1577,23 @@ public class PyFile extends PyObject
                 int c = file.read();
                 if (c != -1 && c != '\n')
                     file.unread(c);
+                else if (c == '\n')
+                    buf.setCharAt(buf.length() - 1, '\n');
             }
             return buf.toString();
         }
 
         public int read() throws IOException {
             int c = file.read();
-            if (c != '\r')
+            if (sep_is_nl || c != '\r' || file.available() == 0) {
                 return c;
-            if (file.available() > 0) {
-                c = file.read();
-                if (c != -1 && c != '\n')
-                    file.unread(c);
+            }
+            c = file.read();
+            if (c == -1) {
+                return '\r';
+            } else if (c != '\n') {
+                file.unread(c);
+                return '\r';
             }
             return '\n';
         }
@@ -1582,6 +1641,122 @@ public class PyFile extends PyObject
             return file.__tojava__(cls);
         }
     }
+
+    private static class UniversalWrapper extends FileWrapper {
+        /** The wrapped FileWrapper */
+        private FileWrapper file;
+
+        /** Whether the next character, if it's a LF, should be
+         * skipped (the previous character was a CR) */
+        private boolean skipNextLF = false;
+
+        /** The Newlines encountered in the current file */
+        private EnumSet newlineTypes = EnumSet.noneOf(Newline.class);
+
+        public UniversalWrapper(FileWrapper file) {
+            this.file = file;
+        }
+
+        public String read(int n) throws IOException {
+            boolean all = n < 0;
+            StringBuffer sb = new StringBuffer(all ? 8192 : n);
+            while (all || n-- > 0) {
+                int next = read();
+                if (next == -1) {
+                    break;
+                }
+                sb.append((char)next);
+            }
+            return sb.toString();
+        }
+
+        public int read() throws IOException {
+            int c = file.read();
+            switch (c) {
+            case '\r':
+                skipNextLF = true;
+                c = '\n';
+                break;
+            case '\n':
+                if (skipNextLF) {
+                    skipNextLF = false;
+                    newlineTypes.add(Newline.CRLF);
+                    c = read();
+                    break;
+                }
+                newlineTypes.add(Newline.LF);
+                break;
+            default:
+                if (skipNextLF) {
+                    skipNextLF = false;
+                    newlineTypes.add(Newline.CR);
+                }
+            }
+            return c;
+        }
+
+        public void write(String s) throws IOException {
+            file.write(s);
+        }
+
+        public long tell() throws IOException {
+            long pos = file.tell();
+            if (skipNextLF) {
+                // Attempt to consume the next LF so the file position
+                // begins on the actual next line
+                int next = file.read();
+                if ((char)next == '\n') {
+                    pos++;
+                    skipNextLF = false;
+                    newlineTypes.add(Newline.CRLF);
+                } else if (next != -1) {
+                    // Not a CRLF; rewind unless EOF
+                    file.seek(file.tell() -1, 0);
+                }
+            }
+            return pos;
+        }
+
+        public void seek(long pos, int how) throws IOException {
+            file.seek(pos, how);
+        }
+
+        public void flush() throws IOException {
+            file.flush();
+        }
+
+        public void close() throws IOException {
+            file.close();
+        }
+
+        public void truncate(long position) throws IOException {
+            file.truncate(position);
+        }
+
+        public Object __tojava__(Class cls) throws IOException {
+            return file.__tojava__(cls);
+        }
+
+        public EnumSet getNewlineTypes() {
+            return newlineTypes;
+        }
+    }
+
+    /**
+     * Newline types
+     */
+    public enum Newline {
+        CR ("\r"),
+        LF ("\n"),
+        CRLF ("\r\n");
+
+        private final String value;
+        public String getValue() { return value; }
+
+        Newline(String value) {
+            this.value = value;
+        }
+    };
 
     /**
      * A mechanism to make sure PyFiles are closed on exit. On
@@ -1645,4 +1820,5 @@ public class PyFile extends PyObject
             }
         }
     }
+
 }

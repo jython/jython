@@ -1014,7 +1014,6 @@ _skips = {
         test_timing
         test_unicode_file
         test_unicodedata
-        test_univnewlines
         test_urllibnet
         test_wave
         test_weakref
