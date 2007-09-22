@@ -11,14 +11,14 @@ try:
     import sys
     raise support.TestError('Your default encoding, %s, can handle encoding the Euro sign.  This test needs the default encoding to be unable to handle on its test character' %
             sys.getdefaultencoding())
-except UnicodeEncodeError:
+except UnicodeError:
     pass
 
 f = open("test207.out", "w")
 try:
     f.write(EURO_SIGN)
     raise support.TestError("Shouldn't be able to write out a Euro sign without first encoding")
-except UnicodeEncodeError:
+except UnicodeError:
     pass
 f.close()
 
