@@ -698,16 +698,15 @@ public class PyFile extends PyObject
                                 "'U', not '" + origMode + "'");
         }
 
-        binary = mode.indexOf('b') > -1;
+        binary = mode.contains("b");
 
-        String cleanMode;
-        if ("wa".indexOf(mode.charAt(0)) > -1 || (mode.length() > 1 &&
-                                                  mode.charAt(1) == '+')) {
-            cleanMode = "rw";
+        int maxSearch = mode.length() < 3 ? mode.length() : 3;
+        if ("wa".indexOf(mode.charAt(0)) > -1 ||
+            mode.substring(0, maxSearch).contains("+")) {
+            return "rw";
         } else {
-            cleanMode = "r";
+            return "r";
         }
-        return cleanMode;
     }
 
     final String file_read(int n) {
