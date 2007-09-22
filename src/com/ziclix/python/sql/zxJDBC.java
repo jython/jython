@@ -363,7 +363,18 @@ public class zxJDBC extends PyObject implements ClassDictInit {
      * @return PyException
      */
     public static PyException makeException(PyObject type, Throwable t) {
-
+    	return makeException(type, t, -1);
+    }
+    
+    /**
+     * Return a newly instantiated PyException of the given type.
+     *
+     * @param type
+     * @param t
+     * @param rowIndex		Row index where the error has happened.  Useful for diagnosing. 
+     * @return PyException
+     */
+    public static PyException makeException(PyObject type, Throwable t, int rowIndex) {
         if (Options.showJavaExceptions) {
             java.io.CharArrayWriter buf = new java.io.CharArrayWriter();
             java.io.PrintWriter writer = new java.io.PrintWriter(buf);
@@ -386,6 +397,9 @@ public class zxJDBC extends PyObject implements ClassDictInit {
                 buffer.append(" [SQLCode: " + sqlException.getErrorCode() + "]");
                 if (sqlException.getSQLState() != null) {
                     buffer.append(", [SQLState: " + sqlException.getSQLState() + "]");
+                }
+                if(rowIndex >= 0) {
+                    buffer.append(", [Row number: " + rowIndex + "]");
                 }
                 sqlException = sqlException.getNextException();
                 if (sqlException != null) {
