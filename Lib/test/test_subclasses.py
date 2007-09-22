@@ -190,10 +190,6 @@ class TestSubclasses(unittest.TestCase):
 
 
 def test_main():
-# Jython transition 2.3
-# pickle fails on subclasses of builtin types
-# http://jython.org/bugs/1768990
-    del TestSubclasses.test_pickle_builtins
     test_support.run_unittest(TestSubclasses)
 
 if __name__ == "__main__":
