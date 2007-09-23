@@ -546,10 +546,10 @@ public class PyFile extends PyObject
         this.mode = mode;
         this.softspace = false;
         this.closed = false;
-        if (binary) {
-            this.file = new TextWrapper(file);
-        } else if (universal) {
+        if (universal) {
             this.file = new UniversalWrapper(file);
+        } else if (!binary) {
+            this.file = new TextWrapper(file);
         } else {
             this.file = file;
         }
