@@ -1,9 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.Hashtable;
-import java.util.Enumeration;
-
 /**
  * A builtin python dictionary.
  */
@@ -580,13 +577,13 @@ public class PyDictionary extends PyObject {
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
-    protected Hashtable table;
+    protected java.util.Map table;
 
     /**
      * Create an empty dictionary.
      */
     public PyDictionary() {
-        this(new Hashtable());
+        this(java.util.Collections.synchronizedMap(new java.util.HashMap()));
     }
 
     /**
@@ -595,7 +592,7 @@ public class PyDictionary extends PyObject {
      */
     public PyDictionary(PyType subtype) {
         super(subtype);
-        table = new Hashtable();
+        table = java.util.Collections.synchronizedMap(new java.util.HashMap());
     }
 
     /**
@@ -603,8 +600,8 @@ public class PyDictionary extends PyObject {
      * @param t  the hashtable used. The supplied hashtable is used as
      *           is and must only contain PyObject key:value pairs.
      */
-    public PyDictionary(Hashtable t) {
-        table = t;
+    public PyDictionary(java.util.Map t) {
+        table = java.util.Collections.synchronizedMap(new java.util.HashMap(t));
     }
 
     /**
@@ -634,7 +631,7 @@ public class PyDictionary extends PyObject {
             if (src.__findattr__("keys") != null)
                 this.update(src);
             else {
-                PyObject pairs = Py.iter(src, "iteration over non-sequence");
+                PyObject pairs = Py.iter(src, "iteration over non-sequence -not");
                 PyObject pair;
                 int cnt = 0;
                 for (; (pair = pairs.__iternext__()) != null; cnt++) {
@@ -744,7 +741,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyObject dict___iter__() {
-        return new PyDictionaryIter(this, table.keys(), PyDictionaryIter.KEYS);
+        return iterkeys();
     }
 
     public String toString() {
@@ -757,14 +754,15 @@ public class PyDictionary extends PyObject {
             return "{...}";
         }
 
-        java.util.Enumeration ek = table.keys();
-        java.util.Enumeration ev = table.elements();
         StringBuffer buf = new StringBuffer("{");
-        while(ek.hasMoreElements() && ev.hasMoreElements()) {
-            buf.append(((PyObject)ek.nextElement()).__repr__().toString());
-            buf.append(": ");
-            buf.append(((PyObject)ev.nextElement()).__repr__().toString());
-            buf.append(", ");
+        synchronized(table) {
+            for (java.util.Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
+                java.util.Map.Entry entry = (java.util.Map.Entry)it.next();
+                buf.append(((PyObject)entry.getKey()).__repr__().toString());
+                buf.append(": ");
+                buf.append(((PyObject)entry.getValue()).__repr__().toString());
+                buf.append(", ");
+            }
         }
         if(buf.length() > 1){
             buf.delete(buf.length() - 2, buf.length());
@@ -784,22 +782,7 @@ public class PyDictionary extends PyObject {
             return null;
 
         PyDictionary other = (PyDictionary)ob_other;
-        int an = table.size();
-        int bn = other.table.size();
-        if (an != bn)
-            return Py.Zero;
-
-        PyList akeys = keys();
-        for (int i=0; i<an; i++) {
-            PyObject akey = akeys.pyget(i);
-            PyObject bvalue = other.__finditem__(akey);
-            if (bvalue == null)
-                return Py.Zero;
-            PyObject avalue = __finditem__(akey);
-            if (!avalue._eq(bvalue).__nonzero__())
-                return Py.Zero;
-        }
-        return Py.One;
+        return table.equals(other.table) ? Py.True : Py.False;
     }
 
     public PyObject __ne__(PyObject ob_other) {
@@ -809,7 +792,7 @@ public class PyDictionary extends PyObject {
     final PyObject dict___ne__(PyObject ob_other) {
         PyObject eq_result = __eq__(ob_other);
         if (eq_result == null) return null;
-        return  eq_result == Py.One?Py.Zero:Py.One;
+        return  eq_result == Py.True?Py.False:Py.True;
     }
     
     final PyObject dict___lt__(PyObject ob_other){
@@ -817,7 +800,7 @@ public class PyDictionary extends PyObject {
     	if(result == -2){
     		return null;
     	}
-    	return result < 0 ? Py.One : Py.Zero;
+    	return result < 0 ? Py.True : Py.False;
     }
     
     final PyObject dict___gt__(PyObject ob_other){
@@ -825,7 +808,7 @@ public class PyDictionary extends PyObject {
     	if(result == -2){
     		return null;
     	}
-    	return result > 0 ? Py.One : Py.Zero;
+    	return result > 0 ? Py.True : Py.False;
     }
     
     final PyObject dict___le__(PyObject ob_other){
@@ -833,7 +816,7 @@ public class PyDictionary extends PyObject {
     	if(result == -2){
     		return null;
     	}
-    	return result <= 0 ? Py.One : Py.Zero;
+    	return result <= 0 ? Py.True : Py.False;
     }
     
     final PyObject dict___ge__(PyObject ob_other){
@@ -841,7 +824,7 @@ public class PyDictionary extends PyObject {
     	if(result == -2){
     		return null;
     	}
-    	return result >= 0 ? Py.One : Py.Zero;
+    	return result >= 0 ? Py.True : Py.False;
     }
 
     public int __cmp__(PyObject ob_other) {
@@ -899,10 +882,6 @@ public class PyDictionary extends PyObject {
         return table.containsKey(key);
     }
 
-    public boolean __contains__(PyObject o) {
-        return dict___contains__(o);
-    }
-
     final boolean dict___contains__(PyObject o) {
         return dict_has_key(o);
     }
@@ -949,7 +928,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyDictionary dict_copy() {
-        return new PyDictionary((Hashtable)table.clone());
+        return new PyDictionary(table); // no need to clone()
     }
 
     /**
@@ -983,14 +962,7 @@ public class PyDictionary extends PyObject {
     }
 
     private void do_update(PyDictionary d) {
-        Hashtable otable = d.table;
-
-        java.util.Enumeration ek = otable.keys();
-        java.util.Enumeration ev = otable.elements();
-        int n = otable.size();
-
-        for (int i=0; i<n; i++)
-            table.put(ek.nextElement(), ev.nextElement());
+        table.putAll(d.table);
     }
 
     private void do_update(PyObject d,PyObject keys) {
@@ -1074,13 +1046,14 @@ public class PyDictionary extends PyObject {
     }
 
     final PyObject dict_popitem() {
-        java.util.Enumeration keys = table.keys();
-        if (!keys.hasMoreElements())
-            throw Py.KeyError("popitem(): dictionary is empty");
-        PyObject key = (PyObject) keys.nextElement();
-        PyObject val = (PyObject) table.get(key);
-        table.remove(key);
-        return new PyTuple(new PyObject[] { key, val });
+        synchronized(table) {
+            java.util.Iterator it = table.entrySet().iterator();
+            if (!it.hasNext())
+                throw Py.KeyError("popitem(): dictionary is empty");
+            java.util.Map.Entry entry = (java.util.Map.Entry)it.next();
+            it.remove();
+            return new PyTuple(new PyObject[] { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
+        }
     }
 
     /**
@@ -1092,16 +1065,15 @@ public class PyDictionary extends PyObject {
     }
 
     final PyList dict_items() {
-        java.util.Enumeration ek = table.keys();
-        java.util.Enumeration ev = table.elements();
         int n = table.size();
-        PyObject[] elements = new PyObject[n];
-        for (int i=0; i<n; i++) {
-            elements[i] = new PyTuple(new PyObject[] {
-                (PyObject)ek.nextElement(), (PyObject)ev.nextElement()
-            });
+        java.util.Vector l = new java.util.Vector(n);
+        synchronized(table) {
+            for (java.util.Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
+                java.util.Map.Entry entry = (java.util.Map.Entry)it.next();
+                l.addElement(new PyTuple(new PyObject[] { (PyObject)entry.getKey(), (PyObject)entry.getValue() }));
+            }
         }
-        return new PyList(elements);
+        return new PyList(l);
     }
 
     /**
@@ -1112,14 +1084,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyList dict_keys() {
-        java.util.Enumeration e = table.keys();
-        int n = table.size();
-        PyObject[] elements = new PyObject[n];
-
-        for (int i=0; i<n; i++) {
-            elements[i] = (PyObject)e.nextElement();
-        }
-        return new PyList(elements);
+        return new PyList(new java.util.Vector(table.keySet()));
     }
 
     /**
@@ -1130,13 +1095,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyList dict_values() {
-        java.util.Enumeration e = table.elements();
-        int n = table.size();
-        PyObject[] elements = new PyObject[n];
-        for (int i=0; i<n; i++) {
-            elements[i] = (PyObject)e.nextElement();
-        }
-        return new PyList(elements);
+        return new PyList(new java.util.Vector(table.values()));
     }
 
     /**
@@ -1147,8 +1106,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyObject dict_iteritems() {
-        return new PyDictionaryIter(this, table.keys(),
-                    PyDictionaryIter.ITEMS);
+        return new PDEntriesIter(table.entrySet());
     }
 
     /**
@@ -1159,8 +1117,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyObject dict_iterkeys() {
-        return new PyDictionaryIter(this, table.keys(),
-                    PyDictionaryIter.KEYS);
+        return new PDCollectionIter(table.keySet());
     }
 
     /**
@@ -1171,8 +1128,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyObject dict_itervalues() {
-        return new PyDictionaryIter(this, table.keys(),
-                    PyDictionaryIter.VALUES);
+        return new PDCollectionIter(table.values());
     }
 
     public int hashCode() {
@@ -1187,36 +1143,36 @@ public class PyDictionary extends PyObject {
         return false;
     }
 
+    // just a lightweight wrapper for now...
+    class PDCollectionIter extends PyIterator {
+        private java.util.Iterator iterator;
+        public PDCollectionIter(java.util.Collection c) {
+            this.iterator = c.iterator();
+        }
 
-}
-
-class PyDictionaryIter extends PyIterator {
-    public static final int KEYS = 0;
-    public static final int VALUES = 1;
-    public static final int ITEMS = 2;
-
-    private PyObject dict;
-    private Enumeration enumeration;
-    private int type;
-
-    public PyDictionaryIter(PyObject dict, Enumeration e, int type) {
-        this.dict = dict;
-        this.enumeration = e;
-        this.type = type;
-    }
-
-    public PyObject __iternext__() {
-        if (!enumeration.hasMoreElements())
-            return null;
-        PyObject key = (PyObject) enumeration.nextElement();
-        switch (type) {
-        case VALUES:
-            return dict.__finditem__(key);
-        case ITEMS:
-            return new PyTuple(new PyObject[] { key, dict.__finditem__(key) });
-        default: // KEYS
-            return key;
+        public PyObject __iternext__() {
+            if (!iterator.hasNext())
+                return null;
+            return (PyObject)iterator.next();
         }
     }
+
+    class PDEntriesIter extends PyIterator {
+        private java.util.Iterator iterator;
+        public PDEntriesIter(java.util.Set s) {
+            this.iterator = s.iterator();
+        }
+        
+        public PyObject __iternext__() {
+        if (!iterator.hasNext())
+            return null;
+        java.util.Map.Entry entry =  (java.util.Map.Entry)iterator.next();
+        return new PyTuple(new PyObject[] { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
+        }
+    }
+
 }
+
+
+
 
