@@ -14,6 +14,7 @@ Jython 2.2.1 rc1
     - [ 1799328 ] string formatting doesn't call __unicode__ on %s in unicode objects 
     - [ 1763263 ] os.utime(path, None) doesn't work (incl. a patch)
     - [ 1758904 ] I added doc strings for functions in os module (javaos.py).
+    - [ 1735774 ] Redirecting stdout/err with os.popen fails if cmd is unicode
 
 Jython 2.2
   No changes from 2.2 rc3
