@@ -213,9 +213,8 @@ def utime(path, times):
         mtime = times[1]
     else:
         mtime = time.time()
-    # Only the modification time is changed (and only on java2).
-    if hasattr(File, "setLastModified"):
-        File(path).setLastModified(long(mtime * 1000.0))
+    # Only the modification time is changed
+    File(path).setLastModified(long(mtime * 1000.0))
 
 class LazyDict( UserDict ):
     """A lazy-populating User Dictionary.
