@@ -30,6 +30,7 @@ from java.io import File
 import java.lang.System
 import javapath as path
 from UserDict import UserDict
+import time
 
 class stat_result:
   import stat as _stat
@@ -97,27 +98,36 @@ path.defpath = defpath
 path.extsep = extsep
 
 def _exit(n=0):
-    """Exit to the system with specified status, without normal exit
+    """_exit(status)
+
+    Exit to the system with specified status, without normal exit
     processing.
     """
     java.lang.System.exit(n)
 
 def getcwd():
-    """Return a string representing the current working directory."""
+    """getcwd() -> path
+
+    Return a string representing the current working directory.
+    """
     foo = File(File("foo").getAbsolutePath())
     return foo.getParent()
 
 def chdir(path):
-    """Change the current working directory to the specified path."""
+    """chdir(path)
+
+    Change the current working directory to the specified path.
+    """
     raise OSError(0, 'chdir not supported in Java', path)
 
 def listdir(path):
-    """Return a list containing the names of the entries in the
-    directory.
+    """listdir(path) -> list_of_strings
+
+    Return a list containing the names of the entries in the directory.
 
         path: path of directory to list
 
-    The list is in arbitrary order. It does not include the special
+    The list is in arbitrary order.  It does not include the special
     entries '.' and '..' even if they are present in the directory.
     """
     l = File(path).list()
@@ -126,7 +136,9 @@ def listdir(path):
     return list(l)
 
 def mkdir(path, mode='ignored'):
-    """Create a directory.
+    """mkdir(path [, mode=0777])
+
+    Create a directory.
 
     The optional parameter is currently ignored.
     """
@@ -134,7 +146,9 @@ def mkdir(path, mode='ignored'):
         raise OSError(0, "couldn't make directory", path)
 
 def makedirs(path, mode='ignored'):
-    """Super-mkdir; create a leaf directory and all intermediate ones.
+    """makedirs(path [, mode=0777])
+
+    Super-mkdir; create a leaf directory and all intermediate ones.
 
     Works like mkdir, except that any intermediate path segment (not
     just the rightmost) will be created if it does not exist.
@@ -144,24 +158,34 @@ def makedirs(path, mode='ignored'):
         raise OSError(0, "couldn't make directories", path)
 
 def remove(path):
-    """Remove a file (same as unlink(path))."""
+    """remove(path)
+
+    Remove a file (same as unlink(path)).
+    """
     if not File(path).delete():
         raise OSError(0, "couldn't delete file", path)
 
 def rename(path, newpath):
-    """Rename a file or directory."""
+    """rename(old, new)
+
+    Rename a file or directory.
+    """
     if not File(path).renameTo(File(newpath)):
         raise OSError(0, "couldn't rename file", path)
 
 def rmdir(path):
-    """Remove a directory."""
+    """rmdir(path)
+
+    Remove a directory."""
     if not File(path).delete():
         raise OSError(0, "couldn't delete directory", path)
 
 unlink = remove
 
 def stat(path):
-    """Perform a stat system call on the given path.
+    """stat(path) -> stat result
+
+    Perform a stat system call on the given path.
 
     The Java stat implementation only returns a small subset of
     the standard fields: size, modification time and change time.
@@ -176,15 +200,22 @@ def stat(path):
     return stat_result((0, 0, 0, 0, 0, 0, size, mtime, mtime, 0))
 
 def utime(path, times):
-    """Set the access and modified time of the file to the given values.
+    """utime(path, (atime, mtime))
+    utime(path, None)
+
+    Set the access and modified time of the file to the given values.
+    If the second form is used, set the access and modified times to the
+    current time.
 
     Due to java limitations only the modification time is changed.
-    Usage:
-        utime(path, (atime,mtime))
     """
+    if times is not None:
+        mtime = times[1]
+    else:
+        mtime = time.time()
     # Only the modification time is changed (and only on java2).
-    if times and hasattr(File, "setLastModified"):
-        File(path).setLastModified(long(times[1] * 1000.0))
+    if hasattr(File, "setLastModified"):
+        File(path).setLastModified(long(mtime * 1000.0))
 
 class LazyDict( UserDict ):
     """A lazy-populating User Dictionary.
@@ -297,16 +328,18 @@ def getenv(key, default=None):
     return environ.get(key, default)
 
 def system( *args, **kwargs ):
-    """Execute the command (a string) in a subshell."""
+    """system(command) -> exit_status
+
+    Execute the command (a string) in a subshell.
+    """
     # allow lazy import of popen2 and javashell
     import popen2
     return popen2.system( *args, **kwargs )
 
 def popen( *args, **kwargs ):
-    """Open a pipe to/from a command returning a file object.
+    """popen(command [, mode='r' [, bufsize]]) -> pipe
 
-    Example:
-        popen(command [, mode='r' [, bufsize]])
+    Open a pipe to/from a command returning a file object.
     """
     # allow lazy import of popen2 and javashell
     import popen2
@@ -320,7 +353,7 @@ def popen2(cmd, mode="t", bufsize=-1):
 
     On UNIX, 'cmd' may be a sequence, in which case arguments will be
     passed directly to the program without shell intervention (as with
-    os.spawnv()). If 'cmd' is a string it will be passed to the shell
+    os.spawnv()).  If 'cmd' is a string it will be passed to the shell
     (as with os.system()).  If 'bufsize' is specified, it sets the
     buffer size for the I/O pipes.  The file objects (child_stdin,
     child_stdout) are returned.
@@ -335,7 +368,7 @@ def popen3(cmd, mode="t", bufsize=-1):
     On UNIX, 'cmd' may be a sequence, in which case arguments will be
     passed directly to the program without shell intervention
     (as with os.spawnv()).  If 'cmd' is a string it will be passed
-    to the shell (as with os.system()). If 'bufsize' is specified,
+    to the shell (as with os.system()).  If 'bufsize' is specified,
     it sets the buffer size for the I/O pipes.  The file objects
     (child_stdin, child_stdout, child_stderr) are returned.
     """
@@ -349,7 +382,7 @@ def popen4(cmd, mode="t", bufsize=-1):
     On UNIX, 'cmd' may be a sequence, in which case arguments will be
     passed directly to the program without shell intervention
     (as with os.spawnv()).  If 'cmd' is a string it will be passed
-    to the shell (as with os.system()). If 'bufsize' is specified,
+    to the shell (as with os.system()).  If 'bufsize' is specified,
     it sets the buffer size for the I/O pipes.  The file objects
     (child_stdin, child_stdout_stderr) are returned.
     """
@@ -358,7 +391,10 @@ def popen4(cmd, mode="t", bufsize=-1):
     return stdin, stdout
 
 def getlogin():
-    """Return the actual login name."""
+    """getlogin() -> string
+
+    Return the actual login name.
+    """
     return java.lang.System.getProperty("user.name")
 
 #XXX: copied from CPython's release23-maint branch revision 56502
