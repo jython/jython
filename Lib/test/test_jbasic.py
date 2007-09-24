@@ -31,9 +31,15 @@ for i in items:
 	vec.addElement(i)
 
 expected = 0
-for i in vec.elements():
-	assert i == expected, 'testing enumeration on java.util.Vector'
+for i in vec:
+	assert i == expected, 'testing __iter__ on java.util.Vector'
 	expected = expected+1
+
+expected = 0
+for i in iter(vec):
+    assert i == expected, 'testing iter(java.util.Vector)'
+    expected = expected+1
+
 
 print_test('create java objects', 2)
 

@@ -1,5 +1,21 @@
 Jython NEWS
 
+Jython 2.2.1 rc1
+  Bugs fixed
+    - Reading and writing on files would run data through the JVM's default charset
+    - Include the row number where an exception occured while using a zxJDBC cursor
+    - [ 1766527 ] in keyword doesn't work on os.environ
+    - [ 1767194 ] xmllib applies default namespace to attributes incorrectly
+    - [ 1768074 ] str.replace doesn't handle an empty string to be replaced
+    - [ 1775893 ] in keyword does not use dict.has_key()
+    - [ 1782493 ] jython --version doesn't show the java version number
+    - [ 1782856 ] zxJDBC.Timestamp returns hours in AM/PM not 24 hour time
+    - [ 1783960 ] can not exclude parts from text-mode installation
+    - [ 1799328 ] string formatting doesn't call __unicode__ on %s in unicode objects 
+    - [ 1763263 ] os.utime(path, None) doesn't work (incl. a patch)
+    - [ 1758904 ] I added doc strings for functions in os module (javaos.py).
+    - [ 1735774 ] Redirecting stdout/err with os.popen fails if cmd is unicode
+
 Jython 2.2
   Identical to 2.2 rc3
 Jython 2.2 rc3
