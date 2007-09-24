@@ -15,6 +15,8 @@ Jython 2.2.1 rc1
     - [ 1763263 ] os.utime(path, None) doesn't work (incl. a patch)
     - [ 1758904 ] I added doc strings for functions in os module (javaos.py).
     - [ 1735774 ] Redirecting stdout/err with os.popen fails if cmd is unicode
+    - [ 1773865 ] Patch for [1768990] pickle fails on subclasses
+    - [ 1783153 ] Patch: compatibility with Java 1.3 for Jython 2.2
 
 Jython 2.2
   Identical to 2.2 rc3
