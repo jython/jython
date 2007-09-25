@@ -421,6 +421,19 @@ public class PyInstance extends PyObject
         return (PyString)ret;
     }
 
+    public PyUnicode __unicode__() {
+        PyObject ret = invoke_ex("__unicode__");
+        if(ret == null) {
+            return super.__unicode__();
+        } else if(ret instanceof PyUnicode) {
+            return (PyUnicode)ret;
+        } else if(ret instanceof PyString) {
+            return new PyUnicode((PyString)ret);
+        } else {
+            throw Py.TypeError("__unicode__ must return unicode or str");
+        }
+    }
+
     public int hashCode() {
         PyObject ret;
         ret = invoke_ex("__hash__");
