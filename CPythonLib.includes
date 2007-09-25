@@ -109,6 +109,7 @@ symbol.py
 this.py
 threading.py
 textwrap.py
+timeit.py
 token.py
 tokenize.py
 traceback.py
