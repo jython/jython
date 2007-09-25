@@ -150,6 +150,10 @@ public class PySystemState extends PyObject
                                            exc.traceback});
     }
 
+    public static void exc_clear() {
+    	Py.getThreadState().exception = null;
+    }
+
     public static PyFrame _getframe() {
         return _getframe(-1);
     }
