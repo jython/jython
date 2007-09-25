@@ -190,28 +190,29 @@ public class JavaImportHelper {
      * @return <code>true</code> if something was really added, <code>false</code> otherwise
      */
     private static boolean addPackage(String packageName, boolean packageAdded) {
-        boolean added = false;
-        PyObject module = Py.getSystemState().modules.__finditem__(packageName.intern());
+        PyObject modules = Py.getSystemState().modules;
+        String internedPackageName = packageName.intern();
+        PyObject module = modules.__finditem__(internedPackageName);
+        // a previously failed import could have created a Py.None entry in sys.modules
         if (module == null || module == Py.None) {
-            PyObject modules = Py.getSystemState().modules;
-            int dotPos;
+            int dotPos = 0;
             do {
-                String internedPackageName = packageName.intern();
-                if (modules.__finditem__(internedPackageName) == Py.None) {
-                    // a previously failed import could have created a Py.None entry in sys.modules
-                    modules.__delitem__(internedPackageName);
-                }
                 PyJavaPackage p = PySystemState.add_package(packageName);
-                Py.getSystemState().modules.__setitem__(internedPackageName, p);
-                added = true;
+                if(dotPos == 0) {
+                    modules.__setitem__(internedPackageName, p);
+                } else {
+                    module = modules.__finditem__(internedPackageName);
+                    if (module == null || module == Py.None) {
+                        modules.__setitem__(internedPackageName, p);
+                    }
+                }
                 dotPos = packageName.lastIndexOf(DOT);
                 if (dotPos > 0) {
                     packageName = packageName.substring(0, dotPos);
+                    internedPackageName = packageName.intern();
                 }
-            } while (dotPos > 0);
-        }
-        // make sure not to turn off the packageAdded flag
-        if (added && !packageAdded) {
+            } while(dotPos > 0);
+            // make sure not to turn off the packageAdded flag
             packageAdded = true;
         }
         return packageAdded;
