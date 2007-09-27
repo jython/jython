@@ -1,5 +1,10 @@
 Jython NEWS
 
+Jython 2.2.1 rc2
+  Bugs fixed
+    - [ 1800378 ] __unicode__ ignored on subclasses of builtin types
+    - [ 1801802 ] JavaImportHelper not thread safe
+
 Jython 2.2.1 rc1
   Bugs fixed
     - Reading and writing on files would run data through the JVM's default charset
