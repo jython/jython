@@ -1702,6 +1702,7 @@ public class PyFile extends PyObject
 
         public void seek(long pos, int how) throws IOException {
             file.seek(pos, how);
+            skipNextLF = false;
         }
 
         public void flush() throws IOException {

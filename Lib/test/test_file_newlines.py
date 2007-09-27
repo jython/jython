@@ -141,6 +141,14 @@ class ReadUniversalNewlinesTestCase(BaseTestCase):
         readline(self.fp, 'CRLF\n', 5)
         readline(self.fp, 'EOF', 3)
 
+    def test_seek(self):
+        # Ensure seek doesn't confuse CRLF newline identification
+        self.fp.seek(6)
+        readline(self.fp, 'CRLF\n')
+        assert self.fp.newlines == None
+        self.fp.seek(5)
+        readline(self.fp, '\n')
+        assert self.fp.newlines == '\n'
 
 class WriteUniversalNewlinesTestCase(unittest.TestCase):
 
