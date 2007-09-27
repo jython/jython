@@ -878,7 +878,7 @@ public class PyUnicode extends PyString {
             }
 
             public PyObject __call__(PyObject arg0) {
-                return new PyUnicode(((PyUnicode)self).unicode_join(arg0));
+                return((PyUnicode)self).unicode_join(arg0);
             }
 
         }
@@ -1482,7 +1482,7 @@ public class PyUnicode extends PyString {
     }
     
     public PyUnicode(PyType subtype, PyString pystring) {
-        this(subtype, (String)pystring.__tojava__(String.class));
+        this(subtype, pystring.decode().toString());
     }
 
 

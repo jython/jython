@@ -1624,7 +1624,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final PyUnicode str___unicode__() {
-        return new PyUnicode(this.toString());
+        return new PyUnicode(this);
     }
 
     public int __len__() {
