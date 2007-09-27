@@ -33,7 +33,7 @@ expose_meth: :b isspace
 expose_meth: :b istitle
 expose_meth: :b isunicode
 expose_meth: :b isupper
-expose_meth: :u join o
+expose_meth: join o
 expose_meth: :u ljust i
 expose_meth: :u lower
 expose_meth: :u lstrip S?

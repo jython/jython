@@ -176,22 +176,6 @@ public class PyObject implements java.io.Serializable {
 
         }
         dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyObject.class,0,0,new exposed___repr__(null,null)));
-        class exposed___unicode__ extends PyBuiltinMethodNarrow {
-
-            exposed___unicode__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___unicode__(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyUnicode(self.__str__());
-            }
-
-        }
-        dict.__setitem__("__unicode__",new PyMethodDescr("__unicode__",PyObject.class,0,0,new exposed___unicode__(null,null)));
         class exposed___init__ extends PyBuiltinMethod {
 
             exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
