@@ -43,7 +43,6 @@ public class parser {
         }
     }
 
-
     // if reader != null, reset it
     public static PyException fixParseError(BufferedReader reader, Throwable t,
                                      String filename)
@@ -87,12 +86,11 @@ public class parser {
         else return Py.JavaError(t);
     }
 
-
     public static Node parse(String string, String kind) {
         return parse(new ByteArrayInputStream(PyString.to_bytes(string)),
                      kind, "<string>", null);
     }
-        
+
     public static modType parse(InputStream istream, String kind,
                                  String filename, CompilerFlags cflags) 
     {
@@ -145,27 +143,6 @@ public class parser {
             throw fixParseError(bufreader, t, filename);
         }
         return node;
-        
-        
-//        try {
-//            node = parse(new StringBufferInputStream(string),
-//                         kind, filename, cflags, true);
-//        }
-//        catch (PySyntaxError e) {
-//            //System.out.println("e: "+e.lineno+", "+e.column+", "+
-//            //                   e.forceNewline);
-//            try {
-//                node = parse(new StringBufferInputStream(string+"\n"),
-//                             kind, filename, cflags, true);
-//            }
-//            catch (PySyntaxError e1) {
-//                //System.out.println("e1: "+e1.lineno+", "+e1.column+
-//                //                   ", "+e1.forceNewline);
-//                if (e.forceNewline || !e1.forceNewline) throw e;
-//            }
-//            return null;
-//        }
-//        return node;
     }
 
     private static modType doparse(String kind, CompilerFlags cflags, 
@@ -223,34 +200,12 @@ public class parser {
             }
         }
         
-        //if (Options.fixMacReaderBug);
-        reader = new FixMacReaderBug(reader);
-        
         BufferedReader bufreader = new BufferedReader(reader);
         
         try {
             bufreader.mark(nbytes);
         } catch (IOException exc) { }
         return bufreader;
-    }
-
-}
-
-
-/**
- * A workaround for a bug in MRJ2.2's FileReader, where the value returned
- * from read(b, o, l) sometimes are wrong.
- */
-class FixMacReaderBug extends FilterReader {
-    public FixMacReaderBug(Reader in) {
-        super(in);
-    }
-
-    public int read(char b[], int off, int len) throws IOException {
-        int l = super.read(b, off, len);
-        if (l < -1)
-            l += off;
-        return l;
     }
 }
 
