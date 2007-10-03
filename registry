@@ -43,10 +43,6 @@ python.deprecated.keywordMangling = false
 #python.console=org.python.util.ReadlineConsole
 #python.console.readlinelib=JavaReadline
 
-# Setting this to true will cause the console to poll standard in
-# This might be helpful on systems without system-level threads
-python.console.poll = false
-
 # Setting this to a valid codec name will cause the console to use a
 # different encoding when reading commands from the console.
 # The default java encoding is still used when reading python sources
