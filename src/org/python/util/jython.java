@@ -1,10 +1,22 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.util;
 
-import org.python.core.*;
+import java.io.File;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
-import java.util.zip.*;
-import java.io.*;
+import org.python.core.Options;
+import org.python.core.Py;
+import org.python.core.PyCode;
+import org.python.core.PyException;
+import org.python.core.PyModule;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.core.PyStringMap;
+import org.python.core.PySystemState;
+import org.python.core.imp;
 
 public class jython
 {
@@ -222,7 +234,12 @@ public class jython
                 opts.encoding = PySystemState.registry.getProperty(
                                 "python.console.encoding", null);
             }
-            if (opts.encoding != null) {
+            if(opts.encoding != null) {
+                if(!Charset.isSupported(opts.encoding)) {
+                    System.err.println(opts.encoding
+                            + " is not a supported encoding on this JVM, so it can't be used in python.console.encoding.");
+                    System.exit(1);
+                }
                 interp.cflags.encoding = opts.encoding;
             }
             try {

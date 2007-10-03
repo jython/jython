@@ -50,7 +50,7 @@ public class InteractiveInterpreter extends PythonInterpreter {
     public boolean runsource(String source, String filename, String symbol) {
         PyObject code;
         try {
-            code = Py.compile_command_flags(source, filename, symbol,cflags,true);
+            code = Py.compile_command_flags(source, filename, symbol, cflags, true);
         } catch (PyException exc) {
             if (Py.matchException(exc, Py.SyntaxError)) {
                 // Case 1
