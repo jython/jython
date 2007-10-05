@@ -247,7 +247,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="jython.version" value="${svn.revision}">
             <isset property="svn.revision" />
         </condition>
-        <property name="jython.version" value="2.2.1rc1" />
+        <property name="jython.version" value="2.2.1rc2" />
     	<!-- if not set so far, default svn.revision to HEAD, since we always want
     	     the latest revision on the specified subversion main directory -->
     	<property name="svn.revision" value="HEAD"/>
@@ -396,10 +396,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 	     in PySystemState.java and README.txt change -->
 	<target name="version" depends="checkout" if="do.snapshot.build" >
 		<property name="replace.value.version" value='version = "2.2rc${svn.revision}"' />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2.1rc1"' value="${replace.value.version}" />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token='version = "2.2.1rc2"' value="${replace.value.version}" />
 		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_LEVEL = 0x0C" value="PY_RELEASE_LEVEL = 0xAA" />
 		<property name="replace.value.serial" value="PY_RELEASE_SERIAL = ${svn.revision}" />
-		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 1" value="${replace.value.serial}" />
+		<replace file="${source.dir}/org/python/core/PySystemState.java" token="PY_RELEASE_SERIAL = 2" value="${replace.value.serial}" />
 
     	<!-- change README.txt -->
 		<replace file="${jython.base.dir}/README.txt" token='2.2' value='2.2rc${svn.revision}' />
