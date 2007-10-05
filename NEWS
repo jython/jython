@@ -2,8 +2,10 @@ Jython NEWS
 
 Jython 2.2.1 rc2
   Bugs fixed
+    - Python files are parsed using the JVM's default encoding
     - [ 1800378 ] __unicode__ ignored on subclasses of builtin types
     - [ 1801802 ] JavaImportHelper not thread safe
+    - python.console.encoding is silently ignored if the JVM doesn't support the given encoding
 
 Jython 2.2.1 rc1
   Bugs fixed
