@@ -1,6 +1,6 @@
-Welcome to Jython 2.2.1rc1
+Welcome to Jython 2.2.1rc2
 =======================
-This is the first release candidate for the 2.2.1 release of Jython, an
+This is the second release candidate for the 2.2.1 release of Jython, an
 implementation of the Python programming language on the Java Virtual Machine.
 2.2.1 is a bugfix release that takes care of all of the major bugs that have
 been reported since 2.2.  See the NEWS file for a more complete list of
