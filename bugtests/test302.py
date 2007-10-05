@@ -1,5 +1,4 @@
 """
-Test the cp1542 encoding (euro-centric console)
 In bug #439688 the value 0x99 does not survive the JavaCC parser.
 """
 
@@ -12,15 +11,15 @@ f.close()
 try:
     import test302s
 except SyntaxError:
-    raise support.TestWarning('Should not raise a Syntaxerror')
+    raise support.TestError('Importing a file with str byte > 128 should not raise a Syntaxerror')
 
-f = open("test302.out", "wb")
+f = open("test302.out", "w")
 f.write("\x99")
 f.close();
 
-import java
-readerval = java.io.FileReader("test302.out").read()
+from java.io import FileInputStream, InputStreamReader
+readval = InputStreamReader(FileInputStream("test302.out"), 'ISO-8859-1').read()
 
-if ord(test302s.v) != readerval:
+if ord(test302s.v) != readval:
     raise support.TestError("Module source was not decoded correctly %x %x" % 
-                (ord(test302s.v), ord(readerval)))
+                (ord(test302s.v), readval))

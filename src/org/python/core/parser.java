@@ -92,7 +92,7 @@ public class parser {
         return parse(new ByteArrayInputStream(PyString.to_bytes(string)),
                      kind, "<string>", null);
     }
-
+        
     public static modType parse(InputStream istream, String kind,
                                  String filename, CompilerFlags cflags) 
     {
@@ -205,15 +205,22 @@ public class parser {
             nbytes = 10000;
         if (nbytes > 100000)
             nbytes = 100000;
-        
-        Reader reader = null;
-        try {
-            if (cflags != null && cflags.encoding != null) {
+        Reader reader;
+        if(cflags != null && cflags.encoding != null) {
+            try {
                 reader = new InputStreamReader(istream, cflags.encoding);
+            } catch(UnsupportedEncodingException exc) {
+                throw Py.SystemError("python.console.encoding, " + cflags.encoding
+                        + ", isn't supported by this JVM so we can't parse this data.");
             }
-        } catch (UnsupportedEncodingException exc) { ; }
-        if (reader == null) {
-            reader = new InputStreamReader(istream);
+        } else {
+            try {
+                // Use ISO-8859-1 to get bytes off the input stream since it leaves their values alone.
+                reader = new InputStreamReader(istream, "ISO-8859-1");
+            } catch(UnsupportedEncodingException e) {
+                // This JVM is whacked, it doesn't even have iso-8859-1
+                throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
+            }
         }
         
         //if (Options.fixMacReaderBug);
