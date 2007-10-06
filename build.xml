@@ -40,7 +40,6 @@ The following targets are designed for direct invocation:
   - full-build
   - clean (uses developer-build settings if called directly)
   - parser (uses developer-build settings if called directly)
-  - copy-lib
 Following an ant convention, the callable targets have a description attribute.
 All other targets may give unpredicted results if called directly.
 
@@ -120,6 +119,8 @@ javahl.dir=C:/Programme/Subversion/javahl
 svnant.jar.dir=${basedir}/../externals/svnant-jars
         </echo>
     </target>
+
+    <target name="jarless" depends="compile, copy-lib"/>
 
     <target name="developer-build" depends="jar, copy-lib" description="a local build for developers" />
 
@@ -551,7 +552,7 @@ The readme text for the next release will be like:
         </copy>
     </target>
 
-    <target name="copy-lib" depends="init" description="Copies the files from CPythonLib and Lib to dist">
+    <target name="copy-lib" depends="init">
         <copy todir="${dist.dir}" preservelastmodified="true">
             <fileset dir="${jython.base.dir}" includes="Tools/**/*.py" />
         </copy>
