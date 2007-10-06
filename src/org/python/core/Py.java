@@ -1622,8 +1622,16 @@ public final class Py
         PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords,
                                   globals, Py.EmptyObjects,
                                   new PyTuple(closure_cells));
-        if (doc != null)
+        if (doc != null) {
             dict.__setitem__("__doc__", doc);
+        }
+        
+        if(dict.__finditem__("__module__") == null) {
+            PyObject module = globals.__finditem__("__name__");
+            if(module != null) {
+                dict.__setitem__("__module__", module);
+            }
+        }
 
         PyObject metaclass;
         
