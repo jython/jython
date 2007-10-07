@@ -115,7 +115,7 @@ public class PyBuiltinFunctionSet extends PyBuiltinFunction {
         throw info.unexpectedCall(4, false);
     }
 
-    protected PyBuiltinFunction bind(PyObject self) {
+    public PyBuiltinFunction bind(PyObject self) {
         throw Py.TypeError("Can't bind a builtin function");
     }
     

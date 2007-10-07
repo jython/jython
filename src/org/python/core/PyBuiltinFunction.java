@@ -117,7 +117,7 @@ public abstract class PyBuiltinFunction extends PyObject implements
     /**
      * @return a new instance of this type of PyBuiltinFunction bound to self
      */
-    abstract protected PyBuiltinFunction bind(PyObject self);
+    abstract public PyBuiltinFunction bind(PyObject self);
 
     public PyObject getSelf() {
         return Py.None;

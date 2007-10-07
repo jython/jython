@@ -7,7 +7,7 @@ public abstract class PyNewWrapper extends PyBuiltinMethod {
         for_type = (PyType)getSelf();
     }
 
-    protected PyBuiltinFunction bind(PyObject self) {
+    public PyBuiltinFunction bind(PyObject self) {
         throw Py.SystemError("__new__ wrappers are already bound");
     }
 
