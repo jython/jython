@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.io.Serializable;
 
+import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedType;
 
 /**
@@ -26,7 +27,7 @@ public class PyNone extends PyObject implements Serializable
         return NoneType___nonzero__();
     }
 
-    @ExposedType
+    @ExposedMethod
     final boolean NoneType___nonzero__() {
         return false;
     }
@@ -44,7 +45,7 @@ public class PyNone extends PyObject implements Serializable
         return NoneType_toString();
     }
 
-    @ExposedType(name="__repr__")
+    @ExposedMethod(names="__repr__")
     final String NoneType_toString() {
         return "None";
     }
