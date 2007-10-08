@@ -21,11 +21,11 @@ public class TypeExposerTest extends TestCase {
     public void testFindMethods() {
         TypeExposer ecp = new TypeExposer(SimpleExposed.class);
         List<Method> methods = ecp.findMethods();
-        assertEquals(1, methods.size());
+        assertEquals(2, methods.size());
     }
 
     public void testGetName() {
-        assertEquals("SimpleExposed", new TypeExposer(SimpleExposed.class).getName());
+        assertEquals("simpleexposed", new TypeExposer(SimpleExposed.class).getName());
         assertEquals("somethingcompletelydifferent",
                      new TypeExposer(Rename.class).getName());
     }
@@ -39,9 +39,10 @@ public class TypeExposerTest extends TestCase {
 
     public void testMakeBuilder() throws InstantiationException, IllegalAccessException {
         TypeBuilder t = new TypeExposer(SimpleExposed.class).makeBuilder();
-        assertEquals("SimpleExposed", t.getName());
+        assertEquals("simpleexposed", t.getName());
         assertEquals(SimpleExposed.class, t.getTypeClass());
         assertNotNull(t.getDict().__finditem__("simple_method"));
+        assertNotNull(t.getDict().__finditem__("prefixed"));
     }
 
     public class Unexposed {}

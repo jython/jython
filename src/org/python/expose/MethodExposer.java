@@ -21,6 +21,16 @@ public class MethodExposer extends Exposer {
         }
     }
 
+    /**
+     * @param prefix -
+     *            a prefix that will be stripped from method names if no
+     *            explicit name is given in the Exposed annotation
+     */
+    public MethodExposer(Method method, String prefix) {
+        this(method);
+        this.prefix = prefix;
+    }
+
     public Class getMethodClass() {
         return method.getDeclaringClass();
     }
@@ -28,7 +38,11 @@ public class MethodExposer extends Exposer {
     public String getName() {
         String name = exp.name();
         if(name.equals("")) {
-            return method.getName();
+            name = method.getName();
+            if(name.startsWith(prefix)) {
+                return name.substring(prefix.length());
+            }
+            return name;
         }
         return name;
     }
@@ -88,4 +102,6 @@ public class MethodExposer extends Exposer {
     private Exposed exp;
 
     private Method method;
+
+    private String prefix = "";
 }

@@ -28,4 +28,10 @@ public class MethodExposerTest extends TestCase {
         assertEquals(Py.None, bound.__call__());
         assertEquals(1, simpleExposed.timesCalled);
     }
+    
+    public void testPrefixing() throws SecurityException, NoSuchMethodException {
+        MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simpleexposed_prefixed"),
+                                             "simpleexposed_");
+        assertEquals("prefixed", mp.getName());
+    }
 }

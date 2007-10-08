@@ -29,7 +29,7 @@ public class TypeExposer extends Exposer {
     public TypeBuilder makeBuilder() {
         BytecodeLoader.Loader l = new BytecodeLoader.Loader();
         for(Method m : findMethods()) {
-            new MethodExposer(m).load(l);
+            new MethodExposer(m, getName() + "_").load(l);
         }
         Class descriptor = load(l);
         try {
