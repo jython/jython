@@ -3,12 +3,12 @@ package org.python.core;
 
 import java.io.Serializable;
 
-import org.python.expose.Exposed;
+import org.python.expose.ExposedType;
 
 /**
  * A class representing the singleton None object,
  */
-@Exposed(name="NoneType")
+@ExposedType(name="NoneType")
 public class PyNone extends PyObject implements Serializable
 {
 
@@ -26,7 +26,7 @@ public class PyNone extends PyObject implements Serializable
         return NoneType___nonzero__();
     }
 
-    @Exposed
+    @ExposedType
     final boolean NoneType___nonzero__() {
         return false;
     }
@@ -44,7 +44,7 @@ public class PyNone extends PyObject implements Serializable
         return NoneType_toString();
     }
 
-    @Exposed(name="__repr__")
+    @ExposedType(name="__repr__")
     final String NoneType_toString() {
         return "None";
     }

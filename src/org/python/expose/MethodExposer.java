@@ -7,8 +7,8 @@ import org.objectweb.asm.Type;
 import org.python.core.PyBuiltinMethodNarrow;
 
 /**
- * Generates a class to call a given method with the {@link Exposed} annotation
- * as a method on a builtin Python type.
+ * Generates a class to call a given method with the {@link ExposedMethod}
+ * annotation as a method on a builtin Python type.
  */
 public class MethodExposer extends Exposer {
 
@@ -16,9 +16,10 @@ public class MethodExposer extends Exposer {
         super(PyBuiltinMethodNarrow.class, method.getDeclaringClass().getName() + "$exposed_"
                 + method.getName());
         this.method = method;
-        exp = method.getAnnotation(Exposed.class);
+        exp = method.getAnnotation(ExposedMethod.class);
         if(exp == null) {
-            throw new IllegalArgumentException(method + " doesn't have the @Exposed annotation");
+            throw new IllegalArgumentException(method
+                    + " doesn't have the @ExposedMethod annotation");
         }
     }
 
@@ -36,20 +37,20 @@ public class MethodExposer extends Exposer {
         return method.getDeclaringClass();
     }
 
-    public String getName() {
-        String name = exp.name();
-        if(name.equals("")) {
-            name = method.getName();
+    public String[] getNames() {
+        String[] names = exp.names();
+        if(names.length == 0) {
+            String name = method.getName();
             if(name.startsWith(prefix)) {
-                return name.substring(prefix.length());
+                name = name.substring(prefix.length());
             }
-            return name;
+            return new String[] {name};
         }
-        return name;
+        return names;
     }
 
     protected void generate() {
-        generateNoArgConstructor();
+        generateNamedConstructor();
         generateFullConstructor();
         generateBind();
         generateCall();
@@ -64,10 +65,10 @@ public class MethodExposer extends Exposer {
         endConstructor();
     }
 
-    private void generateNoArgConstructor() {
-        startConstructor();
+    private void generateNamedConstructor() {
+        startConstructor(STRING);
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitLdcInsn(getName());
+        mv.visitVarInsn(ALOAD, 1);
         mv.visitLdcInsn(method.getParameterTypes().length + 1);
         mv.visitLdcInsn(method.getParameterTypes().length + 1);
         superConstructor(STRING, INT, INT);
@@ -129,7 +130,7 @@ public class MethodExposer extends Exposer {
         endMethod();
     }
 
-    private Exposed exp;
+    private ExposedMethod exp;
 
     private Method method;
 

@@ -3,43 +3,43 @@ package org.python.expose;
 import org.python.core.Py;
 import org.python.core.PyObject;
 
-@Exposed(name = "simpleexposed")
+@ExposedType(name = "simpleexposed")
 public class SimpleExposed extends PyObject {
 
     public void method() {}
 
     public int timesCalled;
 
-    @Exposed
+    @ExposedMethod
     public void simple_method() {
         timesCalled++;
     }
 
-    @Exposed
+    @ExposedMethod
     public void simpleexposed_prefixed() {}
 
-    @Exposed
+    @ExposedMethod
     public boolean __nonzero__() {
         return false;
     }
 
-    @Exposed(name = "__repr__")
+    @ExposedMethod(names = {"__repr__", "__str__"})
     public String toString() {
         return TO_STRING_RETURN;
     }
-    
-    @Exposed
+
+    @ExposedMethod
     public void takesArgument(PyObject arg) {
         assert arg == Py.None;
     }
-    
-    @Exposed(type=MethodType.BINARY)
+
+    @ExposedMethod(type = MethodType.BINARY)
     public PyObject __add__(PyObject arg) {
         if(arg == Py.False) {
             return Py.One;
         }
         return null;
     }
-    
+
     public static final String TO_STRING_RETURN = "A simple test class";
 }

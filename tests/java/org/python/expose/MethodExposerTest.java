@@ -18,18 +18,21 @@ public class MethodExposerTest extends TestCase {
 
     public PyBuiltinFunction createBound(MethodExposer me) throws Exception {
         Class descriptor = me.load(new BytecodeLoader.Loader());
-        PyBuiltinMethod instance = (PyBuiltinMethod)descriptor.newInstance();
-        return instance.bind(new SimpleExposed());
+        return instantiate(descriptor, me.getNames()[0]).bind(new SimpleExposed());
+    }
+    
+    public PyBuiltinFunction instantiate(Class descriptor, String name) throws Exception {
+        return (PyBuiltinFunction)descriptor.getConstructor(String.class).newInstance(name);
     }
 
     public void testSimpleMethod() throws Exception {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simple_method"));
-        assertEquals("simple_method", mp.getName());
+        assertEquals("simple_method", mp.getNames()[0]);
         assertEquals(SimpleExposed.class, mp.getMethodClass());
         assertEquals("org/python/expose/SimpleExposed$exposed_simple_method", mp.getInternalName());
         assertEquals("org.python.expose.SimpleExposed$exposed_simple_method", mp.getClassName());
         Class descriptor = mp.load(new BytecodeLoader.Loader());
-        PyBuiltinMethod instance = (PyBuiltinMethod)descriptor.newInstance();
+        PyBuiltinFunction instance = instantiate(descriptor, "simple_method");
         assertSame("simple_method", instance.__getattr__("__name__").toString());
         SimpleExposed simpleExposed = new SimpleExposed();
         PyBuiltinFunction bound = instance.bind(simpleExposed);
@@ -41,7 +44,7 @@ public class MethodExposerTest extends TestCase {
     public void testPrefixing() throws Exception {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simpleexposed_prefixed"),
                                              "simpleexposed_");
-        assertEquals("prefixed", mp.getName());
+        assertEquals("prefixed", mp.getNames()[0]);
     }
 
     public void testStringReturn() throws Exception {

@@ -1,7 +1,7 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.expose.Exposed;
+import org.python.expose.ExposedMethod;
 
 /**
  * A builtin python string.
@@ -2780,7 +2780,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_count(sub, start, end);
     }
     
-    @Exposed(defaults={"Py.ZERO", "str___len__"})
+    @ExposedMethod(defaults={"Py.ZERO", "str___len__"})
     final int str_count(String sub, int start, int end) {
         int[] indices = translateIndices(start, end);
         int n = sub.length();

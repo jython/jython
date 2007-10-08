@@ -26,8 +26,7 @@ public class TypeExposerTest extends TestCase {
 
     public void testGetName() {
         assertEquals("simpleexposed", new TypeExposer(SimpleExposed.class).getName());
-        assertEquals("somethingcompletelydifferent",
-                     new TypeExposer(Rename.class).getName());
+        assertEquals("somethingcompletelydifferent", new TypeExposer(Rename.class).getName());
     }
 
     public void testNoExposed() {
@@ -43,10 +42,12 @@ public class TypeExposerTest extends TestCase {
         assertEquals(SimpleExposed.class, t.getTypeClass());
         assertNotNull(t.getDict().__finditem__("simple_method"));
         assertNotNull(t.getDict().__finditem__("prefixed"));
+        assertNotNull(t.getDict().__finditem__("__str__"));
+        assertNotNull(t.getDict().__finditem__("__repr__"));
     }
 
     public class Unexposed {}
 
-    @Exposed(name = "somethingcompletelydifferent")
+    @ExposedType(name = "somethingcompletelydifferent")
     public class Rename {}
 }

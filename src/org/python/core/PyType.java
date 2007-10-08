@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import org.python.expose.Exposed;
+import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
 import org.python.expose.TypeExposer;
 
@@ -1179,7 +1179,7 @@ public class PyType extends PyObject implements Serializable {
         String name = null;
         String[] exposed_methods = null;
         TypeBuilder tb = null;
-        if(c.getAnnotation(Exposed.class) != null) {
+        if(c.getAnnotation(ExposedType.class) != null) {
             tb = new TypeExposer(c).makeBuilder();
             name = tb.getName();
             base = PyObject.class;

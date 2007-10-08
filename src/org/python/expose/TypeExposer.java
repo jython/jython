@@ -13,14 +13,14 @@ import org.python.core.PyStringMap;
 
 /**
  * Generates a subclass of TypeBuilder to expose a class with the
- * {@link Exposed} annotation as a builtin Python type.
+ * {@link ExposedType} annotation as a builtin Python type.
  */
 public class TypeExposer extends Exposer {
 
     public TypeExposer(Class<?> cls) {
         super(BaseTypeBuilder.class, getExposedName(cls));
         this.cls = cls;
-        exp = cls.getAnnotation(Exposed.class);
+        exp = cls.getAnnotation(ExposedType.class);
         if(exp == null) {
             throw new IllegalArgumentException(cls + " doesn't have the @Exposed annotation");
         }
@@ -55,7 +55,7 @@ public class TypeExposer extends Exposer {
     public List<Method> findMethods() {
         List<Method> exposedMethods = new ArrayList<Method>();
         for(Method m : cls.getMethods()) {
-            if(m.getAnnotation(Exposed.class) != null) {
+            if(m.getAnnotation(ExposedMethod.class) != null) {
                 exposedMethods.add(m);
             }
         }
@@ -76,17 +76,27 @@ public class TypeExposer extends Exposer {
         mv.visitLdcInsn(getName());
         mv.visitLdcInsn(Type.getType(cls));
         List<Method> methods = findMethods();
-        mv.visitLdcInsn(methods.size());
+        List<MethodExposer> exposers = new ArrayList<MethodExposer>(methods.size());
+        int numNames = 0;
+        for(Method method : methods) {
+            MethodExposer me = new MethodExposer(method, getName() + "_");
+            exposers.add(me);
+            numNames += me.getNames().length;
+        }
+        mv.visitLdcInsn(numNames);
         mv.visitTypeInsn(ANEWARRAY, BUILTIN_FUNCTION.getInternalName());
         mv.visitVarInsn(ASTORE, 1);
-        for(int i = 0; i < methods.size(); i++) {
-            mv.visitVarInsn(ALOAD, 1);
-            MethodExposer me = new MethodExposer(methods.get(i));
-            mv.visitLdcInsn(i);
-            mv.visitTypeInsn(NEW, me.getInternalName());
-            mv.visitInsn(DUP);
-            callConstructor(me.getGeneratedType());
-            mv.visitInsn(AASTORE);
+        int i = 0;
+        for(MethodExposer exposer : exposers) {
+            for(int j = 0; j < exposer.getNames().length; j++) {
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitLdcInsn(i++);
+                mv.visitTypeInsn(NEW, exposer.getInternalName());
+                mv.visitInsn(DUP);
+                mv.visitLdcInsn(exposer.getNames()[j]);
+                callConstructor(exposer.getGeneratedType(), STRING);
+                mv.visitInsn(AASTORE);
+            }
         }
         mv.visitVarInsn(ALOAD, 1);
         superConstructor(STRING, CLASS, ABUILTIN_FUNCTION);
@@ -125,7 +135,7 @@ public class TypeExposer extends Exposer {
         private String name;
     }
 
-    private Exposed exp;
+    private ExposedType exp;
 
     private Class cls;
 }
