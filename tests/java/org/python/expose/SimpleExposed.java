@@ -5,6 +5,8 @@ import org.python.core.PyObject;
 @Exposed(name = "simpleexposed")
 public class SimpleExposed extends PyObject {
 
+    public void method() {}
+
     public int timesCalled;
 
     @Exposed
@@ -15,5 +17,15 @@ public class SimpleExposed extends PyObject {
     @Exposed
     public void simpleexposed_prefixed() {}
 
-    public void method() {}
+    @Exposed
+    public boolean __nonzero__() {
+        return false;
+    }
+
+    @Exposed(name = "__repr__")
+    public String toString() {
+        return TO_STRING_RETURN;
+    }
+
+    public static final String TO_STRING_RETURN = "A simple test class";
 }

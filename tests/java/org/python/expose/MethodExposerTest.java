@@ -10,10 +10,19 @@ import org.python.core.PySystemState;
 
 public class MethodExposerTest extends TestCase {
 
-    public void testSimpleMethod() throws SecurityException, NoSuchMethodException,
-            InstantiationException, IllegalAccessException {
+    public void setUp() {
         System.setProperty(PySystemState.PYTHON_CACHEDIR_SKIP, "true");
         PySystemState.initialize();
+    }
+    
+    public PyBuiltinFunction createBound(MethodExposer me) throws InstantiationException, IllegalAccessException {
+        Class descriptor = me.load(new BytecodeLoader.Loader());
+        PyBuiltinMethod instance = (PyBuiltinMethod)descriptor.newInstance();
+        return instance.bind(new SimpleExposed());
+    }
+    
+    public void testSimpleMethod() throws SecurityException, NoSuchMethodException,
+            InstantiationException, IllegalAccessException {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simple_method"));
         assertEquals("simple_method", mp.getName());
         assertEquals(SimpleExposed.class, mp.getMethodClass());
@@ -28,10 +37,23 @@ public class MethodExposerTest extends TestCase {
         assertEquals(Py.None, bound.__call__());
         assertEquals(1, simpleExposed.timesCalled);
     }
-    
+
     public void testPrefixing() throws SecurityException, NoSuchMethodException {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simpleexposed_prefixed"),
                                              "simpleexposed_");
         assertEquals("prefixed", mp.getName());
+    }
+
+    public void testStringReturn() throws SecurityException, NoSuchMethodException,
+            InstantiationException, IllegalAccessException {
+        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("toString"));
+        assertEquals(Py.newString(SimpleExposed.TO_STRING_RETURN), createBound(me).__call__());
+    }
+    
+    public void testBooleanReturn() throws SecurityException, NoSuchMethodException,
+            InstantiationException, IllegalAccessException {
+        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("__nonzero__"));
+        assertEquals(Py.False, createBound(me).__call__());
+        
     }
 }

@@ -93,8 +93,19 @@ public class MethodExposer extends Exposer {
         mv.visitMethodInsn(INVOKEVIRTUAL,
                            methType.getInternalName(),
                            method.getName(),
-                           methodDesc(VOID));
-        mv.visitFieldInsn(GETSTATIC, PY.getInternalName(), "None", PYOBJ.getDescriptor());
+                           Type.getMethodDescriptor(method));
+        Class ret = method.getReturnType();
+        if(ret == Void.TYPE) {
+            mv.visitFieldInsn(GETSTATIC, PY.getInternalName(), "None", PYOBJ.getDescriptor());
+        } else if(ret == String.class) {
+            mv.visitMethodInsn(INVOKESTATIC, PY.getInternalName(), "newString", methodDesc(PYSTR,
+                                                                                           STRING));
+        } else if(ret == Boolean.TYPE) {
+            mv.visitMethodInsn(INVOKESTATIC,
+                               PY.getInternalName(),
+                               "newBoolean",
+                               methodDesc(PYBOOLEAN, BOOLEAN));
+        }
         mv.visitInsn(ARETURN);
         endMethod();
     }

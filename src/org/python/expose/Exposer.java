@@ -8,11 +8,12 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
+import org.python.core.PyBoolean;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyBuiltinMethod;
 import org.python.core.PyBuiltinMethodNarrow;
 import org.python.core.PyObject;
-import org.python.modules.types;
+import org.python.core.PyString;
 
 /**
  * Base class that handles the basics of generating a single class with asm.
@@ -150,6 +151,10 @@ public abstract class Exposer implements Opcodes {
     public static final Type PYOBJ = Type.getType(PyObject.class);
 
     public static final Type PY = Type.getType(Py.class);
+    
+    public static final Type PYSTR = Type.getType(PyString.class);
+    
+    public static final Type PYBOOLEAN = Type.getType(PyBoolean.class);
 
     public static final Type BUILTIN_METHOD = Type.getType(PyBuiltinMethod.class);
 
@@ -164,6 +169,9 @@ public abstract class Exposer implements Opcodes {
     public static final Type STRING = Type.getType(String.class);
 
     public static final Type INT = Type.INT_TYPE;
+    
+    /** The primitive boolean type */
+    public static final Type BOOLEAN = Type.BOOLEAN_TYPE;
 
     public static final Type VOID = Type.VOID_TYPE;
 
