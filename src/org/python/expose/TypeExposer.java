@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.objectweb.asm.Type;
+import org.python.core.BytecodeLoader;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyMethodDescr;
 import org.python.core.PyObject;
@@ -17,12 +18,35 @@ import org.python.core.PyStringMap;
 public class TypeExposer extends Exposer {
 
     public TypeExposer(Class<?> cls) {
-        super(BaseTypeBuilder.class, cls.getName() + "$PyExposer");
+        super(BaseTypeBuilder.class, getExposedName(cls));
         this.cls = cls;
         exp = cls.getAnnotation(Exposed.class);
         if(exp == null) {
             throw new IllegalArgumentException(cls + " doesn't have the @Exposed annotation");
         }
+    }
+
+    public TypeBuilder makeBuilder() {
+        BytecodeLoader.Loader l = new BytecodeLoader.Loader();
+        for(Method m : findMethods()) {
+            new MethodExposer(m).load(l);
+        }
+        Class descriptor = load(l);
+        try {
+            return (TypeBuilder)descriptor.newInstance();
+        } catch(Exception e) {
+            // If we're unable to create the generated class, the process is
+            // definitely ill, but that shouldn't be the case most of the time
+            // so make this a runtime exception
+            throw new RuntimeException("Unable to create generated builder", e);
+        }
+    }
+    
+    /**
+     * @return - the name of the class that would be generated to expose cls.
+     */
+    public static String getExposedName(Class cls) {
+        return cls.getName() + "$PyExposer";
     }
 
     /**
@@ -74,13 +98,15 @@ public class TypeExposer extends Exposer {
         public BaseTypeBuilder(String name, Class typeClass, PyBuiltinFunction[] funcs) {
             this.typeClass = typeClass;
             this.name = name;
+            this.funcs = funcs;
+        }
+
+        public PyObject getDict() {
+            PyObject dict = new PyStringMap();
             for(PyBuiltinFunction func : funcs) {
                 PyMethodDescr pmd = new PyMethodDescr(typeClass, func);
                 dict.__setitem__(pmd.getName(), pmd);
             }
-        }
-
-        public PyObject getDict() {
             return dict;
         }
 
@@ -91,12 +117,12 @@ public class TypeExposer extends Exposer {
         public Class getTypeClass() {
             return typeClass;
         }
+        
 
+        private PyBuiltinFunction[] funcs;
         private Class typeClass;
 
         private String name;
-
-        private PyStringMap dict = new PyStringMap();
     }
 
     private Exposed exp;

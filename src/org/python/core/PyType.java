@@ -10,6 +10,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.python.expose.Exposed;
+import org.python.expose.TypeBuilder;
+import org.python.expose.TypeExposer;
+
 /**
  * first-class Python type.
  *
@@ -915,12 +919,9 @@ public class PyType extends PyObject implements Serializable {
         return null;
     }
 
-    private static Method get_descr_method(
-        Class c,
-        String name,
-        Class[] parmtypes) {
+    private static Method get_descr_method(Class c, String name, Class[] parmtypes) {
         Method meth = get_non_static_method(c, name, parmtypes);
-        if (meth != null && meth.getDeclaringClass() != PyObject.class) {
+        if(meth != null && meth.getDeclaringClass() != PyObject.class) {
             return meth;
         }
         return null;
@@ -945,7 +946,8 @@ public class PyType extends PyObject implements Serializable {
                                       Class base,
                                       boolean newstyle,
                                       Method setup,
-                                      String[] exposed_methods) {
+                                      String[] exposed_methods,
+                                      TypeBuilder tb) {
 
         if(base == null) {
             base = c.getSuperclass();
@@ -966,7 +968,7 @@ public class PyType extends PyObject implements Serializable {
         newtype.builtin = true;
         boolean top = false;
         // basic mro, base, bases
-        PyType[] mro = null;
+        PyType[] mro;
         if(base == Object.class) {
             mro = new PyType[] {newtype};
             top = true;
@@ -979,11 +981,19 @@ public class PyType extends PyObject implements Serializable {
             newtype.bases = new PyObject[] {basetype};
         }
         newtype.mro = mro;
-        PyObject dict = new PyStringMap();
-        if(newstyle) {
-            fillInNewstyle(newtype, setup, exposed_methods, dict);
+        PyObject dict;
+        if(tb != null) {
+            dict = tb.getDict();
         } else {
-            fillInClassic(c, base, dict);
+            dict = new PyStringMap();
+            if(newstyle) {
+                fillInNewstyle(newtype, setup, exposed_methods, dict);
+            } else {
+                fillInClassic(c, base, dict);
+            }
+        }
+        if(newstyle) {
+            newtype.non_instantiable = dict.__finditem__("__new__") == null;
         }
         boolean has_set = false, has_delete = false;
         if(!top) {
@@ -1151,10 +1161,10 @@ public class PyType extends PyObject implements Serializable {
             try {
                 setup.invoke(null, new Object[] {dict, null});
             } catch(Exception e) {
+                e.printStackTrace();
                 throw error(e);
             }
         }
-        newtype.non_instantiable = dict.__finditem__("__new__") == null;
     }
 
     private static HashMap class_to_type;
@@ -1168,40 +1178,45 @@ public class PyType extends PyObject implements Serializable {
         Class base = null;
         String name = null;
         String[] exposed_methods = null;
-        try {
-            setup =
-                c.getDeclaredMethod(
-                    "typeSetup",
-                    new Class[] { PyObject.class, Newstyle.class });
+        TypeBuilder tb = null;
+        if(c.getAnnotation(Exposed.class) != null) {
+            tb = new TypeExposer(c).makeBuilder();
+            name = tb.getName();
+            base = PyObject.class;
             newstyle = true;
-        } catch (NoSuchMethodException e) {
-        } catch (Exception e) {
-            throw error(e);
-        }
-        if(newstyle) { // newstyle
-            base = (Class)exposed_decl_get_object(c, "base");
-            name = (String)exposed_decl_get_object(c, "name");
-            if(base == null) {
-                Class cur = c;
-                while(cur != PyObject.class) {
-                    Class exposed_as = (Class)exposed_decl_get_object(cur, "as");
-                    if(exposed_as != null) {
-                        PyType exposed_as_type = fromClass(exposed_as);
-                        class_to_type.put(c, exposed_as_type);
-                        return exposed_as_type;
-                    }
-                    cur = cur.getSuperclass();
-                }
+        } else {
+            try {
+                setup = c.getDeclaredMethod("typeSetup", new Class[] {PyObject.class,
+                                                                      Newstyle.class});
+                newstyle = true;
+            } catch(NoSuchMethodException e) {} catch(Exception e) {
+                throw error(e);
             }
-            exposed_methods = (String[]) exposed_decl_get_object(c, "methods");
-            if (exposed_methods == null)
-                exposed_methods = EMPTY;
+            if(newstyle) { // newstyle
+                base = (Class)exposed_decl_get_object(c, "base");
+                name = (String)exposed_decl_get_object(c, "name");
+                if(base == null) {
+                    Class cur = c;
+                    while(cur != PyObject.class) {
+                        Class exposed_as = (Class)exposed_decl_get_object(cur, "as");
+                        if(exposed_as != null) {
+                            PyType exposed_as_type = fromClass(exposed_as);
+                            class_to_type.put(c, exposed_as_type);
+                            return exposed_as_type;
+                        }
+                        cur = cur.getSuperclass();
+                    }
+                }
+                exposed_methods = (String[])exposed_decl_get_object(c, "methods");
+                if(exposed_methods == null)
+                    exposed_methods = EMPTY;
+            }
         }
         PyType newtype = (PyType)class_to_type.get(c);
         if (newtype == null) {
             newtype = c == PyType.class ? new PyType(true) : new PyType();
             class_to_type.put(c, newtype);
-            fillFromClass(newtype, name, c, base, newstyle, setup, exposed_methods);
+            fillFromClass(newtype, name, c, base, newstyle, setup, exposed_methods, tb);
         }
         return newtype;
     }

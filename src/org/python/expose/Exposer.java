@@ -1,9 +1,12 @@
 package org.python.expose;
 
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.util.CheckClassAdapter;
+import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyBuiltinMethod;
@@ -34,6 +37,15 @@ public abstract class Exposer implements Opcodes {
      * class. cv is set to the ClassVisitor to be used when this is called.
      */
     protected abstract void generate();
+    
+    /**
+     * Generates this Exposer and loads it into the given Loader.
+     */
+    protected Class load(BytecodeLoader.Loader l) {
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+        generate(new CheckClassAdapter(cw));
+        return l.loadClassFromBytes(getClassName(), cw.toByteArray());
+    }
 
     protected Type getGeneratedType() {
         return thisType;

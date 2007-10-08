@@ -37,21 +37,8 @@ public class TypeExposerTest extends TestCase {
         } catch(IllegalArgumentException iae) {}
     }
 
-    public void testGenerate() throws InstantiationException, IllegalAccessException {
-        ByteLoader l = new ByteLoader();
-        TypeExposer ecp = new TypeExposer(SimpleExposed.class);
-        for(Method m : ecp.findMethods()) {
-            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-            MethodExposer mp = new MethodExposer(m);
-            mp.generate(cw);
-            l.loadClassFromBytes(mp.getClassName(), cw.toByteArray());
-        }
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        TraceClassVisitor cv = new TraceClassVisitor(new CheckClassAdapter(cw),
-                                                     new PrintWriter(System.out));
-        ecp.generate(cv);
-        Class descriptor = l.loadClassFromBytes(ecp.getClassName(), cw.toByteArray());
-        TypeBuilder t = (TypeBuilder)descriptor.newInstance();
+    public void testMakeBuilder() throws InstantiationException, IllegalAccessException {
+        TypeBuilder t = new TypeExposer(SimpleExposed.class).makeBuilder();
         assertEquals("SimpleExposed", t.getName());
         assertEquals(SimpleExposed.class, t.getTypeClass());
         assertNotNull(t.getDict().__finditem__("simple_method"));
