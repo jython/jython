@@ -64,4 +64,12 @@ public class MethodExposerTest extends TestCase {
             fail("Need to pass an argument to takesArgument");
         } catch(Exception e) {}
     }
+
+    public void testBinary() throws Exception {
+        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("__add__",
+                                                                           PyObject.class));
+        PyBuiltinFunction bound = createBound(me);
+        assertEquals(Py.NotImplemented, bound.__call__(Py.None));
+        assertEquals(Py.One, bound.__call__(Py.False));
+    }
 }

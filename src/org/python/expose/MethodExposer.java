@@ -2,6 +2,7 @@ package org.python.expose;
 
 import java.lang.reflect.Method;
 
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.python.core.PyBuiltinMethodNarrow;
 
@@ -85,22 +86,33 @@ public class MethodExposer extends Exposer {
     }
 
     private void generateCall() {
+        int usedLocals = 1;// We always have one used local for this
         Type[] args = new Type[method.getParameterTypes().length];
         for(int i = 0; i < args.length; i++) {
             args[i] = PYOBJ;
         }
         startMethod("__call__", PYOBJ, args);
         Type methType = Type.getType(getMethodClass());
-        mv.visitVarInsn(ALOAD, 0);
         get("self", PYOBJ);
         mv.visitTypeInsn(CHECKCAST, methType.getInternalName());
         for(int i = 0; i < args.length; i++) {
-            mv.visitVarInsn(ALOAD, i + 1);
+            mv.visitVarInsn(ALOAD, usedLocals++);
         }
         mv.visitMethodInsn(INVOKEVIRTUAL,
                            methType.getInternalName(),
                            method.getName(),
                            Type.getMethodDescriptor(method));
+        if(exp.type() == MethodType.BINARY) {
+            mv.visitInsn(DUP);
+            Label regularReturn = new Label();
+            mv.visitJumpInsn(IFNONNULL, regularReturn);
+            mv.visitFieldInsn(GETSTATIC,
+                              PY.getInternalName(),
+                              "NotImplemented",
+                              PYOBJ.getDescriptor());
+            mv.visitInsn(ARETURN);
+            mv.visitLabel(regularReturn);
+        }
         Class ret = method.getReturnType();
         if(ret == Void.TYPE) {
             mv.visitFieldInsn(GETSTATIC, PY.getInternalName(), "None", PYOBJ.getDescriptor());

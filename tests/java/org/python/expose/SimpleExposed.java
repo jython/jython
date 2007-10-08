@@ -33,5 +33,13 @@ public class SimpleExposed extends PyObject {
         assert arg == Py.None;
     }
     
+    @Exposed(type=MethodType.BINARY)
+    public PyObject __add__(PyObject arg) {
+        if(arg == Py.False) {
+            return Py.One;
+        }
+        return null;
+    }
+    
     public static final String TO_STRING_RETURN = "A simple test class";
 }

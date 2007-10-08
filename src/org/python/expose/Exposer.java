@@ -1,11 +1,14 @@
 package org.python.expose;
 
+import java.io.PrintWriter;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.util.TraceClassVisitor;
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBoolean;
@@ -38,13 +41,17 @@ public abstract class Exposer implements Opcodes {
      * class. cv is set to the ClassVisitor to be used when this is called.
      */
     protected abstract void generate();
-    
+
     /**
      * Generates this Exposer and loads it into the given Loader.
      */
     protected Class load(BytecodeLoader.Loader l) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        generate(new CheckClassAdapter(cw));
+        ClassVisitor cv = new CheckClassAdapter(cw);
+        if(dump) {
+            cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
+        }
+        generate(cv);
         return l.loadClassFromBytes(getClassName(), cw.toByteArray());
     }
 
@@ -148,12 +155,14 @@ public abstract class Exposer implements Opcodes {
     /** The type that will be generated. */
     protected Type thisType;
 
+    private static final boolean dump = false;
+
     public static final Type PYOBJ = Type.getType(PyObject.class);
 
     public static final Type PY = Type.getType(Py.class);
-    
+
     public static final Type PYSTR = Type.getType(PyString.class);
-    
+
     public static final Type PYBOOLEAN = Type.getType(PyBoolean.class);
 
     public static final Type BUILTIN_METHOD = Type.getType(PyBuiltinMethod.class);
@@ -169,7 +178,7 @@ public abstract class Exposer implements Opcodes {
     public static final Type STRING = Type.getType(String.class);
 
     public static final Type INT = Type.INT_TYPE;
-    
+
     /** The primitive boolean type */
     public static final Type BOOLEAN = Type.BOOLEAN_TYPE;
 

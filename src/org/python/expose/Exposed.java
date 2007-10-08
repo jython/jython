@@ -10,12 +10,16 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Exposed {
 
     /**
-     * @return the name to expose this item as.  Defaults to the actual name of the item.
+     * @return the name to expose this item as. Defaults to the actual name of
+     *         the item.
      */
     String name() default "";
 
     /**
-     * @return default arguments for a method.  Starts at the number of arguments - defaults.length
+     * @return default arguments for a method. Starts at the number of arguments -
+     *         defaults.length
      */
     String[] defaults() default {};
+
+    MethodType type() default MethodType.NORMAL;
 }
