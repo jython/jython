@@ -21,7 +21,7 @@ public class TypeExposerTest extends TestCase {
     public void testFindMethods() {
         TypeExposer ecp = new TypeExposer(SimpleExposed.class);
         List<Method> methods = ecp.findMethods();
-        assertEquals(4, methods.size());
+        assertEquals(5, methods.size());
     }
 
     public void testGetName() {

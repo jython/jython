@@ -67,8 +67,8 @@ public class MethodExposer extends Exposer {
         startConstructor();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitLdcInsn(getName());
-        mv.visitInsn(ICONST_1);
-        mv.visitInsn(ICONST_1);
+        mv.visitLdcInsn(method.getParameterTypes().length + 1);
+        mv.visitLdcInsn(method.getParameterTypes().length + 1);
         superConstructor(STRING, INT, INT);
         endConstructor();
     }
@@ -85,11 +85,18 @@ public class MethodExposer extends Exposer {
     }
 
     private void generateCall() {
-        startMethod("__call__", PYOBJ);
+        Type[] args = new Type[method.getParameterTypes().length];
+        for(int i = 0; i < args.length; i++) {
+            args[i] = PYOBJ;
+        }
+        startMethod("__call__", PYOBJ, args);
         Type methType = Type.getType(getMethodClass());
         mv.visitVarInsn(ALOAD, 0);
         get("self", PYOBJ);
         mv.visitTypeInsn(CHECKCAST, methType.getInternalName());
+        for(int i = 0; i < args.length; i++) {
+            mv.visitVarInsn(ALOAD, i + 1);
+        }
         mv.visitMethodInsn(INVOKEVIRTUAL,
                            methType.getInternalName(),
                            method.getName(),

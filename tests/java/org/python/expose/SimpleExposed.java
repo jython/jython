@@ -1,5 +1,6 @@
 package org.python.expose;
 
+import org.python.core.Py;
 import org.python.core.PyObject;
 
 @Exposed(name = "simpleexposed")
@@ -26,6 +27,11 @@ public class SimpleExposed extends PyObject {
     public String toString() {
         return TO_STRING_RETURN;
     }
-
+    
+    @Exposed
+    public void takesArgument(PyObject arg) {
+        assert arg == Py.None;
+    }
+    
     public static final String TO_STRING_RETURN = "A simple test class";
 }

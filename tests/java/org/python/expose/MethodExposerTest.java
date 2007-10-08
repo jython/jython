@@ -6,6 +6,7 @@ import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyBuiltinMethod;
+import org.python.core.PyObject;
 import org.python.core.PySystemState;
 
 public class MethodExposerTest extends TestCase {
@@ -14,15 +15,14 @@ public class MethodExposerTest extends TestCase {
         System.setProperty(PySystemState.PYTHON_CACHEDIR_SKIP, "true");
         PySystemState.initialize();
     }
-    
-    public PyBuiltinFunction createBound(MethodExposer me) throws InstantiationException, IllegalAccessException {
+
+    public PyBuiltinFunction createBound(MethodExposer me) throws Exception {
         Class descriptor = me.load(new BytecodeLoader.Loader());
         PyBuiltinMethod instance = (PyBuiltinMethod)descriptor.newInstance();
         return instance.bind(new SimpleExposed());
     }
-    
-    public void testSimpleMethod() throws SecurityException, NoSuchMethodException,
-            InstantiationException, IllegalAccessException {
+
+    public void testSimpleMethod() throws Exception {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simple_method"));
         assertEquals("simple_method", mp.getName());
         assertEquals(SimpleExposed.class, mp.getMethodClass());
@@ -38,22 +38,30 @@ public class MethodExposerTest extends TestCase {
         assertEquals(1, simpleExposed.timesCalled);
     }
 
-    public void testPrefixing() throws SecurityException, NoSuchMethodException {
+    public void testPrefixing() throws Exception {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simpleexposed_prefixed"),
                                              "simpleexposed_");
         assertEquals("prefixed", mp.getName());
     }
 
-    public void testStringReturn() throws SecurityException, NoSuchMethodException,
-            InstantiationException, IllegalAccessException {
+    public void testStringReturn() throws Exception {
         MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("toString"));
         assertEquals(Py.newString(SimpleExposed.TO_STRING_RETURN), createBound(me).__call__());
     }
-    
-    public void testBooleanReturn() throws SecurityException, NoSuchMethodException,
-            InstantiationException, IllegalAccessException {
+
+    public void testBooleanReturn() throws Exception {
         MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("__nonzero__"));
         assertEquals(Py.False, createBound(me).__call__());
-        
+    }
+
+    public void testArgumentPassing() throws Exception {
+        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("takesArgument",
+                                                                           PyObject.class));
+        PyBuiltinFunction bound = createBound(me);
+        bound.__call__(Py.None);
+        try {
+            bound.__call__();
+            fail("Need to pass an argument to takesArgument");
+        } catch(Exception e) {}
     }
 }
