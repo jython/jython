@@ -41,5 +41,13 @@ public class SimpleExposed extends PyObject {
         return null;
     }
 
+    @ExposedMethod(type = MethodType.CMP)
+    public int __cmp__(PyObject other) {
+        if(other == Py.False) {
+            return 1;
+        }
+        return -2;
+    }
+
     public static final String TO_STRING_RETURN = "A simple test class";
 }

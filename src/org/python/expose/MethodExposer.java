@@ -24,13 +24,14 @@ public class MethodExposer extends Exposer {
     }
 
     /**
-     * @param prefix -
-     *            a prefix that will be stripped from method names if no
-     *            explicit name is given in the Exposed annotation
+     * @param type -
+     *            the type the method is on. If no explicit name is given in the
+     *            annotation, type + '_' will be stripped from method names to
+     *            make the exposed name.
      */
-    public MethodExposer(Method method, String prefix) {
+    public MethodExposer(Method method, String type) {
         this(method);
-        this.prefix = prefix;
+        this.prefix = type;
     }
 
     public Class getMethodClass() {
@@ -41,8 +42,8 @@ public class MethodExposer extends Exposer {
         String[] names = exp.names();
         if(names.length == 0) {
             String name = method.getName();
-            if(name.startsWith(prefix)) {
-                name = name.substring(prefix.length());
+            if(name.startsWith(prefix + "_")) {
+                name = name.substring((prefix + "_").length());
             }
             return new String[] {name};
         }
@@ -113,6 +114,43 @@ public class MethodExposer extends Exposer {
                               PYOBJ.getDescriptor());
             mv.visitInsn(ARETURN);
             mv.visitLabel(regularReturn);
+        } else if(exp.type() == MethodType.CMP) {
+            mv.visitInsn(DUP);
+            mv.visitIntInsn(BIPUSH, -2);
+            Label regularReturn = new Label();
+            mv.visitJumpInsn(IF_ICMPNE, regularReturn);
+            mv.visitTypeInsn(NEW, STRING_BUILDER.getInternalName());
+            mv.visitInsn(DUP);
+            mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix + "', not a '");
+            callConstructor(STRING_BUILDER, STRING);
+            mv.visitVarInsn(ALOAD, 1);
+            mv.visitMethodInsn(INVOKEVIRTUAL,
+                               PYOBJ.getInternalName(),
+                               "getType",
+                               methodDesc(PYTYPE));
+            mv.visitMethodInsn(INVOKEVIRTUAL,
+                               PYTYPE.getInternalName(),
+                               "fastGetName",
+                               methodDesc(STRING));
+            mv.visitMethodInsn(INVOKEVIRTUAL,
+                               STRING_BUILDER.getInternalName(),
+                               "append",
+                               methodDesc(STRING_BUILDER, STRING));
+            mv.visitLdcInsn("'");
+            mv.visitMethodInsn(INVOKEVIRTUAL,
+                               STRING_BUILDER.getInternalName(),
+                               "append",
+                               methodDesc(STRING_BUILDER, STRING));
+            mv.visitMethodInsn(INVOKEVIRTUAL,
+                               STRING_BUILDER.getInternalName(),
+                               "toString",
+                               methodDesc(STRING));
+            mv.visitMethodInsn(INVOKESTATIC,
+                               PY.getInternalName(),
+                               "TypeError",
+                               methodDesc(PYEXCEPTION, STRING));
+            mv.visitInsn(ATHROW);
+            mv.visitLabel(regularReturn);
         }
         Class ret = method.getReturnType();
         if(ret == Void.TYPE) {
@@ -125,6 +163,11 @@ public class MethodExposer extends Exposer {
                                PY.getInternalName(),
                                "newBoolean",
                                methodDesc(PYBOOLEAN, BOOLEAN));
+        } else if(ret == Integer.TYPE) {
+            mv.visitMethodInsn(INVOKESTATIC,
+                               PY.getInternalName(),
+                               "newInteger",
+                               methodDesc(PYINTEGER, INT));
         }
         mv.visitInsn(ARETURN);
         endMethod();

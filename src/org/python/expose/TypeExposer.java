@@ -79,7 +79,7 @@ public class TypeExposer extends Exposer {
         List<MethodExposer> exposers = new ArrayList<MethodExposer>(methods.size());
         int numNames = 0;
         for(Method method : methods) {
-            MethodExposer me = new MethodExposer(method, getName() + "_");
+            MethodExposer me = new MethodExposer(method, getName());
             exposers.add(me);
             numNames += me.getNames().length;
         }

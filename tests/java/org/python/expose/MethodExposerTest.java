@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
-import org.python.core.PyBuiltinMethod;
+import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PySystemState;
 
@@ -20,7 +20,7 @@ public class MethodExposerTest extends TestCase {
         Class descriptor = me.load(new BytecodeLoader.Loader());
         return instantiate(descriptor, me.getNames()[0]).bind(new SimpleExposed());
     }
-    
+
     public PyBuiltinFunction instantiate(Class descriptor, String name) throws Exception {
         return (PyBuiltinFunction)descriptor.getConstructor(String.class).newInstance(name);
     }
@@ -43,7 +43,7 @@ public class MethodExposerTest extends TestCase {
 
     public void testPrefixing() throws Exception {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simpleexposed_prefixed"),
-                                             "simpleexposed_");
+                                             "simpleexposed");
         assertEquals("prefixed", mp.getNames()[0]);
     }
 
@@ -73,6 +73,22 @@ public class MethodExposerTest extends TestCase {
                                                                            PyObject.class));
         PyBuiltinFunction bound = createBound(me);
         assertEquals(Py.NotImplemented, bound.__call__(Py.None));
+        assertEquals(Py.One, bound.__call__(Py.False));
+    }
+
+    public void testCmp() throws Exception {
+        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("__cmp__",
+                                                                           PyObject.class),
+                                                                           "simpleexpose");
+        PyBuiltinFunction bound = createBound(me);
+        try {
+            bound.__call__(Py.None);
+            fail("Returning -2 from __cmp__ should yield a type error");
+        } catch(PyException e) {
+            if(!Py.matchException(e, Py.TypeError)) {
+                fail("Returning -2 from __cmp__ should yield a type error");
+            }
+        }
         assertEquals(Py.One, bound.__call__(Py.False));
     }
 }
