@@ -21,7 +21,7 @@ public @interface ExposedMethod {
 
     /**
      * @return default arguments. Starts at the number of arguments -
-     *         defaults.length
+     *         defaults.length.  
      */
     String[] defaults() default {};
 

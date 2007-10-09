@@ -79,7 +79,7 @@ public class MethodExposerTest extends TestCase {
     public void testCmp() throws Exception {
         MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("__cmp__",
                                                                            PyObject.class),
-                                                                           "simpleexpose");
+                                             "simpleexpose");
         PyBuiltinFunction bound = createBound(me);
         try {
             bound.__call__(Py.None);
@@ -90,5 +90,21 @@ public class MethodExposerTest extends TestCase {
             }
         }
         assertEquals(Py.One, bound.__call__(Py.False));
+    }
+
+    public void testNoneDefault() throws Exception {
+        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("defaultToNone",
+                                                                           PyObject.class));
+        PyBuiltinFunction bound = createBound(me);
+        assertEquals(Py.One, bound.__call__(Py.One));
+        assertEquals(Py.None, bound.__call__());
+    }
+
+    public void testNullDefault() throws Exception {
+        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("defaultToNull",
+                                                                           PyObject.class));
+        PyBuiltinFunction bound = createBound(me);
+        assertEquals(Py.One, bound.__call__(Py.One));
+        assertEquals(null, bound.__call__());
     }
 }

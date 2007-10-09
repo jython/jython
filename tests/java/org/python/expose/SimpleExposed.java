@@ -48,6 +48,16 @@ public class SimpleExposed extends PyObject {
         }
         return -2;
     }
+    
+    @ExposedMethod(defaults = {"Py.None"})
+    public PyObject defaultToNone(PyObject arg) {
+        return arg;
+    }
+    
+    @ExposedMethod(defaults = {"null"})
+    public PyObject defaultToNull(PyObject arg) {
+        return arg;
+    }
 
     public static final String TO_STRING_RETURN = "A simple test class";
 }

@@ -54,7 +54,9 @@ public class MethodExposer extends Exposer {
         generateNamedConstructor();
         generateFullConstructor();
         generateBind();
-        generateCall();
+        for(int i = 0; i < exp.defaults().length + 1; i++) {
+            generateCall(i);
+        }
     }
 
     private void generateFullConstructor() {
@@ -70,7 +72,7 @@ public class MethodExposer extends Exposer {
         startConstructor(STRING);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
-        mv.visitLdcInsn(method.getParameterTypes().length + 1);
+        mv.visitLdcInsn(method.getParameterTypes().length + 1 - exp.defaults().length);
         mv.visitLdcInsn(method.getParameterTypes().length + 1);
         superConstructor(STRING, INT, INT);
         endConstructor();
@@ -87,9 +89,9 @@ public class MethodExposer extends Exposer {
         endMethod();
     }
 
-    private void generateCall() {
+    private void generateCall(int numDefaults) {
         int usedLocals = 1;// We always have one used local for this
-        Type[] args = new Type[method.getParameterTypes().length];
+        Type[] args = new Type[method.getParameterTypes().length - numDefaults];
         for(int i = 0; i < args.length; i++) {
             args[i] = PYOBJ;
         }
@@ -99,6 +101,14 @@ public class MethodExposer extends Exposer {
         mv.visitTypeInsn(CHECKCAST, methType.getInternalName());
         for(int i = 0; i < args.length; i++) {
             mv.visitVarInsn(ALOAD, usedLocals++);
+        }
+        for(int i = 0; i < numDefaults; i++) {
+            String def = exp.defaults()[i];
+            if(def.equals("Py.None")) {
+                pushNone();
+            }else if(def.equals("null")) {
+                mv.visitInsn(ACONST_NULL);
+            }
         }
         mv.visitMethodInsn(INVOKEVIRTUAL,
                            methType.getInternalName(),
@@ -154,7 +164,7 @@ public class MethodExposer extends Exposer {
         }
         Class ret = method.getReturnType();
         if(ret == Void.TYPE) {
-            mv.visitFieldInsn(GETSTATIC, PY.getInternalName(), "None", PYOBJ.getDescriptor());
+            pushNone();
         } else if(ret == String.class) {
             mv.visitMethodInsn(INVOKESTATIC, PY.getInternalName(), "newString", methodDesc(PYSTR,
                                                                                            STRING));
@@ -171,6 +181,10 @@ public class MethodExposer extends Exposer {
         }
         mv.visitInsn(ARETURN);
         endMethod();
+    }
+
+    private void pushNone() {
+        mv.visitFieldInsn(GETSTATIC, PY.getInternalName(), "None", PYOBJ.getDescriptor());
     }
 
     private ExposedMethod exp;
