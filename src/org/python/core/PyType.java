@@ -983,7 +983,7 @@ public class PyType extends PyObject implements Serializable {
         newtype.mro = mro;
         PyObject dict;
         if(tb != null) {
-            dict = tb.getDict();
+            dict = tb.getDict(newtype);
         } else {
             dict = new PyStringMap();
             if(newstyle) {

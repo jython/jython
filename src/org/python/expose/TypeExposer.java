@@ -8,8 +8,10 @@ import org.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyMethodDescr;
+import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
+import org.python.core.PyType;
 
 /**
  * Generates a subclass of TypeBuilder to expose a class with the
@@ -24,10 +26,16 @@ public class TypeExposer extends Exposer {
         if(exp == null) {
             throw new IllegalArgumentException(cls + " doesn't have the @Exposed annotation");
         }
+        if(!exp.constructor().equals("")) {
+            ne = new NewExposer(cls, exp.constructor());
+        }
     }
 
     public TypeBuilder makeBuilder() {
         BytecodeLoader.Loader l = new BytecodeLoader.Loader();
+        if(ne != null) {
+            ne.load(l);
+        }
         for(Method m : findMethods()) {
             new MethodExposer(m, getName() + "_").load(l);
         }
@@ -99,23 +107,35 @@ public class TypeExposer extends Exposer {
             }
         }
         mv.visitVarInsn(ALOAD, 1);
-        superConstructor(STRING, CLASS, ABUILTIN_FUNCTION);
+        if(ne != null) {
+            mv.visitTypeInsn(NEW, ne.getInternalName());
+            mv.visitInsn(DUP);
+            callConstructor(ne.getGeneratedType());
+        } else {
+            mv.visitInsn(ACONST_NULL);
+        }
+        superConstructor(STRING, CLASS, ABUILTIN_FUNCTION, PYNEWWRAPPER);
         endConstructor();
     }
 
     protected static class BaseTypeBuilder implements TypeBuilder {
 
-        public BaseTypeBuilder(String name, Class typeClass, PyBuiltinFunction[] funcs) {
+        public BaseTypeBuilder(String name, Class typeClass, PyBuiltinFunction[] funcs, PyNewWrapper newWrapper) {
             this.typeClass = typeClass;
             this.name = name;
             this.funcs = funcs;
+            this.newWrapper = newWrapper;
         }
 
-        public PyObject getDict() {
+        public PyObject getDict(PyType type) {
             PyObject dict = new PyStringMap();
             for(PyBuiltinFunction func : funcs) {
                 PyMethodDescr pmd = new PyMethodDescr(typeClass, func);
                 dict.__setitem__(pmd.getName(), pmd);
+            }
+            if(newWrapper != null) {
+                dict.__setitem__("__new__", newWrapper);
+                newWrapper.setWrappedType(type);
             }
             return dict;
         }
@@ -128,12 +148,14 @@ public class TypeExposer extends Exposer {
             return typeClass;
         }
         
-
+        private PyNewWrapper newWrapper;
         private PyBuiltinFunction[] funcs;
         private Class typeClass;
 
         private String name;
     }
+    
+    private NewExposer ne;
 
     private ExposedType exp;
 

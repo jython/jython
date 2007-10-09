@@ -9,13 +9,7 @@ import org.python.core.PyException;
 import org.python.core.PyObject;
 import org.python.core.PySystemState;
 
-public class MethodExposerTest extends TestCase {
-
-    public void setUp() {
-        System.setProperty(PySystemState.PYTHON_CACHEDIR_SKIP, "true");
-        PySystemState.initialize();
-    }
-
+public class MethodExposerTest extends InterpTestCase {
     public PyBuiltinFunction createBound(MethodExposer me) throws Exception {
         Class descriptor = me.load(new BytecodeLoader.Loader());
         return instantiate(descriptor, me.getNames()[0]).bind(new SimpleExposed());

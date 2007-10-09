@@ -1,14 +1,21 @@
 package org.python.expose;
 
 import org.python.core.Py;
+import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyType;
 
-@ExposedType(name = "simpleexposed")
+@ExposedType(name = "simpleexposed", constructor="__new__")
 public class SimpleExposed extends PyObject {
 
     public void method() {}
 
     public int timesCalled;
+    
+    public static PyObject __new__(PyNewWrapper new_, boolean init, PyType subtype,
+                               PyObject[] args, String[] keywords) {
+        return Py.One;
+    }
 
     @ExposedMethod
     public void simple_method() {
