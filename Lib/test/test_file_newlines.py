@@ -150,6 +150,7 @@ class ReadUniversalNewlinesTestCase(BaseTestCase):
         readline(self.fp, '\n')
         assert self.fp.newlines == '\n'
 
+
 class WriteUniversalNewlinesTestCase(unittest.TestCase):
 
     def test_fails(self):
