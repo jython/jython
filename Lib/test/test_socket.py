@@ -786,6 +786,7 @@ class FileObjectClassOpenCloseTests(SocketConnectedTest):
         self.serv_conn.close()
         try:
             self.cli_file.write(MSG)
+            self.cli_file.flush()
         except Exception, x:
             self.fail("Closing socket appears to have closed file wrapper: %s" % str(x))
 
@@ -834,7 +835,7 @@ class FileObjectClassTestCase(SocketConnectedTest):
 
     def _testFullRead(self):
         self.cli_file.write(MSG)
-        self.cli_file.close()
+        self.cli_file.flush()
 
     def testUnbufferedRead(self):
         # Performing unbuffered file read test
