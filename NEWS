@@ -1,5 +1,8 @@
 Jython NEWS
 
+Jython 2.2.1
+  Identical to 2.2.1 rc2
+
 Jython 2.2.1 rc2
   Bugs fixed
     - Python files are parsed using the JVM's default encoding
