@@ -62,7 +62,7 @@ public class TypeExposer extends Exposer {
      */
     public List<Method> findMethods() {
         List<Method> exposedMethods = new ArrayList<Method>();
-        for(Method m : cls.getMethods()) {
+        for(Method m : cls.getDeclaredMethods()) {
             if(m.getAnnotation(ExposedMethod.class) != null) {
                 exposedMethods.add(m);
             }

@@ -65,6 +65,9 @@ public class SimpleExposed extends PyObject {
     public PyObject defaultToNull(PyObject arg) {
         return arg;
     }
+    
+    @ExposedMethod
+    private void privateMethod() {}
 
     public static final String TO_STRING_RETURN = "A simple test class";
 }
