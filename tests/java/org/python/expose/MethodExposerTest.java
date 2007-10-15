@@ -1,15 +1,20 @@
 package org.python.expose;
 
-import junit.framework.TestCase;
+import java.lang.reflect.Method;
 
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyException;
 import org.python.core.PyObject;
-import org.python.core.PySystemState;
 
 public class MethodExposerTest extends InterpTestCase {
+
+    public PyBuiltinFunction createBound(String methodName, Class... args) throws Exception {
+        return createBound(new MethodExposer(SimpleExposed.class.getDeclaredMethod(methodName, args),
+                                             "simpleexpose"));
+    }
+
     public PyBuiltinFunction createBound(MethodExposer me) throws Exception {
         Class descriptor = me.load(new BytecodeLoader.Loader());
         return instantiate(descriptor, me.getNames()[0]).bind(new SimpleExposed());
@@ -42,19 +47,16 @@ public class MethodExposerTest extends InterpTestCase {
     }
 
     public void testStringReturn() throws Exception {
-        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("toString"));
-        assertEquals(Py.newString(SimpleExposed.TO_STRING_RETURN), createBound(me).__call__());
+        assertEquals(Py.newString(SimpleExposed.TO_STRING_RETURN),
+                     createBound("toString").__call__());
     }
 
     public void testBooleanReturn() throws Exception {
-        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("__nonzero__"));
-        assertEquals(Py.False, createBound(me).__call__());
+        assertEquals(Py.False, createBound("__nonzero__").__call__());
     }
 
     public void testArgumentPassing() throws Exception {
-        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("takesArgument",
-                                                                           PyObject.class));
-        PyBuiltinFunction bound = createBound(me);
+        PyBuiltinFunction bound = createBound("takesArgument", PyObject.class);
         bound.__call__(Py.None);
         try {
             bound.__call__();
@@ -63,18 +65,13 @@ public class MethodExposerTest extends InterpTestCase {
     }
 
     public void testBinary() throws Exception {
-        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("__add__",
-                                                                           PyObject.class));
-        PyBuiltinFunction bound = createBound(me);
+        PyBuiltinFunction bound = createBound("__add__", PyObject.class);
         assertEquals(Py.NotImplemented, bound.__call__(Py.None));
         assertEquals(Py.One, bound.__call__(Py.False));
     }
 
     public void testCmp() throws Exception {
-        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("__cmp__",
-                                                                           PyObject.class),
-                                             "simpleexpose");
-        PyBuiltinFunction bound = createBound(me);
+        PyBuiltinFunction bound = createBound("__cmp__", PyObject.class);
         try {
             bound.__call__(Py.None);
             fail("Returning -2 from __cmp__ should yield a type error");
@@ -87,17 +84,13 @@ public class MethodExposerTest extends InterpTestCase {
     }
 
     public void testNoneDefault() throws Exception {
-        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("defaultToNone",
-                                                                           PyObject.class));
-        PyBuiltinFunction bound = createBound(me);
+        PyBuiltinFunction bound = createBound("defaultToNone", PyObject.class);
         assertEquals(Py.One, bound.__call__(Py.One));
         assertEquals(Py.None, bound.__call__());
     }
 
     public void testNullDefault() throws Exception {
-        MethodExposer me = new MethodExposer(SimpleExposed.class.getMethod("defaultToNull",
-                                                                           PyObject.class));
-        PyBuiltinFunction bound = createBound(me);
+        PyBuiltinFunction bound = createBound("defaultToNull", PyObject.class);
         assertEquals(Py.One, bound.__call__(Py.One));
         assertEquals(null, bound.__call__());
     }
