@@ -161,6 +161,13 @@ class ClassKeeper(object):
         self.init.loadThis()
         self.init.invokeConstructor(Type.getType(core.PyFunctionTable),
                                Method.getMethod("void <init> ()"))
+        #self.cv.visitField(Op.ACC_PUBLIC + Op.ACC_FINAL, '__file__',
+        #                   Type.getType(java.lang.String).getDescriptor(),
+        #                   None, None)
+        #self.init.loadThis()
+        #self.init.loadArg(0)
+        #self.init.putField(self.asType, '__file__',
+        #                   Type.getType(java.lang.String))
 
         
     def isCodeConstant(self, name):
