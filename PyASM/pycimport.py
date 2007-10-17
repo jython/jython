@@ -1,6 +1,15 @@
-_debugging = False
+import sys
+import os
 
-def readPycHeader(file):
+from org.python.core import imp as _imp, PyFrame as _Frame
+from marshal import Unmarshaller
+
+# Known issues:
+# * Circular import (a module that imports itself) does not work
+
+__debugging__ = False
+
+def __readPycHeader(file):
     def read():
         return ord(file.read(1))
     magic = read() | (read()<<8)
@@ -9,23 +18,21 @@ def readPycHeader(file):
     mtime = read() | (read()<<8) | (read()<<16) | (read()<<24)
     return magic, mtime
 
-def makeModule(name, code, path):
+def __makeModule(name, code, path):
     module = _imp.addModule(name)
     frame = _Frame(code, module.__dict__, module.__dict__, None)
-    code.call(frame) # execute module code
     module.__file__ = path
+    code.call(frame) # execute module code
     return module
 
-class Importer(object):
-    started = False # wait until dependancies are in place before useing this
+class __Importer(object):
     def __init__(self, path):
-        if _debugging: print "Importer invoked"
+        if __debugging__: print "Importer invoked"
         self.__path = path
     def find_module(self, fullname, path=None):
-        if not self.started:
-            return None
-        if _debugging: print "Importer.find_module(fullname=%s, path=%s)" % (
-            repr(fullname),repr(path))
+        if __debugging__:
+            print "Importer.find_module(fullname=%s, path=%s)" % (
+                repr(fullname), repr(path))
         path = fullname.split('.')
         filename = path[-1]
         path = path[:-1]
@@ -34,7 +41,7 @@ class Importer(object):
         if os.path.exists(pycfile):
             f = open(pycfile, 'rb')
             try:
-                magic, mtime = readPycHeader(f)
+                magic, mtime = __readPycHeader(f)
             except:
                 return None # abort! not a valid pyc-file
             f.close()
@@ -50,25 +57,26 @@ class Importer(object):
         path[-1] += '.pyc'
         filename = os.path.join(self.__path, *path)
         f = open(filename, 'rb')
-        magic, mtime = readPycHeader(f)
+        magic, mtime = __readPycHeader(f)
         code = Unmarshaller(f, magic=magic).load()
-        return makeModule( fullname, code, filename )
+        return __makeModule( fullname, code, filename )
 
-import sys
+class __MetaImporter(object):
+    def __init__(self):
+        self.__importers = {}
+    def find_module(self, fullname, path):
+        for _path in sys.path:
+            if _path not in self.__importers:
+                try:
+                    self.__importers[_path] = __Importer(_path)
+                except:
+                    self.__importers[_path] = None
+            importer = self.__importers[_path]
+            if importer is not None:
+                loader = importer.find_module(fullname, path)
+                if loader is not None:
+                    return loader
+        else:
+            return None
 
-sys.path_hooks.append(Importer)
-# Defere all the imports so that the import hooks will still be valid
-import os
-
-if os.name == 'java':
-    from org.python.core import imp as _imp, PyFrame as _Frame
-    from marshal import Unmarshaller
-
-if __name__ == '__main__':
-    # Start Jython within Jython... with pyc-importing enabled
-    from org.python.util import jython
-    from java.lang import String
-    from jarray import array
-    Importer.started = True # Start the import hook mechanism
-    print "Python bytecode importing enabled"
-    jython.main(array(sys.argv[1:], String))
+sys.meta_path.insert(0, __MetaImporter())
