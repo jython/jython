@@ -351,7 +351,7 @@ class Unmarshaller:
     def load_code(self):
         lastVisitor = self.__visitor
         visitor= _visitor= self.__visitor= CodeVisitor(self.magic, lastVisitor)
-        #visitor = PythonDis(visitor, stdout, False)
+        #visitor = PythonDis(visitor, stdout, True)
         try:
             argcount = self.read_long()
             nlocals = self.read_long()

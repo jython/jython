@@ -1,11 +1,8 @@
 import sys
 import os
 
-from org.python.core import imp as _imp, PyFrame as _Frame
+from org.python.core import imp as _imp, PyFrame as _Frame, Py as _Py
 from marshal import Unmarshaller
-
-# Known issues:
-# * Circular import (a module that imports itself) does not work
 
 __debugging__ = False
 
@@ -20,7 +17,8 @@ def __readPycHeader(file):
 
 def __makeModule(name, code, path):
     module = _imp.addModule(name)
-    frame = _Frame(code, module.__dict__, module.__dict__, None)
+    builtins = _Py.getSystemState().builtins
+    frame = _Frame(code, module.__dict__, module.__dict__, builtins)
     module.__file__ = path
     code.call(frame) # execute module code
     return module
@@ -65,6 +63,8 @@ class __MetaImporter(object):
     def __init__(self):
         self.__importers = {}
     def find_module(self, fullname, path):
+        if __debugging__: print "MetaImporter.find_module(%s, %s)" % (
+            repr(fullname), repr(path))
         for _path in sys.path:
             if _path not in self.__importers:
                 try:
