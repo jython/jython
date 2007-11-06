@@ -583,6 +583,18 @@ class BasicTCPTest(SocketConnectedTest):
             time.sleep(0.5)
         self.fail("Sending on remotely closed socket should have raised exception")
 
+    def testDup(self):
+        msg = self.cli_conn.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+
+        dup_conn = self.cli_conn.dup()
+        msg = dup_conn.recv(len('and ' + MSG))
+        self.assertEqual(msg, 'and ' +  MSG)
+
+    def _testDup(self):
+        self.serv_conn.send(MSG)
+        self.serv_conn.send('and ' + MSG)
+
 class BasicUDPTest(ThreadedUDPSocketTest):
 
     def __init__(self, methodName='runTest'):
@@ -762,7 +774,7 @@ class NonBlockingUDPTests(ThreadedUDPSocketTest): pass
 # TODO: Write some non-blocking UDP tests
 #
 
-class FileObjectClassOpenCloseTests(SocketConnectedTest):
+class TCPFileObjectClassOpenCloseTests(SocketConnectedTest):
 
     def testCloseFileDoesNotCloseSocket(self):
         # This test is necessary on java/jython
@@ -789,6 +801,71 @@ class FileObjectClassOpenCloseTests(SocketConnectedTest):
             self.cli_file.flush()
         except Exception, x:
             self.fail("Closing socket appears to have closed file wrapper: %s" % str(x))
+
+class UDPFileObjectClassOpenCloseTests(ThreadedUDPSocketTest):
+
+    def testCloseFileDoesNotCloseSocket(self):
+        # This test is necessary on java/jython
+        msg = self.serv.recv(1024)
+        self.assertEqual(msg, MSG)
+
+    def _testCloseFileDoesNotCloseSocket(self):
+        self.cli_file = self.cli.makefile('wb')
+        self.cli_file.close()
+        try:
+            self.cli.sendto(MSG, 0, (HOST, PORT))
+        except Exception, x:
+            self.fail("Closing file wrapper appears to have closed underlying socket: %s" % str(x))
+
+    def testCloseSocketDoesNotCloseFile(self):
+        self.serv_file = self.serv.makefile('rb')
+        self.serv.close()
+        msg = self.serv_file.readline()
+        self.assertEqual(msg, MSG)
+
+    def _testCloseSocketDoesNotCloseFile(self):
+        try:
+            self.cli.sendto(MSG, 0, (HOST, PORT))
+        except Exception, x:
+            self.fail("Closing file wrapper appears to have closed underlying socket: %s" % str(x))
+
+class FileAndDupOpenCloseTests(SocketConnectedTest):
+
+    def testCloseDoesNotCloseOthers(self):
+        msg = self.cli_conn.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+
+        msg = self.cli_conn.recv(len('and ' + MSG))
+        self.assertEqual(msg, 'and ' + MSG)
+
+    def _testCloseDoesNotCloseOthers(self):
+        self.dup_conn1 = self.serv_conn.dup()
+        self.dup_conn2 = self.serv_conn.dup()
+        self.cli_file = self.serv_conn.makefile('wb')
+        self.serv_conn.close()
+        self.dup_conn1.close()
+
+        try:
+            self.serv_conn.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EBADF)
+        else:
+            self.fail("Original socket did not close")
+        try:
+            self.dup_conn1.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EBADF)
+        else:
+            self.fail("Duplicate socket 1 did not close")
+
+        self.dup_conn2.send(MSG)
+        self.dup_conn2.close()
+
+        try:
+            self.cli_file.write('and ' + MSG)
+        except Exception, x:
+            self.fail("Closing others appears to have closed the socket file: %s" % str(x))
+        self.cli_file.close()
 
 class FileObjectClassTestCase(SocketConnectedTest):
 
@@ -1021,7 +1098,6 @@ class TestJythonExceptions(unittest.TestCase):
         else:
             self.fail("Binding to already bound host/port should have raised exception")
 
-
     def testUnresolvedAddress(self):
         try:
             self.s.connect( ('non.existent.server', PORT) )
@@ -1049,6 +1125,26 @@ class TestJythonExceptions(unittest.TestCase):
             self.fail("Receive on unconnected socket raised wrong exception: %s" % x)
         else:
             self.fail("Receive on unconnected socket raised exception")
+
+    def testClosedSocket(self):
+        self.s.close()
+        try:
+            self.s.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EBADF)
+
+        dup = self.s.dup()
+        try:
+            dup.send(MSG)
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EBADF)
+
+        fp = self.s.makefile()
+        try:
+            fp.write(MSG)
+            fp.flush()
+        except socket.error, se:
+            self.failUnlessEqual(se[0], errno.EBADF)
 
 class TestAddressParameters:
 
@@ -1099,7 +1195,9 @@ def test_main():
         UDPTimeoutTest,
         NonBlockingTCPTests,
         NonBlockingUDPTests,
-        FileObjectClassOpenCloseTests,
+        TCPFileObjectClassOpenCloseTests,
+        UDPFileObjectClassOpenCloseTests,
+        FileAndDupOpenCloseTests,
         FileObjectClassTestCase,
         UnbufferedFileObjectClassTestCase,
         LineBufferedFileObjectClassTestCase,
