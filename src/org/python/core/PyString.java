@@ -1,6 +1,8 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.nio.ByteBuffer;
+
 /**
  * A builtin python string.
  */
@@ -2124,6 +2126,13 @@ public class PyString extends PyBaseString implements ClassDictInit
      */
     public static String from_bytes(byte[] buf) {
         return from_bytes(buf, 0, buf.length);
+    }
+
+    /**
+     * @return A String with chars corresponding to the bytes in buf
+     */
+    public static String from_bytes(ByteBuffer buf) {
+        return from_bytes(buf.array(), buf.arrayOffset(), buf.limit());
     }
     
     /**

@@ -1581,7 +1581,7 @@ public class PyArray extends PySequence implements Cloneable {
      * @param value
      *            value to set the element to
      */
-    protected void set(int i, PyObject value) {
+    public void set(int i, PyObject value) {
         // check for overflow of the integral types
         if(type == Byte.TYPE) {
             long val;

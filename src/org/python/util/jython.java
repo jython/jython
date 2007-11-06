@@ -38,7 +38,7 @@ public class jython
         "-Q arg   : division options: -Qold (default), -Qwarn, -Qwarnall, -Qnew\n" +
         "-S       : don't imply 'import site' on initialization\n" +
         //"-t       : issue warnings about inconsistent tab usage (-tt: issue errors)\n" +
-        //"-u       : unbuffered binary stdout and stderr\n" + // (also PYTHONUNBUFFERED=x)\n" +
+        "-u       : unbuffered binary stdout and stderr\n" + // (also PYTHONUNBUFFERED=x)\n" +
         //"           see man page for details on internal buffering relating to '-u'\n" +
         "-v       : verbose (trace import statements)\n" + // (also PYTHONVERBOSE=x)\n" +
         "-V       : print the Python version number and exit (also --version)\n" +
@@ -314,6 +314,9 @@ class CommandLineOptions
                 jar = true;
                 if (!fixInteractive)
                     interactive = false;
+            }
+            else if (arg.equals("-u")) {
+                Options.unbuffered = true;
             }
             else if (arg.equals("-v")) {
                 Options.verbose++;

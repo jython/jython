@@ -151,6 +151,12 @@ public final class Py
         return new PyException(Py.IOError, message);
     }
 
+    public static PyException IOError(int errno, String message) {
+        PyTuple args = new PyTuple(new PyObject[] {new PyInteger(errno),
+                                                   new PyString(message)});
+        return new PyException(Py.IOError, args);
+    }
+
     public static PyObject KeyError;
     public static PyException KeyError(String message) {
         return new PyException(Py.KeyError, message);
@@ -1304,7 +1310,7 @@ public final class Py
                 contents = o.toString();
             else if (o instanceof PyFile) {
                 PyFile fp = (PyFile)o;
-                if (fp.closed)
+                if (fp.getClosed())
                     return;
                 contents = fp.read().toString();
             } else

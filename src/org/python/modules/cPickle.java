@@ -751,7 +751,7 @@ public class cPickle implements ClassDictInit {
 
         FileIOFile(PyObject file) {
             this.file = (PyFile)file.__tojava__(PyFile.class);
-            if (this.file.closed)
+            if (this.file.getClosed())
                 throw Py.ValueError("I/O operation on closed file");
         }
 
