@@ -769,7 +769,7 @@ _socketmethods = (
     'bind', 'connect', 'connect_ex', 'fileno', 'listen',
     'getpeername', 'getsockname', 'getsockopt', 'setsockopt',
     'sendall', 'setblocking',
-    'settimeout', 'gettimeout', 'shutdown')
+    'settimeout', 'gettimeout', 'shutdown', 'getchannel')
 
 class _closedsocket(object):
     __slots__ = []
