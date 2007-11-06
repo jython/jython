@@ -1035,9 +1035,7 @@ _failures = {
     test_dis
     test_descr
     test_descrtut
-    test_dumbdbm
     test_eof
-    test_file
     test_frozen
     test_hexoct
     test_inspect
