@@ -49,6 +49,7 @@ public class zipimport implements ClassDictInit {
 
         // Hide from Python
         dict.__setitem__("classDictInit", null);
+        dict.__setitem__("initClassExceptions", null);
     }
 
     /**
