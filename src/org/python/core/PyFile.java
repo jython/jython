@@ -569,7 +569,6 @@ public class PyFile extends PyObject
     }
 
     public PyFile() {
-        // xxx: this constructor should only be used in conjunction with file_init
     }
 
     public PyFile(PyType subType) {
@@ -743,11 +742,8 @@ public class PyFile extends PyObject
                     new LineBufferedWriter(raw) :
                     new BufferedWriter(raw, bufsize);
         } else if (reading) {
-            if (lineBuffered) {
-                // Line buffering is for output only
-                bufsize = 0;
-            }
-            buffer = new BufferedReader(raw, bufsize);
+            // Line buffering is for output only
+            buffer = new BufferedReader(raw, lineBuffered ? 0 : bufsize);
         } else {
             // Should never happen
             throw Py.ValueError("unknown mode: '" + mode + "'");
@@ -1133,13 +1129,13 @@ public class PyFile extends PyObject
         public Closer(TextIOBase file) {
             this.file = file;
             // Add ourselves to the queue of Closers to be run on shutdown
-            synchronized(closers) {
+            synchronized (closers) {
                 closers.add(this);
             }
         }
 
         public void close() {
-            synchronized(closers) {
+            synchronized (closers) {
                 if (!closers.remove(this)) {
                     return;
                 }
@@ -1159,11 +1155,13 @@ public class PyFile extends PyObject
         }
 
         public void run() {
-            synchronized(closers) {
-                while(closers.size() > 0) {
+            synchronized (closers) {
+                while (closers.size() > 0) {
                     try {
                         ((Closer)closers.removeFirst())._close();
-                    } catch(PyException e) {}
+                    } catch (PyException e) {
+                        // continue
+                    }
                 }
             }
         }
