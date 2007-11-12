@@ -1,6 +1,8 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.io.UnsupportedEncodingException;
+
 /**
  * A builtin python string.
  */
@@ -2113,10 +2115,12 @@ public class PyString extends PyBaseString implements ClassDictInit
      *         the low-order bits of its corresponding char.
      */
     public static byte[] to_bytes(String s) {
-        int len = s.length();
-        byte[] b = new byte[len];
-        s.getBytes(0, len, b, 0);
-        return b;
+        try {
+            return s.getBytes("ISO-8859-1");
+        } catch(UnsupportedEncodingException e) {
+            // This JVM is whacked, it doesn't even have iso-8859-1
+            throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
+        }
     }
 
     /**
