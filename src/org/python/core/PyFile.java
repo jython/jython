@@ -545,7 +545,7 @@ public class PyFile extends PyObject
      * shutdown */
     private Closer closer;
 
-    /** All PyFile's closers */
+    /** All PyFiles' closers */
     private static LinkedList closers = new LinkedList();
 
     static {
