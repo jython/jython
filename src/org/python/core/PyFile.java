@@ -61,22 +61,6 @@ public class PyFile extends PyObject
 
         }
         dict.__setitem__("__cmp__",new PyMethodDescr("__cmp__",PyFile.class,1,1,new exposed___cmp__(null,null)));
-        class exposed_isatty extends PyBuiltinMethodNarrow {
-
-            exposed_isatty(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isatty(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyFile)self).file_isatty());
-            }
-
-        }
-        dict.__setitem__("isatty",new PyMethodDescr("isatty",PyFile.class,0,0,new exposed_isatty(null,null)));
         class exposed___iter__ extends PyBuiltinMethodNarrow {
 
             exposed___iter__(PyObject self,PyBuiltinFunction.Info info) {
@@ -581,15 +565,15 @@ public class PyFile extends PyObject
     }
 
     public PyFile(InputStream istream, OutputStream ostream, String name,
-                  String mode, int bufsize, boolean isatty, boolean closefd) {
+                  String mode, int bufsize, boolean closefd) {
         parseMode(mode);
-        file_init(new StreamIO(istream, ostream, isatty, closefd), name, mode, bufsize);
+        file_init(new StreamIO(istream, ostream, closefd), name, mode, bufsize);
     }
 
     public PyFile(InputStream istream, OutputStream ostream, String name,
                   String mode, int bufsize)
     {
-        this(istream, ostream, name, mode, -1, false, true);
+        this(istream, ostream, name, mode, -1, true);
     }
 
     public PyFile(InputStream istream, OutputStream ostream, String name,
@@ -608,13 +592,13 @@ public class PyFile extends PyObject
     }
 
     public PyFile(InputStream istream, String name, String mode, int bufsize,
-                  boolean isatty, boolean closefd) {
+                  boolean closefd) {
         parseMode(mode);
-        file_init(new StreamIO(istream, isatty, closefd), name, mode, bufsize);
+        file_init(new StreamIO(istream, closefd), name, mode, bufsize);
     }
 
     public PyFile(InputStream istream, String name, String mode, int bufsize) {
-        this(istream, name, mode, -1, false, true);
+        this(istream, name, mode, -1, true);
     }
 
     public PyFile(InputStream istream, String name, String mode) {
@@ -630,13 +614,13 @@ public class PyFile extends PyObject
     }
 
     public PyFile(OutputStream ostream, String name, String mode, int bufsize,
-                  boolean isatty, boolean closefd) {
+                  boolean closefd) {
         parseMode(mode);
-        file_init(new StreamIO(ostream, isatty, closefd), name, mode, bufsize);
+        file_init(new StreamIO(ostream, closefd), name, mode, bufsize);
     }
 
     public PyFile(OutputStream ostream, String name, String mode, int bufsize) {
-        this(ostream, name, mode, -1, false, true);
+        this(ostream, name, mode, -1, true);
     }
 
     public PyFile(OutputStream ostream, String name, String mode) {

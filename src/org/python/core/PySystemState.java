@@ -281,11 +281,11 @@ public class PySystemState extends PyObject
         String mode = Options.unbuffered ? "b" : "";
         int buffering = Options.unbuffered ? 0 : 1;
         __stdout__ = stdout = new PyFile(new FileOutputStream(FileDescriptor.out),
-                                         "<stdout>", "w" + mode, buffering, true, false);
+                                         "<stdout>", "w" + mode, buffering, false);
         __stderr__ = stderr = new PyFile(new FileOutputStream(FileDescriptor.err),
-                                         "<stderr>", "w" + mode, 0, true, false);
+                                         "<stderr>", "w" + mode, 0, false);
         __stdin__ = stdin = new PyFile(new FileInputStream(FileDescriptor.in), "<stdin>",
-                                       "r" + mode, buffering, true, false);
+                                       "r" + mode, buffering, false);
         __displayhook__ = new PySystemStateFunctions("displayhook", 10, 1, 1);
         __excepthook__ = new PySystemStateFunctions("excepthook", 30, 3, 3);
 

@@ -34,9 +34,6 @@ public class StreamIO extends RawIOBase {
      * __tojava__ */
     private OutputStream outputStream;
 
-    /** true if the Streams refer to a terminal device */
-    private boolean isatty;
-
     /** true if the underlying file is actually closed on close() */
     private boolean closefd;
 
@@ -45,15 +42,13 @@ public class StreamIO extends RawIOBase {
      *
      * @param readChannel a ReadableByteChannel
      * @param writeChannel a WritableByteChannel
-     * @param isatty boolean whether this io object is a tty device
      * @param closefd boolean whether the underlying file is closed on
      *                close() (defaults to True)
      */
     public StreamIO(ReadableByteChannel readChannel,
-                    WritableByteChannel writeChannel, boolean isatty, boolean closefd) {
+                    WritableByteChannel writeChannel, boolean closefd) {
         this.readChannel = readChannel;
         this.writeChannel = writeChannel;
-        this.isatty = isatty;
         this.closefd = closefd;
     }
 
@@ -61,24 +56,22 @@ public class StreamIO extends RawIOBase {
      * Construct a StreamIO for the given read channel.
      *
      * @param readChannel a ReadableByteChannel
-     * @param isatty boolean whether this io object is a tty device
      * @param closefd boolean whether the underlying file is closed on
      *                close() (defaults to True)
      */
-    public StreamIO(ReadableByteChannel readChannel, boolean isatty, boolean closefd) {
-        this(readChannel, null, isatty, closefd);
+    public StreamIO(ReadableByteChannel readChannel, boolean closefd) {
+        this(readChannel, null, closefd);
     }
 
     /**
      * Construct a StreamIO for the given write channel.
      *
      * @param writeChannel a WritableByteChannel
-     * @param isatty boolean whether this io object is a tty device
      * @param closefd boolean whether the underlying file is closed on
      *                close() (defaults to True)
      */
-    public StreamIO(WritableByteChannel writeChannel, boolean isatty, boolean closefd) {
-        this(null, writeChannel, isatty, closefd);
+    public StreamIO(WritableByteChannel writeChannel, boolean closefd) {
+        this(null, writeChannel, closefd);
     }
 
     /**
@@ -86,15 +79,13 @@ public class StreamIO extends RawIOBase {
      *
      * @param inputStream an InputStream
      * @param outputStream an OutputStream
-     * @param isatty boolean whether this io object is a tty device
      * @param closefd boolean whether the underlying file is closed on
      *                close() (defaults to True)
      */
-    public StreamIO(InputStream inputStream, OutputStream outputStream, boolean isatty,
+    public StreamIO(InputStream inputStream, OutputStream outputStream,
                     boolean closefd) {
         this(inputStream == null ? null : Channels.newChannel(inputStream),
-             outputStream == null ? null : Channels.newChannel(outputStream), isatty,
-             closefd);
+             outputStream == null ? null : Channels.newChannel(outputStream), closefd);
         this.inputStream = inputStream;
         this.outputStream = outputStream;
     }
@@ -103,24 +94,22 @@ public class StreamIO extends RawIOBase {
      * Construct a StreamIO for the given read/write streams.
      *
      * @param inputStream an InputStream
-     * @param isatty boolean whether this io object is a tty device
      * @param closefd boolean whether the underlying file is closed on
      *                close() (defaults to True)
      */
-    public StreamIO(InputStream inputStream, boolean isatty, boolean closefd) {
-        this(inputStream, null, isatty, closefd);
+    public StreamIO(InputStream inputStream, boolean closefd) {
+        this(inputStream, null, closefd);
     }
 
     /**
      * Construct a StreamIO for the given read/write streams.
      *
      * @param outputStream an OutputStream
-     * @param isatty boolean whether this io object is a tty device
      * @param closefd boolean whether the underlying file is closed on
      *                close() (defaults to True)
      */
-    public StreamIO(OutputStream outputStream, boolean isatty, boolean closefd) {
-        this(null, outputStream, isatty, closefd);
+    public StreamIO(OutputStream outputStream, boolean closefd) {
+        this(null, outputStream, closefd);
     }
 
     /** {@inheritDoc} */
@@ -165,12 +154,6 @@ public class StreamIO extends RawIOBase {
             }
         }
         super.close();
-    }
-
-    /** {@inheritDoc} */
-    public boolean isatty() {
-        checkClosed();
-        return isatty;
     }
 
     /** {@inheritDoc} */

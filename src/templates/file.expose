@@ -10,7 +10,8 @@ expose_getset: newlines getNewlines
 expose_getset: softspace getSoftspace setSoftspace delSoftspace
 # exposed methods
 expose_vanilla_cmp
-expose_meth: :b isatty
+# XXX: not supported at this point
+#expose_meth: :b isatty
 expose_meth: __iter__
 expose_meth: __iternext__
 expose_meth: :b __nonzero__
