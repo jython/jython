@@ -256,6 +256,16 @@ public class FileIO extends RawIOBase {
     }
 
     /** {@inheritDoc} */
+    public long tell() {
+        checkClosed();
+        try {
+            return fileChannel.position();
+        } catch (IOException ioe) {
+            throw Py.IOError(ioe);
+        }
+    }
+
+    /** {@inheritDoc} */
     public long truncate(long size) {
         checkClosed();
         checkWritable();
