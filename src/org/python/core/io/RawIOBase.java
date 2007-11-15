@@ -11,6 +11,13 @@ import org.python.core.Py;
 /**
  * Base class for raw binary I/O.
  *
+ * RawIOBases wrap raw Java I/O objects (typically nio Channels). They
+ * provide a convenient means of handling raw Java I/O objects in the
+ * context of Python files.
+ *
+ * RawIOBases maintain state about their underlying I/O objects (such
+ * as their mode) and translate Java exceptions into PyExceptions.
+ *
  * The read() method is implemented by calling readinto(); derived
  * classes that want to support read() only need to implement
  * readinto() as a primitive operation. In general, readinto() can be
