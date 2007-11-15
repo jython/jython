@@ -2,7 +2,6 @@
 package org.python.core;
 
 import java.io.OutputStream;
-import java.io.Writer;
 
 public class StdoutWrapper extends OutputStream {
     protected String name;
@@ -28,16 +27,9 @@ public class StdoutWrapper extends OutputStream {
         if (obj instanceof PyJavaInstance) {
             PyFile f = null;
 
-            Object tmp = obj.__tojava__(OutputStream.class);
-            if ((tmp != Py.NoConversion) && (tmp != null)) {
-                OutputStream os = (OutputStream) tmp;
-                f = new PyFile(os, "<java OutputStream>");
-            } else {
-                tmp = obj.__tojava__(Writer.class);
-                if ((tmp != Py.NoConversion) && (tmp != null)) {
-                    Writer w = (Writer) tmp;
-                    f = new PyFile(w, "<java Writer>");
-                }
+            Object tojava = obj.__tojava__(OutputStream.class);
+            if (tojava != null && tojava != Py.NoConversion) {
+                f = new PyFile((OutputStream)tojava, "<java OutputStream>");
             }
             if (f != null) {
                 setObject(ss, f);

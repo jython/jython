@@ -11,7 +11,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 
 import org.python.compiler.Module;
@@ -2053,16 +2052,9 @@ class FixedFileWrapper extends StdoutWrapper {
         this.file = file;
 
         if (file instanceof PyJavaInstance) {
-            Object tmp = file.__tojava__(OutputStream.class);
-            if ((tmp != Py.NoConversion) && (tmp != null)) {
-                OutputStream os = (OutputStream)tmp;
-                this.file = new PyFile(os, "<java OutputStream>");
-            } else {
-                tmp = file.__tojava__(Writer.class);
-                if ((tmp != Py.NoConversion) && (tmp != null)) {
-                    Writer w = (Writer)tmp;
-                    this.file = new PyFile(w, "<java Writer>");
-                }
+            Object tojava = file.__tojava__(OutputStream.class);
+            if (tojava != null && tojava != Py.NoConversion) {
+                this.file = new PyFile((OutputStream)tojava, "<java OutputStream>");
             }
         }
     }

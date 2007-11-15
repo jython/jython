@@ -4,7 +4,6 @@ package org.python.core;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.io.Writer;
 import java.util.LinkedList;
 
 import org.python.core.io.BinaryIOWrapper;
@@ -17,7 +16,6 @@ import org.python.core.io.IOBase;
 import org.python.core.io.LineBufferedRandom;
 import org.python.core.io.LineBufferedWriter;
 import org.python.core.io.RawIOBase;
-import org.python.core.io.ReaderWriterIO;
 import org.python.core.io.StreamIO;
 import org.python.core.io.TextIOBase;
 import org.python.core.io.TextIOWrapper;
@@ -632,23 +630,6 @@ public class PyFile extends PyObject
     }
 
     public PyFile(OutputStream ostream) {
-        this(ostream, "<???>", "w");
-    }
-
-    public PyFile(Writer ostream, String name, String mode, int bufsize) {
-        parseMode(mode);
-        file_init(new ReaderWriterIO(ostream), name, mode, bufsize);
-    }
-
-    public PyFile(Writer ostream, String name, String mode) {
-        this(ostream, name, mode, -1);
-    }
-
-    public PyFile(Writer ostream, String name) {
-        this(ostream, name, "w");
-    }
-
-    public PyFile(Writer ostream) {
         this(ostream, "<???>", "w");
     }
 
