@@ -819,18 +819,17 @@ public class PyFile extends PyObject
     final synchronized PyObject file_readlines(int sizehint) {
         checkClosed();
         PyList list = new PyList();
-        int bytesread = 0;
-        for (;;) {
-            String s = file.readline(-1);
-            int len = s.length();
-            if (len == 0)
+        int count = 0;
+        do {
+            String line = file.readline(-1);
+            int len = line.length();
+            if (len == 0) {
                 // EOF
                 break;
-            bytesread += len;
-            list.append(new PyString(s));
-            if (sizehint > 0 && bytesread > sizehint)
-                break;
-        }
+            }
+            count += len;
+            list.append(new PyString(line));
+        } while (sizehint <= 0 || count < sizehint);
         return list;
     }
 
