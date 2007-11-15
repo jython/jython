@@ -3,27 +3,27 @@ package org.python.core.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.DatagramChannel;
 
 import org.python.core.Py;
 
 /**
- * Raw I/O implementation for sockets.
+ * Raw I/O implementation for datagram sockets.
  *
  * @author Philip Jenvey
  */
-public class SocketIO extends SocketIOBase {
+public class DatagramSocketIO extends SocketIOBase {
 
     /** The underlying socket */
-    private SocketChannel socketChannel;
+    private DatagramChannel socketChannel;
 
     /**
-     * Construct a SocketIO for the given SocketChannel.
+     * Construct a DatagramSocketIO for the given DatagramChannel.
      *
-     * @param socketChannel a SocketChannel to wrap
+     * @param socketChannel a DatagramChannel to wrap
      * @param mode a raw io socket mode String
      */
-    public SocketIO(SocketChannel socketChannel, String mode) {
+    public DatagramSocketIO(DatagramChannel socketChannel, String mode) {
         super(mode);
         this.socketChannel = socketChannel;
     }
