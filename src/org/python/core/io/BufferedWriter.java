@@ -123,4 +123,9 @@ public class BufferedWriter extends BufferedIOMixin {
         checkReadable();
         return -1;
     }
+
+    /** {@inheritDoc} */
+    public boolean readable() {
+        return false;
+    }
 }
