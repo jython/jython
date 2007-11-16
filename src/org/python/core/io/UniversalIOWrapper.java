@@ -49,7 +49,7 @@ public class UniversalIOWrapper extends TextIOBase {
 
         do {
             readaheadArray = readahead.array();
-            readaheadPos = readahead.arrayOffset() + readahead.position();
+            readaheadPos = readahead.position();
 
             while (readaheadPos < readahead.limit() && builderPos < size) {
                 char next = (char)(readaheadArray[readaheadPos++] & 0xff);
@@ -70,7 +70,7 @@ public class UniversalIOWrapper extends TextIOBase {
                         // Not EOF and readChunk replaced the
                         // readahead; reset the readahead info
                         readaheadArray = readahead.array();
-                        readaheadPos = readahead.arrayOffset() + readahead.position();
+                        readaheadPos = readahead.position();
                     }
                     skipNextLF = true;
                     break;
@@ -98,7 +98,7 @@ public class UniversalIOWrapper extends TextIOBase {
         // position is invalid if the readahead is empty (at EOF;
         // readChunk() returned 0)
         if (readahead.hasRemaining()) {
-            readahead.position(readaheadPos - readahead.arrayOffset());
+            readahead.position(readaheadPos);
         }
         // Shrink the readahead if it grew
         packReadahead();
@@ -116,13 +116,13 @@ public class UniversalIOWrapper extends TextIOBase {
         char[] all = new char[readahead.remaining() + remaining.remaining()];
 
         // Consume the readahead
-        int length = readLoop(readahead.array(), readahead.arrayOffset() +
-                              readahead.position(), all, 0, readahead.remaining());
+        int length = readLoop(readahead.array(), readahead.position(), all, 0,
+                              readahead.remaining());
         readahead.position(readahead.limit());
 
         // Consume the remainder of the file
-        length += readLoop(remaining.array(), remaining.arrayOffset() +
-                           remaining.position(), all, length, remaining.remaining());
+        length += readLoop(remaining.array(), remaining.position(), all, length,
+                           remaining.remaining());
 
         // Handle skipNextLF at EOF
         if (skipNextLF) {
@@ -193,7 +193,7 @@ public class UniversalIOWrapper extends TextIOBase {
 
         do {
             readaheadArray = readahead.array();
-            readaheadPos = readahead.arrayOffset() + readahead.position();
+            readaheadPos = readahead.position();
             interimBuilderPos = 0;
 
             while (readaheadPos < readahead.limit() &&
@@ -220,7 +220,7 @@ public class UniversalIOWrapper extends TextIOBase {
 
                         // Not EOF and readChunk replaced the
                         // readahead; reset the readahead info
-                        readaheadPos = readahead.arrayOffset() + readahead.position();
+                        readaheadPos = readahead.position();
                     }
                     skipNextLF = true;
 
@@ -228,7 +228,7 @@ public class UniversalIOWrapper extends TextIOBase {
                     builder.append(interimBuilder, 0, interimBuilderPos);
 
                     // Reposition the readahead to where we ended
-                    readahead.position(readaheadPos - readahead.arrayOffset());
+                    readahead.position(readaheadPos);
 
                     return drainBuilder();
                 case '\n':
@@ -243,7 +243,7 @@ public class UniversalIOWrapper extends TextIOBase {
                     builder.append(interimBuilder, 0, interimBuilderPos);
 
                     // Reposition the readahead to where we ended
-                    readahead.position(readaheadPos - readahead.arrayOffset());
+                    readahead.position(readaheadPos);
 
                     return drainBuilder();
                 default:
@@ -264,7 +264,7 @@ public class UniversalIOWrapper extends TextIOBase {
         // position is invalid if the readahead is empty (at EOF;
         // readChunk() returned 0)
         if (readahead.hasRemaining()) {
-            readahead.position(readaheadPos - readahead.arrayOffset());
+            readahead.position(readaheadPos);
         }
 
         return drainBuilder();

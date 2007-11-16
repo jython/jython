@@ -55,7 +55,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
 
         do {
             readaheadArray = readahead.array();
-            readaheadPos = readahead.arrayOffset() + readahead.position();
+            readaheadPos = readahead.position();
 
             while (readaheadPos < readahead.limit() && builderPos < size) {
                 char next = (char)(readaheadArray[readaheadPos++] & 0xff);
@@ -72,7 +72,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
                         // Not EOF and readChunk replaced the
                         // readahead; reset the readahead info
                         readaheadArray = readahead.array();
-                        readaheadPos = readahead.arrayOffset() + readahead.position();
+                        readaheadPos = readahead.position();
                     }
 
                     if (readaheadArray[readaheadPos] == LF_BYTE) {
@@ -90,7 +90,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
         // position is invalid if the readahead is empty (at EOF;
         // readChunk() returned 0)
         if (readahead.hasRemaining()) {
-            readahead.position(readaheadPos - readahead.arrayOffset());
+            readahead.position(readaheadPos);
         }
         // Shrink the readahead if it grew
         packReadahead();
@@ -122,13 +122,13 @@ public class TextIOWrapper extends BinaryIOWrapper {
         char[] all = new char[readahead.remaining() + remaining.remaining()];
 
         // Consume the readahead
-        length += readLoop(readahead.array(), readahead.arrayOffset() +
-                           readahead.position(), all, 0, readahead.remaining());
+        length += readLoop(readahead.array(), readahead.position(), all, 0,
+                           readahead.remaining());
         readahead.position(readahead.limit());
 
         // Consume the remainder of the file
-        length += readLoop(remaining.array(), remaining.arrayOffset() +
-                           remaining.position(), all, length, remaining.remaining());
+        length += readLoop(remaining.array(), remaining.position(), all, length,
+                           remaining.remaining());
 
         return new String(all, 0, length);
     }
@@ -189,7 +189,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
 
         do {
             readaheadArray = readahead.array();
-            readaheadPos = readahead.arrayOffset() + readahead.position();
+            readaheadPos = readahead.position();
             interimBuilderPos = 0;
 
             while (readaheadPos < readahead.limit() &&
@@ -211,7 +211,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
                         // readahead; reset the readahead info and
                         // flush the interimBuilder (it's full)
                         readaheadArray = readahead.array();
-                        readaheadPos = readahead.arrayOffset() + readahead.position();
+                        readaheadPos = readahead.position();
                         flushInterimBuilder = true;
                     }
 
@@ -233,7 +233,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
                     builder.append(interimBuilder, 0, interimBuilderPos);
 
                     // Reposition the readahead to where we ended
-                    readahead.position(readaheadPos - readahead.arrayOffset());
+                    readahead.position(readaheadPos);
 
                     return drainBuilder();
                 }
@@ -247,7 +247,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
         // position is invalid if the readahead is empty (at EOF;
         // readChunk() returned 0)
         if (readahead.hasRemaining()) {
-            readahead.position(readaheadPos - readahead.arrayOffset());
+            readahead.position(readaheadPos);
         }
 
         return drainBuilder();

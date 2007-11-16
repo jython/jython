@@ -79,7 +79,7 @@ public class BinaryIOWrapper extends TextIOBase {
 
         do {
             readaheadArray = readahead.array();
-            readaheadPos = readahead.arrayOffset() + readahead.position();
+            readaheadPos = readahead.position();
             interimBuilderPos = 0;
 
             while (readaheadPos < readahead.limit() &&
@@ -91,7 +91,7 @@ public class BinaryIOWrapper extends TextIOBase {
                     builder.append(interimBuilder, 0, interimBuilderPos);
 
                     // Reposition the readahead to where we ended
-                    readahead.position(readaheadPos - readahead.arrayOffset());
+                    readahead.position(readaheadPos);
 
                     return drainBuilder();
                 }
@@ -105,7 +105,7 @@ public class BinaryIOWrapper extends TextIOBase {
         // invalid if the readahead is empty (at EOF; readChunk()
         // returned 0)
         if (readahead.hasRemaining()) {
-            readahead.position(readaheadPos - readahead.arrayOffset());
+            readahead.position(readaheadPos);
         }
 
         return drainBuilder();
