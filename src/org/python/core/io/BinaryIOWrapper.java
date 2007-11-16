@@ -39,6 +39,7 @@ public class BinaryIOWrapper extends TextIOBase {
             readahead.limit(readahead.position() + size);
             data.put(readahead);
             readahead.limit(readaheadLimit);
+            data.flip();
             return PyString.from_bytes(data);
         }
 
@@ -62,6 +63,7 @@ public class BinaryIOWrapper extends TextIOBase {
         all.put(readahead);
         clearReadahead();
         all.put(remaining);
+        all.flip();
         return PyString.from_bytes(all);
     }
 

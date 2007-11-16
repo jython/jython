@@ -2132,7 +2132,8 @@ public class PyString extends PyBaseString implements ClassDictInit
      * @return A String with chars corresponding to the bytes in buf
      */
     public static String from_bytes(ByteBuffer buf) {
-        return from_bytes(buf.array(), buf.arrayOffset(), buf.limit());
+        return from_bytes(buf.array(), buf.arrayOffset() + buf.position(),
+                          buf.arrayOffset() + buf.limit());
     }
     
     /**
