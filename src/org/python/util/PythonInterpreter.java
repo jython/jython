@@ -86,15 +86,6 @@ public class PythonInterpreter {
     }
 
     /**
-     * Set a java.io.Writer to use for the standard output stream
-     *
-     * @param outStream Writer to use as output stream
-     */
-    public void setOut(java.io.Writer outStream) {
-        setOut(new PyFile(outStream));
-    }
-
-    /**
      * Set a java.io.OutputStream to use for the standard output stream
      *
      * @param outStream OutputStream to use as output stream
@@ -105,10 +96,6 @@ public class PythonInterpreter {
 
     public void setErr(PyObject outStream) {
         systemState.stderr = outStream;
-    }
-
-    public void setErr(java.io.Writer outStream) {
-        setErr(new PyFile(outStream));
     }
 
     public void setErr(java.io.OutputStream outStream) {

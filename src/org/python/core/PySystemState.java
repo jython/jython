@@ -8,7 +8,9 @@ import org.python.core.packagecache.PackageManager;
 import org.python.core.packagecache.SysPackageManager;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -276,9 +278,14 @@ public class PySystemState extends PyObject
         path_importer_cache = new PyDictionary();
 
         // Set up the initial standard ins and outs
-        __stdout__ = stdout = new PyFile(System.out, "<stdout>");
-        __stderr__ = stderr = new PyFile(System.err, "<stderr>");
-        __stdin__ = stdin = new PyFile(System.in, "<stdin>");
+        String mode = Options.unbuffered ? "b" : "";
+        int buffering = Options.unbuffered ? 0 : 1;
+        __stdout__ = stdout = new PyFile(new FileOutputStream(FileDescriptor.out),
+                                         "<stdout>", "w" + mode, buffering, false);
+        __stderr__ = stderr = new PyFile(new FileOutputStream(FileDescriptor.err),
+                                         "<stderr>", "w" + mode, 0, false);
+        __stdin__ = stdin = new PyFile(new FileInputStream(FileDescriptor.in), "<stdin>",
+                                       "r" + mode, buffering, false);
         __displayhook__ = new PySystemStateFunctions("displayhook", 10, 1, 1);
         __excepthook__ = new PySystemStateFunctions("excepthook", 30, 3, 3);
 

@@ -124,7 +124,6 @@ public class imp {
 
     public static PyObject load_source(String modname, String filename) {
         PyObject mod = Py.None;
-        //XXX: bufsize is ignored in PyFile now, but look 3rd arg if this ever changes.
         PyFile file = new PyFile(filename, "r", 1024);
         Object o = file.__tojava__(InputStream.class);
         if (o == Py.NoConversion) {

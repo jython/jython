@@ -11,7 +11,6 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 
 import org.python.compiler.Module;
@@ -149,6 +148,12 @@ public final class Py
     public static PyException IOError(String message) {
         //System.err.println("sioe: "+message);
         return new PyException(Py.IOError, message);
+    }
+
+    public static PyException IOError(int errno, String message) {
+        PyTuple args = new PyTuple(new PyObject[] {new PyInteger(errno),
+                                                   new PyString(message)});
+        return new PyException(Py.IOError, args);
     }
 
     public static PyObject KeyError;
@@ -1304,7 +1309,7 @@ public final class Py
                 contents = o.toString();
             else if (o instanceof PyFile) {
                 PyFile fp = (PyFile)o;
-                if (fp.closed)
+                if (fp.getClosed())
                     return;
                 contents = fp.read().toString();
             } else
@@ -2047,16 +2052,9 @@ class FixedFileWrapper extends StdoutWrapper {
         this.file = file;
 
         if (file instanceof PyJavaInstance) {
-            Object tmp = file.__tojava__(OutputStream.class);
-            if ((tmp != Py.NoConversion) && (tmp != null)) {
-                OutputStream os = (OutputStream)tmp;
-                this.file = new PyFile(os, "<java OutputStream>");
-            } else {
-                tmp = file.__tojava__(Writer.class);
-                if ((tmp != Py.NoConversion) && (tmp != null)) {
-                    Writer w = (Writer)tmp;
-                    this.file = new PyFile(w, "<java Writer>");
-                }
+            Object tojava = file.__tojava__(OutputStream.class);
+            if (tojava != null && tojava != Py.NoConversion) {
+                this.file = new PyFile((OutputStream)tojava, "<java OutputStream>");
             }
         }
     }
