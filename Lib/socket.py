@@ -286,7 +286,7 @@ class _datagram_socket_impl(_nio_impl):
 
 __all__ = [ 'AF_INET', 'SO_REUSEADDR', 'SOCK_DGRAM', 'SOCK_RAW',
         'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
-        'SocketType', 'SocketTypes', 'error', 'herror', 'gaierror', 'timeout',
+        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
         'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
         'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
         'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
