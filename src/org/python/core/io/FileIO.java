@@ -188,7 +188,7 @@ public class FileIO extends RawIOBase {
         // the file is growing
         long toRead;
         try {
-            toRead = fileChannel.size() - fileChannel.position();
+            toRead = Math.max(0, fileChannel.size() - fileChannel.position());
         } catch (IOException ioe) {
             throw Py.IOError(ioe);
         }

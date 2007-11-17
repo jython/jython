@@ -129,9 +129,16 @@ public abstract class TextIOBase extends IOBase {
 
     /** {@inheritDoc} */
     public long truncate(long pos) {
+        long initialPos = tell();
         flush();
-        seek(pos);
-        return bufferedIO.truncate(pos);
+        pos = bufferedIO.truncate(pos);
+        // FileChannel resets the position to the truncated size if
+        // the position was larger, whereas Python expects the
+        // original position
+        if (initialPos > pos) {
+            seek(initialPos);
+        }
+        return pos;
     }
 
     /** {@inheritDoc} */
