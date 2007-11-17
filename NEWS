@@ -4,6 +4,7 @@ Jython 2.2.2 rc1
   Bugs fixed
     - [ 1806980 ] os.path.join ignores empty string
     - [ 1744567 ] Simultaneous read & write on socket FileWrapper causes hang
+    - [ 1831710 ] PyFileCloser throws NullPointerException on shutdown
 
 Jython 2.2.1
   Identical to 2.2.1 rc2
