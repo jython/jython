@@ -1,5 +1,11 @@
 Jython NEWS
 
+Jython 2.2.2 rc1
+  Bugs fixed
+    - [ 1806980 ] os.path.join ignores empty string
+    - [ 1744567 ] Simultaneous read & write on socket FileWrapper causes hang
+    - [ 1831710 ] PyFileCloser throws NullPointerException on shutdown
+
 Jython 2.2.1
   Identical to 2.2.1 rc2
 
@@ -29,8 +35,7 @@ Jython 2.2.1 rc1
     - [ 1783153 ] Patch: compatibility with Java 1.3 for Jython 2.2
 
 Jython 2.2
-  No changes from 2.2 rc3
-
+  Identical to 2.2 rc3
 Jython 2.2 rc3
   New Features
     - Added telnetlib from CPython
@@ -122,6 +127,7 @@ Jython 2.2 beta2
     - [ 1682423 ] Convert PyModule to a new-style class
     - [ 1682498 ] Fix int(None) raising an AttributeError
     - [ 1684172 ] Changes to make compileall work
+    - [ 1628469 ] fixes for failing builtin tests
 
   
 Jython 2.2 beta1
