@@ -1119,6 +1119,10 @@ public class PyFile extends PyObject
         }
 
         public void run() {
+            if (closers == null) {
+                // closers can be null in some strange cases
+                return;
+            }
             synchronized (closers) {
                 while (closers.size() > 0) {
                     try {
