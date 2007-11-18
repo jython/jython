@@ -122,7 +122,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="jarless" depends="compile, copy-lib"/>
 
-    <target name="developer-build" depends="jar, copy-lib" description="a local build for developers" />
+    <target name="developer-build" depends="prepare-output, jar, copy-lib" description="a local build for developers" />
 
     <target name="full-build" depends="full-init, dump-env, install" description="a full build with svn checkout" />
 
@@ -295,11 +295,14 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </delete>
     </target>
 
-    <!-- create necessary directories -->
-    <target name="prepare" depends="prepare-full, prepare-checkout">
+    <!-- create output directories -->
+    <target name ="prepare-output" depends="init">
         <mkdir dir="${output.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
+
+    <!-- create necessary directories -->
+    <target name="prepare" depends="prepare-full, prepare-checkout, prepare-output"/>
 
     <!-- create directories needed only in full-build -->
     <target name="prepare-full" depends="clean" if="full-build">
