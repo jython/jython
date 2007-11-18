@@ -25,5 +25,5 @@ class JyLocalGenerator(JyGenerator.JyGenerator):
         return '''
 <center>
     <a href="http://www.jython.org/">
-    <img border="0" src="%(rootdir)s/images/jpython-new-small.gif"></a></center>''' % \
+    <img border="0" src="%(rootdir)s/images/jython-new-small.gif"></a></center>''' % \
     self._d
