@@ -1,8 +1,7 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
+import org.python.core.util.StringUtil;
 
 /**
  * A builtin python string.
@@ -2108,45 +2107,7 @@ public class PyString extends PyBaseString implements ClassDictInit
      *         corresponding char.
      */
     public byte[] toBytes() {
-        return to_bytes(string);
-    }
-
-    /**
-     * @return a byte array with one byte for each char in s. Each byte contains
-     *         the low-order bits of its corresponding char.
-     */
-    public static byte[] to_bytes(String s) {
-        try {
-            return s.getBytes("ISO-8859-1");
-        } catch(UnsupportedEncodingException e) {
-            // This JVM is whacked, it doesn't even have iso-8859-1
-            throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
-        }
-    }
-
-    /**
-     * @return A String with chars corresponding to the bytes in buf
-     */
-    public static String from_bytes(byte[] buf) {
-        return from_bytes(buf, 0, buf.length);
-    }
-
-    /**
-     * @return A String with chars corresponding to the bytes in buf
-     */
-    public static String from_bytes(ByteBuffer buf) {
-        return from_bytes(buf.array(), buf.arrayOffset() + buf.position(),
-                          buf.arrayOffset() + buf.limit());
-    }
-    
-    /**
-     * @return A String of len buff with chars corresponding to buf from off to
-     *         off + len
-     */
-    public static String from_bytes(byte[] buf, int off, int len) {
-        // Yes, I known the method is deprecated, but it is the fastest
-        // way of converting between between byte[] and String
-        return new String(buf, 0, off, len);
+        return StringUtil.toBytes(string);
     }
 
     public Object __tojava__(Class c) {

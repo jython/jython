@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
+import org.python.core.util.StringUtil;
 import org.python.parser.IParserHost;
 import org.python.parser.Node;
 import org.python.parser.ParseException;
@@ -87,7 +88,7 @@ public class parser {
     }
 
     public static Node parse(String string, String kind) {
-        return parse(new ByteArrayInputStream(PyString.to_bytes(string)),
+        return parse(new ByteArrayInputStream(StringUtil.toBytes(string)),
                      kind, "<string>", null);
     }
 
@@ -115,7 +116,7 @@ public class parser {
         modType node = null;        
         //System.err.println(new PyString(string).__repr__().toString());
 
-        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(PyString.to_bytes(string)),
+        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(StringUtil.toBytes(string)),
                                                  cflags);
         
         PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader),

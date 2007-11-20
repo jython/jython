@@ -3,6 +3,7 @@
 package org.python.modules;
 
 import org.python.core.*;
+import org.python.core.util.StringUtil;
 
 public class sha implements ClassDictInit {
     public static String __doc__ =
@@ -43,7 +44,7 @@ public class sha implements ClassDictInit {
         String cp = ap.getString(0, null);
         SHA1 n = new SHA1();
         if(cp != null) {
-            n.update(PyString.to_bytes(cp));
+            n.update(StringUtil.toBytes(cp));
         }
         return n;
     }

@@ -12,6 +12,8 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 
+import org.python.core.util.StringUtil;
+
 /**
  * A wrapper class around native java arrays.
  * 
@@ -1270,7 +1272,7 @@ public class PyArray extends PySequence implements Cloneable {
         if((strlen % itemsize) != 0) {
             throw Py.ValueError("string length not a multiple of item size");
         }
-        ByteArrayInputStream bis = new ByteArrayInputStream(PyString.to_bytes(input));
+        ByteArrayInputStream bis = new ByteArrayInputStream(StringUtil.toBytes(input));
         int origsize = delegate.getSize();
         try {
             fromStream(bis);
@@ -1803,6 +1805,6 @@ public class PyArray extends PySequence implements Cloneable {
         } catch(IOException e) {
             throw Py.IOError(e);
         }
-        return PyString.from_bytes(bos.toByteArray());
+        return StringUtil.fromBytes(bos.toByteArray());
     }
 }

@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
+import org.python.core.util.StringUtil;
 import org.python.parser.ast.modType;
 
 public final class Py
@@ -1782,7 +1783,7 @@ public final class Py
                                        String filename,
                                        String type,
                                        CompilerFlags cflags) {
-        return Py.compile_flags(new ByteArrayInputStream(PyString.to_bytes(data + "\n\n")),
+        return Py.compile_flags(new ByteArrayInputStream(StringUtil.toBytes(data + "\n\n")),
                                 filename,
                                 type,
                                 cflags);

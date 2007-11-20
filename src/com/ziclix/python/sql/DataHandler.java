@@ -14,6 +14,7 @@ import org.python.core.PyLong;
 import org.python.core.PyObject;
 import org.python.core.PyList;
 import org.python.core.PyString;
+import org.python.core.util.StringUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -250,7 +251,7 @@ public class DataHandler {
                         byte[] bytes = DataHandler.read(longvarchar);
 
                         if (bytes != null) {
-                            obj = Py.newString(PyString.from_bytes(bytes));
+                            obj = Py.newString(StringUtil.fromBytes(bytes));
                         }
                     } finally {
                         try {

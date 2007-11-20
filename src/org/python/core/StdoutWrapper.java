@@ -3,6 +3,8 @@ package org.python.core;
 
 import java.io.OutputStream;
 
+import org.python.core.util.StringUtil;
+
 public class StdoutWrapper extends OutputStream {
     protected String name;
 
@@ -63,7 +65,7 @@ public class StdoutWrapper extends OutputStream {
     }
 
     public void write(byte[] data, int off, int len) {
-        write(PyString.from_bytes(data, off, len));
+        write(StringUtil.fromBytes(data, off, len));
     }
 
     public void clearSoftspace() {

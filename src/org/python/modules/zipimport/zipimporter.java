@@ -27,6 +27,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.util.StringUtil;
 
 import java.util.Date;
 import java.util.Enumeration;
@@ -493,7 +494,7 @@ public class zipimporter extends PyObject {
                 // continue
             }
         }
-        return PyString.from_bytes(data);
+        return StringUtil.fromBytes(data);
     }
 
     public boolean is_package(String fullname) {

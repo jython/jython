@@ -3,7 +3,7 @@ package org.python.core.io;
 
 import java.nio.ByteBuffer;
 
-import org.python.core.PyString;
+import org.python.core.util.StringUtil;
 
 /**
  * A Buffered text stream in binary mode.
@@ -29,7 +29,7 @@ public class BinaryIOWrapper extends TextIOBase {
         }
 
         if (!readahead.hasRemaining()) {
-            return PyString.from_bytes(bufferedIO.read(size));
+            return StringUtil.fromBytes(bufferedIO.read(size));
         }
 
         ByteBuffer data = ByteBuffer.allocate(size);
@@ -40,7 +40,7 @@ public class BinaryIOWrapper extends TextIOBase {
             data.put(readahead);
             readahead.limit(readaheadLimit);
             data.flip();
-            return PyString.from_bytes(data);
+            return StringUtil.fromBytes(data);
         }
 
         // Drain the readahead then request more from the buffer
@@ -48,13 +48,13 @@ public class BinaryIOWrapper extends TextIOBase {
         clearReadahead();
         bufferedIO.readinto(data);
         data.flip();
-        return PyString.from_bytes(data);
+        return StringUtil.fromBytes(data);
     }
 
     /** {@inheritDoc} */
     public String readall() {
         if (!readahead.hasRemaining()) {
-            return PyString.from_bytes(bufferedIO.readall());
+            return StringUtil.fromBytes(bufferedIO.readall());
         }
 
         ByteBuffer remaining = bufferedIO.readall();
@@ -64,7 +64,7 @@ public class BinaryIOWrapper extends TextIOBase {
         clearReadahead();
         all.put(remaining);
         all.flip();
-        return PyString.from_bytes(all);
+        return StringUtil.fromBytes(all);
     }
 
     /** {@inheritDoc} */
@@ -116,6 +116,6 @@ public class BinaryIOWrapper extends TextIOBase {
         if (readahead.hasRemaining()) {
             clearReadahead();
         }
-        return bufferedIO.write(ByteBuffer.wrap(PyString.to_bytes(buf)));
+        return bufferedIO.write(ByteBuffer.wrap(StringUtil.toBytes(buf)));
     }
 }
