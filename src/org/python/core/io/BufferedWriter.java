@@ -49,7 +49,7 @@ public class BufferedWriter extends BufferedIOMixin {
         int bytesToWrite = bytesSize - toBuffer;
 
         int origBytesLimit = bytes.limit();
-        bytes.limit(bytesToWrite);
+        bytes.limit(bytes.position() + bytesToWrite);
 
         int totalToWrite = total - toBuffer;
         int count = totalToWrite;
@@ -63,7 +63,6 @@ public class BufferedWriter extends BufferedIOMixin {
 
         if (toBuffer > 0) {
             bytes.limit(origBytesLimit);
-            bytes.position(bytesToWrite);
             buffer.put(bytes);
         }
 

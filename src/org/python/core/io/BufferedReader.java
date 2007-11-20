@@ -98,7 +98,10 @@ public class BufferedReader extends BufferedIOMixin {
 
         if (bufferSize > 0) {
             peek(1);
-            bytes.limit(Math.min(size, buffer.remaining()));
+            int bufferedSize = buffer.remaining();
+            if (bufferedSize < size) {
+                bytes.limit(bytes.position() + bufferedSize);
+            }
         }
         return readinto(bytes);
     }
