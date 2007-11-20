@@ -659,7 +659,7 @@ public class PyFile extends PyObject
         PyObject name = ap.getPyObject(0);
         if (!(name instanceof PyString)) {
             throw Py.TypeError("coercing to Unicode: need string, '" +
-                               name.getType().getFullName() + "'type found");
+                               name.getType().getFullName() + "' type found");
         }
         String mode = ap.getString(1, "r");
         int bufsize = ap.getInt(2, -1);
