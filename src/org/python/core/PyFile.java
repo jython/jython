@@ -156,6 +156,22 @@ public class PyFile extends PyObject
 
         }
         dict.__setitem__("close",new PyMethodDescr("close",PyFile.class,0,0,new exposed_close(null,null)));
+        class exposed_fileno extends PyBuiltinMethodNarrow {
+
+            exposed_fileno(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed_fileno(self,info);
+            }
+
+            public PyObject __call__() {
+                return((PyFile)self).file_fileno();
+            }
+
+        }
+        dict.__setitem__("fileno",new PyMethodDescr("fileno",PyFile.class,0,0,new exposed_fileno(null,null)));
         class exposed_flush extends PyBuiltinMethodNarrow {
 
             exposed_flush(PyObject self,PyBuiltinFunction.Info info) {
@@ -562,33 +578,6 @@ public class PyFile extends PyObject
         file_init(raw, name, mode, bufsize);
     }
 
-    public PyFile(InputStream istream, OutputStream ostream, String name,
-                  String mode, int bufsize, boolean closefd) {
-        parseMode(mode);
-        file_init(new StreamIO(istream, ostream, closefd), name, mode, bufsize);
-    }
-
-    public PyFile(InputStream istream, OutputStream ostream, String name,
-                  String mode, int bufsize)
-    {
-        this(istream, ostream, name, mode, -1, true);
-    }
-
-    public PyFile(InputStream istream, OutputStream ostream, String name,
-                  String mode)
-    {
-        this(istream, ostream, name, mode, -1);
-    }
-
-    public PyFile(InputStream istream, OutputStream ostream, String name)
-    {
-        this(istream, ostream, name, "r+");
-    }
-
-    public PyFile(InputStream istream, OutputStream ostream) {
-        this(istream, ostream, "<???>", "r+");
-    }
-
     public PyFile(InputStream istream, String name, String mode, int bufsize,
                   boolean closefd) {
         parseMode(mode);
@@ -979,12 +968,12 @@ public class PyFile extends PyObject
         return file.isatty();
     }
 
-    public int fileno() {
+    public PyObject fileno() {
         return file_fileno();
     }
 
-    final int file_fileno() {
-        return file.fileno();
+    final PyObject file_fileno() {
+        return new PyJavaInstance(file.fileno());
     }
 
     final String file_toString() {

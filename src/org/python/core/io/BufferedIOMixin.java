@@ -78,7 +78,7 @@ public abstract class BufferedIOMixin extends BufferedIOBase {
     }
 
     /** {@inheritDoc} */
-    public int fileno() {
+    public RawIOBase fileno() {
         return rawIO.fileno();
     }
 

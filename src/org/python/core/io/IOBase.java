@@ -114,11 +114,11 @@ public abstract class IOBase {
      *
      * Raises IOError if the IO object does not use a file descriptor.
      *
-     * @return a file descriptor int
+     * @return a file descriptor
      */
-    public int fileno() {
+    public RawIOBase fileno() {
         unsupported("fileno");
-        return -1;
+        return null;
     }
 
     /**

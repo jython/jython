@@ -3,6 +3,7 @@ package org.python.core.io;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
 import java.nio.channels.SocketChannel;
 
 import org.python.core.Py;
@@ -95,5 +96,10 @@ public class SocketIO extends SocketIOBase {
             throw Py.IOError(ioe);
         }
         super.close();
+    }
+
+    /** {@inheritDoc} */
+    public Channel getChannel() {
+        return socketChannel;
     }
 }

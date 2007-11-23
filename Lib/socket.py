@@ -76,6 +76,10 @@ import java.nio.channels.UnsupportedAddressTypeException
 
 import javax.net.ssl.SSLSocketFactory
 
+import org.python.core.io.DatagramSocketIO
+import org.python.core.io.ServerSocketIO
+import org.python.core.io.SocketIO
+
 class error(Exception): pass
 class herror(error): pass
 class gaierror(error): pass
@@ -206,7 +210,8 @@ class _nio_impl:
     def getchannel(self):
         return self.jchannel
 
-    fileno = getchannel
+    def fileno(self):
+        return self.socketio
 
 class _client_socket_impl(_nio_impl):
 
@@ -220,6 +225,7 @@ class _client_socket_impl(_nio_impl):
             self.host = None
             self.port = None
         self.jsocket = self.jchannel.socket()
+        self.socketio = org.python.core.io.SocketIO(self.jchannel, 'rw')
 
     def bind(self, host, port):
         self.jsocket.bind(java.net.InetSocketAddress(host, port))
@@ -246,6 +252,7 @@ class _server_socket_impl(_nio_impl):
             bindaddr = java.net.InetSocketAddress(port)
         self._setreuseaddress(reuse_addr)
         self.jsocket.bind(bindaddr, backlog)
+        self.socketio = org.python.core.io.ServerSocketIO(self.jchannel, 'rw')
 
     def accept(self):
         if self.mode in (MODE_BLOCKING, MODE_NONBLOCKING):
@@ -271,6 +278,7 @@ class _datagram_socket_impl(_nio_impl):
                 local_address = java.net.InetSocketAddress(port)
             self.jsocket.bind(local_address)
         self._setreuseaddress(reuse_addr)
+        self.socketio = org.python.core.io.DatagramSocketIO(self.jchannel, 'rw')
 
     def connect(self, host, port):
         self.jchannel.connect(java.net.InetSocketAddress(host, port))
@@ -445,7 +453,10 @@ class _nonblocking_api_mixin:
             return None
         return self.sock_impl.getchannel()
 
-    fileno = getchannel
+    def fileno(self):
+        if not self.sock_impl:
+            return None
+        return self.sock_impl.fileno()
 
     def _get_jsocket(self):
         return self.sock_impl.jsocket

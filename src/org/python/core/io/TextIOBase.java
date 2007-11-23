@@ -164,7 +164,7 @@ public abstract class TextIOBase extends IOBase {
     }
 
     /** {@inheritDoc} */
-    public int fileno() {
+    public RawIOBase fileno() {
         return bufferedIO.fileno();
     }
 

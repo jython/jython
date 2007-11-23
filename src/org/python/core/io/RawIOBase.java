@@ -2,6 +2,7 @@
 package org.python.core.io;
 
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -151,4 +152,17 @@ public abstract class RawIOBase extends IOBase {
         }
         return count;
     }
+
+    /** {@inheritDoc} */
+    public RawIOBase fileno() {
+        checkClosed();
+        return this;
+    }
+
+    /**
+     * Return the underlying Java nio Channel.
+     *
+     * @return the underlying Java nio Channel
+     */
+    public abstract Channel getChannel();
 }

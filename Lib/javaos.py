@@ -26,11 +26,32 @@ __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
            "popen", "popen2", "popen3", "popen4", "getlogin"
            ]
 
+import errno
 from java.io import File
 import java.lang.System
 import javapath as path
 from UserDict import UserDict
+import org.python.core.io.FileDescriptors
 import time
+
+# open for reading only
+O_RDONLY = 0x0
+# open for writing only
+O_WRONLY = 0x1
+# open for reading and writing
+O_RDWR = 0x2
+
+# set append mode
+O_APPEND = 0x8
+# synchronous writes
+O_SYNC = 0x80
+
+# create if nonexistant
+O_CREAT = 0x200
+# truncate to zero length
+O_TRUNC = 0x400
+# error if already exists
+O_EXCL = 0x800
 
 class stat_result:
   import stat as _stat
@@ -215,6 +236,135 @@ def utime(path, times):
         mtime = time.time()
     # Only the modification time is changed
     File(path).setLastModified(long(mtime * 1000.0))
+
+def close(fd):
+    """close(fd)
+
+    Close a file descriptor (for low level IO).
+    """
+    rawio = org.python.core.io.FileDescriptors.get(fd)
+    _handle_oserror(rawio.close)
+
+def fdopen(fd, mode='r', bufsize=-1):
+    """fdopen(fd [, mode='r' [, bufsize]]) -> file_object
+
+    Return an open file object connected to a file descriptor.
+    """
+    rawio = org.python.core.io.FileDescriptors.get(fd)
+    if (len(mode) and mode[0] or '') not in 'rwa':
+        raise ValueError("invalid file mode '%s'" % mode)
+    if rawio.closed():
+        raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
+
+    from org.python.core import PyFile
+    try:
+        fp = PyFile(rawio, '<fdopen>', mode, bufsize)
+    except IOError:
+        raise OSError(errno.EINVAL, errno.strerror(errno.EINVAL))
+    return fp
+
+def ftruncate(fd, length):
+    """ftruncate(fd, length)
+
+    Truncate a file to a specified length.
+    """    
+    rawio = org.python.core.io.FileDescriptors.get(fd)
+    try:
+        rawio.truncate(length)
+    except Exception, e:
+        raise IOError(errno.EBADF, errno.strerror(errno.EBADF))
+
+def lseek(fd, pos, how):
+    """lseek(fd, pos, how) -> newpos
+
+    Set the current position of a file descriptor.
+    """
+    rawio = org.python.core.io.FileDescriptors.get(fd)
+    return _handle_oserror(rawio.seek, pos, how)
+
+def open(filename, flag, mode=0777):
+    """open(filename, flag [, mode=0777]) -> fd
+
+    Open a file (for low level IO).
+    """
+    reading = flag & O_RDONLY
+    writing = flag & O_WRONLY
+    updating = flag & O_RDWR
+    creating = flag & O_CREAT
+
+    truncating = flag & O_TRUNC
+    exclusive = flag & O_EXCL
+    sync = flag & O_SYNC
+    appending = flag & O_APPEND
+
+    if updating and writing:
+        raise OSError(errno.EINVAL, 'Invalid argument: %r' % filename)
+
+    if not creating and not path.exists(filename):
+        raise OSError(errno.ENOENT, 'No such file or directory: %r' % filename)
+
+    if not writing or updating:
+        # Default to reading
+        reading = True
+
+    from org.python.core.io import FileIO
+    if truncating and not writing:
+        # Explicitly truncate, writing will truncate anyway
+        FileIO(filename, 'w').close()
+
+    if exclusive and creating:
+        from java.io import File
+        try:
+            if not File(filename).createNewFile():
+                raise OSError(errno.EEXIST, 'File exists: %r' % filename)
+        except java.io.IOException, ioe:
+            raise OSError(ioe)
+
+    mode = '%s%s%s%s' % (reading and 'r' or '',
+                         (not appending and writing) and 'w' or '',
+                         (appending and (writing or updating)) and 'a' or '',
+                         updating and '+' or '')
+
+    if sync and (writing or updating):
+        from java.io import FileNotFoundException, RandomAccessFile
+        try:
+            fchannel = RandomAccessFile(filename, 'rws').getChannel()
+        except FileNotFoundException, fnfe:
+            if path.isdir(filename):
+                raise OSError(errno.EISDIR, "Is a directory")
+            raise OSError(errno.ENOENT,
+                          "No such file or directory: %r' % filename")
+        return FileIO(fchannel, mode)
+
+    return FileIO(filename, mode)
+
+def read(fd, buffersize):
+    """read(fd, buffersize) -> string
+
+    Read a file descriptor.
+    """
+    from org.python.core.util import StringUtil
+    rawio = org.python.core.io.FileDescriptors.get(fd)
+    buf = _handle_oserror(rawio.read, buffersize)
+    return str(StringUtil.fromBytes(buf))
+
+def write(fd, string):
+    """write(fd, string) -> byteswritten
+
+    Write a string to a file descriptor.
+    """
+    from java.nio import ByteBuffer
+    from org.python.core.util import StringUtil
+    rawio = org.python.core.io.FileDescriptors.get(fd)
+    return _handle_oserror(rawio.write,
+                           ByteBuffer.wrap(StringUtil.toBytes(string)))
+
+def _handle_oserror(func, *args, **kwargs):
+    """Translate exceptions into OSErrors"""
+    try:
+        return func(*args, **kwargs)
+    except:
+        raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
 class LazyDict( UserDict ):
     """A lazy-populating User Dictionary.

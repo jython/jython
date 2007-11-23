@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -38,21 +39,6 @@ public class StreamIO extends RawIOBase {
     private boolean closefd;
 
     /**
-     * Construct a StreamIO for the given read/write channels.
-     *
-     * @param readChannel a ReadableByteChannel
-     * @param writeChannel a WritableByteChannel
-     * @param closefd boolean whether the underlying file is closed on
-     *                close() (defaults to True)
-     */
-    public StreamIO(ReadableByteChannel readChannel,
-                    WritableByteChannel writeChannel, boolean closefd) {
-        this.readChannel = readChannel;
-        this.writeChannel = writeChannel;
-        this.closefd = closefd;
-    }
-
-    /**
      * Construct a StreamIO for the given read channel.
      *
      * @param readChannel a ReadableByteChannel
@@ -60,7 +46,17 @@ public class StreamIO extends RawIOBase {
      *                close() (defaults to True)
      */
     public StreamIO(ReadableByteChannel readChannel, boolean closefd) {
-        this(readChannel, null, closefd);
+        this.readChannel = readChannel;
+        this.closefd = closefd;
+    }
+
+    /**
+     * Construct a StreamIO for the given read channel.
+     *
+     * @param readChannel a ReadableByteChannel
+     */
+    public StreamIO(ReadableByteChannel readChannel) {
+        this(readChannel, true);
     }
 
     /**
@@ -71,23 +67,20 @@ public class StreamIO extends RawIOBase {
      *                close() (defaults to True)
      */
     public StreamIO(WritableByteChannel writeChannel, boolean closefd) {
-        this(null, writeChannel, closefd);
+        this.writeChannel = writeChannel;
+        this.closefd = closefd;
     }
 
     /**
-     * Construct a StreamIO for the given read/write streams.
+     * Construct a StreamIO for the given write channel.
      *
-     * @param inputStream an InputStream
-     * @param outputStream an OutputStream
+     * @param writeChannel a WritableByteChannel
+     * @param isatty boolean whether this io object is a tty device
      * @param closefd boolean whether the underlying file is closed on
      *                close() (defaults to True)
      */
-    public StreamIO(InputStream inputStream, OutputStream outputStream,
-                    boolean closefd) {
-        this(inputStream == null ? null : Channels.newChannel(inputStream),
-             outputStream == null ? null : Channels.newChannel(outputStream), closefd);
-        this.inputStream = inputStream;
-        this.outputStream = outputStream;
+    public StreamIO(WritableByteChannel writeChannel) {
+        this(writeChannel, true);
     }
 
     /**
@@ -98,7 +91,7 @@ public class StreamIO extends RawIOBase {
      *                close() (defaults to True)
      */
     public StreamIO(InputStream inputStream, boolean closefd) {
-        this(inputStream, null, closefd);
+        this(Channels.newChannel(inputStream), closefd);
     }
 
     /**
@@ -109,7 +102,7 @@ public class StreamIO extends RawIOBase {
      *                close() (defaults to True)
      */
     public StreamIO(OutputStream outputStream, boolean closefd) {
-        this(null, outputStream, closefd);
+        this(Channels.newChannel(outputStream), closefd);
     }
 
     /** {@inheritDoc} */
@@ -180,5 +173,10 @@ public class StreamIO extends RawIOBase {
             return inputStream;
         }
         return super.__tojava__(cls);
+    }
+
+    /** {@inheritDoc} */
+    public Channel getChannel() {
+        return readable() ? readChannel : writeChannel;
     }
 }
