@@ -1,12 +1,16 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -305,13 +309,12 @@ public class PyType extends PyObject implements Serializable {
         }
         PyType newBase = best_base(newBases);
         if(!newBase.layoutAligns(base)) {
-            throw Py.TypeError("'" + base + "' layout differs from '" + newBase
-                    + "'");
+            throw Py.TypeError("'" + base + "' layout differs from '" + newBase + "'");
         }
         PyObject[] savedBases = bases;
         PyType savedBase = base;
         PyObject[] savedMro = mro;
-        List savedSubMros = new ArrayList();
+        List<Object> savedSubMros = new ArrayList<Object>();
         try {
             bases = newBases;
             base = newBase;
@@ -342,27 +345,25 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private void mro_internal() {
-        if(getType().underlying_class != PyType.class
-                && getType().lookup("mro") != null) {
-            mro = Py.make_array(getType().lookup("mro")
-                    .__get__(null, getType())
-                    .__call__(this));
-        }else{
+        if(getType().underlying_class != PyType.class && getType().lookup("mro") != null) {
+            mro = Py.make_array(getType().lookup("mro").__get__(null, getType()).__call__(this));
+        } else {
             mro = compute_mro();
         }
     }
     
     /**
-     * Collects the subclasses and current mro of this type in currentMroSaver.  If
-     * this type has subclasses C and D, and D has a subclass E current mro saver will equal
-     * [C, C.__mro__, D, D.__mro__, E, E.__mro__] after this call.
+     * Collects the subclasses and current mro of this type in mroCollector. If
+     * this type has subclasses C and D, and D has a subclass E current
+     * mroCollector will equal [C, C.__mro__, D, D.__mro__, E, E.__mro__] after
+     * this call.
      */
-    private void mro_subclasses(List mroCollector){
-        for (java.util.Iterator iter =subclasses.iterator(); iter.hasNext();) {
-            java.lang.ref.WeakReference type_ref = (java.lang.ref.WeakReference)iter.next();
-            PyType subtype = (PyType)type_ref.get();
-            if (subtype == null)
+    private void mro_subclasses(List<Object> mroCollector){
+        for(WeakReference<PyType> ref : subclasses) {
+            PyType subtype = ref.get();
+            if (subtype == null) {
                 continue;
+            }
             mroCollector.add(subtype);
             mroCollector.add(subtype.mro);
             subtype.mro_internal();
@@ -395,11 +396,11 @@ public class PyType extends PyObject implements Serializable {
     private int numSlots;
     private boolean needs_userdict = true;
 
-    private java.lang.ref.ReferenceQueue subclasses_refq = new java.lang.ref.ReferenceQueue();
-    private java.util.HashSet subclasses = new java.util.HashSet();
+    private ReferenceQueue<PyType> subclasses_refq = new ReferenceQueue<PyType>();
+    private HashSet<WeakReference<PyType>> subclasses = new HashSet<WeakReference<PyType>>();
 
     private void cleanup_subclasses() {
-        java.lang.ref.Reference ref;
+        Reference ref;
         while ((ref = subclasses_refq.poll()) != null) {
             subclasses.remove(ref);
         }
@@ -416,9 +417,8 @@ public class PyType extends PyObject implements Serializable {
     public synchronized final PyObject type_getSubclasses() {
         PyList result = new PyList();
         cleanup_subclasses();
-        for (java.util.Iterator iter =subclasses.iterator(); iter.hasNext();) {
-            java.lang.ref.WeakReference type_ref = (java.lang.ref.WeakReference)iter.next();
-            PyType subtype = (PyType)type_ref.get();
+        for(WeakReference<PyType> ref : subclasses) {
+            PyType subtype = ref.get();
             if (subtype == null)
                 continue;
             result.append(subtype);
@@ -428,17 +428,14 @@ public class PyType extends PyObject implements Serializable {
 
     private synchronized void attachSubclass(PyType subtype) {
         cleanup_subclasses();
-        subclasses.add(
-            new java.lang.ref.WeakReference(subtype, subclasses_refq));
+        subclasses.add(new WeakReference<PyType>(subtype, subclasses_refq));
     }
 
     private synchronized void detachSubclass(PyType subtype) {
         cleanup_subclasses();
-        for (java.util.Iterator iter =subclasses.iterator(); iter.hasNext();) {
-            java.lang.ref.WeakReference type_ref = (java.lang.ref.WeakReference)iter.next();
-            PyType refType = (PyType)type_ref.get();
-            if(refType == subtype){
-                subclasses.remove(type_ref);
+        for(WeakReference<PyType> ref : subclasses) {
+            if(ref.get() == subtype){
+                subclasses.remove(ref);
                 break;
             }
         }
@@ -453,23 +450,22 @@ public class PyType extends PyObject implements Serializable {
         if (!top) {
             stop = behavior.onType(this);
         }
-        if (stop)
+        if (stop) {
             return;
-        for (java.util.Iterator iter = subclasses.iterator();
-            iter.hasNext();
-            ) {
-            java.lang.ref.WeakReference type_ref =
-                (java.lang.ref.WeakReference) iter.next();
-            PyType subtype = (PyType) type_ref.get();
-            if (subtype == null)
+        }
+        for(WeakReference<PyType> ref : subclasses) {
+            PyType subtype = ref.get();
+            if (subtype == null) {
                 continue;
+            }
             subtype.traverse_hierarchy(false, behavior);
         }
     }
 
-    private static void fill_classic_mro(ArrayList acc,PyClass classic_cl) {
-        if(!acc.contains(classic_cl))
+    private static void fill_classic_mro(ArrayList<PyObject> acc,PyClass classic_cl) {
+        if(!acc.contains(classic_cl)) {
             acc.add(classic_cl);
+        }
         PyObject[] bases = classic_cl.__bases__.getArray();
         for (int i=0; i <bases.length; i++) {
             fill_classic_mro(acc,(PyClass)bases[i]);
@@ -477,28 +473,30 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static PyObject[] classic_mro(PyClass classic_cl) {
-        ArrayList acc = new ArrayList();
+        ArrayList<PyObject> acc = new ArrayList<PyObject>();
         fill_classic_mro(acc, classic_cl);
-        return (PyObject[])acc.toArray(new PyObject[0]);
+        return acc.toArray(new PyObject[acc.size()]);
     }
 
     private static boolean tail_contains(PyObject[] lst,int whence,PyObject o) {
         int n = lst.length;
         for (int i=whence+1; i < n; i++) {
-            if (lst[i] == o)
+            if (lst[i] == o) {
                 return true;
+            }
         }
         return false;
     }
 
     private static PyException mro_error(PyObject[][] to_merge,int[] remain) {
-        StringBuffer msg = new StringBuffer("Cannot create a"+
-            " consistent method resolution\norder (MRO) for bases ");
+        StringBuffer msg = new StringBuffer("Cannot create a consistent method resolution\n" +
+                                            "order (MRO) for bases ");
         PyDictionary set = new PyDictionary();
         for (int i=0; i < to_merge.length; i++) {
             PyObject[] lst = to_merge[i];
-            if(remain[i] < lst.length)
+            if(remain[i] < lst.length) {
                 set.__setitem__(lst[remain[i]],Py.None);
+            }
         }
         PyObject iter = set.__iter__();
         PyObject cur;
@@ -515,14 +513,12 @@ public class PyType extends PyObject implements Serializable {
         return Py.TypeError(msg.toString());
     }
 
-      private static void debug(PyObject[] objs) {
-         System.out.println(new PyList(objs).toString());
-      }
-
+    private static void debug(PyObject[] objs) {
+        System.out.println(new PyList(objs).toString());
+    }
       
     final PyList type_mro() {
         return new PyList(compute_mro());
-        
     }
 
     final PyList type_mro(PyObject o) {
@@ -532,28 +528,27 @@ public class PyType extends PyObject implements Serializable {
     final PyObject[] compute_mro() {
         PyObject[] bases = this.bases;
         int n = bases.length;
-        for (int i=0; i < n; i++) {
+        for(int i = 0; i < n; i++) {
             PyObject cur = bases[i];
-            for (int j = i+1; j<n; j++) {
-                if (bases[j] == cur) {
+            for(int j = i + 1; j < n; j++) {
+                if(bases[j] == cur) {
                     PyObject name = cur.__findattr__("__name__");
-                    throw Py.TypeError("duplicate base class " +
-                        (name==null?"?":name.toString()));
+                    throw Py.TypeError("duplicate base class "
+                            + (name == null ? "?" : name.toString()));
                 }
             }
         }
 
         int nmerge = n+1;
-
         PyObject[][] to_merge = new PyObject[nmerge][];
         int[] remain = new int[nmerge];
 
-        for (int i=0; i < n; i++) {
+        for(int i = 0; i < n; i++) {
             PyObject cur = bases[i];
             remain[i] = 0;
-            if (cur instanceof PyType) {
+            if(cur instanceof PyType) {
                 to_merge[i] = ((PyType)cur).mro;
-            } else if (cur instanceof PyClass) {
+            } else if(cur instanceof PyClass) {
                 to_merge[i] = classic_mro((PyClass)cur);
             }
         }
@@ -561,7 +556,7 @@ public class PyType extends PyObject implements Serializable {
         to_merge[n] = bases;
         remain[n] = 0;
 
-        ArrayList acc = new ArrayList();
+        ArrayList<PyObject> acc = new ArrayList<PyObject>();
         acc.add(this);
 
         int empty_cnt=0;
@@ -589,7 +584,7 @@ public class PyType extends PyObject implements Serializable {
             empty_cnt = 0;
         }
         if (empty_cnt == nmerge) {
-            return (PyObject[])acc.toArray(bases);
+            return acc.toArray(bases);
         }
         throw mro_error(to_merge,remain);
     }
@@ -605,8 +600,9 @@ public class PyType extends PyObject implements Serializable {
             PyObject parent = mro[i];
             if (parent instanceof PyType) {
                 PyType parent_type =(PyType)parent;
-                if (isSolidBase(parent_type))
+                if (isSolidBase(parent_type)) {
                     return parent_type;
+                }
             }
         }
         throw Py.TypeError("base without solid base");
@@ -623,9 +619,9 @@ public class PyType extends PyObject implements Serializable {
      * @throws Py.TypeError if at least one of the bases isn't a new-style class
      */
     private static PyType best_base(PyObject[] bases) {
-        PyType winner=null;
-        PyType candidate=null;
-        PyType best=null;
+        PyType winner = null;
+        PyType candidate = null;
+        PyType best = null;
         for (int i=0; i < bases.length;i++) {
             PyObject base_proto = bases[i];
             if (base_proto instanceof PyClass)
@@ -1167,7 +1163,7 @@ public class PyType extends PyObject implements Serializable {
         }
     }
 
-    private static HashMap class_to_type;
+    private static HashMap<Class, PyType> class_to_type;
 
     public static interface Newstyle {
     }
@@ -1212,7 +1208,7 @@ public class PyType extends PyObject implements Serializable {
                     exposed_methods = EMPTY;
             }
         }
-        PyType newtype = (PyType)class_to_type.get(c);
+        PyType newtype = class_to_type.get(c);
         if (newtype == null) {
             newtype = c == PyType.class ? new PyType(true) : new PyType();
             class_to_type.put(c, newtype);
@@ -1245,10 +1241,10 @@ public class PyType extends PyObject implements Serializable {
 
     public static synchronized PyType fromClass(Class c) {
         if (class_to_type == null) {
-            class_to_type = new HashMap();
+            class_to_type = new HashMap<Class, PyType>();
             addFromClass(PyType.class);
         }
-        PyType type = (PyType) class_to_type.get(c);
+        PyType type = class_to_type.get(c);
         if (type != null)
             return type;
         return addFromClass(c);
