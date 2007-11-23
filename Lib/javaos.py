@@ -27,12 +27,13 @@ __all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
            ]
 
 import errno
-from java.io import File
 import java.lang.System
 import javapath as path
-from UserDict import UserDict
-import org.python.core.io.FileDescriptors
 import time
+
+from java.io import File
+from org.python.core.io import FileDescriptors
+from UserDict import UserDict
 
 # open for reading only
 O_RDONLY = 0x0
@@ -242,7 +243,7 @@ def close(fd):
 
     Close a file descriptor (for low level IO).
     """
-    rawio = org.python.core.io.FileDescriptors.get(fd)
+    rawio = FileDescriptors.get(fd)
     _handle_oserror(rawio.close)
 
 def fdopen(fd, mode='r', bufsize=-1):
@@ -250,7 +251,7 @@ def fdopen(fd, mode='r', bufsize=-1):
 
     Return an open file object connected to a file descriptor.
     """
-    rawio = org.python.core.io.FileDescriptors.get(fd)
+    rawio = FileDescriptors.get(fd)
     if (len(mode) and mode[0] or '') not in 'rwa':
         raise ValueError("invalid file mode '%s'" % mode)
     if rawio.closed():
@@ -268,7 +269,7 @@ def ftruncate(fd, length):
 
     Truncate a file to a specified length.
     """    
-    rawio = org.python.core.io.FileDescriptors.get(fd)
+    rawio = FileDescriptors.get(fd)
     try:
         rawio.truncate(length)
     except Exception, e:
@@ -279,7 +280,7 @@ def lseek(fd, pos, how):
 
     Set the current position of a file descriptor.
     """
-    rawio = org.python.core.io.FileDescriptors.get(fd)
+    rawio = FileDescriptors.get(fd)
     return _handle_oserror(rawio.seek, pos, how)
 
 def open(filename, flag, mode=0777):
@@ -344,7 +345,7 @@ def read(fd, buffersize):
     Read a file descriptor.
     """
     from org.python.core.util import StringUtil
-    rawio = org.python.core.io.FileDescriptors.get(fd)
+    rawio = FileDescriptors.get(fd)
     buf = _handle_oserror(rawio.read, buffersize)
     return str(StringUtil.fromBytes(buf))
 
@@ -355,7 +356,7 @@ def write(fd, string):
     """
     from java.nio import ByteBuffer
     from org.python.core.util import StringUtil
-    rawio = org.python.core.io.FileDescriptors.get(fd)
+    rawio = FileDescriptors.get(fd)
     return _handle_oserror(rawio.write,
                            ByteBuffer.wrap(StringUtil.toBytes(string)))
 
