@@ -11,8 +11,12 @@ import org.python.core.PyType;
 
 public class NewExposer extends Exposer {
 
+    public NewExposer(Class<?> cls, String name) {
+        this(getNewImpl(cls, name));
+    }
+    
     public NewExposer(Method method) {
-        super(PyNewWrapper.class, method.getDeclaringClass().getName() + "$exposed___new__");
+        this(Type.getType(method.getDeclaringClass()), method.getName());
         if((method.getModifiers() & Modifier.STATIC) == 0) {
             throw new IllegalArgumentException(method
                     + " isn't static, but it must be to be exposed as __new__");
@@ -21,11 +25,12 @@ public class NewExposer extends Exposer {
             throw new IllegalArgumentException(method
                     + " must return PyObject to be exposed as __new__");
         }
-        this.method = method;
     }
-
-    public NewExposer(Class<?> cls, String name) {
-        this(getNewImpl(cls, name));
+    
+    public NewExposer(Type onType, String methodName) {
+        super(PyNewWrapper.class, onType.getClassName() + "$exposed___new__");
+        this.onType = onType;
+        this.name = methodName;
     }
 
     private static Method getNewImpl(Class<?> cls, String name) {
@@ -65,16 +70,14 @@ public class NewExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 3);
         mv.visitVarInsn(ALOAD, 4);
         mv.visitMethodInsn(INVOKESTATIC,
-                           Type.getType(getMethodClass()).getInternalName(),
-                           method.getName(),
+                           onType.getInternalName(),
+                           name,
                            methodDesc(PYOBJ, PYNEWWRAPPER, BOOLEAN, PYTYPE, APYOBJ, ASTRING));
         mv.visitInsn(ARETURN);
         endMethod();
     }
 
-    public Class getMethodClass() {
-        return method.getDeclaringClass();
-    }
-
-    private Method method;
+    private Type onType;
+    
+    private String name;
 }

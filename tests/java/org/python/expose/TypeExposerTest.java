@@ -12,12 +12,6 @@ import org.python.core.PyType;
 
 public class TypeExposerTest extends TestCase {
 
-    public void testFindMethods() {
-        TypeExposer ecp = new TypeExposer(SimpleExposed.class);
-        List<Method> methods = ecp.findMethods();
-        assertEquals(10, methods.size());
-    }
-
     public void testGetName() {
         assertEquals("simpleexposed", new TypeExposer(SimpleExposed.class).getName());
         assertEquals("somethingcompletelydifferent", new TypeExposer(Rename.class).getName());

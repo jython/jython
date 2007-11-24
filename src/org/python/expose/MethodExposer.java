@@ -1,10 +1,13 @@
 package org.python.expose;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.python.core.PyBuiltinMethodNarrow;
+
+import com.sun.mirror.util.Types;
 
 /**
  * Generates a class to call a given method with the {@link ExposedMethod}
@@ -13,14 +16,7 @@ import org.python.core.PyBuiltinMethodNarrow;
 public class MethodExposer extends Exposer {
 
     public MethodExposer(Method method) {
-        super(PyBuiltinMethodNarrow.class, method.getDeclaringClass().getName() + "$exposed_"
-                + method.getName());
-        this.method = method;
-        exp = method.getAnnotation(ExposedMethod.class);
-        if(exp == null) {
-            throw new IllegalArgumentException(method
-                    + " doesn't have the @ExposedMethod annotation");
-        }
+        this(method, "");
     }
 
     /**
@@ -30,31 +26,56 @@ public class MethodExposer extends Exposer {
      *            make the exposed name.
      */
     public MethodExposer(Method method, String type) {
-        this(method);
-        this.prefix = type;
+        this(Type.getType(method.getDeclaringClass()),
+             method.getName(),
+             Type.getMethodDescriptor(method),
+             type,
+             getExp(method).names(),
+             getExp(method).defaults(),
+             getExp(method).type());
     }
 
-    public Class getMethodClass() {
-        return method.getDeclaringClass();
+    public static ExposedMethod getExp(Method m) {
+        ExposedMethod exp = m.getAnnotation(ExposedMethod.class);
+        if(exp == null) {
+            throw new IllegalArgumentException(m + " doesn't have the @ExposedMethod annotation");
+        }
+        return exp;
+    }
+
+    public MethodExposer(Type onType,
+                         String methodName,
+                         String desc,
+                         String prefix,
+                         String[] asNames,
+                         String[] defaults,
+                         MethodType type) {
+        super(PyBuiltinMethodNarrow.class, onType.getClassName() + "_" + methodName + "_exposer");
+        this.onType = onType;
+        this.methodName = methodName;
+        this.params = Type.getArgumentTypes(desc);
+        this.returnType = Type.getReturnType(desc);
+        this.prefix = prefix;
+        this.asNames = asNames;
+        this.defaults = defaults;
+        this.type = type;
     }
 
     public String[] getNames() {
-        String[] names = exp.names();
-        if(names.length == 0) {
-            String name = method.getName();
-            if(name.startsWith(prefix + "_")) {
-                name = name.substring((prefix + "_").length());
+        if(asNames.length == 0) {
+            if(methodName.startsWith(prefix + "_")) {
+                methodName = methodName.substring((prefix + "_").length());
             }
-            return new String[] {name};
+            return new String[] {methodName};
         }
-        return names;
+        return asNames;
     }
 
     protected void generate() {
         generateNamedConstructor();
         generateFullConstructor();
         generateBind();
-        for(int i = 0; i < exp.defaults().length + 1; i++) {
+        for(int i = 0; i < defaults.length + 1; i++) {
             generateCall(i);
         }
     }
@@ -72,8 +93,8 @@ public class MethodExposer extends Exposer {
         startConstructor(STRING);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
-        mv.visitLdcInsn(method.getParameterTypes().length + 1 - exp.defaults().length);
-        mv.visitLdcInsn(method.getParameterTypes().length + 1);
+        mv.visitLdcInsn(params.length + 1 - defaults.length);
+        mv.visitLdcInsn(params.length + 1);
         superConstructor(STRING, INT, INT);
         endConstructor();
     }
@@ -91,30 +112,29 @@ public class MethodExposer extends Exposer {
 
     private void generateCall(int numDefaults) {
         int usedLocals = 1;// We always have one used local for this
-        Type[] args = new Type[method.getParameterTypes().length - numDefaults];
+        Type[] args = new Type[params.length - numDefaults];
         for(int i = 0; i < args.length; i++) {
             args[i] = PYOBJ;
         }
         startMethod("__call__", PYOBJ, args);
-        Type methType = Type.getType(getMethodClass());
         get("self", PYOBJ);
-        mv.visitTypeInsn(CHECKCAST, methType.getInternalName());
+        mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         for(int i = 0; i < args.length; i++) {
             mv.visitVarInsn(ALOAD, usedLocals++);
         }
         for(int i = 0; i < numDefaults; i++) {
-            String def = exp.defaults()[i];
+            String def = defaults[i];
             if(def.equals("Py.None")) {
                 pushNone();
-            }else if(def.equals("null")) {
+            } else if(def.equals("null")) {
                 mv.visitInsn(ACONST_NULL);
             }
         }
         mv.visitMethodInsn(INVOKEVIRTUAL,
-                           methType.getInternalName(),
-                           method.getName(),
-                           Type.getMethodDescriptor(method));
-        if(exp.type() == MethodType.BINARY) {
+                           onType.getInternalName(),
+                           methodName,
+                           methodDesc(returnType, params));
+        if(type == MethodType.BINARY) {
             mv.visitInsn(DUP);
             Label regularReturn = new Label();
             mv.visitJumpInsn(IFNONNULL, regularReturn);
@@ -124,7 +144,7 @@ public class MethodExposer extends Exposer {
                               PYOBJ.getDescriptor());
             mv.visitInsn(ARETURN);
             mv.visitLabel(regularReturn);
-        } else if(exp.type() == MethodType.CMP) {
+        } else if(type == MethodType.CMP) {
             mv.visitInsn(DUP);
             mv.visitIntInsn(BIPUSH, -2);
             Label regularReturn = new Label();
@@ -162,18 +182,17 @@ public class MethodExposer extends Exposer {
             mv.visitInsn(ATHROW);
             mv.visitLabel(regularReturn);
         }
-        Class ret = method.getReturnType();
-        if(ret == Void.TYPE) {
+        if(returnType.equals(Type.VOID_TYPE)) {
             pushNone();
-        } else if(ret == String.class) {
+        } else if(returnType.equals(STRING)) {
             mv.visitMethodInsn(INVOKESTATIC, PY.getInternalName(), "newString", methodDesc(PYSTR,
                                                                                            STRING));
-        } else if(ret == Boolean.TYPE) {
+        } else if(returnType.equals(Type.BOOLEAN_TYPE)) {
             mv.visitMethodInsn(INVOKESTATIC,
                                PY.getInternalName(),
                                "newBoolean",
                                methodDesc(PYBOOLEAN, BOOLEAN));
-        } else if(ret == Integer.TYPE) {
+        } else if(returnType.equals(Type.INT_TYPE)) {
             mv.visitMethodInsn(INVOKESTATIC,
                                PY.getInternalName(),
                                "newInteger",
@@ -187,9 +206,15 @@ public class MethodExposer extends Exposer {
         mv.visitFieldInsn(GETSTATIC, PY.getInternalName(), "None", PYOBJ.getDescriptor());
     }
 
-    private ExposedMethod exp;
+    private String methodName;
 
-    private Method method;
+    private String[] asNames, defaults;
 
-    private String prefix = "";
+    private String prefix;
+
+    private Type[] params;
+
+    private Type onType, returnType;
+
+    private MethodType type;
 }

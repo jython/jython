@@ -15,7 +15,6 @@ public class NewExposerTest extends InterpTestCase {
 
     public void testSimple() throws Exception {
         NewExposer ne = new NewExposer(Instantiable.class, "creator");
-        assertEquals(Instantiable.class, ne.getMethodClass());
         assertEquals("org/python/expose/NewExposerTest$Instantiable$exposed___new__",
                      ne.getInternalName());
         assertEquals("org.python.expose.NewExposerTest$Instantiable$exposed___new__",

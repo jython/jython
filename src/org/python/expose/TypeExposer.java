@@ -20,15 +20,53 @@ import org.python.core.PyType;
 public class TypeExposer extends Exposer {
 
     public TypeExposer(Class<?> cls) {
-        super(BaseTypeBuilder.class, getExposedName(cls));
-        this.cls = cls;
-        exp = cls.getAnnotation(ExposedType.class);
+        this(Type.getType(cls),
+             makeName(cls),
+             getMethodExposers(cls, makeName(cls)),
+             getNewExposer(cls));
+    }
+    
+    public static List<MethodExposer> getMethodExposers(Class<?> cls, String name){
+        List<Method> methods = findMethods(cls);
+        List<MethodExposer> exposers = new ArrayList<MethodExposer>(methods.size());
+        for(Method method : methods) {
+            MethodExposer me = new MethodExposer(method, name);
+            exposers.add(me);
+        }
+        return exposers;
+    }
+    
+    public static NewExposer getNewExposer(Class<?> cls) {
+        if(!getExp(cls).constructor().equals("")) {
+            return new NewExposer(cls, getExp(cls).constructor());
+        }
+        return null;
+    }
+
+    public static ExposedType getExp(Class<?> m) {
+        ExposedType exp = m.getAnnotation(ExposedType.class);
         if(exp == null) {
-            throw new IllegalArgumentException(cls + " doesn't have the @Exposed annotation");
+            throw new IllegalArgumentException(m + " doesn't have the @ExposedType annotation");
         }
-        if(!exp.constructor().equals("")) {
-            ne = new NewExposer(cls, exp.constructor());
+        return exp;
+    }
+    
+    public static String makeName(Class<?> cls) {
+        if(getExp(cls).name().equals("")) {
+            return cls.getSimpleName();
         }
+        return getExp(cls).name();
+    }
+    
+    public TypeExposer(Type onType, String name, List<MethodExposer> exposers, NewExposer ne) {
+        super(BaseTypeBuilder.class, onType.getClassName() + "$PyExposer");
+        this.onType = onType;
+        this.name = name;
+        this.exposers = exposers;
+        for(MethodExposer method : exposers) {
+            numNames += method.getNames().length;
+        }
+        this.ne = ne;
     }
 
     public TypeBuilder makeBuilder() {
@@ -36,8 +74,8 @@ public class TypeExposer extends Exposer {
         if(ne != null) {
             ne.load(l);
         }
-        for(Method m : findMethods()) {
-            new MethodExposer(m, getName() + "_").load(l);
+        for(MethodExposer me : exposers) {
+            me.load(l);
         }
         Class descriptor = load(l);
         try {
@@ -60,7 +98,7 @@ public class TypeExposer extends Exposer {
     /**
      * @return - the methods on the exposed class that should be exposed.
      */
-    public List<Method> findMethods() {
+    public static List<Method> findMethods(Class cls) {
         List<Method> exposedMethods = new ArrayList<Method>();
         for(Method m : cls.getDeclaredMethods()) {
             if(m.getAnnotation(ExposedMethod.class) != null) {
@@ -71,10 +109,6 @@ public class TypeExposer extends Exposer {
     }
 
     public String getName() {
-        String name = exp.name();
-        if(name.equals("")) {
-            return cls.getSimpleName();
-        }
         return name;
     }
 
@@ -82,15 +116,7 @@ public class TypeExposer extends Exposer {
         startConstructor();
         mv.visitVarInsn(ALOAD, 0);
         mv.visitLdcInsn(getName());
-        mv.visitLdcInsn(Type.getType(cls));
-        List<Method> methods = findMethods();
-        List<MethodExposer> exposers = new ArrayList<MethodExposer>(methods.size());
-        int numNames = 0;
-        for(Method method : methods) {
-            MethodExposer me = new MethodExposer(method, getName());
-            exposers.add(me);
-            numNames += me.getNames().length;
-        }
+        mv.visitLdcInsn(onType);
         mv.visitLdcInsn(numNames);
         mv.visitTypeInsn(ANEWARRAY, BUILTIN_FUNCTION.getInternalName());
         mv.visitVarInsn(ASTORE, 1);
@@ -154,10 +180,14 @@ public class TypeExposer extends Exposer {
 
         private String name;
     }
-    
+
+    private Type onType;
+
+    private String name;
+
+    private List<MethodExposer> exposers = new ArrayList<MethodExposer>();
+
+    private int numNames;
+
     private NewExposer ne;
-
-    private ExposedType exp;
-
-    private Class cls;
 }
