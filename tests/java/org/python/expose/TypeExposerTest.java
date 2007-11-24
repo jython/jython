@@ -58,9 +58,10 @@ public class TypeExposerTest extends TestCase {
     @ExposedType(name = "somethingcompletelydifferent")
     public class Rename {}
 
-    @ExposedType(constructor = "__new__")
+    @ExposedType
     public class NonstaticNew {
 
+        @ExposedNew
         public PyObject __new__(PyNewWrapper new_,
                                 boolean init,
                                 PyType subtype,
@@ -70,9 +71,10 @@ public class TypeExposerTest extends TestCase {
         }
     }
 
-    @ExposedType(constructor = "__new__")
+    @ExposedType
     public static class NoreturnNew {
 
+        @ExposedNew
         public static void __new__(PyNewWrapper new_,
                                    boolean init,
                                    PyType subtype,
@@ -80,9 +82,10 @@ public class TypeExposerTest extends TestCase {
                                    String[] keywords) {}
     }
 
-    @ExposedType(constructor = "__new__")
+    @ExposedType
     public static class SimplestNew {
 
+        @ExposedNew
         public static PyObject __new__(PyNewWrapper new_,
                                        boolean init,
                                        PyType subtype,

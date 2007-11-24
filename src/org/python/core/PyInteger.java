@@ -4,15 +4,16 @@ package org.python.core;
 import java.io.Serializable;
 
 import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 /**
  * A builtin python int.
  */
-@ExposedType(name="int", constructor="int_new")
+@ExposedType(name="int")
 public class PyInteger extends PyObject {
-    
+    @ExposedNew
     public static PyObject int_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("int", args, keywords, new String[] { "x",

@@ -5,13 +5,14 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
 
-@ExposedType(name = "simpleexposed", constructor="__new__")
+@ExposedType(name = "simpleexposed")
 public class SimpleExposed extends PyObject {
 
     public void method() {}
 
     public int timesCalled;
     
+    @ExposedNew
     public static PyObject __new__(PyNewWrapper new_, boolean init, PyType subtype,
                                PyObject[] args, String[] keywords) {
         return Py.One;

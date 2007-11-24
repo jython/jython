@@ -37,8 +37,10 @@ public class TypeExposer extends Exposer {
     }
     
     public static NewExposer getNewExposer(Class<?> cls) {
-        if(!getExp(cls).constructor().equals("")) {
-            return new NewExposer(cls, getExp(cls).constructor());
+        for(Method m : cls.getDeclaredMethods()) {
+            if(m.getAnnotation(ExposedNew.class) != null) {
+                return new NewExposer(m);
+            }
         }
         return null;
     }
