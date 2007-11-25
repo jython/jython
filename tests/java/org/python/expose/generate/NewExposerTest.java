@@ -1,23 +1,19 @@
-package org.python.expose;
-
-import javax.management.Descriptor;
+package org.python.expose.generate;
 
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
-import org.python.core.PyBuiltinFunction;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
-
-import junit.framework.TestCase;
+import org.python.expose.ExposedType;
 
 public class NewExposerTest extends InterpTestCase {
 
     public void testSimple() throws Exception {
         NewExposer ne = new NewExposer(Instantiable.class, "creator");
-        assertEquals("org/python/expose/NewExposerTest$Instantiable$exposed___new__",
+        assertEquals("org/python/expose/generate/NewExposerTest$Instantiable$exposed___new__",
                      ne.getInternalName());
-        assertEquals("org.python.expose.NewExposerTest$Instantiable$exposed___new__",
+        assertEquals("org.python.expose.generate.NewExposerTest$Instantiable$exposed___new__",
                      ne.getClassName());
         Class descriptor = ne.load(new BytecodeLoader.Loader());
         PyNewWrapper instance = (PyNewWrapper)descriptor.newInstance();

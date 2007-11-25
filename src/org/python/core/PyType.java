@@ -15,10 +15,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.python.expose.ExposedType;
-import org.python.expose.ExposedTypeVisitor;
-import org.python.expose.ExposedTypeProcessorTest;
 import org.python.expose.TypeBuilder;
-import org.python.expose.TypeExposer;
+import org.python.expose.generate.TypeExposer;
 
 /**
  * first-class Python type.

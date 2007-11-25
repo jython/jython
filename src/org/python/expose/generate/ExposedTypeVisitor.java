@@ -1,4 +1,4 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;

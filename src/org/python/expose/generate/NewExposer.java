@@ -1,4 +1,4 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import java.lang.reflect.Method;
 

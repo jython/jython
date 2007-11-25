@@ -1,4 +1,4 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +7,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
+import org.python.expose.MethodType;
 
 /**
  * Visits a method passing all calls through to its delegate. If an ExposedNew

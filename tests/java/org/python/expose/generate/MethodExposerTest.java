@@ -1,4 +1,4 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import java.lang.reflect.Method;
 
@@ -7,6 +7,7 @@ import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyException;
 import org.python.core.PyObject;
+import org.python.expose.generate.MethodExposer;
 
 public class MethodExposerTest extends InterpTestCase {
 
@@ -27,8 +28,8 @@ public class MethodExposerTest extends InterpTestCase {
     public void testSimpleMethod() throws Exception {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getDeclaredMethod("simple_method"));
         assertEquals("simple_method", mp.getNames()[0]);
-        assertEquals("org/python/expose/SimpleExposed$simple_method_exposer", mp.getInternalName());
-        assertEquals("org.python.expose.SimpleExposed$simple_method_exposer", mp.getClassName());
+        assertEquals("org/python/expose/generate/SimpleExposed$simple_method_exposer", mp.getInternalName());
+        assertEquals("org.python.expose.generate.SimpleExposed$simple_method_exposer", mp.getClassName());
         Class descriptor = mp.load(new BytecodeLoader.Loader());
         PyBuiltinFunction instance = instantiate(descriptor, "simple_method");
         assertSame("simple_method", instance.__getattr__("__name__").toString());

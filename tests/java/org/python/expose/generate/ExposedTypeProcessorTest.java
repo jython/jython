@@ -1,4 +1,4 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,12 +8,14 @@ import junit.framework.TestCase;
 import org.python.core.BytecodeLoader;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyObject;
+import org.python.expose.generate.ExposedTypeProcessor;
+import org.python.expose.generate.MethodExposer;
 
 public class ExposedTypeProcessorTest extends TestCase {
 
     public void testDetectType() throws Exception {
         InputStream in = getClass().getClassLoader()
-                .getResourceAsStream("org/python/expose/SimpleExposed.class");
+                .getResourceAsStream("org/python/expose/generate/SimpleExposed.class");
         ExposedTypeProcessor ice = new ExposedTypeProcessor(in);
         assertEquals("simpleexposed", ice.getName());
         assertEquals(10, ice.getMethodExposers().size());
@@ -30,7 +32,7 @@ public class ExposedTypeProcessorTest extends TestCase {
         }
         ice.getNewExposer().load(loader);
         ice.getTypeExposer().load(loader);
-        Class doctoredSimple = loader.loadClassFromBytes("org.python.expose.SimpleExposed", ice.getBytecode());
+        Class doctoredSimple = loader.loadClassFromBytes("org.python.expose.generate.SimpleExposed", ice.getBytecode());
         PyObject simp = (PyObject)doctoredSimple.newInstance();
         PyBuiltinFunction func = MethodExposerTest.instantiate(simple_method, "invisible");
         PyBuiltinFunction bound = func.bind(simp);
@@ -39,7 +41,7 @@ public class ExposedTypeProcessorTest extends TestCase {
 
     public void testNoAnnotationType() throws IOException {
         InputStream in = getClass().getClassLoader()
-                .getResourceAsStream("org/python/expose/ExposedTypeProcessorTest.class");
+                .getResourceAsStream("org/python/expose/generate/ExposedTypeProcessorTest.class");
         try {
             new ExposedTypeProcessor(in);
             fail("Shouldn't be able to create an InnerClassExposer with a class without ExposedType");

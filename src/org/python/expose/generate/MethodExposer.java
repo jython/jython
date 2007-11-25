@@ -1,4 +1,4 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -6,6 +6,8 @@ import java.lang.reflect.Method;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.python.core.PyBuiltinMethodNarrow;
+import org.python.expose.ExposedMethod;
+import org.python.expose.MethodType;
 
 import com.sun.mirror.util.Types;
 

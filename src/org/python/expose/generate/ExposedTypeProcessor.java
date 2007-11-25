@@ -1,4 +1,4 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +19,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.TraceClassVisitor;
 import org.python.core.PyType;
+import org.python.expose.ExposedType;
 
 /**
  * Processes the bytecode of a Java class that has the {@link ExposedType}

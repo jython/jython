@@ -1,4 +1,4 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import org.objectweb.asm.Type;
 import org.python.core.Py;
@@ -12,6 +12,10 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+import org.python.expose.TypeBuilder;
 
 /** 
  * Type objects used by exposed generation.

@@ -1,8 +1,9 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import junit.framework.TestCase;
 
 import org.objectweb.asm.Type;
+import org.python.expose.generate.ExposedTypeVisitor;
 
 public class ExposedTypeVisitorTest extends TestCase {
 

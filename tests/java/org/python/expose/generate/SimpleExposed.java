@@ -1,9 +1,13 @@
-package org.python.expose;
+package org.python.expose.generate;
 
 import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 
 @ExposedType(name = "simpleexposed")
 public class SimpleExposed extends PyObject {

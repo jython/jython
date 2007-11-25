@@ -1,7 +1,4 @@
-package org.python.expose;
-
-import java.lang.reflect.Method;
-import java.util.List;
+package org.python.expose.generate;
 
 import junit.framework.TestCase;
 
@@ -9,8 +6,11 @@ import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+import org.python.expose.TypeBuilder;
 
-public class TypeExposerTest extends TestCase {
+public class TypeExposerTest extends InterpTestCase {
 
     public void testGetName() {
         assertEquals("simpleexposed", new TypeExposer(SimpleExposed.class).getName());
