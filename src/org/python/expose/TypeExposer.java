@@ -60,8 +60,12 @@ public class TypeExposer extends Exposer {
         return getExp(cls).name();
     }
     
+    public static String makeGeneratedName(Type onType) {
+        return onType.getClassName() + "$PyExposer";
+    }
+    
     public TypeExposer(Type onType, String name, List<MethodExposer> exposers, NewExposer ne) {
-        super(BaseTypeBuilder.class, onType.getClassName() + "$PyExposer");
+        super(BaseTypeBuilder.class, makeGeneratedName(onType));
         this.onType = onType;
         this.name = name;
         this.exposers = exposers;

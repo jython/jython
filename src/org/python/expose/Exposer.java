@@ -27,7 +27,7 @@ import org.python.core.PyType;
  * Subclass to supply the actual functionality of the generated class.
  * 
  */
-public abstract class Exposer implements Opcodes {
+public abstract class Exposer implements Opcodes, PyTypes {
 
     /**
      * @param superClass -
@@ -51,11 +51,11 @@ public abstract class Exposer implements Opcodes {
      */
     protected Class load(BytecodeLoader.Loader l) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        ClassVisitor cv = new CheckClassAdapter(cw);
+       // ClassVisitor cv = new CheckClassAdapter(cw);
         if(dump) {
             cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
         }
-        generate(cv);
+        generate(cw);
         return l.loadClassFromBytes(getClassName(), cw.toByteArray());
     }
 
@@ -160,47 +160,4 @@ public abstract class Exposer implements Opcodes {
     protected Type thisType;
 
     private static final boolean dump = false;
-
-    public static final Type PYOBJ = Type.getType(PyObject.class);
-
-    public static final Type APYOBJ = Type.getType(PyObject[].class);
-
-    public static final Type PYTYPE = Type.getType(PyType.class);
-
-    public static final Type PYEXCEPTION= Type.getType(PyException.class);
-
-    public static final Type PY = Type.getType(Py.class);
-
-    public static final Type PYSTR = Type.getType(PyString.class);
-
-    public static final Type PYBOOLEAN = Type.getType(PyBoolean.class);
-
-    public static final Type PYINTEGER = Type.getType(PyInteger.class);
-
-    public static final Type PYNEWWRAPPER= Type.getType(PyNewWrapper.class);
-
-    public static final Type BUILTIN_METHOD = Type.getType(PyBuiltinMethod.class);
-
-    public static final Type BUILTIN_METHOD_NARROW = Type.getType(PyBuiltinMethodNarrow.class);
-
-    public static final Type BUILTIN_FUNCTION = Type.getType(PyBuiltinFunction.class);
-
-    public static final Type ABUILTIN_FUNCTION = Type.getType(PyBuiltinFunction[].class);
-
-    public static final Type BUILTIN_INFO = Type.getType(PyBuiltinFunction.Info.class);
-
-    public static final Type STRING = Type.getType(String.class);
-
-    public static final Type ASTRING = Type.getType(String[].class);
-
-    public static final Type STRING_BUILDER = Type.getType(StringBuilder.class);
-
-    public static final Type INT = Type.INT_TYPE;
-
-    /** The primitive boolean type */
-    public static final Type BOOLEAN = Type.BOOLEAN_TYPE;
-
-    public static final Type VOID = Type.VOID_TYPE;
-
-    public static final Type CLASS = Type.getType(Class.class);
 }

@@ -17,6 +17,9 @@ public class SimpleExposed extends PyObject {
                                PyObject[] args, String[] keywords) {
         return Py.One;
     }
+    
+    @ExposedMethod
+    void invisible() {}
 
     @ExposedMethod
     public void simple_method() {

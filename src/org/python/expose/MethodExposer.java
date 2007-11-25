@@ -27,6 +27,7 @@ public class MethodExposer extends Exposer {
      */
     public MethodExposer(Method method, String type) {
         this(Type.getType(method.getDeclaringClass()),
+             method.getModifiers(),
              method.getName(),
              Type.getMethodDescriptor(method),
              type,
@@ -44,13 +45,14 @@ public class MethodExposer extends Exposer {
     }
 
     public MethodExposer(Type onType,
+                         int access,
                          String methodName,
                          String desc,
                          String prefix,
                          String[] asNames,
                          String[] defaults,
                          MethodType type) {
-        super(PyBuiltinMethodNarrow.class, onType.getClassName() + "_" + methodName + "_exposer");
+        super(PyBuiltinMethodNarrow.class, onType.getClassName() + "$" + methodName + "_exposer");
         this.onType = onType;
         this.methodName = methodName;
         this.params = Type.getArgumentTypes(desc);
@@ -61,6 +63,10 @@ public class MethodExposer extends Exposer {
         this.type = type;
     }
 
+    /**
+     * @return the names this method will be exposed as. Must be at least length
+     *         1.
+     */
     public String[] getNames() {
         if(asNames.length == 0) {
             if(methodName.startsWith(prefix + "_")) {
@@ -69,6 +75,13 @@ public class MethodExposer extends Exposer {
             return new String[] {methodName};
         }
         return asNames;
+    }
+
+    /**
+     * @return the default values for the later params, if any.
+     */
+    String[] getDefaults() {
+        return defaults;
     }
 
     protected void generate() {

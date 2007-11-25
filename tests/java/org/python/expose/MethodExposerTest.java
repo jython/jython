@@ -10,25 +10,25 @@ import org.python.core.PyObject;
 
 public class MethodExposerTest extends InterpTestCase {
 
-    public PyBuiltinFunction createBound(String methodName, Class... args) throws Exception {
+    public static PyBuiltinFunction createBound(String methodName, Class... args) throws Exception {
         return createBound(new MethodExposer(SimpleExposed.class.getDeclaredMethod(methodName, args),
                                              "simpleexpose"));
     }
 
-    public PyBuiltinFunction createBound(MethodExposer me) throws Exception {
+    public static PyBuiltinFunction createBound(MethodExposer me) throws Exception {
         Class descriptor = me.load(new BytecodeLoader.Loader());
         return instantiate(descriptor, me.getNames()[0]).bind(new SimpleExposed());
     }
 
-    public PyBuiltinFunction instantiate(Class descriptor, String name) throws Exception {
+    public static PyBuiltinFunction instantiate(Class descriptor, String name) throws Exception {
         return (PyBuiltinFunction)descriptor.getConstructor(String.class).newInstance(name);
     }
 
     public void testSimpleMethod() throws Exception {
         MethodExposer mp = new MethodExposer(SimpleExposed.class.getDeclaredMethod("simple_method"));
         assertEquals("simple_method", mp.getNames()[0]);
-        assertEquals("org/python/expose/SimpleExposed_simple_method_exposer", mp.getInternalName());
-        assertEquals("org.python.expose.SimpleExposed_simple_method_exposer", mp.getClassName());
+        assertEquals("org/python/expose/SimpleExposed$simple_method_exposer", mp.getInternalName());
+        assertEquals("org.python.expose.SimpleExposed$simple_method_exposer", mp.getClassName());
         Class descriptor = mp.load(new BytecodeLoader.Loader());
         PyBuiltinFunction instance = instantiate(descriptor, "simple_method");
         assertSame("simple_method", instance.__getattr__("__name__").toString());

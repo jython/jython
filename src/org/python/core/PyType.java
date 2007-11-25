@@ -15,6 +15,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.python.expose.ExposedType;
+import org.python.expose.ExposedTypeVisitor;
+import org.python.expose.ExposedTypeProcessorTest;
 import org.python.expose.TypeBuilder;
 import org.python.expose.TypeExposer;
 
@@ -1165,6 +1167,8 @@ public class PyType extends PyObject implements Serializable {
 
     private static HashMap<Class, PyType> class_to_type;
 
+    private static HashMap<Class, TypeBuilder> classToBuilder = new HashMap<Class, TypeBuilder>();
+
     public static interface Newstyle {
     }
 
@@ -1174,9 +1178,11 @@ public class PyType extends PyObject implements Serializable {
         Class base = null;
         String name = null;
         String[] exposed_methods = null;
-        TypeBuilder tb = null;
-        if(c.getAnnotation(ExposedType.class) != null) {
-            tb = new TypeExposer(c).makeBuilder();
+        TypeBuilder tb = classToBuilder.get(c);
+        if(tb != null || c.getAnnotation(ExposedType.class) != null) {
+            if(tb == null) {
+                tb = new TypeExposer(c).makeBuilder();
+            }
             name = tb.getName();
             base = PyObject.class;
             newstyle = true;
@@ -1498,6 +1504,10 @@ public class PyType extends PyObject implements Serializable {
             return ("_"+classname.substring(i)+methodname).intern();
         }
         return methodname;
+    }
+
+    public static void addBuilder(Class class1, TypeBuilder builder) {
+        classToBuilder.put(class1, builder);
     }
 
 }
