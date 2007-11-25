@@ -127,14 +127,24 @@ public class Time implements ClassDictInit
         return System.currentTimeMillis()/1000.0;
     }
 
-    private static double __initialclock__ = 0.0;
+    /**
+     * @return - the seconds elapsed since the first call to this function
+     */
     public static double clock() {
-        if(__initialclock__ == 0.0) {
-            // set on the first call
-            __initialclock__ = time();
+        // Check against an explicit initialization variable, clockInitialized,
+        // rather than a value of initialClock since the initial call to
+        // System.nanoTime can yield anything and that could lead to initialTime
+        // being set twice.
+        if(!clockInitialized) { 
+            initialClock = System.nanoTime();
+            clockInitialized = true;
+            return 0;
         }
-        return time() - __initialclock__;
+        return (System.nanoTime() - initialClock) / NANOS_PER_SECOND; 
     }
+    private static final double NANOS_PER_SECOND = 1000000000.0;
+    private static long initialClock;
+    private static boolean clockInitialized;
 
     private static void throwValueError(String msg) {
         throw new PyException(Py.ValueError, new PyString(msg));
