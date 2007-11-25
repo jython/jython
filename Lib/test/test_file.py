@@ -101,9 +101,9 @@ class AutoFileTests(unittest.TestCase):
         #           'readline', 'readlines', 'seek', 'tell', 'truncate',
         #           'write', 'xreadlines', '__iter__']
         noarg = object()
-        # XXX: Jython doesn't support fileno or isatty
+        # XXX: Jython doesn't support isatty
         #methods = dict(fileno=noarg, flush=noarg, isatty=noarg, next=noarg,
-        methods = dict(flush=noarg, next=noarg,
+        methods = dict(fileno=noarg, flush=noarg, next=noarg,
                        read=-1, readinto=array('c', 'x'), readline=-1,
                        readlines=noarg, seek=0, tell=noarg, truncate=0,
                        write='x', xreadlines=noarg, __iter__=noarg)
