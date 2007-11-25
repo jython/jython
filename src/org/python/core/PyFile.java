@@ -490,33 +490,7 @@ public class PyFile extends PyObject
         dict.__setitem__("__new__",new PyNewWrapper(PyFile.class,"__new__",-1,-1) {
 
                                                                                       public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                          PyFile newobj;
-                                                                                          if (for_type == subtype) {
-                                                                                              newobj = null;
-                                                                                              if (init) {
-                                                                                                  if (args.length == 0) {
-                                                                                                      newobj = new PyFile();
-                                                                                                      newobj.file_init(args, keywords);
-                                                                                                  } else if (args[0] instanceof PyString ||
-                                                                                                          (args[0] instanceof PyJavaInstance &&
-                                                                                                          ((PyJavaInstance) args[0]).javaProxy == String.class)) {
-                                                                                                      // If first arg is a PyString or String, assume its being 
-                                                                                                      // called as a builtin.
-                                                                                                      newobj = new PyFile();
-                                                                                                      newobj.file_init(args, keywords);
-                                                                                                      newobj.closer = new Closer(newobj.file);
-                                                                                                  } else {
-                                                                                                      // assume it's being called as a java class
-                                                                                                      PyJavaClass pjc = new PyJavaClass(PyFile.class);
-                                                                                                      newobj = (PyFile) pjc.__call__(args, keywords);
-                                                                                                  }
-                                                                                              } else {
-                                                                                                  newobj = new PyFile();
-                                                                                              }
-                                                                                          } else {
-                                                                                              newobj = new PyFileDerived(subtype);
-                                                                                          }
-                                                                                          return newobj;
+                                                                                          return file_new(this,init,subtype,args,keywords);
                                                                                       }
 
                                                                                   });
@@ -640,6 +614,36 @@ public class PyFile extends PyObject
 
     public PyFile(String name, String mode, int bufsize) {
         file_init(new FileIO(name, parseMode(mode)), name, mode, bufsize);
+    }
+
+    final static PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype,
+                                   PyObject[]args, String[]keywords) {
+        PyFile newFile;
+        if (new_.for_type == subtype) {
+            if (init) {
+                if (args.length == 0) {
+                    newFile = new PyFile();
+                    newFile.file_init(args, keywords);
+                } else if (args[0] instanceof PyString ||
+                           (args[0] instanceof PyJavaInstance &&
+                            ((PyJavaInstance)args[0]).javaProxy == String.class)) {
+                    // If first arg is a PyString or String, assume
+                    // its being called as a builtin.
+                    newFile = new PyFile();
+                    newFile.file_init(args, keywords);
+                    newFile.closer = new Closer(newFile.file);
+                } else {
+                    // assume it's being called as a java class
+                    PyJavaClass pjc = new PyJavaClass(PyFile.class);
+                    newFile = (PyFile)pjc.__call__(args, keywords);
+                }
+            } else {
+                newFile = new PyFile();
+            }
+        } else {
+            newFile = new PyFileDerived(subtype);
+        }
+        return newFile;
     }
 
     final void file_init(PyObject[] args,String[] kwds) {

@@ -36,4 +36,6 @@ expose_meth: :o xreadlines
 expose_wide_meth: __init__ -1 -1
   `vdeleg`(init);
   `void;
-expose_new_mutable:
+# PyFile is mutable, its new is marked as 'immutable' for the sake of
+# being customized
+expose_new_immutable:
