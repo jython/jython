@@ -1,12 +1,12 @@
 package org.python.core;
 
 /**
- * Implements type checking and retury type coercion for a data descriptor. A
+ * Implements type checking and return type coercion for a data descriptor. A
  * subclass must at least implement invokeGet which is called in __get__
- * operations. If the descriptor supports setting and deleting, it must also
- * override invokeSet and invokeDel respectively. When implementing those
- * methods, their respective implementsDescr* methods should be overriden to
- * return true well.
+ * operations. If the descriptor supports setting and deleting, the subclass
+ * must also override invokeSet and invokeDel respectively. When implementing
+ * those methods, their respective implementsDescr* methods should be overriden
+ * as well.
  */
 public class PyDataDescr extends PyDescriptor {
 
