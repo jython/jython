@@ -2,7 +2,6 @@ package org.python.expose.generate;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,14 +10,10 @@ import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.TraceClassVisitor;
-import org.python.core.PyType;
 import org.python.expose.ExposedType;
 
 /**
@@ -74,6 +69,13 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
         return typeExposer;
     }
 
+    /**
+     * @return the name of the class being processed
+     */
+    public String getExposedClassName() {
+        return onType.getClassName();
+    }
+
     private List<MethodExposer> methodExposers = new ArrayList<MethodExposer>();
 
     private NewExposer newExposer;
@@ -83,6 +85,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
     private ClassWriter cw;
 
     private String typeName;
+
+    private Type onType;
 
     /**
      * The actual visitor that runs over the bytecode and figures out what to
@@ -176,7 +180,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                          String[] exceptions) {
             if(name.equals("<clinit>")) {
                 // If the class already has a static block, we add our builder
-                // adding code to it.
+                // adding code at the beginning of it.
                 generatedStaticBlock = true;
                 final MethodVisitor passthroughVisitor = super.visitMethod(access,
                                                                            name,
@@ -184,13 +188,10 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                                                            signature,
                                                                            exceptions);
                 return new MethodAdapter(passthroughVisitor) {
-
                     @Override
-                    public void visitInsn(int opcode) {
-                        if(opcode == RETURN) {
-                            generateAddBuilder(passthroughVisitor);
-                        }
-                        super.visitInsn(opcode);
+                    public void visitCode() {
+                        super.visitCode();
+                        generateAddBuilder(passthroughVisitor);
                     }
                 };
             } else {
@@ -219,8 +220,6 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                 };
             }
         }
-
-        private Type onType;
 
         private boolean generatedStaticBlock;
     }

@@ -1,26 +1,11 @@
 package org.python.expose.generate;
 
-import java.io.PrintWriter;
-
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.TraceClassVisitor;
 import org.python.core.BytecodeLoader;
-import org.python.core.Py;
-import org.python.core.PyBoolean;
-import org.python.core.PyBuiltinFunction;
-import org.python.core.PyBuiltinMethod;
-import org.python.core.PyBuiltinMethodNarrow;
-import org.python.core.PyException;
-import org.python.core.PyInteger;
-import org.python.core.PyNewWrapper;
-import org.python.core.PyObject;
-import org.python.core.PyString;
-import org.python.core.PyType;
 
 /**
  * Base class that handles the basics of generating a single class with asm.
@@ -51,10 +36,6 @@ public abstract class Exposer implements Opcodes, PyTypes {
      */
     protected Class load(BytecodeLoader.Loader l) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-       // ClassVisitor cv = new CheckClassAdapter(cw);
-        if(dump) {
-            cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
-        }
         generate(cw);
         return l.loadClassFromBytes(getClassName(), cw.toByteArray());
     }
@@ -158,6 +139,4 @@ public abstract class Exposer implements Opcodes, PyTypes {
 
     /** The type that will be generated. */
     protected Type thisType;
-
-    private static final boolean dump = false;
 }

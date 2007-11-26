@@ -148,6 +148,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${postgresql.jar}" />
             <pathelement path="${jndi.jar}" />
             <pathelement path="${jdbc.jar}" />
+            <pathelement path="${asm.jar}" />
             <pathelement path="${java.class.path}" />
         </path>
 
@@ -163,6 +164,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <available property="jndi.present" classname="javax.naming.Context" classpath="${jndi.jar}" />
         <available property="javax.sql.present" classname="javax.sql.DataSource" />
         <available property="jdbc30.present" classname="java.sql.ParameterMetaData" />
+        <available property="asm.present" classname="org.objectweb.asm.Opcodes" classpath="${asm.jar}" />
         <property name="work.dir" value="${basedir}" />
         <property name="jython.base.dir" value="${basedir}" />
         <property name="source.dir" value="${basedir}/src" />
@@ -219,6 +221,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="init" depends="common-init">
         <property name="output.dir" value="${work.dir}/build" />
+        <property name="compile.dir" value="${output.dir}/classes" />
+        <property name="exposed.dir" value="${output.dir}/exposed" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
         <property name="parser.dir" value="${source.dir}/org/python/parser" />
@@ -241,6 +245,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>jndi               = '${jndi.present}'</echo>
         <echo>jdbc               = '${javax.sql.present}'</echo>
         <echo>jdbc3.0            = '${jdbc30.present}'</echo>
+        <echo>asm                = '${asm.present}'</echo>
         <echo>--- properties ---</echo>
         <echo>work.dir           = '${work.dir}'</echo>
         <echo>jython.base.dir    = '${jython.base.dir}'</echo>
@@ -297,7 +302,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- create necessary directories -->
     <target name="prepare" depends="prepare-full, prepare-checkout">
-        <mkdir dir="${output.dir}" />
+        <mkdir dir="${compile.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
 
@@ -365,7 +370,7 @@ The readme text for the next release will be like:
 
     <target name="template-init" depends="prepare">
         <javac srcdir="${source.dir}/"
-                destdir="${output.dir}/"
+                destdir="${compile.dir}"
                 target="${jdk.target.version}"
                 source="${jdk.source.version}"
                 debug="${debug}"
@@ -378,14 +383,14 @@ The readme text for the next release will be like:
 
     <target name="template" depends="checkout, template-init">
         <taskdef name="gentempl" classname="org.python.util.TemplateAntTask"
-            classpath="${output.dir}" />
+            classpath="${compile.dir}" />
         <gentempl srcdir="${templates.dir}" verbose="true"
 		  lazy="${templates.lazy}"/>
     </target>
 
     <target name="compile" depends="init">
         <javac srcdir="${source.dir}/"
-               destdir="${output.dir}/"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
@@ -409,7 +414,7 @@ The readme text for the next release will be like:
 
         <javac srcdir="${jython.base.dir}/Lib"
                includes="jxxload_help/**"
-               destdir="${output.dir}/"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
@@ -421,35 +426,37 @@ The readme text for the next release will be like:
         <!-- java files used by tests -->
         <javac srcdir="${jython.base.dir}/Lib/test/"
                includes="javatests/**"
-               destdir="${output.dir}/"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}"
-        />
+               nowarn="${nowarn}" />
 
         <copy file="${source.dir}/org/python/modules/ucnhash.dat"
-              todir="${output.dir}/org/python/modules"
-              preservelastmodified="true"
-        />
+              todir="${compile.dir}/org/python/modules"
+              preservelastmodified="true" />
 
-        <copy todir="${output.dir}/com" preservelastmodified="true">
+        <copy todir="${compile.dir}/com" preservelastmodified="true">
             <fileset dir="${source.dir}/com">
                 <include name="**/*.properties" />
             </fileset>
         </copy>
     </target>
+    <target name="expose" depends="compile">
+        <mkdir dir="${exposed.dir}"/>
+        <taskdef name="expose" classname="org.python.expose.generate.ExposeTask"
+            classpath="${compile.dir}" classpathref="main.classpath"/>
+        <expose srcdir="${compile.dir}"
+            destdir="${exposed.dir}" includes="**/PyNone.class,**/PyInteger.class">
+        </expose>
+    </target>
 
-    <target name="jar" depends="compile">
-        <jar destfile="${dist.dir}/jython.jar"
-             basedir="${output.dir}"
-             update="true">
-          <include name="com/**/*" />
-          <include name="org/**/*" />
-          <include name="jxxload_help/*" />
-          <include name="javatests/*" />
+    <target name="jar" depends="expose">
+        <jar destfile="${dist.dir}/jython.jar" update="true">
+          <fileset dir="${compile.dir}"/>   
+          <fileset dir="${exposed.dir}"/>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
               <attribute name="Built-By" value="${user.name}" />
@@ -573,7 +580,7 @@ The readme text for the next release will be like:
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
                includes="org/**"
-               destdir="${output.dir}/"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
@@ -583,7 +590,7 @@ The readme text for the next release will be like:
         />
         <echo>copy installer classes to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${output.dir}">
+            <fileset dir="${compile.dir}">
             	<include name="org/python/util/install/**/*.class" />
             	<include name="org/apache/commons/cli/*.class" />
             </fileset>
