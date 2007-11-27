@@ -66,7 +66,7 @@ javaccHome=${basedir}/../externals/javacc-4.0
 ht2html.dir=${basedir}/../externals/ht2html-2.0
 
 # - define the home of the corresponding CPython version
-python.home=c:/Programme/Python/Python22
+python.home=c:/Programme/Python/Python23
 
 # - javax.servlet
 servlet.jar=c:/workspace/HEAD/CH.obj.commons.core/make_lib/j2ee.jar
@@ -83,7 +83,7 @@ jline.jar=${basedir}/../externals/external-jars/jline-0.9.91.jar
 mysql.jar=${basedir}/../externals/external-jars/mysql-connector-java-3.0.16-ga-bin.jar
 postgresql.jar=${basedir}/../externals/external-jars/pg74.215.jdbc2.jar
 oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/ojdbc14.jar
-#informix.jar=
+#informix.jar=${basedir}/../externals/external-jars/ifxjdbc.jar
 
 # - option for javac (build.compiler=modern is a global option to use standard jdk 1.3/1.4/1.5)
 #build.compiler=modern
@@ -126,6 +126,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="full-build" depends="full-init, dump-env, install" description="a full build with svn checkout" />
 
+    <!-- this target should only set properties common to both developer and full build --> 	
     <target name="common-init">
         <property file="${user.home}/ant.properties" />
         <property file="${basedir}/ant.properties" />
@@ -163,13 +164,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <available property="jndi.present" classname="javax.naming.Context" classpath="${jndi.jar}" />
         <available property="javax.sql.present" classname="javax.sql.DataSource" />
         <available property="jdbc30.present" classname="java.sql.ParameterMetaData" />
-        <property name="work.dir" value="${basedir}" />
-        <property name="jython.base.dir" value="${basedir}" />
-        <property name="source.dir" value="${basedir}/src" />
-        <property name="templates.dir" value="${basedir}/src/templates" />
-        <property name="python.lib" value="${basedir}/CPythonLib" />
-        <property name="bugtests.dir" value="${basedir}/bugtests" />
-        <property name="templates.lazy" value="true" />
     </target>
 
     <target name="full-init" depends="common-init">
@@ -179,10 +173,13 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- predefined tags for jython and cpython -->
         <property name="svn.tag" value="Release_2_2beta2" />
 
+        <!-- use different work and checkout directories -->
         <property name="work.dir" value="${basedir}/../full_build_${svn.tag}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
         <property name="source.dir" value="${jython.base.dir}/src" />
+        <property name="templates.dir" value="${source.dir}/templates" />
+        <property name="bugtests.dir" value="${jython.base.dir}/bugtests" />
         <property name="has.repositories.connection" value="true" />
         <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
         <property name="python.exe" value="${python.home}/python" />
@@ -196,7 +193,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <isset property="svn.revision" />
         </condition>
         <property name="jython.version" value="2.2b2" />
-	<property name="svn.revision" value="HEAD"/>
+        <property name="svn.revision" value="HEAD"/>
     	
         <!-- classpath for svn ant task -->
         <path id="svn.classpath">
@@ -207,7 +204,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </path>
     	<!-- taskdef for svn ant task -->
     	<taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="svn.classpath" />
-	<!-- Require all of the optional jars for a full build -->
+        <!-- Require all of the optional jars for a full build -->
         <fail unless="readline.present" message="readline jar not present" />
         <fail unless="jline.present" message="jline jar not present" />
         <fail unless="servlet.present" message="servlet jar not present" />
@@ -218,6 +215,14 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     </target>
 
     <target name="init" depends="common-init">
+        <property name="work.dir" value="${basedir}" />
+        <property name="jython.base.dir" value="${basedir}" />
+        <property name="source.dir" value="${basedir}/src" />
+        <property name="templates.dir" value="${basedir}/src/templates" />
+        <property name="python.lib" value="${basedir}/CPythonLib" />
+        <property name="bugtests.dir" value="${basedir}/bugtests" />
+        <property name="templates.lazy" value="true" />
+
         <property name="output.dir" value="${work.dir}/build" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
@@ -249,6 +254,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>output.dir         = '${output.dir}'</echo>
         <echo>dist.dir           = '${dist.dir}'</echo>
         <echo>apidoc.dir         = '${apidoc.dir}'</echo>
+        <echo>templates.dir      = '${templates.dir}'</echo>
+        <echo>templates.lazy     = '${templates.lazy}'</echo>
         <echo>python.lib         = '${python.lib}'</echo>
         <echo>javaccHome         = '${javaccHome}'</echo>
         <echo>ht2html.dir        = '${ht2html.dir}'</echo>
