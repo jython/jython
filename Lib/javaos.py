@@ -299,10 +299,10 @@ def open(filename, flag, mode=0777):
     appending = flag & O_APPEND
 
     if updating and writing:
-        raise OSError(errno.EINVAL, 'Invalid argument: %r' % filename)
+        raise OSError(errno.EINVAL, errno.strerror(errno.EINVAL), filename)
 
     if not creating and not path.exists(filename):
-        raise OSError(errno.ENOENT, 'No such file or directory: %r' % filename)
+        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), filename)
 
     if not writing or updating:
         # Default to reading
@@ -314,10 +314,10 @@ def open(filename, flag, mode=0777):
         FileIO(filename, 'w').close()
 
     if exclusive and creating:
-        from java.io import File
         try:
             if not File(filename).createNewFile():
-                raise OSError(errno.EEXIST, 'File exists: %r' % filename)
+                raise OSError(errno.EEXIST, errno.strerror(errno.EEXIST),
+                              filename)
         except java.io.IOException, ioe:
             raise OSError(ioe)
 
@@ -332,9 +332,8 @@ def open(filename, flag, mode=0777):
             fchannel = RandomAccessFile(filename, 'rws').getChannel()
         except FileNotFoundException, fnfe:
             if path.isdir(filename):
-                raise OSError(errno.EISDIR, "Is a directory")
-            raise OSError(errno.ENOENT,
-                          "No such file or directory: %r' % filename")
+                raise OSError(errno.EISDIR, errno.strerror(errno.EISDIR))
+            raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), filename)
         return FileIO(fchannel, mode)
 
     return FileIO(filename, mode)
