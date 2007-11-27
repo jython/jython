@@ -12,8 +12,11 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.expose.ExposedDelete;
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
 
@@ -58,7 +61,11 @@ public interface PyTypes {
 
     public static final Type EXPOSED_NEW = Type.getType(ExposedNew.class);
     
-    public static final Type EXPOSED_GET = Type.getType(ExposedNew.class);
+    public static final Type EXPOSED_GET = Type.getType(ExposedGet.class);
+    
+    public static final Type EXPOSED_SET = Type.getType(ExposedSet.class);
+    
+    public static final Type EXPOSED_DELETE = Type.getType(ExposedDelete.class);
 
     public static final Type TYPEBUILDER = Type.getType(TypeBuilder.class);
     

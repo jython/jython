@@ -2,6 +2,7 @@ package org.python.expose.generate;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.objectweb.asm.Type;
@@ -68,7 +69,7 @@ public class TypeExposer extends Exposer {
         return onType.getClassName() + "$PyExposer";
     }
     
-    public TypeExposer(Type onType, String name, List<MethodExposer> exposers, NewExposer ne) {
+    public TypeExposer(Type onType, String name, Collection<MethodExposer> exposers, NewExposer ne) {
         super(BaseTypeBuilder.class, makeGeneratedName(onType));
         this.onType = onType;
         this.name = name;
@@ -195,7 +196,7 @@ public class TypeExposer extends Exposer {
 
     private String name;
 
-    private List<MethodExposer> exposers = new ArrayList<MethodExposer>();
+    private Collection<MethodExposer> exposers;
 
     private int numNames;
 

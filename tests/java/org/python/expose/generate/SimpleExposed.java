@@ -44,18 +44,17 @@ public class SimpleExposed extends PyObject {
         return false;
     }
 
-    @ExposedGet(name = "toString")
     @ExposedMethod(names = {"__repr__", "__str__"})
     public String toString() {
         return toStringVal;
     }
 
-    @ExposedSet
+    @ExposedSet(name = "tostring")
     public void setToString(String newVal) {
         toStringVal = newVal;
     }
 
-    @ExposedDelete
+    @ExposedDelete(name = "tostring")
     public void deleteToString() {
         toStringVal = null;
     }
@@ -91,6 +90,7 @@ public class SimpleExposed extends PyObject {
         return arg;
     }
 
+    @ExposedGet(name = "tostring")
     public String toStringVal = TO_STRING_RETURN;
 
     public static final String TO_STRING_RETURN = "A simple test class";

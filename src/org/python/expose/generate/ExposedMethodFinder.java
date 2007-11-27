@@ -7,7 +7,6 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
-import org.python.expose.ExposedNew;
 import org.python.expose.MethodType;
 
 /**
@@ -46,6 +45,12 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
      */
     public abstract void handleResult(NewExposer exposer);
 
+    public abstract void exposeAsGetDescriptor(String descName);
+
+    public abstract void exposeAsSetDescriptor(String descName);
+
+    public abstract void exposeAsDeleteDescriptor(String descName);
+
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         if(desc.equals(EXPOSED_NEW.getDescriptor())) {
@@ -59,8 +64,30 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
             }
             methVisitor = new ExposedMethodVisitor();
             return methVisitor;
-        } else if(desc.equals(EXPOSED_GET)) {
-            
+        } else if(desc.equals(EXPOSED_GET.getDescriptor())) {
+            return new DescriptorVisitor(methodName) {
+
+                @Override
+                public void handleResult(String name) {
+                    exposeAsGetDescriptor(name);
+                }
+            };
+        } else if(desc.equals(EXPOSED_SET.getDescriptor())) {
+            return new DescriptorVisitor(methodName) {
+
+                @Override
+                public void handleResult(String name) {
+                    exposeAsSetDescriptor(name);
+                }
+            };
+        } else if(desc.equals(EXPOSED_DELETE.getDescriptor())) {
+            return new DescriptorVisitor(methodName) {
+
+                @Override
+                public void handleResult(String name) {
+                    exposeAsDeleteDescriptor(name);
+                }
+            };
         }
         return super.visitAnnotation(desc, visible);
     }
@@ -146,7 +173,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
 
     private Type onType;
 
-    private String methodName, methodDesc, typeName;
+    private String methodDesc, typeName, methodName;
 
     private String[] exceptions;
 

@@ -3,13 +3,17 @@ package org.python.expose.generate;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -46,8 +50,12 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
     /**
      * @return MethodExposers for each method that needs to be exposed
      */
-    public List<MethodExposer> getMethodExposers() {
+    public Collection<MethodExposer> getMethodExposers() {
         return methodExposers;
+    }
+
+    public Collection<DescriptorExposer> getDescriptorExposers() {
+        return descExposers.values();
     }
 
     /**
@@ -76,7 +84,16 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
         return onType.getClassName();
     }
 
+    protected DescriptorExposer getDescriptorExposer(String descName) {
+        if(!descExposers.containsKey(descName)) {
+            descExposers.put(descName, new DescriptorExposer(onType, descName));
+        }
+        return descExposers.get(descName);
+    }
+
     private List<MethodExposer> methodExposers = new ArrayList<MethodExposer>();
+
+    private Map<String, DescriptorExposer> descExposers = new HashMap<String, DescriptorExposer>();
 
     private NewExposer newExposer;
 
@@ -174,8 +191,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
         @Override
         public MethodVisitor visitMethod(int access,
-                                         String name,
-                                         String desc,
+                                         final String name,
+                                         final String desc,
                                          String signature,
                                          String[] exceptions) {
             if(name.equals("<clinit>")) {
@@ -188,6 +205,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                                                            signature,
                                                                            exceptions);
                 return new MethodAdapter(passthroughVisitor) {
+
                     @Override
                     public void visitCode() {
                         super.visitCode();
@@ -208,6 +226,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                                desc,
                                                exceptions,
                                                passthroughVisitor) {
+
                     @Override
                     public void handleResult(MethodExposer exposer) {
                         methodExposers.add(exposer);
@@ -217,8 +236,44 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     public void handleResult(NewExposer exposer) {
                         newExposer = exposer;
                     }
+
+                    @Override
+                    public void exposeAsGetDescriptor(String descName) {
+                        getDescriptorExposer(descName).addMethodGetter(name, desc);
+                    }
+
+                    @Override
+                    public void exposeAsSetDescriptor(String descName) {
+                        getDescriptorExposer(descName).addMethodSetter(name, desc);
+                    }
+
+                    @Override
+                    public void exposeAsDeleteDescriptor(String descName) {
+                        getDescriptorExposer(descName).addMethodDeleter(name, desc);
+                    }
                 };
             }
+        }
+
+        @Override
+        public FieldVisitor visitField(int access,
+                                       String name,
+                                       final String desc,
+                                       String signature,
+                                       Object value) {
+            FieldVisitor passthroughVisitor = super.visitField(access, name, desc, signature, value);
+            return new ExposedFieldFinder(name, passthroughVisitor) {
+
+                @Override
+                public void exposeAsGet(String name) {
+                    getDescriptorExposer(name).addFieldGetter(name, Type.getType(desc));
+                }
+
+                @Override
+                public void exposeAsSet(String name) {
+                    getDescriptorExposer(name).addFieldSetter(name, Type.getType(desc));
+                }
+            };
         }
 
         private boolean generatedStaticBlock;

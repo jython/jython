@@ -27,16 +27,6 @@ public class DescriptorExposer extends Exposer {
         name = descrName;
     }
 
-    /**
-     * Indicates this descritpor will call the given method on its type for
-     * __get__.
-     * 
-     * @param desc -
-     *            the method descriptor for the method to call. Must return a
-     *            non-primitive type and take no arguments. If the setter has
-     *            already been determined, the return type must agree with its
-     *            type
-     */
     public void addMethodGetter(String methodName, String desc) {
         if(hasGetter()) {
             error("Descriptor can only have one getter");
