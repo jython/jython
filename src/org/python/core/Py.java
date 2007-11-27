@@ -17,6 +17,7 @@ import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
 import org.python.core.util.StringUtil;
+import org.python.modules.errno;
 import org.python.parser.ast.modType;
 
 public final class Py
@@ -143,6 +144,7 @@ public final class Py
         String message = ioe.getMessage();
         if (ioe instanceof java.io.FileNotFoundException) {
             message = "File not found - "+message;
+            return IOError(errno.ENOENT, message);
         }
         return new PyException(Py.IOError, message);
     }
