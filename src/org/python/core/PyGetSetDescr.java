@@ -73,7 +73,7 @@ public class PyGetSetDescr extends PyDataDescr {
     }
 
     @Override
-    public void invokeDel(PyObject obj) {
+    public void invokeDelete(PyObject obj) {
         try {
             delMeth.invoke(obj, new Object[0]);
         } catch(IllegalArgumentException e) {

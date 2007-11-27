@@ -57,10 +57,14 @@ public interface PyTypes {
     public static final Type EXPOSED_METHOD = Type.getType(ExposedMethod.class);
 
     public static final Type EXPOSED_NEW = Type.getType(ExposedNew.class);
+    
+    public static final Type EXPOSED_GET = Type.getType(ExposedNew.class);
 
     public static final Type TYPEBUILDER = Type.getType(TypeBuilder.class);
     
     // Java types
+    public static final Type OBJECT = Type.getType(Object.class);
+    
     public static final Type STRING = Type.getType(String.class);
 
     public static final Type ASTRING = Type.getType(String[].class);

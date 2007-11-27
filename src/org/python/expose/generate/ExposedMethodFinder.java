@@ -7,6 +7,7 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
+import org.python.expose.ExposedNew;
 import org.python.expose.MethodType;
 
 /**
@@ -48,16 +49,18 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         if(desc.equals(EXPOSED_NEW.getDescriptor())) {
-            if(newExp != null || methVisitor != null) {
+            if(methVisitor != null) {
                 throw new IllegalArgumentException("Can only be one @ExposedMethod or @ExposedNew on a single method.");
             }
             newExp = new NewExposer(onType, access, methodName, methodDesc, exceptions);
         } else if(desc.equals(EXPOSED_METHOD.getDescriptor())) {
-            if(newExp != null || methVisitor != null) {
+            if(newExp != null) {
                 throw new IllegalArgumentException("Can only be one @ExposedMethod or @ExposedNew on a single method.");
             }
             methVisitor = new ExposedMethodVisitor();
             return methVisitor;
+        } else if(desc.equals(EXPOSED_GET)) {
+            
         }
         return super.visitAnnotation(desc, visible);
     }

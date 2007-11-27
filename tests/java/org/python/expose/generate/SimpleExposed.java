@@ -4,8 +4,11 @@ import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.expose.ExposedDelete;
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
@@ -15,13 +18,16 @@ public class SimpleExposed extends PyObject {
     public void method() {}
 
     public int timesCalled;
-    
+
     @ExposedNew
-    public static PyObject __new__(PyNewWrapper new_, boolean init, PyType subtype,
-                               PyObject[] args, String[] keywords) {
+    public static PyObject __new__(PyNewWrapper new_,
+                                   boolean init,
+                                   PyType subtype,
+                                   PyObject[] args,
+                                   String[] keywords) {
         return Py.One;
     }
-    
+
     @ExposedMethod
     void invisible() {}
 
@@ -38,9 +44,20 @@ public class SimpleExposed extends PyObject {
         return false;
     }
 
+    @ExposedGet(name = "toString")
     @ExposedMethod(names = {"__repr__", "__str__"})
     public String toString() {
-        return TO_STRING_RETURN;
+        return toStringVal;
+    }
+
+    @ExposedSet
+    public void setToString(String newVal) {
+        toStringVal = newVal;
+    }
+
+    @ExposedDelete
+    public void deleteToString() {
+        toStringVal = null;
     }
 
     @ExposedMethod
@@ -63,16 +80,18 @@ public class SimpleExposed extends PyObject {
         }
         return -2;
     }
-    
+
     @ExposedMethod(defaults = {"Py.None"})
     public PyObject defaultToNone(PyObject arg) {
         return arg;
     }
-    
+
     @ExposedMethod(defaults = {"null"})
     public PyObject defaultToNull(PyObject arg) {
         return arg;
     }
-    
+
+    public String toStringVal = TO_STRING_RETURN;
+
     public static final String TO_STRING_RETURN = "A simple test class";
 }

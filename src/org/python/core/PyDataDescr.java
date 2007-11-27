@@ -18,6 +18,18 @@ public class PyDataDescr extends PyDescriptor {
      * @param ofType -
      *            the type returned by the descriptor
      */
+    public PyDataDescr(Class onType, String name, Class ofType) {
+        this(PyType.fromClass(onType), name, ofType);
+    }
+
+    /**
+     * @param onType -
+     *            the type the descriptor belongs to
+     * @param name -
+     *            the name of the descriptor on descriptor type
+     * @param ofType -
+     *            the type returned by the descriptor
+     */
     public PyDataDescr(PyType onType, String name, Class ofType) {
         this.dtype = onType;
         this.name = name;
@@ -65,11 +77,11 @@ public class PyDataDescr extends PyDescriptor {
             PyType objtype = obj.getType();
             if(objtype != dtype && !objtype.isSubType(dtype))
                 throw get_wrongtype(objtype);
-            invokeDel(obj);
+            invokeDelete(obj);
         }
     }
 
-    public void invokeDel(PyObject obj) {
+    public void invokeDelete(PyObject obj) {
         throw new UnsupportedOperationException("Must be overriden by a subclass");
     }
 
