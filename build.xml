@@ -444,7 +444,7 @@ The readme text for the next release will be like:
             </fileset>
         </copy>
     </target>
-    <target name="expose" depends="compile">
+    <target name="expose" depends="init">
         <mkdir dir="${exposed.dir}"/>
         <taskdef name="expose" classname="org.python.expose.generate.ExposeTask"
             classpath="${compile.dir}" classpathref="main.classpath"/>
@@ -453,7 +453,7 @@ The readme text for the next release will be like:
         </expose>
     </target>
 
-    <target name="jar" depends="expose">
+    <target name="jar" depends="compile,expose">
         <jar destfile="${dist.dir}/jython.jar" update="true">
           <fileset dir="${compile.dir}"/>   
           <fileset dir="${exposed.dir}"/>

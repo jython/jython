@@ -1,7 +1,10 @@
 package org.python.expose.generate;
 
+import java.io.IOException;
+
 import junit.framework.TestCase;
 
+import org.objectweb.asm.Type;
 import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
@@ -12,20 +15,10 @@ import org.python.expose.TypeBuilder;
 
 public class TypeExposerTest extends InterpTestCase {
 
-    public void testGetName() {
-        assertEquals("simpleexposed", new TypeExposer(SimpleExposed.class).getName());
-        assertEquals("somethingcompletelydifferent", new TypeExposer(Rename.class).getName());
-    }
-
-    public void testNoExposed() {
-        try {
-            new TypeExposer(Unexposed.class);
-            fail("Passing a class without @Exposed to ExposedClassProcessor should throw an IllegalArgumentException");
-        } catch(IllegalArgumentException iae) {}
-    }
-
-    public void testMakeBuilder() throws InstantiationException, IllegalAccessException {
-        TypeBuilder t = new TypeExposer(SimpleExposed.class).makeBuilder();
+    public void testMakeBuilder() throws Exception {
+        ExposedTypeProcessor etp = new ExposedTypeProcessor(getClass().getClassLoader()
+                .getResourceAsStream("org/python/expose/generate/SimpleExposed.class"));
+        TypeBuilder t = etp.getTypeExposer().makeBuilder();
         assertEquals("simpleexposed", t.getName());
         assertEquals(SimpleExposed.class, t.getTypeClass());
         PyType type = PyType.fromClass(SimpleExposed.class);
@@ -34,21 +27,14 @@ public class TypeExposerTest extends InterpTestCase {
         assertNotNull(dict.__finditem__("prefixed"));
         assertNotNull(dict.__finditem__("__str__"));
         assertNotNull(dict.__finditem__("__repr__"));
-        assertEquals(Py.One, type.__call__());
+        assertNotNull(dict.__finditem__("tostring"));
+        dict.__finditem__("tostring").__get__(new SimpleExposed(), type );
     }
 
-    public void testBadNews() {
-        for(Class cls : new Class[] {NonstaticNew.class, NoreturnNew.class}) {
-            try {
-                new TypeExposer(cls);
-                fail("Passing a malformed constructor, as on " + cls
-                        + ", should raise an IllegalArgumentException");
-            } catch(IllegalArgumentException iae) {}
-        }
-    }
-
-    public void testGoodNew() {
-        TypeBuilder te = new TypeExposer(SimplestNew.class).makeBuilder();
+    public void testGoodNew() throws IOException {
+        ExposedTypeProcessor etp = new ExposedTypeProcessor(getClass().getClassLoader()
+                .getResourceAsStream("org/python/expose/generate/TypeExposerTest$SimplestNew.class"));
+        TypeBuilder te = etp.getTypeExposer().makeBuilder();
         PyObject new_ = te.getDict(PyType.fromClass(SimplestNew.class)).__finditem__("__new__");
         assertEquals(Py.One, new_.__call__(PyType.fromClass(SimplestNew.class)));
     }

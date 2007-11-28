@@ -6,6 +6,7 @@ import org.python.core.PyBoolean;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyBuiltinMethod;
 import org.python.core.PyBuiltinMethodNarrow;
+import org.python.core.PyDataDescr;
 import org.python.core.PyException;
 import org.python.core.PyInteger;
 import org.python.core.PyNewWrapper;
@@ -20,7 +21,7 @@ import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
 
-/** 
+/**
  * Type objects used by exposed generation.
  */
 public interface PyTypes {
@@ -52,6 +53,10 @@ public interface PyTypes {
 
     public static final Type ABUILTIN_FUNCTION = Type.getType(PyBuiltinFunction[].class);
 
+    public static final Type DATA_DESCR = Type.getType(PyDataDescr.class);
+
+    public static final Type ADATA_DESCR = Type.getType(PyDataDescr[].class);
+
     public static final Type BUILTIN_INFO = Type.getType(PyBuiltinFunction.Info.class);
 
     // Exposer Jython types
@@ -60,18 +65,18 @@ public interface PyTypes {
     public static final Type EXPOSED_METHOD = Type.getType(ExposedMethod.class);
 
     public static final Type EXPOSED_NEW = Type.getType(ExposedNew.class);
-    
+
     public static final Type EXPOSED_GET = Type.getType(ExposedGet.class);
-    
+
     public static final Type EXPOSED_SET = Type.getType(ExposedSet.class);
-    
+
     public static final Type EXPOSED_DELETE = Type.getType(ExposedDelete.class);
 
     public static final Type TYPEBUILDER = Type.getType(TypeBuilder.class);
-    
+
     // Java types
     public static final Type OBJECT = Type.getType(Object.class);
-    
+
     public static final Type STRING = Type.getType(String.class);
 
     public static final Type ASTRING = Type.getType(String[].class);
@@ -79,11 +84,11 @@ public interface PyTypes {
     public static final Type STRING_BUILDER = Type.getType(StringBuilder.class);
 
     public static final Type CLASS = Type.getType(Class.class);
-    
+
     // Primitives
     public static final Type INT = Type.INT_TYPE;
 
     public static final Type VOID = Type.VOID_TYPE;
-    
+
     public static final Type BOOLEAN = Type.BOOLEAN_TYPE;
 }

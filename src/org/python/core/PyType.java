@@ -1177,10 +1177,7 @@ public class PyType extends PyObject implements Serializable {
         String name = null;
         String[] exposed_methods = null;
         TypeBuilder tb = classToBuilder.get(c);
-        if(tb != null || c.getAnnotation(ExposedType.class) != null) {
-            if(tb == null) {
-                tb = new TypeExposer(c).makeBuilder();
-            }
+        if(tb != null) {
             name = tb.getName();
             base = PyObject.class;
             newstyle = true;

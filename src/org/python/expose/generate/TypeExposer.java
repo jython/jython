@@ -1,20 +1,28 @@
 package org.python.expose.generate;
 
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 import org.python.core.PyBuiltinFunction;
+import org.python.core.PyDataDescr;
 import org.python.core.PyMethodDescr;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
 import org.python.core.PyType;
+import org.python.expose.ExposedDelete;
+import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
 
@@ -24,60 +32,24 @@ import org.python.expose.TypeBuilder;
  */
 public class TypeExposer extends Exposer {
 
-    public TypeExposer(Class<?> cls) {
-        this(Type.getType(cls),
-             makeName(cls),
-             getMethodExposers(cls, makeName(cls)),
-             getNewExposer(cls));
-    }
-    
-    public static List<MethodExposer> getMethodExposers(Class<?> cls, String name){
-        List<Method> methods = findMethods(cls);
-        List<MethodExposer> exposers = new ArrayList<MethodExposer>(methods.size());
-        for(Method method : methods) {
-            MethodExposer me = new MethodExposer(method, name);
-            exposers.add(me);
-        }
-        return exposers;
-    }
-    
-    public static NewExposer getNewExposer(Class<?> cls) {
-        for(Method m : cls.getDeclaredMethods()) {
-            if(m.getAnnotation(ExposedNew.class) != null) {
-                return new NewExposer(m);
-            }
-        }
-        return null;
-    }
-
-    public static ExposedType getExp(Class<?> m) {
-        ExposedType exp = m.getAnnotation(ExposedType.class);
-        if(exp == null) {
-            throw new IllegalArgumentException(m + " doesn't have the @ExposedType annotation");
-        }
-        return exp;
-    }
-    
-    public static String makeName(Class<?> cls) {
-        if(getExp(cls).name().equals("")) {
-            return cls.getSimpleName();
-        }
-        return getExp(cls).name();
-    }
-    
-    public static String makeGeneratedName(Type onType) {
-        return onType.getClassName() + "$PyExposer";
-    }
-    
-    public TypeExposer(Type onType, String name, Collection<MethodExposer> exposers, NewExposer ne) {
+    public TypeExposer(Type onType,
+                       String name,
+                       Collection<MethodExposer> methods,
+                       Collection<DescriptorExposer> descriptors,
+                       NewExposer ne) {
         super(BaseTypeBuilder.class, makeGeneratedName(onType));
         this.onType = onType;
         this.name = name;
-        this.exposers = exposers;
-        for(MethodExposer method : exposers) {
+        this.methods = methods;
+        this.descriptors = descriptors;
+        for(MethodExposer method : methods) {
             numNames += method.getNames().length;
         }
         this.ne = ne;
+    }
+
+    public static String makeGeneratedName(Type onType) {
+        return onType.getClassName() + "$PyExposer";
     }
 
     public TypeBuilder makeBuilder() {
@@ -85,7 +57,10 @@ public class TypeExposer extends Exposer {
         if(ne != null) {
             ne.load(l);
         }
-        for(MethodExposer me : exposers) {
+        for(DescriptorExposer de : descriptors) {
+            de.load(l);
+        }
+        for(MethodExposer me : methods) {
             me.load(l);
         }
         Class descriptor = load(l);
@@ -97,26 +72,6 @@ public class TypeExposer extends Exposer {
             // so make this a runtime exception
             throw new RuntimeException("Unable to create generated builder", e);
         }
-    }
-    
-    /**
-     * @return - the name of the class that would be generated to expose cls.
-     */
-    public static String getExposedName(Class cls) {
-        return cls.getName() + "$PyExposer";
-    }
-
-    /**
-     * @return - the methods on the exposed class that should be exposed.
-     */
-    public static List<Method> findMethods(Class cls) {
-        List<Method> exposedMethods = new ArrayList<Method>();
-        for(Method m : cls.getDeclaredMethods()) {
-            if(m.getAnnotation(ExposedMethod.class) != null) {
-                exposedMethods.add(m);
-            }
-        }
-        return exposedMethods;
     }
 
     public String getName() {
@@ -132,7 +87,7 @@ public class TypeExposer extends Exposer {
         mv.visitTypeInsn(ANEWARRAY, BUILTIN_FUNCTION.getInternalName());
         mv.visitVarInsn(ASTORE, 1);
         int i = 0;
-        for(MethodExposer exposer : exposers) {
+        for(MethodExposer exposer : methods) {
             for(int j = 0; j < exposer.getNames().length; j++) {
                 mv.visitVarInsn(ALOAD, 1);
                 mv.visitLdcInsn(i++);
@@ -144,6 +99,19 @@ public class TypeExposer extends Exposer {
             }
         }
         mv.visitVarInsn(ALOAD, 1);
+        mv.visitLdcInsn(descriptors.size());
+        mv.visitTypeInsn(ANEWARRAY, DATA_DESCR.getInternalName());
+        mv.visitVarInsn(ASTORE, 2);
+        i = 0;
+        for(DescriptorExposer desc : descriptors) {
+            mv.visitVarInsn(ALOAD, 2);
+            mv.visitLdcInsn(i);
+            mv.visitTypeInsn(NEW, desc.getInternalName());
+            mv.visitInsn(DUP);
+            callConstructor(desc.getGeneratedType());
+            mv.visitInsn(AASTORE);
+        }
+        mv.visitVarInsn(ALOAD, 2);
         if(ne != null) {
             mv.visitTypeInsn(NEW, ne.getInternalName());
             mv.visitInsn(DUP);
@@ -151,15 +119,20 @@ public class TypeExposer extends Exposer {
         } else {
             mv.visitInsn(ACONST_NULL);
         }
-        superConstructor(STRING, CLASS, ABUILTIN_FUNCTION, PYNEWWRAPPER);
+        superConstructor(STRING, CLASS, ABUILTIN_FUNCTION, ADATA_DESCR, PYNEWWRAPPER);
         endConstructor();
     }
 
     protected static class BaseTypeBuilder implements TypeBuilder {
 
-        public BaseTypeBuilder(String name, Class typeClass, PyBuiltinFunction[] funcs, PyNewWrapper newWrapper) {
+        public BaseTypeBuilder(String name,
+                               Class typeClass,
+                               PyBuiltinFunction[] funcs,
+                               PyDataDescr[] descrs,
+                               PyNewWrapper newWrapper) {
             this.typeClass = typeClass;
             this.name = name;
+            this.descrs = descrs;
             this.funcs = funcs;
             this.newWrapper = newWrapper;
         }
@@ -169,6 +142,9 @@ public class TypeExposer extends Exposer {
             for(PyBuiltinFunction func : funcs) {
                 PyMethodDescr pmd = new PyMethodDescr(typeClass, func);
                 dict.__setitem__(pmd.getName(), pmd);
+            }
+            for(PyDataDescr descr : descrs) {
+                dict.__setitem__(descr.getName(), descr);
             }
             if(newWrapper != null) {
                 dict.__setitem__("__new__", newWrapper);
@@ -184,9 +160,13 @@ public class TypeExposer extends Exposer {
         public Class getTypeClass() {
             return typeClass;
         }
-        
+
         private PyNewWrapper newWrapper;
+
         private PyBuiltinFunction[] funcs;
+
+        private PyDataDescr[] descrs;
+
         private Class typeClass;
 
         private String name;
@@ -196,7 +176,9 @@ public class TypeExposer extends Exposer {
 
     private String name;
 
-    private Collection<MethodExposer> exposers;
+    private Collection<MethodExposer> methods;
+
+    private Collection<DescriptorExposer> descriptors;
 
     private int numNames;
 

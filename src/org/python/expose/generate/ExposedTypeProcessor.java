@@ -147,8 +147,15 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
             if(typeName == null) {
                 throw new IllegalArgumentException("A class given to InnerClassExposer must have the ExposedType annotation");
             }
-            typeExposer = new TypeExposer(onType, getName(), methodExposers, newExposer);
+            typeExposer = new TypeExposer(onType,
+                                          getName(),
+                                          methodExposers,
+                                          descExposers.values(),
+                                          newExposer);
             for(MethodExposer exposer : methodExposers) {
+                addInnerClass(exposer.getGeneratedType());
+            }
+            for(DescriptorExposer exposer : descExposers.values()) {
                 addInnerClass(exposer.getGeneratedType());
             }
             if(newExposer != null) {
@@ -257,21 +264,21 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
         @Override
         public FieldVisitor visitField(int access,
-                                       String name,
+                                       final String fieldName,
                                        final String desc,
                                        String signature,
                                        Object value) {
-            FieldVisitor passthroughVisitor = super.visitField(access, name, desc, signature, value);
-            return new ExposedFieldFinder(name, passthroughVisitor) {
+            FieldVisitor passthroughVisitor = super.visitField(access, fieldName, desc, signature, value);
+            return new ExposedFieldFinder(fieldName, passthroughVisitor) {
 
                 @Override
                 public void exposeAsGet(String name) {
-                    getDescriptorExposer(name).addFieldGetter(name, Type.getType(desc));
+                    getDescriptorExposer(name).addFieldGetter(fieldName, Type.getType(desc));
                 }
 
                 @Override
                 public void exposeAsSet(String name) {
-                    getDescriptorExposer(name).addFieldSetter(name, Type.getType(desc));
+                    getDescriptorExposer(name).addFieldSetter(fieldName, Type.getType(desc));
                 }
             };
         }

@@ -7,9 +7,9 @@ import junit.framework.TestCase;
 
 import org.python.core.BytecodeLoader;
 import org.python.core.PyBuiltinFunction;
+import org.python.core.PyDataDescr;
 import org.python.core.PyObject;
-import org.python.expose.generate.ExposedTypeProcessor;
-import org.python.expose.generate.MethodExposer;
+import org.python.core.PyType;
 
 public class ExposedTypeProcessorTest extends TestCase {
 
@@ -31,9 +31,7 @@ public class ExposedTypeProcessorTest extends TestCase {
                 exposer.load(loader);
             }
         }
-        for(DescriptorExposer exposer : ice.getDescriptorExposers()) {
-            exposer.load(loader);
-        }
+        Class tostringDesc = ice.getDescriptorExposers().iterator().next().load(loader);
         ice.getNewExposer().load(loader);
         ice.getTypeExposer().load(loader);
         Class doctoredSimple = loader.loadClassFromBytes("org.python.expose.generate.SimpleExposed",
@@ -42,6 +40,9 @@ public class ExposedTypeProcessorTest extends TestCase {
         PyBuiltinFunction func = MethodExposerTest.instantiate(simple_method, "invisible");
         PyBuiltinFunction bound = func.bind(simp);
         bound.__call__();
+        PyDataDescr desc = (PyDataDescr)tostringDesc.newInstance();
+        assertEquals(doctoredSimple.getField("toStringVal").get(simp),
+                     desc.__get__(simp, PyType.fromClass(doctoredSimple)).toString());
     }
 
     public void testNoAnnotationType() throws IOException {

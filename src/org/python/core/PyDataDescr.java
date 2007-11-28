@@ -36,6 +36,13 @@ public class PyDataDescr extends PyDescriptor {
         this.ofType = ofType;
     }
 
+    /**
+     * @return - the name this descriptor is exposed as
+     */
+    public String getName() {
+        return name;
+    }
+
     @Override
     public PyObject __get__(PyObject obj, PyObject type) {
         if(obj != null) {

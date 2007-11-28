@@ -1,19 +1,27 @@
 package org.python.expose.generate;
 
-import java.lang.reflect.Method;
-
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyException;
 import org.python.core.PyObject;
-import org.python.expose.generate.MethodExposer;
+import org.python.expose.MethodType;
 
-public class MethodExposerTest extends InterpTestCase {
+public class MethodExposerTest extends InterpTestCase implements Opcodes, PyTypes {
 
-    public static PyBuiltinFunction createBound(String methodName, Class... args) throws Exception {
-        return createBound(new MethodExposer(SimpleExposed.class.getDeclaredMethod(methodName, args),
-                                             "simpleexpose"));
+    public static MethodExposer createExposer(String methodName, Type returnType, Type... args) {
+        return new MethodExposer(Type.getType(SimpleExposed.class),
+                                 Opcodes.ACC_PUBLIC,
+                                 methodName,
+                                 Type.getMethodDescriptor(returnType, args),
+                                 "simpleexposed");
+    }
+
+    public static PyBuiltinFunction createBound(String methodName, Type returnType, Type... args)
+            throws Exception {
+        return createBound(createExposer(methodName, returnType, args));
     }
 
     public static PyBuiltinFunction createBound(MethodExposer me) throws Exception {
@@ -26,10 +34,12 @@ public class MethodExposerTest extends InterpTestCase {
     }
 
     public void testSimpleMethod() throws Exception {
-        MethodExposer mp = new MethodExposer(SimpleExposed.class.getDeclaredMethod("simple_method"));
+        MethodExposer mp = createExposer("simple_method", VOID);
         assertEquals("simple_method", mp.getNames()[0]);
-        assertEquals("org/python/expose/generate/SimpleExposed$simple_method_exposer", mp.getInternalName());
-        assertEquals("org.python.expose.generate.SimpleExposed$simple_method_exposer", mp.getClassName());
+        assertEquals("org/python/expose/generate/SimpleExposed$simple_method_exposer",
+                     mp.getInternalName());
+        assertEquals("org.python.expose.generate.SimpleExposed$simple_method_exposer",
+                     mp.getClassName());
         Class descriptor = mp.load(new BytecodeLoader.Loader());
         PyBuiltinFunction instance = instantiate(descriptor, "simple_method");
         assertSame("simple_method", instance.__getattr__("__name__").toString());
@@ -41,22 +51,20 @@ public class MethodExposerTest extends InterpTestCase {
     }
 
     public void testPrefixing() throws Exception {
-        MethodExposer mp = new MethodExposer(SimpleExposed.class.getMethod("simpleexposed_prefixed"),
-                                             "simpleexposed");
-        assertEquals("prefixed", mp.getNames()[0]);
+        assertEquals("prefixed", createExposer("simpleexposed_prefixed", VOID).getNames()[0]);
     }
 
     public void testStringReturn() throws Exception {
         assertEquals(Py.newString(SimpleExposed.TO_STRING_RETURN),
-                     createBound("toString").__call__());
+                     createBound("toString", STRING).__call__());
     }
 
     public void testBooleanReturn() throws Exception {
-        assertEquals(Py.False, createBound("__nonzero__").__call__());
+        assertEquals(Py.False, createBound("__nonzero__", BOOLEAN).__call__());
     }
 
     public void testArgumentPassing() throws Exception {
-        PyBuiltinFunction bound = createBound("takesArgument", PyObject.class);
+        PyBuiltinFunction bound = createBound("takesArgument", VOID, PYOBJ);
         bound.__call__(Py.None);
         try {
             bound.__call__();
@@ -65,13 +73,17 @@ public class MethodExposerTest extends InterpTestCase {
     }
 
     public void testBinary() throws Exception {
-        PyBuiltinFunction bound = createBound("__add__", PyObject.class);
+        MethodExposer exposer = createExposer("__add__", PYOBJ, PYOBJ);
+        exposer.type = MethodType.BINARY;
+        PyBuiltinFunction bound = createBound(exposer);
         assertEquals(Py.NotImplemented, bound.__call__(Py.None));
         assertEquals(Py.One, bound.__call__(Py.False));
     }
 
     public void testCmp() throws Exception {
-        PyBuiltinFunction bound = createBound("__cmp__", PyObject.class);
+        MethodExposer exp = createExposer("__cmp__", INT, PYOBJ);
+        exp.type = MethodType.CMP;
+        PyBuiltinFunction bound = createBound(exp);
         try {
             bound.__call__(Py.None);
             fail("Returning -2 from __cmp__ should yield a type error");
@@ -84,13 +96,17 @@ public class MethodExposerTest extends InterpTestCase {
     }
 
     public void testNoneDefault() throws Exception {
-        PyBuiltinFunction bound = createBound("defaultToNone", PyObject.class);
+        MethodExposer exp = createExposer("defaultToNone", PYOBJ, PYOBJ);
+        exp.defaults = new String[] {"Py.None"};
+        PyBuiltinFunction bound = createBound(exp);
         assertEquals(Py.One, bound.__call__(Py.One));
         assertEquals(Py.None, bound.__call__());
     }
 
     public void testNullDefault() throws Exception {
-        PyBuiltinFunction bound = createBound("defaultToNull", PyObject.class);
+        MethodExposer exp = createExposer("defaultToNull", PYOBJ, PYOBJ);
+        exp.defaults = new String[] {"null"};
+        PyBuiltinFunction bound = createBound(exp);
         assertEquals(Py.One, bound.__call__(Py.One));
         assertEquals(null, bound.__call__());
     }

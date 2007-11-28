@@ -84,6 +84,9 @@ public class ExposeTask extends MatchingTask {
             for(MethodExposer exposer : etp.getMethodExposers()) {
                 generate(exposer);
             }
+            for(DescriptorExposer exposer : etp.getDescriptorExposers()) {
+                generate(exposer);
+            }
             if(etp.getNewExposer() != null) {
                 generate(etp.getNewExposer());
             }

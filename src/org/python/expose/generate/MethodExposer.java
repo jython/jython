@@ -17,33 +17,15 @@ import com.sun.mirror.util.Types;
  */
 public class MethodExposer extends Exposer {
 
-    public MethodExposer(Method method) {
-        this(method, "");
-    }
-
-    /**
-     * @param type -
-     *            the type the method is on. If no explicit name is given in the
-     *            annotation, type + '_' will be stripped from method names to
-     *            make the exposed name.
-     */
-    public MethodExposer(Method method, String type) {
-        this(Type.getType(method.getDeclaringClass()),
-             method.getModifiers(),
-             method.getName(),
-             Type.getMethodDescriptor(method),
-             type,
-             getExp(method).names(),
-             getExp(method).defaults(),
-             getExp(method).type());
-    }
-
-    public static ExposedMethod getExp(Method m) {
-        ExposedMethod exp = m.getAnnotation(ExposedMethod.class);
-        if(exp == null) {
-            throw new IllegalArgumentException(m + " doesn't have the @ExposedMethod annotation");
-        }
-        return exp;
+    public MethodExposer(Type onType, int access, String methodName, String desc, String prefix) {
+        this(onType,
+             access,
+             methodName,
+             desc,
+             prefix,
+             new String[0],
+             new String[0],
+             MethodType.NORMAL);
     }
 
     public MethodExposer(Type onType,
@@ -223,7 +205,7 @@ public class MethodExposer extends Exposer {
 
     private String methodName;
 
-    private String[] asNames, defaults;
+    protected String[] asNames, defaults;
 
     private String prefix;
 
@@ -231,5 +213,5 @@ public class MethodExposer extends Exposer {
 
     private Type onType, returnType;
 
-    private MethodType type;
+    protected MethodType type;
 }
