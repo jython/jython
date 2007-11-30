@@ -1162,7 +1162,7 @@ public final class Py
         PyException e = Py.JavaError(t);
 
         //Add another traceback object to the exception if needed
-        if (e.traceback.tb_frame != frame) {
+        if (e.traceback.tb_frame != frame && e.traceback.tb_frame.f_back != null) {
             e.traceback = new PyTraceback(e.traceback);
         }
     }
@@ -1173,7 +1173,7 @@ public final class Py
         pye.instantiate();
 
         // attach catching frame
-        if (frame != null && pye.traceback.tb_frame != frame) {
+        if (frame != null && pye.traceback.tb_frame != frame && pye.traceback.tb_frame.f_back != null) {
             pye.traceback = new PyTraceback(pye.traceback);
         }
        
