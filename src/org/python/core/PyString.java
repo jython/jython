@@ -1,6 +1,8 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.core.util.StringUtil;
+
 /**
  * A builtin python string.
  */
@@ -1624,7 +1626,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final PyUnicode str___unicode__() {
-        return new PyUnicode(this.toString());
+        return new PyUnicode(this);
     }
 
     public int __len__() {
@@ -2105,35 +2107,7 @@ public class PyString extends PyBaseString implements ClassDictInit
      *         corresponding char.
      */
     public byte[] toBytes() {
-        return to_bytes(string);
-    }
-
-    /**
-     * @return a byte array with one byte for each char in s. Each byte contains
-     *         the low-order bits of its corresponding char.
-     */
-    public static byte[] to_bytes(String s) {
-        int len = s.length();
-        byte[] b = new byte[len];
-        s.getBytes(0, len, b, 0);
-        return b;
-    }
-
-    /**
-     * @return A String with chars corresponding to the bytes in buf
-     */
-    public static String from_bytes(byte[] buf) {
-        return from_bytes(buf, 0, buf.length);
-    }
-    
-    /**
-     * @return A String of len buff with chars corresponding to buf from off to
-     *         off + len
-     */
-    public static String from_bytes(byte[] buf, int off, int len) {
-        // Yes, I known the method is deprecated, but it is the fastest
-        // way of converting between between byte[] and String
-        return new String(buf, 0, off, len);
+        return StringUtil.toBytes(string);
     }
 
     public Object __tojava__(Class c) {

@@ -14,6 +14,7 @@ public class PyFunction extends PyObject
     public PyCode func_code;
     public PyObject __dict__;
     public PyObject func_closure; // nested scopes: closure
+    public PyObject __module__ = Py.None;
 
     public PyFunction(PyObject globals, PyObject[] defaults, PyCode code,
                       PyObject doc,PyObject[] closure_cells)
@@ -30,6 +31,10 @@ public class PyFunction extends PyObject
             func_closure = new PyTuple(closure_cells);
         } else {
             func_closure = null;
+        }
+        PyObject name = globals.__finditem__("__name__");
+        if(name != null) {
+            __module__ = name;
         }
     }
 
@@ -49,12 +54,16 @@ public class PyFunction extends PyObject
     }
 
 
-    private static final String[] __members__ = {
-        "__doc__", "func_doc",
-        "__name__", "func_name", "__dict__",
-        "func_globals", "func_defaults", "func_code",
-        "func_closure"
-    };
+    private static final String[] __members__ = {"__doc__",
+                                                 "func_doc",
+                                                 "__name__",
+                                                 "func_name",
+                                                 "__dict__",
+                                                 "__module__",
+                                                 "func_globals",
+                                                 "func_defaults",
+                                                 "func_code",
+                                                 "func_closure"};
 
     public PyObject __dir__() {
         PyString members[] = new PyString[__members__.length];
@@ -105,6 +114,8 @@ public class PyFunction extends PyObject
             else
                 throw Py.TypeError("setting function's dictionary " + 
                                    "to a non-dict");
+        } else if(name == "__module__") {
+            __module__ = value;
         } else {
             if (__dict__ == null)
                 __dict__ = new PyStringMap();
@@ -120,6 +131,9 @@ public class PyFunction extends PyObject
             return;
         } else if (name == "func_doc" || name == "__doc__") {
             __doc__ = Py.None;
+            return;
+        } else if(name == "__module__") {
+            __module__ = Py.None;
             return;
         }
         if (__dict__ == null)

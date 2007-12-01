@@ -259,10 +259,6 @@ def test_main():
         del SysModuleTest.test_lost_displayhook
         del SysModuleTest.test_refcount
         del SysModuleTest.test_setcheckinterval
-# Jython transition 2.3
-# sys.exc_clear is missing
-# http://jython.org/bugs/1768982
-        del SysModuleTest.test_exc_clear
     test.test_support.run_unittest(SysModuleTest)
 
 if __name__ == "__main__":

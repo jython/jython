@@ -43,15 +43,19 @@ POLLHUP  = 16
 POLLNVAL = 32
 
 def _getselectable(selectable_object):
-    for method in ['getchannel', 'fileno']:
+    try:
+        channel = selectable_object.getchannel()
+    except:
         try:
-            channel = getattr(selectable_object, method)()
-            if channel and not isinstance(channel, java.nio.channels.SelectableChannel):
-                raise TypeError("Object '%s' is not watchable" % selectable_object, errno.ENOTSOCK)
-            return channel
+            channel = selectable_object.fileno().getChannel()
         except:
-            pass
-    raise TypeError("Object '%s' is not watchable" % selectable_object, errno.ENOTSOCK)
+            raise TypeError("Object '%s' is not watchable" % selectable_object,
+                            errno.ENOTSOCK)
+    
+    if channel and not isinstance(channel, java.nio.channels.SelectableChannel):
+        raise TypeError("Object '%s' is not watchable" % selectable_object,
+                        errno.ENOTSOCK)
+    return channel
 
 class poll:
 

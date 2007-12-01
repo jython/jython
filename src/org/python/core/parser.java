@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
+import org.python.core.util.StringUtil;
 import org.python.parser.IParserHost;
 import org.python.parser.Node;
 import org.python.parser.ParseException;
@@ -42,7 +43,6 @@ public class parser {
             return null;
         }
     }
-
 
     // if reader != null, reset it
     public static PyException fixParseError(BufferedReader reader, Throwable t,
@@ -87,9 +87,8 @@ public class parser {
         else return Py.JavaError(t);
     }
 
-
     public static Node parse(String string, String kind) {
-        return parse(new ByteArrayInputStream(PyString.to_bytes(string)),
+        return parse(new ByteArrayInputStream(StringUtil.toBytes(string)),
                      kind, "<string>", null);
     }
 
@@ -117,7 +116,7 @@ public class parser {
         modType node = null;        
         //System.err.println(new PyString(string).__repr__().toString());
 
-        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(PyString.to_bytes(string)),
+        BufferedReader bufreader = prepBufreader(new ByteArrayInputStream(StringUtil.toBytes(string)),
                                                  cflags);
         
         PythonGrammar g = new PythonGrammar(new ReaderCharStream(bufreader),
@@ -145,27 +144,6 @@ public class parser {
             throw fixParseError(bufreader, t, filename);
         }
         return node;
-        
-        
-//        try {
-//            node = parse(new StringBufferInputStream(string),
-//                         kind, filename, cflags, true);
-//        }
-//        catch (PySyntaxError e) {
-//            //System.out.println("e: "+e.lineno+", "+e.column+", "+
-//            //                   e.forceNewline);
-//            try {
-//                node = parse(new StringBufferInputStream(string+"\n"),
-//                             kind, filename, cflags, true);
-//            }
-//            catch (PySyntaxError e1) {
-//                //System.out.println("e1: "+e1.lineno+", "+e1.column+
-//                //                   ", "+e1.forceNewline);
-//                if (e.forceNewline || !e1.forceNewline) throw e;
-//            }
-//            return null;
-//        }
-//        return node;
     }
 
     private static modType doparse(String kind, CompilerFlags cflags, 
@@ -205,19 +183,23 @@ public class parser {
             nbytes = 10000;
         if (nbytes > 100000)
             nbytes = 100000;
-        
-        Reader reader = null;
-        try {
-            if (cflags != null && cflags.encoding != null) {
+        Reader reader;
+        if(cflags != null && cflags.encoding != null) {
+            try {
                 reader = new InputStreamReader(istream, cflags.encoding);
+            } catch(UnsupportedEncodingException exc) {
+                throw Py.SystemError("python.console.encoding, " + cflags.encoding
+                        + ", isn't supported by this JVM so we can't parse this data.");
             }
-        } catch (UnsupportedEncodingException exc) { ; }
-        if (reader == null) {
-            reader = new InputStreamReader(istream);
+        } else {
+            try {
+                // Use ISO-8859-1 to get bytes off the input stream since it leaves their values alone.
+                reader = new InputStreamReader(istream, "ISO-8859-1");
+            } catch(UnsupportedEncodingException e) {
+                // This JVM is whacked, it doesn't even have iso-8859-1
+                throw Py.SystemError("Java couldn't find the ISO-8859-1 encoding");
+            }
         }
-        
-        //if (Options.fixMacReaderBug);
-        reader = new FixMacReaderBug(reader);
         
         BufferedReader bufreader = new BufferedReader(reader);
         
@@ -225,25 +207,6 @@ public class parser {
             bufreader.mark(nbytes);
         } catch (IOException exc) { }
         return bufreader;
-    }
-
-}
-
-
-/**
- * A workaround for a bug in MRJ2.2's FileReader, where the value returned
- * from read(b, o, l) sometimes are wrong.
- */
-class FixMacReaderBug extends FilterReader {
-    public FixMacReaderBug(Reader in) {
-        super(in);
-    }
-
-    public int read(char b[], int off, int len) throws IOException {
-        int l = super.read(b, off, len);
-        if (l < -1)
-            l += off;
-        return l;
     }
 }
 

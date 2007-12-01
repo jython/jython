@@ -75,7 +75,7 @@ class _ShellEnv:
                      " setting %s. Failed command=%s""" 
             raise OSError( 0, msgFmt % ( _osType, _envType, cmd ))
             
-        if isinstance(cmd, types.StringType):
+        if isinstance(cmd, basestring):
             shellCmd = self.cmd + [cmd]
         else:
             shellCmd = cmd

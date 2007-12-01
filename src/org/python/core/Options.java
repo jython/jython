@@ -26,12 +26,6 @@ public class Options {
     public static boolean showPythonProxyExceptions = false;
 
     /**
-     * Setting this to true will cause the console to poll standard in. This
-     * might be helpful on systems without system-level threads.
-     */
-    public static boolean pollStandardIn = false;
-
-    /**
      * If true, Jython respects Java the accessibility flag for fields,
      * methods, and constructors. This means you can only access public members.
      * Set this to false to access all members by toggling the accessible flag
@@ -76,6 +70,10 @@ public class Options {
      * If true, enable truedivision for the '/' operator.
      */
     public static boolean Qnew = false;
+
+    /** Force stdin, stdout and stderr to be unbuffered, and opened in
+     * binary mode */
+    public static boolean unbuffered = false;
 
     /**
      * Enable division warning. The value maps to the registry values of
@@ -125,9 +123,6 @@ public class Options {
 
         Options.deprecatedKeywordMangling = getBooleanOption(
                 "deprecated.keywordMangling", Options.deprecatedKeywordMangling);
-
-        Options.pollStandardIn = getBooleanOption("console.poll",
-                Options.pollStandardIn);
 
         Options.respectJavaAccessibility = getBooleanOption(
                 "security.respectJavaAccessibility",

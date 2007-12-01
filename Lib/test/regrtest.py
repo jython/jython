@@ -1035,9 +1035,7 @@ _failures = {
     test_dis
     test_descr
     test_descrtut
-    test_dumbdbm
     test_eof
-    test_file
     test_frozen
     test_hexoct
     test_inspect
@@ -1048,18 +1046,15 @@ _failures = {
     test_pep277
     test_pickle
     test_pickletools
-    test_pkg
     test_pkgimport
     test_posixpath
     test_profilehooks
     test_pyclbr
     test_quopri
     test_random
-    test_shutil
     test_slice
     test_softspace
     test_syntax
-    test_tempfile
     test_threaded_import
     test_trace
     test_ucn

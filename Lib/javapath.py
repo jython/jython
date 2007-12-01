@@ -115,6 +115,8 @@ def join(path, *args):
 	if g.isAbsolute() or len(f.getPath()) == 0:
 	    f = g
 	else:
+            if a == "":
+                a = os.sep
 	    f = File(f, a)
     return f.getPath()
 

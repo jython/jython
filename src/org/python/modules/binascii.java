@@ -18,6 +18,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyStringMap;
 import org.python.core.PyTuple;
+import org.python.core.util.StringUtil;
 
 /**
  * The <tt>binascii.java</tt> module contains a number of methods to convert
@@ -203,7 +204,7 @@ public class binascii {
     };
 
     private static byte[] table_b2a_hqx =
-        PyString.to_bytes("!\"#$%&'()*+,-012345689@ABCDEFGHIJKLMNPQRSTUVXYZ[`abcdefhijklmpqr");
+        StringUtil.toBytes("!\"#$%&'()*+,-012345689@ABCDEFGHIJKLMNPQRSTUVXYZ[`abcdefhijklmpqr");
 
 
 
@@ -225,7 +226,7 @@ public class binascii {
     private static int BASE64_MAXBIN = 57;
 
     private static byte[] table_b2a_base64 =
-        PyString.to_bytes("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+        StringUtil.toBytes("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
 
 

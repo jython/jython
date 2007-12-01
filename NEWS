@@ -1,5 +1,42 @@
 Jython NEWS
 
+Jython 2.2.2 rc1
+  Bugs fixed
+    - [ 1806980 ] os.path.join ignores empty string
+    - [ 1744567 ] Simultaneous read & write on socket FileWrapper causes hang
+    - [ 1831710 ] PyFileCloser throws NullPointerException on shutdown
+    - [ 1817908 ] Broken link for corner icon in html documentation
+
+Jython 2.2.1
+  Identical to 2.2.1 rc2
+
+Jython 2.2.1 rc2
+  Bugs fixed
+    - Python files are parsed using the JVM's default encoding
+    - [ 1800378 ] __unicode__ ignored on subclasses of builtin types
+    - [ 1801802 ] JavaImportHelper not thread safe
+    - python.console.encoding is silently ignored if the JVM doesn't support the given encoding
+
+Jython 2.2.1 rc1
+  Bugs fixed
+    - Reading and writing on files would run data through the JVM's default charset
+    - Include the row number where an exception occured while using a zxJDBC cursor
+    - [ 1766527 ] in keyword doesn't work on os.environ
+    - [ 1767194 ] xmllib applies default namespace to attributes incorrectly
+    - [ 1768074 ] str.replace doesn't handle an empty string to be replaced
+    - [ 1775893 ] in keyword does not use dict.has_key()
+    - [ 1782493 ] jython --version doesn't show the java version number
+    - [ 1782856 ] zxJDBC.Timestamp returns hours in AM/PM not 24 hour time
+    - [ 1783960 ] can not exclude parts from text-mode installation
+    - [ 1799328 ] string formatting doesn't call __unicode__ on %s in unicode objects 
+    - [ 1763263 ] os.utime(path, None) doesn't work (incl. a patch)
+    - [ 1758904 ] I added doc strings for functions in os module (javaos.py).
+    - [ 1735774 ] Redirecting stdout/err with os.popen fails if cmd is unicode
+    - [ 1773865 ] Patch for [1768990] pickle fails on subclasses
+    - [ 1783153 ] Patch: compatibility with Java 1.3 for Jython 2.2
+
+Jython 2.2
+  Identical to 2.2 rc3
 Jython 2.2 rc3
   New Features
     - Added telnetlib from CPython
@@ -91,6 +128,7 @@ Jython 2.2 beta2
     - [ 1682423 ] Convert PyModule to a new-style class
     - [ 1682498 ] Fix int(None) raising an AttributeError
     - [ 1684172 ] Changes to make compileall work
+    - [ 1628469 ] fixes for failing builtin tests
 
   
 Jython 2.2 beta1

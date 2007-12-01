@@ -404,7 +404,7 @@ public class exceptions implements ClassDictInit {
         PyObject self = ap.getPyObject(0);
 
         if (self.__getattr__("filename") != Py.None) {
-            return Py.newString("[Errno %s] %s: %s").__mod__(
+            return Py.newString("[Errno %s] %s: %r").__mod__(
                     new PyTuple(new PyObject[] { self.__getattr__("errno"),
                             self.__getattr__("strerror"),
                             self.__getattr__("filename") })).__str__();

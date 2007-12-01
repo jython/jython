@@ -163,6 +163,17 @@ class JavaShellTest(unittest.TestCase):
             newValue, value
             ))
 
+    def testFormatUnicodeCommand(self):
+        shell = javashell._ShellEnv(cmd=['runner'])
+        self.assertEqual(shell._formatCmd('echo hello'), ['runner', 'echo hello'])
+        self.assertEqual(shell._formatCmd(u'echo world'), ['runner', u'echo world'])
+
+    def testExecuteUnicodeCommandWithRedirection(self):
+        process = javashell.shellexecute(u'nonexcmd 2>&1')
+        stdout = process.getOutputStream().toString()
+        process.waitFor()
+        self.assertNotEqual(stdout, "", "Redirecting 2>&1 failed with unicode cmd")
+
 def test_main():
     test_support.run_unittest(JavaShellTest)
 
