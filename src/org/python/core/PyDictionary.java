@@ -651,12 +651,12 @@ public class PyDictionary extends PyObject {
                         throw Py.ValueError("dictionary update sequence element #"+cnt+
                              " has length "+n+"; 2 is required");
                     }
-                    this.__setitem__(pair.__getitem__(0),pair.__getitem__(1));
+                    dict___setitem__(pair.__getitem__(0), pair.__getitem__(1));
                 }
             }
         }
-        for (int i=0; i < kwds.length; i++) {
-            this.__setitem__(kwds[i],args[nargs+i]);
+        for(int i = 0; i < kwds.length; i++) {
+            dict___setitem__(Py.newString(kwds[i]), args[nargs + i]);
         }        
     }
     public static PyObject fromkeys(PyObject keys) {
