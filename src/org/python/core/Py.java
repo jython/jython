@@ -429,7 +429,11 @@ public final class Py
             memory_error((OutOfMemoryError)t);
         }
         PyJavaInstance exc = new PyJavaInstance(t);
-        return new PyException(exc.instclass, exc);
+        PyException pyex = new PyException(exc.instclass, exc);
+        // Set the cause to the original throwable to preserve
+        // the exception chain.
+        pyex.initCause(t);
+        return pyex;
     }
 
     // Don't allow any constructors. Class only provides static methods.
