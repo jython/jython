@@ -1213,7 +1213,7 @@ public class PyObject implements java.io.Serializable {
         if (o instanceof PyObject[])
             return new PyTuple((PyObject[]) o);
         else
-            return new PyTuple(new PyObject[] { this, (PyObject) o });
+            return new PyTuple(this, (PyObject) o );
     }
 
 
@@ -3250,7 +3250,7 @@ public class PyObject implements java.io.Serializable {
                     }
                 }
                 if (n>0) {
-                    state=new PyTuple(new PyObject[] {state, slots});
+                    state=new PyTuple(state, slots);
                 }
             }
         }
@@ -3278,8 +3278,7 @@ public class PyObject implements java.io.Serializable {
             args2[i+1]=((PyTuple)args).pyget(i);
         }
 
-        res=new PyTuple(new PyObject[] {newobj,
-                new PyTuple(args2), state, listitems, dictitems});
+        res = new PyTuple(newobj, new PyTuple(args2), state, listitems, dictitems);
 
         return res;
     }

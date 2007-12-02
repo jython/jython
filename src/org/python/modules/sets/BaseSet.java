@@ -342,12 +342,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
         String name = getType().getFullName();
         PyObject factory = __builtin__.__import__("setsfactory");
         PyObject func = factory.__getattr__(name);
-        return new PyTuple(new PyObject[]{
-            func,
-            new PyTuple(new PyObject[]{
-                new PyList(this)
-            })
-        });
+        return new PyTuple(func, new PyTuple(new PyList(this)));
     }
 
     public PyObject __deepcopy__(PyObject memo) {

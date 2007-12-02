@@ -1185,10 +1185,7 @@ public class PyInteger extends PyObject {
 
         int v = getValue();
         int xdivy = divide(v, rightv);
-        return new PyTuple(new PyObject[] {
-            Py.newInteger(xdivy),
-            Py.newInteger(modulo(v, rightv, xdivy))
-        });
+        return new PyTuple(Py.newInteger(xdivy), Py.newInteger(modulo(v, rightv, xdivy)));
     }
     
     final PyObject int___rdivmod__(PyObject left){
@@ -1198,10 +1195,7 @@ public class PyInteger extends PyObject {
 
         int v = getValue();
         int xdivy = divide(leftv, v);
-        return new PyTuple(new PyObject[] {
-            Py.newInteger(xdivy),
-            Py.newInteger(modulo(leftv, v, xdivy))
-        });
+        return new PyTuple(Py.newInteger(xdivy), Py.newInteger(modulo(leftv, v, xdivy)));
     }
 
     public PyObject __pow__(PyObject right, PyObject modulo) {

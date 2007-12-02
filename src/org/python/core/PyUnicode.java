@@ -1861,7 +1861,7 @@ public class PyUnicode extends PyString {
     }
     
     final PyTuple unicode___getnewargs__() {
-        return new PyTuple(new PyObject[] {new PyUnicode(this.string)});
+        return new PyTuple(new PyUnicode(this.string));
     }
 
 }

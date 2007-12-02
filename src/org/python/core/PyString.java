@@ -2217,7 +2217,7 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     final PyTuple str___getnewargs__() {
-        return new PyTuple(new PyObject[] {new PyString(this.string)});
+        return new PyTuple(new PyString(this.string));
     }
 
     public PyTuple __getnewargs__() {

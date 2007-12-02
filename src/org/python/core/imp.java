@@ -809,7 +809,7 @@ public class imp {
 
     private synchronized static PyTuple getStarArg() {
         if (all == null) {
-            all = new PyTuple(new PyString[] { Py.newString('*') });
+            all = new PyTuple(Py.newString('*'));
         }
         return all;
     }

@@ -483,7 +483,7 @@ public class PyStringMap extends PyObject
         values[index] = null;
         size--;
 
-        return new PyTuple(new PyObject[] { key, val });
+        return new PyTuple(key, val);
     }
 
     /**
@@ -500,9 +500,7 @@ public class PyStringMap extends PyObject
             String key = keyTable[i];
             if (key == null || key == "<deleted key>" || values[i] == null)
                 continue;
-            l.append(new PyTuple(new PyObject[] {
-                new PyString(key), valueTable[i]
-            }));
+            l.append(new PyTuple(new PyString(key), valueTable[i]));
         }
         return l;
     }
@@ -638,8 +636,7 @@ class PyStringMapIter extends PyIterator {
                 case VALUES:
                     return val;
                 case ITEMS:
-                    return new PyTuple(new PyObject[] { Py.newString(key),
-                        val });
+                    return new PyTuple(Py.newString(key), val);
                 default:    // KEYS
                     return Py.newString(key);
             }

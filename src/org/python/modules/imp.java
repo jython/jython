@@ -148,15 +148,11 @@ public class imp {
             if(mi == null) {
                 continue;
             }
-            return new PyTuple(new PyObject[] {
-                mi.file,
-                new PyString(mi.filename),
-                new PyTuple(new PyObject[] {
-                    new PyString(mi.suffix),
-                    new PyString(mi.mode),
-                    Py.newInteger(mi.type)
-                }),
-            });
+            return new PyTuple(mi.file,
+                               new PyString(mi.filename),
+                               new PyTuple(new PyString(mi.suffix),
+                                           new PyString(mi.mode),
+                                           Py.newInteger(mi.type)));
         }
         throw Py.ImportError("No module named " + name);
     }
@@ -198,18 +194,12 @@ public class imp {
     }
 
     public static PyObject get_suffixes() {
-        return new PyList(new PyObject[] {
-            new PyTuple(new PyObject[] {
-                new PyString(".py"),
-                new PyString("r"),
-                Py.newInteger(PY_SOURCE),
-            }),
-            new PyTuple(new PyObject[] {
-                new PyString(".class"),
-                new PyString("rb"),
-                Py.newInteger(PY_COMPILED),
-            }),
-        });
+        return new PyList(new PyObject[] {new PyTuple(new PyString(".py"),
+                                                      new PyString("r"),
+                                                      Py.newInteger(PY_SOURCE)),
+                                          new PyTuple(new PyString(".class"),
+                                                      new PyString("rb"),
+                                                      Py.newInteger(PY_COMPILED)),});
     }
 
     public static PyModule new_module(String name) {

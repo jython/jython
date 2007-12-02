@@ -146,10 +146,9 @@ public class PySystemState extends PyObject
 
     public static PyTuple exc_info() {
         PyException exc = Py.getThreadState().exception;
-        if (exc == null)
-            return new PyTuple(new PyObject[] {Py.None,Py.None,Py.None});
-        return new PyTuple(new PyObject[] {exc.type, exc.value,
-                                           exc.traceback});
+        if(exc == null)
+            return new PyTuple(Py.None, Py.None, Py.None);
+        return new PyTuple(exc.type, exc.value, exc.traceback);
     }
 
     public static void exc_clear() {
@@ -534,23 +533,24 @@ public class PySystemState extends PyObject
         Py.stderr = new StderrWrapper();
         Py.stdout = new StdoutWrapper();
 
-        String s = null;
-        if (PY_RELEASE_LEVEL == 0x0A)
+        String s;
+        if(PY_RELEASE_LEVEL == 0x0A)
             s = "alpha";
-        else if (PY_RELEASE_LEVEL == 0x0B)
+        else if(PY_RELEASE_LEVEL == 0x0B)
             s = "beta";
-        else if (PY_RELEASE_LEVEL == 0x0C)
+        else if(PY_RELEASE_LEVEL == 0x0C)
             s = "candidate";
-        else if (PY_RELEASE_LEVEL == 0x0F)
+        else if(PY_RELEASE_LEVEL == 0x0F)
             s = "final";
-        else if (PY_RELEASE_LEVEL == 0xAA) 
+        else if(PY_RELEASE_LEVEL == 0xAA)
             s = "snapshot";
-        version_info = new PyTuple(new PyObject[] {
-                            Py.newInteger(PY_MAJOR_VERSION),
-                            Py.newInteger(PY_MINOR_VERSION),
-                            Py.newInteger(PY_MICRO_VERSION),
-                            Py.newString(s),
-                            Py.newInteger(PY_RELEASE_SERIAL) });
+        else
+            throw new RuntimeException("Illegal value for PY_RELEASE_LEVEL: " + PY_RELEASE_LEVEL);
+        version_info = new PyTuple(Py.newInteger(PY_MAJOR_VERSION),
+                                   Py.newInteger(PY_MINOR_VERSION),
+                                   Py.newInteger(PY_MICRO_VERSION),
+                                   Py.newString(s),
+                                   Py.newInteger(PY_RELEASE_SERIAL));
     }
 
     public static PackageManager packageManager;

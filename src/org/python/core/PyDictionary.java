@@ -1080,7 +1080,7 @@ public class PyDictionary extends PyObject {
         PyObject key = (PyObject) keys.nextElement();
         PyObject val = (PyObject) table.get(key);
         table.remove(key);
-        return new PyTuple(new PyObject[] { key, val });
+        return new PyTuple(key, val);
     }
 
     /**
@@ -1096,10 +1096,8 @@ public class PyDictionary extends PyObject {
         java.util.Enumeration ev = table.elements();
         int n = table.size();
         PyObject[] elements = new PyObject[n];
-        for (int i=0; i<n; i++) {
-            elements[i] = new PyTuple(new PyObject[] {
-                (PyObject)ek.nextElement(), (PyObject)ev.nextElement()
-            });
+        for(int i = 0; i < n; i++) {
+            elements[i] = new PyTuple((PyObject)ek.nextElement(), (PyObject)ev.nextElement());
         }
         return new PyList(elements);
     }
@@ -1213,7 +1211,7 @@ class PyDictionaryIter extends PyIterator {
         case VALUES:
             return dict.__finditem__(key);
         case ITEMS:
-            return new PyTuple(new PyObject[] { key, dict.__finditem__(key) });
+            return new PyTuple(key, dict.__finditem__(key));
         default: // KEYS
             return key;
         }

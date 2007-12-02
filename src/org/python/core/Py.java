@@ -154,8 +154,7 @@ public final class Py
     }
 
     public static PyException IOError(int errno, String message) {
-        PyTuple args = new PyTuple(new PyObject[] {new PyInteger(errno),
-                                                   new PyString(message)});
+        PyTuple args = new PyTuple(new PyInteger(errno), new PyString(message));
         return new PyException(Py.IOError, args);
     }
 
@@ -257,14 +256,11 @@ public final class Py
     public static PyObject UnicodeTranslateError;
     public static PyException UnicodeTranslateError(String object,
                                                  int start,
-                                                 int end,
-                                                 String reason) {
-        return new PyException(Py.UnicodeTranslateError,
-                               new PyTuple(new PyObject[] {
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+                                                 int end, String reason) {
+        return new PyException(Py.UnicodeTranslateError, new PyTuple(new PyString(object),
+                                                                     new PyInteger(start),
+                                                                     new PyInteger(end),
+                                                                     new PyString(reason)));
     }
 
     public static PyObject UnicodeDecodeError;
@@ -274,12 +270,11 @@ public final class Py
                                                  int start,
                                                  int end,
                                                  String reason) {
-        return new PyException(Py.UnicodeDecodeError,
-                               new PyTuple(new PyObject[] {new PyString(encoding),
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+        return new PyException(Py.UnicodeDecodeError, new PyTuple(new PyString(encoding),
+                                                                  new PyString(object),
+                                                                  new PyInteger(start),
+                                                                  new PyInteger(end),
+                                                                  new PyString(reason)));
     }
 
     public static PyObject UnicodeEncodeError;
@@ -289,12 +284,11 @@ public final class Py
                                                  int start,
                                                  int end,
                                                  String reason) {
-        return new PyException(Py.UnicodeEncodeError,
-                               new PyTuple(new PyObject[] {new PyString(encoding),
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+        return new PyException(Py.UnicodeEncodeError, new PyTuple(new PyString(encoding),
+                                                                  new PyString(object),
+                                                                  new PyInteger(start),
+                                                                  new PyInteger(end),
+                                                                  new PyString(reason)));
     }
 
     public static PyObject EOFError;

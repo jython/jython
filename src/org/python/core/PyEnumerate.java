@@ -92,7 +92,7 @@ public class PyEnumerate extends PyIterator {
         next_index = new PyInteger((int)en_index);
         en_index++;
 
-        en_result = new PyTuple(new PyObject[] {next_index, next_item});
+        en_result = new PyTuple(next_index, next_item);
         return en_result;
     }
 }

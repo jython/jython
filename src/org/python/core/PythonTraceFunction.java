@@ -54,8 +54,6 @@ class PythonTraceFunction extends TraceFunction {
     public TraceFunction traceException(PyFrame frame, PyException exc) {
         return safeCall(frame,
                         "exception",
-                        new PyTuple(new PyObject[] {exc.type,
-                                                    exc.value,
-                                                    exc.traceback}));
+                        new PyTuple(exc.type, exc.value, exc.traceback));
     }
 }

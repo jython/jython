@@ -760,9 +760,14 @@ public class zipimporter extends PyObject {
             PyObject date = new PyInteger(epochToDosDate(zipEntry.getTime()));
             PyObject crc = new PyLong(zipEntry.getCrc());
 
-            PyTuple entry = new PyTuple(new PyObject[] {
-                    __file__, compress, data_size, file_size, file_offset, time, date,
-                    crc});
+            PyTuple entry = new PyTuple(__file__,
+                                        compress,
+                                        data_size,
+                                        file_size,
+                                        file_offset,
+                                        time,
+                                        date,
+                                        crc);
             files.__setitem__(new PyString(zipEntry.getName()), entry);
         }
 

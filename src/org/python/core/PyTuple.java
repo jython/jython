@@ -332,7 +332,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
         this(TUPLETYPE, Py.EmptyObjects);
     }
 
-    public PyTuple(PyObject[] elements) {
+    public PyTuple(PyObject... elements) {
         this(TUPLETYPE, elements);
     }
 
@@ -497,9 +497,7 @@ public class PyTuple extends PySequenceList implements ClassDictInit
     }
 
     final PyTuple tuple___getnewargs__() {
-        return new PyTuple(new PyObject[]
-            {new PyTuple(list.getArray())}
-        );
+        return new PyTuple(new PyTuple(list.getArray()));
     }
 
     public PyTuple __getnewargs__() {

@@ -154,7 +154,7 @@ public class math implements ClassDictInit {
     public static PyTuple modf(double v) {
         double w = v % 1.0;
         v -= w;
-        return new PyTuple(new PyObject[] {new PyFloat(w), new PyFloat(v)});
+        return new PyTuple(new PyFloat(w), new PyFloat(v));
     }
 
     public static PyTuple frexp(double v) {
@@ -176,7 +176,7 @@ public class math implements ClassDictInit {
             }
             v = v*sign;
         }
-        return new PyTuple(new PyObject[] {new PyFloat(v), new PyInteger(i)});
+        return new PyTuple(new PyFloat(v), new PyInteger(i));
     }
 
     public static double ldexp(double v, int w) {

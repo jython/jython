@@ -901,9 +901,7 @@ public class PyFloat extends PyObject
             throw Py.ZeroDivisionError("float division");
         double z = Math.floor(value / rightv);
 
-        return new PyTuple(
-            new PyObject[] {new PyFloat(z), new PyFloat(value-z*rightv)}
-            );
+        return new PyTuple(new PyFloat(z), new PyFloat(value - z * rightv));
     }
 
     public PyObject __rdivmod__(PyObject left) {
@@ -915,9 +913,7 @@ public class PyFloat extends PyObject
             throw Py.ZeroDivisionError("float division");
         double z = Math.floor(leftv / value);
 
-        return new PyTuple(
-            new PyObject[] {new PyFloat(z), new PyFloat(leftv-z*value)}
-            );
+        return new PyTuple(new PyFloat(z), new PyFloat(leftv - z * value));
     }
 
     final PyObject float___rdivmod__(PyObject left) {

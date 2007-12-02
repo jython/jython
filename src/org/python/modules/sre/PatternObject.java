@@ -167,9 +167,7 @@ public class PatternObject extends PyObject {
         }
 
         if (subn)
-            return new PyTuple(new PyObject[] {
-                instring.createInstance(buf.toString()), Py.newInteger(n)
-            });
+            return new PyTuple(instring.createInstance(buf.toString()), Py.newInteger(n));
         else
             return instring.createInstance(buf.toString());
     }
