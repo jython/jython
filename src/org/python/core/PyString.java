@@ -1996,17 +1996,6 @@ public class PyString extends PyBaseString implements ClassDictInit
         return false;
     }
 
-    public boolean equals(Object other) {
-        if (!(other instanceof PyString))
-            return false;
-
-        PyString o = (PyString)other;
-        if (interned && o.interned)
-            return string == o.string;
-
-        return string.equals(o.string);
-    }
-
     public int __cmp__(PyObject other) {
         return str___cmp__(other);
     }

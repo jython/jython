@@ -414,15 +414,16 @@ public class PyObject implements java.io.Serializable {
      * <code>a.equals(b) == true</code> iff <code>cmp(a,b) == 0</code>
      **/
     public boolean equals(Object ob_other) {
-        return (ob_other instanceof PyObject)
-            && _eq((PyObject) ob_other).__nonzero__();
+        if(ob_other == this) {
+            return true;
+        }
+        return (ob_other instanceof PyObject) && _eq((PyObject)ob_other).__nonzero__();
     }
 
     /**
-     * Equivalent to the standard Python __nonzero__ method.
-     * Returns whether of not a given <code>PyObject</code> is
-     * considered true.
-     **/
+     * Equivalent to the standard Python __nonzero__ method. Returns whether of
+     * not a given <code>PyObject</code> is considered true.
+     */
     public boolean __nonzero__() {
         return true;
     }
