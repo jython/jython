@@ -930,6 +930,8 @@ public class PyArray extends PySequence implements Cloneable {
      * 
      * @return <code>Class</code> of the native type
      */
+
+    // promote H, I (unsigned int) to next larger size
     public static Class char2class(char type) throws PyIgnoreMethodTag {
         switch(type){
             case 'z':
@@ -940,8 +942,12 @@ public class PyArray extends PySequence implements Cloneable {
                 return Byte.TYPE;
             case 'h':
                 return Short.TYPE;
+            case 'H':
+                return Integer.TYPE;
             case 'i':
                 return Integer.TYPE;
+            case 'I':
+                return Long.TYPE;
             case 'l':
                 return Long.TYPE;
             case 'f':

@@ -2,9 +2,16 @@
 package org.python.core;
 
 /**
- * A faster Dictionary where the keys have to be strings.
+
+ * Used to be, a faster Dictionary where the keys have to be
+ * strings. But that's old school, both from a Java and a Python
+ * perspective. So now we store in a standard Map, allowing for
+ * arbitary PyObjects as strings. Upon entry we coerce, any regular
+ * String into a PyString.
  * <p>
  * This is the default for all __dict__ instances.
+ * Do we need to intern all PyString objects when we get a String?
+ * that's sort of annoying...
  */
 
 public class PyStringMap extends PyObject
@@ -38,13 +45,16 @@ public class PyStringMap extends PyObject
         return table.size() != 0;
     }
 
+    // hmm... didn't realize we needed to support null here... anyway,
+    // it's there for such users
     public PyObject __finditem__(String key) {
-        return (PyObject)table.get(key);
+        if (key == null) {
+            return null;
+        }
+        return (PyObject)table.get(new PyString(key));
     }
 
     public PyObject __finditem__(PyObject key) {
-        if (key instanceof PyString)
-            return __finditem__(((PyString)key).internedString());
         return (PyObject)table.get(key);
     }
 
@@ -58,15 +68,11 @@ public class PyStringMap extends PyObject
     }
     
     public PyObject __getitem__(PyObject key) {
-        if (key instanceof PyString) {
-            return __getitem__(((PyString)key).internedString());
+        PyObject o=__finditem__(key);
+        if (null == o) {
+            throw Py.KeyError("'"+key+"'");
         } else {
-            PyObject o=__finditem__(key);
-            if (null == o) {
-                throw Py.KeyError("'"+key.toString()+"'");
-            } else {
-                return o;
-            }
+            return o;
         }
     }
 
@@ -75,33 +81,24 @@ public class PyStringMap extends PyObject
     }
 
     public void __setitem__(String key, PyObject value) {
-        table.put(key, value);
+        table.put(new PyString(key), value);
     }
 
     public void __setitem__(PyObject key, PyObject value) {
-        if (key instanceof PyString) {
-            __setitem__(((PyString)key).internedString(), value);
-        }
-        else {
-            table.put(key, value);
-        }
+        table.put(key, value);
     }
 
     public void __delitem__(String key) {
-        Object ret = table.remove(key);
+        Object ret = table.remove(new PyString(key));
         if (ret == null) {
             throw Py.KeyError(key);
         }
     }
 
     public void __delitem__(PyObject key) {
-        if (key instanceof PyString) {
-            __delitem__(((PyString)key).internedString());
-        }
-        else {
-            Object ret = table.remove(key);
-            if (ret == null)
-                throw Py.KeyError(key.toString());
+        Object ret = table.remove(key);
+        if (ret == null) {
+            throw Py.KeyError(key);
         }
     }
 
@@ -183,13 +180,10 @@ public class PyStringMap extends PyObject
      * Return true if the key exist in the dictionary.
      */
     public boolean has_key(String key) {
-        return table.containsKey(key);
+        return table.containsKey(new PyString(key));
     }
 
     public boolean has_key(PyObject key) {
-        if (key instanceof PyString) {
-            return has_key(((PyString)key).internedString());
-        }
         return table.containsKey(key);
     }
 
@@ -314,13 +308,7 @@ public class PyStringMap extends PyObject
         int n = table.size();
         java.util.Vector v = new java.util.Vector(n);
         for (java.util.Iterator it = table.keySet().iterator(); it.hasNext(); ) {
-            Object obj = it.next();
-            if (obj instanceof String) {
-                v.addElement(new PyString((String)obj));
-            }
-            else {
-                v.addElement(obj);
-            }
+            v.addElement(it.next());
         }
         return new PyList(v);
     }
