@@ -1052,7 +1052,6 @@ _failures = {
     test_pyclbr
     test_quopri
     test_random
-    test_slice
     test_softspace
     test_syntax
     test_threaded_import

@@ -101,8 +101,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			return __builtin__.repr(arg1);
 		case 38:
 			return __builtin__.round(Py.py2double(arg1));
-		case 40:
-			return __builtin__.slice(arg1);
 		case 41:
 			return __builtin__.vars(arg1);
 		case 42:
@@ -164,8 +162,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 			return __builtin__.reduce(arg1, arg2);
 		case 38:
 			return __builtin__.round(Py.py2double(arg1), Py.py2int(arg2));
-		case 40:
-			return __builtin__.slice(arg1, arg2);
 		case 42:
 			return __builtin__.xrange(Py.py2int(arg1), Py.py2int(arg2));
 		case 29:
@@ -214,8 +210,6 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 		case 39:
 			__builtin__.setattr(arg1, asString(arg2, "setattr(): attribute name must be string"), arg3);
 			return Py.None;
-		case 40:
-			return __builtin__.slice(arg1, arg2, arg3);
 		case 42:
 			return __builtin__.xrange(Py.py2int(arg1), Py.py2int(arg2), Py.py2int(arg3));
 		case 44:
@@ -330,6 +324,7 @@ public class __builtin__  {
 		dict.__setitem__("basestring", PyType.fromClass(PyBaseString.class));
 		dict.__setitem__("file", PyType.fromClass(PyFile.class));
 		dict.__setitem__("open", PyType.fromClass(PyFile.class));
+        dict.__setitem__("slice", PyType.fromClass(PySlice.class));
 	
 		/* - */
 
@@ -384,7 +379,6 @@ public class __builtin__  {
 		dict.__setitem__("repr", new BuiltinFunctions("repr", 37, 1));
 		dict.__setitem__("round", new BuiltinFunctions("round", 38, 1, 2));
 		dict.__setitem__("setattr", new BuiltinFunctions("setattr", 39, 3));
-		dict.__setitem__("slice", new BuiltinFunctions("slice", 40, 1, 3));
 		dict.__setitem__("vars", new BuiltinFunctions("vars", 41, 0, 1));
 		dict.__setitem__("xrange", new BuiltinFunctions("xrange", 42, 1, 3));
 		dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 1, -1));
@@ -1021,18 +1015,6 @@ public class __builtin__  {
 
 	public static void setattr(PyObject o, String n, PyObject v) {
 		o.__setattr__(n, v);
-	}
-
-	public static PySlice slice(PyObject start, PyObject stop, PyObject step) {
-		return new PySlice(start, stop, step);
-	}
-
-	public static PySlice slice(PyObject start, PyObject stop) {
-		return slice(start, stop, Py.None);
-	}
-
-	public static PySlice slice(PyObject stop) {
-		return slice(Py.None, stop, Py.None);
 	}
 
 	public static PyObject sum(PyObject seq, PyObject result) {

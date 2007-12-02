@@ -578,9 +578,9 @@ public class PyInstance extends PyObject
 
         PySlice slice = (PySlice)key;
 
-        if (slice.step != Py.None && slice.step != Py.One) {
-            if (slice.step instanceof PyInteger) {
-                if (((PyInteger)slice.step).getValue() != 1) {
+        if (slice.getStep() != Py.None && slice.getStep() != Py.One) {
+            if (slice.getStep() instanceof PyInteger) {
+                if (((PyInteger)slice.getStep()).getValue() != 1) {
                     return null;
                 }
             } else {
