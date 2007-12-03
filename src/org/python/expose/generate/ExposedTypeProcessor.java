@@ -135,6 +135,11 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     public void handleResult(String name) {
                         typeName = name;
                     }
+
+                    @Override
+                    public void handleResult(Type base) {
+                        baseType = base;
+                    }
                 };
             }
             return super.visitAnnotation(desc, visible);
@@ -148,6 +153,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                 throw new IllegalArgumentException("A class given to InnerClassExposer must have the ExposedType annotation");
             }
             typeExposer = new TypeExposer(onType,
+                                          baseType,
                                           getName(),
                                           methodExposers,
                                           descExposers.values(),
@@ -286,6 +292,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                 }
             };
         }
+        
+        private Type baseType = OBJECT;
 
         private boolean generatedStaticBlock;
     }

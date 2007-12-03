@@ -166,22 +166,34 @@ public class MethodExposer extends Exposer {
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         for(int i = 0; i < args.length; i++) {
             mv.visitVarInsn(ALOAD, usedLocals++);
-            if(params[i] == INT) {
+            if(params[i].equals(INT)) {
                 mv.visitMethodInsn(INVOKEVIRTUAL, PYOBJ.getInternalName(), "asInt", "()I");
+            } else if(params[i].equals(STRING)) {
+                mv.visitMethodInsn(INVOKEVIRTUAL,
+                                   PYOBJ.getInternalName(),
+                                   "asString",
+                                   methodDesc(STRING));
+            }else if(params[i].equals(BOOLEAN)) {
+                mv.visitMethodInsn(INVOKEVIRTUAL,
+                                   PYOBJ.getInternalName(),
+                                   "__nonzero__",
+                                   methodDesc(BOOLEAN));
             }
         }
-        for(int i = 0; i < numDefaults; i++) {
-            String def = defaults[i];
+        for(int i = 0; i < numDefaults ; i++) {
+            String def = defaults[i + defaults.length - numDefaults];
             if(def.equals("Py.None")) {
                 pushNone();
             } else if(def.equals("null")) {
                 mv.visitInsn(ACONST_NULL);
-            } else if(params[i + args.length] == INT) {
+            } else if(params[i + args.length].equals(INT)) {
                 // An int is required here, so parse the default as an Integer
                 // and push it as a constant.
                 // If the default isn't a valid integer, a NumberFormatException
                 // will be raised.
                 mv.visitLdcInsn(new Integer(def));
+            } else if(params[i + args.length].equals(BOOLEAN)){
+                mv.visitLdcInsn(Boolean.valueOf(def) ? 1 : 0);
             }
         }
         mv.visitMethodInsn(INVOKEVIRTUAL,

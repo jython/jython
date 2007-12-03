@@ -33,11 +33,13 @@ import org.python.expose.TypeBuilder;
 public class TypeExposer extends Exposer {
 
     public TypeExposer(Type onType,
+                       Type baseType,
                        String name,
                        Collection<MethodExposer> methods,
                        Collection<DescriptorExposer> descriptors,
                        NewExposer ne) {
         super(BaseTypeBuilder.class, makeGeneratedName(onType));
+        this.baseType = baseType;
         this.onType = onType;
         this.name = name;
         this.methods = methods;
@@ -83,6 +85,7 @@ public class TypeExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitLdcInsn(getName());
         mv.visitLdcInsn(onType);
+        mv.visitLdcInsn(baseType);
         mv.visitLdcInsn(numNames);
         mv.visitTypeInsn(ANEWARRAY, BUILTIN_FUNCTION.getInternalName());
         mv.visitVarInsn(ASTORE, 1);
@@ -119,7 +122,7 @@ public class TypeExposer extends Exposer {
         } else {
             mv.visitInsn(ACONST_NULL);
         }
-        superConstructor(STRING, CLASS, ABUILTIN_FUNCTION, ADATA_DESCR, PYNEWWRAPPER);
+        superConstructor(STRING, CLASS, CLASS, ABUILTIN_FUNCTION, ADATA_DESCR, PYNEWWRAPPER);
         endConstructor();
     }
 
@@ -127,10 +130,12 @@ public class TypeExposer extends Exposer {
 
         public BaseTypeBuilder(String name,
                                Class typeClass,
+                               Class baseClass,
                                PyBuiltinFunction[] funcs,
                                PyDataDescr[] descrs,
                                PyNewWrapper newWrapper) {
             this.typeClass = typeClass;
+            this.baseClass = baseClass;
             this.name = name;
             this.descrs = descrs;
             this.funcs = funcs;
@@ -161,6 +166,10 @@ public class TypeExposer extends Exposer {
             return typeClass;
         }
 
+        public Class getBase() {
+            return baseClass;
+        }
+
         private PyNewWrapper newWrapper;
 
         private PyBuiltinFunction[] funcs;
@@ -168,9 +177,13 @@ public class TypeExposer extends Exposer {
         private PyDataDescr[] descrs;
 
         private Class typeClass;
+        
+        private Class baseClass;
 
         private String name;
     }
+
+    private Type baseType;
 
     private Type onType;
 

@@ -3127,6 +3127,10 @@ public class PyObject implements Serializable {
         throw new ConversionException(index);
     }
 
+    public String asString(){
+        throw Py.TypeError("expected a str");
+    }
+
     public String asStringOrNull(int index) throws ConversionException {
        return asString(index);
     }

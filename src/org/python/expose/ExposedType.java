@@ -22,4 +22,6 @@ public @interface ExposedType {
      *         the class.
      */
     String name() default "";
+
+    Class base() default Object.class;
 }

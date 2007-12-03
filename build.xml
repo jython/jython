@@ -449,8 +449,8 @@ The readme text for the next release will be like:
         <taskdef name="expose" classname="org.python.expose.generate.ExposeTask"
             classpath="${compile.dir}" classpathref="main.classpath"/>
         <expose srcdir="${compile.dir}"
-            destdir="${exposed.dir}" includes="**/PyNone.class,**/PyInteger.class,**/PyObject.class">
-        </expose>
+            destdir="${exposed.dir}" 
+            includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
 
     <target name="jar" depends="compile,expose">

@@ -14,9 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
-import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
-import org.python.expose.generate.TypeExposer;
 
 /**
  * first-class Python type.
@@ -1169,7 +1167,7 @@ public class PyType extends PyObject implements Serializable {
 
     public static void addBuilder(Class forClass, TypeBuilder builder) {
         classToBuilder.put(forClass, builder);
-        if(builder.getName().equals("object")) {
+        if(builder.getTypeClass().equals(PyObject.class)) {
             // PyObject's type is loaded before as part of creating its builder,
             // so it needs to be bootstrapped
             PyType objType = fromClass(PyObject.class);
@@ -1186,7 +1184,9 @@ public class PyType extends PyObject implements Serializable {
         TypeBuilder tb = classToBuilder.get(c);
         if(tb != null) {
             name = tb.getName();
-            base = PyObject.class;
+            if(!tb.getBase().equals(Object.class)) {
+                base = tb.getBase(); 
+            }
             newstyle = true;
         } else {
             try {
@@ -1248,6 +1248,18 @@ public class PyType extends PyObject implements Serializable {
      */
 
     public static synchronized PyType fromClass(Class c) {
+        if(c.equals(PyUnicode.class)) {
+            if(!classToBuilder.containsKey(PyUnicode.class)) {
+                System.out.println("PyUnicode's static block wasn't called, hacking it into place!");
+                try {
+                    Class exposer = c.getClassLoader()
+                            .loadClass("org.python.core.PyUnicode$PyExposer");
+                    addBuilder(PyUnicode.class, (TypeBuilder)exposer.newInstance());
+                } catch(Exception e) {
+                    throw new RuntimeException(e);
+                } 
+            }
+        }
         if (class_to_type == null) {
             class_to_type = new HashMap<Class, PyType>();
             addFromClass(PyType.class);

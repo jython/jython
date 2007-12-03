@@ -1,6 +1,5 @@
 package org.python.expose.generate;
 
-import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Type;
 
 /**
@@ -17,6 +16,8 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
     public void visit(String name, Object value) {
         if(name.equals("name")) {
             typeName = (String)value;
+        } else if(name.equals("base")) {
+            base = (Type)value;
         } else {
             super.visit(name, value);
         }
@@ -29,7 +30,10 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
             typeName = name.substring(name.lastIndexOf(".") + 1);
         }
         handleResult(typeName);
+        handleResult(base);
     }
+
+    public abstract void handleResult(Type base);
 
     /**
      * @param name -
@@ -40,4 +44,6 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
     private String typeName;
 
     private Type onType;
+    
+    private Type base = Type.getType(Object.class);
 }

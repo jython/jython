@@ -13,4 +13,6 @@ public interface TypeBuilder {
     public PyObject getDict(PyType type);
 
     public Class getTypeClass();
+
+    public Class getBase();
 }

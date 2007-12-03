@@ -13,12 +13,7 @@ package org.python.core;
  * Subclasses that are mutable should also implement: set, setslice, del,
  * and delRange.
  */
-
-// this class doesn't "implement InitModule" because otherwise
-// PyJavaClass.init() would try to instantiate it.  That fails because this
-// class is abstract.  TBD: is there a way to test for whether a class is
-// abstract?
-abstract public class PySequence extends PyObject {
+public abstract class PySequence extends PyObject {
     /**
      * This constructor is used by PyJavaClass.init()
      */
