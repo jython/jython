@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
+import org.python.core.PyBuiltinMethod;
 import org.python.core.PyBuiltinMethodNarrow;
 import org.python.expose.ExposedMethod;
 import org.python.expose.MethodType;
@@ -27,7 +28,7 @@ public class MethodExposer extends Exposer {
              new String[0],
              MethodType.NORMAL);
     }
-
+    
     public MethodExposer(Type onType,
                          int access,
                          String methodName,
@@ -36,7 +37,8 @@ public class MethodExposer extends Exposer {
                          String[] asNames,
                          String[] defaults,
                          MethodType type) {
-        super(PyBuiltinMethodNarrow.class, onType.getClassName() + "$" + methodName + "_exposer");
+        super(isWide(desc) ? PyBuiltinMethod.class : PyBuiltinMethodNarrow.class,
+              onType.getClassName() + "$" + methodName + "_exposer");
         this.onType = onType;
         this.methodName = methodName;
         this.params = Type.getArgumentTypes(desc);
@@ -53,10 +55,11 @@ public class MethodExposer extends Exposer {
      */
     public String[] getNames() {
         if(asNames.length == 0) {
-            if(methodName.startsWith(prefix + "_")) {
-                methodName = methodName.substring((prefix + "_").length());
+            String name = methodName;
+            if(name.startsWith(prefix + "_")) {
+                name = methodName.substring((prefix + "_").length());
             }
-            return new String[] {methodName};
+            return new String[] {name};
         }
         return asNames;
     }
@@ -72,8 +75,15 @@ public class MethodExposer extends Exposer {
         generateNamedConstructor();
         generateFullConstructor();
         generateBind();
-        for(int i = 0; i < defaults.length + 1; i++) {
-            generateCall(i);
+        if(isWide(params)) {
+            if(defaults.length > 0) {
+                throw new IllegalStateException("Can't have defaults on a wide method");
+            }
+            generateWideCall();
+        } else {
+            for(int i = 0; i < defaults.length + 1; i++) {
+                generateCall(i);
+            }
         }
     }
 
@@ -90,9 +100,13 @@ public class MethodExposer extends Exposer {
         startConstructor(STRING);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
-        mv.visitLdcInsn(params.length + 1 - defaults.length);
-        mv.visitLdcInsn(params.length + 1);
-        superConstructor(STRING, INT, INT);
+        if(isWide(params)) {
+            superConstructor(STRING);
+        } else {
+            mv.visitLdcInsn(params.length + 1 - defaults.length);
+            mv.visitLdcInsn(params.length + 1);
+            superConstructor(STRING, INT, INT);
+        }
         endConstructor();
     }
 
@@ -103,6 +117,40 @@ public class MethodExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 1);
         get("info", BUILTIN_INFO);
         callConstructor(thisType, PYOBJ, BUILTIN_INFO);
+        mv.visitInsn(ARETURN);
+        endMethod();
+    }
+
+    private void generateWideCall() {
+        startMethod("__call__", PYOBJ, APYOBJ, ASTRING);
+        get("self", PYOBJ);
+        mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
+        mv.visitVarInsn(ALOAD, 1);
+        mv.visitVarInsn(ALOAD, 2);
+        mv.visitMethodInsn(INVOKEVIRTUAL,
+                           onType.getInternalName(),
+                           methodName,
+                           methodDesc(returnType, params));
+        generateCallReturn();
+    }
+
+    private void generateCallReturn() {
+        if(returnType.equals(VOID)) {
+            pushNone();
+        } else if(returnType.equals(STRING)) {
+            mv.visitMethodInsn(INVOKESTATIC, PY.getInternalName(), "newString", methodDesc(PYSTR,
+                                                                                           STRING));
+        } else if(returnType.equals(BOOLEAN)) {
+            mv.visitMethodInsn(INVOKESTATIC,
+                               PY.getInternalName(),
+                               "newBoolean",
+                               methodDesc(PYBOOLEAN, BOOLEAN));
+        } else if(returnType.equals(INT)) {
+            mv.visitMethodInsn(INVOKESTATIC,
+                               PY.getInternalName(),
+                               "newInteger",
+                               methodDesc(PYINTEGER, INT));
+        }
         mv.visitInsn(ARETURN);
         endMethod();
     }
@@ -118,6 +166,9 @@ public class MethodExposer extends Exposer {
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         for(int i = 0; i < args.length; i++) {
             mv.visitVarInsn(ALOAD, usedLocals++);
+            if(params[i] == INT) {
+                mv.visitMethodInsn(INVOKEVIRTUAL, PYOBJ.getInternalName(), "asInt", "()I");
+            }
         }
         for(int i = 0; i < numDefaults; i++) {
             String def = defaults[i];
@@ -125,6 +176,12 @@ public class MethodExposer extends Exposer {
                 pushNone();
             } else if(def.equals("null")) {
                 mv.visitInsn(ACONST_NULL);
+            } else if(params[i + args.length] == INT) {
+                // An int is required here, so parse the default as an Integer
+                // and push it as a constant.
+                // If the default isn't a valid integer, a NumberFormatException
+                // will be raised.
+                mv.visitLdcInsn(new Integer(def));
             }
         }
         mv.visitMethodInsn(INVOKEVIRTUAL,
@@ -179,28 +236,19 @@ public class MethodExposer extends Exposer {
             mv.visitInsn(ATHROW);
             mv.visitLabel(regularReturn);
         }
-        if(returnType.equals(Type.VOID_TYPE)) {
-            pushNone();
-        } else if(returnType.equals(STRING)) {
-            mv.visitMethodInsn(INVOKESTATIC, PY.getInternalName(), "newString", methodDesc(PYSTR,
-                                                                                           STRING));
-        } else if(returnType.equals(Type.BOOLEAN_TYPE)) {
-            mv.visitMethodInsn(INVOKESTATIC,
-                               PY.getInternalName(),
-                               "newBoolean",
-                               methodDesc(PYBOOLEAN, BOOLEAN));
-        } else if(returnType.equals(Type.INT_TYPE)) {
-            mv.visitMethodInsn(INVOKESTATIC,
-                               PY.getInternalName(),
-                               "newInteger",
-                               methodDesc(PYINTEGER, INT));
-        }
-        mv.visitInsn(ARETURN);
-        endMethod();
+        generateCallReturn();
     }
 
     private void pushNone() {
         mv.visitFieldInsn(GETSTATIC, PY.getInternalName(), "None", PYOBJ.getDescriptor());
+    }
+    
+    private static boolean isWide(String methDescriptor) {
+        return isWide(Type.getArgumentTypes(methDescriptor));
+    }
+    
+    private static boolean isWide(Type[] args) {
+        return args.length == 2 && args[0].equals(APYOBJ) && args[1].equals(ASTRING);
     }
 
     private String methodName;

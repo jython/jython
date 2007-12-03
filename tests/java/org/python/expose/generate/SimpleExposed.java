@@ -1,6 +1,7 @@
 package org.python.expose.generate;
 
 import org.python.core.Py;
+import org.python.core.PyInteger;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
@@ -80,14 +81,24 @@ public class SimpleExposed extends PyObject {
         return -2;
     }
 
-    @ExposedMethod(defaults = {"Py.None"})
+    @ExposedMethod(defaults = "Py.None")
     public PyObject defaultToNone(PyObject arg) {
         return arg;
     }
 
-    @ExposedMethod(defaults = {"null"})
+    @ExposedMethod(defaults = "null")
     public PyObject defaultToNull(PyObject arg) {
         return arg;
+    }
+
+    @ExposedMethod(defaults = "1")
+    public PyObject defaultToOne(int arg) {
+        return new PyInteger(arg);
+    }
+
+    @ExposedMethod
+    public PyObject fullArgs(PyObject[] args, String[] kws) {
+        return new PyInteger(args.length + kws.length);
     }
 
     @ExposedGet(name = "tostring")

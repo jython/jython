@@ -974,6 +974,11 @@ public class PyLong extends PyObject
         return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
+    @Override
+    public int asInt() {
+        return (int)getLong(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    }
+
     public Object __tojava__(Class c) {
         try {
             if (c == Byte.TYPE || c == Byte.class) {

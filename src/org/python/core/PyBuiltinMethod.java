@@ -10,6 +10,10 @@ public abstract class PyBuiltinMethod extends PyBuiltinFunction {
         this.self = self;
     }
     
+    protected PyBuiltinMethod(String name) {
+        this(null, new DefaultInfo(name));
+    }
+    
     public PyObject getSelf(){
         return self;
     }

@@ -795,4 +795,9 @@ public class PyInteger extends PyObject {
     public int asInt(int index) {
         return getValue();
     }
+
+    @Override
+    public int asInt() {
+        return getValue();
+    }
 }

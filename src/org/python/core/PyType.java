@@ -991,19 +991,16 @@ public class PyType extends PyObject implements Serializable {
         if(newstyle) {
             newtype.non_instantiable = dict.__finditem__("__new__") == null;
         }
-        boolean has_set = false, has_delete = false;
         if(!top) {
             if(get_descr_method(c, "__set__", OO) != null || /* backw comp */
             get_descr_method(c, "_doset", OO) != null) {
-                has_set = true;
+                newtype.has_set = true;
             }
             if(get_descr_method(c, "__delete__", O) != null || /* backw comp */
             get_descr_method(c, "_dodel", O) != null) {
-                has_delete = true;
+                newtype.has_delete = true;
             }
         }
-        newtype.has_set = has_set;
-        newtype.has_delete = has_delete;
         newtype.dict = dict;
     }
 
@@ -1168,6 +1165,16 @@ public class PyType extends PyObject implements Serializable {
     private static HashMap<Class, TypeBuilder> classToBuilder = new HashMap<Class, TypeBuilder>();
 
     public static interface Newstyle {
+    }
+
+    public static void addBuilder(Class forClass, TypeBuilder builder) {
+        classToBuilder.put(forClass, builder);
+        if(builder.getName().equals("object")) {
+            // PyObject's type is loaded before as part of creating its builder,
+            // so it needs to be bootstrapped
+            PyType objType = fromClass(PyObject.class);
+            objType.dict = builder.getDict(objType);
+        }
     }
 
     private static PyType addFromClass(Class c) {
@@ -1499,10 +1506,6 @@ public class PyType extends PyObject implements Serializable {
             return ("_"+classname.substring(i)+methodname).intern();
         }
         return methodname;
-    }
-
-    public static void addBuilder(Class class1, TypeBuilder builder) {
-        classToBuilder.put(class1, builder);
     }
 
 }

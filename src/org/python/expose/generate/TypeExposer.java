@@ -88,12 +88,12 @@ public class TypeExposer extends Exposer {
         mv.visitVarInsn(ASTORE, 1);
         int i = 0;
         for(MethodExposer exposer : methods) {
-            for(int j = 0; j < exposer.getNames().length; j++) {
+            for(String name : exposer.getNames()) {
                 mv.visitVarInsn(ALOAD, 1);
                 mv.visitLdcInsn(i++);
                 mv.visitTypeInsn(NEW, exposer.getInternalName());
                 mv.visitInsn(DUP);
-                mv.visitLdcInsn(exposer.getNames()[j]);
+                mv.visitLdcInsn(name);
                 callConstructor(exposer.getGeneratedType(), STRING);
                 mv.visitInsn(AASTORE);
             }
@@ -105,7 +105,7 @@ public class TypeExposer extends Exposer {
         i = 0;
         for(DescriptorExposer desc : descriptors) {
             mv.visitVarInsn(ALOAD, 2);
-            mv.visitLdcInsn(i);
+            mv.visitLdcInsn(i++);
             mv.visitTypeInsn(NEW, desc.getInternalName());
             mv.visitInsn(DUP);
             callConstructor(desc.getGeneratedType());

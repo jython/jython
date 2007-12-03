@@ -42,9 +42,9 @@ public abstract class PyBuiltinFunction extends PyObject implements
             this.minargs = minargs;
             this.maxargs = maxargs;
         }
-
-        public DefaultInfo(String name, int nargs) {
-            this(name, nargs, nargs);
+        
+        public DefaultInfo(String name) {
+            this(name, -1, -1);
         }
 
         private String name;

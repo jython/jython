@@ -110,4 +110,34 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
         assertEquals(Py.One, bound.__call__(Py.One));
         assertEquals(null, bound.__call__());
     }
+
+    public void testIntDefault() throws Exception {
+        MethodExposer exp = createExposer("defaultToOne", PYOBJ, INT);
+        exp.defaults = new String[] {"1"};
+        PyBuiltinFunction bound = createBound(exp);
+        assertEquals(Py.Zero, bound.__call__(Py.Zero));
+        assertEquals(Py.One, bound.__call__());
+        exp.defaults = new String[] {"X"};
+        try {
+            createBound(exp);
+            fail("Shouldn't be able to create the exposer with a non-int default value");
+        } catch(NumberFormatException nfe) {}
+    }
+
+    public void testFullArguments() throws Exception {
+        MethodExposer exp = new MethodExposer(Type.getType(SimpleExposed.class),
+                                              Opcodes.ACC_PUBLIC,
+                                              "fullArgs",
+                                              Type.getMethodDescriptor(PYOBJ, new Type[] {APYOBJ,
+                                                                                          ASTRING}),
+                                              "simpleexposed");
+        PyBuiltinFunction bound = createBound(exp);
+        assertEquals(Py.Zero, bound.__call__());
+        assertEquals(Py.One, bound.__call__(Py.One));
+        exp.defaults = new String[] {"X"};
+        try {
+            createBound(exp);
+            fail("Shouldn't be able to create the exposer with a default value");
+        } catch(IllegalStateException ise) {}
+    }
 }

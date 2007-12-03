@@ -167,8 +167,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
             if(!generatedStaticBlock) {
                 MethodVisitor mv = visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
                 mv.visitCode();
-                generateAddBuilder(mv);
                 mv.visitInsn(RETURN);
+                mv.visitMaxs(0, 0);
                 mv.visitEnd();
             }
             super.visitEnd();
@@ -268,7 +268,11 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                        final String desc,
                                        String signature,
                                        Object value) {
-            FieldVisitor passthroughVisitor = super.visitField(access, fieldName, desc, signature, value);
+            FieldVisitor passthroughVisitor = super.visitField(access,
+                                                               fieldName,
+                                                               desc,
+                                                               signature,
+                                                               value);
             return new ExposedFieldFinder(fieldName, passthroughVisitor) {
 
                 @Override
