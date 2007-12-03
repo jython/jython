@@ -437,10 +437,7 @@ public final class Py
     }
 
     // Don't allow any constructors. Class only provides static methods.
-    private Py() { ; }
-
-    /** @deprecated **/
-    //public static InterpreterState interp;
+    private Py() {}
 
     /**
        Convert a given <code>PyObject</code> to an instance of a Java class.
