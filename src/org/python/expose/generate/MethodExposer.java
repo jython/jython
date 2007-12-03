@@ -1,16 +1,11 @@
 package org.python.expose.generate;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
 import org.python.core.PyBuiltinMethod;
 import org.python.core.PyBuiltinMethodNarrow;
 import org.python.expose.ExposedMethod;
 import org.python.expose.MethodType;
-
-import com.sun.mirror.util.Types;
 
 /**
  * Generates a class to call a given method with the {@link ExposedMethod}
