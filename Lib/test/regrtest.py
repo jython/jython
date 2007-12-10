@@ -958,7 +958,6 @@ _skips = {
         test_email
         test_email_codecs
         test_fcntl
-        test_filecmp
         test_fork1
         test_gc
         test_gdbm

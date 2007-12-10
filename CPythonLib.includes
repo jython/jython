@@ -39,6 +39,7 @@ dircmp.py
 dospath.py
 dumbdbm.py
 exceptions.py
+filecmp.py
 fileinput.py
 fnmatch.py
 formatter.py

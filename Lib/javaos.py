@@ -30,6 +30,7 @@ import errno
 import java.lang.System
 import javapath as path
 import time
+import stat as _stat
 
 from java.io import File
 from org.python.core.io import FileDescriptors
@@ -55,7 +56,6 @@ O_TRUNC = 0x400
 O_EXCL = 0x800
 
 class stat_result:
-  import stat as _stat
 
   _stat_members = (
     ('st_mode', _stat.ST_MODE),
@@ -271,7 +271,16 @@ def stat(path):
     if size == 0 and not f.exists():
         raise OSError(0, 'No such file or directory', path)
     mtime = f.lastModified() / 1000.0
-    return stat_result((0, 0, 0, 0, 0, 0, size, mtime, mtime, 0))
+    mode = 0
+    if f.isDirectory():
+        mode = _stat.S_IFDIR
+    elif f.isFile():
+        mode = _stat.S_IFREG
+    if f.canRead():
+        mode = mode | _stat.S_IREAD
+    if f.canWrite():
+        mode = mode | _stat.S_IWRITE
+    return stat_result((mode, 0, 0, 0, 0, 0, size, mtime, mtime, 0))
 
 def utime(path, times):
     """utime(path, (atime, mtime))
