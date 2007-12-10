@@ -11,9 +11,6 @@ import org.python.modules._codecs;
  */
 @ExposedType(name="unicode", base=PyBaseString.class)
 public class PyUnicode extends PyString {
-    static {
-        System.out.println("In static block on PyUnicode");
-    }
 
     public static final PyType UNICODETYPE = PyType.fromClass(PyUnicode.class);
     

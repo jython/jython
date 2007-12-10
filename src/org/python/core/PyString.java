@@ -12,7 +12,7 @@ import org.python.expose.MethodType;
 @ExposedType(name="str")
 public class PyString extends PyBaseString
 {
-    private static final PyType STRTYPE = PyType.fromClass(PyString.class);
+    public static final PyType STRTYPE = PyType.fromClass(PyString.class);
     protected String string;
     private transient int cached_hashcode=0;
     private transient boolean interned=false;
@@ -457,6 +457,16 @@ public class PyString extends PyBaseString
             return string == o.string;
 
         return string.equals(o.string);
+    }
+    
+    @ExposedMethod
+    public PyObject str___getitem__(PyObject index) {
+        return seq___finditem__(index);
+    }
+    
+    @ExposedMethod(defaults="null")
+    public PyObject str___getslice__(PyObject start, PyObject stop, PyObject step) {
+        return seq___getslice__(start, stop, step);
     }
 
     public int __cmp__(PyObject other) {
@@ -1433,6 +1443,7 @@ public class PyString extends PyBaseString
         return str_ljust(width);
     }
 
+    @ExposedMethod
     final String str_ljust(int width) {
         int n = width-string.length();
         if (n <= 0)

@@ -307,7 +307,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
 public class __builtin__  {
 	public static void fillWithBuiltins(PyObject dict) {
 		/* newstyle */
-		dict.__setitem__("object", PyType.fromClass(PyObject.class));
+		dict.__setitem__("object", PyObject.OBJTYPE);
 		dict.__setitem__("type", PyType.fromClass(PyType.class));
 		dict.__setitem__("bool", PyType.fromClass(PyBoolean.class));
 		dict.__setitem__("int", PyType.fromClass(PyInteger.class));
@@ -325,8 +325,8 @@ public class __builtin__  {
 		dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
 		dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
 		dict.__setitem__("super", PyType.fromClass(PySuper.class));
-		dict.__setitem__("str", PyType.fromClass(PyString.class));
-		dict.__setitem__("unicode", PyType.fromClass(PyUnicode.class));
+		dict.__setitem__("str", PyString.STRTYPE);
+		dict.__setitem__("unicode", PyUnicode.UNICODETYPE);
 		dict.__setitem__("basestring", PyType.fromClass(PyBaseString.class));
 		dict.__setitem__("file", PyType.fromClass(PyFile.class));
 		dict.__setitem__("open", PyType.fromClass(PyFile.class));

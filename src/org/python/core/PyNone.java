@@ -50,8 +50,23 @@ public class PyNone extends PyObject implements Serializable
         return "None";
     }
 
-    public boolean isMappingType() { return false; }
-    public boolean isSequenceType() { return false; }
-    public boolean isNumberType() { return false; }
-    public String asStringOrNull(int index) { return null; }
+    public boolean isMappingType() {
+        return false;
+    }
+
+    public boolean isSequenceType() {
+        return false;
+    }
+
+    public boolean isNumberType() {
+        return false;
+    }
+
+    public String asStringOrNull(int index) {
+        return null;
+    }
+
+    public String asStringOrNull() {
+        return null;
+    }
 }

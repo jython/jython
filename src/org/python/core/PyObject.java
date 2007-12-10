@@ -20,6 +20,8 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name="object")
 public class PyObject implements Serializable {
+    
+    public static final PyType OBJTYPE = PyType.fromClass(PyObject.class);
     @ExposedNew
     static final PyObject new_impl(PyNewWrapper new_,
                                    boolean init,
@@ -3133,6 +3135,10 @@ public class PyObject implements Serializable {
 
     public String asStringOrNull(int index) throws ConversionException {
        return asString(index);
+    }
+
+    public String asStringOrNull(){
+        return asString();
     }
 
     // TODO - remove when all asName users are moved to the @Exposed annotation
