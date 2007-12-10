@@ -429,8 +429,7 @@ The readme text for the next release will be like:
         />
 
         <!-- java files used by tests -->
-        <javac srcdir="${jython.base.dir}/Lib/test/"
-               includes="javatests/**"
+        <javac srcdir="${jython.base.dir}/tests/java"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
