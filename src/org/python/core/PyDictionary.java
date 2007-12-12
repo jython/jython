@@ -1,14 +1,20 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.Hashtable;
+import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * A builtin python dictionary.
  */
 
-public class PyDictionary extends PyObject {
+public class PyDictionary extends PyObject implements Map {
 
     //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     /* type info */
@@ -1120,13 +1126,6 @@ public class PyDictionary extends PyObject {
         return new PyList(elements);
     }
 
-    /**
-     * Return a copy of the dictionarys list of values.
-     */
-    public PyList values() {
-        return dict_values();
-    }
-
     final PyList dict_values() {
         java.util.Enumeration e = table.elements();
         int n = table.size();
@@ -1185,7 +1184,287 @@ public class PyDictionary extends PyObject {
         return false;
     }
 
+    /* The following methods implement the java.util.Map interface
+    which allows PyDictionary to be passed to java methods that take
+    java.util.Map as a parameter.  Basically, the Map methods are a
+    wrapper around the PyDictionary's Map container stored in member
+    variable 'table'. These methods simply convert java Object to
+    PyObjects on insertion, and PyObject to Objects on retrieval. */
 
+    /** @see java.util.Map#entrySet() */
+    public Set entrySet() {
+        return new PyMapEntrySet(table.entrySet());
+    }
+
+    /** @see java.util.Map#keySet() */
+    public Set keySet() {
+        return new PyMapKeyValSet(table.keySet());
+    }
+
+    /** Return a copy of the dictionarys list of values. */
+    public Collection values() {
+        return new PyMapKeyValSet(table.values());
+    }
+
+  
+    /** @see java.util.Map#putAll(Map map) */
+    public void putAll(Map map) {
+        Iterator i = map.entrySet().iterator();
+        while (i.hasNext()) {
+            Map.Entry entry = (Map.Entry)i.next();
+            table.put(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
+        }
+    }
+
+    /** @see java.util.Map#remove(Object key) */
+    public Object remove(Object key) {
+        return tojava(table.remove(Py.java2py(key)));
+    }
+
+    /** @see java.util.Map#put(Object key, Object value) */
+    public Object put(Object key, Object value) {
+        return tojava(table.put(Py.java2py(key), Py.java2py(value)));
+    }
+
+    /** @see java.util.Map#get(Object key) */
+    public Object get(Object key) {
+        return tojava(table.get(Py.java2py(key)));
+    }
+
+    /** @see java.util.Map#containsValue(Object key) */
+    public boolean containsValue(Object value) {
+        return table.containsValue(Py.java2py(value));
+    }
+
+    /** @see java.util.Map#containsValue(Object key) */
+    public boolean containsKey(Object key) {
+        return table.containsKey(Py.java2py(key));
+    }
+    
+    /** @see java.util.Map#isEmpty(Object key) */
+    public boolean isEmpty() {
+        return table.isEmpty();
+    }
+    
+    /** @see java.util.Map#size(Object key) */
+    public int size() {
+        return table.size();
+    }
+
+    /** Convert return values to java objects */
+    static final Object tojava(Object val) {
+        return val == null ? null : ((PyObject)val).__tojava__(Object.class);
+    }
+}
+
+/**
+ * Wrapper for a Map.Entry object returned from the java.util.Set
+ * object which in turn is returned by the entrySet method of
+ * java.util.Map.  This is needed to correctly convert from PyObjects
+ * to java Objects.  Note that we take care in the equals and hashCode
+ * methods to make sure these methods are consistent with Map.Entry
+ * objects that contain java Objects for a value so that on the java
+ * side they can be reliable compared.
+ */
+class PyToJavaMapEntry implements Map.Entry {
+
+    private Map.Entry entry;
+
+    /** Create a copy of the Map.Entry with Py.None coverted to null */
+    PyToJavaMapEntry(Map.Entry entry) {
+        this.entry = entry;
+    }
+    
+    public boolean equals(Object o) {
+        if (o == null || !(o instanceof Map.Entry)) return false;
+        Map.Entry me = new JavaToPyMapEntry((Map.Entry)o);
+        return o.equals(me);
+    }
+
+    public Object getKey() {
+        return PyDictionary.tojava(entry.getKey());
+    }
+    
+    public Object getValue() {
+        return PyDictionary.tojava(entry.getValue());
+    }
+
+    public int hashCode() {
+        // formula for the hash code is taken from the Map.Entry documentation.
+        // Given the source we assume that key is not null.
+        Object val = entry.getValue();
+        return getKey().hashCode() ^ (val == null ? 0 : val.hashCode());
+    }
+
+    public Object setValue(Object value) {
+        return entry.setValue(Py.java2py(value));
+    }
+
+    public Map.Entry getEntry() {
+        return entry;
+    }
+
+}
+
+/**
+ * MapEntry Object for java MapEntry objects passed to the
+ * java.util.Set interface which is returned by the entrySet method of
+ * PyDictionary. Essentially like PyTojavaMapEntry, but going the
+ * other way converting java Objects to PyObjects.
+ */
+class JavaToPyMapEntry implements Map.Entry {
+    private PyObject key;
+    private PyObject val;
+
+    public JavaToPyMapEntry(Map.Entry entry) {
+        this.key = Py.java2py(entry.getKey());
+        this.val = Py.java2py(entry.getValue());
+    }
+    
+    public boolean equals(Object o) {
+        if (o == null || !(o instanceof Map.Entry)) return false;
+        Map.Entry oe = (Map.Entry)o;
+        // The objects comming in will always be a Map.Entry from a
+        // PyDictionary, so getKey and getValue will always be PyObjects
+        return oe.getKey().equals(key) && oe.getValue().equals(val);
+    }
+
+    public int hashCode() {
+        return key.hashCode() ^ val.hashCode();
+    }
+
+    public Object getKey() {
+        return key;
+    }
+
+    public Object getValue() {
+        return val;
+    }
+    
+    public Object setValue(Object val) {
+      throw new UnsupportedOperationException("Not supported by this view");
+    }
+}
+
+/**
+ *  Wrapper collection class for the keySet and values methods of
+ *  java.util.Map
+ */
+class PyMapKeyValSet extends PyMapSet {
+
+    
+    PyMapKeyValSet(Collection coll) {
+        super(coll);
+    }
+
+    Object toJava(Object o) {
+        return PyDictionary.tojava(o);
+    }
+    
+    Object toPython(Object o) {
+        return Py.java2py(o);
+    }
+}
+
+/**
+ * Set wrapper for the java.util.Map.entrySet method. Map.Entry
+ * objects are wrapped further in JavaToPyMapEntry and
+ * PyToJavaMapEntry.  Note - The set interface is reliable for
+ * standard objects like strings and integers, but may be inconstant
+ * for other types of objects since the equals method may return false
+ * for Map.Entry object that hold more elaborate PyObject types.
+ * However, We insure that this iterface works when the Map.Entry
+ * object originates from a Set object retrieved from a PyDictionary.
+ */
+class PyMapEntrySet extends PyMapSet {
+
+    PyMapEntrySet(Collection coll) {
+        super(coll);
+    } 
+
+    // We know that PyMapEntrySet will only contains Map.Entrys, so
+    // if the object being passed in is null or not a Map.Entry, then
+    // return null which will match nothing for remove and contains methods.
+    Object toPython(Object o) {
+        if (o == null || !(o instanceof Map.Entry)) return null;
+        if (o instanceof PyToJavaMapEntry)
+            // Use the original entry from PyDictionary
+            return ((PyToJavaMapEntry)o).getEntry();
+        else
+            return new JavaToPyMapEntry((Map.Entry)o);
+    }
+
+    Object toJava(Object o) {
+        return new PyToJavaMapEntry((Map.Entry)o);
+    }
+}
+
+/**
+ * PyMapSet serves as a wrapper around Set Objects returned by the
+ * java.util.Map interface of PyDictionary. entrySet, values and
+ * keySet methods return this type for the java.util.Map
+ * implementation.  This class is necessary as a wrapper to convert
+ * PyObjects to java Objects for methods that return values, and
+ * convert Objects to PyObjects for methods that take values. The
+ * translation is necessary to provide java access to jython
+ * dictionary objects. This wrapper also provides the expected backing
+ * functionality such that changes to the wrapper set or reflected in
+ * PyDictionary.
+ */
+abstract class PyMapSet extends AbstractSet
+{
+
+    Collection coll;
+
+    PyMapSet(Collection coll) {
+        this.coll = coll;
+    }
+
+    abstract Object toJava(Object obj);
+    abstract Object toPython(Object obj);
+
+    public int size() {
+        return coll.size();
+    }
+    
+    public boolean contains(Object o) {
+        return coll.contains(toPython(o));
+    }
+    
+     public boolean remove(Object o) {
+         return coll.remove(toPython(o));
+    }
+    
+    public void clear() {
+        coll.clear();
+    }
+
+    // Iterator wrapper class returned by the PyMapSet iterator
+    // method. We need this wrapper to return PyToJavaMapEntry objects
+    // for the 'next()' method.
+    class PySetIter implements Iterator {
+        Iterator itr;
+
+        PySetIter(Iterator itr) {
+            this.itr = itr;
+        }
+
+        public boolean hasNext() {
+            return itr.hasNext();
+        }
+
+        public Object next() {
+            return toJava(itr.next());
+        }
+    
+        public void remove() {
+            itr.remove();
+        }
+    }
+    
+    public Iterator iterator() {
+        return new PySetIter(coll.iterator());
+    }
 }
 
 class PyDictionaryIter extends PyIterator {
@@ -1217,4 +1496,3 @@ class PyDictionaryIter extends PyIterator {
         }
     }
 }
-
