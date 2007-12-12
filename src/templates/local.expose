@@ -1,0 +1,21 @@
+# setup
+type_name: local
+type_class: PyLocal
+
+# getsets
+expose_getset: __dict__ getDict setDict
+
+# exposed methods
+expose_wide_meth: __init__ -1 -1
+  `vdeleg`(init);
+  `void;
+expose_new_mutable:
+  PyLocal newobj;
+  if (for_type == subtype) {
+      newobj=new PyLocal();
+  } else {
+      newobj=new PyLocalDerived(subtype);
+  }
+  if (init)
+     newobj.local_init2(args, keywords);
+  return newobj;

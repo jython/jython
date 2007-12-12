@@ -539,6 +539,7 @@ The readme text for the next release will be like:
               <include name="src/**/*.java" />
               <include name="src/com/**/*.properties" />
               <include name="Lib/jxxload_help/*.java" />
+              <include name="tests/java/**/*.java" />
               <include name="src/org/**/ucnhash.dat" />
               <include name="src/org/python/parser/build.xml" />
               <exclude name="src/org/python/parser/python.java" />

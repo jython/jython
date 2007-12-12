@@ -15,7 +15,7 @@ from traceback import print_exc as _print_exc
 # Rename some stuff so "from threading import *" is safe
 __all__ = ['activeCount', 'Condition', 'currentThread', 'enumerate', 'Event',
            'Lock', 'RLock', 'Semaphore', 'BoundedSemaphore', 'Thread',
-           'Timer', 'setprofile', 'settrace']
+           'Timer', 'setprofile', 'settrace', 'local']
 
 _start_new_thread = thread.start_new_thread
 _allocate_lock = thread.allocate_lock
@@ -689,6 +689,13 @@ def enumerate():
 
 _MainThread()
 
+# get thread-local implementation, either from the thread
+# module, or from the python fallback
+
+try:
+    from thread import _local as local
+except ImportError:
+    from _threading_local import local
 
 # Self-test code
 
