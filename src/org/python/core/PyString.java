@@ -12,14 +12,14 @@ import org.python.expose.MethodType;
 @ExposedType(name="str")
 public class PyString extends PyBaseString
 {
-    public static final PyType STRTYPE = PyType.fromClass(PyString.class);
+    public static final PyType TYPE = PyType.fromClass(PyString.class);
     protected String string;
     private transient int cached_hashcode=0;
     private transient boolean interned=false;
 
     // for PyJavaClass.init()
     public PyString() {
-        this(STRTYPE, "");
+        this(TYPE, "");
     }
 
     public PyString(PyType subType, String string) {
@@ -32,11 +32,11 @@ public class PyString extends PyBaseString
     }
 
     public PyString(String string) {
-        this(STRTYPE, string);
+        this(TYPE, string);
     }
 
     public PyString(char c) {
-        this(STRTYPE,String.valueOf(c));
+        this(TYPE,String.valueOf(c));
     }
 
     @ExposedNew

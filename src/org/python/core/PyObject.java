@@ -21,7 +21,7 @@ import org.python.expose.ExposedType;
 @ExposedType(name="object")
 public class PyObject implements Serializable {
     
-    public static final PyType OBJTYPE = PyType.fromClass(PyObject.class);
+    public static final PyType TYPE = PyType.fromClass(PyObject.class);
     @ExposedNew
     static final PyObject new_impl(PyNewWrapper new_,
                                    boolean init,
@@ -2908,7 +2908,7 @@ public class PyObject implements Serializable {
         object___delattr__(asName(name));
     }
 
-    private static final String asName(PyObject obj) {
+    public static final String asName(PyObject obj) {
         try {
             return obj.asName(0);
         } catch(PyObject.ConversionException e) {

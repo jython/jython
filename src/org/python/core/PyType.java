@@ -14,181 +14,22 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import org.python.expose.ExposedDelete;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedSet;
+import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
 
 /**
  * first-class Python type.
  *
  */
+@ExposedType(name="type")
 public class PyType extends PyObject implements Serializable {
-    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-    /* type info */
 
-    public static final String exposed_name="type";
-
-    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("__dict__",new PyGetSetDescr("__dict__",PyType.class,"getDict","setDict","delDict"));
-        dict.__setitem__("__name__",new PyGetSetDescr("__name__",PyType.class,"fastGetName",null,null));
-        dict.__setitem__("__base__",new PyGetSetDescr("__base__",PyType.class,"getBase",null,null));
-        dict.__setitem__("__bases__",new PyGetSetDescr("__bases__",PyType.class,"getBases","setBases","delBases"));
-        dict.__setitem__("__mro__",new PyGetSetDescr("__mro__",PyType.class,"getMro",null,null));
-        dict.__setitem__("__flags__",new PyGetSetDescr("__flags__",PyType.class,"getFlags",null,null));
-        class exposed_mro extends PyBuiltinMethodNarrow {
-
-            exposed_mro(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_mro(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyType)self).type_mro(arg0);
-            }
-
-            public PyObject __call__() {
-                return((PyType)self).type_mro();
-            }
-
-        }
-        dict.__setitem__("mro",new PyMethodDescr("mro",PyType.class,0,1,new exposed_mro(null,null)));
-        class exposed___getattribute__ extends PyBuiltinMethodNarrow {
-
-            exposed___getattribute__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___getattribute__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    String name=(arg0.asName(0));
-                    PyObject ret=((PyType)self).type___findattr__(name);
-                    if (ret==null)
-                        ((PyType)self).noAttributeError(name);
-                    return ret;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("__getattribute__",new PyMethodDescr("__getattribute__",PyType.class,1,1,new exposed___getattribute__(null,null)));
-        class exposed___setattr__ extends PyBuiltinMethodNarrow {
-
-            exposed___setattr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___setattr__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    ((PyType)self).type___setattr__(arg0.asName(0),arg1);
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("__setattr__",new PyMethodDescr("__setattr__",PyType.class,2,2,new exposed___setattr__(null,null)));
-        class exposed___delattr__ extends PyBuiltinMethodNarrow {
-
-            exposed___delattr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___delattr__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    ((PyType)self).type___delattr__(arg0.asName(0));
-                    return Py.None;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("__delattr__",new PyMethodDescr("__delattr__",PyType.class,1,1,new exposed___delattr__(null,null)));
-        class exposed___subclasses__ extends PyBuiltinMethodNarrow {
-
-            exposed___subclasses__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___subclasses__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyType)self).type_getSubclasses();
-            }
-
-        }
-        dict.__setitem__("__subclasses__",new PyMethodDescr("__subclasses__",PyType.class,0,0,new exposed___subclasses__(null,null)));
-        class exposed___call__ extends PyBuiltinMethod {
-
-            exposed___call__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___call__(self,info);
-            }
-
-            public PyObject __call__(PyObject[]args) {
-                return __call__(args,Py.NoKeywords);
-            }
-
-            public PyObject __call__(PyObject[]args,String[]keywords) {
-                return((PyType)self).type___call__(args,keywords);
-            }
-
-        }
-        dict.__setitem__("__call__",new PyMethodDescr("__call__",PyType.class,-1,-1,new exposed___call__(null,null)));
-        dict.__setitem__("__new__",new PyNewWrapper(PyType.class,"__new__",-1,-1) {
-
-                                                                                      public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                          return type_new(this,init,subtype,args,keywords);
-                                                                                      }
-
-                                                                                  });
-    }
-    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-
+    @ExposedNew
     public static PyObject type_new(PyNewWrapper new_, boolean init,
             PyType subtype, PyObject[] args, String[] keywords) {
         if (args.length == 1 && keywords.length == 0) {
@@ -206,7 +47,6 @@ public class PyType extends PyObject implements Serializable {
         if (!(dict instanceof PyDictionary || dict instanceof PyStringMap))
             throw Py.TypeError("type(): dict must be dict");
         return newType(new_, subtype, name, (PyTuple) bases, dict);
-
     }
 
     private Object writeReplace() {
@@ -270,22 +110,26 @@ public class PyType extends PyObject implements Serializable {
         return base.getLayout();
     }
 
+    @ExposedGet(name="__base__")
     public PyObject getBase() {
         if (base == null)
             return Py.None;
         return base;
     }
 
+    @ExposedGet(name="__bases__")
     public PyObject getBases() {
         if (bases == null)
             return new PyTuple();
         return new PyTuple(bases);
     }
 
+    @ExposedDelete(name="__bases__")
     public void delBases() {
         throw Py.TypeError("Can't delete __bases__ attribute");
     }
 
+    @ExposedSet(name="__bases__")
     public void setBases(PyObject newBasesTuple) {
         if(!(newBasesTuple instanceof PyTuple)){
             throw Py.TypeError("bases must be a tuple");
@@ -404,15 +248,18 @@ public class PyType extends PyObject implements Serializable {
         }
     }
 
+    @ExposedGet(name="__mro__")
     public PyTuple getMro() {
         return new PyTuple(mro);
     }
 
+    @ExposedGet(name="__flags__")
     public PyLong getFlags() {
         return new PyLong(tp_flags);
     }
     
-    public synchronized final PyObject type_getSubclasses() {
+    @ExposedMethod
+    public synchronized final PyObject type___subclasses__() {
         PyList result = new PyList();
         cleanup_subclasses();
         for(WeakReference<PyType> ref : subclasses) {
@@ -515,12 +362,12 @@ public class PyType extends PyObject implements Serializable {
         System.out.println(new PyList(objs).toString());
     }
       
-    final PyList type_mro() {
-        return new PyList(compute_mro());
-    }
-
+    @ExposedMethod(defaults = "null")
     final PyList type_mro(PyObject o) {
-        return ((PyType)o).type_mro();
+        if(o == null) {
+            return new PyList(compute_mro());
+        }
+        return new PyList(((PyType)o).compute_mro());
     }
 
     final PyObject[] compute_mro() {
@@ -786,6 +633,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
 
+    @ExposedGet(name="__name__")
     public String fastGetName() {
         return name;
     }
@@ -893,8 +741,6 @@ public class PyType extends PyObject implements Serializable {
             throw error(e);
         }
     }
-
-    private final static String[] EMPTY = new String[0];
 
     private static PyException error(Exception e) {
         return Py.JavaError(e);
@@ -1160,17 +1006,20 @@ public class PyType extends PyObject implements Serializable {
 
     private static HashMap<Class, PyType> class_to_type;
 
-    private static HashMap<Class, TypeBuilder> classToBuilder = new HashMap<Class, TypeBuilder>();
+    private static HashMap<Class, TypeBuilder> classToBuilder;
 
     public static interface Newstyle {
     }
 
     public static void addBuilder(Class forClass, TypeBuilder builder) {
+        if(classToBuilder == null) {
+            classToBuilder = new HashMap<Class, TypeBuilder>();
+        }
         classToBuilder.put(forClass, builder);
-        if(builder.getTypeClass().equals(PyObject.class)) {
+        if(builder.getTypeClass().equals(PyObject.class) || builder.getTypeClass().equals(PyType.class)) {
             // PyObject's type is loaded before as part of creating its builder,
             // so it needs to be bootstrapped
-            PyType objType = fromClass(PyObject.class);
+            PyType objType = fromClass(builder.getTypeClass());
             objType.dict = builder.getDict(objType);
         }
     }
@@ -1181,7 +1030,7 @@ public class PyType extends PyObject implements Serializable {
         Class base = null;
         String name = null;
         String[] exposed_methods = null;
-        TypeBuilder tb = classToBuilder.get(c);
+        TypeBuilder tb = classToBuilder == null ? null : classToBuilder.get(c);
         if(tb != null) {
             name = tb.getName();
             if(!tb.getBase().equals(Object.class)) {
@@ -1213,7 +1062,7 @@ public class PyType extends PyObject implements Serializable {
                 }
                 exposed_methods = (String[])exposed_decl_get_object(c, "methods");
                 if(exposed_methods == null)
-                    exposed_methods = EMPTY;
+                    exposed_methods = new String[0];
             }
         }
         PyType newtype = class_to_type.get(c);
@@ -1225,7 +1074,7 @@ public class PyType extends PyObject implements Serializable {
         return newtype;
     }
 
-    static PyType TypeType = fromClass(PyType.class);
+    public static PyType TYPE = fromClass(PyType.class);
 
     /*
      * considers:
@@ -1248,18 +1097,6 @@ public class PyType extends PyObject implements Serializable {
      */
 
     public static synchronized PyType fromClass(Class c) {
-        if(c.equals(PyUnicode.class)) {
-            if(!classToBuilder.containsKey(PyUnicode.class)) {
-                System.out.println("PyUnicode's static block wasn't called, hacking it into place!");
-                try {
-                    Class exposer = c.getClassLoader()
-                            .loadClass("org.python.core.PyUnicode$PyExposer");
-                    addBuilder(PyUnicode.class, (TypeBuilder)exposer.newInstance());
-                } catch(Exception e) {
-                    throw new RuntimeException(e);
-                } 
-            }
-        }
         if (class_to_type == null) {
             class_to_type = new HashMap<Class, PyType>();
             addFromClass(PyType.class);
@@ -1270,6 +1107,11 @@ public class PyType extends PyObject implements Serializable {
         return addFromClass(c);
     }
 
+    @ExposedMethod
+    final PyObject type___getattribute__(PyObject name){
+        return type___findattr__(asName(name));
+    }
+    
     // name must be interned
     final PyObject type___findattr__(String name) {
         PyType metatype = getType();
@@ -1299,6 +1141,11 @@ public class PyType extends PyObject implements Serializable {
 
         return null;
     }
+    
+    @ExposedMethod
+    final void type___setattr__(PyObject name, PyObject value){
+        type___setattr__(asName(name), value);
+    }
 
     final void type___setattr__(String name, PyObject value) {
         super.__setattr__(name, value);
@@ -1326,6 +1173,11 @@ public class PyType extends PyObject implements Serializable {
 
     }
 
+    @ExposedMethod
+    final void type___delattr__(PyObject name) {
+        type___delattr__(asName(name));
+    }
+    
     final void type___delattr__(String name) {
         super.__delattr__(name);
         if (name == "__set__") {
@@ -1374,14 +1226,17 @@ public class PyType extends PyObject implements Serializable {
     }
 
 
+    @ExposedGet(name="__dict__")
     public PyObject getDict() { // xxx return dict-proxy
         return dict;
     }
     
+    @ExposedSet(name="__dict__")
     public void setDict(PyObject newDict) {
     	throw Py.TypeError("can't set attribute '__dict__' of type '" + name + "'");
     }
 
+    @ExposedDelete(name="__dict__")
     public void delDict() {
     	throw Py.TypeError("can't delete attribute '__dict__' of type '" + name + "'");
     }
@@ -1459,7 +1314,7 @@ public class PyType extends PyObject implements Serializable {
             newobj = new_.__get__(null, type).__call__(type_prepended, keywords);
         }
         /* special case type(x) */
-        if (type == TypeType && args.length==1 && keywords.length==0) {
+        if (type == TYPE && args.length==1 && keywords.length==0) {
             return newobj;
         }
         newobj.dispatch__init__(type,args,keywords);
@@ -1474,6 +1329,7 @@ public class PyType extends PyObject implements Serializable {
         return type___call__(args,keywords);
     }
 
+    @ExposedMethod
     final PyObject type___call__(PyObject[] args, String[] keywords) {
         PyObject new_ = lookup("__new__");
         if (non_instantiable || new_ == null) {

@@ -12,15 +12,15 @@ import org.python.modules._codecs;
 @ExposedType(name="unicode", base=PyBaseString.class)
 public class PyUnicode extends PyString {
 
-    public static final PyType UNICODETYPE = PyType.fromClass(PyUnicode.class);
+    public static final PyType TYPE = PyType.fromClass(PyUnicode.class);
     
     // for PyJavaClass.init()
     public PyUnicode() {
-        this(UNICODETYPE, "");
+        this(TYPE, "");
     }
 
     public PyUnicode(String string) {
-        this(UNICODETYPE, string);
+        this(TYPE, string);
     }
     
     public PyUnicode(PyType subtype, String string) {
@@ -28,7 +28,7 @@ public class PyUnicode extends PyString {
     }
     
     public PyUnicode(PyString pystring) {
-        this(UNICODETYPE, pystring);
+        this(TYPE, pystring);
     }
     
     public PyUnicode(PyType subtype, PyString pystring) {
@@ -37,7 +37,7 @@ public class PyUnicode extends PyString {
 
 
     public PyUnicode(char c) {
-        this(UNICODETYPE,String.valueOf(c));
+        this(TYPE,String.valueOf(c));
     }
 
     @ExposedNew

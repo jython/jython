@@ -13,10 +13,10 @@ import org.python.expose.ExposedType;
 public class PyNone extends PyObject implements Serializable
 {
 
-    private static final PyType NONETYPE = PyType.fromClass(PyNone.class);
+    public static final PyType TYPE = PyType.fromClass(PyNone.class);
 
     PyNone() {
-        super(NONETYPE);
+        super(TYPE);
     }
 
     private Object writeReplace() {

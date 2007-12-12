@@ -13,6 +13,9 @@ import org.python.expose.MethodType;
  */
 @ExposedType(name="int")
 public class PyInteger extends PyObject {
+    
+    public static final PyType TYPE = PyType.fromClass(PyInteger.class);
+    
     @ExposedNew
     public static PyObject int_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
@@ -68,8 +71,6 @@ public class PyInteger extends PyObject {
 		}
 	}
     
-    private static final PyType INTTYPE = PyType.fromClass(PyInteger.class);
-    
     private int value;
 
     public PyInteger(PyType subType, int v) {
@@ -78,7 +79,7 @@ public class PyInteger extends PyObject {
     }
 
     public PyInteger(int v) {
-        this(INTTYPE, v);
+        this(TYPE, v);
     }
 
     public int getValue() {
