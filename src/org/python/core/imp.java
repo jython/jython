@@ -479,7 +479,7 @@ public class imp {
                                     sourceFile.getAbsolutePath());
         }
         // If no source, try loading precompiled
-        Py.writeDebug(IMPORT_LOG, "trying precompiled with no source"
+        Py.writeDebug(IMPORT_LOG, "trying precompiled with no source "
                 + compiledFile.getPath());
         if(compiledFile.isFile()
                 && caseok(compiledFile, compiledName, compiledName.length())) {
