@@ -76,6 +76,46 @@ public abstract class Exposer implements Opcodes, PyTypes {
     protected void superConstructor(Type... args) {
         callConstructor(superType, args);
     }
+    
+    class Instantiator {
+        public Instantiator(Type... types) {
+            this.types = types;
+        }
+
+        /** 
+         * Push args onto the stack corresponding to the types passed to the constructor.
+         */
+        public void pushArgs() {
+            if(types.length > 0) {
+                throw new IllegalStateException("If the constuctor takes types as indicated by "
+                        + "passing their types to Instantiator, pushArgs must be overriden to put "
+                        + "those args on the stack before the call");
+            }
+        };
+
+        public Type[] getTypes() {
+            return types;
+        }
+
+        private Type[] types;
+    }
+    
+    /** Instantiates ofType using its no-arg constructor */
+    protected void instantiate(Type ofType) {
+        instantiate(ofType, new Instantiator());
+    }
+    
+    /**
+     * Instantiates ofType with its constructor that takes the types returned by
+     * inst.getTypes(). inst should override pushArgs to put arguments of those
+     * types on the stack for the call.
+     */
+    protected void instantiate(Type ofType, Instantiator inst){
+        mv.visitTypeInsn(NEW, ofType.getInternalName());
+        mv.visitInsn(DUP);
+        inst.pushArgs();
+        callConstructor(ofType, inst.getTypes());
+    }
 
     /** Calls the constructor on onType with the given args. */
     protected void callConstructor(Type onType, Type... args) {

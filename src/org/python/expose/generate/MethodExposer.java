@@ -107,11 +107,12 @@ public class MethodExposer extends Exposer {
 
     private void generateBind() {
         startMethod("bind", BUILTIN_FUNCTION, PYOBJ);
-        mv.visitTypeInsn(NEW, getInternalName());
-        mv.visitInsn(DUP);
-        mv.visitVarInsn(ALOAD, 1);
-        get("info", BUILTIN_INFO);
-        callConstructor(thisType, PYOBJ, BUILTIN_INFO);
+        instantiate(thisType, new Instantiator(PYOBJ, BUILTIN_INFO){
+            public void pushArgs() {
+                mv.visitVarInsn(ALOAD, 1);
+                get("info", BUILTIN_INFO);
+            }
+        });
         mv.visitInsn(ARETURN);
         endMethod();
     }
@@ -225,10 +226,11 @@ public class MethodExposer extends Exposer {
             mv.visitIntInsn(BIPUSH, -2);
             Label regularReturn = new Label();
             mv.visitJumpInsn(IF_ICMPNE, regularReturn);
-            mv.visitTypeInsn(NEW, STRING_BUILDER.getInternalName());
-            mv.visitInsn(DUP);
-            mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix + "', not a '");
-            callConstructor(STRING_BUILDER, STRING);
+            instantiate(STRING_BUILDER, new Instantiator(STRING){
+                public void pushArgs(){
+                    mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix + "', not a '");
+                }
+            });
             mv.visitVarInsn(ALOAD, 1);
             mv.visitMethodInsn(INVOKEVIRTUAL,
                                PYOBJ.getInternalName(),

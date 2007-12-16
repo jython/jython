@@ -91,13 +91,14 @@ public class TypeExposer extends Exposer {
         mv.visitVarInsn(ASTORE, 1);
         int i = 0;
         for(MethodExposer exposer : methods) {
-            for(String name : exposer.getNames()) {
+            for(final String name : exposer.getNames()) {
                 mv.visitVarInsn(ALOAD, 1);
                 mv.visitLdcInsn(i++);
-                mv.visitTypeInsn(NEW, exposer.getInternalName());
-                mv.visitInsn(DUP);
-                mv.visitLdcInsn(name);
-                callConstructor(exposer.getGeneratedType(), STRING);
+                instantiate(exposer.getGeneratedType(), new Instantiator(STRING){
+                    public void pushArgs() {
+                        mv.visitLdcInsn(name);
+                    }
+                });
                 mv.visitInsn(AASTORE);
             }
         }
@@ -109,16 +110,12 @@ public class TypeExposer extends Exposer {
         for(DescriptorExposer desc : descriptors) {
             mv.visitVarInsn(ALOAD, 2);
             mv.visitLdcInsn(i++);
-            mv.visitTypeInsn(NEW, desc.getInternalName());
-            mv.visitInsn(DUP);
-            callConstructor(desc.getGeneratedType());
+            instantiate(desc.getGeneratedType());
             mv.visitInsn(AASTORE);
         }
         mv.visitVarInsn(ALOAD, 2);
         if(ne != null) {
-            mv.visitTypeInsn(NEW, ne.getInternalName());
-            mv.visitInsn(DUP);
-            callConstructor(ne.getGeneratedType());
+            instantiate(ne.getGeneratedType());
         } else {
             mv.visitInsn(ACONST_NULL);
         }
