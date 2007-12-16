@@ -242,7 +242,7 @@ public abstract class AbstractArray implements Serializable{
      * @return array containing a shallow copy of the data.
      */
     public Object copyArray() {
-        Object copy = Array.newInstance(getArray().getClass().getComponentType(), this.size);
+        Object copy = createArray(this.size);
         System.arraycopy(getArray(), 0, copy, 0, this.size);
         return copy;
     }
@@ -494,8 +494,7 @@ public abstract class AbstractArray implements Serializable{
     private void setNewBase(int newCapacity) {
         this.modCountIncr = 1;
         Object base = getArray();
-        Class baseType = base.getClass().getComponentType();
-        Object newBase = Array.newInstance(baseType, newCapacity);
+        Object newBase = createArray(newCapacity);
         System.arraycopy(base, 0, newBase, 0, this.capacity);
         setArray(newBase);
     }
@@ -586,4 +585,9 @@ public abstract class AbstractArray implements Serializable{
     public int getModCountIncr() {
         return this.modCountIncr;
     }
+    
+    /**
+     * @return an array of the given size for the type used by this abstract array.
+     */ 
+    protected abstract Object createArray(int size);
 }

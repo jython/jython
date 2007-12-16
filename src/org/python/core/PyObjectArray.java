@@ -204,5 +204,10 @@ public class PyObjectArray extends AbstractArray {
 	public void ensureCapacity(int minCapacity) {
 	    super.ensureCapacity(minCapacity);
 	}
+	
+	@Override
+	protected PyObject[] createArray(int size) {
+        return new PyObject[size];
+    }
 }
 
