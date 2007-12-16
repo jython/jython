@@ -1565,7 +1565,7 @@ public class PyString extends PyBaseString implements ClassDictInit
 
     protected String string;
     private transient int cached_hashcode=0;
-    private transient boolean interned=false;
+    protected transient boolean interned=false;
 
     // for PyJavaClass.init()
     public PyString() {
@@ -1587,6 +1587,16 @@ public class PyString extends PyBaseString implements ClassDictInit
 
     public PyString(char c) {
         this(STRTYPE,String.valueOf(c));
+    }
+
+    /**
+     * Creates a PyString from an already interned String. Just means it won't
+     * be reinterned if used in a place that requires interned Strings.
+     */
+    public static PyString fromInterned(String interned) {
+        PyString str = new PyString(STRTYPE, interned);
+        str.interned = true;
+        return str;
     }
 
     final static PyObject str_new(PyNewWrapper new_, boolean init, PyType subtype,

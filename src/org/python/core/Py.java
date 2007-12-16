@@ -554,7 +554,7 @@ public final class Py
     public static PyString newString(String s) {
         return new PyString(s);
     }
-
+    
     public static PyUnicode newUnicode(char c) {
         return (PyUnicode)makeCharacter(c, true);
     }

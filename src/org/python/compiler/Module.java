@@ -128,10 +128,8 @@ class PyStringConstant extends Constant implements ClassConstants
     public void put(Code c) throws IOException {
         module.classfile.addField(name, $pyStr, access);
         c.ldc(value);
-        int mref_newString = c.pool.Methodref(
-            "org/python/core/Py",
-            "newString",
-            "(" + $str + ")" + $pyStr);
+        int mref_newString = c.pool.Methodref("org/python/core/PyString", "fromInterned", "("
+                + $str + ")" + $pyStr);
         c.invokestatic(mref_newString);
         c.putstatic(module.classfile.name, name, $pyStr);
     }
@@ -163,11 +161,9 @@ class PyUnicodeConstant extends Constant implements ClassConstants
     public void put(Code c) throws IOException {
         module.classfile.addField(name, $pyUnicode, access);
         c.ldc(value);
-        int mref_newString = c.pool.Methodref(
-            "org/python/core/Py",
-            "newUnicode",
-            "(" + $str + ")" + $pyUnicode);
-        c.invokestatic(mref_newString);
+        int mref_newUni = c.pool.Methodref("org/python/core/PyUnicode", "fromInterned", "("
+                + $str + ")" + $pyUnicode);
+        c.invokestatic(mref_newUni);
         c.putstatic(module.classfile.name, name, $pyUnicode);
     }
 
