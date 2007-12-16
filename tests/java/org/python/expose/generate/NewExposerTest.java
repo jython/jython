@@ -1,5 +1,7 @@
 package org.python.expose.generate;
 
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyNewWrapper;
@@ -7,10 +9,14 @@ import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.expose.ExposedType;
 
-public class NewExposerTest extends InterpTestCase {
+public class NewExposerTest extends InterpTestCase implements Opcodes {
 
     public void testSimple() throws Exception {
-        NewExposer ne = new NewExposer(Instantiable.class, "creator");
+        NewExposer ne = new NewExposer(Type.getType(Instantiable.class),
+                                       ACC_STATIC | ACC_PUBLIC,
+                                       "creator",
+                                       NewExposer.NEW_DESCRIPTOR,
+                                       new String[] {}); 
         assertEquals("org/python/expose/generate/NewExposerTest$Instantiable$exposed___new__",
                      ne.getInternalName());
         assertEquals("org.python.expose.generate.NewExposerTest$Instantiable$exposed___new__",

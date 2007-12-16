@@ -10,26 +10,6 @@ import org.python.core.PyType;
 
 public class NewExposer extends Exposer {
 
-    public NewExposer(Class<?> cls, String name) {
-        this(getNewImpl(cls, name));
-    }
-
-    public NewExposer(Method method) {
-        this(Type.getType(method.getDeclaringClass()),
-             method.getModifiers(),
-             method.getName(),
-             Type.getMethodDescriptor(method),
-             asInternals(method.getExceptionTypes()));
-    }
-
-    private static String[] asInternals(Class<?>[] exceptionTypes) {
-        String[] internals = new String[exceptionTypes.length];
-        for(int i = 0; i < internals.length; i++) {
-            internals[i] = Type.getInternalName(exceptionTypes[i]);
-        }
-        return internals;
-    }
-
     public NewExposer(Type onType, int access, String methodName, String desc, String[] exceptions) {
         super(PyNewWrapper.class, onType.getClassName() + "$exposed___new__");
         String fullName = onType.getClassName() + "." + methodName;
@@ -47,22 +27,6 @@ public class NewExposer extends Exposer {
         }
         this.onType = onType;
         this.name = methodName;
-    }
-
-    private static Method getNewImpl(Class<?> cls, String name) {
-        try {
-            return cls.getDeclaredMethod(name,
-                                         PyNewWrapper.class,
-                                         Boolean.TYPE,
-                                         PyType.class,
-                                         PyObject[].class,
-                                         String[].class);
-        } catch(SecurityException e) {
-            throw new RuntimeException(e);
-        } catch(NoSuchMethodException e) {
-            throw new IllegalArgumentException("There is no method named " + name + " on " + cls
-                    + " with the arguments for new_impl");
-        }
     }
 
     @Override
