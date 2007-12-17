@@ -1046,7 +1046,6 @@ _failures = {
     test_pickle
     test_pickletools
     test_pkgimport
-    test_posixpath
     test_profilehooks
     test_pyclbr
     test_quopri
