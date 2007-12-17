@@ -12,21 +12,21 @@ public class NewExposer extends Exposer {
 
     public NewExposer(Type onType, int access, String methodName, String desc, String[] exceptions) {
         super(PyNewWrapper.class, onType.getClassName() + "$exposed___new__");
-        String fullName = onType.getClassName() + "." + methodName;
-        if((access & Opcodes.ACC_STATIC) == 0) {
-            throw new IllegalArgumentException(fullName
-                    + " isn't static, but it must be to be exposed as __new__");
-        }
-        if(!Type.getReturnType(desc).equals(PYOBJ)) {
-            throw new IllegalArgumentException(fullName
-                    + " must return PyObject to be exposed as __new__");
-        }
-        if(exceptions != null && exceptions.length > 0) {
-            throw new IllegalArgumentException(fullName
-                    + " may not throw any exceptions if it is to be exposed as __new__");
-        }
         this.onType = onType;
         this.name = methodName;
+        if((access & Opcodes.ACC_STATIC) == 0) {
+            throwInvalid("Full methods for @ExposedNew must be static");
+        }
+        if(!Type.getReturnType(desc).equals(PYOBJ)) {
+            throwInvalid("@ExposedNew methods must return PyObject");
+        }
+        if(exceptions != null && exceptions.length > 0) {
+            throwInvalid("@ExposedNew methods may not throw exceptions");
+        }
+    }
+    
+    private void throwInvalid(String msg){
+        throw new InvalidExposingException(msg + "[method=" + onType.getClassName() + "." + name +"]");
     }
 
     @Override

@@ -134,10 +134,34 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
         PyBuiltinFunction bound = createBound(exp);
         assertEquals(Py.Zero, bound.__call__());
         assertEquals(Py.One, bound.__call__(Py.One));
-        exp.defaults = new String[] {"X"};
         try {
-            createBound(exp);
+            new MethodExposer(Type.getType(SimpleExposed.class),
+                              Opcodes.ACC_PUBLIC,
+                              "fullArgs",
+                              Type.getMethodDescriptor(PYOBJ, new Type[] {APYOBJ, ASTRING}),
+                              "simpleexposed",
+                              new String[0],
+                              new String[] {"X"},
+                              MethodType.NORMAL);
             fail("Shouldn't be able to create the exposer with a default value");
-        } catch(IllegalStateException ise) {}
+        } catch(InvalidExposingException ite) {}
+    }
+
+    public void testExposingStatic() {
+        try {
+            new MethodExposer(Type.getType(SimpleExposed.class),
+                              Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+                              "fullArgs",
+                              Type.getMethodDescriptor(PYOBJ, new Type[] {APYOBJ, ASTRING}),
+                              "simpleexposed");
+            fail("Shouldn't be able to create an exposer on a static method");
+        } catch(InvalidExposingException ite) {}
+    }
+
+    public void test__new__() throws Exception {
+        try {
+            createExposer("__new__", VOID);
+            fail("Shouldn't be able to make a MethodExposer with the name __new__");
+        } catch(InvalidExposingException ite) {}
     }
 }

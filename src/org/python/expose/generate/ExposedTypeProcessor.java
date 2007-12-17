@@ -30,7 +30,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
     /**
      * @param in -
      *            an InputStream to bytecode of an ExposedType
-     * @throws IllegalArgumentException -
+     * @throws InvalidExposingException -
      *             if the class doesn't have an annotation, or if one of the
      *             method annotations is malformed
      */
@@ -59,8 +59,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
     }
 
     /**
-     * @return The NewExposer for this type. Can be null if the type isn't
-     *         instantiable.
+     * @return The Exposer for __new__ for this type. Can be null if the type
+     *         isn't instantiable.
      */
     public Exposer getNewExposer() {
         return newExposer;
@@ -144,13 +144,17 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
             }
             return super.visitAnnotation(desc, visible);
         }
+        
+        private void throwInvalid(String msg){
+            throw new InvalidExposingException(msg + "[class=" + onType.getClassName() + "]");
+        }
 
         @Override
         public void visitEnd() {
             // typeName is set by the ExposedTypeVisitor in visitAnnotation, if
             // the ExposedType annotation is found.
             if(typeName == null) {
-                throw new IllegalArgumentException("A class given to InnerClassExposer must have the ExposedType annotation");
+                throwInvalid("A class to be exposed must have the ExposedType annotation");
             }
             typeExposer = new TypeExposer(onType,
                                           baseType,
@@ -247,6 +251,9 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
                     @Override
                     public void handleNewExposer(Exposer exposer) {
+                        if(newExposer != null){
+                            throwInvalid("Only one @ExposedNew is allowed per class");
+                        }
                         newExposer = exposer;
                     }
 

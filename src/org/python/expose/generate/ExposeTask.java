@@ -77,9 +77,11 @@ public class ExposeTask extends MatchingTask {
         for(File f : toExpose) {
             ExposedTypeProcessor etp;
             try {
-                etp = new ExposedTypeProcessor(new FileInputStream(f));// TODO - complain about non-exposed type
+                etp = new ExposedTypeProcessor(new FileInputStream(f));
             } catch(IOException e) {
                 throw new BuildException("Unable to read '" + f + "' to expose it", e);
+            } catch(InvalidExposingException iee){
+                throw new BuildException(iee.getMessage());
             }
             for(MethodExposer exposer : etp.getMethodExposers()) {
                 generate(exposer);

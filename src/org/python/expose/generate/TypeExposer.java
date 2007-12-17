@@ -1,13 +1,8 @@
 package org.python.expose.generate;
 
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
@@ -18,11 +13,6 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyStringMap;
 import org.python.core.PyType;
-import org.python.expose.ExposedDelete;
-import org.python.expose.ExposedGet;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
 
@@ -44,10 +34,27 @@ public class TypeExposer extends Exposer {
         this.name = name;
         this.methods = methods;
         this.descriptors = descriptors;
+        Set<String> names = new HashSet<String>();
+        for(DescriptorExposer exposer: descriptors) {
+            if(!names.add(exposer.getName())) {
+                throwDupe(exposer.getName());
+            }
+        }
         for(MethodExposer method : methods) {
-            numNames += method.getNames().length;
+            String[] methNames = method.getNames();
+            for(String methName : methNames) {
+                if(!names.add(methName)) {
+                    throwDupe(methName);
+                }
+            }
+            numNames += methNames.length;
         }
         this.ne = ne;
+    }
+    
+    private void throwDupe(String exposedName) {
+        throw new InvalidExposingException("Only one item may be exposed on a type with a given name[name="
+                + exposedName + ", class=" + onType.getClassName() + "]");
     }
 
     public static String makeGeneratedName(Type onType) {

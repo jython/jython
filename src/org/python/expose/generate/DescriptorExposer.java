@@ -27,6 +27,13 @@ public class DescriptorExposer extends Exposer {
         name = descrName;
     }
 
+    /**
+     * @return - the name this descriptor will be exposed as in its type's dict
+     */
+    public String getName() {
+        return name;
+    }
+
     public void addMethodGetter(String methodName, String desc) {
         if(hasGetter()) {
             error("Descriptor can only have one getter");
@@ -90,7 +97,7 @@ public class DescriptorExposer extends Exposer {
     }
 
     public String toString() {
-        return "DescriptorExposer[onType=" + onType.getClassName() + ", name=" + name + "]";
+        return "DescriptorExposer[class=" + onType.getClassName() + ", name=" + name + "]";
     }
 
     @Override
@@ -200,7 +207,8 @@ public class DescriptorExposer extends Exposer {
     }
 
     private void error(String reason) {
-        throw new IllegalArgumentException(reason + ": " + this);
+        throw new InvalidExposingException(reason + "[class=" + onType.getClassName() + ", name="
+                + name + "]");
     }
 
     private Type onType, ofType;

@@ -14,7 +14,7 @@ public class DescriptorExposerTest extends InterpTestCase implements PyTypes {
         try {
             de.load(new BytecodeLoader.Loader());
             fail("Should not be able to generate a descriptor with no getter");
-        } catch(IllegalArgumentException ise) {
+        } catch(InvalidExposingException ise) {
             // Should be thrown when a getter isn't added.
         }
     }

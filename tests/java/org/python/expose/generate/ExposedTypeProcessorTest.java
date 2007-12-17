@@ -51,8 +51,8 @@ public class ExposedTypeProcessorTest extends TestCase {
         try {
             new ExposedTypeProcessor(in);
             fail("Shouldn't be able to create an InnerClassExposer with a class without ExposedType");
-        } catch(IllegalArgumentException iae) {
-            // Expected since there is no @ExposedType on InnerClassExposerTest
+        } catch(InvalidExposingException ite) {
+            // Expected since there is no @ExposedType on ExposedTypeProcessorTest
         }
     }
 }

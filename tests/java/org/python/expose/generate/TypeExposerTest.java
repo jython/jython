@@ -9,6 +9,7 @@ import org.python.core.Py;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;
+import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
@@ -28,7 +29,7 @@ public class TypeExposerTest extends InterpTestCase {
         assertNotNull(dict.__finditem__("__str__"));
         assertNotNull(dict.__finditem__("__repr__"));
         assertNotNull(dict.__finditem__("tostring"));
-        dict.__finditem__("tostring").__get__(new SimpleExposed(), type );
+        dict.__finditem__("tostring").__get__(new SimpleExposed(), type);
     }
 
     public void testGoodNew() throws IOException {
@@ -39,10 +40,23 @@ public class TypeExposerTest extends InterpTestCase {
         assertEquals(Py.One, new_.__call__(PyType.fromClass(SimplestNew.class)));
     }
 
-    public class Unexposed {}
+    public void testCatchingDupes() throws IOException {
+        try {
+            new ExposedTypeProcessor(getClass().getClassLoader()
+                    .getResourceAsStream("org/python/expose/generate/TypeExposerTest$DupeMethodNames.class"));
+            fail("Shouldn't be able to create a type with identical names in the dict");
+        } catch(InvalidExposingException ite) {}
+    }
 
-    @ExposedType(name = "somethingcompletelydifferent")
-    public class Rename {}
+    @ExposedType
+    public static class DupeMethodNames {
+
+        @ExposedMethod
+        public void blah() {}
+
+        @ExposedMethod(names = "blah")
+        public void bleh() {}
+    }
 
     @ExposedType
     public class NonstaticNew {
@@ -55,17 +69,6 @@ public class TypeExposerTest extends InterpTestCase {
                                 String[] keywords) {
             return null;
         }
-    }
-
-    @ExposedType
-    public static class NoreturnNew {
-
-        @ExposedNew
-        public static void __new__(PyNewWrapper new_,
-                                   boolean init,
-                                   PyType subtype,
-                                   PyObject[] args,
-                                   String[] keywords) {}
     }
 
     @ExposedType

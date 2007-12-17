@@ -7,6 +7,8 @@ import org.python.core.PyBuiltinMethodNarrow;
 import org.python.expose.ExposedMethod;
 import org.python.expose.MethodType;
 
+import com.sun.jdi.InvalidTypeException;
+
 /**
  * Generates a class to call a given method with the {@link ExposedMethod}
  * annotation as a method on a builtin Python type.
@@ -36,12 +38,30 @@ public class MethodExposer extends Exposer {
               onType.getClassName() + "$" + methodName + "_exposer");
         this.onType = onType;
         this.methodName = methodName;
+        if((access & ACC_STATIC) != 0){
+            throwInvalid("@ExposedMethod can't be applied to static methods");
+        }
         this.params = Type.getArgumentTypes(desc);
+        if(isWide(params)){
+            if(defaults.length > 0) {
+                throwInvalid("Can't have defaults on a method that takes PyObject[], String[]");
+            }
+        }
         this.returnType = Type.getReturnType(desc);
         this.prefix = prefix;
         this.asNames = asNames;
+        for(String name : getNames()) {
+            if(name.equals("__new__")) {
+                throwInvalid("@ExposedNew must be used to create __new__, not @ExposedMethod");
+            }
+        }
         this.defaults = defaults;
         this.type = type;
+    }
+
+    private void throwInvalid(String msg) {
+        throw new InvalidExposingException(msg + "[method=" + onType.getClassName() + "."
+                + methodName + "]");
     }
 
     /**
@@ -71,9 +91,6 @@ public class MethodExposer extends Exposer {
         generateFullConstructor();
         generateBind();
         if(isWide(params)) {
-            if(defaults.length > 0) {
-                throw new IllegalStateException("Can't have defaults on a wide method");
-            }
             generateWideCall();
         } else {
             for(int i = 0; i < defaults.length + 1; i++) {
