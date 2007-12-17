@@ -18,6 +18,8 @@ from java.io import PrintWriter
 from java.lang.System import out
 stdout = PrintWriter(out)
 
+__debugging__ = False
+
 def reallyContains(dct, item):
     if item in dct:
         keys = list(dct.keys())
@@ -106,6 +108,7 @@ class ClassKeeper(object):
     asType = property(lambda self: Type.getType(
             "L%s;" % self.__name.replace('.','/')))
     def __init__(self, name):
+        print "CLASSNAME:", name
         self.__name = name
         self.__cw = asm.ClassWriter(asm.ClassWriter.COMPUTE_MAXS
                                     # Frames need to be computed for
@@ -113,12 +116,13 @@ class ClassKeeper(object):
                                     #+ asm.ClassWriter.COMPUTE_FRAMES
                                     )
         self.cv = self.__cw
-        ## add this line to get a printout of the generated java bytecode
-        #self.cv = asm.util.TraceClassVisitor(self.cv, stdout)
-        ## add this line to get a printout of the java bytecode with offsets
-        #self.cv = OffsetTracer(self.cv, stdout)
-        ## add this line to verify that the code generation is well behaved
-        #self.cv = asm.util.CheckClassAdapter(self.cv)
+        if __debugging__:
+            ## add this line to get a printout of the generated java bytecode
+            self.cv = asm.util.TraceClassVisitor(self.cv, stdout)
+            ## add this line to get a printout of the java bytecode with offsets
+            #self.cv = OffsetTracer(self.cv, stdout)
+            ## add this line to verify that the code generation is well behaved
+            #self.cv = asm.util.CheckClassAdapter(self.cv)
         self.cv.visit(Op.V1_4, Op.ACC_PUBLIC, name, None,
                       "org/python/core/PyFunctionTable",
                       stringArray("org/python/core/PyRunnable"))

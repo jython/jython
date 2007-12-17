@@ -25,6 +25,8 @@ except ImportError:
 def byteArray(string):
     return array(list(string),'c')
 
+__debugging__ = False
+
 # marshal types
 mappings = dict(
     TYPE_NULL		= ('0', 0),
@@ -351,7 +353,7 @@ class Unmarshaller:
     def load_code(self):
         lastVisitor = self.__visitor
         visitor= _visitor= self.__visitor= CodeVisitor(self.magic, lastVisitor)
-        #visitor = PythonDis(visitor, stdout, True)
+        if __debugging__: visitor = PythonDis(visitor, stdout, True)
         try:
             argcount = self.read_long()
             nlocals = self.read_long()

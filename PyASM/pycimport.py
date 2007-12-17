@@ -57,6 +57,7 @@ class __Importer(object):
         f = open(filename, 'rb')
         magic, mtime = __readPycHeader(f)
         code = Unmarshaller(f, magic=magic).load()
+        if __debugging__: print "Successfully loaded:", fullname
         return __makeModule( fullname, code, filename )
 
 class __MetaImporter(object):
