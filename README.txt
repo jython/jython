@@ -14,7 +14,7 @@ These have to be installed prior to building this branch of Jython.
 
  * ASM 3.0 - The new bytecode generation framework depends on the main ASM jar
    and the asm-commons jar from version 3 of the ASM project. It also depends
-   on the asm-tree jar and the asm-util jar for debugging.
+   on the asm-tree, asm-analysis, and the asm-util jar for debugging.
    These jars can be obtained from the ASM website: http://asm.objectweb.org/
    There is also one jar (asm-all) that contains all the various parts of ASM.
 

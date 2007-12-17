@@ -451,19 +451,3 @@ def dumps(x):
 def loads(s):
     f = StringIO(s)
     return load(f)
-
-def _makeModule(code):
-    # TODO
-    return code
-
-def _readPyc(filename):
-    f = open(filename, 'rb')
-    def read():
-        return ord(f.read(1))
-    magic = read() | (read()<<8)
-    if not ( f.read(1) == '\r' and f.read(1) == '\n' ):
-        raise TypeError("The file is not a valid pyc file.")
-    mtime = read() | (read()<<8) | (read()<<16) | (read()<<24)
-    # TODO: when this is used for loading, the mtime needs to be considered.
-    return _makeModule( Unmarshaller(f, magic=magic).load() )
-

@@ -1,45 +1,23 @@
 import opcode, re
-try:
-    from org.python.newcompiler.pyasm import BytecodeVisitor as Visitor,\
-        Operator, CodeFlags as Flags
-    from org.python.newcompiler.asm import OffsetTracer
-    from org.python.core.BytecodeLoader import makeCode
-    from org.objectweb import asm
-    from org.objectweb.asm import Type, Opcodes as Op
-    from org.objectweb.asm.commons import GeneratorAdapter, Method,\
-        TableSwitchGenerator
-    from org.objectweb.asm.tree import analysis
-    from org.python import core
-    from jarray import array
-    import java
-    from java.io import PrintWriter
-    from java.lang.System import out
-    stdout = PrintWriter(out)
-except Exception, err:
-    # print err
-    # mock code to be able to import the module from CPython, an easy way
-    # to compile it...
-    Visitor = object
-    class ArrantPrac(object):
-        def __getattr__(self,attr):
-            return self
-    Operator = Method = Type = java = core = ArrantPrac()
-    mirror = lambda *x: x
-    Type.getObjectType = mirror
-    Type.getType = mirror
-    Method.getMethod = mirror
-    TableSwitchGenerator = object
 
-    del ArrantPrac
+from org.python.newcompiler.pyasm import BytecodeVisitor as Visitor,\
+    Operator, CodeFlags as Flags
+from org.python.newcompiler.asm import OffsetTracer
+from org.python.core.BytecodeLoader import makeCode
+from org.objectweb import asm
+from org.objectweb.asm import Type, Opcodes as Op
+from org.objectweb.asm.commons import GeneratorAdapter, Method,\
+    TableSwitchGenerator
+from org.objectweb.asm.tree import analysis
+from org.python import core
 
-def printFlags(flags):
-    for id in dir(Flags):
-        flag = getattr(Flags,id)
-        if flag & flags == flag:
-            print id, hex(flag)
-            flags ^= flag
-    return flags
-    
+from jarray import array
+import java
+
+from java.io import PrintWriter
+from java.lang.System import out
+stdout = PrintWriter(out)
+
 def reallyContains(dct, item):
     if item in dct:
         keys = list(dct.keys())
@@ -1399,9 +1377,10 @@ class ASMVisitor(Visitor):
 
     def visitPrintItemTo(self):
         """object, object -- """
+        self.asm.swap()
         self.asm.invokeStatic(pyType, Method.getMethod(
                 "void printComma (%s)" % ", ".join(
-                    ["org.python.core.PyObject)"]*2)))
+                    ["org.python.core.PyObject"]*2)))
 
     def visitPrintNewline(self):
         """ -- """
@@ -1609,10 +1588,10 @@ class ASMVisitor(Visitor):
         """object -- """
         self.loadFrame()
         self.asm.swap()
-        self.push(self.__varnames.index(globalName))
+        self.push(globalName)
         self.asm.swap()
         self.asm.invokeVirtual(pyFrameType, Method.getMethod(
-                "void setglobal (int, org.python.core.PyObject)"))
+                "void setglobal (String, org.python.core.PyObject)"))
 
     def visitStoreName(self, name):
         """object -- """
@@ -1865,17 +1844,3 @@ class ASMVisitor(Visitor):
                      'String[]', 'String[]', 'int', 'int'])))
         init.putStatic(self.__class.asType, self.__code.getName(), pyCodeType)
         self.asm.endMethod()
-
-if __name__ == '__main__':
-    import os
-    import sys
-    args = list(sys.argv[1:])
-    if os.name == 'java':
-        from marshal import _readPyc as readPyc
-        args.append("pyasm.pyc")
-        print readPyc(args[0])
-        #print readPyc("pyasm.pyc")
-    else:
-        from parser import kompilera
-        args.append("pyasm.py")
-        kompilera(open(args[0]).read())
