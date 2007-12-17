@@ -7,8 +7,6 @@ import org.python.core.PyBuiltinMethodNarrow;
 import org.python.expose.ExposedMethod;
 import org.python.expose.MethodType;
 
-import com.sun.jdi.InvalidTypeException;
-
 /**
  * Generates a class to call a given method with the {@link ExposedMethod}
  * annotation as a method on a builtin Python type.
