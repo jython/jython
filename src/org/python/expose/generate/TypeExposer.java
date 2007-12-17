@@ -37,7 +37,7 @@ public class TypeExposer extends Exposer {
                        String name,
                        Collection<MethodExposer> methods,
                        Collection<DescriptorExposer> descriptors,
-                       NewExposer ne) {
+                       Exposer ne) {
         super(BaseTypeBuilder.class, makeGeneratedName(onType));
         this.baseType = baseType;
         this.onType = onType;
@@ -192,5 +192,5 @@ public class TypeExposer extends Exposer {
 
     private int numNames;
 
-    private NewExposer ne;
+    private Exposer ne;
 }

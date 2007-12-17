@@ -6,6 +6,7 @@ import java.util.List;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.python.expose.MethodType;
 
@@ -15,7 +16,7 @@ import org.python.expose.MethodType;
  * constructed with that annotation. Only one of the handleResult methods will
  * be called, if any.
  */
-public abstract class ExposedMethodFinder extends MethodAdapter implements PyTypes {
+public abstract class ExposedMethodFinder extends MethodAdapter implements PyTypes, Opcodes {
 
     public ExposedMethodFinder(String typeName,
                                Type onType,
@@ -43,7 +44,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
      * @param exposer -
      *            the newExposer built as a result of visiting ExposeNew
      */
-    public abstract void handleResult(NewExposer exposer);
+    public abstract void handleNewExposer(Exposer exposer);
 
     public abstract void exposeAsGetDescriptor(String descName);
 
@@ -54,14 +55,17 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
         if(desc.equals(EXPOSED_NEW.getDescriptor())) {
-            if(methVisitor != null) {
-                throw new IllegalArgumentException("Can only be one @ExposedMethod or @ExposedNew on a single method.");
+            if((access & ACC_STATIC) != 0) {
+                newExp = new NewExposer(onType, access, methodName, methodDesc, exceptions);
+            } else {
+                newExp = new OverridableNewExposer(onType,
+                                            Type.getType("L" + onType.getInternalName() + "Derived;"),
+                                            access,
+                                            methodName,
+                                            methodDesc,
+                                            exceptions);
             }
-            newExp = new NewExposer(onType, access, methodName, methodDesc, exceptions);
         } else if(desc.equals(EXPOSED_METHOD.getDescriptor())) {
-            if(newExp != null) {
-                throw new IllegalArgumentException("Can only be one @ExposedMethod or @ExposedNew on a single method.");
-            }
             methVisitor = new ExposedMethodVisitor();
             return methVisitor;
         } else if(desc.equals(EXPOSED_GET.getDescriptor())) {
@@ -161,13 +165,14 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
                                            methVisitor.names,
                                            methVisitor.defaults,
                                            methVisitor.type));
-        } else if(newExp != null) {
-            handleResult(newExp);
+        } 
+        if(newExp != null) {
+            handleNewExposer(newExp);
         }
         super.visitEnd();
     }
 
-    private NewExposer newExp;
+    private Exposer newExp;
 
     ExposedMethodVisitor methVisitor;
 

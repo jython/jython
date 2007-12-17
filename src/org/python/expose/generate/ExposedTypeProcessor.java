@@ -62,7 +62,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
      * @return The NewExposer for this type. Can be null if the type isn't
      *         instantiable.
      */
-    public NewExposer getNewExposer() {
+    public Exposer getNewExposer() {
         return newExposer;
     }
 
@@ -95,7 +95,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
     private Map<String, DescriptorExposer> descExposers = new HashMap<String, DescriptorExposer>();
 
-    private NewExposer newExposer;
+    private Exposer newExposer;
 
     private TypeExposer typeExposer;
 
@@ -246,7 +246,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     }
 
                     @Override
-                    public void handleResult(NewExposer exposer) {
+                    public void handleNewExposer(Exposer exposer) {
                         newExposer = exposer;
                     }
 

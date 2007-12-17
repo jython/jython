@@ -1016,9 +1016,10 @@ public class PyType extends PyObject implements Serializable {
             classToBuilder = new HashMap<Class, TypeBuilder>();
         }
         classToBuilder.put(forClass, builder);
-        if(builder.getTypeClass().equals(PyObject.class) || builder.getTypeClass().equals(PyType.class)) {
-            // PyObject's type is loaded before as part of creating its builder,
-            // so it needs to be bootstrapped
+        if(builder.getTypeClass().equals(PyObject.class)
+                || builder.getTypeClass().equals(PyType.class)) {
+            // PyObject and PyType are loaded as part of creating their
+            // builders, so they need to be bootstrapped
             PyType objType = fromClass(builder.getTypeClass());
             objType.dict = builder.getDict(objType);
         }

@@ -1,10 +1,14 @@
 package org.python.expose.generate;
 
+import java.io.PrintWriter;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.util.TraceClassVisitor;
 import org.python.core.BytecodeLoader;
 
 /**
@@ -37,6 +41,9 @@ public abstract class Exposer implements Opcodes, PyTypes {
     protected Class load(BytecodeLoader.Loader l) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         generate(cw);
+//        ClassVisitor cv = new CheckClassAdapter(cw);
+//        cv = new TraceClassVisitor(cv, new PrintWriter(System.out));
+//        generate(cv);
         return l.loadClassFromBytes(getClassName(), cw.toByteArray());
     }
 

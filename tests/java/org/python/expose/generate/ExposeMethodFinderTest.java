@@ -26,7 +26,7 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
             }
 
             @Override
-            public void handleResult(NewExposer exposer) {
+            public void handleNewExposer(Exposer exposer) {
                 resultantNewExp = exposer;
             }
 
@@ -169,7 +169,7 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
 
     private MethodExposer resultantMethExp;
 
-    private NewExposer resultantNewExp;
+    private Exposer resultantNewExp;
 
     private String deleteName, getName, setName;
 }

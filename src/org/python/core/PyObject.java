@@ -22,23 +22,8 @@ import org.python.expose.ExposedType;
 public class PyObject implements Serializable {
     
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
+    
     @ExposedNew
-    static final PyObject new_impl(PyNewWrapper new_,
-                                   boolean init,
-                                   PyType subtype,
-                                   PyObject[] args,
-                                   String[] keywords) {
-        PyObject newobj;
-        if(new_.for_type == subtype) {
-            newobj = new PyObject();
-            if(init)
-                newobj.object___init__(args, keywords);
-        } else {
-            newobj = new PyObjectDerived(subtype);
-        }
-        return newobj;
-    }
-
     @ExposedMethod
     final void object___init__(PyObject[] args, String[] keywords) {
     // xxx
