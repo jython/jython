@@ -468,7 +468,7 @@ public class imp {
                     PyObject ret = createFromPyClass(modName,
                                                      makeStream(compiledFile),
                                                      true,
-                                                     sourceFile.getAbsolutePath());
+                                                     compiledFile.getAbsolutePath());
                     if(ret != null) {
                         return ret;
                     }
