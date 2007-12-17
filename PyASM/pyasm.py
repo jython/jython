@@ -1095,11 +1095,12 @@ class ASMVisitor(Visitor):
     def visitForIteration(self, end):
         """iter -- iter value | """
         self.__blocks.append(ForBlock(self.asm))
+        #@self.scheduleCode(end)
         def code():
             block = self.__blocks.pop()
             if not isinstance(block, ForBlock):
-                TypeError("Illegal block state, expected ForBlock, not %s"
-                          % type(block))
+                raise TypeError("Illegal block state, expected ForBlock, not %s"
+                                % type(block))
             block.end()
         self.scheduleCode(end, code)
         body = self.label()
@@ -1545,6 +1546,14 @@ class ASMVisitor(Visitor):
     def visitSetupLoop(self, loopEnd):
         """ -- """
         block = LoopBlock(self.asm, self.label(loopEnd))
+        #@self.scheduleCode(loopEnd)
+        def code():
+            # check for optimized loop block (with constant test expr)
+            if block in self.__blocks:
+                top = self.__blocks.pop()
+                if not block is top:
+                    raise TypeError("Encountered badly terminated loop block")
+        self.scheduleCode(loopEnd, code)
         self.__blocks.append(block)
 
     def visitPopBlock(self):
