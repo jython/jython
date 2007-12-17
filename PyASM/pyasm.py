@@ -1551,7 +1551,7 @@ class ASMVisitor(Visitor):
             # check for optimized loop block (with constant test expr)
             if block in self.__blocks:
                 top = self.__blocks.pop()
-                if not block is top:
+                if block is not top:
                     raise TypeError("Encountered badly terminated loop block")
         self.scheduleCode(loopEnd, code)
         self.__blocks.append(block)
