@@ -21,7 +21,7 @@ public class NewExposer extends Exposer {
             throwInvalid("@ExposedNew methods must return PyObject");
         }
         if(exceptions != null && exceptions.length > 0) {
-            throwInvalid("@ExposedNew methods may not throw exceptions");
+            throwInvalid("@ExposedNew methods may not throw checked exceptions");
         }
     }
     
