@@ -1,4 +1,5 @@
 org/python/core/PyBaseString.class
+org/python/core/PyBuiltinFunction.class
 org/python/core/PyInteger.class
 org/python/core/PyNone.class
 org/python/core/PyObject.class

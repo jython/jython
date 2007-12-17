@@ -1,6 +1,8 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.expose.ExposeAsSuperclass;
+
 /**
  * A helper class for faster implementations of commonly called methods.
  * <p>
@@ -8,9 +10,7 @@ package org.python.core;
  * method with a switch on the index number.
  * 
  */
-public class PyBuiltinFunctionSet extends PyBuiltinFunction {
-
-    public static final Class exposed_as = PyBuiltinFunction.class;
+public class PyBuiltinFunctionSet extends PyBuiltinFunction implements ExposeAsSuperclass {
 
     // used as an index into a big switch statement in the various derived
     // class's __call__() methods.

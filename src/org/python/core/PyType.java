@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -786,7 +787,6 @@ public class PyType extends PyObject implements Serializable {
                                       Class base,
                                       boolean newstyle,
                                       Method setup,
-                                      String[] exposed_methods,
                                       TypeBuilder tb) {
 
         if(base == null) {
@@ -827,7 +827,7 @@ public class PyType extends PyObject implements Serializable {
         } else {
             dict = new PyStringMap();
             if(newstyle) {
-                fillInNewstyle(newtype, setup, exposed_methods, dict);
+                fillInNewstyle(newtype, setup, dict);
             } else {
                 fillInClassic(c, base, dict);
             }
@@ -987,13 +987,7 @@ public class PyType extends PyObject implements Serializable {
 
     private static void fillInNewstyle(PyType newtype,
                                        Method setup,
-                                       String[] exposed_methods,
                                        PyObject dict) {
-        for(int i = 0; i < exposed_methods.length; i++) {
-            String methname = exposed_methods[i];
-            dict.__setitem__(normalize_name(methname),
-                             new PyReflectedFunction(methname));
-        }
         if(setup != null) {
             try {
                 setup.invoke(null, new Object[] {dict, null});
@@ -1016,21 +1010,26 @@ public class PyType extends PyObject implements Serializable {
             classToBuilder = new HashMap<Class, TypeBuilder>();
         }
         classToBuilder.put(forClass, builder);
-        if(builder.getTypeClass().equals(PyObject.class)
-                || builder.getTypeClass().equals(PyType.class)) {
+        
+        if(class_to_type.containsKey(forClass)) {
             // PyObject and PyType are loaded as part of creating their
             // builders, so they need to be bootstrapped
             PyType objType = fromClass(builder.getTypeClass());
+            objType.name = builder.getName();
             objType.dict = builder.getDict(objType);
         }
     }
 
     private static PyType addFromClass(Class c) {
+        if(ExposeAsSuperclass.class.isAssignableFrom(c)) {
+            PyType exposedAs = fromClass(c.getSuperclass());
+            class_to_type.put(c, exposedAs);
+            return exposedAs;
+        }
         Method setup = null;
         boolean newstyle = Newstyle.class.isAssignableFrom(c);
         Class base = null;
         String name = null;
-        String[] exposed_methods = null;
         TypeBuilder tb = classToBuilder == null ? null : classToBuilder.get(c);
         if(tb != null) {
             name = tb.getName();
@@ -1049,28 +1048,13 @@ public class PyType extends PyObject implements Serializable {
             if(newstyle) { // newstyle
                 base = (Class)exposed_decl_get_object(c, "base");
                 name = (String)exposed_decl_get_object(c, "name");
-                if(base == null) {
-                    Class cur = c;
-                    while(cur != PyObject.class) {
-                        Class exposed_as = (Class)exposed_decl_get_object(cur, "as");
-                        if(exposed_as != null) {
-                            PyType exposed_as_type = fromClass(exposed_as);
-                            class_to_type.put(c, exposed_as_type);
-                            return exposed_as_type;
-                        }
-                        cur = cur.getSuperclass();
-                    }
-                }
-                exposed_methods = (String[])exposed_decl_get_object(c, "methods");
-                if(exposed_methods == null)
-                    exposed_methods = new String[0];
             }
         }
         PyType newtype = class_to_type.get(c);
         if (newtype == null) {
             newtype = c == PyType.class ? new PyType(true) : new PyType();
             class_to_type.put(c, newtype);
-            fillFromClass(newtype, name, c, base, newstyle, setup, exposed_methods, tb);
+            fillFromClass(newtype, name, c, base, newstyle, setup, tb);
         }
         return newtype;
     }
@@ -1089,11 +1073,6 @@ public class PyType extends PyObject implements Serializable {
      *
      *   Class exposed_base
      *   String exposed_name
-     *
-     *   Class exposed_as => instances are exposed as implementing
-     *    just this superclass
-     *
-     *   (String[] exposed_methods)
      *
      */
 
