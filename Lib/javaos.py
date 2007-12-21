@@ -58,6 +58,11 @@ O_TRUNC = 0x400
 # error if already exists
 O_EXCL = 0x800
 
+# seek variables
+SEEK_SET = 0
+SEEK_CUR = 1
+SEEK_END = 2
+
 class stat_result:
 
   _stat_members = (
