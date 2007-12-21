@@ -7,6 +7,7 @@ import org.python.core.PyList;
 import org.python.core.PyModule;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyInteger;
 
@@ -65,15 +66,19 @@ public class imp {
      * This needs to be consolidated with the code in (@see org.python.core.imp).
      *
      * @param name module name
-     * @param entry an iterable of paths
+     * @param entry a path String
      * @param findingPackage if looking for a package only try to locate __init__
      * @return null if no module found otherwise module information
      */
-    static ModuleInfo findFromSource(String name, PyObject entry, boolean findingPackage) {
+    static ModuleInfo findFromSource(String name, String entry, boolean findingPackage) {
         int nlen = name.length();
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
-        String directoryName = org.python.core.imp.defaultEmptyPathDirectory(entry.toString());
+        String directoryName = PySystemState.getPathLazy(entry);
+        // displayDirName is for identification purposes: when null it
+        // forces java.io.File to be a relative path (e.g. foo/bar.py
+        // instead of /tmp/foo/bar.py)
+        String displayDirName = entry.equals("") ? null : entry;
 
         // First check for packages
         File dir = findingPackage ? new File(directoryName) : new File(directoryName, name);
@@ -85,7 +90,8 @@ public class imp {
 
         if(!findingPackage) {
             if(pkg) {
-                return new ModuleInfo(Py.None, dir.getPath(), "", "", PKG_DIRECTORY);
+                return new ModuleInfo(Py.None, new File(displayDirName, name).getPath(),
+                                      "", "", PKG_DIRECTORY);
             } else {
                 Py.writeDebug("import", "trying source " + dir.getPath());
                 sourceName = name + ".py";
@@ -102,18 +108,21 @@ public class imp {
                 long classTime = compiledFile.lastModified();
                 if (classTime >= pyTime) {
                     return new ModuleInfo(newFile(compiledFile),
-                        compiledFile.getPath(), ".class", "rb", PY_COMPILED);
+                                          new File(displayDirName, compiledName).getPath(),
+                                          ".class", "rb", PY_COMPILED);
                 }
             }
             return new ModuleInfo(newFile(sourceFile),
-                    sourceFile.getPath(), ".py", "r", PY_SOURCE);
+                                  new File(displayDirName, sourceName).getPath(),
+                                  ".py", "r", PY_SOURCE);
         }
 
         // If no source, try loading precompiled
         Py.writeDebug("import", "trying " + compiledFile.getPath());
         if (compiledFile.isFile() && caseok(compiledFile, compiledName, nlen)) {
             return new ModuleInfo(newFile(compiledFile),
-                    compiledFile.getPath(), ".class", "rb", PY_COMPILED);
+                    new File(displayDirName, compiledName).getPath(),
+                                  ".class", "rb", PY_COMPILED);
         }
         return null;
     }
@@ -129,10 +138,12 @@ public class imp {
         if (o == Py.NoConversion) {
             throw Py.TypeError("must be a file-like object");
         }
-        mod = org.python.core.imp.createFromSource(modname.intern(),
-                                                   (InputStream)o,
-                                                   filename.toString());
-        PyObject modules = Py.getSystemState().modules;
+        PySystemState sys = Py.getSystemState();
+        String compiledFilename =
+                org.python.core.imp.makeCompiledFilename(sys.getPath(filename));
+        mod = org.python.core.imp.createFromSource(modname.intern(), (InputStream)o,
+                                                   filename, compiledFilename);
+        PyObject modules = sys.modules;
         modules.__setitem__(modname.intern(), mod);
         return mod;
     }
@@ -144,7 +155,7 @@ public class imp {
 
         PyObject iter = path.__iter__();
         for (PyObject p = null; (p = iter.__iternext__()) != null; ) {
-            ModuleInfo mi = findFromSource(name, p, false);
+            ModuleInfo mi = findFromSource(name, p.toString(), false);
             if(mi == null) {
                 continue;
             }
@@ -159,6 +170,7 @@ public class imp {
 
     public static PyObject load_module(String name, PyObject file, PyObject filename, PyTuple data) {
         PyObject mod = Py.None;
+        PySystemState sys = Py.getSystemState();
         int type = ((PyInteger)data.__getitem__(2).__int__()).getValue();
         while(mod == Py.None) {
             Object o = file.__tojava__(InputStream.class);
@@ -167,8 +179,13 @@ public class imp {
             }
             switch (type) {
                 case PY_SOURCE:
-                    mod = org.python.core.imp.createFromSource(
-                        name.intern(), (InputStream)o, filename.toString());
+                    String resolvedFilename = sys.getPath(filename.toString());
+                    String compiledName =
+                            org.python.core.imp.makeCompiledFilename(resolvedFilename);
+                    mod = org.python.core.imp.createFromSource(name.intern(),
+                                                               (InputStream)o,
+                                                               filename.toString(),
+                                                               compiledName);
                     break;
                 case PY_COMPILED:
                     mod = org.python.core.imp.loadFromCompiled(
@@ -179,7 +196,7 @@ public class imp {
                     m.__dict__.__setitem__("__path__",
                         new PyList(new PyObject[] { filename }));
                     m.__dict__.__setitem__("__file__", filename);
-                    ModuleInfo mi = findFromSource(name, filename, true);
+                    ModuleInfo mi = findFromSource(name, filename.toString(), true);
                     type = mi.type;
                     file = mi.file;
                     filename = new PyString(mi.filename);
@@ -188,7 +205,7 @@ public class imp {
                     throw Py.ImportError("No module named " + name);
             }
         }
-        PyObject modules = Py.getSystemState().modules;
+        PyObject modules = sys.modules;
         modules.__setitem__(name.intern(), mod);
         return mod;
     }

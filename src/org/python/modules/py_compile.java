@@ -3,8 +3,10 @@ package org.python.modules;
 
 import java.io.File;
 
+import org.python.core.Py;
 import org.python.core.PyList;
 import org.python.core.PyString;
+import org.python.core.PySystemState;
 
 public class py_compile {
     public static PyList __all__ = new PyList(new PyString[] { new PyString("compile") });
@@ -18,6 +20,12 @@ public class py_compile {
     }
 
     public static boolean compile(String filename, String cfile, String dfile) {
+        // Resolve relative path names. dfile is only used for error
+        // messages and should not be resolved
+        PySystemState sys = Py.getSystemState();
+        filename = sys.getPath(filename);
+        cfile = sys.getPath(cfile);
+        
         File file = new File(filename);
         String name = file.getName();
         int dot = name.lastIndexOf('.');

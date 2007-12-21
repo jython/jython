@@ -14,6 +14,7 @@ module as os.path.
 # sameopenfile -- Java doesn't have fstat nor file descriptors?
 # samestat -- How?
 
+import sys
 from java.io import File
 import java.io.IOException
 from java.lang import System
@@ -88,7 +89,7 @@ def exists(path):
 
     """
     path = _tostr(path, "exists")
-    return File(path).exists()
+    return File(sys.getPath(path)).exists()
 
 def isabs(path):
     """Test whether a path is absolute"""
@@ -98,12 +99,12 @@ def isabs(path):
 def isfile(path):
     """Test whether a path is a regular file"""
     path = _tostr(path, "isfile")
-    return File(path).isFile()
+    return File(sys.getPath(path)).isFile()
 
 def isdir(path):
     """Test whether a path is a directory"""
     path = _tostr(path, "isdir")
-    return File(path).isDirectory()
+    return File(sys.getPath(path)).isDirectory()
 
 def join(path, *args):
     """Join two or more pathname components, inserting os.sep as needed"""
@@ -242,7 +243,7 @@ def abspath(path):
 def _abspath(path):
     # Must use normpath separately because getAbsolutePath doesn't normalize
     # and getCanonicalPath would eliminate symlinks.
-    return normpath(File(path).getAbsolutePath())
+    return normpath(File(sys.getPath(path)).getAbsolutePath())
 
 def realpath(path):
     """Return an absolute path normalized and symbolic links eliminated"""
@@ -251,13 +252,13 @@ def realpath(path):
     
 def _realpath(path):
     try:
-        return File(path).getCanonicalPath()
+        return File(sys.getPath(path)).getCanonicalPath()
     except java.io.IOException:
         return _abspath(path)
 
 def getsize(path):
     path = _tostr(path, "getsize")
-    f = File(path)
+    f = File(sys.getPath(path))
     size = f.length()
     # Sadly, if the returned length is zero, we don't really know if the file
     # is zero sized or does not exist.
@@ -267,7 +268,7 @@ def getsize(path):
 
 def getmtime(path):
     path = _tostr(path, "getmtime")
-    f = File(path)
+    f = File(sys.getPath(path))
     if not f.exists():
         raise OSError(0, 'No such file or directory', path)
     return f.lastModified() / 1000.0
@@ -276,7 +277,7 @@ def getatime(path):
     # We can't detect access time so we return modification time. This
     # matches the behaviour in os.stat().
     path = _tostr(path, "getatime")
-    f = File(path)
+    f = File(sys.getPath(path))
     if not f.exists():
         raise OSError(0, 'No such file or directory', path)
     return f.lastModified() / 1000.0

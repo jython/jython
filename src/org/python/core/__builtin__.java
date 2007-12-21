@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 
+import org.python.core.util.RelativeFile;
 import org.python.modules.sets.PyImmutableSet;
 import org.python.modules.sets.PySet;
 
@@ -524,7 +525,7 @@ public class __builtin__  {
 	public static void execfile_flags(String name, PyObject globals, PyObject locals, CompilerFlags cflags) {
 		java.io.FileInputStream file;
 		try {
-			file = new java.io.FileInputStream(name);
+			file = new java.io.FileInputStream(new RelativeFile(name));
 		} catch (java.io.FileNotFoundException e) {
 			throw Py.IOError(e);
 		}

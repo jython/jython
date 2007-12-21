@@ -13,6 +13,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 
 import org.python.core.Py;
+import org.python.core.util.RelativeFile;
 import org.python.modules.errno;
 
 /**
@@ -47,11 +48,12 @@ public class FileIO extends RawIOBase {
     public FileIO(String name, String mode) {
         parseMode(mode);
 
+        File fullPath = new RelativeFile(name);
         String rafMode = "r" + (writable ? "w" : "");
         try {
-            fileChannel = new RandomAccessFile(name, rafMode).getChannel();
+            fileChannel = new RandomAccessFile(fullPath, rafMode).getChannel();
         } catch (FileNotFoundException fnfe) {
-            if (new File(name).isDirectory()) {
+            if (fullPath.isDirectory()) {
                 throw Py.IOError(errno.EISDIR, "Is a directory");
             }
             throw Py.IOError(errno.ENOENT, "No such file or directory: '" + name + "'");

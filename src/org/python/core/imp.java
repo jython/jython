@@ -125,7 +125,7 @@ public class imp {
         return compileSource(name, makeStream(file), sourceFilename);
     }
 
-    private static String makeCompiledFilename(String filename) {
+    public static String makeCompiledFilename(String filename) {
         return filename.substring(0, filename.length() - 3)
                 + "$py.class";
     }
@@ -208,7 +208,7 @@ public class imp {
         return createFromSource(name, fp, filename, null);
     }
     
-    static PyObject createFromSource(String name, InputStream fp,
+    public static PyObject createFromSource(String name, InputStream fp,
             String filename, String outFilename) {
         byte[] bytes = compileSource(name, fp, filename);
         outFilename = cacheCompiledSource(filename, outFilename, bytes);
@@ -303,7 +303,7 @@ public class imp {
         return importer;
     }
 
-    static PyObject replacePathItem(PyObject path) {
+    static PyObject replacePathItem(PySystemState sys, PyObject path) {
         if (path instanceof SyspathArchive) {
             // already an archive
             return null;
@@ -312,7 +312,7 @@ public class imp {
         try {
             // this has the side affect of adding the jar to the PackageManager
             // during the initialization of the SyspathArchive
-            return new SyspathArchive(path.toString());
+            return new SyspathArchive(sys.getPath(path.toString()));
         } catch (Exception e) {
             return null;
         }
@@ -331,7 +331,7 @@ public class imp {
         PyList ppath = path == null ? sys.path : path;
         for (int i = 0; i < ppath.__len__(); i++) {
             PyObject p = ppath.__getitem__(i);
-            PyObject q = replacePathItem(p);
+            PyObject q = replacePathItem(sys, p);
             if (q == null) {
                 continue;
             }
@@ -368,7 +368,7 @@ public class imp {
                     return loadFromLoader(loader, moduleName);
                 }
             }
-            ret = loadFromSource(name, moduleName, p);
+            ret = loadFromSource(sys, name, moduleName, p.__str__().toString());
             if (ret != null) {
                 return ret;
             }
@@ -413,28 +413,17 @@ public class imp {
         return createFromPyClass(name, stream, false, filename);
     }
 
-    /**
-     * If <code>directoryName</code> is empty, return a correct directory name for a path.
-     * If  <code>directoryName</code> is not an empty string, this method returns <code>directoryName</code> unchanged.
-     */
-    public static String defaultEmptyPathDirectory(String directoryName) {
-        // The empty string translates into the current working
-        // directory, which is usually provided on the system property
-        // "user.dir". Don't rely on File's constructor to provide
-        // this correctly.
-        if (directoryName.length() == 0) {
-            directoryName = System.getProperty("user.dir");
-        }
-        return directoryName;
-    }
-    
-    static PyObject loadFromSource(String name, String modName, PyObject entry) {
+    static PyObject loadFromSource(PySystemState sys, String name, String modName, String entry) {
         // System.err.println("load-from-source: "+name+" "+modName+" "+entry);
 
         int nlen = name.length();
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
-        String directoryName = defaultEmptyPathDirectory(entry.toString());
+        String directoryName = sys.getPath(entry);
+        // displayDirName is for identification purposes (e.g.
+        // __file__): when null it forces java.io.File to be a
+        // relative path (e.g. foo/bar.py instead of /tmp/foo/bar.py)
+        String displayDirName = entry.equals("") ? null : entry.toString();
 
         // First check for packages
         File dir = new File(directoryName, name);
@@ -451,7 +440,7 @@ public class imp {
             compiledFile = new File(directoryName, compiledName);
         } else {
             PyModule m = addModule(modName);
-            PyObject filename = new PyString(dir.getPath());
+            PyObject filename = new PyString(new File(displayDirName, name).getPath());
             m.__dict__.__setitem__("__path__", new PyList(
                     new PyObject[] { filename }));
             m.__dict__.__setitem__("__file__", filename);
@@ -465,28 +454,30 @@ public class imp {
                 long pyTime = sourceFile.lastModified();
                 long classTime = compiledFile.lastModified();
                 if(classTime >= pyTime) {
-                    PyObject ret = createFromPyClass(modName,
-                                                     makeStream(compiledFile),
-                                                     true,
-                                                     sourceFile.getAbsolutePath());
+                    String filename = new File(displayDirName, sourceName).getPath();
+                    PyObject ret = createFromPyClass(modName, makeStream(compiledFile),
+                                                     true, filename);
                     if(ret != null) {
                         return ret;
                     }
                 }
             }
-            return createFromSource(modName,
-                                    makeStream(sourceFile),
-                                    sourceFile.getAbsolutePath());
+            String filename;
+            if (pkg) {
+                filename = new File(new File(displayDirName, name), sourceName).getPath();
+            } else {
+                filename = new File(displayDirName, sourceName).getPath();
+            }
+            return createFromSource(modName, makeStream(sourceFile), filename,
+                                    compiledFile.getPath());
         }
         // If no source, try loading precompiled
         Py.writeDebug(IMPORT_LOG, "trying precompiled with no source "
                 + compiledFile.getPath());
         if(compiledFile.isFile()
                 && caseok(compiledFile, compiledName, compiledName.length())) {
-            return createFromPyClass(modName,
-                                     makeStream(compiledFile),
-                                     true,
-                                     compiledFile.getAbsolutePath());
+            String filename = new File(displayDirName, compiledName).getPath();
+            return createFromPyClass(modName, makeStream(compiledFile), true, filename);
         }
         return null;
     }

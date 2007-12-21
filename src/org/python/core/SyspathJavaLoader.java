@@ -12,13 +12,16 @@ import java.io.InputStream;
 import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
 
+import org.python.core.util.RelativeFile;
+
 public class SyspathJavaLoader extends ClassLoader {
 
     private static final char SLASH_CHAR = '/';
     
     public InputStream getResourceAsStream(String res) {
         Py.writeDebug("resource", "trying resource: " + res);
-        ClassLoader classLoader = Py.getSystemState().getClassLoader();
+        PySystemState sys = Py.getSystemState();
+        ClassLoader classLoader = sys.getClassLoader();
         if (classLoader != null) {
             return classLoader.getResourceAsStream(res);
         }
@@ -45,7 +48,7 @@ public class SyspathJavaLoader extends ClassLoader {
             entryRes = entryRes.replace(File.separatorChar, SLASH_CHAR);
         }
         
-        PyList path = Py.getSystemState().path;
+        PyList path = sys.path;
         for (int i = 0; i < path.__len__(); i++) {
             PyObject entry = path.__getitem__(i);
             if (entry instanceof SyspathArchive) {
@@ -60,10 +63,7 @@ public class SyspathJavaLoader extends ClassLoader {
                 }
                 continue;
             }
-            String dir = entry.__str__().toString();
-            if (dir.length() == 0) {
-                dir = null;
-            }
+            String dir = sys.getPath(entry.__str__().toString());
             try {
                 return new BufferedInputStream(new FileInputStream(new File(
                         dir, res)));
@@ -80,7 +80,8 @@ public class SyspathJavaLoader extends ClassLoader {
             throws ClassNotFoundException {
         // First, if the Python runtime system has a default class loader,
         // defer to it.
-        ClassLoader classLoader = Py.getSystemState().getClassLoader();
+        PySystemState sys = Py.getSystemState();
+        ClassLoader classLoader = sys.getClassLoader();
         if (classLoader != null) {
             return classLoader.loadClass(name);
         }
@@ -95,7 +96,7 @@ public class SyspathJavaLoader extends ClassLoader {
             return c;
         }
         
-        PyList path = Py.getSystemState().path;
+        PyList path = sys.path;
         for(int i = 0; i < path.__len__(); i++) {
             InputStream fis = null;
             File file = null;
@@ -163,10 +164,7 @@ public class SyspathJavaLoader extends ClassLoader {
             accum += token;
             first = false;
         }
-        if (dir.length() == 0) {
-            dir = null;
-        }
-        return new File(dir, accum + ".class");
+        return new RelativeFile(dir, accum + ".class");
     }
 
     private Class loadClassFromBytes(String name, byte[] data) {

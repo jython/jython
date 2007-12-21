@@ -36,6 +36,9 @@ from java.io import File
 from org.python.core.io import FileDescriptors
 from UserDict import UserDict
 
+import sys
+sys.modules['os.path'] = _path = path
+
 # open for reading only
 O_RDONLY = 0x0
 # open for writing only
@@ -132,15 +135,18 @@ def getcwd():
 
     Return a string representing the current working directory.
     """
-    foo = File(File("foo").getAbsolutePath())
-    return foo.getParent()
+    return sys.getCurrentWorkingDir()
 
 def chdir(path):
     """chdir(path)
 
     Change the current working directory to the specified path.
     """
-    raise OSError(0, 'chdir not supported in Java', path)
+    if not _path.exists(path):
+        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+    if not _path.isdir(path):
+        raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
+    sys.setCurrentWorkingDir(path)
 
 def listdir(path):
     """listdir(path) -> list_of_strings
@@ -152,7 +158,7 @@ def listdir(path):
     The list is in arbitrary order.  It does not include the special
     entries '.' and '..' even if they are present in the directory.
     """
-    l = File(path).list()
+    l = File(sys.getPath(path)).list()
     if l is None:
         raise OSError(0, 'No such directory', path)
     return list(l)
@@ -164,7 +170,7 @@ def mkdir(path, mode='ignored'):
 
     The optional parameter is currently ignored.
     """
-    if not File(path).mkdir():
+    if not File(sys.getPath(path)).mkdir():
         raise OSError(0, "couldn't make directory", path)
 
 def makedirs(path, mode='ignored'):
@@ -176,7 +182,7 @@ def makedirs(path, mode='ignored'):
     just the rightmost) will be created if it does not exist.
     The optional parameter is currently ignored.
     """
-    if not File(path).mkdirs():
+    if not File(sys.getPath(path)).mkdirs():
         raise OSError(0, "couldn't make directories", path)
 
 def remove(path):
@@ -184,7 +190,7 @@ def remove(path):
 
     Remove a file (same as unlink(path)).
     """
-    if not File(path).delete():
+    if not File(sys.getPath(path)).delete():
         raise OSError(0, "couldn't delete file", path)
 
 unlink = remove
@@ -194,7 +200,7 @@ def rename(path, newpath):
 
     Rename a file or directory.
     """
-    if not File(path).renameTo(File(newpath)):
+    if not File(sys.getPath(path)).renameTo(File(sys.getPath(newpath))):
         raise OSError(0, "couldn't rename file", path)
 
 #XXX: copied from CPython 2.5.1
@@ -228,7 +234,7 @@ def rmdir(path):
     """rmdir(path)
 
     Remove a directory."""
-    if not File(path).delete():
+    if not File(sys.getPath(path)).delete():
         raise OSError(0, "couldn't delete directory", path)
 
 #XXX: copied from CPython 2.5.1
@@ -264,7 +270,7 @@ def stat(path):
     The Java stat implementation only returns a small subset of
     the standard fields: size, modification time and change time.
     """
-    f = File(path)
+    f = File(sys.getPath(path))
     size = f.length()
     # Sadly, if the returned length is zero, we don't really know if the file
     # is zero sized or does not exist.
@@ -297,7 +303,7 @@ def utime(path, times):
     else:
         mtime = time.time()
     # Only the modification time is changed
-    File(path).setLastModified(long(mtime * 1000.0))
+    File(sys.getPath(path)).setLastModified(long(mtime * 1000.0))
 
 def close(fd):
     """close(fd)
@@ -376,7 +382,7 @@ def open(filename, flag, mode=0777):
 
     if exclusive and creating:
         try:
-            if not File(filename).createNewFile():
+            if not File(sys.getPath(filename)).createNewFile():
                 raise OSError(errno.EEXIST, errno.strerror(errno.EEXIST),
                               filename)
         except java.io.IOException, ioe:
@@ -390,7 +396,7 @@ def open(filename, flag, mode=0777):
     if sync and (writing or updating):
         from java.io import FileNotFoundException, RandomAccessFile
         try:
-            fchannel = RandomAccessFile(filename, 'rws').getChannel()
+            fchannel = RandomAccessFile(sys.getPath(filename), 'rws').getChannel()
         except FileNotFoundException, fnfe:
             if path.isdir(filename):
                 raise OSError(errno.EISDIR, errno.strerror(errno.EISDIR))
