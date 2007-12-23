@@ -413,7 +413,7 @@ class ExecfileTracebackTestCase(BaseChdirTestCase):
         except NotImplementedError:
             tb = sys.exc_info()[2]
             self.assertEqual(tb.tb_next.tb_frame.f_code.co_filename,
-                              self.basename1)
+                             self.basename1)
 
 
 class ListdirTestCase(BaseChdirTestCase):
@@ -639,7 +639,7 @@ def test_main():
              FilesTestCase]
     if sys.platform.startswith('java'):
         tests.extend((ImportJavaClassTestCase,
-                     ImportJarTestCase))
+                      ImportJarTestCase))
     test_support.run_unittest(*tests)
 
 
