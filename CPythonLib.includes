@@ -105,6 +105,7 @@ sndhdr.py
 SocketServer.py
 sre*.py
 stat.py
+string.py
 StringIO.py
 symbol.py
 this.py
