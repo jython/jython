@@ -1,5 +1,6 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
+import java.util.*;
 
 /**
  * A builtin python dictionary.
@@ -577,13 +578,13 @@ public class PyDictionary extends PyObject {
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
-    protected java.util.Map table;
+    private final Map table;
 
     /**
      * Create an empty dictionary.
      */
     public PyDictionary() {
-        this(java.util.Collections.synchronizedMap(new java.util.HashMap()));
+        this(Collections.synchronizedMap(new HashMap()));
     }
 
     /**
@@ -592,7 +593,7 @@ public class PyDictionary extends PyObject {
      */
     public PyDictionary(PyType subtype) {
         super(subtype);
-        table = java.util.Collections.synchronizedMap(new java.util.HashMap());
+        table = Collections.synchronizedMap(new HashMap());
     }
 
     /**
@@ -600,8 +601,8 @@ public class PyDictionary extends PyObject {
      * @param t  the hashtable used. The supplied hashtable is used as
      *           is and must only contain PyObject key:value pairs.
      */
-    public PyDictionary(java.util.Map t) {
-        table = java.util.Collections.synchronizedMap(new java.util.HashMap(t));
+    public PyDictionary(Map t) {
+        table = Collections.synchronizedMap(new HashMap(t));
     }
 
     /**
@@ -756,8 +757,8 @@ public class PyDictionary extends PyObject {
 
         StringBuffer buf = new StringBuffer("{");
         synchronized(table) {
-            for (java.util.Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
-                java.util.Map.Entry entry = (java.util.Map.Entry)it.next();
+            for (Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry entry = (Map.Entry)it.next();
                 buf.append(((PyObject)entry.getKey()).__repr__().toString());
                 buf.append(": ");
                 buf.append(((PyObject)entry.getValue()).__repr__().toString());
@@ -1047,12 +1048,13 @@ public class PyDictionary extends PyObject {
 
     final PyObject dict_popitem() {
         synchronized(table) {
-            java.util.Iterator it = table.entrySet().iterator();
+            Iterator it = table.entrySet().iterator();
             if (!it.hasNext())
                 throw Py.KeyError("popitem(): dictionary is empty");
-            java.util.Map.Entry entry = (java.util.Map.Entry)it.next();
+            Map.Entry entry = (Map.Entry)it.next();
             it.remove();
-            return new PyTuple(new PyObject[] { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
+            return new PyTuple(new PyObject[] 
+            { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
         }
     }
 
@@ -1065,15 +1067,16 @@ public class PyDictionary extends PyObject {
     }
 
     final PyList dict_items() {
-        int n = table.size();
-        java.util.Vector l = new java.util.Vector(n);
+        List lst = null;
         synchronized(table) {
-            for (java.util.Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
-                java.util.Map.Entry entry = (java.util.Map.Entry)it.next();
-                l.addElement(new PyTuple(new PyObject[] { (PyObject)entry.getKey(), (PyObject)entry.getValue() }));
+            lst = new ArrayList(table.size());
+            for (Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry entry = (Map.Entry)it.next();
+                lst.add(new PyTuple(new PyObject[] 
+                { (PyObject)entry.getKey(), (PyObject)entry.getValue() }));
             }
         }
-        return new PyList(l);
+        return new PyList(lst);
     }
 
     /**
@@ -1084,7 +1087,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyList dict_keys() {
-        return new PyList(new java.util.Vector(table.keySet()));
+        return new PyList(new ArrayList(table.keySet()));
     }
 
     /**
@@ -1095,7 +1098,7 @@ public class PyDictionary extends PyObject {
     }
 
     final PyList dict_values() {
-        return new PyList(new java.util.Vector(table.values()));
+        return new PyList(new ArrayList(table.values()));
     }
 
     /**
@@ -1145,8 +1148,8 @@ public class PyDictionary extends PyObject {
 
     // just a lightweight wrapper for now...
     class PDCollectionIter extends PyIterator {
-        private java.util.Iterator iterator;
-        public PDCollectionIter(java.util.Collection c) {
+        private final Iterator iterator;
+        public PDCollectionIter(Collection c) {
             this.iterator = c.iterator();
         }
 
@@ -1158,16 +1161,17 @@ public class PyDictionary extends PyObject {
     }
 
     class PDEntriesIter extends PyIterator {
-        private java.util.Iterator iterator;
-        public PDEntriesIter(java.util.Set s) {
+        private Iterator iterator;
+        public PDEntriesIter(Set s) {
             this.iterator = s.iterator();
         }
         
         public PyObject __iternext__() {
         if (!iterator.hasNext())
             return null;
-        java.util.Map.Entry entry =  (java.util.Map.Entry)iterator.next();
-        return new PyTuple(new PyObject[] { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
+        Map.Entry entry =  (Map.Entry)iterator.next();
+        return new PyTuple(new PyObject[] 
+        { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
         }
     }
 
