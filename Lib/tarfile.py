@@ -30,6 +30,10 @@
 """Read from and write to tar format archives.
 """
 
+# From CPython 2.5.1 with @classmethod decorators replaced and
+# TarFile.gzopen changed to not assume CPython reference counting GC
+# (make GzipFile close the underlying file)
+
 __version__ = "$Revision: 53162 $"
 # $Source$
 
@@ -861,7 +865,7 @@ class TarInfo(object):
     def __repr__(self):
         return "<%s %r at %#x>" % (self.__class__.__name__,self.name,id(self))
 
-    @classmethod
+    #@classmethod
     def frombuf(cls, buf):
         """Construct a TarInfo object from a 512 byte string buffer.
         """
@@ -893,6 +897,7 @@ class TarInfo(object):
         if tarinfo.chksum not in calc_chksums(buf):
             raise ValueError("invalid header")
         return tarinfo
+    frombuf = classmethod(frombuf)
 
     def tobuf(self, posix=False):
         """Return a tar header as a string of 512 byte blocks.
@@ -1102,7 +1107,7 @@ class TarFile(object):
     # the super-constructor. A sub-constructor is registered and made available
     # by adding it to the mapping in OPEN_METH.
 
-    @classmethod
+    #@classmethod
     def open(cls, name=None, mode="r", fileobj=None, bufsize=20*512):
         """Open a tar archive for reading, writing or appending. Return
            an appropriate TarFile class.
@@ -1173,16 +1178,18 @@ class TarFile(object):
             return cls.taropen(name, mode, fileobj)
 
         raise ValueError("undiscernible mode")
+    open = classmethod(open)
 
-    @classmethod
+    #@classmethod
     def taropen(cls, name, mode="r", fileobj=None):
         """Open uncompressed tar archive name for reading or writing.
         """
         if len(mode) > 1 or mode not in "raw":
             raise ValueError("mode must be 'r', 'a' or 'w'")
         return cls(name, mode, fileobj)
+    taropen = classmethod(taropen)
 
-    @classmethod
+    #@classmethod
     def gzopen(cls, name, mode="r", fileobj=None, compresslevel=9):
         """Open gzip compressed tar archive name for reading or writing.
            Appending is not allowed.
@@ -1197,17 +1204,19 @@ class TarFile(object):
             raise CompressionError("gzip module is not available")
 
         if fileobj is None:
-            fileobj = file(name, mode + "b")
+            fileobj = gzip.GzipFile(name, mode, compresslevel)
+        else:
+            fileobj = gzip.GzipFile(name, mode, compresslevel, fileobj)
 
         try:
-            t = cls.taropen(name, mode,
-                gzip.GzipFile(name, mode, compresslevel, fileobj))
+            t = cls.taropen(name, mode, fileobj)
         except IOError:
             raise ReadError("not a gzip file")
         t._extfileobj = False
         return t
+    gzopen = classmethod(gzopen)
 
-    @classmethod
+    #@classmethod
     def bz2open(cls, name, mode="r", fileobj=None, compresslevel=9):
         """Open bzip2 compressed tar archive name for reading or writing.
            Appending is not allowed.
@@ -1231,6 +1240,7 @@ class TarFile(object):
             raise ReadError("not a bzip2 file")
         t._extfileobj = False
         return t
+    bz2open = classmethod(bz2open)
 
     # All *open() methods are registered here.
     OPEN_METH = {
