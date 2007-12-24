@@ -1561,7 +1561,7 @@ public class PyString extends PyBaseString
             throw Py.TypeError("str or unicode required for replace");
         }
         if(string.length() == 0) {
-            return new PyString(string);
+            return createInstance(string);
         }
         int iMaxsplit;
         if(maxsplit == null) {
@@ -1601,10 +1601,10 @@ public class PyString extends PyBaseString
             }
             buf.append(((PyString)obj).string);
         }
-        if(needsUnicode || this instanceof PyUnicode){
+        if(needsUnicode){
             return new PyUnicode(buf.toString());
         }
-        return new PyString(buf.toString());
+        return createInstance(buf.toString());
     }
 
 

@@ -163,38 +163,38 @@ public class PyUnicode extends PyString {
     }
 
     @ExposedMethod
-    final String unicode_lower() {
-        return str_lower();
+    final PyObject unicode_lower() {
+        return new PyUnicode(str_lower());
     }
 
     @ExposedMethod
-    final String unicode_upper() {
-        return str_upper();
+    final PyObject unicode_upper() {
+        return new PyUnicode(str_upper());
     }
 
     @ExposedMethod
-    final String unicode_title() {
-        return str_title();
+    final PyObject unicode_title() {
+        return new PyUnicode(str_title());
     }
 
     @ExposedMethod
-    final String unicode_swapcase() {
-        return str_swapcase();
+    final PyObject unicode_swapcase() {
+        return new PyUnicode(str_swapcase());
     }
 
     @ExposedMethod(defaults="null")
-    final String unicode_strip(String sep) {
-        return str_strip(sep);
+    final PyObject unicode_strip(String sep) {
+        return new PyUnicode(str_strip(sep));
     }
     
     @ExposedMethod(defaults="null")
-    final String unicode_lstrip(String sep) {
-        return str_lstrip(sep);
+    final PyObject unicode_lstrip(String sep) {
+        return new PyUnicode(str_lstrip(sep));
     }
 
     @ExposedMethod(defaults="null")
-    final String unicode_rstrip(String sep) {
-        return str_rstrip(sep);
+    final PyObject unicode_rstrip(String sep) {
+        return new PyUnicode(str_rstrip(sep));
     }
 
 
@@ -238,33 +238,33 @@ public class PyUnicode extends PyString {
     }
 
     @ExposedMethod
-    final String unicode_ljust(int width) {
-        return str_ljust(width);
+    final PyObject unicode_ljust(int width) {
+        return new PyUnicode(str_ljust(width));
     }
 
     @ExposedMethod
-    final String unicode_rjust(int width) {
-        return str_rjust(width);
+    final PyObject unicode_rjust(int width) {
+        return new PyUnicode(str_rjust(width));
     }
 
     @ExposedMethod
-    final String unicode_center(int width) {
-        return str_center(width);
+    final PyObject unicode_center(int width) {
+        return new PyUnicode(str_center(width));
     }
 
     @ExposedMethod
-    final String unicode_zfill(int width) {
-        return str_zfill(width);
+    final PyObject unicode_zfill(int width) {
+        return new PyUnicode(str_zfill(width));
     }
 
     @ExposedMethod(defaults="8")
-    final String unicode_expandtabs(int tabsize) {
-        return str_expandtabs(tabsize);
+    final PyObject unicode_expandtabs(int tabsize) {
+        return new PyUnicode(str_expandtabs(tabsize));
     }
 
     @ExposedMethod
-    final String unicode_capitalize() {
-        return str_capitalize();
+    final PyObject unicode_capitalize() {
+        return new PyUnicode(str_capitalize());
     }
 
     @ExposedMethod(defaults = "null")
@@ -288,8 +288,9 @@ public class PyUnicode extends PyString {
     }
 
     @ExposedMethod
-    final String unicode_translate(PyObject table) {
-        return _codecs.charmap_decode(string, "ignore", table, true).__getitem__(0).toString();
+    final PyObject unicode_translate(PyObject table) {
+        String trans = _codecs.charmap_decode(string, "ignore", table, true).__getitem__(0).toString();
+        return new PyUnicode(trans);
     }
     
     @ExposedMethod
