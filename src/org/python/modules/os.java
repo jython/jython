@@ -12,7 +12,7 @@ public class os implements ClassDictInit {
 
         // Fake from javaos import *
 
-        PyTuple all = new PyTuple(new PyString[] { Py.newString('*') });
+        PyTuple all = new PyTuple(Py.newString('*'));
         PyObject module = __builtin__.__import__("javaos", null, null, all);
 
         PyObject names = module.__dir__();

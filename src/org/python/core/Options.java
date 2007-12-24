@@ -71,6 +71,10 @@ public class Options {
      */
     public static boolean Qnew = false;
 
+    /** Force stdin, stdout and stderr to be unbuffered, and opened in
+     * binary mode */
+    public static boolean unbuffered = false;
+
     /**
      * Enable division warning. The value maps to the registry values of
      * <ul>

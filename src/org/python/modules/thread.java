@@ -35,6 +35,7 @@ public class thread implements ClassDictInit
 
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("LockType", PyType.fromClass(PyLock.class));
+        dict.__setitem__("_local", PyType.fromClass(PyLocal.class));   
     }
 
     public static PyObject error = new PyString("thread.error");

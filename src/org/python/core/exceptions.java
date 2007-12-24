@@ -404,15 +404,15 @@ public class exceptions implements ClassDictInit {
         PyObject self = ap.getPyObject(0);
 
         if (self.__getattr__("filename") != Py.None) {
-            return Py.newString("[Errno %s] %s: %s").__mod__(
-                    new PyTuple(new PyObject[] { self.__getattr__("errno"),
+            return Py.newString("[Errno %s] %s: %r").__mod__(
+                    new PyTuple( self.__getattr__("errno"),
                             self.__getattr__("strerror"),
-                            self.__getattr__("filename") })).__str__();
+                            self.__getattr__("filename") )).__str__();
         } else if (self.__getattr__("errno").__nonzero__()
                 && self.__getattr__("strerror").__nonzero__()) {
             return Py.newString("[Errno %s] %s").__mod__(
-                    new PyTuple(new PyObject[] { self.__getattr__("errno"),
-                            self.__getattr__("strerror") })).__str__();
+                    new PyTuple( self.__getattr__("errno"),
+                            self.__getattr__("strerror") )).__str__();
         } else {
             return Exception__str__(arg, kws);
         }
@@ -489,17 +489,17 @@ public class exceptions implements ClassDictInit {
             PyInteger badByte = new PyInteger((self.__getattr__("object")
                     .toString().charAt(start)) & 0xff);
             return Py.newString("'%.400s' codec can't decode byte 0x%02x in position %d: %.400s")
-                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
-                                                         badByte,
-                                                         self.__getattr__("start"),
-                                                         self.__getattr__("reason")}))
+                    .__mod__(new PyTuple(self.__getattr__("encoding"),
+                                         badByte,
+                                         self.__getattr__("start"),
+                                         self.__getattr__("reason")))
                     .__str__();
         } else {
             return Py.newString("'%.400s' codec can't decode bytes in position %d-%d: %.400s")
-                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
-                                                         self.__getattr__("start"),
-                                                         new PyInteger(end - 1),
-                                                         self.__getattr__("reason")}))
+                    .__mod__(new PyTuple(self.__getattr__("encoding"),
+                                         self.__getattr__("start"),
+                                         new PyInteger(end - 1),
+                                         self.__getattr__("reason")))
                     .__str__();
         } 
     }
@@ -531,17 +531,17 @@ public class exceptions implements ClassDictInit {
             else
                 format = "'%.400s' codec can't encode character u'\\U%08x' in position %d: %.400s";
             return Py.newString(format)
-                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
+                    .__mod__(new PyTuple(self.__getattr__("encoding"),
                                                          new PyInteger(badchar),
                                                          self.__getattr__("start"),
-                                                         self.__getattr__("reason")}))
+                                                         self.__getattr__("reason")))
                     .__str__();
         } else {
             return Py.newString("'%.400s' codec can't encode characters in position %d-%d: %.400s")
-                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("encoding"),
+                    .__mod__(new PyTuple(self.__getattr__("encoding"),
                                                          self.__getattr__("start"),
                                                          new PyInteger(end - 1),
-                                                         self.__getattr__("reason")}))
+                                                         self.__getattr__("reason")))
                     .__str__();
         } 
     }
@@ -589,15 +589,15 @@ public class exceptions implements ClassDictInit {
             else
                 format = "can't translate character u'\\U%08x' in position %d: %.400s";
             return Py.newString(format)
-                    .__mod__(new PyTuple(new PyObject[] {new PyInteger(badchar),
-                                                         self.__getattr__("start"),
-                                                         self.__getattr__("reason")}))
+                    .__mod__(new PyTuple(new PyInteger(badchar),
+                                                            self.__getattr__("start"),
+                                                            self.__getattr__("reason")))
                     .__str__();
         } else {
             return Py.newString("can't translate characters in position %d-%d: %.400s")
-                    .__mod__(new PyTuple(new PyObject[] {self.__getattr__("start"),
+                    .__mod__(new PyTuple(self.__getattr__("start"),
                                                          new PyInteger(end - 1),
-                                                         self.__getattr__("reason")}))
+                                                         self.__getattr__("reason")))
                     .__str__();
         } 
     }

@@ -12,6 +12,8 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 
+import org.python.core.util.StringUtil;
+
 /**
  * A wrapper class around native java arrays.
  * 
@@ -629,31 +631,23 @@ public class PyArray extends PySequence implements Cloneable {
     // PyArray can't extend anymore, so delegate
     private class ArrayDelegate extends AbstractArray {
 
-        final PyArray pyArray;
 
-        private ArrayDelegate(PyArray pyArray) {
-            super((pyArray.data == null) ? 0 : Array.getLength(pyArray.data));
-            this.pyArray = pyArray;
+        private ArrayDelegate() {
+            super(data == null ? 0 : Array.getLength(data));
         }
 
         protected Object getArray() {
-            return pyArray.data;
+            return data;
         }
 
         protected void setArray(Object array) {
-            pyArray.data = array;
+            data = array;
         }
 
-        protected void makeInsertSpace(int index) {
-            super.makeInsertSpace(index, 1);
-        }
-
-        protected void makeInsertSpace(int index, int length) {
-            super.makeInsertSpace(index, length);
-        }
-
-        public void remove(int index) {
-            super.remove(index);
+        @Override
+        protected Object createArray(int size) {
+            Class baseType = data.getClass().getComponentType();
+            return Array.newInstance(baseType, size);
         }
     }
 
@@ -667,14 +661,14 @@ public class PyArray extends PySequence implements Cloneable {
 
     public PyArray(PyArray toCopy) {
         data = toCopy.delegate.copyArray();
-        delegate = new ArrayDelegate(this);
+        delegate = new ArrayDelegate();
         type = toCopy.type;
     }
 
     public PyArray(Class type, Object data) {
         this.type = type;
         this.data = data;
-        delegate = new ArrayDelegate(this);
+        delegate = new ArrayDelegate();
     }
 
     public PyArray(Class type, int n) {
@@ -700,7 +694,7 @@ public class PyArray extends PySequence implements Cloneable {
             typecode = type.getName();
         }
         data = Array.newInstance(type, 0);
-        delegate = new ArrayDelegate(this);
+        delegate = new ArrayDelegate();
         
         PyObject seq = ap.getPyObject(1, null);
         if(seq == null){
@@ -1270,7 +1264,7 @@ public class PyArray extends PySequence implements Cloneable {
         if((strlen % itemsize) != 0) {
             throw Py.ValueError("string length not a multiple of item size");
         }
-        ByteArrayInputStream bis = new ByteArrayInputStream(PyString.to_bytes(input));
+        ByteArrayInputStream bis = new ByteArrayInputStream(StringUtil.toBytes(input));
         int origsize = delegate.getSize();
         try {
             fromStream(bis);
@@ -1581,7 +1575,7 @@ public class PyArray extends PySequence implements Cloneable {
      * @param value
      *            value to set the element to
      */
-    protected void set(int i, PyObject value) {
+    public void set(int i, PyObject value) {
         // check for overflow of the integral types
         if(type == Byte.TYPE) {
             long val;
@@ -1803,6 +1797,6 @@ public class PyArray extends PySequence implements Cloneable {
         } catch(IOException e) {
             throw Py.IOError(e);
         }
-        return PyString.from_bytes(bos.toByteArray());
+        return StringUtil.fromBytes(bos.toByteArray());
     }
 }

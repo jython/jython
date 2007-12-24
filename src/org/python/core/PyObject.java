@@ -198,15 +198,16 @@ public class PyObject implements Serializable {
      * <code>a.equals(b) == true</code> iff <code>cmp(a,b) == 0</code>
      **/
     public boolean equals(Object ob_other) {
-        return (ob_other instanceof PyObject)
-            && _eq((PyObject) ob_other).__nonzero__();
+        if(ob_other == this) {
+            return true;
+        }
+        return (ob_other instanceof PyObject) && _eq((PyObject)ob_other).__nonzero__();
     }
 
     /**
-     * Equivalent to the standard Python __nonzero__ method.
-     * Returns whether of not a given <code>PyObject</code> is
-     * considered true.
-     **/
+     * Equivalent to the standard Python __nonzero__ method. Returns whether of
+     * not a given <code>PyObject</code> is considered true.
+     */
     public boolean __nonzero__() {
         return true;
     }
@@ -995,7 +996,7 @@ public class PyObject implements Serializable {
         if (o instanceof PyObject[])
             return new PyTuple((PyObject[]) o);
         else
-            return new PyTuple(new PyObject[] { this, (PyObject) o });
+            return new PyTuple(this, (PyObject) o );
     }
 
 
@@ -3059,7 +3060,7 @@ public class PyObject implements Serializable {
                     }
                 }
                 if (n>0) {
-                    state=new PyTuple(new PyObject[] {state, slots});
+                    state=new PyTuple(state, slots);
                 }
             }
         }
@@ -3087,8 +3088,7 @@ public class PyObject implements Serializable {
             args2[i+1]=((PyTuple)args).pyget(i);
         }
 
-        res=new PyTuple(new PyObject[] {newobj,
-                new PyTuple(args2), state, listitems, dictitems});
+        res = new PyTuple(newobj, new PyTuple(args2), state, listitems, dictitems);
 
         return res;
     }

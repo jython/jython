@@ -143,9 +143,7 @@ public class MatchObject extends PyObject {
 
 
     PyTuple _pair(int i1, int i2) {
-        return new PyTuple(new PyObject[] {
-            Py.newInteger(i1), Py.newInteger(i2)
-        });
+        return new PyTuple(Py.newInteger(i1), Py.newInteger(i2));
     }
 
     private PyObject getslice(PyObject index, PyObject def) {

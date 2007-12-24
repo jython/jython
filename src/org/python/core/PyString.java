@@ -1,11 +1,11 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.python.core.util.StringUtil;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
-
 /**
  * A builtin python string.
  */
@@ -15,7 +15,7 @@ public class PyString extends PyBaseString
     public static final PyType TYPE = PyType.fromClass(PyString.class);
     protected String string;
     private transient int cached_hashcode=0;
-    private transient boolean interned=false;
+    protected transient boolean interned=false;
 
     // for PyJavaClass.init()
     public PyString() {
@@ -37,6 +37,16 @@ public class PyString extends PyBaseString
 
     public PyString(char c) {
         this(TYPE,String.valueOf(c));
+    }
+    
+    /**
+     * Creates a PyString from an already interned String. Just means it won't
+     * be reinterned if used in a place that requires interned Strings.
+     */
+    public static PyString fromInterned(String interned) {
+        PyString str = new PyString(TYPE, interned);
+        str.interned = true;
+        return str;
     }
 
     @ExposedNew
@@ -448,17 +458,6 @@ public class PyString extends PyBaseString
         return false;
     }
 
-    public boolean equals(Object other) {
-        if (!(other instanceof PyString))
-            return false;
-
-        PyString o = (PyString)other;
-        if (interned && o.interned)
-            return string == o.string;
-
-        return string.equals(o.string);
-    }
-    
     @ExposedMethod
     public PyObject str___getitem__(PyObject index) {
         return seq___finditem__(index);
@@ -577,35 +576,7 @@ public class PyString extends PyBaseString
      *         corresponding char.
      */
     public byte[] toBytes() {
-        return to_bytes(string);
-    }
-
-    /**
-     * @return a byte array with one byte for each char in s. Each byte contains
-     *         the low-order bits of its corresponding char.
-     */
-    public static byte[] to_bytes(String s) {
-        int len = s.length();
-        byte[] b = new byte[len];
-        s.getBytes(0, len, b, 0);
-        return b;
-    }
-
-    /**
-     * @return A String with chars corresponding to the bytes in buf
-     */
-    public static String from_bytes(byte[] buf) {
-        return from_bytes(buf, 0, buf.length);
-    }
-    
-    /**
-     * @return A String of len buff with chars corresponding to buf from off to
-     *         off + len
-     */
-    public static String from_bytes(byte[] buf, int off, int len) {
-        // Yes, I known the method is deprecated, but it is the fastest
-        // way of converting between between byte[] and String
-        return new String(buf, 0, off, len);
+        return StringUtil.toBytes(string);
     }
 
     public Object __tojava__(Class c) {
@@ -719,7 +690,7 @@ public class PyString extends PyBaseString
     }
 
     final PyTuple str___getnewargs__() {
-        return new PyTuple(new PyObject[] {new PyString(this.string)});
+        return new PyTuple(new PyString(this.string));
     }
 
     public PyTuple __getnewargs__() {

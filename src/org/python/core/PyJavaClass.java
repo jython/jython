@@ -357,8 +357,9 @@ public class PyJavaClass extends PyClass
                signature.  If this alters the signature of the function in
                some significant way, then return a duplicate and stick it in
                the __dict__ */
-            if (o1 != o) {
-                if (func.handles(meth)){
+            if(o1 != o) {
+                if(func.handles(meth)) {
+                    __dict__.__setitem__(name, func);
                     return;
                 }
                 func = func.copy();

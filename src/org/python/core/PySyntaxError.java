@@ -24,9 +24,7 @@ public class PySyntaxError extends PyException {
             new PyInteger(column), new PyString(text)
         };
 
-        this.value = new PyTuple(new PyObject[] {
-            new PyString(s), new PyTuple(tmp)
-        });
+        this.value = new PyTuple(new PyString(s), new PyTuple(tmp));
 
         this.lineno = line;
         this.column = column;

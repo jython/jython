@@ -12,6 +12,7 @@ import org.python.core.Py;
 import org.python.core.PyFile;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.util.StringUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -66,7 +67,7 @@ public class JDBC20DataHandler extends FilterDataHandler {
 
                 String clob = (String) object.__tojava__(String.class);
                 int length = clob.length();
-                InputStream stream = new ByteArrayInputStream(PyString.to_bytes(clob));
+                InputStream stream = new ByteArrayInputStream(StringUtil.toBytes(clob));
 
                 stream = new BufferedInputStream(stream);
 

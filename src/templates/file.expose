@@ -7,8 +7,11 @@ expose_getset: mode getMode
 expose_getset: name getName
 expose_getset: closed getClosed
 expose_getset: newlines getNewlines
+expose_getset: softspace getSoftspace setSoftspace delSoftspace
 # exposed methods
 expose_vanilla_cmp
+# XXX: not supported at this point
+#expose_meth: :b isatty
 expose_meth: __iter__
 expose_meth: __iternext__
 expose_meth: :b __nonzero__
@@ -17,8 +20,10 @@ expose_meth: __repr__
 expose_meth: __str__
   return new PyString(((`typ)self).file_toString());
 expose_meth: :- close
+expose_meth: :o fileno
 expose_meth: :- flush
 expose_meth: :s read i?
+expose_meth: :i readinto o
 expose_meth: :s readline i?
 expose_meth: :o readlines i?
 expose_meth: :- seek l i?
@@ -31,12 +36,6 @@ expose_meth: :o xreadlines
 expose_wide_meth: __init__ -1 -1
   `vdeleg`(init);
   `void;
-expose_new_mutable:
-# TODO:
-# __setattr__
-# fileno ?
-# newlines ?
-#
-#next
-#softspace
-#encoding
+# PyFile is mutable, its new is marked as 'immutable' for the sake of
+# being customized
+expose_new_immutable:

@@ -11,12 +11,13 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
-import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
 import org.python.core.adapter.ExtensiblePyObjectAdapter;
+import org.python.core.util.StringUtil;
+import org.python.modules.errno;
 import org.python.parser.ast.modType;
 
 public final class Py
@@ -143,12 +144,18 @@ public final class Py
         String message = ioe.getMessage();
         if (ioe instanceof java.io.FileNotFoundException) {
             message = "File not found - "+message;
+            return IOError(errno.ENOENT, message);
         }
         return new PyException(Py.IOError, message);
     }
     public static PyException IOError(String message) {
         //System.err.println("sioe: "+message);
         return new PyException(Py.IOError, message);
+    }
+
+    public static PyException IOError(int errno, String message) {
+        PyTuple args = new PyTuple(new PyInteger(errno), new PyString(message));
+        return new PyException(Py.IOError, args);
     }
 
     public static PyObject KeyError;
@@ -249,14 +256,11 @@ public final class Py
     public static PyObject UnicodeTranslateError;
     public static PyException UnicodeTranslateError(String object,
                                                  int start,
-                                                 int end,
-                                                 String reason) {
-        return new PyException(Py.UnicodeTranslateError,
-                               new PyTuple(new PyObject[] {
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+                                                 int end, String reason) {
+        return new PyException(Py.UnicodeTranslateError, new PyTuple(new PyString(object),
+                                                                     new PyInteger(start),
+                                                                     new PyInteger(end),
+                                                                     new PyString(reason)));
     }
 
     public static PyObject UnicodeDecodeError;
@@ -266,12 +270,11 @@ public final class Py
                                                  int start,
                                                  int end,
                                                  String reason) {
-        return new PyException(Py.UnicodeDecodeError,
-                               new PyTuple(new PyObject[] {new PyString(encoding),
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+        return new PyException(Py.UnicodeDecodeError, new PyTuple(new PyString(encoding),
+                                                                  new PyString(object),
+                                                                  new PyInteger(start),
+                                                                  new PyInteger(end),
+                                                                  new PyString(reason)));
     }
 
     public static PyObject UnicodeEncodeError;
@@ -281,12 +284,11 @@ public final class Py
                                                  int start,
                                                  int end,
                                                  String reason) {
-        return new PyException(Py.UnicodeEncodeError,
-                               new PyTuple(new PyObject[] {new PyString(encoding),
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+        return new PyException(Py.UnicodeEncodeError, new PyTuple(new PyString(encoding),
+                                                                  new PyString(object),
+                                                                  new PyInteger(start),
+                                                                  new PyInteger(end),
+                                                                  new PyString(reason)));
     }
 
     public static PyObject EOFError;
@@ -427,14 +429,15 @@ public final class Py
             memory_error((OutOfMemoryError)t);
         }
         PyJavaInstance exc = new PyJavaInstance(t);
-        return new PyException(exc.instclass, exc);
+        PyException pyex = new PyException(exc.instclass, exc);
+        // Set the cause to the original throwable to preserve
+        // the exception chain.
+        pyex.initCause(t);
+        return pyex;
     }
 
     // Don't allow any constructors. Class only provides static methods.
-    private Py() { ; }
-
-    /** @deprecated **/
-    //public static InterpreterState interp;
+    private Py() {}
 
     /**
        Convert a given <code>PyObject</code> to an instance of a Java class.
@@ -551,7 +554,7 @@ public final class Py
     public static PyString newString(String s) {
         return new PyString(s);
     }
-
+    
     public static PyUnicode newUnicode(char c) {
         return (PyUnicode)makeCharacter(c, true);
     }
@@ -1154,7 +1157,7 @@ public final class Py
         PyException e = Py.JavaError(t);
 
         //Add another traceback object to the exception if needed
-        if (e.traceback.tb_frame != frame) {
+        if (e.traceback.tb_frame != frame && e.traceback.tb_frame.f_back != null) {
             e.traceback = new PyTraceback(e.traceback);
         }
     }
@@ -1165,7 +1168,7 @@ public final class Py
         pye.instantiate();
 
         // attach catching frame
-        if (frame != null && pye.traceback.tb_frame != frame) {
+        if (frame != null && pye.traceback.tb_frame != frame && pye.traceback.tb_frame.f_back != null) {
             pye.traceback = new PyTraceback(pye.traceback);
         }
        
@@ -1304,7 +1307,7 @@ public final class Py
                 contents = o.toString();
             else if (o instanceof PyFile) {
                 PyFile fp = (PyFile)o;
-                if (fp.closed)
+                if (fp.getClosed())
                     return;
                 contents = fp.read().toString();
             } else
@@ -1777,7 +1780,7 @@ public final class Py
                                        String filename,
                                        String type,
                                        CompilerFlags cflags) {
-        return Py.compile_flags(new ByteArrayInputStream(PyString.to_bytes(data + "\n\n")),
+        return Py.compile_flags(new ByteArrayInputStream(StringUtil.toBytes(data + "\n\n")),
                                 filename,
                                 type,
                                 cflags);
@@ -2047,16 +2050,9 @@ class FixedFileWrapper extends StdoutWrapper {
         this.file = file;
 
         if (file instanceof PyJavaInstance) {
-            Object tmp = file.__tojava__(OutputStream.class);
-            if ((tmp != Py.NoConversion) && (tmp != null)) {
-                OutputStream os = (OutputStream)tmp;
-                this.file = new PyFile(os, "<java OutputStream>");
-            } else {
-                tmp = file.__tojava__(Writer.class);
-                if ((tmp != Py.NoConversion) && (tmp != null)) {
-                    Writer w = (Writer)tmp;
-                    this.file = new PyFile(w, "<java Writer>");
-                }
+            Object tojava = file.__tojava__(OutputStream.class);
+            if (tojava != null && tojava != Py.NoConversion) {
+                this.file = new PyFile((OutputStream)tojava, "<java OutputStream>");
             }
         }
     }

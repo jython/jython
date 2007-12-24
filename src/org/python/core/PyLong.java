@@ -1255,10 +1255,7 @@ public class PyLong extends PyObject
         BigInteger rightv = coerce(right);
 
         BigInteger xdivy = divide(value, rightv);
-        return new PyTuple(new PyObject[] {
-            Py.newLong(xdivy),
-            Py.newLong(modulo(value, rightv, xdivy))
-        });
+        return new PyTuple(Py.newLong(xdivy), Py.newLong(modulo(value, rightv, xdivy)));
     }
 
     public PyObject __rdivmod__(PyObject left) {
@@ -1271,10 +1268,7 @@ public class PyLong extends PyObject
         BigInteger leftv = coerce(left);
 
         BigInteger xdivy = divide(leftv, value);
-        return new PyTuple(new PyObject[] {
-            Py.newLong(xdivy),
-            Py.newLong(modulo(leftv, value, xdivy))
-        });
+        return new PyTuple(Py.newLong(xdivy), Py.newLong(modulo(leftv, value, xdivy)));
     }
 
     public PyObject __pow__(PyObject right, PyObject modulo) {
@@ -1561,7 +1555,7 @@ public class PyLong extends PyObject
     }
 
     final PyTuple long___getnewargs__() {
-        return new PyTuple(new PyObject[]{new PyLong(this.getValue())});
+        return new PyTuple(new PyLong(this.getValue()));
     }
 
     public PyTuple __getnewargs__() {

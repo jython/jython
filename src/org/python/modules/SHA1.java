@@ -45,6 +45,7 @@ package org.python.modules;
 
 import java.io.UnsupportedEncodingException;
 import org.python.core.*;
+import org.python.core.util.StringUtil;
 
 /**
  * This class implements the SHA-1 message digest algorithm.
@@ -492,7 +493,7 @@ public final class SHA1 {
     );
 
     public String digest() {
-        return PyString.from_bytes(engineDigest());
+        return StringUtil.fromBytes(engineDigest());
     }
 
     // XXX should become PyObject and use Py.idstr?

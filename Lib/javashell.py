@@ -9,11 +9,13 @@ operating system, and uses that shell to determine environment variables
 and to provide subshell execution functionality.
 """
 from java.lang import System, Runtime
+from java.io import File
 from java.io import IOException
 from java.io import InputStreamReader
 from java.io import BufferedReader
 from UserDict import UserDict
 import jarray
+import os
 import string
 import sys
 import types
@@ -58,7 +60,7 @@ class _ShellEnv:
         else:
             env = None
         try:
-            p = Runtime.getRuntime().exec( shellCmd, env )
+            p = Runtime.getRuntime().exec( shellCmd, env, File(os.getcwd()) )
             return p
         except IOException, ex:
             raise OSError(

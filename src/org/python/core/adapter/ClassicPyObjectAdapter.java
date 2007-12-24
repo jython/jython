@@ -97,7 +97,7 @@ public class ClassicPyObjectAdapter extends ExtensiblePyObjectAdapter {
 		add(new ClassAdapter(Boolean.class) {
 
 			public PyObject adapt(Object o) {
-				return ((Boolean) o).booleanValue() ? Py.One : Py.Zero;
+				return ((Boolean) o).booleanValue() ? Py.True : Py.False;
 			}
 
 		});

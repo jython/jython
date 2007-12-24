@@ -869,7 +869,7 @@ public class PyStringDerived extends PyString implements Slotted {
         PyString py_name=null;
         try {
             if (getattribute!=null) {
-                return getattribute.__get__(this,self_type).__call__(py_name=new PyString(name));
+                return getattribute.__get__(this,self_type).__call__(py_name=PyString.fromInterned(name));
             } else {
                 return super.__findattr__(name);
             }
@@ -878,7 +878,7 @@ public class PyStringDerived extends PyString implements Slotted {
                 PyObject getattr=self_type.lookup("__getattr__");
                 if (getattr!=null)
                     try {
-                        return getattr.__get__(this,self_type).__call__(py_name!=null?py_name:new PyString(name));
+                        return getattr.__get__(this,self_type).__call__(py_name!=null?py_name:PyString.fromInterned(name));
                     } catch (PyException e1) {
                         if (!Py.matchException(e1,Py.AttributeError))
                             throw e1;
@@ -893,7 +893,7 @@ public class PyStringDerived extends PyString implements Slotted {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__setattr__");
         if (impl!=null) {
-            impl.__get__(this,self_type).__call__(new PyString(name),value);
+            impl.__get__(this,self_type).__call__(PyString.fromInterned(name),value);
             return;
         }
         super.__setattr__(name,value);
@@ -903,7 +903,7 @@ public class PyStringDerived extends PyString implements Slotted {
         PyType self_type=getType();
         PyObject impl=self_type.lookup("__delattr__");
         if (impl!=null) {
-            impl.__get__(this,self_type).__call__(new PyString(name));
+            impl.__get__(this,self_type).__call__(PyString.fromInterned(name));
             return;
         }
         super.__delattr__(name);

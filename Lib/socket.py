@@ -75,7 +75,10 @@ import java.nio.channels.UnresolvedAddressException
 import java.nio.channels.UnsupportedAddressTypeException
 
 import javax.net.ssl.SSLSocketFactory
-import org.python.core.PyFile
+
+import org.python.core.io.DatagramSocketIO
+import org.python.core.io.ServerSocketIO
+import org.python.core.io.SocketIO
 
 class error(Exception): pass
 class herror(error): pass
@@ -207,7 +210,8 @@ class _nio_impl:
     def getchannel(self):
         return self.jchannel
 
-    fileno = getchannel
+    def fileno(self):
+        return self.socketio
 
 class _client_socket_impl(_nio_impl):
 
@@ -221,6 +225,7 @@ class _client_socket_impl(_nio_impl):
             self.host = None
             self.port = None
         self.jsocket = self.jchannel.socket()
+        self.socketio = org.python.core.io.SocketIO(self.jchannel, 'rw')
 
     def bind(self, host, port):
         self.jsocket.bind(java.net.InetSocketAddress(host, port))
@@ -247,6 +252,7 @@ class _server_socket_impl(_nio_impl):
             bindaddr = java.net.InetSocketAddress(port)
         self._setreuseaddress(reuse_addr)
         self.jsocket.bind(bindaddr, backlog)
+        self.socketio = org.python.core.io.ServerSocketIO(self.jchannel, 'rw')
 
     def accept(self):
         if self.mode in (MODE_BLOCKING, MODE_NONBLOCKING):
@@ -272,6 +278,7 @@ class _datagram_socket_impl(_nio_impl):
                 local_address = java.net.InetSocketAddress(port)
             self.jsocket.bind(local_address)
         self._setreuseaddress(reuse_addr)
+        self.socketio = org.python.core.io.DatagramSocketIO(self.jchannel, 'rw')
 
     def connect(self, host, port):
         self.jchannel.connect(java.net.InetSocketAddress(host, port))
@@ -287,7 +294,7 @@ class _datagram_socket_impl(_nio_impl):
 
 __all__ = [ 'AF_INET', 'SO_REUSEADDR', 'SOCK_DGRAM', 'SOCK_RAW',
         'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
-        'SocketType', 'SocketTypes', 'error', 'herror', 'gaierror', 'timeout',
+        'SocketType', 'error', 'herror', 'gaierror', 'timeout',
         'getfqdn', 'gethostbyaddr', 'gethostbyname', 'gethostname',
         'socket', 'getaddrinfo', 'getdefaulttimeout', 'setdefaulttimeout',
         'has_ipv6', 'htons', 'htonl', 'ntohs', 'ntohl',
@@ -360,7 +367,7 @@ def getprotobyname(protocolname=None):
     # Same situation as above
     raise NotImplementedError("getprotobyname not yet supported on jython.")
 
-def socket(family = AF_INET, type = SOCK_STREAM, flags=0):
+def _realsocket(family = AF_INET, type = SOCK_STREAM, flags=0):
     assert family == AF_INET
     assert type in (SOCK_DGRAM, SOCK_STREAM)
     assert flags == 0
@@ -409,6 +416,8 @@ class _nonblocking_api_mixin:
 
     timeout = _defaulttimeout
     mode = MODE_BLOCKING
+    reference_count = 0
+    close_lock = threading.Lock()
 
     def gettimeout(self):
         return self.timeout
@@ -444,7 +453,10 @@ class _nonblocking_api_mixin:
             return None
         return self.sock_impl.getchannel()
 
-    fileno = getchannel
+    def fileno(self):
+        if not self.sock_impl:
+            return None
+        return self.sock_impl.fileno()
 
     def _get_jsocket(self):
         return self.sock_impl.jsocket
@@ -464,7 +476,6 @@ class _tcpsocket(_nonblocking_api_mixin):
     ostream = None
     local_addr = None
     server = 0
-    file_count = 0
     reuse_addr = 0
 
     def bind(self, addr):
@@ -610,66 +621,6 @@ class _tcpsocket(_nonblocking_api_mixin):
         if optname == SO_REUSEADDR:
             return self.reuse_addr
 
-    def makefile(self, mode="r", bufsize=-1):
-        file = None
-        if self.istream:
-            if self.ostream:
-                file = org.python.core.PyFile(self.istream, self.ostream,
-                                              "<socket>", mode)
-            else:
-                file = org.python.core.PyFile(self.istream, "<socket>", mode)
-        elif self.ostream:
-            file = org.python.core.PyFile(self.ostream, "<socket>", mode)
-        else:
-            raise IOError, "both istream and ostream have been shut down"
-        if file:
-            return _tcpsocket.FileWrapper(self, file)
-
-    class FileWrapper:
-        def __init__(self, socket, file):
-            self.socket  = socket
-            self.istream = socket.istream
-            self.ostream = socket.ostream
-
-            self.file       = file
-            self.read       = file.read
-            self.readline   = file.readline
-            self.readlines  = file.readlines
-            self.write      = file.write
-            self.writelines = file.writelines
-            self.flush      = file.flush
-            self.seek       = file.seek
-            self.tell       = file.tell
-            self.closed     = file.closed
-
-            self.socket.file_count += 1
-
-        def close(self):
-            if self.closed:
-                # Already closed
-                return
-
-            self.socket.file_count -= 1
-            # AMAK: 20070715: Cannot close the PyFile, because closing 
-            # it causes the InputStream and OutputStream to be closed.
-            # This in turn causes the underlying socket to be closed.
-            # This was always true for java.net sockets
-            # And continues to be true for java.nio sockets
-            # http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4717638
-#            self.file.close()
-            istream = self.istream
-            ostream = self.ostream
-            self.istream = None
-            self.ostream = None
-#            self.closed = self.file.closed
-            self.closed = 1
-
-            if self.socket.file_count == 0 and self.socket.sock_impl is None:
-                # This is the last file Only close the socket and streams 
-                # if there are no outstanding files left.
-                istream.close()
-                ostream.close()
-
     def shutdown(self, how):
         assert how in (SHUT_RD, SHUT_WR, SHUT_RDWR)
         assert self.sock_impl
@@ -680,23 +631,12 @@ class _tcpsocket(_nonblocking_api_mixin):
 
     def close(self):
         try:
-            if not self.sock_impl:
-                return
-            sock_impl = self.sock_impl
-            istream = self.istream
-            ostream = self.ostream
-            self.sock_impl = None
-            self.istream = None
-            self.ostream = None
-            # Only close the socket and streams if there are no 
-            # outstanding files left.
-            if self.file_count == 0:
-                if istream:
-                    istream.close()
-                if ostream:
-                    ostream.close()
-                if sock_impl:
-                    sock_impl.close()
+            if self.istream:
+                self.istream.close()
+            if self.ostream:
+                self.ostream.close()
+            if self.sock_impl:
+                self.sock_impl.close()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
         
@@ -814,11 +754,8 @@ class _udpsocket(_nonblocking_api_mixin):
 
     def close(self):
         try:
-            if not self.sock_impl:
-                return
-            sock = self.sock_impl
-            self.sock_impl = None
-            sock.close()
+            if self.sock_impl:
+                self.sock_impl.close()
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
@@ -839,8 +776,322 @@ class _udpsocket(_nonblocking_api_mixin):
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
-SocketType = _tcpsocket
-SocketTypes = [_tcpsocket, _udpsocket]
+_socketmethods = (
+    'bind', 'connect', 'connect_ex', 'fileno', 'listen',
+    'getpeername', 'getsockname', 'getsockopt', 'setsockopt',
+    'sendall', 'setblocking',
+    'settimeout', 'gettimeout', 'shutdown', 'getchannel')
+
+class _closedsocket(object):
+    __slots__ = []
+    def _dummy(*args):
+        raise error(errno.EBADF, 'Bad file descriptor')
+    send = recv = sendto = recvfrom = __getattr__ = _dummy
+
+class _socketobject(object):
+
+    __doc__ = _realsocket.__doc__
+
+    __slots__ = ["_sock", "send", "recv", "sendto", "recvfrom",
+                 "__weakref__"]
+
+    def __init__(self, family=AF_INET, type=SOCK_STREAM, proto=0, _sock=None):
+        if _sock is None:
+            _sock = _realsocket(family, type, proto)
+            _sock.reference_count += 1
+        elif not isinstance(_sock, _closedsocket):
+            _sock.reference_count += 1
+        self._sock = _sock
+        self.send = self._sock.send
+        self.recv = self._sock.recv
+        if hasattr(self._sock, 'sendto'):
+            self.sendto = self._sock.sendto
+        self.recvfrom = self._sock.recvfrom
+
+    def close(self):
+        _sock = self._sock
+        if not isinstance(_sock, _closedsocket):
+            _sock.close_lock.acquire()
+            try:
+                _sock.reference_count -=1 
+                if not _sock.reference_count:
+                    _sock.close()
+                self._sock = _closedsocket()
+                self.send = self.recv = self.sendto = self.recvfrom = \
+                    self._sock._dummy
+            finally:
+                _sock.close_lock.release()
+    #close.__doc__ = _realsocket.close.__doc__
+
+    def accept(self):
+        sock, addr = self._sock.accept()
+        return _socketobject(_sock=sock), addr
+    #accept.__doc__ = _realsocket.accept.__doc__
+
+    def dup(self):
+        """dup() -> socket object
+
+        Return a new socket object connected to the same system resource."""
+        _sock = self._sock
+        if isinstance(_sock, _closedsocket):
+            return _socketobject(_sock=_sock)
+
+        _sock.close_lock.acquire()
+        try:
+            duped = _socketobject(_sock=_sock)
+        finally:
+            _sock.close_lock.release()
+        return duped
+
+    def makefile(self, mode='r', bufsize=-1):
+        """makefile([mode[, bufsize]]) -> file object
+
+        Return a regular file object corresponding to the socket.  The mode
+        and bufsize arguments are as for the built-in open() function."""
+        _sock = self._sock
+        if isinstance(_sock, _closedsocket):
+            return _fileobject(_sock, mode, bufsize)
+
+        _sock.close_lock.acquire()
+        try:
+            fileobject = _fileobject(_sock, mode, bufsize)
+        finally:
+            _sock.close_lock.release()
+        return fileobject
+
+    _s = ("def %s(self, *args): return self._sock.%s(*args)\n\n"
+          #"%s.__doc__ = _realsocket.%s.__doc__\n")
+          )
+    for _m in _socketmethods:
+        #exec _s % (_m, _m, _m, _m)
+        exec _s % (_m, _m)
+    del _m, _s
+
+socket = SocketType = _socketobject
+
+class _fileobject(object):
+    """Faux file object attached to a socket object."""
+
+    default_bufsize = 8192
+    name = "<socket>"
+
+    __slots__ = ["mode", "bufsize", "softspace",
+                 # "closed" is a property, see below
+                 "_sock", "_rbufsize", "_wbufsize", "_rbuf", "_wbuf",
+                 "_close"]
+
+    def __init__(self, sock, mode='rb', bufsize=-1):
+        self._sock = sock
+        if not isinstance(sock, _closedsocket):
+            sock.reference_count += 1
+        self.mode = mode # Not actually used in this version
+        if bufsize < 0:
+            bufsize = self.default_bufsize
+        self.bufsize = bufsize
+        self.softspace = False
+        if bufsize == 0:
+            self._rbufsize = 1
+        elif bufsize == 1:
+            self._rbufsize = self.default_bufsize
+        else:
+            self._rbufsize = bufsize
+        self._wbufsize = bufsize
+        self._rbuf = "" # A string
+        self._wbuf = [] # A list of strings
+
+    def _getclosed(self):
+        return self._sock is None
+    closed = property(_getclosed, doc="True if the file is closed")
+
+    def close(self):
+        try:
+            if self._sock:
+                self.flush()
+        finally:
+            if self._sock and not isinstance(self._sock, _closedsocket):
+                self._sock.reference_count -= 1
+                if not self._sock.reference_count:
+                    self._sock.close()
+            self._sock = None
+
+    def __del__(self):
+        try:
+            self.close()
+        except:
+            # close() may fail if __init__ didn't complete
+            pass
+
+    def flush(self):
+        if self._wbuf:
+            buffer = "".join(self._wbuf)
+            self._wbuf = []
+            self._sock.sendall(buffer)
+
+    def fileno(self):
+        return self._sock.fileno()
+
+    def write(self, data):
+        data = str(data) # XXX Should really reject non-string non-buffers
+        if not data:
+            return
+        self._wbuf.append(data)
+        if (self._wbufsize == 0 or
+            self._wbufsize == 1 and '\n' in data or
+            self._get_wbuf_len() >= self._wbufsize):
+            self.flush()
+
+    def writelines(self, list):
+        # XXX We could do better here for very long lists
+        # XXX Should really reject non-string non-buffers
+        self._wbuf.extend(filter(None, map(str, list)))
+        if (self._wbufsize <= 1 or
+            self._get_wbuf_len() >= self._wbufsize):
+            self.flush()
+
+    def _get_wbuf_len(self):
+        buf_len = 0
+        for x in self._wbuf:
+            buf_len += len(x)
+        return buf_len
+
+    def read(self, size=-1):
+        data = self._rbuf
+        if size < 0:
+            # Read until EOF
+            buffers = []
+            if data:
+                buffers.append(data)
+            self._rbuf = ""
+            if self._rbufsize <= 1:
+                recv_size = self.default_bufsize
+            else:
+                recv_size = self._rbufsize
+            while True:
+                data = self._sock.recv(recv_size)
+                if not data:
+                    break
+                buffers.append(data)
+            return "".join(buffers)
+        else:
+            # Read until size bytes or EOF seen, whichever comes first
+            buf_len = len(data)
+            if buf_len >= size:
+                self._rbuf = data[size:]
+                return data[:size]
+            buffers = []
+            if data:
+                buffers.append(data)
+            self._rbuf = ""
+            while True:
+                left = size - buf_len
+                recv_size = max(self._rbufsize, left)
+                data = self._sock.recv(recv_size)
+                if not data:
+                    break
+                buffers.append(data)
+                n = len(data)
+                if n >= left:
+                    self._rbuf = data[left:]
+                    buffers[-1] = data[:left]
+                    break
+                buf_len += n
+            return "".join(buffers)
+
+    def readline(self, size=-1):
+        data = self._rbuf
+        if size < 0:
+            # Read until \n or EOF, whichever comes first
+            if self._rbufsize <= 1:
+                # Speed up unbuffered case
+                assert data == ""
+                buffers = []
+                recv = self._sock.recv
+                while data != "\n":
+                    data = recv(1)
+                    if not data:
+                        break
+                    buffers.append(data)
+                return "".join(buffers)
+            nl = data.find('\n')
+            if nl >= 0:
+                nl += 1
+                self._rbuf = data[nl:]
+                return data[:nl]
+            buffers = []
+            if data:
+                buffers.append(data)
+            self._rbuf = ""
+            while True:
+                data = self._sock.recv(self._rbufsize)
+                if not data:
+                    break
+                buffers.append(data)
+                nl = data.find('\n')
+                if nl >= 0:
+                    nl += 1
+                    self._rbuf = data[nl:]
+                    buffers[-1] = data[:nl]
+                    break
+            return "".join(buffers)
+        else:
+            # Read until size bytes or \n or EOF seen, whichever comes first
+            nl = data.find('\n', 0, size)
+            if nl >= 0:
+                nl += 1
+                self._rbuf = data[nl:]
+                return data[:nl]
+            buf_len = len(data)
+            if buf_len >= size:
+                self._rbuf = data[size:]
+                return data[:size]
+            buffers = []
+            if data:
+                buffers.append(data)
+            self._rbuf = ""
+            while True:
+                data = self._sock.recv(self._rbufsize)
+                if not data:
+                    break
+                buffers.append(data)
+                left = size - buf_len
+                nl = data.find('\n', 0, left)
+                if nl >= 0:
+                    nl += 1
+                    self._rbuf = data[nl:]
+                    buffers[-1] = data[:nl]
+                    break
+                n = len(data)
+                if n >= left:
+                    self._rbuf = data[left:]
+                    buffers[-1] = data[:left]
+                    break
+                buf_len += n
+            return "".join(buffers)
+
+    def readlines(self, sizehint=0):
+        total = 0
+        list = []
+        while True:
+            line = self.readline()
+            if not line:
+                break
+            list.append(line)
+            total += len(line)
+            if sizehint and total >= sizehint:
+                break
+        return list
+
+    # Iterator protocols
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        line = self.readline()
+        if not line:
+            raise StopIteration
+        return line
+
 
 # Define the SSL support
 

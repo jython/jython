@@ -20,20 +20,50 @@ and opendir), and leave all pathname manipulation to os.path
 (e.g., split and join).
 """
 
-__all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
-           "defpath", "name",
-           "system", "environ", "putenv", "getenv",
-           "popen", "popen2", "popen3", "popen4", "getlogin"
-           ]
+__all__ = ["altsep", "chdir", "curdir", "defpath", "environ", "getcwd", 
+           "getenv", "getlogin", "linesep", "listdir", "mkdir", "name", 
+           "pardir", "pathsep", "popen", "popen2", "popen3", "popen4", 
+           "putenv","remove", "rename", "rmdir", "sep", "stat", "system",
+           "unlink", "utime"]
 
-from java.io import File
+import errno
 import java.lang.System
 import javapath as path
-from UserDict import UserDict
 import time
+import stat as _stat
+
+from java.io import File
+from org.python.core.io import FileDescriptors
+from UserDict import UserDict
+
+import sys
+sys.modules['os.path'] = _path = path
+
+# open for reading only
+O_RDONLY = 0x0
+# open for writing only
+O_WRONLY = 0x1
+# open for reading and writing
+O_RDWR = 0x2
+
+# set append mode
+O_APPEND = 0x8
+# synchronous writes
+O_SYNC = 0x80
+
+# create if nonexistant
+O_CREAT = 0x200
+# truncate to zero length
+O_TRUNC = 0x400
+# error if already exists
+O_EXCL = 0x800
+
+# seek variables
+SEEK_SET = 0
+SEEK_CUR = 1
+SEEK_END = 2
 
 class stat_result:
-  import stat as _stat
 
   _stat_members = (
     ('st_mode', _stat.ST_MODE),
@@ -110,15 +140,18 @@ def getcwd():
 
     Return a string representing the current working directory.
     """
-    foo = File(File("foo").getAbsolutePath())
-    return foo.getParent()
+    return sys.getCurrentWorkingDir()
 
 def chdir(path):
     """chdir(path)
 
     Change the current working directory to the specified path.
     """
-    raise OSError(0, 'chdir not supported in Java', path)
+    if not _path.exists(path):
+        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+    if not _path.isdir(path):
+        raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
+    sys.setCurrentWorkingDir(path)
 
 def listdir(path):
     """listdir(path) -> list_of_strings
@@ -130,7 +163,7 @@ def listdir(path):
     The list is in arbitrary order.  It does not include the special
     entries '.' and '..' even if they are present in the directory.
     """
-    l = File(path).list()
+    l = File(sys.getPath(path)).list()
     if l is None:
         raise OSError(0, 'No such directory', path)
     return list(l)
@@ -142,7 +175,7 @@ def mkdir(path, mode='ignored'):
 
     The optional parameter is currently ignored.
     """
-    if not File(path).mkdir():
+    if not File(sys.getPath(path)).mkdir():
         raise OSError(0, "couldn't make directory", path)
 
 def makedirs(path, mode='ignored'):
@@ -154,7 +187,7 @@ def makedirs(path, mode='ignored'):
     just the rightmost) will be created if it does not exist.
     The optional parameter is currently ignored.
     """
-    if not File(path).mkdirs():
+    if not File(sys.getPath(path)).mkdirs():
         raise OSError(0, "couldn't make directories", path)
 
 def remove(path):
@@ -162,25 +195,77 @@ def remove(path):
 
     Remove a file (same as unlink(path)).
     """
-    if not File(path).delete():
+    if not File(sys.getPath(path)).delete():
         raise OSError(0, "couldn't delete file", path)
+
+unlink = remove
 
 def rename(path, newpath):
     """rename(old, new)
 
     Rename a file or directory.
     """
-    if not File(path).renameTo(File(newpath)):
+    if not File(sys.getPath(path)).renameTo(File(sys.getPath(newpath))):
         raise OSError(0, "couldn't rename file", path)
+
+#XXX: copied from CPython 2.5.1
+def renames(old, new):
+    """renames(old, new)
+
+    Super-rename; create directories as necessary and delete any left
+    empty.  Works like rename, except creation of any intermediate
+    directories needed to make the new pathname good is attempted
+    first.  After the rename, directories corresponding to rightmost
+    path segments of the old name will be pruned way until either the
+    whole path is consumed or a nonempty directory is found.
+
+    Note: this function can fail with the new directory structure made
+    if you lack permissions needed to unlink the leaf directory or
+    file.
+
+    """
+    head, tail = path.split(new)
+    if head and tail and not path.exists(head):
+        makedirs(head)
+    rename(old, new)
+    head, tail = path.split(old)
+    if head and tail:
+        try:
+            removedirs(head)
+        except error:
+            pass
 
 def rmdir(path):
     """rmdir(path)
 
     Remove a directory."""
-    if not File(path).delete():
+    if not File(sys.getPath(path)).delete():
         raise OSError(0, "couldn't delete directory", path)
 
-unlink = remove
+#XXX: copied from CPython 2.5.1
+def removedirs(name):
+    """removedirs(path)
+
+    Super-rmdir; remove a leaf directory and empty all intermediate
+    ones.  Works like rmdir except that, if the leaf directory is
+    successfully removed, directories corresponding to rightmost path
+    segments will be pruned away until either the whole path is
+    consumed or an error occurs.  Errors during this latter phase are
+    ignored -- they generally mean that a directory was not empty.
+
+    """
+    rmdir(name)
+    head, tail = path.split(name)
+    if not tail:
+        head, tail = path.split(head)
+    while head and tail:
+        try:
+            rmdir(head)
+        except error:
+            break
+        head, tail = path.split(head)
+
+__all__.extend(['makedirs', 'renames', 'removedirs'])
 
 def stat(path):
     """stat(path) -> stat result
@@ -190,14 +275,23 @@ def stat(path):
     The Java stat implementation only returns a small subset of
     the standard fields: size, modification time and change time.
     """
-    f = File(path)
+    f = File(sys.getPath(path))
     size = f.length()
     # Sadly, if the returned length is zero, we don't really know if the file
     # is zero sized or does not exist.
     if size == 0 and not f.exists():
         raise OSError(0, 'No such file or directory', path)
     mtime = f.lastModified() / 1000.0
-    return stat_result((0, 0, 0, 0, 0, 0, size, mtime, mtime, 0))
+    mode = 0
+    if f.isDirectory():
+        mode = _stat.S_IFDIR
+    elif f.isFile():
+        mode = _stat.S_IFREG
+    if f.canRead():
+        mode = mode | _stat.S_IREAD
+    if f.canWrite():
+        mode = mode | _stat.S_IWRITE
+    return stat_result((mode, 0, 0, 0, 0, 0, size, mtime, mtime, 0))
 
 def utime(path, times):
     """utime(path, (atime, mtime))
@@ -214,7 +308,135 @@ def utime(path, times):
     else:
         mtime = time.time()
     # Only the modification time is changed
-    File(path).setLastModified(long(mtime * 1000.0))
+    File(sys.getPath(path)).setLastModified(long(mtime * 1000.0))
+
+def close(fd):
+    """close(fd)
+
+    Close a file descriptor (for low level IO).
+    """
+    rawio = FileDescriptors.get(fd)
+    _handle_oserror(rawio.close)
+
+def fdopen(fd, mode='r', bufsize=-1):
+    """fdopen(fd [, mode='r' [, bufsize]]) -> file_object
+
+    Return an open file object connected to a file descriptor.
+    """
+    rawio = FileDescriptors.get(fd)
+    if (len(mode) and mode[0] or '') not in 'rwa':
+        raise ValueError("invalid file mode '%s'" % mode)
+    if rawio.closed():
+        raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
+
+    from org.python.core import PyFile
+    try:
+        fp = PyFile(rawio, '<fdopen>', mode, bufsize)
+    except IOError:
+        raise OSError(errno.EINVAL, errno.strerror(errno.EINVAL))
+    return fp
+
+def ftruncate(fd, length):
+    """ftruncate(fd, length)
+
+    Truncate a file to a specified length.
+    """    
+    rawio = FileDescriptors.get(fd)
+    try:
+        rawio.truncate(length)
+    except Exception, e:
+        raise IOError(errno.EBADF, errno.strerror(errno.EBADF))
+
+def lseek(fd, pos, how):
+    """lseek(fd, pos, how) -> newpos
+
+    Set the current position of a file descriptor.
+    """
+    rawio = FileDescriptors.get(fd)
+    return _handle_oserror(rawio.seek, pos, how)
+
+def open(filename, flag, mode=0777):
+    """open(filename, flag [, mode=0777]) -> fd
+
+    Open a file (for low level IO).
+    """
+    reading = flag & O_RDONLY
+    writing = flag & O_WRONLY
+    updating = flag & O_RDWR
+    creating = flag & O_CREAT
+
+    truncating = flag & O_TRUNC
+    exclusive = flag & O_EXCL
+    sync = flag & O_SYNC
+    appending = flag & O_APPEND
+
+    if updating and writing:
+        raise OSError(errno.EINVAL, errno.strerror(errno.EINVAL), filename)
+
+    if not creating and not path.exists(filename):
+        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), filename)
+
+    if not writing or updating:
+        # Default to reading
+        reading = True
+
+    from org.python.core.io import FileIO
+    if truncating and not writing:
+        # Explicitly truncate, writing will truncate anyway
+        FileIO(filename, 'w').close()
+
+    if exclusive and creating:
+        try:
+            if not File(sys.getPath(filename)).createNewFile():
+                raise OSError(errno.EEXIST, errno.strerror(errno.EEXIST),
+                              filename)
+        except java.io.IOException, ioe:
+            raise OSError(ioe)
+
+    mode = '%s%s%s%s' % (reading and 'r' or '',
+                         (not appending and writing) and 'w' or '',
+                         (appending and (writing or updating)) and 'a' or '',
+                         updating and '+' or '')
+
+    if sync and (writing or updating):
+        from java.io import FileNotFoundException, RandomAccessFile
+        try:
+            fchannel = RandomAccessFile(sys.getPath(filename), 'rws').getChannel()
+        except FileNotFoundException, fnfe:
+            if path.isdir(filename):
+                raise OSError(errno.EISDIR, errno.strerror(errno.EISDIR))
+            raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), filename)
+        return FileIO(fchannel, mode)
+
+    return FileIO(filename, mode)
+
+def read(fd, buffersize):
+    """read(fd, buffersize) -> string
+
+    Read a file descriptor.
+    """
+    from org.python.core.util import StringUtil
+    rawio = FileDescriptors.get(fd)
+    buf = _handle_oserror(rawio.read, buffersize)
+    return str(StringUtil.fromBytes(buf))
+
+def write(fd, string):
+    """write(fd, string) -> byteswritten
+
+    Write a string to a file descriptor.
+    """
+    from java.nio import ByteBuffer
+    from org.python.core.util import StringUtil
+    rawio = FileDescriptors.get(fd)
+    return _handle_oserror(rawio.write,
+                           ByteBuffer.wrap(StringUtil.toBytes(string)))
+
+def _handle_oserror(func, *args, **kwargs):
+    """Translate exceptions into OSErrors"""
+    try:
+        return func(*args, **kwargs)
+    except:
+        raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
 class LazyDict( UserDict ):
     """A lazy-populating User Dictionary.

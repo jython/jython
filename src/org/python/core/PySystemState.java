@@ -8,7 +8,9 @@ import org.python.core.packagecache.PackageManager;
 import org.python.core.packagecache.SysPackageManager;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,6 +136,8 @@ public class PySystemState extends PyObject
 
     public static PyList warnoptions;
 
+    private String currentWorkingDir;
+
     private ClassLoader classLoader = null;
     public ClassLoader getClassLoader() {
         return classLoader;
@@ -144,10 +148,9 @@ public class PySystemState extends PyObject
 
     public static PyTuple exc_info() {
         PyException exc = Py.getThreadState().exception;
-        if (exc == null)
-            return new PyTuple(new PyObject[] {Py.None,Py.None,Py.None});
-        return new PyTuple(new PyObject[] {exc.type, exc.value,
-                                           exc.traceback});
+        if(exc == null)
+            return new PyTuple(Py.None, Py.None, Py.None);
+        return new PyTuple(exc.type, exc.value, exc.traceback);
     }
 
     public static void exc_clear() {
@@ -275,10 +278,17 @@ public class PySystemState extends PyObject
         path_hooks.append(PyJavaClass.lookup(zipimporter.class));
         path_importer_cache = new PyDictionary();
 
+        currentWorkingDir = new File("").getAbsolutePath();
+
         // Set up the initial standard ins and outs
-        __stdout__ = stdout = new PyFile(System.out, "<stdout>");
-        __stderr__ = stderr = new PyFile(System.err, "<stderr>");
-        __stdin__ = stdin = new PyFile(System.in, "<stdin>");
+        String mode = Options.unbuffered ? "b" : "";
+        int buffering = Options.unbuffered ? 0 : 1;
+        __stdout__ = stdout = new PyFile(new FileOutputStream(FileDescriptor.out),
+                                         "<stdout>", "w" + mode, buffering, false);
+        __stderr__ = stderr = new PyFile(new FileOutputStream(FileDescriptor.err),
+                                         "<stderr>", "w" + mode, 0, false);
+        __stdin__ = stdin = new PyFile(new FileInputStream(FileDescriptor.in), "<stdin>",
+                                       "r" + mode, buffering, false);
         __displayhook__ = new PySystemStateFunctions("displayhook", 10, 1, 1);
         __excepthook__ = new PySystemStateFunctions("excepthook", 30, 3, 3);
 
@@ -527,23 +537,24 @@ public class PySystemState extends PyObject
         Py.stderr = new StderrWrapper();
         Py.stdout = new StdoutWrapper();
 
-        String s = null;
-        if (PY_RELEASE_LEVEL == 0x0A)
+        String s;
+        if(PY_RELEASE_LEVEL == 0x0A)
             s = "alpha";
-        else if (PY_RELEASE_LEVEL == 0x0B)
+        else if(PY_RELEASE_LEVEL == 0x0B)
             s = "beta";
-        else if (PY_RELEASE_LEVEL == 0x0C)
+        else if(PY_RELEASE_LEVEL == 0x0C)
             s = "candidate";
-        else if (PY_RELEASE_LEVEL == 0x0F)
+        else if(PY_RELEASE_LEVEL == 0x0F)
             s = "final";
-        else if (PY_RELEASE_LEVEL == 0xAA) 
+        else if(PY_RELEASE_LEVEL == 0xAA)
             s = "snapshot";
-        version_info = new PyTuple(new PyObject[] {
-                            Py.newInteger(PY_MAJOR_VERSION),
-                            Py.newInteger(PY_MINOR_VERSION),
-                            Py.newInteger(PY_MICRO_VERSION),
-                            Py.newString(s),
-                            Py.newInteger(PY_RELEASE_SERIAL) });
+        else
+            throw new RuntimeException("Illegal value for PY_RELEASE_LEVEL: " + PY_RELEASE_LEVEL);
+        version_info = new PyTuple(Py.newInteger(PY_MAJOR_VERSION),
+                                   Py.newInteger(PY_MINOR_VERSION),
+                                   Py.newInteger(PY_MICRO_VERSION),
+                                   Py.newString(s),
+                                   Py.newInteger(PY_RELEASE_SERIAL));
     }
 
     public static PackageManager packageManager;
@@ -810,6 +821,60 @@ public class PySystemState extends PyObject
         codecs.setDefaultEncoding(encoding);
     }
 
+    /**
+     * Change the current working directory to the specified path.
+     *
+     * @param path a path String
+     */
+    public void setCurrentWorkingDir(String path) {
+        File pathFile = new File(getPath(path));
+        try {
+            currentWorkingDir = pathFile.getCanonicalPath();
+        } catch (IOException e) {
+            currentWorkingDir = pathFile.getAbsolutePath();
+        }
+    }
+
+    /**
+     * Return a string representing the current working directory.
+     *
+     * @return a path String
+     */
+    public String getCurrentWorkingDir() {
+        return currentWorkingDir;
+    }
+
+    /**
+     * Resolve a path. Returns the full path taking the current
+     * working directory into account.
+     *
+     * @param path a path String
+     * @return a resolved path String
+     */
+    public String getPath(String path) {
+        if (path == null || new File(path).isAbsolute()) {
+            return path;
+        }
+        return new File(getCurrentWorkingDir(), path).getPath();
+    }
+
+    /**
+     * Resolve a path. Returns the full path taking the current
+     * working directory into account.
+     *
+     * Like getPath but called statically. The current PySystemState
+     * is only consulted for the current working directory when it's
+     * necessary (when the path is relative).
+     *
+     * @param path a path String
+     * @return a resolved path String
+     */
+    public static String getPathLazy(String path) {
+        if (path == null || new File(path).isAbsolute()) {
+            return path;
+        }
+        return new File(Py.getSystemState().getCurrentWorkingDir(), path).getPath();
+    }
 
     // Not public by design. We can't rebind the displayhook if
     // a reflected function is inserted in the class dict.

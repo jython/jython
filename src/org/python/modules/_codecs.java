@@ -38,24 +38,15 @@ public class _codecs {
     }
 
     private static PyTuple decode_tuple(String s, int len) {
-        return new PyTuple(new PyObject[] {
-            new PyUnicode(s),
-            Py.newInteger(len)
-        });
+        return new PyTuple(new PyUnicode(s), Py.newInteger(len));
     }
 
     private static PyTuple decode_tuple_str(String s, int len) {
-        return new PyTuple(new PyObject[] {
-            new PyString(s),
-            Py.newInteger(len)
-        });
+        return new PyTuple(new PyString(s), Py.newInteger(len));
     }
 
     private static PyTuple encode_tuple(String s, int len) {
-        return new PyTuple(new PyObject[] {
-            Py.java2py(s),
-            Py.newInteger(len)
-        });
+        return new PyTuple(Py.java2py(s), Py.newInteger(len));
     }
 
 
@@ -428,11 +419,7 @@ i = codecs.insertReplacementAndGetResume(v, errors, "charmap", str, i, i + 1, "n
                                            int byteorder) {
         int[] bo = new int[] { 0 };
         String s = decode_UTF16(str, errors, bo);
-        return new PyTuple(new PyObject[] {
-             Py.newString(s),
-             Py.newInteger(str.length()),
-             Py.newInteger(bo[0])
-        });
+        return new PyTuple(Py.newString(s), Py.newInteger(str.length()), Py.newInteger(bo[0]));
     }
 
     private static String decode_UTF16(String str,
