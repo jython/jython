@@ -1,14 +1,10 @@
 package org.python.expose.generate;
 
-import java.io.PrintWriter;
-
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.TraceClassVisitor;
 import org.python.core.BytecodeLoader;
 
 /**
