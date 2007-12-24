@@ -142,7 +142,7 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
                               "simpleexposed",
                               new String[0],
                               new String[] {"X"},
-                              MethodType.NORMAL);
+                              MethodType.DEFAULT);
             fail("Shouldn't be able to create the exposer with a default value");
         } catch(InvalidExposingException ite) {}
     }
