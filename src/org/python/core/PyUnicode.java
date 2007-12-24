@@ -1490,6 +1490,16 @@ public class PyUnicode extends PyString {
         this(UNICODETYPE,String.valueOf(c));
     }
 
+    /**
+     * Creates a PyUnicode from an already interned String. Just means it won't
+     * be reinterned if used in a place that requires interned Strings.
+     */
+    public static PyUnicode fromInterned(String interned) {
+        PyUnicode uni = new PyUnicode(UNICODETYPE, interned);
+        uni.interned = true;
+        return uni;
+    }
+
     final static PyObject unicode_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("unicode",
@@ -1861,7 +1871,7 @@ public class PyUnicode extends PyString {
     }
     
     final PyTuple unicode___getnewargs__() {
-        return new PyTuple(new PyObject[] {new PyUnicode(this.string)});
+        return new PyTuple(new PyUnicode(this.string));
     }
 
 }

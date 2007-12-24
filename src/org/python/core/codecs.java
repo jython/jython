@@ -237,7 +237,7 @@ public class codecs {
             throw wrong_exception_type(exc);
         }
         PyObject end = exc.__getattr__("end");
-        return new PyTuple(new PyObject[]{Py.java2py(""), end});
+        return new PyTuple(Py.java2py(""), end);
     }
 
     private static boolean isUnicodeError(PyObject exc) {
@@ -251,13 +251,13 @@ public class codecs {
         PyObject exc = ap.getPyObject(0);
         if(Py.isInstance(exc, Py.UnicodeDecodeError)){
             PyObject end = exc.__getattr__("end");
-            return new PyTuple(new PyObject[]{new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), end});
+            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), end);
         }else if(Py.isInstance(exc, Py.UnicodeEncodeError)){
             PyObject end = exc.__getattr__("end");
-        return new PyTuple(new PyObject[]{Py.java2py("?"), end});
+        return new PyTuple(Py.java2py("?"), end);
         }else if(Py.isInstance(exc, Py.UnicodeTranslateError)){
             PyObject end = exc.__getattr__("end");
-            return new PyTuple(new PyObject[]{new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), end});
+            return new PyTuple(new PyUnicode(Py_UNICODE_REPLACEMENT_CHARACTER), end);
             }
         throw wrong_exception_type(exc);
     }
@@ -273,7 +273,7 @@ public class codecs {
         String object = exc.__getattr__("object").toString();
         StringBuffer replacement = new StringBuffer();
         xmlcharrefreplace_internal(start, end, object, replacement);
-        return new PyTuple(new PyObject[]{Py.java2py(replacement.toString()), exc.__getattr__("end")});
+        return new PyTuple(Py.java2py(replacement.toString()), exc.__getattr__("end"));
     }
     
     public static StringBuffer xmlcharrefreplace(int start, int end, String toReplace){
@@ -343,7 +343,7 @@ public class codecs {
         String object = exc.__getattr__("object").toString();
         StringBuffer replacement = new StringBuffer();
         backslashreplace_internal(start, end, object, replacement);
-        return new PyTuple(new PyObject[]{Py.java2py(replacement.toString()), exc.__getattr__("end")});
+        return new PyTuple(Py.java2py(replacement.toString()), exc.__getattr__("end"));
     }
     
     public static StringBuffer backslashreplace(int start, int end, String toReplace){

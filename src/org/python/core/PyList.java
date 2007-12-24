@@ -1311,8 +1311,6 @@ public class PyList extends PySequenceList {
     }
 
     public PyTuple __getnewargs__() {
-        return new PyTuple(new PyObject[]
-            {new PyTuple(list.getArray())}
-        );
+        return new PyTuple(new PyTuple(list.getArray()));
     }
 }

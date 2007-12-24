@@ -45,6 +45,8 @@ property.expose:org.python.core.PyProperty
 set.expose:org.python.modules.sets.PySet
 #gderived.py doesn't handle derived out of org.python.core
 #set.derived:org.python.modules.sets.PySetDerived
+slice.expose:org.python.core.PySlice
+slice.derived:org.python.core.PySliceDerived
 str.expose:org.python.core.PyString
 str.derived:org.python.core.PyStringDerived
 super.derived:org.python.core.PySuperDerived

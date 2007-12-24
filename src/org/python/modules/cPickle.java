@@ -1457,7 +1457,7 @@ public class cPickle implements ClassDictInit {
                 module = whichmodule(object, name);
 
             if(protocol >= 2) {
-                PyTuple extKey = new PyTuple(new PyObject[] {module, name});
+                PyTuple extKey = new PyTuple(module, name);
                 PyObject extCode = extension_registry.get(extKey);
                 if(extCode != Py.None) {
                     int code = ((PyInteger)extCode).getValue();
@@ -2333,9 +2333,7 @@ public class cPickle implements ClassDictInit {
 
 
     private static PyObject importModule(String name) {
-        PyObject silly_list = new PyTuple(new PyString[] {
-            Py.newString("__doc__"),
-        });
+        PyObject silly_list = new PyTuple(Py.newString("__doc__"));
         return __builtin__.__import__(name, null, null, silly_list);
     }
 

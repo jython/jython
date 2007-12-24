@@ -225,15 +225,11 @@ public class PyTimeTuple extends PyTuple {
 
     final PyObject struct_time___reduce__() {
         PyTuple newargs = __getnewargs__();
-        return new PyTuple(new PyObject[]{
-            getType(), newargs
-        });
+        return new PyTuple(getType(), newargs);
     }
 
     public PyTuple __getnewargs__() {
-        return new PyTuple(new PyObject[]
-            {new PyList(getArray())}
-        );
+        return new PyTuple(new PyList(getArray()));
     }
 
     private static PyObject struct_time_new(PyNewWrapper wrapper,

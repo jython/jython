@@ -3,7 +3,8 @@ package org.python.core;
 import java.util.*;
 
 /**
- * this used to be A faster Dictionary where the keys have to be strings, but no more.
+ * this used to be "A faster Dictionary where the keys have to be strings", but no more.
+ * Instead, it will allow either String or PyObject to be keys.
  * <p>
  * This is the default for all __dict__ instances.
  */
@@ -288,8 +289,7 @@ public class PyStringMap extends PyObject
                 throw Py.KeyError("popitem(): dictionary is empty");
             java.util.Map.Entry entry = (java.util.Map.Entry)it.next();
             it.remove();
-            return new PyTuple(new PyObject[]
-            { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
+            return new PyTuple((PyObject)entry.getKey(), (PyObject)entry.getValue());
         }
     }
 
@@ -312,7 +312,7 @@ public class PyStringMap extends PyObject
                     key = new PyString((String)objKey);
                 else
                     key = (PyObject)objKey;
-                lst.add(new PyTuple(new PyObject[] { key, value }));               
+                lst.add(new PyTuple(key, value ));               
             }
         }
         return new PyList(lst);
@@ -419,7 +419,7 @@ public class PyStringMap extends PyObject
                key = new PyString((String)objKey);
             else
                key = (PyObject)objKey;
-            return new PyTuple(new PyObject[] { key, value });
+            return new PyTuple(key, value);
         }
     }
 }

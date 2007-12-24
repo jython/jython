@@ -112,11 +112,8 @@ public class Time implements ClassDictInit
         // calculate the static variables tzname, timezone, altzone, daylight
         TimeZone tz = TimeZone.getDefault();
 
-        tzname = new PyTuple(
-            new PyObject[] {
-                new PyString(tz.getDisplayName(false, 0)),
-                new PyString(tz.getDisplayName(true, 0))
-            });
+        tzname = new PyTuple(new PyString(tz.getDisplayName(false, 0)),
+                             new PyString(tz.getDisplayName(true, 0)));
 
         daylight = tz.useDaylightTime() ? 1 : 0;
         timezone = -tz.getRawOffset() / 1000;

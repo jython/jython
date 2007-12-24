@@ -574,9 +574,7 @@ public class binascii {
                                   "String has incomplete number of bytes");
         }
 
-        return new PyTuple(new PyObject[] {
-                           Py.java2py(bin_data.toString()),
-                           Py.newInteger(done ? 1 : 0) });
+        return new PyTuple(Py.java2py(bin_data.toString()), Py.newInteger(done ? 1 : 0));
     }
 
 

@@ -8,6 +8,7 @@ import org.python.core.Py;
 import org.python.core.PyJavaPackage;
 import org.python.core.PyList;
 import org.python.core.PyString;
+import org.python.core.util.RelativeFile;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -37,9 +38,9 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
                 + name;
 
         for (int i = 0; i < path.__len__(); i++) {
-            String dir = imp.defaultEmptyPathDirectory(path.pyget(i).__str__().toString());
+            String dir = path.pyget(i).__str__().toString();
 
-            File f = new File(dir, child);
+            File f = new RelativeFile(dir, child);
             if (f.isDirectory() && imp.caseok(f, name, name.length())) {
                 /*
                  * Figure out if we have a directory a mixture of python and

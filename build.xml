@@ -429,8 +429,7 @@ The readme text for the next release will be like:
         />
 
         <!-- java files used by tests -->
-        <javac srcdir="${jython.base.dir}/Lib/test/"
-               includes="javatests/**"
+        <javac srcdir="${jython.base.dir}/tests/java"
                destdir="${output.dir}/"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
@@ -540,7 +539,7 @@ The readme text for the next release will be like:
               <include name="src/**/*.java" />
               <include name="src/com/**/*.properties" />
               <include name="Lib/jxxload_help/*.java" />
-              <include name="Lib/test/javatests/*.java" />
+              <include name="tests/java/**/*.java" />
               <include name="src/org/**/ucnhash.dat" />
               <include name="src/org/python/parser/build.xml" />
               <exclude name="src/org/python/parser/python.java" />
@@ -568,10 +567,12 @@ The readme text for the next release will be like:
         </copy>
 
         <copy todir="${dist.dir}/Lib">
-            <fileset dir="${jython.base.dir}/Lib" excludes="**/*.class"/>
+            <fileset dir="${jython.base.dir}/Lib">
+                <exclude name="**/*.class"/>
+            </fileset>
             <fileset dir="${python.lib}" excludes="**/*.pyc, **/*.pyo" includesfile="${jython.base.dir}/CPythonLib.includes">
-              <!-- The include file gets all of CPythonLib's test directory, but we only want the ones from Jython's Lib.   -->
-	      <present present="srconly" targetdir="${jython.base.dir}/Lib"/>
+                <!-- The include file gets all of CPythonLib's test directory, but we only want the ones from Jython's Lib.   -->
+                <present present="srconly" targetdir="${jython.base.dir}/Lib"/>
             </fileset>
         </copy>
     </target>

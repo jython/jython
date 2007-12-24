@@ -48,9 +48,7 @@ public class PythonObjectInputStream extends ObjectInputStream {
 
 
     private static PyObject importModule(String name) {
-        PyObject silly_list = new PyTuple(new PyString[] {
-            Py.newString("__doc__"),
-        });
+        PyObject silly_list = new PyTuple(Py.newString("__doc__"));
         return __builtin__.__import__(name, null, null, silly_list);
     }
 }

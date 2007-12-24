@@ -958,7 +958,6 @@ _skips = {
         test_email
         test_email_codecs
         test_fcntl
-        test_filecmp
         test_fork1
         test_gc
         test_gdbm
@@ -1047,12 +1046,10 @@ _failures = {
     test_pickle
     test_pickletools
     test_pkgimport
-    test_posixpath
     test_profilehooks
     test_pyclbr
     test_quopri
     test_random
-    test_slice
     test_softspace
     test_syntax
     test_threaded_import

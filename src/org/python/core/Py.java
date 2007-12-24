@@ -154,8 +154,7 @@ public final class Py
     }
 
     public static PyException IOError(int errno, String message) {
-        PyTuple args = new PyTuple(new PyObject[] {new PyInteger(errno),
-                                                   new PyString(message)});
+        PyTuple args = new PyTuple(new PyInteger(errno), new PyString(message));
         return new PyException(Py.IOError, args);
     }
 
@@ -262,14 +261,11 @@ public final class Py
     public static PyObject UnicodeTranslateError;
     public static PyException UnicodeTranslateError(String object,
                                                  int start,
-                                                 int end,
-                                                 String reason) {
-        return new PyException(Py.UnicodeTranslateError,
-                               new PyTuple(new PyObject[] {
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+                                                 int end, String reason) {
+        return new PyException(Py.UnicodeTranslateError, new PyTuple(new PyString(object),
+                                                                     new PyInteger(start),
+                                                                     new PyInteger(end),
+                                                                     new PyString(reason)));
     }
 
     public static PyObject UnicodeDecodeError;
@@ -279,12 +275,11 @@ public final class Py
                                                  int start,
                                                  int end,
                                                  String reason) {
-        return new PyException(Py.UnicodeDecodeError,
-                               new PyTuple(new PyObject[] {new PyString(encoding),
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+        return new PyException(Py.UnicodeDecodeError, new PyTuple(new PyString(encoding),
+                                                                  new PyString(object),
+                                                                  new PyInteger(start),
+                                                                  new PyInteger(end),
+                                                                  new PyString(reason)));
     }
 
     public static PyObject UnicodeEncodeError;
@@ -294,12 +289,11 @@ public final class Py
                                                  int start,
                                                  int end,
                                                  String reason) {
-        return new PyException(Py.UnicodeEncodeError,
-                               new PyTuple(new PyObject[] {new PyString(encoding),
-                                                           new PyString(object),
-                                                           new PyInteger(start),
-                                                           new PyInteger(end),
-                                                           new PyString(reason)}));
+        return new PyException(Py.UnicodeEncodeError, new PyTuple(new PyString(encoding),
+                                                                  new PyString(object),
+                                                                  new PyInteger(start),
+                                                                  new PyInteger(end),
+                                                                  new PyString(reason)));
     }
 
     public static PyObject EOFError;
@@ -440,14 +434,15 @@ public final class Py
             memory_error((OutOfMemoryError)t);
         }
         PyJavaInstance exc = new PyJavaInstance(t);
-        return new PyException(exc.instclass, exc);
+        PyException pyex = new PyException(exc.instclass, exc);
+        // Set the cause to the original throwable to preserve
+        // the exception chain.
+        pyex.initCause(t);
+        return pyex;
     }
 
     // Don't allow any constructors. Class only provides static methods.
-    private Py() { ; }
-
-    /** @deprecated **/
-    //public static InterpreterState interp;
+    private Py() {}
 
     /**
        Convert a given <code>PyObject</code> to an instance of a Java class.
@@ -564,7 +559,7 @@ public final class Py
     public static PyString newString(String s) {
         return new PyString(s);
     }
-
+    
     public static PyUnicode newUnicode(char c) {
         return (PyUnicode)makeCharacter(c, true);
     }

@@ -25,6 +25,7 @@ import org.python.core.PyModule;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
+import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
 import org.python.core.util.StringUtil;
@@ -324,6 +325,9 @@ public class zipimporter extends PyObject {
     /** Dict with file info {path: tocEntry} */
     private PyObject files;
 
+    /** The PySystemState this zipimporter is associated with */
+    private PySystemState sys;
+
     public zipimporter() {
         super();
     }
@@ -349,9 +353,11 @@ public class zipimporter extends PyObject {
         }
 
         File pathFile = new File(path);
+        sys = Py.getSystemState();
         prefix = "";
         while (true) {
-            if (pathFile.isFile()) {
+            File fullPathFile = new File(sys.getPath(pathFile.getPath()));
+            if (fullPathFile.isFile()) {
                 archive = pathFile.getPath();
                 break;
             }
@@ -582,7 +588,7 @@ public class zipimporter extends PyObject {
     public InputStream getDataStream(String datapath) {
         ZipFile zipArchive;
         try {
-            zipArchive = new ZipFile(new File(archive));
+            zipArchive = new ZipFile(new File(sys.getPath(archive)));
         }
         catch (IOException ioe) {
             throw zipimport.ZipImportError("zipimport: can not open file: " + archive);
@@ -730,7 +736,7 @@ public class zipimporter extends PyObject {
      * @return a PyDictionary of tocEntrys
      */
     private PyObject readDirectory(String archive) {
-        File file = new File(archive);
+        File file = new File(sys.getPath(archive));
         if (!file.canRead()) {
             throw zipimport.ZipImportError("can't open Zip file: '" + archive + "'");
         }
@@ -760,9 +766,14 @@ public class zipimporter extends PyObject {
             PyObject date = new PyInteger(epochToDosDate(zipEntry.getTime()));
             PyObject crc = new PyLong(zipEntry.getCrc());
 
-            PyTuple entry = new PyTuple(new PyObject[] {
-                    __file__, compress, data_size, file_size, file_offset, time, date,
-                    crc});
+            PyTuple entry = new PyTuple(__file__,
+                                        compress,
+                                        data_size,
+                                        file_size,
+                                        file_offset,
+                                        time,
+                                        date,
+                                        crc);
             files.__setitem__(new PyString(zipEntry.getName()), entry);
         }
 

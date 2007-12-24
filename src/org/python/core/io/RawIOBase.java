@@ -109,6 +109,9 @@ public abstract class RawIOBase extends IOBase {
         int bufCount;
         for (int i = 0; i < bufs.length; i++) {
             ByteBuffer buf = (ByteBuffer)bufs[i];
+            if (!buf.hasRemaining()) {
+                continue;
+            }
             if ((bufCount = readinto(buf)) == 0) {
                 break;
             }
@@ -145,6 +148,9 @@ public abstract class RawIOBase extends IOBase {
         int bufCount;
         for (int i = 0; i < bufs.length; i++) {
             ByteBuffer buf = (ByteBuffer)bufs[i];
+            if (!buf.hasRemaining()) {
+                continue;
+            }
             if ((bufCount = write(buf)) == 0) {
                 break;
             }
