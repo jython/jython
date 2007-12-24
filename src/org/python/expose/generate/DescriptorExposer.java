@@ -63,7 +63,7 @@ public class DescriptorExposer extends Exposer {
         }
         if(ofType == null) {
             ofType = type;
-        } else if(!ofType.equals(type)) {
+        } else if(!ofType.equals(type)) {   
             error("Types of the getter and setter must agree");
         }
     }

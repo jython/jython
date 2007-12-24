@@ -23,5 +23,10 @@ public @interface ExposedType {
      */
     String name() default "";
 
+    /**
+     * @return the base type of this type. Must be another class anotated with
+     *         ExposedType. If unspecified, the base is set to object, or
+     *         PyObject.class.
+     */
     Class base() default Object.class;
 }

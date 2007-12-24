@@ -29,5 +29,5 @@ public @interface ExposedMethod {
      * @return - how to expose this method. See {@link MethodType} for the
      *         options.
      */
-    MethodType type() default MethodType.NORMAL;
+    MethodType type() default MethodType.DEFAULT;
 }

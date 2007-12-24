@@ -151,7 +151,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
 
         private String[] defaults = new String[0];
 
-        private MethodType type = MethodType.NORMAL;
+        private MethodType type = MethodType.DEFAULT;
     }
 
     @Override

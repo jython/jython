@@ -21,7 +21,7 @@ public class MethodExposer extends Exposer {
              prefix,
              new String[0],
              new String[0],
-             MethodType.NORMAL);
+             MethodType.DEFAULT);
     }
     
     public MethodExposer(Type onType,
