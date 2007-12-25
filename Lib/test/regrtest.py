@@ -1008,7 +1008,6 @@ _skips = {
         test_sunaudiodev
         test_sundry
         test_symtable
-        test_tarfile
         test_timeout
         test_timing
         test_unicode_file
