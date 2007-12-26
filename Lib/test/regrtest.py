@@ -988,7 +988,6 @@ _skips = {
         test_parser
         test_plistlib
         test_poll
-        test_popen
         test_posix
         test_pty
         test_pwd
