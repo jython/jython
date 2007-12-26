@@ -1,7 +1,11 @@
 package org.python.modules;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.List;
+
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
 import org.python.core.PyException;
@@ -643,6 +647,100 @@ public class itertools implements ClassDictInit {
      */
     public static PyIterator takewhile(PyObject predicate, PyObject iterable) {
         return new WhileIterator(predicate, iterable, false);
+    }
+
+    
+    // TODO: groupby
+
+    // TODO: implement __copy__ protocol 
+    private final static class Tee {
+
+        private final PyObject iterator;
+        private final ConcurrentMap buffer;
+        private final int[] offsets;
+        private TeeIterator[] tees;
+
+        private Tee(PyObject iterable, final int n) {
+            if (n < 0) {
+                throw Py.ValueError("n must be >= 0");
+            }
+            iterator = iterable.__iter__();
+            buffer = new ConcurrentHashMap();
+            offsets = new int[n];
+            tees = new TeeIterator[n];
+            for (int i = 0; i < n; i++) {
+                offsets[i] = -1;
+                tees[i] = new TeeIterator(i);
+            }
+        }
+
+        public static PyTuple makeTees(PyObject iterable, final int n) {
+            return new PyTuple((new Tee(iterable, n)).tees);
+        }
+
+        private class TeeIterator extends ItertoolsIterator {
+
+            private final int position;
+            private int count = 0;
+
+            TeeIterator(int position) {
+                this.position = position;
+            }
+
+            public PyObject __iternext__() {
+                final PyObject item;
+                int max = Integer.MIN_VALUE;
+                int min = Integer.MAX_VALUE;
+                for (int j = 0; j < offsets.length; j++) {
+                    if (max < offsets[j]) {
+                        max = offsets[j];
+                    }
+                    if (min > offsets[j]) {
+                        min = offsets[j];
+                    }
+                }
+                if (count > max) {
+                    item = nextElement(iterator);
+                    if (item != null) {
+                        buffer.put(count, item);
+                    }
+                } else if (count < min) {
+                    item = (PyObject) buffer.remove(count);
+                } else {
+                    item = (PyObject) buffer.get(count);
+                }
+                offsets[position] = count; 
+                count++;
+                return item;
+            }
+        }
+    }
+    public static PyString __doc__tee = new PyString(
+            "tee(iterable, n=2) --> tuple of n independent iterators.");
+
+    /**
+     * Create a tuple of iterators, each of which is effectively a copy of iterable.       
+     * @param iterable
+     * @param n
+     * @return PyTuple
+     * @author Jim Baker <jbaker@zyasoft.com>
+     * @since 2.4
+     */
+    public static PyTuple tee(PyObject iterable, final int n) {
+        return Tee.makeTees(iterable, n);
+    }
+
+    /**
+     * Create a tuple of iterators, each of which is effectively a copy of iterable.       
+     * @param iterable
+     * @param n
+     * @return PyTuple
+     * @author Jim Baker <jbaker@zyasoft.com>
+     * @since 2.4
+     */
+    
+    public static PyTuple tee(PyObject iterable) {
+        return tee(iterable, 2);
     }
 
 }

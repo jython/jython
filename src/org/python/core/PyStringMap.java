@@ -3,6 +3,7 @@ package org.python.core;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -15,11 +16,30 @@ import java.util.Map.Entry;
  * <p>
  * This is the default for all __dict__ instances.
  */
-
+final class NullValue {
+}
+    
 public class PyStringMap extends PyObject
 {
-    private final Map table;
+    private final ConcurrentMap table;
 
+    
+    // CHM cannot store null values. Some Python code, specifically using
+    // classDictInit components, assumes that this is possible to hide from
+    // Python. So we have to compensate here.
+    private final static NullValue nullValue = new NullValue();
+    
+    private static PyObject toNullable(Object value) {
+        if (value == nullValue) return null;
+        else return (PyObject)value;
+    }
+    
+    private static Object fromNullable(PyObject value) {
+        if (value == null) return nullValue;
+        else return value;
+    }
+    
+    
     public PyStringMap(int capacity) {
         table = new ConcurrentHashMap(capacity);
     }
@@ -56,7 +76,7 @@ public class PyStringMap extends PyObject
     public PyObject __finditem__(PyObject key) {
         if (key instanceof PyString)
             return __finditem__(((PyString)key).internedString());
-        return (PyObject)table.get(key);
+        return (PyObject)toNullable(table.get(key));
     }
 
     public PyObject __getitem__(String key) {
@@ -86,7 +106,7 @@ public class PyStringMap extends PyObject
     }
 
     public void __setitem__(String key, PyObject value) {
-        table.put(key, value);
+        table.put(key, fromNullable(value));
     }
 
     public void __setitem__(PyObject key, PyObject value) {
@@ -94,7 +114,8 @@ public class PyStringMap extends PyObject
             __setitem__(((PyString)key).internedString(), value);
         }
         else {
-            table.put(key, value);
+            table.put(key, fromNullable(value));
+
         }
     }
 
@@ -138,7 +159,7 @@ public class PyStringMap extends PyObject
             else
                 buf.append(((PyObject)entry.getKey()).__repr__().toString());
             buf.append(": ");
-            buf.append(((PyObject)entry.getValue()).__repr__().toString());
+            buf.append(((PyObject)toNullable(entry.getValue())).__repr__().toString());
             buf.append(", ");
         }      
         if(buf.length() > 1){
@@ -250,7 +271,7 @@ public class PyStringMap extends PyObject
     public void update(PyDictionary dict) {
         for (Iterator it = dict.table.entrySet().iterator(); it.hasNext(); ) {
             Entry entry = (Entry)it.next();
-            __setitem__((PyObject)entry.getKey(), (PyObject)entry.getValue());
+            __setitem__((PyObject)entry.getKey(), (PyObject)toNullable(entry.getValue()));
         }
     }
 
@@ -289,7 +310,7 @@ public class PyStringMap extends PyObject
             throw Py.KeyError("popitem(): dictionary is empty");
         Entry entry = (Entry)it.next();
         Object objKey = entry.getKey();
-        PyObject value = (PyObject)entry.getValue();
+        PyObject value = (PyObject)toNullable(entry.getValue());
         PyTuple tuple;
         if (objKey instanceof String)
             tuple = new PyTuple(new PyString((String)objKey), value);
@@ -312,7 +333,7 @@ public class PyStringMap extends PyObject
             objKey = ((PyString)key).internedString();
         else
             objKey = key;
-        PyObject value = (PyObject)table.remove(objKey);
+        PyObject value = (PyObject)toNullable(table.remove(objKey));
         if(value == null) {
             if (failobj == null) {
                 throw Py.KeyError(key.__repr__().toString());
@@ -333,7 +354,7 @@ public class PyStringMap extends PyObject
             Entry entry = (Entry)it.next();
             Object objKey = entry.getKey();
             PyObject key = null;
-            PyObject value = (PyObject)entry.getValue();
+            PyObject value = (PyObject)toNullable(entry.getValue());
             if (objKey instanceof String)
                 key = new PyString((String)objKey);
             else
@@ -401,7 +422,7 @@ public class PyStringMap extends PyObject
         public PyObject __iternext__() {
             if (!iterator.hasNext())
                 return null;
-            return (PyObject)iterator.next();
+            return (PyObject)toNullable(iterator.next());
         }
     }
 
@@ -436,7 +457,7 @@ public class PyStringMap extends PyObject
             Entry entry =  (Entry)iterator.next();
             Object objKey = entry.getKey();
             PyObject key = null;
-            PyObject value = (PyObject)entry.getValue();
+            PyObject value = (PyObject)toNullable(entry.getValue());
             if (objKey instanceof String)
                key = new PyString((String)objKey);
             else
