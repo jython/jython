@@ -15,6 +15,7 @@ import org.python.core.PyNone;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
+import org.python.core.__builtin__;
 
 /**
  * Functional tools for creating and using iterators. Java implementation of the
@@ -650,8 +651,129 @@ public class itertools implements ClassDictInit {
     }
 
     
-    // TODO: groupby
+    // TODO: groupby - from itertools documentation, this is what we need to implement
 
+//    class groupby(object):
+//        def __init__(self, iterable, key=None):
+//            if key is None:
+//                key = lambda x: x
+//            self.keyfunc = key
+//            self.it = iter(iterable)
+//            self.tgtkey = self.currkey = self.currvalue = xrange(0)
+//        def __iter__(self):
+//            return self
+//        def next(self):
+//            while self.currkey == self.tgtkey:
+//                self.currvalue = self.it.next() # Exit on StopIteration
+//                self.currkey = self.keyfunc(self.currvalue)
+//            self.tgtkey = self.currkey
+//            return (self.currkey, self._grouper(self.tgtkey))
+//        def _grouper(self, tgtkey):
+//            while self.currkey == tgtkey:
+//                yield self.currvalue
+//                self.currvalue = self.it.next() # Exit on StopIteration
+//                self.currkey = self.keyfunc(self.currvalue)
+
+    private final static class GroupBy extends ItertoolsIterator {
+
+        private final PyObject iterator;
+        private final PyObject keyFunc;
+        private PyObject currentKey;
+        private PyObject currentValue;
+        private PyObject targetKey;
+        private boolean completed = false;
+
+        private GroupBy(PyObject iterable, PyObject key) {
+            iterator = iterable.__iter__();
+            keyFunc = key;
+            targetKey = currentKey = currentValue = __builtin__.xrange(0);
+        }
+
+        public PyObject __iternext__() {
+            if (completed) return null;
+            while (currentKey.equals(targetKey)) {
+                currentValue = nextElement(iterator);
+                if (currentValue == null) {
+                    return null; // instead  of a StopIteration
+                }
+                if (keyFunc == null) { // identity function
+                    currentKey = currentValue;
+                } else {
+                    currentKey = keyFunc.__call__(currentValue);
+                }
+            }
+            targetKey = currentKey;
+            return new PyTuple(currentKey, new GroupByIterator(targetKey));
+        }
+
+        private class GroupByIterator extends ItertoolsIterator {
+
+            private final PyObject key;
+            private boolean completed = false;
+
+            private GroupByIterator(PyObject key) {
+                this.key = key;
+            }
+
+            public PyObject __iternext__() {
+                final PyObject item = currentValue;
+
+                // Using @completed here implements yield-before-doing-other-stuff logic
+                // see sample code in the itertools docs
+                // (http://docs.python.org/lib/itertools-functions.html) of a 
+                // Pure Python implementation that drove this dev.
+                // Incidentally, this is a good motivating example of how
+                // generator internals are actually implemented in Jython
+                // with PyGenerator (in of course, a more general, abstract way)
+                if (completed) {
+                    return null;
+                }
+                currentValue = nextElement(iterator);
+                if (currentValue == null) {
+                    completed = true;
+                } else {
+                    if (keyFunc == null) { // identity function
+                        currentKey = currentValue;
+                    } else {
+                        currentKey = keyFunc.__call__(currentValue);
+                    }
+                }
+                if (!currentKey.equals(targetKey)) {
+                    completed = true;
+                }
+                return item;
+            }
+        }
+    }
+
+    public static PyString __doc__groupby = new PyString(
+            "groupby(iterable[, keyfunc]) -> create an iterator which returns\n" +
+            "(key, sub-iterator) grouped by each value of key(value).");
+
+    /**
+     * Create an iterator which returns the pair (key, sub-iterator) grouped by
+     * key(value).       
+     * @param iterable
+     * @param key
+     * @return PyIterator
+     * @author Jim Baker <jbaker@zyasoft.com>
+     * @since 2.4
+     */
+    public static PyIterator groupby(PyObject iterable, PyObject key) {
+        return new GroupBy(iterable, key);
+    }
+
+     /**
+     * Create an iterator which returns the pair (value, sub-iterator) grouped by
+     * value       
+     * @param iterable
+     * @return PyIterator
+     * @author Jim Baker <jbaker@zyasoft.com>
+     * @since 2.4
+     */
+    public static PyIterator groupby(PyObject iterable) {
+        return new GroupBy(iterable, null);
+    }
     // TODO: implement __copy__ protocol 
     private final static class Tee {
 
