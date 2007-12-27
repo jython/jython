@@ -149,13 +149,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${postgresql.jar}" />
             <pathelement path="${jndi.jar}" />
             <pathelement path="${jdbc.jar}" />
-            <pathelement path="${asm.jar}" />
-            <pathelement path="${asm-commons.jar}" />
+            <pathelement path="extlibs/asm-3.1.jar" />
             <pathelement path="${java.class.path}" />
         </path>
 
-        <available property="threadlocal.present" classname="java.lang.ThreadLocal" />
-        <available property="secureclassloader.present" classname="java.security.SecureClassLoader" />
         <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />
         <available property="readline.present" classname="org.gnu.readline.Readline" classpath="${readline.jar}" />
         <available property="jline.present" classname="jline.Terminal" classpath="${jline.jar}" />
@@ -166,7 +163,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <available property="jndi.present" classname="javax.naming.Context" classpath="${jndi.jar}" />
         <available property="javax.sql.present" classname="javax.sql.DataSource" />
         <available property="jdbc30.present" classname="java.sql.ParameterMetaData" />
-        <available property="asm.present" classname="org.objectweb.asm.Opcodes" classpath="${asm.jar}" />
     </target>
 
     <target name="full-init" depends="common-init">
@@ -221,16 +217,25 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="work.dir" value="${basedir}" />
         <property name="jython.base.dir" value="${basedir}" />
         <property name="source.dir" value="${basedir}/src" />
+        <property name="test.source.dir" value="${basedir}/tests/java" />
         <property name="templates.dir" value="${basedir}/src/templates" />
         <property name="python.lib" value="${basedir}/CPythonLib" />
         <property name="bugtests.dir" value="${basedir}/bugtests" />
         <property name="templates.lazy" value="true" />
         <property name="output.dir" value="${work.dir}/build" />
         <property name="compile.dir" value="${output.dir}/classes" />
+        <property name="test.compile.dir" value="${output.dir}/testclasses" />
         <property name="exposed.dir" value="${output.dir}/exposed" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
         <property name="parser.dir" value="${source.dir}/org/python/parser" />
+        <path id="test.classpath">
+            <path refid="main.classpath"/>
+            <pathelement path="extlibs/asm-commons-3.1.jar" />
+            <pathelement path="${exposed.dir}" />
+            <pathelement path="${compile.dir}" />
+            <pathelement path="${test.compile.dir}" />
+        </path>
     </target>
 	
     <target name="dump-env" depends="init">
@@ -238,8 +243,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>Build environment for ${ant.project.name}</echo>
         <echo>(Note: if ${propertyname} is displayed, then the property is not set)</echo>
         <echo>--- optional libraries ---</echo>
-        <echo>threadlocal        = '${threadlocal.present}'</echo>
-        <echo>secureclassloader  = '${secureclassloader.present}'</echo>
         <echo>servlet            = '${servlet.present}'</echo>
         <echo>readline           = '${readline.present}'</echo>
         <echo>jline              = '${jline.present}'</echo>
@@ -250,7 +253,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>jndi               = '${jndi.present}'</echo>
         <echo>jdbc               = '${javax.sql.present}'</echo>
         <echo>jdbc3.0            = '${jdbc30.present}'</echo>
-        <echo>asm                = '${asm.present}'</echo>
         <echo>--- properties ---</echo>
         <echo>work.dir           = '${work.dir}'</echo>
         <echo>jython.base.dir    = '${jython.base.dir}'</echo>
@@ -310,6 +312,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <!-- create output directories -->
     <target name ="prepare-output" depends="init">
         <mkdir dir="${compile.dir}" />
+        <mkdir dir="${test.compile.dir}" />
+        <mkdir dir="${exposed.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
 
@@ -405,8 +409,7 @@ The readme text for the next release will be like:
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-	       nowarn="${nowarn}"
-        >
+	       nowarn="${nowarn}">
             <exclude name="org/python/parser/python.java" />
             <exclude name="**/PyServlet.java" unless="servlet.present" />
             <exclude name="**/ReadlineConsole.java" unless="readline.present" />
@@ -430,20 +433,18 @@ The readme text for the next release will be like:
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}"
-        />
+               nowarn="${nowarn}"/>
 
         <!-- java files used by tests -->
-        <javac srcdir="${jython.base.dir}/tests/java"
-               destdir="${compile.dir}"
+        <javac srcdir="${test.source.dir}"
+               destdir="${test.compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
                nowarn="${nowarn}"> 
-            <classpath refid="main.classpath" />
- 
+            <classpath refid="test.classpath" />
         </javac>
 
         <copy file="${source.dir}/org/python/modules/ucnhash.dat"
@@ -456,8 +457,8 @@ The readme text for the next release will be like:
             </fileset>
         </copy>
     </target>
+
     <target name="expose" depends="init">
-        <mkdir dir="${exposed.dir}"/>
         <taskdef name="expose" classname="org.python.expose.generate.ExposeTask"
             classpath="${compile.dir}" classpathref="main.classpath"/>
         <expose srcdir="${compile.dir}"
@@ -476,8 +477,6 @@ The readme text for the next release will be like:
               <section name="Build-Info">
                   <attribute name="version" value="${jython.version}" />
                   <attribute name="svn-build" value="${do.checkout}" />
-                  <attribute name="threadlocal" value="${threadlocal.present}" />
-                  <attribute name="secureclassloader" value="${secureclassloader.present}" />
                   <attribute name="servlet" value="${servlet.present}" />
                   <attribute name="readline" value="${readline.present}" />
                   <attribute name="jline" value="${jline.present}" />
@@ -628,8 +627,6 @@ The readme text for the next release will be like:
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="svn-build" value="${do.checkout}" />
-                    <attribute name="threadlocal" value="${threadlocal.present}" />
-                    <attribute name="secureclassloader" value="${secureclassloader.present}" />
                     <attribute name="servlet" value="${servlet.present}" />
                     <attribute name="readline" value="${readline.present}" />
                     <attribute name="jline" value="${jline.present}" />
@@ -649,13 +646,25 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="regrtest" depends="init">
+    <target name="test" depends="javatest,regrtest"/>
+    <target name="javatest" depends="compile,expose">
+        <junit fork="true" printsummary="true">
+            <classpath refid="test.classpath"/>
+            <batchtest todir="${dist.dir}/testreports">
+                <fileset dir="${test.source.dir}" includes="**/*Test*.java">
+                    <exclude name="javatests/**/*" />
+                    <exclude name="**/InterpTestCase.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+    <target name="regrtest" depends="compile,expose,copy-lib">
         <java classname="org.python.util.jython" fork="true">
             <jvmarg value="-Dpython.home=${dist.dir}"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
-            <classpath>
-                <pathelement location="${dist.dir}/jython.jar"/>
-            </classpath>
+            <!-- Only run the tests that are expected to work on Jython -->
+            <arg value="--expected"/>
+            <classpath refid="test.classpath" />
         </java>
     </target>
 
