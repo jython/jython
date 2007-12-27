@@ -681,7 +681,6 @@ public class itertools implements ClassDictInit {
         private PyObject currentKey;
         private PyObject currentValue;
         private PyObject targetKey;
-        private boolean completed = false;
 
         private GroupBy(PyObject iterable, PyObject key) {
             iterator = iterable.__iter__();
@@ -690,7 +689,6 @@ public class itertools implements ClassDictInit {
         }
 
         public PyObject __iternext__() {
-            if (completed) return null;
             while (currentKey.equals(targetKey)) {
                 currentValue = nextElement(iterator);
                 if (currentValue == null) {
@@ -774,6 +772,7 @@ public class itertools implements ClassDictInit {
     public static PyIterator groupby(PyObject iterable) {
         return new GroupBy(iterable, null);
     }
+    
     // TODO: implement __copy__ protocol 
     private final static class Tee {
 
@@ -837,6 +836,7 @@ public class itertools implements ClassDictInit {
             }
         }
     }
+    
     public static PyString __doc__tee = new PyString(
             "tee(iterable, n=2) --> tuple of n independent iterators.");
 

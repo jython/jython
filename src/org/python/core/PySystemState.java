@@ -132,7 +132,7 @@ public class PySystemState extends PyObject
     public static int maxint = Integer.MAX_VALUE;
     public static int minint = Integer.MIN_VALUE;
 
-    public PyObject executable = Py.None;
+    public PyObject executable;
 
     public static PyList warnoptions;
 
@@ -270,6 +270,7 @@ public class PySystemState extends PyObject
         argv = (PyList)defaultArgv.repeat(1);
         path = (PyList)defaultPath.repeat(1);
         path.append(Py.newString("__classpath__"));
+        executable = defaultExecutable;
 
         meta_path = new PyList();
         meta_path.append(new PrecompiledImporter());
@@ -310,6 +311,7 @@ public class PySystemState extends PyObject
 
     private static PyList defaultPath;
     private static PyList defaultArgv;
+    private static PyObject defaultExecutable;
 
     public static Properties registry; // = init_registry();
     public static String prefix;
@@ -496,6 +498,7 @@ public class PySystemState extends PyObject
         // Initialize the path (and add system defaults)
         defaultPath = initPath(registry, standalone, jarFileName);
         defaultArgv = initArgv(argv);
+        defaultExecutable = initExecutable(registry);
 
         // Set up the known Java packages
         initPackages(registry);
@@ -599,6 +602,31 @@ public class PySystemState extends PyObject
             }
         }
         return argv;
+    }
+
+    /**
+     * Determine the default sys.executable value from the
+     * registry. Returns Py.None is no executable can be found.
+     *
+     * @param props a Properties registry
+     * @return a PyObject path string or Py.None
+     */
+    private static PyObject initExecutable(Properties props) {
+        String executable = (String)props.get("python.executable");
+        if (executable == null) {
+            return Py.None;
+        }
+
+        File executableFile = new File(executable);
+        try {
+            executableFile = executableFile.getCanonicalFile();
+        } catch (IOException ioe) {
+            executableFile = executableFile.getAbsoluteFile();
+        }
+        if (!executableFile.isFile()) {
+            return Py.None;
+        }
+        return new PyString(executableFile.getPath());
     }
 
     private static Hashtable builtinNames;

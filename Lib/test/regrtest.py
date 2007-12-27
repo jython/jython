@@ -957,6 +957,7 @@ _skips = {
         test_dummy_threading
         test_email
         test_email_codecs
+        test_extcall
         test_fcntl
         test_fork1
         test_gc
@@ -988,7 +989,6 @@ _skips = {
         test_parser
         test_plistlib
         test_poll
-        test_popen
         test_posix
         test_pty
         test_pwd
@@ -1008,7 +1008,6 @@ _skips = {
         test_sunaudiodev
         test_sundry
         test_symtable
-        test_tarfile
         test_timeout
         test_timing
         test_unicode_file

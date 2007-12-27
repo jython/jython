@@ -9,6 +9,9 @@ import tarfile
 
 from test import test_support
 
+# From CPython 2.5.1, with a change to tarname() to use the correct
+# tempdir when the testtar path name is relative (due to regrtest)
+
 # Check for our compression modules.
 try:
     import gzip
@@ -23,7 +26,8 @@ except ImportError:
 def path(path):
     return test_support.findfile(path)
 
-testtar = path("testtar.tar")
+tarname = "testtar.tar"
+testtar = path(tarname)
 tempdir = os.path.join(tempfile.gettempdir(), "testtar" + os.extsep + "dir")
 tempname = test_support.TESTFN
 membercount = 12
@@ -31,7 +35,7 @@ membercount = 12
 def tarname(comp=""):
     if not comp:
         return testtar
-    return os.path.join(tempdir, "%s%s%s" % (testtar, os.extsep, comp))
+    return os.path.join(dirname(), "%s%s%s" % (tarname, os.extsep, comp))
 
 def dirname():
     if not os.path.exists(tempdir):
