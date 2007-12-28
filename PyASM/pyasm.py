@@ -108,7 +108,6 @@ class ClassKeeper(object):
     asType = property(lambda self: Type.getType(
             "L%s;" % self.__name.replace('.','/')))
     def __init__(self, name):
-        print "CLASSNAME:", name
         self.__name = name
         self.__cw = asm.ClassWriter(asm.ClassWriter.COMPUTE_MAXS
                                     # Frames need to be computed for
@@ -379,7 +378,8 @@ class ClassKeeper(object):
                                 (type(value), value))
             self.clinit.putStatic(self.asType, name, pyObjectType)
 
-
+# FIXME: The block objects need to be refactored, se notes in ASMVisitor code.
+# FIXME: The contract of the block objects needs to be thoroughly documented.
 class Block(object):
     def __init__(self, asm, stackSize=0, *stateVariables):
         self.asm = asm
@@ -471,6 +471,7 @@ class TryExceptBlock(TryBlock):
 class ExceptBlock(HandlerBlock):
     def __init__(self, asm, sourceBlock):
         HandlerBlock.__init__(self, asm, sourceBlock, 3)
+    nestingStackSize = property(lambda self: self.stackSize - 3)
     def end(self):
         """stack is: ... exc_traceback exc_value exc_type"""
         self.asm.dupX2()
@@ -615,6 +616,16 @@ class ASMVisitor(Visitor):
         self.__class.setFilename(filename)
 
         self.asm = self.__class.newFunction(name)
+
+        for variableName in self.__cellvars:
+            if variableName not in self.__varnames:
+                continue
+            self.loadFrame()
+            self.push(self.__varnames.index(variableName))
+            self.derefIndex(variableName)
+            self.asm.invokeVirtual(pyFrameType, Method.getMethod(
+                    "void to_cell (int, int)"))
+
         self.asm.visitCode()
         self.__code = self.__class.getCodeReference()
 
@@ -787,27 +798,15 @@ class ASMVisitor(Visitor):
 
     def visitUnpackSequence(self, count):
         """sequence -- (element, )*count"""
-        sequenceType = getType(core.PySequenceList)
-        self.asm.checkCast(sequenceType) # FIXME: could generate better error
-        self.asm.dup()
-        self.asm.invokeVirtual(sequenceType, Method.getMethod(
-                "int size ()"))
         self.push(count)
-        ok = self.label()
-        self.asm.ifICmp(self.asm.EQ, ok)
-        self.push("Incompatible lengths for unpack")
         self.asm.invokeStatic(pyType, Method.getMethod(
-                "org.python.core.PyException ValueError (String)"))
-        self.asm.throwException()
-        self.asm.visitLabel(ok)
-        method = Method.getMethod("org.python.core.PyObject pyget (int)")
-        sequence = self.newLocal(sequenceType, "sequence")
-        sequence.store()
+                "org.python.core.PyObject[] unpackSequence (%s)" % ", ".join(
+                    ['org.python.core.PyObject', 'int'])))
         for i in range(count -1, -1, -1):
-            sequence.load()
+            if i != 0: self.asm.dup()
             self.push(i)
-            self.asm.invokeVirtual(sequenceType, method)
-        sequence.end()
+            self.asm.arrayLoad(pyObjectType)
+            if i != 0: self.asm.swap()
 
     def buildSequence(self, seqType, size):
         """helper method for BuildTuple and BuildList"""
@@ -956,24 +955,38 @@ class ASMVisitor(Visitor):
 
     def visitBreakLoop(self):
         """ -- """
+        # FIXME: in_try_block is a great patch by Nicholas Riley, but should
+        # probably be refactored so that it is handeled in the block object.
+        in_try_block = False
         for i in xrange(len(self.__blocks) -1,-1,-1):
             block = self.__blocks[i]
-            block.exit(False)
             if isinstance(block, LoopBlock):
                 self.asm.goTo(block.endLabel)
                 break
+            elif not in_try_block:
+                block.exit(False)
+            if isinstance(block, TryExceptBlock):
+                in_try_block = True
         else: # No surrounding LoopBlock was found
             raise SyntaxError("break not properly nested in loop.")
 
     def visitContinueLoop(self, loopStart):
         """ -- """
+        # FIXME: in_try_block is a great patch by Nicholas Riley, but should
+        # probably be refactored so that it is handeled in the block object.
+        in_try_block = False        
         for i in xrange(len(self.__blocks) -1,-1,-1):
             block = self.__blocks[i]
             if isinstance(block, LoopBlock):
+                self.asm.goTo(self.label(loopStart))
                 break
-            else:
+            elif not in_try_block:
                 block.exit(False)
-        self.asm.goTo(self.label(loopStart))
+            if isinstance(block, TryExceptBlock):
+                block.loadState()
+                in_try_block = True
+        else: # No surrounding LoopBlock was found
+            raise SyntaxError("continue not properly nested in loop.")
 
     def visitDeleteAttribute(self, attributeName):
         """object -- """
@@ -1233,12 +1246,6 @@ class ASMVisitor(Visitor):
 
     def visitLoadClosure(self, variableName):
         """ -- cellvar"""
-        if variableName in self.__varnames:
-            self.loadFrame()
-            self.push(self.__varnames.index(variableName))
-            self.derefIndex(variableName)
-            self.asm.invokeVirtual(pyFrameType, Method.getMethod(
-                    "void to_cell (int, int)"))
         self.loadFrame()
         self.derefIndex(variableName)
         self.asm.invokeVirtual(pyFrameType, Method.getMethod(
@@ -1416,9 +1423,15 @@ class ASMVisitor(Visitor):
     def visitReturnValue(self):
         """object -- """
         jumps = False
+        # FIXME: in_try_block is a great patch by Nicholas Riley, but should
+        # probably be refactored so that it is handeled in the block object.
+        in_try_block = False
         for i in xrange(len(self.__blocks) -1,-1,-1):
             block = self.__blocks[i]
-            jumps = block.exit() or jumps
+            if not in_try_block:
+                jumps = block.exit() or jumps
+            if isinstance(block, TryExceptBlock):
+                in_try_block = True
         self.loadFrame()
         self.push(-1)
         self.asm.putField(pyFrameType, 'f_lasti', Type.INT_TYPE)

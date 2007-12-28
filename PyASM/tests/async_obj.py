@@ -94,7 +94,7 @@ def test():
             self.x = x
             self.y = y
         def write(self):
-            print self.x, self.y
+            print "x,y", self.x, self.y
         def mult(self, n):
             self.x = n*2
             self.y = n*2
@@ -110,8 +110,9 @@ def test():
         y = x.get_x()
         print "Future %r" % (y,)
         x.write()
-        print y
+        print "y", y
 
+print __name__
 if __name__ == '__main__':
     test()
 
