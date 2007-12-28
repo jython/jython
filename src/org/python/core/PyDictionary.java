@@ -1244,6 +1244,51 @@ public class PyDictionary extends PyObject implements Map {
     }
 }
 
+/** Basic implementation of Entry that just holds onto a key and value and returns them. */
+class SimpleEntry<K, V> implements Entry<K, V> {
+    
+    public SimpleEntry(K key, V value){
+        this.key = key;
+        this.value = value;
+    }
+    
+    public K getKey() {
+        return key;
+    }
+
+    public V getValue() {
+        return value;
+    }
+
+    public boolean equals(Object o) {
+        if(!(o instanceof Map.Entry)) {
+            return false;
+        }
+        Map.Entry e = (Map.Entry)o;
+        return eq(key, e.getKey()) && eq(value, e.getValue());
+    }
+
+    private static boolean eq(Object o1, Object o2) {
+        return o1 == null ? o2 == null : o1.equals(o2);
+    }
+
+    public int hashCode() {
+        return ((key == null) ? 0 : key.hashCode()) ^ ((value == null) ? 0 : value.hashCode());
+    }
+
+    public String toString() {
+        return key + "=" + value;
+    }
+
+    public V setValue(V val) {
+        throw new UnsupportedOperationException("Not supported by this view");
+    }
+
+    protected K key;
+
+    protected V value;
+}
+
 /**
  * Wrapper for a Entry object returned from the java.util.Set
  * object which in turn is returned by the entrySet method of
@@ -1253,13 +1298,11 @@ public class PyDictionary extends PyObject implements Map {
  * objects that contain java Objects for a value so that on the java
  * side they can be reliable compared.
  */
-class PyToJavaMapEntry implements Entry {
-
-    private Entry entry;
+class PyToJavaMapEntry extends SimpleEntry {
 
     /** Create a copy of the Entry with Py.None coverted to null */
     PyToJavaMapEntry(Entry entry) {
-        this.entry = entry;
+        super(entry.getKey(), entry.getValue());
     }
     
     public boolean equals(Object o) {
@@ -1268,68 +1311,35 @@ class PyToJavaMapEntry implements Entry {
         return o.equals(me);
     }
 
+    // tojava is called in getKey and getValue so the raw key and value can be
+    // used to create a new SimpleEntry in getEntry.
     public Object getKey() {
-        return PyDictionary.tojava(entry.getKey());
+        return PyDictionary.tojava(key);
     }
     
     public Object getValue() {
-        return PyDictionary.tojava(entry.getValue());
+        return PyDictionary.tojava(value);
     }
 
-    public int hashCode() {
-        // formula for the hash code is taken from the Entry documentation.
-        // Given the source we assume that key is not null.
-        Object val = entry.getValue();
-        return getKey().hashCode() ^ (val == null ? 0 : val.hashCode());
-    }
-
-    public Object setValue(Object value) {
-        return entry.setValue(Py.java2py(value));
-    }
-
+    /**
+     * @return an entry that returns the original values given to this entry.
+     */
     public Entry getEntry() {
-        return entry;
+        return new SimpleEntry(key, value);
     }
 
 }
 
 /**
- * MapEntry Object for java MapEntry objects passed to the
- * java.util.Set interface which is returned by the entrySet method of
- * PyDictionary. Essentially like PyTojavaMapEntry, but going the
- * other way converting java Objects to PyObjects.
+ * MapEntry Object for java MapEntry objects passed to the java.util.Set
+ * interface which is returned by the entrySet method of PyDictionary.
+ * Essentially like PyTojavaMapEntry, but going the other way converting java
+ * Objects to PyObjects.
  */
-class JavaToPyMapEntry implements Entry {
-    private PyObject key;
-    private PyObject val;
-
+class JavaToPyMapEntry extends SimpleEntry {
+    
     public JavaToPyMapEntry(Entry entry) {
-        this.key = Py.java2py(entry.getKey());
-        this.val = Py.java2py(entry.getValue());
-    }
-    
-    public boolean equals(Object o) {
-        if (o == null || !(o instanceof Entry)) return false;
-        Entry oe = (Entry)o;
-        // The objects comming in will always be a Entry from a
-        // PyDictionary, so getKey and getValue will always be PyObjects
-        return oe.getKey().equals(key) && oe.getValue().equals(val);
-    }
-
-    public int hashCode() {
-        return key.hashCode() ^ val.hashCode();
-    }
-
-    public Object getKey() {
-        return key;
-    }
-
-    public Object getValue() {
-        return val;
-    }
-    
-    public Object setValue(Object val) {
-      throw new UnsupportedOperationException("Not supported by this view");
+        super(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
     }
 }
 
@@ -1338,7 +1348,6 @@ class JavaToPyMapEntry implements Entry {
  *  java.util.Map
  */
 class PyMapKeyValSet extends PyMapSet {
-
     
     PyMapKeyValSet(Collection coll) {
         super(coll);
@@ -1367,18 +1376,20 @@ class PyMapEntrySet extends PyMapSet {
 
     PyMapEntrySet(Collection coll) {
         super(coll);
-    } 
+    }
 
     // We know that PyMapEntrySet will only contains Entrys, so
     // if the object being passed in is null or not a Entry, then
     // return null which will match nothing for remove and contains methods.
     Object toPython(Object o) {
-        if (o == null || !(o instanceof Entry)) return null;
-        if (o instanceof PyToJavaMapEntry)
+        if(o == null || !(o instanceof Entry))
+            return null;
+        if(o instanceof PyToJavaMapEntry) {
             // Use the original entry from PyDictionary
             return ((PyToJavaMapEntry)o).getEntry();
-        else
+        } else {
             return new JavaToPyMapEntry((Entry)o);
+        }
     }
 
     Object toJava(Object o) {
@@ -1398,16 +1409,14 @@ class PyMapEntrySet extends PyMapSet {
  * functionality such that changes to the wrapper set or reflected in
  * PyDictionary.
  */
-abstract class PyMapSet extends AbstractSet
-{
-
-    Collection coll;
+abstract class PyMapSet extends AbstractSet {
 
     PyMapSet(Collection coll) {
         this.coll = coll;
     }
 
     abstract Object toJava(Object obj);
+
     abstract Object toPython(Object obj);
 
     public int size() {
@@ -1452,6 +1461,8 @@ abstract class PyMapSet extends AbstractSet
     public Iterator iterator() {
         return new PySetIter(coll.iterator());
     }
+    
+    private final Collection coll;
 }
 
 
