@@ -10,51 +10,71 @@ import unittest, test.test_support
 
 class JythonMapInJavaTest(unittest.TestCase):
 
-    def test_pydictionary_in_java(self):
+    def checkcontains(self, keys):
+        for k in keys:
+            self.failUnless(k in self.testdict)
+            self.failUnless(self.testmap.containsKey(k))
 
-        dict = {"a":"x", "b":"y", "c":"z", "d": None, None: "foo"}
-        jmap = Dict2JavaTest(dict)
+    def checkdoesntcontain(self, keys):
+        for k in keys:
+            self.failIf(k in self.testdict)
+            self.failIf(self.testmap.containsKey(k))
+
+    def checkvalues(self, *keyvalues):
+        for k, v in keyvalues:
+            self.assertEquals(v, self.testdict[k])
+
+    def checksize(self, correctsize):
+        self.assertEquals(self.testmap.size(), len(self.testdict))
+        self.assertEquals(self.testmap.size(), correctsize)
+
+    def maketestdict(self, base):
+        self.testdict = base
+        self.testmap = Dict2JavaTest(self.testdict)
+
+    def test_basic_map_operations(self):
+        self.maketestdict({"a":"x", "b":"y", "c":"z", "d": None, None: "foo"})
 
         # Make sure we see it on the java side
-        self.assertEqual(True, len(dict) == jmap.size() and jmap.containsKey("a")
-               and jmap.containsKey("b") and jmap.containsKey("c")
-               and jmap.containsKey("d"))
-
+        self.assertEquals(len(self.testdict), self.testmap.size())
+        self.checkcontains('abcd')
 
         # Add {"e":"1", "f":null, "g":"2"} using the Map.putAll method
-        oldlen = len(dict)
-        self.assertEqual(True, jmap.test_putAll_efg())
-        self.assertEqual(True, jmap.size() == len(dict) == oldlen + 3)
-        self.assertEqual(True, dict["e"] == "1" and dict["f"] == None and dict["g"] == "2")
+        oldlen = len(self.testdict)
+        self.failUnless(self.testmap.test_putAll_efg())
+        self.checksize(oldlen + 3)
+        self.checkvalues(('e', '1'), ('f', None), ('g', '2'))
 
         # test Map.get method, get "g" and "d" test will throw an exception if fail    
-        self.assertEqual(True, jmap.test_get_gd())
+        self.failUnless(self.testmap.test_get_gd())
 
         # remove elements with keys "a" and "c" with the Map.remove method
-        oldlen = len(dict)
-        self.assertEqual(True, jmap.test_remove_ac())
-        self.assertEqual(True, jmap.size() == len(dict) == oldlen - 2
-               and "a" not in dict and "c" not in dict)
+        oldlen = len(self.testdict)
+        self.failUnless(self.testmap.test_remove_ac())
+        self.checksize(oldlen - 2)
+        self.checkdoesntcontain('ac')
 
         # test Map.put method, adds {"h":null} and {"i": Integer(3)} and {"g": "3"}
         # "g" replaces a previous value of "2"
-        oldlen = len(dict)
-        self.assertEqual(True, jmap.test_put_hig())
-        self.assertEqual(True, dict["h"] == None and dict["i"] == 3 and dict["g"] == "3"
-               and len(dict) == oldlen+2)
+        oldlen = len(self.testdict)
+        self.failUnless(self.testmap.test_put_hig())
+        self.checksize(oldlen + 2)
+        self.checkvalues(('h', None), ('i', 3), ('g', '3'))
 
-        self.assertEqual(True, jmap.test_java_mapentry())
+        self.failUnless(self.testmap.test_java_mapentry())
 
-        set = jmap.entrySet()
-        self.assertEqual(True, set.size() == len(dict))
+    def test_entryset(self):
+        self.maketestdict({"h":"x", "b":"y", "g":"z", "e": None, None: "foo", "d":7})
+        set = self.testmap.entrySet()
+        self.checksize(set.size())
 
-        # Make sure the set is consistent with the dictionary
+        # Make sure the set is consistent with the self.testdictionary
         for entry in set:
-            self.assertEqual(True, dict.has_key(entry.getKey()))
-            self.assertEqual(True, dict[entry.getKey()] == entry.getValue())
-            self.assertEqual(True, set.contains(entry))
+            self.failUnless(self.testdict.has_key(entry.getKey()))
+            self.assertEquals(self.testdict[entry.getKey()], entry.getValue())
+            self.failUnless(set.contains(entry))
 
-        # make sure changes in the set are reflected in the dictionary
+        # make sure changes in the set are reflected in the self.testdictionary
         for entry in set:
             if entry.getKey() == "h":
                 hentry = entry
@@ -62,71 +82,83 @@ class JythonMapInJavaTest(unittest.TestCase):
                 eentry = entry
 
         # Make sure nulls and non Map.Entry object do not match anything in the set
-        self.assertEqual(True, jmap.test_entry_set_nulls())
+        self.failUnless(self.testmap.test_entry_set_nulls())
 
-        self.assertEqual(True, hentry != None and eentry != None)
-        self.assertEqual(True, set.remove(eentry))
-        self.assertEqual(True, not set.contains(eentry) and "e" not in dict)
-        self.assertEqual(True, set.remove(hentry))
-        self.assertEqual(True, not set.contains(hentry) and "h" not in dict)
-        self.assertEqual(True, jmap.size() == set.size() == len(dict))
+        self.failUnless(set.remove(eentry))
+        self.failIf(set.contains(eentry))
+        self.failIf("e" in self.testdict)
+        self.failUnless(set.remove(hentry))
+        self.failIf(set.contains(hentry))
+        self.failIf("h" in self.testdict)
+        self.checksize(set.size())
         oldlen = set.size()
-        self.assertEqual(True, not set.remove(eentry))
-        self.assertEqual(True, jmap.size() == set.size() == len(dict) == oldlen)
+        self.failIf(set.remove(eentry))
+        self.checksize(oldlen)
 
         # test Set.removeAll method
-        oldlen = len(dict)
+        oldlen = len(self.testdict)
         elist = [ entry for entry in set if entry.key in ["b", "g", "d", None]]
         self.assertEqual(len(elist), 4)
-        self.assertEqual(True, set.removeAll(elist))
-        self.assertEqual(True, "b" not in dict and "g" not in dict and "d"
-                       not in dict and None not in dict)
-        self.assertEqual(True, len(dict) == set.size() == jmap.size() == oldlen - 4)
+        self.failUnless(set.removeAll(elist))
+        self.checkdoesntcontain('bdg')
+        # can't check for None in self.testmap, so do it just for testdict
+        self.failIf(None in self.testdict)
+        self.checksize(oldlen - 4)
 
         itr = set.iterator()
         while (itr.hasNext()):
             val = itr.next()
             itr.remove()
-        self.assertEqual(True, set.isEmpty() and len(dict) == jmap.size() == 0)
+        self.failUnless(set.isEmpty())
+        self.checksize(0)
 
-        # Test collections returned by keySet() 
-        jmap.put("foo", "bar")
-        jmap.put("num", 5)
-        jmap.put(None, 4.3)
-        jmap.put(34, None)
-        keyset = jmap.keySet()
-        self.assertEqual(True, len(dict) == jmap.size() == keyset.size() == 4)
+    def test_keyset(self):
+        self.maketestdict({})
+        self.testmap.put("foo", "bar")
+        self.testmap.put("num", 5)
+        self.testmap.put(None, 4.3)
+        self.testmap.put(34, None)
+        keyset = self.testmap.keySet()
+        self.checksize(4)
 
-        self.assertEqual(True, keyset.remove(None))
-        self.assertEqual(True, len(dict) == 3 and not keyset.contains(None))
-        self.assertEqual(True, keyset.remove(34))
-        self.assertEqual(True, len(dict) == 2 and not keyset.contains(34))
+        self.failUnless(keyset.remove(None))
+        self.checksize(3)
+        self.failIf(keyset.contains(None))
+        self.failUnless(keyset.remove(34))
+        self.checksize(2)
+        self.failIf(keyset.contains(34))
         itr = keyset.iterator()
         while itr.hasNext():
             key = itr.next()
             if key == "num":
                 itr.remove()
-        self.assertEqual(True, len(dict) == jmap.size() == keyset.size() == 1)
+        self.checksize(1)
 
-        # test collections returned by values()
-        jmap.put("foo", "bar")
-        jmap.put("num", "bar")
-        jmap.put(None, 3.2)
-        jmap.put(34, None)
-        values = jmap.values()
-        self.assertEqual(True, len(dict) == jmap.size() == values.size() == 4)
+    def test_values(self):
+        self.maketestdict({})
+        self.testmap.put("foo", "bar")
+        self.testmap.put("num", "bar")
+        self.testmap.put(None, 3.2)
+        self.testmap.put(34, None)
+        values = self.testmap.values()
+        self.assertEquals(values.size(), len(self.testdict))
+        self.checksize(4)
 
-        self.assertEqual(True, values.remove(None))
-        self.assertEqual(True, values.size() == 3)
+        self.failUnless(values.remove(None))
+        self.checksize(3)
+        self.assertEquals(values.size(), len(self.testdict))
+
         itr = values.iterator()
         while itr.hasNext():
             val = itr.next()
             if val == "bar":
                 itr.remove()
-        self.assertEqual(True, len(dict) == values.size() == jmap.size() == 1)
-        values.clear()
-        self.assertEqual(True, values.isEmpty() and len(dict) == 0 and jmap.size() == 0)
+        self.checksize(1)
+        self.assertEquals(values.size(), len(self.testdict))
 
+        values.clear()
+        self.failUnless(values.isEmpty())
+        self.checksize(0)
 
 def test_main():
     test.test_support.run_unittest(JythonMapInJavaTest)
