@@ -8,6 +8,9 @@ On the Mac EasyDialogs.AskPassword is used, if available.
 
 """
 
+# From CPython 2.5.1 with a fix to _raw_input (see
+# http://bugs.python.org/issue1703 )
+
 # Authors: Piers Lauder (original)
 #          Guido van Rossum (Windows support and cleanup)
 
