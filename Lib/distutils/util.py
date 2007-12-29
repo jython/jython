@@ -106,7 +106,7 @@ def change_root (new_root, pathname):
     Otherwise, it requires making 'pathname' relative and then joining the
     two, which is tricky on DOS/Windows and Mac OS.
     """
-    if os.name == 'posix':
+    if os.name == 'posix' or os.name == 'java':
         if not os.path.isabs(pathname):
             return os.path.join(new_root, pathname)
         else:
@@ -427,7 +427,10 @@ byte_compile(files, optimize=%s, force=%s,
             # Terminology from the py_compile module:
             #   cfile - byte-compiled file
             #   dfile - purported source filename (same as 'file' by default)
-            cfile = file + (__debug__ and "c" or "o")
+            if sys.platform.startswith('java'):
+                cfile = file[:-3] + '$py.class'
+            else:
+                cfile = file + (__debug__ and "c" or "o")
             dfile = file
             if prefix:
                 if file[:len(prefix)] != prefix:

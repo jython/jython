@@ -73,7 +73,7 @@ def get_python_inc(plat_specific=0, prefix=None):
                 return os.path.join(prefix, "Mac", "Include")
         else:
                 return os.path.join(prefix, "Include")
-    elif os.name == "os2":
+    elif os.name == "os2" or os.name == "java":
         return os.path.join(prefix, "Include")
     else:
         raise DistutilsPlatformError(
@@ -127,7 +127,7 @@ def get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
             else:
                 return os.path.join(prefix, "Lib", "site-packages")
 
-    elif os.name == "os2":
+    elif os.name == "os2" or os.name == "java":
         if standard_lib:
             return os.path.join(PREFIX, "Lib")
         else:

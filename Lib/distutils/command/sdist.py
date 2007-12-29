@@ -80,6 +80,7 @@ class sdist (Command):
                     'no-prune': 'prune' }
 
     default_format = { 'posix': 'gztar',
+                       'java': 'gztar',
                        'nt': 'zip' }
 
     def initialize_options (self):
