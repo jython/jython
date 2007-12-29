@@ -6,6 +6,7 @@ Jython 2.2.2 rc1
     - [ 1744567 ] Simultaneous read & write on socket FileWrapper causes hang
     - [ 1831710 ] PyFileCloser throws NullPointerException on shutdown
     - [ 1817908 ] Broken link for corner icon in html documentation
+    - [ 1850722 ] socket.py - ClientCookie and ClientForm (and urllib2)
 
 Jython 2.2.1
   Identical to 2.2.1 rc2
