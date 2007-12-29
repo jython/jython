@@ -2,6 +2,7 @@
  test some jython internals
 """
 import unittest
+import time
 from test_support import run_suite
 
 import java
@@ -40,6 +41,7 @@ class WeakIdentityMapTests(unittest.TestCase):
         java.lang.System.runFinalization()
         java.lang.System.gc()
         java.lang.System.runFinalization()
+        time.sleep(1)
 
         assert widmap.get(i) == 'i' # triggers stale weak refs cleanup
         assert widmap._internal_map_size() == 1        
