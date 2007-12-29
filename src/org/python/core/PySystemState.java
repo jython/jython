@@ -688,6 +688,9 @@ public class PySystemState extends PyObject
             if (prefix != null) {
                 String libpath = new File(prefix, "Lib").toString();
                 path.append(new PyString(libpath));
+                libpath = new File(prefix, "Lib" + File.separator +
+                                   "site-packages").toString();
+                path.append(new PyString(libpath));
             }
 
             addPaths(path, props.getProperty("python.path", ""));
