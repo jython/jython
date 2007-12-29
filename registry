@@ -8,7 +8,6 @@
 #python.path = /home/bwarsaw/projects/python/Lib
 # This is how Finn  sets his path on his windows development machine
 #python.path = d:\\python20\\lib
-python.path=/Users/jbaker/Django/trunk
 
 # Set the directory to use for caches (currently just package information)
 # This directory should be writable by the user
