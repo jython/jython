@@ -2,8 +2,7 @@
 # used as fileset in build.xml (target copy-full)
 
 # Lib directories, in alphabetical order:
-distutils/*.py
-distutils/command/*.py
+distutils/**
 email/**
 encodings/**
 logging/*
