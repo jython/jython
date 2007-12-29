@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Utility functions for "import" support.
@@ -20,6 +21,9 @@ public class imp {
     private static final String UNKNOWN_SOURCEFILE = "<unknown>";
 
     public static final int APIVersion = 12;
+
+    /** Synchronizes import operations */
+    public static final ReentrantLock importLock = new ReentrantLock();
 
     private static Object syspathJavaLoaderLock = new Object();
 
@@ -701,9 +705,14 @@ public class imp {
      * @param modDict the __dict__ of an already imported module
      * @return an imported module (Java or Python)
      */
-    public synchronized static PyObject importName(String name, boolean top, 
+    public static PyObject importName(String name, boolean top, 
             PyObject modDict, PyObject fromlist) {
-        return import_name(name, top, modDict, fromlist);
+        importLock.lock();
+        try {
+            return import_name(name, top, modDict, fromlist);
+        } finally {
+            importLock.unlock();
+        }
     }
 
     /**

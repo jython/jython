@@ -1050,7 +1050,6 @@ _failures = {
     test_random
     test_softspace
     test_syntax
-    test_threaded_import
     test_trace
     test_ucn
     test_unicode
