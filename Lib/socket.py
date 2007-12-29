@@ -1139,6 +1139,12 @@ class ssl:
         cert = self._get_server_cert()
         return cert.getIssuerDN().toString()
 
+_realssl = ssl
+def ssl(sock, keyfile=None, certfile=None):
+    if hasattr(sock, "_sock"):
+        sock = sock._sock
+    return _realssl(sock, keyfile, certfile)
+
 def test():
     s = socket(AF_INET, SOCK_STREAM)
     s.connect(("", 80))
