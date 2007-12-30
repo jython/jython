@@ -22,7 +22,7 @@ public class UniversalIOWrapper extends TextIOBase {
     private boolean skipNextLF = false;
 
     /** The Newlines encountered in this file */
-    private EnumSet newlineTypes = EnumSet.noneOf(Newline.class);
+    private EnumSet<Newline> newlineTypes = EnumSet.noneOf(Newline.class);
 
     /**
      * Contruct a UniversalIOWrapper wrapping the given
@@ -317,11 +317,10 @@ public class UniversalIOWrapper extends TextIOBase {
             return new PyString(newline.getValue());
         }
 
-        PyObject[] newlines = new PyObject[size];
         int i = 0;
-        for (Iterator newlineIter = newlineTypes.iterator(); newlineIter.hasNext(); i++) {
-            String newline = ((Newline)newlineIter.next()).getValue();
-            newlines[i] = new PyString(newline);
+        PyObject[] newlines = new PyObject[size];
+        for (Newline newline : newlineTypes) {
+            newlines[i++] = new PyString(newline.getValue());
         }
         return new PyTuple(newlines);
     }
