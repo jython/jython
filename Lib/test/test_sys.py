@@ -235,10 +235,7 @@ class SysModuleTest(unittest.TestCase):
         self.assert_(isinstance(sys.builtin_module_names, tuple))
         self.assert_(isinstance(sys.copyright, basestring))
         self.assert_(isinstance(sys.exec_prefix, basestring))
-        if test.test_support.is_jython:
-            self.assertEqual(None, sys.executable)
-        else:
-            self.assert_(isinstance(sys.executable, basestring))
+        self.assert_(isinstance(sys.executable, basestring))
         self.assert_(isinstance(sys.hexversion, int))
         self.assert_(isinstance(sys.maxint, int))
         self.assert_(isinstance(sys.maxunicode, int))

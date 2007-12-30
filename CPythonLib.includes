@@ -2,6 +2,7 @@
 # used as fileset in build.xml (target copy-full)
 
 # Lib directories, in alphabetical order:
+distutils/**
 email/**
 encodings/**
 logging/*
@@ -100,6 +101,7 @@ shlex.py
 shutil.py
 SimpleHTTPServer.py
 SimpleXMLRPCServer.py
+site-packages/README
 smtplib.py
 sndhdr.py
 SocketServer.py

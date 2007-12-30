@@ -988,7 +988,6 @@ _skips = {
         test_parser
         test_plistlib
         test_poll
-        test_popen
         test_posix
         test_pty
         test_pwd
@@ -1008,7 +1007,6 @@ _skips = {
         test_sunaudiodev
         test_sundry
         test_symtable
-        test_tarfile
         test_timeout
         test_timing
         test_unicode_file
@@ -1052,7 +1050,6 @@ _failures = {
     test_random
     test_softspace
     test_syntax
-    test_threaded_import
     test_trace
     test_ucn
     test_unicode

@@ -222,4 +222,32 @@ public class imp {
     public static PyModule new_module(String name) {
         return new PyModule(name, null);
     }
+
+    /**
+     * Acquires the interpreter's import lock for the current thread.
+     *
+     * This lock should be used by import hooks to ensure
+     * thread-safety when importing modules.
+     *
+     */
+    public static void acquire_lock() {
+        org.python.core.imp.importLock.lock();
+    }
+
+    /**
+     * Release the interpreter's import lock.
+     *
+     */
+    public static void release_lock() {
+        org.python.core.imp.importLock.unlock();
+    }
+
+    /**
+     * Return true if the import lock is currently held, else false.
+     *
+     * @return true if the import lock is currently held, else false.
+     */
+    public static boolean lock_held() {
+        return org.python.core.imp.importLock.isHeldByCurrentThread();
+    }
 }

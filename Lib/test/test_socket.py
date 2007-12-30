@@ -15,6 +15,7 @@ import thread, threading
 import Queue
 import sys
 from weakref import proxy
+from StringIO import StringIO
 
 PORT = 50007
 HOST = 'localhost'
@@ -943,6 +944,26 @@ class FileObjectClassTestCase(SocketConnectedTest):
     def _testClosedAttr(self):
         self.assert_(not self.cli_file.closed)
 
+class PrivateFileObjectTestCase(unittest.TestCase):
+
+    """Test usage of socket._fileobject with an arbitrary socket-like
+    object.
+
+    E.g. urllib2 wraps an httplib.HTTPResponse object with _fileobject.
+    """
+
+    def setUp(self):
+        self.socket_like = StringIO()
+        self.socket_like.recv = self.socket_like.read
+        self.socket_like.sendall = self.socket_like.write
+
+    def testPrivateFileObject(self):
+        fileobject = socket._fileobject(self.socket_like, 'rb')
+        fileobject.write('hello jython')
+        fileobject.flush()
+        self.socket_like.seek(0)
+        self.assertEqual(fileobject.read(), 'hello jython')
+
 class UnbufferedFileObjectClassTestCase(FileObjectClassTestCase):
 
     """Repeat the tests from FileObjectClassTestCase with bufsize==0.
@@ -1199,6 +1220,7 @@ def test_main():
         UDPFileObjectClassOpenCloseTests,
         FileAndDupOpenCloseTests,
         FileObjectClassTestCase,
+        PrivateFileObjectTestCase,
         UnbufferedFileObjectClassTestCase,
         LineBufferedFileObjectClassTestCase,
         SmallBufferedFileObjectClassTestCase

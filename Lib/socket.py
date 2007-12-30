@@ -799,7 +799,7 @@ class _socketobject(object):
         if _sock is None:
             _sock = _realsocket(family, type, proto)
             _sock.reference_count += 1
-        elif not isinstance(_sock, _closedsocket):
+        elif isinstance(_sock, _nonblocking_api_mixin):
             _sock.reference_count += 1
         self._sock = _sock
         self.send = self._sock.send
@@ -810,7 +810,7 @@ class _socketobject(object):
 
     def close(self):
         _sock = self._sock
-        if not isinstance(_sock, _closedsocket):
+        if isinstance(_sock, _nonblocking_api_mixin):
             _sock.close_lock.acquire()
             try:
                 _sock.reference_count -=1 
@@ -833,7 +833,7 @@ class _socketobject(object):
 
         Return a new socket object connected to the same system resource."""
         _sock = self._sock
-        if isinstance(_sock, _closedsocket):
+        if not isinstance(_sock, _nonblocking_api_mixin):
             return _socketobject(_sock=_sock)
 
         _sock.close_lock.acquire()
@@ -849,7 +849,7 @@ class _socketobject(object):
         Return a regular file object corresponding to the socket.  The mode
         and bufsize arguments are as for the built-in open() function."""
         _sock = self._sock
-        if isinstance(_sock, _closedsocket):
+        if not isinstance(_sock, _nonblocking_api_mixin):
             return _fileobject(_sock, mode, bufsize)
 
         _sock.close_lock.acquire()
@@ -882,7 +882,7 @@ class _fileobject(object):
 
     def __init__(self, sock, mode='rb', bufsize=-1):
         self._sock = sock
-        if not isinstance(sock, _closedsocket):
+        if isinstance(sock, _nonblocking_api_mixin):
             sock.reference_count += 1
         self.mode = mode # Not actually used in this version
         if bufsize < 0:
@@ -908,7 +908,7 @@ class _fileobject(object):
             if self._sock:
                 self.flush()
         finally:
-            if self._sock and not isinstance(self._sock, _closedsocket):
+            if self._sock and isinstance(self._sock, _nonblocking_api_mixin):
                 self._sock.reference_count -= 1
                 if not self._sock.reference_count:
                     self._sock.close()
@@ -1138,6 +1138,12 @@ class ssl:
     def issuer(self):
         cert = self._get_server_cert()
         return cert.getIssuerDN().toString()
+
+_realssl = ssl
+def ssl(sock, keyfile=None, certfile=None):
+    if hasattr(sock, "_sock"):
+        sock = sock._sock
+    return _realssl(sock, keyfile, certfile)
 
 def test():
     s = socket(AF_INET, SOCK_STREAM)
