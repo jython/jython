@@ -195,27 +195,36 @@ public class PythonInterpreter {
         locals.__setitem__(name.intern(), value);
     }
 
-
     /**
      * Get the value of a variable in the local namespace
-     *
-     * @param name      the name of the variable
+     * 
+     * @param name
+     *            the name of the variable
+     * @return the value of the variable, or null if that name isn't assigned
      */
     public PyObject get(String name) {
         return locals.__finditem__(name.intern());
     }
 
     /**
-     * Get the value of a variable in the local namespace Value will be
-     * returned as an instance of the given Java class.
+     * Get the value of a variable in the local namespace Value will be returned
+     * as an instance of the given Java class.
      * <code>interp.get("foo", Object.class)</code> will return the most
      * appropriate generic Java object.
-     *
-     * @param name      the name of the variable
-     * @param javaclass the class of object to return
+     * 
+     * @param name
+     *            the name of the variable
+     * @param javaclass
+     *            the class of object to return
+     * @return the value of the variable as the given class, or null if that
+     *         name isn't assigned
      */
     public Object get(String name, Class javaclass) {
-        return Py.tojava(locals.__finditem__(name.intern()), javaclass);
+        PyObject val = locals.__finditem__(name.intern());
+        if(val == null) {
+            return null;
+        }
+        return Py.tojava(val, javaclass);
     }
 
     public void cleanup() {

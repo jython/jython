@@ -365,7 +365,11 @@ public final class Py
             memory_error((OutOfMemoryError)t);
         }
         PyJavaInstance exc = new PyJavaInstance(t);
-        return new PyException(exc.instclass, exc);
+        PyException pyex = new PyException(exc.instclass, exc);
+        // Set the cause to the original throwable to preserve
+        // the exception chain.
+        pyex.initCause(t);
+        return pyex;
     }
 
     // Don't allow any constructors. Class only provides static methods.
@@ -1088,7 +1092,7 @@ public final class Py
         PyException e = Py.JavaError(t);
 
         //Add another traceback object to the exception if needed
-        if (e.traceback.tb_frame != frame) {
+        if (e.traceback.tb_frame != frame && e.traceback.tb_frame.f_back != null) {
             e.traceback = new PyTraceback(e.traceback);
         }
     }
@@ -1099,7 +1103,7 @@ public final class Py
         pye.instantiate();
 
         // attach catching frame
-        if (frame != null && pye.traceback.tb_frame != frame) {
+        if (frame != null && pye.traceback.tb_frame != frame && pye.traceback.tb_frame.f_back != null) {
             pye.traceback = new PyTraceback(pye.traceback);
         }
        

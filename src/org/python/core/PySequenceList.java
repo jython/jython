@@ -138,9 +138,11 @@ public abstract class PySequenceList extends PySequence implements List {
     public boolean equals(Object o) {
         if(o instanceof PySequenceList) {
             return list.equals(((PySequenceList)o).list);
-        } else  if (o instanceof List) {
+        } else if(o instanceof List) {
             return o.equals(this);
-        } else return false;
+        } else {
+            return super.equals(o);
+        }
     }
 
     public int hashCode() {

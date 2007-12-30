@@ -20,11 +20,11 @@ and opendir), and leave all pathname manipulation to os.path
 (e.g., split and join).
 """
 
-__all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
-           "defpath", "name",
-           "system", "environ", "putenv", "getenv",
-           "popen", "popen2", "popen3", "popen4", "getlogin"
-           ]
+__all__ = ["altsep", "chdir", "curdir", "defpath", "environ", "getcwd", 
+           "getenv", "getlogin", "linesep", "listdir", "mkdir", "name", 
+           "pardir", "pathsep", "popen", "popen2", "popen3", "popen4", 
+           "putenv","remove", "rename", "rmdir", "sep", "stat", "system",
+           "unlink", "utime"]
 
 from java.io import File
 import java.lang.System
@@ -165,6 +165,8 @@ def remove(path):
     if not File(path).delete():
         raise OSError(0, "couldn't delete file", path)
 
+unlink = remove
+
 def rename(path, newpath):
     """rename(old, new)
 
@@ -173,6 +175,33 @@ def rename(path, newpath):
     if not File(path).renameTo(File(newpath)):
         raise OSError(0, "couldn't rename file", path)
 
+#XXX: copied from CPython 2.5.1
+def renames(old, new):
+    """renames(old, new)
+
+    Super-rename; create directories as necessary and delete any left
+    empty.  Works like rename, except creation of any intermediate
+    directories needed to make the new pathname good is attempted
+    first.  After the rename, directories corresponding to rightmost
+    path segments of the old name will be pruned way until either the
+    whole path is consumed or a nonempty directory is found.
+
+    Note: this function can fail with the new directory structure made
+    if you lack permissions needed to unlink the leaf directory or
+    file.
+
+    """
+    head, tail = path.split(new)
+    if head and tail and not path.exists(head):
+        makedirs(head)
+    rename(old, new)
+    head, tail = path.split(old)
+    if head and tail:
+        try:
+            removedirs(head)
+        except error:
+            pass
+
 def rmdir(path):
     """rmdir(path)
 
@@ -180,7 +209,30 @@ def rmdir(path):
     if not File(path).delete():
         raise OSError(0, "couldn't delete directory", path)
 
-unlink = remove
+#XXX: copied from CPython 2.5.1
+def removedirs(name):
+    """removedirs(path)
+
+    Super-rmdir; remove a leaf directory and empty all intermediate
+    ones.  Works like rmdir except that, if the leaf directory is
+    successfully removed, directories corresponding to rightmost path
+    segments will be pruned away until either the whole path is
+    consumed or an error occurs.  Errors during this latter phase are
+    ignored -- they generally mean that a directory was not empty.
+
+    """
+    rmdir(name)
+    head, tail = path.split(name)
+    if not tail:
+        head, tail = path.split(head)
+    while head and tail:
+        try:
+            rmdir(head)
+        except error:
+            break
+        head, tail = path.split(head)
+
+__all__.extend(['makedirs', 'renames', 'removedirs'])
 
 def stat(path):
     """stat(path) -> stat result
