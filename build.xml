@@ -232,7 +232,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="templates.lazy" value="true" />
         <property name="output.dir" value="${work.dir}/build" />
         <property name="compile.dir" value="${output.dir}/classes" />
-        <property name="test.compile.dir" value="${output.dir}/testclasses" />
         <property name="exposed.dir" value="${output.dir}/exposed" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
@@ -242,7 +241,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="extlibs/asm-commons-3.1.jar" />
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
-            <pathelement path="${test.compile.dir}" />
         </path>
     </target>
 	
@@ -320,7 +318,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <!-- create output directories -->
     <target name ="prepare-output" depends="init">
         <mkdir dir="${compile.dir}" />
-        <mkdir dir="${test.compile.dir}" />
         <mkdir dir="${exposed.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
@@ -440,7 +437,7 @@ The readme text for the next release will be like:
 
         <!-- java files used by tests -->
         <javac srcdir="${test.source.dir}"
-               destdir="${test.compile.dir}"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
