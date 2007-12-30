@@ -27,16 +27,13 @@ immutableset.expose:org.python.modules.sets.PyImmutableSet
 #gderived.py doesn't handle derived out of org.python.core
 #immutableset.derived:org.python.modules.sets.PyImmutableSetDerived
 int.derived:org.python.core.PyIntegerDerived
-int.expose:org.python.core.PyInteger
 list.derived:org.python.core.PyListDerived
 list.expose:org.python.core.PyList
 long.derived:org.python.core.PyLongDerived
 long.expose:org.python.core.PyLong
 module.derived:org.python.core.PyModuleDerived
 module.expose:org.python.core.PyModule
-None.expose:org.python.core.PyNone
 object.derived:org.python.core.PyObjectDerived
-object.expose:org.python.core.PyObject
 property.derived:org.python.core.PyPropertyDerived
 property.expose:org.python.core.PyProperty
 #sequence.expose:org.python.core.PySequence
@@ -47,7 +44,6 @@ set.expose:org.python.modules.sets.PySet
 #set.derived:org.python.modules.sets.PySetDerived
 slice.expose:org.python.core.PySlice
 slice.derived:org.python.core.PySliceDerived
-str.expose:org.python.core.PyString
 str.derived:org.python.core.PyStringDerived
 super.derived:org.python.core.PySuperDerived
 super.expose:org.python.core.PySuper
@@ -57,8 +53,6 @@ timetuple.expose:org.python.modules.time.PyTimeTuple
 tuple.derived:org.python.core.PyTupleDerived
 tuple.expose:org.python.core.PyTuple
 type.derived:org.python.core.PyTypeDerived
-type.expose:org.python.core.PyType
 unicode.derived:org.python.core.PyUnicodeDerived
-unicode.expose:org.python.core.PyUnicode
 zipimporter.derived:org.python.modules.zipimport.zipimporterDerived
 zipimporter.expose:org.python.modules.zipimport.zipimporter
