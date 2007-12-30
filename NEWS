@@ -8,8 +8,9 @@ Jython 2.5
     - PyDictionary now implements Map so it may be passed to any Java function expecting a Map.
 
   Ported Modules
-    - threading.local
+    - collections
     - filecmp
+    - threading.local
 
 Jython 2.2.2 rc1
   Bugs fixed

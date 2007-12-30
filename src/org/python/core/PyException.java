@@ -33,20 +33,19 @@ public class PyException extends RuntimeException
             while (type instanceof PyTuple && type.__len__() > 0) {
                 type = type.__getitem__(0);
             }
-            if (type instanceof PyClass &&
-                (!(value instanceof PyInstance &&
-                   __builtin__.isinstance(value, type))))
-            {
-                //System.out.println("value: "+value);
+            if(type instanceof PyClass
+                    && (!(value instanceof PyInstance && __builtin__.isinstance(value, type)))) {
                 if (value instanceof PyTuple) {
-                    value = ((PyClass)type).__call__(
-                            ((PyTuple)value).getArray());
+                    if (type == Py.KeyError) {
+                        value = ((PyClass)type).__call__(new PyObject[] {value});
+                    } else {
+                        value = ((PyClass)type).__call__(((PyTuple)value).getArray());
+                    }
                 } else {
                     if (value == Py.None) {
                         value = ((PyClass)type).__call__(Py.EmptyObjects);
                     } else {
-                        value = ((PyClass)type).__call__(
-                            new PyObject[] {value});
+                        value = ((PyClass)type).__call__(new PyObject[] {value});
                     }
                 }
             }

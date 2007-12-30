@@ -626,7 +626,7 @@ public class PyDictionary extends PyObject implements Map {
         }
     }
 
-    final void dict_init(PyObject[] args,String[] kwds) {
+    final protected void dict_init(PyObject[] args,String[] kwds) {
         int nargs = args.length - kwds.length;
         if (nargs > 1)
             throw PyBuiltinFunction.DefaultInfo.unexpectedCall(
@@ -785,10 +785,13 @@ public class PyDictionary extends PyObject implements Map {
         return dict___eq__(ob_other);
     }
 
-    final PyObject dict___eq__(PyObject ob_other) {
-        if (ob_other.getType() != getType())
+    final PyObject dict___eq__(PyObject ob_other) {               
+        PyType thisType = getType();
+        PyType otherType = ob_other.getType();
+        if (otherType != thisType && !thisType.isSubType(otherType) 
+                && !otherType.isSubType(thisType)) {
             return null;
-
+        }
         PyDictionary other = (PyDictionary)ob_other;
         int an = table.size();
         int bn = other.table.size();
@@ -855,9 +858,12 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final int dict___cmp__(PyObject ob_other) {
-        if (ob_other.getType() != getType())
+        PyType thisType = getType();
+        PyType otherType = ob_other.getType();
+        if (otherType != thisType && !thisType.isSubType(otherType) 
+                && !otherType.isSubType(thisType)) {
             return -2;
-
+        }
         PyDictionary other = (PyDictionary)ob_other;
         int an = table.size();
         int bn = other.table.size();

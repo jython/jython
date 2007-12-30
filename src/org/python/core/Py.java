@@ -162,7 +162,10 @@ public final class Py
     public static PyException KeyError(String message) {
         return new PyException(Py.KeyError, message);
     }
-
+    public static PyException KeyError(PyObject key) {
+        return new PyException(Py.KeyError, key);
+    }
+    
     public static PyObject AssertionError;
     public static PyException AssertionError(String message) {
         return new PyException(Py.AssertionError, message);

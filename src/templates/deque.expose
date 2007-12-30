@@ -1,0 +1,59 @@
+# setup
+type_name: deque
+type_class: PyDeque
+# exposed methods
+expose_meth: :- append o
+expose_meth: :- appendleft o
+expose_meth: pop
+expose_meth: popleft
+expose_meth: :- extend o
+expose_meth: :- extendleft o
+expose_meth: :- remove o
+expose_meth: :- clear 
+expose_meth: :- rotate o?
+expose_meth: __getitem__ o
+expose_meth: :- __setitem__ o o
+expose_meth: :- __delitem__ o
+expose_meth: :i __len__
+expose_meth: __repr__
+  return new PyString(((`typ)self).deque_toString());
+expose_meth: __iter__
+expose_meth: __eq__ o
+  PyObject ret = ((`typ)self).deque___eq__(`arg0);
+  if (ret == null)
+  return Py.NotImplemented;
+  return ret;
+expose_meth: __ne__ o
+  PyObject ret = ((`typ)self).deque___ne__(`arg0);
+  if (ret == null)
+  return Py.NotImplemented;
+  return ret;
+expose_meth: __lt__ o
+  PyObject ret = ((`typ)self).deque___lt__(`arg0);
+  if (ret == null)
+  return Py.NotImplemented;
+  return ret;
+expose_meth: __le__ o
+  PyObject ret = ((`typ)self).deque___le__(`arg0);
+  if (ret == null)
+  return Py.NotImplemented;
+  return ret;
+expose_meth: __gt__ o
+  PyObject ret = ((`typ)self).deque___gt__(`arg0);
+  if (ret == null)
+  return Py.NotImplemented;
+  return ret;
+expose_meth: __ge__ o
+  PyObject ret = ((`typ)self).deque___ge__(`arg0);
+  if (ret == null)
+  return Py.NotImplemented;
+  return ret;
+expose_meth: __hash__
+   return new PyInteger(((`typ)self).deque_hashCode());
+expose_meth: __reduce__
+#expose_meth: __reduce_ex__ i?
+expose_meth: __copy__
+expose_wide_meth: __init__ -1 -1
+  `vdeleg`(init);
+  `void;
+expose_new_mutable:
