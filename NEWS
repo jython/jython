@@ -1,5 +1,16 @@
 Jython NEWS
 
+Jython 2.5
+  Incompatible Changes
+    - To implement the Java Map interface, PyDictionary.values now returns a Collection instead of a PyList
+  
+  New Features
+    - PyDictionary now implements Map so it may be passed to any Java function expecting a Map.
+
+  Ported Modules
+    - threading.local
+    - filecmp
+
 Jython 2.2.2 rc1
   Bugs fixed
     - [ 1806980 ] os.path.join ignores empty string
