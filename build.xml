@@ -240,6 +240,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <path id="test.classpath">
             <path refid="main.classpath"/>
             <pathelement path="extlibs/asm-commons-3.1.jar" />
+            <pathelement path="extlibs/junit-3.8.2.jar" />
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
         </path>
