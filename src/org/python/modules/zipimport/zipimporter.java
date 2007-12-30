@@ -369,8 +369,8 @@ public class zipimporter extends PyObject {
             }
 
             String childFile = pathFile.getPath();
-            prefix = childFile.substring(childFile.lastIndexOf(File.separator) + 1) +
-                    File.separator + prefix;
+            prefix = childFile.substring(childFile.lastIndexOf(File.separator) + 1)
+                    + File.separator + prefix;
             pathFile = parentFile;
         }
 
@@ -599,8 +599,7 @@ public class zipimporter extends PyObject {
             return zipArchive.getInputStream(data);
         }
         catch (IOException ioe) {
-            Py.writeDebug("import", "zipimporter.getDataStream exception: " +
-                          ioe.toString());
+            Py.writeDebug("import", "zipimporter.getDataStream exception: " + ioe.toString());
             throw zipimport.ZipImportError("zipimport: can not open file: " + archive);
 
         }
@@ -753,8 +752,7 @@ public class zipimporter extends PyObject {
         for (Enumeration zipEntries = zipFile.entries(); zipEntries.hasMoreElements();) {
             ZipEntry zipEntry = (ZipEntry)zipEntries.nextElement();
 
-            PyObject __file__ = new PyString(archive + File.separator +
-                                             zipEntry.getName());
+            PyObject __file__ = new PyString(archive + File.separator + zipEntry.getName());
             PyObject compress = new PyInteger(zipEntry.getMethod());
             PyObject data_size = new PyLong(zipEntry.getCompressedSize());
             PyObject file_size = new PyLong(zipEntry.getSize());

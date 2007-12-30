@@ -59,7 +59,6 @@ public class zipimport implements ClassDictInit {
     public static void initClassExceptions(PyObject exceptions) {
         PyObject ImportError = exceptions.__finditem__("ImportError");
         ZipImportError = Py.makeClass("ZipImportError", new PyObject[] {ImportError},
-                                      Py.newJavaCode(exceptions.class, "empty__init__"),
-                                      null);
+                                      Py.newJavaCode(exceptions.class, "empty__init__"), null);
     }
 }
