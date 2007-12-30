@@ -4,155 +4,100 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-public class PyGetSetDescr extends PyDescriptor {
+public class PyGetSetDescr extends PyDataDescr {
 
-    private Method get_meth;
-
-    private Method set_meth;
-
-    private Method del_meth;
-
-    private Class getset_type;
-
-    public PyGetSetDescr(PyType dtype,
-                         String name,
-                         Class c,
-                         String get,
-                         String set) {
-        this(dtype, name, c, get, set, null);
-    }
     public PyGetSetDescr(String name, Class c, String get, String set) {
         this(PyType.fromClass(c), name, c, get, set, null);
     }
-
-    public PyGetSetDescr(PyType dtype,
-                         String name,
-                         Class c,
-                         String get,
-                         String set,
-                         String del) {
-        this.name = name;
-        this.dtype = dtype;
-        try {
-            get_meth = c.getMethod(get, new Class[] {});
-        } catch(NoSuchMethodException e) {
-            throw Py.SystemError("method "+get+" doesn't exist: "+c.getName());
-        }
-        if(Modifier.isStatic(get_meth.getModifiers()))
-            throw Py.SystemError("static "+get+" not supported: "+c.getName());
-        getset_type = get_meth.getReturnType();
-        if(set != null) {
-            try {
-                set_meth = c.getMethod(set, new Class[] {getset_type});
-            } catch(NoSuchMethodException e) {
-                throw Py.SystemError("method "+set+" doesn't exist: "+c.getName());
-            }
-            if(Modifier.isStatic(set_meth.getModifiers()))
-                throw Py.SystemError("static "+set+" not supported: "+c.getName());
-        }
-        if(del != null) {
-            try {
-                del_meth = c.getMethod(del, new Class[] {});
-            } catch(NoSuchMethodException e) {
-                throw Py.SystemError("method "+set+" doesn't exist: "+c.getName());
-            }
-            if(Modifier.isStatic(del_meth.getModifiers()))
-                throw Py.SystemError("static "+del+" not supported: "+c.getName());
-        }
-     }
 
     public PyGetSetDescr(String name, Class c, String get, String set, String del) {
         this(PyType.fromClass(c), name, c, get, set, del);
     }
 
-    public String toString() {
-        return "<attribute '" + name + "' of '" + dtype.fastGetName()
-                + "' objects>";
+    public PyGetSetDescr(PyType dtype, String name, Class c, String get, String set) {
+        this(dtype, name, c, get, set, null);
     }
 
-    /**
-     * @see org.python.core.PyObject#__get__(org.python.core.PyObject,
-     *      org.python.core.PyObject)
-     */
-    public PyObject __get__(PyObject obj, PyObject type) {
+    public PyGetSetDescr(PyType dtype, String name, Class c, String get, String set, String del) {
+        super(dtype, name, getMethod(c, get).getReturnType());
+        this.name = name;
+        this.dtype = dtype;
+        getMeth = getMethod(c, get);
+        if(set != null) {
+            setMeth = getMethod(c, set, ofType);
+        }
+        if(del != null) {
+            delMeth = getMethod(c, del);
+        }
+    }
+
+    private static Method getMethod(Class onClass, String name, Class... params) {
+        Method meth;
         try {
-            if(obj != null) {
-                PyType objtype = obj.getType();
-                if(objtype != dtype && !objtype.isSubType(dtype))
-                    throw get_wrongtype(objtype);
-                Object v = get_meth.invoke(obj, new Object[0]);
-                if(v == null) {
-                    obj.noAttributeError(name);
-                }
-                return Py.java2py(v);
-            }
-            return this;
+            meth = onClass.getMethod(name, params);
+        } catch(NoSuchMethodException e) {
+            throw Py.SystemError("method '" + name + "' doesn't exist on '" + onClass.getName()
+                    + "'");
+        }
+        if(Modifier.isStatic(meth.getModifiers())) {
+            throw Py.SystemError("static '" + name + "' not supported on '" + onClass.getName()
+                    + "'");
+        }
+        return meth;
+    }
+
+    @Override
+    public Object invokeGet(PyObject obj) {
+        try {
+            return getMeth.invoke(obj);
         } catch(IllegalArgumentException e) {
             throw Py.JavaError(e);
         } catch(IllegalAccessException e) {
-            throw Py.JavaError(e); // unexpected
+            throw Py.JavaError(e);
         } catch(InvocationTargetException e) {
             throw Py.JavaError(e);
         }
     }
 
-    /**
-     * @see org.python.core.PyObject#__set__(org.python.core.PyObject,
-     *      org.python.core.PyObject)
-     */
-    public void __set__(PyObject obj, PyObject value) {
+    @Override
+    public void invokeSet(PyObject obj, Object converted) {
         try {
-            // obj != null
-            PyType objtype = obj.getType();
-            if(objtype != dtype && !objtype.isSubType(dtype))
-                throw get_wrongtype(objtype);
-            Object converted = value.__tojava__(getset_type);
-            if(converted == Py.NoConversion) {
-                throw Py.TypeError(""); // xxx
-            }
-            set_meth.invoke(obj, new Object[] {converted});
+            setMeth.invoke(obj, converted);
         } catch(IllegalArgumentException e) {
             throw Py.JavaError(e);
         } catch(IllegalAccessException e) {
-            throw Py.JavaError(e); // unexpected
+            throw Py.JavaError(e);
         } catch(InvocationTargetException e) {
             throw Py.JavaError(e);
         }
     }
 
-    public void __delete__(PyObject obj) {
+    @Override
+    public void invokeDelete(PyObject obj) {
         try {
-            if(obj != null) {
-                PyType objtype = obj.getType();
-                if(objtype != dtype && !objtype.isSubType(dtype))
-                    throw get_wrongtype(objtype);
-                del_meth.invoke(obj, new Object[0]);
-            }
+            delMeth.invoke(obj, new Object[0]);
         } catch(IllegalArgumentException e) {
             throw Py.JavaError(e);
         } catch(IllegalAccessException e) {
-            throw Py.JavaError(e); // unexpected
+            throw Py.JavaError(e);
         } catch(InvocationTargetException e) {
             throw Py.JavaError(e);
         }
     }
 
-    /**
-     * @see org.python.core.PyObject#implementsDescrSet()
-     */
+    @Override
     public boolean implementsDescrSet() {
-        return set_meth != null;
+        return setMeth != null;
     }
 
+    @Override
     public boolean implementsDescrDelete() {
-        return del_meth != null;
+        return delMeth != null;
     }
 
-    /**
-     * @see org.python.core.PyObject#isDataDescr()
-     */
-    public boolean isDataDescr() {
-        return true;
-    }
+    private Method getMeth;
 
+    private Method setMeth;
+
+    private Method delMeth;
 }

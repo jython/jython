@@ -1,8 +1,14 @@
 package org.python.core;
 
+import org.python.core.PyBuiltinFunction.DefaultInfo;
+
 public abstract class PyBuiltinMethodNarrow extends PyBuiltinMethod {
 
-    public PyBuiltinMethodNarrow(PyObject self, Info info) {
+    protected PyBuiltinMethodNarrow(String name, int minArgs, int maxArgs) {
+        super(null, new DefaultInfo(name, minArgs, maxArgs));
+    }
+
+    protected PyBuiltinMethodNarrow(PyObject self, Info info) {
         super(self, info);
     }
 

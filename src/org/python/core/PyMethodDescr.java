@@ -7,6 +7,10 @@ public class PyMethodDescr extends PyDescriptor implements
 
     protected PyBuiltinFunction meth;
 
+    public PyMethodDescr(Class c, PyBuiltinFunction func) {
+        this(func.info.getName(), c, func.info.getMinargs(), func.info.getMaxargs(), func);
+    }
+
     public PyMethodDescr(String name,
                          Class c,
                          int minargs,

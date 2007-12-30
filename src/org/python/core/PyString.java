@@ -3,1573 +3,25 @@ package org.python.core;
 
 import org.python.core.util.StringUtil;
 
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
+
 /**
  * A builtin python string.
  */
-public class PyString extends PyBaseString implements ClassDictInit
+@ExposedType(name="str")
+public class PyString extends PyBaseString
 {
-    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-    /* type info */
-
-    public static final String exposed_name="str";
-
-    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___ne__ extends PyBuiltinMethodNarrow {
-
-            exposed___ne__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___ne__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___ne__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__ne__",new PyMethodDescr("__ne__",PyString.class,1,1,new exposed___ne__(null,null)));
-        class exposed___eq__ extends PyBuiltinMethodNarrow {
-
-            exposed___eq__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___eq__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___eq__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyString.class,1,1,new exposed___eq__(null,null)));
-        class exposed___lt__ extends PyBuiltinMethodNarrow {
-
-            exposed___lt__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___lt__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___lt__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__lt__",new PyMethodDescr("__lt__",PyString.class,1,1,new exposed___lt__(null,null)));
-        class exposed___le__ extends PyBuiltinMethodNarrow {
-
-            exposed___le__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___le__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___le__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__le__",new PyMethodDescr("__le__",PyString.class,1,1,new exposed___le__(null,null)));
-        class exposed___gt__ extends PyBuiltinMethodNarrow {
-
-            exposed___gt__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___gt__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___gt__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__gt__",new PyMethodDescr("__gt__",PyString.class,1,1,new exposed___gt__(null,null)));
-        class exposed___ge__ extends PyBuiltinMethodNarrow {
-
-            exposed___ge__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___ge__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___ge__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PyString.class,1,1,new exposed___ge__(null,null)));
-        class exposed___add__ extends PyBuiltinMethodNarrow {
-
-            exposed___add__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___add__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___add__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__add__",new PyMethodDescr("__add__",PyString.class,1,1,new exposed___add__(null,null)));
-        class exposed___mod__ extends PyBuiltinMethodNarrow {
-
-            exposed___mod__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___mod__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___mod__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__mod__",new PyMethodDescr("__mod__",PyString.class,1,1,new exposed___mod__(null,null)));
-        class exposed___mul__ extends PyBuiltinMethodNarrow {
-
-            exposed___mul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___mul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___mul__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__mul__",new PyMethodDescr("__mul__",PyString.class,1,1,new exposed___mul__(null,null)));
-        class exposed___rmul__ extends PyBuiltinMethodNarrow {
-
-            exposed___rmul__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___rmul__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).str___rmul__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__rmul__",new PyMethodDescr("__rmul__",PyString.class,1,1,new exposed___rmul__(null,null)));
-        class exposed___getitem__ extends PyBuiltinMethodNarrow {
-
-            exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___getitem__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyString)self).seq___finditem__(arg0);
-                if (ret==null) {
-                    throw Py.IndexError("index out of range: "+arg0);
-                }
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyString.class,1,1,new exposed___getitem__(null,null)));
-        class exposed___getslice__ extends PyBuiltinMethodNarrow {
-
-            exposed___getslice__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___getslice__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                return((PyString)self).seq___getslice__(arg0,arg1,arg2);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return((PyString)self).seq___getslice__(arg0,arg1);
-            }
-
-        }
-        dict.__setitem__("__getslice__",new PyMethodDescr("__getslice__",PyString.class,2,3,new exposed___getslice__(null,null)));
-        class exposed___contains__ extends PyBuiltinMethodNarrow {
-
-            exposed___contains__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___contains__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return Py.newBoolean(((PyString)self).str___contains__(arg0));
-            }
-
-        }
-        dict.__setitem__("__contains__",new PyMethodDescr("__contains__",PyString.class,1,1,new exposed___contains__(null,null)));
-        class exposed___len__ extends PyBuiltinMethodNarrow {
-
-            exposed___len__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___len__(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newInteger(((PyString)self).str___len__());
-            }
-
-        }
-        dict.__setitem__("__len__",new PyMethodDescr("__len__",PyString.class,0,0,new exposed___len__(null,null)));
-        class exposed___str__ extends PyBuiltinMethodNarrow {
-
-            exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___str__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyString)self).str___str__();
-            }
-
-        }
-        dict.__setitem__("__str__",new PyMethodDescr("__str__",PyString.class,0,0,new exposed___str__(null,null)));
-        class exposed___unicode__ extends PyBuiltinMethodNarrow {
-
-            exposed___unicode__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___unicode__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyString)self).str___unicode__();
-            }
-
-        }
-        dict.__setitem__("__unicode__",new PyMethodDescr("__unicode__",PyString.class,0,0,new exposed___unicode__(null,null)));
-        class exposed___hash__ extends PyBuiltinMethodNarrow {
-
-            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___hash__(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newInteger(((PyString)self).str_hashCode());
-            }
-
-        }
-        dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyString.class,0,0,new exposed___hash__(null,null)));
-        class exposed___repr__ extends PyBuiltinMethodNarrow {
-
-            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___repr__(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_toString());
-            }
-
-        }
-        dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyString.class,0,0,new exposed___repr__(null,null)));
-        class exposed_capitalize extends PyBuiltinMethodNarrow {
-
-            exposed_capitalize(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_capitalize(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_capitalize());
-            }
-
-        }
-        dict.__setitem__("capitalize",new PyMethodDescr("capitalize",PyString.class,0,0,new exposed_capitalize(null,null)));
-        class exposed_center extends PyBuiltinMethodNarrow {
-
-            exposed_center(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_center(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_center(arg0.asInt(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("center",new PyMethodDescr("center",PyString.class,1,1,new exposed_center(null,null)));
-        class exposed_count extends PyBuiltinMethodNarrow {
-
-            exposed_count(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_count(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                try {
-                    return Py.newInteger(((PyString)self).str_count(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                    case 2:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return Py.newInteger(((PyString)self).str_count(arg0.asString(0),arg1.asInt(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return Py.newInteger(((PyString)self).str_count(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("count",new PyMethodDescr("count",PyString.class,1,3,new exposed_count(null,null)));
-        class exposed_decode extends PyBuiltinMethodNarrow {
-
-            exposed_decode(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_decode(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return((PyString)self).str_decode(arg0.asString(0),arg1.asString(1));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                    case 1:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return((PyString)self).str_decode(arg0.asString(0));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__() {
-                return((PyString)self).str_decode();
-            }
-
-        }
-        dict.__setitem__("decode",new PyMethodDescr("decode",PyString.class,0,2,new exposed_decode(null,null)));
-        class exposed_encode extends PyBuiltinMethodNarrow {
-
-            exposed_encode(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_encode(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return new PyString(((PyString)self).str_encode(arg0.asString(0),arg1.asString(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                    case 1:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_encode(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_encode());
-            }
-
-        }
-        dict.__setitem__("encode",new PyMethodDescr("encode",PyString.class,0,2,new exposed_encode(null,null)));
-        class exposed_endswith extends PyBuiltinMethodNarrow {
-
-            exposed_endswith(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_endswith(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                try {
-                    return Py.newBoolean(((PyString)self).str_endswith(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                    case 2:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return Py.newBoolean(((PyString)self).str_endswith(arg0.asString(0),arg1.asInt(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return Py.newBoolean(((PyString)self).str_endswith(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("endswith",new PyMethodDescr("endswith",PyString.class,1,3,new exposed_endswith(null,null)));
-        class exposed_expandtabs extends PyBuiltinMethodNarrow {
-
-            exposed_expandtabs(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_expandtabs(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_expandtabs(arg0.asInt(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_expandtabs());
-            }
-
-        }
-        dict.__setitem__("expandtabs",new PyMethodDescr("expandtabs",PyString.class,0,1,new exposed_expandtabs(null,null)));
-        class exposed_find extends PyBuiltinMethodNarrow {
-
-            exposed_find(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_find(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                try {
-                    return Py.newInteger(((PyString)self).str_find(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                    case 2:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return Py.newInteger(((PyString)self).str_find(arg0.asString(0),arg1.asInt(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return Py.newInteger(((PyString)self).str_find(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("find",new PyMethodDescr("find",PyString.class,1,3,new exposed_find(null,null)));
-        class exposed_index extends PyBuiltinMethodNarrow {
-
-            exposed_index(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_index(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                try {
-                    return Py.newInteger(((PyString)self).str_index(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                    case 2:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return Py.newInteger(((PyString)self).str_index(arg0.asString(0),arg1.asInt(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return Py.newInteger(((PyString)self).str_index(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("index",new PyMethodDescr("index",PyString.class,1,3,new exposed_index(null,null)));
-        class exposed_isalnum extends PyBuiltinMethodNarrow {
-
-            exposed_isalnum(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isalnum(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_isalnum());
-            }
-
-        }
-        dict.__setitem__("isalnum",new PyMethodDescr("isalnum",PyString.class,0,0,new exposed_isalnum(null,null)));
-        class exposed_isalpha extends PyBuiltinMethodNarrow {
-
-            exposed_isalpha(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isalpha(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_isalpha());
-            }
-
-        }
-        dict.__setitem__("isalpha",new PyMethodDescr("isalpha",PyString.class,0,0,new exposed_isalpha(null,null)));
-        class exposed_isdecimal extends PyBuiltinMethodNarrow {
-
-            exposed_isdecimal(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isdecimal(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_isdecimal());
-            }
-
-        }
-        dict.__setitem__("isdecimal",new PyMethodDescr("isdecimal",PyString.class,0,0,new exposed_isdecimal(null,null)));
-        class exposed_isdigit extends PyBuiltinMethodNarrow {
-
-            exposed_isdigit(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isdigit(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_isdigit());
-            }
-
-        }
-        dict.__setitem__("isdigit",new PyMethodDescr("isdigit",PyString.class,0,0,new exposed_isdigit(null,null)));
-        class exposed_islower extends PyBuiltinMethodNarrow {
-
-            exposed_islower(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_islower(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_islower());
-            }
-
-        }
-        dict.__setitem__("islower",new PyMethodDescr("islower",PyString.class,0,0,new exposed_islower(null,null)));
-        class exposed_isnumeric extends PyBuiltinMethodNarrow {
-
-            exposed_isnumeric(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isnumeric(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_isnumeric());
-            }
-
-        }
-        dict.__setitem__("isnumeric",new PyMethodDescr("isnumeric",PyString.class,0,0,new exposed_isnumeric(null,null)));
-        class exposed_isspace extends PyBuiltinMethodNarrow {
-
-            exposed_isspace(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isspace(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_isspace());
-            }
-
-        }
-        dict.__setitem__("isspace",new PyMethodDescr("isspace",PyString.class,0,0,new exposed_isspace(null,null)));
-        class exposed_istitle extends PyBuiltinMethodNarrow {
-
-            exposed_istitle(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_istitle(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_istitle());
-            }
-
-        }
-        dict.__setitem__("istitle",new PyMethodDescr("istitle",PyString.class,0,0,new exposed_istitle(null,null)));
-        class exposed_isunicode extends PyBuiltinMethodNarrow {
-
-            exposed_isunicode(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isunicode(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_isunicode());
-            }
-
-        }
-        dict.__setitem__("isunicode",new PyMethodDescr("isunicode",PyString.class,0,0,new exposed_isunicode(null,null)));
-        class exposed_isupper extends PyBuiltinMethodNarrow {
-
-            exposed_isupper(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_isupper(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyString)self).str_isupper());
-            }
-
-        }
-        dict.__setitem__("isupper",new PyMethodDescr("isupper",PyString.class,0,0,new exposed_isupper(null,null)));
-        class exposed_join extends PyBuiltinMethodNarrow {
-
-            exposed_join(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_join(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyString)self).str_join(arg0);
-            }
-
-        }
-        dict.__setitem__("join",new PyMethodDescr("join",PyString.class,1,1,new exposed_join(null,null)));
-        class exposed_ljust extends PyBuiltinMethodNarrow {
-
-            exposed_ljust(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_ljust(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_ljust(arg0.asInt(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("ljust",new PyMethodDescr("ljust",PyString.class,1,1,new exposed_ljust(null,null)));
-        class exposed_lower extends PyBuiltinMethodNarrow {
-
-            exposed_lower(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_lower(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_lower());
-            }
-
-        }
-        dict.__setitem__("lower",new PyMethodDescr("lower",PyString.class,0,0,new exposed_lower(null,null)));
-        class exposed_lstrip extends PyBuiltinMethodNarrow {
-
-            exposed_lstrip(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_lstrip(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_lstrip(arg0.asStringOrNull(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string or None";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_lstrip());
-            }
-
-        }
-        dict.__setitem__("lstrip",new PyMethodDescr("lstrip",PyString.class,0,1,new exposed_lstrip(null,null)));
-        class exposed_replace extends PyBuiltinMethodNarrow {
-
-            exposed_replace(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_replace(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                try {
-                    return((PyString)self).str_replace(arg0,arg1,arg2.asInt(2));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 2:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return((PyString)self).str_replace(arg0,arg1);
-            }
-
-        }
-        dict.__setitem__("replace",new PyMethodDescr("replace",PyString.class,2,3,new exposed_replace(null,null)));
-        class exposed_rfind extends PyBuiltinMethodNarrow {
-
-            exposed_rfind(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_rfind(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                try {
-                    return Py.newInteger(((PyString)self).str_rfind(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                    case 2:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return Py.newInteger(((PyString)self).str_rfind(arg0.asString(0),arg1.asInt(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return Py.newInteger(((PyString)self).str_rfind(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("rfind",new PyMethodDescr("rfind",PyString.class,1,3,new exposed_rfind(null,null)));
-        class exposed_rindex extends PyBuiltinMethodNarrow {
-
-            exposed_rindex(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_rindex(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                try {
-                    return Py.newInteger(((PyString)self).str_rindex(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                    case 2:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return Py.newInteger(((PyString)self).str_rindex(arg0.asString(0),arg1.asInt(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return Py.newInteger(((PyString)self).str_rindex(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("rindex",new PyMethodDescr("rindex",PyString.class,1,3,new exposed_rindex(null,null)));
-        class exposed_rjust extends PyBuiltinMethodNarrow {
-
-            exposed_rjust(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_rjust(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_rjust(arg0.asInt(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("rjust",new PyMethodDescr("rjust",PyString.class,1,1,new exposed_rjust(null,null)));
-        class exposed_rstrip extends PyBuiltinMethodNarrow {
-
-            exposed_rstrip(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_rstrip(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_rstrip(arg0.asStringOrNull(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string or None";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_rstrip());
-            }
-
-        }
-        dict.__setitem__("rstrip",new PyMethodDescr("rstrip",PyString.class,0,1,new exposed_rstrip(null,null)));
-        class exposed_split extends PyBuiltinMethodNarrow {
-
-            exposed_split(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_split(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return((PyString)self).str_split(arg0.asStringOrNull(0),arg1.asInt(1));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string or None";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return((PyString)self).str_split(arg0.asStringOrNull(0));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string or None";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__() {
-                return((PyString)self).str_split();
-            }
-
-        }
-        dict.__setitem__("split",new PyMethodDescr("split",PyString.class,0,2,new exposed_split(null,null)));
-        class exposed_splitlines extends PyBuiltinMethodNarrow {
-
-            exposed_splitlines(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_splitlines(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyString)self).str_splitlines(arg0.__nonzero__());
-            }
-
-            public PyObject __call__() {
-                return((PyString)self).str_splitlines();
-            }
-
-        }
-        dict.__setitem__("splitlines",new PyMethodDescr("splitlines",PyString.class,0,1,new exposed_splitlines(null,null)));
-        class exposed_startswith extends PyBuiltinMethodNarrow {
-
-            exposed_startswith(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_startswith(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1,PyObject arg2) {
-                try {
-                    return Py.newBoolean(((PyString)self).str_startswith(arg0.asString(0),arg1.asInt(1),arg2.asInt(2)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                    case 2:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return Py.newBoolean(((PyString)self).str_startswith(arg0.asString(0),arg1.asInt(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 1:
-                        msg="expected an integer";
-                        break;
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return Py.newBoolean(((PyString)self).str_startswith(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("startswith",new PyMethodDescr("startswith",PyString.class,1,3,new exposed_startswith(null,null)));
-        class exposed_strip extends PyBuiltinMethodNarrow {
-
-            exposed_strip(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_strip(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_strip(arg0.asStringOrNull(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string or None";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_strip());
-            }
-
-        }
-        dict.__setitem__("strip",new PyMethodDescr("strip",PyString.class,0,1,new exposed_strip(null,null)));
-        class exposed_swapcase extends PyBuiltinMethodNarrow {
-
-            exposed_swapcase(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_swapcase(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_swapcase());
-            }
-
-        }
-        dict.__setitem__("swapcase",new PyMethodDescr("swapcase",PyString.class,0,0,new exposed_swapcase(null,null)));
-        class exposed_title extends PyBuiltinMethodNarrow {
-
-            exposed_title(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_title(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_title());
-            }
-
-        }
-        dict.__setitem__("title",new PyMethodDescr("title",PyString.class,0,0,new exposed_title(null,null)));
-        class exposed_translate extends PyBuiltinMethodNarrow {
-
-            exposed_translate(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_translate(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return new PyString(((PyString)self).str_translate(arg0.asString(0),arg1.asString(1)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                    case 1:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_translate(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("translate",new PyMethodDescr("translate",PyString.class,1,2,new exposed_translate(null,null)));
-        class exposed_upper extends PyBuiltinMethodNarrow {
-
-            exposed_upper(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_upper(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyString)self).str_upper());
-            }
-
-        }
-        dict.__setitem__("upper",new PyMethodDescr("upper",PyString.class,0,0,new exposed_upper(null,null)));
-        class exposed_zfill extends PyBuiltinMethodNarrow {
-
-            exposed_zfill(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_zfill(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((PyString)self).str_zfill(arg0.asInt(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected an integer";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("zfill",new PyMethodDescr("zfill",PyString.class,1,1,new exposed_zfill(null,null)));
-        dict.__setitem__("__new__",new PyNewWrapper(PyString.class,"__new__",-1,-1) {
-
-                                                                                        public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                            return str_new(this,init,subtype,args,keywords);
-                                                                                        }
-
-                                                                                    });
-    }
-    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-
-    private static final PyType STRTYPE = PyType.fromClass(PyString.class);
-
+    public static final PyType TYPE = PyType.fromClass(PyString.class);
     protected String string;
     private transient int cached_hashcode=0;
     protected transient boolean interned=false;
 
     // for PyJavaClass.init()
     public PyString() {
-        this(STRTYPE, "");
+        this(TYPE, "");
     }
 
     public PyString(PyType subType, String string) {
@@ -1582,11 +34,11 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public PyString(String string) {
-        this(STRTYPE, string);
+        this(TYPE, string);
     }
 
     public PyString(char c) {
-        this(STRTYPE,String.valueOf(c));
+        this(TYPE,String.valueOf(c));
     }
 
     /**
@@ -1594,11 +46,12 @@ public class PyString extends PyBaseString implements ClassDictInit
      * be reinterned if used in a place that requires interned Strings.
      */
     public static PyString fromInterned(String interned) {
-        PyString str = new PyString(STRTYPE, interned);
+        PyString str = new PyString(TYPE, interned);
         str.interned = true;
         return str;
     }
 
+    @ExposedNew
     final static PyObject str_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("str", args, keywords, new String[] { "object" }, 0);
@@ -1616,9 +69,6 @@ public class PyString extends PyBaseString implements ClassDictInit
         }
     }
 
-    /** <i>Internal use only. Do not call this method explicit.</i> */
-    public static void classDictInit(PyObject dict) throws PyIgnoreMethodTag {}
-
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'string' object";
     }
@@ -1627,6 +77,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str___str__();
     }
 
+    @ExposedMethod
     final PyString str___str__() {
         return this;
     }
@@ -1635,6 +86,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str___unicode__();
     }
 
+    @ExposedMethod
     final PyUnicode str___unicode__() {
         return new PyUnicode(this);
     }
@@ -1643,6 +95,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str___len__();
     }
 
+    @ExposedMethod
     final int str___len__() {
         return string.length();
     }
@@ -1651,6 +104,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_toString();
     }
 
+    @ExposedMethod(names="__repr__")
     final String str_toString() {
         return string;
     }
@@ -2006,10 +460,21 @@ public class PyString extends PyBaseString implements ClassDictInit
         return false;
     }
 
+    @ExposedMethod
+    public PyObject str___getitem__(PyObject index) {
+        return seq___finditem__(index);
+    }
+    
+    @ExposedMethod(defaults="null")
+    public PyObject str___getslice__(PyObject start, PyObject stop, PyObject step) {
+        return seq___getslice__(start, stop, step);
+    }
+
     public int __cmp__(PyObject other) {
         return str___cmp__(other);
     }
 
+    @ExposedMethod(type=MethodType.CMP)
     final int str___cmp__(PyObject other) {
         if (!(other instanceof PyString))
             return -2;
@@ -2022,6 +487,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str___eq__(other);
     }
 
+    @ExposedMethod(type=MethodType.BINARY)
     final PyObject str___eq__(PyObject other) {
         String s = coerce(other);
         if (s == null)
@@ -2033,6 +499,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str___ne__(other);
     }
 
+    @ExposedMethod(type=MethodType.BINARY)
     final PyObject str___ne__(PyObject other) {
         String s = coerce(other);
         if (s == null)
@@ -2041,47 +508,51 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
     
     public PyObject __lt__(PyObject other) {
+        return str___lt__(other);
+    }
+
+    @ExposedMethod(type=MethodType.BINARY)
+    final PyObject str___lt__(PyObject other){
         String s = coerce(other);
         if (s == null)
             return null;
         return string.compareTo(s) < 0 ? Py.True : Py.False;
     }
-    
-    final PyObject str___lt__(PyObject other){
-    	return __lt__(other);
-    }
 
     public PyObject __le__(PyObject other) {
+        return str___le__(other);
+    }
+
+    @ExposedMethod(type=MethodType.BINARY)
+    final PyObject str___le__(PyObject other){
         String s = coerce(other);
         if (s == null)
             return null;
         return string.compareTo(s) <= 0 ? Py.True : Py.False;
     }
-    
-    final PyObject str___le__(PyObject other){
-    	return __le__(other);
-    }
 
     public PyObject __gt__(PyObject other) {
+        return str___gt__(other);
+    }
+
+    @ExposedMethod(type=MethodType.BINARY)
+    final PyObject str___gt__(PyObject other){
         String s = coerce(other);
         if (s == null)
             return null;
         return string.compareTo(s) > 0 ? Py.True : Py.False;
     }
-    
-    final PyObject str___gt__(PyObject other){
-    	return __gt__(other);
-    }
 
     public PyObject __ge__(PyObject other) {
+        return str___ge__(other);
+    }
+
+    @ExposedMethod(type=MethodType.BINARY)
+    final PyObject str___ge__(PyObject other){
         String s = coerce(other);
         if (s == null)
             return null;
         return string.compareTo(s) >= 0 ? Py.True : Py.False;
-    }
-    
-    final PyObject str___ge__(PyObject other){
-    	return __ge__(other);
     }
 
     private static String coerce(PyObject o) {
@@ -2091,10 +562,11 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public int hashCode() {
-        return str_hashCode();
+        return str___hash__();
     }
 
-    final int str_hashCode() {
+    @ExposedMethod
+    final int str___hash__() {
         if (cached_hashcode == 0)
             cached_hashcode = string.hashCode();
         return cached_hashcode;
@@ -2159,6 +631,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str___contains__(o);
     }
 
+    @ExposedMethod
     final boolean str___contains__(PyObject o) {
         if (!(o instanceof PyString))
             throw Py.TypeError("'in <string>' requires string as left operand");
@@ -2185,13 +658,15 @@ public class PyString extends PyBaseString implements ClassDictInit
         return createInstance(new String(new_chars));
     }
 
+    @ExposedMethod(type=MethodType.BINARY)
     final PyObject str___mul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             return null;
         int count = ((PyInteger)o.__int__()).getValue();
         return repeat(count);
     }
-
+    
+    @ExposedMethod(type=MethodType.BINARY)
     final PyObject str___rmul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             return null;
@@ -2202,7 +677,8 @@ public class PyString extends PyBaseString implements ClassDictInit
     public PyObject __add__(PyObject generic_other) {
         return str___add__(generic_other);
     }
-
+    
+    @ExposedMethod(type=MethodType.BINARY)
     final PyObject str___add__(PyObject generic_other) {
         if (generic_other instanceof PyString) {
             PyString other = (PyString)generic_other;
@@ -2227,6 +703,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str___mod__(other);
     }
     
+    @ExposedMethod
     public PyObject str___mod__(PyObject other){
         StringFormatter fmt = new StringFormatter(string);
         return fmt.format(other);
@@ -2393,7 +870,8 @@ public class PyString extends PyBaseString implements ClassDictInit
     public String lower() {
         return str_lower();
     }
-
+    
+    @ExposedMethod
     final String str_lower() {
         return string.toLowerCase();
     }
@@ -2402,6 +880,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_upper();
     }
 
+    @ExposedMethod
     final String str_upper() {
         return string.toUpperCase();
     }
@@ -2410,6 +889,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_title();
     }
 
+    @ExposedMethod
     final String str_title() {
         char[] chars = string.toCharArray();
         int n = chars.length;
@@ -2436,6 +916,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_swapcase();
     }
 
+    @ExposedMethod
     final String str_swapcase() {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -2452,10 +933,6 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public String strip() {
-        return str_strip();
-    }
-
-    final String str_strip() {
         return str_strip(null);
     }
 
@@ -2463,6 +940,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_strip(sep);
     }
 
+    @ExposedMethod(defaults="null")
     final String str_strip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -2491,17 +969,14 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public String lstrip() {
-        return str_lstrip();
-    }
-
-    final String str_lstrip() {
         return str_lstrip(null);
     }
-
+    
     public String lstrip(String sep) {
         return str_lstrip(sep);
     }
 
+    @ExposedMethod(defaults="null")
     final String str_lstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -2516,18 +991,11 @@ public class PyString extends PyBaseString implements ClassDictInit
         return (start > 0) ? string.substring(start, n) : string;
     }
 
-    public String rstrip() {
-        return str_rstrip();
-    }
-
-    final String str_rstrip() {
-        return str_rstrip(null);
-    }
-
     public String rstrip(String sep) {
         return str_rstrip(sep);
     }
-
+    
+    @ExposedMethod(defaults="null")
     final String str_rstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -2544,18 +1012,10 @@ public class PyString extends PyBaseString implements ClassDictInit
 
 
     public PyList split() {
-        return str_split();
-    }
-
-    final PyList str_split() {
         return str_split(null, -1);
     }
 
     public PyList split(String sep) {
-        return str_split(sep);
-    }
-
-    final PyList str_split(String sep) {
         return str_split(sep, -1);
     }
 
@@ -2563,6 +1023,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_split(sep, maxsplit);
     }
 
+    @ExposedMethod(defaults= {"null", "-1"})
     final PyList str_split(String sep, int maxsplit) {
         if (sep != null)
             return splitfields(sep, maxsplit);
@@ -2630,10 +1091,6 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public PyList splitlines() {
-        return str_splitlines();
-    }
-
-    final PyList str_splitlines() {
         return str_splitlines(false);
     }
 
@@ -2641,6 +1098,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_splitlines(keepends);
     }
 
+    @ExposedMethod(defaults="false")
     final PyList str_splitlines(boolean keepends) {
         PyList list = new PyList();
 
@@ -2678,26 +1136,19 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public int index(String sub) {
-        return str_index(sub);
-    }
-
-    final int str_index(String sub) {
-        return str_index(sub, 0, string.length());
+        return str_index(sub, 0, null);
     }
 
     public int index(String sub, int start) {
-        return str_index(sub, start);
-    }
-
-    final int str_index(String sub, int start) {
-        return str_index(sub, start, string.length());
+        return str_index(sub, start, null);
     }
 
     public int index(String sub, int start, int end) {
-        return str_index(sub, start, end);
+        return str_index(sub, start, Py.newInteger(end));
     }
 
-    final int str_index(String sub, int start, int end) {
+    @ExposedMethod(defaults= {"0", "null"})
+    final int str_index(String sub, int start, PyObject end) {
         int index = str_find(sub, start, end);
         if (index == -1)
             throw Py.ValueError("substring not found in string.index");
@@ -2705,53 +1156,39 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public int rindex(String sub) {
-        return str_rindex(sub);
-    }
-
-    final int str_rindex(String sub) {
-        return str_rindex(sub, 0, string.length());
+        return str_rindex(sub, 0, null);
     }
 
     public int rindex(String sub, int start) {
-        return str_rindex(sub, start);
-    }
-
-    final int str_rindex(String sub, int start) {
-        return str_rindex(sub, start, string.length());
+        return str_rindex(sub, start, null);
     }
 
     public int rindex(String sub, int start, int end) {
-        return str_rindex(sub, start, end);
+        return str_rindex(sub, start, Py.newInteger(end));
     }
 
-    final int str_rindex(String sub, int start, int end) {
+    @ExposedMethod(defaults = {"0", "null"})
+    final int str_rindex(String sub, int start, PyObject end) {
         int index = str_rfind(sub, start, end);
-        if (index == -1)
+        if(index == -1)
             throw Py.ValueError("substring not found in string.rindex");
         return index;
     }
 
     public int count(String sub) {
-        return str_count(sub);
-    }
-
-    final int str_count(String sub) {
-        return count(sub, 0, string.length());
+        return str_count(sub, 0, null);
     }
 
     public int count(String sub, int start) {
-        return str_count(sub, start);
-    }
-
-    final int str_count(String sub, int start) {
-        return count(sub, start, string.length());
+        return str_count(sub, start, null);
     }
 
     public int count(String sub, int start, int end) {
-        return str_count(sub, start, end);
+        return str_count(sub, start, Py.newInteger(end));
     }
-
-    final int str_count(String sub, int start, int end) {
+    
+    @ExposedMethod(defaults={"0", "null"})
+    final int str_count(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int n = sub.length();
         if(n == 0) {
@@ -2770,26 +1207,19 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public int find(String sub) {
-        return str_find(sub);
-    }
-
-    final int str_find(String sub) {
-        return str_find(sub, 0, string.length());
+        return str_find(sub, 0, null);
     }
 
     public int find(String sub, int start) {
-        return str_find(sub, start);
-    }
-
-    final int str_find(String sub, int start) {
-        return str_find(sub, start, string.length());
+        return str_find(sub, start, null);
     }
 
     public int find(String sub, int start, int end) {
-        return str_find(sub, start, end);
+        return str_find(sub, start, Py.newInteger(end));
     }
 
-    final int str_find(String sub, int start, int end) {
+    @ExposedMethod(defaults= {"0", "null"})
+    final int str_find(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.indexOf(sub, indices[0]);
         if (index > indices[1])
@@ -2798,26 +1228,19 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public int rfind(String sub) {
-        return str_rfind(sub);
-    }
-
-    final int str_rfind(String sub) {
-        return str_rfind(sub, 0, string.length());
+        return str_rfind(sub, 0, null);
     }
 
     public int rfind(String sub, int start) {
-        return str_rfind(sub, start);
-    }
-
-    final int str_rfind(String sub, int start) {
-        return str_rfind(sub, start, string.length());
+        return str_rfind(sub, start, null);
     }
 
     public int rfind(String sub, int start, int end) {
-        return str_rfind(sub, start, end);
+        return str_rfind(sub, start, Py.newInteger(end));
     }
 
-    final int str_rfind(String sub, int start, int end) {
+    @ExposedMethod(defaults= {"0", "null"})
+    final int str_rfind(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.lastIndexOf(sub, indices[1] - sub.length());
         if(index < indices[0])
@@ -2993,6 +1416,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_ljust(width);
     }
 
+    @ExposedMethod
     final String str_ljust(int width) {
         int n = width-string.length();
         if (n <= 0)
@@ -3004,6 +1428,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_rjust(width);
     }
 
+    @ExposedMethod
     final String str_rjust(int width) {
         int n = width-string.length();
         if (n <= 0)
@@ -3015,6 +1440,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_center(width);
     }
 
+    @ExposedMethod
     final String str_center(int width) {
         int n = width-string.length();
         if (n <= 0)
@@ -3029,6 +1455,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_zfill(width);
     }
 
+    @ExposedMethod
     final String str_zfill(int width) {
         String s = string;
         int n = s.length();
@@ -3055,10 +1482,6 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public String expandtabs() {
-        return str_expandtabs();
-    }
-
-    final String str_expandtabs() {
         return str_expandtabs(8);
     }
 
@@ -3066,6 +1489,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_expandtabs(tabsize);
     }
 
+    @ExposedMethod(defaults="8")
     final String str_expandtabs(int tabsize) {
         String s = string;
         StringBuffer buf = new StringBuffer((int)(s.length()*1.5));
@@ -3096,6 +1520,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_capitalize();
     }
 
+    @ExposedMethod
     final String str_capitalize() {
         if (string.length() == 0)
             return string;
@@ -3103,31 +1528,32 @@ public class PyString extends PyBaseString implements ClassDictInit
         return first.concat(string.substring(1).toLowerCase());
     }
 
-    final PyString str_replace(PyObject oldPiece, PyObject newPiece) {
-        if(!(oldPiece instanceof PyString)) {
-            throw Py.TypeError("str or unicode required for replace");
-        }
-        if(oldPiece.__len__() == 0) {
-            return str_replace(oldPiece, newPiece, string.length() + 1);
-        } else {
-            return str_replace(oldPiece, newPiece, string.length());
-        }
-    }
-    
-    final PyString str_replace(PyObject oldPiece, PyObject newPiece, int maxsplit) {
-        if(!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)){
+    @ExposedMethod(defaults = "null")
+    final PyString str_replace(PyObject oldPiece, PyObject newPiece, PyObject maxsplit) {
+        if(!(oldPiece instanceof PyString) || !(newPiece instanceof PyString)) {
             throw Py.TypeError("str or unicode required for replace");
         }
         if(string.length() == 0) {
-            return new PyString(string);
+            return createInstance(string);
         }
-        return ((PyString)newPiece).str_join(str_split(((PyString)oldPiece).string, maxsplit));
+        int iMaxsplit;
+        if(maxsplit == null) {
+            if(oldPiece.__len__() == 0) {
+                iMaxsplit = string.length() + 1;
+            } else {
+                iMaxsplit = string.length();
+            }
+        } else {
+            iMaxsplit = maxsplit.asInt();
+        }
+        return ((PyString)newPiece).str_join(str_split(((PyString)oldPiece).string, iMaxsplit));
     }
 
     public String join(PyObject seq) {
         return str_join(seq).string;
     }
 
+    @ExposedMethod
     final PyString str_join(PyObject seq) {
         StringBuffer buf = new StringBuffer();
 
@@ -3148,34 +1574,27 @@ public class PyString extends PyBaseString implements ClassDictInit
             }
             buf.append(((PyString)obj).string);
         }
-        if(needsUnicode || this instanceof PyUnicode){
+        if(needsUnicode){
             return new PyUnicode(buf.toString());
         }
-        return new PyString(buf.toString());
+        return createInstance(buf.toString());
     }
 
 
     public boolean startswith(String prefix) {
-        return str_startswith(prefix);
-    }
-
-    final boolean str_startswith(String prefix) {
-        return string.startsWith(prefix);
+        return str_startswith(prefix, 0, null);
     }
 
     public boolean startswith(String prefix, int offset) {
-        return str_startswith(prefix, offset);
-    }
-
-    final boolean str_startswith(String prefix, int offset) {
-        return str_startswith(prefix, offset, string.length());
+        return str_startswith(prefix, offset, null);
     }
 
     public boolean startswith(String prefix, int start, int end) {
-        return str_startswith(prefix, start, end);
+        return str_startswith(prefix, start, Py.newInteger(end));
     }
 
-    final boolean str_startswith(String prefix, int start, int end) {
+    @ExposedMethod(defaults= {"0", "null"})
+    final boolean str_startswith(String prefix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         if(indices[1] - indices[0] < prefix.length()){
             return false;
@@ -3184,26 +1603,19 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public boolean endswith(String suffix) {
-        return str_endswith(suffix);
-    }
-
-    final boolean str_endswith(String suffix) {
-        return string.endsWith(suffix);
+        return str_endswith(suffix, 0, null);
     }
 
     public boolean endswith(String suffix, int start) {
-        return str_endswith(suffix, start);
-    }
-
-    final boolean str_endswith(String suffix, int start) {
-        return str_endswith(suffix, start, string.length());
+        return str_endswith(suffix, start, null);
     }
 
     public boolean endswith(String suffix, int start, int end) {
-        return str_endswith(suffix, start, end);
+        return str_endswith(suffix, start, Py.newInteger(end));
     }
 
-    final boolean str_endswith(String suffix, int start, int end) {
+    @ExposedMethod(defaults= {"0", "null"})
+    final boolean str_endswith(String suffix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
 
         String substr = string.substring(indices[0], indices[1]);
@@ -3219,15 +1631,21 @@ public class PyString extends PyBaseString implements ClassDictInit
      *         string.length()
      * 
      */
-    private int[] translateIndices(int start, int end) {
+    private int[] translateIndices(int start, PyObject end) {
+        int iEnd;
+        if(end == null) {
+            iEnd = string.length();
+        } else {
+            iEnd = end.asInt();
+        }
         int n = string.length();
-        if(end < 0) {
-            end = n + end;
-            if(end < 0) {
-                end = 0;
+        if(iEnd < 0) {
+            iEnd = n + iEnd;
+            if(iEnd < 0) {
+                iEnd = 0;
             }
-        } else if(end > n) {
-            end = n;
+        } else if(iEnd > n) {
+            iEnd = n;
         }
         if(start < 0) {
             start = n + start;
@@ -3235,17 +1653,13 @@ public class PyString extends PyBaseString implements ClassDictInit
                 start = 0;
             }
         }
-        if(start > end) {
-            start = end;
+        if(start > iEnd) {
+            start = iEnd;
         }
-        return new int[] {start, end};
+        return new int[] {start, iEnd};
     }
 
     public String translate(String table) {
-        return str_translate(table);
-    }
-
-    final String str_translate(String table) {
         return str_translate(table, null);
     }
 
@@ -3253,6 +1667,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_translate(table, deletechars);
     }
 
+    @ExposedMethod(defaults="null")
     final String str_translate(String table, String deletechars) {
         if (table.length() != 256)
             throw Py.ValueError(
@@ -3316,6 +1731,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_islower();
     }
 
+    @ExposedMethod
     final boolean str_islower() {
         int n = string.length();
 
@@ -3339,6 +1755,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_isupper();
     }
 
+    @ExposedMethod
     final boolean str_isupper() {
         int n = string.length();
 
@@ -3362,6 +1779,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_isalpha();
     }
 
+    @ExposedMethod
     final boolean str_isalpha() {
         int n = string.length();
 
@@ -3385,6 +1803,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_isalnum();
     }
 
+    @ExposedMethod
     final boolean str_isalnum() {
         int n = string.length();
 
@@ -3417,6 +1836,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_isdecimal();
     }
 
+    @ExposedMethod
     final boolean str_isdecimal() {
         int n = string.length();
 
@@ -3447,6 +1867,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_isdigit();
     }
 
+    @ExposedMethod
     final boolean str_isdigit() {
         int n = string.length();
 
@@ -3470,6 +1891,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_isnumeric();
     }
 
+    @ExposedMethod
     final boolean str_isnumeric() {
         int n = string.length();
 
@@ -3499,6 +1921,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_istitle();
     }
 
+    @ExposedMethod
     final boolean str_istitle() {
         int n = string.length();
 
@@ -3534,6 +1957,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_isspace();
     }
 
+    @ExposedMethod
     final boolean str_isspace() {
         int n = string.length();
 
@@ -3557,6 +1981,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_isunicode();
     }
 
+    @ExposedMethod
     final boolean str_isunicode() {
         int n = string.length();
         for (int i = 0; i < n; i++) {
@@ -3568,18 +1993,10 @@ public class PyString extends PyBaseString implements ClassDictInit
     }
 
     public String encode() {
-        return str_encode();
-    }
-
-    final String str_encode() {
         return str_encode(null, null);
     }
 
     public String encode(String encoding) {
-        return str_encode(encoding);
-    }
-
-    final String str_encode(String encoding) {
         return str_encode(encoding, null);
     }
 
@@ -3587,23 +2004,16 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_encode(encoding, errors);
     }
 
+    @ExposedMethod(defaults= {"null", "null"})
     final String str_encode(String encoding, String errors) {
         return codecs.encode(this, encoding, errors);
     }
 
     public PyObject decode() {
-        return str_decode();
-    }
-
-    final PyObject str_decode() {
-        return str_decode(null, null); // xxx
+        return str_decode(null, null);
     }
 
     public PyObject decode(String encoding) {
-        return str_decode(encoding);
-    }
-
-    final PyObject str_decode(String encoding) {
         return str_decode(encoding, null);
     }
 
@@ -3611,6 +2021,7 @@ public class PyString extends PyBaseString implements ClassDictInit
         return str_decode(encoding, errors);
     }
 
+    @ExposedMethod(defaults= {"null", "null"})
     final PyObject str_decode(String encoding, String errors) {
         return codecs.decode(this, encoding, errors);
     }
@@ -3618,6 +2029,11 @@ public class PyString extends PyBaseString implements ClassDictInit
     /* arguments' conversion helper */
 
     public String asString(int index) throws PyObject.ConversionException {
+        return string;
+    }
+
+    @Override
+    public String asString() {
         return string;
     }
 
