@@ -8,16 +8,23 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedSet;
 import org.python.expose.ExposedType;
 
+/**
+ * The Python Module object.
+ *
+ */
 @ExposedType(name="module")
-public class PyModule extends PyObject
-{
+public class PyModule extends PyObject {
     private final PyObject module_doc = new PyString(
-      "module(name[, doc])\n" +
-      "\n" +
-      "Create a module object.\n" + 
-      "The name must be a string; the optional doc argument can have any type.");
+        "module(name[, doc])\n" +
+        "\n" +
+        "Create a module object.\n" +
+        "The name must be a string; the optional doc argument can have any type.");
 
+    /** The module's mutable dictionary */
     public PyObject __dict__;
+
+    /** For use with __import__ */
+    private static PyObject fromlist = null;
 
     public PyModule() {
         super();
@@ -42,20 +49,19 @@ public class PyModule extends PyObject
         module_init(new PyString(name), Py.None);
     }
 
-    final void module_init(PyObject name, PyObject doc) {
-        ensureDict();
-        __dict__.__setitem__("__name__", name);
-        __dict__.__setitem__("__doc__", doc);
-    }
-
     @ExposedNew
     @ExposedMethod
     final void module___init__(PyObject[] args, String[] keywords) {
-      ArgParser ap = new ArgParser("__init__", args, keywords, new String[] {"name",
-                                                                             "doc"});
-      PyObject name = ap.getPyObject(0);
-      PyObject docs = ap.getPyObject(1, Py.None);
-      module_init(name, docs);
+        ArgParser ap = new ArgParser("__init__", args, keywords, new String[] {"name", "doc"});
+        PyObject name = ap.getPyObject(0);
+        PyObject docs = ap.getPyObject(1, Py.None);
+        module_init(name, docs);
+    }
+
+    private void module_init(PyObject name, PyObject doc) {
+        ensureDict();
+        __dict__.__setitem__("__name__", name);
+        __dict__.__setitem__("__doc__", doc);
     }
 
     public PyObject fastGetDict() {
@@ -64,11 +70,12 @@ public class PyModule extends PyObject
 
     @ExposedGet(name="__dict__")
     public PyObject getDict() {
-        if (__dict__ == null)
+        if (__dict__ == null) {
             return Py.None;
+        }
         return __dict__;
     }
-  
+
     @ExposedSet(name="__dict__")
     public void setDict(PyObject newDict) {
         throw Py.TypeError("readonly attribute");
@@ -81,9 +88,9 @@ public class PyModule extends PyObject
 
     @ExposedGet(name="__doc__")
     public PyObject getDoc() {
-        PyObject d = fastGetDict();
-        if (d != null) {
-            PyObject doc = d.__finditem__("__doc__");
+        PyObject dict = fastGetDict();
+        if (dict != null) {
+            PyObject doc = dict.__finditem__("__doc__");
             if (doc != null) {
                 return doc;
             }
@@ -91,90 +98,95 @@ public class PyModule extends PyObject
         return module_doc;
     }
 
-    protected PyObject impAttr(String attr) {
+    protected PyObject impAttr(String name) {
         PyObject path = __dict__.__finditem__("__path__");
-        PyObject pyname = __dict__.__finditem__("__name__");
+        PyObject pyName = __dict__.__finditem__("__name__");
+        if (path == null || pyName == null) {
+            return null;
+        }
 
-        if (path == null || pyname == null) return null;
-
-        String name = pyname.__str__().toString();
-        String fullName = (name+'.'+attr).intern();
-
-        PyObject ret = null;
-
-        //System.err.println("PyModule.impAttr " + attr + " " + name + " " + fullName);
+        PyObject attr = null;
+        String fullName = (pyName.__str__().toString() + '.'
+                           + name).intern();
         if (path == Py.None) {
-            /* disabled:
-            ret = imp.loadFromClassLoader(
-            (name+'.'+attr).intern(),
-            Py.getSystemState().getClassLoader());
-             */
+            // XXX: disabled
+            //attr = imp.loadFromClassLoader(fullName,
+            //                               Py.getSystemState().getClassLoader());
         }
         else if (path instanceof PyList) {
-            ret = imp.find_module(attr, fullName, (PyList)path);
+            attr = imp.find_module(name, fullName, (PyList)path);
         }
         else {
             throw Py.TypeError("__path__ must be list or None");
         }
 
-        if (ret == null) {
-            ret = PySystemState.packageManager.lookupName(fullName);
+        if (attr == null) {
+            attr = PySystemState.packageManager.lookupName(fullName);
         }
 
-        if (ret != null) {
+        if (attr != null) {
             // Allow a package component to change its own meaning
-            PyObject tmp = Py.getSystemState().modules.__finditem__(fullName);
-            if (tmp != null) ret = tmp;
-            __dict__.__setitem__(attr, ret);
-            return ret;
+            PyObject found = Py.getSystemState().modules.__finditem__(fullName);
+            if (found != null) {
+                attr = found;
+            }
+            __dict__.__setitem__(name, attr);
+            return attr;
         }
 
         return null;
     }
 
-    public PyObject __findattr__(String attr) {
-        return module___findattr__(attr);
+    public PyObject __findattr__(String name) {
+        return module___findattr__(name);
     }
 
-    final PyObject module___findattr__(String attr) {
-        PyObject ret;
+    final PyObject module___findattr__(String name) {
+        PyObject attr;
 
         if (__dict__ != null) {
-          ret = __dict__.__finditem__(attr);
-          if (ret != null) return ret;
+            attr = __dict__.__finditem__(name);
+            if (attr != null) {
+                return attr;
+            }
         }
 
-        ret = super.__findattr__(attr);
-        if (ret != null) return ret;
+        attr = super.__findattr__(name);
+        if (attr != null) {
+            return attr;
+        }
 
         if (__dict__ == null) {
             return null;
         }
 
-        PyObject pyname = __dict__.__finditem__("__name__");
-        if (pyname == null) return null;
+        PyObject pyName = __dict__.__finditem__("__name__");
+        if (pyName == null) {
+            return null;
+        }
 
-        return impHook(pyname.__str__().toString()+'.'+attr);
+        return impHook(pyName.__str__().toString( ) + '.' + name);
     }
 
-    public void __setattr__(String attr, PyObject value) {
-        module___setattr__(attr, value);
+    public void __setattr__(String name, PyObject value) {
+        module___setattr__(name, value);
     }
 
     @ExposedMethod
-    final void module___setattr__(String attr, PyObject value) {
-        if (attr != "__dict__")
+    final void module___setattr__(String name, PyObject value) {
+        if (name != "__dict__") {
             ensureDict();
-        super.__setattr__(attr, value);
+        }
+        super.__setattr__(name, value);
     }
 
-    public void __delattr__(String attr) {
-        module___delattr__(attr);
+    public void __delattr__(String name) {
+        module___delattr__(name);
     }
 
     @ExposedMethod
-    final void module___delattr__(String attr) {
-        super.__delattr__(attr);
+    final void module___delattr__(String name) {
+        super.__delattr__(name);
     }
 
     public String toString()  {
@@ -185,44 +197,46 @@ public class PyModule extends PyObject
     final String module_toString()  {
         PyObject name = null;
         PyObject filename = null;
+
         if (__dict__ != null) {
-          name = __dict__.__finditem__("__name__");
-          filename = __dict__.__finditem__("__file__");
+            name = __dict__.__finditem__("__name__");
+            filename = __dict__.__finditem__("__file__");
         }
-        if (name == null)
+        if (name == null) {
             name = new PyString("?");
-        if (filename == null)
+        }
+        if (filename == null) {
             filename = new PyString("(built-in)");
-        else
+        } else {
             filename = new PyString("from '" + filename + "'");
+        }
         return "<module '" + name + "' " + filename + ">";
     }
 
     public PyObject __dir__() {
-        if (__dict__ == null)
+        if (__dict__ == null) {
             throw Py.TypeError("module.__dict__ is not a dictionary");
+        }
         return __dict__.invoke("keys");
     }
 
     private void ensureDict() {
-        if (__dict__ == null)
+        if (__dict__ == null) {
             __dict__ = new PyStringMap();
+        }
     }
-
-    static private PyObject silly_list = null;
 
     private static PyObject impHook(String name) {
-        if (silly_list == null) {
-            silly_list = new PyTuple(Py.newString("__doc__"));
+        if (fromlist == null) {
+            fromlist = new PyTuple(Py.newString("__doc__"));
         }
         try {
-            return __builtin__.__import__(name, null, null, silly_list);
-        } catch(PyException e) {
-            if (Py.matchException(e, Py.ImportError)) {
+            return __builtin__.__import__(name, null, null, fromlist);
+        } catch(PyException pe) {
+            if (Py.matchException(pe, Py.ImportError)) {
                 return null;
             }
-            throw e;
+            throw pe;
         }
     }
-
 }
