@@ -36,7 +36,7 @@ public class PyModule extends PyObject {
 
     public PyModule(PyType subType, String name) {
         super(subType);
-        module_init(new PyString(name), Py.None);
+        module___init__(new PyString(name), Py.None);
     }
 
     public PyModule(String name) {
@@ -46,7 +46,7 @@ public class PyModule extends PyObject {
     public PyModule(String name, PyObject dict) {
         super();
         __dict__ = dict;
-        module_init(new PyString(name), Py.None);
+        module___init__(new PyString(name), Py.None);
     }
 
     @ExposedNew
@@ -55,10 +55,10 @@ public class PyModule extends PyObject {
         ArgParser ap = new ArgParser("__init__", args, keywords, new String[] {"name", "doc"});
         PyObject name = ap.getPyObject(0);
         PyObject docs = ap.getPyObject(1, Py.None);
-        module_init(name, docs);
+        module___init__(name, docs);
     }
 
-    private void module_init(PyObject name, PyObject doc) {
+    private void module___init__(PyObject name, PyObject doc) {
         ensureDict();
         __dict__.__setitem__("__name__", name);
         __dict__.__setitem__("__doc__", doc);
