@@ -1,12 +1,7 @@
 package org.python.expose.generate;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.objectweb.asm.Type;
 import org.python.core.PyDataDescr;
-import org.python.expose.ExposedGet;
 
 /**
  * Generates a class to expose a descriptor on Python type. One of addMethodGetter or addFieldGetter
@@ -22,21 +17,6 @@ public class DescriptorExposer extends Exposer {
 
     private String getterMethodName, getterFieldName, setterMethodName, setterFieldName,
             deleterMethodName;
-
-    private static final Set<Type> PRIMITIVES = Collections.unmodifiableSet(new HashSet<Type>() {
-
-        {
-            add(Type.BOOLEAN_TYPE);
-            add(Type.BYTE_TYPE);
-            add(Type.CHAR_TYPE);
-            add(Type.DOUBLE_TYPE);
-            add(Type.FLOAT_TYPE);
-            add(Type.INT_TYPE);
-            add(Type.LONG_TYPE);
-            add(Type.SHORT_TYPE);
-            add(Type.VOID_TYPE);
-        }
-    });
 
     /**
      * Creates an exposer that will work on type and have <code>descrName</code> as its name in

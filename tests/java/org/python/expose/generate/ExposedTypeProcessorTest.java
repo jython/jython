@@ -18,7 +18,7 @@ public class ExposedTypeProcessorTest extends TestCase {
                 .getResourceAsStream("org/python/expose/generate/SimpleExposed.class");
         ExposedTypeProcessor ice = new ExposedTypeProcessor(in);
         assertEquals("simpleexposed", ice.getName());
-        assertEquals(12, ice.getMethodExposers().size());
+        assertEquals(13, ice.getMethodExposers().size());
         assertNotNull(ice.getNewExposer());
         assertEquals(1, ice.getDescriptorExposers().size());
         assertEquals("simpleexposed", ice.getTypeExposer().getName());

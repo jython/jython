@@ -4,6 +4,7 @@ import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.core.PyType;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -94,6 +95,11 @@ public class SimpleExposed extends PyObject {
     @ExposedMethod(defaults = "1")
     public PyObject defaultToOne(int arg) {
         return new PyInteger(arg);
+    }
+
+    @ExposedMethod(defaults = {"a", "1", "2", "3"})
+    public PyObject manyPrimitives(char c, short s, double d, byte b) {
+        return new PyString("" + c + s + d + b);
     }
 
     @ExposedMethod

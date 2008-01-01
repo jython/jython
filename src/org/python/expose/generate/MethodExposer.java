@@ -19,7 +19,7 @@ public class MethodExposer extends Exposer {
 
     private String prefix;
 
-    private Type[] params;
+    private Type[] args;
 
     private Type onType, returnType;
 
@@ -51,8 +51,8 @@ public class MethodExposer extends Exposer {
         if((access & ACC_STATIC) != 0) {
             throwInvalid("@ExposedMethod can't be applied to static methods");
         }
-        this.params = Type.getArgumentTypes(desc);
-        if(isWide(params)) {
+        this.args = Type.getArgumentTypes(desc);
+        if(isWide(args)) {
             if(defaults.length > 0) {
                 throwInvalid("Can't have defaults on a method that takes PyObject[], String[]");
             }
@@ -99,7 +99,7 @@ public class MethodExposer extends Exposer {
         generateNamedConstructor();
         generateFullConstructor();
         generateBind();
-        if(isWide(params)) {
+        if(isWide(args)) {
             generateWideCall();
         } else {
             for(int i = 0; i < defaults.length + 1; i++) {
@@ -122,11 +122,11 @@ public class MethodExposer extends Exposer {
         startConstructor(STRING);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
-        if(isWide(params)) {
+        if(isWide(args)) {
             superConstructor(STRING);
         } else {
-            mv.visitLdcInsn(params.length + 1 - defaults.length);
-            mv.visitLdcInsn(params.length + 1);
+            mv.visitLdcInsn(args.length + 1 - defaults.length);
+            mv.visitLdcInsn(args.length + 1);
             superConstructor(STRING, INT, INT);
         }
         endConstructor();
@@ -152,7 +152,7 @@ public class MethodExposer extends Exposer {
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         mv.visitVarInsn(ALOAD, 1);
         mv.visitVarInsn(ALOAD, 2);
-        call(onType, methodName, returnType, params);
+        call(onType, methodName, returnType, args);
         generateCallReturn();
     }
 
@@ -170,93 +170,118 @@ public class MethodExposer extends Exposer {
     }
 
     private boolean hasDefault(int argIndex) {
-        return defaults.length - params.length + argIndex >= 0;
+        return defaults.length - args.length + argIndex >= 0;
     }
 
     private String getDefault(int argIndex) {
-        return defaults[defaults.length - params.length + argIndex];
+        return defaults[defaults.length - args.length + argIndex];
     }
 
     private void generateCall(int numDefaults) {
         int usedLocals = 1;// We always have one used local for 'this'
-        Type[] args = new Type[params.length - numDefaults];
-        for(int i = 0; i < args.length; i++) {
-            args[i] = PYOBJ;
+        Type[] callArgs = new Type[args.length - numDefaults];
+        for(int i = 0; i < callArgs.length; i++) {
+            callArgs[i] = PYOBJ;
         }
-        startMethod("__call__", PYOBJ, args);
+        startMethod("__call__", PYOBJ, callArgs);
         // Push self on the stack so we can call it
         get("self", PYOBJ);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
-        // Push the passed in args onto the stack, and convert them if necessary
-        for(int i = 0; i < args.length; i++) {
+        // Push the passed in callArgs onto the stack, and convert them if necessary
+        for(int i = 0; i < callArgs.length; i++) {
             mv.visitVarInsn(ALOAD, usedLocals++);
-            if(params[i].equals(INT)) {
-                call(PYOBJ, "asInt", INT);
-            } else if(params[i].equals(STRING)) {
+            if(PRIMITIVES.contains(args[i])) {
+                convertToPrimitive(args[i]);
+            } else if(args[i].equals(STRING)) {
                 if(hasDefault(i) && getDefault(i).equals("null")) {
                     call(PYOBJ, "asStringOrNull", STRING);
                 } else {
                     call(PYOBJ, "asString", STRING);
                 }
-            } else if(params[i].equals(BOOLEAN)) {
-                call(PYOBJ, "__nonzero__", BOOLEAN);
             }
         }
         // Push the defaults onto the stack
-        for(int i = args.length; i < params.length; i++) {
-            String def = getDefault(i);
-            if(def.equals("Py.None")) {
-                getStatic(PY, "None", PYOBJ);
-            } else if(def.equals("null")) {
-                mv.visitInsn(ACONST_NULL);
-            } else if(params[i].equals(INT)) {
-                // An int is required here, so parse the default as an Integer
-                // and push it as a constant.
-                // If the default isn't a valid integer, a NumberFormatException
-                // will be raised.
-                mv.visitLdcInsn(new Integer(def));
-            } else if(params[i].equals(BOOLEAN)) {
-                mv.visitLdcInsn(Boolean.valueOf(def) ? 1 : 0);
-            }
+        for(int i = callArgs.length; i < args.length; i++) {
+            pushDefault(getDefault(i), args[i]);
         }
         // Actually call the exposed method
-        call(onType, methodName, returnType, params);
+        call(onType, methodName, returnType, args);
         if(type == MethodType.BINARY) {
-            // If this is a binary method, returning null means we should throw NotImplemented
-            mv.visitInsn(DUP);
-            Label regularReturn = new Label();
-            mv.visitJumpInsn(IFNONNULL, regularReturn);
-            getStatic(PY, "NotImplemented", PYOBJ);
-            mv.visitInsn(ARETURN);
-            mv.visitLabel(regularReturn);
+            checkBinaryResult();
         } else if(type == MethodType.CMP) {
-            // If this is a cmp method, returning -2 means the passed in object was of the wrong
-            // type
-            mv.visitInsn(DUP);
-            mv.visitIntInsn(BIPUSH, -2);
-            Label regularReturn = new Label();
-            mv.visitJumpInsn(IF_ICMPNE, regularReturn);
-            // tediously build an error message based on the type name
-            instantiate(STRING_BUILDER, new Instantiator(STRING) {
-
-                public void pushArgs() {
-                    mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix
-                            + "', not a '");
-                }
-            });
-            mv.visitVarInsn(ALOAD, 1);
-            call(PYOBJ, "getType", PYTYPE);
-            call(PYTYPE, "fastGetName", STRING);
-            call(STRING_BUILDER, "append", STRING_BUILDER, STRING);
-            mv.visitLdcInsn("'");
-            call(STRING_BUILDER, "append", STRING_BUILDER, STRING);
-            call(STRING_BUILDER, "toString", STRING);
-            // throw a type error with our excellent message since this was of the wrong type.
-            callStatic(PY, "TypeError", PYEXCEPTION, STRING);
-            mv.visitInsn(ATHROW);
-            mv.visitLabel(regularReturn);
+            checkCmpResult();
         }
         generateCallReturn();
+    }
+
+    /** Throw NotImplemented if a binary method returned null. */
+    private void checkBinaryResult() {
+        // If this is a binary method, 
+        mv.visitInsn(DUP);
+        Label regularReturn = new Label();
+        mv.visitJumpInsn(IFNONNULL, regularReturn);
+        getStatic(PY, "NotImplemented", PYOBJ);
+        mv.visitInsn(ARETURN);
+        mv.visitLabel(regularReturn);
+    }
+
+    /** Throw a type error if a cmp method returned -2. */
+    private void checkCmpResult() {
+        mv.visitInsn(DUP);
+        mv.visitIntInsn(BIPUSH, -2);
+        Label regularReturn = new Label();
+        mv.visitJumpInsn(IF_ICMPNE, regularReturn);
+        // tediously build an error message based on the type name
+        instantiate(STRING_BUILDER, new Instantiator(STRING) {
+
+            public void pushArgs() {
+                mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix
+                        + "', not a '");
+            }
+        });
+        mv.visitVarInsn(ALOAD, 1);
+        call(PYOBJ, "getType", PYTYPE);
+        call(PYTYPE, "fastGetName", STRING);
+        call(STRING_BUILDER, "append", STRING_BUILDER, STRING);
+        mv.visitLdcInsn("'");
+        call(STRING_BUILDER, "append", STRING_BUILDER, STRING);
+        call(STRING_BUILDER, "toString", STRING);
+        // throw a type error with our excellent message since this was of the wrong type.
+        callStatic(PY, "TypeError", PYEXCEPTION, STRING);
+        mv.visitInsn(ATHROW);
+        mv.visitLabel(regularReturn);
+    }
+
+    private void pushDefault(String def, Type arg) {
+        if(def.equals("Py.None")) {
+            getStatic(PY, "None", PYOBJ);
+        } else if(def.equals("null")) {
+            mv.visitInsn(ACONST_NULL);
+        } else if(arg.equals(Type.LONG_TYPE)) {
+            // For primitive types, parse using the Java wrapper for that type and push onto the
+            // stack as a constant. If the default is malformed, a NumberFormatException will be
+            // raised.
+            mv.visitLdcInsn(new Long(def));
+        } else if(arg.equals(INT)) {
+            mv.visitLdcInsn(new Integer(def));
+        } else if(arg.equals(BYTE)) {
+            // byte, char, boolean and short go as int constants onto the stack, so convert them
+            // to ints to get the right type
+            mv.visitLdcInsn(new Byte(def).intValue());
+        } else if(arg.equals(SHORT)) {
+            mv.visitLdcInsn(new Short(def).intValue());
+        } else if(arg.equals(CHAR)) {
+            if(def.length() != 1) {
+                throwInvalid("A default for a char argument must be one character in length");
+            }
+            mv.visitLdcInsn((int)new Character(def.charAt(0)).charValue());
+        } else if(arg.equals(BOOLEAN)) {
+            mv.visitLdcInsn(Boolean.valueOf(def) ? 1 : 0);
+        } else if(arg.equals(Type.FLOAT_TYPE)) {
+            mv.visitLdcInsn(new Float(def));
+        } else if(arg.equals(Type.DOUBLE_TYPE)) {
+            mv.visitLdcInsn(new Double(def));
+        }
     }
 
     private static boolean isWide(String methDescriptor) {

@@ -124,6 +124,24 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
         } catch(NumberFormatException nfe) {}
     }
 
+    public void testPrimitiveDefaults() throws Exception {
+        MethodExposer exp = createExposer("manyPrimitives",
+                                          PYOBJ,
+                                          CHAR,
+                                          SHORT,
+                                          Type.DOUBLE_TYPE,
+                                          BYTE);
+        exp.defaults = new String[] {"a", "1", "2", "3"};
+        PyBuiltinFunction bound = createBound(exp);
+        assertEquals("a12.03", bound.__call__().toString());
+        assertEquals("b12.03", bound.__call__(Py.newString('b')).toString());
+        exp.defaults = new String[] {"ab", "1", "2", "3"};
+        try {
+            createBound(exp);
+            fail("Char should only be one character");
+        } catch(InvalidExposingException iee) {}
+    }
+
     public void testFullArguments() throws Exception {
         MethodExposer exp = new MethodExposer(Type.getType(SimpleExposed.class),
                                               Opcodes.ACC_PUBLIC,

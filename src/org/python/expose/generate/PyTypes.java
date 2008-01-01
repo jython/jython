@@ -86,6 +86,12 @@ public interface PyTypes {
     public static final Type CLASS = Type.getType(Class.class);
 
     // Primitives
+    public static final Type BYTE = Type.BYTE_TYPE;
+
+    public static final Type SHORT = Type.SHORT_TYPE;
+
+    public static final Type CHAR = Type.CHAR_TYPE;
+
     public static final Type INT = Type.INT_TYPE;
 
     public static final Type VOID = Type.VOID_TYPE;

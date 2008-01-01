@@ -1,5 +1,9 @@
 package org.python.expose.generate;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -25,6 +29,21 @@ public abstract class Exposer implements Opcodes, PyTypes {
 
     /** The type that will be generated. */
     protected Type thisType;
+    
+    protected static final Set<Type> PRIMITIVES = Collections.unmodifiableSet(new HashSet<Type>() {
+
+        {
+            add(Type.BOOLEAN_TYPE);
+            add(Type.BYTE_TYPE);
+            add(Type.CHAR_TYPE);
+            add(Type.DOUBLE_TYPE);
+            add(Type.FLOAT_TYPE);
+            add(Type.INT_TYPE);
+            add(Type.LONG_TYPE);
+            add(Type.SHORT_TYPE);
+            add(Type.VOID_TYPE);
+        }
+    });
 
     /**
      * @param superClass -
@@ -193,6 +212,13 @@ public abstract class Exposer implements Opcodes, PyTypes {
     protected void get(String fieldName, Type ofType) {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, getInternalName(), fieldName, ofType.getDescriptor());
+    }
+    
+    protected void convertToPrimitive(Type primitiveType){
+        if(!PRIMITIVES.contains(primitiveType)){
+            throw new IllegalArgumentException(primitiveType + " isn't a primitive!");
+        }
+        callStatic(PY, "py2" + primitiveType.getClassName(), primitiveType, PYOBJ);
     }
 
     /** Gets a static field from onType of the given type. */

@@ -25,11 +25,8 @@ public class PyObject implements Serializable {
     
     @ExposedNew
     @ExposedMethod
-    final void object___init__(PyObject[] args, String[] keywords) {
-    // xxx
-    }
+    final void object___init__(PyObject[] args, String[] keywords) {}
 
-    // getType may become not necessary
     private PyType objtype;
 
     @ExposedGet(name="__class__")
