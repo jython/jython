@@ -413,6 +413,22 @@ public class PyDeque extends PyObject {
 
         }
         dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyDeque.class,0,0,new exposed___iter__(null,null)));
+        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
+
+            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
+                super(self,info);
+            }
+
+            public PyBuiltinFunction bind(PyObject self) {
+                return new exposed___nonzero__(self,info);
+            }
+
+            public PyObject __call__() {
+                return Py.newBoolean(((PyDeque)self).deque___nonzero__());
+            }
+
+        }
+        dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyDeque.class,0,0,new exposed___nonzero__(null,null)));
         class exposed___hash__ extends PyBuiltinMethodNarrow {
 
             exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
@@ -728,6 +744,14 @@ public class PyDeque extends PyObject {
         return size;
     }
 
+    public boolean __nonzero__() {
+        return deque___nonzero__();
+    }
+
+    final boolean deque___nonzero__() {
+        return size != 0;
+    }
+
     public PyObject __finditem__(PyObject key) {
         try {
             return deque___getitem__(key);
@@ -902,8 +926,7 @@ public class PyDeque extends PyObject {
         if (ol2 < 0) {
             ol2 = o2.__len__();
         }
-        int i = 0;
-        for ( ; i < ol1 && i < ol2; i++) {
+        for (int i = 0 ; i < ol1 && i < ol2; i++) {
             if (!o1.__getitem__(i)._eq(o2.__getitem__(i)).__nonzero__()) {
                 return i;
             }
@@ -927,12 +950,7 @@ public class PyDeque extends PyObject {
     }
 
     final PyObject deque___reduce__() {
-        return new PyTuple(new PyObject [] {
-                this.getType(),
-                Py.EmptyTuple,
-                Py.None,
-                this.deque___iter__()
-        });
+        return new PyTuple(getType(), Py.EmptyTuple, Py.None, deque___iter__());
     }
 
     final PyObject deque___copy__() {

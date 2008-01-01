@@ -1,6 +1,6 @@
 from collections import deque
 import unittest
-from test import test_support#, seq_tests
+from test import test_support, seq_tests
 from weakref import proxy
 import copy
 import cPickle as pickle
@@ -563,7 +563,7 @@ deque(['a', 'b', 'd', 'e', 'f'])
 
 
 >>> def roundrobin(*iterables):
-...     pending = deque(iter(i) for i in iterables)
+...     pending = deque([iter(i) for i in iterables])
 ...     while pending:
 ...         task = pending.popleft()
 ...         try:
@@ -612,22 +612,34 @@ def test_main(verbose=None):
         TestSubclassWithKwargs,
     )
 
-    # As This file uses cPickle and the support is needed from that.
-    del TestBasic.test_pickle
-    del TestBasic.test_pickle_recursive
-    del TestSubclass.test_pickle
-    del TestSubclass.test_copy_pickle
+    if test_support.is_jython:
+      # Py*Derived doesn't pickle its dict if the supertype has __reduce__
+      del TestSubclass.test_pickle
 
-    # Support is needed from weakref module
-    del TestSubclass.test_weakref
+      # Jython doesn't weakref things immediately
+      del TestSubclass.test_weakref
 
-    # This test case won't work in jython, because jython doesn't have 'gc' module
-    del TestBasic.test_gc_doesnt_blowup
+      # Jython doesn't have the gc module
+      del TestBasic.test_gc_doesnt_blowup
 
-    # This test case will not work as 'seq_tests' module is needed
-    del TestVariousIteratorArgs.test_constructor
+      # Needs 2.5 seq_tests
+      del TestVariousIteratorArgs.test_constructor
 
     test_support.run_unittest(*test_classes)
-     
+
+    # verify reference counting
+    if verbose and hasattr(sys, "gettotalrefcount"):
+        import gc
+        counts = [None] * 5
+        for i in xrange(len(counts)):
+            test_support.run_unittest(*test_classes)
+            gc.collect()
+            counts[i] = sys.gettotalrefcount()
+        print counts
+
+    # doctests
+    from test import test_deque
+    test_support.run_doctest(test_deque, verbose)
+
 if __name__ == "__main__":
     test_main(verbose=True)

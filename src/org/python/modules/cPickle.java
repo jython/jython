@@ -1016,10 +1016,8 @@ public class cPickle implements ClassDictInit {
                             "Second element of tupe returned by " +
                             reduce.__repr__() + " must be a tuple");
             }
+            save_reduce(callable, arg_tup, state, listitems, dictitems, putMemo(d, object));
 
-            save_reduce(callable, arg_tup, state, listitems, dictitems);
-
-            put(putMemo(d, object));
         }
 
 
@@ -1035,7 +1033,7 @@ public class cPickle implements ClassDictInit {
         }
 
         final private void save_reduce(PyObject callable, PyObject arg_tup,
-                                       PyObject state, PyObject listitems, PyObject dictitems)
+                                       PyObject state, PyObject listitems, PyObject dictitems, int memoId)
         {
             PyObject callableName = callable.__findattr__("__name__");
             if(protocol >= 2 && callableName != null
@@ -1053,6 +1051,7 @@ public class cPickle implements ClassDictInit {
                 save(arg_tup);
                 file.write(REDUCE);
             }
+            put(memoId);
             if (listitems != Py.None) {
                 batch_appends(listitems);
             }
@@ -2233,19 +2232,31 @@ public class cPickle implements ClassDictInit {
             memo.put(String.valueOf(i), peek());
         }
 
-
         final private void load_append() {
             PyObject value = pop();
-            PyList list = (PyList)peek();
-            list.append(value);
+            PyObject obj = peek();
+            if(obj instanceof PyList) {
+                ((PyList)obj).append(value);
+            } else {
+                PyObject appender = obj.__getattr__("append");
+                appender.__call__(value);
+            }
         }
 
         final private void load_appends() {
             int mark = marker();
-            PyList list = (PyList)peek(mark+1);
-            for (int i = mark-1; i >= 0; i--)
-                list.append(peek(i));
-            pop(mark+1);
+            PyObject obj = peek(mark + 1);
+            if(obj instanceof PyList) {
+                for(int i = mark - 1; i >= 0; i--) {
+                    ((PyList)obj).append(peek(i));
+                }
+            } else {
+                PyObject appender = obj.__getattr__("append");
+                for(int i = mark - 1; i >= 0; i--) {
+                    appender.__call__(peek(i));
+                }
+            }
+            pop(mark + 1);
         }
 
         final private void load_setitem() {
