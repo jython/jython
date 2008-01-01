@@ -86,6 +86,11 @@ public abstract class PyBuiltinFunction extends PyObject {
         }
     }
 
+    protected PyBuiltinFunction(PyType type, Info info) {
+        super(type);
+        this.info = info;
+    }
+
     protected PyBuiltinFunction(Info info) {
         this.info = info;
     }

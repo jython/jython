@@ -109,11 +109,12 @@ public class MethodExposer extends Exposer {
     }
 
     private void generateFullConstructor() {
-        startConstructor(PYOBJ, BUILTIN_INFO);
+        startConstructor(PYTYPE, PYOBJ, BUILTIN_INFO);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ALOAD, 1);
         mv.visitVarInsn(ALOAD, 2);
-        superConstructor(PYOBJ, BUILTIN_INFO);
+        mv.visitVarInsn(ALOAD, 3);
+        superConstructor(PYTYPE, PYOBJ, BUILTIN_INFO);
         endConstructor();
     }
 
@@ -133,9 +134,11 @@ public class MethodExposer extends Exposer {
 
     private void generateBind() {
         startMethod("bind", BUILTIN_FUNCTION, PYOBJ);
-        instantiate(thisType, new Instantiator(PYOBJ, BUILTIN_INFO) {
+        instantiate(thisType, new Instantiator(PYTYPE, PYOBJ, BUILTIN_INFO) {
 
             public void pushArgs() {
+                mv.visitVarInsn(ALOAD, 0);
+                call(thisType, "getType", PYTYPE);
                 mv.visitVarInsn(ALOAD, 1);
                 get("info", BUILTIN_INFO);
             }

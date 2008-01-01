@@ -12,6 +12,10 @@ public abstract class PyBuiltinMethodNarrow extends PyBuiltinMethod {
         super(self, info);
     }
 
+    protected PyBuiltinMethodNarrow(PyType type, PyObject self, Info info) {
+        super(type, self, info);
+    }
+
     public PyObject __call__(PyObject[] args, String[] keywords) {
         if(keywords.length != 0) {
             throw info.unexpectedCall(args.length, true);
