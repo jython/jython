@@ -1,5 +1,0 @@
-# setup
-type_name: basestring
-type_class: PyBaseString
-type_base_class: PyObject
-
