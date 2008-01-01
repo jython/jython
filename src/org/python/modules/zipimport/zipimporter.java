@@ -2,43 +2,34 @@
 package org.python.modules.zipimport;
 
 import java.io.File;
-import java.io.InputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
-import org.python.core.imp;
 import org.python.core.ArgParser;
 import org.python.core.BytecodeLoader;
 import org.python.core.FileUtil;
 import org.python.core.Py;
-import org.python.core.PyBuiltinFunction;
-import org.python.core.PyBuiltinMethod;
-import org.python.core.PyBuiltinMethodNarrow;
 import org.python.core.PyCode;
 import org.python.core.PyDictionary;
-import org.python.core.PyGetSetDescr;
 import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyLong;
-import org.python.core.PyMethodDescr;
 import org.python.core.PyModule;
-import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.imp;
+import org.python.core.util.StringUtil;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
-import org.python.core.util.StringUtil;
-
-import java.util.Date;
-import java.util.Enumeration;
-
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * Import Python modules and packages from ZIP-format archives.
