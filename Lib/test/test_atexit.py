@@ -5,8 +5,6 @@ from os import popen, unlink
 import sys
 
 executable = sys.executable
-if is_jython:
-    executable = "jython"
 
 input = """\
 import atexit

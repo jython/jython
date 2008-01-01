@@ -1025,7 +1025,6 @@ _failures = {
     'java':
     '''
     test___all__
-    test_atexit
     test_class
     test_copy
     test_cpickle
