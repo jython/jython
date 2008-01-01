@@ -24,7 +24,7 @@ public class PyModule extends PyObject {
     public PyObject __dict__;
 
     /** For use with __import__ */
-    private static PyObject fromlist = null;
+    private static PyObject fromlist;
 
     public PyModule() {
         super();
