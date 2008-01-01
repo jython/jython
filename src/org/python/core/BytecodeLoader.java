@@ -1,8 +1,9 @@
 // Copyright (c) Corporation for National Research Initiatives
-
 package org.python.core;
 
 import java.security.SecureClassLoader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -11,67 +12,57 @@ import java.util.Vector;
  */
 public class BytecodeLoader {
 
-    static Vector init() {
-        Vector parents = new Vector();
-        parents.addElement(imp.getSyspathJavaLoader());
-        return parents;
-    }
-
-    static Class findParentClass(Vector parents, String name)
-            throws ClassNotFoundException {
-        for (int i = 0; i < parents.size(); i++) {
-            try {
-                return ((ClassLoader) parents.elementAt(i)).loadClass(name);
-            } catch (ClassNotFoundException e) {
-            }
-        }
-        // couldn't find the .class file on sys.path
-        throw new ClassNotFoundException(name);
-    }
-
-    static void compileClass (Class c) {
-        Compiler.compileClass(c);
-    }
-
-    private static Loader makeLoader() {
-            return new Loader();
-    }
-
     /**
      * Turn the java byte code in data into a java class.
      * 
-     * @param name the name of the class
-     * @param referents a list of superclass and interfaces that the new class
-     *            will reference.
-     * @param data the java byte code.
+     * @param name
+     *            the name of the class
+     * @param data
+     *            the java byte code.
+     * @param referents
+     *            superclasses and interfaces that the new class will reference.
      */
-    public static Class makeClass(String name, Vector referents, byte[] data) {
-        Loader loader = makeLoader();
-
-        if (referents != null) {
-            for (int i = 0; i < referents.size(); i++) {
-                try {
-                    Class cls = (Class) referents.elementAt(i);
-                    ClassLoader cur = cls.getClassLoader();
-                    if (cur != null) {
-                        loader.addParent(cur);
-                    }
-                } catch (SecurityException e) {
+    public static Class makeClass(String name, byte[] data, Class... referents) {
+        Loader loader = new Loader();
+        for(int i = 0; i < referents.length; i++) {
+            try {
+                ClassLoader cur = referents[i].getClassLoader();
+                if(cur != null) {
+                    loader.addParent(cur);
                 }
-            }
+            } catch(SecurityException e) {}
         }
         return loader.loadClassFromBytes(name, data);
     }
 
     /**
+     * Turn the java byte code in data into a java class.
+     * 
+     * @param name
+     *            the name of the class
+     * @param referents
+     *            superclasses and interfaces that the new class will reference.
+     * @param data
+     *            the java byte code.
+     */
+    public static Class makeClass(String name, Vector<Class> referents, byte[] data) {
+        if(referents != null) {
+            return makeClass(name, data, referents.toArray(new Class[0]));
+        }
+        return makeClass(name, data);
+    }
+
+    /**
      * Turn the java byte code for a compiled python module into a java class.
      * 
-     * @param name the name of the class
-     * @param data the java byte code.
+     * @param name
+     *            the name of the class
+     * @param data
+     *            the java byte code.
      */
     public static PyCode makeCode(String name, byte[] data, String filename) {
         try {
-            Class c = makeClass(name, null, data);
+            Class c = makeClass(name, data);
             Object o = c.getConstructor(new Class[] {String.class})
                     .newInstance(new Object[] {filename});
             return ((PyRunnable)o).getMain();
@@ -79,35 +70,25 @@ public class BytecodeLoader {
             throw Py.JavaError(e);
         }
     }
-    
-    private static class Loader extends SecureClassLoader {
-        private Vector parents;
+
+    public static class Loader extends SecureClassLoader {
+
+        private List<ClassLoader> parents = new ArrayList<ClassLoader>();
 
         public Loader() {
-            this.parents = BytecodeLoader.init();
+            parents.add(imp.getSyspathJavaLoader());
         }
 
         public void addParent(ClassLoader referent) {
-            if (!this.parents.contains(referent)) {
-                this.parents.add(0, referent);
+            if(!parents.contains(referent)) {
+                parents.add(0, referent);
             }
-        }
-
-        // override from abstract base class
-        protected Class loadClass(String name, boolean resolve)
-                throws ClassNotFoundException {
-            Class c = findLoadedClass(name);
-            if (c != null) {
-                return c;
-            }
-            return BytecodeLoader.findParentClass(this.parents, name);
         }
 
         public Class loadClassFromBytes(String name, byte[] data) {
-            Class c = defineClass(name, data, 0, data.length, this.getClass()
-                    .getProtectionDomain());
+            Class c = defineClass(name, data, 0, data.length, getClass().getProtectionDomain());
             resolveClass(c);
-            BytecodeLoader.compileClass(c);
+            Compiler.compileClass(c);
             return c;
         }
     }

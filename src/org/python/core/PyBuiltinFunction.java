@@ -1,28 +1,10 @@
 package org.python.core;
 
-public abstract class PyBuiltinFunction extends PyObject implements
-        PyType.Newstyle {
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedType;
 
-    public static final String exposed_name = "builtin_function_or_method";
-
-    public static void typeSetup(PyObject dict, PyType.Newstyle marker) {
-        dict.__setitem__("__name__", new PyGetSetDescr("__name__",
-                                                       PyBuiltinFunction.class,
-                                                       "fastGetName",
-                                                       null));
-        dict.__setitem__("__self__", new PyGetSetDescr("__self__",
-                                                       PyBuiltinFunction.class,
-                                                       "getSelf",
-                                                       null));
-        dict.__setitem__("__doc__", new PyGetSetDescr("__doc__",
-                                                      PyBuiltinFunction.class,
-                                                      "fastGetDoc",
-                                                      null));
-        dict.__setitem__("__call__", new PyGetSetDescr("__call__",
-                                                       PyBuiltinFunction.class,
-                                                       "makeCall",
-                                                       null));
-    }
+@ExposedType(name="builtin_function_or_method")
+public abstract class PyBuiltinFunction extends PyObject {
 
     public interface Info {
 
@@ -42,9 +24,9 @@ public abstract class PyBuiltinFunction extends PyObject implements
             this.minargs = minargs;
             this.maxargs = maxargs;
         }
-
-        public DefaultInfo(String name, int nargs) {
-            this(name, nargs, nargs);
+        
+        public DefaultInfo(String name) {
+            this(name, -1, -1);
         }
 
         private String name;
@@ -117,8 +99,9 @@ public abstract class PyBuiltinFunction extends PyObject implements
     /**
      * @return a new instance of this type of PyBuiltinFunction bound to self
      */
-    abstract protected PyBuiltinFunction bind(PyObject self);
+    abstract public PyBuiltinFunction bind(PyObject self);
 
+    @ExposedGet(name="__self__")
     public PyObject getSelf() {
         return Py.None;
     }
@@ -134,14 +117,17 @@ public abstract class PyBuiltinFunction extends PyObject implements
         }
     }
 
+    @ExposedGet(name="__name__")
     public PyObject fastGetName() {
         return Py.newString(this.info.getName());
     }
 
+    @ExposedGet(name="__doc__")
     public PyObject fastGetDoc() {
         return Py.None;
     }
 
+    @ExposedGet(name="__call__")
     public PyObject makeCall() {
         return this;
     }

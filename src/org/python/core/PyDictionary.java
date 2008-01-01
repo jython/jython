@@ -614,6 +614,18 @@ public class PyDictionary extends PyObject implements Map {
         table = new ConcurrentHashMap(t);
     }
 
+     /**
+     * Create an new dictionary which is based on the map and for derived types.
+     * @param subtype
+     * @param t  the hashtable used. The supplied hashtable is used as
+     *           is and must only contain PyObject key:value pairs.
+     */
+    public PyDictionary(PyType subtype, Map t) {
+        super(subtype);
+        table = new ConcurrentHashMap(t);
+    }
+
+        
     /**
      * Create a new dictionary with the element as content.
      * @param elements The initial elements that is inserted in the
@@ -627,7 +639,7 @@ public class PyDictionary extends PyObject implements Map {
         }
     }
 
-    final void dict_init(PyObject[] args,String[] kwds) {
+    final protected void dict_init(PyObject[] args,String[] kwds) {
         int nargs = args.length - kwds.length;
         if (nargs > 1)
             throw PyBuiltinFunction.DefaultInfo.unexpectedCall(
@@ -786,10 +798,13 @@ public class PyDictionary extends PyObject implements Map {
         return dict___eq__(ob_other);
     }
 
-    final PyObject dict___eq__(PyObject ob_other) {
-        if (ob_other.getType() != getType())
+    final PyObject dict___eq__(PyObject ob_other) {               
+        PyType thisType = getType();
+        PyType otherType = ob_other.getType();
+        if (otherType != thisType && !thisType.isSubType(otherType) 
+                && !otherType.isSubType(thisType)) {
             return null;
-
+        }
         PyDictionary other = (PyDictionary)ob_other;
         return table.equals(other.table) ? Py.True : Py.False;
     }
@@ -841,9 +856,12 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final int dict___cmp__(PyObject ob_other) {
-        if (ob_other.getType() != getType())
+        PyType thisType = getType();
+        PyType otherType = ob_other.getType();
+        if (otherType != thisType && !thisType.isSubType(otherType) 
+                && !otherType.isSubType(thisType)) {
             return -2;
-
+        }
         PyDictionary other = (PyDictionary)ob_other;
         int an = table.size();
         int bn = other.table.size();

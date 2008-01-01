@@ -2,297 +2,42 @@
 package org.python.modules.zipimport;
 
 import java.io.File;
-import java.io.InputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
-import org.python.core.imp;
 import org.python.core.ArgParser;
 import org.python.core.BytecodeLoader;
 import org.python.core.FileUtil;
 import org.python.core.Py;
-import org.python.core.PyBuiltinFunction;
-import org.python.core.PyBuiltinMethod;
-import org.python.core.PyBuiltinMethodNarrow;
 import org.python.core.PyCode;
 import org.python.core.PyDictionary;
-import org.python.core.PyGetSetDescr;
 import org.python.core.PyInteger;
 import org.python.core.PyList;
 import org.python.core.PyLong;
-import org.python.core.PyMethodDescr;
 import org.python.core.PyModule;
-import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PySystemState;
 import org.python.core.PyTuple;
 import org.python.core.PyType;
+import org.python.core.imp;
 import org.python.core.util.StringUtil;
-
-import java.util.Date;
-import java.util.Enumeration;
-
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
 
 /**
  * Import Python modules and packages from ZIP-format archives.
  *
  * @author Philip Jenvey
  */
+@ExposedType(name="zipimporter")
 public class zipimporter extends PyObject {
-
-    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-    /* type info */
-
-    public static final String exposed_name="zipimporter";
-
-    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("archive",new PyGetSetDescr("archive",zipimporter.class,"getArchive",null,null));
-        dict.__setitem__("prefix",new PyGetSetDescr("prefix",zipimporter.class,"getPrefix",null,null));
-        dict.__setitem__("_files",new PyGetSetDescr("_files",zipimporter.class,"getFiles",null,null));
-        dict.__setitem__("__doc__",new PyGetSetDescr("__doc__",zipimporter.class,"getDoc",null,null));
-        class exposed_find_module extends PyBuiltinMethodNarrow {
-
-            exposed_find_module(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_find_module(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                try {
-                    return((zipimporter)self).zipimporter_find_module(arg0.asString(0),arg1.asString(1));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                    case 1:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return((zipimporter)self).zipimporter_find_module(arg0.asString(0));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("find_module",new PyMethodDescr("find_module",zipimporter.class,1,2,new exposed_find_module(null,null)));
-        class exposed_load_module extends PyBuiltinMethodNarrow {
-
-            exposed_load_module(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_load_module(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return((zipimporter)self).zipimporter_load_module(arg0.asString(0));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("load_module",new PyMethodDescr("load_module",zipimporter.class,1,1,new exposed_load_module(null,null)));
-        class exposed_get_data extends PyBuiltinMethodNarrow {
-
-            exposed_get_data(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_get_data(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((zipimporter)self).zipimporter_get_data(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("get_data",new PyMethodDescr("get_data",zipimporter.class,1,1,new exposed_get_data(null,null)));
-        class exposed_is_package extends PyBuiltinMethodNarrow {
-
-            exposed_is_package(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_is_package(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return Py.newBoolean(((zipimporter)self).zipimporter_is_package(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("is_package",new PyMethodDescr("is_package",zipimporter.class,1,1,new exposed_is_package(null,null)));
-        class exposed_get_code extends PyBuiltinMethodNarrow {
-
-            exposed_get_code(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_get_code(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return((zipimporter)self).zipimporter_get_code(arg0.asString(0));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("get_code",new PyMethodDescr("get_code",zipimporter.class,1,1,new exposed_get_code(null,null)));
-        class exposed_get_source extends PyBuiltinMethodNarrow {
-
-            exposed_get_source(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_get_source(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    return new PyString(((zipimporter)self).zipimporter_get_source(arg0.asString(0)));
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="expected a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("get_source",new PyMethodDescr("get_source",zipimporter.class,1,1,new exposed_get_source(null,null)));
-        class exposed___repr__ extends PyBuiltinMethodNarrow {
-
-            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___repr__(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((zipimporter)self).zipimporter_toString());
-            }
-
-        }
-        dict.__setitem__("__repr__",new PyMethodDescr("__repr__",zipimporter.class,0,0,new exposed___repr__(null,null)));
-        class exposed___init__ extends PyBuiltinMethod {
-
-            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___init__(self,info);
-            }
-
-            public PyObject __call__(PyObject[]args) {
-                return __call__(args,Py.NoKeywords);
-            }
-
-            public PyObject __call__(PyObject[]args,String[]keywords) {
-                ((zipimporter)self).zipimporter_init(args,keywords);
-                return Py.None;
-            }
-
-        }
-        dict.__setitem__("__init__",new PyMethodDescr("__init__",zipimporter.class,-1,-1,new exposed___init__(null,null)));
-        dict.__setitem__("__new__",new PyNewWrapper(zipimporter.class,"__new__",-1,-1) {
-
-                                                                                           public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                               zipimporter newobj;
-                                                                                               if (for_type==subtype) {
-                                                                                                   newobj=new zipimporter();
-                                                                                                   if (init)
-                                                                                                       newobj.zipimporter_init(args,keywords);
-                                                                                               } else {
-                                                                                                   newobj=new zipimporterDerived(subtype);
-                                                                                               }
-                                                                                               return newobj;
-                                                                                           }
-
-                                                                                       });
-    }
-    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-
     private static final PyString __doc__ = new PyString(
         "zipimporter(archivepath) -> zipimporter object\n" +
         "\n" +
@@ -338,16 +83,18 @@ public class zipimporter extends PyObject {
 
     public zipimporter(String path) {
         super();
-        zipimporter_init(path);
+        zipimporter___init__(path);
     }
 
-    final void zipimporter_init(PyObject[] args, String[] kwds) {
+    @ExposedNew
+    @ExposedMethod
+    final void zipimporter___init__(PyObject[] args, String[] kwds) {
         ArgParser ap = new ArgParser("__init__", args, kwds, new String[] {"path"});
         String path = ap.getString(0);
-        zipimporter_init(path);
+        zipimporter___init__(path);
     }
 
-    private void zipimporter_init(String path) {
+    private void zipimporter___init__(String path) {
         if (path == null || path.length() == 0) {
             throw zipimport.ZipImportError("archive path is empty");
         }
@@ -369,8 +116,8 @@ public class zipimporter extends PyObject {
             }
 
             String childFile = pathFile.getPath();
-            prefix = childFile.substring(childFile.lastIndexOf(File.separator) + 1) +
-                    File.separator + prefix;
+            prefix = childFile.substring(childFile.lastIndexOf(File.separator) + 1)
+                    + File.separator + prefix;
             pathFile = parentFile;
         }
 
@@ -391,18 +138,7 @@ public class zipimporter extends PyObject {
     }
 
     public PyObject find_module(String fullname) {
-        return zipimporter_find_module(fullname);
-    }
-
-    /**
-     * Find the module for the fully qualified name.
-     *
-     * @param fullname the fully qualified name of the module
-     * @return a loader instance if this importer can load the module, None
-     *         otherwise
-     */
-    final PyObject zipimporter_find_module(String fullname) {
-        return find_module(fullname, null);
+        return zipimporter_find_module(fullname, null);
     }
 
     public PyObject find_module(String fullname, String path) {
@@ -417,6 +153,7 @@ public class zipimporter extends PyObject {
      * @return a loader instance if this importer can load the module, None
      *         otherwise
      */
+    @ExposedMethod(defaults="null")
     final PyObject zipimporter_find_module(String fullname, String path) {
         ModuleInfo moduleInfo = getModuleInfo(fullname);
         if (moduleInfo == ModuleInfo.ERROR || moduleInfo == ModuleInfo.NOT_FOUND) {
@@ -435,6 +172,7 @@ public class zipimporter extends PyObject {
      * @param fullname the fully qualified name of the module
      * @return a loaded PyModule
      */
+    @ExposedMethod
     final PyObject zipimporter_load_module(String fullname) {
         ModuleCodeData moduleCodeData = getModuleCode(fullname);
         if (moduleCodeData == null) {
@@ -473,6 +211,7 @@ public class zipimporter extends PyObject {
      * @param path a String path name within the archive
      * @return a String of data in binary mode (no CRLF)
      */
+    @ExposedMethod
     final String zipimporter_get_data(String path) {
         int len = archive.length();
         if (len < path.length() && path.startsWith(archive + File.separator)) {
@@ -514,6 +253,7 @@ public class zipimporter extends PyObject {
      * @param fullname the fully qualified name of the module
      * @return a boolean describing if the module is a package
      */
+    @ExposedMethod
     final boolean zipimporter_is_package(String fullname) {
         ModuleInfo moduleInfo = getModuleInfo(fullname);
         if (moduleInfo == ModuleInfo.NOT_FOUND) {
@@ -532,6 +272,7 @@ public class zipimporter extends PyObject {
      * @param fullname the fully qualified name of the module
      * @return the module's PyCode object or None
      */
+    @ExposedMethod
     final PyObject zipimporter_get_code(String fullname) {
         ModuleCodeData moduleCodeData = getModuleCode(fullname);
         if (moduleCodeData != null) {
@@ -551,6 +292,7 @@ public class zipimporter extends PyObject {
      * @param fullname the fully qualified name of the module
      * @return a String of the module's source code or null
      */
+    @ExposedMethod
     final String zipimporter_get_source(String fullname) {
         ModuleInfo moduleInfo = getModuleInfo(fullname);
 
@@ -599,8 +341,7 @@ public class zipimporter extends PyObject {
             return zipArchive.getInputStream(data);
         }
         catch (IOException ioe) {
-            Py.writeDebug("import", "zipimporter.getDataStream exception: " +
-                          ioe.toString());
+            Py.writeDebug("import", "zipimporter.getDataStream exception: " + ioe.toString());
             throw zipimport.ZipImportError("zipimport: can not open file: " + archive);
 
         }
@@ -753,8 +494,7 @@ public class zipimporter extends PyObject {
         for (Enumeration zipEntries = zipFile.entries(); zipEntries.hasMoreElements();) {
             ZipEntry zipEntry = (ZipEntry)zipEntries.nextElement();
 
-            PyObject __file__ = new PyString(archive + File.separator +
-                                             zipEntry.getName());
+            PyObject __file__ = new PyString(archive + File.separator + zipEntry.getName());
             PyObject compress = new PyInteger(zipEntry.getMethod());
             PyObject data_size = new PyLong(zipEntry.getCompressedSize());
             PyObject file_size = new PyLong(zipEntry.getSize());
@@ -854,13 +594,21 @@ public class zipimporter extends PyObject {
         return zipimporter_toString();
     }
 
+    @ExposedMethod(names="__repr__")
     final String zipimporter_toString() {
         return "<zipimporter object \"" + archive + "\">";
     }
 
+    @ExposedGet(name="archive")
     public String getArchive() { return archive; }
+
+    @ExposedGet(name="prefix")
     public String getPrefix() { return prefix; }
+
+    @ExposedGet(name="_files")
     public PyObject getFiles() { return files; }
+
+    @ExposedGet(name="__doc__")
     public PyObject getDoc() { return __doc__; }
 
     /**

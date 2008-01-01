@@ -1,0 +1,10 @@
+org/python/core/PyBaseString.class
+org/python/core/PyBuiltinFunction.class
+org/python/core/PyInteger.class
+org/python/core/PyModule.class
+org/python/core/PyNone.class
+org/python/core/PyObject.class
+org/python/core/PyString.class
+org/python/core/PyType.class
+org/python/core/PyUnicode.class
+org/python/modules/zipimport/zipimporter.class

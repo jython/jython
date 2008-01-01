@@ -197,8 +197,8 @@ public class FileIO extends RawIOBase {
         }
 
         if (toRead > Integer.MAX_VALUE) {
-            throw Py.OverflowError("requested number of bytes is more than a Python " +
-                                   "string can hold");
+            throw Py.OverflowError("requested number of bytes is more than a Python string can "
+                                   + "hold");
         }
 
         ByteBuffer all = ByteBuffer.allocate((int)toRead);

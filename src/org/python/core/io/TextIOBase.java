@@ -103,8 +103,8 @@ public abstract class TextIOBase extends IOBase {
             if (buf instanceof PyString) {
                 throw Py.TypeError("Cannot use string as modifiable buffer");
             }
-            throw Py.TypeError("argument 1 must be read-write buffer, not " +
-                               buf.getType().getFullName());
+            throw Py.TypeError("argument 1 must be read-write buffer, not "
+                               + buf.getType().getFullName());
         }
         PyArray array = (PyArray)buf;
         String read = read(array.__len__());

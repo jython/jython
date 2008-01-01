@@ -11,9 +11,9 @@ This build will create directories /build and /dist below basedir.
 Use case 2: full build for a release (using svn checkout)
 ---------------------------------------------------------
   - make sure you have access to the jython subversion repository (https://jython.svn.sourceforge.net/svnroot/jython/trunk)
-  - override svn.tag in ant.properties (if necessary)
+  - override svn.main.dir in ant.properties (if necessary)
   - call target 'full-build'
-This build will create a working directory named full_build_${svn.tag} at the same
+This build will create a working directory named full_build/${svn.main.dir} at the same
 level as your local directories jython, sandbox and installer.
 It will contain a big jython_installer-${jython.version}.jar file suitable for installation.
 
@@ -55,7 +55,6 @@ Actions for a release
 ---------------------
  http://wiki.python.org/jython/JythonDeveloperGuide/HowToReleaseJython
 
-
 An example ant.properties file:
 -------------------------------
 
@@ -92,13 +91,21 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 #optimize=off
 #deprecation=off
 
-# - the svn tag to build from; only needed for full-build
-#svn.tag=Release_2_2beta2
-#svn.tag=HEAD
+# - the svn main directory to build from; only needed for full-build
+# This e.g. could be one of:
+#   trunk
+#   branches/Release_2_2maint
+#   tags/Release_2_2rc3
+# meaning any directory just above the two directories:
+#   /installer
+#   /jython
+# svn.main.dir defaults to trunk
+#svn.main.dir=trunk
 
-# - the revision; defaults to svn.tag; only needed for full-build
-#   (uncomment and indicate the correct revision to do a snapshot build)
-#svn.revision=3245
+# - the revision; only needed for a snapshot full-build
+# To create a snapshot build: uncomment and indicate the correct revision (it has to be a number)
+# For 'normal' builds, this defaults to the latest revision on svn.main.dir (HEAD)
+#svn.revision=3444
 
 # - the directory containing libsvnjavahl-1.dll (on windows) and svnjavahl.jar; only needed for full-build
 # how to get these:
@@ -149,11 +156,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${postgresql.jar}" />
             <pathelement path="${jndi.jar}" />
             <pathelement path="${jdbc.jar}" />
+            <pathelement path="extlibs/asm-3.1.jar" />
             <pathelement path="${java.class.path}" />
         </path>
 
-        <available property="threadlocal.present" classname="java.lang.ThreadLocal" />
-        <available property="secureclassloader.present" classname="java.security.SecureClassLoader" />
         <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />
         <available property="readline.present" classname="org.gnu.readline.Readline" classpath="${readline.jar}" />
         <available property="jline.present" classname="jline.Terminal" classpath="${jline.jar}" />
@@ -170,11 +176,10 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- use this property to distinguish a full-build from a developer-build -->
         <property name="full-build" value="true" />
 
-        <!-- predefined tags for jython and cpython -->
-        <property name="svn.tag" value="Release_2_2beta2" />
+        <!-- predefined main directory for checkout -->
+        <property name="svn.main.dir" value="trunk" />
 
-        <!-- use different work and checkout directories -->
-        <property name="work.dir" value="${basedir}/../full_build_${svn.tag}" />
+        <property name="work.dir" value="${basedir}/../full_build/${svn.main.dir}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
         <property name="source.dir" value="${jython.base.dir}/src" />
@@ -192,7 +197,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <condition property="jython.version" value="${svn.revision}">
             <isset property="svn.revision" />
         </condition>
-        <property name="jython.version" value="2.2b2" />
+        <property name="jython.version" value="2.3a0" />
+        <!-- if not set so far, default svn.revision to HEAD, since we always want
+    	     the latest revision on the specified subversion main directory -->
         <property name="svn.revision" value="HEAD"/>
     	
         <!-- classpath for svn ant task -->
@@ -218,15 +225,25 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="work.dir" value="${basedir}" />
         <property name="jython.base.dir" value="${basedir}" />
         <property name="source.dir" value="${basedir}/src" />
+        <property name="test.source.dir" value="${basedir}/tests/java" />
         <property name="templates.dir" value="${basedir}/src/templates" />
         <property name="python.lib" value="${basedir}/CPythonLib" />
         <property name="bugtests.dir" value="${basedir}/bugtests" />
         <property name="templates.lazy" value="true" />
 
         <property name="output.dir" value="${work.dir}/build" />
+        <property name="compile.dir" value="${output.dir}/classes" />
+        <property name="exposed.dir" value="${output.dir}/exposed" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
         <property name="parser.dir" value="${source.dir}/org/python/parser" />
+        <path id="test.classpath">
+            <path refid="main.classpath"/>
+            <pathelement path="extlibs/asm-commons-3.1.jar" />
+            <pathelement path="extlibs/junit-3.8.2.jar" />
+            <pathelement path="${exposed.dir}" />
+            <pathelement path="${compile.dir}" />
+        </path>
     </target>
 	
     <target name="dump-env" depends="init">
@@ -234,8 +251,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>Build environment for ${ant.project.name}</echo>
         <echo>(Note: if ${propertyname} is displayed, then the property is not set)</echo>
         <echo>--- optional libraries ---</echo>
-        <echo>threadlocal        = '${threadlocal.present}'</echo>
-        <echo>secureclassloader  = '${secureclassloader.present}'</echo>
         <echo>servlet            = '${servlet.present}'</echo>
         <echo>readline           = '${readline.present}'</echo>
         <echo>jline              = '${jline.present}'</echo>
@@ -267,11 +282,11 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>nowarn             = '${nowarn}'</echo>
         <echo>--- properties (used for full-build only ) ---</echo>
         <echo>python.exe         = '${python.exe}'</echo>
-        <echo>svn.tag            = '${svn.tag}'</echo>
+        <echo>svn.main.dir       = '${svn.main.dir}'</echo>
+        <echo>svn.revision       = '${svn.revision}'</echo>
         <echo>svn.checkout.dir   = '${svn.checkout.dir}'</echo>
         <echo>javahl.dir         = '${javahl.dir}'</echo>
         <echo>svnant.jar.dir     = '${svnant.jar.dir}'</echo>
-        <echo>svn.revision       = '${svn.revision}'</echo>
         <echo>do.snapshot.build  = '${do.snapshot.build}'</echo>
         <echo>do.checkout        = '${do.checkout}'</echo>
     </target>
@@ -304,7 +319,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <!-- create output directories -->
     <target name ="prepare-output" depends="init">
-        <mkdir dir="${output.dir}" />
+        <mkdir dir="${compile.dir}" />
+        <mkdir dir="${exposed.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
 
@@ -324,11 +340,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     </target>
 
     <target name="checkout" depends="prepare" if="do.checkout">
-    	<!-- determine if to checkout from /tags/${svn.tag} (any tag), or /trunk (HEAD) -->
-    	<condition property="svn.main.dir" value="trunk">
-    		<equals arg1="${svn.tag}" arg2="HEAD" />
-    	</condition>
-    	<property name="svn.main.dir" value="tags/${svn.tag}" />
         <svn javahl="${javahl.dir}" >
         	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/jython" revision="${svn.revision}" destPath="${svn.checkout.dir}/jython" />
         	<checkout url="https://jython.svn.sourceforge.net/svnroot/jython/${svn.main.dir}/installer" revision="${svn.revision}" destPath="${svn.checkout.dir}/installer" />
@@ -375,7 +386,7 @@ The readme text for the next release will be like:
 
     <target name="template-init" depends="prepare">
         <javac srcdir="${source.dir}/"
-                destdir="${output.dir}/"
+                destdir="${compile.dir}"
                 target="${jdk.target.version}"
                 source="${jdk.source.version}"
                 debug="${debug}"
@@ -388,20 +399,19 @@ The readme text for the next release will be like:
 
     <target name="template" depends="checkout, template-init">
         <taskdef name="gentempl" classname="org.python.util.TemplateAntTask"
-            classpath="${output.dir}" />
+            classpath="${compile.dir}" />
         <gentempl srcdir="${templates.dir}" verbose="true"
 		  lazy="${templates.lazy}"/>
     </target>
 
     <target name="compile" depends="init">
         <javac srcdir="${source.dir}/"
-               destdir="${output.dir}/"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-	       nowarn="${nowarn}"
-        >
+	       nowarn="${nowarn}">
             <exclude name="org/python/parser/python.java" />
             <exclude name="**/PyServlet.java" unless="servlet.present" />
             <exclude name="**/ReadlineConsole.java" unless="readline.present" />
@@ -419,46 +429,53 @@ The readme text for the next release will be like:
 
         <javac srcdir="${jython.base.dir}/Lib"
                includes="jxxload_help/**"
-               destdir="${output.dir}/"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}"
-        />
+               nowarn="${nowarn}"/>
 
         <!-- java files used by tests -->
-        <javac srcdir="${jython.base.dir}/tests/java"
-               destdir="${output.dir}/"
+        <javac srcdir="${test.source.dir}"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
                optimize="${optimize}"
                deprecation="${deprecation}"
-               nowarn="${nowarn}"
-        />
+               nowarn="${nowarn}"> 
+            <classpath refid="test.classpath" />
+        </javac>
 
         <copy file="${source.dir}/org/python/modules/ucnhash.dat"
-              todir="${output.dir}/org/python/modules"
-              preservelastmodified="true"
-        />
+              todir="${compile.dir}/org/python/modules"
+              preservelastmodified="true" />
 
-        <copy todir="${output.dir}/com" preservelastmodified="true">
+        <copy todir="${compile.dir}/com" preservelastmodified="true">
             <fileset dir="${source.dir}/com">
                 <include name="**/*.properties" />
             </fileset>
         </copy>
     </target>
 
-    <target name="jar" depends="compile">
-        <jar destfile="${dist.dir}/jython.jar"
-             basedir="${output.dir}"
-             update="true">
-          <include name="com/**/*" />
-          <include name="org/**/*" />
-          <include name="jxxload_help/*" />
-          <include name="javatests/*" />
+    <target name="expose" depends="init">
+        <taskdef name="expose" classname="org.python.expose.generate.ExposeTask">
+            <classpath>
+                <path refid="main.classpath" />
+                <pathelement path="${compile.dir}" />
+            </classpath>
+        </taskdef>
+        <expose srcdir="${compile.dir}"
+            destdir="${exposed.dir}" 
+            includesfile="${jython.base.dir}/CoreExposed.includes"/>
+    </target>
+
+    <target name="jar" depends="compile,expose">
+        <jar destfile="${dist.dir}/jython.jar" update="true">
+          <fileset dir="${compile.dir}"/>   
+          <fileset dir="${exposed.dir}"/>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
               <attribute name="Built-By" value="${user.name}" />
@@ -466,8 +483,6 @@ The readme text for the next release will be like:
               <section name="Build-Info">
                   <attribute name="version" value="${jython.version}" />
                   <attribute name="svn-build" value="${do.checkout}" />
-                  <attribute name="threadlocal" value="${threadlocal.present}" />
-                  <attribute name="secureclassloader" value="${secureclassloader.present}" />
                   <attribute name="servlet" value="${servlet.present}" />
                   <attribute name="readline" value="${readline.present}" />
                   <attribute name="jline" value="${jline.present}" />
@@ -579,12 +594,11 @@ The readme text for the next release will be like:
 
     <!-- wrap the build into the installer -->
     <target name="install" depends="version, doc, javadoc, jar, copy-full">
-        <fail unless="svn.tag" message="no svn.tag specified" />
         <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
                includes="org/**"
-               destdir="${output.dir}/"
+               destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
@@ -594,7 +608,7 @@ The readme text for the next release will be like:
         />
         <echo>copy installer classes to ${dist.dir}</echo>
         <copy todir="${dist.dir}" preservelastmodified="true">
-            <fileset dir="${output.dir}">
+            <fileset dir="${compile.dir}">
             	<include name="org/python/util/install/**/*.class" />
             	<include name="org/apache/commons/cli/*.class" />
             </fileset>
@@ -618,8 +632,6 @@ The readme text for the next release will be like:
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="svn-build" value="${do.checkout}" />
-                    <attribute name="threadlocal" value="${threadlocal.present}" />
-                    <attribute name="secureclassloader" value="${secureclassloader.present}" />
                     <attribute name="servlet" value="${servlet.present}" />
                     <attribute name="readline" value="${readline.present}" />
                     <attribute name="jline" value="${jline.present}" />
@@ -639,13 +651,25 @@ The readme text for the next release will be like:
         </jar>
     </target>
 
-    <target name="regrtest" depends="init">
+    <target name="test" depends="javatest,regrtest"/>
+    <target name="javatest" depends="compile,expose">
+        <junit fork="true" printsummary="true">
+            <classpath refid="test.classpath"/>
+            <batchtest todir="${dist.dir}/testreports">
+                <fileset dir="${test.source.dir}" includes="**/*Test*.java">
+                    <exclude name="javatests/**/*" />
+                    <exclude name="**/InterpTestCase.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+    </target>
+    <target name="regrtest" depends="compile,expose,copy-lib">
         <java classname="org.python.util.jython" fork="true">
             <jvmarg value="-Dpython.home=${dist.dir}"/>
             <arg value="${dist.dir}/Lib/test/regrtest.py"/>
-            <classpath>
-                <pathelement location="${dist.dir}/jython.jar"/>
-            </classpath>
+            <!-- Only run the tests that are expected to work on Jython -->
+            <arg value="--expected"/>
+            <classpath refid="test.classpath" />
         </java>
     </target>
 

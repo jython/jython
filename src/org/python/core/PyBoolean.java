@@ -357,4 +357,9 @@ public class PyBoolean extends PyInteger {
         return value ? 1 : 0;
     }
 
+    @Override
+    public int asInt() {
+        return value ? 1 : 0;
+    }
+
 }

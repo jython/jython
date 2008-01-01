@@ -122,8 +122,7 @@ public class TextIOWrapper extends BinaryIOWrapper {
         char[] all = new char[readahead.remaining() + remaining.remaining()];
 
         // Consume the readahead
-        length += readLoop(readahead.array(), readahead.position(), all, 0,
-                           readahead.remaining());
+        length += readLoop(readahead.array(), readahead.position(), all, 0, readahead.remaining());
         readahead.position(readahead.limit());
 
         // Consume the remainder of the file

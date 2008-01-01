@@ -58,8 +58,7 @@ public class BinaryIOWrapper extends TextIOBase {
         }
 
         ByteBuffer remaining = bufferedIO.readall();
-        ByteBuffer all = ByteBuffer.allocate(readahead.remaining() +
-                                             remaining.remaining());
+        ByteBuffer all = ByteBuffer.allocate(readahead.remaining() + remaining.remaining());
         all.put(readahead);
         clearReadahead();
         all.put(remaining);

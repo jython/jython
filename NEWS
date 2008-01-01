@@ -1,11 +1,33 @@
 Jython NEWS
 
+Jython 2.5
+  Incompatible Changes
+    - To implement the Java Map interface, PyDictionary.values now returns a Collection instead of a PyList
+  
+  New Features
+    - PyDictionary now implements Map so it may be passed to any Java function expecting a Map.
+
+  Ported Modules
+    - collections
+    - filecmp
+    - threading.local
+
 Jython 2.2.2 rc1
   Bugs fixed
     - [ 1806980 ] os.path.join ignores empty string
     - [ 1744567 ] Simultaneous read & write on socket FileWrapper causes hang
     - [ 1831710 ] PyFileCloser throws NullPointerException on shutdown
     - [ 1817908 ] Broken link for corner icon in html documentation
+    - [ 1850722 ] socket.py - ClientCookie and ClientForm (and urllib2)
+    - [ 1841445 ] PythonInterpreter.get(String name, Class javaclass) throws 
+    an NPE if name isn't defined
+    - [ 1839871 ] dict calls __setitem__ on subclasses in initialization
+    - [ 1816134 ] str uses its own __eq__ instead of deferring to subclasses
+    - [ 1796425 ] os.renames missing
+    - [ 1796415 ] os.removedirs missing
+    - [ 1814678 ] os.__all__ missing many functions
+    - [ 1812122 ] NullPointerException when rethrowing an exception
+    - [ 1830916 ] PyException doesn't store causal Java exception
 
 Jython 2.2.1
   Identical to 2.2.1 rc2

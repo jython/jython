@@ -35,8 +35,8 @@ import org.python.modules.zipimport.zipimporter;
 // xxx this should really be a module!
 public class PySystemState extends PyObject
 {
-    private static final String PYTHON_CACHEDIR = "python.cachedir";
-    protected static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
+    public static final String PYTHON_CACHEDIR = "python.cachedir";
+    public static final String PYTHON_CACHEDIR_SKIP = "python.cachedir.skip";
     protected static final String CACHEDIR_DEFAULT_NAME = "cachedir";
     
     public static final String JYTHON_JAR = "jython.jar";
@@ -687,6 +687,9 @@ public class PySystemState extends PyObject
 
             if (prefix != null) {
                 String libpath = new File(prefix, "Lib").toString();
+                path.append(new PyString(libpath));
+                libpath = new File(prefix, "Lib" + File.separator +
+                                   "site-packages").toString();
                 path.append(new PyString(libpath));
             }
 

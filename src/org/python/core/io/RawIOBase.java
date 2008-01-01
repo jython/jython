@@ -59,7 +59,7 @@ public abstract class RawIOBase extends IOBase {
      */
     public ByteBuffer readall() {
         long count = 0;
-        List chunks = new ArrayList();
+        List<ByteBuffer> chunks = new ArrayList<ByteBuffer>();
         while (true) {
             ByteBuffer chunk = read(DEFAULT_BUFFER_SIZE);
             int chunkSize = chunk.remaining();
@@ -71,13 +71,13 @@ public abstract class RawIOBase extends IOBase {
         }
 
         if (count > Integer.MAX_VALUE) {
-            throw Py.OverflowError("requested number of bytes is more than a Python " +
-                                   "string can hold");
+            throw Py.OverflowError("requested number of bytes is more than a Python string can "
+                                   + "hold");
         }
 
         ByteBuffer all = ByteBuffer.allocate((int)count);
-        for (Iterator chunkIter = chunks.iterator(); chunkIter.hasNext();) {
-            all.put((ByteBuffer)chunkIter.next());
+        for (ByteBuffer chunk : chunks) {
+            all.put(chunk);
         }
         all.flip();
         return all;
@@ -107,8 +107,7 @@ public abstract class RawIOBase extends IOBase {
     public long readinto(ByteBuffer[] bufs) {
         long count = 0;
         int bufCount;
-        for (int i = 0; i < bufs.length; i++) {
-            ByteBuffer buf = (ByteBuffer)bufs[i];
+        for (ByteBuffer buf : bufs) {
             if (!buf.hasRemaining()) {
                 continue;
             }
@@ -146,8 +145,7 @@ public abstract class RawIOBase extends IOBase {
     public long write(ByteBuffer[] bufs) {
         long count = 0;
         int bufCount;
-        for (int i = 0; i < bufs.length; i++) {
-            ByteBuffer buf = (ByteBuffer)bufs[i];
+        for (ByteBuffer buf : bufs) {
             if (!buf.hasRemaining()) {
                 continue;
             }
