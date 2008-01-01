@@ -1051,7 +1051,6 @@ _failures = {
     test_trace
     test_ucn
     test_unicode
-    test_urllib
     test_xpickle
     test_zipimport
     ''',
