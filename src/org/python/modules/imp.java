@@ -239,7 +239,11 @@ public class imp {
      *
      */
     public static void release_lock() {
-        org.python.core.imp.importLock.unlock();
+        try{
+            org.python.core.imp.importLock.unlock();
+        }catch(IllegalMonitorStateException e){
+            throw Py.RuntimeError("not holding the import lock");
+        }
     }
 
     /**
