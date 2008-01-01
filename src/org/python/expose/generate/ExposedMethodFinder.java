@@ -11,12 +11,23 @@ import org.objectweb.asm.Type;
 import org.python.expose.MethodType;
 
 /**
- * Visits a method passing all calls through to its delegate. If an ExposedNew
- * or ExposedMethod annotation is visited, calls handleResult with the exposer
- * constructed with that annotation. Only one of the handleResult methods will
- * be called, if any.
+ * Visits a method passing all calls through to its delegate. If an ExposedNew or ExposedMethod
+ * annotation is visited, calls handleResult with the exposer constructed with that annotation. Only
+ * one of the handleResult methods will be called, if any.
  */
 public abstract class ExposedMethodFinder extends MethodAdapter implements PyTypes, Opcodes {
+
+    private Exposer newExp;
+
+    private ExposedMethodVisitor methVisitor;
+
+    private Type onType;
+
+    private String methodDesc, typeName, methodName;
+
+    private String[] exceptions;
+
+    private int access;
 
     public ExposedMethodFinder(String typeName,
                                Type onType,
@@ -59,11 +70,12 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
                 newExp = new NewExposer(onType, access, methodName, methodDesc, exceptions);
             } else {
                 newExp = new OverridableNewExposer(onType,
-                                            Type.getType("L" + onType.getInternalName() + "Derived;"),
-                                            access,
-                                            methodName,
-                                            methodDesc,
-                                            exceptions);
+                                                   Type.getType("L" + onType.getInternalName()
+                                                           + "Derived;"),
+                                                   access,
+                                                   methodName,
+                                                   methodDesc,
+                                                   exceptions);
             }
         } else if(desc.equals(EXPOSED_METHOD.getDescriptor())) {
             methVisitor = new ExposedMethodVisitor();
@@ -165,22 +177,10 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
                                            methVisitor.names,
                                            methVisitor.defaults,
                                            methVisitor.type));
-        } 
+        }
         if(newExp != null) {
             handleNewExposer(newExp);
         }
         super.visitEnd();
     }
-
-    private Exposer newExp;
-
-    ExposedMethodVisitor methVisitor;
-
-    private Type onType;
-
-    private String methodDesc, typeName, methodName;
-
-    private String[] exceptions;
-
-    private int access;
 }

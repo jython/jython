@@ -3,10 +3,15 @@ package org.python.expose.generate;
 import org.objectweb.asm.Type;
 
 /**
- * Visits an ExposedType annotation and passes the values it gathers to
- * handleResult.
+ * Visits an ExposedType annotation and passes the values it gathers to handleResult.
  */
 public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
+
+    private String typeName;
+
+    private Type onType;
+
+    private Type base = Type.getType(Object.class);
 
     public ExposedTypeVisitor(Type onType) {
         this.onType = onType;
@@ -40,10 +45,4 @@ public abstract class ExposedTypeVisitor extends RestrictiveAnnotationVisitor {
      *            the name the type should be exposed as from the annotation.
      */
     public abstract void handleResult(String name);
-
-    private String typeName;
-
-    private Type onType;
-    
-    private Type base = Type.getType(Object.class);
 }

@@ -17,10 +17,24 @@ import org.python.expose.ExposedType;
 import org.python.expose.TypeBuilder;
 
 /**
- * Generates a subclass of TypeBuilder to expose a class with the
- * {@link ExposedType} annotation as a builtin Python type.
+ * Generates a subclass of TypeBuilder to expose a class with the {@link ExposedType} annotation as
+ * a builtin Python type.
  */
 public class TypeExposer extends Exposer {
+
+    private Type baseType;
+
+    private Type onType;
+
+    private String name;
+
+    private Collection<MethodExposer> methods;
+
+    private Collection<DescriptorExposer> descriptors;
+
+    private int numNames;
+
+    private Exposer ne;
 
     public TypeExposer(Type onType,
                        Type baseType,
@@ -35,7 +49,7 @@ public class TypeExposer extends Exposer {
         this.methods = methods;
         this.descriptors = descriptors;
         Set<String> names = new HashSet<String>();
-        for(DescriptorExposer exposer: descriptors) {
+        for(DescriptorExposer exposer : descriptors) {
             if(!names.add(exposer.getName())) {
                 throwDupe(exposer.getName());
             }
@@ -51,7 +65,7 @@ public class TypeExposer extends Exposer {
         }
         this.ne = ne;
     }
-    
+
     private void throwDupe(String exposedName) {
         throw new InvalidExposingException("Only one item may be exposed on a type with a given name[name="
                 + exposedName + ", class=" + onType.getClassName() + "]");
@@ -101,7 +115,8 @@ public class TypeExposer extends Exposer {
             for(final String name : exposer.getNames()) {
                 mv.visitVarInsn(ALOAD, 1);
                 mv.visitLdcInsn(i++);
-                instantiate(exposer.getGeneratedType(), new Instantiator(STRING){
+                instantiate(exposer.getGeneratedType(), new Instantiator(STRING) {
+
                     public void pushArgs() {
                         mv.visitLdcInsn(name);
                     }
@@ -131,6 +146,18 @@ public class TypeExposer extends Exposer {
     }
 
     protected static class BaseTypeBuilder implements TypeBuilder {
+
+        private PyNewWrapper newWrapper;
+
+        private PyBuiltinFunction[] funcs;
+
+        private PyDataDescr[] descrs;
+
+        private Class typeClass;
+
+        private Class baseClass;
+
+        private String name;
 
         public BaseTypeBuilder(String name,
                                Class typeClass,
@@ -173,31 +200,5 @@ public class TypeExposer extends Exposer {
         public Class getBase() {
             return baseClass;
         }
-
-        private PyNewWrapper newWrapper;
-
-        private PyBuiltinFunction[] funcs;
-
-        private PyDataDescr[] descrs;
-
-        private Class typeClass;
-        
-        private Class baseClass;
-
-        private String name;
     }
-
-    private Type baseType;
-
-    private Type onType;
-
-    private String name;
-
-    private Collection<MethodExposer> methods;
-
-    private Collection<DescriptorExposer> descriptors;
-
-    private int numNames;
-
-    private Exposer ne;
 }

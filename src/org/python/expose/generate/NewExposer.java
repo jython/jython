@@ -10,6 +10,10 @@ import org.python.core.PyType;
 
 public class NewExposer extends Exposer {
 
+    private Type onType;
+
+    private String name;
+
     public NewExposer(Type onType, int access, String methodName, String desc, String[] exceptions) {
         super(PyNewWrapper.class, onType.getClassName() + "$exposed___new__");
         this.onType = onType;
@@ -24,9 +28,10 @@ public class NewExposer extends Exposer {
             throwInvalid("@ExposedNew methods may not throw checked exceptions");
         }
     }
-    
-    private void throwInvalid(String msg){
-        throw new InvalidExposingException(msg + "[method=" + onType.getClassName() + "." + name +"]");
+
+    private void throwInvalid(String msg) {
+        throw new InvalidExposingException(msg + "[method=" + onType.getClassName() + "." + name
+                + "]");
     }
 
     @Override
@@ -50,8 +55,7 @@ public class NewExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 3);
         mv.visitVarInsn(ALOAD, 4);
         mv.visitMethodInsn(INVOKESTATIC, onType.getInternalName(), name, NEW_DESCRIPTOR);
-        mv.visitInsn(ARETURN);
-        endMethod();
+        endMethod(ARETURN);
     }
 
     public static final String NEW_DESCRIPTOR = Type.getMethodDescriptor(PYOBJ,
@@ -60,8 +64,4 @@ public class NewExposer extends Exposer {
                                                                                      PYTYPE,
                                                                                      APYOBJ,
                                                                                      ASTRING});
-
-    private Type onType;
-
-    private String name;
 }

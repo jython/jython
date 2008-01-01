@@ -21,18 +21,31 @@ import org.objectweb.asm.Type;
 import org.python.expose.ExposedType;
 
 /**
- * Processes the bytecode of a Java class that has the {@link ExposedType}
- * annotation on it and generates new bytecode for it containing the inner
- * classes Jython needs to expose it as a type.
+ * Processes the bytecode of a Java class that has the {@link ExposedType} annotation on it and
+ * generates new bytecode for it containing the inner classes Jython needs to expose it as a type.
  */
 public class ExposedTypeProcessor implements Opcodes, PyTypes {
+
+    private List<MethodExposer> methodExposers = new ArrayList<MethodExposer>();
+
+    private Map<String, DescriptorExposer> descExposers = new HashMap<String, DescriptorExposer>();
+
+    private Exposer newExposer;
+
+    private TypeExposer typeExposer;
+
+    private ClassWriter cw;
+
+    private String typeName;
+
+    private Type onType;
 
     /**
      * @param in -
      *            an InputStream to bytecode of an ExposedType
      * @throws InvalidExposingException -
-     *             if the class doesn't have an annotation, or if one of the
-     *             method annotations is malformed
+     *             if the class doesn't have an annotation, or if one of the method annotations is
+     *             malformed
      */
     public ExposedTypeProcessor(InputStream in) throws IOException {
         ClassReader cr = new ClassReader(in);
@@ -59,8 +72,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
     }
 
     /**
-     * @return The Exposer for __new__ for this type. Can be null if the type
-     *         isn't instantiable.
+     * @return The Exposer for __new__ for this type. Can be null if the type isn't instantiable.
      */
     public Exposer getNewExposer() {
         return newExposer;
@@ -91,25 +103,14 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
         return descExposers.get(descName);
     }
 
-    private List<MethodExposer> methodExposers = new ArrayList<MethodExposer>();
-
-    private Map<String, DescriptorExposer> descExposers = new HashMap<String, DescriptorExposer>();
-
-    private Exposer newExposer;
-
-    private TypeExposer typeExposer;
-
-    private ClassWriter cw;
-
-    private String typeName;
-
-    private Type onType;
-
     /**
-     * The actual visitor that runs over the bytecode and figures out what to
-     * expose.
+     * The actual visitor that runs over the bytecode and figures out what to expose.
      */
     private final class TypeProcessor extends ClassAdapter {
+
+        private Type baseType = OBJECT;
+
+        private boolean generatedStaticBlock;
 
         private TypeProcessor(ClassVisitor cv) {
             super(cv);
@@ -144,8 +145,8 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
             }
             return super.visitAnnotation(desc, visible);
         }
-        
-        private void throwInvalid(String msg){
+
+        private void throwInvalid(String msg) {
             throw new InvalidExposingException(msg + "[class=" + onType.getClassName() + "]");
         }
 
@@ -251,7 +252,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
 
                     @Override
                     public void handleNewExposer(Exposer exposer) {
-                        if(newExposer != null){
+                        if(newExposer != null) {
                             throwInvalid("Only one @ExposedNew is allowed per class");
                         }
                         newExposer = exposer;
@@ -299,9 +300,5 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                 }
             };
         }
-        
-        private Type baseType = OBJECT;
-
-        private boolean generatedStaticBlock;
     }
 }

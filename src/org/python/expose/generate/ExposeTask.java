@@ -16,6 +16,12 @@ import org.objectweb.asm.ClassWriter;
 
 public class ExposeTask extends MatchingTask {
 
+    private Path src;
+
+    private File destDir;
+
+    private Set<File> toExpose = new HashSet<File>();
+
     /**
      * Set the source directories to find the class files to be exposed.
      */
@@ -35,8 +41,7 @@ public class ExposeTask extends MatchingTask {
     }
 
     /**
-     * Set the destination directory into which the Java source files should be
-     * compiled.
+     * Set the destination directory into which the Java source files should be compiled.
      * 
      * @param destDir
      *            the destination director
@@ -46,8 +51,7 @@ public class ExposeTask extends MatchingTask {
     }
 
     /**
-     * Gets the destination directory into which the java source files should be
-     * compiled.
+     * Gets the destination directory into which the java source files should be compiled.
      * 
      * @return the destination directory
      */
@@ -80,7 +84,7 @@ public class ExposeTask extends MatchingTask {
                 etp = new ExposedTypeProcessor(new FileInputStream(f));
             } catch(IOException e) {
                 throw new BuildException("Unable to read '" + f + "' to expose it", e);
-            } catch(InvalidExposingException iee){
+            } catch(InvalidExposingException iee) {
                 throw new BuildException(iee.getMessage());
             }
             for(MethodExposer exposer : etp.getMethodExposers()) {
@@ -134,8 +138,7 @@ public class ExposeTask extends MatchingTask {
     }
 
     /**
-     * Check that all required attributes have been set and nothing silly has
-     * been entered.
+     * Check that all required attributes have been set and nothing silly has been entered.
      */
     protected void checkParameters() throws BuildException {
         if(src == null || src.size() == 0) {
@@ -146,10 +149,4 @@ public class ExposeTask extends MatchingTask {
                     + "or is not a directory", getLocation());
         }
     }
-
-    private Path src;
-
-    private File destDir;
-
-    private Set<File> toExpose = new HashSet<File>();
 }

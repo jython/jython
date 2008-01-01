@@ -7,12 +7,16 @@ import org.python.core.PyObject;
 
 public class OverridableNewExposer extends Exposer {
 
+    private Type onType, subtype;
+
+    private String name;
+
     public OverridableNewExposer(Type onType,
-                          Type subtype,
-                          int access,
-                          String methodName,
-                          String descriptor,
-                          String[] exceptions) {
+                                 Type subtype,
+                                 int access,
+                                 String methodName,
+                                 String descriptor,
+                                 String[] exceptions) {
         super(PyOverridableNew.class, onType.getClassName() + "$exposed___new__");
         this.onType = onType;
         this.subtype = subtype;
@@ -35,8 +39,9 @@ public class OverridableNewExposer extends Exposer {
 
     private void generateOfType() {
         startMethod("createOfType", PYOBJ, BOOLEAN, APYOBJ, ASTRING);
-        instantiate(onType, new Instantiator(PYTYPE){
-            public void pushArgs(){
+        instantiate(onType, new Instantiator(PYTYPE) {
+
+            public void pushArgs() {
                 get("for_type", PYTYPE);
             }
         });
@@ -47,28 +52,20 @@ public class OverridableNewExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 4);
         mv.visitVarInsn(ALOAD, 2);
         mv.visitVarInsn(ALOAD, 3);
-        mv.visitMethodInsn(INVOKEVIRTUAL, onType.getInternalName(), name, methodDesc(VOID,
-                                                                                     APYOBJ,
-                                                                                     ASTRING));
+        call(onType, name, VOID, APYOBJ, ASTRING);
         mv.visitLabel(regularReturn);
         mv.visitVarInsn(ALOAD, 4);
-        mv.visitInsn(ARETURN);
-        endMethod();
+        endMethod(ARETURN);
     }
-    
+
     private void generateOfSubtype() {
         startMethod("createOfSubtype", PYOBJ, PYTYPE);
-        instantiate(subtype, new Instantiator(PYTYPE){
-            public void pushArgs(){
+        instantiate(subtype, new Instantiator(PYTYPE) {
+
+            public void pushArgs() {
                 mv.visitVarInsn(ALOAD, 1);
             }
         });
-        mv.visitInsn(ARETURN);
-        endMethod();
+        endMethod(ARETURN);
     }
-    
-    private Type onType, subtype;
-    
-    private String name;
-
 }

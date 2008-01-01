@@ -2,6 +2,8 @@ package org.python.expose.generate;
 
 abstract class DescriptorVisitor extends RestrictiveAnnotationVisitor {
 
+    private String val;
+
     DescriptorVisitor(String defaultName) {
         val = defaultName;
     }
@@ -21,6 +23,4 @@ abstract class DescriptorVisitor extends RestrictiveAnnotationVisitor {
     }
 
     public abstract void handleResult(String name);
-
-    private String val;
 }

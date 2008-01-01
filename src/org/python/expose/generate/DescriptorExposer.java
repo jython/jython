@@ -9,17 +9,38 @@ import org.python.core.PyDataDescr;
 import org.python.expose.ExposedGet;
 
 /**
- * Generates a class to expose a descriptor on Python type. One of
- * addMethodGetter or addFieldGetter must be called, and possibly one of
- * addMethodSetter and addFieldSetter if this is a settable descriptor. If this
- * is a deletable descriptor, addMethodDeleter may be called. There is no
+ * Generates a class to expose a descriptor on Python type. One of addMethodGetter or addFieldGetter
+ * must be called, and possibly one of addMethodSetter and addFieldSetter if this is a settable
+ * descriptor. If this is a deletable descriptor, addMethodDeleter may be called. There is no
  * addFieldDeleter since there's no defined behavior to 'delete' a field.
  */
 public class DescriptorExposer extends Exposer {
 
+    private Type onType, ofType;
+
+    private String name;
+
+    private String getterMethodName, getterFieldName, setterMethodName, setterFieldName,
+            deleterMethodName;
+
+    private static final Set<Type> PRIMITIVES = Collections.unmodifiableSet(new HashSet<Type>() {
+
+        {
+            add(Type.BOOLEAN_TYPE);
+            add(Type.BYTE_TYPE);
+            add(Type.CHAR_TYPE);
+            add(Type.DOUBLE_TYPE);
+            add(Type.FLOAT_TYPE);
+            add(Type.INT_TYPE);
+            add(Type.LONG_TYPE);
+            add(Type.SHORT_TYPE);
+            add(Type.VOID_TYPE);
+        }
+    });
+
     /**
-     * Creates an exposer that will work on type and have <code>descrName</code>
-     * as its name in the type's dict.
+     * Creates an exposer that will work on type and have <code>descrName</code> as its name in
+     * the type's dict.
      */
     public DescriptorExposer(Type onType, String descrName) {
         super(PyDataDescr.class, onType.getClassName() + "$" + descrName + "_descriptor");
@@ -63,7 +84,7 @@ public class DescriptorExposer extends Exposer {
         }
         if(ofType == null) {
             ofType = type;
-        } else if(!ofType.equals(type)) {   
+        } else if(!ofType.equals(type)) {
             error("Types of the getter and setter must agree");
         }
     }
@@ -139,12 +160,8 @@ public class DescriptorExposer extends Exposer {
         startMethod("invokeGet", OBJECT, PYOBJ);
         mv.visitVarInsn(ALOAD, 1);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
-        mv.visitMethodInsn(INVOKEVIRTUAL,
-                           onType.getInternalName(),
-                           getterMethodName,
-                           methodDesc(ofType));
-        mv.visitInsn(ARETURN);
-        endMethod();
+        call(onType, getterMethodName, ofType);
+        endMethod(ARETURN);
     }
 
     private void generateFieldGetter() {
@@ -155,8 +172,7 @@ public class DescriptorExposer extends Exposer {
                           onType.getInternalName(),
                           getterFieldName,
                           ofType.getDescriptor());
-        mv.visitInsn(ARETURN);
-        endMethod();
+        endMethod(ARETURN);
     }
 
     private void generateMethodSetter() {
@@ -165,12 +181,8 @@ public class DescriptorExposer extends Exposer {
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         mv.visitVarInsn(ALOAD, 2);
         mv.visitTypeInsn(CHECKCAST, ofType.getInternalName());
-        mv.visitMethodInsn(INVOKEVIRTUAL,
-                           onType.getInternalName(),
-                           setterMethodName,
-                           methodDesc(VOID, ofType));
-        mv.visitInsn(RETURN);
-        endMethod();
+        call(onType, setterMethodName, VOID, ofType);
+        endMethod(RETURN);
     }
 
     private void generateFieldSetter() {
@@ -183,53 +195,25 @@ public class DescriptorExposer extends Exposer {
                           onType.getInternalName(),
                           setterFieldName,
                           ofType.getDescriptor());
-        mv.visitInsn(RETURN);
-        endMethod();
+        endMethod(RETURN);
     }
 
     private void generateMethodDeleter() {
         startMethod("invokeDelete", VOID, PYOBJ);
         mv.visitVarInsn(ALOAD, 1);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
-        mv.visitMethodInsn(INVOKEVIRTUAL,
-                           onType.getInternalName(),
-                           deleterMethodName,
-                           methodDesc(VOID));
-        mv.visitInsn(RETURN);
-        endMethod();
+        call(onType, deleterMethodName, VOID);
+        endMethod(RETURN);
     }
 
     private void generateDoesntImplement(String setOrDelete) {
         startMethod("implementsDescr" + setOrDelete, BOOLEAN);
         mv.visitInsn(ICONST_0);
-        mv.visitInsn(IRETURN);
-        endMethod();
+        endMethod(IRETURN);
     }
 
     private void error(String reason) {
         throw new InvalidExposingException(reason + "[class=" + onType.getClassName() + ", name="
                 + name + "]");
     }
-
-    private Type onType, ofType;
-
-    private String name;
-
-    private String getterMethodName, getterFieldName, setterMethodName, setterFieldName,
-            deleterMethodName;
-
-    private static final Set<Type> PRIMITIVES = Collections.unmodifiableSet(new HashSet<Type>() {
-
-        {
-            add(Type.BOOLEAN_TYPE);
-            add(Type.BYTE_TYPE);
-            add(Type.CHAR_TYPE);
-            add(Type.DOUBLE_TYPE);
-            add(Type.FLOAT_TYPE);
-            add(Type.INT_TYPE);
-            add(Type.LONG_TYPE);
-            add(Type.SHORT_TYPE);
-            add(Type.VOID_TYPE);
-        }
-    });
 }

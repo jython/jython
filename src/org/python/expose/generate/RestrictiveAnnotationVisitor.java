@@ -3,9 +3,8 @@ package org.python.expose.generate;
 import org.objectweb.asm.AnnotationVisitor;
 
 /**
- * An Annotation visitor that throws an IllegalArgumentException if it visits
- * anything other than visitEnd. Should be subclasses by something interested in
- * only certain events.
+ * An Annotation visitor that throws an IllegalArgumentException if it visits anything other than
+ * visitEnd. Should be subclasses by something interested in only certain events.
  */
 public class RestrictiveAnnotationVisitor implements AnnotationVisitor {
 

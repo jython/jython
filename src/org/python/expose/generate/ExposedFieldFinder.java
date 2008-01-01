@@ -6,6 +6,10 @@ import org.objectweb.asm.FieldVisitor;
 
 public abstract class ExposedFieldFinder implements FieldVisitor, PyTypes {
 
+    private String fieldName;
+
+    private FieldVisitor delegate;
+
     public ExposedFieldFinder(String name, FieldVisitor delegate) {
         fieldName = name;
         this.delegate = delegate;
@@ -44,8 +48,4 @@ public abstract class ExposedFieldFinder implements FieldVisitor, PyTypes {
     public void visitEnd() {
         delegate.visitEnd();
     }
-
-    private String fieldName;
-
-    private FieldVisitor delegate;
 }
