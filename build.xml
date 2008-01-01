@@ -461,8 +461,12 @@ The readme text for the next release will be like:
     </target>
 
     <target name="expose" depends="init">
-        <taskdef name="expose" classname="org.python.expose.generate.ExposeTask"
-            classpath="${compile.dir}" classpathref="main.classpath"/>
+        <taskdef name="expose" classname="org.python.expose.generate.ExposeTask">
+            <classpath>
+                <path refid="main.classpath" />
+                <pathelement path="${compile.dir}" />
+            </classpath>
+        </taskdef>
         <expose srcdir="${compile.dir}"
             destdir="${exposed.dir}" 
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
