@@ -49,7 +49,7 @@ public class PyUnicode extends PyString {
      */
     public static PyUnicode fromInterned(String interned) {
         PyUnicode uni = new PyUnicode(TYPE, interned);
-        uni.interned = interned;
+        uni.interned = true;
         return uni;
     }
 
