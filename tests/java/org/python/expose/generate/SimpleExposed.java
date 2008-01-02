@@ -62,8 +62,8 @@ public class SimpleExposed extends PyObject {
     }
 
     @ExposedMethod
-    public void takesArgument(PyObject arg) {
-        assert arg == Py.None;
+    public double takesArgument(PyObject arg) {
+        return Py.py2double(arg);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
@@ -98,13 +98,28 @@ public class SimpleExposed extends PyObject {
     }
 
     @ExposedMethod(defaults = {"a", "1", "2", "3"})
-    public PyObject manyPrimitives(char c, short s, double d, byte b) {
-        return new PyString("" + c + s + d + b);
+    public String manyPrimitives(char c, short s, double d, byte b) {
+        return "" + c + s + d + b;
     }
 
     @ExposedMethod
-    public PyObject fullArgs(PyObject[] args, String[] kws) {
-        return new PyInteger(args.length + kws.length);
+    public long fullArgs(PyObject[] args, String[] kws) {
+        return args.length + kws.length;
+    }
+
+    @ExposedMethod
+    public short shortReturn() {
+        return 12;
+    }
+
+    @ExposedMethod
+    public byte byteReturn() {
+        return 0;
+    }
+
+    @ExposedMethod
+    public char charReturn() {
+        return 'a';
     }
 
     @ExposedGet(name = "tostring")

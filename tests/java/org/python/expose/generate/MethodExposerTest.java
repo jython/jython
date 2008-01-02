@@ -64,8 +64,8 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
     }
 
     public void testArgumentPassing() throws Exception {
-        PyBuiltinFunction bound = createBound("takesArgument", VOID, PYOBJ);
-        bound.__call__(Py.None);
+        PyBuiltinFunction bound = createBound("takesArgument", Type.DOUBLE_TYPE, PYOBJ);
+        assertEquals(1.0, Py.py2double(bound.__call__(Py.One)));
         try {
             bound.__call__();
             fail("Need to pass an argument to takesArgument");
@@ -126,7 +126,7 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
 
     public void testPrimitiveDefaults() throws Exception {
         MethodExposer exp = createExposer("manyPrimitives",
-                                          PYOBJ,
+                                          STRING,
                                           CHAR,
                                           SHORT,
                                           Type.DOUBLE_TYPE,
@@ -146,7 +146,7 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
         MethodExposer exp = new MethodExposer(Type.getType(SimpleExposed.class),
                                               Opcodes.ACC_PUBLIC,
                                               "fullArgs",
-                                              Type.getMethodDescriptor(PYOBJ, new Type[] {APYOBJ,
+                                              Type.getMethodDescriptor(Type.LONG_TYPE, new Type[] {APYOBJ,
                                                                                           ASTRING}),
                                               "simpleexposed");
         PyBuiltinFunction bound = createBound(exp);
@@ -174,6 +174,12 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
                               "simpleexposed");
             fail("Shouldn't be able to create an exposer on a static method");
         } catch(InvalidExposingException ite) {}
+    }
+    
+    public void testPrimitiveReturns() throws Exception{
+        assertEquals(12, Py.py2int(createBound("shortReturn", SHORT).__call__()));
+        assertEquals(0, Py.py2int(createBound("byteReturn", BYTE).__call__()));
+        assertEquals("a", createBound("charReturn", CHAR).__call__().toString());
     }
 
     public void test__new__() throws Exception {

@@ -163,8 +163,16 @@ public class MethodExposer extends Exposer {
             callStatic(PY, "newString", PYSTR, STRING);
         } else if(returnType.equals(BOOLEAN)) {
             callStatic(PY, "newBoolean", PYBOOLEAN, BOOLEAN);
-        } else if(returnType.equals(INT)) {
+        } else if(returnType.equals(INT) || returnType.equals(BYTE) || returnType.equals(SHORT)) {
             callStatic(PY, "newInteger", PYINTEGER, INT);
+        } else if(returnType.equals(CHAR)) {
+            callStatic(PY, "makeCharacter", PYSTR,  CHAR);
+        } else if(returnType.equals(Type.DOUBLE_TYPE)) {
+            callStatic(PY, "newFloat", PYFLOAT , Type.DOUBLE_TYPE);
+        } else if(returnType.equals(Type.FLOAT_TYPE)) {
+            callStatic(PY, "newFloat", PYFLOAT,  Type.FLOAT_TYPE);
+        } else if(returnType.equals(Type.LONG_TYPE)) {
+            callStatic(PY, "newLong", PYLONG, Type.LONG_TYPE);
         }
         endMethod(ARETURN);
     }
@@ -216,7 +224,7 @@ public class MethodExposer extends Exposer {
 
     /** Throw NotImplemented if a binary method returned null. */
     private void checkBinaryResult() {
-        // If this is a binary method, 
+        // If this is a binary method,
         mv.visitInsn(DUP);
         Label regularReturn = new Label();
         mv.visitJumpInsn(IFNONNULL, regularReturn);
@@ -235,8 +243,7 @@ public class MethodExposer extends Exposer {
         instantiate(STRING_BUILDER, new Instantiator(STRING) {
 
             public void pushArgs() {
-                mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix
-                        + "', not a '");
+                mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix + "', not a '");
             }
         });
         mv.visitVarInsn(ALOAD, 1);

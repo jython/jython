@@ -538,6 +538,10 @@ public final class Py
         return new PyLong(i);
     }
 
+    public static PyLong newLong(long l) {
+        return new PyLong(l);
+    }
+
     public static PyComplex newImaginary(double v) {
         return new PyComplex(0, v);
     }
@@ -1537,7 +1541,7 @@ public final class Py
         return makeCharacter(o.charValue());
     }
 
-    static final PyString makeCharacter(char c) {
+    public static final PyString makeCharacter(char c) {
         return makeCharacter(c, false);
     }
     static final PyString makeCharacter(char c, boolean explicitUnicode) {
