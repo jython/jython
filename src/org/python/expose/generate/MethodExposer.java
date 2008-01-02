@@ -153,27 +153,7 @@ public class MethodExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitVarInsn(ALOAD, 2);
         call(onType, methodName, returnType, args);
-        generateCallReturn();
-    }
-
-    private void generateCallReturn() {
-        if(returnType.equals(VOID)) {
-            getStatic(PY, "None", PYOBJ);
-        } else if(returnType.equals(STRING)) {
-            callStatic(PY, "newString", PYSTR, STRING);
-        } else if(returnType.equals(BOOLEAN)) {
-            callStatic(PY, "newBoolean", PYBOOLEAN, BOOLEAN);
-        } else if(returnType.equals(INT) || returnType.equals(BYTE) || returnType.equals(SHORT)) {
-            callStatic(PY, "newInteger", PYINTEGER, INT);
-        } else if(returnType.equals(CHAR)) {
-            callStatic(PY, "makeCharacter", PYSTR,  CHAR);
-        } else if(returnType.equals(Type.DOUBLE_TYPE)) {
-            callStatic(PY, "newFloat", PYFLOAT , Type.DOUBLE_TYPE);
-        } else if(returnType.equals(Type.FLOAT_TYPE)) {
-            callStatic(PY, "newFloat", PYFLOAT,  Type.FLOAT_TYPE);
-        } else if(returnType.equals(Type.LONG_TYPE)) {
-            callStatic(PY, "newLong", PYLONG, Type.LONG_TYPE);
-        }
+        toPy(returnType);
         endMethod(ARETURN);
     }
 
@@ -198,8 +178,8 @@ public class MethodExposer extends Exposer {
         // Push the passed in callArgs onto the stack, and convert them if necessary
         for(int i = 0; i < callArgs.length; i++) {
             mv.visitVarInsn(ALOAD, usedLocals++);
-            if(PRIMITIVES.contains(args[i])) {
-                convertToPrimitive(args[i]);
+            if(PRIMITIVES.containsKey(args[i])) {
+                callStatic(PY, "py2" + args[i].getClassName(), args[i], PYOBJ);
             } else if(args[i].equals(STRING)) {
                 if(hasDefault(i) && getDefault(i).equals("null")) {
                     call(PYOBJ, "asStringOrNull", STRING);
@@ -219,7 +199,8 @@ public class MethodExposer extends Exposer {
         } else if(type == MethodType.CMP) {
             checkCmpResult();
         }
-        generateCallReturn();
+        toPy(returnType);
+        endMethod(ARETURN);
     }
 
     /** Throw NotImplemented if a binary method returned null. */

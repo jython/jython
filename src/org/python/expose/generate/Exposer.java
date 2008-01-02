@@ -1,8 +1,7 @@
 package org.python.expose.generate;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -29,21 +28,22 @@ public abstract class Exposer implements Opcodes, PyTypes {
 
     /** The type that will be generated. */
     protected Type thisType;
-    
-    protected static final Set<Type> PRIMITIVES = Collections.unmodifiableSet(new HashSet<Type>() {
+
+    /** Maps from a primitive type to its wrapper */
+    protected static final Map<Type, Type> PRIMITIVES = new HashMap<Type, Type>() {
 
         {
-            add(Type.BOOLEAN_TYPE);
-            add(Type.BYTE_TYPE);
-            add(Type.CHAR_TYPE);
-            add(Type.DOUBLE_TYPE);
-            add(Type.FLOAT_TYPE);
-            add(Type.INT_TYPE);
-            add(Type.LONG_TYPE);
-            add(Type.SHORT_TYPE);
-            add(Type.VOID_TYPE);
+            put(BOOLEAN, Type.getType(Boolean.class));
+            put(BYTE, Type.getType(Byte.class));
+            put(CHAR, Type.getType(Character.class));
+            put(Type.DOUBLE_TYPE, Type.getType(Double.class));
+            put(Type.FLOAT_TYPE, Type.getType(Float.class));
+            put(INT, Type.getType(Integer.class));
+            put(Type.LONG_TYPE, Type.getType(Long.class));
+            put(SHORT, Type.getType(Short.class));
+            put(VOID, Type.getType(Void.class));
         }
-    });
+    };
 
     /**
      * @param superClass -
@@ -213,12 +213,29 @@ public abstract class Exposer implements Opcodes, PyTypes {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, getInternalName(), fieldName, ofType.getDescriptor());
     }
-    
-    protected void convertToPrimitive(Type primitiveType){
-        if(!PRIMITIVES.contains(primitiveType)){
-            throw new IllegalArgumentException(primitiveType + " isn't a primitive!");
+
+    /**
+     * Turns an object of inputType on the top of the stack into an equivalent Py type. Handles
+     * primitives, void, and String. If void, the top item on the stack isn't touched.
+     */
+    protected void toPy(Type inputType) {
+        if(inputType.equals(VOID)) {
+            getStatic(PY, "None", PYOBJ);
+        } else if(inputType.equals(STRING)) {
+            callStatic(PY, "newString", PYSTR, STRING);
+        } else if(inputType.equals(BOOLEAN)) {
+            callStatic(PY, "newBoolean", PYBOOLEAN, BOOLEAN);
+        } else if(inputType.equals(INT) || inputType.equals(BYTE) || inputType.equals(SHORT)) {
+            callStatic(PY, "newInteger", PYINTEGER, INT);
+        } else if(inputType.equals(CHAR)) {
+            callStatic(PY, "makeCharacter", PYSTR, CHAR);
+        } else if(inputType.equals(Type.DOUBLE_TYPE)) {
+            callStatic(PY, "newFloat", PYFLOAT, Type.DOUBLE_TYPE);
+        } else if(inputType.equals(Type.FLOAT_TYPE)) {
+            callStatic(PY, "newFloat", PYFLOAT, Type.FLOAT_TYPE);
+        } else if(inputType.equals(Type.LONG_TYPE)) {
+            callStatic(PY, "newLong", PYLONG, Type.LONG_TYPE);
         }
-        callStatic(PY, "py2" + primitiveType.getClassName(), primitiveType, PYOBJ);
     }
 
     /** Gets a static field from onType of the given type. */
