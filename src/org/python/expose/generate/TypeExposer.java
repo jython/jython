@@ -176,7 +176,7 @@ public class TypeExposer extends Exposer {
         public PyObject getDict(PyType type) {
             PyObject dict = new PyStringMap();
             for(PyBuiltinFunction func : funcs) {
-                PyMethodDescr pmd = new PyMethodDescr(typeClass, func);
+                PyMethodDescr pmd = new PyMethodDescr(type, func);
                 dict.__setitem__(pmd.getName(), pmd);
             }
             for(PyDataDescr descr : descrs) {
