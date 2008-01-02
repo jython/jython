@@ -38,7 +38,8 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "zipimporter")
 public class zipimporter extends PyObject {
-    private static final PyString __doc__ = new PyString(
+    @ExposedGet
+    public static final PyString __doc__ = new PyString(
         "zipimporter(archivepath) -> zipimporter object\n" +
         "\n" +
         "Create a new zipimporter instance. 'archivepath' must be a path to\n" +
@@ -62,13 +63,16 @@ public class zipimporter extends PyObject {
     static enum ModuleInfo {ERROR, NOT_FOUND, MODULE, PACKAGE};
 
     /** Pathname of the Zip archive */
-    private String archive;
+    @ExposedGet
+    public String archive;
 
     /** File prefix: "a/sub/directory/" */
-    private String prefix;
+    @ExposedGet
+    public String prefix;
 
     /** Dict with file info {path: tocEntry} */
-    private PyObject files;
+    @ExposedGet(name = "_files")
+    public PyObject files;
 
     /** The PySystemState this zipimporter is associated with */
     private PySystemState sys;
@@ -598,18 +602,6 @@ public class zipimporter extends PyObject {
     final String zipimporter_toString() {
         return "<zipimporter object \"" + archive + "\">";
     }
-
-    @ExposedGet(name = "archive")
-    public String getArchive() { return archive; }
-
-    @ExposedGet(name = "prefix")
-    public String getPrefix() { return prefix; }
-
-    @ExposedGet(name = "_files")
-    public PyObject getFiles() { return files; }
-
-    @ExposedGet(name = "__doc__")
-    public PyObject getDoc() { return __doc__; }
 
     /**
      * Container for PyModule code, whether or not it's a package and

@@ -34,9 +34,11 @@ import org.python.expose.MethodType;
 @ExposedType(name = "file")
 public class PyFile extends PyObject {
     /** The filename */
-    private PyObject name;
+    @ExposedGet
+    public PyObject name;
 
     /** The mode string */
+    @ExposedGet
     public String mode;
 
     /** Indicator dictating whether a space should be written to this
@@ -560,16 +562,6 @@ public class PyFile extends PyObject {
 
     private void checkClosed() {
         file.checkClosed();
-    }
-
-    @ExposedGet(name = "mode")
-    public String getMode() {
-        return mode;
-    }
-
-    @ExposedGet(name = "name")
-    public PyObject getName() {
-        return name;
     }
 
     @ExposedGet(name = "closed")
