@@ -12,7 +12,7 @@ import org.python.expose.ExposedType;
  * The Python Module object.
  *
  */
-@ExposedType(name="module")
+@ExposedType(name = "module")
 public class PyModule extends PyObject {
     private final PyObject moduleDoc = new PyString(
         "module(name[, doc])\n" +
@@ -68,7 +68,7 @@ public class PyModule extends PyObject {
         return __dict__;
     }
 
-    @ExposedGet(name="__dict__")
+    @ExposedGet(name = "__dict__")
     public PyObject getDict() {
         if (__dict__ == null) {
             return Py.None;
@@ -76,17 +76,17 @@ public class PyModule extends PyObject {
         return __dict__;
     }
 
-    @ExposedSet(name="__dict__")
+    @ExposedSet(name = "__dict__")
     public void setDict(PyObject newDict) {
         throw Py.TypeError("readonly attribute");
     }
 
-    @ExposedDelete(name="__dict__")
+    @ExposedDelete(name = "__dict__")
     public void delDict() {
         throw Py.TypeError("readonly attribute");
     }
 
-    @ExposedGet(name="__doc__")
+    @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
         PyObject dict = fastGetDict();
         if (dict != null) {
@@ -190,7 +190,7 @@ public class PyModule extends PyObject {
         return module_toString();
     }
 
-    @ExposedMethod(names={"__repr__"})
+    @ExposedMethod(names = {"__repr__"})
     final String module_toString()  {
         PyObject name = null;
         PyObject filename = null;

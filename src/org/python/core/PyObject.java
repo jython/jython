@@ -18,7 +18,7 @@ import org.python.expose.ExposedType;
  * All objects known to the Jython runtime system are represented by an instance
  * of the class <code>PyObject</code> or one of its subclasses.
  */
-@ExposedType(name="object")
+@ExposedType(name = "object")
 public class PyObject implements Serializable {
     
     public static final PyType TYPE = PyType.fromClass(PyObject.class);
@@ -29,12 +29,12 @@ public class PyObject implements Serializable {
 
     private PyType objtype;
 
-    @ExposedGet(name="__class__")
+    @ExposedGet(name = "__class__")
     public PyType getType() {
         return objtype;
     }
 
-    @ExposedSet(name="__class__")
+    @ExposedSet(name = "__class__")
     public void setType(PyType type) {
         if(getType().layoutAligns(type) &&
                 !type.equals(PyType.fromClass(PyObject.class))){
@@ -44,7 +44,7 @@ public class PyObject implements Serializable {
         }
     }
 
-    @ExposedDelete(name="__class__")
+    @ExposedDelete(name = "__class__")
     public void delType() {
         throw Py.TypeError("Can't delete __class__ attribute");
     }
@@ -54,7 +54,7 @@ public class PyObject implements Serializable {
         return objtype;
     }
 
-    @ExposedGet(name="__doc__")
+    @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
         PyObject d = fastGetDict();
         if (d != null) {
@@ -122,7 +122,7 @@ public class PyObject implements Serializable {
      * configure the string representation of a <code>PyObject</code> is to
      * override the standard Java <code>toString</code> method.
      **/
-    @ExposedMethod(names="__str__")
+    @ExposedMethod(names = "__str__")
     public PyString __repr__() {
         return new PyString(toString());
     }
@@ -131,7 +131,7 @@ public class PyObject implements Serializable {
         return object_toString();
     }
 
-    @ExposedMethod(names="__repr__")
+    @ExposedMethod(names = "__repr__")
     final String object_toString() {
         if (getType() == null) {
             return "unknown object";
@@ -2965,7 +2965,7 @@ public class PyObject implements Serializable {
         return object___reduce_ex__(0);
     }
 
-    @ExposedMethod(defaults="0")
+    @ExposedMethod(defaults = "0")
     final PyObject object___reduce_ex__(int arg) {
         PyObject res;
 

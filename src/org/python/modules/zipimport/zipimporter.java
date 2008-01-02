@@ -36,7 +36,7 @@ import org.python.expose.ExposedType;
  *
  * @author Philip Jenvey
  */
-@ExposedType(name="zipimporter")
+@ExposedType(name = "zipimporter")
 public class zipimporter extends PyObject {
     private static final PyString __doc__ = new PyString(
         "zipimporter(archivepath) -> zipimporter object\n" +
@@ -153,7 +153,7 @@ public class zipimporter extends PyObject {
      * @return a loader instance if this importer can load the module, None
      *         otherwise
      */
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final PyObject zipimporter_find_module(String fullname, String path) {
         ModuleInfo moduleInfo = getModuleInfo(fullname);
         if (moduleInfo == ModuleInfo.ERROR || moduleInfo == ModuleInfo.NOT_FOUND) {
@@ -594,21 +594,21 @@ public class zipimporter extends PyObject {
         return zipimporter_toString();
     }
 
-    @ExposedMethod(names="__repr__")
+    @ExposedMethod(names = "__repr__")
     final String zipimporter_toString() {
         return "<zipimporter object \"" + archive + "\">";
     }
 
-    @ExposedGet(name="archive")
+    @ExposedGet(name = "archive")
     public String getArchive() { return archive; }
 
-    @ExposedGet(name="prefix")
+    @ExposedGet(name = "prefix")
     public String getPrefix() { return prefix; }
 
-    @ExposedGet(name="_files")
+    @ExposedGet(name = "_files")
     public PyObject getFiles() { return files; }
 
-    @ExposedGet(name="__doc__")
+    @ExposedGet(name = "__doc__")
     public PyObject getDoc() { return __doc__; }
 
     /**

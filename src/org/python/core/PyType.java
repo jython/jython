@@ -27,7 +27,7 @@ import org.python.expose.TypeBuilder;
  * first-class Python type.
  *
  */
-@ExposedType(name="type")
+@ExposedType(name = "type")
 public class PyType extends PyObject implements Serializable {
 
     @ExposedNew
@@ -111,26 +111,26 @@ public class PyType extends PyObject implements Serializable {
         return base.getLayout();
     }
 
-    @ExposedGet(name="__base__")
+    @ExposedGet(name = "__base__")
     public PyObject getBase() {
         if (base == null)
             return Py.None;
         return base;
     }
 
-    @ExposedGet(name="__bases__")
+    @ExposedGet(name = "__bases__")
     public PyObject getBases() {
         if (bases == null)
             return new PyTuple();
         return new PyTuple(bases);
     }
 
-    @ExposedDelete(name="__bases__")
+    @ExposedDelete(name = "__bases__")
     public void delBases() {
         throw Py.TypeError("Can't delete __bases__ attribute");
     }
 
-    @ExposedSet(name="__bases__")
+    @ExposedSet(name = "__bases__")
     public void setBases(PyObject newBasesTuple) {
         if(!(newBasesTuple instanceof PyTuple)){
             throw Py.TypeError("bases must be a tuple");
@@ -249,12 +249,12 @@ public class PyType extends PyObject implements Serializable {
         }
     }
 
-    @ExposedGet(name="__mro__")
+    @ExposedGet(name = "__mro__")
     public PyTuple getMro() {
         return new PyTuple(mro);
     }
 
-    @ExposedGet(name="__flags__")
+    @ExposedGet(name = "__flags__")
     public PyLong getFlags() {
         return new PyLong(tp_flags);
     }
@@ -634,7 +634,7 @@ public class PyType extends PyObject implements Serializable {
     }
 
 
-    @ExposedGet(name="__name__")
+    @ExposedGet(name = "__name__")
     public String fastGetName() {
         return name;
     }
@@ -1206,17 +1206,17 @@ public class PyType extends PyObject implements Serializable {
     }
 
 
-    @ExposedGet(name="__dict__")
+    @ExposedGet(name = "__dict__")
     public PyObject getDict() { // xxx return dict-proxy
         return dict;
     }
     
-    @ExposedSet(name="__dict__")
+    @ExposedSet(name = "__dict__")
     public void setDict(PyObject newDict) {
     	throw Py.TypeError("can't set attribute '__dict__' of type '" + name + "'");
     }
 
-    @ExposedDelete(name="__dict__")
+    @ExposedDelete(name = "__dict__")
     public void delDict() {
     	throw Py.TypeError("can't delete attribute '__dict__' of type '" + name + "'");
     }

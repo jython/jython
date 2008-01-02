@@ -11,7 +11,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python string.
  */
-@ExposedType(name="str")
+@ExposedType(name = "str")
 public class PyString extends PyBaseString
 {
     public static final PyType TYPE = PyType.fromClass(PyString.class);
@@ -104,7 +104,7 @@ public class PyString extends PyBaseString
         return str_toString();
     }
 
-    @ExposedMethod(names="__repr__")
+    @ExposedMethod(names = "__repr__")
     final String str_toString() {
         return string;
     }
@@ -465,7 +465,7 @@ public class PyString extends PyBaseString
         return seq___finditem__(index);
     }
     
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     public PyObject str___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
     }
@@ -474,7 +474,7 @@ public class PyString extends PyBaseString
         return str___cmp__(other);
     }
 
-    @ExposedMethod(type=MethodType.CMP)
+    @ExposedMethod(type = MethodType.CMP)
     final int str___cmp__(PyObject other) {
         if (!(other instanceof PyString))
             return -2;
@@ -487,7 +487,7 @@ public class PyString extends PyBaseString
         return str___eq__(other);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___eq__(PyObject other) {
         String s = coerce(other);
         if (s == null)
@@ -499,7 +499,7 @@ public class PyString extends PyBaseString
         return str___ne__(other);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___ne__(PyObject other) {
         String s = coerce(other);
         if (s == null)
@@ -511,7 +511,7 @@ public class PyString extends PyBaseString
         return str___lt__(other);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___lt__(PyObject other){
         String s = coerce(other);
         if (s == null)
@@ -523,7 +523,7 @@ public class PyString extends PyBaseString
         return str___le__(other);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___le__(PyObject other){
         String s = coerce(other);
         if (s == null)
@@ -535,7 +535,7 @@ public class PyString extends PyBaseString
         return str___gt__(other);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___gt__(PyObject other){
         String s = coerce(other);
         if (s == null)
@@ -547,7 +547,7 @@ public class PyString extends PyBaseString
         return str___ge__(other);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___ge__(PyObject other){
         String s = coerce(other);
         if (s == null)
@@ -658,7 +658,7 @@ public class PyString extends PyBaseString
         return createInstance(new String(new_chars));
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___mul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             return null;
@@ -666,7 +666,7 @@ public class PyString extends PyBaseString
         return repeat(count);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___rmul__(PyObject o) {
         if (!(o instanceof PyInteger || o instanceof PyLong))
             return null;
@@ -678,7 +678,7 @@ public class PyString extends PyBaseString
         return str___add__(generic_other);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___add__(PyObject generic_other) {
         if (generic_other instanceof PyString) {
             PyString other = (PyString)generic_other;
@@ -940,7 +940,7 @@ public class PyString extends PyBaseString
         return str_strip(sep);
     }
 
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final String str_strip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -976,7 +976,7 @@ public class PyString extends PyBaseString
         return str_lstrip(sep);
     }
 
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final String str_lstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -995,7 +995,7 @@ public class PyString extends PyBaseString
         return str_rstrip(sep);
     }
     
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final String str_rstrip(String sep) {
         char[] chars = string.toCharArray();
         int n=chars.length;
@@ -1023,7 +1023,7 @@ public class PyString extends PyBaseString
         return str_split(sep, maxsplit);
     }
 
-    @ExposedMethod(defaults= {"null", "-1"})
+    @ExposedMethod(defaults = {"null", "-1"})
     final PyList str_split(String sep, int maxsplit) {
         if (sep != null)
             return splitfields(sep, maxsplit);
@@ -1098,7 +1098,7 @@ public class PyString extends PyBaseString
         return str_splitlines(keepends);
     }
 
-    @ExposedMethod(defaults="false")
+    @ExposedMethod(defaults = "false")
     final PyList str_splitlines(boolean keepends) {
         PyList list = new PyList();
 
@@ -1147,7 +1147,7 @@ public class PyString extends PyBaseString
         return str_index(sub, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int str_index(String sub, int start, PyObject end) {
         int index = str_find(sub, start, end);
         if (index == -1)
@@ -1187,7 +1187,7 @@ public class PyString extends PyBaseString
         return str_count(sub, start, Py.newInteger(end));
     }
     
-    @ExposedMethod(defaults={"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int str_count(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int n = sub.length();
@@ -1218,7 +1218,7 @@ public class PyString extends PyBaseString
         return str_find(sub, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int str_find(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.indexOf(sub, indices[0]);
@@ -1239,7 +1239,7 @@ public class PyString extends PyBaseString
         return str_rfind(sub, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int str_rfind(String sub, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         int index = string.lastIndexOf(sub, indices[1] - sub.length());
@@ -1489,7 +1489,7 @@ public class PyString extends PyBaseString
         return str_expandtabs(tabsize);
     }
 
-    @ExposedMethod(defaults="8")
+    @ExposedMethod(defaults = "8")
     final String str_expandtabs(int tabsize) {
         String s = string;
         StringBuffer buf = new StringBuffer((int)(s.length()*1.5));
@@ -1593,7 +1593,7 @@ public class PyString extends PyBaseString
         return str_startswith(prefix, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final boolean str_startswith(String prefix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
         if(indices[1] - indices[0] < prefix.length()){
@@ -1614,7 +1614,7 @@ public class PyString extends PyBaseString
         return str_endswith(suffix, start, Py.newInteger(end));
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final boolean str_endswith(String suffix, int start, PyObject end) {
         int[] indices = translateIndices(start, end);
 
@@ -1667,7 +1667,7 @@ public class PyString extends PyBaseString
         return str_translate(table, deletechars);
     }
 
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final String str_translate(String table, String deletechars) {
         if (table.length() != 256)
             throw Py.ValueError(
@@ -2004,7 +2004,7 @@ public class PyString extends PyBaseString
         return str_encode(encoding, errors);
     }
 
-    @ExposedMethod(defaults= {"null", "null"})
+    @ExposedMethod(defaults = {"null", "null"})
     final String str_encode(String encoding, String errors) {
         return codecs.encode(this, encoding, errors);
     }
@@ -2021,7 +2021,7 @@ public class PyString extends PyBaseString
         return str_decode(encoding, errors);
     }
 
-    @ExposedMethod(defaults= {"null", "null"})
+    @ExposedMethod(defaults = {"null", "null"})
     final PyObject str_decode(String encoding, String errors) {
         return codecs.decode(this, encoding, errors);
     }

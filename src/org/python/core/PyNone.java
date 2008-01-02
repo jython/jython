@@ -9,7 +9,7 @@ import org.python.expose.ExposedType;
 /**
  * A class representing the singleton None object,
  */
-@ExposedType(name="NoneType")
+@ExposedType(name = "NoneType")
 public class PyNone extends PyObject implements Serializable
 {
 
@@ -45,7 +45,7 @@ public class PyNone extends PyObject implements Serializable
         return NoneType_toString();
     }
 
-    @ExposedMethod(names="__repr__")
+    @ExposedMethod(names = "__repr__")
     final String NoneType_toString() {
         return "None";
     }
