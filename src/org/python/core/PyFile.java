@@ -32,8 +32,7 @@ import org.python.expose.MethodType;
  * A python file wrapper around a java stream, reader/writer or file.
  */
 @ExposedType(name = "file")
-public class PyFile extends PyObject
-{
+public class PyFile extends PyObject {
     /** The filename */
     private PyObject name;
 
@@ -86,13 +85,13 @@ public class PyFile extends PyObject
 
     public PyFile(RawIOBase raw, String name, String mode, int bufsize) {
         parseMode(mode);
-        file_init(raw, name, mode, bufsize);
+        file___init__(raw, name, mode, bufsize);
     }
 
     public PyFile(InputStream istream, String name, String mode, int bufsize,
                   boolean closefd) {
         parseMode(mode);
-        file_init(new StreamIO(istream, closefd), name, mode, bufsize);
+        file___init__(new StreamIO(istream, closefd), name, mode, bufsize);
     }
 
     public PyFile(InputStream istream, String name, String mode, int bufsize) {
@@ -111,10 +110,9 @@ public class PyFile extends PyObject
         this(istream, "<???>", "r");
     }
 
-    public PyFile(OutputStream ostream, String name, String mode, int bufsize,
-                  boolean closefd) {
+    public PyFile(OutputStream ostream, String name, String mode, int bufsize, boolean closefd) {
         parseMode(mode);
-        file_init(new StreamIO(ostream, closefd), name, mode, bufsize);
+        file___init__(new StreamIO(ostream, closefd), name, mode, bufsize);
     }
 
     public PyFile(OutputStream ostream, String name, String mode, int bufsize) {
@@ -134,7 +132,7 @@ public class PyFile extends PyObject
     }
 
     public PyFile(RandomAccessFile file, String name, String mode, int bufsize) {
-        file_init(new FileIO(file.getChannel(), parseMode(mode)), name, mode, bufsize);
+        file___init__(new FileIO(file.getChannel(), parseMode(mode)), name, mode, bufsize);
     }
 
     public PyFile(RandomAccessFile file, String name, String mode) {
@@ -150,25 +148,25 @@ public class PyFile extends PyObject
     }
 
     public PyFile(String name, String mode, int bufsize) {
-        file_init(new FileIO(name, parseMode(mode)), name, mode, bufsize);
+        file___init__(new FileIO(name, parseMode(mode)), name, mode, bufsize);
     }
 
     @ExposedNew
-    final static PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype,
-                                   PyObject[]args, String[]keywords) {
+    static final PyObject file_new(PyNewWrapper new_, boolean init, PyType subtype, PyObject[]args,
+                                   String[]keywords) {
         PyFile newFile;
         if (new_.for_type == subtype) {
             if (init) {
                 if (args.length == 0) {
                     newFile = new PyFile();
-                    newFile.file_init(args, keywords);
+                    newFile.file___init__(args, keywords);
                 } else if (args[0] instanceof PyString ||
                            (args[0] instanceof PyJavaInstance &&
                             ((PyJavaInstance)args[0]).javaProxy == String.class)) {
                     // If first arg is a PyString or String, assume
                     // its being called as a builtin.
                     newFile = new PyFile();
-                    newFile.file_init(args, keywords);
+                    newFile.file___init__(args, keywords);
                     newFile.closer = new Closer(newFile.file);
                 } else {
                     // assume it's being called as a java class
@@ -184,24 +182,25 @@ public class PyFile extends PyObject
         return newFile;
     }
 
-    final void file_init(PyObject[] args,String[] kwds) {
-        ArgParser ap = new ArgParser("file", args, kwds,
-                                     new String[] { "name", "mode", "bufsize" }, 1);
+    @ExposedMethod
+    final void file___init__(PyObject[] args, String[] kwds) {
+        ArgParser ap = new ArgParser("file", args, kwds, new String[] {"name", "mode", "bufsize"},
+                                     1);
         PyObject name = ap.getPyObject(0);
         if (!(name instanceof PyString)) {
-            throw Py.TypeError("coercing to Unicode: need string, '" +
-                               name.getType().getFullName() + "' type found");
+            throw Py.TypeError("coercing to Unicode: need string, '" + name.getType().getFullName()
+                               + "' type found");
         }
         String mode = ap.getString(1, "r");
         int bufsize = ap.getInt(2, -1);
-        file_init(new FileIO(name.toString(), parseMode(mode)), name, mode, bufsize);
+        file___init__(new FileIO(name.toString(), parseMode(mode)), name, mode, bufsize);
     }
 
-    private void file_init(RawIOBase raw, String name, String mode, int bufsize) {
-        file_init(raw, new PyString(name), mode, bufsize);
+    private void file___init__(RawIOBase raw, String name, String mode, int bufsize) {
+        file___init__(raw, new PyString(name), mode, bufsize);
     }
 
-    private void file_init(RawIOBase raw, PyObject name, String mode, int bufsize) {
+    private void file___init__(RawIOBase raw, PyObject name, String mode, int bufsize) {
         this.name = name;
         this.mode = mode;
 
@@ -230,13 +229,9 @@ public class PyFile extends PyObject
         boolean lineBuffered = bufsize == 1;
         BufferedIOBase buffer;
         if (updating) {
-            buffer = lineBuffered ?
-                    new LineBufferedRandom(raw) :
-                    new BufferedRandom(raw, bufsize);
+            buffer = lineBuffered ? new LineBufferedRandom(raw) : new BufferedRandom(raw, bufsize);
         } else if (writing || appending) {
-            buffer = lineBuffered ?
-                    new LineBufferedWriter(raw) :
-                    new BufferedWriter(raw, bufsize);
+            buffer = lineBuffered ? new LineBufferedWriter(raw) : new BufferedWriter(raw, bufsize);
         } else if (reading) {
             // Line buffering is for output only
             buffer = new BufferedReader(raw, lineBuffered ? 0 : bufsize);
@@ -266,13 +261,13 @@ public class PyFile extends PyObject
             if (mode.length() == 0) {
                 mode = "r";
             } else if ("wa+".indexOf(mode.charAt(0)) > -1) {
-                throw Py.ValueError("universal newline mode can only be used with " +
-                                    "modes starting with 'r'");
+                throw Py.ValueError("universal newline mode can only be used with modes starting "
+                                    + "with 'r'");
             }
         }
         if ("rwa".indexOf(mode.charAt(0)) == -1) {
-            throw Py.ValueError("mode string must begin with one of 'r', 'w', 'a' or " +
-                                "'U', not '" + origMode + "'");
+            throw Py.ValueError("mode string must begin with one of 'r', 'w', 'a' or 'U', not '"
+                                + origMode + "'");
         }
 
         binary = mode.contains("b");
@@ -281,8 +276,8 @@ public class PyFile extends PyObject
         appending = mode.contains("a");
         updating = mode.contains("+");
 
-        return (reading ? "r" : "") + (writing ? "w" : "") +
-                (appending ? "a" : "") + (updating ? "+" : "");
+        return (reading ? "r" : "") + (writing ? "w" : "") + (appending ? "a" : "")
+                + (updating ? "+" : "");
     }
 
     @ExposedMethod(defaults = {"-1"})
@@ -376,8 +371,9 @@ public class PyFile extends PyObject
     @ExposedMethod
     final PyObject file_next() {
         PyObject ret = __iternext__();
-        if (ret == null)
+        if (ret == null) {
             throw Py.StopIteration("");
+        }
         return ret;
     }
 
@@ -425,8 +421,7 @@ public class PyFile extends PyObject
         PyObject item = null;
         while ((item = iter.__iternext__()) != null) {
             if (!(item instanceof PyString)) {
-                throw Py.TypeError("writelines() argument must be a " +
-                                   "sequence of strings");
+                throw Py.TypeError("writelines() argument must be a sequence of strings");
             }
             file.write(item.toString());
         }
@@ -620,7 +615,7 @@ public class PyFile extends PyObject
     private static void initCloser() {
         try {
             Runtime.getRuntime().addShutdownHook(new PyFileCloser());
-        } catch(SecurityException e) {
+        } catch (SecurityException se) {
             Py.writeDebug("PyFile", "Can't register file closer hook");
         }
     }
@@ -631,7 +626,7 @@ public class PyFile extends PyObject
      * run by PyFileCloser on JVM shutdown. When a PyFile's close or
      * finalize methods are called, PyFile calls its Closer.close
      * which clears Closer out of the shutdown queue.
-     * 
+     *
      * We use a regular object here rather than WeakReferences and
      * their ilk as they may be collected before the shutdown hook
      * runs. There's no guarantee that finalize will be called during
@@ -643,7 +638,7 @@ public class PyFile extends PyObject
 
         /** The underlying file */
         private TextIOBase file;
-        
+
         public Closer(TextIOBase file) {
             this.file = file;
             // Add ourselves to the queue of Closers to be run on shutdown
@@ -658,10 +653,10 @@ public class PyFile extends PyObject
                     return;
                 }
             }
-            _close();
+            doClose();
         }
-        
-        public void _close() {
+
+        public void doClose() {
             file.close();
         }
     }
@@ -680,7 +675,7 @@ public class PyFile extends PyObject
             synchronized (closers) {
                 while (closers.size() > 0) {
                     try {
-                        ((Closer)closers.removeFirst())._close();
+                        ((Closer)closers.removeFirst()).doClose();
                     } catch (PyException e) {
                         // continue
                     }
