@@ -40,6 +40,12 @@ public class PyUnicodeDerived extends PyUnicode implements Slotted {
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
     }
+    
+    public PyUnicodeDerived(PyType subtype, PyUnicode uni) {
+        super(subtype, uni);
+        slots=new PyObject[subtype.getNumSlots()];
+        dict=subtype.instDict();
+    }
 
     public PyString __str__() {
         PyType self_type=getType();

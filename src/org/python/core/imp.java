@@ -253,10 +253,15 @@ public class imp {
             Py.getSystemState().modules.__delitem__(name.intern());
             throw t;
         }
-        if(moduleLocation != null) {
-            module.__setattr__("__file__",
-                               new PyString(moduleLocation));
-        }else{
+
+        if (moduleLocation != null) {
+            // Don't stomp on __file__ if it has already been defined up the call chain,
+            // that code knows better (note that we single thread module loading)
+            if (module.__findattr__("__file__") == null) {
+                module.__setattr__("__file__",
+                        new PyString(moduleLocation));
+            }
+        } else {
             Py.writeDebug(IMPORT_LOG, "No fileName known to set __file__ for " + name + ".");
         }
         return module;

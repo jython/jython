@@ -15,9 +15,9 @@ import org.python.expose.MethodType;
 public class PyString extends PyBaseString
 {
     public static final PyType TYPE = PyType.fromClass(PyString.class);
-    protected String string;
+    protected final String string;
     private transient int cached_hashcode=0;
-    protected transient boolean interned=false;
+    protected transient String interned;
 
     // for PyJavaClass.init()
     public PyString() {
@@ -47,7 +47,7 @@ public class PyString extends PyBaseString
      */
     public static PyString fromInterned(String interned) {
         PyString str = new PyString(TYPE, interned);
-        str.interned = true;
+        str.interned = interned;
         return str;
     }
 
@@ -110,12 +110,11 @@ public class PyString extends PyBaseString
     }
 
     public String internedString() {
-        if (interned)
-            return string;
+        if (interned != null)
+            return interned;
         else {
-            string = string.intern();
-            interned = true;
-            return string;
+            interned = string.intern();
+            return interned;
         }
     }
 
@@ -123,7 +122,7 @@ public class PyString extends PyBaseString
         return new PyString(encode_UnicodeEscape(string, true));
     }
 
-    private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
+    private static char[] hexdigit = "0123456789abcdef".toCharArray();
 
     public static String encode_UnicodeEscape(String str,
                                               boolean use_quotes)

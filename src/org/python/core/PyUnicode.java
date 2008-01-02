@@ -35,6 +35,9 @@ public class PyUnicode extends PyString {
         this(subtype, pystring.decode().toString());
     }
 
+    public PyUnicode(PyType subtype, PyUnicode uni) {
+        this(subtype, uni.string);
+    }
 
     public PyUnicode(char c) {
         this(TYPE,String.valueOf(c));
@@ -46,7 +49,7 @@ public class PyUnicode extends PyString {
      */
     public static PyUnicode fromInterned(String interned) {
         PyUnicode uni = new PyUnicode(TYPE, interned);
-        uni.interned = true;
+        uni.interned = interned;
         return uni;
     }
 
@@ -78,7 +81,9 @@ public class PyUnicode extends PyString {
             if (S == null) {
                 return new PyUnicodeDerived(subtype, "");
             }
-        
+            if (S instanceof PyUnicode) {
+                return new PyUnicodeDerived(subtype, (PyUnicode)S);
+            }
             return new PyUnicodeDerived(subtype, (String)((S.__str__()).__tojava__(String.class)));
         }
     }
