@@ -19,7 +19,6 @@ dict.derived:org.python.core.PyDictionaryDerived
 dict.expose:org.python.core.PyDictionary
 enumerate.expose:org.python.core.PyEnumerate
 file.derived:org.python.core.PyFileDerived
-file.expose:org.python.core.PyFile
 float.derived:org.python.core.PyFloatDerived
 float.expose:org.python.core.PyFloat
 #function.expose:org.python.core.PyFunction

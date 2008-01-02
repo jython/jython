@@ -1,5 +1,6 @@
 org/python/core/PyBaseString.class
 org/python/core/PyBuiltinFunction.class
+org/python/core/PyFile.class
 org/python/core/PyInteger.class
 org/python/core/PyList.class
 org/python/core/PyModule.class
