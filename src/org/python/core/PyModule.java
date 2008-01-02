@@ -14,7 +14,7 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name="module")
 public class PyModule extends PyObject {
-    private final PyObject module_doc = new PyString(
+    private final PyObject moduleDoc = new PyString(
         "module(name[, doc])\n" +
         "\n" +
         "Create a module object.\n" +
@@ -95,7 +95,7 @@ public class PyModule extends PyObject {
                 return doc;
             }
         }
-        return module_doc;
+        return moduleDoc;
     }
 
     protected PyObject impAttr(String name) {
@@ -106,17 +106,14 @@ public class PyModule extends PyObject {
         }
 
         PyObject attr = null;
-        String fullName = (pyName.__str__().toString() + '.'
-                           + name).intern();
+        String fullName = (pyName.__str__().toString() + '.' + name).intern();
         if (path == Py.None) {
             // XXX: disabled
             //attr = imp.loadFromClassLoader(fullName,
             //                               Py.getSystemState().getClassLoader());
-        }
-        else if (path instanceof PyList) {
+        } else if (path instanceof PyList) {
             attr = imp.find_module(name, fullName, (PyList)path);
-        }
-        else {
+        } else {
             throw Py.TypeError("__path__ must be list or None");
         }
 
@@ -165,7 +162,7 @@ public class PyModule extends PyObject {
             return null;
         }
 
-        return impHook(pyName.__str__().toString( ) + '.' + name);
+        return impHook(pyName.__str__().toString() + '.' + name);
     }
 
     public void __setattr__(String name, PyObject value) {
@@ -232,7 +229,7 @@ public class PyModule extends PyObject {
         }
         try {
             return __builtin__.__import__(name, null, null, fromlist);
-        } catch(PyException pe) {
+        } catch (PyException pe) {
             if (Py.matchException(pe, Py.ImportError)) {
                 return null;
             }
