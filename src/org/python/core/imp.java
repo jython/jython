@@ -451,6 +451,12 @@ public class imp {
         }
 
         if (sourceFile.isFile() && caseok(sourceFile, sourceName, sourceName.length())) {
+            String filename;
+            if (pkg) {
+                filename = new File(new File(displayDirName, name), sourceName).getPath();
+            } else {
+                filename = new File(displayDirName, sourceName).getPath();
+            }
             if(compiledFile.isFile()
                     && caseok(compiledFile, compiledName, compiledName.length())) {
                 Py.writeDebug(IMPORT_LOG, "trying precompiled "
@@ -458,19 +464,15 @@ public class imp {
                 long pyTime = sourceFile.lastModified();
                 long classTime = compiledFile.lastModified();
                 if(classTime >= pyTime) {
-                    String filename = new File(displayDirName, sourceName).getPath();
+                    // XXX: filename should use compiledName here (not
+                    // sourceName), but this currently breaks source
+                    // code printed out in tracebacks
                     PyObject ret = createFromPyClass(modName, makeStream(compiledFile),
                                                      true, filename);
                     if(ret != null) {
                         return ret;
                     }
                 }
-            }
-            String filename;
-            if (pkg) {
-                filename = new File(new File(displayDirName, name), sourceName).getPath();
-            } else {
-                filename = new File(displayDirName, sourceName).getPath();
             }
             return createFromSource(modName, makeStream(sourceFile), filename,
                                     compiledFile.getPath());
