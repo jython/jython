@@ -2,6 +2,7 @@
 package org.python.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.zip.ZipEntry;
@@ -85,7 +86,7 @@ public class jython
                 file.close();
             }
             Py.runCode(code, locals, locals);
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw Py.IOError(e);
         }
     }
@@ -189,9 +190,15 @@ public class jython
 
         // was there a filename on the command line?
         if (opts.filename != null) {
-            String path = new java.io.File(opts.filename).getParent();
-            if (path == null)
+            String path;
+            try {
+                 path = new File(opts.filename).getCanonicalFile().getParent();
+            } catch (IOException ioe) {
+                 path = new File(opts.filename).getAbsoluteFile().getParent();
+            }
+            if (path == null) {
                 path = "";
+            }
             Py.getSystemState().path.insert(0, new PyString(path));
             if (opts.jar) {
                 runJar(opts.filename);
