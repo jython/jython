@@ -1231,7 +1231,7 @@ public class PyObject implements Serializable {
         try {
             if (++ts.compareStateNesting > 10) {
                 if ((token = check_recursion(ts, this, o)) == null)
-                    return Py.One;
+                    return Py.True;
             }
             PyObject res = __eq__(o);
             if (res != null)
@@ -1242,7 +1242,7 @@ public class PyObject implements Serializable {
             return _cmpeq_unsafe(o) == 0 ? Py.True : Py.False;
         } catch (PyException e) {
             if (Py.matchException(e, Py.AttributeError)) {
-                return Py.Zero;
+                return Py.False;
             }
             throw e;
         } finally {
@@ -1270,7 +1270,7 @@ public class PyObject implements Serializable {
         try {
             if (++ts.compareStateNesting > 10) {
                 if ((token = check_recursion(ts, this, o)) == null)
-                    return Py.Zero;
+                    return Py.False;
             }
             PyObject res = __ne__(o);
             if (res != null)

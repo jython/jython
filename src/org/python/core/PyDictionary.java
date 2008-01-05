@@ -796,19 +796,19 @@ public class PyDictionary extends PyObject implements Map {
         int an = table.size();
         int bn = other.table.size();
         if (an != bn)
-            return Py.Zero;
+            return Py.False;
 
         PyList akeys = keys();
         for (int i=0; i<an; i++) {
             PyObject akey = akeys.pyget(i);
             PyObject bvalue = other.__finditem__(akey);
             if (bvalue == null)
-                return Py.Zero;
+                return Py.False;
             PyObject avalue = __finditem__(akey);
             if (!avalue._eq(bvalue).__nonzero__())
-                return Py.Zero;
+                return Py.False;
         }
-        return Py.One;
+        return Py.True;
     }
 
     public PyObject __ne__(PyObject ob_other) {
@@ -818,7 +818,7 @@ public class PyDictionary extends PyObject implements Map {
     final PyObject dict___ne__(PyObject ob_other) {
         PyObject eq_result = __eq__(ob_other);
         if (eq_result == null) return null;
-        return  eq_result == Py.One?Py.Zero:Py.One;
+        return  eq_result == Py.True?Py.False:Py.True;
     }
     
     final PyObject dict___lt__(PyObject ob_other){
@@ -826,7 +826,7 @@ public class PyDictionary extends PyObject implements Map {
     	if(result == -2){
     		return null;
     	}
-    	return result < 0 ? Py.One : Py.Zero;
+    	return result < 0 ? Py.True : Py.False;
     }
     
     final PyObject dict___gt__(PyObject ob_other){
@@ -834,7 +834,7 @@ public class PyDictionary extends PyObject implements Map {
     	if(result == -2){
     		return null;
     	}
-    	return result > 0 ? Py.One : Py.Zero;
+    	return result > 0 ? Py.True : Py.False;
     }
     
     final PyObject dict___le__(PyObject ob_other){
@@ -842,7 +842,7 @@ public class PyDictionary extends PyObject implements Map {
     	if(result == -2){
     		return null;
     	}
-    	return result <= 0 ? Py.One : Py.Zero;
+    	return result <= 0 ? Py.True : Py.False;
     }
     
     final PyObject dict___ge__(PyObject ob_other){
@@ -850,7 +850,7 @@ public class PyDictionary extends PyObject implements Map {
     	if(result == -2){
     		return null;
     	}
-    	return result >= 0 ? Py.One : Py.Zero;
+    	return result >= 0 ? Py.True : Py.False;
     }
 
     public int __cmp__(PyObject ob_other) {

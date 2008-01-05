@@ -108,10 +108,10 @@ public abstract class PySequence extends PyObject {
         int tl = __len__();
         int ol = o.__len__();
         if(tl != ol) {
-            return Py.Zero;
+            return Py.False;
         }
         int i = cmp(this, tl, o, ol);
-        return (i < 0) ? Py.One : Py.Zero;
+        return (i < 0) ? Py.True : Py.False;
     }
 
     public synchronized PyObject __ne__(PyObject o) {
@@ -125,10 +125,10 @@ public abstract class PySequence extends PyObject {
         int tl = __len__();
         int ol = o.__len__();
         if(tl != ol) {
-            return Py.One;
+            return Py.True;
         }
         int i = cmp(this, tl, o, ol);
-        return (i < 0) ? Py.Zero : Py.One;
+        return (i < 0) ? Py.False : Py.True;
     }
 
     public synchronized PyObject __lt__(PyObject o) {
@@ -137,7 +137,7 @@ public abstract class PySequence extends PyObject {
         }
         int i = cmp(this, -1, o, -1);
         if(i < 0) {
-            return (i == -1) ? Py.One : Py.Zero;
+            return (i == -1) ? Py.True : Py.False;
         }
         return __finditem__(i)._lt(o.__finditem__(i));
     }
@@ -152,7 +152,7 @@ public abstract class PySequence extends PyObject {
         }
         int i = cmp(this, -1, o, -1);
         if(i < 0) {
-            return (i == -1 || i == -2) ? Py.One : Py.Zero;
+            return (i == -1 || i == -2) ? Py.True : Py.False;
         }
         return __finditem__(i)._le(o.__finditem__(i));
     }
@@ -167,7 +167,7 @@ public abstract class PySequence extends PyObject {
         }
         int i = cmp(this, -1, o, -1);
         if(i < 0)
-            return (i == -3) ? Py.One : Py.Zero;
+            return (i == -3) ? Py.True : Py.False;
         return __finditem__(i)._gt(o.__finditem__(i));
     }
 
@@ -181,7 +181,7 @@ public abstract class PySequence extends PyObject {
         }
         int i = cmp(this, -1, o, -1);
         if(i < 0) {
-            return (i == -3 || i == -2) ? Py.One : Py.Zero;
+            return (i == -3 || i == -2) ? Py.True : Py.False;
         }
         return __finditem__(i)._ge(o.__finditem__(i));
     }
