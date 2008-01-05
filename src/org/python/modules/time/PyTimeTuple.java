@@ -191,10 +191,10 @@ public class PyTimeTuple extends PyTuple {
         int tl = __len__();
         int ol = o.__len__();
         if (tl != ol) {
-            return Py.Zero;
+            return Py.False;
         }
         int i = cmp(this, tl, o, ol);
-        return (i < 0) ? Py.One : Py.Zero;
+        return (i < 0) ? Py.True : Py.False;
     }
 
     public synchronized PyObject __ne__(PyObject o) {
@@ -208,10 +208,10 @@ public class PyTimeTuple extends PyTuple {
         int tl = __len__();
         int ol = o.__len__();
         if (tl != ol) {
-            return Py.One;
+            return Py.True;
         }
         int i = cmp(this, tl, o, ol);
-        return (i < 0) ? Py.Zero : Py.One;
+        return (i < 0) ? Py.False : Py.True;
     }
 
     /**

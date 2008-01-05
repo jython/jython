@@ -576,7 +576,8 @@ public class PyFile extends PyObject {
 
     @ExposedGet(name = "softspace")
     public PyObject getSoftspace() {
-        return softspace ? new PyInteger(1) : new PyInteger(0);
+        // NOTE: not actual bools because CPython is this way
+        return softspace ? Py.One : Py.Zero;
     }
 
     @ExposedSet(name = "softspace")

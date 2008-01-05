@@ -277,7 +277,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
             BaseSet bs = this._binary_sanity_check(other);
             return Py.newBoolean(this._set.equals(bs._set));
         }
-        return Py.Zero;
+        return Py.False;
     }
 
     public PyObject __ne__(PyObject other) {
@@ -289,7 +289,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
             BaseSet bs = this._binary_sanity_check(other);
             return Py.newBoolean(!this._set.equals(bs._set));
         }
-        return Py.One;
+        return Py.True;
     }
 
     public PyObject __le__(PyObject other) {
@@ -407,27 +407,27 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     public PyObject baseset_issubset(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         if (this.__len__() > bs.__len__()) {
-            return Py.Zero;
+            return Py.False;
         }
         for (Iterator iterator = this._set.iterator(); iterator.hasNext();) {
             if (!bs._set.contains(iterator.next())) {
-                return Py.Zero;
+                return Py.False;
             }
         }
-        return Py.One;
+        return Py.True;
     }
 
     public PyObject baseset_issuperset(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         if (this.__len__() < bs.__len__()) {
-            return Py.Zero;
+            return Py.False;
         }
         for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
             if (!this._set.contains(iterator.next())) {
-                return Py.Zero;
+                return Py.False;
             }
         }
-        return Py.One;
+        return Py.True;
     }
 
     final String baseset_toString() {
