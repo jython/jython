@@ -118,7 +118,9 @@ if sys.exec_prefix != sys.prefix:
     prefixes.append(sys.exec_prefix)
 for prefix in prefixes:
     if prefix:
-        if os.sep == '/':
+        if sys.platform[:4] == 'java':
+            sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
+        elif os.sep == '/':
             sitedirs = [makepath(prefix,
                                  "lib",
                                  "python" + sys.version[:3],
