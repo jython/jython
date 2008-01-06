@@ -47,7 +47,6 @@ super.derived:org.python.core.PySuperDerived
 super.expose:org.python.core.PySuper
 #test.derived
 #test.expose
-timetuple.expose:org.python.modules.time.PyTimeTuple
 tuple.derived:org.python.core.PyTupleDerived
 tuple.expose:org.python.core.PyTuple
 type.derived:org.python.core.PyTypeDerived

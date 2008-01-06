@@ -9,4 +9,5 @@ org/python/core/PyObject.class
 org/python/core/PyString.class
 org/python/core/PyType.class
 org/python/core/PyUnicode.class
+org/python/modules/time/PyTimeTuple.class
 org/python/modules/zipimport/zipimporter.class
