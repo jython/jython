@@ -242,18 +242,16 @@ public class Time implements ClassDictInit
             dow = dow+7;
         // TBD: is this date dst?
         boolean isdst = tz.inDaylightTime(cal.getTime());
-        return new PyTimeTuple(new PyObject[] {
-            new PyInteger(cal.get(Calendar.YEAR)),
-            new PyInteger(cal.get(Calendar.MONTH)+1),
-            new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
-            new PyInteger(cal.get(Calendar.HOUR) +
-                          12*cal.get(Calendar.AM_PM)),
-            new PyInteger(cal.get(Calendar.MINUTE)),
-            new PyInteger(cal.get(Calendar.SECOND)),
-            new PyInteger(dow),
-            new PyInteger(cal.get(Calendar.DAY_OF_YEAR)),
-            new PyInteger(isdst ? 1 : 0)
-        });
+        return new PyTimeTuple(new PyInteger(cal.get(Calendar.YEAR)),
+                               new PyInteger(cal.get(Calendar.MONTH)+1),
+                               new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
+                               new PyInteger(cal.get(Calendar.HOUR) +
+                                             12*cal.get(Calendar.AM_PM)),
+                               new PyInteger(cal.get(Calendar.MINUTE)),
+                               new PyInteger(cal.get(Calendar.SECOND)),
+                               new PyInteger(dow),
+                               new PyInteger(cal.get(Calendar.DAY_OF_YEAR)),
+                               new PyInteger(isdst ? 1 : 0));
     }
 
     public static PyTuple localtime() {

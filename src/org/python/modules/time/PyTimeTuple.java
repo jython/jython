@@ -1,3 +1,4 @@
+/* Copyright (c) 2005-2008 Jython Developers */
 package org.python.modules.time;
 
 import org.python.core.ArgParser;
@@ -15,30 +16,42 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
+/**
+ * struct_time of the time module.
+ *
+ */
 @ExposedType(name = "struct_time")
 public class PyTimeTuple extends PyTuple {
     @ExposedGet
     public PyInteger tm_year;
+
     @ExposedGet
     public PyInteger tm_mon;
+
     @ExposedGet
     public PyInteger tm_mday;
+
     @ExposedGet
     public PyInteger tm_hour;
+
     @ExposedGet
     public PyInteger tm_min;
+
     @ExposedGet
     public PyInteger tm_sec;
+
     @ExposedGet
     public PyInteger tm_wday;
+
     @ExposedGet
     public PyInteger tm_yday;
+
     @ExposedGet
     public PyInteger tm_isdst;
 
     public static final PyType TYPE = PyType.fromClass(PyTimeTuple.class);
 
-    PyTimeTuple(PyObject[] vals) {
+    PyTimeTuple(PyObject... vals) {
         super(TYPE, vals);
         tm_year = (PyInteger)vals[0];
         tm_mon = (PyInteger)vals[1];
@@ -53,16 +66,16 @@ public class PyTimeTuple extends PyTuple {
 
     PyTimeTuple(PyTuple vals) {
         super(TYPE, new PyObject[] {
-            vals.pyget(0),
-            vals.pyget(1),
-            vals.pyget(2),
-            vals.pyget(3),
-            vals.pyget(4),
-            vals.pyget(5),
-            vals.pyget(6),
-            vals.pyget(7),
-            vals.pyget(8)
-        });
+                vals.pyget(0),
+                vals.pyget(1),
+                vals.pyget(2),
+                vals.pyget(3),
+                vals.pyget(4),
+                vals.pyget(5),
+                vals.pyget(6),
+                vals.pyget(7),
+                vals.pyget(8)
+            });
         tm_year = (PyInteger)vals.pyget(0);
         tm_mon = (PyInteger)vals.pyget(1);
         tm_mday = (PyInteger)vals.pyget(2);
@@ -72,6 +85,26 @@ public class PyTimeTuple extends PyTuple {
         tm_wday = (PyInteger)vals.pyget(6);
         tm_yday = (PyInteger)vals.pyget(7);
         tm_isdst = (PyInteger)vals.pyget(8);
+    }
+
+    @ExposedNew
+    static PyObject struct_time_new(PyNewWrapper wrapper, boolean init, PyType subtype,
+                                    PyObject[] args, String[] keywords) {
+        ArgParser ap = new ArgParser("struct_time", args, keywords, new String[] {"tuple"}, 1);
+        PyObject obj = ap.getPyObject(0);
+        if (obj instanceof PyTuple) {
+            if (obj.__len__() != 9) {
+                throw Py.TypeError("time.struct_time() takes a 9-sequence (1-sequence given)");
+            }
+            return new PyTimeTuple((PyTuple)obj);
+        } else if (obj instanceof PySequence) {
+            PySequence seq = (PySequence)obj;
+            if (seq.__len__() != 9) {
+                throw Py.TypeError("time.struct_time() takes a 9-sequence (1-sequence given)");
+            }
+            return new PyTimeTuple((PyObject[])seq.__tojava__(PyObject[].class));
+        }
+        throw Py.TypeError("constructor requires a sequence");
     }
 
     public synchronized PyObject __eq__(PyObject o) {
@@ -127,30 +160,5 @@ public class PyTimeTuple extends PyTuple {
 
     public PyTuple __getnewargs__() {
         return new PyTuple(new PyList(getArray()));
-    }
-
-    @ExposedNew
-    private static PyObject struct_time_new(PyNewWrapper wrapper,
-                                            boolean init,
-                                            PyType subtype,
-                                            PyObject[] args,
-                                            String[] keywords) {
-        ArgParser ap = new ArgParser("struct_time", args, keywords,
-                                     new String[] { "tuple" }, 1);
-        PyObject obj = ap.getPyObject(0);
-        if(obj instanceof PyTuple) {
-            if(obj.__len__() != 9){
-                throw Py.TypeError("time.struct_time() takes a 9-sequence (1-sequence given)");
-            }
-            return new PyTimeTuple((PyTuple)obj);
-        } else if(obj instanceof PySequence) {
-            PySequence seq = (PySequence)obj;
-            if(seq.__len__() != 9){
-                throw Py.TypeError("time.struct_time() takes a 9-sequence (1-sequence given)");
-            }
-            return new PyTimeTuple((PyObject[])seq.__tojava__(PyObject[].class));
-            
-        }
-        throw Py.TypeError("constructor requires a sequence");
     }
 }
