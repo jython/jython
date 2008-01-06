@@ -810,8 +810,7 @@ public class PySet extends BaseSet {
             this.__isub__(other);
             return;
         }
-        PyObject iter = other.__iter__();
-        for (PyObject o; (o = iter.__iternext__()) != null;) {
+        for (PyObject o : other.asIterable()) {
             if (this.__contains__(o)) {
                 this._set.remove(o);
             }

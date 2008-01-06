@@ -62,20 +62,18 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
             return;
         }
 
-        PyObject value = null;
         if (data.__findattr__("__iter__") != null) {
-            PyObject iter = data.__iter__();
-            while ((value = iter.__iternext__()) != null) {
+            for (PyObject item : data.asIterable()) {
                 try {
-                    this._set.add(value);
+                    this._set.add(item);
                 } catch (PyException e) {
-                    PyObject immutable = this.asImmutable(e, value);
-                    this._set.add(immutable);
+                    this._set.add(asImmutable(e, item));
                 }
             }
         } else {
             int i = 0;
             while(true) {
+                PyObject value;
                 try {
                     value = data.__finditem__(i++);
                     if (value == null) {

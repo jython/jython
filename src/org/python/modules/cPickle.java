@@ -1326,10 +1326,8 @@ public class cPickle implements ClassDictInit {
         }
 
         private void batch_appends(PyObject object) {
-            PyObject iter = object.__iter__();
             int countInBatch = 0;
-            PyObject nextObj;
-            while((nextObj = iter.__iternext__()) != null) {
+            for (PyObject nextObj : object.asIterable()) {
                 if(protocol == 0) {
                     save(nextObj);
                     file.write(APPEND);

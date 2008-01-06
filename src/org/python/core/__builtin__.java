@@ -575,8 +575,7 @@ public class __builtin__  {
 			return filter(f, (PyString) l);
 		}
 		PyList list = new PyList();
-		PyObject iter = l.__iter__();
-		for (PyObject item = null; (item = iter.__iternext__()) != null;) {
+		for (PyObject item : l.asIterable()) {
 			if (f == Py.None) {
 				if (!item.__nonzero__()) {
 					continue;
@@ -757,8 +756,7 @@ public class __builtin__  {
 
 	private static PyObject max(PyObject o) {
 		PyObject max = null;
-		PyObject iter = o.__iter__();
-		for (PyObject item; (item = iter.__iternext__()) != null;) {
+		for (PyObject item : o.asIterable()) {
 			if (max == null || item._gt(max).__nonzero__()) {
 				max = item;
 			}
@@ -768,6 +766,7 @@ public class __builtin__  {
 		}
 		return max;
 	}
+
     public static PyObject min(PyObject[] l) {
         if (l.length == 0) {
             throw Py.TypeError("min expected 1 arguments, got 0");
@@ -778,19 +777,18 @@ public class __builtin__  {
         return min(new PyTuple(l));
     }
 
-	private static PyObject min(PyObject o) {
-		PyObject min = null;
-		PyObject iter = o.__iter__();
-		for (PyObject item; (item = iter.__iternext__()) != null;) {
-			if (min == null || item._lt(min).__nonzero__()) {
-				min = item;
-			}
-		}
-		if (min == null) {
-			throw Py.ValueError("min of empty sequence");
-		}
-		return min;
-	}
+    private static PyObject min(PyObject o) {
+        PyObject min = null;
+        for (PyObject item : o.asIterable()) {
+            if (min == null || item._lt(min).__nonzero__()) {
+                min = item;
+            }
+        }
+        if (min == null) {
+            throw Py.ValueError("min of empty sequence");
+        }
+        return min;
+    }
 
     public static PyString oct(PyObject o) {
         try {
@@ -1019,18 +1017,14 @@ public class __builtin__  {
 	}
 
 	public static PyObject sum(PyObject seq, PyObject result) {
-
-		if (result instanceof PyString) {
-			throw Py.TypeError("sum() can't sum strings [use ''.join(seq) instead]");
-		}
-
-		PyObject item;
-		PyObject iter = seq.__iter__();
-		while ((item = iter.__iternext__()) != null) {
-			result = result._add(item);
-		}
-		return result;
-	}
+        if (result instanceof PyString) {
+            throw Py.TypeError("sum() can't sum strings [use ''.join(seq) instead]");
+        }
+        for (PyObject item : seq.asIterable()) {
+            result = result._add(item);
+        }
+        return result;
+    }
 	
 	public static PyObject reversed(PyObject seq) {
         if(hasattr(seq, "__getitem__") && hasattr(seq, "__len__") && 

@@ -682,8 +682,7 @@ public class PyDictionary extends PyObject implements Map {
             value = Py.None;
         }
         PyObject d = type.__call__();
-        PyIterator iter = (PyIterator)keys.__iter__();
-        for (PyObject o = iter.__iternext__();o != null;o = iter.__iternext__()) {
+        for (PyObject o : keys.asIterable()) {
             d.__setitem__(o, value);
         }
         return d;
@@ -1005,10 +1004,10 @@ public class PyDictionary extends PyObject implements Map {
             table.put(ek.nextElement(), ev.nextElement());
     }
 
-    private void do_update(PyObject d,PyObject keys) {
-        PyObject iter = keys.__iter__();
-        for (PyObject key; (key = iter.__iternext__()) != null; )
+    private void do_update(PyObject d, PyObject keys) {
+        for (PyObject key : keys.asIterable()) {
             __setitem__(key, d.__getitem__(key));
+        }
     }
 
     /**

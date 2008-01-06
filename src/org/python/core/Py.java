@@ -2008,8 +2008,6 @@ public final class Py
         if (o instanceof PyTuple)
             return ((PyTuple)o).getArray();
     
-        PyObject iter = o.__iter__();
-    
         // Guess result size and allocate space.
         int n = 10;
         try {
@@ -2018,9 +2016,8 @@ public final class Py
     
         PyObject[] objs= new PyObject[n];
     
-        int i;
-        for (i = 0; ; i++) {
-            PyObject item = iter.__iternext__();
+        int i = 0;
+        for (PyObject item : o.asIterable()) {
             if (item == null)
                 break;
             if (i >= n) {
@@ -2033,7 +2030,7 @@ public final class Py
                 System.arraycopy(objs, 0, newobjs, 0, objs.length);
                 objs = newobjs;
             }
-            objs[i] = item;
+            objs[i++] = item;
         }
     
         // Cut back if guess was too large.

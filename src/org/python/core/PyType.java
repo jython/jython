@@ -540,9 +540,7 @@ public class PyType extends PyObject implements Serializable {
             if(slots instanceof PyString) {
                 addSlot(newtype, slots);
             } else {
-                PyObject iter = slots.__iter__();
-                PyObject slotname;
-                for(; (slotname = iter.__iternext__()) != null;) {
+                for (PyObject slotname : slots.asIterable()) {
                     addSlot(newtype, slotname);
                 }
             }

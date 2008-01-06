@@ -354,10 +354,9 @@ public class PyTuple extends PySequenceList implements ClassDictInit
             if (S instanceof PyTuple) {
                 return S;
             }
-            PyObject iter = S.__iter__();
             // it's not always possible to know the length of the iterable
             ArrayList a = new ArrayList(10);
-            for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+            for (PyObject item : S.asIterable()) {
                 a.add(item);
             }
             return new PyTuple((PyObject[])a.toArray(new PyObject[a.size()]));
@@ -365,10 +364,9 @@ public class PyTuple extends PySequenceList implements ClassDictInit
             if (S == null) {
                 return new PyTupleDerived(subtype, Py.EmptyObjects);
             }
-            PyObject iter = S.__iter__();
             // it's not always possible to know the length of the iterable
             ArrayList a = new ArrayList(10);
-            for (PyObject item = null; (item = iter.__iternext__()) != null; ) {
+            for (PyObject item : S.asIterable()) {
                 a.add(item);
             }
             return new PyTupleDerived(subtype, (PyObject[])a.toArray(new PyObject[a.size()]));

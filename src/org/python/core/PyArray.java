@@ -1077,20 +1077,18 @@ public class PyArray extends PySequence implements Cloneable {
      *            any object that can be iterated over.
      */
     private void extendInternalIter(PyObject iterable) {
-        PyObject iter = iterable.__iter__();
-        PyObject item = null;
         // iterable object without a length property - cannot presize the
         // array, so append each item
         if(iterable.__findattr__("__len__") == null) {
-            for(int i = 0; (item = iter.__iternext__()) != null; i++) {
+            for (PyObject item : iterable.asIterable()) {
                 append(item);
             }
         } else {
             // create room
             int last = delegate.getSize();
             delegate.ensureCapacity(last + iterable.__len__());
-            for(int i = last; (item = iter.__iternext__()) != null; i++) {
-                set(i, item);
+            for (PyObject item : iterable.asIterable()) {
+                set(last++, item);
                 delegate.size++;
             }
         }

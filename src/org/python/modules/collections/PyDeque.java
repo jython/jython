@@ -599,9 +599,8 @@ public class PyDeque extends PyObject {
      * iterable argument.
      */
     final void deque_extend(PyObject iterable) {
-        PyObject iter = iterable.__iter__();
-        for (PyObject tmp = null; (tmp = iter.__iternext__()) != null; ) {
-            deque_append(tmp);			
+        for (PyObject item : iterable.asIterable()) {
+            deque_append(item);			
         } 
     }
 
@@ -610,10 +609,9 @@ public class PyDeque extends PyObject {
      * Note, the series of left appends results in reversing the order of 
      * elements in the iterable argument.
      */
-    final void deque_extendleft(PyObject iterable) {		
-        PyObject iter = iterable.__iter__();
-        for (PyObject tmp = null; (tmp = iter.__iternext__()) != null; ) { 
-            deque_appendleft(tmp);
+    final void deque_extendleft(PyObject iterable) {
+        for (PyObject item : iterable.asIterable()) {
+            deque_appendleft(item);
         }
     }
 

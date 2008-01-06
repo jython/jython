@@ -342,8 +342,7 @@ public class imp {
             ppath.__setitem__(i, q);
         }
 
-        PyObject iter = metaPath.__iter__();
-        for (PyObject importer; (importer = iter.__iternext__()) != null;) {
+        for (PyObject importer : metaPath.asIterable()) {
             PyObject findModule = importer.__getattr__("find_module");
             loader = findModule.__call__(new PyObject[] {
                     new PyString(moduleName), path == null ? Py.None : path });
@@ -853,8 +852,7 @@ public class imp {
      */
     private static void loadNames(PyObject names, PyObject module,
             PyObject locals, boolean filter) {
-        PyObject iter = names.__iter__();
-        for (PyObject name; (name = iter.__iternext__()) != null;) {
+        for (PyObject name : names.asIterable()) {
             String sname = ((PyString) name).internedString();
             if (filter && sname.startsWith("_")) {
                 continue;

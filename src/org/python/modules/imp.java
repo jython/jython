@@ -153,8 +153,7 @@ public class imp {
             path = Py.getSystemState().path;
         }
 
-        PyObject iter = path.__iter__();
-        for (PyObject p = null; (p = iter.__iternext__()) != null; ) {
+        for (PyObject p : path.asIterable()) {
             ModuleInfo mi = findFromSource(name, p.toString(), false);
             if(mi == null) {
                 continue;

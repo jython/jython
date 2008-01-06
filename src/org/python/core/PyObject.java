@@ -6,6 +6,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -374,20 +375,18 @@ public class PyObject implements Serializable {
                             + "'");
             argslen += kwargs.__len__();
         }
-        List starObjs = null;
+        List<PyObject> starObjs = null;
         if(starargs != null) {
             if(starargs.__findattr__("__iter__") != null){
-                PyObject iter = starargs.__iter__();
-                starObjs = new ArrayList();
-                PyObject cur;
-                while((cur = iter.__iternext__()) != null) {
+                starObjs = new ArrayList<PyObject>();
+                for (PyObject cur : starargs.asIterable()) {
                     starObjs.add(cur);
                 }
             } else {
                 try {
                     int nstar = starargs.__len__();
                     PyObject cur;
-                    starObjs = new ArrayList(nstar);
+                    starObjs = new ArrayList<PyObject>(nstar);
                     for(int i = 0; (cur = starargs.__finditem__(i)) != null
                             && i < nstar; i++) {
                         starObjs.add(cur);
@@ -406,9 +405,9 @@ public class PyObject implements Serializable {
         int argidx = args.length - keywords.length;
         System.arraycopy(args, 0, newargs, 0, argidx);
         if(starObjs != null) {
-            Iterator it = starObjs.iterator();
+            Iterator<PyObject> it = starObjs.iterator();
             while(it.hasNext()) {
-                newargs[argidx++] = (PyObject)it.next();
+                newargs[argidx++] = it.next();
             }
         }
         System.arraycopy(args,
@@ -687,8 +686,7 @@ public class PyObject implements Serializable {
      * When iterating over a python sequence from java code, it should be
      * done with code like this:
      * <pre>
-     *    PyObject iter = seq.__iter__();
-     *    for (PyObject item; (item = iter.__iternext__()) != null;)  {
+     *    for (PyObject item : seq.asIterable())  {
      *        // Do somting with item
      *    }
      * </pre>
@@ -697,6 +695,49 @@ public class PyObject implements Serializable {
      */
     public PyObject __iter__() {
         throw Py.TypeError("iteration over non-sequence");
+    }
+
+    /**
+     * @return an Iterable over the Python iterator returned by __iter__ on this object. If this
+     *         object doesn't support __iter__, a TypeException will be raised when iterator is
+     *         called on the returned Iterable.
+     */
+    public Iterable<PyObject> asIterable() {
+        return new Iterable<PyObject>() {
+
+            public Iterator<PyObject> iterator() {
+                return new Iterator<PyObject>() {
+
+                    private PyObject iter = __iter__();
+
+                    private PyObject next;
+
+                    private boolean checkedForNext;
+
+                    public boolean hasNext() {
+                        if (!checkedForNext) {
+                            next = iter.__iternext__();
+                            checkedForNext = true;
+                        }
+                        return next != null;
+                    }
+
+                    public PyObject next() {
+                        if (!hasNext()) {
+                            throw new NoSuchElementException("End of the line, bub");
+                        }
+                        PyObject toReturn = next;
+                        checkedForNext = false;
+                        next = null;
+                        return toReturn;
+                    }
+
+                    public void remove() {
+                        throw new UnsupportedOperationException("Can't remove from a Python iterator");
+                    }
+                };
+            }
+        };
     }
 
     /**
@@ -878,9 +919,7 @@ public class PyObject implements Serializable {
         if (obj == null)
             return;
         if (obj instanceof PyList) {
-            PyObject lst_iter = obj.__iter__();
-            PyObject name;
-            for (; (name = lst_iter.__iternext__())!= null; ) {
+            for (PyObject name : obj.asIterable()) {
                 accum.__setitem__(name, Py.None);
             }
         } else {
@@ -1473,10 +1512,10 @@ public class PyObject implements Serializable {
     }
 
     final boolean object___contains__(PyObject o) {
-        PyObject iter = __iter__();
-        for (PyObject item = null;(item = iter.__iternext__()) != null;) {
-            if (o._eq(item).__nonzero__())
+        for (PyObject item : asIterable()) {
+            if (o._eq(item).__nonzero__()) {
                 return true;
+            }
         }
         return false;
     }

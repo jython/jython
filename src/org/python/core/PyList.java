@@ -44,8 +44,7 @@ public class PyList extends PySequenceList {
 
     public PyList(PyObject o) {
         this(TYPE);
-        PyObject iter = o.__iter__();
-        for(PyObject item = null; (item = iter.__iternext__()) != null;) {
+        for (PyObject item : o.asIterable()) {
             append(item);
         }
     }
@@ -63,8 +62,7 @@ public class PyList extends PySequenceList {
             PySequenceList p = (PySequenceList)seq.__getslice__(Py.None, Py.None, Py.One);
             this.list = p.list;
         } else {
-            PyObject iter = seq.__iter__();
-            for(PyObject item = null; (item = iter.__iternext__()) != null;) {
+            for (PyObject item : seq.asIterable()) {
                 append(item);
             }
         }
