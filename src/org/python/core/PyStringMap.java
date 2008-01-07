@@ -345,8 +345,8 @@ public class PyStringMap extends PyObject {
         }
         return new PyList(list);
     }
-    
-    private PyTuple itemTuple(Entry<Object, PyObject> entry){
+
+    private PyTuple itemTuple(Entry<Object, PyObject> entry) {
         Object key = entry.getKey();
         PyObject pyKey;
         if (key instanceof String) {
