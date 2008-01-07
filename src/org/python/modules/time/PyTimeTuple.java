@@ -42,11 +42,8 @@ public class PyTimeTuple extends PyTuple {
     }
 
     @ExposedNew
-    static PyObject struct_time_new(PyNewWrapper wrapper,
-                                    boolean init,
-                                    PyType subtype,
-                                    PyObject[] args,
-                                    String[] keywords) {
+    static PyObject struct_time_new(PyNewWrapper wrapper, boolean init, PyType subtype,
+                                    PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("struct_time", args, keywords, new String[] {"tuple"}, 1);
         PyObject obj = ap.getPyObject(0);
         if (obj instanceof PyTuple) {
@@ -71,7 +68,7 @@ public class PyTimeTuple extends PyTuple {
 
     @ExposedMethod(type = MethodType.BINARY)
     final synchronized PyObject struct_time___eq__(PyObject o) {
-        if (!(getType() == o.getType()) && !(getType().isSubType(o.getType()))) {
+        if (getType() != o.getType() && !getType().isSubType(o.getType())) {
             return null;
         }
         int tl = __len__();
@@ -90,7 +87,7 @@ public class PyTimeTuple extends PyTuple {
     @ExposedMethod(type = MethodType.BINARY)
     final synchronized PyObject struct_time___ne__(PyObject o) {
         PyObject eq = struct_time___eq__(o);
-        if(eq == null) {
+        if (eq == null) {
             return null;
         }
         return eq.__not__();
