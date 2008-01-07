@@ -192,7 +192,7 @@ public class PyDefaultDict extends PyDictionary {
         super(subtype);
     }
    
-    public PyDefaultDict(PyType subtype, Map map) {
+    public PyDefaultDict(PyType subtype, Map<PyObject, PyObject> map) {
         super(subtype, map);
     }
     

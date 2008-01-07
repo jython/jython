@@ -587,13 +587,13 @@ public class PyDictionary extends PyObject implements Map {
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
-    protected final Map table;
+    protected final Map<PyObject, PyObject> table;
 
     /**
      * Create an empty dictionary.
      */
     public PyDictionary() {
-        this(new ConcurrentHashMap());
+        this(new ConcurrentHashMap<PyObject, PyObject>());
     }
 
     /**
@@ -602,7 +602,7 @@ public class PyDictionary extends PyObject implements Map {
      */
     public PyDictionary(PyType subtype) {
         super(subtype);
-        table = new ConcurrentHashMap();
+        table = new ConcurrentHashMap<PyObject, PyObject>();
     }
 
     /**
@@ -610,8 +610,8 @@ public class PyDictionary extends PyObject implements Map {
      * @param t  the hashtable used. The supplied hashtable is used as
      *           is and must only contain PyObject key:value pairs.
      */
-    public PyDictionary(Map t) {
-        table = new ConcurrentHashMap(t);
+    public PyDictionary(Map<PyObject, PyObject> t) {
+        table = new ConcurrentHashMap<PyObject, PyObject>(t);
     }
 
      /**
@@ -620,9 +620,9 @@ public class PyDictionary extends PyObject implements Map {
      * @param t  the hashtable used. The supplied hashtable is used as
      *           is and must only contain PyObject key:value pairs.
      */
-    public PyDictionary(PyType subtype, Map t) {
+    public PyDictionary(PyType subtype, Map<PyObject, PyObject> t) {
         super(subtype);
-        table = new ConcurrentHashMap(t);
+        table = new ConcurrentHashMap<PyObject, PyObject>(t);
     }
 
         
@@ -737,7 +737,7 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict___finditem__(PyObject key) {
-        return (PyObject)table.get(key);
+        return table.get(key);
     }
 
     public void __setitem__(PyObject key, PyObject value) {
@@ -778,11 +778,10 @@ public class PyDictionary extends PyObject implements Map {
 
         StringBuffer buf = new StringBuffer("{");
 
-        for (Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
-            Entry entry = (Entry)it.next();
-            buf.append(((PyObject)entry.getKey()).__repr__().toString());
+        for (Entry<PyObject, PyObject> entry : table.entrySet()) {
+            buf.append((entry.getKey()).__repr__().toString());
             buf.append(": ");
-            buf.append(((PyObject)entry.getValue()).__repr__().toString());
+            buf.append((entry.getValue()).__repr__().toString());
             buf.append(", ");
         }
         if(buf.length() > 1){
@@ -1026,8 +1025,9 @@ public class PyDictionary extends PyObject implements Map {
 
     final PyObject dict_setdefault(PyObject key, PyObject failobj) {
         PyObject o = __finditem__(key);
-        if (o == null)
+        if (o == null) {
             __setitem__(key, o = failobj);
+        }
         return o;
     }
     
@@ -1040,11 +1040,10 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict_pop(PyObject key) {
-        if (!table.containsKey(key))
+        if (!table.containsKey(key)) {
             throw Py.KeyError("popitem(): dictionary is empty");
-        PyObject val = (PyObject) table.get(key);
-        table.remove(key);
-        return val;
+        }
+        return table.remove(key);
     }
 
     /**
@@ -1056,11 +1055,10 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict_pop(PyObject key, PyObject defaultValue) {
-        if (!table.containsKey(key))
+        if (!table.containsKey(key)) {
             return defaultValue;
-        PyObject val = (PyObject) table.get(key);
-        table.remove(key);
-        return val;
+        }
+        return table.remove(key);
     }
 
 
@@ -1092,11 +1090,9 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyList dict_items() {
-        List list = new ArrayList(table.size());
-        for (Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
-            Entry entry = (Entry)it.next();
-            list.add(new PyTuple(
-                (PyObject)entry.getKey(), (PyObject)entry.getValue() ));
+        List<PyObject> list = new ArrayList<PyObject>(table.size());
+        for (Entry<PyObject, PyObject> entry : table.entrySet()) {
+            list.add(new PyTuple(entry.getKey(), entry.getValue()));
         }
         return new PyList(list);
     }

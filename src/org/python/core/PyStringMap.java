@@ -255,9 +255,8 @@ public class PyStringMap extends PyObject {
      * Insert all the key:value pairs from <code>dict</code> into this mapping.
      */
     public void update(PyDictionary dict) {
-        for (Iterator it = dict.table.entrySet().iterator(); it.hasNext();) {
-            Entry entry = (Entry)it.next();
-            __setitem__((PyObject)entry.getKey(), (PyObject)entry.getValue());
+        for (Entry<PyObject, PyObject> entry : dict.table.entrySet()) {
+            __setitem__(entry.getKey(), entry.getValue());
         }
     }
 
