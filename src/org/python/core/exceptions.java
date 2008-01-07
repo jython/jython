@@ -20,6 +20,7 @@ public class exceptions implements ClassDictInit {
             + "\n"
             + "Exception\n"
             + " |\n"
+            + " +-- GeneratorExit\n"
             + " +-- SystemExit\n"
             + " +-- StopIteration\n"
             + " +-- StandardError\n"
@@ -218,6 +219,9 @@ public class exceptions implements ClassDictInit {
 
         buildClass(dict, "StopIteration", "Exception", "empty__init__",
                 "Signal the end from iterator.next().");
+        
+        buildClass(dict, "GeneratorExit", "Exception", "empty__init__",
+                "Request that a generator exit.");
 
         buildClass(dict, "Warning", "Exception", "empty__init__",
                 "Base class for warning categories.");
