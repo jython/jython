@@ -18,11 +18,10 @@ import org.python.core.PyTuple;
 import org.python.core.__builtin__;
 
 /**
- * Functional tools for creating and using iterators. Java implementation of the
- * CPython module itertools.
+ * Functional tools for creating and using iterators. Java implementation of the CPython module
+ * itertools.
  * 
- * @author Henrik Eriksson <henke.eriksson@gmail.com>
- * @since 2.3
+ * @since 2.5
  */
 public class itertools implements ClassDictInit {
 
@@ -47,12 +46,8 @@ public class itertools implements ClassDictInit {
     static abstract class ItertoolsIterator extends PyIterator {
 
         /**
-         * Returns the next element from an iterator. If it raises/throws
-         * StopIteration just store the Exception and return null according to
-         * PyIterator practice.
-         * 
-         * @param pyIter
-         * @return
+         * Returns the next element from an iterator. If it raises/throws StopIteration just store
+         * the Exception and return null according to PyIterator practice.
          */
         protected PyObject nextElement(PyObject pyIter) {
             PyObject element = null;
@@ -79,11 +74,7 @@ public class itertools implements ClassDictInit {
                     + "method returns consecutive\nintegers starting from zero or, if specified, from firstval.");
 
     /**
-     * Creates an iterator that returns consecutive integers starting at
-     * <code>init</code>.
-     * 
-     * @param init
-     * @return
+     * Creates an iterator that returns consecutive integers starting at <code>init</code>.
      */
     public static PyIterator count(final int init) {
         return new PyIterator() {
@@ -98,8 +89,6 @@ public class itertools implements ClassDictInit {
 
     /**
      * Creates an iterator that returns consecutive integers starting at 0.
-     * 
-     * @return
      */
     public static PyIterator count() {
         return itertools.count(0);
@@ -110,12 +99,8 @@ public class itertools implements ClassDictInit {
                     + "until itis exhausted.\nThen repeat the sequence indefinitely.");
 
     /**
-     * Returns an iterator that iterates over an iterable, saving the values for
-     * each iteration. When the iterable is exhausted continues to iterate over
-     * the saved values indefinitely.
-     * 
-     * @param sequence
-     * @return
+     * Returns an iterator that iterates over an iterable, saving the values for each iteration.
+     * When the iterable is exhausted continues to iterate over the saved values indefinitely.
      */
     public static PyIterator cycle(final PyObject sequence) {
         return new ItertoolsIterator() {
@@ -160,9 +145,6 @@ public class itertools implements ClassDictInit {
 
     /**
      * Creates an iterator that iterates over a <i>chain</i> of iterables.
-     * 
-     * @param iterables
-     * @return
      */
     public static PyIterator chain(final PyObject[] iterables) {
         final PyObject[] iterators = new PyObject[iterables.length];
@@ -198,12 +180,8 @@ public class itertools implements ClassDictInit {
                     + "for the specified number of times.  If not specified, returns the element\nendlessly.");
 
     /**
-     * Creates an iterator that returns the same object the number of times
-     * given by <code>times</code>.
-     * 
-     * @param object
-     * @param times
-     * @return
+     * Creates an iterator that returns the same object the number of times given by
+     * <code>times</code>.
      */
     public static PyIterator repeat(final PyObject object, final int times) {
         return new PyIterator() {
@@ -221,9 +199,6 @@ public class itertools implements ClassDictInit {
 
     /**
      * Creates an iterator that returns the same object over and over again.
-     * 
-     * @param object
-     * @return
      */
     public static PyIterator repeat(final PyObject object) {
         return new PyIterator() {
@@ -240,11 +215,8 @@ public class itertools implements ClassDictInit {
                     + "instead of filling in None for shorter\niterables.");
 
     /**
-     * Works as <code>__builtin__.map()</code> but returns an iterator instead
-     * of a list. (Code in this method is based on __builtin__.map()).
-     * 
-     * @param argstar
-     * @return
+     * Works as <code>__builtin__.map()</code> but returns an iterator instead of a list. (Code in
+     * this method is based on __builtin__.map()).
      */
     public static PyIterator imap(PyObject[] argstar) {
         final int n = argstar.length - 1;
@@ -301,15 +273,12 @@ public class itertools implements ClassDictInit {
     /**
      * Creates an iterator that returns selected values from an iterable.
      * 
-     * @param iterable
      * @param startObj
      *            the index of where in the iterable to start returning values
      * @param stopObj
      *            the index of where in the iterable to stop returning values
      * @param stepObj
-     *            the number of steps to take beween each call to
-     *            <code>next()</code>
-     * @return
+     *            the number of steps to take beween each call to <code>next()</code>
      */
     public static PyIterator islice(final PyObject iterable, PyObject startObj,
             PyObject stopObj, PyObject stepObj) {
@@ -370,21 +339,14 @@ public class itertools implements ClassDictInit {
     /**
      * @see islice(PyObject PyObject iterable, PyObject startObj, PyObject
      *      stopObj, PyObject stepObj) startObj defaults to 0 and stepObj to 1
-     * @param iterable
-     * @param stopObj
-     * @return
      */
     public static PyIterator islice(PyObject iterable, PyObject stopObj) {
         return islice(iterable, new PyInteger(0), stopObj, new PyInteger(1));
     }
 
     /**
-     * @see islice(PyObject PyObject iterable, PyObject startObj, PyObject
-     *      stopObj, PyObject stepObj) stepObj defaults to 1
-     * @param iterable
-     * @param start
-     * @param stopObj
-     * @return
+     * @see islice(PyObject PyObject iterable, PyObject startObj, PyObject stopObj, PyObject
+     *      stepObj) stepObj defaults to 1
      */
     public static PyIterator islice(PyObject iterable, PyObject start,
             PyObject stopObj) {
@@ -443,12 +405,8 @@ public class itertools implements ClassDictInit {
 
     /**
      * Creates an iterator that returns the items of the iterable for which
-     * <code>predicate(item)</code> is <code>true</code>. If
-     * <code>predicate</code> is null (None) return the items that are true.
-     * 
-     * @param predicate
-     * @param iterable
-     * @return
+     * <code>predicate(item)</code> is <code>true</code>. If <code>predicate</code> is null
+     * (None) return the items that are true.
      */
     public static PyIterator ifilter(PyObject predicate, PyObject iterable) {
         return new FilterIterator(predicate, iterable, true);
@@ -461,12 +419,8 @@ public class itertools implements ClassDictInit {
 
     /**
      * Creates an iterator that returns the items of the iterable for which
-     * <code>predicate(item)</code> is <code>false</code>. If
-     * <code>predicate</code> is null (None) return the items that are false.
-     * 
-     * @param predicate
-     * @param iterable
-     * @return
+     * <code>predicate(item)</code> is <code>false</code>. If <code>predicate</code> is null
+     * (None) return the items that are false.
      */
     public static PyIterator ifilterfalse(PyObject predicate, PyObject iterable) {
         return new FilterIterator(predicate, iterable, false);
@@ -480,13 +434,10 @@ public class itertools implements ClassDictInit {
                     + "instead of\na list.");
 
     /**
-     * Create an iterator whose <code>next()</code> method returns a tuple
-     * where the i-th element comes from the i-th iterable argument. Continues
-     * until the shortest iterable is exhausted. (Code in this method is based
-     * on __builtin__.zip()).
+     * Create an iterator whose <code>next()</code> method returns a tuple where the i-th element
+     * comes from the i-th iterable argument. Continues until the shortest iterable is exhausted.
+     * (Code in this method is based on __builtin__.zip()).
      * 
-     * @param argstar
-     * @return
      */
     public static PyIterator izip(PyObject[] argstar) {
         final int itemsize = argstar.length;
@@ -544,7 +495,6 @@ public class itertools implements ClassDictInit {
      * 
      * @param starargs
      *            [0] = callable function, [1] = iterable with argument tuples
-     * @return
      */
     public static PyIterator starmap(PyObject[] starargs) {
         if (starargs.length != 2) {
@@ -629,11 +579,8 @@ public class itertools implements ClassDictInit {
                     + "from the iterable while predicate(item) is true.\nAfterwards, return every element until theiterable is exhausted.");
 
     /**
-     * Create an iterator that drops items from the iterable while <code>prdicate(item)</code> equals true. After which 
-     * every remaining item of the iterable is returned.
-     * @param predicate
-     * @param iterable
-     * @return
+     * Create an iterator that drops items from the iterable while <code>prdicate(item)</code>
+     * equals true. After which every remaining item of the iterable is returned.
      */
     public static PyIterator dropwhile(PyObject predicate, PyObject iterable) {
         return new WhileIterator(predicate, iterable, true);
@@ -644,11 +591,8 @@ public class itertools implements ClassDictInit {
                     + "successive entries from an iterable as long as the \npredicate evaluates to true for each entry.");
 
     /**
-     * Create an iterator that returns items from the iterable while <code>predicate(item)</code> is true. After which 
-     * iteration is stopped.
-     * @param predicate
-     * @param iterable
-     * @return
+     * Create an iterator that returns items from the iterable while <code>predicate(item)</code>
+     * is true. After which iteration is stopped.
      */
     public static PyIterator takewhile(PyObject predicate, PyObject iterable) {
         return new WhileIterator(predicate, iterable, false);
@@ -721,23 +665,14 @@ public class itertools implements ClassDictInit {
             "(key, sub-iterator) grouped by each value of key(value).");
 
     /**
-     * Create an iterator which returns the pair (key, sub-iterator) grouped by
-     * key(value).       
-     * @param iterable
-     * @param key
-     * @return PyIterator
-     * @since 2.4
+     * Create an iterator which returns the pair (key, sub-iterator) grouped by key(value).
      */
     public static PyIterator groupby(PyObject iterable, PyObject key) {
         return new GroupBy(iterable, key);
     }
 
-     /**
-     * Create an iterator which returns the pair (value, sub-iterator) grouped by
-     * value       
-     * @param iterable
-     * @return PyIterator
-     * @since 2.4
+    /**
+     * Create an iterator which returns the pair (value, sub-iterator) grouped by value
      */
     public static PyIterator groupby(PyObject iterable) {
         return new GroupBy(iterable, null);
@@ -811,23 +746,15 @@ public class itertools implements ClassDictInit {
             "tee(iterable, n=2) --> tuple of n independent iterators.");
 
     /**
-     * Create a tuple of iterators, each of which is effectively a copy of iterable.       
-     * @param iterable
-     * @param n
-     * @return PyTuple
-     * @since 2.4
+     * Create a tuple of iterators, each of which is effectively a copy of iterable.
      */
     public static PyTuple tee(PyObject iterable, final int n) {
         return Tee.makeTees(iterable, n);
     }
 
     /**
-     * Create a pair of iterators, each of which is effectively a copy of iterable.       
-     * @param iterable
-     * @return PyTuple
-     * @since 2.4
+     * Create a pair of iterators, each of which is effectively a copy of iterable.
      */
-    
     public static PyTuple tee(PyObject iterable) {
         return tee(iterable, 2);
     }
