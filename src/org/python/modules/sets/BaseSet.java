@@ -61,47 +61,21 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
             this._set.addAll(((BaseSet)data)._set);
             return;
         }
-
-        if (data.__findattr__("__iter__") != null) {
-            for (PyObject item : data.asIterable()) {
-                try {
-                    this._set.add(item);
-                } catch (PyException e) {
-                    this._set.add(asImmutable(e, item));
-                }
-            }
-        } else {
-            int i = 0;
-            while(true) {
-                PyObject value;
-                try {
-                    value = data.__finditem__(i++);
-                    if (value == null) {
-                        break;
-                    }
-                } catch (PyException e) {
-                    if(Py.matchException(e, Py.AttributeError)) {
-                        throw Py.TypeError("object not iterable");
-                    }
-                    throw e;
-                }
-                try {
-                    this._set.add(value);
-                } catch (PyException e) {
-                    PyObject immutable = this.asImmutable(e, value);
-                    this._set.add(immutable);
-                }
+        for (PyObject item : data.asIterable()) {
+            try {
+                this._set.add(item);
+            } catch (PyException e) {
+                this._set.add(asImmutable(e, item));
             }
         }
     }
 
     /**
-     * The union of <code>this</code> with <code>other</code>.
-     * <p/>
-     * <br/>
-     * (I.e. all elements that are in either set)
-     *
-     * @param other A <code>BaseSet</code> instance.
+     * The union of <code>this</code> with <code>other</code>. <p/> <br/> (I.e. all elements
+     * that are in either set)
+     * 
+     * @param other
+     *            A <code>BaseSet</code> instance.
      * @return The union of the two sets as a new set.
      */
     public PyObject __or__(PyObject other) {

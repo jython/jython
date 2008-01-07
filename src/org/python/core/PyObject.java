@@ -376,28 +376,11 @@ public class PyObject implements Serializable {
             argslen += kwargs.__len__();
         }
         List<PyObject> starObjs = null;
-        if(starargs != null) {
-            if(starargs.__findattr__("__iter__") != null){
-                starObjs = new ArrayList<PyObject>();
-                for (PyObject cur : starargs.asIterable()) {
-                    starObjs.add(cur);
-                }
-            } else {
-                try {
-                    int nstar = starargs.__len__();
-                    PyObject cur;
-                    starObjs = new ArrayList<PyObject>(nstar);
-                    for(int i = 0; (cur = starargs.__finditem__(i)) != null
-                            && i < nstar; i++) {
-                        starObjs.add(cur);
-                    }
-                } catch(PyException e) {
-                    if(Py.matchException(e, Py.AttributeError)) {
-                        throw Py.TypeError(name + "argument after * must "
-                                + "be a sequence");
-                    }
-                    throw e;
-                }
+        if (starargs != null) {
+            starObjs = new ArrayList<PyObject>();
+            PyObject iter = Py.iter(starargs, name + "argument after * must be a sequence");
+            for (PyObject cur = null; ((cur = iter.__iternext__()) != null); ) {
+                starObjs.add(cur);
             }
             argslen += starObjs.size();
         }
@@ -669,28 +652,26 @@ public class PyObject implements Serializable {
     /*The basic functions to implement an iterator */
 
     /**
-     * Return an iterator that is used to iterate the element of this
-     * sequence.
-     * From version 2.2, this method is the primary protocol for looping
-     * over sequences.
+     * Return an iterator that is used to iterate the element of this sequence. From version 2.2,
+     * this method is the primary protocol for looping over sequences.
      * <p>
-     * If a PyObject subclass should support iteration based in the
-     * __finditem__() method, it must supply an implementation of __iter__()
-     * like this:
+     * If a PyObject subclass should support iteration based in the __finditem__() method, it must
+     * supply an implementation of __iter__() like this:
+     * 
      * <pre>
-     *    public PyObject __iter__() {
-     *        return new PySequenceIter(this);
-     *    }
+     * public PyObject __iter__() {
+     *     return new PySequenceIter(this);
+     * }
      * </pre>
-     *
-     * When iterating over a python sequence from java code, it should be
-     * done with code like this:
+     * 
+     * When iterating over a python sequence from java code, it should be done with code like this:
+     * 
      * <pre>
-     *    for (PyObject item : seq.asIterable())  {
-     *        // Do somting with item
-     *    }
+     * for (PyObject item : seq.asIterable()) {
+     *     // Do somting with item
+     * }
      * </pre>
-     *
+     * 
      * @since 2.2
      */
     public PyObject __iter__() {
