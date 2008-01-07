@@ -817,7 +817,7 @@ public class PyDictionary extends PyObject implements Map {
     final PyObject dict___ne__(PyObject ob_other) {
         PyObject eq_result = __eq__(ob_other);
         if (eq_result == null) return null;
-        return  eq_result == Py.True?Py.False:Py.True;
+        return eq_result.__not__();
     }
     
     final PyObject dict___lt__(PyObject ob_other){
