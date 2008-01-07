@@ -16,6 +16,7 @@ import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.__builtin__;
+import org.python.core.ArgParser;
 
 /**
  * Functional tools for creating and using iterators. Java implementation of the CPython module
@@ -38,7 +39,10 @@ public class itertools implements ClassDictInit {
                     + "starmap(fun, seq) --> fun(*seq[0]), fun(*seq[1]), ...\n"
                     + "chain(p, q, ...) --> p0, p1, ... plast, q0, q1, ... \n"
                     + "takewhile(pred, seq) --> seq[0], seq[1], until pred fails\n"
-                    + "dropwhile(pred, seq) --> seq[n],seq[n+1], starting when pred fails\n");
+                    + "dropwhile(pred, seq) --> seq[n],seq[n+1], starting when pred fails\n"
+                    + "groupby(iterable[, keyfunc]) -> create an iterator which returns\n"
+                    + "(key, sub-iterator) grouped by each value of key(value)."
+                    + "tee(iterable, n=2) --> tuple of n independent iterators.");
 
     /**
      * Iterator base class used by most methods.
@@ -82,6 +86,10 @@ public class itertools implements ClassDictInit {
 
             public PyObject __iternext__() {
                 return new PyInteger(counter++);
+            }
+            
+            public PyString __repr__() {
+                return (PyString)(Py.newString("count(%d)").__mod__(Py.newInteger(counter)));
             }
 
         };
@@ -185,14 +193,23 @@ public class itertools implements ClassDictInit {
      */
     public static PyIterator repeat(final PyObject object, final int times) {
         return new PyIterator() {
-            int counter = 0;
+            int counter = times;
 
             public PyObject __iternext__() {
-                if (counter < times) {
-                    counter++;
+                if (counter > 0) {
+                    counter--;
                     return object;
                 }
                 return null;
+            }
+            
+            public int __len__() {
+               return times; 
+            }
+            
+            public PyString __repr__() {
+                return (PyString)(Py.newString("repeat(%r, %d)").
+                        __mod__(new PyTuple(object, Py.newInteger(counter))));
             }
         };
     }
@@ -204,6 +221,11 @@ public class itertools implements ClassDictInit {
         return new PyIterator() {
             public PyObject __iternext__() {
                 return object;
+            }
+                        
+            public PyString __repr__() {
+                return (PyString)(Py.newString("repeat(%r)").
+                        __mod__(new PyTuple(object)));
             }
         };
     }
@@ -270,6 +292,25 @@ public class itertools implements ClassDictInit {
                     + "Step defaults to one.  If\nspecified as another value, step determines how manyvalues are \n"
                     + "skipped between successive calls.  Works like a slice() on a list\nbut returns an iterator.");
 
+    
+    private static int py2int(PyObject obj, int defaultValue, String msg) {
+        if (obj instanceof PyNone) {
+            return defaultValue;
+        } else {
+            int value = defaultValue;
+            try {
+                value = Py.py2int(obj);
+            }
+            catch (PyException pyEx) {
+                if (Py.matchException(pyEx, Py.TypeError)) {
+                    throw Py.ValueError(msg);
+                } else {
+                    throw pyEx;
+                }
+            }
+            return value;
+        }
+    }
     /**
      * Creates an iterator that returns selected values from an iterable.
      * 
@@ -282,26 +323,11 @@ public class itertools implements ClassDictInit {
      */
     public static PyIterator islice(final PyObject iterable, PyObject startObj,
             PyObject stopObj, PyObject stepObj) {
-        final int stop;
-        final int start;
-        final int step;
-        // flag for indicating that None was supplied for stop
-        final boolean stopNone;
+        final int stop = py2int(stopObj, 0, "Stop argument must be a non-negative integer or None");
+        final int start = py2int(startObj, 0, "Start argument must be a non-negative integer or None");
+        final int step = py2int(stepObj, 1, "Step argument must be a non-negative integer or None");
+        final boolean stopNone = stopObj instanceof PyNone;
 
-        // convert input parameters
-        if (stopObj instanceof PyNone) {
-            stopNone = true;
-            stop = 0;
-        } else {
-            stopNone = false;
-            stop = Py.py2int(stopObj,
-                    "Stop argument must be a non-negative integer or None");
-        }
-
-        start = Py.py2int(startObj, "Start argument must be a non-negative integer");
-        step = Py.py2int(stepObj, "Step argument must be a non-negative integer");
-
-        // validate input parameters
         if (start < 0 || step < 0 || stop < 0) {
             throw Py.ValueError("Indices for islice() must be non-negative integers");
         }
@@ -667,17 +693,16 @@ public class itertools implements ClassDictInit {
     /**
      * Create an iterator which returns the pair (key, sub-iterator) grouped by key(value).
      */
-    public static PyIterator groupby(PyObject iterable, PyObject key) {
+    
+   
+    public static PyIterator groupby(PyObject [] args, String [] kws) {
+        ArgParser ap = new ArgParser("groupby", args, kws, "iterable", "key");
+        PyObject iterable = ap.getPyObject(0);
+        PyObject key = ap.getPyObject(1, null);
         return new GroupBy(iterable, key);
     }
 
-    /**
-     * Create an iterator which returns the pair (value, sub-iterator) grouped by value
-     */
-    public static PyIterator groupby(PyObject iterable) {
-        return new GroupBy(iterable, null);
-    }
-    
+
     // TODO: implement __copy__ protocol 
     private final static class Tee {
 
@@ -700,6 +725,8 @@ public class itertools implements ClassDictInit {
             }
         }
 
+
+        
         public static PyTuple makeTees(PyObject iterable, final int n) {
             return new PyTuple((new Tee(iterable, n)).tees);
         }
