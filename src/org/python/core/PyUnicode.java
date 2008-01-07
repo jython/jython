@@ -30,13 +30,10 @@ public class PyUnicode extends PyString {
     public PyUnicode(PyString pystring) {
         this(TYPE, pystring);
     }
-    
-    public PyUnicode(PyType subtype, PyString pystring) {
-        this(subtype, pystring.decode().toString());
-    }
 
-    public PyUnicode(PyType subtype, PyUnicode uni) {
-        this(subtype, uni.string);
+    public PyUnicode(PyType subtype, PyString pystring) {
+        this(subtype, pystring instanceof PyUnicode ? pystring.string : pystring.decode()
+                .toString());
     }
 
     public PyUnicode(char c) {
@@ -79,12 +76,13 @@ public class PyUnicode extends PyString {
             return S.__unicode__();
         } else {
             if (S == null) {
-                return new PyUnicodeDerived(subtype, "");
+                return new PyUnicodeDerived(subtype, Py.EmptyString);
             }
             if (S instanceof PyUnicode) {
                 return new PyUnicodeDerived(subtype, (PyUnicode)S);
+            } else {
+                return new PyUnicodeDerived(subtype, S.__str__());
             }
-            return new PyUnicodeDerived(subtype, (String)((S.__str__()).__tojava__(String.class)));
         }
     }
 

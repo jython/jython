@@ -35,7 +35,7 @@ public class PyUnicodeDerived extends PyUnicode implements Slotted {
         dict=new PyStringMap();
     }
 
-    public PyUnicodeDerived(PyType subtype,String string) {
+    public PyUnicodeDerived(PyType subtype,PyString string) {
         super(subtype,string);
         slots=new PyObject[subtype.getNumSlots()];
         dict=subtype.instDict();
