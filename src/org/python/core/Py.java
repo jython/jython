@@ -2005,46 +2005,27 @@ public final class Py
     }
 
     static PyObject[] make_array(PyObject o) {
-        if (o instanceof PyTuple)
+        if (o instanceof PyTuple) {
             return ((PyTuple)o).getArray();
-    
+        }
         // Guess result size and allocate space.
         int n = 10;
         try {
             n = o.__len__();
         } catch (PyException exc) { }
     
-        PyObject[] objs= new PyObject[n];
-    
-        int i = 0;
+        PyObjectArray objs = new PyObjectArray(n);
         for (PyObject item : o.asIterable()) {
-            if (item == null)
-                break;
-            if (i >= n) {
-                if (n < 500) {
-                    n += 10;
-                } else {
-                    n += 100;
-                }
-                PyObject[] newobjs = new PyObject[n];
-                System.arraycopy(objs, 0, newobjs, 0, objs.length);
-                objs = newobjs;
-            }
-            objs[i++] = item;
+            objs.add(item);
         }
-    
         // Cut back if guess was too large.
-        if (i < n) {
-            PyObject[] newobjs = new PyObject[i];
-            System.arraycopy(objs, 0, newobjs, 0, i);
-            objs = newobjs;
-        }
-        return objs;
+        objs.trimToSize();
+        return (PyObject[])objs.getArray();
     }    
     
 }
 
-/** @deprecated **/
+/** @deprecated */
 class FixedFileWrapper extends StdoutWrapper {
     private PyObject file;
     public FixedFileWrapper(PyObject file) {
