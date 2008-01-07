@@ -697,6 +697,9 @@ public class itertools implements ClassDictInit {
    
     public static PyIterator groupby(PyObject [] args, String [] kws) {
         ArgParser ap = new ArgParser("groupby", args, kws, "iterable", "key");
+        if(args.length > 2){
+            throw Py.TypeError("groupby takes two arguments, iterable and key");
+        }
         PyObject iterable = ap.getPyObject(0);
         PyObject key = ap.getPyObject(1, null);
         return new GroupBy(iterable, key);
