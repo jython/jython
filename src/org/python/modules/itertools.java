@@ -490,6 +490,10 @@ public class itertools implements ClassDictInit {
      */
     public static PyIterator izip(PyObject[] argstar) {
         final int itemsize = argstar.length;
+        
+        if (itemsize == 0) {
+            return (PyIterator)(__builtin__.xrange(0).__iter__());            
+        }
 
         // Type check the arguments; they must be sequences.
         final PyObject[] iters = new PyObject[itemsize];
@@ -650,30 +654,6 @@ public class itertools implements ClassDictInit {
         return new WhileIterator(predicate, iterable, false);
     }
 
-    
-    // TODO: groupby - from itertools documentation, this is what we need to implement
-
-//    class groupby(object):
-//        def __init__(self, iterable, key=None):
-//            if key is None:
-//                key = lambda x: x
-//            self.keyfunc = key
-//            self.it = iter(iterable)
-//            self.tgtkey = self.currkey = self.currvalue = xrange(0)
-//        def __iter__(self):
-//            return self
-//        def next(self):
-//            while self.currkey == self.tgtkey:
-//                self.currvalue = self.it.next() # Exit on StopIteration
-//                self.currkey = self.keyfunc(self.currvalue)
-//            self.tgtkey = self.currkey
-//            return (self.currkey, self._grouper(self.tgtkey))
-//        def _grouper(self, tgtkey):
-//            while self.currkey == tgtkey:
-//                yield self.currvalue
-//                self.currvalue = self.it.next() # Exit on StopIteration
-//                self.currkey = self.keyfunc(self.currvalue)
-
     private final static class GroupBy extends ItertoolsIterator {
 
         private final PyObject iterator;
@@ -692,9 +672,9 @@ public class itertools implements ClassDictInit {
             while (currentKey.equals(targetKey)) {
                 currentValue = nextElement(iterator);
                 if (currentValue == null) {
-                    return null; // instead  of a StopIteration
+                    return null;
                 }
-                if (keyFunc == null) { // identity function
+                if (keyFunc == null) {
                     currentKey = currentValue;
                 } else {
                     currentKey = keyFunc.__call__(currentValue);
@@ -715,14 +695,6 @@ public class itertools implements ClassDictInit {
 
             public PyObject __iternext__() {
                 final PyObject item = currentValue;
-
-                // Using @completed here implements yield-before-doing-other-stuff logic
-                // see sample code in the itertools docs
-                // (http://docs.python.org/lib/itertools-functions.html) of a 
-                // Pure Python implementation that drove this dev.
-                // Incidentally, this is a good motivating example of how
-                // generator internals are actually implemented in Jython
-                // with PyGenerator (in of course, a more general, abstract way)
                 if (completed) {
                     return null;
                 }
@@ -730,7 +702,7 @@ public class itertools implements ClassDictInit {
                 if (currentValue == null) {
                     completed = true;
                 } else {
-                    if (keyFunc == null) { // identity function
+                    if (keyFunc == null) {
                         currentKey = currentValue;
                     } else {
                         currentKey = keyFunc.__call__(currentValue);
@@ -754,7 +726,6 @@ public class itertools implements ClassDictInit {
      * @param iterable
      * @param key
      * @return PyIterator
-     * @author Jim Baker <jbaker@zyasoft.com>
      * @since 2.4
      */
     public static PyIterator groupby(PyObject iterable, PyObject key) {
@@ -766,7 +737,6 @@ public class itertools implements ClassDictInit {
      * value       
      * @param iterable
      * @return PyIterator
-     * @author Jim Baker <jbaker@zyasoft.com>
      * @since 2.4
      */
     public static PyIterator groupby(PyObject iterable) {
@@ -845,7 +815,6 @@ public class itertools implements ClassDictInit {
      * @param iterable
      * @param n
      * @return PyTuple
-     * @author Jim Baker <jbaker@zyasoft.com>
      * @since 2.4
      */
     public static PyTuple tee(PyObject iterable, final int n) {
@@ -853,11 +822,9 @@ public class itertools implements ClassDictInit {
     }
 
     /**
-     * Create a tuple of iterators, each of which is effectively a copy of iterable.       
+     * Create a pair of iterators, each of which is effectively a copy of iterable.       
      * @param iterable
-     * @param n
      * @return PyTuple
-     * @author Jim Baker <jbaker@zyasoft.com>
      * @since 2.4
      */
     
