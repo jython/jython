@@ -1,61 +1,39 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
+
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * this used to be "A faster Dictionary where the keys have to be strings", but no more.
- * Instead, it will allow either String or PyObject to be keys.
- * <p>
- * This is the default for all __dict__ instances.
+ * Special fast dict implementation for __dict__ instances. Allows interned String keys in addition
+ * to PyObject unlike PyDictionary.
  */
-final class NullValue {
-}
-    
-public class PyStringMap extends PyObject
-{
-    private final ConcurrentMap table;
+public class PyStringMap extends PyObject {
 
-    
-    // CHM cannot store null values. Some Python code, specifically using
-    // classDictInit components, assumes that this is possible to hide from
-    // Python. So we have to compensate here.
-    private final static NullValue nullValue = new NullValue();
-    
-    private static PyObject toNullable(Object value) {
-        if (value == nullValue) return null;
-        else return (PyObject)value;
-    }
-    
-    private static Object fromNullable(PyObject value) {
-        if (value == null) return nullValue;
-        else return value;
-    }
-    
-    
-    public PyStringMap(int capacity) {
-        table = new ConcurrentHashMap(capacity);
-    }
-
-    public PyStringMap(java.util.Map map) {
-        table = new ConcurrentHashMap(map);
-    }
+    private final Map<Object, PyObject> table;
 
     public PyStringMap() {
         this(4);
     }
 
+    public PyStringMap(int capacity) {
+        table = new ConcurrentHashMap<Object, PyObject>(capacity);
+    }
+
+    public PyStringMap(Map<Object, PyObject> map) {
+        table = new ConcurrentHashMap<Object, PyObject>(map);
+    }
+
     public PyStringMap(PyObject elements[]) {
-        table = new ConcurrentHashMap(elements.length);
-        for (int i=0; i<elements.length; i+=2) {
-            __setitem__(elements[i], elements[i+1]);
+        this(elements.length);
+        for (int i = 0; i < elements.length; i += 2) {
+            __setitem__(elements[i], elements[i + 1]);
         }
     }
 
@@ -68,33 +46,35 @@ public class PyStringMap extends PyObject
     }
 
     public PyObject __finditem__(String key) {
-        if (key == null)
+        if (key == null) {
             return null;
-        return (PyObject)table.get(key);
+        }
+        return table.get(key);
     }
 
     public PyObject __finditem__(PyObject key) {
-        if (key instanceof PyString)
+        if (key instanceof PyString) {
             return __finditem__(((PyString)key).internedString());
-        return (PyObject)toNullable(table.get(key));
+        }
+        return table.get(key);
     }
 
     public PyObject __getitem__(String key) {
-        PyObject o=__finditem__(key);
+        PyObject o = __finditem__(key);
         if (null == o) {
-            throw Py.KeyError("'"+key+"'");
+            throw Py.KeyError("'" + key + "'");
         } else {
             return o;
         }
     }
-    
+
     public PyObject __getitem__(PyObject key) {
         if (key instanceof PyString) {
             return __getitem__(((PyString)key).internedString());
         } else {
-            PyObject o=__finditem__(key);
+            PyObject o = __finditem__(key);
             if (null == o) {
-                throw Py.KeyError("'"+key.toString()+"'");
+                throw Py.KeyError("'" + key.toString() + "'");
             } else {
                 return o;
             }
@@ -106,16 +86,24 @@ public class PyStringMap extends PyObject
     }
 
     public void __setitem__(String key, PyObject value) {
-        table.put(key, fromNullable(value));
+        if (value == null) {
+            table.remove(key);
+        } else {
+            table.put(key, value);
+        }
     }
 
     public void __setitem__(PyObject key, PyObject value) {
-        if (key instanceof PyString) {
+        if (value == null) {
+            if (key instanceof PyString) {
+                table.remove(((PyString)key).internedString());
+            } else {
+                table.remove(key);
+            }
+        } else if (key instanceof PyString) {
             __setitem__(((PyString)key).internedString(), value);
-        }
-        else {
-            table.put(key, fromNullable(value));
-
+        } else {
+            table.put(key, value);
         }
     }
 
@@ -129,11 +117,11 @@ public class PyStringMap extends PyObject
     public void __delitem__(PyObject key) {
         if (key instanceof PyString) {
             __delitem__(((PyString)key).internedString());
-        }
-        else {
+        } else {
             Object ret = table.remove(key);
-            if (ret == null)
+            if (ret == null) {
                 throw Py.KeyError(key.toString());
+            }
         }
     }
 
@@ -149,38 +137,38 @@ public class PyStringMap extends PyObject
         if (!ts.enterRepr(this)) {
             return "{...}";
         }
-
         StringBuffer buf = new StringBuffer("{");
-        for (Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
-            Entry entry = (Entry)it.next();
+        for (Entry<Object, PyObject> entry : table.entrySet()) {
             Object key = entry.getKey();
-            if (key instanceof String)
+            if (key instanceof String) {
                 buf.append(key);
-            else
+            } else {
                 buf.append(((PyObject)entry.getKey()).__repr__().toString());
+            }
             buf.append(": ");
-            buf.append(((PyObject)toNullable(entry.getValue())).__repr__().toString());
+            buf.append(entry.getValue().__repr__().toString());
             buf.append(", ");
-        }      
-        if(buf.length() > 1){
+        }
+        if (buf.length() > 1) {
             buf.delete(buf.length() - 2, buf.length());
         }
         buf.append("}");
-
         ts.exitRepr(this);
         return buf.toString();
     }
-  
+
     public int __cmp__(PyObject other) {
-        if (!(other instanceof PyStringMap ||
-                  other instanceof PyDictionary)) {
+        if (!(other instanceof PyStringMap || other instanceof PyDictionary)) {
             return -2;
         }
         int an = __len__();
         int bn = other.__len__();
-        if (an < bn) return -1;
-        if (an > bn) return 1;
-
+        if (an < bn) {
+            return -1;
+        }
+        if (an > bn) {
+            return 1;
+        }
         PyList akeys = keys();
         PyList bkeys = null;
         if (other instanceof PyStringMap) {
@@ -190,19 +178,19 @@ public class PyStringMap extends PyObject
         }
         akeys.sort();
         bkeys.sort();
-
-        for (int i=0; i<bn; i++) {
+        for (int i = 0; i < bn; i++) {
             PyObject akey = akeys.pyget(i);
             PyObject bkey = bkeys.pyget(i);
             int c = akey._cmp(bkey);
-            if (c != 0)
+            if (c != 0) {
                 return c;
-
+            }
             PyObject avalue = __finditem__(akey);
             PyObject bvalue = other.__finditem__(bkey);
             c = avalue._cmp(bvalue);
-            if (c != 0)
+            if (c != 0) {
                 return c;
+            }
         }
         return 0;
     }
@@ -221,28 +209,28 @@ public class PyStringMap extends PyObject
         return table.containsKey(key);
     }
 
-
     /**
-     * Return this[key] if the key exists in the mapping, default_object
-     * is returned otherwise.
-     *
-     * @param key            the key to lookup in the mapping.
-     * @param default_object the value to return if the key does not
-     *                       exists in the mapping.
+     * Return this[key] if the key exists in the mapping, default_object is returned otherwise.
+     * 
+     * @param key
+     *            the key to lookup in the mapping.
+     * @param default_object
+     *            the value to return if the key does not exists in the mapping.
      */
     public PyObject get(PyObject key, PyObject default_object) {
         PyObject o = __finditem__(key);
-        if (o == null)
+        if (o == null) {
             return default_object;
-        else
+        } else {
             return o;
+        }
     }
 
     /**
-     * Return this[key] if the key exists in the mapping, None
-     * is returned otherwise.
-     *
-     * @param key  the key to lookup in the mapping.
+     * Return this[key] if the key exists in the mapping, None is returned otherwise.
+     * 
+     * @param key
+     *            the key to lookup in the mapping.
      */
     public PyObject get(PyObject key) {
         return get(key, Py.None);
@@ -252,89 +240,92 @@ public class PyStringMap extends PyObject
      * Return a shallow copy of the dictionary.
      */
     public PyStringMap copy() {
-        return new PyStringMap(table); 
+        return new PyStringMap(table);
     }
 
     /**
-     * Insert all the key:value pairs from <code>map</code> into this
-     * mapping. Since this is a PyStringMap, no need to coerce keys,
-     * like from PyDictionary below
+     * Insert all the key:value pairs from <code>map</code> into this mapping. Since this is a
+     * PyStringMap, no need to coerce keys, like from PyDictionary below
      */
     public void update(PyStringMap map) {
         table.putAll(map.table);
     }
 
     /**
-     * Insert all the key:value pairs from <code>dict</code> into
-     * this mapping.
+     * Insert all the key:value pairs from <code>dict</code> into this mapping.
      */
     public void update(PyDictionary dict) {
-        for (Iterator it = dict.table.entrySet().iterator(); it.hasNext(); ) {
+        for (Iterator it = dict.table.entrySet().iterator(); it.hasNext();) {
             Entry entry = (Entry)it.next();
-            __setitem__((PyObject)entry.getKey(), (PyObject)toNullable(entry.getValue()));
+            __setitem__((PyObject)entry.getKey(), (PyObject)entry.getValue());
         }
     }
 
     /**
-     * Return this[key] if the key exist, otherwise insert key with
-     * a None value and return None.
-     *
-     * @param key   the key to lookup in the mapping.
+     * Return this[key] if the key exist, otherwise insert key with a None value and return None.
+     * 
+     * @param key
+     *            the key to lookup in the mapping.
      */
     public PyObject setdefault(PyObject key) {
         return setdefault(key, Py.None);
     }
 
     /**
-     * Return this[key] if the key exist, otherwise insert key with
-     * the value of failobj and return failobj
-     *
-     * @param key     the key to lookup in the mapping.
-     * @param failobj the default value to insert in the mapping
-     *                if key does not already exist.
+     * Return this[key] if the key exist, otherwise insert key with the value of failobj and return
+     * failobj
+     * 
+     * @param key
+     *            the key to lookup in the mapping.
+     * @param failobj
+     *            the default value to insert in the mapping if key does not already exist.
      */
     public PyObject setdefault(PyObject key, PyObject failobj) {
         PyObject o = __finditem__(key);
-        if (o == null)
+        if (o == null) {
             __setitem__(key, o = failobj);
+        }
         return o;
     }
 
     /**
-     * Return a random (key, value) tuple pair and remove the pair
-     * from the mapping.
+     * Return a random (key, value) tuple pair and remove the pair from the mapping.
      */
     public PyObject popitem() {
         Iterator it = table.entrySet().iterator();
-        if (!it.hasNext())
+        if (!it.hasNext()) {
             throw Py.KeyError("popitem(): dictionary is empty");
+        }
         Entry entry = (Entry)it.next();
         Object objKey = entry.getKey();
-        PyObject value = (PyObject)toNullable(entry.getValue());
+        PyObject value = (PyObject)entry.getValue();
         PyTuple tuple;
-        if (objKey instanceof String)
+        if (objKey instanceof String) {
             tuple = new PyTuple(new PyString((String)objKey), value);
-        else
+        } else {
             tuple = new PyTuple((PyObject)objKey, value);
+        }
         it.remove();
         return tuple;
     }
 
     // not correct - we need to determine size and remove at the same time!
     public PyObject pop(PyObject key) {
-        if (table.size() == 0)
+        if (table.size() == 0) {
             throw Py.KeyError("pop(): dictionary is empty");
+        }
         return pop(key, null);
     }
 
     public PyObject pop(PyObject key, PyObject failobj) {
         Object objKey;
-        if (key instanceof PyString)
+        if (key instanceof PyString) {
             objKey = ((PyString)key).internedString();
-        else
+        } else {
             objKey = key;
-        PyObject value = (PyObject)toNullable(table.remove(objKey));
-        if(value == null) {
+        }
+        PyObject value = table.remove(objKey);
+        if (value == null) {
             if (failobj == null) {
                 throw Py.KeyError(key.__repr__().toString());
             } else {
@@ -343,42 +334,42 @@ public class PyStringMap extends PyObject
         }
         return value;
     }
+
     /**
-     * Return a copy of the mappings list of (key, value) tuple
-     * pairs.
+     * Return a copy of the mappings list of (key, value) tuple pairs.
      */
     public PyList items() {
-        final List list = new ArrayList(table.size());
-          
-        for (Iterator it = table.entrySet().iterator(); it.hasNext(); ) {
-            Entry entry = (Entry)it.next();
-            Object objKey = entry.getKey();
-            PyObject key = null;
-            PyObject value = (PyObject)toNullable(entry.getValue());
-            if (objKey instanceof String)
-                key = new PyString((String)objKey);
-            else
-                key = (PyObject)objKey;
-            list.add(new PyTuple(key, value ));               
+        List<PyObject> list = new ArrayList<PyObject>(table.size());
+        for (Entry<Object, PyObject> entry : table.entrySet()) {
+            list.add(itemTuple(entry));
         }
         return new PyList(list);
     }
-
-
+    
+    private PyTuple itemTuple(Entry<Object, PyObject> entry){
+        Object key = entry.getKey();
+        PyObject pyKey;
+        if (key instanceof String) {
+            pyKey = PyString.fromInterned((String)key);
+        } else {
+            pyKey = (PyObject)key;
+        }
+        return new PyTuple(pyKey, entry.getValue());
+    }
 
     /**
-     * Return a copy of the mappings list of keys. We have to take in
-     * account that we could be storing String or PyObject objects
+     * Return a copy of the mappings list of keys. We have to take in account that we could be
+     * storing String or PyObject objects
      */
     public PyList keys() {
-        final List list = new ArrayList(table.size());
-        for (Iterator it = table.keySet().iterator(); it.hasNext(); ) {
+        List<PyObject> list = new ArrayList<PyObject>(table.size());
+        for (Iterator it = table.keySet().iterator(); it.hasNext();) {
             Object obj = it.next();
             if (obj instanceof String) {
-                list.add(new PyString((String)obj));
+                list.add(PyString.fromInterned((String)obj));
+            } else {
+                list.add((PyObject)obj);
             }
-            else
-            list.add(obj);
         }
         return new PyList(list);
     }
@@ -389,23 +380,23 @@ public class PyStringMap extends PyObject
     public PyList values() {
         return new PyList(table.values());
     }
+
     /**
      * return an iterator over (key, value) pairs
      */
     public PyObject iteritems() {
         return new ItemsIter(table.entrySet());
     }
-    
+
     /**
      * return an iterator over the keys
      */
-    
     // Python allows one to change the dict while iterating over it,
     // including deletion. Java does not. Can we resolve with CHM?
     public PyObject iterkeys() {
         return new KeysIter(table.keySet());
     }
-    
+
     /**
      * return an iterator over the values
      */
@@ -414,58 +405,57 @@ public class PyStringMap extends PyObject
     }
 
     private class ValuesIter extends PyIterator {
-        private final Iterator iterator;
-        public ValuesIter(Collection c) {
+
+        private final Iterator<PyObject> iterator;
+
+        public ValuesIter(Collection<PyObject> c) {
             this.iterator = c.iterator();
         }
 
         public PyObject __iternext__() {
-            if (!iterator.hasNext())
+            if (!iterator.hasNext()) {
                 return null;
-            return (PyObject)toNullable(iterator.next());
+            }
+            return iterator.next();
         }
     }
 
     private class KeysIter extends PyIterator {
+
         private final Iterator iterator;
+
         public KeysIter(Set s) {
             this.iterator = s.iterator();
         }
-        
+
         public PyObject __iternext__() {
-            if (!iterator.hasNext())
+            if (!iterator.hasNext()) {
                 return null;
+            }
             Object objKey = iterator.next();
             PyObject key = null;
-            if (objKey instanceof String)
-               key = new PyString((String)objKey);
-            else
-               key = (PyObject)objKey;
+            if (objKey instanceof String) {
+                key = PyString.fromInterned((String)objKey);
+            } else {
+                key = (PyObject)objKey;
+            }
             return key;
         }
     }
 
     private class ItemsIter extends PyIterator {
-        private final Iterator iterator;
-        public ItemsIter(Set s) {
+
+        private final Iterator<Entry<Object, PyObject>> iterator;
+
+        public ItemsIter(Set<Entry<Object, PyObject>> s) {
             this.iterator = s.iterator();
         }
-        
+
         public PyObject __iternext__() {
-            if (!iterator.hasNext())
+            if (!iterator.hasNext()) {
                 return null;
-            Entry entry =  (Entry)iterator.next();
-            Object objKey = entry.getKey();
-            PyObject key = null;
-            PyObject value = (PyObject)toNullable(entry.getValue());
-            if (objKey instanceof String)
-               key = new PyString((String)objKey);
-            else
-               key = (PyObject)objKey;
-            return new PyTuple(key, value);
+            }
+            return itemTuple(iterator.next());
         }
     }
 }
-
-
-
