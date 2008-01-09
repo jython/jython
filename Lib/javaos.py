@@ -276,11 +276,9 @@ def stat(path):
     the standard fields: size, modification time and change time.
     """
     f = File(sys.getPath(path))
-    size = f.length()
-    # Sadly, if the returned length is zero, we don't really know if the file
-    # is zero sized or does not exist.
-    if size == 0 and not f.exists():
+    if not f.exists():
         raise OSError(0, 'No such file or directory', path)
+    size = f.length()
     mtime = f.lastModified() / 1000.0
     mode = 0
     if f.isDirectory():
