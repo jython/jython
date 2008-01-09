@@ -67,8 +67,9 @@ def makepath(*paths):
 
 L = sys.modules.values()
 for m in L:
-    if hasattr(m, "__file__"):
-        m.__file__ = makepath(m.__file__)
+    mfile = getattr(m, "__file__", None)
+    if mfile is not None:
+        m.__file__ = makepath(mfile)
 del m, L
 
 # This ensures that the initial path provided by the interpreter contains
