@@ -6,7 +6,6 @@ module as os.path.
 """
 
 # Incompletely implemented:
-# islink -- How?
 # ismount -- How?
 # normcase -- How?
 
@@ -14,6 +13,7 @@ module as os.path.
 # sameopenfile -- Java doesn't have fstat nor file descriptors?
 # samestat -- How?
 
+import stat
 import sys
 from java.io import File
 import java.io.IOException
@@ -143,12 +143,12 @@ def commonprefix(m):
     return prefix
 
 def islink(path):
-    """Test whether a path is a symbolic link.
-
-    XXX This incorrectly always returns false under JDK.
-
-    """
-    return 0
+    """Test whether a path is a symbolic link"""
+    try:
+        st = os.lstat(path)
+    except (os.error, AttributeError):
+        return False
+    return stat.S_ISLNK(st.st_mode)
 
 def samefile(path, path2):
     """Test whether two pathnames reference the same actual file"""

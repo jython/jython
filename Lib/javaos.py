@@ -291,6 +291,34 @@ def stat(path):
         mode = mode | _stat.S_IWRITE
     return stat_result((mode, 0, 0, 0, 0, 0, size, mtime, mtime, 0))
 
+def lstat(path):
+    """lstat(path) -> stat result
+    
+    Like stat(path), but do not follow symbolic links.
+    """
+    f = File(sys.getPath(path))
+    abs_parent = f.getAbsoluteFile().getParentFile()
+    can_parent = abs_parent.getCanonicalFile()
+
+    if can_parent.getAbsolutePath() == abs_parent.getAbsolutePath():
+        # The parent directory's absolute path is canonical..
+        if f.getAbsolutePath() != f.getCanonicalPath():
+            # but the file's absolute and paths differ (a link)
+            return stat_result((_stat.S_IFLNK, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+
+    # The parent directory's path is not canonical (one of the parent
+    # directories is a symlink). Build a new path with the parent's
+    # canonical path and compare the files
+    f = File(_path.join(can_parent.getAbsolutePath(), f.getName()))
+    if f.getAbsolutePath() != f.getCanonicalPath():
+        return stat_result((_stat.S_IFLNK, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+
+    # Not a link, only now can we determine if it exists (because
+    # File.exists() returns False for dead links)
+    if not f.exists():
+        raise OSError(0, 'No such file or directory', path)
+    return stat(path)
+
 def utime(path, times):
     """utime(path, (atime, mtime))
     utime(path, None)
