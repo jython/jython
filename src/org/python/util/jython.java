@@ -28,7 +28,7 @@ public class jython
         //"-d       : debug output from parser (also PYTHONDEBUG=x)\n" +
         "-Dprop=v : Set the property `prop' to value `v'\n"+
         //"-E       : ignore environment variables (such as PYTHONPATH)\n" +
-        "-E codec : Use a different codec the reading from the console.\n"+
+        "-C codec : Use a different codec when reading from the console.\n"+
         "-h       : print this help message and exit (also --help)\n" +
         "-i       : inspect interactively after running script\n" + //, (also PYTHONINSPECT=x)\n" +
         "           and force prompts, even if stdin does not appear to be a terminal\n" +
@@ -346,8 +346,13 @@ class CommandLineOptions
             else if (arg.equals("-W")) {
                 warnoptions.addElement(args[++index]);
             }
-            else if (arg.equals("-E")) {
+            else if (arg.equals("-C")) {
                 encoding = args[++index];
+            }
+            else if (arg.equals("-E")) {
+                // XXX: accept -E (ignore environment variables) to be
+                // compatiable with CPython. do nothing for now (we
+                // could ignore the registry)
             }
             else if (arg.startsWith("-D")) {
                 String key = null;

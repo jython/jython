@@ -2,7 +2,10 @@ Jython NEWS
 
 Jython 2.5
   Incompatible Changes
-    - To implement the Java Map interface, PyDictionary.values now returns a Collection instead of a PyList
+    - To implement the Java Map interface, PyDictionary.values now returns a
+    Collection instead of a PyList
+    - The -E codec command line option (use a different codec when reading from
+    the console) has been changed to -C codec
   
   New Features
     - PyDictionary now implements Map so it may be passed to any Java function expecting a Map.
