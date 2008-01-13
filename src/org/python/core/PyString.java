@@ -123,7 +123,7 @@ public class PyString extends PyBaseString
         return new PyString(encode_UnicodeEscape(string, true));
     }
 
-    private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
+    private static char[] hexdigit = "0123456789abcdef".toCharArray();
 
     public static String encode_UnicodeEscape(String str,
                                               boolean use_quotes)
