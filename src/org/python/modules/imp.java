@@ -153,8 +153,7 @@ public class imp {
             path = Py.getSystemState().path;
         }
 
-        PyObject iter = path.__iter__();
-        for (PyObject p = null; (p = iter.__iternext__()) != null; ) {
+        for (PyObject p : path.asIterable()) {
             ModuleInfo mi = findFromSource(name, p.toString(), false);
             if(mi == null) {
                 continue;
@@ -239,7 +238,11 @@ public class imp {
      *
      */
     public static void release_lock() {
-        org.python.core.imp.importLock.unlock();
+        try{
+            org.python.core.imp.importLock.unlock();
+        }catch(IllegalMonitorStateException e){
+            throw Py.RuntimeError("not holding the import lock");
+        }
     }
 
     /**

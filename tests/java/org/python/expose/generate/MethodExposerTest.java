@@ -64,8 +64,8 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
     }
 
     public void testArgumentPassing() throws Exception {
-        PyBuiltinFunction bound = createBound("takesArgument", VOID, PYOBJ);
-        bound.__call__(Py.None);
+        PyBuiltinFunction bound = createBound("takesArgument", Type.DOUBLE_TYPE, PYOBJ);
+        assertEquals(1.0, Py.py2double(bound.__call__(Py.One)));
         try {
             bound.__call__();
             fail("Need to pass an argument to takesArgument");
@@ -124,11 +124,29 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
         } catch(NumberFormatException nfe) {}
     }
 
+    public void testPrimitiveDefaults() throws Exception {
+        MethodExposer exp = createExposer("manyPrimitives",
+                                          STRING,
+                                          CHAR,
+                                          SHORT,
+                                          Type.DOUBLE_TYPE,
+                                          BYTE);
+        exp.defaults = new String[] {"a", "1", "2", "3"};
+        PyBuiltinFunction bound = createBound(exp);
+        assertEquals("a12.03", bound.__call__().toString());
+        assertEquals("b12.03", bound.__call__(Py.newString('b')).toString());
+        exp.defaults = new String[] {"ab", "1", "2", "3"};
+        try {
+            createBound(exp);
+            fail("Char should only be one character");
+        } catch(InvalidExposingException iee) {}
+    }
+
     public void testFullArguments() throws Exception {
         MethodExposer exp = new MethodExposer(Type.getType(SimpleExposed.class),
                                               Opcodes.ACC_PUBLIC,
                                               "fullArgs",
-                                              Type.getMethodDescriptor(PYOBJ, new Type[] {APYOBJ,
+                                              Type.getMethodDescriptor(Type.LONG_TYPE, new Type[] {APYOBJ,
                                                                                           ASTRING}),
                                               "simpleexposed");
         PyBuiltinFunction bound = createBound(exp);
@@ -156,6 +174,12 @@ public class MethodExposerTest extends InterpTestCase implements Opcodes, PyType
                               "simpleexposed");
             fail("Shouldn't be able to create an exposer on a static method");
         } catch(InvalidExposingException ite) {}
+    }
+    
+    public void testPrimitiveReturns() throws Exception{
+        assertEquals(12, Py.py2int(createBound("shortReturn", SHORT).__call__()));
+        assertEquals(0, Py.py2int(createBound("byteReturn", BYTE).__call__()));
+        assertEquals("a", createBound("charReturn", CHAR).__call__().toString());
     }
 
     public void test__new__() throws Exception {

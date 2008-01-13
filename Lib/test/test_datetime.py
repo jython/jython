@@ -15,13 +15,11 @@ from datetime import time
 from datetime import date, datetime
 from test import test_support
 
-# Before Python 2.3, proto=2 was taken as a synonym for proto=1.
-# cPickle not updated in Jython so commenting out.
 pickle_choices = [(pickler, unpickler, proto)
-                  for pickler in pickle, #cPickle
-                  for unpickler in pickle, #cPickle
+                  for pickler in pickle, cPickle
+                  for unpickler in pickle, cPickle
                   for proto in range(3)]
-#assert len(pickle_choices) == 2*2*3
+assert len(pickle_choices) == 2*2*3
 
 # An arbitrary collection of objects of non-datetime types, for testing
 # mixed-type comparisons.
@@ -97,7 +95,6 @@ class TestTZInfo(unittest.TestCase):
             self.assertEqual(fo.tzname(dt), "Three")
             self.assertEqual(fo.dst(dt), timedelta(minutes=42))
 
-    #XXX: pickling not working for jython yet.
     def test_pickling_base(self):
         # There's no point to pickling tzinfo objects on their own (they
         # carry no data), but they need to be picklable anyway else
@@ -109,7 +106,6 @@ class TestTZInfo(unittest.TestCase):
                 derived = unpickler.loads(green)
                 self.failUnless(type(derived) is tzinfo)
 
-    #XXX: pickling not working for jython yet.
     def test_pickling_subclass(self):
         # Make sure we can pickle/unpickle an instance of a subclass.
         offset = timedelta(minutes=-300)
@@ -299,7 +295,6 @@ class TestTimeDelta(HarmlessMixedComparison):
         self.assertEqual(len(d), 1)
         self.assertEqual(d[t1], 2)
 
-    #XXX: pickling not working for jython yet.
     def test_pickling(self):
         args = 12, 34, 56
         orig = timedelta(*args)
@@ -853,7 +848,6 @@ class TestDate(HarmlessMixedComparison):
             self.assertEqual(t.tm_yday, 61+i)
             self.assertEqual(t.tm_isdst, -1)
 
-    #XXX: pickling not working for jython yet.
     def test_pickling(self):
         args = 6, 7, 23
         orig = self.theclass(*args)
@@ -1206,7 +1200,6 @@ class TestDateTime(TestDate):
         # datetime + datetime is senseless
         self.assertRaises(TypeError, lambda: a + a)
 
-    #XXX: pickling not working for jython yet.
     def test_pickling(self):
         args = 6, 7, 23, 20, 59, 1, 64**2
         orig = self.theclass(*args)
@@ -1215,7 +1208,6 @@ class TestDateTime(TestDate):
             derived = unpickler.loads(green)
             self.assertEqual(orig, derived)
 
-    #XXX: pickling not working for jython yet.
     def test_more_pickling(self):
         a = self.theclass(2003, 2, 7, 16, 48, 37, 444116)
         s = pickle.dumps(a)
@@ -1593,7 +1585,6 @@ class TestTime(HarmlessMixedComparison):
         self.assert_(isinstance(self.theclass.resolution, timedelta))
         self.assert_(self.theclass.max > self.theclass.min)
 
-    #XXX: pickling not working for jython yet.
     def test_pickling(self):
         args = 20, 59, 16, 64**2
         orig = self.theclass(*args)
@@ -1901,7 +1892,6 @@ class TestTimeTZ(TestTime, TZInfoBase):
         t2 = self.theclass(23, 48, 6, 100, tzinfo=FixedOffset(-1010, ""))
         self.assertEqual(hash(t1), hash(t2))
 
-    #XXX: pickling not working for jython yet.
     def test_pickling(self):
         # Try one without a tzinfo.
         args = 20, 59, 16, 64**2
@@ -2102,7 +2092,6 @@ class TestDateTimeTZ(TestDateTime, TZInfoBase):
         t2 = self.theclass(2, 2, 2, tzinfo=FixedOffset(0, ""))
         self.assertRaises(ValueError, lambda: t1 == t2)
 
-    #XXX: pickling not working for jython yet.
     def test_pickling(self):
         # Try one without a tzinfo.
         args = 6, 7, 23, 20, 59, 1, 64**2

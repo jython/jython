@@ -11,7 +11,7 @@ import org.python.expose.MethodType;
 /**
  * A builtin python int.
  */
-@ExposedType(name="int")
+@ExposedType(name = "int")
 public class PyInteger extends PyObject {
     
     public static final PyType TYPE = PyType.fromClass(PyInteger.class);
@@ -154,7 +154,7 @@ public class PyInteger extends PyObject {
         return int___cmp__(other);
     }
 
-    @ExposedMethod(type=MethodType.CMP)
+    @ExposedMethod(type = MethodType.CMP)
     final int int___cmp__(PyObject other) {
         if (!canCoerce(other))
              return -2;
@@ -185,7 +185,7 @@ public class PyInteger extends PyObject {
         return int___add__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___add__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -203,7 +203,7 @@ public class PyInteger extends PyObject {
         return int___radd__(left);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___radd__(PyObject left) {
         return __add__(left);
     }
@@ -220,7 +220,7 @@ public class PyInteger extends PyObject {
         return int___sub__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___sub__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -231,7 +231,7 @@ public class PyInteger extends PyObject {
         return int___rsub__(left);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rsub__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -242,7 +242,7 @@ public class PyInteger extends PyObject {
         return int___mul__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___mul__(PyObject right) {
         if (right instanceof PySequence)
             return ((PySequence) right).repeat(getValue());
@@ -266,7 +266,7 @@ public class PyInteger extends PyObject {
         return int___rmul__(left);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rmul__(PyObject left) {
         return __mul__(left);
     }
@@ -299,7 +299,7 @@ public class PyInteger extends PyObject {
         return int___div__(right);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___div__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -312,7 +312,7 @@ public class PyInteger extends PyObject {
         return int___rdiv__(left);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rdiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -325,7 +325,7 @@ public class PyInteger extends PyObject {
         return int___floordiv__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___floordiv__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -336,7 +336,7 @@ public class PyInteger extends PyObject {
         return int___rfloordiv__(left);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rfloordiv__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -347,7 +347,7 @@ public class PyInteger extends PyObject {
         return int___truediv__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___truediv__(PyObject right) {
         if (right instanceof PyInteger)
             return __float__().__truediv__(right);
@@ -361,7 +361,7 @@ public class PyInteger extends PyObject {
         return int___rtruediv__(left);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rtruediv__(PyObject left) {
         if (left instanceof PyInteger)
             return left.__float__().__truediv__(this);
@@ -379,7 +379,7 @@ public class PyInteger extends PyObject {
         return int___mod__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___mod__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -392,7 +392,7 @@ public class PyInteger extends PyObject {
         return int___rmod__(left);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rmod__(PyObject left) {
         if (!canCoerce(left))
             return null;
@@ -405,7 +405,7 @@ public class PyInteger extends PyObject {
         return int___divmod__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___divmod__(PyObject right) {
         if (!canCoerce(right))
             return null;
@@ -416,7 +416,7 @@ public class PyInteger extends PyObject {
         return new PyTuple(Py.newInteger(xdivy), Py.newInteger(modulo(v, rightv, xdivy)));
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rdivmod__(PyObject left){
         if (!canCoerce(left))
             return null;
@@ -431,7 +431,7 @@ public class PyInteger extends PyObject {
         return int___pow__(right,modulo);
     }
 
-    @ExposedMethod(type=MethodType.BINARY, defaults= {"null"})
+    @ExposedMethod(type = MethodType.BINARY, defaults = {"null"})
     final PyObject int___pow__(PyObject right, PyObject modulo) {
         if (!canCoerce(right))
             return null;
@@ -452,7 +452,7 @@ public class PyInteger extends PyObject {
         return _pow(coerce(left), getValue(), modulo, left, this);
     }
     
-    @ExposedMethod(type=MethodType.BINARY, defaults= {"null"})
+    @ExposedMethod(type = MethodType.BINARY, defaults = {"null"})
     final PyObject int___rpow__(PyObject left){
     	return __rpow__(left, null);
     }
@@ -525,7 +525,7 @@ public class PyInteger extends PyObject {
         return int___lshift__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___lshift__(PyObject right) {
 		int rightv;
 		if (right instanceof PyInteger)
@@ -542,7 +542,7 @@ public class PyInteger extends PyObject {
         return Py.newInteger(getValue() << rightv);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rlshift__(PyObject left) {
 		int leftv;
 		if (left instanceof PyInteger)
@@ -563,7 +563,7 @@ public class PyInteger extends PyObject {
         return int___rshift__(right);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
 	final PyObject int___rshift__(PyObject right) {
 		int rightv;
 		if (right instanceof PyInteger)
@@ -579,7 +579,7 @@ public class PyInteger extends PyObject {
 		return Py.newInteger(getValue() >> rightv);
 	}
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rrshift__(PyObject left) {
         int leftv;
         if (left instanceof PyInteger)
@@ -599,7 +599,7 @@ public class PyInteger extends PyObject {
         return int___and__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___and__(PyObject right) {
         int rightv;
         if (right instanceof PyInteger)
@@ -612,7 +612,7 @@ public class PyInteger extends PyObject {
         return Py.newInteger(getValue() & rightv);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rand__(PyObject left){
     	return int___and__(left);
     }
@@ -621,7 +621,7 @@ public class PyInteger extends PyObject {
         return int___xor__(right);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
 	final PyObject int___xor__(PyObject right) {
 		int rightv;
 		if (right instanceof PyInteger)
@@ -634,7 +634,7 @@ public class PyInteger extends PyObject {
 		return Py.newInteger(getValue() ^ rightv);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
 	final PyObject int___rxor__(PyObject left){
         int leftv;
         if (left instanceof PyInteger)
@@ -651,7 +651,7 @@ public class PyInteger extends PyObject {
         return int___or__(right);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
 	final PyObject int___or__(PyObject right) {
 		int rightv;
 		if (right instanceof PyInteger)
@@ -664,7 +664,7 @@ public class PyInteger extends PyObject {
 		return Py.newInteger(getValue() | rightv);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___ror__(PyObject left){
     	return int___or__(left);
     }

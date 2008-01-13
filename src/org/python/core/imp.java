@@ -347,8 +347,7 @@ public class imp {
             ppath.__setitem__(i, q);
         }
 
-        PyObject iter = metaPath.__iter__();
-        for (PyObject importer; (importer = iter.__iternext__()) != null;) {
+        for (PyObject importer : metaPath.asIterable()) {
             PyObject findModule = importer.__getattr__("find_module");
             loader = findModule.__call__(new PyObject[] {
                     new PyString(moduleName), path == null ? Py.None : path });
@@ -456,6 +455,12 @@ public class imp {
         }
 
         if (sourceFile.isFile() && caseok(sourceFile, sourceName, sourceName.length())) {
+            String filename;
+            if (pkg) {
+                filename = new File(new File(displayDirName, name), sourceName).getPath();
+            } else {
+                filename = new File(displayDirName, sourceName).getPath();
+            }
             if(compiledFile.isFile()
                     && caseok(compiledFile, compiledName, compiledName.length())) {
                 Py.writeDebug(IMPORT_LOG, "trying precompiled "
@@ -463,19 +468,15 @@ public class imp {
                 long pyTime = sourceFile.lastModified();
                 long classTime = compiledFile.lastModified();
                 if(classTime >= pyTime) {
-                    String filename = new File(displayDirName, sourceName).getPath();
+                    // XXX: filename should use compiledName here (not
+                    // sourceName), but this currently breaks source
+                    // code printed out in tracebacks
                     PyObject ret = createFromPyClass(modName, makeStream(compiledFile),
                                                      true, filename);
                     if(ret != null) {
                         return ret;
                     }
                 }
-            }
-            String filename;
-            if (pkg) {
-                filename = new File(new File(displayDirName, name), sourceName).getPath();
-            } else {
-                filename = new File(displayDirName, sourceName).getPath();
             }
             return createFromSource(modName, makeStream(sourceFile), filename,
                                     compiledFile.getPath());
@@ -856,8 +857,7 @@ public class imp {
      */
     private static void loadNames(PyObject names, PyObject module,
             PyObject locals, boolean filter) {
-        PyObject iter = names.__iter__();
-        for (PyObject name; (name = iter.__iternext__()) != null;) {
+        for (PyObject name : names.asIterable()) {
             String sname = ((PyString) name).internedString();
             if (filter && sname.startsWith("_")) {
                 continue;

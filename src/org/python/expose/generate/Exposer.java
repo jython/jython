@@ -1,5 +1,8 @@
 package org.python.expose.generate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
@@ -25,6 +28,22 @@ public abstract class Exposer implements Opcodes, PyTypes {
 
     /** The type that will be generated. */
     protected Type thisType;
+
+    /** Maps from a primitive type to its wrapper */
+    protected static final Map<Type, Type> PRIMITIVES = new HashMap<Type, Type>() {
+
+        {
+            put(BOOLEAN, Type.getType(Boolean.class));
+            put(BYTE, Type.getType(Byte.class));
+            put(CHAR, Type.getType(Character.class));
+            put(Type.DOUBLE_TYPE, Type.getType(Double.class));
+            put(Type.FLOAT_TYPE, Type.getType(Float.class));
+            put(INT, Type.getType(Integer.class));
+            put(Type.LONG_TYPE, Type.getType(Long.class));
+            put(SHORT, Type.getType(Short.class));
+            put(VOID, Type.getType(Void.class));
+        }
+    };
 
     /**
      * @param superClass -
@@ -193,6 +212,30 @@ public abstract class Exposer implements Opcodes, PyTypes {
     protected void get(String fieldName, Type ofType) {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, getInternalName(), fieldName, ofType.getDescriptor());
+    }
+
+    /**
+     * Turns an object of inputType on the top of the stack into an equivalent Py type. Handles
+     * primitives, void, and String. If void, the top item on the stack isn't touched.
+     */
+    protected void toPy(Type inputType) {
+        if(inputType.equals(VOID)) {
+            getStatic(PY, "None", PYOBJ);
+        } else if(inputType.equals(STRING)) {
+            callStatic(PY, "newString", PYSTR, STRING);
+        } else if(inputType.equals(BOOLEAN)) {
+            callStatic(PY, "newBoolean", PYBOOLEAN, BOOLEAN);
+        } else if(inputType.equals(INT) || inputType.equals(BYTE) || inputType.equals(SHORT)) {
+            callStatic(PY, "newInteger", PYINTEGER, INT);
+        } else if(inputType.equals(CHAR)) {
+            callStatic(PY, "makeCharacter", PYSTR, CHAR);
+        } else if(inputType.equals(Type.DOUBLE_TYPE)) {
+            callStatic(PY, "newFloat", PYFLOAT, Type.DOUBLE_TYPE);
+        } else if(inputType.equals(Type.FLOAT_TYPE)) {
+            callStatic(PY, "newFloat", PYFLOAT, Type.FLOAT_TYPE);
+        } else if(inputType.equals(Type.LONG_TYPE)) {
+            callStatic(PY, "newLong", PYLONG, Type.LONG_TYPE);
+        }
     }
 
     /** Gets a static field from onType of the given type. */

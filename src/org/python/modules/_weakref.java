@@ -279,7 +279,7 @@ public class _weakref implements ClassDictInit {
             PyObject pyother = (PyObject) ((AbstractReference) other).
                                                             gref.get();
             if (pythis == null || pyother == null)
-                return this == other ? Py.One : Py.Zero;
+                return this == other ? Py.True : Py.False;
             return  pythis._eq(pyother);
         }
 

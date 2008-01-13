@@ -495,7 +495,7 @@ public abstract class AbstractArray implements Serializable{
         this.modCountIncr = 1;
         Object base = getArray();
         Object newBase = createArray(newCapacity);
-        System.arraycopy(base, 0, newBase, 0, this.capacity);
+        System.arraycopy(base, 0, newBase, 0, capacity > newCapacity ? newCapacity : capacity);
         setArray(newBase);
     }
 

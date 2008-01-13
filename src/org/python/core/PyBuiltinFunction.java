@@ -3,7 +3,7 @@ package org.python.core;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedType;
 
-@ExposedType(name="builtin_function_or_method")
+@ExposedType(name = "builtin_function_or_method")
 public abstract class PyBuiltinFunction extends PyObject {
 
     public interface Info {
@@ -86,6 +86,11 @@ public abstract class PyBuiltinFunction extends PyObject {
         }
     }
 
+    protected PyBuiltinFunction(PyType type, Info info) {
+        super(type);
+        this.info = info;
+    }
+
     protected PyBuiltinFunction(Info info) {
         this.info = info;
     }
@@ -101,7 +106,7 @@ public abstract class PyBuiltinFunction extends PyObject {
      */
     abstract public PyBuiltinFunction bind(PyObject self);
 
-    @ExposedGet(name="__self__")
+    @ExposedGet(name = "__self__")
     public PyObject getSelf() {
         return Py.None;
     }
@@ -117,17 +122,17 @@ public abstract class PyBuiltinFunction extends PyObject {
         }
     }
 
-    @ExposedGet(name="__name__")
+    @ExposedGet(name = "__name__")
     public PyObject fastGetName() {
         return Py.newString(this.info.getName());
     }
 
-    @ExposedGet(name="__doc__")
+    @ExposedGet(name = "__doc__")
     public PyObject fastGetDoc() {
         return Py.None;
     }
 
-    @ExposedGet(name="__call__")
+    @ExposedGet(name = "__call__")
     public PyObject makeCall() {
         return this;
     }

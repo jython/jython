@@ -1,23 +1,22 @@
 package org.python.core;
 
-public class PyMethodDescr extends PyDescriptor implements
-        PyBuiltinFunction.Info {
+public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Info {
 
     protected int minargs, maxargs;
 
     protected PyBuiltinFunction meth;
 
-    public PyMethodDescr(Class c, PyBuiltinFunction func) {
-        this(func.info.getName(), c, func.info.getMinargs(), func.info.getMaxargs(), func);
+    public PyMethodDescr(PyType t, PyBuiltinFunction func) {
+        this(func.info.getName(), t, func.info.getMinargs(), func.info.getMaxargs(), func);
     }
 
-    public PyMethodDescr(String name,
-                         Class c,
-                         int minargs,
-                         int maxargs,
-                         PyBuiltinFunction func) {
+    public PyMethodDescr(String name, Class c, int minargs, int maxargs, PyBuiltinFunction func) {
+        this(name, PyType.fromClass(c), minargs, maxargs, func);
+    }
+
+    public PyMethodDescr(String name, PyType type, int minargs, int maxargs, PyBuiltinFunction func) {
         this.name = name;
-        this.dtype = PyType.fromClass(c);
+        this.dtype = type;
         this.minargs = minargs;
         this.maxargs = maxargs;
         this.meth = func;
@@ -37,31 +36,21 @@ public class PyMethodDescr extends PyDescriptor implements
     }
 
     public String toString() {
-        return "<method '" + name + "' of '" + dtype.fastGetName()
-                + "' objects>";
+        return "<method '" + name + "' of '" + dtype.fastGetName() + "' objects>";
     }
-    
-    public PyObject __call__(PyObject[] args){
-        return __call__(args, Py.NoKeywords);
-    }
-    
-    public PyObject __call__(PyObject[] args, String[] kwargs){
-        if(args.length == kwargs.length){
+
+    public PyObject __call__(PyObject[] args, String[] kwargs) {
+        if(args.length == kwargs.length) {
             throw Py.TypeError(name + " requires at least one argument");
         }
         checkCallerType(args[0]);
         PyObject[] actualArgs = new PyObject[args.length - 1];
         System.arraycopy(args, 1, actualArgs, 0, actualArgs.length);
         return meth.bind(args[0]).__call__(actualArgs, kwargs);
-        
     }
 
     public PyException unexpectedCall(int nargs, boolean keywords) {
-        return PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs,
-                                                            keywords,
-                                                            name,
-                                                            minargs,
-                                                            maxargs);
+        return PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, keywords, name, minargs, maxargs);
     }
 
     public PyObject __get__(PyObject obj, PyObject type) {

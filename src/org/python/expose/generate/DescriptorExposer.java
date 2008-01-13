@@ -1,12 +1,7 @@
 package org.python.expose.generate;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.objectweb.asm.Type;
 import org.python.core.PyDataDescr;
-import org.python.expose.ExposedGet;
 
 /**
  * Generates a class to expose a descriptor on Python type. One of addMethodGetter or addFieldGetter
@@ -22,21 +17,6 @@ public class DescriptorExposer extends Exposer {
 
     private String getterMethodName, getterFieldName, setterMethodName, setterFieldName,
             deleterMethodName;
-
-    private static final Set<Type> PRIMITIVES = Collections.unmodifiableSet(new HashSet<Type>() {
-
-        {
-            add(Type.BOOLEAN_TYPE);
-            add(Type.BYTE_TYPE);
-            add(Type.CHAR_TYPE);
-            add(Type.DOUBLE_TYPE);
-            add(Type.FLOAT_TYPE);
-            add(Type.INT_TYPE);
-            add(Type.LONG_TYPE);
-            add(Type.SHORT_TYPE);
-            add(Type.VOID_TYPE);
-        }
-    });
 
     /**
      * Creates an exposer that will work on type and have <code>descrName</code> as its name in
@@ -79,9 +59,6 @@ public class DescriptorExposer extends Exposer {
     }
 
     private void setOfType(Type type) {
-        if(PRIMITIVES.contains(type)) {
-            error("Can't make a descriptor on a primitive type");
-        }
         if(ofType == null) {
             ofType = type;
         } else if(!ofType.equals(type)) {
@@ -151,7 +128,11 @@ public class DescriptorExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitLdcInsn(onType);
         mv.visitLdcInsn(name);
-        mv.visitLdcInsn(ofType);
+        if(PRIMITIVES.containsKey(ofType)) {
+            mv.visitLdcInsn(PRIMITIVES.get(ofType));
+        } else {
+            mv.visitLdcInsn(ofType);
+        }
         superConstructor(CLASS, STRING, CLASS);
         endConstructor();
     }
@@ -161,6 +142,9 @@ public class DescriptorExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         call(onType, getterMethodName, ofType);
+        if(PRIMITIVES.containsKey(ofType)) {
+            toPy(ofType);
+        }
         endMethod(ARETURN);
     }
 
@@ -172,6 +156,9 @@ public class DescriptorExposer extends Exposer {
                           onType.getInternalName(),
                           getterFieldName,
                           ofType.getDescriptor());
+        if(PRIMITIVES.containsKey(ofType)) {
+            toPy(ofType);
+        }
         endMethod(ARETURN);
     }
 
@@ -180,7 +167,12 @@ public class DescriptorExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         mv.visitVarInsn(ALOAD, 2);
-        mv.visitTypeInsn(CHECKCAST, ofType.getInternalName());
+        if(PRIMITIVES.containsKey(ofType)) {
+            mv.visitTypeInsn(CHECKCAST, PRIMITIVES.get(ofType).getInternalName());
+            call(PRIMITIVES.get(ofType), ofType.getClassName() + "Value", ofType);
+        } else {
+            mv.visitTypeInsn(CHECKCAST, ofType.getInternalName());
+        }
         call(onType, setterMethodName, VOID, ofType);
         endMethod(RETURN);
     }
@@ -190,7 +182,12 @@ public class DescriptorExposer extends Exposer {
         mv.visitVarInsn(ALOAD, 1);
         mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
         mv.visitVarInsn(ALOAD, 2);
-        mv.visitTypeInsn(CHECKCAST, ofType.getInternalName());
+        if(PRIMITIVES.containsKey(ofType)) {
+            mv.visitTypeInsn(CHECKCAST, PRIMITIVES.get(ofType).getInternalName());
+            call(PRIMITIVES.get(ofType), ofType.getClassName() + "Value", ofType);
+        } else {
+            mv.visitTypeInsn(CHECKCAST, ofType.getInternalName());
+        }
         mv.visitFieldInsn(PUTFIELD,
                           onType.getInternalName(),
                           setterFieldName,

@@ -4,6 +4,7 @@ import org.python.core.Py;
 import org.python.core.PyInteger;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyString;
 import org.python.core.PyType;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -61,8 +62,8 @@ public class SimpleExposed extends PyObject {
     }
 
     @ExposedMethod
-    public void takesArgument(PyObject arg) {
-        assert arg == Py.None;
+    public double takesArgument(PyObject arg) {
+        return Py.py2double(arg);
     }
 
     @ExposedMethod(type = MethodType.BINARY)
@@ -96,9 +97,29 @@ public class SimpleExposed extends PyObject {
         return new PyInteger(arg);
     }
 
+    @ExposedMethod(defaults = {"a", "1", "2", "3"})
+    public String manyPrimitives(char c, short s, double d, byte b) {
+        return "" + c + s + d + b;
+    }
+
     @ExposedMethod
-    public PyObject fullArgs(PyObject[] args, String[] kws) {
-        return new PyInteger(args.length + kws.length);
+    public long fullArgs(PyObject[] args, String[] kws) {
+        return args.length + kws.length;
+    }
+
+    @ExposedMethod
+    public short shortReturn() {
+        return 12;
+    }
+
+    @ExposedMethod
+    public byte byteReturn() {
+        return 0;
+    }
+
+    @ExposedMethod
+    public char charReturn() {
+        return 'a';
     }
 
     @ExposedGet(name = "tostring")

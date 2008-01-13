@@ -8,7 +8,9 @@ import org.python.core.PyBuiltinMethod;
 import org.python.core.PyBuiltinMethodNarrow;
 import org.python.core.PyDataDescr;
 import org.python.core.PyException;
+import org.python.core.PyFloat;
 import org.python.core.PyInteger;
+import org.python.core.PyLong;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
@@ -42,6 +44,10 @@ public interface PyTypes {
     public static final Type PYBOOLEAN = Type.getType(PyBoolean.class);
 
     public static final Type PYINTEGER = Type.getType(PyInteger.class);
+
+    public static final Type PYLONG = Type.getType(PyLong.class);
+
+    public static final Type PYFLOAT = Type.getType(PyFloat.class);
 
     public static final Type PYNEWWRAPPER = Type.getType(PyNewWrapper.class);
 
@@ -86,6 +92,12 @@ public interface PyTypes {
     public static final Type CLASS = Type.getType(Class.class);
 
     // Primitives
+    public static final Type BYTE = Type.BYTE_TYPE;
+
+    public static final Type SHORT = Type.SHORT_TYPE;
+
+    public static final Type CHAR = Type.CHAR_TYPE;
+
     public static final Type INT = Type.INT_TYPE;
 
     public static final Type VOID = Type.VOID_TYPE;

@@ -157,7 +157,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${jndi.jar}" />
             <pathelement path="${jdbc.jar}" />
             <pathelement path="extlibs/asm-3.1.jar" />
-            <pathelement path="${java.class.path}" />
+            <pathelement path="extlibs/asm-util-3.1.jar" />
         </path>
 
         <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />

@@ -695,8 +695,7 @@ public class PyDictionary extends PyObject implements Map {
             value = Py.None;
         }
         PyObject d = type.__call__();
-        PyIterator iter = (PyIterator)keys.__iter__();
-        for (PyObject o = iter.__iternext__();o != null;o = iter.__iternext__()) {
+        for (PyObject o : keys.asIterable()) {
             d.__setitem__(o, value);
         }
         return d;
@@ -805,7 +804,22 @@ public class PyDictionary extends PyObject implements Map {
             return null;
         }
         PyDictionary other = (PyDictionary)ob_other;
-        return table.equals(other.table) ? Py.True : Py.False;
+        int an = table.size();
+        int bn = other.table.size();
+        if (an != bn)
+            return Py.False;
+
+        PyList akeys = keys();
+        for (int i=0; i<an; i++) {
+            PyObject akey = akeys.pyget(i);
+            PyObject bvalue = other.__finditem__(akey);
+            if (bvalue == null)
+                return Py.False;
+            PyObject avalue = __finditem__(akey);
+            if (!avalue._eq(bvalue).__nonzero__())
+                return Py.False;
+        }
+        return Py.True;
     }
 
     public PyObject __ne__(PyObject ob_other) {
@@ -815,7 +829,7 @@ public class PyDictionary extends PyObject implements Map {
     final PyObject dict___ne__(PyObject ob_other) {
         PyObject eq_result = __eq__(ob_other);
         if (eq_result == null) return null;
-        return  eq_result == Py.True?Py.False:Py.True;
+        return eq_result.__not__();
     }
     
     final PyObject dict___lt__(PyObject ob_other){
@@ -991,10 +1005,10 @@ public class PyDictionary extends PyObject implements Map {
         table.putAll(d.table);
     }
 
-    private void do_update(PyObject d,PyObject keys) {
-        PyObject iter = keys.__iter__();
-        for (PyObject key; (key = iter.__iternext__()) != null; )
+    private void do_update(PyObject d, PyObject keys) {
+        for (PyObject key : keys.asIterable()) {
             __setitem__(key, d.__getitem__(key));
+        }
     }
 
     /**

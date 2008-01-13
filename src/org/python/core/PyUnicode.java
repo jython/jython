@@ -9,7 +9,7 @@ import org.python.modules._codecs;
 /**
  * a builtin python unicode string.
  */
-@ExposedType(name="unicode", base=PyBaseString.class)
+@ExposedType(name = "unicode", base = PyBaseString.class)
 public class PyUnicode extends PyString {
 
     public static final PyType TYPE = PyType.fromClass(PyUnicode.class);
@@ -126,22 +126,22 @@ public class PyUnicode extends PyString {
         return new PyString("u" + encode_UnicodeEscape(string, true));
     }
 
-    @ExposedMethod(names="__repr__")
+    @ExposedMethod(names = "__repr__")
     public String unicode_toString() {
-        return str_toString();
+        return "u'" + encode_UnicodeEscape(string, false) + "'";
     }
     
-    @ExposedMethod(type=MethodType.CMP)
+    @ExposedMethod(type = MethodType.CMP)
     final int unicode___cmp__(PyObject other) {
         return str___cmp__(other);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject unicode___eq__(PyObject other) {
         return str___eq__(other);
     }
     
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject unicode___ne__(PyObject other) {
         return str___ne__(other);
     }
@@ -160,17 +160,17 @@ public class PyUnicode extends PyString {
         return str___contains__(o);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject unicode___mul__(PyObject o) {
         return str___mul__(o);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject unicode___rmul__(PyObject o) {
         return str___rmul__(o);
     }
 
-    @ExposedMethod(type=MethodType.BINARY)
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject unicode___add__(PyObject generic_other) {
         return str___add__(generic_other);
     }
@@ -195,23 +195,23 @@ public class PyUnicode extends PyString {
         return new PyUnicode(str_swapcase());
     }
 
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final PyObject unicode_strip(String sep) {
         return new PyUnicode(str_strip(sep));
     }
     
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final PyObject unicode_lstrip(String sep) {
         return new PyUnicode(str_lstrip(sep));
     }
 
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final PyObject unicode_rstrip(String sep) {
         return new PyUnicode(str_rstrip(sep));
     }
 
 
-    @ExposedMethod(defaults= {"null", "-1"})
+    @ExposedMethod(defaults = {"null", "-1"})
     final PyList unicode_split(String sep, int maxsplit) {
         return str_split(sep, maxsplit);
     }
@@ -225,27 +225,27 @@ public class PyUnicode extends PyString {
         return new PyUnicode(string.substring(begin, end));
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int unicode_index(String sub, int start, PyObject end) {
         return str_index(sub, start, end);
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int unicode_rindex(String sub, int start, PyObject end) {
         return str_rindex(sub, start, end);
     }
     
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int unicode_count(String sub, int start, PyObject end) {
         return str_count(sub, start, end);
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int unicode_find(String sub, int start, PyObject end) {
         return str_find(sub, start, end);
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final int unicode_rfind(String sub, int start, PyObject end) {
         return str_rfind(sub, start, end);
     }
@@ -270,7 +270,7 @@ public class PyUnicode extends PyString {
         return new PyUnicode(str_zfill(width));
     }
 
-    @ExposedMethod(defaults="8")
+    @ExposedMethod(defaults = "8")
     final PyObject unicode_expandtabs(int tabsize) {
         return new PyUnicode(str_expandtabs(tabsize));
     }
@@ -290,12 +290,12 @@ public class PyUnicode extends PyString {
         return str_join(seq);
     }
 
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final boolean unicode_startswith(String prefix, int start, PyObject end) {
         return str_startswith(prefix, start, end);
     }
     
-    @ExposedMethod(defaults= {"0", "null"})
+    @ExposedMethod(defaults = {"0", "null"})
     final boolean unicode_endswith(String suffix, int start, PyObject end) {
         return str_endswith(suffix, start, end);
     }
@@ -356,12 +356,12 @@ public class PyUnicode extends PyString {
         return true;
     }
 
-    @ExposedMethod(defaults= {"null", "null"})
+    @ExposedMethod(defaults = {"null", "null"})
     final String unicode_encode(String encoding, String errors) {
         return str_encode(encoding, errors);
     }
 
-    @ExposedMethod(defaults= {"null", "null"})
+    @ExposedMethod(defaults = {"null", "null"})
     final PyObject unicode_decode(String encoding, String errors) {
         return str_decode(encoding, errors);
     }

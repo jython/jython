@@ -212,10 +212,10 @@ public class operator implements ClassDictInit
     public static int countOf(PyObject seq, PyObject item) {
         int count = 0;
 
-        PyObject iter = seq.__iter__();
-        for (PyObject tmp = null; (tmp = iter.__iternext__()) != null; ) {
-            if (item._eq(tmp).__nonzero__())
+        for (PyObject tmp : seq.asIterable()) {
+            if (item._eq(tmp).__nonzero__()) {
                 count++;
+            }
         }
         return count;
     }
@@ -224,8 +224,9 @@ public class operator implements ClassDictInit
         int i = 0;
         PyObject iter = seq.__iter__();
         for (PyObject tmp = null; (tmp = iter.__iternext__()) != null; i++) {
-            if (item._eq(tmp).__nonzero__())
+            if (item._eq(tmp).__nonzero__()) {
                 return i;
+            }
         }
         throw Py.ValueError("sequence.index(x): x not in list");
     }

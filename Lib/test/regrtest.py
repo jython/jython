@@ -984,7 +984,6 @@ _skips = {
         test_nis
         test_normalization
         test_openpty
-        test_optparse
         test_ossaudiodev
         test_parser
         test_plistlib
@@ -1026,7 +1025,6 @@ _failures = {
     'java':
     '''
     test___all__
-    test_atexit
     test_class
     test_copy
     test_cpickle
@@ -1037,7 +1035,6 @@ _failures = {
     test_frozen
     test_hexoct
     test_inspect
-    test_imp
     test_marshal
     test_new
     test_pep263
@@ -1054,7 +1051,6 @@ _failures = {
     test_trace
     test_ucn
     test_unicode
-    test_urllib
     test_xpickle
     test_zipimport
     ''',

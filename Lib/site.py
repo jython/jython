@@ -67,8 +67,9 @@ def makepath(*paths):
 
 L = sys.modules.values()
 for m in L:
-    if hasattr(m, "__file__"):
-        m.__file__ = makepath(m.__file__)
+    mfile = getattr(m, "__file__", None)
+    if mfile is not None:
+        m.__file__ = makepath(mfile)
 del m, L
 
 # This ensures that the initial path provided by the interpreter contains
@@ -118,7 +119,9 @@ if sys.exec_prefix != sys.prefix:
     prefixes.append(sys.exec_prefix)
 for prefix in prefixes:
     if prefix:
-        if os.sep == '/':
+        if sys.platform[:4] == 'java':
+            sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
+        elif os.sep == '/':
             sitedirs = [makepath(prefix,
                                  "lib",
                                  "python" + sys.version[:3],

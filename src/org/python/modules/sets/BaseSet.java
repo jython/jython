@@ -61,49 +61,21 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
             this._set.addAll(((BaseSet)data)._set);
             return;
         }
-
-        PyObject value = null;
-        if (data.__findattr__("__iter__") != null) {
-            PyObject iter = data.__iter__();
-            while ((value = iter.__iternext__()) != null) {
-                try {
-                    this._set.add(value);
-                } catch (PyException e) {
-                    PyObject immutable = this.asImmutable(e, value);
-                    this._set.add(immutable);
-                }
-            }
-        } else {
-            int i = 0;
-            while(true) {
-                try {
-                    value = data.__finditem__(i++);
-                    if (value == null) {
-                        break;
-                    }
-                } catch (PyException e) {
-                    if(Py.matchException(e, Py.AttributeError)) {
-                        throw Py.TypeError("object not iterable");
-                    }
-                    throw e;
-                }
-                try {
-                    this._set.add(value);
-                } catch (PyException e) {
-                    PyObject immutable = this.asImmutable(e, value);
-                    this._set.add(immutable);
-                }
+        for (PyObject item : data.asIterable()) {
+            try {
+                this._set.add(item);
+            } catch (PyException e) {
+                this._set.add(asImmutable(e, item));
             }
         }
     }
 
     /**
-     * The union of <code>this</code> with <code>other</code>.
-     * <p/>
-     * <br/>
-     * (I.e. all elements that are in either set)
-     *
-     * @param other A <code>BaseSet</code> instance.
+     * The union of <code>this</code> with <code>other</code>. <p/> <br/> (I.e. all elements
+     * that are in either set)
+     * 
+     * @param other
+     *            A <code>BaseSet</code> instance.
      * @return The union of the two sets as a new set.
      */
     public PyObject __or__(PyObject other) {
@@ -277,7 +249,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
             BaseSet bs = this._binary_sanity_check(other);
             return Py.newBoolean(this._set.equals(bs._set));
         }
-        return Py.Zero;
+        return Py.False;
     }
 
     public PyObject __ne__(PyObject other) {
@@ -289,7 +261,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
             BaseSet bs = this._binary_sanity_check(other);
             return Py.newBoolean(!this._set.equals(bs._set));
         }
-        return Py.One;
+        return Py.True;
     }
 
     public PyObject __le__(PyObject other) {
@@ -407,27 +379,27 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     public PyObject baseset_issubset(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         if (this.__len__() > bs.__len__()) {
-            return Py.Zero;
+            return Py.False;
         }
         for (Iterator iterator = this._set.iterator(); iterator.hasNext();) {
             if (!bs._set.contains(iterator.next())) {
-                return Py.Zero;
+                return Py.False;
             }
         }
-        return Py.One;
+        return Py.True;
     }
 
     public PyObject baseset_issuperset(PyObject other) {
         BaseSet bs = this._binary_sanity_check(other);
         if (this.__len__() < bs.__len__()) {
-            return Py.Zero;
+            return Py.False;
         }
         for (Iterator iterator = bs._set.iterator(); iterator.hasNext();) {
             if (!this._set.contains(iterator.next())) {
-                return Py.Zero;
+                return Py.False;
             }
         }
-        return Py.One;
+        return Py.True;
     }
 
     final String baseset_toString() {

@@ -240,6 +240,11 @@ public final class Py
     public static PyException StopIteration(String message) {
         return new PyException(Py.StopIteration, message);
     }
+    
+    public static PyObject GeneratorExit;
+    public static PyException GeneratorExit(String message) {
+        return new PyException(Py.GeneratorExit, message);
+    }
 
     public static PyObject ImportError;
     public static PyException ImportError(String message) {
@@ -538,6 +543,10 @@ public final class Py
         return new PyLong(i);
     }
 
+    public static PyLong newLong(long l) {
+        return new PyLong(l);
+    }
+
     public static PyComplex newImaginary(double v) {
         return new PyComplex(0, v);
     }
@@ -651,6 +660,7 @@ public final class Py
         Exception           = initExc("Exception", exc, dict);
         SystemExit          = initExc("SystemExit", exc, dict);
         StopIteration       = initExc("StopIteration", exc, dict);
+        GeneratorExit       = initExc("GeneratorExit", exc, dict);
         StandardError       = initExc("StandardError", exc, dict);
         KeyboardInterrupt   = initExc("KeyboardInterrupt", exc, dict);
         ImportError         = initExc("ImportError", exc, dict);
@@ -1434,29 +1444,30 @@ public final class Py
         stdout.println();
     }
 
-    /* A collection of convenience functions for converting PyObjects
-       to Java primitives */
-
+    /*
+     * A collection of convenience functions for converting PyObjects to Java primitives
+     */
     public static boolean py2boolean(PyObject o) {
         return o.__nonzero__();
     }
 
     public static byte py2byte(PyObject o) {
-        if (o instanceof PyInteger) return (byte)((PyInteger)o).getValue();
-
+        if(o instanceof PyInteger) {
+            return (byte)((PyInteger)o).getValue();
+        }
         Object i = o.__tojava__(Byte.TYPE);
-        if (i == null || i == Py.NoConversion)
+        if(i == null || i == Py.NoConversion)
             throw Py.TypeError("integer required");
-        return ((Byte) i).byteValue();
+        return ((Byte)i).byteValue();
     }
-    public static short py2short(PyObject o) {
-        if (o instanceof PyInteger)
-            return (short)((PyInteger)o).getValue();
 
+    public static short py2short(PyObject o) {
+        if(o instanceof PyInteger)
+            return (short)((PyInteger)o).getValue();
         Object i = o.__tojava__(Short.TYPE);
-        if (i == null || i == Py.NoConversion)
+        if(i == null || i == Py.NoConversion)
             throw Py.TypeError("integer required");
-        return ((Short) i).shortValue();
+        return ((Short)i).shortValue();
     }
 
     public static int py2int(PyObject o) {
@@ -1464,10 +1475,10 @@ public final class Py
     }
 
     public static int py2int(PyObject o, String msg) {
-        if (o instanceof PyInteger)
+        if(o instanceof PyInteger)
             return ((PyInteger)o).getValue();
         Object obj = o.__tojava__(Integer.TYPE);
-        if (obj == Py.NoConversion)
+        if(obj == Py.NoConversion)
             throw Py.TypeError(msg);
         return ((Integer)obj).intValue();
     }
@@ -1475,34 +1486,32 @@ public final class Py
     public static long py2long(PyObject o) {
         if(o instanceof PyInteger)
             return ((PyInteger)o).getValue();
-
         Object i = o.__tojava__(Long.TYPE);
-        if (i == null || i == Py.NoConversion)
+        if(i == null || i == Py.NoConversion)
             throw Py.TypeError("integer required");
-        return ((Long) i).longValue();
+        return ((Long)i).longValue();
     }
 
     public static float py2float(PyObject o) {
-        if (o instanceof PyFloat)
+        if(o instanceof PyFloat)
             return (float)((PyFloat)o).getValue();
-        if (o instanceof PyInteger)
+        if(o instanceof PyInteger)
             return ((PyInteger)o).getValue();
-
         Object i = o.__tojava__(Float.TYPE);
-        if (i == null || i == Py.NoConversion)
+        if(i == null || i == Py.NoConversion)
             throw Py.TypeError("float required");
-        return ((Float) i).floatValue();
+        return ((Float)i).floatValue();
     }
-    public static double py2double(PyObject o) {
-        if (o instanceof PyFloat)
-            return ((PyFloat)o).getValue();
-        if (o instanceof PyInteger)
-            return ((PyInteger)o).getValue();
 
+    public static double py2double(PyObject o) {
+        if(o instanceof PyFloat)
+            return ((PyFloat)o).getValue();
+        if(o instanceof PyInteger)
+            return ((PyInteger)o).getValue();
         Object i = o.__tojava__(Double.TYPE);
-        if (i == null || i == Py.NoConversion)
+        if(i == null || i == Py.NoConversion)
             throw Py.TypeError("float required");
-        return ((Double) i).doubleValue();
+        return ((Double)i).doubleValue();
     }
 
     public static char py2char(PyObject o) {
@@ -1510,24 +1519,23 @@ public final class Py
     }
 
     public static char py2char(PyObject o, String msg) {
-        if (o instanceof PyString) {
+        if(o instanceof PyString) {
             PyString s = (PyString)o;
-            if (s.__len__() != 1)
+            if(s.__len__() != 1)
                 throw Py.TypeError(msg);
             return s.toString().charAt(0);
         }
-        if (o instanceof PyInteger) {
+        if(o instanceof PyInteger) {
             return (char)((PyInteger)o).getValue();
         }
-
         Object i = o.__tojava__(Character.TYPE);
-        if (i == null || i == Py.NoConversion)
+        if(i == null || i == Py.NoConversion)
             throw Py.TypeError(msg);
-        return ((Character) i).charValue();
+        return ((Character)i).charValue();
     }
 
     public static void py2void(PyObject o) {
-        if (o != Py.None) {
+        if(o != Py.None) {
             throw Py.TypeError("None required for void return");
         }
     }
@@ -1539,7 +1547,7 @@ public final class Py
         return makeCharacter(o.charValue());
     }
 
-    static final PyString makeCharacter(char c) {
+    public static final PyString makeCharacter(char c) {
         return makeCharacter(c, false);
     }
     static final PyString makeCharacter(char c, boolean explicitUnicode) {
@@ -2003,49 +2011,27 @@ public final class Py
     }
 
     static PyObject[] make_array(PyObject o) {
-        if (o instanceof PyTuple)
+        if (o instanceof PyTuple) {
             return ((PyTuple)o).getArray();
-    
-        PyObject iter = o.__iter__();
-    
+        }
         // Guess result size and allocate space.
         int n = 10;
         try {
             n = o.__len__();
         } catch (PyException exc) { }
     
-        PyObject[] objs= new PyObject[n];
-    
-        int i;
-        for (i = 0; ; i++) {
-            PyObject item = iter.__iternext__();
-            if (item == null)
-                break;
-            if (i >= n) {
-                if (n < 500) {
-                    n += 10;
-                } else {
-                    n += 100;
-                }
-                PyObject[] newobjs = new PyObject[n];
-                System.arraycopy(objs, 0, newobjs, 0, objs.length);
-                objs = newobjs;
-            }
-            objs[i] = item;
+        PyObjectArray objs = new PyObjectArray(n);
+        for (PyObject item : o.asIterable()) {
+            objs.add(item);
         }
-    
         // Cut back if guess was too large.
-        if (i < n) {
-            PyObject[] newobjs = new PyObject[i];
-            System.arraycopy(objs, 0, newobjs, 0, i);
-            objs = newobjs;
-        }
-        return objs;
+        objs.trimToSize();
+        return (PyObject[])objs.getArray();
     }    
     
 }
 
-/** @deprecated **/
+/** @deprecated */
 class FixedFileWrapper extends StdoutWrapper {
     private PyObject file;
     public FixedFileWrapper(PyObject file) {

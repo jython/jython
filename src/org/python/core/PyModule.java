@@ -12,9 +12,9 @@ import org.python.expose.ExposedType;
  * The Python Module object.
  *
  */
-@ExposedType(name="module")
+@ExposedType(name = "module")
 public class PyModule extends PyObject {
-    private final PyObject module_doc = new PyString(
+    private final PyObject moduleDoc = new PyString(
         "module(name[, doc])\n" +
         "\n" +
         "Create a module object.\n" +
@@ -68,7 +68,7 @@ public class PyModule extends PyObject {
         return __dict__;
     }
 
-    @ExposedGet(name="__dict__")
+    @ExposedGet(name = "__dict__")
     public PyObject getDict() {
         if (__dict__ == null) {
             return Py.None;
@@ -76,17 +76,17 @@ public class PyModule extends PyObject {
         return __dict__;
     }
 
-    @ExposedSet(name="__dict__")
+    @ExposedSet(name = "__dict__")
     public void setDict(PyObject newDict) {
         throw Py.TypeError("readonly attribute");
     }
 
-    @ExposedDelete(name="__dict__")
+    @ExposedDelete(name = "__dict__")
     public void delDict() {
         throw Py.TypeError("readonly attribute");
     }
 
-    @ExposedGet(name="__doc__")
+    @ExposedGet(name = "__doc__")
     public PyObject getDoc() {
         PyObject dict = fastGetDict();
         if (dict != null) {
@@ -95,7 +95,7 @@ public class PyModule extends PyObject {
                 return doc;
             }
         }
-        return module_doc;
+        return moduleDoc;
     }
 
     protected PyObject impAttr(String name) {
@@ -106,17 +106,14 @@ public class PyModule extends PyObject {
         }
 
         PyObject attr = null;
-        String fullName = (pyName.__str__().toString() + '.'
-                           + name).intern();
+        String fullName = (pyName.__str__().toString() + '.' + name).intern();
         if (path == Py.None) {
             // XXX: disabled
             //attr = imp.loadFromClassLoader(fullName,
             //                               Py.getSystemState().getClassLoader());
-        }
-        else if (path instanceof PyList) {
+        } else if (path instanceof PyList) {
             attr = imp.find_module(name, fullName, (PyList)path);
-        }
-        else {
+        } else {
             throw Py.TypeError("__path__ must be list or None");
         }
 
@@ -165,7 +162,7 @@ public class PyModule extends PyObject {
             return null;
         }
 
-        return impHook(pyName.__str__().toString( ) + '.' + name);
+        return impHook(pyName.__str__().toString() + '.' + name);
     }
 
     public void __setattr__(String name, PyObject value) {
@@ -193,7 +190,7 @@ public class PyModule extends PyObject {
         return module_toString();
     }
 
-    @ExposedMethod(names={"__repr__"})
+    @ExposedMethod(names = {"__repr__"})
     final String module_toString()  {
         PyObject name = null;
         PyObject filename = null;
@@ -232,7 +229,7 @@ public class PyModule extends PyObject {
         }
         try {
             return __builtin__.__import__(name, null, null, fromlist);
-        } catch(PyException pe) {
+        } catch (PyException pe) {
             if (Py.matchException(pe, Py.ImportError)) {
                 return null;
             }

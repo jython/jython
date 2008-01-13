@@ -36,9 +36,10 @@ import org.python.expose.ExposedType;
  *
  * @author Philip Jenvey
  */
-@ExposedType(name="zipimporter")
+@ExposedType(name = "zipimporter")
 public class zipimporter extends PyObject {
-    private static final PyString __doc__ = new PyString(
+    @ExposedGet
+    public static final PyString __doc__ = new PyString(
         "zipimporter(archivepath) -> zipimporter object\n" +
         "\n" +
         "Create a new zipimporter instance. 'archivepath' must be a path to\n" +
@@ -62,13 +63,16 @@ public class zipimporter extends PyObject {
     static enum ModuleInfo {ERROR, NOT_FOUND, MODULE, PACKAGE};
 
     /** Pathname of the Zip archive */
-    private String archive;
+    @ExposedGet
+    public String archive;
 
     /** File prefix: "a/sub/directory/" */
-    private String prefix;
+    @ExposedGet
+    public String prefix;
 
     /** Dict with file info {path: tocEntry} */
-    private PyObject files;
+    @ExposedGet(name = "_files")
+    public PyObject files;
 
     /** The PySystemState this zipimporter is associated with */
     private PySystemState sys;
@@ -153,7 +157,7 @@ public class zipimporter extends PyObject {
      * @return a loader instance if this importer can load the module, None
      *         otherwise
      */
-    @ExposedMethod(defaults="null")
+    @ExposedMethod(defaults = "null")
     final PyObject zipimporter_find_module(String fullname, String path) {
         ModuleInfo moduleInfo = getModuleInfo(fullname);
         if (moduleInfo == ModuleInfo.ERROR || moduleInfo == ModuleInfo.NOT_FOUND) {
@@ -594,22 +598,10 @@ public class zipimporter extends PyObject {
         return zipimporter_toString();
     }
 
-    @ExposedMethod(names="__repr__")
+    @ExposedMethod(names = "__repr__")
     final String zipimporter_toString() {
         return "<zipimporter object \"" + archive + "\">";
     }
-
-    @ExposedGet(name="archive")
-    public String getArchive() { return archive; }
-
-    @ExposedGet(name="prefix")
-    public String getPrefix() { return prefix; }
-
-    @ExposedGet(name="_files")
-    public PyObject getFiles() { return files; }
-
-    @ExposedGet(name="__doc__")
-    public PyObject getDoc() { return __doc__; }
 
     /**
      * Container for PyModule code, whether or not it's a package and

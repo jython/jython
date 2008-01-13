@@ -2,6 +2,7 @@
 package org.python.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.zip.ZipEntry;
@@ -22,12 +23,12 @@ public class jython
 {
     private static String usage =
         "usage: jython [option] ... [-c cmd | -m mod | file | -] [arg] ...\n" +
-        "Options and arguments (and corresponding environment variables):\n" +
+        "Options and arguments:\n" + //(and corresponding environment variables):\n" +
         "-c cmd   : program passed in as string (terminates option list)\n" +
         //"-d       : debug output from parser (also PYTHONDEBUG=x)\n" +
         "-Dprop=v : Set the property `prop' to value `v'\n"+
         //"-E       : ignore environment variables (such as PYTHONPATH)\n" +
-        "-E codec : Use a different codec the reading from the console.\n"+
+        "-C codec : Use a different codec when reading from the console.\n"+
         "-h       : print this help message and exit (also --help)\n" +
         "-i       : inspect interactively after running script\n" + //, (also PYTHONINSPECT=x)\n" +
         "           and force prompts, even if stdin does not appear to be a terminal\n" +
@@ -85,7 +86,7 @@ public class jython
                 file.close();
             }
             Py.runCode(code, locals, locals);
-        } catch (java.io.IOException e) {
+        } catch (IOException e) {
             throw Py.IOError(e);
         }
     }
@@ -189,9 +190,15 @@ public class jython
 
         // was there a filename on the command line?
         if (opts.filename != null) {
-            String path = new java.io.File(opts.filename).getParent();
-            if (path == null)
+            String path;
+            try {
+                 path = new File(opts.filename).getCanonicalFile().getParent();
+            } catch (IOException ioe) {
+                 path = new File(opts.filename).getAbsoluteFile().getParent();
+            }
+            if (path == null) {
                 path = "";
+            }
             Py.getSystemState().path.insert(0, new PyString(path));
             if (opts.jar) {
                 runJar(opts.filename);
@@ -339,8 +346,13 @@ class CommandLineOptions
             else if (arg.equals("-W")) {
                 warnoptions.addElement(args[++index]);
             }
-            else if (arg.equals("-E")) {
+            else if (arg.equals("-C")) {
                 encoding = args[++index];
+            }
+            else if (arg.equals("-E")) {
+                // XXX: accept -E (ignore environment variables) to be
+                // compatiable with CPython. do nothing for now (we
+                // could ignore the registry)
             }
             else if (arg.startsWith("-D")) {
                 String key = null;
