@@ -146,6 +146,13 @@ public class PyFrame extends PyObject
         return f_locals;
     }
 
+    //
+    // Track the current line number. Called by generated code.
+    //
+    // This is not to be confused with the CPython method 
+    // frame_setlineno() which causes the interpreter to jump to
+    // the given line.
+    //
     public void setline(int line) {
         f_lineno = line;
         if (tracefunc != null)

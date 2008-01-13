@@ -118,11 +118,11 @@ public class InteractiveInterpreter extends PythonInterpreter {
      **/
     public void interrupt(ThreadState ts) {
         TraceFunction breaker = new BreakTraceFunction();
-        TraceFunction oldTrace = ts.systemState.tracefunc;
-        ts.systemState.tracefunc = breaker;
+        TraceFunction oldTrace = ts.tracefunc;
+        ts.tracefunc = breaker;
         if (ts.frame != null)
             ts.frame.tracefunc = breaker;
-        ts.systemState.tracefunc = oldTrace;
+        ts.tracefunc = oldTrace;
         //ts.thread.join();
     }
 }

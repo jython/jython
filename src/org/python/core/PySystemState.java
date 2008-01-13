@@ -769,25 +769,22 @@ public class PySystemState extends PyObject
         packageManager.addJarDir(directoryPath, cache);
     }
 
-    public TraceFunction tracefunc = null;
-    public TraceFunction profilefunc = null;
 
     public void settrace(PyObject tracefunc) {
-        //InterpreterState interp = Py.getThreadState().interp;
+        ThreadState ts = Py.getThreadState();
         if (tracefunc == Py.None) {
-            this.tracefunc = null;
+            ts.tracefunc = null;
         } else {
-            this.tracefunc = new PythonTraceFunction(tracefunc);
+            ts.tracefunc = new PythonTraceFunction(tracefunc);
         }
     }
 
     public void setprofile(PyObject profilefunc) {
-        //InterpreterState interp = Py.getThreadState().interp;
-
+        ThreadState ts = Py.getThreadState();
         if (profilefunc == Py.None) {
-            this.profilefunc = null;
+            ts.profilefunc = null;
         } else {
-            this.profilefunc = new PythonTraceFunction(profilefunc);
+            ts.profilefunc = new PythonTraceFunction(profilefunc);
         }
     }
 
