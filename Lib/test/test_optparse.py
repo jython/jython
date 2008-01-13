@@ -8,6 +8,7 @@
 # $Id: test_optparse.py 35634 2004-04-01 07:38:49Z fdrake $
 #
 
+import __builtin__
 import sys
 import os
 import copy
@@ -165,8 +166,14 @@ class TestOptionChecks(BaseTest):
                                ["---"])
 
     def test_attr_invalid(self):
-        self.assertOptionError("invalid keyword arguments: foo, bar",
-                               ["-b"], {'foo': None, 'bar': None})
+        try:
+            make_option(*["-b"], **{'foo': None, 'bar': None})
+        except OptionError, oe:
+            msg = str(oe)
+            self.assertNotEqual(msg.find("invalid keyword arguments: "), -1)
+            self.assert_(msg.endswith('foo, bar') or msg.endswith('bar, foo'))
+        else:
+            self.fail('No OptionError raised.')
 
     def test_action_invalid(self):
         self.assertOptionError("invalid action: 'foo'",
@@ -395,9 +402,15 @@ class TestStandard(BaseTest):
         self.parser.add_option("--foz", action="store",
                                type="string", dest="foo")
         possibilities = ", ".join({"--foz": None, "--foo": None}.keys())
-        self.assertParseFail(["--f=bar"],
-                             "ambiguous option: --f (%s?)" % possibilities)
-
+        try:
+            self.parser.parse_args(["--f=bar"])
+        except SystemExit, se:
+            msg = str(se)
+            self.assertNotEqual(msg.find("ambiguous option: --f ("), -1)
+            self.assert_(msg.endswith('--foz, --foo?)') or \
+                             msg.endswith('--foo, --foz?)'))
+        else:
+            self.fail('No SystemExit raised.')
 
     def test_short_and_long_option_split(self):
         self.assertParseOK(["-a", "xyz", "--foo", "bar"],
@@ -461,14 +474,14 @@ class TestBool(BaseTest):
         (options, args) = self.assertParseOK(["-q"],
                                              {'verbose': 0},
                                              [])
-        if hasattr(__builtins__, 'False'):
+        if hasattr(__builtin__, 'False'):
             self.failUnless(options.verbose is False)
 
     def test_bool_true(self):
         (options, args) = self.assertParseOK(["-v"],
                                              {'verbose': 1},
                                              [])
-        if hasattr(__builtins__, 'True'):
+        if hasattr(__builtin__, 'True'):
             self.failUnless(options.verbose is True)
 
     def test_bool_flicker_on_and_off(self):

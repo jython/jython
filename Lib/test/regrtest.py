@@ -983,7 +983,6 @@ _skips = {
         test_nis
         test_normalization
         test_openpty
-        test_optparse
         test_ossaudiodev
         test_parser
         test_plistlib

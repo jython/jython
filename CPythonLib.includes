@@ -76,6 +76,7 @@ netrc.py
 nntplib.py
 ntpath.py
 nturl2path.py
+optparse.py
 pdb.py
 pickle.py
 pickletools.py
