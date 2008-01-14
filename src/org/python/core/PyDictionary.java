@@ -922,6 +922,10 @@ public class PyDictionary extends PyObject implements Map {
         return table.containsKey(key);
     }
 
+    public boolean __contains__(PyObject o) {
+        return dict___contains__(o);
+    }
+
     final boolean dict___contains__(PyObject o) {
         return dict_has_key(o);
     }
