@@ -235,7 +235,13 @@ class dispatcher:
     def add_channel(self, map=None):
         #self.log_info('adding channel %s' % self)
         if map is None:
-            map = socket_map
+            if hasattr(self, '_map'):
+                map = self._map
+                del self._map
+            else:
+                map = socket_map
+        if not hasattr(self, '_fileno'):
+            self._fileno = self.socket.fileno()
         map[self._fileno] = self
 
     def del_channel(self, map=None):
@@ -250,14 +256,14 @@ class dispatcher:
         self.family_and_type = family, type
         self.socket = socket.socket(family, type)
         self.socket.setblocking(0)
-        self._fileno = self.socket.fileno()
-        self.add_channel()
-
+        
     def set_socket(self, sock, map=None):
         self.socket = sock
 ##        self.__dict__['socket'] = sock
-        self._fileno = sock.fileno()
-        self.add_channel(map)
+        if sock.fileno():
+            self.add_channel(map)
+        else:
+            self._map = map
 
     def set_reuse_addr(self):
         # try to re-use a server port if possible
@@ -296,7 +302,9 @@ class dispatcher:
         self.accepting = 1
         if os.name == 'nt' and num > 5:
             num = 1
-        return self.socket.listen(num)
+        ret = self.socket.listen(num)
+        self.add_channel()
+        return ret
 
     def bind(self, addr):
         self.addr = addr
@@ -309,6 +317,7 @@ class dispatcher:
         if err in (EINPROGRESS, EALREADY, EWOULDBLOCK):
             return
         if err in (0, EISCONN):
+            self.add_channel()
             self.addr = address
             self.connected = 1
             self.handle_connect()
@@ -319,6 +328,7 @@ class dispatcher:
         # XXX can return either an address pair or None
         try:
             conn, addr = self.socket.accept()
+            self.add_channel()
             return conn, addr
         except socket.error, why:
             if why[0] == EWOULDBLOCK:
