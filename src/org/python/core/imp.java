@@ -583,7 +583,7 @@ public class imp {
             StringBuffer parentNameBuffer) {
         PyObject ret = import_next(null, parentNameBuffer, name, null, null);
         if (ret == null || ret == Py.None) {
-            throw Py.ImportError("no module named " + name);
+            throw Py.ImportError("No module named " + name);
         }
         return ret;
     }
@@ -597,7 +597,7 @@ public class imp {
             }
         }
         if (ret == null || ret == Py.None) {
-            throw Py.ImportError("no module named " + name);
+            throw Py.ImportError("No module named " + name);
         }
         return ret;
     }
@@ -621,7 +621,7 @@ public class imp {
             }
             mod = import_next(mod, parentNameBuffer, name, fullName, fromlist);
             if (mod == null || mod == Py.None) {
-            	throw Py.ImportError("no module named " + name);
+            	throw Py.ImportError("No module named " + name);
             }
             last_dot = dot + 1;
         } while (dot != -1);
