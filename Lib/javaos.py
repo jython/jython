@@ -300,9 +300,12 @@ def access(path, mode):
     specified access to the path.  The mode argument can be F_OK to test
     existence, or the inclusive-OR of R_OK, W_OK, and X_OK.
     """
+    if not isinstance(mode, (int, long)):
+        raise TypeError('an integer is required')
+
     f = File(sys.getPath(path))
-    if mode & F_OK and not f.exists():
-        return False
+    if not f.exists():
+      return False
     if mode & R_OK and not f.canRead():
         return False
     if mode & W_OK and not f.canWrite():
