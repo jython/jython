@@ -1,7 +1,7 @@
 /**
  *   PyDeque.java - This class implements the functionalities of Deque data structure.
- *   Deques are a generalization of stacks and queues (the name is pronounced “deck” 
- *   and is short for “double-ended queue”). Deques support thread-safe, memory 
+ *   Deques are a generalization of stacks and queues (the name is pronounced 'deck' 
+ *   and is short for 'double-ended queue'). Deques support thread-safe, memory 
  *   efficient appends and pops from either side of the deque with approximately the 
  *   same O(1) performance in either direction.
  *   
