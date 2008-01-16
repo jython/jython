@@ -419,7 +419,6 @@ public class imp {
     static PyObject loadFromSource(PySystemState sys, String name, String modName, String entry) {
         // System.err.println("load-from-source: "+name+" "+modName+" "+entry);
 
-        int nlen = name.length();
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
         String directoryName = sys.getPath(entry);
@@ -433,8 +432,8 @@ public class imp {
         File sourceFile = new File(dir, sourceName);
         File compiledFile = new File(dir, compiledName);
 
-        boolean pkg = (dir.isDirectory() && caseok(dir, name, nlen) && (sourceFile
-                .isFile() || compiledFile.isFile()));
+        boolean pkg = dir.isDirectory() && caseok(dir, name) && (sourceFile.isFile()
+                                                                 || compiledFile.isFile());
         if (!pkg) {
             Py.writeDebug(IMPORT_LOG, "trying source " + dir.getPath());
             sourceName = name + ".py";
@@ -449,15 +448,14 @@ public class imp {
             m.__dict__.__setitem__("__file__", filename);
         }
 
-        if (sourceFile.isFile() && caseok(sourceFile, sourceName, sourceName.length())) {
+        if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
             String filename;
             if (pkg) {
                 filename = new File(new File(displayDirName, name), sourceName).getPath();
             } else {
                 filename = new File(displayDirName, sourceName).getPath();
             }
-            if(compiledFile.isFile()
-                    && caseok(compiledFile, compiledName, compiledName.length())) {
+            if(compiledFile.isFile() && caseok(compiledFile, compiledName)) {
                 Py.writeDebug(IMPORT_LOG, "trying precompiled "
                         + compiledFile.getPath());
                 long pyTime = sourceFile.lastModified();
@@ -479,21 +477,20 @@ public class imp {
         // If no source, try loading precompiled
         Py.writeDebug(IMPORT_LOG, "trying precompiled with no source "
                 + compiledFile.getPath());
-        if(compiledFile.isFile()
-                && caseok(compiledFile, compiledName, compiledName.length())) {
+        if(compiledFile.isFile() && caseok(compiledFile, compiledName)) {
             String filename = new File(displayDirName, compiledName).getPath();
             return createFromPyClass(modName, makeStream(compiledFile), true, filename);
         }
         return null;
     }
 
-    public static boolean caseok(File file, String filename, int namelen) {
+    public static boolean caseok(File file, String filename) {
         if (Options.caseok) {
             return true;
         }
         try {
             File canFile = new File(file.getCanonicalPath());
-            return filename.regionMatches(0, canFile.getName(), 0, namelen);
+            return filename.regionMatches(0, canFile.getName(), 0, filename.length());
         } catch (IOException exc) {
             return false;
         }
