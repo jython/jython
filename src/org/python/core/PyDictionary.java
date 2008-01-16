@@ -1246,12 +1246,12 @@ public class PyDictionary extends PyObject implements Map {
         return table.containsKey(Py.java2py(key));
     }
     
-    /** @see java.util.Map#isEmpty(Object key) */
+    /** @see java.util.Map#isEmpty() */
     public boolean isEmpty() {
         return table.isEmpty();
     }
     
-    /** @see java.util.Map#size(Object key) */
+    /** @see java.util.Map#size() */
     public int size() {
         return table.size();
     }
