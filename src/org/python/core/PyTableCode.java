@@ -152,17 +152,8 @@ public class PyTableCode extends PyCode
             }
         }
         // nested scopes: setup env with closure
-        int env_j = 0;
-        int ncells = frame.f_ncells;
-        int nfreevars = frame.f_nfreevars;
-        PyCell[] env = frame.f_env;
-        PyTuple freevars = (PyTuple)closure;
-        for (int i = 0; i < ncells; i++,env_j++) {
-            env[env_j] = new PyCell();
-        }
-        for (int i=0; i<nfreevars; i++,env_j++) {
-            env[env_j] = (PyCell)freevars.pyget(i);
-        }
+	// this should only be done once, so let the frame take care of it
+	frame.setupEnv((PyTuple)closure);
 
         ts.frame = frame;
 
