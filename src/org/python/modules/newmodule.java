@@ -31,7 +31,7 @@ public class newmodule {
         }
     }
 
-    public static PyMethod instancemethod(PyObject func, PyObject instance, PyClass cls) {
+    public static PyMethod instancemethod(PyObject func, PyObject instance, PyObject cls) {
         return new PyMethod(instance, func, cls);
     }
 
