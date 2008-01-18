@@ -15,7 +15,7 @@ public abstract class PyBuiltinMethod extends PyBuiltinFunction implements Expos
     }
     
     protected PyBuiltinMethod(String name) {
-        this(null, null, new DefaultInfo(name));
+        this(null, new DefaultInfo(name));
     }
     
     public PyObject getSelf(){
