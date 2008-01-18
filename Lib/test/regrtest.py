@@ -1033,7 +1033,6 @@ _failures = {
     test_eof
     test_frozen
     test_hexoct
-    test_inspect
     test_marshal
     test_new
     test_pep263

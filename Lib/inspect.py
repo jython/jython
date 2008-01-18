@@ -28,7 +28,7 @@ Here are some of the useful functions provided by this module:
 __author__ = 'Ka-Ping Yee <ping@lfw.org>'
 __date__ = '1 Jan 2001'
 
-import sys, os, types, string, re, dis, imp, tokenize, linecache
+import sys, os, types, string, re, imp, tokenize, linecache
 
 # ----------------------------------------------------------- type-checking
 def ismodule(object):
@@ -599,7 +599,11 @@ def getargs(co):
     if not iscode(co):
         raise TypeError('arg is not a code object')
 
-    code = co.co_code
+    if not sys.platform.startswith('java'):
+         # Jython doesn't have co_code
+        code = co.co_code
+        import dis
+
     nargs = co.co_argcount
     names = co.co_varnames
     args = list(names[:nargs])
