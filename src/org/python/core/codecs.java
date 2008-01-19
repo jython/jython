@@ -80,14 +80,18 @@ public class codecs {
 
     private static boolean import_encodings_called = false;
 
+    private static final Object IMPORT_LOCK = new Object();
+
     private static void import_encodings() {
-        if (!import_encodings_called) {
-            import_encodings_called = true;
-            try {
-                __builtin__.__import__("encodings");
-            } catch (PyException exc) {
-                if (exc.type != Py.ImportError) {
-                    throw exc;
+        synchronized (IMPORT_LOCK) {
+            if (!import_encodings_called) {
+                import_encodings_called = true;
+                try {
+                    __builtin__.__import__("encodings");
+                } catch (PyException exc) {
+                    if (exc.type != Py.ImportError) {
+                        throw exc;
+                    }
                 }
             }
         }
