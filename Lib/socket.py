@@ -666,12 +666,12 @@ class _tcpsocket(_nonblocking_api_mixin):
         try:
             if not self.sock_impl:
                 host, port = self.local_addr or ("", 0)
-                host = java.net.InetAddress.getByName(host).getHostAddress()
+                host = java.net.InetAddress.getByName(host).getHostName()
             else:
                 if self.server:
-                    host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
+                    host = self.sock_impl.jsocket.getInetAddress().getHostName()
                 else:
-                    host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
+                    host = self.sock_impl.jsocket.getLocalAddress().getHostName()
                 port = self.sock_impl.jsocket.getLocalPort()
             return (host, port)
         except java.lang.Exception, jlx:
@@ -681,7 +681,7 @@ class _tcpsocket(_nonblocking_api_mixin):
         try:
             assert self.sock_impl
             assert not self.server
-            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
+            host = self.sock_impl.jsocket.getInetAddress().getHostName()
             port = self.sock_impl.jsocket.getPort()
             return (host, port)
         except java.lang.Exception, jlx:
