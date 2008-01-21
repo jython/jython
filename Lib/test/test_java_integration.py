@@ -1,13 +1,14 @@
 import os
 import unittest
 import sys
+import re
 
 from test import test_support
-from java.awt import Component
+from java.awt import Dimension, Component, Rectangle
 from java.util import Vector
-from java.io import FileOutputStream, FileWriter
+from java.io import FileOutputStream, FileWriter, OutputStreamWriter, UnsupportedEncodingException
+from java.lang import Runnable, ThreadGroup, System, Runtime, Math
 
-# The following is the correspoding bytecode compiled with javac 1.5
 """
 public abstract class Abstract {
     public Abstract() {
@@ -17,6 +18,7 @@ public abstract class Abstract {
     public abstract void method();
 }
 """
+# The following is the correspoding bytecode for Abstract compiled with javac 1.5
 ABSTRACT_CLASS = """\
 eJw1TrsKwkAQnI1nEmMe/oKdSaHYiyCClWih2F+SQyOaQDz9LxsFCz/AjxL3Am6xw8zs7O7n+3oD
 GKPnQcD30ELgIHQQEexJURZ6SmgN4h1BzKtcEaJlUarV9ZyqeivTEyv2WelDlRO8TXWtM7UojBrM
@@ -130,6 +132,73 @@ class SysIntegrationTest(unittest.TestCase):
         self.assertEquals('hello', f.read())
         f.close()
         sys.stdout = out
+		
+class AutoSuperTest(unittest.TestCase):
+	
+    def test_auto_super(self):
+        class R(Rectangle):
+            def __init__(self):
+                self.size = Dimension(6, 7)
+        self.assert_("width=6,height=7" in  R().toString())
+
+    def test_no_default_constructor(self):
+        "Check autocreation when java superclass misses a default constructor."
+        class A(ThreadGroup):
+            def __init__(self):
+                print self.name
+        self.assertRaises(TypeError, A)
+        
+    def test_no_public_constructors(self):
+        try:
+           Math() 
+        except TypeError, e:
+            self.assert_("no public constructors for" in str(e))
+
+class PyObjectCmpTest(unittest.TestCase):
+
+    def test_vect_cmp(self):
+        "Check comparing a PyJavaClass with a Object."
+        class X(Runnable):
+            pass
+        v = Vector()
+        v.addElement(1)
+        v.indexOf(X())
+
+class IOTest(unittest.TestCase):
+
+    def test_io_errors(self):
+        "Check that IOException isn't mangled into an IOError"
+        try:
+           x = OutputStreamWriter(System.out, "garbage")
+        except UnsupportedEncodingException:
+           pass
+        else:
+           raise self.fail("Should have raised java.io.UnsupportedEncodingException")
+
+class VectorTest(unittest.TestCase):
+
+    def test_looping(self):
+        for i in Vector(): pass
+
+class ReservedNamesTest(unittest.TestCase):
+    "Access to java names which are al reserved words"
+
+    def test_system_in(self):
+        s = System.in
+        self.assert_("java.io.BufferedInputStream" in str(s))
+    
+    def test_runtime_exec(self):
+        e = Runtime.getRuntime().exec
+        self.assert_(re.search("method .*exec", str(e)) is not None)
+
+class ImportTest(unittest.TestCase):
+    
+    def test_bad_input_exception(self):
+        try:
+            __import__('')
+        except ValueError, e:
+            self.assert_("Empty module name" in str(e))
+        
 
 def test_main():
     test_support.run_unittest(AbstractOnSyspathTest,
@@ -137,7 +206,13 @@ def test_main():
             BeanTest, 
             MethodVisibilityTest, 
             ExtendJavaTest, 
-            SysIntegrationTest)
+            SysIntegrationTest,
+            AutoSuperTest,
+            PyObjectCmpTest,
+            IOTest,
+            VectorTest,
+            ReservedNamesTest,
+            ImportTest)
 
 if __name__ == "__main__":
     test_main()
