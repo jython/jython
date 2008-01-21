@@ -12,7 +12,7 @@ class SubclassInstanceTest(unittest.TestCase):
 			self.fail("expected TypeError for subclassing an int instance")
 
 def test_main():
-	test.test_support.run_unittest(JSubclassTest)
+	test.test_support.run_unittest(SubclassInstanceTest)
 
 if __name__ == "__main__":
 	test_main()
