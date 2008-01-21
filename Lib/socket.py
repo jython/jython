@@ -166,7 +166,7 @@ class _nio_impl:
         return self.jsocket.getReuseAddress()
 
     def getpeername(self):
-        return (self.jsocket.getInetAddress().getHostName(), self.jsocket.getPort() )
+        return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getPort() )
 
     def config(self, mode, timeout):
         self.mode = mode
@@ -218,7 +218,7 @@ class _client_socket_impl(_nio_impl):
     def __init__(self, socket=None):
         if socket:
             self.jchannel = socket.getChannel()
-            self.host = socket.getInetAddress().getHostName()
+            self.host = socket.getInetAddress().getHostAddress()
             self.port = socket.getPort()
         else:
             self.jchannel = java.nio.channels.SocketChannel.open()
@@ -333,7 +333,7 @@ class _datagram_socket_impl(_nio_impl):
         if return_source_address:
             host = None
             if packet.getAddress():
-                host = packet.getAddress().getHostName()
+                host = packet.getAddress().getHostAddress()
             port = packet.getPort()
             return return_data, (host, port)
         else:
@@ -350,7 +350,7 @@ class _datagram_socket_impl(_nio_impl):
             byte_array = byte_array[:bytes_read]
         return_data = byte_array.tostring()
         if return_source_address:
-            return return_data, (source_address.getHostName(), source_address.getPort())
+            return return_data, (source_address.getAddress().getHostAddress(), source_address.getPort())
         else:
             return return_data
 
@@ -666,12 +666,12 @@ class _tcpsocket(_nonblocking_api_mixin):
         try:
             if not self.sock_impl:
                 host, port = self.local_addr or ("", 0)
-                host = java.net.InetAddress.getByName(host).getHostName()
+                host = java.net.InetAddress.getByName(host).getHostAddress()
             else:
                 if self.server:
-                    host = self.sock_impl.jsocket.getInetAddress().getHostName()
+                    host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
                 else:
-                    host = self.sock_impl.jsocket.getLocalAddress().getHostName()
+                    host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
                 port = self.sock_impl.jsocket.getLocalPort()
             return (host, port)
         except java.lang.Exception, jlx:
@@ -681,7 +681,7 @@ class _tcpsocket(_nonblocking_api_mixin):
         try:
             assert self.sock_impl
             assert not self.server
-            host = self.sock_impl.jsocket.getInetAddress().getHostName()
+            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
             port = self.sock_impl.jsocket.getPort()
             return (host, port)
         except java.lang.Exception, jlx:
@@ -788,7 +788,7 @@ class _udpsocket(_nonblocking_api_mixin):
     def getsockname(self):
         try:
             assert self.sock_impl
-            host = self.sock_impl.jsocket.getLocalAddress().getHostName()
+            host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
             port = self.sock_impl.jsocket.getLocalPort()
             return (host, port)
         except java.lang.Exception, jlx:
@@ -797,7 +797,7 @@ class _udpsocket(_nonblocking_api_mixin):
     def getpeername(self):
         try:
             assert self.sock
-            host = self.sock_impl.jsocket.getInetAddress().getHostName()
+            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
             port = self.sock_impl.jsocket.getPort()
             return (host, port)
         except java.lang.Exception, jlx:
@@ -1157,7 +1157,7 @@ class ssl:
     def make_ssl_socket(self, plain_socket, auto_close=0):
         java_net_socket = plain_socket._get_jsocket()
         assert isinstance(java_net_socket, java.net.Socket)
-        host = java_net_socket.getInetAddress().getHostName()
+        host = java_net_socket.getInetAddress().getHostAddress()
         port = java_net_socket.getPort()
         factory = javax.net.ssl.SSLSocketFactory.getDefault();
         ssl_socket = factory.createSocket(java_net_socket, host, port, auto_close)
