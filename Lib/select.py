@@ -73,8 +73,7 @@ class poll:
             else:
                 jmask = OP_READ
         if mask & POLLOUT:
-            if channel.validOps() & OP_WRITE:
-                jmask |= OP_WRITE
+            jmask |= OP_WRITE
             if channel.validOps() & OP_CONNECT:
                 jmask |= OP_CONNECT
         selectionkey = channel.register(self.selector, jmask)

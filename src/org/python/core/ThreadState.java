@@ -28,9 +28,6 @@ public class ThreadState {
 
     public int recursion_depth = 0;
 
-    public TraceFunction tracefunc;
-    public TraceFunction profilefunc;
-    
     public PyInstance getInitializingProxy() {
         if (this.initializingProxies == null
                 || this.initializingProxies.empty()) {

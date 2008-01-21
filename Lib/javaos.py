@@ -63,18 +63,6 @@ SEEK_SET = 0
 SEEK_CUR = 1
 SEEK_END = 2
 
-# test for existence of file
-F_OK = 0
-# test for execute or search permission
-X_OK = 1<<0
-# test for write permission
-W_OK = 1<<1
-# test for read permission
-R_OK = 1<<2
-
-# successful termination
-EX_OK = 0
-
 class stat_result:
 
   _stat_members = (
@@ -279,41 +267,6 @@ def removedirs(name):
 
 __all__.extend(['makedirs', 'renames', 'removedirs'])
 
-def strerror(code):
-    """strerror(code) -> string
-    
-    Translate an error code to a message string.
-    """
-    if not isinstance(code, (int, long)):
-        raise TypeError('an integer is required')
-    try:
-        return errno.strerror(code)
-    except KeyError:
-        return 'Unknown error: %d' % code
-
-def access(path, mode):
-    """access(path, mode) -> True if granted, False otherwise
-        
-    Use the real uid/gid to test for access to a path.  Note that most
-    operations will use the effective uid/gid, therefore this routine can
-    be used in a suid/sgid environment to test if the invoking user has the
-    specified access to the path.  The mode argument can be F_OK to test
-    existence, or the inclusive-OR of R_OK, W_OK, and X_OK.
-    """
-    if not isinstance(mode, (int, long)):
-        raise TypeError('an integer is required')
-
-    f = File(sys.getPath(path))
-    if not f.exists():
-      return False
-    if mode & R_OK and not f.canRead():
-        return False
-    if mode & W_OK and not f.canWrite():
-        return False
-    if mode & X_OK:
-        return False
-    return True
-
 def stat(path):
     """stat(path) -> stat result
 
@@ -324,7 +277,7 @@ def stat(path):
     """
     f = File(sys.getPath(path))
     if not f.exists():
-        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+        raise OSError(0, 'No such file or directory', path)
     size = f.length()
     mtime = f.lastModified() / 1000.0
     mode = 0
@@ -363,7 +316,7 @@ def lstat(path):
     # Not a link, only now can we determine if it exists (because
     # File.exists() returns False for dead links)
     if not f.exists():
-        raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
+        raise OSError(0, 'No such file or directory', path)
     return stat(path)
 
 def utime(path, times):

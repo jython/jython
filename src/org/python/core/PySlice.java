@@ -1,6 +1,7 @@
 //Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import org.apache.tools.zip.AsiExtraField;
 import org.python.core.PyObject.ConversionException;
 
 /**

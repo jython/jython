@@ -7,47 +7,6 @@ from java.awt import Component
 from java.util import Vector
 from java.io import FileOutputStream, FileWriter
 
-# The following is the correspoding bytecode compiled with javac 1.5
-"""
-public abstract class Abstract {
-    public Abstract() {
-        method();
-    }
-
-    public abstract void method();
-}
-"""
-ABSTRACT_CLASS = """\
-eJw1TrsKwkAQnI1nEmMe/oKdSaHYiyCClWih2F+SQyOaQDz9LxsFCz/AjxL3Am6xw8zs7O7n+3oD
-GKPnQcD30ELgIHQQEexJURZ6SmgN4h1BzKtcEaJlUarV9ZyqeivTEyv2WelDlRO8TXWtM7UojBrM
-0ouuZaaHR3mTPtqwfXRgE9y/Q+gZb3SS5X60To8q06LPHwiYskAmxN1hFjMSYyd5gpIHrDsT3sU9
-5IgZF4wuhCBzpnG9Ru/+AF4RJn8=
-""".decode('base64').decode('zlib')
-
-class AbstractOnSyspathTest(unittest.TestCase):
-    '''Subclasses an abstract class that isn't on the startup classpath.
-    
-    Checks for http://jython.org/bugs/1861985
-    '''
-    def setUp(self):
-        out = open('Abstract.class', 'w')
-        out.write(ABSTRACT_CLASS)
-        out.close()
-        self.orig_syspath = sys.path[:]
-        sys.path.append('')
-
-    def tearDown(self):
-        os.unlink('Abstract.class')
-        sys.path = self.orig_syspath
-
-    def test_can_subclass_abstract(self):
-        import Abstract
-        
-        class A(Abstract):
-            def method(self):
-                pass
-        A()
-
 class InstantiationTest(unittest.TestCase):
     def test_cant_create_abstract(self):
         self.assertRaises(TypeError, Component)
@@ -132,8 +91,7 @@ class SysIntegrationTest(unittest.TestCase):
         sys.stdout = out
 
 def test_main():
-    test_support.run_unittest(AbstractOnSyspathTest,
-            InstantiationTest, 
+    test_support.run_unittest(InstantiationTest, 
             BeanTest, 
             MethodVisibilityTest, 
             ExtendJavaTest, 

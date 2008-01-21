@@ -19,7 +19,7 @@ public class OffsetTracer extends TraceClassVisitor {
     }
 
     protected TraceMethodVisitor createTraceMethodVisitor() {
-        return createTMV(2);
+        return createTMV(0);
     }
 
     public static TraceMethodVisitor createTMV(final int width) {

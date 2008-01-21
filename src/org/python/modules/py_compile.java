@@ -27,27 +27,17 @@ public class py_compile {
         cfile = sys.getPath(cfile);
         
         File file = new File(filename);
-        if (!file.exists()) {
-            throw Py.IOError(errno.ENOENT,  "No such file or directory: '" + filename + "'");
-        }
         String name = file.getName();
         int dot = name.lastIndexOf('.');
         if (dot != -1) {
             name = name.substring(0, dot);
         }
-
-        // name the __init__ module after its package
-        File dir = file.getParentFile();
-        if (dir != null && name.equals("__init__")) {
-            name = dir.getName();
-            dir = dir.getParentFile();
-        }
-
         // Make the compiled classfile's name the fully qualified with a package by
         // walking up the directory tree looking for __init__.py files. Don't
         // check for __init__$py.class since we're compiling source here and the
         // existence of a class file without corresponding source probably doesn't
         // indicate a package.
+        File dir = file.getParentFile();
         while (dir != null && (new File(dir, "__init__.py").exists())) {
             name = dir.getName() + "." + name;
             dir = dir.getParentFile();

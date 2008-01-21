@@ -1,5 +1,6 @@
 from test.test_support import verbose
 import random
+from UserList import UserList
 
 nerrors = 0
 
@@ -116,57 +117,181 @@ for n in sizes:
     x = [e for e, i in augmented] # a stable sort of s
     check("stability", x, s)
 
-def bug453523():
-    global nerrors
-    from random import random
 
-    # If this fails, the most likely outcome is a core dump.
-    if verbose:
-        print "Testing bug 453523 -- list.sort() crasher."
+import unittest
+from test import test_support
+import sys
 
-    class C:
-        def __lt__(self, other):
-            if L and random() < 0.75:
-                pop()
-            else:
-                push(3)
-            return random() < 0.5
+#==============================================================================
 
-    L = [C() for i in range(50)]
-    pop = L.pop
-    push = L.append
-    try:
-        L.sort()
-    except ValueError:
-        pass
-    else:
-        print "    Mutation during list.sort() wasn't caught."
-        nerrors += 1
-# Jython transition 2.3
-# Mutation during list.sort doesn't throw a ValueError
-# http://jython.org/bugs/1758322
-#bug453523()
+class TestBugs(unittest.TestCase):
 
-def cmpNone():
-    global nerrors
+    def test_bug453523(self):
+        # bug 453523 -- list.sort() crasher.
+        # If this fails, the most likely outcome is a core dump.
+        # Mutations during a list sort should raise a ValueError.
 
-    if verbose:
-        print "Testing None as a comparison function."
+        class C:
+            def __lt__(self, other):
+                if L and random.random() < 0.75:
+                    L.pop()
+                else:
+                    L.append(3)
+                return random.random() < 0.5
 
-    L = range(50)
-    random.shuffle(L)
-    try:
+        L = [C() for i in range(50)]
+        self.assertRaises(ValueError, L.sort)
+
+    def test_cmpNone(self):
+        # Testing None as a comparison function.
+
+        L = range(50)
+        random.shuffle(L)
         L.sort(None)
-    except TypeError:
-        print "    Passing None as cmpfunc failed."
-        nerrors += 1
-    else:
-        if L != range(50):
-            print "    Passing None as cmpfunc failed."
-            nerrors += 1
-cmpNone()
+        self.assertEqual(L, range(50))
 
-if nerrors:
-    print "Test failed", nerrors
-elif verbose:
-    print "Test passed -- no errors."
+    def test_undetected_mutation(self):
+        # Python 2.4a1 did not always detect mutation
+        memorywaster = []
+        for i in range(20):
+            def mutating_cmp(x, y):
+                L.append(3)
+                L.pop()
+                return cmp(x, y)
+            L = [1,2]
+            self.assertRaises(ValueError, L.sort, mutating_cmp)
+            def mutating_cmp(x, y):
+                L.append(3)
+                del L[:]
+                return cmp(x, y)
+            self.assertRaises(ValueError, L.sort, mutating_cmp)
+            memorywaster = [memorywaster]
+
+#==============================================================================
+
+class TestDecorateSortUndecorate(unittest.TestCase):
+
+    def test_decorated(self):
+        data = 'The quick Brown fox Jumped over The lazy Dog'.split()
+        copy = data[:]
+        random.shuffle(data)
+        data.sort(key=str.lower)
+        copy.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
+
+    def test_baddecorator(self):
+        data = 'The quick Brown fox Jumped over The lazy Dog'.split()
+        self.assertRaises(TypeError, data.sort, None, lambda x,y: 0)
+
+    def test_stability(self):
+        data = [(random.randrange(100), i) for i in xrange(200)]
+        copy = data[:]
+        data.sort(key=lambda (x,y): x)  # sort on the random first field
+        copy.sort()                     # sort using both fields
+        self.assertEqual(data, copy)    # should get the same result
+
+    def test_cmp_and_key_combination(self):
+        # Verify that the wrapper has been removed
+        def compare(x, y):
+            self.assertEqual(type(x), str)
+            self.assertEqual(type(x), str)
+            return cmp(x, y)
+        data = 'The quick Brown fox Jumped over The lazy Dog'.split()
+        data.sort(cmp=compare, key=str.lower)
+
+    def test_badcmp_with_key(self):
+        # Verify that the wrapper has been removed
+        data = 'The quick Brown fox Jumped over The lazy Dog'.split()
+        self.assertRaises(TypeError, data.sort, "bad", str.lower)
+
+    def test_key_with_exception(self):
+        # Verify that the wrapper has been removed
+        data = range(-2,2)
+        dup = data[:]
+        self.assertRaises(ZeroDivisionError, data.sort, None, lambda x: 1/x)
+        self.assertEqual(data, dup)
+
+    def test_key_with_mutation(self):
+        data = range(10)
+        def k(x):
+            del data[:]
+            data[:] = range(20)
+            return x
+        self.assertRaises(ValueError, data.sort, key=k)
+
+    def test_key_with_mutating_del(self):
+        data = range(10)
+        class SortKiller(object):
+            def __init__(self, x):
+                pass
+            def __del__(self):
+                del data[:]
+                data[:] = range(20)
+        self.assertRaises(ValueError, data.sort, key=SortKiller)
+
+    def test_key_with_mutating_del_and_exception(self):
+        data = range(10)
+        ## dup = data[:]
+        class SortKiller(object):
+            def __init__(self, x):
+                if x > 2:
+                    raise RuntimeError
+            def __del__(self):
+                del data[:]
+                data[:] = range(20)
+        self.assertRaises(RuntimeError, data.sort, key=SortKiller)
+        ## major honking subtlety: we *can't* do:
+        ##
+        ## self.assertEqual(data, dup)
+        ##
+        ## because there is a reference to a SortKiller in the
+        ## traceback and by the time it dies we're outside the call to
+        ## .sort() and so the list protection gimmicks are out of
+        ## date (this cost some brain cells to figure out...).
+
+    def test_reverse(self):
+        data = range(100)
+        random.shuffle(data)
+        data.sort(reverse=True)
+        self.assertEqual(data, range(99,-1,-1))
+        self.assertRaises(TypeError, data.sort, "wrong type")
+
+    def test_reverse_stability(self):
+        data = [(random.randrange(100), i) for i in xrange(200)]
+        copy1 = data[:]
+        copy2 = data[:]
+        data.sort(cmp=lambda x,y: cmp(x[0],y[0]), reverse=True)
+        copy1.sort(cmp=lambda x,y: cmp(y[0],x[0]))
+        self.assertEqual(data, copy1)
+        copy2.sort(key=lambda x: x[0], reverse=True)
+        self.assertEqual(data, copy2)
+
+#==============================================================================
+
+def test_main(verbose=None):
+    test_classes = (
+        TestDecorateSortUndecorate,
+        TestBugs,
+    )
+    
+    # In the following test cases, class obj, which has function that changes
+    # the data upon which sort is invoked, is passed for "key" argument.
+    # It can not be checked if that function changes data as long as it is 
+    # invoked(e.g. __del__ in SortKiller). so these are currently commented out. 	
+    del TestDecorateSortUndecorate.test_key_with_mutating_del
+    del TestDecorateSortUndecorate.test_key_with_mutating_del_and_exception
+    #
+
+    test_support.run_unittest(*test_classes)
+ 
+    # verify reference counting
+    if verbose and hasattr(sys, "gettotalrefcount"):
+        import gc
+        counts = [None] * 5
+        for i in xrange(len(counts)):
+            test_support.run_unittest(*test_classes)
+            gc.collect()
+            counts[i] = sys.gettotalrefcount()
+        print counts
+
+if __name__ == "__main__":
+    test_main(verbose=True)

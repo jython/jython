@@ -602,22 +602,11 @@ class BasicUDPTest(ThreadedUDPSocketTest):
         ThreadedUDPSocketTest.__init__(self, methodName=methodName)
 
     def testSendtoAndRecv(self):
-        # Testing sendto() and recv() over UDP
+        # Testing sendto() and Recv() over UDP
         msg = self.serv.recv(len(MSG))
         self.assertEqual(msg, MSG)
 
     def _testSendtoAndRecv(self):
-        self.cli.sendto(MSG, 0, (HOST, PORT))
-
-    def testSendtoAndRecvTimeoutMode(self):
-        # Need to test again in timeout mode, which follows
-        # a different code path
-        self.serv.settimeout(10)
-        msg = self.serv.recv(len(MSG))
-        self.assertEqual(msg, MSG)
-
-    def _testSendtoAndRecvTimeoutMode(self):
-        self.cli.settimeout(10)
         self.cli.sendto(MSG, 0, (HOST, PORT))
 
     def testRecvFrom(self):
@@ -628,34 +617,12 @@ class BasicUDPTest(ThreadedUDPSocketTest):
     def _testRecvFrom(self):
         self.cli.sendto(MSG, 0, (HOST, PORT))
 
-    def testRecvFromTimeoutMode(self):
-        # Need to test again in timeout mode, which follows
-        # a different code path
-        self.serv.settimeout(10)
-        msg, addr = self.serv.recvfrom(len(MSG))
-        self.assertEqual(msg, MSG)
-
-    def _testRecvFromTimeoutMode(self):
-        self.cli.settimeout(10)
-        self.cli.sendto(MSG, 0, (HOST, PORT))
-
     def testSendtoEightBitSafe(self):
         # This test is necessary because java only supports signed bytes
         msg = self.serv.recv(len(EIGHT_BIT_MSG))
         self.assertEqual(msg, EIGHT_BIT_MSG)
 
     def _testSendtoEightBitSafe(self):
-        self.cli.sendto(EIGHT_BIT_MSG, 0, (HOST, PORT))
-
-    def testSendtoEightBitSafeTimeoutMode(self):
-        # Need to test again in timeout mode, which follows
-        # a different code path
-        self.serv.settimeout(10)
-        msg = self.serv.recv(len(EIGHT_BIT_MSG))
-        self.assertEqual(msg, EIGHT_BIT_MSG)
-
-    def _testSendtoEightBitSafeTimeoutMode(self):
-        self.cli.settimeout(10)
         self.cli.sendto(EIGHT_BIT_MSG, 0, (HOST, PORT))
 
 class BasicSocketPairTest(SocketPairTest):
@@ -1202,39 +1169,39 @@ class TestJythonExceptions(unittest.TestCase):
 
 class TestAddressParameters:
 
-    def testBindNonTupleEndpointRaisesTypeError(self):
-        try:
-            self.socket.bind(HOST, PORT)
-        except TypeError:
-            pass
-        else:
-            self.fail("Illegal non-tuple bind address did not raise TypeError")
+	def testBindNonTupleEndpointRaisesTypeError(self):
+		try:
+			self.socket.bind(HOST, PORT)
+		except TypeError:
+			pass
+		else:
+			self.fail("Illegal non-tuple bind address did not raise TypeError")
 
-    def testConnectNonTupleEndpointRaisesTypeError(self):
-        try:
-            self.socket.connect(HOST, PORT)
-        except TypeError:
-            pass
-        else:
-            self.fail("Illegal non-tuple connect address did not raise TypeError")
+	def testConnectNonTupleEndpointRaisesTypeError(self):
+		try:
+			self.socket.connect(HOST, PORT)
+		except TypeError:
+			pass
+		else:
+			self.fail("Illegal non-tuple connect address did not raise TypeError")
 
-    def testConnectExNonTupleEndpointRaisesTypeError(self):
-        try:
-            self.socket.connect_ex(HOST, PORT)
-        except TypeError:
-            pass
-        else:
-            self.fail("Illegal non-tuple connect address did not raise TypeError")
+	def testConnectExNonTupleEndpointRaisesTypeError(self):
+		try:
+			self.socket.connect_ex(HOST, PORT)
+		except TypeError:
+			pass
+		else:
+			self.fail("Illegal non-tuple connect address did not raise TypeError")
 
 class TestTCPAddressParameters(unittest.TestCase, TestAddressParameters):
 
-    def setUp(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	def setUp(self):
+		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 class TestUDPAddressParameters(unittest.TestCase, TestAddressParameters):
 
-    def setUp(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	def setUp(self):
+		self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def test_main():
     tests = [

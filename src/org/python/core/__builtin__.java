@@ -386,6 +386,7 @@ public class __builtin__  {
 		dict.__setitem__("zip", new BuiltinFunctions("zip", 43, 1, -1));
 		dict.__setitem__("reversed", new BuiltinFunctions("reversed", 45, 1));
 		dict.__setitem__("__import__", new ImportFunction());
+        dict.__setitem__("sorted", new SortedFunction());
 	}
 
 	public static PyObject abs(PyObject o) {
@@ -1195,5 +1196,37 @@ class ImportFunction extends PyObject {
 
 	public String toString() {
 		return "<built-in function __import__>";
-	}
+	}    
+}
+
+class SortedFunction extends PyObject {
+    public PyObject __call__(PyObject args[], String kwds[]) {              
+        if (args.length == 0) {
+            throw Py.TypeError(" sorted() takes at least 1 argument (0 given)");            
+        } else if (args.length > 4) {
+            throw Py.TypeError(" sorted() takes at most 4 arguments (" + args.length + " given)");
+        } else {
+            PyObject iter = args[0].__iter__();
+            if (iter == null) 
+                throw Py.TypeError("'" + args[0].getType().fastGetName() + "' object is not iterable");         
+        }
+
+        // redo parsing to be more conformant
+        PyList seq = new PyList(args[0]);
+
+        PyObject newargs[] = new PyObject[args.length - 1];     
+        System.arraycopy(args, 1, newargs, 0, args.length - 1);
+        ArgParser ap = new ArgParser("sorted", newargs, kwds, new String[] {"cmp", "key", "reverse"}, 0);
+
+        PyObject cmp = ap.getPyObject(0, Py.None);      
+        PyObject key = ap.getPyObject(1, Py.None);
+        PyObject reverse = ap.getPyObject(2, Py.None);
+
+        seq.sort(cmp, key, reverse);
+        return seq;
+    }
+
+    public String toString() {
+        return "<built-in function sorted>";
+    }
 }

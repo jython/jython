@@ -25,9 +25,6 @@ public class PyFrame extends PyObject
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
 
-    private static final String UNBOUNDLOCAL_ERROR_MSG =
-            "local variable '%.200s' referenced before assignment";
-
     private static final String[] __members__ = {
         "f_back", "f_code", "f_locals", "f_globals", "f_lineno",
         "f_builtins", "f_trace"
@@ -65,20 +62,6 @@ public class PyFrame extends PyObject
 
     public PyFrame(PyTableCode code, PyObject globals) {
         this(code, null, globals, null);
-    }
-
-    // populate the frame with closure variables, but at most once.
-    private int env_j = 0;
-    void setupEnv(PyTuple freevars) {
-	int ntotal = f_ncells + f_nfreevars;
-	// add space for the cellvars
-	for (; env_j < f_ncells; env_j++) {
-	    f_env[env_j] = new PyCell();
-	}
-	// inherit the freevars
-	for (int i=0; env_j < ntotal; i++, env_j++) {
-	    f_env[env_j] = (PyCell)freevars.pyget(i);
-	}
     }
 
     public String toString() {
@@ -174,13 +157,6 @@ public class PyFrame extends PyObject
         return f_locals;
     }
 
-    //
-    // Track the current line number. Called by generated code.
-    //
-    // This is not to be confused with the CPython method 
-    // frame_setlineno() which causes the interpreter to jump to
-    // the given line.
-    //
     public void setline(int line) {
         f_lineno = line;
         if (tracefunc != null)
@@ -208,7 +184,7 @@ public class PyFrame extends PyObject
         if (ret != null)
             return ret;
 
-        throw Py.UnboundLocalError(String.format(UNBOUNDLOCAL_ERROR_MSG, index));
+        throw Py.UnboundLocalError("local: '" + index + "'");
         //return getglobal(index);
     }
 
@@ -257,8 +233,7 @@ public class PyFrame extends PyObject
     public void dellocal(int index) {
         if (f_fastlocals != null) {
             if (f_fastlocals[index] == null) {
-                throw Py.UnboundLocalError(String.format(UNBOUNDLOCAL_ERROR_MSG,
-                                                         f_code.co_varnames[index]));
+                throw Py.UnboundLocalError("local: '" + f_code.co_varnames[index] + "'");
             }
             f_fastlocals[index] = null;
         } else
@@ -272,7 +247,7 @@ public class PyFrame extends PyObject
             f_locals.__delitem__(index);
         } catch (PyException e) {
             if (!Py.matchException(e, Py.KeyError)) throw e;
-            throw Py.UnboundLocalError(String.format(UNBOUNDLOCAL_ERROR_MSG, index));
+            throw Py.UnboundLocalError("local: '" + index + "'");
         }
     }
 
@@ -292,7 +267,7 @@ public class PyFrame extends PyObject
         String name;
         if (index >= f_ncells) name = f_code.co_freevars[index - f_ncells];
         else name = f_code.co_cellvars[index];
-        throw Py.UnboundLocalError(String.format(UNBOUNDLOCAL_ERROR_MSG, name));
+        throw Py.UnboundLocalError("local: '" + name + "'");
     }
 
     public void setderef(int index, PyObject value) {

@@ -18,7 +18,8 @@ public abstract class PySequence extends PyObject {
      * This constructor is used by PyJavaClass.init()
      */
     public PySequence() {}
-
+    public int gListAllocatedStatus = -1;
+    
     protected PySequence(PyType type) {
         super(type);
     }
@@ -377,6 +378,7 @@ public abstract class PySequence extends PyObject {
         } else {
             throw Py.TypeError("sequence subscript must be integer or slice");
         }
+        gListAllocatedStatus = __len__();
     }
 
     public synchronized Object __tojava__(Class c) throws PyIgnoreMethodTag {

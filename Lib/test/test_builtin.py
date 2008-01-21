@@ -4,7 +4,7 @@ import test.test_support, unittest
 from test.test_support import fcmp, have_unicode, TESTFN, unlink
 from sets import Set
 
-import sys, warnings, cStringIO
+import sys, warnings, cStringIO, random
 warnings.filterwarnings("ignore", "hex../oct.. of negative int",
                         FutureWarning, __name__)
 warnings.filterwarnings("ignore", "integer argument expected",
@@ -1174,6 +1174,45 @@ class BuiltinTest(unittest.TestCase):
                     return i
         self.assertRaises(ValueError, zip, BadSeq(), BadSeq())
 
+class TestSorted(unittest.TestCase):
+
+    def test_basic(self):
+        data = range(100)
+        copy = data[:]
+        random.shuffle(copy)
+        self.assertEqual(data, sorted(copy))
+        self.assertNotEqual(data, copy)
+
+        data.reverse()
+        random.shuffle(copy)
+        self.assertEqual(data, sorted(copy, cmp=lambda x, y: cmp(y,x)))
+        self.assertNotEqual(data, copy)
+        random.shuffle(copy)
+        self.assertEqual(data, sorted(copy, key=lambda x: -x))
+        self.assertNotEqual(data, copy)
+        random.shuffle(copy)       
+        self.assertEqual(data, sorted(copy, reverse=1))
+        self.assertNotEqual(data, copy)
+
+    def test_inputtypes(self):
+        s = 'abracadabra'
+        types = [list, tuple]
+        if have_unicode:
+            types.insert(0, unicode)
+        for T in types:
+            self.assertEqual(sorted(s), sorted(T(s)))
+
+        s = ''.join(dict.fromkeys(s).keys())  # unique letters only
+        types = [set, frozenset, list, tuple, dict.fromkeys]
+        if have_unicode:
+            types.insert(0, unicode)
+        for T in types:
+            self.assertEqual(sorted(s), sorted(T(s)))
+
+    def test_baddecorator(self):
+        data = 'The quick Brown fox Jumped over The lazy Dog'.split()
+        self.assertRaises(TypeError, sorted, data, None, lambda x,y: 0)
+
 def test_main():
     if test.test_support.is_jython:
 # Jython transition 2.3
@@ -1184,7 +1223,7 @@ def test_main():
 # filter doesn't respect subclass type
 # http://jython.org/1768969
         del BuiltinTest.test_filter_subclasses
-    test.test_support.run_unittest(BuiltinTest)
+    test.test_support.run_unittest(BuiltinTest, TestSorted)
 
 if __name__ == "__main__":
     test_main()

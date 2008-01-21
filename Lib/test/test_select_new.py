@@ -42,7 +42,7 @@ class AsynchronousServer:
             pass
 
     def select_acceptable(self):
-        return select.select([self.server_socket], [self.server_socket], [], SELECT_TIMEOUT)[0]
+        return select.select([self.server_socket], [], [], SELECT_TIMEOUT)[0]
 
     def verify_acceptable(self):
         assert self.select_acceptable(), "Server socket should be acceptable"

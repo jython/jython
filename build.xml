@@ -53,9 +53,8 @@ The first setting of a property wins, further settings are ignored.
 
 Actions for a release
 ---------------------
-See http://wiki.python.org/jython/JythonDeveloperGuide/HowToReleaseJython
+ http://wiki.python.org/jython/JythonDeveloperGuide/HowToReleaseJython
 
-        	
 An example ant.properties file:
 -------------------------------
 
@@ -109,11 +108,8 @@ oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/
 #svn.revision=3444
 
 # - the directory containing libsvnjavahl-1.dll (on windows) and svnjavahl.jar; only needed for full-build
-# how to get these (for windows):
-#   - goto http://subversion.tigris.org/servlets/ProjectDocumentList
-#   - open the Releases folder
-#   - click on the Windows folder
-#   - download svn-win32-1.4.6_javahl.zip (or newer)
+# how to get these:
+#   - download http://subversion.tigris.org/files/documents/15/31073/svn-win32-1.3.1_javahl.zip (or newer)
 #   - unzip the .dll and .jar into javahl.dir
 javahl.dir=C:/Programme/Subversion/javahl
 
@@ -125,10 +121,8 @@ javahl.dir=C:/Programme/Subversion/javahl
 #   - svnClientAdapter.jar
 #   - svnjavahl.jar
 # how to get these:
-#   - goto http://subclipse.tigris.org/servlets/ProjectDocumentList
-#   - click on the the svnant folder
-#   - download svnant-1.0.0.zip (or newer)
-#   - unzip the jar files from the /lib folder to svnant.jar.dir
+#   - download http://subclipse.tigris.org/files/documents/906/23927/svnant-1.0.0-rc1.zip (or newer)
+#   - unzip the jar files from /lib folder to svnant.jar.dir
 svnant.jar.dir=${basedir}/../externals/svnant-jars
         </echo>
     </target>
@@ -160,6 +154,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${oracle.jar}" />
             <pathelement path="${mysql.jar}" />
             <pathelement path="${postgresql.jar}" />
+            <pathelement path="${jndi.jar}" />
+            <pathelement path="${jdbc.jar}" />
             <pathelement path="extlibs/asm-3.1.jar" />
             <pathelement path="extlibs/asm-util-3.1.jar" />
         </path>
@@ -171,7 +167,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <available property="mysql.present" classname="org.gjt.mm.mysql.Driver" classpath="${mysql.jar}" />
         <available property="postgresql.present" classname="org.postgresql.Driver" classpath="${postgresql.jar}" />
         <available property="oracle.present" classname="oracle.jdbc.driver.OracleDriver" classpath="${oracle.jar}" />
-        <available property="jndi.present" classname="javax.naming.Context" />
+        <available property="jndi.present" classname="javax.naming.Context" classpath="${jndi.jar}" />
         <available property="javax.sql.present" classname="javax.sql.DataSource" />
         <available property="jdbc30.present" classname="java.sql.ParameterMetaData" />
     </target>
@@ -183,11 +179,14 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <!-- predefined main directory for checkout -->
         <property name="svn.main.dir" value="trunk" />
 
-    	<!-- properties work.dir and jython.base.dir are both defined in init and full-init, but with different settings -->
         <property name="work.dir" value="${basedir}/../full_build/${svn.main.dir}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
+        <property name="source.dir" value="${jython.base.dir}/src" />
+        <property name="templates.dir" value="${source.dir}/templates" />
+        <property name="bugtests.dir" value="${jython.base.dir}/bugtests" />
         <property name="has.repositories.connection" value="true" />
+        <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
         <property name="python.exe" value="${python.home}/python" />
         <condition property="do.checkout" value="true">
             <istrue value="${has.repositories.connection}" />
@@ -223,15 +222,15 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     </target>
 
     <target name="init" depends="common-init">
-    	<!-- properties work.dir and jython.base.dir are both defined in init and full-init, but with different settings -->
         <property name="work.dir" value="${basedir}" />
-        <property name="jython.base.dir" value="${work.dir}" />
-        <property name="source.dir" value="${jython.base.dir}/src" />
-        <property name="test.source.dir" value="${jython.base.dir}/tests/java" />
-        <property name="templates.dir" value="${source.dir}/templates" />
-        <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
-        <property name="bugtests.dir" value="${jython.base.dir}/bugtests" />
+        <property name="jython.base.dir" value="${basedir}" />
+        <property name="source.dir" value="${basedir}/src" />
+        <property name="test.source.dir" value="${basedir}/tests/java" />
+        <property name="templates.dir" value="${basedir}/src/templates" />
+        <property name="python.lib" value="${basedir}/CPythonLib" />
+        <property name="bugtests.dir" value="${basedir}/bugtests" />
         <property name="templates.lazy" value="true" />
+
         <property name="output.dir" value="${work.dir}/build" />
         <property name="compile.dir" value="${output.dir}/classes" />
         <property name="exposed.dir" value="${output.dir}/exposed" />
@@ -268,8 +267,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>source.dir         = '${source.dir}'</echo>
         <echo>parser.dir         = '${parser.dir}'</echo>
         <echo>output.dir         = '${output.dir}'</echo>
-        <echo>compile.dir        = '${compile.dir}'</echo>
-        <echo>exposed.dir        = '${exposed.dir}'</echo>
         <echo>dist.dir           = '${dist.dir}'</echo>
         <echo>apidoc.dir         = '${apidoc.dir}'</echo>
         <echo>templates.dir      = '${templates.dir}'</echo>
@@ -350,7 +347,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <!-- checkout cpython license from the correct python maintenance branch -->
         <svn javahl="${javahl.dir}" >
-               <checkout url="http://svn.python.org/projects/python/branches/release23-maint/" destPath="${svn.checkout.dir}/python" recurse="false" />
+               <checkout url="http://svn.python.org/projects/python/branches/release22-maint/" destPath="${svn.checkout.dir}/python" recurse="false" />
         </svn> 
     </target>
 
@@ -526,11 +523,7 @@ The readme text for the next release will be like:
     </target>
 
     <target name="javadoc" depends="compile">
-        <path id="javadoc.classpath">
-            <pathelement path="${java.class.path}" />
-            <path refid="main.classpath" />
-        </path> 
-        <javadoc sourcepath="${source.dir}" 
+        <javadoc sourcepath="${source.dir}"
                  destdir="${apidoc.dir}"
                  source="${jdk.source.version}"
                  public="true"
@@ -539,7 +532,7 @@ The readme text for the next release will be like:
                  windowtitle="Jython API documentation"
                  bottom="&lt;a href='http://www.jython.org' target='_top'>Jython homepage&lt;/a>"
         >
-            <classpath refid="javadoc.classpath" />
+            <classpath refid="main.classpath" />
         </javadoc>
     </target>
 
@@ -600,7 +593,7 @@ The readme text for the next release will be like:
     </target>
 
     <!-- wrap the build into the installer -->
-    <target name="install" depends="version, doc, jar, javadoc, copy-full">
+    <target name="install" depends="version, doc, javadoc, jar, copy-full">
         <property name="install.src.dir" value="${jython.base.dir}/../installer/src/java" />
         <echo>compiling installer from ${install.src.dir}</echo>
         <javac srcdir="${install.src.dir}"
@@ -697,17 +690,17 @@ The readme text for the next release will be like:
 
     <!-- create support_config.py in the bugtset directory only if it doesn't already exist -->
     <target name="create-bugtest-config" depends="init, check-bugtest-config" unless="have_bugtest_config">
-        <!-- doesn't seem to be a direct way to get at the path to javac,
-        java.home points to the jre folder. The following assumes a standard
-        jdk layout. Alternative is to try something like:
+         <!-- doesn't seem to be a direct way to get at the path to javac,
+         java.home points to the jre folder. The following assumes a standard
+         jdk layout. Alternative is to try something like:
 
             <property environment="env"/>
             <property name="jdk.home" value="${env.JAVA_HOME}" />
   
-        or set jdk.home explicitly
-        -->
-        <echo>creating ${bugtests.dir}/support_config.py</echo>
-        <property name="jdk.home" value="${java.home}/.." />
+         or set jdk.home explicitly
+         -->
+         <echo>creating ${bugtests.dir}/support_config.py</echo>
+         <property name="jdk.home" value="${java.home}/.." />
         <echo file="${bugtests.dir}/support_config.py">
 # this configuration was auto-generated by ant build script,
 # safe to edit by hand (won't be overwritten)

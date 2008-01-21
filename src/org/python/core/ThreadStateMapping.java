@@ -1,10 +1,10 @@
 package org.python.core;
 
 class ThreadStateMapping {
-    private static ThreadLocal<ThreadState> cachedThreadState = new ThreadLocal<ThreadState>();
+    private static ThreadLocal cachedThreadState = new ThreadLocal();
 
     public ThreadState getThreadState(PySystemState newSystemState) {
-        ThreadState ts = cachedThreadState.get();
+        ThreadState ts = (ThreadState) cachedThreadState.get();
         if (ts != null) {
             return ts;
         }
@@ -13,6 +13,7 @@ class ThreadStateMapping {
 
         if (newSystemState == null) {
             Py.writeDebug("threadstate", "no current system state");
+            // t.dumpStack();
             newSystemState = Py.defaultSystemState;
         }
 

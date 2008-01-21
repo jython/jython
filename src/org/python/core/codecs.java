@@ -17,6 +17,7 @@ package org.python.core;
 
 public class codecs {
 
+
     public static final String BACKSLASHREPLACE = "backslashreplace";
 
     public static final String IGNORE = "ignore";
@@ -30,9 +31,6 @@ public class codecs {
     private static PyList searchPath;
     private static PyStringMap searchCache;
     private static PyStringMap errorHandlers;
-    
-    /** Used to synchronize registry_init. */
-    private static final Object INIT_LOCK = new Object();
 
     private static String default_encoding = "ascii";
 
@@ -377,25 +375,23 @@ public class codecs {
         }
     }
     
-    private static void registry_init() {
-        synchronized (INIT_LOCK) {
-            if (searchPath != null)
-                return;
-            searchPath = new PyList();
-            searchCache = new PyStringMap();
-            errorHandlers = new PyStringMap();
-            String[] builtinErrorHandlers = new String[] {"strict",
-                                                          IGNORE,
-                                                          REPLACE,
-                                                          XMLCHARREFREPLACE,
-                                                          BACKSLASHREPLACE};
-            for (int i = 0; i < builtinErrorHandlers.length; i++) {
-                register_error(builtinErrorHandlers[i], Py.newJavaFunc(codecs.class,
-                                                                       builtinErrorHandlers[i]
-                                                                               + "_errors"));
-            }
-            import_encodings();
+    private static void registry_init(){
+        if(searchPath != null)
+            return;
+        searchPath = new PyList();
+        searchCache = new PyStringMap();
+        errorHandlers = new PyStringMap();
+        String[] builtinErrorHandlers = new String[] {"strict",
+                                                      IGNORE,
+                                                      REPLACE,
+                                                      XMLCHARREFREPLACE,
+                                                      BACKSLASHREPLACE};
+        for(int i = 0; i < builtinErrorHandlers.length; i++) {
+            register_error(builtinErrorHandlers[i],
+                           Py.newJavaFunc(codecs.class, builtinErrorHandlers[i]
+                                   + "_errors"));
         }
+        import_encodings();
     }
     /* --- UTF-7 Codec -------------------------------------------------------- */
 
