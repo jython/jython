@@ -130,7 +130,7 @@ public class PyUnicode extends PyString {
     public String unicode_toString() {
         return "u'" + encode_UnicodeEscape(string, false) + "'";
     }
-    
+
     @ExposedMethod(type = MethodType.CMP)
     final int unicode___cmp__(PyObject other) {
         return str___cmp__(other);

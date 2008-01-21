@@ -24,8 +24,8 @@ class PythonTraceFunction extends TraceFunction {
                     ret = tracefunc.__call__(frame, new PyString(label), arg);
                 } catch(PyException exc) {
                     frame.tracefunc = null;
-                    ts.systemState.tracefunc = null;
-                    ts.systemState.profilefunc = null;
+                    ts.tracefunc = null;
+                    ts.profilefunc = null;
                     throw exc;
                 } finally {
                     ts.tracing = false;
