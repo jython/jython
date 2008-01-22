@@ -13,6 +13,7 @@ __future__.py
 aifc.py
 anydbm.py
 atexit.py
+asynchat.py
 BaseHTTPServer.py
 base64.py
 bdb.py
