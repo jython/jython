@@ -1,11 +1,54 @@
 import os
 import unittest
 import sys
+import re
 
 from test import test_support
-from java.awt import Component
+from java.awt import Dimension, Component, Rectangle
 from java.util import Vector
-from java.io import FileOutputStream, FileWriter
+from java.io import FileOutputStream, FileWriter, OutputStreamWriter, UnsupportedEncodingException
+from java.lang import Runnable, ThreadGroup, System, Runtime, Math
+
+"""
+public abstract class Abstract {
+    public Abstract() {
+        method();
+    }
+
+    public abstract void method();
+}
+"""
+# The following is the correspoding bytecode for Abstract compiled with javac 1.5
+ABSTRACT_CLASS = """\
+eJw1TrsKwkAQnI1nEmMe/oKdSaHYiyCClWih2F+SQyOaQDz9LxsFCz/AjxL3Am6xw8zs7O7n+3oD
+GKPnQcD30ELgIHQQEexJURZ6SmgN4h1BzKtcEaJlUarV9ZyqeivTEyv2WelDlRO8TXWtM7UojBrM
+0ouuZaaHR3mTPtqwfXRgE9y/Q+gZb3SS5X60To8q06LPHwiYskAmxN1hFjMSYyd5gpIHrDsT3sU9
+5IgZF4wuhCBzpnG9Ru/+AF4RJn8=
+""".decode('base64').decode('zlib')
+
+class AbstractOnSyspathTest(unittest.TestCase):
+    '''Subclasses an abstract class that isn't on the startup classpath.
+    
+    Checks for http://jython.org/bugs/1861985
+    '''
+    def setUp(self):
+        out = open('Abstract.class', 'w')
+        out.write(ABSTRACT_CLASS)
+        out.close()
+        self.orig_syspath = sys.path[:]
+        sys.path.append('')
+
+    def tearDown(self):
+        os.unlink('Abstract.class')
+        sys.path = self.orig_syspath
+
+    def test_can_subclass_abstract(self):
+        import Abstract
+        
+        class A(Abstract):
+            def method(self):
+                pass
+        A()
 
 class InstantiationTest(unittest.TestCase):
     def test_cant_create_abstract(self):
@@ -89,13 +132,87 @@ class SysIntegrationTest(unittest.TestCase):
         self.assertEquals('hello', f.read())
         f.close()
         sys.stdout = out
+		
+class AutoSuperTest(unittest.TestCase):
+	
+    def test_auto_super(self):
+        class R(Rectangle):
+            def __init__(self):
+                self.size = Dimension(6, 7)
+        self.assert_("width=6,height=7" in  R().toString())
+
+    def test_no_default_constructor(self):
+        "Check autocreation when java superclass misses a default constructor."
+        class A(ThreadGroup):
+            def __init__(self):
+                print self.name
+        self.assertRaises(TypeError, A)
+        
+    def test_no_public_constructors(self):
+        try:
+           Math() 
+        except TypeError, e:
+            self.assert_("no public constructors for" in str(e))
+
+class PyObjectCmpTest(unittest.TestCase):
+
+    def test_vect_cmp(self):
+        "Check comparing a PyJavaClass with a Object."
+        class X(Runnable):
+            pass
+        v = Vector()
+        v.addElement(1)
+        v.indexOf(X())
+
+class IOTest(unittest.TestCase):
+
+    def test_io_errors(self):
+        "Check that IOException isn't mangled into an IOError"
+        try:
+           x = OutputStreamWriter(System.out, "garbage")
+        except UnsupportedEncodingException:
+           pass
+        else:
+           raise self.fail("Should have raised java.io.UnsupportedEncodingException")
+
+class VectorTest(unittest.TestCase):
+
+    def test_looping(self):
+        for i in Vector(): pass
+
+class ReservedNamesTest(unittest.TestCase):
+    "Access to java names which are al reserved words"
+
+    def test_system_in(self):
+        s = System.in
+        self.assert_("java.io.BufferedInputStream" in str(s))
+    
+    def test_runtime_exec(self):
+        e = Runtime.getRuntime().exec
+        self.assert_(re.search("method .*exec", str(e)) is not None)
+
+class ImportTest(unittest.TestCase):
+    
+    def test_bad_input_exception(self):
+        try:
+            __import__('')
+        except ValueError, e:
+            self.assert_("Empty module name" in str(e))
+        
 
 def test_main():
-    test_support.run_unittest(InstantiationTest, 
+    test_support.run_unittest(AbstractOnSyspathTest,
+            InstantiationTest, 
             BeanTest, 
             MethodVisibilityTest, 
             ExtendJavaTest, 
-            SysIntegrationTest)
+            SysIntegrationTest,
+            AutoSuperTest,
+            PyObjectCmpTest,
+            IOTest,
+            VectorTest,
+            ReservedNamesTest,
+            ImportTest)
 
 if __name__ == "__main__":
     test_main()

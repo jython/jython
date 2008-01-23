@@ -153,64 +153,20 @@ public class PyTableCode extends PyCode
             }
         }
         // nested scopes: setup env with closure
-        int env_j = 0;
-        int ncells = frame.f_ncells;
-        int nfreevars = frame.f_nfreevars;
-        PyCell[] env = frame.f_env;
-        PyTuple freevars = (PyTuple)closure;
-        for (int i = 0; i < ncells; i++,env_j++) {
-            env[env_j] = new PyCell();
-        }
-        for (int i=0; i<nfreevars; i++,env_j++) {
-            env[env_j] = (PyCell)freevars.pyget(i);
-        }
+	// this should only be done once, so let the frame take care of it
+	frame.setupEnv((PyTuple)closure);
 
         ts.frame = frame;
 
         // Handle trace function for debugging
-        PySystemState ss = ts.systemState;
-        if (ss.tracefunc != null) {
-            // Jython and CPython differ here.  CPython actually lays down
-            // an extra SET_LINENO bytecode for function definition line.
-            // This is ostensibly so that a tuple unpacking failure in
-            // argument passing gets the right line number in the
-            // traceback.  It also means that when tracing a function,
-            // you'll see two 'line' events, one for the def line and then
-            // immediately after, one for the first line of the function.
-            //
-            // Jython on the other hand only lays down a call in the
-            // generated Java function to set the line number for the first
-            // line of the function (i.e. not the def line).  This
-            // difference in behavior doesn't seem to affect arg tuple
-            // unpacking tracebacks, but it does mean that function tracing
-            // gives slightly different behavior.  Is this bad?  Until
-            // someone complains... no.
-            //
-            // The second commented out line fixes this but it is probably
-            // not the right solution.  Better would be to fix the code
-            // generator to lay down two calls to setline() in the
-            // classfile.  This would allow that call to be optimized out
-            // when using the -O option.  I suppose on the other hand we
-            // could test that flag here and not call the setline below.
-            // In either case, it probably doesn't make sense to slow down
-            // function calling even by this miniscule amount until it's
-            // shown to have a detrimental effect.
-            //
-            // Note also that if you were to print out frame.f_lineno in
-            // the `call' event handler of your trace function, you'd see
-            // zero instead of the line of the def.  That's what the first
-            // commented line fixes.
-            //
-            //  9-Sep-1999 baw
-            //
-//             frame.f_lineno = co_firstlineno;
-            frame.tracefunc = ss.tracefunc.traceCall(frame);
-            frame.setline(co_firstlineno);
+        if (ts.tracefunc != null) {
+            frame.f_lineno = co_firstlineno;
+            frame.tracefunc = ts.tracefunc.traceCall(frame);
         }
 
         // Handle trace function for profiling
-        if (ss.profilefunc != null) {
-            ss.profilefunc.traceCall(frame);
+        if (ts.profilefunc != null) {
+            ts.profilefunc.traceCall(frame);
         }
 
         PyObject ret;
@@ -240,8 +196,8 @@ public class PyTableCode extends PyCode
             if (frame.tracefunc != null) {
                 frame.tracefunc.traceException(frame, e);
             }
-            if (ss.profilefunc != null) {
-                ss.profilefunc.traceException(frame, e);
+            if (ts.profilefunc != null) {
+                ts.profilefunc.traceException(frame, e);
             }
 
             //Rethrow the exception to the next stack frame
@@ -254,8 +210,8 @@ public class PyTableCode extends PyCode
             frame.tracefunc.traceReturn(frame, ret);
         }
         // Handle trace function for profiling
-        if (ss.profilefunc != null) {
-            ss.profilefunc.traceReturn(frame, ret);
+        if (ts.profilefunc != null) {
+            ts.profilefunc.traceReturn(frame, ret);
         }
 
         // Restore previously defined exception

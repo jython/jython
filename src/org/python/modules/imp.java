@@ -58,8 +58,8 @@ public class imp {
         }
     }
 
-    private static boolean caseok(File file, String filename, int namelen) {
-        return org.python.core.imp.caseok(file, filename, namelen);
+    private static boolean caseok(File file, String filename) {
+        return org.python.core.imp.caseok(file, filename);
     }
 
     /**
@@ -71,7 +71,6 @@ public class imp {
      * @return null if no module found otherwise module information
      */
     static ModuleInfo findFromSource(String name, String entry, boolean findingPackage) {
-        int nlen = name.length();
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
         String directoryName = PySystemState.getPathLazy(entry);
@@ -85,8 +84,8 @@ public class imp {
         File sourceFile = new File(dir, sourceName);
         File compiledFile = new File(dir, compiledName);
 
-        boolean pkg = (dir.isDirectory() && caseok(dir, name, nlen)
-                && (sourceFile.isFile() || compiledFile.isFile()));
+        boolean pkg = dir.isDirectory() && caseok(dir, name) && (sourceFile.isFile()
+                                                                 || compiledFile.isFile());
 
         if(!findingPackage) {
             if(pkg) {
@@ -101,8 +100,8 @@ public class imp {
             }
         }
 
-        if (sourceFile.isFile() && caseok(sourceFile, sourceName, nlen)) {
-            if (compiledFile.isFile() && caseok(compiledFile, compiledName, nlen)) {
+        if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
+            if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
                 Py.writeDebug("import", "trying precompiled " + compiledFile.getPath());
                 long pyTime = sourceFile.lastModified();
                 long classTime = compiledFile.lastModified();
@@ -119,7 +118,7 @@ public class imp {
 
         // If no source, try loading precompiled
         Py.writeDebug("import", "trying " + compiledFile.getPath());
-        if (compiledFile.isFile() && caseok(compiledFile, compiledName, nlen)) {
+        if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
             return new ModuleInfo(newFile(compiledFile),
                     new File(displayDirName, compiledName).getPath(),
                                   ".class", "rb", PY_COMPILED);

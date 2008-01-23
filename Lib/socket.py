@@ -166,7 +166,7 @@ class _nio_impl:
         return self.jsocket.getReuseAddress()
 
     def getpeername(self):
-        return (self.jsocket.getInetAddress().getHostName(), self.jsocket.getPort() )
+        return (self.jsocket.getInetAddress().getHostAddress(), self.jsocket.getPort() )
 
     def config(self, mode, timeout):
         self.mode = mode
@@ -218,7 +218,7 @@ class _client_socket_impl(_nio_impl):
     def __init__(self, socket=None):
         if socket:
             self.jchannel = socket.getChannel()
-            self.host = socket.getInetAddress().getHostName()
+            self.host = socket.getInetAddress().getHostAddress()
             self.port = socket.getPort()
         else:
             self.jchannel = java.nio.channels.SocketChannel.open()
@@ -265,7 +265,7 @@ class _server_socket_impl(_nio_impl):
             # In timeout mode now
             new_cli_sock = self.jsocket.accept()
             return _client_socket_impl(new_cli_sock)
-        
+
 class _datagram_socket_impl(_nio_impl):
 
     def __init__(self, port=None, address=None, reuse_addr=0):
@@ -286,11 +286,85 @@ class _datagram_socket_impl(_nio_impl):
     def finish_connect(self):
         return self.jchannel.finishConnect()
 
-    def receive(self, packet):
-        self.jsocket.receive(packet)
+    def disconnect(self):
+        """
+            Disconnect the datagram socket.
+            cpython appears not to have this operation
+        """
+        self.jchannel.disconnect()
 
-    def send(self, packet):
+    def _do_send_net(self, byte_array, socket_address, flags):
+        # Need two separate implementations because the java.nio APIs do not support timeouts
+        num_bytes = len(byte_array)
+        if socket_address:
+            packet = java.net.DatagramPacket(byte_array, num_bytes, socket_address)
+        else:
+            packet = java.net.DatagramPacket(byte_array, num_bytes)
         self.jsocket.send(packet)
+        return num_bytes
+
+    def _do_send_nio(self, byte_array, socket_address, flags):
+        byte_buf = java.nio.ByteBuffer.wrap(byte_array)
+        bytes_sent = self.jchannel.send(byte_buf, socket_address)
+        return bytes_sent
+
+    def sendto(self, byte_array, address, flags):
+        host, port = _unpack_address_tuple(address)
+        socket_address = java.net.InetSocketAddress(host, port)
+        if self.mode == MODE_TIMEOUT:
+            return self._do_send_net(byte_array, socket_address, flags)
+        else:
+            return self._do_send_nio(byte_array, socket_address, flags)
+
+    def send(self, byte_array, flags):
+        if self.mode == MODE_TIMEOUT:
+            return self._do_send_net(byte_array, None, flags)
+        else:
+            return self._do_send_nio(byte_array, None, flags)
+
+    def _do_receive_net(self, return_source_address, num_bytes, flags):
+        byte_array = jarray.zeros(num_bytes, 'b')
+        packet = java.net.DatagramPacket(byte_array, num_bytes)
+        self.jsocket.receive(packet)
+        bytes_rcvd = packet.getLength()
+        if bytes_rcvd < num_bytes:
+            byte_array = byte_array[:bytes_rcvd]
+        return_data = byte_array.tostring()
+        if return_source_address:
+            host = None
+            if packet.getAddress():
+                host = packet.getAddress().getHostAddress()
+            port = packet.getPort()
+            return return_data, (host, port)
+        else:
+            return return_data
+
+    def _do_receive_nio(self, return_source_address, num_bytes, flags):
+        byte_array = jarray.zeros(num_bytes, 'b')
+        byte_buf = java.nio.ByteBuffer.wrap(byte_array)
+        source_address = self.jchannel.receive(byte_buf)
+        byte_buf.flip() ; bytes_read = byte_buf.remaining()
+        if source_address is None and not self.jchannel.isBlocking():
+            raise would_block_error()
+        if bytes_read < num_bytes:
+            byte_array = byte_array[:bytes_read]
+        return_data = byte_array.tostring()
+        if return_source_address:
+            return return_data, (source_address.getAddress().getHostAddress(), source_address.getPort())
+        else:
+            return return_data
+
+    def recvfrom(self, num_bytes, flags):
+        if self.mode == MODE_TIMEOUT:
+            return self._do_receive_net(1, num_bytes, flags)
+        else:
+            return self._do_receive_nio(1, num_bytes, flags)
+
+    def recv(self, num_bytes, flags):
+        if self.mode == MODE_TIMEOUT:
+            return self._do_receive_net(0, num_bytes, flags)
+        else:
+            return self._do_receive_nio(0, num_bytes, flags)
 
 __all__ = [ 'AF_INET', 'SO_REUSEADDR', 'SOCK_DGRAM', 'SOCK_RAW',
         'SOCK_RDM', 'SOCK_SEQPACKET', 'SOCK_STREAM', 'SOL_SOCKET',
@@ -685,56 +759,36 @@ class _udpsocket(_nonblocking_api_mixin):
                 flags, addr = 0, p1
             else:
                 flags, addr = 0, p2
-            n = len(data)
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
-            host, port = addr
-            bytes = java.lang.String(data).getBytes('iso-8859-1')
-            a = java.net.InetAddress.getByName(host)
-            packet = java.net.DatagramPacket(bytes, n, a, port)
-            self.sock_impl.send(packet)
-            return n
+            byte_array = java.lang.String(data).getBytes('iso-8859-1')
+            result = self.sock_impl.sendto(byte_array, addr, flags)
+            return result
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
-    def send(self, data):
+    def send(self, data, flags=None):
         if not self.addr: raise error(errno.ENOTCONN, "Socket is not connected")
-        return self.sendto(data, self.addr)
+        byte_array = java.lang.String(data).getBytes('iso-8859-1')
+        return self.sock_impl.send(byte_array, flags)
 
-    def recvfrom(self, n):
+    def recvfrom(self, num_bytes, flags=None):
         try:
             assert self.sock_impl
-            bytes = jarray.zeros(n, 'b')
-            packet = java.net.DatagramPacket(bytes, n)
-            self.sock_impl.receive(packet)
-            host = None
-            if packet.getAddress():
-                host = packet.getAddress().getHostName()
-            port = packet.getPort()
-            m = packet.getLength()
-            if m < n:
-                bytes = bytes[:m]
-            return bytes.tostring(), (host, port)
+            return self.sock_impl.recvfrom(num_bytes, flags)
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
-    def recv(self, n):
+    def recv(self, num_bytes, flags=None):
         try:
-            assert self.sock_impl
-            bytes = jarray.zeros(n, 'b')
-            packet = java.net.DatagramPacket(bytes, n)
-            self.sock_impl.receive(packet)
-            m = packet.getLength()
-            if m < n:
-                bytes = bytes[:m]
-            return bytes.tostring()
+            return self.sock_impl.recv(num_bytes, flags)
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
 
     def getsockname(self):
         try:
             assert self.sock_impl
-            host = self.sock_impl.jsocket.getLocalAddress().getHostName()
+            host = self.sock_impl.jsocket.getLocalAddress().getHostAddress()
             port = self.sock_impl.jsocket.getLocalPort()
             return (host, port)
         except java.lang.Exception, jlx:
@@ -743,7 +797,7 @@ class _udpsocket(_nonblocking_api_mixin):
     def getpeername(self):
         try:
             assert self.sock
-            host = self.sock_impl.jsocket.getInetAddress().getHostName()
+            host = self.sock_impl.jsocket.getInetAddress().getHostAddress()
             port = self.sock_impl.jsocket.getPort()
             return (host, port)
         except java.lang.Exception, jlx:
@@ -1103,7 +1157,7 @@ class ssl:
     def make_ssl_socket(self, plain_socket, auto_close=0):
         java_net_socket = plain_socket._get_jsocket()
         assert isinstance(java_net_socket, java.net.Socket)
-        host = java_net_socket.getInetAddress().getHostName()
+        host = java_net_socket.getInetAddress().getHostAddress()
         port = java_net_socket.getPort()
         factory = javax.net.ssl.SSLSocketFactory.getDefault();
         ssl_socket = factory.createSocket(java_net_socket, host, port, auto_close)

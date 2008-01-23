@@ -41,7 +41,7 @@ public abstract class PathPackageManager extends CachedJarsPackageManager {
             String dir = path.pyget(i).__str__().toString();
 
             File f = new RelativeFile(dir, child);
-            if (f.isDirectory() && imp.caseok(f, name, name.length())) {
+            if (f.isDirectory() && imp.caseok(f, name)) {
                 /*
                  * Figure out if we have a directory a mixture of python and
                  * java or just an empty directory (which means Java) or a

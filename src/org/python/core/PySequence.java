@@ -378,7 +378,6 @@ public abstract class PySequence extends PyObject {
         } else {
             throw Py.TypeError("sequence subscript must be integer or slice");
         }
-        gListAllocatedStatus = __len__();
     }
 
     public synchronized Object __tojava__(Class c) throws PyIgnoreMethodTag {
