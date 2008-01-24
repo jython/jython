@@ -48,6 +48,7 @@ formatter.py
 fpformat.py
 ftplib.py
 getopt.py
+gettext.py
 glob.py
 gopherlib.py
 gzip.py
@@ -61,6 +62,7 @@ imghdr.py
 inspect.py
 keyword.py
 linecache.py
+locale.py
 macpath.py
 macurl2path.py
 mailbox.py

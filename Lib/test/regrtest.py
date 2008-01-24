@@ -963,7 +963,6 @@ _skips = {
         test_gc
         test_gdbm
         test_getargs2
-        test_gettext
         test_gl
         test_grp
         test_heapq
