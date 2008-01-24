@@ -4,7 +4,6 @@
 // unimplemented:
 //
 // accept2dyear
-// strptime()
 //
 // There may also be some incompatibilities in strftime(), because the Java
 // tools for creating those formats don't always map to C's strftime()
@@ -669,7 +668,7 @@ public class Time implements ClassDictInit
                 .replaceAll("%A", "EEEE")
                 .replaceAll("%b", "MMM")
                 .replaceAll("%B", "MMMM")
-                .replaceAll("%c", DEFAULT_FORMAT_JA) // TODO: is this right??
+                .replaceAll("%c", "EEE MMM dd HH:mm:ss yyyy")
                 .replaceAll("%d", "dd")
                 .replaceAll("%H", "HH")
                 .replaceAll("%I", "kk")
