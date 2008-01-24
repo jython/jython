@@ -1146,7 +1146,8 @@ class BuiltinTest(unittest.TestCase):
                 if i < 0 or i > 2: raise IndexError
                 return i + 4
         self.assertEqual(zip(a, I()), t)
-        self.assertRaises(TypeError, zip)
+        # no longer true as of 2.4
+        # self.assertRaises(TypeError, zip)
         self.assertRaises(TypeError, zip, None)
         class G:
             pass

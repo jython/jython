@@ -972,6 +972,7 @@ _skips = {
         test_imgfile
         test_import
         test_ioctl
+        test_iterlen
         test_largefile
         test_linuxaudiodev
         test_locale
