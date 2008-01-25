@@ -70,7 +70,8 @@ public class imp {
      * @param findingPackage if looking for a package only try to locate __init__
      * @return null if no module found otherwise module information
      */
-    static ModuleInfo findFromSource(String name, String entry, boolean findingPackage) {
+    static ModuleInfo findFromSource(String name, String entry, boolean findingPackage,
+                                     boolean preferSource) {
         String sourceName = "__init__.py";
         String compiledName = "__init__$py.class";
         String directoryName = PySystemState.getPathLazy(entry);
@@ -101,7 +102,7 @@ public class imp {
         }
 
         if (sourceFile.isFile() && caseok(sourceFile, sourceName)) {
-            if (compiledFile.isFile() && caseok(compiledFile, compiledName)) {
+            if (!preferSource && compiledFile.isFile() && caseok(compiledFile, compiledName)) {
                 Py.writeDebug("import", "trying precompiled " + compiledFile.getPath());
                 long pyTime = sourceFile.lastModified();
                 long classTime = compiledFile.lastModified();
@@ -153,7 +154,7 @@ public class imp {
         }
 
         for (PyObject p : path.asIterable()) {
-            ModuleInfo mi = findFromSource(name, p.toString(), false);
+            ModuleInfo mi = findFromSource(name, p.toString(), false, true);
             if(mi == null) {
                 continue;
             }
@@ -194,7 +195,7 @@ public class imp {
                     m.__dict__.__setitem__("__path__",
                         new PyList(new PyObject[] { filename }));
                     m.__dict__.__setitem__("__file__", filename);
-                    ModuleInfo mi = findFromSource(name, filename.toString(), true);
+                    ModuleInfo mi = findFromSource(name, filename.toString(), true, false);
                     type = mi.type;
                     file = mi.file;
                     filename = new PyString(mi.filename);
