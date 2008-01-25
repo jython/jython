@@ -712,7 +712,7 @@ public class itertools implements ClassDictInit {
      * Create a tuple of iterators, each of which is effectively a copy of iterable.
      */
     public static PyTuple tee(PyObject iterable, final int n) {
-        return PyTee.makeTees(iterable, n);
+        return new PyTuple(PyTeeIterator.makeTees(iterable, n));
     }
 
     /**

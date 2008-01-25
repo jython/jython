@@ -1,14 +1,14 @@
 package org.python.modules;
 
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.python.core.Py;
-import org.python.core.PyObject;
-import org.python.core.PyNewWrapper;
-import org.python.core.PyType;
-import org.python.core.PyIterator;
 import org.python.core.PyException;
+import org.python.core.PyIterator;
+import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
+import org.python.core.PyType;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -19,16 +19,16 @@ public class PyTeeIterator extends PyIterator {
     private final int position;
     private int count = 0;
     private final PyObject iterator;
-    private final ConcurrentMap buffer;
+    private final Map<Integer, PyObject> buffer;
     private final int[] offsets;
 
-    PyTeeIterator(PyObject iterator, ConcurrentMap buffer, int[] offsets, int position) {
+    PyTeeIterator(PyObject iterator, Map<Integer, PyObject> buffer, int[] offsets, int position) {
         this.iterator = iterator;
         this.buffer = buffer;
         this.offsets = offsets;
         this.position = position;
     }
-
+    
     @ExposedNew
     final static PyObject tee___new__ (PyNewWrapper new_, boolean init,
             PyType subtype, PyObject[] args, String[] keywords) {
@@ -37,8 +37,22 @@ public class PyTeeIterator extends PyIterator {
         if (nargs < 1 || nargs > 1) {
             throw Py.TypeError("tee expected 1 arguments, got " + nargs);
         }
-        PyTeeIterator t = new PyTee(args[0], 1).getTees()[0];
-        return (PyObject)t;
+        return makeTees(args[0], 1)[0];
+    }
+
+    public static PyTeeIterator[] makeTees(PyObject iterable, int n) {
+        if (n < 0) {
+            throw Py.ValueError("n must be >= 0");
+        }
+        PyObject iterator = iterable.__iter__();
+        Map<Integer, PyObject> buffer = new ConcurrentHashMap<Integer, PyObject>();
+        int[] offsets = new int[n];
+        PyTeeIterator[] tees = new PyTeeIterator[n];
+        for (int i = 0; i < n; i++) {
+            offsets[i] = -1;
+            tees[i] = new PyTeeIterator(iterator, buffer, offsets, i);
+        }
+        return tees;
     }
 
     protected PyObject nextElement(PyObject pyIter) {
@@ -79,9 +93,9 @@ public class PyTeeIterator extends PyIterator {
                 buffer.put(count, item);
             }
         } else if (count < min) {
-            item = (PyObject) buffer.remove(count);
+            item = buffer.remove(count);
         } else {
-            item = (PyObject) buffer.get(count);
+            item = buffer.get(count);
         }
         offsets[position] = count;
         count++;
