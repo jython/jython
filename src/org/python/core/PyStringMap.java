@@ -399,8 +399,12 @@ public class PyStringMap extends PyObject
         PyObject[] valueTable = map.values;
         int n = keyTable.length;
 
-        if (2*filled+n > keys.length)
-            resize(2*filled+n);
+        // Do one big resize at the start, rather than incrementally
+        // resizing as we insert new items. Expect that there will be
+        // no (or few) overlapping keys.
+        if (3 * (filled + map.size) >= 2 * (keys.length + 1)) {
+            resize(2 * (size + map.size));
+        }
 
         for (int i=0; i<n; i++) {
             String key = keyTable[i];
