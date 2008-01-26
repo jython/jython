@@ -27,7 +27,7 @@ import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.core.Py;
 import org.python.core.PyTuple;
-import java.util.Hashtable;
+import java.util.Map;
 import org.python.core.PyString;
 import org.python.core.PyFunction;
 import org.python.core.__builtin__;
@@ -191,7 +191,11 @@ public class PyDefaultDict extends PyDictionary {
     public PyDefaultDict(PyType subtype) {
         super(subtype);
     }
-
+   
+    public PyDefaultDict(PyType subtype, Map<PyObject, PyObject> map) {
+        super(subtype, map);
+    }
+    
     final void defaultdict_init(PyObject[] args, String[] kwds) {
         int nargs = args.length - kwds.length;
         if (nargs != 0) {    		
@@ -267,9 +271,8 @@ public class PyDefaultDict extends PyDictionary {
     }
 
     final PyDefaultDict defaultdict___copy__() {
-        PyDefaultDict ob = new PyDefaultDict();
+        PyDefaultDict ob = new PyDefaultDict(DEFAULTDICT_TYPE, table);
         ob.default_factory = default_factory;
-        ob.table = (Hashtable)table.clone();
         return ob;
     }
 

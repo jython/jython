@@ -4,7 +4,6 @@
 // unimplemented:
 //
 // accept2dyear
-// strptime()
 //
 // There may also be some incompatibilities in strftime(), because the Java
 // tools for creating those formats don't always map to C's strftime()
@@ -20,6 +19,8 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 import org.python.core.ClassDictInit;
 import org.python.core.Py;
@@ -618,5 +619,74 @@ public class Time implements ClassDictInit
             shortdays = null;
             shortmonths = null;
         }
+    }
+
+
+    // from patch by Tristan.King@jcu.edu.au
+    // NOTE: these functions have not been roubustly tested, but that's what unit
+    // tests are for. works with Django. please verify before merging into trunk.
+    public static PyTuple strptime(String data_string) {
+        return strptime(data_string, DEFAULT_FORMAT_PY);
+    }
+
+    public static PyTuple strptime(String data_string, String format) {
+        if (format == null || data_string == null) {
+            // this is not a very interesting error message, but it's the same
+            // as what CPython outputs
+            throw Py.TypeError("expected string of buffer");
+        }
+        String jformat = py2java_format(format);
+        SimpleDateFormat d = new SimpleDateFormat(jformat);
+        Calendar cal = Calendar.getInstance();
+        try {
+            cal.setTime(d.parse(data_string));
+        } catch (ParseException e) {
+            throwValueError("time data did not match format:  data=" + data_string + "  fmt=" + format);
+        }
+        int isdst = -1;
+        if (jformat.contains("zzz")) {
+            isdst = cal.getTimeZone().inDaylightTime(cal.getTime()) ? 1 : 0;
+        }
+        return  new PyTuple(new PyObject[] {
+            new PyInteger(cal.get(Calendar.YEAR)),
+            new PyInteger(cal.get(Calendar.MONTH)+1),
+            new PyInteger(cal.get(Calendar.DAY_OF_MONTH)),
+            new PyInteger(cal.get(Calendar.HOUR) + 12*cal.get(Calendar.AM_PM)),
+            new PyInteger(cal.get(Calendar.MINUTE)),
+            new PyInteger(cal.get(Calendar.SECOND)),
+            new PyInteger((cal.get(Calendar.DAY_OF_WEEK)-2) % 7), // refactored for mon(0)-sun(6)
+            new PyInteger(cal.get(Calendar.DAY_OF_YEAR)),
+            new PyInteger(isdst) }
+        );
+    }
+
+    private static final String DEFAULT_FORMAT_PY = "%a %b %d %H:%M:%S %Y";
+    private static final String DEFAULT_FORMAT_JA = "EEE MMM dd HH:mm:ss zzz yyyy";
+    private static String py2java_format(String format) {
+        format = format
+                .replaceAll("%a", "EEE")
+                .replaceAll("%A", "EEEE")
+                .replaceAll("%b", "MMM")
+                .replaceAll("%B", "MMMM")
+                .replaceAll("%c", "EEE MMM dd HH:mm:ss yyyy")
+                .replaceAll("%d", "dd")
+                .replaceAll("%H", "HH")
+                .replaceAll("%I", "kk")
+                .replaceAll("%j", "DDD")
+                .replaceAll("%m", "MM")
+                .replaceAll("%M", "mm")
+                .replaceAll("%p", "a")
+                .replaceAll("%S", "ss")
+                .replaceAll("%U", "ww")
+                .replaceAll("%w", "0") // unsupported in java
+                .replaceAll("%W", "ww") // same as %U ??
+                .replaceAll("%x", "MM/dd/yy")
+                .replaceAll("%X", "HH:mm:ss")
+                .replaceAll("%y", "yy")
+                .replaceAll("%Y", "yyyy")
+                .replaceAll("%Z", "zzz")
+                .replaceAll("%%", "%")
+            ;
+            return format;
     }
 }

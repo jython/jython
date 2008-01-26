@@ -129,7 +129,7 @@ public class PyList extends PySequenceList {
             stop = start;
         }
         if(value instanceof PySequence) {
-            PySequence sequence = (PySequence)value;
+            PySequence sequence = (PySequence) value;
             setslicePySequence(start, stop, step, sequence);
         } else if(value instanceof List) {
             List list = (List)value.__tojava__(List.class);
@@ -146,7 +146,7 @@ public class PyList extends PySequenceList {
             PyObject[] otherArray;
             PyObject[] array = getArray();
             if(value instanceof PySequenceList) {
-                PySequenceList seqList = (PySequenceList)value;
+                PySequenceList seqList = (PySequenceList) value;
                 otherArray = seqList.getArray();
                 if(otherArray == array) {
                     otherArray = otherArray.clone();
@@ -278,9 +278,10 @@ public class PyList extends PySequenceList {
         int newSize = l * count;
         list.setSize(newSize);
         PyObject[] array = getArray();
-        for(int i = 1; i < count; i++) {
+        for (int i = 1; i < count; i++) {
             System.arraycopy(array, 0, array, i * l, l);
         }
+        gListAllocatedStatus = __len__();
         return this;
     }
 
@@ -321,7 +322,7 @@ public class PyList extends PySequenceList {
             // also support adding java lists (but not PyTuple!)
             Object oList = o.__tojava__(List.class);
             if(oList != Py.NoConversion && oList != null) {
-                List otherList = (List)oList;
+                List otherList = (List) oList;
                 sum = new PyList();
                 sum.list_extend(this);
                 for(Iterator i = otherList.iterator(); i.hasNext();) {
@@ -345,9 +346,9 @@ public class PyList extends PySequenceList {
             return null;
         }
         Object oList = o.__tojava__(List.class);
-        if(oList != Py.NoConversion && oList != null) {
+        if (oList != Py.NoConversion && oList != null) {
             sum = new PyList();
-            sum.addAll((List)oList);
+            sum.addAll((List) oList);
             sum.extend(this);
         }
         return sum;
@@ -446,6 +447,7 @@ public class PyList extends PySequenceList {
     @ExposedMethod
     final void list_append(PyObject o) {
         pyadd(o);
+        gListAllocatedStatus = __len__();
     }
 
     /**
@@ -561,6 +563,7 @@ public class PyList extends PySequenceList {
             index = size();
         }
         list.pyadd(index, o);
+        gListAllocatedStatus = __len__();
     }
 
     /**
@@ -578,6 +581,7 @@ public class PyList extends PySequenceList {
     @ExposedMethod
     final void list_remove(PyObject o) {
         del(_index(o, "list.remove(x): x not in list", 0, size()));
+        gListAllocatedStatus = __len__();
     }
 
     /**
@@ -600,6 +604,7 @@ public class PyList extends PySequenceList {
             array[i] = array[j];
             array[j] = tmp;
         }
+        gListAllocatedStatus = __len__();
     }
 
     /**
@@ -651,6 +656,7 @@ public class PyList extends PySequenceList {
     final void list_extend(PyObject o) {
         int length = size();
         setslice(length, length, 1, o);
+        gListAllocatedStatus = __len__();
     }
 
     public PyObject __iadd__(PyObject o) {
@@ -660,6 +666,7 @@ public class PyList extends PySequenceList {
     @ExposedMethod
     final PyObject list___iadd__(PyObject o) {
         extend(fastSequence(o, "argument to += must be a sequence"));
+
         return this;
     }
 
@@ -674,24 +681,35 @@ public class PyList extends PySequenceList {
      * @param compare
      *            the comparison function.
      */
-    public synchronized void sort(PyObject compare) {
-        list_sort(compare);
-    }
-
-    @ExposedMethod(defaults = "null")
-    final synchronized void list_sort(PyObject compare) {
-        MergeState ms = new MergeState(getArray(), size(), compare);
-        ms.sort();
-    }
-
-    /**
+    
+        /**
      * Sort the items of the list in place. Items is compared with the normal relative comparison
      * operators.
      */
-    public void sort() {
-        list_sort(null);
+
+
+    @ExposedMethod
+    final void list_sort(PyObject[] args, String[] kwds) {
+        ArgParser ap = new ArgParser("list", args, kwds, new String[]{"cmp", "key", "reverse"}, 0);
+        PyObject cmp = ap.getPyObject(0, Py.None);
+        PyObject key = ap.getPyObject(1, Py.None);
+        PyObject reverse = ap.getPyObject(2, Py.False);
+        sort(cmp, key, reverse);
     }
 
+    public void sort(PyObject compare) {
+        sort(compare, Py.None, Py.False);
+    }
+
+    public void sort() {
+        sort(Py.None, Py.None, Py.False);
+    }
+
+    public void sort(PyObject cmp, PyObject key, PyObject reverse) {
+        MergeState ms = new MergeState(this, cmp, key, reverse.__nonzero__());
+        ms.sort();
+    }
+  
     public int hashCode() {
         return list___hash__();
     }

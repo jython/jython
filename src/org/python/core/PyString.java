@@ -123,7 +123,7 @@ public class PyString extends PyBaseString
         return new PyString(encode_UnicodeEscape(string, true));
     }
 
-    private static char[] hexdigit = "0123456789ABCDEF".toCharArray();
+    private static char[] hexdigit = "0123456789abcdef".toCharArray();
 
     public static String encode_UnicodeEscape(String str,
                                               boolean use_quotes)
@@ -680,10 +680,10 @@ public class PyString extends PyBaseString
     
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject str___add__(PyObject generic_other) {
-        if (generic_other instanceof PyString) {
+        if (generic_other.getClass() == PyUnicode.class || generic_other.getClass() == PyString.class) {
             PyString other = (PyString)generic_other;
             String result = string.concat(other.string);
-            if (generic_other instanceof PyUnicode) {
+            if (generic_other.getClass() == PyUnicode.class) {
                 return new PyUnicode(result);
             }
             return createInstance(result);

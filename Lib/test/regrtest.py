@@ -956,12 +956,12 @@ _skips = {
         test_dummy_threading
         test_email
         test_email_codecs
+        test_extcall
         test_fcntl
         test_fork1
         test_gc
         test_gdbm
         test_getargs2
-        test_gettext
         test_gl
         test_grp
         test_heapq
@@ -970,6 +970,7 @@ _skips = {
         test_imgfile
         test_import
         test_ioctl
+        test_iterlen
         test_largefile
         test_linuxaudiodev
         test_locale

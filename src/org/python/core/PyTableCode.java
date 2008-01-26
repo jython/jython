@@ -21,6 +21,7 @@ public class PyTableCode extends PyCode
     public boolean args, keywords;
     PyFunctionTable funcs;
     int func_id;
+    public String co_code = ""; // only used by inspect
 
     final public static int CO_OPTIMIZED      = 0x0001;
     //final public static int CO_NEWLOCALS    = 0x0002

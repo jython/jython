@@ -10,13 +10,6 @@ class SimpleClass:
 class StringMapTest(TestMappingProtocol):
     _tested_class = None
 
-    def _reference(self):
-        """
-        Need to change the reference dict from the superclass since stringmap
-        doesn't allow non-str keys
-        """
-        return {"1":2, "key1":"value1", "key2":(1,2,3)}
-
 class ClassDictTests(StringMapTest):
     """Check that class dicts conform to the mapping protocol"""
     

@@ -30,11 +30,11 @@ public class PyUnicode extends PyString {
     public PyUnicode(PyString pystring) {
         this(TYPE, pystring);
     }
-    
-    public PyUnicode(PyType subtype, PyString pystring) {
-        this(subtype, pystring.decode().toString());
-    }
 
+    public PyUnicode(PyType subtype, PyString pystring) {
+        this(subtype, pystring instanceof PyUnicode ? pystring.string : pystring.decode()
+                .toString());
+    }
 
     public PyUnicode(char c) {
         this(TYPE,String.valueOf(c));
@@ -76,10 +76,13 @@ public class PyUnicode extends PyString {
             return S.__unicode__();
         } else {
             if (S == null) {
-                return new PyUnicodeDerived(subtype, "");
+                return new PyUnicodeDerived(subtype, Py.EmptyString);
             }
-        
-            return new PyUnicodeDerived(subtype, (String)((S.__str__()).__tojava__(String.class)));
+            if (S instanceof PyUnicode) {
+                return new PyUnicodeDerived(subtype, (PyUnicode)S);
+            } else {
+                return new PyUnicodeDerived(subtype, S.__str__());
+            }
         }
     }
 
@@ -120,14 +123,14 @@ public class PyUnicode extends PyString {
     }
 
     public PyString __repr__() {
-        return new PyUnicode("u" + encode_UnicodeEscape(string, true));
+        return new PyString("u" + encode_UnicodeEscape(string, true));
     }
 
     @ExposedMethod(names = "__repr__")
     public String unicode_toString() {
-        return "u" + str_toString();
+        return "u'" + encode_UnicodeEscape(string, false) + "'";
     }
-
+    
     @ExposedMethod(type = MethodType.CMP)
     final int unicode___cmp__(PyObject other) {
         return str___cmp__(other);

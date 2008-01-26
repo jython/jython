@@ -1,4 +1,4 @@
 base_class: PyUnicode
 want_dict: true
-ctr: String string
+ctr: PyString string
 incl: object

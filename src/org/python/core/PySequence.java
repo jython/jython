@@ -18,7 +18,8 @@ public abstract class PySequence extends PyObject {
      * This constructor is used by PyJavaClass.init()
      */
     public PySequence() {}
-
+    public int gListAllocatedStatus = -1;
+    
     protected PySequence(PyType type) {
         super(type);
     }

@@ -2,10 +2,11 @@
 package org.python.core;
 
 import java.util.AbstractSet;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -586,13 +587,13 @@ public class PyDictionary extends PyObject implements Map {
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
 
-    protected Hashtable table;
+    protected final Map<PyObject, PyObject> table;
 
     /**
      * Create an empty dictionary.
      */
     public PyDictionary() {
-        this(new Hashtable());
+        this(new ConcurrentHashMap<PyObject, PyObject>());
     }
 
     /**
@@ -601,7 +602,7 @@ public class PyDictionary extends PyObject implements Map {
      */
     public PyDictionary(PyType subtype) {
         super(subtype);
-        table = new Hashtable();
+        table = new ConcurrentHashMap<PyObject, PyObject>();
     }
 
     /**
@@ -609,10 +610,22 @@ public class PyDictionary extends PyObject implements Map {
      * @param t  the hashtable used. The supplied hashtable is used as
      *           is and must only contain PyObject key:value pairs.
      */
-    public PyDictionary(Hashtable t) {
-        table = t;
+    public PyDictionary(Map<PyObject, PyObject> t) {
+        table = new ConcurrentHashMap<PyObject, PyObject>(t);
     }
 
+     /**
+     * Create an new dictionary which is based on the map and for derived types.
+     * @param subtype
+     * @param t  the hashtable used. The supplied hashtable is used as
+     *           is and must only contain PyObject key:value pairs.
+     */
+    public PyDictionary(PyType subtype, Map<PyObject, PyObject> t) {
+        super(subtype);
+        table = new ConcurrentHashMap<PyObject, PyObject>(t);
+    }
+
+        
     /**
      * Create a new dictionary with the element as content.
      * @param elements The initial elements that is inserted in the
@@ -640,7 +653,7 @@ public class PyDictionary extends PyObject implements Map {
             if (src.__findattr__("keys") != null)
                 this.update(src);
             else {
-                PyObject pairs = Py.iter(src, "iteration over non-sequence");
+                PyObject pairs = Py.iter(src, "iteration over non-sequence -not");
                 PyObject pair;
                 int cnt = 0;
                 for (; (pair = pairs.__iternext__()) != null; cnt++) {
@@ -723,7 +736,7 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict___finditem__(PyObject key) {
-        return (PyObject)table.get(key);
+        return table.get(key);
     }
 
     public void __setitem__(PyObject key, PyObject value) {
@@ -749,7 +762,7 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict___iter__() {
-        return new PyDictionaryIter(this, table.keys(), PyDictionaryIter.KEYS);
+        return iterkeys();
     }
 
     public String toString() {
@@ -762,13 +775,12 @@ public class PyDictionary extends PyObject implements Map {
             return "{...}";
         }
 
-        java.util.Enumeration ek = table.keys();
-        java.util.Enumeration ev = table.elements();
         StringBuffer buf = new StringBuffer("{");
-        while(ek.hasMoreElements() && ev.hasMoreElements()) {
-            buf.append(((PyObject)ek.nextElement()).__repr__().toString());
+
+        for (Entry<PyObject, PyObject> entry : table.entrySet()) {
+            buf.append((entry.getKey()).__repr__().toString());
             buf.append(": ");
-            buf.append(((PyObject)ev.nextElement()).__repr__().toString());
+            buf.append((entry.getValue()).__repr__().toString());
             buf.append(", ");
         }
         if(buf.length() > 1){
@@ -960,7 +972,7 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyDictionary dict_copy() {
-        return new PyDictionary((Hashtable)table.clone());
+        return new PyDictionary(table); // no need to clone()
     }
 
     /**
@@ -994,14 +1006,7 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     private void do_update(PyDictionary d) {
-        Hashtable otable = d.table;
-
-        java.util.Enumeration ek = otable.keys();
-        java.util.Enumeration ev = otable.elements();
-        int n = otable.size();
-
-        for (int i=0; i<n; i++)
-            table.put(ek.nextElement(), ev.nextElement());
+        table.putAll(d.table);
     }
 
     private void do_update(PyObject d, PyObject keys) {
@@ -1038,8 +1043,9 @@ public class PyDictionary extends PyObject implements Map {
 
     final PyObject dict_setdefault(PyObject key, PyObject failobj) {
         PyObject o = __finditem__(key);
-        if (o == null)
+        if (o == null) {
             __setitem__(key, o = failobj);
+        }
         return o;
     }
     
@@ -1052,11 +1058,10 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict_pop(PyObject key) {
-        if (!table.containsKey(key))
+        if (!table.containsKey(key)) {
             throw Py.KeyError("popitem(): dictionary is empty");
-        PyObject val = (PyObject) table.get(key);
-        table.remove(key);
-        return val;
+        }
+        return table.remove(key);
     }
 
     /**
@@ -1068,11 +1073,10 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict_pop(PyObject key, PyObject defaultValue) {
-        if (!table.containsKey(key))
+        if (!table.containsKey(key)) {
             return defaultValue;
-        PyObject val = (PyObject) table.get(key);
-        table.remove(key);
-        return val;
+        }
+        return table.remove(key);
     }
 
 
@@ -1085,13 +1089,14 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict_popitem() {
-        java.util.Enumeration keys = table.keys();
-        if (!keys.hasMoreElements())
+        Iterator it = table.entrySet().iterator();
+        if (!it.hasNext())
             throw Py.KeyError("popitem(): dictionary is empty");
-        PyObject key = (PyObject) keys.nextElement();
-        PyObject val = (PyObject) table.get(key);
-        table.remove(key);
-        return new PyTuple(key, val);
+        Entry entry = (Entry)it.next();
+        PyTuple tuple = new PyTuple(
+                (PyObject)entry.getKey(), (PyObject)entry.getValue());
+        it.remove();
+        return tuple;
     }
 
     /**
@@ -1103,14 +1108,11 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyList dict_items() {
-        java.util.Enumeration ek = table.keys();
-        java.util.Enumeration ev = table.elements();
-        int n = table.size();
-        PyObject[] elements = new PyObject[n];
-        for(int i = 0; i < n; i++) {
-            elements[i] = new PyTuple((PyObject)ek.nextElement(), (PyObject)ev.nextElement());
+        List<PyObject> list = new ArrayList<PyObject>(table.size());
+        for (Entry<PyObject, PyObject> entry : table.entrySet()) {
+            list.add(new PyTuple(entry.getKey(), entry.getValue()));
         }
-        return new PyList(elements);
+        return new PyList(list);
     }
 
     /**
@@ -1121,24 +1123,11 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyList dict_keys() {
-        java.util.Enumeration e = table.keys();
-        int n = table.size();
-        PyObject[] elements = new PyObject[n];
-
-        for (int i=0; i<n; i++) {
-            elements[i] = (PyObject)e.nextElement();
-        }
-        return new PyList(elements);
+        return new PyList(new ArrayList(table.keySet()));
     }
 
     final PyList dict_values() {
-        java.util.Enumeration e = table.elements();
-        int n = table.size();
-        PyObject[] elements = new PyObject[n];
-        for (int i=0; i<n; i++) {
-            elements[i] = (PyObject)e.nextElement();
-        }
-        return new PyList(elements);
+        return new PyList(new ArrayList(table.values()));
     }
 
     /**
@@ -1149,8 +1138,7 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict_iteritems() {
-        return new PyDictionaryIter(this, table.keys(),
-                    PyDictionaryIter.ITEMS);
+        return new ItemsIter(table.entrySet());
     }
 
     /**
@@ -1161,8 +1149,7 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict_iterkeys() {
-        return new PyDictionaryIter(this, table.keys(),
-                    PyDictionaryIter.KEYS);
+        return new ValuesIter(table.keySet());
     }
 
     /**
@@ -1173,8 +1160,7 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     final PyObject dict_itervalues() {
-        return new PyDictionaryIter(this, table.keys(),
-                    PyDictionaryIter.VALUES);
+        return new ValuesIter(table.values());
     }
 
     public int hashCode() {
@@ -1189,7 +1175,35 @@ public class PyDictionary extends PyObject implements Map {
         return false;
     }
 
-    /* The following methods implement the java.util.Map interface
+    class ValuesIter extends PyIterator {
+        private final Iterator iterator;
+        public ValuesIter(Collection c) {
+            this.iterator = c.iterator();
+        }
+
+        public PyObject __iternext__() {
+            if (!iterator.hasNext())
+                return null;
+            return (PyObject)iterator.next();
+        }
+    }
+
+    class ItemsIter extends PyIterator {
+        private Iterator iterator;
+        public ItemsIter(Set s) {
+            this.iterator = s.iterator();
+        }
+        
+        public PyObject __iternext__() {
+        if (!iterator.hasNext())
+            return null;
+        Entry entry =  (Entry)iterator.next();
+        return new PyTuple(new PyObject[] 
+        { (PyObject)entry.getKey(), (PyObject)entry.getValue() });
+        }
+    }
+
+        /* The following methods implement the java.util.Map interface
     which allows PyDictionary to be passed to java methods that take
     java.util.Map as a parameter.  Basically, the Map methods are a
     wrapper around the PyDictionary's Map container stored in member
@@ -1216,7 +1230,7 @@ public class PyDictionary extends PyObject implements Map {
     public void putAll(Map map) {
         Iterator i = map.entrySet().iterator();
         while (i.hasNext()) {
-            Map.Entry entry = (Map.Entry)i.next();
+            Entry entry = (Entry)i.next();
             table.put(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
         }
     }
@@ -1246,12 +1260,12 @@ public class PyDictionary extends PyObject implements Map {
         return table.containsKey(Py.java2py(key));
     }
     
-    /** @see java.util.Map#isEmpty() */
+    /** @see java.util.Map#isEmpty(Object key) */
     public boolean isEmpty() {
         return table.isEmpty();
     }
     
-    /** @see java.util.Map#size() */
+    /** @see java.util.Map#size(Object key) */
     public int size() {
         return table.size();
     }
@@ -1262,92 +1276,102 @@ public class PyDictionary extends PyObject implements Map {
     }
 }
 
-/**
- * Wrapper for a Map.Entry object returned from the java.util.Set
- * object which in turn is returned by the entrySet method of
- * java.util.Map.  This is needed to correctly convert from PyObjects
- * to java Objects.  Note that we take care in the equals and hashCode
- * methods to make sure these methods are consistent with Map.Entry
- * objects that contain java Objects for a value so that on the java
- * side they can be reliable compared.
- */
-class PyToJavaMapEntry implements Map.Entry {
-
-    private Map.Entry entry;
-
-    /** Create a copy of the Map.Entry with Py.None coverted to null */
-    PyToJavaMapEntry(Map.Entry entry) {
-        this.entry = entry;
+/** Basic implementation of Entry that just holds onto a key and value and returns them. */
+class SimpleEntry<K, V> implements Entry<K, V> {
+    
+    public SimpleEntry(K key, V value){
+        this.key = key;
+        this.value = value;
     }
     
+    public K getKey() {
+        return key;
+    }
+
+    public V getValue() {
+        return value;
+    }
+
     public boolean equals(Object o) {
-        if (o == null || !(o instanceof Map.Entry)) return false;
-        Map.Entry me = new JavaToPyMapEntry((Map.Entry)o);
-        return o.equals(me);
+        if(!(o instanceof Map.Entry)) {
+            return false;
+        }
+        Map.Entry e = (Map.Entry)o;
+        return eq(key, e.getKey()) && eq(value, e.getValue());
     }
 
-    public Object getKey() {
-        return PyDictionary.tojava(entry.getKey());
-    }
-    
-    public Object getValue() {
-        return PyDictionary.tojava(entry.getValue());
+    private static boolean eq(Object o1, Object o2) {
+        return o1 == null ? o2 == null : o1.equals(o2);
     }
 
     public int hashCode() {
-        // formula for the hash code is taken from the Map.Entry documentation.
-        // Given the source we assume that key is not null.
-        Object val = entry.getValue();
-        return getKey().hashCode() ^ (val == null ? 0 : val.hashCode());
+        return ((key == null) ? 0 : key.hashCode()) ^ ((value == null) ? 0 : value.hashCode());
     }
 
-    public Object setValue(Object value) {
-        return entry.setValue(Py.java2py(value));
+    public String toString() {
+        return key + "=" + value;
     }
 
-    public Map.Entry getEntry() {
-        return entry;
+    public V setValue(V val) {
+        throw new UnsupportedOperationException("Not supported by this view");
+    }
+
+    protected K key;
+
+    protected V value;
+}
+
+/**
+ * Wrapper for a Entry object returned from the java.util.Set
+ * object which in turn is returned by the entrySet method of
+ * java.util.Map.  This is needed to correctly convert from PyObjects
+ * to java Objects.  Note that we take care in the equals and hashCode
+ * methods to make sure these methods are consistent with Entry
+ * objects that contain java Objects for a value so that on the java
+ * side they can be reliable compared.
+ */
+class PyToJavaMapEntry extends SimpleEntry {
+
+    /** Create a copy of the Entry with Py.None coverted to null */
+    PyToJavaMapEntry(Entry entry) {
+        super(entry.getKey(), entry.getValue());
+    }
+    
+    public boolean equals(Object o) {
+        if (o == null || !(o instanceof Entry)) return false;
+        Entry me = new JavaToPyMapEntry((Entry)o);
+        return o.equals(me);
+    }
+
+    // tojava is called in getKey and getValue so the raw key and value can be
+    // used to create a new SimpleEntry in getEntry.
+    public Object getKey() {
+        return PyDictionary.tojava(key);
+    }
+    
+    public Object getValue() {
+        return PyDictionary.tojava(value);
+    }
+
+    /**
+     * @return an entry that returns the original values given to this entry.
+     */
+    public Entry getEntry() {
+        return new SimpleEntry(key, value);
     }
 
 }
 
 /**
- * MapEntry Object for java MapEntry objects passed to the
- * java.util.Set interface which is returned by the entrySet method of
- * PyDictionary. Essentially like PyTojavaMapEntry, but going the
- * other way converting java Objects to PyObjects.
+ * MapEntry Object for java MapEntry objects passed to the java.util.Set
+ * interface which is returned by the entrySet method of PyDictionary.
+ * Essentially like PyTojavaMapEntry, but going the other way converting java
+ * Objects to PyObjects.
  */
-class JavaToPyMapEntry implements Map.Entry {
-    private PyObject key;
-    private PyObject val;
-
-    public JavaToPyMapEntry(Map.Entry entry) {
-        this.key = Py.java2py(entry.getKey());
-        this.val = Py.java2py(entry.getValue());
-    }
+class JavaToPyMapEntry extends SimpleEntry {
     
-    public boolean equals(Object o) {
-        if (o == null || !(o instanceof Map.Entry)) return false;
-        Map.Entry oe = (Map.Entry)o;
-        // The objects comming in will always be a Map.Entry from a
-        // PyDictionary, so getKey and getValue will always be PyObjects
-        return oe.getKey().equals(key) && oe.getValue().equals(val);
-    }
-
-    public int hashCode() {
-        return key.hashCode() ^ val.hashCode();
-    }
-
-    public Object getKey() {
-        return key;
-    }
-
-    public Object getValue() {
-        return val;
-    }
-    
-    public Object setValue(Object val) {
-      throw new UnsupportedOperationException("Not supported by this view");
+    public JavaToPyMapEntry(Entry entry) {
+        super(Py.java2py(entry.getKey()), Py.java2py(entry.getValue()));
     }
 }
 
@@ -1356,7 +1380,6 @@ class JavaToPyMapEntry implements Map.Entry {
  *  java.util.Map
  */
 class PyMapKeyValSet extends PyMapSet {
-
     
     PyMapKeyValSet(Collection coll) {
         super(coll);
@@ -1372,35 +1395,37 @@ class PyMapKeyValSet extends PyMapSet {
 }
 
 /**
- * Set wrapper for the java.util.Map.entrySet method. Map.Entry
+ * Set wrapper for the java.util.EntrySet method. Entry
  * objects are wrapped further in JavaToPyMapEntry and
  * PyToJavaMapEntry.  Note - The set interface is reliable for
  * standard objects like strings and integers, but may be inconstant
  * for other types of objects since the equals method may return false
- * for Map.Entry object that hold more elaborate PyObject types.
- * However, We insure that this iterface works when the Map.Entry
+ * for Entry object that hold more elaborate PyObject types.
+ * However, We insure that this iterface works when the Entry
  * object originates from a Set object retrieved from a PyDictionary.
  */
 class PyMapEntrySet extends PyMapSet {
 
     PyMapEntrySet(Collection coll) {
         super(coll);
-    } 
+    }
 
-    // We know that PyMapEntrySet will only contains Map.Entrys, so
-    // if the object being passed in is null or not a Map.Entry, then
+    // We know that PyMapEntrySet will only contains Entrys, so
+    // if the object being passed in is null or not a Entry, then
     // return null which will match nothing for remove and contains methods.
     Object toPython(Object o) {
-        if (o == null || !(o instanceof Map.Entry)) return null;
-        if (o instanceof PyToJavaMapEntry)
+        if(o == null || !(o instanceof Entry))
+            return null;
+        if(o instanceof PyToJavaMapEntry) {
             // Use the original entry from PyDictionary
             return ((PyToJavaMapEntry)o).getEntry();
-        else
-            return new JavaToPyMapEntry((Map.Entry)o);
+        } else {
+            return new JavaToPyMapEntry((Entry)o);
+        }
     }
 
     Object toJava(Object o) {
-        return new PyToJavaMapEntry((Map.Entry)o);
+        return new PyToJavaMapEntry((Entry)o);
     }
 }
 
@@ -1416,16 +1441,14 @@ class PyMapEntrySet extends PyMapSet {
  * functionality such that changes to the wrapper set or reflected in
  * PyDictionary.
  */
-abstract class PyMapSet extends AbstractSet
-{
-
-    Collection coll;
+abstract class PyMapSet extends AbstractSet {
 
     PyMapSet(Collection coll) {
         this.coll = coll;
     }
 
     abstract Object toJava(Object obj);
+
     abstract Object toPython(Object obj);
 
     public int size() {
@@ -1470,34 +1493,10 @@ abstract class PyMapSet extends AbstractSet
     public Iterator iterator() {
         return new PySetIter(coll.iterator());
     }
+    
+    private final Collection coll;
 }
 
-class PyDictionaryIter extends PyIterator {
-    public static final int KEYS = 0;
-    public static final int VALUES = 1;
-    public static final int ITEMS = 2;
 
-    private PyObject dict;
-    private Enumeration enumeration;
-    private int type;
 
-    public PyDictionaryIter(PyObject dict, Enumeration e, int type) {
-        this.dict = dict;
-        this.enumeration = e;
-        this.type = type;
-    }
 
-    public PyObject __iternext__() {
-        if (!enumeration.hasMoreElements())
-            return null;
-        PyObject key = (PyObject) enumeration.nextElement();
-        switch (type) {
-        case VALUES:
-            return dict.__finditem__(key);
-        case ITEMS:
-            return new PyTuple(key, dict.__finditem__(key));
-        default: // KEYS
-            return key;
-        }
-    }
-}

@@ -4,7 +4,7 @@ import test.test_support, unittest
 from test.test_support import fcmp, have_unicode, TESTFN, unlink
 from sets import Set
 
-import sys, warnings, cStringIO
+import sys, warnings, cStringIO, random
 warnings.filterwarnings("ignore", "hex../oct.. of negative int",
                         FutureWarning, __name__)
 warnings.filterwarnings("ignore", "integer argument expected",
@@ -932,36 +932,36 @@ class BuiltinTest(unittest.TestCase):
         self.assertRaises(OverflowError, range, -sys.maxint, sys.maxint)
         self.assertRaises(OverflowError, range, 0, 2*sys.maxint)
 
-    def test_input_and_raw_input(self):
-        self.write_testfile()
-        fp = open(TESTFN, 'r')
-        savestdin = sys.stdin
-        savestdout = sys.stdout # Eats the echo
-        try:
-            sys.stdin = fp
-            sys.stdout = BitBucket()
-            self.assertEqual(input(), 2)
-            self.assertEqual(input('testing\n'), 2)
-            self.assertEqual(raw_input(), 'The quick brown fox jumps over the lazy dog.')
-            self.assertEqual(raw_input('testing\n'), 'Dear John')
-            sys.stdin = cStringIO.StringIO("NULL\0")
-            self.assertRaises(TypeError, input, 42, 42)
-            sys.stdin = cStringIO.StringIO("    'whitespace'")
-            self.assertEqual(input(), 'whitespace')
-            sys.stdin = cStringIO.StringIO()
-            self.assertRaises(EOFError, input)
-            # Depends on del immediately removing sys.stdout which isn't the
-            # case on Jython
-            if not test.test_support.is_jython:
-                del sys.stdout
-                self.assertRaises(RuntimeError, input, 'prompt')
-                del sys.stdin
-                self.assertRaises(RuntimeError, input, 'prompt')
-        finally:
-            sys.stdin = savestdin
-            sys.stdout = savestdout
-            fp.close()
-            unlink(TESTFN)
+#     def test_input_and_raw_input(self):
+#         self.write_testfile()
+#         fp = open(TESTFN, 'r')
+#         savestdin = sys.stdin
+#         savestdout = sys.stdout # Eats the echo
+#         try:
+#             sys.stdin = fp
+#             sys.stdout = BitBucket()
+#             self.assertEqual(input(), 2)
+#             self.assertEqual(input('testing\n'), 2)
+#             self.assertEqual(raw_input(), 'The quick brown fox jumps over the lazy dog.')
+#             self.assertEqual(raw_input('testing\n'), 'Dear John')
+#             sys.stdin = cStringIO.StringIO("NULL\0")
+#             self.assertRaises(TypeError, input, 42, 42)
+#             sys.stdin = cStringIO.StringIO("    'whitespace'")
+#             self.assertEqual(input(), 'whitespace')
+#             sys.stdin = cStringIO.StringIO()
+#             self.assertRaises(EOFError, input)
+#             # Depends on del immediately removing sys.stdout which isn't the
+#             # case on Jython
+#             if not test.test_support.is_jython:
+#                 del sys.stdout
+#                 self.assertRaises(RuntimeError, input, 'prompt')
+#                 del sys.stdin
+#                 self.assertRaises(RuntimeError, input, 'prompt')
+#         finally:
+#             sys.stdin = savestdin
+#             sys.stdout = savestdout
+#             fp.close()
+#             unlink(TESTFN)
 
     def test_reduce(self):
         self.assertEqual(reduce(lambda x, y: x+y, ['a', 'b', 'c'], ''), 'abc')
@@ -1146,7 +1146,8 @@ class BuiltinTest(unittest.TestCase):
                 if i < 0 or i > 2: raise IndexError
                 return i + 4
         self.assertEqual(zip(a, I()), t)
-        self.assertRaises(TypeError, zip)
+        # no longer true as of 2.4
+        # self.assertRaises(TypeError, zip)
         self.assertRaises(TypeError, zip, None)
         class G:
             pass
@@ -1174,6 +1175,45 @@ class BuiltinTest(unittest.TestCase):
                     return i
         self.assertRaises(ValueError, zip, BadSeq(), BadSeq())
 
+class TestSorted(unittest.TestCase):
+
+    def test_basic(self):
+        data = range(100)
+        copy = data[:]
+        random.shuffle(copy)
+        self.assertEqual(data, sorted(copy))
+        self.assertNotEqual(data, copy)
+
+        data.reverse()
+        random.shuffle(copy)
+        self.assertEqual(data, sorted(copy, cmp=lambda x, y: cmp(y,x)))
+        self.assertNotEqual(data, copy)
+        random.shuffle(copy)
+        self.assertEqual(data, sorted(copy, key=lambda x: -x))
+        self.assertNotEqual(data, copy)
+        random.shuffle(copy)       
+        self.assertEqual(data, sorted(copy, reverse=1))
+        self.assertNotEqual(data, copy)
+
+    def test_inputtypes(self):
+        s = 'abracadabra'
+        types = [list, tuple]
+        if have_unicode:
+            types.insert(0, unicode)
+        for T in types:
+            self.assertEqual(sorted(s), sorted(T(s)))
+
+        s = ''.join(dict.fromkeys(s).keys())  # unique letters only
+        types = [set, frozenset, list, tuple, dict.fromkeys]
+        if have_unicode:
+            types.insert(0, unicode)
+        for T in types:
+            self.assertEqual(sorted(s), sorted(T(s)))
+
+    def test_baddecorator(self):
+        data = 'The quick Brown fox Jumped over The lazy Dog'.split()
+        self.assertRaises(TypeError, sorted, data, None, lambda x,y: 0)
+
 def test_main():
     if test.test_support.is_jython:
 # Jython transition 2.3
@@ -1184,7 +1224,7 @@ def test_main():
 # filter doesn't respect subclass type
 # http://jython.org/1768969
         del BuiltinTest.test_filter_subclasses
-    test.test_support.run_unittest(BuiltinTest)
+    test.test_support.run_unittest(BuiltinTest, TestSorted)
 
 if __name__ == "__main__":
     test_main()
