@@ -419,13 +419,12 @@ try: z.sort(2)
 except TypeError: pass
 else: raise TestFailed, 'list sort compare function is not callable'
 
-#XXX need a strategy for locking list during sort.
-#def selfmodifyingComparison(x,y):
-#    z.append(1)
-#    return cmp(x, y)
-#try: z.sort(selfmodifyingComparison)
-#except ValueError: pass
-#else: raise TestFailed, 'modifying list during sort'
+def selfmodifyingComparison(x,y):
+    z.append(1)
+    return cmp(x, y)
+try: z.sort(selfmodifyingComparison)
+except ValueError: pass
+else: raise TestFailed, 'modifying list during sort'
 
 try: z.sort(lambda x, y: 's')
 except TypeError: pass

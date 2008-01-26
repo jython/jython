@@ -427,8 +427,7 @@ class CommonTest(seq_tests.CommonTest):
         def selfmodifyingComparison(x,y):
             z.append(1)
             return cmp(x, y)
-        # XXX: Jython bug #1785366
-        #self.assertRaises(ValueError, z.sort, selfmodifyingComparison)
+        self.assertRaises(ValueError, z.sort, selfmodifyingComparison)
 
         self.assertRaises(TypeError, z.sort, lambda x, y: 's')
 
