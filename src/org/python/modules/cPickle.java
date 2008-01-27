@@ -2342,8 +2342,8 @@ public class cPickle implements ClassDictInit {
 
 
     private static PyObject importModule(String name) {
-        PyObject silly_list = new PyTuple(Py.newString("__doc__"));
-        return __builtin__.__import__(name, null, null, silly_list);
+        PyObject fromlist = new PyTuple(Py.newString("__doc__"));
+        return __builtin__.__import__(name, null, null, fromlist);
     }
 
     private static PyObject getJavaFunc(String name) {
