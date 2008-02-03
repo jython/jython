@@ -40,6 +40,10 @@ public class PyUnicode extends PyString {
         this(TYPE,String.valueOf(c));
     }
     
+    public PyUnicode(int codepoint) {
+        this(TYPE, new String(new int[]{codepoint}, 0,1));
+    }
+    
     PyUnicode(StringBuilder buffer) {
         this(TYPE, new String(buffer));
     }
