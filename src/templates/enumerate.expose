@@ -1,6 +1,0 @@
-type_name: enumerate
-type_class: PyEnumerate
-type_base_class: PyObject
-expose_new_immutable:
-expose_meth: next
-expose_meth: __iter__

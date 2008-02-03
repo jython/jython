@@ -310,12 +310,12 @@ public class __builtin__ {
         /* newstyle */
         dict.__setitem__("object", PyObject.TYPE);
         dict.__setitem__("type", PyType.TYPE);
-        dict.__setitem__("bool", PyType.fromClass(PyBoolean.class));
+        dict.__setitem__("bool", PyBoolean.TYPE);
         dict.__setitem__("int", PyInteger.TYPE);
-        dict.__setitem__("enumerate", PyType.fromClass(PyEnumerate.class));
-        dict.__setitem__("float", PyType.fromClass(PyFloat.class));
+        dict.__setitem__("enumerate", PyEnumerate.TYPE);
+        dict.__setitem__("float", PyFloat.TYPE);
         dict.__setitem__("long", PyType.fromClass(PyLong.class));
-        dict.__setitem__("complex", PyType.fromClass(PyComplex.class));
+        dict.__setitem__("complex", PyComplex.TYPE);
         dict.__setitem__("dict", PyType.fromClass(PyDictionary.class));
         dict.__setitem__("list", PyList.TYPE);
         dict.__setitem__("tuple", PyType.fromClass(PyTuple.class));
@@ -324,13 +324,13 @@ public class __builtin__ {
 
         dict.__setitem__("property", PyType.fromClass(PyProperty.class));
         dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
-        dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
+        dict.__setitem__("classmethod", PyClassMethod.TYPE);
         dict.__setitem__("super", PyType.fromClass(PySuper.class));
         dict.__setitem__("str", PyString.TYPE);
         dict.__setitem__("unicode", PyUnicode.TYPE);
-        dict.__setitem__("basestring", PyType.fromClass(PyBaseString.class));
-        dict.__setitem__("file", PyType.fromClass(PyFile.class));
-        dict.__setitem__("open", PyType.fromClass(PyFile.class));
+        dict.__setitem__("basestring", PyBaseString.TYPE);
+        dict.__setitem__("file", PyFile.TYPE);
+        dict.__setitem__("open", PyFile.TYPE);
         dict.__setitem__("slice", PyType.fromClass(PySlice.class));
 
         /* - */

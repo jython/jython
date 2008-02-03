@@ -33,6 +33,9 @@ import org.python.expose.MethodType;
  */
 @ExposedType(name = "file")
 public class PyFile extends PyObject {
+
+    public static final PyType TYPE = PyType.fromClass(PyFile.class);
+    
     /** The filename */
     @ExposedGet
     public PyObject name;
