@@ -68,14 +68,14 @@ public class PySystemState extends PyObject
 
     public static PyTuple version_info;
 
-    public static int maxunicode = 65535;
+    public final static int maxunicode = 1114111;
 
     /**
      * The copyright notice for this release.
      */
     // TBD: should we use \u00a9 Unicode c-inside-circle?
     public static String copyright =
-        "Copyright (c) 2000-2007, Jython Developers\n" +
+        "Copyright (c) 2000-2008, Jython Developers\n" +
         "All rights reserved.\n\n" +
 
         "Copyright (c) 2000 BeOpen.com.\n" +

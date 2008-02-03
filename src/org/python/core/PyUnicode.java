@@ -39,6 +39,11 @@ public class PyUnicode extends PyString {
     public PyUnicode(char c) {
         this(TYPE,String.valueOf(c));
     }
+    
+    PyUnicode(StringBuilder buffer) {
+        this(TYPE, new String(buffer));
+    }
+
 
     /**
      * Creates a PyUnicode from an already interned String. Just means it won't
@@ -131,6 +136,16 @@ public class PyUnicode extends PyString {
         return "u'" + encode_UnicodeEscape(string, false) + "'";
     }
     
+    @ExposedMethod
+    public PyObject unicode___getitem__(PyObject index) {
+        return seq___finditem__(index);
+    }
+    
+    @ExposedMethod(defaults = "null")
+    public PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
+        return seq___getslice__(start, stop, step);
+    }
+    
     @ExposedMethod(type = MethodType.CMP)
     final int unicode___cmp__(PyObject other) {
         return str___cmp__(other);
@@ -195,9 +210,26 @@ public class PyUnicode extends PyString {
         return new PyUnicode(str_swapcase());
     }
 
-    @ExposedMethod(defaults = "null")
-    final PyObject unicode_strip(String sep) {
-        return new PyUnicode(str_strip(sep));
+    @ExposedMethod
+    final PyObject unicode_strip(PyObject[] args, String[] kws) {
+        int nargs = args.length;
+        if (nargs == 0) {
+            return new PyUnicode(str_strip(null));  
+        }
+        if (nargs > 1) {
+            throw Py.TypeError("strip() takes at most 1 argument");
+        } 
+        PyObject sep = args[0];
+        if (sep == Py.None) {
+            return new PyUnicode(str_strip(null));  
+        }
+        else if (sep instanceof PyUnicode) {
+            return new PyUnicode(str_strip(sep.toString())); 
+        }
+        else if (sep instanceof PyString) {
+            return new PyUnicode(str_strip(((PyString)sep).decode().toString()));
+        }   
+        throw Py.TypeError("strip arg must be None, unicode or str");
     }
     
     @ExposedMethod(defaults = "null")
@@ -333,7 +365,23 @@ public class PyUnicode extends PyString {
 
     @ExposedMethod
     final boolean unicode_isdigit() {
-        return str_isdigit();
+        int n = string.codePointCount(0, string.length());
+        /* Shortcut for single character strings */
+        if (n == 1) {
+            int ch = string.codePointAt(0);
+            return Character.isDigit(ch);
+        }
+
+        if (n == 0) {
+            return false;
+        }
+
+        for (int i = 0; i < n; i++) {
+            if (!Character.isDigit(string.codePointAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @ExposedMethod
