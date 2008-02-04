@@ -193,7 +193,13 @@ public class codecs {
             throw Py.TypeError("encoder must return a tuple " +
                     "(object,integer)");
         }
-        return result.__getitem__(0).toString();
+        PyObject encoded = result.__getitem__(0);
+        if (encoded instanceof PyString) {
+            return encoded.toString();
+        } else {
+            throw Py.TypeError("decoder did not return a string/unicode object (type=" +
+                    encoded.getType().fastGetName() + ")");
+        }
     }
 
     private static PyObject getEncoder(String encoding) {
@@ -972,21 +978,20 @@ public class codecs {
         }
         return v.toString();
     }
-    
-    
+
     public static String PyUnicode_EncodePunycode(String str,
             String errors) {
         int size = str.length();
         StringBuilder v = new StringBuilder(size);
         return null;
     }
-    
+
     public static String PyUnicode_EncodeIDNA(String str,
             String errors) {
         int size = str.length();
         StringBuilder v = new StringBuilder(size);
 
-    
+
 //   1. If the sequence contains any code points outside the ASCII range
 //      (0..7F) then proceed to step 2, otherwise skip to step 3.
 //
@@ -1017,9 +1022,9 @@ public class codecs {
 //      inclusive.
 
 
-                return null;
+        return null;
     }
-    
+
     /* --- Utility methods -------------------------------------------- */
     public static PyObject encoding_error(String errors,
             String encoding,

@@ -173,6 +173,61 @@ public class _codecs {
         return decode_tuple(v.toString(), size);
     }
 
+    // parallel to CPython's PyUnicode_TranslateCharmap
+    public static PyTuple translate_charmap(String str,
+            String errors,
+            PyObject mapping, boolean ignoreUnmapped) {
+
+        int size = str.length();
+        StringBuilder v = new StringBuilder(size);
+        for (int i = 0; i < size; i++) {
+            char ch = str.charAt(i);
+            if (ch > 0xFF) {
+                i = codecs.insertReplacementAndGetResume(v,
+                        errors,
+                        "charmap",
+                        str,
+                        i,
+                        i + 1,
+                        "ordinal not in range(255)") - 1;
+                continue;
+            }
+            PyObject w = Py.newInteger(ch);
+            PyObject x = mapping.__finditem__(w);
+            if (x == null) {
+                if (ignoreUnmapped) {
+                    v.append(ch);
+                } else {
+                    i = codecs.insertReplacementAndGetResume(v, errors, "charmap", str, i, i + 1, "no mapping found") - 1;
+                }
+                continue;
+            }
+            /* Apply mapping */
+            if (x instanceof PyInteger) {
+                int value = ((PyInteger) x).getValue();
+                if (value < 0 || value > PySystemState.maxunicode) {
+                    throw Py.TypeError("character mapping must return " + "integer greater than 0 and less than sys.maxunicode");
+                }
+                v.append((char) value);
+            } else if (x == Py.None) {
+                i = codecs.insertReplacementAndGetResume(v,
+                        errors,
+                        "charmap",
+                        str,
+                        i,
+                        i + 1,
+                        "character maps to <undefined>") - 1;
+            } else if (x instanceof PyUnicode) {
+                v.append(x.toString());
+            } else {
+                /* wrong return value */
+                throw Py.TypeError("character mapping must return " + "integer, None or unicode");
+            }
+        }
+        return decode_tuple(v.toString(), size);
+    }
+    
+    
     public static PyTuple charmap_encode(String str, String errors,
             PyObject mapping) {
         //Default to Latin-1

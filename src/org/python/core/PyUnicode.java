@@ -13,7 +13,7 @@ import org.python.modules._codecs;
 public class PyUnicode extends PyString {
 
     public static final PyType TYPE = PyType.fromClass(PyUnicode.class);
-    
+
     // for PyJavaClass.init()
     public PyUnicode() {
         this(TYPE, "");
@@ -22,32 +22,30 @@ public class PyUnicode extends PyString {
     public PyUnicode(String string) {
         this(TYPE, string);
     }
-    
+
     public PyUnicode(PyType subtype, String string) {
         super(subtype, string);
     }
-    
+
     public PyUnicode(PyString pystring) {
         this(TYPE, pystring);
     }
 
     public PyUnicode(PyType subtype, PyString pystring) {
-        this(subtype, pystring instanceof PyUnicode ? pystring.string : pystring.decode()
-                .toString());
+        this(subtype, pystring instanceof PyUnicode ? pystring.string : pystring.decode().toString());
     }
 
     public PyUnicode(char c) {
-        this(TYPE,String.valueOf(c));
+        this(TYPE, String.valueOf(c));
     }
-    
+
     public PyUnicode(int codepoint) {
-        this(TYPE, new String(new int[]{codepoint}, 0,1));
+        this(TYPE, new String(new int[]{codepoint}, 0, 1));
     }
-    
+
     PyUnicode(StringBuilder buffer) {
         this(TYPE, new String(buffer));
     }
-
 
     /**
      * Creates a PyUnicode from an already interned String. Just means it won't
@@ -63,12 +61,13 @@ public class PyUnicode extends PyString {
     final static PyObject unicode_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
         ArgParser ap = new ArgParser("unicode",
-                                     args,
-                                     keywords,
-                                     new String[] {"string",
-                                                   "encoding",
-                                                   "errors"},
-                                     0);
+                args,
+                keywords,
+                new String[]{"string",
+            "encoding",
+            "errors"
+        },
+                0);
         PyObject S = ap.getPyObject(0, null);
         String encoding = ap.getString(1, null);
         String errors = ap.getString(2, null);
@@ -77,10 +76,16 @@ public class PyUnicode extends PyString {
                 return new PyUnicode("");
             }
             if (S instanceof PyUnicode) {
-                return new PyUnicode(((PyUnicode)S).string);
+                return new PyUnicode(((PyUnicode) S).string);
             }
             if (S instanceof PyString) {
-                return new PyUnicode(codecs.decode((PyString)S, encoding, errors).toString());
+                PyObject decoded = codecs.decode((PyString) S, encoding, errors);
+                if (decoded instanceof PyUnicode) {
+                    return new PyUnicode((PyUnicode) decoded);
+                } else {
+                    throw Py.TypeError("decoder did not return an unicode object (type=" +
+                            decoded.getType().fastGetName() + ")");
+                }
             }
             return S.__unicode__();
         } else {
@@ -88,7 +93,7 @@ public class PyUnicode extends PyString {
                 return new PyUnicodeDerived(subtype, Py.EmptyString);
             }
             if (S instanceof PyUnicode) {
-                return new PyUnicodeDerived(subtype, (PyUnicode)S);
+                return new PyUnicodeDerived(subtype, (PyUnicode) S);
             } else {
                 return new PyUnicodeDerived(subtype, S.__str__());
             }
@@ -98,9 +103,9 @@ public class PyUnicode extends PyString {
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'unicode' object";
     }
-    
-    public PyString createInstance(String str){
-       return new PyUnicode(str);
+
+    public PyString createInstance(String str) {
+        return new PyUnicode(str);
     }
 
     public PyObject __mod__(PyObject other) {
@@ -108,7 +113,7 @@ public class PyUnicode extends PyString {
     }
 
     @ExposedMethod
-    final PyObject unicode___mod__(PyObject other){
+    final PyObject unicode___mod__(PyObject other) {
         StringFormatter fmt = new StringFormatter(string, true);
         return fmt.format(other).__unicode__();
     }
@@ -127,8 +132,11 @@ public class PyUnicode extends PyString {
         return new PyString(encode());
     }
 
+    // TODO; this method does not appear to be called currently!
+    // something is wrong with MRO, it seems
+    @ExposedMethod
     final int unicode___len__() {
-        return str___len__();
+        return string.codePointCount(0, string.length());
     }
 
     public PyString __repr__() {
@@ -139,17 +147,17 @@ public class PyUnicode extends PyString {
     public String unicode_toString() {
         return "u'" + encode_UnicodeEscape(string, false) + "'";
     }
-    
+
     @ExposedMethod
     public PyObject unicode___getitem__(PyObject index) {
         return seq___finditem__(index);
     }
-    
+
     @ExposedMethod(defaults = "null")
     public PyObject unicode___getslice__(PyObject start, PyObject stop, PyObject step) {
         return seq___getslice__(start, stop, step);
     }
-    
+
     @ExposedMethod(type = MethodType.CMP)
     final int unicode___cmp__(PyObject other) {
         return str___cmp__(other);
@@ -159,7 +167,7 @@ public class PyUnicode extends PyString {
     final PyObject unicode___eq__(PyObject other) {
         return str___eq__(other);
     }
-    
+
     @ExposedMethod(type = MethodType.BINARY)
     final PyObject unicode___ne__(PyObject other) {
         return str___ne__(other);
@@ -171,7 +179,9 @@ public class PyUnicode extends PyString {
     }
 
     protected PyObject pyget(int i) {
-        return Py.makeCharacter(string.charAt(i), true);
+        int codepoint = string.codePointAt(i);
+        // System.out.println("pyget:" + i + "," + Integer.toHexString(codepoint));
+        return Py.makeCharacter(codepoint, true);
     }
 
     @ExposedMethod
@@ -218,24 +228,22 @@ public class PyUnicode extends PyString {
     final PyObject unicode_strip(PyObject[] args, String[] kws) {
         int nargs = args.length;
         if (nargs == 0) {
-            return new PyUnicode(str_strip(null));  
+            return new PyUnicode(str_strip(null));
         }
         if (nargs > 1) {
             throw Py.TypeError("strip() takes at most 1 argument");
-        } 
+        }
         PyObject sep = args[0];
         if (sep == Py.None) {
-            return new PyUnicode(str_strip(null));  
+            return new PyUnicode(str_strip(null));
+        } else if (sep instanceof PyUnicode) {
+            return new PyUnicode(str_strip(sep.toString()));
+        } else if (sep instanceof PyString) {
+            return new PyUnicode(str_strip(((PyString) sep).decode().toString()));
         }
-        else if (sep instanceof PyUnicode) {
-            return new PyUnicode(str_strip(sep.toString())); 
-        }
-        else if (sep instanceof PyString) {
-            return new PyUnicode(str_strip(((PyString)sep).decode().toString()));
-        }   
         throw Py.TypeError("strip arg must be None, unicode or str");
     }
-    
+
     @ExposedMethod(defaults = "null")
     final PyObject unicode_lstrip(String sep) {
         return new PyUnicode(str_lstrip(sep));
@@ -246,7 +254,6 @@ public class PyUnicode extends PyString {
         return new PyUnicode(str_rstrip(sep));
     }
 
-
     @ExposedMethod(defaults = {"null", "-1"})
     final PyList unicode_split(String sep, int maxsplit) {
         return str_split(sep, maxsplit);
@@ -256,7 +263,7 @@ public class PyUnicode extends PyString {
     final PyList unicode_splitlines(boolean keepends) {
         return str_splitlines(keepends);
     }
-    
+
     protected PyString fromSubstring(int begin, int end) {
         return new PyUnicode(string.substring(begin, end));
     }
@@ -270,7 +277,7 @@ public class PyUnicode extends PyString {
     final int unicode_rindex(String sub, int start, PyObject end) {
         return str_rindex(sub, start, end);
     }
-    
+
     @ExposedMethod(defaults = {"0", "null"})
     final int unicode_count(String sub, int start, PyObject end) {
         return str_count(sub, start, end);
@@ -330,7 +337,7 @@ public class PyUnicode extends PyString {
     final boolean unicode_startswith(String prefix, int start, PyObject end) {
         return str_startswith(prefix, start, end);
     }
-    
+
     @ExposedMethod(defaults = {"0", "null"})
     final boolean unicode_endswith(String suffix, int start, PyObject end) {
         return str_endswith(suffix, start, end);
@@ -338,10 +345,10 @@ public class PyUnicode extends PyString {
 
     @ExposedMethod
     final PyObject unicode_translate(PyObject table) {
-        String trans = _codecs.charmap_decode(string, "ignore", table, true).__getitem__(0).toString();
+        String trans = _codecs.translate_charmap(string, "ignore", table, true).__getitem__(0).toString();
         return new PyUnicode(trans);
     }
-    
+
     @ExposedMethod
     final boolean unicode_islower() {
         return str_islower();
@@ -417,9 +424,8 @@ public class PyUnicode extends PyString {
     final PyObject unicode_decode(String encoding, String errors) {
         return str_decode(encoding, errors);
     }
-    
+
     final PyTuple unicode___getnewargs__() {
         return new PyTuple(new PyUnicode(this.string));
     }
-
 }

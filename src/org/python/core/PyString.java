@@ -97,6 +97,9 @@ public class PyString extends PyBaseString
 
     @ExposedMethod
     final int str___len__() {
+        if (this instanceof PyUnicode) {
+           return string.codePointCount(0, string.length());
+        }
         return string.length();
     }
 
@@ -1387,7 +1390,17 @@ public class PyString extends PyBaseString
                 bi = new java.math.BigInteger(str, base);
             return new PyLong(bi);
         } catch (NumberFormatException exc) {
-            throw Py.ValueError("invalid literal for __long__: "+str);
+            if (this instanceof PyUnicode) {
+                // TODO: here's a basic issue: do we use the BigInteger constructor
+                // above, or add an equivalent to CPython's PyUnicode_EncodeDecimal;
+                // we should note that the current error string does not quite match
+                // CPython regardless of the codec, that's going to require some more work
+                throw Py.UnicodeEncodeError("decimal", "codec can't encode character",
+                        0,0, "invalid decimal Unicode string");
+            }
+            else {
+                throw Py.ValueError("invalid literal for __long__: "+str);
+            }
         } catch (StringIndexOutOfBoundsException exc) {
             throw Py.ValueError("invalid literal for __long__: "+str);
         }
