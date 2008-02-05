@@ -24,10 +24,13 @@
 Copyright (C) 2001-2002 Vinay Sajip. All Rights Reserved.
 """
 
-import select
 import os, sys, string, struct, types, cPickle, cStringIO
 import socket, threading, time
 import logging, logging.handlers, logging.config
+if os.name.startswith('java'):
+    from select import cpython_compatible_select as select
+else:
+    from select import select
 
 BANNER = "-- %-10s %-6s ---------------------------------------------------\n"
 
@@ -101,9 +104,7 @@ class LogRecordSocketReceiver(ThreadingTCPServer):
     def serve_until_stopped(self):
         abort = 0
         while not abort:
-            rd, wr, ex = select.select([self.socket.fileno()],
-                                       [], [],
-                                       self.timeout)
+            rd, wr, ex = select([self.socket.fileno()], [], [], self.timeout)
             if rd:
                 self.handle_request()
             abort = self.abort
