@@ -974,7 +974,6 @@ _skips = {
         test_largefile
         test_linuxaudiodev
         test_locale
-        test_logging
         test_longexp
         test_macfs
         test_macostools
@@ -1038,7 +1037,6 @@ _failures = {
     test_pep263
     test_pep277
     test_pickle
-    test_pickletools
     test_pkgimport
     test_profilehooks
     test_pyclbr
