@@ -804,21 +804,8 @@ public class PyType extends PyObject implements Serializable {
         newtype.name = name;
         newtype.underlying_class = c;
         newtype.builtin = true;
-        boolean top = false;
         // basic mro, base, bases
-        PyType[] mro;
-        if(base == Object.class) {
-            mro = new PyType[] {newtype};
-            top = true;
-        } else {
-            PyType basetype = fromClass(base);
-            mro = new PyType[basetype.mro.length + 1];
-            System.arraycopy(basetype.mro, 0, mro, 1, basetype.mro.length);
-            mro[0] = newtype;
-            newtype.base = basetype;
-            newtype.bases = new PyObject[] {basetype};
-        }
-        newtype.mro = mro;
+        fillInMRO(newtype, base);
         PyObject dict;
         if(tb != null) {
             dict = tb.getDict(newtype);
@@ -833,7 +820,7 @@ public class PyType extends PyObject implements Serializable {
         if(newstyle) {
             newtype.non_instantiable = dict.__finditem__("__new__") == null;
         }
-        if(!top) {
+        if(base != Object.class) {
             if(get_descr_method(c, "__set__", OO) != null || /* backw comp */
             get_descr_method(c, "_doset", OO) != null) {
                 newtype.has_set = true;
@@ -996,6 +983,21 @@ public class PyType extends PyObject implements Serializable {
         }
     }
 
+    private static void fillInMRO(PyType type, Class base) {
+        PyType[] mro;
+        if (base == Object.class) {
+            mro = new PyType[] {type};
+        } else {
+            PyType baseType = fromClass(base);
+            mro = new PyType[baseType.mro.length + 1];
+            System.arraycopy(baseType.mro, 0, mro, 1, baseType.mro.length);
+            mro[0] = type;
+            type.base = baseType;
+            type.bases = new PyObject[] {baseType};
+        }
+        type.mro = mro;
+    }
+
     private static HashMap<Class, PyType> class_to_type;
 
     private static HashMap<Class, TypeBuilder> classToBuilder;
@@ -1010,11 +1012,19 @@ public class PyType extends PyObject implements Serializable {
         classToBuilder.put(forClass, builder);
         
         if(class_to_type.containsKey(forClass)) {
-            // PyObject and PyType are loaded as part of creating their
-            // builders, so they need to be bootstrapped
+            // Workaround the fact that some types are initialized
+            // before their builders (namely PyObject and PyType, but
+            // others too). Essentially do the work of addFromClass &
+            // fillFromClass after the fact
             PyType objType = fromClass(builder.getTypeClass());
             objType.name = builder.getName();
             objType.dict = builder.getDict(objType);
+            Class base = builder.getBase();
+            if (base == Object.class) {
+                base = forClass.getSuperclass();
+            }
+            fillInMRO(objType, base);
+            objType.non_instantiable = objType.dict.__finditem__("__new__") == null;
         }
     }
 
