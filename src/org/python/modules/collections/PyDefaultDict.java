@@ -1,19 +1,6 @@
-/**
- *   PyDefaultDict.java - This is a subclass of the builtin dict(PyDictionary) class. 
- *   It supports one additional method __missing__ and adds one writable instance 
- *   variable default_factory. The remaining functionality is the same as for the dict
- *   class. 
- *   
- *   collections.defaultdict([default_factory[, ...]]) - returns a new dictionary-like 
- *   object. The first argument provides the initial value for the default_factory 
- *   attribute; it defaults to None. All remaining arguments are treated the same as 
- *   if they were passed to the dict constructor, including keyword arguments.
- *    
- *   @author    Mehendran T (mehendran@gmail.com)
- *              Novell Software Development (I) Pvt. Ltd              
- *   @created   Tue 18-Sep-2007 21:09:09
- */
 package org.python.modules.collections;
+
+import java.util.Map;
 
 import org.python.core.PyBuiltinFunction;
 import org.python.core.PyBuiltinMethod;
@@ -27,11 +14,25 @@ import org.python.core.PyObject;
 import org.python.core.PyType;
 import org.python.core.Py;
 import org.python.core.PyTuple;
-import java.util.Map;
 import org.python.core.PyString;
 import org.python.core.PyFunction;
 import org.python.core.__builtin__;
 
+/**
+ * PyDefaultDict - This is a subclass of the builtin dict(PyDictionary) class. 
+ * It supports one additional method __missing__ and adds one writable instance 
+ * variable default_factory. The remaining functionality is the same as for the dict
+ * class. 
+ *   
+ * collections.defaultdict([default_factory[, ...]]) - returns a new dictionary-like 
+ * object. The first argument provides the initial value for the default_factory 
+ * attribute; it defaults to None. All remaining arguments are treated the same as 
+ * if they were passed to the dict constructor, including keyword arguments.
+ *    
+ * @author    Mehendran T (mehendran@gmail.com)
+ *            Novell Software Development (I) Pvt. Ltd              
+ * @created   Tue 18-Sep-2007 21:09:09
+ */
 public class PyDefaultDict extends PyDictionary {
     
     //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
