@@ -1641,7 +1641,7 @@ public final class Py
         }
         
         if(dict.__finditem__("__module__") == null) {
-            PyObject module = globals.__finditem__("__name__");
+            PyObject module = frame.getglobal("__name__");
             if(module != null) {
                 dict.__setitem__("__module__", module);
             }
