@@ -173,6 +173,10 @@ public class PyFunction extends PyObject
         return super.__findattr__(name);
     }
 
+    public PyObject getDoc() {
+        return __doc__;
+    }
+
     public PyObject _doget(PyObject container) {
         return _doget(container, null);
     }

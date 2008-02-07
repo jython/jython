@@ -10,8 +10,6 @@ public class PyMethod extends PyObject
     public PyObject im_self;
     public PyObject im_func;
     public PyObject im_class;
-    public String __name__;
-    public PyObject __doc__;
 
     public PyMethod(PyObject self, PyObject f, PyObject wherefound) {
         if(self == Py.None){
@@ -24,20 +22,16 @@ public class PyMethod extends PyObject
 
     public PyMethod(PyObject self, PyFunction f, PyObject wherefound) {
         this(self, (PyObject)f, wherefound);
-        __name__ = f.__name__;
-        __doc__ = f.__doc__;
     }
 
     public PyMethod(PyObject self, PyReflectedFunction f, PyObject wherefound)
     {
         this(self, (PyObject)f, wherefound);
-        __name__ = f.__name__;
-        __doc__ = f.__doc__;
     }
 
     private static final String[] __members__ = {
         "im_self", "im_func", "im_class",
-        "__doc__", "__name__", "__dict__",
+        "__doc__", "__dict__",
     };
 
     // TBD: this should be unnecessary
@@ -60,8 +54,9 @@ public class PyMethod extends PyObject
 
     public PyObject __findattr__(String name) {
         PyObject ret = super.__findattr__(name);
-        if (ret != null)
+        if (ret != null) {
             return ret;
+        }
         return im_func.__findattr__(name);
     }
 
@@ -70,6 +65,10 @@ public class PyMethod extends PyObject
             throwReadonly(name);
         }
         im_func.__delattr__(name);
+    }
+
+    public PyObject getDoc() {
+        return im_func.getDoc();
     }
 
     public PyObject _doget(PyObject container) {
@@ -120,9 +119,9 @@ public class PyMethod extends PyObject
         if (badcall) {
             String got ="nothing";
             if (args.length>=1)
-                got = class_name(args[0].fastGetClass())+" instance";
-            throw Py.TypeError("unbound method " + __name__ + "() must be " +
-                               "called with "+class_name(im_class)+ " instance as first argument"+
+                got = getClassName(args[0].fastGetClass())+" instance";
+            throw Py.TypeError("unbound method " + getFuncName() + "() must be " +
+                               "called with "+getClassName(im_class)+ " instance as first argument"+
                                " (got "+got+" instead)");
         }
         else
@@ -143,7 +142,7 @@ public class PyMethod extends PyObject
         return -2;
     }
 
-    private String class_name(PyObject cls) {
+    private String getClassName(PyObject cls) {
         if (cls instanceof PyClass)
            return ((PyClass)cls).__name__;
         if (cls instanceof PyType)
@@ -151,16 +150,29 @@ public class PyMethod extends PyObject
         return "?";
     }
 
+    private String getFuncName() {
+        PyObject funcName = null;
+        try {
+            funcName = im_func.__findattr__("__name__");
+        } catch (PyException pye) {
+            // continue
+        }
+        if (funcName == null) {
+            return "?";
+        }
+        return funcName.toString();
+    }
+
     public String toString() {
         String classname = "?";
         if (im_class != null)
-            classname = class_name(im_class);
+            classname = getClassName(im_class);
         if (im_self == null)
             // this is an unbound method
-            return "<unbound method " + classname + "." + __name__ + ">";
+            return "<unbound method " + classname + "." + getFuncName() + ">";
         else
             return "<method " + classname + "." +
-                __name__ + " of " + class_name(im_self.fastGetClass()) +
+                getFuncName() + " of " + getClassName(im_self.fastGetClass()) +
                 " instance " + Py.idstr(im_self) + ">";
     }
 }
