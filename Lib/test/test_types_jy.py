@@ -75,7 +75,7 @@ class BrokenNameTestCase(unittest.TestCase):
         try:
             class Foobar:
                 pass
-        except NameError, ne:
+        except NameError:
             pass
         else:
             self.assert_(False, "Expected a NameError")
