@@ -24,9 +24,19 @@ import os
 def _tostr(s, method):
     if isinstance(s, basestring):
         return s
-    import org
     raise TypeError, "%s() argument must be a str or unicode object, not %s" % (
-                method, org.python.core.Py.safeRepr(s))
+                method, _type_name(s))
+
+def _type_name(obj):
+    TPFLAGS_HEAPTYPE = 1 << 9
+    type_name = ''
+    obj_type = type(obj)
+    # XXX: pending type.__module__ fix
+    #is_heap = obj_type.__flags__ & TPFLAGS_HEAPTYPE == TPFLAGS_HEAPTYPE
+    #if not is_heap and obj_type.__module__ != '__builtin__':
+    #    type_name = '%s.' % obj_type.__module__
+    type_name += obj_type.__name__
+    return type_name
         
 def dirname(path):
     """Return the directory component of a pathname"""

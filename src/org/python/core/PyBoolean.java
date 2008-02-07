@@ -48,10 +48,6 @@ public class PyBoolean extends PyInteger {
         return value ? 1 : 0;
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'bool' object";
-    }
-
     public String toString() {
         return bool_toString();
     }

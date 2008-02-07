@@ -86,7 +86,7 @@ public class PyBuiltinFunctionSet extends PyBuiltinFunction implements ExposeAsS
 
     public PyObject __call__(PyObject[] args, String[] kws) {
         if(kws.length != 0) {
-            throw Py.TypeError(safeRepr()
+            throw Py.TypeError(getType().fastGetName()
                     + "(): this function takes no keyword arguments");
         }
         return __call__(args);

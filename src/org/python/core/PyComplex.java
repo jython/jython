@@ -105,10 +105,6 @@ public class PyComplex extends PyObject {
         this(TYPE, r, i);
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'complex' object";
-    }
-
     public final PyFloat getReal() {
         return Py.newFloat(real);
     }

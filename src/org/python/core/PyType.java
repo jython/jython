@@ -1283,13 +1283,6 @@ public class PyType extends PyObject implements Serializable {
          type___setattr__(name, value);
     }
 
-    /**
-     * @see org.python.core.PyObject#safeRepr()
-     */
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "type object '" + name + "'"; // xxx use fullname
-    }
-
     private static PyObject invoke_new_(PyObject new_,PyType type,boolean init,PyObject[] args,String[] keywords) {
         PyObject newobj;
         if (new_ instanceof PyNewWrapper) {

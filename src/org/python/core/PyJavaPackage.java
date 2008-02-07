@@ -178,13 +178,4 @@ public class PyJavaPackage extends PyObject {
     public String toString()  {
         return "<java package "+__name__+" "+Py.idstr(this)+">";
     }
-    
-    
-    /**
-     * @see org.python.core.PyObject#safeRepr()
-     */
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "java package '"+__name__+"'";       
-    }
-
 }

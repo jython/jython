@@ -401,7 +401,7 @@ And more, added later.
 >>> i.gi_running = 42
 Traceback (most recent call last):
   ...
-AttributeError: 'generator' object attribute 'gi_running' is read-only
+AttributeError: generator attribute 'gi_running' is read-only
 >>> def g():
 ...     yield me.gi_running
 >>> me = g()

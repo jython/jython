@@ -145,18 +145,6 @@ public class PyObject implements Serializable {
         return "<"+name+" object "+Py.idstr(this)+">";
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        if (getType() == null) {
-            return "unknown object";
-        }
-
-        String name = getType().getFullName();
-        if (name == null)
-            return "unknown object";
-
-        return "'" + name + "' object";
-    }
-
     /**
      * Equivalent to the standard Python __str__ method.  This method
      * should not typically need to be overridden.  The easiest way to
@@ -237,7 +225,7 @@ public class PyObject implements Serializable {
      * @param keywords the keywords used for all keyword arguments.
      **/
     public PyObject __call__(PyObject args[], String keywords[]) {
-        throw Py.TypeError("call of non-function (" + safeRepr() + ")");
+        throw Py.TypeError("call of non-function (" + getType().fastGetName() + ")");
     }
 
     /**
@@ -823,13 +811,12 @@ public class PyObject implements Serializable {
     }
 
     public void noAttributeError(String name) {
-        throw Py.AttributeError(
-            safeRepr() + " has no attribute '" + name + "'");
+        throw Py.AttributeError(getType().fastGetName() + " has no attribute '" + name + "'");
     }
 
     public void readonlyAttributeError(String name) {
-        throw Py.AttributeError(
-            safeRepr() + " attribute '" + name + "' is read-only");
+        throw Py.AttributeError(getType().fastGetName() + " attribute '" + name
+                                + "' is read-only");
     }
 
     /**
@@ -2786,12 +2773,12 @@ public class PyObject implements Serializable {
 
     public void setDict(PyObject newDict) {
     	// fallback if setDict not implemented in subclass
-    	throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().safeRepr());
+    	throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().fastGetName());
     }
 
     public void delDict() {
         // fallback to error
-        throw Py.TypeError("can't delete attribute '__dict__' of instance of '" + getType().safeRepr()+ "'");
+        throw Py.TypeError("can't delete attribute '__dict__' of instance of '" + getType().fastGetName()+ "'");
     }
 
     public boolean implementsDescrSet() {

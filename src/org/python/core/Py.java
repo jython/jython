@@ -1671,7 +1671,7 @@ public final class Py
                         throw Py.TypeError(
                             "meta-class fails to supply proper "
                                 + "ctr: "
-                                + base.safeRepr());
+                                + base.getType().fastGetName());
                     }
                 }             
                 metaclass = base.__findattr__("__class__");
@@ -1866,10 +1866,6 @@ public final class Py
         return idimpl.java_obj_id(o);
     }
     
-    public static String safeRepr(PyObject o) {
-        return o.safeRepr();
-    }
-
     public static void printResult(PyObject ret) {
         Py.getThreadState().systemState.invoke("displayhook", ret);
     }

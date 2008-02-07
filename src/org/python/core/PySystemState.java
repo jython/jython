@@ -241,10 +241,6 @@ public class PySystemState extends PyObject
         accum.update(__dict__);
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "module 'sys'";
-    }
-
     public String toString() {
         return "sys module";
     }

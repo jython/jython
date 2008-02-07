@@ -143,10 +143,6 @@ public class PyMethod extends PyObject
         return -2;
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'method' object";
-    }
-    
     private String class_name(PyObject cls) {
         if (cls instanceof PyClass)
            return ((PyClass)cls).__name__;

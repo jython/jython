@@ -174,13 +174,10 @@ public class PyFunction extends PyObject
     }
 
     public PyObject _doget(PyObject container) {
-        //System.out.println("_doget(c):"+(container==null?null:container.safeRepr())); // debug
         return _doget(container, null);
     }
 
     public PyObject _doget(PyObject container, PyObject wherefound) {
-        //System.out.println("_doget(c,w):"+(container==null?null:container.safeRepr())
-        //+","+(wherefound==null?null:wherefound.safeRepr())); // debug
         return new PyMethod(container, this, wherefound);
     }
 

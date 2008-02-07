@@ -49,10 +49,6 @@ public class PyFloat extends PyObject
         this((double)v);
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'float' object";
-    }
-
     public double getValue() {
         return value;
     }

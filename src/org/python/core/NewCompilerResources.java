@@ -54,7 +54,7 @@ public class NewCompilerResources {
                                 new PyTuple(bases), dict, proxyClass });
                     } catch (Exception e) {
                         throw Py.TypeError("meta-class fails to supply proper "
-                                + "ctr: " + base.safeRepr());
+                                           + "ctr: " + base.getType().fastGetName());
                     }
                 }
                 metaclass = base.__findattr__("__class__");

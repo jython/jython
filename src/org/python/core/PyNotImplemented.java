@@ -21,10 +21,6 @@ public class PyNotImplemented extends PySingleton implements Serializable
         return null;
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "NotImplemented";
-    }
-
     public boolean isMappingType() { return false; }
     public boolean isSequenceType() { return false; }
 

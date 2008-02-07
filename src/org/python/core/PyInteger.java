@@ -86,10 +86,6 @@ public class PyInteger extends PyObject {
         return value;
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'int' object";
-    }
-
     public String toString() {
         return int_toString();
     }

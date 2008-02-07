@@ -363,10 +363,6 @@ public class PyTuple extends PySequenceList implements ClassDictInit
         }
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'tuple' object";
-    }
-
     protected PyObject getslice(int start, int stop, int step) {
         if (step > 0 && stop < start)
             stop = start;

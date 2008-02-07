@@ -22,13 +22,8 @@ public class MD5Object extends PyObject
 
     public PyObject update(PyObject arg) {
         if (!(arg instanceof PyString))
-            // TBD: this should be able to call safeRepr() on the arg, but
-            // I can't currently do this because safeRepr is protected so
-            // that it's not accessible from Python.  This is bogus;
-            // arbitrary Java code should be able to get safeRepr but we
-            // still want to hide it from Python.  There should be another
-            // way to hide Java methods from Python.
-            throw Py.TypeError("argument 1 expected string");
+            throw Py.TypeError("update() argument 1 must be string or read-only buffer, not "
+                               + arg.getType().fastGetName());
         data += arg.toString();
         return Py.None;
     }
