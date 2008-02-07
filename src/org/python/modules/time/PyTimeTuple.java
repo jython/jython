@@ -20,7 +20,7 @@ import org.python.expose.MethodType;
  * struct_time of the time module.
  *
  */
-@ExposedType(name = "struct_time")
+@ExposedType(name = "time.struct_time")
 public class PyTimeTuple extends PyTuple {
 
     @ExposedGet

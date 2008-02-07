@@ -193,7 +193,7 @@ public class PyFile extends PyObject {
                                      1);
         PyObject name = ap.getPyObject(0);
         if (!(name instanceof PyString)) {
-            throw Py.TypeError("coercing to Unicode: need string, '" + name.getType().getFullName()
+            throw Py.TypeError("coercing to Unicode: need string, '" + name.getType().fastGetName()
                                + "' type found");
         }
         String mode = ap.getString(1, "r");

@@ -138,11 +138,16 @@ public class PyObject implements Serializable {
             return "unknown object";
         }
 
-        String name = getType().getFullName();
-        if (name == null)
+        String name = getType().getName();
+        if (name == null) {
             return "unknown object";
+        }
 
-        return "<"+name+" object "+Py.idstr(this)+">";
+        PyObject module = getType().getModule();
+        if (module instanceof PyString && !module.toString().equals("__builtin__")) {
+            return String.format("<%s.%s object %s>", module.toString(), name, Py.idstr(this));
+        }
+        return String.format("<%s object %s>", name, Py.idstr(this));
     }
 
     /**

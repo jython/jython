@@ -36,7 +36,7 @@ import org.python.expose.ExposedType;
  *
  * @author Philip Jenvey
  */
-@ExposedType(name = "zipimporter")
+@ExposedType(name = "zipimport.zipimporter")
 public class zipimporter extends PyObject {
     @ExposedGet
     public static final PyString __doc__ = new PyString(

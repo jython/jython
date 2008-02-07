@@ -311,7 +311,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
     
     final PyObject baseset___reduce__(){
-        String name = getType().getFullName();
+        String name = getType().fastGetName();
         PyObject factory = __builtin__.__import__("setsfactory");
         PyObject func = factory.__getattr__(name);
         return new PyTuple(func, new PyTuple(new PyList(this)));
@@ -407,7 +407,7 @@ public abstract class BaseSet extends PyObject /*implements Set*/ {
     }
 
     public String toString() {
-        String name = getType().getFullName();
+        String name = getType().fastGetName();
         StringBuffer buf = new StringBuffer(name).append("([");
         for (Iterator i = this._set.iterator(); i.hasNext();) {
             buf.append(((PyObject) i.next()).__repr__().toString());

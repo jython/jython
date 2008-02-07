@@ -17,7 +17,7 @@ public class MethodExposer extends Exposer {
 
     protected String[] asNames, defaults;
 
-    private String prefix;
+    private String prefix, typeName;
 
     private Type[] args;
 
@@ -25,12 +25,12 @@ public class MethodExposer extends Exposer {
 
     protected MethodType type;
 
-    public MethodExposer(Type onType, int access, String methodName, String desc, String prefix) {
+    public MethodExposer(Type onType, int access, String methodName, String desc, String typeName) {
         this(onType,
              access,
              methodName,
              desc,
-             prefix,
+             typeName,
              new String[0],
              new String[0],
              MethodType.DEFAULT);
@@ -40,7 +40,7 @@ public class MethodExposer extends Exposer {
                          int access,
                          String methodName,
                          String desc,
-                         String prefix,
+                         String typeName,
                          String[] asNames,
                          String[] defaults,
                          MethodType type) {
@@ -58,6 +58,12 @@ public class MethodExposer extends Exposer {
             }
         }
         this.returnType = Type.getReturnType(desc);
+        this.typeName = typeName;
+        String prefix = typeName;
+        int lastDot = prefix.lastIndexOf('.');
+        if (lastDot != -1) {
+            prefix = prefix.substring(lastDot + 1);
+        }
         this.prefix = prefix;
         this.asNames = asNames;
         for(String name : getNames()) {
@@ -224,7 +230,7 @@ public class MethodExposer extends Exposer {
         instantiate(STRING_BUILDER, new Instantiator(STRING) {
 
             public void pushArgs() {
-                mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix + "', not a '");
+                mv.visitLdcInsn(typeName + ".__cmp__(x,y) requires y to be '" + typeName + "', not a '");
             }
         });
         mv.visitVarInsn(ALOAD, 1);

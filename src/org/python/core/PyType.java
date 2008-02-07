@@ -632,8 +632,19 @@ public class PyType extends PyObject implements Serializable {
     }
 
 
-    @ExposedGet(name = "__name__")
     public String fastGetName() {
+        return name;
+    }
+
+    @ExposedGet(name = "__name__")
+    public String getName() {
+        if (underlying_class == null) {
+            return name;
+        }
+        int lastDot = name.lastIndexOf('.');
+        if (lastDot != -1) {
+            return name.substring(lastDot + 1);
+        }
         return name;
     }
 
@@ -792,13 +803,16 @@ public class PyType extends PyObject implements Serializable {
         }
         if(name == null) {
             name = c.getName();
-        }
-        if(name.startsWith("org.python.core.Py")) {
-            name = name.substring("org.python.core.Py".length()).toLowerCase();
-        } else {
-            int lastdot = name.lastIndexOf('.');
-            if(lastdot != -1) {
-                name = name.substring(lastdot + 1);
+            // Strip the java fully qualified class name (specifically
+            // remove org.python.core.Py or fallback to stripping to
+            // the last dot)
+            if(name.startsWith("org.python.core.Py")) {
+                name = name.substring("org.python.core.Py".length()).toLowerCase();
+            } else {
+                int lastDot = name.lastIndexOf('.');
+                if(lastDot != -1) {
+                    name = name.substring(lastDot + 1);
+                }
             }
         }
         newtype.name = name;
@@ -1237,29 +1251,34 @@ public class PyType extends PyObject implements Serializable {
         return super.__tojava__(c);
     }
 
+    @ExposedGet(name = "__module__")
     public PyObject getModule() {
-        if (underlying_class != null)
-            return new PyString("__builtin__");
-        return dict.__finditem__("__module__");
+        if (underlying_class == null) {
+            return dict.__finditem__("__module__");
+        }
+        int lastDot = name.lastIndexOf('.');
+        if (lastDot != -1) {
+            return Py.newString(name.substring(0, lastDot));
+        }
+        return Py.newString("__builtin__");
     }
     
     public int getNumSlots(){
         return numSlots;
     }
 
-    public String getFullName () {
-        if (underlying_class != null)
-            return name;
-        PyObject mod = getModule();
-        if (mod != null)
-            return mod.__str__()+"."+name;
-        return name;
-    }
-
     public String toString() {
-        if (underlying_class != null)
-            return "<type '" + name + "'>";
-        return "<class '" + getFullName() + "'>";
+        String kind;
+        if (underlying_class == null) {
+            kind = "class";
+        } else {
+            kind = "type";
+        }
+        PyObject module = getModule();
+        if (module instanceof PyString && !module.toString().equals("__builtin__")) {
+            return String.format("<%s '%s.%s'>", kind, module.toString(), getName());
+        }
+        return String.format("<%s '%s'>", kind, getName());
     }
 
     /**

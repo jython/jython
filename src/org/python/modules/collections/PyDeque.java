@@ -41,7 +41,7 @@ import org.python.expose.MethodType;
  *            Novell Software Development (I) Pvt. Ltd              
  * @created   Mon 10-Sep-2007 19:54:27
  */
-@ExposedType(name = "deque")
+@ExposedType(name = "collections.deque")
 public class PyDeque extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyDeque.class);
@@ -248,8 +248,7 @@ public class PyDeque extends PyObject {
         if (!ts.enterRepr(this)) { 
             return "[...]";
         }
-        String name = getType().fastGetName();
-        StringBuffer buf = new StringBuffer(name).append("([");
+        StringBuffer buf = new StringBuffer("deque").append("([");
         for (Node tmp = header.right; tmp != header; tmp = tmp.right) {
             buf.append(tmp.data.__repr__().toString());
             if (tmp.right != header) {

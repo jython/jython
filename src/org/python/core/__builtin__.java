@@ -52,7 +52,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.range(arg1);
             case 3:
                 if (!(arg1 instanceof PyString)) {
-                    throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().getFullName() + " found");
+                    throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().fastGetName() + " found");
                 }
                 if (arg1.__len__() > 1) {
                     throw Py.TypeError("ord() expected a character, but string of length " + arg1.__len__() + " found");
