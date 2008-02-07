@@ -47,7 +47,7 @@ public class PyObject implements Serializable {
 
     @ExposedDelete(name = "__class__")
     public void delType() {
-        throw Py.TypeError("Can't delete __class__ attribute");
+        throw Py.TypeError("can't delete __class__ attribute");
     }
 
     // xxx
@@ -816,12 +816,12 @@ public class PyObject implements Serializable {
     }
 
     public void noAttributeError(String name) {
-        throw Py.AttributeError(getType().fastGetName() + " has no attribute '" + name + "'");
+        throw Py.AttributeError(String.format("'%.50s' object has no attribute '%.400s'",
+                                              getType().fastGetName(), name));
     }
 
     public void readonlyAttributeError(String name) {
-        throw Py.AttributeError(getType().fastGetName() + " attribute '" + name
-                                + "' is read-only");
+        throw Py.TypeError("readonly attribute");
     }
 
     /**
