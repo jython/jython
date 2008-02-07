@@ -41,7 +41,6 @@ tuple.expose:org.python.core.PyTuple
 type.derived:org.python.core.PyTypeDerived
 unicode.derived:org.python.core.PyUnicodeDerived
 zipimporter.derived:org.python.modules.zipimport.zipimporterDerived
-deque.expose:org.python.modules.collections.PyDeque
 deque.derived:org.python.modules.collections.PyDequeDerived
 defaultdict.expose:org.python.modules.collections.PyDefaultDict
 defaultdict.derived:org.python.modules.collections.PyDefaultDictDerived

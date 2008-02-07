@@ -1,7 +1,7 @@
 package org.python.modules.collections;
 
 import org.python.core.ClassDictInit;
-import org.python.core.Py;
+import org.python.core.PyType;
 import org.python.core.PyObject;
 
 /**
@@ -17,7 +17,7 @@ import org.python.core.PyObject;
 public class Collections implements ClassDictInit {
 
     public static void classDictInit(PyObject dict) {
-        dict.__setitem__("deque", Py.java2py(PyDeque.class));  
-        dict.__setitem__("defaultdict", Py.java2py(PyDefaultDict.class));
+        dict.__setitem__("deque", PyDeque.TYPE);  
+        dict.__setitem__("defaultdict", PyDefaultDict.TYPE);
     }
 }

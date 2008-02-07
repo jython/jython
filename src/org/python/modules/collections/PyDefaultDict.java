@@ -177,7 +177,7 @@ public class PyDefaultDict extends PyDictionary {
     }
     //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
     
-    private static final PyType DEFAULTDICT_TYPE = PyType.fromClass(PyDefaultDict.class);
+    public static final PyType TYPE = PyType.fromClass(PyDefaultDict.class);
     
     /**
      * This attribute is used by the __missing__ method; it is initialized from
@@ -186,7 +186,7 @@ public class PyDefaultDict extends PyDictionary {
     private PyObject default_factory = Py.None;
 
     public PyDefaultDict() {
-        this(DEFAULTDICT_TYPE);
+        this(TYPE);
     }
 
     public PyDefaultDict(PyType subtype) {
@@ -272,7 +272,7 @@ public class PyDefaultDict extends PyDictionary {
     }
 
     final PyDefaultDict defaultdict___copy__() {
-        PyDefaultDict ob = new PyDefaultDict(DEFAULTDICT_TYPE, table);
+        PyDefaultDict ob = new PyDefaultDict(TYPE, table);
         ob.default_factory = default_factory;
         return ob;
     }
