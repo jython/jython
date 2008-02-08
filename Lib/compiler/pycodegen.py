@@ -7,11 +7,13 @@ import types
 from cStringIO import StringIO
 
 from compiler import ast, parse, walk, syntax
-from compiler import pyassem, misc, future, symbols
+#from compiler import pyassem, misc, future, symbols
+from compiler import misc, future, symbols
 from compiler.consts import SC_LOCAL, SC_GLOBAL, SC_FREE, SC_CELL
 from compiler.consts import CO_VARARGS, CO_VARKEYWORDS, CO_NEWLOCALS,\
      CO_NESTED, CO_GENERATOR, CO_GENERATOR_ALLOWED, CO_FUTURE_DIVISION
-from compiler.pyassem import TupleArg
+#from compiler.pyassem import TupleArg
+TupleArg = None
 
 # XXX The version-specific code can go, since this code only works with 2.x.
 # Do we have Python 1.x or Python 2.x?
@@ -119,7 +121,8 @@ class Module(AbstractCompileMode):
         f.write(self.getPycHeader())
         marshal.dump(self.code, f)
 
-    MAGIC = imp.get_magic()
+    #MAGIC = imp.get_magic()
+    MAGIC = None
 
     def getPycHeader(self):
         # compile.c uses marshal to write a long directly, with

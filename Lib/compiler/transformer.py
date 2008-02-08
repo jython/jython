@@ -23,7 +23,8 @@ parseFile(path) -> AST
 # and replace OWNER, ORGANIZATION, and YEAR as appropriate.
 
 from ast import *
-import parser
+#import parser
+parser = None
 # Care must be taken to use only symbols and tokens defined in Python
 # 1.5.2 for code branches executed in 1.5.2
 import symbol
