@@ -69,6 +69,7 @@ public class PyString extends PyBaseString
         }
     }
 
+    @Override
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'string' object";
     }
@@ -1633,7 +1634,7 @@ public class PyString extends PyBaseString
      *         string.length()
      * 
      */
-    private int[] translateIndices(int start, PyObject end) {
+    protected int[] translateIndices(int start, PyObject end) {
         int iEnd;
         if(end == null) {
             iEnd = string.length();

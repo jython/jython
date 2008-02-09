@@ -3,6 +3,7 @@ package org.python.core;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.python.expose.ExposedMethod;
@@ -47,6 +48,17 @@ public class PyList extends PySequenceList {
         for (PyObject item : o.asIterable()) {
             append(item);
         }
+    }
+    
+    private static List<PyObject> listify(Iterator<PyObject> iter) {
+         final List<PyObject> list = new LinkedList<PyObject>();  
+         while (iter.hasNext()) {
+            list.add(iter.next());
+         }
+         return list;
+    }
+    public PyList(Iterator<PyObject> iter) {
+        this(TYPE, listify(iter));
     }
 
     @ExposedNew
