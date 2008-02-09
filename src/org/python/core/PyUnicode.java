@@ -1,5 +1,8 @@
 package org.python.core;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -196,7 +199,7 @@ public class PyUnicode extends PyString implements Iterable {
         }
 
         StringBuilder buffer = new StringBuilder(sliceLength(start, stop, step));
-        for (Iterator<Integer> iter = new SubsequenceIterator(start, stop, step); iter.hasNext();) {
+        for (Iterator<Integer> iter = newSubsequenceIterator(start, stop, step); iter.hasNext();) {
             buffer.appendCodePoint(iter.next());
         }
         return createInstance(new String(buffer));
@@ -243,37 +246,41 @@ public class PyUnicode extends PyString implements Iterable {
         return Py.makeCharacter(codepoint, true);
     }
 
-    // TODO: need to support negative steps;
-    // presumably this is via  a reversed iterator
-    private class SubsequenceIterator implements Iterator {
+    // TODO: rename to SubsequenceIterator
+    private class SubsequenceIteratorImpl implements Iterator {
 
         private int current,  k,  start,  stop,  step;
 
-        SubsequenceIterator(int start, int stop, int step) {
+        SubsequenceIteratorImpl(int start, int stop, int step) {
             k = 0;
             current = start;
             this.start = start;
             this.stop = stop;
             this.step = step;
-            if (start > 0) {
-                advance(start);
+            for (int i = 0; i < start; i++) {
+                nextCodePoint();
             }
         }
 
-        SubsequenceIterator() {
+        SubsequenceIteratorImpl() {
             this(0, getCodePointCount(), 1);
         }
-
+        
         public boolean hasNext() {
-            return current + step <= stop;
+            return current < stop;
         }
 
         public Object next() {
-            current += step;
-            return advance(step);
+            int codePoint = nextCodePoint();
+            current += 1;
+            for (int j = 1; j < step && hasNext(); j++) {
+                nextCodePoint();
+                current += 1;
+            }
+            return codePoint;
         }
 
-        private int advance() {
+        private int nextCodePoint() {
             int U;
             int W1 = string.charAt(k);
             if (W1 >= 0xD800 && W1 < 0xDC00) {
@@ -287,25 +294,69 @@ public class PyUnicode extends PyString implements Iterable {
             return U;
         }
         
-        private int advance(int i) {
-            int U = advance();
-            while (i-- > 1) {
-                advance();
-            }
-            return U;
-        }
-
         public void remove() {
             throw new UnsupportedOperationException("Not supported on PyUnicode objects (immutable)");
         }
     }
 
-    public Iterator newSubsequenceIterator() {
-        return new SubsequenceIterator();
-    }
+    private class SteppedIterator<T> implements Iterator {
 
+        private final Iterator<T> iter;
+        private final int step;
+        private T lookahead = null;
+        
+        public SteppedIterator(int step, Iterator<T> iter) {
+            this.iter = iter;
+            this.step = step;
+            lookahead = advance();
+        }
+        
+        private T advance() {
+            if (iter.hasNext()) {
+                T elem = iter.next();
+                for (int i = 1; i < step && iter.hasNext(); i++) {
+                    iter.next();
+                }
+                return elem;
+            } else {
+                return null;
+            }
+        }
+        public boolean hasNext() {
+            return lookahead != null;
+        }
+        
+        public T next() {
+            T old = lookahead;
+            if (iter.hasNext()) {
+                lookahead = iter.next();
+                for (int i = 1; i < step && iter.hasNext(); i++) {
+                    iter.next();
+                }
+            }
+            else {
+                lookahead = null;
+            }
+            return old;
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+        
+    }
+    
+    public Iterator newSubsequenceIterator() {
+        return new SubsequenceIteratorImpl();
+    }
+    
     public Iterator newSubsequenceIterator(int start, int stop, int step) {
-        return new SubsequenceIterator(start, stop, step);
+        if (step < 0) {
+            return new SteppedIterator(step * -1, new ReversedIterator(new SubsequenceIteratorImpl(stop + 1, start + 1, 1)));
+        }
+        else {
+            return new SubsequenceIteratorImpl(start, stop, step);
+        }
     }
 
     private PyUnicode coerceToUnicode(PyObject o) {
@@ -469,10 +520,11 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
+    // may wish to refactor to a shared class if we find some usage there
     private class PeekIterator<T> implements Iterator {
         private T lookahead = null;
         private final Iterator<T> iter;
-        PeekIterator(Iterator<T> iter) {
+        public PeekIterator(Iterator<T> iter) {
             this.iter = iter;
             next();
         }
@@ -497,8 +549,34 @@ public class PyUnicode extends PyString implements Iterable {
         
     }
 
+    private class ReversedIterator<T> implements Iterator {
+        private final List<T> reversed = new ArrayList<T>();
+        private final Iterator<T> iter;
+
+        ReversedIterator(Iterator<T> iter) {
+            while (iter.hasNext()) {
+                reversed.add(iter.next());
+            }
+            Collections.reverse(reversed);
+            this.iter = reversed.iterator();
+        }
+        
+        public boolean hasNext() {
+            return iter.hasNext();
+        }
+
+        public T next() {
+            return iter.next();
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+        
+    }
+    
     private class LineSplitIterator implements Iterator {
-        private final PeekIterator<Integer> iter = new PeekIterator(new SubsequenceIterator());
+        private final PeekIterator<Integer> iter = new PeekIterator(newSubsequenceIterator());
         private final boolean keepends;
 
         LineSplitIterator(boolean keepends) {
@@ -705,7 +783,7 @@ public class PyUnicode extends PyString implements Iterable {
         PyUnicode oldPiece = coerceToUnicode(oldPieceObj);
 
         if (oldPiece.getCodePointCount() == 0) {
-            SubsequenceIterator iter = new SubsequenceIterator();
+            Iterator<Integer> iter = newSubsequenceIterator();
             for (int i = 1; (maxsplit == -1 || i < maxsplit) && iter.hasNext(); i++) {
                 if (i == 1) {
                     buffer.append(newPiece.string);
@@ -764,7 +842,7 @@ public class PyUnicode extends PyString implements Iterable {
             return str_islower();
         }
         boolean cased = false;
-        for (Iterator<Integer> iter = new SubsequenceIterator(); iter.hasNext();) {
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             int codepoint = iter.next();
             if (Character.isUpperCase(codepoint) || Character.isTitleCase(codepoint)) {
                 return false;
@@ -781,7 +859,7 @@ public class PyUnicode extends PyString implements Iterable {
             return str_isupper();
         }
         boolean cased = false;
-        for (Iterator<Integer> iter = new SubsequenceIterator(); iter.hasNext();) {
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             int codepoint = iter.next();
             if (Character.isLowerCase(codepoint) || Character.isTitleCase(codepoint)) {
                 return false;
@@ -812,7 +890,7 @@ public class PyUnicode extends PyString implements Iterable {
         if (isBasicPlane()) {
             return str_isdigit();
         }
-        for (Iterator<Integer> iter = new SubsequenceIterator(); iter.hasNext();) {
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             if (!Character.isDigit(iter.next())) {
                 return false;
             }
