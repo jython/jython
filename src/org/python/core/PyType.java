@@ -359,10 +359,6 @@ public class PyType extends PyObject implements Serializable {
         return Py.TypeError(msg.toString());
     }
 
-    private static void debug(PyObject[] objs) {
-        System.out.println(new PyList(objs).toString());
-    }
-      
     @ExposedMethod(defaults = "null")
     final PyList type_mro(PyObject o) {
         if(o == null) {
@@ -742,30 +738,16 @@ public class PyType extends PyObject implements Serializable {
         return name.intern();
     }
 
-    private static Object exposed_decl_get_object(Class c, String name) {
-        try {
-            return c.getDeclaredField("exposed_" + name).get(null);
-        } catch (NoSuchFieldException e) {
-            return null;
-        } catch (Exception e) {
-            throw error(e);
-        }
-    }
-
     private static PyException error(Exception e) {
         return Py.JavaError(e);
     }
 
-    private static Method get_non_static_method(
-        Class c,
-        String name,
-        Class[] parmtypes) {
+    private static Method get_non_static_method(Class<?> c, String name, Class[] parmtypes) {
         try {
             Method meth = c.getMethod(name, parmtypes);
             if (!Modifier.isStatic(meth.getModifiers()))
                 return meth;
-        } catch (NoSuchMethodException e) {
-        }
+        } catch (NoSuchMethodException e) {}
         return null;
     }
 
@@ -794,8 +776,6 @@ public class PyType extends PyObject implements Serializable {
                                       String name,
                                       Class c,
                                       Class base,
-                                      boolean newstyle,
-                                      Method setup,
                                       TypeBuilder tb) {
 
         if(base == null) {
@@ -821,34 +801,28 @@ public class PyType extends PyObject implements Serializable {
         // basic mro, base, bases
         fillInMRO(newtype, base);
         PyObject dict;
-        if(tb != null) {
+        if (tb != null) {
             dict = tb.getDict(newtype);
+            newtype.non_instantiable = dict.__finditem__("__new__") == null;
         } else {
             dict = new PyStringMap();
-            if(newstyle) {
-                fillInNewstyle(newtype, setup, dict);
-            } else {
-                fillInClassic(c, base, dict);
-            }
-        }
-        if(newstyle) {
-            newtype.non_instantiable = dict.__finditem__("__new__") == null;
-        }
-        if(base != Object.class) {
-            if(get_descr_method(c, "__set__", OO) != null || /* backw comp */
-            get_descr_method(c, "_doset", OO) != null) {
-                newtype.has_set = true;
-            }
-            if(get_descr_method(c, "__delete__", O) != null || /* backw comp */
-            get_descr_method(c, "_dodel", O) != null) {
-                newtype.has_delete = true;
+            fillInClassic(c, base, dict);
+            if (base != Object.class) {
+                if (get_descr_method(c, "__set__", OO) != null || /* backw comp */
+                get_descr_method(c, "_doset", OO) != null) {
+                    newtype.has_set = true;
+                }
+                if (get_descr_method(c, "__delete__", O) != null || /* backw comp */
+                get_descr_method(c, "_dodel", O) != null) {
+                    newtype.has_delete = true;
+                }
             }
         }
         newtype.dict = dict;
     }
 
-    private static void fillInClassic(Class c, Class base, PyObject dict) {
-        HashMap propnames = new HashMap();
+    private static void fillInClassic(Class c, Class<?> base, PyObject dict) {
+        HashMap<String, Object> propnames = new HashMap<String, Object>();
         Method[] methods = c.getMethods();
         for(int i = 0; i < methods.length; i++) {
             Method meth = methods[i];
@@ -975,24 +949,11 @@ public class PyType extends PyObject implements Serializable {
         }
         if(ClassDictInit.class.isAssignableFrom(c) && c != ClassDictInit.class) {
             try {
-                Method m = c.getMethod("classDictInit",
-                                       new Class[] {PyObject.class});
+                @SuppressWarnings("unchecked")
+                Method m = c.getMethod("classDictInit", PyObject.class);
                 m.invoke(null, new Object[] {dict});
             } catch(Exception exc) {
                 throw error(exc);
-            }
-        }
-    }
-
-    private static void fillInNewstyle(PyType newtype,
-                                       Method setup,
-                                       PyObject dict) {
-        if(setup != null) {
-            try {
-                setup.invoke(null, new Object[] {dict, null});
-            } catch(Exception e) {
-                e.printStackTrace();
-                throw error(e);
             }
         }
     }
@@ -1043,60 +1004,30 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static PyType addFromClass(Class c) {
-        if(ExposeAsSuperclass.class.isAssignableFrom(c)) {
+        if (ExposeAsSuperclass.class.isAssignableFrom(c)) {
             PyType exposedAs = fromClass(c.getSuperclass());
             class_to_type.put(c, exposedAs);
             return exposedAs;
         }
-        Method setup = null;
-        boolean newstyle = Newstyle.class.isAssignableFrom(c);
         Class base = null;
         String name = null;
         TypeBuilder tb = classToBuilder == null ? null : classToBuilder.get(c);
-        if(tb != null) {
+        if (tb != null) {
             name = tb.getName();
-            if(!tb.getBase().equals(Object.class)) {
-                base = tb.getBase(); 
-            }
-            newstyle = true;
-        } else {
-            try {
-                setup = c.getDeclaredMethod("typeSetup", new Class[] {PyObject.class,
-                                                                      Newstyle.class});
-                newstyle = true;
-            } catch(NoSuchMethodException e) {} catch(Exception e) {
-                throw error(e);
-            }
-            if(newstyle) { // newstyle
-                base = (Class)exposed_decl_get_object(c, "base");
-                name = (String)exposed_decl_get_object(c, "name");
+            if (!tb.getBase().equals(Object.class)) {
+                base = tb.getBase();
             }
         }
         PyType newtype = class_to_type.get(c);
         if (newtype == null) {
             newtype = c == PyType.class ? new PyType(true) : new PyType();
             class_to_type.put(c, newtype);
-            fillFromClass(newtype, name, c, base, newstyle, setup, tb);
+            fillFromClass(newtype, name, c, base, tb);
         }
         return newtype;
     }
 
     public static PyType TYPE = fromClass(PyType.class);
-
-    /*
-     * considers:
-     *   if c implements Newstyle => c and all subclasses
-     *    are considered newstyle
-     *
-     *   if c has static typeSetup(PyObject dict, Newstyle marker)
-     *   => c is considired newstyle, subclasses are not automatically;
-     *    typeSetup is invoked to populate dict which will become
-     *    type's __dict__
-     *
-     *   Class exposed_base
-     *   String exposed_name
-     *
-     */
 
     public static synchronized PyType fromClass(Class c) {
         if (class_to_type == null) {
