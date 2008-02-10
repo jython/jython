@@ -15,6 +15,7 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -53,6 +54,8 @@ public interface PyTypes {
 
     public static final Type BUILTIN_METHOD = Type.getType(PyBuiltinMethod.class);
 
+    public static final Type ABUILTIN_METHOD = Type.getType(PyBuiltinMethod[].class);
+
     public static final Type BUILTIN_METHOD_NARROW = Type.getType(PyBuiltinMethodNarrow.class);
 
     public static final Type BUILTIN_FUNCTION = Type.getType(PyBuiltinFunction.class);
@@ -69,6 +72,8 @@ public interface PyTypes {
     public static final Type EXPOSED_TYPE = Type.getType(ExposedType.class);
 
     public static final Type EXPOSED_METHOD = Type.getType(ExposedMethod.class);
+
+    public static final Type EXPOSED_CLASS_METHOD = Type.getType(ExposedClassMethod.class);
 
     public static final Type EXPOSED_NEW = Type.getType(ExposedNew.class);
 

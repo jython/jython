@@ -11,7 +11,6 @@ bool.derived:org.python.core.PyBooleanDerived
 classmethod.derived:org.python.core.PyClassMethodDerived
 complex.derived:org.python.core.PyComplexDerived
 dict.derived:org.python.core.PyDictionaryDerived
-dict.expose:org.python.core.PyDictionary
 file.derived:org.python.core.PyFileDerived
 float.derived:org.python.core.PyFloatDerived
 #function.expose:org.python.core.PyFunction
@@ -42,5 +41,4 @@ type.derived:org.python.core.PyTypeDerived
 unicode.derived:org.python.core.PyUnicodeDerived
 zipimporter.derived:org.python.modules.zipimport.zipimporterDerived
 deque.derived:org.python.modules.collections.PyDequeDerived
-defaultdict.expose:org.python.modules.collections.PyDefaultDict
 defaultdict.derived:org.python.modules.collections.PyDefaultDictDerived

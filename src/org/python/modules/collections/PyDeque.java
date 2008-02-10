@@ -22,24 +22,17 @@ import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
 /**
- * PyDeque - This class implements the functionalities of Deque data structure.
- * Deques are a generalization of stacks and queues (the name is pronounced 'deck' 
- * and is short for 'double-ended queue'). Deques support thread-safe, memory 
- * efficient appends and pops from either side of the deque with approximately the 
- * same O(1) performance in either direction.
- *   
- * Though list objects support similar operations, they are optimized for fast 
- * fixed-length operations and incur O(n) memory movement costs for pop(0) and 
- * insert(0, v) operations which change both the size and position of the underlying
- * data representation.
- *   
- * collections.deque([iterable]) - returns a new deque object initialized left-to-right
- * (using append()) with data from iterable. If iterable is not specified, the new 
- * deque is empty.
- *    
- * @author    Mehendran T (mehendran@gmail.com)
- *            Novell Software Development (I) Pvt. Ltd              
- * @created   Mon 10-Sep-2007 19:54:27
+ * PyDeque - This class implements the functionalities of Deque data structure. Deques are a
+ * generalization of stacks and queues (the name is pronounced 'deck' and is short for 'double-ended
+ * queue'). Deques support thread-safe, memory efficient appends and pops from either side of the
+ * deque with approximately the same O(1) performance in either direction.
+ * 
+ * Though list objects support similar operations, they are optimized for fast fixed-length
+ * operations and incur O(n) memory movement costs for pop(0) and insert(0, v) operations which
+ * change both the size and position of the underlying data representation.
+ * 
+ * collections.deque([iterable]) - returns a new deque object initialized left-to-right (using
+ * append()) with data from iterable. If iterable is not specified, the new deque is empty.
  */
 @ExposedType(name = "collections.deque")
 public class PyDeque extends PyObject {

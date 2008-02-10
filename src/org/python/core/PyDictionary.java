@@ -4,589 +4,29 @@ package org.python.core;
 import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.python.core.PyMapSet.PySetIter;
+import org.python.expose.ExposedClassMethod;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 
 /**
  * A builtin python dictionary.
  */
 
+@ExposedType(name = "dict")
 public class PyDictionary extends PyObject implements Map {
 
-    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-    /* type info */
-
-    public static final String exposed_name="dict";
-
-    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___ne__ extends PyBuiltinMethodNarrow {
-
-            exposed___ne__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___ne__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyDictionary)self).dict___ne__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__ne__",new PyMethodDescr("__ne__",PyDictionary.class,1,1,new exposed___ne__(null,null)));
-        class exposed___eq__ extends PyBuiltinMethodNarrow {
-
-            exposed___eq__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___eq__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyDictionary)self).dict___eq__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__eq__",new PyMethodDescr("__eq__",PyDictionary.class,1,1,new exposed___eq__(null,null)));
-        class exposed___lt__ extends PyBuiltinMethodNarrow {
-
-            exposed___lt__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___lt__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyDictionary)self).dict___lt__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__lt__",new PyMethodDescr("__lt__",PyDictionary.class,1,1,new exposed___lt__(null,null)));
-        class exposed___gt__ extends PyBuiltinMethodNarrow {
-
-            exposed___gt__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___gt__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyDictionary)self).dict___gt__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__gt__",new PyMethodDescr("__gt__",PyDictionary.class,1,1,new exposed___gt__(null,null)));
-        class exposed___ge__ extends PyBuiltinMethodNarrow {
-
-            exposed___ge__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___ge__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyDictionary)self).dict___ge__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__ge__",new PyMethodDescr("__ge__",PyDictionary.class,1,1,new exposed___ge__(null,null)));
-        class exposed___le__ extends PyBuiltinMethodNarrow {
-
-            exposed___le__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___le__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyDictionary)self).dict___le__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__le__",new PyMethodDescr("__le__",PyDictionary.class,1,1,new exposed___le__(null,null)));
-        class exposed___cmp__ extends PyBuiltinMethodNarrow {
-
-            exposed___cmp__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___cmp__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                int ret=((PyDictionary)self).dict___cmp__(arg0);
-                if (ret==-2) {
-                    throw Py.TypeError("dict"+".__cmp__(x,y) requires y to be '"+"dict"+"', not a '"+(arg0).getType().fastGetName()+"'");
-                }
-                return Py.newInteger(ret);
-            }
-
-        }
-        dict.__setitem__("__cmp__",new PyMethodDescr("__cmp__",PyDictionary.class,1,1,new exposed___cmp__(null,null)));
-        class exposed___getitem__ extends PyBuiltinMethodNarrow {
-
-            exposed___getitem__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___getitem__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyDictionary)self).dict___finditem__(arg0);
-                if (ret==null)
-                    throw Py.KeyError(arg0.toString());
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__getitem__",new PyMethodDescr("__getitem__",PyDictionary.class,1,1,new exposed___getitem__(null,null)));
-        class exposed_fromkeys extends PyBuiltinMethodNarrow {
-
-            exposed_fromkeys(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_fromkeys(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return dict_fromkeys((PyType)getSelf(),arg0,arg1);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return dict_fromkeys((PyType)getSelf(),arg0);
-            }
-
-        }
-        dict.__setitem__("fromkeys",new PyClassMethodDescr("fromkeys",PyDictionary.class,1,2,new exposed_fromkeys(null,null)));
-        class exposed_get extends PyBuiltinMethodNarrow {
-
-            exposed_get(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_get(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return((PyDictionary)self).dict_get(arg0,arg1);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyDictionary)self).dict_get(arg0);
-            }
-
-        }
-        dict.__setitem__("get",new PyMethodDescr("get",PyDictionary.class,1,2,new exposed_get(null,null)));
-        class exposed_setdefault extends PyBuiltinMethodNarrow {
-
-            exposed_setdefault(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_setdefault(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return((PyDictionary)self).dict_setdefault(arg0,arg1);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyDictionary)self).dict_setdefault(arg0);
-            }
-
-        }
-        dict.__setitem__("setdefault",new PyMethodDescr("setdefault",PyDictionary.class,1,2,new exposed_setdefault(null,null)));
-        class exposed_pop extends PyBuiltinMethodNarrow {
-
-            exposed_pop(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_pop(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                return((PyDictionary)self).dict_pop(arg0,arg1);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PyDictionary)self).dict_pop(arg0);
-            }
-
-        }
-        dict.__setitem__("pop",new PyMethodDescr("pop",PyDictionary.class,1,2,new exposed_pop(null,null)));
-        class exposed_popitem extends PyBuiltinMethodNarrow {
-
-            exposed_popitem(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_popitem(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict_popitem();
-            }
-
-        }
-        dict.__setitem__("popitem",new PyMethodDescr("popitem",PyDictionary.class,0,0,new exposed_popitem(null,null)));
-        class exposed_has_key extends PyBuiltinMethodNarrow {
-
-            exposed_has_key(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_has_key(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return Py.newBoolean(((PyDictionary)self).dict_has_key(arg0));
-            }
-
-        }
-        dict.__setitem__("has_key",new PyMethodDescr("has_key",PyDictionary.class,1,1,new exposed_has_key(null,null)));
-        class exposed___contains__ extends PyBuiltinMethodNarrow {
-
-            exposed___contains__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___contains__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return Py.newBoolean(((PyDictionary)self).dict___contains__(arg0));
-            }
-
-        }
-        dict.__setitem__("__contains__",new PyMethodDescr("__contains__",PyDictionary.class,1,1,new exposed___contains__(null,null)));
-        class exposed___len__ extends PyBuiltinMethodNarrow {
-
-            exposed___len__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___len__(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newInteger(((PyDictionary)self).dict___len__());
-            }
-
-        }
-        dict.__setitem__("__len__",new PyMethodDescr("__len__",PyDictionary.class,0,0,new exposed___len__(null,null)));
-        class exposed___setitem__ extends PyBuiltinMethodNarrow {
-
-            exposed___setitem__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___setitem__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                ((PyDictionary)self).dict___setitem__(arg0,arg1);
-                return Py.None;
-            }
-
-        }
-        dict.__setitem__("__setitem__",new PyMethodDescr("__setitem__",PyDictionary.class,2,2,new exposed___setitem__(null,null)));
-        class exposed___delitem__ extends PyBuiltinMethodNarrow {
-
-            exposed___delitem__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___delitem__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                ((PyDictionary)self).dict___delitem__(arg0);
-                return Py.None;
-            }
-
-        }
-        dict.__setitem__("__delitem__",new PyMethodDescr("__delitem__",PyDictionary.class,1,1,new exposed___delitem__(null,null)));
-        class exposed_keys extends PyBuiltinMethodNarrow {
-
-            exposed_keys(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_keys(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict_keys();
-            }
-
-        }
-        dict.__setitem__("keys",new PyMethodDescr("keys",PyDictionary.class,0,0,new exposed_keys(null,null)));
-        class exposed_update extends PyBuiltinMethodNarrow {
-
-            exposed_update(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_update(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                ((PyDictionary)self).dict_update(arg0);
-                return Py.None;
-            }
-
-        }
-        dict.__setitem__("update",new PyMethodDescr("update",PyDictionary.class,1,1,new exposed_update(null,null)));
-        class exposed_itervalues extends PyBuiltinMethodNarrow {
-
-            exposed_itervalues(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_itervalues(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict_itervalues();
-            }
-
-        }
-        dict.__setitem__("itervalues",new PyMethodDescr("itervalues",PyDictionary.class,0,0,new exposed_itervalues(null,null)));
-        class exposed_iteritems extends PyBuiltinMethodNarrow {
-
-            exposed_iteritems(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_iteritems(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict_iteritems();
-            }
-
-        }
-        dict.__setitem__("iteritems",new PyMethodDescr("iteritems",PyDictionary.class,0,0,new exposed_iteritems(null,null)));
-        class exposed_iterkeys extends PyBuiltinMethodNarrow {
-
-            exposed_iterkeys(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_iterkeys(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict_iterkeys();
-            }
-
-        }
-        dict.__setitem__("iterkeys",new PyMethodDescr("iterkeys",PyDictionary.class,0,0,new exposed_iterkeys(null,null)));
-        class exposed_items extends PyBuiltinMethodNarrow {
-
-            exposed_items(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_items(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict_items();
-            }
-
-        }
-        dict.__setitem__("items",new PyMethodDescr("items",PyDictionary.class,0,0,new exposed_items(null,null)));
-        class exposed_values extends PyBuiltinMethodNarrow {
-
-            exposed_values(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_values(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict_values();
-            }
-
-        }
-        dict.__setitem__("values",new PyMethodDescr("values",PyDictionary.class,0,0,new exposed_values(null,null)));
-        class exposed_clear extends PyBuiltinMethodNarrow {
-
-            exposed_clear(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_clear(self,info);
-            }
-
-            public PyObject __call__() {
-                ((PyDictionary)self).dict_clear();
-                return Py.None;
-            }
-
-        }
-        dict.__setitem__("clear",new PyMethodDescr("clear",PyDictionary.class,0,0,new exposed_clear(null,null)));
-        class exposed_copy extends PyBuiltinMethodNarrow {
-
-            exposed_copy(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_copy(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict_copy();
-            }
-
-        }
-        dict.__setitem__("copy",new PyMethodDescr("copy",PyDictionary.class,0,0,new exposed_copy(null,null)));
-        class exposed___iter__ extends PyBuiltinMethodNarrow {
-
-            exposed___iter__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___iter__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyDictionary)self).dict___iter__();
-            }
-
-        }
-        dict.__setitem__("__iter__",new PyMethodDescr("__iter__",PyDictionary.class,0,0,new exposed___iter__(null,null)));
-        class exposed___hash__ extends PyBuiltinMethodNarrow {
-
-            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___hash__(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newInteger(((PyDictionary)self).dict_hashCode());
-            }
-
-        }
-        dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyDictionary.class,0,0,new exposed___hash__(null,null)));
-        class exposed___repr__ extends PyBuiltinMethodNarrow {
-
-            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___repr__(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyDictionary)self).dict_toString());
-            }
-
-        }
-        dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyDictionary.class,0,0,new exposed___repr__(null,null)));
-        class exposed___init__ extends PyBuiltinMethod {
-
-            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___init__(self,info);
-            }
-
-            public PyObject __call__(PyObject[]args) {
-                return __call__(args,Py.NoKeywords);
-            }
-
-            public PyObject __call__(PyObject[]args,String[]keywords) {
-                ((PyDictionary)self).dict_init(args,keywords);
-                return Py.None;
-            }
-
-        }
-        dict.__setitem__("__init__",new PyMethodDescr("__init__",PyDictionary.class,-1,-1,new exposed___init__(null,null)));
-        dict.__setitem__("__new__",new PyNewWrapper(PyDictionary.class,"__new__",-1,-1) {
-
-                                                                                            public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                                PyDictionary newobj;
-                                                                                                if (for_type==subtype) {
-                                                                                                    newobj=new PyDictionary();
-                                                                                                    if (init)
-                                                                                                        newobj.dict_init(args,keywords);
-                                                                                                } else {
-                                                                                                    newobj=new PyDictionaryDerived(subtype);
-                                                                                                }
-                                                                                                return newobj;
-                                                                                            }
-
-                                                                                        });
-    }
-    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-
+    public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
+    
     protected final Map<PyObject, PyObject> table;
 
     /**
@@ -639,13 +79,15 @@ public class PyDictionary extends PyObject implements Map {
         }
     }
 
-    final protected void dict_init(PyObject[] args,String[] kwds) {
+    @ExposedMethod
+    @ExposedNew
+    final protected void dict___init__(PyObject[] args, String[] kwds) {
         int nargs = args.length - kwds.length;
         if (nargs > 1)
             throw PyBuiltinFunction.DefaultInfo.unexpectedCall(
                     nargs,
                     false,
-                    exposed_name,
+                    "dict",
                     0,
                     1);
         if (nargs == 1) {
@@ -678,22 +120,17 @@ public class PyDictionary extends PyObject implements Map {
             dict___setitem__(Py.newString(kwds[i]), args[nargs + i]);
         }        
     }
+    
     public static PyObject fromkeys(PyObject keys) {
-        return fromkeys(keys, null);
+        return fromkeys(keys, Py.None);
     }
 
     public static PyObject fromkeys(PyObject keys, PyObject value) {
-        return dict_fromkeys(PyType.fromClass(PyDictionary.class), keys, value);
+        return dict_fromkeys(TYPE, keys, value);
     }
 
-    final static PyObject dict_fromkeys(PyType type, PyObject keys) {
-        return dict_fromkeys(type, keys, null);
-    }
-
+    @ExposedClassMethod(defaults = "Py.None")
     final static PyObject dict_fromkeys(PyType type, PyObject keys, PyObject value) {
-        if (value == null) {
-            value = Py.None;
-        }
         PyObject d = type.__call__();
         for (PyObject o : keys.asIterable()) {
             d.__setitem__(o, value);
@@ -705,6 +142,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict___len__();
     }
 
+    @ExposedMethod
     final int dict___len__() {
         return table.size();
     }
@@ -713,6 +151,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict___nonzero__();
     }
 
+    @ExposedMethod
     final boolean dict___nonzero__() {
         return table.size() != 0;
     }
@@ -722,17 +161,23 @@ public class PyDictionary extends PyObject implements Map {
     }
 
     public PyObject __finditem__(PyObject key) {
-        return dict___finditem__(key);
+        return table.get(key);
     }
 
-    final PyObject dict___finditem__(PyObject key) {
-        return table.get(key);
+    @ExposedMethod
+    final PyObject dict___getitem__(PyObject key) {
+        PyObject ret = table.get(key);
+        if(ret == null) {
+            throw Py.KeyError(key);
+        }
+        return ret;
     }
 
     public void __setitem__(PyObject key, PyObject value) {
         dict___setitem__(key,value);
     }
 
+    @ExposedMethod
     final void dict___setitem__(PyObject key, PyObject value)  {
         table.put(key, value);
     }
@@ -741,6 +186,7 @@ public class PyDictionary extends PyObject implements Map {
         dict___delitem__(key);
     }
 
+    @ExposedMethod
     final void dict___delitem__(PyObject key) {
         Object ret = table.remove(key);
         if (ret == null)
@@ -751,6 +197,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict___iter__();
     }
 
+    @ExposedMethod
     final PyObject dict___iter__() {
         return iterkeys();
     }
@@ -759,6 +206,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict_toString();
     }
 
+    @ExposedMethod(names = {"__repr__", "__str__"})
     final String dict_toString() {
         ThreadState ts = Py.getThreadState();
         if (!ts.enterRepr(this)) {
@@ -786,6 +234,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict___eq__(ob_other);
     }
 
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject dict___eq__(PyObject ob_other) {               
         PyType thisType = getType();
         PyType otherType = ob_other.getType();
@@ -816,12 +265,14 @@ public class PyDictionary extends PyObject implements Map {
         return dict___ne__(ob_other);
     }
 
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject dict___ne__(PyObject ob_other) {
         PyObject eq_result = __eq__(ob_other);
         if (eq_result == null) return null;
         return eq_result.__not__();
     }
-    
+
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject dict___lt__(PyObject ob_other){
     	int result = __cmp__(ob_other);
     	if(result == -2){
@@ -829,7 +280,8 @@ public class PyDictionary extends PyObject implements Map {
     	}
     	return result < 0 ? Py.True : Py.False;
     }
-    
+
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject dict___gt__(PyObject ob_other){
     	int result = __cmp__(ob_other);
     	if(result == -2){
@@ -837,7 +289,8 @@ public class PyDictionary extends PyObject implements Map {
     	}
     	return result > 0 ? Py.True : Py.False;
     }
-    
+
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject dict___le__(PyObject ob_other){
     	int result = __cmp__(ob_other);
     	if(result == -2){
@@ -845,7 +298,8 @@ public class PyDictionary extends PyObject implements Map {
     	}
     	return result <= 0 ? Py.True : Py.False;
     }
-    
+
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject dict___ge__(PyObject ob_other){
     	int result = __cmp__(ob_other);
     	if(result == -2){
@@ -858,6 +312,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict___cmp__(ob_other);
     }
 
+    @ExposedMethod(type = MethodType.CMP)
     final int dict___cmp__(PyObject ob_other) {
         PyType thisType = getType();
         PyType otherType = ob_other.getType();
@@ -908,6 +363,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict_has_key(key);
     }
 
+    @ExposedMethod
     final boolean dict_has_key(PyObject key) {
         return table.containsKey(key);
     }
@@ -916,6 +372,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict___contains__(o);
     }
 
+    @ExposedMethod
     final boolean dict___contains__(PyObject o) {
         return dict_has_key(o);
     }
@@ -932,8 +389,9 @@ public class PyDictionary extends PyObject implements Map {
         return dict_get(key,default_object);
     }
 
+    @ExposedMethod(defaults = "Py.None")
     final PyObject dict_get(PyObject key, PyObject default_object) {
-        PyObject o = dict___finditem__(key);
+        PyObject o = table.get(key);
         if (o == null)
             return default_object;
         else
@@ -947,11 +405,7 @@ public class PyDictionary extends PyObject implements Map {
      * @param key  the key to lookup in the dictionary.
      */
     public PyObject get(PyObject key) {
-        return dict_get(key);
-    }
-
-    final PyObject dict_get(PyObject key) {
-        return get(key, Py.None);
+        return dict_get(key, Py.None);
     }
 
     /**
@@ -961,6 +415,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict_copy();
     }
 
+    @ExposedMethod
     final PyDictionary dict_copy() {
         return new PyDictionary(table); // no need to clone()
     }
@@ -972,6 +427,7 @@ public class PyDictionary extends PyObject implements Map {
         dict_clear();
     }
 
+    @ExposedMethod
     final void dict_clear() {
         table.clear();
     }
@@ -984,6 +440,7 @@ public class PyDictionary extends PyObject implements Map {
         dict_update(d);
     }
 
+    @ExposedMethod
     final void dict_update(PyObject d) {
         if (d instanceof PyDictionary) {
             do_update((PyDictionary)d);
@@ -1012,11 +469,7 @@ public class PyDictionary extends PyObject implements Map {
      * @param key   the key to lookup in the dictionary.
      */
     public PyObject setdefault(PyObject key) {
-        return dict_setdefault(key);
-    }
-
-    final PyObject dict_setdefault(PyObject key) {
-        return setdefault(key, Py.None);
+        return dict_setdefault(key, Py.None);
     }
 
     /**
@@ -1031,6 +484,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict_setdefault(key,failobj);
     }
 
+    @ExposedMethod(defaults = "Py.None")
     final PyObject dict_setdefault(PyObject key, PyObject failobj) {
         PyObject o = __finditem__(key);
         if (o == null) {
@@ -1044,14 +498,7 @@ public class PyDictionary extends PyObject implements Map {
      * from the dictionary.
      */
     public PyObject pop(PyObject key) {
-        return dict_pop(key);
-    }
-
-    final PyObject dict_pop(PyObject key) {
-        if (!table.containsKey(key)) {
-            throw Py.KeyError("popitem(): dictionary is empty");
-        }
-        return table.remove(key);
+        return dict_pop(key, null);
     }
 
     /**
@@ -1062,8 +509,12 @@ public class PyDictionary extends PyObject implements Map {
         return dict_pop(key, defaultValue);
     }
 
+    @ExposedMethod(defaults = "null")
     final PyObject dict_pop(PyObject key, PyObject defaultValue) {
         if (!table.containsKey(key)) {
+            if (defaultValue == null) {
+                throw Py.KeyError("popitem(): dictionary is empty");
+            }
             return defaultValue;
         }
         return table.remove(key);
@@ -1078,6 +529,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict_popitem();
     }
 
+    @ExposedMethod
     final PyObject dict_popitem() {
         Iterator it = table.entrySet().iterator();
         if (!it.hasNext())
@@ -1097,6 +549,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict_items();
     }
 
+    @ExposedMethod
     final PyList dict_items() {
         List<PyObject> list = new ArrayList<PyObject>(table.size());
         for (Entry<PyObject, PyObject> entry : table.entrySet()) {
@@ -1112,12 +565,14 @@ public class PyDictionary extends PyObject implements Map {
         return dict_keys();
     }
 
+    @ExposedMethod
     final PyList dict_keys() {
-        return new PyList(new ArrayList(table.keySet()));
+        return new PyList(new ArrayList<PyObject>(table.keySet()));
     }
 
+    @ExposedMethod
     final PyList dict_values() {
-        return new PyList(new ArrayList(table.values()));
+        return new PyList(new ArrayList<PyObject>(table.values()));
     }
 
     /**
@@ -1127,6 +582,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict_iteritems();
     }
 
+    @ExposedMethod
     final PyObject dict_iteritems() {
         return new ItemsIter(table.entrySet());
     }
@@ -1138,6 +594,7 @@ public class PyDictionary extends PyObject implements Map {
         return dict_iterkeys();
     }
 
+    @ExposedMethod
     final PyObject dict_iterkeys() {
         return new ValuesIter(table.keySet());
     }
@@ -1149,15 +606,17 @@ public class PyDictionary extends PyObject implements Map {
         return dict_itervalues();
     }
 
+    @ExposedMethod
     final PyObject dict_itervalues() {
         return new ValuesIter(table.values());
     }
 
     public int hashCode() {
-        return dict_hashCode();
+        return dict___hash__();
     }
 
-    final int dict_hashCode() {
+    @ExposedMethod
+    final int dict___hash__() {
         throw Py.TypeError("unhashable type");
     }
 
@@ -1486,7 +945,3 @@ abstract class PyMapSet extends AbstractSet {
     
     private final Collection coll;
 }
-
-
-
-

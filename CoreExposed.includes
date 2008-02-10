@@ -4,6 +4,7 @@ org/python/core/PyBoolean.class
 org/python/core/PyBuiltinFunction.class
 org/python/core/PyClassMethod.class
 org/python/core/PyComplex.class
+org/python/core/PyDictionary.class
 org/python/core/PyEnumerate.class
 org/python/core/PyFile.class
 org/python/core/PyFloat.class
@@ -15,6 +16,7 @@ org/python/core/PyObject.class
 org/python/core/PyString.class
 org/python/core/PyType.class
 org/python/core/PyUnicode.class
+org/python/modules/collections/PyDefaultDict.class
 org/python/modules/collections/PyDeque.class
 org/python/modules/time/PyTimeTuple.class
 org/python/modules/zipimport/zipimporter.class

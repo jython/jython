@@ -246,7 +246,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                                                passthroughVisitor) {
 
                     @Override
-                    public void handleResult(MethodExposer exposer) {
+                    public void handleResult(InstanceMethodExposer exposer) {
                         methodExposers.add(exposer);
                     }
 
@@ -271,6 +271,12 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
                     @Override
                     public void exposeAsDeleteDescriptor(String descName) {
                         getDescriptorExposer(descName).addMethodDeleter(name, desc);
+                    }
+
+                    @Override
+                    public void handleResult(ClassMethodExposer exposer) {
+                        methodExposers.add(exposer);
+                        
                     }
                 };
             }

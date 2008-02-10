@@ -65,7 +65,7 @@ public abstract class Exposer implements Opcodes, PyTypes {
     /**
      * Generates this Exposer and loads it into the given Loader.
      */
-    protected Class load(BytecodeLoader.Loader l) {
+    protected Class<?> load(BytecodeLoader.Loader l) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         generate(cw);
         return l.loadClassFromBytes(getClassName(), cw.toByteArray());

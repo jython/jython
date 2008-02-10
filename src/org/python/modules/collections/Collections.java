@@ -9,10 +9,6 @@ import org.python.core.PyObject;
  *               structures.
  *               - deque:  ordered collection accessible from endpoints only
  *               - defaultdict:  dict subclass with a default value factory
- * 
- * @author    Mehendran T (mehendran@gmail.com)
- *            Novell Software Development (I) Pvt. Ltd              
- * @created   Fri 07-Sep-2007 18:50:20
  */
 public class Collections implements ClassDictInit {
 

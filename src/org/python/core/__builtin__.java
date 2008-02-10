@@ -316,7 +316,7 @@ public class __builtin__ {
         dict.__setitem__("float", PyFloat.TYPE);
         dict.__setitem__("long", PyType.fromClass(PyLong.class));
         dict.__setitem__("complex", PyComplex.TYPE);
-        dict.__setitem__("dict", PyType.fromClass(PyDictionary.class));
+        dict.__setitem__("dict", PyDictionary.TYPE);
         dict.__setitem__("list", PyList.TYPE);
         dict.__setitem__("tuple", PyType.fromClass(PyTuple.class));
         dict.__setitem__("set", PyType.fromClass(PySet.class));

@@ -6,6 +6,7 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
 import org.python.expose.ExposedMethod;
@@ -120,6 +121,24 @@ public class SimpleExposed extends PyObject {
     @ExposedMethod
     public char charReturn() {
         return 'a';
+    }
+
+    @ExposedClassMethod 
+    public static char classmethod(PyType onType) {
+        return 'a';
+    }
+
+    @ExposedClassMethod(defaults = {"null", "Py.None"})
+    public static int defaultsclassmethod(PyType onType, String possiblyNull, PyObject possiblyNone) {
+        if (possiblyNull == null) {
+            return 0;
+        } else if (possiblyNull.equals("hello")) {
+            return 1;
+        } else if (possiblyNone.equals(Py.None)) {
+            return 2;
+        } else {
+            return 3;
+        }
     }
 
     @ExposedGet(name = "tostring")

@@ -21,7 +21,7 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
                                        new EmptyVisitor()) {
 
             @Override
-            public void handleResult(MethodExposer exposer) {
+            public void handleResult(InstanceMethodExposer exposer) {
                 resultantMethExp = exposer;
             }
 
@@ -44,6 +44,9 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
             public void exposeAsSetDescriptor(String descName) {
                 setName = descName;
             }
+
+            @Override
+            public void handleResult(ClassMethodExposer exposer) {}
         };
     }
 
@@ -98,7 +101,7 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
 
     public void testNamesExposedMethod() {
         makeAndVisit(EXPOSED_METHOD, METHOD, "names", "first", "second");
-        assertEquals(0, resultantMethExp.getDefaults().length);
+        assertEquals(0, resultantMethExp.defaults.length);
         assertEquals(2, resultantMethExp.getNames().length);
         assertEquals("first", resultantMethExp.getNames()[0]);
         assertEquals("second", resultantMethExp.getNames()[1]);
@@ -106,8 +109,8 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
 
     public void testDefaultsExposedMethod() {
         makeAndVisit(EXPOSED_METHOD, METHOD, "defaults", "Py.None");
-        assertEquals(1, resultantMethExp.getDefaults().length);
-        assertEquals("Py.None", resultantMethExp.getDefaults()[0]);
+        assertEquals(1, resultantMethExp.defaults.length);
+        assertEquals("Py.None", resultantMethExp.defaults[0]);
     }
 
     public void testDelDescriptor() {
@@ -167,7 +170,7 @@ public class ExposeMethodFinderTest extends TestCase implements Opcodes, PyTypes
 
     private static final String DELETE = "del";
 
-    private MethodExposer resultantMethExp;
+    private InstanceMethodExposer resultantMethExp;
 
     private Exposer resultantNewExp;
 
