@@ -783,7 +783,7 @@ def test_main(verbose=False):
     
     _verbose = test_support.verbose
     try:
-      test_support.verbose = False
+      test_support.verbose = verbose
       test_support.run_suite(test_suite)
     finally:
       test_support.verbose = _verbose
