@@ -14,29 +14,22 @@ dict.derived:org.python.core.PyDictionaryDerived
 file.derived:org.python.core.PyFileDerived
 float.derived:org.python.core.PyFloatDerived
 #function.expose:org.python.core.PyFunction
-immutableset.expose:org.python.modules.sets.PyImmutableSet
 #gderived.py doesn't handle derived out of org.python.core
 #immutableset.derived:org.python.modules.sets.PyImmutableSetDerived
 int.derived:org.python.core.PyIntegerDerived
 list.derived:org.python.core.PyListDerived
 long.derived:org.python.core.PyLongDerived
-long.expose:org.python.core.PyLong
 module.derived:org.python.core.PyModuleDerived
 object.derived:org.python.core.PyObjectDerived
 property.derived:org.python.core.PyPropertyDerived
-property.expose:org.python.core.PyProperty
 #random.derived:org.python.modules.random.PyRandomDerived
 #random.expose:org.python.modules.random.PyRandom
-set.expose:org.python.modules.sets.PySet
 #gderived.py doesn't handle derived out of org.python.core
 #set.derived:org.python.modules.sets.PySetDerived
-slice.expose:org.python.core.PySlice
 slice.derived:org.python.core.PySliceDerived
 str.derived:org.python.core.PyStringDerived
 super.derived:org.python.core.PySuperDerived
-super.expose:org.python.core.PySuper
 tuple.derived:org.python.core.PyTupleDerived
-tuple.expose:org.python.core.PyTuple
 type.derived:org.python.core.PyTypeDerived
 unicode.derived:org.python.core.PyUnicodeDerived
 zipimporter.derived:org.python.modules.zipimport.zipimporterDerived

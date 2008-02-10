@@ -1,95 +1,23 @@
 //Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import org.python.core.PyObject.ConversionException;
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
 
 /**
  * A python slice object.
  */
 
+@ExposedType(name = "slice")
 public class PySlice extends PyObject {
-
-    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-    /* type info */
-
-    public static final String exposed_name="slice";
-
-    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("start",new PyGetSetDescr("start",PySlice.class,"getStart",null,null));
-        dict.__setitem__("stop",new PyGetSetDescr("stop",PySlice.class,"getStop",null,null));
-        dict.__setitem__("step",new PyGetSetDescr("step",PySlice.class,"getStep",null,null));
-        class exposed_indices extends PyBuiltinMethodNarrow {
-
-            exposed_indices(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed_indices(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                return((PySlice)self).slice_indices(arg0);
-            }
-
-        }
-        dict.__setitem__("indices",new PyMethodDescr("indices",PySlice.class,1,1,new exposed_indices(null,null)));
-        class exposed___hash__ extends PyBuiltinMethodNarrow {
-
-            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___hash__(self,info);
-            }
-
-            public PyObject __call__() {
-                throw Py.TypeError("unhashable type");
-            }
-
-        }
-        dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PySlice.class,0,0,new exposed___hash__(null,null)));
-        class exposed___init__ extends PyBuiltinMethod {
-
-            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___init__(self,info);
-            }
-
-            public PyObject __call__(PyObject[]args) {
-                return __call__(args,Py.NoKeywords);
-            }
-
-            public PyObject __call__(PyObject[]args,String[]keywords) {
-                ((PySlice)self).slice_init(args,keywords);
-                return Py.None;
-            }
-
-        }
-        dict.__setitem__("__init__",new PyMethodDescr("__init__",PySlice.class,-1,-1,new exposed___init__(null,null)));
-        dict.__setitem__("__new__",new PyNewWrapper(PySlice.class,"__new__",-1,-1) {
-
-                                                                                       public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                           PySlice newobj;
-                                                                                           if (for_type==subtype) {
-                                                                                               newobj=new PySlice();
-                                                                                               if (init)
-                                                                                                   newobj.slice_init(args,keywords);
-                                                                                           } else {
-                                                                                               newobj=new PySliceDerived(subtype);
-                                                                                           }
-                                                                                           return newobj;
-                                                                                       }
-
-                                                                                   });
-    }
-    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-
-    final void slice_init(PyObject[] args, String[] keywords) {
+    
+    public static final PyType TYPE = PyType.fromClass(PySlice.class);
+    
+    @ExposedNew
+    @ExposedMethod
+    final void slice___init__(PyObject[] args, String[] keywords) {
         if(args.length == 0) {
             throw Py.TypeError("slice expected at least 1 arguments, got " + args.length);
         } else if(args.length > 3) {
@@ -108,10 +36,8 @@ public class PySlice extends PyObject {
         }
     }
 
-    private static final PyType SLICE_TYPE = PyType.fromClass(PySlice.class);
-
     public PySlice(PyObject start, PyObject stop, PyObject step) {
-        this(SLICE_TYPE);
+        this(TYPE);
         if(start != null) {
             this.start = start;
         }
@@ -128,7 +54,7 @@ public class PySlice extends PyObject {
     }
     
     public PySlice() {
-        this(SLICE_TYPE);
+        this(TYPE);
     }
 
     public final PyObject getStart() {
@@ -144,10 +70,11 @@ public class PySlice extends PyObject {
     }
 
     public int hashCode() { 
-        return slice_hashCode();
+        return slice___hash__();
     }
 
-    final int slice_hashCode() {
+    @ExposedMethod
+    final int slice___hash__() {
         throw Py.TypeError("unhashable type");
     } 
 
@@ -185,6 +112,7 @@ public class PySlice extends PyObject {
         return __eq__(o).__not__();
     }
     
+    @ExposedMethod
     public PyObject slice_indices(PyObject len) {
         int ilen;
         try {
@@ -269,9 +197,12 @@ public class PySlice extends PyObject {
     }
     private static final int START = 0, STOP = 1, STEP = 2;
 
+    @ExposedGet
     public PyObject start = Py.None;
 
+    @ExposedGet
     public PyObject stop = Py.None;
 
+    @ExposedGet
     public PyObject step = Py.None;
 }
