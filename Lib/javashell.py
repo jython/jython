@@ -74,7 +74,7 @@ class _ShellEnv:
         if self.cmd is None:
             msgFmt = "Unable to execute commands in subshell because shell" \
                      " functionality not implemented for OS %s with shell"  \
-                     " setting %s. Failed command=%s""" 
+                     " setting %s. Failed command=%s" 
             raise OSError( 0, msgFmt % ( _osType, _envType, cmd ))
             
         if isinstance(cmd, basestring):
