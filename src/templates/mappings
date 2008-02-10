@@ -23,7 +23,6 @@ module.derived:org.python.core.PyModuleDerived
 object.derived:org.python.core.PyObjectDerived
 property.derived:org.python.core.PyPropertyDerived
 #random.derived:org.python.modules.random.PyRandomDerived
-#random.expose:org.python.modules.random.PyRandom
 #gderived.py doesn't handle derived out of org.python.core
 #set.derived:org.python.modules.sets.PySetDerived
 slice.derived:org.python.core.PySliceDerived

@@ -323,7 +323,7 @@ public class __builtin__ {
         dict.__setitem__("frozenset", PyImmutableSet.TYPE);
 
         dict.__setitem__("property", PyProperty.TYPE);
-        dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
+        dict.__setitem__("staticmethod", PyStaticMethod.TYPE);
         dict.__setitem__("classmethod", PyClassMethod.TYPE);
         dict.__setitem__("super", PySuper.TYPE);
         dict.__setitem__("str", PyString.TYPE);
