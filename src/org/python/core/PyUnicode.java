@@ -3,6 +3,7 @@ package org.python.core;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
@@ -11,6 +12,7 @@ import org.python.modules._codecs;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * a builtin python unicode string.
@@ -59,6 +61,18 @@ public class PyUnicode extends PyString implements Iterable {
         this(TYPE, new String(buffer));
     }
 
+    private static StringBuilder fromCodePoints(Iterator<Integer> iter) {
+        StringBuilder buffer = new StringBuilder();
+        while (iter.hasNext()) {
+            buffer.appendCodePoint(iter.next());
+        }
+        return buffer;
+    }
+
+    PyUnicode(Iterator<Integer> iter) {
+        this(fromCodePoints(iter));
+    }
+
     /**
      * Creates a PyUnicode from an already interned String. Just means it won't
      * be reinterned if used in a place that requires interned Strings.
@@ -77,6 +91,10 @@ public class PyUnicode extends PyString implements Iterable {
         }
         return plane == Plane.BASIC;
     }
+
+//    public boolean isBasicPlane() {
+//        return false;
+//    }
 
     public int getCodePointCount() {
         if (codePointCount >= 0) {
@@ -246,7 +264,6 @@ public class PyUnicode extends PyString implements Iterable {
         return Py.makeCharacter(codepoint, true);
     }
 
-    // TODO: rename to SubsequenceIterator
     private class SubsequenceIteratorImpl implements Iterator {
 
         private int current,  k,  start,  stop,  step;
@@ -265,7 +282,7 @@ public class PyUnicode extends PyString implements Iterable {
         SubsequenceIteratorImpl() {
             this(0, getCodePointCount(), 1);
         }
-        
+
         public boolean hasNext() {
             return current < stop;
         }
@@ -293,7 +310,7 @@ public class PyUnicode extends PyString implements Iterable {
             }
             return U;
         }
-        
+
         public void remove() {
             throw new UnsupportedOperationException("Not supported on PyUnicode objects (immutable)");
         }
@@ -304,13 +321,13 @@ public class PyUnicode extends PyString implements Iterable {
         private final Iterator<T> iter;
         private final int step;
         private T lookahead = null;
-        
+
         public SteppedIterator(int step, Iterator<T> iter) {
             this.iter = iter;
             this.step = step;
             lookahead = advance();
         }
-        
+
         private T advance() {
             if (iter.hasNext()) {
                 T elem = iter.next();
@@ -322,10 +339,11 @@ public class PyUnicode extends PyString implements Iterable {
                 return null;
             }
         }
+
         public boolean hasNext() {
             return lookahead != null;
         }
-        
+
         public T next() {
             T old = lookahead;
             if (iter.hasNext()) {
@@ -333,8 +351,7 @@ public class PyUnicode extends PyString implements Iterable {
                 for (int i = 1; i < step && iter.hasNext(); i++) {
                     iter.next();
                 }
-            }
-            else {
+            } else {
                 lookahead = null;
             }
             return old;
@@ -343,18 +360,16 @@ public class PyUnicode extends PyString implements Iterable {
         public void remove() {
             throw new UnsupportedOperationException();
         }
-        
     }
-    
+
     public Iterator newSubsequenceIterator() {
         return new SubsequenceIteratorImpl();
     }
-    
+
     public Iterator newSubsequenceIterator(int start, int stop, int step) {
         if (step < 0) {
             return new SteppedIterator(step * -1, new ReversedIterator(new SubsequenceIteratorImpl(stop + 1, start + 1, 1)));
-        }
-        else {
+        } else {
             return new SubsequenceIteratorImpl(start, stop, step);
         }
     }
@@ -395,11 +410,13 @@ public class PyUnicode extends PyString implements Iterable {
         return str___add__(generic_other);
     }
 
+    // utf16 ok
     @ExposedMethod
     final PyObject unicode_lower() {
         return new PyUnicode(str_lower());
     }
 
+    // utf16 ok
     @ExposedMethod
     final PyObject unicode_upper() {
         return new PyUnicode(str_upper());
@@ -407,42 +424,155 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod
     final PyObject unicode_title() {
-        return new PyUnicode(str_title());
+        if (isBasicPlane()) {
+            return new PyUnicode(str_title());
+        }
+        StringBuilder buffer = new StringBuilder(string.length());
+        boolean previous_is_cased = false;
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            int codePoint = iter.next();
+            if (previous_is_cased) {
+                buffer.appendCodePoint(Character.toLowerCase(codePoint));
+            } else {
+                buffer.appendCodePoint(Character.toTitleCase(codePoint));
+            }
+
+            if (Character.isLowerCase(codePoint) ||
+                    Character.isUpperCase(codePoint) ||
+                    Character.isTitleCase(codePoint)) {
+                previous_is_cased = true;
+            } else {
+                previous_is_cased = false;
+            }
+        }
+        return new PyUnicode(buffer);
     }
 
     @ExposedMethod
     final PyObject unicode_swapcase() {
-        return new PyUnicode(str_swapcase());
+        if (isBasicPlane()) {
+            return new PyUnicode(str_swapcase());
+        }
+        StringBuilder buffer = new StringBuilder(string.length());
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            int codePoint = iter.next();
+            if (Character.isUpperCase(codePoint)) {
+                buffer.appendCodePoint(Character.toLowerCase(codePoint));
+            } else if (Character.isLowerCase(codePoint)) {
+                buffer.appendCodePoint(Character.toUpperCase(codePoint));
+            } else {
+                buffer.appendCodePoint(codePoint);
+            }
+        }
+        return new PyUnicode(buffer);
     }
 
-    @ExposedMethod
-    final PyObject unicode_strip(PyObject[] args, String[] kws) {
-        int nargs = args.length;
-        if (nargs == 0) {
-            return new PyUnicode(str_strip(null));
+    private class StripIterator implements Iterator {
+
+        private final Iterator<Integer> iter;
+        private int lookahead = -1;
+
+        public StripIterator(PyUnicode sep, Iterator<Integer> iter) {
+            this.iter = iter;
+            if (sep != null) {
+                Set<Integer> sepSet = new HashSet<Integer>();
+                for (Iterator<Integer> sepIter = sep.newSubsequenceIterator(); sepIter.hasNext();) {
+                    sepSet.add(sepIter.next());
+                }
+                while (iter.hasNext()) {
+                    int codePoint = iter.next();
+                    if (!sepSet.contains(codePoint)) {
+                        lookahead = codePoint;
+                        return;
+                    }
+                }
+            } else {
+                while (iter.hasNext()) {
+                    int codePoint = iter.next();
+                    if (!Character.isWhitespace(codePoint)) {
+                        lookahead = codePoint;
+                        return;
+                    }
+                }
+            }
         }
-        if (nargs > 1) {
-            throw Py.TypeError("strip() takes at most 1 argument");
+
+        public boolean hasNext() {
+            return lookahead != -1;
         }
-        PyObject sep = args[0];
-        if (sep == Py.None) {
-            return new PyUnicode(str_strip(null));
-        } else if (sep instanceof PyUnicode) {
-            return new PyUnicode(str_strip(sep.toString()));
-        } else if (sep instanceof PyString) {
-            return new PyUnicode(str_strip(((PyString) sep).decode().toString()));
+
+        public Object next() {
+            int old = lookahead;
+            if (iter.hasNext()) {
+                lookahead = iter.next();
+            } else {
+                lookahead = -1;
+            }
+            return old;
         }
-        throw Py.TypeError("strip arg must be None, unicode or str");
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    // compliance requires that we need to support a bit of inconsistency
+    // compared to other coercion used
+    private PyUnicode coerceStripSepToUnicode(PyObject o) {
+        if (o == null) {
+            return null;
+        } else if (o instanceof PyUnicode) {
+            return (PyUnicode) o;
+        } else if (o instanceof PyString) {
+            return new PyUnicode(((PyString) o).decode().toString());
+        } else if (o == Py.None) {
+            return null;
+        } else {
+            throw Py.TypeError("strip arg must be None, unicode or str");
+        }
+    }
+    
+
+    
+    @ExposedMethod(defaults = "null")
+    final PyObject unicode_strip(PyObject sepObj) {
+        PyUnicode sep = coerceStripSepToUnicode(sepObj);
+        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
+            if (sep == null) {
+                return new PyUnicode(str_strip(null));
+            } else {
+                return new PyUnicode(str_strip(sep.string));
+            }
+        }
+        return new PyUnicode(new ReversedIterator(new StripIterator(sep,
+                new ReversedIterator(new StripIterator(sep, newSubsequenceIterator())))));
     }
 
     @ExposedMethod(defaults = "null")
-    final PyObject unicode_lstrip(String sep) {
-        return new PyUnicode(str_lstrip(sep));
+    final PyObject unicode_lstrip(PyObject sepObj) {
+        PyUnicode sep = coerceStripSepToUnicode(sepObj);
+        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
+            if (sep == null) {
+                return new PyUnicode(str_lstrip(null));
+            } else {
+                return new PyUnicode(str_lstrip(sep.string));
+            }
+        }
+        return new PyUnicode(new StripIterator(sep, newSubsequenceIterator()));
     }
 
     @ExposedMethod(defaults = "null")
-    final PyObject unicode_rstrip(String sep) {
-        return new PyUnicode(str_rstrip(sep));
+    final PyObject unicode_rstrip(PyObject sepObj) {
+        PyUnicode sep = coerceStripSepToUnicode(sepObj);
+        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
+            if (sep == null) {
+                return new PyUnicode(str_rstrip(null));
+            } else {
+                return new PyUnicode(str_rstrip(sep.string));
+            }
+        }
+        return new PyUnicode(new ReversedIterator(new StripIterator(sep,
+                new ReversedIterator(newSubsequenceIterator()))));
     }
 
     private abstract class SplitIterator implements Iterator {
@@ -522,17 +652,19 @@ public class PyUnicode extends PyString implements Iterable {
 
     // may wish to refactor to a shared class if we find some usage there
     private class PeekIterator<T> implements Iterator {
+
         private T lookahead = null;
         private final Iterator<T> iter;
+
         public PeekIterator(Iterator<T> iter) {
             this.iter = iter;
             next();
         }
-        
+
         public T peek() {
             return lookahead;
         }
-        
+
         public boolean hasNext() {
             return lookahead != null;
         }
@@ -546,10 +678,10 @@ public class PyUnicode extends PyString implements Iterable {
         public void remove() {
             throw new UnsupportedOperationException();
         }
-        
     }
 
     private class ReversedIterator<T> implements Iterator {
+
         private final List<T> reversed = new ArrayList<T>();
         private final Iterator<T> iter;
 
@@ -560,7 +692,7 @@ public class PyUnicode extends PyString implements Iterable {
             Collections.reverse(reversed);
             this.iter = reversed.iterator();
         }
-        
+
         public boolean hasNext() {
             return iter.hasNext();
         }
@@ -572,21 +704,21 @@ public class PyUnicode extends PyString implements Iterable {
         public void remove() {
             throw new UnsupportedOperationException();
         }
-        
     }
-    
+
     private class LineSplitIterator implements Iterator {
+
         private final PeekIterator<Integer> iter = new PeekIterator(newSubsequenceIterator());
         private final boolean keepends;
 
         LineSplitIterator(boolean keepends) {
             this.keepends = keepends;
         }
- 
+
         public boolean hasNext() {
             return iter.hasNext();
         }
-        
+
         public Object next() {
             StringBuilder buffer = new StringBuilder();
             while (iter.hasNext()) {
@@ -595,20 +727,17 @@ public class PyUnicode extends PyString implements Iterable {
                     if (keepends) {
                         buffer.appendCodePoint(codepoint);
                         buffer.appendCodePoint(iter.next());
-                    }
-                    else {
+                    } else {
                         iter.next();
                     }
                     break;
-                }
-                else if (codepoint == '\n' || codepoint == '\r' ||
-                    Character.getType(codepoint) == Character.LINE_SEPARATOR) {
+                } else if (codepoint == '\n' || codepoint == '\r' ||
+                        Character.getType(codepoint) == Character.LINE_SEPARATOR) {
                     if (keepends) {
                         buffer.appendCodePoint(codepoint);
                     }
                     break;
-                }
-                else {
+                } else {
                     buffer.appendCodePoint(codepoint);
                 }
             }
@@ -618,9 +747,8 @@ public class PyUnicode extends PyString implements Iterable {
         public void remove() {
             throw new UnsupportedOperationException();
         }
-        
     }
-        
+
     private class SepSplitIterator extends SplitIterator {
 
         private final PyUnicode sep;
@@ -745,25 +873,73 @@ public class PyUnicode extends PyString implements Iterable {
         return str_rfind(sub, start, end);
     }
 
-    // need to be utf-16 aware
     @ExposedMethod
     final PyObject unicode_ljust(int width) {
-        return new PyUnicode(str_ljust(width));
+        int n = width - getCodePointCount();
+        if (n <= 0) {
+            return new PyUnicode(string);
+        } else {
+            return new PyUnicode(string + spaces(n));
+        }
     }
 
     @ExposedMethod
     final PyObject unicode_rjust(int width) {
-        return new PyUnicode(str_rjust(width));
+        int n = width - getCodePointCount();
+        if (n <= 0) {
+            return new PyUnicode(string);
+        } else {
+            return new PyUnicode(spaces(n) + string);
+        }
     }
 
     @ExposedMethod
     final PyObject unicode_center(int width) {
-        return new PyUnicode(str_center(width));
+        int n = width - getCodePointCount();
+        if (n <= 0) {
+            return new PyUnicode(string);
+        }
+        int half = n / 2;
+        if (n % 2 > 0 && width % 2 > 0) {
+            half += 1;
+        }
+        return new PyUnicode(spaces(half) + string + spaces(n - half));
     }
 
     @ExposedMethod
     final PyObject unicode_zfill(int width) {
-        return new PyUnicode(str_zfill(width));
+        int n = getCodePointCount();
+        if (n >= width) {
+            return new PyUnicode(string);
+        }
+        StringBuilder buffer = new StringBuilder(width);
+        int nzeros = width - n;
+        boolean first = true;
+        boolean leadingSign = false;
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            int codePoint = iter.next();
+            if (first) {
+                first = false;
+                if (codePoint == '+' || codePoint == '-') {
+                    buffer.appendCodePoint(codePoint);
+                    leadingSign = true;
+                }
+                for (int i = 0; i < nzeros; i++) {
+                    buffer.appendCodePoint('0');
+                }
+                if (!leadingSign) {
+                    buffer.appendCodePoint(codePoint);
+                }
+            } else {
+                buffer.appendCodePoint(codePoint);
+            }
+        }
+        if (first) {
+            for (int i = 0; i < nzeros; i++) {
+                buffer.appendCodePoint('0');
+            }
+        }
+        return new PyUnicode(buffer);
     }
 
     @ExposedMethod(defaults = "8")
@@ -773,7 +949,23 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod
     final PyObject unicode_capitalize() {
-        return new PyUnicode(str_capitalize());
+        if (string.length() == 0) {
+            return this;
+        }
+        if (isBasicPlane()) {
+            return new PyUnicode(str_capitalize());
+        }
+        StringBuilder buffer = new StringBuilder(string.length());
+        boolean first = true;
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            if (first) {
+                buffer.appendCodePoint(Character.toUpperCase(iter.next()));
+                first = false;
+            } else {
+                buffer.appendCodePoint(Character.toLowerCase(iter.next()));
+            }
+        }
+        return new PyUnicode(buffer);
     }
 
     @ExposedMethod(defaults = "-1")
@@ -872,23 +1064,61 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod
     final boolean unicode_isalpha() {
-        return str_isalpha();
+        if (isBasicPlane()) {
+            return str_isalpha();
+        }
+        if (getCodePointCount() == 0) {
+            return false;
+        }
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            if (!Character.isLetter(iter.next())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @ExposedMethod
     final boolean unicode_isalnum() {
-        return str_isalnum();
+        if (isBasicPlane()) {
+            return str_isalnum();
+        }
+        if (getCodePointCount() == 0) {
+            return false;
+        }
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            int codePoint = iter.next();
+            if (!(Character.isLetterOrDigit(codePoint) ||
+                    Character.getType(codePoint) == Character.LETTER_NUMBER)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @ExposedMethod
     final boolean unicode_isdecimal() {
-        return str_isdecimal();
+        if (isBasicPlane()) {
+            return str_isdecimal();
+        }
+        if (getCodePointCount() == 0) {
+            return false;
+        }
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            if (Character.getType(iter.next()) != Character.DECIMAL_DIGIT_NUMBER) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @ExposedMethod
     final boolean unicode_isdigit() {
         if (isBasicPlane()) {
             return str_isdigit();
+        }
+        if (getCodePointCount() == 0) {
+            return false;
         }
         for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
             if (!Character.isDigit(iter.next())) {
@@ -900,17 +1130,68 @@ public class PyUnicode extends PyString implements Iterable {
 
     @ExposedMethod
     final boolean unicode_isnumeric() {
-        return str_isnumeric();
+        if (isBasicPlane()) {
+            return str_isnumeric();
+        }
+        if (getCodePointCount() == 0) {
+            return false;
+        }
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            int type = Character.getType(iter.next());
+            if (type != Character.DECIMAL_DIGIT_NUMBER &&
+                    type != Character.LETTER_NUMBER &&
+                    type != Character.OTHER_NUMBER) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @ExposedMethod
     final boolean unicode_istitle() {
-        return str_istitle();
+        if (isBasicPlane()) {
+            return str_istitle();
+        }
+        if (getCodePointCount() == 0) {
+            return false;
+        }
+        boolean cased = false;
+        boolean previous_is_cased = false;
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            int codePoint = iter.next();
+            if (Character.isUpperCase(codePoint) || Character.isTitleCase(codePoint)) {
+                if (previous_is_cased) {
+                    return false;
+                }
+                previous_is_cased = true;
+                cased = true;
+            } else if (Character.isLowerCase(codePoint)) {
+                if (!previous_is_cased) {
+                    return false;
+                }
+                previous_is_cased = true;
+                cased = true;
+            } else {
+                previous_is_cased = false;
+            }
+        }
+        return cased;
     }
 
     @ExposedMethod
     final boolean unicode_isspace() {
-        return str_isspace();
+        if (isBasicPlane()) {
+            return str_isspace();
+        }
+        if (getCodePointCount() == 0) {
+            return false;
+        }
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext();) {
+            if (!Character.isWhitespace(iter.next())) {
+                return false;
+            }
+        }
+        return true;
     }
     // end utf-16 aware
     @ExposedMethod

@@ -1408,7 +1408,7 @@ public class PyString extends PyBaseString
     }
 
 
-    private static String spaces(int n) {
+    protected static String spaces(int n) {
         char[] chars = new char[n];
         for (int i=0; i<n; i++)
             chars[i] = ' ';
