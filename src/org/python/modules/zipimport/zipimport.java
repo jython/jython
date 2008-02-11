@@ -43,7 +43,7 @@ public class zipimport implements ClassDictInit {
     public static void classDictInit(PyObject dict) {
         dict.__setitem__("__name__", new PyString("zipimport"));
         dict.__setitem__("__doc__", __doc__);
-        dict.__setitem__("zipimporter", PyType.fromClass(zipimporter.class));
+        dict.__setitem__("zipimporter", zipimporter.TYPE);
         dict.__setitem__("_zip_directory_cache", _zip_directory_cache);
         dict.__setitem__("ZipImportError", ZipImportError);
 

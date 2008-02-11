@@ -38,6 +38,9 @@ import org.python.expose.ExposedType;
  */
 @ExposedType(name = "zipimport.zipimporter")
 public class zipimporter extends PyObject {
+    
+    public static final PyType TYPE = PyType.fromClass(zipimporter.class);
+    
     @ExposedGet
     public static final PyString __doc__ = new PyString(
         "zipimporter(archivepath) -> zipimporter object\n" +
