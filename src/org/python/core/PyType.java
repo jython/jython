@@ -848,6 +848,10 @@ public class PyType extends PyObject implements Serializable {
     }
 
     private static void fillInClassic(Class c, Class<?> base, PyObject dict) {
+        if (Py.BOOTSTRAP_TYPES.contains(c)) {
+            // BOOTSTRAP_TYPES will be filled in by addBuilder later
+            return;
+        }
         HashMap<String, Object> propnames = new HashMap<String, Object>();
         Method[] methods = c.getMethods();
         for(int i = 0; i < methods.length; i++) {
@@ -1012,11 +1016,13 @@ public class PyType extends PyObject implements Serializable {
         }
         classToBuilder.put(forClass, builder);
         
-        if(class_to_type.containsKey(forClass)) {
-            // Workaround the fact that some types are initialized
-            // before their builders (namely PyObject and PyType, but
-            // others too). Essentially do the work of addFromClass &
-            // fillFromClass after the fact
+        if (class_to_type.containsKey(forClass)) {
+            if (!Py.BOOTSTRAP_TYPES.remove(forClass)) {
+                Py.writeWarning("init", "Bootstrapping class not in Py.BOOTSTRAP_TYPES[class="
+                        + forClass + "]");
+            }
+            // The types in Py.BOOTSTRAP_TYPES are initialized before their builders are assigned,
+            // so do the work of addFromClass & fillFromClass after the fact
             PyType objType = fromClass(builder.getTypeClass());
             objType.name = builder.getName();
             objType.dict = builder.getDict(objType);

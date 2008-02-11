@@ -3152,6 +3152,13 @@ public class PyObject implements Serializable {
     public long asLong(int index) throws ConversionException {
         throw new ConversionException(index);
     }
+    
+    static {
+        for (Class unbootstrapped : Py.BOOTSTRAP_TYPES) {
+            Py.writeWarning("init", "Bootstrap type wasn't encountered in bootstrapping[class="
+                    + unbootstrapped + "]");
+        }
+    }
 
 }
 

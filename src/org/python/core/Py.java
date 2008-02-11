@@ -12,6 +12,8 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.io.StreamCorruptedException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.python.compiler.Module;
 import org.python.core.adapter.ClassicPyObjectAdapter;
@@ -93,6 +95,15 @@ public final class Py
 
     /** Set if the type object is dynamically allocated */
     public static long TPFLAGS_HEAPTYPE;
+    
+    /** Builtin types that are used to setup PyObject. */
+    static final Set<Class> BOOTSTRAP_TYPES = new HashSet<Class>(4);
+    static {
+        BOOTSTRAP_TYPES.add(PyObject.class);
+        BOOTSTRAP_TYPES.add(PyType.class);
+        BOOTSTRAP_TYPES.add(PyBuiltinFunction.class);
+        BOOTSTRAP_TYPES.add(PyDataDescr.class);
+    }
 
     /** A unique object to indicate no conversion is possible
         in __tojava__ methods **/
