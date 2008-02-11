@@ -4,6 +4,7 @@ org/python/core/PyBoolean.class
 org/python/core/PyBuiltinFunction.class
 org/python/core/PyClassMethod.class
 org/python/core/PyComplex.class
+org/python/core/PyDataDescr.class
 org/python/core/PyDictionary.class
 org/python/core/PyEnumerate.class
 org/python/core/PyFile.class

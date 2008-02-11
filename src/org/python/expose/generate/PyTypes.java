@@ -15,6 +15,7 @@ import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 import org.python.core.PyType;
+import org.python.expose.ExposeAsSuperclass;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedDelete;
 import org.python.expose.ExposedGet;
@@ -35,6 +36,8 @@ public interface PyTypes {
     public static final Type APYOBJ = Type.getType(PyObject[].class);
 
     public static final Type PYTYPE = Type.getType(PyType.class);
+
+    public static final Type ASSUPER = Type.getType(ExposeAsSuperclass.class);
 
     public static final Type PYEXCEPTION = Type.getType(PyException.class);
 

@@ -555,8 +555,34 @@ public class PyType extends PyObject implements Serializable {
         
         newtype.mro_internal();
         // __dict__ descriptor
-        if (newtype.needs_userdict && newtype.lookup("__dict__")==null) {
-            dict.__setitem__("__dict__",new PyGetSetDescr(newtype,"__dict__",PyObject.class,"getDict","setDict","delDict"));
+        if (newtype.needs_userdict && newtype.lookup("__dict__") == null) {
+            dict.__setitem__("__dict__", new PyDataDescr(newtype, "__dict__", PyObject.class) {
+
+                @Override
+                public Object invokeGet(PyObject obj) {
+                    return obj.getDict();
+                }
+
+                @Override
+                public boolean implementsDescrSet() {
+                    return true;
+                }
+
+                @Override
+                public void invokeSet(PyObject obj, Object value) {
+                    obj.setDict((PyObject)value);
+                }
+
+                @Override
+                public boolean implementsDescrDelete() {
+                    return true;
+                }
+
+                @Override
+                public void invokeDelete(PyObject obj) {
+                    obj.delDict();
+                }
+            });
         }
 
         newtype.has_set = newtype.lookup("__set__") != null;
@@ -807,15 +833,15 @@ public class PyType extends PyObject implements Serializable {
         } else {
             dict = new PyStringMap();
             fillInClassic(c, base, dict);
-            if (base != Object.class) {
-                if (get_descr_method(c, "__set__", OO) != null || /* backw comp */
-                get_descr_method(c, "_doset", OO) != null) {
-                    newtype.has_set = true;
-                }
-                if (get_descr_method(c, "__delete__", O) != null || /* backw comp */
-                get_descr_method(c, "_dodel", O) != null) {
-                    newtype.has_delete = true;
-                }
+        }
+        if (base != Object.class) {
+            if (get_descr_method(c, "__set__", OO) != null || /* backw comp */
+            get_descr_method(c, "_doset", OO) != null) {
+                newtype.has_set = true;
+            }
+            if (get_descr_method(c, "__delete__", O) != null || /* backw comp */
+            get_descr_method(c, "_dodel", O) != null) {
+                newtype.has_delete = true;
             }
         }
         newtype.dict = dict;

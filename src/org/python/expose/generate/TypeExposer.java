@@ -180,6 +180,7 @@ public class TypeExposer extends Exposer {
                 dict.__setitem__(pmd.getName(), pmd);
             }
             for(PyDataDescr descr : descrs) {
+                descr.setType(type);
                 dict.__setitem__(descr.getName(), descr);
             }
             if(newWrapper != null) {

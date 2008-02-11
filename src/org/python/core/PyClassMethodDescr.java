@@ -5,14 +5,6 @@ public class PyClassMethodDescr extends PyMethodDescr {
     PyClassMethodDescr(PyType t, PyBuiltinFunction meth) {
         super(t, meth);
     }
-    
-    public PyClassMethodDescr(String name,
-                              Class c,
-                              int minargs,
-                              int maxargs,
-                              PyBuiltinFunction meth) {
-        super(name, c, minargs, maxargs, meth);
-    }
 
     protected void checkCallerType(PyObject obj) {
         if((PyType)obj != dtype && !((PyType)obj).isSubType(dtype))

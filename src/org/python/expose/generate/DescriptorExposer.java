@@ -23,7 +23,7 @@ public class DescriptorExposer extends Exposer {
      * the type's dict.
      */
     public DescriptorExposer(Type onType, String descrName) {
-        super(PyDataDescr.class, onType.getClassName() + "$" + descrName + "_descriptor");
+        super(PyDataDescr.class, onType.getClassName() + "$" + descrName + "_descriptor", ASSUPER);
         this.onType = onType;
         name = descrName;
     }
@@ -113,27 +113,24 @@ public class DescriptorExposer extends Exposer {
             generateMethodSetter();
         } else if(setterFieldName != null) {
             generateFieldSetter();
-        } else {
-            generateDoesntImplement("Set");
         }
+        generateImplement("Set", setterMethodName != null || setterFieldName != null);
         if(deleterMethodName != null) {
             generateMethodDeleter();
-        } else {
-            generateDoesntImplement("Delete");
         }
+        generateImplement("Delete", deleterMethodName != null);
     }
 
     private void generateConstructor() {
         startConstructor();
         mv.visitVarInsn(ALOAD, 0);
-        mv.visitLdcInsn(onType);
         mv.visitLdcInsn(name);
         if(PRIMITIVES.containsKey(ofType)) {
             mv.visitLdcInsn(PRIMITIVES.get(ofType));
         } else {
             mv.visitLdcInsn(ofType);
         }
-        superConstructor(CLASS, STRING, CLASS);
+        superConstructor(STRING, CLASS);
         endConstructor();
     }
 
@@ -203,9 +200,9 @@ public class DescriptorExposer extends Exposer {
         endMethod(RETURN);
     }
 
-    private void generateDoesntImplement(String setOrDelete) {
+    private void generateImplement(String setOrDelete, boolean implementsIt) {
         startMethod("implementsDescr" + setOrDelete, BOOLEAN);
-        mv.visitInsn(ICONST_0);
+        mv.visitInsn(implementsIt ? ICONST_1 : ICONST_0);
         endMethod(IRETURN);
     }
 
