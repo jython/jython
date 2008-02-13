@@ -347,9 +347,11 @@ public class PyObject implements Serializable {
 
         int argslen = args.length;
 
-        String name = "";
+        String name;
         if (this instanceof PyFunction) {
             name = ((PyFunction) this).__name__ + "() ";
+        } else if (this instanceof PyBuiltinFunction) {
+            name = ((PyBuiltinFunction)this).fastGetName().toString() + "() ";
         } else {
             name = getType().fastGetName() + " ";
         }
@@ -357,7 +359,7 @@ public class PyObject implements Serializable {
             PyObject keys = kwargs.__findattr__("keys");
             if(keys == null)
                 throw Py.TypeError(name
-                        + "argument after ** must be a dictionary");
+                        + "argument after ** must be a mapping");
             for (int i = 0; i < keywords.length; i++)
                 if (kwargs.__finditem__(keywords[i]) != null)
                     throw Py.TypeError(
