@@ -98,9 +98,6 @@ public class PyString extends PyBaseString
 
     @ExposedMethod
     final int str___len__() {
-        if (this instanceof PyUnicode) {
-           return string.codePointCount(0, string.length());
-        }
         return string.length();
     }
 

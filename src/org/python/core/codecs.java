@@ -9,6 +9,8 @@ package org.python.core;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Contains the implementation of the builtin codecs.
@@ -979,17 +981,161 @@ public class codecs {
         return v.toString();
     }
 
-    public static String PyUnicode_EncodePunycode(String str,
-            String errors) {
-        int size = str.length();
-        StringBuilder v = new StringBuilder(size);
-        return null;
+    private static class Punycode {
+        // specified by punycode, http://www.ietf.org/rfc/rfc3492.txt
+        private static final int BASE = 36;
+        private static final int TMIN = 1;
+        private static final int TMAX = 26;
+        private static final int SKEW = 38;
+        private static final int DAMP = 700;
+        private static final int INITIAL_BIAS = 72;
+        private static final int INITIAL_N = 128;
+        private static final int BASIC = 0x80;
+
+        private Punycode() {
+
+        }
+
+        private static int adapt(int delta, int numpoints, boolean firsttime) {
+            delta = firsttime ? delta / DAMP : delta >> 1;
+            delta += delta / numpoints;
+            int k = 0;
+            while (delta > (((BASE - TMIN) * TMAX) / 2)) {
+                delta /= BASE - TMIN;
+                k += BASE;
+            }
+            return k + (((BASE - TMIN + 1) * delta) / (delta + SKEW));
+        }
+
+        private static boolean isBasic(int codePoint) {
+            return codePoint < BASIC;
+        }
     }
 
-    public static String PyUnicode_EncodeIDNA(String str,
+    public static String PyUnicode_EncodePunycode(PyUnicode input,
             String errors) {
-        int size = str.length();
-        StringBuilder v = new StringBuilder(size);
+        int n = Punycode.INITIAL_N;
+        int delta = 0;
+        long guard_delta;
+        int bias = Punycode.INITIAL_BIAS;
+        int b = 0;
+        final StringBuilder buffer = new StringBuilder();
+        for (Iterator<Integer> iter = input.iterator(); iter.hasNext();) {
+            int c = iter.next();
+            if (Punycode.isBasic(c)) {
+                buffer.appendCodePoint(c);
+                b++;
+            }
+        }
+        if (b > 0) {
+            buffer.appendCodePoint('-');
+        }
+        int h = b;
+        int size = input.getCodePointCount();
+        while (h < size) {
+            int m = Integer.MAX_VALUE;
+            int i = 0;
+            int codePointIndex = 0;
+            for (Iterator<Integer> iter = input.iterator(); iter.hasNext(); i++) {
+                int c = iter.next();
+                if (c > n && c < m) {
+                    m = c;
+                    codePointIndex = i;
+                }
+            }
+            guard_delta = delta + ((m - n) * (h + 1));
+            if (guard_delta > Integer.MAX_VALUE) {
+                throw Py.UnicodeEncodeError("punycode", input.string, codePointIndex, codePointIndex + 1, "overflow");
+            }
+            delta = (int) guard_delta;
+
+            n = m;
+            i = 0;
+            for (Iterator<Integer> iter = input.iterator(); iter.hasNext(); i++) {
+                int c = iter.next();
+                if (c < n) {
+                    guard_delta = delta + 1;
+                    if (guard_delta > Integer.MAX_VALUE) {
+                        throw Py.UnicodeEncodeError("punycode", input.string, i, i + 1, "overflow");
+                    }
+                    delta = (int) guard_delta;
+                }
+                if (c == n) {
+                    int q = delta;
+                    for (int k = Punycode.BASE;; k += Punycode.BASE) {
+                        int t = k <= bias ? Punycode.TMIN : (k >= bias + Punycode.TMAX ? Punycode.TMAX : k - bias);
+                        if (q < t) {
+                            break;
+                        }
+                        buffer.appendCodePoint(t + ((q - t) % (Punycode.BASE - t)));
+                        q = (q - t) / (Punycode.BASE - t);
+                    }
+                    buffer.appendCodePoint(q);
+                    bias = Punycode.adapt(delta, h + 1, h == b);
+                    delta = 0;
+                    h++;
+                }
+            }
+            delta++;
+            n++;
+        }
+        return buffer.toString();
+    }
+
+    public static PyUnicode PyUnicode_DecodePunycode(String input, String errors) {
+
+        int input_size = input.length();
+        int output_size = 0;
+        ArrayList<Integer> ucs4 = new ArrayList(input_size);
+        int j = 0;
+        for (; j < input_size; j++) {
+            int c = input.charAt(j);
+            if (!Punycode.isBasic(c)) {
+                throw Py.UnicodeDecodeError("punycode", input, j, j + 1, "not basic");
+            } else if (c == '-') {
+                break;
+            } else {
+                ucs4.add(c);
+                output_size++;
+            }
+        }
+
+        int n = Punycode.INITIAL_N;
+        int i = 0;
+        int bias = Punycode.INITIAL_BIAS;
+        while (j < input_size) {
+            int old_i = i;
+            int w = 1;
+            for (int k = Punycode.BASE;; k += Punycode.BASE) {
+                int c = input.charAt(j++);
+                int digit = c - '0';
+                long guard_i = i + digit * w;
+                if (guard_i > Integer.MAX_VALUE) {
+                    throw Py.UnicodeDecodeError("punycode", input, j, j + 1, "overflow");
+                }
+                i = (int) guard_i;
+                int t = k <= bias ? Punycode.TMIN : (k >= bias + Punycode.TMAX ? Punycode.TMAX : k - bias);
+                if (digit < t) {
+                    break;
+                }
+                long guard_w = w * Punycode.BASE - t;
+                if (guard_w > Integer.MAX_VALUE) {
+                    throw Py.UnicodeDecodeError("punycode", input, j, j + 1, "overflow");
+                }
+            }
+            bias = Punycode.adapt(i - old_i, output_size + 1, old_i == 0);
+            n += i / (output_size + 1);
+            i %= output_size + 1;
+            ucs4.add(i, n);
+
+        }
+        return new PyUnicode(ucs4);
+    }
+
+    public static String PyUnicode_EncodeIDNA(PyUnicode input,
+            String errors) {
+
+        throw new UnsupportedOperationException();
 
 
 //   1. If the sequence contains any code points outside the ASCII range
@@ -1021,8 +1167,10 @@ public class codecs {
 //   8. Verify that the number of code points is in the range 1 to 63
 //      inclusive.
 
+    }
 
-        return null;
+    public static PyUnicode PyUnicode_DecodeIDNA(String input, String errors) {
+        throw new UnsupportedOperationException();
     }
 
     /* --- Utility methods -------------------------------------------- */

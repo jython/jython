@@ -1,7 +1,7 @@
 package org.python.core;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import org.python.expose.ExposedMethod;
@@ -73,6 +73,10 @@ public class PyUnicode extends PyString implements Iterable {
         this(fromCodePoints(iter));
     }
 
+    PyUnicode(Collection<Integer> ucs4) {
+        this(ucs4.iterator());
+    }
+
     /**
      * Creates a PyUnicode from an already interned String. Just means it won't
      * be reinterned if used in a place that requires interned Strings.
@@ -92,10 +96,14 @@ public class PyUnicode extends PyString implements Iterable {
         return plane == Plane.BASIC;
     }
 
+// RETAIN THE BELOW CODE, it facilitates testing astral support more completely
+
 //    public boolean isBasicPlane() {
 //        return false;
 //    }
-
+    
+// END RETAIN
+    
     public int getCodePointCount() {
         if (codePointCount >= 0) {
             return codePointCount;
@@ -183,8 +191,11 @@ public class PyUnicode extends PyString implements Iterable {
         return new PyString(encode());
     }
 
-    // TODO; this method does not appear to be called currently!
-    // something is wrong with MRO, it seems
+    @Override
+    public int __len__() {
+        return unicode___len__();
+    }
+
     @ExposedMethod
     final int unicode___len__() {
         return getCodePointCount();
@@ -410,13 +421,11 @@ public class PyUnicode extends PyString implements Iterable {
         return str___add__(generic_other);
     }
 
-    // utf16 ok
     @ExposedMethod
     final PyObject unicode_lower() {
         return new PyUnicode(str_lower());
     }
 
-    // utf16 ok
     @ExposedMethod
     final PyObject unicode_upper() {
         return new PyUnicode(str_upper());
@@ -531,9 +540,7 @@ public class PyUnicode extends PyString implements Iterable {
             throw Py.TypeError("strip arg must be None, unicode or str");
         }
     }
-    
 
-    
     @ExposedMethod(defaults = "null")
     final PyObject unicode_strip(PyObject sepObj) {
         PyUnicode sep = coerceStripSepToUnicode(sepObj);
@@ -650,7 +657,6 @@ public class PyUnicode extends PyString implements Iterable {
         }
     }
 
-    // may wish to refactor to a shared class if we find some usage there
     private class PeekIterator<T> implements Iterator {
 
         private T lookahead = null;
@@ -771,9 +777,7 @@ public class PyUnicode extends PyString implements Iterable {
 
             boolean inSeparator = true;
             while (iter.hasNext()) {
-                // what I don't like about this is we are initing a new subsequence iter
-                // for every mismatch; why not cache the first codepoint? yes, add that
-                // complexity, it makes sense
+                // TODO: should cache the first codepoint
                 inSeparator = true;
                 for (Iterator<Integer> sepIter = sep.newSubsequenceIterator();
                         sepIter.hasNext();) {
@@ -811,23 +815,31 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     @ExposedMethod(defaults = {"null", "-1"})
-    final PyList unicode_split(PyObject sep, int maxsplit) {
-        // return str_split(sep, maxsplit); -- it will be interested to compare efficiency of implementations
-        // for BMP and this new support
-        return new PyList(newSplitIterator(coerceToUnicode(sep), maxsplit));
+    final PyList unicode_split(PyObject sepObj, int maxsplit) {
+        PyUnicode sep = coerceToUnicode(sepObj);
+        if (isBasicPlane() && (sep == null || sep.isBasicPlane())) {
+            if (sep != null) {
+                return str_split(sep.string, maxsplit);
+            } else {
+                return str_split(null, maxsplit);
+            }
+        }
+        return new PyList(newSplitIterator(sep, maxsplit));
     }
 
     @ExposedMethod(defaults = "false")
     final PyList unicode_splitlines(boolean keepends) {
+        if (isBasicPlane()) {
+            return str_splitlines(keepends);
+        }
         return new PyList(new LineSplitIterator(keepends));
-    // return str_splitlines(keepends);
+
     }
 
-    // this is with respect to codeunits, and is used only by code that assumes
-    // the plane is basic
     @Override
     protected PyString fromSubstring(int begin, int end) {
-        throw new UnsupportedOperationException();
+        assert(isBasicPlane()); // can only be used on a codepath from str_ equivalents
+        return new PyUnicode(string.substring(begin, end));
     }
 
     @ExposedMethod(defaults = {"0", "null"})
@@ -843,6 +855,9 @@ public class PyUnicode extends PyString implements Iterable {
     @ExposedMethod(defaults = {"0", "null"})
     final int unicode_count(PyObject subObj, int start, PyObject end) {
         final PyUnicode sub = coerceToUnicode(subObj);
+        if (isBasicPlane()) {
+            return str_count(sub.string, start, end);
+        }
         int[] indices = translateIndices(start, end);
         int count = 0;
         for (Iterator<Integer> mainIter = newSubsequenceIterator(indices[0], indices[1], 1);
