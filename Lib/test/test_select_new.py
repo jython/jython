@@ -34,6 +34,7 @@ class AsynchronousServer:
     def __init__(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setblocking(0)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.bind(SERVER_ADDRESS)
         self.server_socket.listen(5)
         try:
@@ -64,6 +65,7 @@ class AsynchronousHandler:
     def __init__(self, new_socket):
         self.socket = new_socket
         self.socket.setblocking(0)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def write(self):
         """
