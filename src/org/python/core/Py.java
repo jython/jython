@@ -150,17 +150,17 @@ public final class Py
 
     public static PyObject IOError;
     public static PyException IOError(java.io.IOException ioe) {
-        //System.err.println("ioe: "+ioe);
-        //ioe.printStackTrace();
         String message = ioe.getMessage();
+        if (message == null) {
+            message = ioe.getClass().getName();
+        }
         if (ioe instanceof java.io.FileNotFoundException) {
-            message = "File not found - "+message;
+            message = "File not found - " + message;
             return IOError(errno.ENOENT, message);
         }
         return new PyException(Py.IOError, message);
     }
     public static PyException IOError(String message) {
-        //System.err.println("sioe: "+message);
         return new PyException(Py.IOError, message);
     }
 
