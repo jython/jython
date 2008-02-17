@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.objectweb.asm.Type;
+import org.python.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 import org.python.core.PyBuiltinMethod;
 import org.python.core.PyDataDescr;

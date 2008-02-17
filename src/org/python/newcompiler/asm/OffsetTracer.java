@@ -3,10 +3,10 @@ package org.python.newcompiler.asm;
 import java.io.PrintWriter;
 import java.util.Formatter;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.util.TraceClassVisitor;
-import org.objectweb.asm.util.TraceMethodVisitor;
+import org.python.objectweb.asm.ClassVisitor;
+import org.python.objectweb.asm.Label;
+import org.python.objectweb.asm.util.TraceClassVisitor;
+import org.python.objectweb.asm.util.TraceMethodVisitor;
 
 public class OffsetTracer extends TraceClassVisitor {
 

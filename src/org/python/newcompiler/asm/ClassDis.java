@@ -6,13 +6,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
-import org.objectweb.asm.ClassAdapter;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.python.objectweb.asm.AnnotationVisitor;
+import org.python.objectweb.asm.Attribute;
+import org.python.objectweb.asm.ClassAdapter;
+import org.python.objectweb.asm.ClassVisitor;
+import org.python.objectweb.asm.FieldVisitor;
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
 import org.python.newcompiler.DisassemblyDocument;
 
 /**

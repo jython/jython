@@ -2,8 +2,8 @@ package org.python.expose.generate;
 
 import java.lang.reflect.Method;
 
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.python.objectweb.asm.Opcodes;
+import org.python.objectweb.asm.Type;
 import org.python.core.PyNewWrapper;
 import org.python.core.PyObject;
 import org.python.core.PyType;

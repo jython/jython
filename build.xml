@@ -160,8 +160,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${oracle.jar}" />
             <pathelement path="${mysql.jar}" />
             <pathelement path="${postgresql.jar}" />
-            <pathelement path="extlibs/asm-3.1.jar" />
-            <pathelement path="extlibs/asm-util-3.1.jar" />
         </path>
 
         <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />
@@ -328,7 +326,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name ="prepare-output" depends="init">
         <mkdir dir="${compile.dir}" />
         <mkdir dir="${exposed.dir}" />
-        <mkdir dir="${jarjar.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
 
@@ -412,7 +409,7 @@ The readme text for the next release will be like:
 		  lazy="${templates.lazy}"/>
     </target>
 
-    <target name="compile" depends="init">
+    <target name="compile" depends="init,jarjar">
         <javac srcdir="${source.dir}/"
                destdir="${compile.dir}"
                target="${jdk.target.version}"
@@ -487,14 +484,13 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-util-3.1.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
         </jarjar>
-        <unjar src="${output.dir}/jarjar.jar" dest="${jarjar.dir}"/>
+        <unjar src="${output.dir}/jarjar.jar" dest="${compile.dir}"/>
     </target>
 
     <target name="jar" depends="compile,expose,jarjar">
        <jar destfile="${dist.dir}/jython.jar">
           <fileset dir="${compile.dir}"/>   
           <fileset dir="${exposed.dir}"/>
-          <fileset dir="${jarjar.dir}"/>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
               <attribute name="Built-By" value="${user.name}" />

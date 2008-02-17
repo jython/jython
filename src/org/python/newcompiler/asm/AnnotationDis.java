@@ -1,6 +1,6 @@
 package org.python.newcompiler.asm;
 
-import org.objectweb.asm.AnnotationVisitor;
+import org.python.objectweb.asm.AnnotationVisitor;
 import org.python.newcompiler.DisassemblyDocument;
 
 class AnnotationDis implements AnnotationVisitor {

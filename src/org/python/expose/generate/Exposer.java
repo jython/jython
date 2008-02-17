@@ -3,11 +3,11 @@ package org.python.expose.generate;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.python.objectweb.asm.ClassVisitor;
+import org.python.objectweb.asm.ClassWriter;
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
+import org.python.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 
 /**
