@@ -77,6 +77,28 @@ public class PyUnicode extends PyString implements Iterable {
         this(ucs4.iterator());
     }
 
+    @Override
+    public int[] toCodePoints() {
+        int n = getCodePointCount();
+        int[] codePoints = new int[n];
+        int i = 0;
+        for (Iterator<Integer> iter = newSubsequenceIterator(); iter.hasNext(); i++) {
+            codePoints[i] = iter.next();
+        }
+        return codePoints;
+    }
+    
+    // modified to know something about codepoints; we just need to return the
+    // corresponding substring; darn UTF16!
+    // TODO: we could avoid doing this unnecessary copy
+    @Override
+    public String substring(int start, int end) {
+        if (isBasicPlane()) {
+            return super.substring(start, end);                 
+        }
+        return new PyUnicode(newSubsequenceIterator(start, end, 1)).string;
+    }
+    
     /**
      * Creates a PyUnicode from an already interned String. Just means it won't
      * be reinterned if used in a place that requires interned Strings.

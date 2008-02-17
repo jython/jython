@@ -69,6 +69,19 @@ public class PyString extends PyBaseString
         }
     }
 
+    public int[] toCodePoints() {
+        int n = string.length();
+        int[] codePoints = new int[n];
+        for (int i = 0; i < n; i++) {
+            codePoints[i] = string.charAt(i);
+        }
+        return codePoints;
+    }
+    
+    public String substring(int start, int end) {
+        return string.substring(start, end);
+    }
+    
     @Override
     public String safeRepr() throws PyIgnoreMethodTag {
         return "'string' object";
