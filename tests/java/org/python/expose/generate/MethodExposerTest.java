@@ -1,7 +1,7 @@
 package org.python.expose.generate;
 
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.python.objectweb.asm.Opcodes;
+import org.python.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 import org.python.core.Py;
 import org.python.core.PyBuiltinFunction;
