@@ -234,6 +234,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="templates.lazy" value="true" />
         <property name="output.dir" value="${work.dir}/build" />
         <property name="compile.dir" value="${output.dir}/classes" />
+        <property name="jarjar.dir" value="${output.dir}/jarjar" />
         <property name="exposed.dir" value="${output.dir}/exposed" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
@@ -245,6 +246,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
         </path>
+        <uptodate property="jarjar.notneeded" srcfile="extlibs/asm-3.1.jar" targetfile="${output.dir}/jarjar.jar"/>
     </target>
 	
     <target name="dump-env" depends="init">
@@ -324,6 +326,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name ="prepare-output" depends="init">
         <mkdir dir="${compile.dir}" />
         <mkdir dir="${exposed.dir}" />
+        <mkdir dir="${jarjar.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
 
@@ -474,16 +477,22 @@ The readme text for the next release will be like:
             destdir="${exposed.dir}" 
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
-
-    <target name="jar" depends="compile,expose">
+    <target name="jarjar" depends="init" unless="jarjar.notneeded">
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
-        <jarjar destfile="${dist.dir}/jython.jar">
+        <jarjar destfile="${output.dir}/jarjar.jar">
+            <zipfileset src="extlibs/asm-3.1.jar"/>
+            <zipfileset src="extlibs/asm-commons-3.1.jar"/>
+            <zipfileset src="extlibs/asm-util-3.1.jar"/>
+            <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
+        </jarjar>
+        <unjar src="${output.dir}/jarjar.jar" dest="${jarjar.dir}"/>
+    </target>
+
+    <target name="jar" depends="compile,expose,jarjar">
+       <jar destfile="${dist.dir}/jython.jar">
           <fileset dir="${compile.dir}"/>   
           <fileset dir="${exposed.dir}"/>
-          <zipfileset src="extlibs/asm-3.1.jar"/>
-          <zipfileset src="extlibs/asm-commons-3.1.jar"/>
-          <zipfileset src="extlibs/asm-util-3.1.jar"/>
-          <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
+          <fileset dir="${jarjar.dir}"/>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
               <attribute name="Built-By" value="${user.name}" />
@@ -507,7 +516,7 @@ The readme text for the next release will be like:
                   <attribute name="optimize" value="${optimize}" />
               </section>
           </manifest>
-        </jarjar>
+        </jar>
     </target>
 
     <!-- build the .html files using the ht2html tool -->
