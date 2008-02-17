@@ -476,9 +476,14 @@ The readme text for the next release will be like:
     </target>
 
     <target name="jar" depends="compile,expose">
-        <jar destfile="${dist.dir}/jython.jar" update="true">
+        <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
+        <jarjar destfile="${dist.dir}/jython.jar">
           <fileset dir="${compile.dir}"/>   
           <fileset dir="${exposed.dir}"/>
+          <zipfileset src="extlibs/asm-3.1.jar"/>
+          <zipfileset src="extlibs/asm-commons-3.1.jar"/>
+          <zipfileset src="extlibs/asm-util-3.1.jar"/>
+          <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
           <manifest>
               <attribute name="Main-Class" value="org.python.util.jython" />
               <attribute name="Built-By" value="${user.name}" />
@@ -502,7 +507,7 @@ The readme text for the next release will be like:
                   <attribute name="optimize" value="${optimize}" />
               </section>
           </manifest>
-        </jar>
+        </jarjar>
     </target>
 
     <!-- build the .html files using the ht2html tool -->
