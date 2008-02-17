@@ -246,7 +246,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
         </path>
-        <uptodate property="jarjar.notneeded" srcfile="extlibs/asm-3.1.jar" targetfile="${output.dir}/jarjar.jar"/>
+        <uptodate property="jarjar.notneeded" targetfile="${output.dir}/jarjar.jar">
+            <srcfiles dir="extlibs" includes="*" />
+        </uptodate>
     </target>
 	
     <target name="dump-env" depends="init">
