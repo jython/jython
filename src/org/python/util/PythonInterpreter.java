@@ -216,5 +216,15 @@ public class PythonInterpreter {
 
     public void cleanup() {
         systemState.callExitFunc();
+        try {
+            Py.getSystemState().stdout.invoke("flush");
+        } catch (PyException pye) {
+            // fall through
+        }
+        try {
+            Py.getSystemState().stderr.invoke("flush");
+        } catch (PyException pye) {
+            // fall through
+        }
     }
 }
