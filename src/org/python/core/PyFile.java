@@ -553,16 +553,6 @@ public class PyFile extends PyObject {
         return file_toString();
     }
 
-    @ExposedMethod(type = MethodType.CMP)
-    final int file___cmp__(PyObject o) {
-        return super.__cmp__(o);
-    }
-
-    @ExposedMethod
-    final boolean file___nonzero__() {
-        return super.__nonzero__();
-    }
-
     private void checkClosed() {
         file.checkClosed();
     }
