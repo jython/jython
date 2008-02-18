@@ -2,13 +2,13 @@ import unittest
 from test import test_support
 import subprocess
 import sys
-import signal
 import os
 import tempfile
 import time
 import re
 
 mswindows = (sys.platform == "win32")
+jython = sys.platform.startswith("java")
 
 #
 # Depends on the following external programs: Python
@@ -17,8 +17,14 @@ mswindows = (sys.platform == "win32")
 if mswindows:
     SETBINARY = ('import msvcrt; msvcrt.setmode(sys.stdout.fileno(), '
                                                 'os.O_BINARY);')
+elif jython:
+    SETBINARY = ('import os,sys;'
+                 'sys.stdout = os.fdopen(sys.stdout.fileno(), "wb");')
 else:
     SETBINARY = ''
+
+if not jython:
+    import signal
 
 # In a debug build, stuff like "[6580 refs]" is printed to stderr at
 # shutdown time.  That frustrates tests trying to check stderr produced
@@ -237,7 +243,8 @@ class ProcessTestCase(unittest.TestCase):
     def test_stdout_filedes_of_stdout(self):
         # stdout is set to 1 (#1531862).
         cmd = r"import sys, os; sys.exit(os.write(sys.stdout.fileno(), '.\n'))"
-        rc = subprocess.call([sys.executable, "-c", cmd], stdout=1)
+        rc = subprocess.call([sys.executable, "-c", cmd],
+                             stdout=sys.__stdout__.fileno())
         self.assertEquals(rc, 2)
 
     def test_cwd(self):
@@ -316,13 +323,13 @@ class ProcessTestCase(unittest.TestCase):
         # communicate() with writes larger than pipe_buf
         # This test will probably deadlock rather than fail, if
         # communicate() does not work properly.
-        x, y = os.pipe()
-        if mswindows:
+        if mswindows or jython:
             pipe_buf = 512
         else:
+            x, y = os.pipe()
             pipe_buf = os.fpathconf(x, "PC_PIPE_BUF")
-        os.close(x)
-        os.close(y)
+            os.close(x)
+            os.close(y)
         p = subprocess.Popen([sys.executable, "-c",
                           'import sys,os;'
                           'sys.stdout.write(sys.stdin.read(47));' \
@@ -403,8 +410,13 @@ class ProcessTestCase(unittest.TestCase):
     def test_no_leaking(self):
         # Make sure we leak no resources
         if not hasattr(test_support, "is_resource_enabled") \
-               or test_support.is_resource_enabled("subprocess") and not mswindows:
-            max_handles = 1026 # too much for most UNIX systems
+               or test_support.is_resource_enabled("subprocess") and \
+               not mswindows:
+            # 1026 is too much for most UNIX systems
+            max_handles = jython and 65 or 1026
+        elif jython:
+            # Spawning java processes takes a long time
+            return
         else:
             max_handles = 65
         for i in range(max_handles):
@@ -475,7 +487,7 @@ class ProcessTestCase(unittest.TestCase):
     #
     # POSIX tests
     #
-    if not mswindows:
+    if not mswindows and not jython:
         def test_exceptions(self):
             # catched & re-raised exceptions
             try:
@@ -654,6 +666,39 @@ class ProcessTestCase(unittest.TestCase):
             rc = subprocess.call(sys.executable +
                                  ' -c "import sys; sys.exit(47)"')
             self.assertEqual(rc, 47)
+
+
+    #
+    # Jython tests
+    #
+    if jython:
+        def test_cwd_exception(self):
+            # catched & re-raised exceptions
+            self.assertRaises(OSError, subprocess.call,
+                              [sys.executable, "-c", ""],
+                              cwd="/this/path/does/not/exist")
+
+        def test_path_exception(self):
+            tf = tempfile.NamedTemporaryFile()
+            self.assertRaises(OSError, subprocess.call,
+                              tf.name)
+            self.assertRaises(OSError, subprocess.call,
+                              "/this/path/does/not/exist")
+
+        def test_invalid_args(self):
+            # invalid arguments should raise ValueError
+            self.assertRaises(ValueError, subprocess.call,
+                              [sys.executable,
+                               "-c", "import sys; sys.exit(47)"],
+                              startupinfo=47)
+            self.assertRaises(ValueError, subprocess.call,
+                              [sys.executable,
+                               "-c", "import sys; sys.exit(47)"],
+                              creationflags=47)
+            self.assertRaises(ValueError, subprocess.call,
+                              [sys.executable,
+                               "-c", "import sys; sys.exit(47)"],
+                              preexec_fn=lambda: 1)
 
 
 def test_main():

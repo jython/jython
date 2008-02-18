@@ -352,11 +352,11 @@ except that:
 
 import sys
 mswindows = (sys.platform == "win32")
+jython = sys.platform.startswith("java")
 
 import os
 import types
 import traceback
-import gc
 
 # Exception classes used by this module.
 class CalledProcessError(Exception):
@@ -395,10 +395,25 @@ if mswindows:
             wShowWindow = 0
         class pywintypes:
             error = IOError
+elif jython:
+    import errno
+    import javashell
+    import threading
+    import java.io.File
+    import java.io.FileDescriptor
+    import java.io.FileOutputStream
+    import java.io.IOException
+    import java.lang.IllegalThreadStateException
+    import java.lang.ProcessBuilder
+    import java.lang.Thread
+    import java.nio.ByteBuffer
+    import org.python.core.io.RawIOBase
+    import org.python.core.io.StreamIO
 else:
     import select
     import errno
     import fcntl
+    import gc
     import pickle
 
 __all__ = ["Popen", "PIPE", "STDOUT", "call", "check_call", "CalledProcessError"]
@@ -529,6 +544,63 @@ def list2cmdline(seq):
     return ''.join(result)
 
 
+if jython:
+    if javashell._getOsType() in ('nt', 'dos'):
+        # Escape the command line arguments on Windows
+        escape_args = lambda args: [list2cmdline([arg]) for arg in args]
+    else:
+        escape_args = lambda args: args
+
+
+    class CouplerThread(java.lang.Thread):
+
+        """Couples a reader and writer RawIOBase.
+
+        Streams data from the reader's read_func (a RawIOBase readinto
+        method) to the writer's write_func (a RawIOBase write method) in
+        a separate thread. Optionally calls close_func when finished
+        streaming or an exception occurs.
+
+        This thread will fail safe when interrupted by Java's
+        Thread.interrupt.
+        """
+
+        # analagous to PC_PIPE_BUF, which is typically 512 or 4096
+        bufsize = 4096
+
+        def __init__(self, name, read_func, write_func, close_func=None):
+            self.read_func = read_func
+            self.write_func = write_func
+            self.close_func = close_func
+            self.setName('CouplerThread-%s (%s)' % (id(self), name))
+            self.setDaemon(True)
+
+        def run(self):
+            buf = java.nio.ByteBuffer.allocate(self.bufsize)
+            while True:
+                try:
+                    count = self.read_func(buf)
+                    if count < 1:
+                        if self.close_func:
+                            self.close_func()
+                        break
+                    buf.flip()
+                    self.write_func(buf)
+                    buf.flip()
+                except IOError, ioe:
+                    if self.close_func:
+                        try:
+                            self.close_func()
+                        except:
+                            pass
+                    # XXX: hack, should really be a
+                    # ClosedByInterruptError(IOError) exception
+                    if str(ioe) == \
+                            'java.nio.channels.ClosedByInterruptException':
+                        return
+                    raise
+
+
 class Popen(object):
     def __init__(self, args, bufsize=0, executable=None,
                  stdin=None, stdout=None, stderr=None,
@@ -558,6 +630,10 @@ class Popen(object):
             if creationflags != 0:
                 raise ValueError("creationflags is only supported on Windows "
                                  "platforms")
+        if jython:
+            if preexec_fn is not None:
+                raise ValueError("preexec_fn is not supported on the Jython "
+                                 "platform")
 
         self.stdin = None
         self.stdout = None
@@ -607,6 +683,62 @@ class Popen(object):
             if stderr is None and errread is not None:
                 os.close(errread)
                 errread = None
+
+        if jython:
+            self._stdin_thread = None
+            self._stdout_thread = None
+            self._stderr_thread = None
+
+            # 'ct' is for CouplerThread
+            proc = self._process
+            ct2cwrite = org.python.core.io.StreamIO(proc.getOutputStream(),
+                                                    True)
+            c2ctread = org.python.core.io.StreamIO(proc.getInputStream(), True)
+            cterrread = org.python.core.io.StreamIO(proc.getErrorStream(),
+                                                    True)
+
+            # Use the java.lang.Process streams for PIPE, otherwise
+            # direct the desired file to/from the java.lang.Process
+            # streams in a separate thread
+            if p2cwrite == PIPE:
+                p2cwrite = ct2cwrite
+            else:
+                if p2cread is None:
+                    # Coupling stdin is not supported: there's no way to
+                    # cleanly interrupt it if it blocks the
+                    # CouplerThread forever (we can Thread.interrupt()
+                    # its CouplerThread but that closes stdin's Channel)
+                    pass
+                else:
+                    self._stdin_thread = self._coupler_thread('stdin',
+                                                              p2cread.readinto,
+                                                              ct2cwrite.write,
+                                                              ct2cwrite.close)
+                    self._stdin_thread.start()
+
+            if c2pread == PIPE:
+                c2pread = c2ctread
+            else:
+                if c2pwrite is None:
+                    c2pwrite = org.python.core.io.StreamIO(
+                        java.io.FileOutputStream(java.io.FileDescriptor.out),
+                        False)
+                self._stdout_thread = self._coupler_thread('stdout',
+                                                           c2ctread.readinto,
+                                                           c2pwrite.write)
+                self._stdout_thread.start()
+
+            if errread == PIPE:
+                errread = cterrread
+            elif not self._stderr_is_stdout(errwrite, c2pwrite):
+                if errwrite is None:
+                    errwrite = org.python.core.io.StreamIO(
+                        java.io.FileOutputStream(java.io.FileDescriptor.err),
+                        False)
+                self._stderr_thread = self._coupler_thread('stderr',
+                                                           cterrread.readinto,
+                                                           errwrite.write)
+                self._stderr_thread.start()
 
         if p2cwrite is not None:
             self.stdin = os.fdopen(p2cwrite, 'wb', bufsize)
@@ -665,6 +797,61 @@ class Popen(object):
             return (stdout, stderr)
 
         return self._communicate(input)
+
+
+    if mswindows or jython:
+        #
+        # Windows and Jython shared methods
+        #
+        def _readerthread(self, fh, buffer):
+            buffer.append(fh.read())
+
+
+        def _communicate(self, input):
+            stdout = None # Return
+            stderr = None # Return
+
+            if self.stdout:
+                stdout = []
+                stdout_thread = threading.Thread(target=self._readerthread,
+                                                 args=(self.stdout, stdout))
+                stdout_thread.setDaemon(True)
+                stdout_thread.start()
+            if self.stderr:
+                stderr = []
+                stderr_thread = threading.Thread(target=self._readerthread,
+                                                 args=(self.stderr, stderr))
+                stderr_thread.setDaemon(True)
+                stderr_thread.start()
+
+            if self.stdin:
+                if input is not None:
+                    self.stdin.write(input)
+                self.stdin.close()
+
+            if self.stdout:
+                stdout_thread.join()
+            if self.stderr:
+                stderr_thread.join()
+
+            # All data exchanged.  Translate lists into strings.
+            if stdout is not None:
+                stdout = stdout[0]
+            if stderr is not None:
+                stderr = stderr[0]
+
+            # Translate newlines, if requested.  We cannot let the file
+            # object do the translation: It is based on stdio, which is
+            # impossible to combine with select (unless forcing no
+            # buffering).
+            if self.universal_newlines and hasattr(file, 'newlines'):
+                if stdout:
+                    stdout = self._translate_newlines(stdout)
+                if stderr:
+                    stderr = self._translate_newlines(stderr)
+
+            self.wait()
+            return (stdout, stderr)
 
 
     if mswindows:
@@ -855,56 +1042,144 @@ class Popen(object):
                 self.returncode = GetExitCodeProcess(self._handle)
             return self.returncode
 
+    elif jython:
+        #
+        # Jython methods
+        #
+        def _get_handles(self, stdin, stdout, stderr):
+            """Construct and return tuple with IO objects:
+            p2cread, p2cwrite, c2pread, c2pwrite, errread, errwrite
+            """
+            p2cread, p2cwrite = None, None
+            c2pread, c2pwrite = None, None
+            errread, errwrite = None, None
 
-        def _readerthread(self, fh, buffer):
-            buffer.append(fh.read())
+            if stdin is None:
+                pass
+            elif stdin == PIPE:
+                p2cwrite = PIPE
+            elif isinstance(stdin, org.python.core.io.RawIOBase):
+                p2cread = stdin
+            else:
+                # Assuming file-like object
+                p2cread = stdin.fileno()
+
+            if stdout is None:
+                pass
+            elif stdout == PIPE:
+                c2pread = PIPE
+            elif isinstance(stdout, org.python.core.io.RawIOBase):
+                c2pwrite = stdout
+            else:
+                # Assuming file-like object
+                c2pwrite = stdout.fileno()
+
+            if stderr is None:
+                pass
+            elif stderr == PIPE:
+                errread = PIPE
+            elif stderr == STDOUT or \
+                    isinstance(stderr, org.python.core.io.RawIOBase):
+                errwrite = stderr
+            else:
+                # Assuming file-like object
+                errwrite = stderr.fileno()
+        
+            return (p2cread, p2cwrite,
+                    c2pread, c2pwrite,
+                    errread, errwrite)
 
 
-        def _communicate(self, input):
-            stdout = None # Return
-            stderr = None # Return
+        def _stderr_is_stdout(self, errwrite, c2pwrite):
+            """Determine if the subprocess' stderr should be redirected to
+            stdout
+            """
+            return errwrite == STDOUT or c2pwrite not in (None, PIPE) and \
+                c2pwrite is errwrite
 
-            if self.stdout:
-                stdout = []
-                stdout_thread = threading.Thread(target=self._readerthread,
-                                                 args=(self.stdout, stdout))
-                stdout_thread.setDaemon(True)
-                stdout_thread.start()
-            if self.stderr:
-                stderr = []
-                stderr_thread = threading.Thread(target=self._readerthread,
-                                                 args=(self.stderr, stderr))
-                stderr_thread.setDaemon(True)
-                stderr_thread.start()
 
-            if self.stdin:
-                if input is not None:
-                    self.stdin.write(input)
-                self.stdin.close()
+        def _coupler_thread(self, *args, **kwargs):
+            """Return a CouplerThread"""
+            return CouplerThread(*args, **kwargs)
 
-            if self.stdout:
-                stdout_thread.join()
-            if self.stderr:
-                stderr_thread.join()
 
-            # All data exchanged.  Translate lists into strings.
-            if stdout is not None:
-                stdout = stdout[0]
-            if stderr is not None:
-                stderr = stderr[0]
+        def _execute_child(self, args, executable, preexec_fn, close_fds,
+                           cwd, env, universal_newlines,
+                           startupinfo, creationflags, shell,
+                           p2cread, p2cwrite,
+                           c2pread, c2pwrite,
+                           errread, errwrite):
+            """Execute program (Java version)"""
 
-            # Translate newlines, if requested.  We cannot let the file
-            # object do the translation: It is based on stdio, which is
-            # impossible to combine with select (unless forcing no
-            # buffering).
-            if self.universal_newlines and hasattr(file, 'newlines'):
-                if stdout:
-                    stdout = self._translate_newlines(stdout)
-                if stderr:
-                    stderr = self._translate_newlines(stderr)
+            if isinstance(args, types.StringTypes):
+                args = [args]
+            else:
+                args = list(args)
+            args = escape_args(args)
 
-            self.wait()
-            return (stdout, stderr)
+            if shell:
+                args = javashell._shellEnv.cmd + args
+
+            if executable is not None:
+                args[0] = executable
+
+            builder = java.lang.ProcessBuilder(args)
+            if env is not None:
+                builder_env = builder.environment()
+                builder_env.clear()
+                builder_env.putAll(dict(env))
+
+            if cwd is None:
+                cwd = os.getcwd()
+            elif not os.path.exists(cwd):
+                raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), cwd)
+            elif not os.path.isdir(cwd):
+                raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOENT), cwd)
+            builder.directory(java.io.File(cwd))
+
+            # Let Java manage redirection of stderr to stdout (it's more
+            # accurate at doing so than CouplerThreads). We redirect not
+            # only when stderr is marked as STDOUT, but also when
+            # c2pwrite is errwrite
+            if self._stderr_is_stdout(errwrite, c2pwrite):
+                builder.redirectErrorStream(True)
+
+            try:
+                self._process = builder.start()
+            except java.io.IOException:
+                executable = os.path.join(cwd, args[0])
+                if not os.path.exists(executable):
+                    raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT),
+                                  args[0])
+                raise OSError(errno.EACCES, errno.strerror(errno.EACCES),
+                              args[0])
+            self._child_created = True
+
+
+        def poll(self, _deadstate=None):
+            """Check if child process has terminated.  Returns returncode
+            attribute."""
+            if self.returncode is None:
+                try:
+                    return self._process.exitValue()
+                except java.lang.IllegalThreadStateException:
+                    pass
+            return self.returncode
+
+
+        def wait(self):
+            """Wait for child process to terminate.  Returns returncode
+            attribute."""
+            if self.returncode is None:
+                self.returncode = self._process.waitFor()
+                for coupler in (self._stdout_thread, self._stderr_thread):
+                    if coupler:
+                        coupler.join()
+                if self._stdin_thread:
+                    # The stdin thread may be blocked forever, forcibly
+                    # stop it
+                    self._stdin_thread.interrupt()
+            return self.returncode
 
     else:
         #
@@ -1243,8 +1518,39 @@ def _demo_windows():
     p.wait()
 
 
+def _demo_jython():
+    #
+    # Example 1: Return the number of processors on this machine
+    #
+    print "Running a jython subprocess to return the number of processors..."
+    p = Popen([sys.executable, "-c",
+               'import sys;' \
+               'from java.lang import Runtime;' \
+               'sys.exit(Runtime.getRuntime().availableProcessors())'])
+    print p.wait()
+
+    #
+    # Example 2: Connecting several subprocesses
+    #
+    print "Connecting two jython subprocesses..."
+    p1 = Popen([sys.executable, "-c",
+                'import os;' \
+                'print os.environ["foo"]'], env=dict(foo='bar'),
+               stdout=PIPE)
+    p2 = Popen([sys.executable, "-c",
+                'import os, sys;' \
+                'their_foo = sys.stdin.read().strip();' \
+                'my_foo = os.environ["foo"];' \
+                'msg = "Their env\'s foo: %r, My env\'s foo: %r";' \
+                'print msg % (their_foo, my_foo)'],
+               env=dict(foo='baz'), stdin=p1.stdout, stdout=PIPE)
+    print p2.communicate()[0]
+
+
 if __name__ == "__main__":
     if mswindows:
         _demo_windows()
+    elif jython:
+        _demo_jython()
     else:
         _demo_posix()
