@@ -1057,6 +1057,7 @@ _default_compilers = (
     # compiler
     ('cygwin.*', 'unix'),
     ('os2emx', 'emx'),
+    ('java.*', 'jython'),
 
     # OS name mappings
     ('posix', 'unix'),
@@ -1105,6 +1106,8 @@ compiler_class = { 'unix':    ('unixccompiler', 'UnixCCompiler',
                                "MetroWerks CodeWarrior"),
                    'emx':     ('emxccompiler', 'EMXCCompiler',
                                "EMX port of GNU C Compiler for OS/2"),
+                   'jython':  ('jythoncompiler', 'JythonCompiler',
+                               "Compiling is not supported on Jython"),
                  }
 
 def show_compilers():

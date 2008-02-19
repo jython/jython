@@ -469,6 +469,13 @@ def _init_os2():
     _config_vars = g
 
 
+def _init_jython():
+    """Initialize the module as appropriate for Jython"""
+    # Stub out some values that build_ext expects; they don't matter
+    # anyway
+    _init_os2()
+
+
 def get_config_vars(*args):
     """With no arguments, return a dictionary of all configuration
     variables relevant for the current platform.  Generally this includes
@@ -481,7 +488,12 @@ def get_config_vars(*args):
     """
     global _config_vars
     if _config_vars is None:
-        func = globals().get("_init_" + os.name)
+        if sys.platform.startswith('java'):
+            # Jython might pose as a different os.name, but we always
+            # want _init_jython regardless
+            func = _init_jython
+        else:
+            func = globals().get("_init_" + os.name)
         if func:
             func()
         else:
