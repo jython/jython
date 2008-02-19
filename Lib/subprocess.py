@@ -1091,8 +1091,8 @@ class Popen(object):
 
 
         def _stderr_is_stdout(self, errwrite, c2pwrite):
-            """Determine if the subprocess' stderr should be redirected to
-            stdout
+            """Determine if the subprocess' stderr should be redirected
+            to stdout
             """
             return errwrite == STDOUT or c2pwrite not in (None, PIPE) and \
                 c2pwrite is errwrite
@@ -1114,8 +1114,7 @@ class Popen(object):
             if isinstance(args, types.StringTypes):
                 args = [args]
             else:
-                args = list(args)
-            args = escape_args(args)
+                args = escape_args(list(args))
 
             if shell:
                 args = javashell._shellEnv.cmd + args
@@ -1146,13 +1145,8 @@ class Popen(object):
 
             try:
                 self._process = builder.start()
-            except java.io.IOException:
-                executable = os.path.join(cwd, args[0])
-                if not os.path.exists(executable):
-                    raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT),
-                                  args[0])
-                raise OSError(errno.EACCES, errno.strerror(errno.EACCES),
-                              args[0])
+            except java.io.IOException, ioe:
+                raise OSError(ioe.getMessage() or ioe)
             self._child_created = True
 
 
