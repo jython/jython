@@ -377,13 +377,16 @@ class sdist (Command):
         """
         log.info("reading manifest file '%s'", self.manifest)
         manifest = open(self.manifest)
-        while 1:
-            line = manifest.readline()
-            if line == '':              # end of file
-                break
-            if line[-1] == '\n':
-                line = line[0:-1]
-            self.filelist.append(line)
+        try:
+            while 1:
+                line = manifest.readline()
+                if line == '':              # end of file
+                    break
+                if line[-1] == '\n':
+                    line = line[0:-1]
+                self.filelist.append(line)
+        finally:
+            manifest.close()
 
     # read_manifest ()
 
