@@ -55,8 +55,8 @@ public class zipimporter extends PyObject {
     static final int IS_BYTECODE = 1;
     static final int IS_PACKAGE = 2;
     static final SearchOrderEntry[] zip_searchorder = new SearchOrderEntry[] {
-        new SearchOrderEntry("/__init__$py.class", IS_PACKAGE | IS_BYTECODE),
-        new SearchOrderEntry("/__init__.py", IS_PACKAGE | IS_SOURCE),
+        new SearchOrderEntry(File.separator + "__init__$py.class", IS_PACKAGE | IS_BYTECODE),
+        new SearchOrderEntry(File.separator + "__init__.py", IS_PACKAGE | IS_SOURCE),
         new SearchOrderEntry("$py.class", IS_BYTECODE),
         new SearchOrderEntry(".py", IS_SOURCE),
         new SearchOrderEntry("", 0)
@@ -230,21 +230,16 @@ public class zipimporter extends PyObject {
             throw Py.IOError(path);
         }
 
-        InputStream dataStream = getDataStream(path);
+        ZipBundle zipBundle = getDataStream(path);
         byte[] data;
         try {
-            data = FileUtil.readBytes(dataStream);
+            data = FileUtil.readBytes(zipBundle.inputStream);
         }
         catch (IOException ioe) {
             throw Py.IOError(ioe);
         }
         finally {
-            try {
-                dataStream.close();
-            }
-            catch (IOException ioe) {
-                // continue
-            }
+            zipBundle.close();
         }
         return StringUtil.fromBytes(data);
     }
@@ -329,12 +324,14 @@ public class zipimporter extends PyObject {
 
     /**
      * Given a path to a compressed file in the archive, return the
-     * file's (uncompressed) data stream.
+     * file's (uncompressed) data stream in a ZipBundle.
      *
      * @param datapath file's filename inside of the archive
-     * @return an InputStream yielding the file's uncompressed data
+     * @return a ZipBundle with an InputStream to the file's
+     * uncompressed data
      */
-    public InputStream getDataStream(String datapath) {
+    public ZipBundle getDataStream(String datapath) {
+        datapath = datapath.replace(File.separatorChar, '/');
         ZipFile zipArchive;
         try {
             zipArchive = new ZipFile(new File(sys.getPath(archive)));
@@ -343,14 +340,13 @@ public class zipimporter extends PyObject {
             throw zipimport.ZipImportError("zipimport: can not open file: " + archive);
         }
 
-        ZipEntry data = zipArchive.getEntry(datapath);
+        ZipEntry dataEntry = zipArchive.getEntry(datapath);
         try {
-            return zipArchive.getInputStream(data);
+            return new ZipBundle(zipArchive, zipArchive.getInputStream(dataEntry));
         }
         catch (IOException ioe) {
             Py.writeDebug("import", "zipimporter.getDataStream exception: " + ioe.toString());
             throw zipimport.ZipImportError("zipimport: can not open file: " + archive);
-
         }
     }
 
@@ -411,19 +407,18 @@ public class zipimporter extends PyObject {
             }
 
             String pathToEntry = archive + File.separator + searchPath;
-            InputStream dataStream = getDataStream(searchPath);
+            ZipBundle zipBundle = getDataStream(searchPath);
             byte[] codeBytes;
             if (isbytecode) {
-                codeBytes = imp.unmarshalCode(fullname, dataStream, true);
+                codeBytes = imp.unmarshalCode(fullname, zipBundle.inputStream, true);
             }
             else {
-                codeBytes = imp.compileSource(fullname, dataStream, pathToEntry);
+                codeBytes = imp.compileSource(fullname, zipBundle.inputStream, pathToEntry);
             }
+            zipBundle.close();
+
             imp.cacheCompiledSource(pathToEntry, null, codeBytes);
-
-            PyCode code;
-            code = BytecodeLoader.makeCode(fullname + "$py", codeBytes, pathToEntry);
-
+            PyCode code = BytecodeLoader.makeCode(fullname + "$py", codeBytes, pathToEntry);
             if (code == null) {
                 continue;
             }
@@ -500,8 +495,9 @@ public class zipimporter extends PyObject {
         PyObject files = new PyDictionary();
         for (Enumeration zipEntries = zipFile.entries(); zipEntries.hasMoreElements();) {
             ZipEntry zipEntry = (ZipEntry)zipEntries.nextElement();
+            String name = zipEntry.getName().replace('/', File.separatorChar);
 
-            PyObject __file__ = new PyString(archive + File.separator + zipEntry.getName());
+            PyObject __file__ = new PyString(archive + File.separator + name);
             PyObject compress = new PyInteger(zipEntry.getMethod());
             PyObject data_size = new PyLong(zipEntry.getCompressedSize());
             PyObject file_size = new PyLong(zipEntry.getSize());
@@ -513,15 +509,16 @@ public class zipimporter extends PyObject {
             PyObject date = new PyInteger(epochToDosDate(zipEntry.getTime()));
             PyObject crc = new PyLong(zipEntry.getCrc());
 
-            PyTuple entry = new PyTuple(__file__,
-                                        compress,
-                                        data_size,
-                                        file_size,
-                                        file_offset,
-                                        time,
-                                        date,
-                                        crc);
-            files.__setitem__(new PyString(zipEntry.getName()), entry);
+            PyTuple entry = new PyTuple(__file__, compress, data_size, file_size, file_offset,
+                                        time, date, crc);
+            files.__setitem__(new PyString(name), entry);
+        }
+
+        try {
+            zipFile.close();
+        }
+        catch (IOException ioe) {
+            throw Py.IOError(ioe);
         }
 
         return files;
@@ -620,6 +617,38 @@ public class zipimporter extends PyObject {
             this.code = code;
             this.ispackage = ispackage;
             this.path = path;
+        }
+    }
+
+    /**
+     * ZipBundle is a ZipFile and one of its InputStreams, bundled
+     * together so the ZipFile can be closed when finished with its
+     * InputStream.
+     *
+     */
+    private class ZipBundle {
+        ZipFile zipFile;
+        InputStream inputStream;
+
+        public ZipBundle(ZipFile zipFile, InputStream inputStream) {
+            this.zipFile = zipFile;
+            this.inputStream = inputStream;
+        }
+
+        /**
+         * Close the ZipFile; implicitly closes all of its
+         * InputStreams.
+         *
+         * Raises an IOError if a problem occurred.
+         *
+         */
+        public void close() {
+            try {
+                zipFile.close();
+            }
+            catch (IOException ioe) {
+                throw Py.IOError(ioe);
+            }
         }
     }
 
