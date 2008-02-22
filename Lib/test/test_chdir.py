@@ -3,9 +3,11 @@
 Made for Jython.
 """
 import imp
+import javashell
 import os
 import py_compile
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -226,6 +228,7 @@ class ImportTestCase(BaseImportTestCase):
     def test_imp_find_module(self):
         module_info = imp.find_module(self.mod_name)
         self.assertEqual(module_info[1], self.basename1)
+        module_info[0].close()
 
     def test_imp_load_module(self):
         module_info = imp.find_module(self.mod_name)
@@ -233,6 +236,7 @@ class ImportTestCase(BaseImportTestCase):
         mod = imp.load_module(self.mod_name, *module_info)
         self.assertEqual(mod.__file__, self.basename1)
         self.assert_(os.path.exists(self.bytecode))
+        module_info[0].close()
 
     def test_imp_load_source(self):
         mod = imp.load_source(self.mod_name, self.basename1)
@@ -345,34 +349,44 @@ class PyCompileTestCase(BaseImportTestCase):
                                     COMPILED_SUFFIX))
 
 
-class ExecuteTestCase(BaseChdirTestCase):
+class SubprocessTestCase(BaseChdirTestCase):
 
     TEST_DIRS = 2
 
     # Write out the external app's cwd to a file we'll specify in setUp
-    COMMAND = """\
-%s -c 'import os; fp = open("%%s", "w"); fp.write(os.getcwd())'""" % \
+    COMMAND = '''\
+"%s" -c "import os; fp = open(r'%%s', 'w'); fp.write(os.getcwd())"''' % \
         EXECUTABLE
 
-    def setUp(self):
-        super(ExecuteTestCase, self).setUp()
-        self.COMMAND = self.COMMAND % self.filename1
-
     def test_popen(self):
-        os.popen(self.COMMAND).read()
+        os.popen(self._command()).read()
         self.assertEqual(read(self.filename1), os.getcwd())
 
         os.chdir(self.dir2)
-        os.popen(self.COMMAND).read()
+        os.popen(self._command()).read()
         self.assertEqual(read(self.filename1), os.getcwd())
 
     def test_system(self):
-        os.system(self.COMMAND)
+        self.assertEqual(os.system(self._command()), 0)
         self.assertEqual(read(self.filename1), os.getcwd())
 
         os.chdir(self.dir2)
-        os.system(self.COMMAND)
+        self.assertEqual(os.system(self._command()), 0)
         self.assertEqual(read(self.filename1), os.getcwd())
+
+    def test_subprocess(self):
+        self.assertEqual(subprocess.call(self._command(), shell=True), 0)
+        self.assertEqual(read(self.filename1), os.getcwd())
+
+        os.chdir(self.dir2)
+        self.assertEqual(subprocess.call(self._command(), shell=True), 0)
+        self.assertEqual(read(self.filename1), os.getcwd())
+
+    def _command(self):
+        command = self.COMMAND % self.filename1
+        if javashell._getOsType() in ('nt', 'dos', 'ce'):
+            command = '"%s"' % command
+        return command
 
 
 class ExecfileTestCase(BaseChdirTestCase):
@@ -565,7 +579,14 @@ class ImportJarTestCase(BaseChdirTestCase):
         write(os.path.join(self.dir1, 'chdir-test.jar'), CHDIR_JY_JAR)
 
     def tearDown(self):
-        super(ImportJarTestCase, self).tearDown()
+        try:
+            super(ImportJarTestCase, self).tearDown()
+        except OSError:
+            # XXX: Windows raises an error here when deleting the jar
+            # because SyspathArchive holds onto its file handle (and you
+            # can't delete a file in use on Windows). We may not want to
+            # change this
+            self.assert(javashell._getOsType() in ('nt', 'dos', 'ce'))
         if 'ChdirJyTest' in sys.modules:
             del sys.modules['ChdirJyTest']
 
@@ -631,7 +652,7 @@ def test_main():
              ImportPackageTestCase,
              ZipimportTestCase,
              PyCompileTestCase,
-             ExecuteTestCase,
+             SubprocessTestCase,
              ExecfileTestCase,
              ExecfileTracebackTestCase,
              ListdirTestCase,
