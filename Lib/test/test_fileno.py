@@ -90,7 +90,9 @@ class TestOsOpenTestCase(unittest.TestCase):
         self.fd = os.open(self.filename, os.O_WRONLY | os.O_APPEND)
         os.write(self.fd, ' filenos')
         os.close(self.fd)
-        self.assertEquals(open(self.filename).read(), 'jython filenos')
+        fp = open(self.filename)
+        self.assertEquals(fp.read(), 'jython filenos')
+        fp.close()
 
         # falls back to read only without O_WRONLY/O_RDWR
         self.fd = os.open(self.filename, os.O_APPEND)
@@ -113,6 +115,7 @@ class TestOsOpenTestCase(unittest.TestCase):
         os.write(self.fd, 'test')
         os.lseek(self.fd, 0, 0)
         self.assertEquals(os.read(self.fd, 4), 'test')
+        os.close(self.fd)
 
     def test_open_truncate(self):
         fp = open(self.filename, 'w')
