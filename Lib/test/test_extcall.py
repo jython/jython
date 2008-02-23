@@ -91,7 +91,7 @@ Verify clearing of SF bug #733667
     >>> g(*Nothing())
     Traceback (most recent call last):
       ...
-    TypeError: g() argument after * must be a sequence, not instance
+    TypeError: g() argument after * must be a sequence
 
     >>> class Nothing:
     ...     def __len__(self): return 5
@@ -100,9 +100,9 @@ Verify clearing of SF bug #733667
     >>> g(*Nothing())
     Traceback (most recent call last):
       ...
-    TypeError: g() argument after * must be a sequence, not instance
+    TypeError: g() argument after * must be a sequence
 
-    >>> class Nothing():
+    >>> class Nothing:
     ...     def __len__(self): return 5
     ...     def __getitem__(self, i):
     ...         if i<3: return i
@@ -165,34 +165,32 @@ What about willful misconduct?
     >>> h(*h)
     Traceback (most recent call last):
       ...
-    TypeError: h() argument after * must be a sequence, not function
+    TypeError: h() argument after * must be a sequence
 
     >>> dir(*h)
     Traceback (most recent call last):
       ...
-    TypeError: dir() argument after * must be a sequence, not function
+    TypeError: dir() argument after * must be a sequence
 
     >>> None(*h)
     Traceback (most recent call last):
       ...
-    TypeError: NoneType object argument after * must be a sequence, \
-not function
+    TypeError: NoneType argument after * must be a sequence
 
     >>> h(**h)
     Traceback (most recent call last):
       ...
-    TypeError: h() argument after ** must be a mapping, not function
+    TypeError: h() argument after ** must be a mapping
 
     >>> dir(**h)
     Traceback (most recent call last):
       ...
-    TypeError: dir() argument after ** must be a mapping, not function
+    TypeError: dir() argument after ** must be a mapping
 
     >>> None(**h)
     Traceback (most recent call last):
       ...
-    TypeError: NoneType object argument after ** must be a mapping, \
-not function
+    TypeError: NoneType argument after ** must be a mapping
 
     >>> dir(b=1, **{'b': 1})
     Traceback (most recent call last):

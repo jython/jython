@@ -160,8 +160,6 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${oracle.jar}" />
             <pathelement path="${mysql.jar}" />
             <pathelement path="${postgresql.jar}" />
-            <pathelement path="extlibs/asm-3.1.jar" />
-            <pathelement path="extlibs/asm-util-3.1.jar" />
         </path>
 
         <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />
@@ -234,6 +232,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="templates.lazy" value="true" />
         <property name="output.dir" value="${work.dir}/build" />
         <property name="compile.dir" value="${output.dir}/classes" />
+        <property name="jarjar.dir" value="${output.dir}/jarjar" />
         <property name="exposed.dir" value="${output.dir}/exposed" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
@@ -245,6 +244,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${exposed.dir}" />
             <pathelement path="${compile.dir}" />
         </path>
+        <uptodate property="jarjar.notneeded" targetfile="${output.dir}/jarjar.jar">
+            <srcfiles dir="extlibs" includes="*" />
+        </uptodate>
     </target>
 	
     <target name="dump-env" depends="init">
@@ -407,7 +409,7 @@ The readme text for the next release will be like:
 		  lazy="${templates.lazy}"/>
     </target>
 
-    <target name="compile" depends="init">
+    <target name="compile" depends="init,jarjar">
         <javac srcdir="${source.dir}/"
                destdir="${compile.dir}"
                target="${jdk.target.version}"
@@ -474,9 +476,19 @@ The readme text for the next release will be like:
             destdir="${exposed.dir}" 
             includesfile="${jython.base.dir}/CoreExposed.includes"/>
     </target>
+    <target name="jarjar" depends="init" unless="jarjar.notneeded">
+        <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="extlibs/jarjar-0.7.jar"/>
+        <jarjar destfile="${output.dir}/jarjar.jar">
+            <zipfileset src="extlibs/asm-3.1.jar"/>
+            <zipfileset src="extlibs/asm-commons-3.1.jar"/>
+            <zipfileset src="extlibs/asm-util-3.1.jar"/>
+            <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
+        </jarjar>
+        <unjar src="${output.dir}/jarjar.jar" dest="${compile.dir}"/>
+    </target>
 
-    <target name="jar" depends="compile,expose">
-        <jar destfile="${dist.dir}/jython.jar" update="true">
+    <target name="jar" depends="compile,expose,jarjar">
+       <jar destfile="${dist.dir}/jython.jar">
           <fileset dir="${compile.dir}"/>   
           <fileset dir="${exposed.dir}"/>
           <manifest>

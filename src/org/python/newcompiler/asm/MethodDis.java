@@ -3,12 +3,12 @@ package org.python.newcompiler.asm;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodAdapter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.python.objectweb.asm.AnnotationVisitor;
+import org.python.objectweb.asm.Attribute;
+import org.python.objectweb.asm.Label;
+import org.python.objectweb.asm.MethodAdapter;
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
 import org.python.newcompiler.DisassemblyDocument;
 
 class MethodDis extends MethodAdapter {

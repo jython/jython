@@ -954,9 +954,7 @@ _skips = {
         test_dl
         test_dummy_thread
         test_dummy_threading
-        test_email
         test_email_codecs
-        test_extcall
         test_fcntl
         test_fork1
         test_gc
@@ -970,7 +968,6 @@ _skips = {
         test_imgfile
         test_import
         test_ioctl
-        test_iterlen
         test_largefile
         test_linuxaudiodev
         test_locale
@@ -1030,15 +1027,16 @@ _failures = {
     test_dis
     test_descr
     test_descrtut
+    test_email
     test_eof
     test_frozen
     test_hexoct
+    test_iterlen
     test_marshal
     test_new
     test_pep263
     test_pep277
     test_pickle
-    test_pickletools
     test_pkgimport
     test_profilehooks
     test_pyclbr

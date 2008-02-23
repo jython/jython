@@ -80,10 +80,6 @@ public class PyList extends PySequenceList {
         }
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'list' object";
-    }
-
     public int __len__() {
         return list___len__();
     }

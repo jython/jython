@@ -4,10 +4,12 @@ import sys
 import re
 
 from test import test_support
-from java.awt import Dimension, Component, Rectangle
-from java.util import Vector
+from java.awt import Dimension, Component, Rectangle, Button, Color
+from java.util import Vector, Hashtable
 from java.io import FileOutputStream, FileWriter, OutputStreamWriter, UnsupportedEncodingException
-from java.lang import Runnable, ThreadGroup, System, Runtime, Math
+from java.lang import Runnable, Thread, ThreadGroup, System, Runtime, Math, Byte
+from javax.swing.tree import TreePath
+from java.math import BigDecimal
 
 """
 public abstract class Abstract {
@@ -180,6 +182,16 @@ class VectorTest(unittest.TestCase):
     def test_looping(self):
         for i in Vector(): pass
 
+    def test_return_proxy(self):
+        "Jython proxies properly return back from Java code"
+        class FooVector(Vector):
+            bar = 99
+
+        ht = Hashtable()
+        fv = FooVector()
+        ht.put("a", fv)
+        fv = ht.get("a")
+
 class ReservedNamesTest(unittest.TestCase):
     "Access to java names which are al reserved words"
 
@@ -199,20 +211,86 @@ class ImportTest(unittest.TestCase):
         except ValueError, e:
             self.assert_("Empty module name" in str(e))
         
+class ButtonTest(unittest.TestCase):
+
+    def test_setLabel(self):
+        b = Button()
+        try:
+            b.setLabel = 4
+        except TypeError, e:
+            self.failUnless("can't assign to this attribute in java instance: setLabel" in str(e))
+
+class ColorTest(unittest.TestCase):
+
+    def test_static_fields(self):
+        Color.red
+        Color.blue
+
+    def test_is_operator(self):
+        red = Color.red
+        self.assert_(red is red)
+        self.assert_(red is Color.red)
+
+class TreePathTest(unittest.TestCase):
+    
+    def test_overloading(self):
+        treePath = TreePath([1,2,3])
+        self.assertEquals(len(treePath.path), 3, "Object[] not passed correctly")
+        self.assertEquals(TreePath(treePath.path).path, treePath.path, "Object[] not passed and returned correctly")
+            
+class BigDecimalTest(unittest.TestCase):
+    
+    def test_coerced_bigdecimal(self):
+        from javatests import BigDecimalTest
+        
+        x = BigDecimal("123.4321")
+        y = BigDecimalTest().asBigDecimal()
+
+        self.assertEqual(type(x), type(y), "BigDecimal coerced")
+        self.assertEqual(x, y, "BigDecimal coerced")
+
+class MethodInvTest(unittest.TestCase):
+    
+    def test_method_invokation(self):
+        from javatests import MethodInvokationTest
+        
+        bar = MethodInvokationTest.foo1(Byte(10))
+
+        self.assertEquals(bar, "foo1 with byte arg: 10", "Wrong method called")
+
+class InterfaceTest(unittest.TestCase):
+    
+    def test_override(self):
+        from java.lang import String
+        class Foo(Runnable):
+            def run(self): pass
+            def toString(self): return "Foo!!!"
+            
+        foo = Foo()
+        s = String.valueOf(foo)
+
+        self.assertEquals(s, "Foo!!!", "toString not overridden in interface")
+
 
 def test_main():
     test_support.run_unittest(AbstractOnSyspathTest,
-            InstantiationTest, 
-            BeanTest, 
-            MethodVisibilityTest, 
-            ExtendJavaTest, 
-            SysIntegrationTest,
-            AutoSuperTest,
-            PyObjectCmpTest,
-            IOTest,
-            VectorTest,
-            ReservedNamesTest,
-            ImportTest)
+                              InstantiationTest, 
+                              BeanTest, 
+                              MethodVisibilityTest, 
+                              ExtendJavaTest, 
+                              SysIntegrationTest,
+                              AutoSuperTest,
+                              PyObjectCmpTest,
+                              IOTest,
+                              VectorTest,
+                              ReservedNamesTest,
+                              ImportTest,
+                              ButtonTest,
+                              ColorTest,
+                              TreePathTest,
+                              BigDecimalTest,
+                              MethodInvTest,
+                              InterfaceTest)
 
 if __name__ == "__main__":
     test_main()

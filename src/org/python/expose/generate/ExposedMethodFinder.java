@@ -3,11 +3,11 @@ package org.python.expose.generate;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.MethodAdapter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.python.objectweb.asm.AnnotationVisitor;
+import org.python.objectweb.asm.MethodAdapter;
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
+import org.python.objectweb.asm.Type;
 import org.python.expose.MethodType;
 
 /**
@@ -19,7 +19,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
 
     private Exposer newExp;
 
-    private ExposedMethodVisitor methVisitor;
+    private ExposedMethodVisitor methVisitor, classMethVisitor;
 
     private Type onType;
 
@@ -47,9 +47,15 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
 
     /**
      * @param exposer -
-     *            the MethodExposer built as a result of visiting ExposeMethod
+     *            the InstanceMethodExposer built as a result of visiting ExposeMethod
      */
-    public abstract void handleResult(MethodExposer exposer);
+    public abstract void handleResult(InstanceMethodExposer exposer);
+
+    /**
+     * @param exposer -
+     *            the ClassMethodExposer built as a result of visiting ExposeClassMethod
+     */
+    public abstract void handleResult(ClassMethodExposer exposer);
 
     /**
      * @param exposer -
@@ -80,6 +86,9 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
         } else if(desc.equals(EXPOSED_METHOD.getDescriptor())) {
             methVisitor = new ExposedMethodVisitor();
             return methVisitor;
+        } else if(desc.equals(EXPOSED_CLASS_METHOD.getDescriptor())){
+            classMethVisitor = new ExposedMethodVisitor();
+            return classMethVisitor;
         } else if(desc.equals(EXPOSED_GET.getDescriptor())) {
             return new DescriptorVisitor(methodName) {
 
@@ -169,7 +178,7 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
     @Override
     public void visitEnd() {
         if(methVisitor != null) {
-            handleResult(new MethodExposer(onType,
+            handleResult(new InstanceMethodExposer(onType,
                                            access,
                                            methodName,
                                            methodDesc,
@@ -180,6 +189,15 @@ public abstract class ExposedMethodFinder extends MethodAdapter implements PyTyp
         }
         if(newExp != null) {
             handleNewExposer(newExp);
+        }
+        if (classMethVisitor != null) {
+            handleResult(new ClassMethodExposer(onType,
+                                                access,
+                                                methodName,
+                                                methodDesc,
+                                                typeName,
+                                                classMethVisitor.names,
+                                                classMethVisitor.defaults));
         }
         super.visitEnd();
     }

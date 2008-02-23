@@ -72,8 +72,9 @@ public class PyGenerator extends PyIterator {
         return Py.None;
     }
 
+    /*
     protected void finalize() throws Throwable {
-        //if (gi_frame.f_lasti == -1) /* Generator already closed. */
+        //if (gi_frame.f_lasti == -1) // Generator already closed.
         //    return; // this is pure optimization
         try {
             close(); // close doesn't work without newcompiler, so ignore the exception
@@ -85,6 +86,7 @@ public class PyGenerator extends PyIterator {
             super.finalize();
         }
     }
+    */
 
     public PyObject __iternext__() {
         if (gi_running)

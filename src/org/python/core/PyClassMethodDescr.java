@@ -2,12 +2,8 @@ package org.python.core;
 
 public class PyClassMethodDescr extends PyMethodDescr {
 
-    public PyClassMethodDescr(String name,
-                              Class c,
-                              int minargs,
-                              int maxargs,
-                              PyBuiltinFunction meth) {
-        super(name, c, minargs, maxargs, meth);
+    PyClassMethodDescr(PyType t, PyBuiltinFunction meth) {
+        super(t, meth);
     }
 
     protected void checkCallerType(PyObject obj) {

@@ -178,11 +178,6 @@ public class PyUnicode extends PyString implements Iterable {
     }
 
     @Override
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'unicode' object";
-    }
-
-    @Override
     public PyString createInstance(String str) {
         return new PyUnicode(str);
     }

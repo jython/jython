@@ -1,8 +1,8 @@
 package org.python.newcompiler.asm;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
-import org.objectweb.asm.FieldVisitor;
+import org.python.objectweb.asm.AnnotationVisitor;
+import org.python.objectweb.asm.Attribute;
+import org.python.objectweb.asm.FieldVisitor;
 import org.python.newcompiler.DisassemblyDocument;
 
 class FieldDis implements FieldVisitor {

@@ -1,6 +1,6 @@
 package org.python.expose.generate;
 
-import org.objectweb.asm.AnnotationVisitor;
+import org.python.objectweb.asm.AnnotationVisitor;
 
 /**
  * An Annotation visitor that throws an IllegalArgumentException if it visits anything other than

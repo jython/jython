@@ -1,75 +1,52 @@
 package org.python.expose.generate;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
-import org.python.core.PyBuiltinMethod;
-import org.python.core.PyBuiltinMethodNarrow;
-import org.python.expose.ExposedMethod;
+import org.python.objectweb.asm.Type;
 import org.python.expose.MethodType;
 
-/**
- * Generates a class to call a given method with the {@link ExposedMethod} annotation as a method on
- * a builtin Python type.
- */
-public class MethodExposer extends Exposer {
+public abstract class MethodExposer extends Exposer {
 
-    private String methodName;
+    protected String[] defaults;
+    
+    protected final String[] asNames;
 
-    protected String[] asNames, defaults;
+    protected final String prefix, typeName;
 
-    private String prefix;
+    protected final Type[] args;
 
-    private Type[] args;
+    protected final String methodName;
 
-    private Type onType, returnType;
-
-    protected MethodType type;
-
-    public MethodExposer(Type onType, int access, String methodName, String desc, String prefix) {
-        this(onType,
-             access,
-             methodName,
-             desc,
-             prefix,
-             new String[0],
-             new String[0],
-             MethodType.DEFAULT);
-    }
+    protected final Type onType, returnType;
 
     public MethodExposer(Type onType,
-                         int access,
                          String methodName,
-                         String desc,
-                         String prefix,
+                         Type[] args,
+                         Type returnType,
+                         String typeName,
                          String[] asNames,
                          String[] defaults,
-                         MethodType type) {
-        super(isWide(desc) ? PyBuiltinMethod.class : PyBuiltinMethodNarrow.class,
-              onType.getClassName() + "$" + methodName + "_exposer");
+                         Class superClass) {
+        super(superClass, onType.getClassName() + "$" + methodName + "_exposer");
         this.onType = onType;
         this.methodName = methodName;
-        if((access & ACC_STATIC) != 0) {
-            throwInvalid("@ExposedMethod can't be applied to static methods");
+        this.args = args;
+        this.typeName = typeName;
+        String prefix = typeName;
+        int lastDot = prefix.lastIndexOf('.');
+        if (lastDot != -1) {
+            prefix = prefix.substring(lastDot + 1);
         }
-        this.args = Type.getArgumentTypes(desc);
-        if(isWide(args)) {
-            if(defaults.length > 0) {
-                throwInvalid("Can't have defaults on a method that takes PyObject[], String[]");
-            }
-        }
-        this.returnType = Type.getReturnType(desc);
         this.prefix = prefix;
         this.asNames = asNames;
+        this.returnType = returnType;
+        this.defaults = defaults;
         for(String name : getNames()) {
             if(name.equals("__new__")) {
                 throwInvalid("@ExposedNew must be used to create __new__, not @ExposedMethod");
             }
         }
-        this.defaults = defaults;
-        this.type = type;
     }
 
-    private void throwInvalid(String msg) {
+    protected void throwInvalid(String msg) {
         throw new InvalidExposingException(msg + "[method=" + onType.getClassName() + "."
                 + methodName + "]");
     }
@@ -87,14 +64,7 @@ public class MethodExposer extends Exposer {
         }
         return asNames;
     }
-
-    /**
-     * @return the default values for the later params, if any.
-     */
-    String[] getDefaults() {
-        return defaults;
-    }
-
+    
     protected void generate() {
         generateNamedConstructor();
         generateFullConstructor();
@@ -149,14 +119,14 @@ public class MethodExposer extends Exposer {
     private void generateWideCall() {
         startMethod("__call__", PYOBJ, APYOBJ, ASTRING);
         get("self", PYOBJ);
-        mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
+        checkSelf();
         mv.visitVarInsn(ALOAD, 1);
         mv.visitVarInsn(ALOAD, 2);
-        call(onType, methodName, returnType, args);
+        makeCall();
         toPy(returnType);
         endMethod(ARETURN);
     }
-
+    
     private boolean hasDefault(int argIndex) {
         return defaults.length - args.length + argIndex >= 0;
     }
@@ -166,7 +136,7 @@ public class MethodExposer extends Exposer {
     }
 
     private void generateCall(int numDefaults) {
-        int usedLocals = 1;// We always have one used local for 'this'
+        int usedLocals = 1;// We always have one used local for self
         Type[] callArgs = new Type[args.length - numDefaults];
         for(int i = 0; i < callArgs.length; i++) {
             callArgs[i] = PYOBJ;
@@ -174,7 +144,7 @@ public class MethodExposer extends Exposer {
         startMethod("__call__", PYOBJ, callArgs);
         // Push self on the stack so we can call it
         get("self", PYOBJ);
-        mv.visitTypeInsn(CHECKCAST, onType.getInternalName());
+        checkSelf();
         // Push the passed in callArgs onto the stack, and convert them if necessary
         for(int i = 0; i < callArgs.length; i++) {
             mv.visitVarInsn(ALOAD, usedLocals++);
@@ -192,53 +162,14 @@ public class MethodExposer extends Exposer {
         for(int i = callArgs.length; i < args.length; i++) {
             pushDefault(getDefault(i), args[i]);
         }
-        // Actually call the exposed method
-        call(onType, methodName, returnType, args);
-        if(type == MethodType.BINARY) {
-            checkBinaryResult();
-        } else if(type == MethodType.CMP) {
-            checkCmpResult();
-        }
+        makeCall();
         toPy(returnType);
         endMethod(ARETURN);
     }
 
-    /** Throw NotImplemented if a binary method returned null. */
-    private void checkBinaryResult() {
-        // If this is a binary method,
-        mv.visitInsn(DUP);
-        Label regularReturn = new Label();
-        mv.visitJumpInsn(IFNONNULL, regularReturn);
-        getStatic(PY, "NotImplemented", PYOBJ);
-        mv.visitInsn(ARETURN);
-        mv.visitLabel(regularReturn);
-    }
+    protected abstract void checkSelf();
 
-    /** Throw a type error if a cmp method returned -2. */
-    private void checkCmpResult() {
-        mv.visitInsn(DUP);
-        mv.visitIntInsn(BIPUSH, -2);
-        Label regularReturn = new Label();
-        mv.visitJumpInsn(IF_ICMPNE, regularReturn);
-        // tediously build an error message based on the type name
-        instantiate(STRING_BUILDER, new Instantiator(STRING) {
-
-            public void pushArgs() {
-                mv.visitLdcInsn(prefix + ".__cmp__(x,y) requires y to be '" + prefix + "', not a '");
-            }
-        });
-        mv.visitVarInsn(ALOAD, 1);
-        call(PYOBJ, "getType", PYTYPE);
-        call(PYTYPE, "fastGetName", STRING);
-        call(STRING_BUILDER, "append", STRING_BUILDER, STRING);
-        mv.visitLdcInsn("'");
-        call(STRING_BUILDER, "append", STRING_BUILDER, STRING);
-        call(STRING_BUILDER, "toString", STRING);
-        // throw a type error with our excellent message since this was of the wrong type.
-        callStatic(PY, "TypeError", PYEXCEPTION, STRING);
-        mv.visitInsn(ATHROW);
-        mv.visitLabel(regularReturn);
-    }
+    protected abstract void makeCall();
 
     private void pushDefault(String def, Type arg) {
         if(def.equals("Py.None")) {
@@ -272,11 +203,8 @@ public class MethodExposer extends Exposer {
         }
     }
 
-    private static boolean isWide(String methDescriptor) {
-        return isWide(Type.getArgumentTypes(methDescriptor));
-    }
-
-    private static boolean isWide(Type[] args) {
+    protected static boolean isWide(Type[] args) {
         return args.length == 2 && args[0].equals(APYOBJ) && args[1].equals(ASTRING);
     }
+
 }

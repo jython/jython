@@ -33,6 +33,9 @@ import org.python.expose.MethodType;
  */
 @ExposedType(name = "file")
 public class PyFile extends PyObject {
+
+    public static final PyType TYPE = PyType.fromClass(PyFile.class);
+    
     /** The filename */
     @ExposedGet
     public PyObject name;
@@ -190,7 +193,7 @@ public class PyFile extends PyObject {
                                      1);
         PyObject name = ap.getPyObject(0);
         if (!(name instanceof PyString)) {
-            throw Py.TypeError("coercing to Unicode: need string, '" + name.getType().getFullName()
+            throw Py.TypeError("coercing to Unicode: need string, '" + name.getType().fastGetName()
                                + "' type found");
         }
         String mode = ap.getString(1, "r");
@@ -548,16 +551,6 @@ public class PyFile extends PyObject {
 
     public String toString() {
         return file_toString();
-    }
-
-    @ExposedMethod(type = MethodType.CMP)
-    final int file___cmp__(PyObject o) {
-        return super.__cmp__(o);
-    }
-
-    @ExposedMethod
-    final boolean file___nonzero__() {
-        return super.__nonzero__();
     }
 
     private void checkClosed() {

@@ -3,11 +3,11 @@ package org.python.expose.generate;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.python.objectweb.asm.ClassVisitor;
+import org.python.objectweb.asm.ClassWriter;
+import org.python.objectweb.asm.MethodVisitor;
+import org.python.objectweb.asm.Opcodes;
+import org.python.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
 
 /**
@@ -28,6 +28,8 @@ public abstract class Exposer implements Opcodes, PyTypes {
 
     /** The type that will be generated. */
     protected Type thisType;
+    
+    protected Type[] interfacesImplemented;
 
     /** Maps from a primitive type to its wrapper */
     protected static final Map<Type, Type> PRIMITIVES = new HashMap<Type, Type>() {
@@ -51,9 +53,10 @@ public abstract class Exposer implements Opcodes, PyTypes {
      * @param generatedName -
      *            the name of the class to generate
      */
-    public Exposer(Class superClass, String generatedName) {
+    public Exposer(Class superClass, String generatedName, Type...interfacesImplemented) {
         superType = Type.getType(superClass);
         thisType = Type.getType("L" + generatedName.replace('.', '/') + ";");
+        this.interfacesImplemented = interfacesImplemented;
     }
 
     /**
@@ -65,7 +68,7 @@ public abstract class Exposer implements Opcodes, PyTypes {
     /**
      * Generates this Exposer and loads it into the given Loader.
      */
-    protected Class load(BytecodeLoader.Loader l) {
+    protected Class<?> load(BytecodeLoader.Loader l) {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         generate(cw);
         return l.loadClassFromBytes(getClassName(), cw.toByteArray());
@@ -91,12 +94,16 @@ public abstract class Exposer implements Opcodes, PyTypes {
     public void generate(ClassVisitor visitor) {
         assert cv == null;
         cv = visitor;
+        String[] interfaces = new String[interfacesImplemented.length];
+        for (int i = 0; i < interfaces.length; i++) {
+            interfaces[i] = interfacesImplemented[i].getInternalName();
+        }
         cv.visit(V1_5,
                  ACC_PUBLIC,
                  getInternalName(),
                  null,
                  superType.getInternalName(),
-                 new String[] {});
+                 interfaces);
         generate();
         assert mv == null;
         cv.visitEnd();

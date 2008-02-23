@@ -2001,7 +2001,6 @@ public class cPickle implements ClassDictInit {
 
         final private void load_unicode() {
             String line = file.readlineNoNl();
-            int n = line.length();
             String value = codecs.PyUnicode_DecodeRawUnicodeEscape(line,
                                                                    "strict");
             push(new PyString(value));

@@ -377,11 +377,4 @@ public class PyClass extends PyObject {
         }
         return false;
     }
-
-    /**
-     * @see org.python.core.PyObject#safeRepr()
-     */
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "class '" + __name__ + "'";
-    }
 }

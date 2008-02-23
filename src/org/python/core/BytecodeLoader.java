@@ -99,8 +99,8 @@ public class BytecodeLoader {
             throw new ClassNotFoundException(name);
         }
 
-        public Class loadClassFromBytes(String name, byte[] data) {
-            Class c = defineClass(name, data, 0, data.length, getClass().getProtectionDomain());
+        public Class<?> loadClassFromBytes(String name, byte[] data) {
+            Class<?> c = defineClass(name, data, 0, data.length, getClass().getProtectionDomain());
             resolveClass(c);
             Compiler.compileClass(c);
             return c;

@@ -13,7 +13,7 @@ import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 
-@ExposedType(name = "tee", base = PyObject.class)
+@ExposedType(name = "itertools.tee", base = PyObject.class)
 public class PyTeeIterator extends PyIterator {
 
     private final int position;

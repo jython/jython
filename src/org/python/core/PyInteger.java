@@ -86,10 +86,6 @@ public class PyInteger extends PyObject {
         return value;
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'int' object";
-    }
-
     public String toString() {
         return int_toString();
     }
@@ -452,7 +448,7 @@ public class PyInteger extends PyObject {
         return _pow(coerce(left), getValue(), modulo, left, this);
     }
     
-    @ExposedMethod(type = MethodType.BINARY, defaults = {"null"})
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject int___rpow__(PyObject left){
     	return __rpow__(left, null);
     }

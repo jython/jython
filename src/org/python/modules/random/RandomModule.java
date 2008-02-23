@@ -9,6 +9,6 @@ public class RandomModule implements ClassDictInit {
     private RandomModule() {}
 
     public static void classDictInit(PyObject dict) {
-        dict.__setitem__("Random", Py.java2py(PyRandom.class));
+        dict.__setitem__("Random", PyRandom.TYPE);
     }
 }

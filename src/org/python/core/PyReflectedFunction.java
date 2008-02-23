@@ -39,6 +39,10 @@ public class PyReflectedFunction extends PyObject
         throw Py.TypeError("java function not settable: "+__name__);
     }
 
+    public PyObject getDoc() {
+        return __doc__;
+    }
+
     private ReflectedArgs makeArgs(Method m) {
         return new ReflectedArgs(m, m.getParameterTypes(),
                                  m.getDeclaringClass(),

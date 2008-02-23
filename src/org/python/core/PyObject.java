@@ -47,7 +47,7 @@ public class PyObject implements Serializable {
 
     @ExposedDelete(name = "__class__")
     public void delType() {
-        throw Py.TypeError("Can't delete __class__ attribute");
+        throw Py.TypeError("can't delete __class__ attribute");
     }
 
     // xxx
@@ -138,23 +138,16 @@ public class PyObject implements Serializable {
             return "unknown object";
         }
 
-        String name = getType().getFullName();
-        if (name == null)
-            return "unknown object";
-
-        return "<"+name+" object "+Py.idstr(this)+">";
-    }
-
-    public String safeRepr() throws PyIgnoreMethodTag {
-        if (getType() == null) {
+        String name = getType().getName();
+        if (name == null) {
             return "unknown object";
         }
 
-        String name = getType().getFullName();
-        if (name == null)
-            return "unknown object";
-
-        return "'" + name + "' object";
+        PyObject module = getType().getModule();
+        if (module instanceof PyString && !module.toString().equals("__builtin__")) {
+            return String.format("<%s.%s object %s>", module.toString(), name, Py.idstr(this));
+        }
+        return String.format("<%s object %s>", name, Py.idstr(this));
     }
 
     /**
@@ -237,7 +230,7 @@ public class PyObject implements Serializable {
      * @param keywords the keywords used for all keyword arguments.
      **/
     public PyObject __call__(PyObject args[], String keywords[]) {
-        throw Py.TypeError("call of non-function (" + safeRepr() + ")");
+        throw Py.TypeError("call of non-function (" + getType().fastGetName() + ")");
     }
 
     /**
@@ -354,9 +347,11 @@ public class PyObject implements Serializable {
 
         int argslen = args.length;
 
-        String name = "";
+        String name;
         if (this instanceof PyFunction) {
             name = ((PyFunction) this).__name__ + "() ";
+        } else if (this instanceof PyBuiltinFunction) {
+            name = ((PyBuiltinFunction)this).fastGetName().toString() + "() ";
         } else {
             name = getType().fastGetName() + " ";
         }
@@ -364,7 +359,7 @@ public class PyObject implements Serializable {
             PyObject keys = kwargs.__findattr__("keys");
             if(keys == null)
                 throw Py.TypeError(name
-                        + "argument after ** must be a dictionary");
+                        + "argument after ** must be a mapping");
             for (int i = 0; i < keywords.length; i++)
                 if (kwargs.__finditem__(keywords[i]) != null)
                     throw Py.TypeError(
@@ -823,13 +818,12 @@ public class PyObject implements Serializable {
     }
 
     public void noAttributeError(String name) {
-        throw Py.AttributeError(
-            safeRepr() + " has no attribute '" + name + "'");
+        throw Py.AttributeError(String.format("'%.50s' object has no attribute '%.400s'",
+                                              getType().fastGetName(), name));
     }
 
     public void readonlyAttributeError(String name) {
-        throw Py.AttributeError(
-            safeRepr() + " attribute '" + name + "' is read-only");
+        throw Py.TypeError("readonly attribute");
     }
 
     /**
@@ -2786,12 +2780,12 @@ public class PyObject implements Serializable {
 
     public void setDict(PyObject newDict) {
     	// fallback if setDict not implemented in subclass
-    	throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().safeRepr());
+    	throw Py.TypeError("can't set attribute '__dict__' of instance of " + getType().fastGetName());
     }
 
     public void delDict() {
         // fallback to error
-        throw Py.TypeError("can't delete attribute '__dict__' of instance of '" + getType().safeRepr()+ "'");
+        throw Py.TypeError("can't delete attribute '__dict__' of instance of '" + getType().fastGetName()+ "'");
     }
 
     public boolean implementsDescrSet() {
@@ -3159,6 +3153,13 @@ public class PyObject implements Serializable {
 
     public long asLong(int index) throws ConversionException {
         throw new ConversionException(index);
+    }
+    
+    static {
+        for (Class unbootstrapped : Py.BOOTSTRAP_TYPES) {
+            Py.writeWarning("init", "Bootstrap type wasn't encountered in bootstrapping[class="
+                    + unbootstrapped + "]");
+        }
     }
 
 }

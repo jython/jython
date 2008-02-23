@@ -21,6 +21,10 @@ public abstract class PyBuiltinMethod extends PyBuiltinFunction implements Expos
     public PyObject getSelf(){
         return self;
     }
+    
+    public PyMethodDescr makeDescriptor(PyType t) {
+        return new PyMethodDescr(t, this);
+    }
 
     protected PyObject self;
 }

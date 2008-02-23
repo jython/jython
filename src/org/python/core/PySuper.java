@@ -1,114 +1,20 @@
 package org.python.core;
 
-public class PySuper extends PyObject implements PyType.Newstyle {
-    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-    /* type info */
+import org.python.expose.ExposedGet;
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
 
-    public static final String exposed_name="super";
+@ExposedType(name = "super")
+public class PySuper extends PyObject {
 
-    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        dict.__setitem__("__thisclass__",new PyGetSetDescr("__thisclass__",PySuper.class,"getThisClass",null,null));
-        dict.__setitem__("__self__",new PyGetSetDescr("__self__",PySuper.class,"getSelf",null,null));
-        dict.__setitem__("__self_class__",new PyGetSetDescr("__self_class__",PySuper.class,"getSelfClass",null,null));
-        class exposed___getattribute__ extends PyBuiltinMethodNarrow {
-
-            exposed___getattribute__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___getattribute__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                try {
-                    String name=(arg0.asName(0));
-                    PyObject ret=((PySuper)self).super___findattr__(name);
-                    if (ret==null)
-                        ((PySuper)self).noAttributeError(name);
-                    return ret;
-                } catch (PyObject.ConversionException e) {
-                    String msg;
-                    switch (e.index) {
-                    case 0:
-                        msg="attribute name must be a string";
-                        break;
-                    default:
-                        msg="xxx";
-                    }
-                    throw Py.TypeError(msg);
-                }
-            }
-
-        }
-        dict.__setitem__("__getattribute__",new PyMethodDescr("__getattribute__",PySuper.class,1,1,new exposed___getattribute__(null,null)));
-        class exposed___get__ extends PyBuiltinMethodNarrow {
-
-            exposed___get__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___get__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0,PyObject arg1) {
-                PyObject obj=(arg0==Py.None)?null:arg1;
-                PyObject type=(arg1==Py.None)?null:arg0;
-                return((PySuper)self).super___get__(obj,type);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject obj=(arg0==Py.None)?null:(null);
-                PyObject type=((null)==Py.None)?null:arg0;
-                return((PySuper)self).super___get__(obj,type);
-            }
-
-        }
-        dict.__setitem__("__get__",new PyMethodDescr("__get__",PySuper.class,1,2,new exposed___get__(null,null)));
-        class exposed___init__ extends PyBuiltinMethod {
-
-            exposed___init__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___init__(self,info);
-            }
-
-            public PyObject __call__(PyObject[]args) {
-                return __call__(args,Py.NoKeywords);
-            }
-
-            public PyObject __call__(PyObject[]args,String[]keywords) {
-                ((PySuper)self).super_init(args,keywords);
-                return Py.None;
-            }
-
-        }
-        dict.__setitem__("__init__",new PyMethodDescr("__init__",PySuper.class,-1,-1,new exposed___init__(null,null)));
-        dict.__setitem__("__new__",new PyNewWrapper(PySuper.class,"__new__",-1,-1) {
-
-                                                                                       public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                           PySuper newobj;
-                                                                                           if (for_type==subtype) {
-                                                                                               newobj=new PySuper();
-                                                                                               if (init)
-                                                                                                   newobj.super_init(args,keywords);
-                                                                                           } else {
-                                                                                               newobj=new PySuperDerived(subtype);
-                                                                                           }
-                                                                                           return newobj;
-                                                                                       }
-
-                                                                                   });
-    }
-    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-
-    private static final PyType SUPERTYPE = PyType.fromClass(PySuper.class);
+    public static final PyType TYPE = PyType.fromClass(PySuper.class);
    
+    @ExposedGet
     protected PyType thisClass;
+    @ExposedGet
     protected PyObject self;
+    @ExposedGet
     protected PyType selfClass;
 
     private PyType supercheck(PyType type,PyObject obj) {
@@ -122,7 +28,9 @@ public class PySuper extends PyObject implements PyType.Newstyle {
                 "obj must be an instance or subtype of type");
     }
     
-    public void super_init(PyObject[] args, String[] keywords) {
+    @ExposedMethod
+    @ExposedNew
+    public void super___init__(PyObject[] args, String[] keywords) {
         if (keywords.length != 0
                 || !PyBuiltinFunction.DefaultInfo.check(args.length, 1, 2)) {
             throw PyBuiltinFunction.DefaultInfo.unexpectedCall(args.length,
@@ -145,7 +53,7 @@ public class PySuper extends PyObject implements PyType.Newstyle {
     }
     
     public PySuper() {
-        this(SUPERTYPE);
+        this(TYPE);
     }
 
     public PySuper(PyType subType) {
@@ -173,11 +81,21 @@ public class PySuper extends PyObject implements PyType.Newstyle {
         }
         return super.__findattr__(name);
     }
+    
+    @ExposedMethod
+    final PyObject super___getattribute__(PyObject name) {
+        PyObject ret = super___findattr__(asName(name));
+        if (ret == null) {
+            noAttributeError(asName(name));
+        }
+        return ret;
+    }
 
     public PyObject __get__(PyObject obj, PyObject type) {
         return super___get__(obj,type);
     }
 
+    @ExposedMethod(defaults = "null")
     final PyObject super___get__(PyObject obj, PyObject type) { //xxx subtype case!
         if (obj == null || obj == Py.None || self != null)
             return this;

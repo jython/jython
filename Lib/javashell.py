@@ -14,6 +14,7 @@ from java.io import IOException
 from java.io import InputStreamReader
 from java.io import BufferedReader
 from UserDict import UserDict
+import distutils.spawn
 import jarray
 import os
 import string
@@ -74,7 +75,7 @@ class _ShellEnv:
         if self.cmd is None:
             msgFmt = "Unable to execute commands in subshell because shell" \
                      " functionality not implemented for OS %s with shell"  \
-                     " setting %s. Failed command=%s""" 
+                     " setting %s. Failed command=%s" 
             raise OSError( 0, msgFmt % ( _osType, _envType, cmd ))
             
         if isinstance(cmd, basestring):
@@ -171,7 +172,7 @@ def _getShellEnv():
         
         # override defaults based on osType
         if osType == "nt":
-            shellCmd = ["cmd", "/c"]
+            shellCmd = ["cmd.exe", "/c"]
             envCmd = "set"
             envTransform = string.upper
         elif osType == "dos":
@@ -179,7 +180,7 @@ def _getShellEnv():
             envCmd = "set"
             envTransform = string.upper
         elif osType == "posix":
-            shellCmd = ["sh", "-c"]
+            shellCmd = ["/bin/sh", "-c"]
             envCmd = "env"
         elif osType == "mac":
             curdir = ':'  # override Posix directories
@@ -193,4 +194,10 @@ def _getShellEnv():
     return _ShellEnv( shellCmd, envCmd, envTransform )
 
 _shellEnv = _getShellEnv()
+# The absolute path can only be determined (from environ's PATH) after
+# _shellEnv is loaded (the os module references it)
+if _shellEnv.cmd:
+    executable = _shellEnv.cmd[0]
+    if not os.path.isabs(executable):
+        _shellEnv.cmd[0] = distutils.spawn.find_executable(executable)
 shellexecute = _shellEnv.execute

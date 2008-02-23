@@ -254,7 +254,7 @@ public class ArgParser {
         Object ret = value.__tojava__(clss);
         if (ret == Py.NoConversion) {
             throw Py.TypeError("argument " + (pos + 1) + ": expected "
-                    + classname + ", " + Py.safeRepr(value) + " found");
+                    + classname + ", " + value.getType().fastGetName() + " found");
         }
         return ret;
     }

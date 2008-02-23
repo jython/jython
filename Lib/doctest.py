@@ -1360,6 +1360,8 @@ def DocTestSuite(module=None):
                 filename = filename[:-1]
             elif filename.endswith(".pyo"):
                 filename = filename[:-1]
+            elif filename.endswith('$py.class'):
+                filename = '%s.py' % filename[:-9]
         def runit(name=name, doc=doc, filename=filename, lineno=lineno):
             _utest(tester, name, doc, filename, lineno)
         suite.addTest(unittest.FunctionTestCase(

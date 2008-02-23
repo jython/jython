@@ -9,7 +9,7 @@ public class Sets implements ClassDictInit {
     private Sets() {}
 
     public static void classDictInit(PyObject dict) {
-        dict.__setitem__("Set", Py.java2py(PySet.class));
-        dict.__setitem__("ImmutableSet", Py.java2py(PyImmutableSet.class));
+        dict.__setitem__("Set", PySet.TYPE);
+        dict.__setitem__("ImmutableSet", PyImmutableSet.TYPE);
     }
 }

@@ -241,10 +241,6 @@ public class PySystemState extends PyObject
         accum.update(__dict__);
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "module 'sys'";
-    }
-
     public String toString() {
         return "sys module";
     }
@@ -276,7 +272,7 @@ public class PySystemState extends PyObject
         meta_path.append(new PrecompiledImporter());
         path_hooks = new PyList();
         path_hooks.append(new JavaImporter());
-        path_hooks.append(PyType.fromClass(zipimporter.class));
+        path_hooks.append(zipimporter.TYPE);
         path_importer_cache = new PyDictionary();
 
         currentWorkingDir = new File("").getAbsolutePath();

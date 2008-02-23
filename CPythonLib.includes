@@ -2,6 +2,7 @@
 # used as fileset in build.xml (target copy-full)
 
 # Lib directories, in alphabetical order:
+compiler/**
 distutils/**
 email/**
 encodings/**

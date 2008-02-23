@@ -82,11 +82,6 @@ public class PyString extends PyBaseString
         return string.substring(start, end);
     }
     
-    @Override
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'string' object";
-    }
-
     public PyString __str__() {
         return str___str__();
     }
@@ -1577,7 +1572,7 @@ public class PyString extends PyBaseString
             if (!(obj instanceof PyString)){
                  throw Py.TypeError(
                         "sequence item " + i + ": expected string, " +
-                        obj.safeRepr() + " found");
+                        obj.getType().fastGetName() + " found");
             }
             if(obj instanceof PyUnicode){
                 needsUnicode = true;

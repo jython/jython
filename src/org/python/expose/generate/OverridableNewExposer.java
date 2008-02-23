@@ -1,7 +1,7 @@
 package org.python.expose.generate;
 
-import org.objectweb.asm.Label;
-import org.objectweb.asm.Type;
+import org.python.objectweb.asm.Label;
+import org.python.objectweb.asm.Type;
 import org.python.core.PyOverridableNew;
 import org.python.core.PyObject;
 

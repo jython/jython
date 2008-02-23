@@ -2,211 +2,36 @@ package org.python.core;
 
 import java.io.Serializable;
 
-public class PyBoolean extends PyInteger {
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedNew;
+import org.python.expose.ExposedType;
+import org.python.expose.MethodType;
 
 /**
  * A builtin python bool. 
  */
-    //~ BEGIN GENERATED REGION -- DO NOT EDIT SEE gexpose.py
-    /* type info */
-
-    public static final String exposed_name="bool";
-
-    public static void typeSetup(PyObject dict,PyType.Newstyle marker) {
-        class exposed___abs__ extends PyBuiltinMethodNarrow {
-
-            exposed___abs__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___abs__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyBoolean)self).bool___abs__();
-            }
-
-        }
-        dict.__setitem__("__abs__",new PyMethodDescr("__abs__",PyBoolean.class,0,0,new exposed___abs__(null,null)));
-        class exposed___neg__ extends PyBuiltinMethodNarrow {
-
-            exposed___neg__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___neg__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyBoolean)self).bool___neg__();
-            }
-
-        }
-        dict.__setitem__("__neg__",new PyMethodDescr("__neg__",PyBoolean.class,0,0,new exposed___neg__(null,null)));
-        class exposed___pos__ extends PyBuiltinMethodNarrow {
-
-            exposed___pos__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___pos__(self,info);
-            }
-
-            public PyObject __call__() {
-                return((PyBoolean)self).bool___pos__();
-            }
-
-        }
-        dict.__setitem__("__pos__",new PyMethodDescr("__pos__",PyBoolean.class,0,0,new exposed___pos__(null,null)));
-        class exposed___and__ extends PyBuiltinMethodNarrow {
-
-            exposed___and__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___and__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyBoolean)self).bool___and__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__and__",new PyMethodDescr("__and__",PyBoolean.class,1,1,new exposed___and__(null,null)));
-        class exposed___or__ extends PyBuiltinMethodNarrow {
-
-            exposed___or__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___or__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyBoolean)self).bool___or__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__or__",new PyMethodDescr("__or__",PyBoolean.class,1,1,new exposed___or__(null,null)));
-        class exposed___xor__ extends PyBuiltinMethodNarrow {
-
-            exposed___xor__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___xor__(self,info);
-            }
-
-            public PyObject __call__(PyObject arg0) {
-                PyObject ret=((PyBoolean)self).bool___xor__(arg0);
-                if (ret==null)
-                    return Py.NotImplemented;
-                return ret;
-            }
-
-        }
-        dict.__setitem__("__xor__",new PyMethodDescr("__xor__",PyBoolean.class,1,1,new exposed___xor__(null,null)));
-        class exposed___nonzero__ extends PyBuiltinMethodNarrow {
-
-            exposed___nonzero__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___nonzero__(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newBoolean(((PyBoolean)self).bool___nonzero__());
-            }
-
-        }
-        dict.__setitem__("__nonzero__",new PyMethodDescr("__nonzero__",PyBoolean.class,0,0,new exposed___nonzero__(null,null)));
-        class exposed___repr__ extends PyBuiltinMethodNarrow {
-
-            exposed___repr__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___repr__(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyBoolean)self).bool_toString());
-            }
-
-        }
-        dict.__setitem__("__repr__",new PyMethodDescr("__repr__",PyBoolean.class,0,0,new exposed___repr__(null,null)));
-        class exposed___str__ extends PyBuiltinMethodNarrow {
-
-            exposed___str__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___str__(self,info);
-            }
-
-            public PyObject __call__() {
-                return new PyString(((PyBoolean)self).bool_toString());
-            }
-
-        }
-        dict.__setitem__("__str__",new PyMethodDescr("__str__",PyBoolean.class,0,0,new exposed___str__(null,null)));
-        class exposed___hash__ extends PyBuiltinMethodNarrow {
-
-            exposed___hash__(PyObject self,PyBuiltinFunction.Info info) {
-                super(self,info);
-            }
-
-            public PyBuiltinFunction bind(PyObject self) {
-                return new exposed___hash__(self,info);
-            }
-
-            public PyObject __call__() {
-                return Py.newInteger(((PyBoolean)self).bool_hashCode());
-            }
-
-        }
-        dict.__setitem__("__hash__",new PyMethodDescr("__hash__",PyBoolean.class,0,0,new exposed___hash__(null,null)));
-        dict.__setitem__("__new__",new PyNewWrapper(PyBoolean.class,"__new__",-1,-1) {
-
-                                                                                         public PyObject new_impl(boolean init,PyType subtype,PyObject[]args,String[]keywords) {
-                                                                                             return bool_new(this,init,subtype,args,keywords);
-                                                                                         }
-
-                                                                                     });
-    }
-    //~ END GENERATED REGION -- DO NOT EDIT SEE gexpose.py
+@ExposedType(name = "bool")
+public class PyBoolean extends PyInteger {
     
-    public static PyObject bool_new(PyNewWrapper new_, boolean init, PyType subtype,
-            PyObject[] args, String[] keywords) {
-        ArgParser ap = new ArgParser("bool", args, keywords, new String[] { "x" }, 0);
+    public static final PyType TYPE = PyType.fromClass(PyBoolean.class);
+    
+    @ExposedNew
+    public static PyObject bool_new(PyNewWrapper new_,
+                                    boolean init,
+                                    PyType subtype,
+                                    PyObject[] args,
+                                    String[] keywords) {
+        ArgParser ap = new ArgParser("bool", args, keywords, new String[] {"x"}, 0);
         PyObject x = ap.getPyObject(0, null);
         if (x == null) {
-        	return Py.False;
+            return Py.False;
         }
         if (new_.for_type == subtype) {
             return x.__nonzero__() ? Py.True : Py.False;
         } else {
             return new PyBooleanDerived(subtype, x.__nonzero__());
         }
-    } // xxx
-    
-    private static final PyType BOOLTYPE = PyType.fromClass(PyBoolean.class);
+    }
     
     private boolean value;
 
@@ -216,46 +41,36 @@ public class PyBoolean extends PyInteger {
     }
 
     public PyBoolean(boolean v) {
-        this(BOOLTYPE, v);
+        this(TYPE, v);
     }
 
     public int getValue() {
         return value ? 1 : 0;
     }
 
-    public String safeRepr() throws PyIgnoreMethodTag {
-        return "'bool' object";
-    }
-
     public String toString() {
         return bool_toString();
     }
 
+    @ExposedMethod(names = {"__str__", "__repr__"})
     final String bool_toString() {
         return value ? "True" : "False";
     }
 
     public int hashCode() {
-        return bool_hashCode();
+        return bool___hash__();
     }
 
-    final int bool_hashCode() {
+    @ExposedMethod
+    final int bool___hash__() {
         return value ? 1 : 0;
-    }
-
-    private static void err_ovf(String msg) {
-        try {
-            Py.OverflowWarning(msg);
-        } catch (PyException exc) {
-            if (Py.matchException(exc, Py.OverflowWarning))
-                throw Py.OverflowError(msg);
-        }
     }
 
     public boolean __nonzero__() {
         return bool___nonzero__();
     }
 
+    @ExposedMethod
     final boolean bool___nonzero__() {
         return value;
     }
@@ -287,6 +102,7 @@ public class PyBoolean extends PyInteger {
         return bool___and__(right);
     }
 
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject bool___and__(PyObject right) {
     	if (right instanceof PyBoolean) {
 	        return Py.newBoolean(value & ((PyBoolean)right).value);
@@ -301,6 +117,7 @@ public class PyBoolean extends PyInteger {
         return bool___xor__(right);
     }
 
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject bool___xor__(PyObject right) {
     	if (right instanceof PyBoolean) {
 	        return Py.newBoolean(value ^ ((PyBoolean)right).value);
@@ -314,7 +131,8 @@ public class PyBoolean extends PyInteger {
     public PyObject __or__(PyObject right) {
         return bool___or__(right);
     }
-
+    
+    @ExposedMethod(type = MethodType.BINARY)
     final PyObject bool___or__(PyObject right) {
     	if (right instanceof PyBoolean) {
 	        return Py.newBoolean(value | ((PyBoolean)right).value);
@@ -329,6 +147,7 @@ public class PyBoolean extends PyInteger {
         return bool___neg__();
     }
 
+    @ExposedMethod
     final PyObject bool___neg__() {
         return Py.newInteger(value ? -1 : 0);
     }
@@ -337,6 +156,7 @@ public class PyBoolean extends PyInteger {
         return bool___pos__();
     }
 
+    @ExposedMethod
     final PyObject bool___pos__() {
         return Py.newInteger(value ? 1 : 0);
     }
@@ -345,6 +165,7 @@ public class PyBoolean extends PyInteger {
         return bool___abs__();
     }
 
+    @ExposedMethod
     final PyObject bool___abs__() {
         return Py.newInteger(value ? 1 : 0);
     }

@@ -1,8 +1,6 @@
 package org.python.modules;
 
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.List;
 
 import org.python.core.ClassDictInit;
@@ -16,9 +14,6 @@ import org.python.core.PyString;
 import org.python.core.PyTuple;
 import org.python.core.__builtin__;
 import org.python.core.ArgParser;
-import org.python.expose.ExposedMethod;
-import org.python.expose.ExposedNew;
-import org.python.expose.ExposedType;
 
 /**
  * Functional tools for creating and using iterators. Java implementation of the CPython module
@@ -653,17 +648,12 @@ public class itertools implements ClassDictInit {
                 }
             }
             targetKey = currentKey;
-            return new PyTuple(currentKey, new GroupByIterator(targetKey));
+            return new PyTuple(currentKey, new GroupByIterator());
         }
 
         private class GroupByIterator extends ItertoolsIterator {
 
-            private final PyObject key;
             private boolean completed = false;
-
-            private GroupByIterator(PyObject key) {
-                this.key = key;
-            }
 
             public PyObject __iternext__() {
                 final PyObject item = currentValue;

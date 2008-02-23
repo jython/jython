@@ -52,7 +52,7 @@ class BuiltinFunctions extends PyBuiltinFunctionSet {
                 return __builtin__.range(arg1);
             case 3:
                 if (!(arg1 instanceof PyString)) {
-                    throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().getFullName() + " found");
+                    throw Py.TypeError("ord() expected string of length 1, but " + arg1.getType().fastGetName() + " found");
                 }
                 return Py.newInteger(__builtin__.ord(arg1));
             case 5:
@@ -306,28 +306,28 @@ public class __builtin__ {
         /* newstyle */
         dict.__setitem__("object", PyObject.TYPE);
         dict.__setitem__("type", PyType.TYPE);
-        dict.__setitem__("bool", PyType.fromClass(PyBoolean.class));
+        dict.__setitem__("bool", PyBoolean.TYPE);
         dict.__setitem__("int", PyInteger.TYPE);
-        dict.__setitem__("enumerate", PyType.fromClass(PyEnumerate.class));
-        dict.__setitem__("float", PyType.fromClass(PyFloat.class));
-        dict.__setitem__("long", PyType.fromClass(PyLong.class));
-        dict.__setitem__("complex", PyType.fromClass(PyComplex.class));
-        dict.__setitem__("dict", PyType.fromClass(PyDictionary.class));
+        dict.__setitem__("enumerate", PyEnumerate.TYPE);
+        dict.__setitem__("float", PyFloat.TYPE);
+        dict.__setitem__("long", PyLong.TYPE);
+        dict.__setitem__("complex", PyComplex.TYPE);
+        dict.__setitem__("dict", PyDictionary.TYPE);
         dict.__setitem__("list", PyList.TYPE);
-        dict.__setitem__("tuple", PyType.fromClass(PyTuple.class));
-        dict.__setitem__("set", PyType.fromClass(PySet.class));
-        dict.__setitem__("frozenset", PyType.fromClass(PyImmutableSet.class));
+        dict.__setitem__("tuple", PyTuple.TYPE);
+        dict.__setitem__("set", PySet.TYPE);
+        dict.__setitem__("frozenset", PyImmutableSet.TYPE);
 
-        dict.__setitem__("property", PyType.fromClass(PyProperty.class));
-        dict.__setitem__("staticmethod", PyType.fromClass(PyStaticMethod.class));
-        dict.__setitem__("classmethod", PyType.fromClass(PyClassMethod.class));
-        dict.__setitem__("super", PyType.fromClass(PySuper.class));
+        dict.__setitem__("property", PyProperty.TYPE);
+        dict.__setitem__("staticmethod", PyStaticMethod.TYPE);
+        dict.__setitem__("classmethod", PyClassMethod.TYPE);
+        dict.__setitem__("super", PySuper.TYPE);
         dict.__setitem__("str", PyString.TYPE);
         dict.__setitem__("unicode", PyUnicode.TYPE);
-        dict.__setitem__("basestring", PyType.fromClass(PyBaseString.class));
-        dict.__setitem__("file", PyType.fromClass(PyFile.class));
-        dict.__setitem__("open", PyType.fromClass(PyFile.class));
-        dict.__setitem__("slice", PyType.fromClass(PySlice.class));
+        dict.__setitem__("basestring", PyBaseString.TYPE);
+        dict.__setitem__("file", PyFile.TYPE);
+        dict.__setitem__("open", PyFile.TYPE);
+        dict.__setitem__("slice", PySlice.TYPE);
 
         /* - */
 

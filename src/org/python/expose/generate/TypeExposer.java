@@ -4,9 +4,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.objectweb.asm.Type;
+import org.python.objectweb.asm.Type;
 import org.python.core.BytecodeLoader;
-import org.python.core.PyBuiltinFunction;
+import org.python.core.PyBuiltinMethod;
 import org.python.core.PyDataDescr;
 import org.python.core.PyMethodDescr;
 import org.python.core.PyNewWrapper;
@@ -108,7 +108,7 @@ public class TypeExposer extends Exposer {
         mv.visitLdcInsn(onType);
         mv.visitLdcInsn(baseType);
         mv.visitLdcInsn(numNames);
-        mv.visitTypeInsn(ANEWARRAY, BUILTIN_FUNCTION.getInternalName());
+        mv.visitTypeInsn(ANEWARRAY, BUILTIN_METHOD.getInternalName());
         mv.visitVarInsn(ASTORE, 1);
         int i = 0;
         for(MethodExposer exposer : methods) {
@@ -141,7 +141,7 @@ public class TypeExposer extends Exposer {
         } else {
             mv.visitInsn(ACONST_NULL);
         }
-        superConstructor(STRING, CLASS, CLASS, ABUILTIN_FUNCTION, ADATA_DESCR, PYNEWWRAPPER);
+        superConstructor(STRING, CLASS, CLASS, ABUILTIN_METHOD, ADATA_DESCR, PYNEWWRAPPER);
         endConstructor();
     }
 
@@ -149,7 +149,7 @@ public class TypeExposer extends Exposer {
 
         private PyNewWrapper newWrapper;
 
-        private PyBuiltinFunction[] funcs;
+        private PyBuiltinMethod[] meths;
 
         private PyDataDescr[] descrs;
 
@@ -162,24 +162,25 @@ public class TypeExposer extends Exposer {
         public BaseTypeBuilder(String name,
                                Class typeClass,
                                Class baseClass,
-                               PyBuiltinFunction[] funcs,
+                               PyBuiltinMethod[] meths,
                                PyDataDescr[] descrs,
                                PyNewWrapper newWrapper) {
             this.typeClass = typeClass;
             this.baseClass = baseClass;
             this.name = name;
             this.descrs = descrs;
-            this.funcs = funcs;
+            this.meths = meths;
             this.newWrapper = newWrapper;
         }
 
         public PyObject getDict(PyType type) {
             PyObject dict = new PyStringMap();
-            for(PyBuiltinFunction func : funcs) {
-                PyMethodDescr pmd = new PyMethodDescr(type, func);
+            for(PyBuiltinMethod func : meths) {
+                PyMethodDescr pmd = func.makeDescriptor(type);
                 dict.__setitem__(pmd.getName(), pmd);
             }
             for(PyDataDescr descr : descrs) {
+                descr.setType(type);
                 dict.__setitem__(descr.getName(), descr);
             }
             if(newWrapper != null) {

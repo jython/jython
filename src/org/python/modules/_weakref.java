@@ -300,7 +300,7 @@ public class _weakref implements ClassDictInit {
                     Py.idstr(this) +";";
             PyObject obj = (PyObject) gref.get();
             if (obj != null)
-                ret += " to " + obj.safeRepr() + ">";
+                ret += " to " + obj.getType().fastGetName() + ">";
             else
                 ret += " dead>";
             return ret;
@@ -378,7 +378,7 @@ public class _weakref implements ClassDictInit {
             PyObject obj = (PyObject) gref.get();
             if (obj == null)
                 obj = Py.None;
-            ret += " to " + obj.safeRepr() + " "+
+            ret += " to " + obj.getType().fastGetName() + " "+
                     Py.idstr(obj) + ">";
             return ret;
         }

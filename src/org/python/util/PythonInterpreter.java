@@ -53,7 +53,7 @@ public class PythonInterpreter {
      * @param dict      the dictionary to use
      */
 
-    // Optional dictionary willl be used for locals namespace
+    // Optional dictionary will be used for locals namespace
     public PythonInterpreter(PyObject dict) {
         this(dict, null);
     }
@@ -66,7 +66,7 @@ public class PythonInterpreter {
             if (systemState == null)
                 systemState = new PySystemState();
         }
-        module = new PyModule("main", dict);
+        module = new PyModule("__main__", dict);
         this.systemState = systemState;
         locals = module.__dict__;
         setState();
@@ -216,5 +216,15 @@ public class PythonInterpreter {
 
     public void cleanup() {
         systemState.callExitFunc();
+        try {
+            Py.getSystemState().stdout.invoke("flush");
+        } catch (PyException pye) {
+            // fall through
+        }
+        try {
+            Py.getSystemState().stderr.invoke("flush");
+        } catch (PyException pye) {
+            // fall through
+        }
     }
 }
