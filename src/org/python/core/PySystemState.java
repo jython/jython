@@ -845,8 +845,8 @@ public class PySystemState extends PyObject
     /**
      * Change the current working directory to the specified path.
      *
-     * path is assumed to be absolute and canonical (via both
-     * PySystemState.getPath and os.path.realpath).
+     * path is assumed to be absolute and canonical (via
+     * os.path.realpath).
      *
      * @param path a path String
      */

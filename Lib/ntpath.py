@@ -5,6 +5,8 @@ Instead of importing this module directly, import os and refer to this
 module as os.path.
 """
 
+import java.io.File
+import javaos
 import os
 import stat
 import sys
@@ -12,7 +14,7 @@ import sys
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
            "getatime","getctime", "islink","exists","lexists","isdir","isfile",
-           "ismount","walk","expanduser","expandvars","normpath","abspath",
+           "walk","expanduser","expandvars","normpath","abspath",
            "splitunc","curdir","pardir","sep","pathsep","defpath","altsep",
            "extsep","devnull","realpath","supports_unicode_filenames"]
 
@@ -286,16 +288,19 @@ def isfile(path):
     return stat.S_ISREG(st.st_mode)
 
 
-# Is a path a mount point?  Either a root (with or without drive letter)
-# or an UNC path with at most a / or \ after the mount point.
+if javaos.name != 'java':
+    # Is a path a mount point?  Either a root (with or without drive letter)
+    # or an UNC path with at most a / or \ after the mount point.
 
-def ismount(path):
-    """Test whether a path is a mount point (defined as root of drive)"""
-    unc, rest = splitunc(path)
-    if unc:
-        return rest in ("", "/", "\\")
-    p = splitdrive(path)[1]
-    return len(p) == 1 and p[0] in '/\\'
+    def ismount(path):
+        """Test whether a path is a mount point (defined as root of drive)"""
+        unc, rest = splitunc(path)
+        if unc:
+            return rest in ("", "/", "\\")
+        p = splitdrive(path)[1]
+        return len(p) == 1 and p[0] in '/\\'
+
+    __all__.append("ismount")
 
 
 # Directory tree walk.
@@ -489,6 +494,11 @@ except ImportError: # not running on Windows - mock up something sensible
         """Return the absolute version of a path."""
         if not isabs(path):
             path = join(os.getcwd(), path)
+        if not splitunc(path)[0] and not splitdrive(path)[0]:
+            # cwd lacks a UNC mount point, so it should have a drive
+            # letter (but lacks one): determine it
+            drive = splitdrive(java.io.File(path).getCanonicalPath())[0]
+            path = join(drive, path)
         return normpath(path)
 
 else:  # use native Windows method on Windows

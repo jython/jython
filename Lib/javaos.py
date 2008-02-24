@@ -204,7 +204,7 @@ def chdir(path):
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
     if not _path.isdir(path):
         raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
-    sys.setCurrentWorkingDir(_path.realpath(sys.getPath(path)))
+    sys.setCurrentWorkingDir(_path.realpath(path))
 
 def listdir(path):
     """listdir(path) -> list_of_strings

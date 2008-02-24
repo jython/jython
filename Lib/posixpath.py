@@ -448,7 +448,7 @@ if javaos.name == 'java':
         encounter a path we've seen before (meaning that there's a loop).
         """
         try:
-            return str(java.io.File(path).getCanonicalPath())
+            return str(java.io.File(abspath(path)).getCanonicalPath())
         except java.io.IOException:
             return None
 else:
