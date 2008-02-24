@@ -87,6 +87,8 @@ def get_os_type():
     return 'posix'
 
 name = 'java'
+# WARNING: _name is private: for Jython internal usage only! user code
+# should *NOT* use it
 _name = get_os_type()
 
 if _name in ('nt', 'ce'):
