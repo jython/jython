@@ -27,10 +27,7 @@ Copyright (C) 2001-2002 Vinay Sajip. All Rights Reserved.
 import os, sys, string, struct, types, cPickle, cStringIO
 import socket, threading, time
 import logging, logging.handlers, logging.config
-if os.name.startswith('java'):
-    from select import cpython_compatible_select as select
-else:
-    from select import select
+from select import select
 
 BANNER = "-- %-10s %-6s ---------------------------------------------------\n"
 
@@ -102,6 +99,14 @@ class LogRecordSocketReceiver(ThreadingTCPServer):
         self.timeout = 1
 
     def serve_until_stopped(self):
+        if sys.platform.startswith('java'):
+            # XXX: There's a problem using cpython_compatibile_select
+            # here: it seems to be due to the fact that
+            # cpython_compatible_select switches blocking mode on while
+            # a separate thread is reading from the same socket, causing
+            # a read of 0 in LogRecordStreamHandler.handle (which
+            # deadlocks this test)
+            self.socket.setblocking(0)
         abort = 0
         while not abort:
             rd, wr, ex = select([self.socket.fileno()], [], [], self.timeout)
