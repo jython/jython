@@ -3,7 +3,6 @@
 Made for Jython.
 """
 import imp
-import javashell
 import os
 import py_compile
 import shutil
@@ -384,7 +383,7 @@ class SubprocessTestCase(BaseChdirTestCase):
 
     def _command(self):
         command = self.COMMAND % self.filename1
-        if javashell._getOsType() in ('nt', 'dos', 'ce'):
+        if os._name in ('nt', 'ce'):
             command = '"%s"' % command
         return command
 
@@ -586,7 +585,7 @@ class ImportJarTestCase(BaseChdirTestCase):
             # because SyspathArchive holds onto its file handle (and you
             # can't delete a file in use on Windows). We may not want to
             # change this
-            self.assert(javashell._getOsType() in ('nt', 'dos', 'ce'))
+            self.assert_(os._name in ('nt', 'ce'))
         if 'ChdirJyTest' in sys.modules:
             del sys.modules['ChdirJyTest']
 

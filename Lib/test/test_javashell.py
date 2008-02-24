@@ -6,7 +6,6 @@ import re
 
 import os
 import javashell
-from javashell import LazyDict
 
 # testCmds is a list of (command, expectedOutput)
 # each command is executed twice, once in unitialized environment and
@@ -64,22 +63,6 @@ class JavaShellTest(unittest.TestCase):
     """This test validates the subshell functionality (javashell, os.environ, popen*).
     Does some white box as well as black box testing.
     """
-    def testGetOsType( self ):
-        """Test expected values for various Java os names"""
-        testVals = {
-            "Windows NT": "nt",
-            "Windows 95": "dos",
-            "MacOS": "mac",
-            "Solaris": "posix",
-            "Linux": "posix",
-            "None": "None"
-            }
-
-        msgFmt = "javashell._getOsType( '%s' ) should return '%s', not '%s'"
-        # test basic mappings
-        for key, val in testVals.items():
-            got = javashell._getOsType( key )
-            assert got == val, msgFmt % ( key, val, got )
 
     def _testCmds( self, _shellEnv, testCmds, whichEnv ):
         """test commands (key) and compare output to expected output (value).
@@ -99,19 +82,12 @@ class JavaShellTest(unittest.TestCase):
 
     def testSystem( self ):
         """test system and environment functionality"""
-        # this doesn't quite test 'system', because system 
-        os.environ = LazyDict( populate=os._getEnvironment )
-        assert not os.environ._populated, \
-                "before population, os.environ._populated should be false"
-        
         org = os.environ
         self._testCmds( javashell._shellEnv, testCmds, "default" )
 
         # trigger initialization of environment
         os.environ[ key ] = value
 
-        assert os.environ._populated, \
-                "after population, os.environ._populated should be true"
         assert org.get( key, None ) == value, \
                 "expected stub to have %s set" % key
         assert os.environ.get( key, None ) == value, \
@@ -131,23 +107,6 @@ class JavaShellTest(unittest.TestCase):
         assert os.environ.has_key( "PATH" ), \
                 "expected environment to have PATH attribute " \
                 "(this may not apply to all platforms!)"
-
-    def testBadShell( self ):
-        "Attempting to get an environment with a shell that is not startable"
-        dprint( "testBadShell: ignore warnings about failing to get environment")
-        se2 = javashell._ShellEnv( ["badshell", "-c"], "set" )
-        str(se2.environment) # trigger initialization
-        assert not se2.environment.items(), "environment should be empty"
-        dprint( "end testBadShell")
-
-    def testBadGetEnv( self ):
-        "Attempting to get an environment with a command that does not print an environment"
-        dprint( "testBadGetEnv: ignore warnings about command not printing environment")
-        envCmd="echo This command does not print environment"    
-        se2 = javashell._ShellEnv( javashell._shellEnv.cmd, envCmd, None )
-        str(se2.environment) # trigger initialization
-        assert not se2.environment.items(), "environment should be empty"
-        dprint( "end testBadGetEnv")
 
     def testPutEnv( self ):
         "Put an environment variable and ensure that spawned processes see the change"

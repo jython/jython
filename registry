@@ -96,17 +96,9 @@ python.options.caseok = false
 # python.jythonc.classpath = /usr/java1.2/jre/lib/rt.jar:/Jython/dist:.
 # python.jythonc.compileropts = +E +D -g
 
-# python.environment controls the type of environment support provided
-# by the os module. Default behavior for known operating systems is to
-# generate the environment by executing shell commands appropriate to
-# the operating system. For unknown operating systems, provide an
-# empty environment. Uncomment this line for an empty environment
-# on all operating systems.
-#python.environment=None
-
 # python.os determines operating-specific features, similar to and overriding the
 # Java property "os.name".
-# Some generic values are also supported: 'nt', 'dos', 'mac' and 'posix'.
+# Some generic values are also supported: 'nt', 'ce' and 'posix'.
 # Uncomment the following line for the most generic OS behavior available.
 #python.os=None
 

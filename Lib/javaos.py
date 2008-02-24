@@ -1,5 +1,5 @@
-r"""OS routines for Java, with some attempts to support DOS, NT, and
-Posix functionality.
+r"""OS routines for Java, with some attempts to support NT, and Posix
+functionality.
 
 This exports:
   - all functions from posix, nt, dos, os2, mac, or ce, e.g. unlink, stat, etc.
@@ -20,24 +20,83 @@ and opendir), and leave all pathname manipulation to os.path
 (e.g., split and join).
 """
 
-__all__ = ["altsep", "chdir", "curdir", "defpath", "environ", "getcwd", 
-           "getenv", "getlogin", "linesep", "listdir", "mkdir", "name", 
-           "pardir", "pathsep", "popen", "popen2", "popen3", "popen4", 
-           "putenv","remove", "rename", "rmdir", "sep", "stat", "system",
-           "unlink", "utime"]
+# CPython os.py __all__
+__all__ = ["altsep", "curdir", "pardir", "sep", "pathsep", "linesep",
+           "defpath", "name", "path",
+           "SEEK_SET", "SEEK_CUR", "SEEK_END"]
+
+# Would come from the posix/nt/etc. modules on CPython
+__all__.extend(['EX_OK', 'F_OK', 'O_APPEND', 'O_CREAT', 'O_EXCL', 'O_RDONLY',
+                'O_RDWR', 'O_SYNC', 'O_TRUNC', 'O_WRONLY', 'R_OK', 'SEEK_CUR',
+                'SEEK_END', 'SEEK_SET', 'W_OK', 'X_OK', '_exit', 'access',
+                'altsep', 'chdir', 'close', 'curdir', 'defpath', 'environ',
+                'error', 'fdopen', 'getcwd', 'getenv', 'getlogin', 'linesep',
+                'listdir', 'lseek', 'lstat', 'makedirs', 'mkdir', 'name',
+                'open', 'pardir', 'path', 'pathsep', 'popen', 'popen2',
+                'popen3', 'popen4', 'putenv', 'read', 'remove', 'removedirs',
+                'rename', 'renames', 'rmdir', 'sep', 'stat', 'stat_result',
+                'strerror', 'system', 'unlink', 'unsetenv', 'utime', 'walk',
+                'write'])
 
 import errno
 import java.lang.System
-import javapath as path
 import time
 import stat as _stat
-
+import sys
 from java.io import File
 from org.python.core.io import FileDescriptors
-from UserDict import UserDict
 
-import sys
+# Mapping of: os._name: [name list, shell command list]
+_os_map = dict(nt=[
+        ['Windows 95', 'Windows 98', 'Windows ME', 'Windows NT',
+         'Windows NT 4.0', 'WindowsNT', 'Windows 2000', 'Windows 2003',
+         'Windows XP', 'Windows Vista'],
+        [['cmd.exe', '/c'], ['command.com', '/c']]
+        ],
+
+               ce=[
+        ['Windows CE'],
+        [['cmd.exe', '/c']]
+        ],
+
+               posix=[
+        [], # posix is a fallback, instead of matching names
+        [['/bin/sh', '-c']]
+        ]
+               )
+
+def get_os_type():
+    """Return the name of the type of the underlying OS.
+
+    Returns a value suitable for the os.name variable (though not
+    necessarily intended to be for os.name Jython).  This value may be
+    overwritten in the Jython registry.
+    """
+    os_name = sys.registry.getProperty('python.os')
+    if os_name:
+        return str(os_name)
+
+    os_name = str(java.lang.System.getProperty('os.name'))
+    os_type = None
+    for type, (patterns, shell_commands) in _os_map.iteritems():
+        for pattern in patterns:
+            if os_name.startswith(pattern):
+                # determine the shell_command later, when it's needed:
+                # it requires os.path (which isn't setup yet)
+                return type
+    return 'posix'
+
+name = 'java'
+_name = get_os_type()
+
+if _name in ('nt', 'ce'):
+    import ntpath as path
+else:
+    import posixpath as path
+
 sys.modules['os.path'] = _path = path
+from os.path import curdir, pardir, sep, pathsep, defpath, extsep, altsep
+linesep = java.lang.System.getProperty('line.separator')
 
 # open for reading only
 O_RDONLY = 0x0
@@ -119,26 +178,6 @@ class stat_result:
 
 error = OSError
 
-name = 'java' # discriminate based on JDK version?
-curdir = '.'  # default to Posix for directory behavior, override below
-pardir = '..' 
-sep = File.separator
-altsep = None
-pathsep = File.pathSeparator
-defpath = '.'
-linesep = java.lang.System.getProperty('line.separator')
-if sep=='.':
-    extsep = '/'
-else:
-    extsep = '.'
-path.curdir = curdir
-path.pardir = pardir
-path.sep = sep
-path.altsep = altsep
-path.pathsep = pathsep
-path.defpath = defpath
-path.extsep = extsep
-
 def _exit(n=0):
     """_exit(status)
 
@@ -163,7 +202,7 @@ def chdir(path):
         raise OSError(errno.ENOENT, errno.strerror(errno.ENOENT), path)
     if not _path.isdir(path):
         raise OSError(errno.ENOTDIR, errno.strerror(errno.ENOTDIR), path)
-    sys.setCurrentWorkingDir(path)
+    sys.setCurrentWorkingDir(_path.realpath(sys.getPath(path)))
 
 def listdir(path):
     """listdir(path) -> list_of_strings
@@ -350,7 +389,8 @@ def lstat(path):
     if can_parent.getAbsolutePath() == abs_parent.getAbsolutePath():
         # The parent directory's absolute path is canonical..
         if f.getAbsolutePath() != f.getCanonicalPath():
-            # but the file's absolute and paths differ (a link)
+            # but the file's absolute and canonical paths differ (a
+            # link)
             return stat_result((_stat.S_IFLNK, 0, 0, 0, 0, 0, 0, 0, 0, 0))
 
     # The parent directory's path is not canonical (one of the parent
@@ -511,115 +551,9 @@ def _handle_oserror(func, *args, **kwargs):
     except:
         raise OSError(errno.EBADF, errno.strerror(errno.EBADF))
 
-class LazyDict( UserDict ):
-    """A lazy-populating User Dictionary.
-    Lazy initialization is not thread-safe.
-    """
-    def __init__( self,
-                  dict=None,
-                  populate=None,
-                  keyTransform=None ):
-        """dict: starting dictionary of values
-        populate: function that returns the populated dictionary
-        keyTransform: function to normalize the keys (e.g., toupper/None)
-        """
-        UserDict.__init__( self, dict )
-        self._populated = 0
-        self.__populateFunc = populate or (lambda: {})
-        self._keyTransform = keyTransform or (lambda key: key)
-
-    def __populate( self ):
-        if not self._populated:
-            # race condition - test, populate, set
-            # make sure you don't set _populated until __populateFunc completes...
-            self.data = self.__populateFunc()
-            self._populated = 1 
-
-    ########## extend methods from UserDict by pre-populating
-    def __repr__(self):
-        self.__populate()
-        return UserDict.__repr__( self )
-    def __cmp__(self, dict):
-        self.__populate()
-        return UserDict.__cmp__( self, dict )
-    def __len__(self):
-        self.__populate()
-        return UserDict.__len__( self )
-    def __getitem__(self, key):
-        self.__populate()
-        return UserDict.__getitem__( self, self._keyTransform(key) )
-    def __setitem__(self, key, item):
-        self.__populate()
-        UserDict.__setitem__( self, self._keyTransform(key), item )
-    def __delitem__(self, key):
-        self.__populate()
-        UserDict.__delitem__( self, self._keyTransform(key) )
-    def clear(self):
-        self.__populate()
-        UserDict.clear( self )
-    def copy(self):
-        self.__populate()
-        return UserDict.copy( self )
-    def keys(self):
-        self.__populate()
-        return UserDict.keys( self )
-    def items(self):
-        self.__populate()
-        return UserDict.items( self )
-    def values(self):
-        self.__populate()
-        return UserDict.values( self )
-    def has_key(self, key):
-        self.__populate()
-        return UserDict.has_key( self, self._keyTransform(key) )
-    def __iter__(self):
-        self.__populate()
-        return iter( self.data )
-    def update(self, dict):
-        self.__populate()
-        UserDict.update( self, dict )
-    def get(self, key, failobj=None):
-        self.__populate()
-        return UserDict.get( self, self._keyTransform(key), failobj )
-    def setdefault(self, key, failobj=None):
-        self.__populate()
-        return UserDict.setdefault( self, self._keyTransform(key), failobj )
-    def popitem(self):
-        self.__populate()
-        return UserDict.popitem( self )
-    def pop(self, *args):
-      self.__populate()
-      return UserDict.pop(self, *args)
-    def iteritems(self):
-      self.__populate()
-      return UserDict.iteritems(self)
-    def iterkeys(self):
-      self.__populate()
-      return UserDict.iterkeys(self)
-    def itervalues(self):
-      self.__populate()
-      return UserDict.itervalues(self)
-    def __contains__(self, key):
-      self.__populate()
-      return UserDict.__contains__(self, key)
-
-# Provide lazy environ, popen*, and system objects
+# Provide lazy popen*, and system objects
 # Do these lazily, as most jython programs don't need them,
 # and they are very expensive to initialize
-
-def _getEnvironment():
-    import javashell
-    return javashell._shellEnv.environment
-
-environ = LazyDict( populate=_getEnvironment )
-putenv = environ.__setitem__
-
-def getenv(key, default=None):
-    """Get an environment variable, return None if it doesn't exist.
-
-    The optional second argument can specify an alternate default.
-    """
-    return environ.get(key, default)
 
 def system( *args, **kwargs ):
     """system(command) -> exit_status
@@ -779,4 +713,55 @@ def walk(top, topdown=True, onerror=None):
 
 __all__.append("walk")
 
+environ = dict([(entry.getKey(), entry.getValue()) for \
+                  entry in java.lang.System.getenv().entrySet()])
 
+if _name in ('os2', 'nt'):  # Where Env Var Names Must Be UPPERCASE
+    import UserDict
+
+    # But we store them as upper case
+    class _Environ(UserDict.IterableUserDict):
+        def __init__(self, environ):
+            UserDict.UserDict.__init__(self)
+            data = self.data
+            for k, v in environ.items():
+                data[k.upper()] = v
+        def __setitem__(self, key, item):
+            self.data[key.upper()] = item
+        def __getitem__(self, key):
+            return self.data[key.upper()]
+        def __delitem__(self, key):
+            del self.data[key.upper()]
+        def has_key(self, key):
+            return key.upper() in self.data
+        def __contains__(self, key):
+            return key.upper() in self.data
+        def get(self, key, failobj=None):
+            return self.data.get(key.upper(), failobj)
+        def update(self, dict):
+            for k, v in dict.items():
+                self[k] = v
+        def copy(self):
+            return dict(self)
+
+    environ = _Environ(environ)
+
+def putenv(key, value):
+    """putenv(key, value)
+        
+    Change or add an environment variable.
+    """
+    environ[key] = value
+
+def unsetenv(key):
+    """unsetenv(key)
+
+    Delete an environment variable.
+    """
+    if key in environ:
+        del environ[key]
+
+def getenv(key, default=None):
+    """Get an environment variable, return None if it doesn't exist.
+    The optional second argument can specify an alternate default."""
+    return environ.get(key, default)
