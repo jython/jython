@@ -10,14 +10,19 @@ Some of this can actually be useful on non-Posix systems too, e.g.
 for manipulation of the pathname component of URLs.
 """
 
+import java.io.File
+import java.io.IOException
+# XXX: os (org.python.modules.os) is broken when we're imported: look at
+# javaos.name instead
+import javaos
 import os
 import stat
 
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
            "getatime","getctime","islink","exists","lexists","isdir","isfile",
-           "ismount","walk","expanduser","expandvars","normpath","abspath",
-           "samefile","sameopenfile","samestat",
+           "walk","expanduser","expandvars","normpath","abspath",
+           "samefile",
            "curdir","pardir","sep","pathsep","defpath","altsep","extsep",
            "devnull","realpath","supports_unicode_filenames"]
 
@@ -213,51 +218,62 @@ def isfile(path):
 
 # Are two filenames really pointing to the same file?
 
-def samefile(f1, f2):
-    """Test whether two pathnames reference the same actual file"""
-    s1 = os.stat(f1)
-    s2 = os.stat(f2)
-    return samestat(s1, s2)
+if javaos.name == 'java':
+    def samefile(f1, f2):
+        """Test whether two pathnames reference the same actual file"""
+        canon1 = java.io.File(_ensure_str(f1)).getCanonicalPath()
+        canon2 = java.io.File(_ensure_str(f2)).getCanonicalPath()
+        return canon1 == canon2
+else:
+    def samefile(f1, f2):
+        """Test whether two pathnames reference the same actual file"""
+        s1 = os.stat(f1)
+        s2 = os.stat(f2)
+        return samestat(s1, s2)    
 
 
-# Are two open files really referencing the same file?
-# (Not necessarily the same file descriptor!)
+# XXX: Plain Jython lacks fstat and st_ino/st_dev
+if javaos.name != 'java':
+    # Are two open files really referencing the same file?
+    # (Not necessarily the same file descriptor!)
 
-def sameopenfile(fp1, fp2):
-    """Test whether two open file objects reference the same file"""
-    s1 = os.fstat(fp1)
-    s2 = os.fstat(fp2)
-    return samestat(s1, s2)
-
-
-# Are two stat buffers (obtained from stat, fstat or lstat)
-# describing the same file?
-
-def samestat(s1, s2):
-    """Test whether two stat buffers reference the same file"""
-    return s1.st_ino == s2.st_ino and \
-           s1.st_dev == s2.st_dev
+    def sameopenfile(fp1, fp2):
+        """Test whether two open file objects reference the same file"""
+        s1 = os.fstat(fp1)
+        s2 = os.fstat(fp2)
+        return samestat(s1, s2)
 
 
-# Is a path a mount point?
-# (Does this work for all UNIXes?  Is it even guaranteed to work by Posix?)
+    # Are two stat buffers (obtained from stat, fstat or lstat)
+    # describing the same file?
 
-def ismount(path):
-    """Test whether a path is a mount point"""
-    try:
-        s1 = os.lstat(path)
-        s2 = os.lstat(join(path, '..'))
-    except os.error:
-        return False # It doesn't exist -- so not a mount point :-)
-    dev1 = s1.st_dev
-    dev2 = s2.st_dev
-    if dev1 != dev2:
-        return True     # path/.. on a different device as path
-    ino1 = s1.st_ino
-    ino2 = s2.st_ino
-    if ino1 == ino2:
-        return True     # path/.. is the same i-node as path
-    return False
+    def samestat(s1, s2):
+        """Test whether two stat buffers reference the same file"""
+        return s1.st_ino == s2.st_ino and \
+               s1.st_dev == s2.st_dev
+
+
+    # Is a path a mount point?
+    # (Does this work for all UNIXes?  Is it even guaranteed to work by Posix?)
+
+    def ismount(path):
+        """Test whether a path is a mount point"""
+        try:
+            s1 = os.lstat(path)
+            s2 = os.lstat(join(path, '..'))
+        except os.error:
+            return False # It doesn't exist -- so not a mount point :-)
+        dev1 = s1.st_dev
+        dev2 = s2.st_dev
+        if dev1 != dev2:
+            return True     # path/.. on a different device as path
+        ino1 = s1.st_ino
+        ino2 = s2.st_ino
+        if ino1 == ino2:
+            return True     # path/.. is the same i-node as path
+        return False
+
+    __all__.extend(["sameopenfile", "samestat", "ismount"])
 
 
 # Directory tree walk.
@@ -317,17 +333,12 @@ def expanduser(path):
         i = len(path)
     if i == 1:
         if 'HOME' not in os.environ:
-            import pwd
-            userhome = pwd.getpwuid(os.getuid()).pw_dir
+            return path
         else:
             userhome = os.environ['HOME']
     else:
-        import pwd
-        try:
-            pwent = pwd.getpwnam(path[1:i])
-        except KeyError:
-            return path
-        userhome = pwent.pw_dir
+        # XXX: Jython lacks the pwd module: '~user' isn't supported
+        return path
     userhome = userhome.rstrip('/')
     return userhome + path[i:]
 
@@ -430,24 +441,55 @@ symbolic links encountered in the path."""
     return abspath(filename)
 
 
-def _resolve_link(path):
-    """Internal helper function.  Takes a path and follows symlinks
-    until we either arrive at something that isn't a symlink, or
-    encounter a path we've seen before (meaning that there's a loop).
-    """
-    paths_seen = []
-    while islink(path):
-        if path in paths_seen:
-            # Already seen this path, so we must have a symlink loop
+if javaos.name == 'java':
+    def _resolve_link(path):
+        """Internal helper function.  Takes a path and follows symlinks
+        until we either arrive at something that isn't a symlink, or
+        encounter a path we've seen before (meaning that there's a loop).
+        """
+        try:
+            return str(java.io.File(path).getCanonicalPath())
+        except java.io.IOException:
             return None
-        paths_seen.append(path)
-        # Resolve where the link points to
-        resolved = os.readlink(path)
-        if not isabs(resolved):
-            dir = dirname(path)
-            path = normpath(join(dir, resolved))
-        else:
-            path = normpath(resolved)
-    return path
+else:
+    def _resolve_link(path):
+        """Internal helper function.  Takes a path and follows symlinks
+        until we either arrive at something that isn't a symlink, or
+        encounter a path we've seen before (meaning that there's a loop).
+        """
+        paths_seen = []
+        while islink(path):
+            if path in paths_seen:
+                # Already seen this path, so we must have a symlink loop
+                return None
+            paths_seen.append(path)
+            # Resolve where the link points to
+            resolved = os.readlink(path)
+            if not isabs(resolved):
+                dir = dirname(path)
+                path = normpath(join(dir, resolved))
+            else:
+                path = normpath(resolved)
+        return path
+
+
+def _ensure_str(obj):
+    """Ensure obj is a string, otherwise raise a TypeError"""
+    if isinstance(obj, basestring):
+        return obj
+    raise TypeError('coercing to Unicode: need string or buffer, %s found' % \
+                        _type_name(obj))
+
+
+def _type_name(obj):
+    """Determine the appropriate type name of obj for display"""
+    TPFLAGS_HEAPTYPE = 1 << 9
+    type_name = ''
+    obj_type = type(obj)
+    is_heap = obj_type.__flags__ & TPFLAGS_HEAPTYPE == TPFLAGS_HEAPTYPE
+    if not is_heap and obj_type.__module__ != '__builtin__':
+        type_name = '%s.' % obj_type.__module__
+    type_name += obj_type.__name__
+    return type_name
 
 supports_unicode_filenames = False

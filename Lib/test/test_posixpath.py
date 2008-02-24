@@ -284,59 +284,60 @@ class PosixPathTest(unittest.TestCase):
 
             self.assertRaises(TypeError, posixpath.samefile)
 
-    def test_samestat(self):
-        f = open(test_support.TESTFN + "1", "wb")
-        try:
-            f.write("foo")
-            f.close()
-            self.assertIs(
-                posixpath.samestat(
-                    os.stat(test_support.TESTFN + "1"),
-                    os.stat(test_support.TESTFN + "1")
-                ),
-                True
-            )
-            # If we don't have links, assume that os.stat() doesn't return resonable
-            # inode information and thus, that samefile() doesn't work
-            if hasattr(os, "symlink"):
+    if os.name != 'java':
+        def test_samestat(self):
+            f = open(test_support.TESTFN + "1", "wb")
+            try:
+                f.write("foo")
+                f.close()
+                self.assertIs(
+                    posixpath.samestat(
+                        os.stat(test_support.TESTFN + "1"),
+                        os.stat(test_support.TESTFN + "1")
+                    ),
+                    True
+                )
+                # If we don't have links, assume that os.stat() doesn't return resonable
+                # inode information and thus, that samefile() doesn't work
                 if hasattr(os, "symlink"):
-                    os.symlink(test_support.TESTFN + "1", test_support.TESTFN + "2")
+                    if hasattr(os, "symlink"):
+                        os.symlink(test_support.TESTFN + "1", test_support.TESTFN + "2")
+                        self.assertIs(
+                            posixpath.samestat(
+                                os.stat(test_support.TESTFN + "1"),
+                                os.stat(test_support.TESTFN + "2")
+                            ),
+                            True
+                        )
+                        os.remove(test_support.TESTFN + "2")
+                    f = open(test_support.TESTFN + "2", "wb")
+                    f.write("bar")
+                    f.close()
                     self.assertIs(
                         posixpath.samestat(
                             os.stat(test_support.TESTFN + "1"),
                             os.stat(test_support.TESTFN + "2")
                         ),
-                        True
+                        False
                     )
+            finally:
+                if not f.close():
+                    f.close()
+                try:
+                    os.remove(test_support.TESTFN + "1")
+                except os.error:
+                    pass
+                try:
                     os.remove(test_support.TESTFN + "2")
-                f = open(test_support.TESTFN + "2", "wb")
-                f.write("bar")
-                f.close()
-                self.assertIs(
-                    posixpath.samestat(
-                        os.stat(test_support.TESTFN + "1"),
-                        os.stat(test_support.TESTFN + "2")
-                    ),
-                    False
-                )
-        finally:
-            if not f.close():
-                f.close()
-            try:
-                os.remove(test_support.TESTFN + "1")
-            except os.error:
-                pass
-            try:
-                os.remove(test_support.TESTFN + "2")
-            except os.error:
-                pass
+                except os.error:
+                    pass
 
-        self.assertRaises(TypeError, posixpath.samestat)
+            self.assertRaises(TypeError, posixpath.samestat)
 
-    def test_ismount(self):
-        self.assertIs(posixpath.ismount("/"), True)
+        def test_ismount(self):
+            self.assertIs(posixpath.ismount("/"), True)
 
-        self.assertRaises(TypeError, posixpath.ismount)
+            self.assertRaises(TypeError, posixpath.ismount)
 
     def test_expanduser(self):
         self.assertEqual(posixpath.expanduser("foo"), "foo")
