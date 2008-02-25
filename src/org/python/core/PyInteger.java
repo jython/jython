@@ -2,6 +2,7 @@
 package org.python.core;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 
 import org.python.expose.ExposedMethod;
 import org.python.expose.ExposedNew;
@@ -15,7 +16,13 @@ import org.python.expose.MethodType;
 public class PyInteger extends PyObject {
     
     public static final PyType TYPE = PyType.fromClass(PyInteger.class);
-    
+
+    /** The minimum value of an int represented by a BigInteger */
+    public static final BigInteger minInt = BigInteger.valueOf(Integer.MIN_VALUE);
+
+    /** The maximum value of an int represented by a BigInteger */
+    public static final BigInteger maxInt = BigInteger.valueOf(Integer.MAX_VALUE);
+
     @ExposedNew
     public static PyObject int_new(PyNewWrapper new_, boolean init, PyType subtype,
             PyObject[] args, String[] keywords) {
@@ -36,7 +43,14 @@ public class PyInteger extends PyObject {
 			if (!(x instanceof PyString)) {
 				throw Py.TypeError("int: can't convert non-string with explicit base");
 			}
-            return Py.newInteger(((PyString) x).atoi(base));
+            try {
+                return Py.newInteger(((PyString)x).atoi(base));
+            } catch (PyException pye) {
+                if (Py.matchException(pye, Py.OverflowError)) {
+                    return ((PyString)x).atol(base);
+                }
+                throw pye;
+            }
         } else {
             if (x == null) {
                 return new PyIntegerDerived(subtype, 0);
