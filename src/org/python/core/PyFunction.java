@@ -85,22 +85,24 @@ public class PyFunction extends PyObject
     }
 
     public void __setattr__(String name, PyObject value) {
-        // TBD: in CPython, func_defaults, func_doc, __doc__ are
-        // writable.  For now, only func_doc, __doc__ are writable in
-        // Jython.
         if (name == "func_doc" || name == "__doc__")
             __doc__ = value;
         else if (name == "func_closure") {
             throwReadonly(name);
         }
-        // not yet implemented:
-        // func_defaults
         else if (name == "__name__")
             throwReadonly(name);
         else if (name == "func_name")
             throwReadonly(name);
-        else if (name == "func_defaults")
-            throwReadonly(name);
+        else if (name == "func_defaults") {
+            if (value instanceof PyTuple) {
+                func_defaults = ((PyTuple)value).getArray();
+            } else if (value instanceof PyNone) {
+                func_defaults = Py.EmptyObjects;
+            } else {
+                throw Py.TypeError("func_defaults must be set to a tuple object");
+            }
+        }
         else if (name == "func_globals")
             throwReadonly(name);
         else if (name == "func_code") {
