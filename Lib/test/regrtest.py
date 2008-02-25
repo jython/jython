@@ -56,8 +56,8 @@ import traceback
 import random
 import StringIO
 
-import test_support
-sys.modules['test.test_support'] = test_support
+from test import test_support
+sys.modules['test_support'] = test_support
 
 # interim stuff
 
