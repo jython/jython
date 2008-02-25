@@ -95,10 +95,10 @@ public class PyFunction extends PyObject
         else if (name == "func_name")
             throwReadonly(name);
         else if (name == "func_defaults") {
-            if (value instanceof PyTuple) {
-                func_defaults = ((PyTuple)value).getArray();
-            } else if (value instanceof PyNone) {
+            if (value == Py.None) {
                 func_defaults = Py.EmptyObjects;
+            } else if (value instanceof PyTuple) {
+                func_defaults = ((PyTuple)value).getArray();
             } else {
                 throw Py.TypeError("func_defaults must be set to a tuple object");
             }
