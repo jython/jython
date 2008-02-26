@@ -22,6 +22,7 @@ binhex.py
 bisect.py
 calendar.py
 cgi.py
+cgitb.py
 CGIHTTPServer.py
 chunk.py
 cmd.py
