@@ -39,6 +39,7 @@ Cookie.py
 difflib.py
 dircache.py
 dircmp.py
+dis.py
 dospath.py
 dumbdbm.py
 exceptions.py
@@ -81,6 +82,7 @@ netrc.py
 nntplib.py
 ntpath.py
 nturl2path.py
+opcode.py
 optparse.py
 pdb.py
 pickle.py
