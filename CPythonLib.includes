@@ -39,6 +39,7 @@ Cookie.py
 difflib.py
 dircache.py
 dircmp.py
+dis.py
 dospath.py
 dumbdbm.py
 exceptions.py
@@ -74,12 +75,14 @@ mimetools.py
 mimetypes.py
 MimeWriter.py
 mimify.py
+modulefinder.py
 multifile.py
 mutex.py
 netrc.py
 nntplib.py
 ntpath.py
 nturl2path.py
+opcode.py
 optparse.py
 pdb.py
 pickle.py
@@ -87,7 +90,6 @@ pickletools.py
 pipes.py
 poplib.py
 posixfile.py
-posixpath.py
 pprint.py
 profile.py
 pstats.py

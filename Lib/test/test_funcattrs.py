@@ -1,6 +1,5 @@
-from test_support import verbose, TestFailed, verify
+from test.test_support import verbose, TestFailed, verify
 import types
-import sys
 
 class F:
     def a(self):
@@ -9,6 +8,10 @@ class F:
 def b():
     'my docstring'
     pass
+
+# __module__ is a special attribute
+verify(b.__module__ == __name__)
+verify(verify.__module__ == "test.test_support")
 
 # setting attributes on functions
 try:
@@ -271,7 +274,7 @@ def test_func_name():
 def test_func_code():
     def f(): pass
     def g(): print 12
-    #XXX: changed to isinstance for jython
+    # XXX: changed to isinstance for jython
     #verify(type(f.func_code) is types.CodeType)
     verify(isinstance(f.func_code, types.CodeType))
     f.func_code = g.func_code
@@ -280,21 +283,19 @@ def test_func_code():
 def test_func_defaults():
     def f(a, b): return (a, b)
     verify(f.func_defaults is None)
-    #XXX: setting defaults this way is not yet supported in jython.
-    if not sys.platform.startswith("java"):
-        f.func_defaults = (1, 2)
-        verify(f.func_defaults == (1, 2))
-        verify(f(10) == (10, 2))
-        def g(a=1, b=2): return (a, b)
-        verify(g.func_defaults == (1, 2))
-        del g.func_defaults
-        verify(g.func_defaults is None)
-        try:
-            g()
-        except TypeError:
-            pass
-        else:
-            raise TestFailed, "shouldn't be allowed to call g() w/o defaults"
+    f.func_defaults = (1, 2)
+    verify(f.func_defaults == (1, 2))
+    verify(f(10) == (10, 2))
+    def g(a=1, b=2): return (a, b)
+    verify(g.func_defaults == (1, 2))
+    del g.func_defaults
+    verify(g.func_defaults is None)
+    try:
+        g()
+    except TypeError:
+        pass
+    else:
+        raise TestFailed, "shouldn't be allowed to call g() w/o defaults"
 
 def test_func_dict():
     def f(): pass

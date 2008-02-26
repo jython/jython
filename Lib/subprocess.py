@@ -397,7 +397,6 @@ if mswindows:
             error = IOError
 elif jython:
     import errno
-    import javashell
     import threading
     import java.io.File
     import java.io.FileDescriptor
@@ -545,11 +544,43 @@ def list2cmdline(seq):
 
 
 if jython:
-    if javashell._getOsType() in ('nt', 'dos'):
-        # Escape the command line arguments on Windows
-        escape_args = lambda args: [list2cmdline([arg]) for arg in args]
-    else:
-        escape_args = lambda args: args
+    # Escape the command line arguments with list2cmdline on Windows
+    escape_args_oses = ['nt', 'ce']
+
+    escape_args = None
+    shell_command = None
+
+    def setup_platform():
+        """Setup the shell command and the command line argument escape
+        function depending on the underlying platform
+        """
+        global escape_args, shell_command
+
+        if os._name in escape_args_oses:
+            escape_args = lambda args: [list2cmdline([arg]) for arg in args]
+        else:
+            escape_args = lambda args: args
+
+        os_info = os._os_map.get(os._name)
+        if os_info is None:
+            os_info = os._os_map.get('posix')
+            
+        for _shell_command in os_info[1]:
+            executable = _shell_command[0]
+            if not os.path.isabs(executable):
+                import distutils.spawn
+                executable = distutils.spawn.find_executable(executable)
+            if not executable or not os.path.exists(executable):
+                continue
+            _shell_command[0] = executable
+            shell_command = _shell_command
+            return
+
+        if not shell_command:
+            import warnings
+            warnings.warn('Unable to determine shell_command for '
+                          'underlying os: %s' % os._name, RuntimeWarning, 3)
+    setup_platform()
 
 
     class CouplerThread(java.lang.Thread):
@@ -1117,7 +1148,7 @@ class Popen(object):
                 args = escape_args(list(args))
 
             if shell:
-                args = javashell._shellEnv.cmd + args
+                args = shell_command + args
 
             if executable is not None:
                 args[0] = executable

@@ -133,7 +133,7 @@ public class PySlice extends PyObject {
             return ((PyInteger)v).getValue();
         } else if(v instanceof PyLong) {
             try {
-                return ((PyInteger)v.__int__()).getValue();
+                return v.asInt();
             } catch (PyException exc) {
                 if (Py.matchException(exc, Py.OverflowError)) {
                     if (new PyLong(0L).__cmp__(v) < 0) {

@@ -3,7 +3,6 @@
 Made for Jython.
 """
 import imp
-import javashell
 import os
 import py_compile
 import shutil
@@ -19,7 +18,12 @@ COMPILED_SUFFIX = sys.platform.startswith('java') and '$py.class' or \
     [suffix for suffix, mode, type in imp.get_suffixes()
      if type == imp.PY_COMPILED][0]
 
-EXECUTABLE = sys.executable or (sys.platform.startswith('java') and 'jython' or None)
+EXECUTABLE = sys.executable or \
+    (sys.platform.startswith('java') and 'jython' or None)
+
+WINDOWS = os.name in ('nt', 'ce') or sys.platform.startswith('java') and \
+    os._name in ('nt', 'ce')
+    
 
 CODE1 = """result = 'result is %r' % (100.0 * (3.0 / 5.0))"""
 CODE1_RESULT = 'result is %r' % (100.0 * (3.0 / 5.0))
@@ -178,6 +182,33 @@ class ChdirTestCase(BaseChdirTestCase):
         open(self.filename1, 'w').close()
         raises(OSError, '[Errno 20] Not a directory: %r' % self.filename1,
                os.chdir, self.filename1)
+
+
+class WindowsChdirTestCase(BaseChdirTestCase):
+
+    FIXTURE_CHDIR = False
+
+    def setUp(self):
+        super(WindowsChdirTestCase, self).setUp()
+        self.subdir = os.path.join(self.dir1, 'Program Files')
+        os.makedirs(self.subdir)
+
+    def test_windows_chdir_dos_path(self):
+        dos_name = os.path.join(self.dir1, 'progra~1')
+        os.chdir(dos_name)
+        self.assertEqual(os.getcwd(), os.path.realpath(dos_name))
+
+    def test_windows_getcwd_ensures_drive_letter(self):
+        drive = os.path.splitdrive(self.subdir)[0]
+        os.chdir('\\')
+        self.assertEqual(os.path.normcase(os.getcwd()),
+                         os.path.normcase(os.path.join(drive, '\\')))
+
+    def test_windows_chdir_slash_isabs(self):
+        drive = os.path.splitdrive(os.getcwd())[0]
+        os.chdir('/')
+        self.assertEqual(os.path.normcase(os.getcwd()),
+                         os.path.normcase(os.path.join(drive, '\\')))
 
 
 class BaseImportTestCase(BaseChdirTestCase):
@@ -384,7 +415,7 @@ class SubprocessTestCase(BaseChdirTestCase):
 
     def _command(self):
         command = self.COMMAND % self.filename1
-        if javashell._getOsType() in ('nt', 'dos', 'ce'):
+        if WINDOWS:
             command = '"%s"' % command
         return command
 
@@ -586,7 +617,7 @@ class ImportJarTestCase(BaseChdirTestCase):
             # because SyspathArchive holds onto its file handle (and you
             # can't delete a file in use on Windows). We may not want to
             # change this
-            self.assert(javashell._getOsType() in ('nt', 'dos', 'ce'))
+            self.assert_(WINDOWS)
         if 'ChdirJyTest' in sys.modules:
             del sys.modules['ChdirJyTest']
 
@@ -661,6 +692,8 @@ def test_main():
     if sys.platform.startswith('java'):
         tests.extend((ImportJavaClassTestCase,
                       ImportJarTestCase))
+    if WINDOWS:
+        tests.append(WindowsChdirTestCase)
     test_support.run_unittest(*tests)
 
 

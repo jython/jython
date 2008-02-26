@@ -1,6 +1,8 @@
 /// Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
+import java.math.BigInteger;
+
 import org.python.core.util.StringUtil;
 
 import org.python.expose.ExposedMethod;
@@ -711,11 +713,10 @@ public class PyString extends PyBaseString
         try
         {
             return Py.newInteger(atoi(10));
-        }
-        catch (PyException e)
-        {
-            if (Py.matchException(e, Py.ValueError))
+        } catch (PyException e) {
+            if (Py.matchException(e, Py.OverflowError)) {
                 return atol(10);
+            }
             throw e;
         }
     }
@@ -1325,14 +1326,15 @@ public class PyString extends PyBaseString
             s = string.substring(b, e);
 
         try {
-            long result = Long.parseLong(s, base);
-            if (result < 0 && !(sign == '-' && result == -result))
-                throw Py.ValueError("invalid literal for __int__: "+string);
-            if (sign == '-')
-                result = - result;
-            if (result < Integer.MIN_VALUE || result > Integer.MAX_VALUE)
-                throw Py.ValueError("invalid literal for __int__: "+string);
-            return (int) result;
+            BigInteger bi;
+            if (sign == '-') {
+                bi = new BigInteger("-" + s, base);
+            } else
+                bi = new BigInteger(s, base);
+            if (bi.compareTo(PyInteger.maxInt) > 0 || bi.compareTo(PyInteger.minInt) < 0) {
+                throw Py.OverflowError("long int too large to convert to int");
+            }
+            return bi.intValue();
         } catch (NumberFormatException exc) {
             throw Py.ValueError("invalid literal for __int__: "+string);
         } catch (StringIndexOutOfBoundsException exc) {

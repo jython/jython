@@ -845,15 +845,13 @@ public class PySystemState extends PyObject
     /**
      * Change the current working directory to the specified path.
      *
+     * path is assumed to be absolute and canonical (via
+     * os.path.realpath).
+     *
      * @param path a path String
      */
     public void setCurrentWorkingDir(String path) {
-        File pathFile = new File(getPath(path));
-        try {
-            currentWorkingDir = pathFile.getCanonicalPath();
-        } catch (IOException e) {
-            currentWorkingDir = pathFile.getAbsolutePath();
-        }
+        currentWorkingDir = path;
     }
 
     /**

@@ -56,8 +56,8 @@ import traceback
 import random
 import StringIO
 
-import test_support
-sys.modules['test.test_support'] = test_support
+from test import test_support
+sys.modules['test_support'] = test_support
 
 # interim stuff
 
@@ -1014,8 +1014,11 @@ _skips = {
         test_winsound
 	"""
 }
-if test_support.is_jython and test_support.underlying_system.startswith('win'):
-    _skips['java'] += 'test_mhlib'
+if test_support.is_jython:
+    if test_support.underlying_system.startswith('win'):
+        _skips['java'] += 'test_mhlib'
+    else:
+        _skips['java'] += 'test_pep277'
 
 _failures = {
     'java':
@@ -1035,7 +1038,6 @@ _failures = {
     test_marshal
     test_new
     test_pep263
-    test_pep277
     test_pickle
     test_pkgimport
     test_profilehooks

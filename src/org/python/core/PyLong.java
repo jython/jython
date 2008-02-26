@@ -18,10 +18,8 @@ public class PyLong extends PyObject {
 
     public static final PyType TYPE = PyType.fromClass(PyLong.class);
     
-    public static final BigInteger minLong =
-        BigInteger.valueOf(Long.MIN_VALUE);
-    public static final BigInteger maxLong =
-        BigInteger.valueOf(Long.MAX_VALUE);
+    public static final BigInteger minLong = BigInteger.valueOf(Long.MIN_VALUE);
+    public static final BigInteger maxLong = BigInteger.valueOf(Long.MAX_VALUE);
     public static final BigInteger maxULong =
         BigInteger.valueOf(1).shiftLeft(64).subtract(BigInteger.valueOf(1));
 
@@ -730,12 +728,10 @@ public class PyLong extends PyObject {
 
     @ExposedMethod
     final PyObject long___int__() {
-        long v = value.longValue();
-        if (v < Integer.MIN_VALUE || v > Integer.MAX_VALUE) {
-            return Py.newLong(value);
+        if (value.compareTo(PyInteger.maxInt) <= 0 && value.compareTo(PyInteger.minInt) >= 0) {
+            return Py.newInteger(value.intValue());
         }
-        return Py.newInteger((int)getLong(Integer.MIN_VALUE,
-                                          Integer.MAX_VALUE));
+        return Py.newLong(value);
     }
 
 
