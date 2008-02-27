@@ -602,11 +602,22 @@ class BasicUDPTest(ThreadedUDPSocketTest):
         ThreadedUDPSocketTest.__init__(self, methodName=methodName)
 
     def testSendtoAndRecv(self):
-        # Testing sendto() and Recv() over UDP
+        # Testing sendto() and recv() over UDP
         msg = self.serv.recv(len(MSG))
         self.assertEqual(msg, MSG)
 
     def _testSendtoAndRecv(self):
+        self.cli.sendto(MSG, 0, (HOST, PORT))
+
+    def testSendtoAndRecvTimeoutMode(self):
+        # Need to test again in timeout mode, which follows
+        # a different code path
+        self.serv.settimeout(10)
+        msg = self.serv.recv(len(MSG))
+        self.assertEqual(msg, MSG)
+
+    def _testSendtoAndRecvTimeoutMode(self):
+        self.cli.settimeout(10)
         self.cli.sendto(MSG, 0, (HOST, PORT))
 
     def testRecvFrom(self):
@@ -617,12 +628,34 @@ class BasicUDPTest(ThreadedUDPSocketTest):
     def _testRecvFrom(self):
         self.cli.sendto(MSG, 0, (HOST, PORT))
 
+    def testRecvFromTimeoutMode(self):
+        # Need to test again in timeout mode, which follows
+        # a different code path
+        self.serv.settimeout(10)
+        msg, addr = self.serv.recvfrom(len(MSG))
+        self.assertEqual(msg, MSG)
+
+    def _testRecvFromTimeoutMode(self):
+        self.cli.settimeout(10)
+        self.cli.sendto(MSG, 0, (HOST, PORT))
+
     def testSendtoEightBitSafe(self):
         # This test is necessary because java only supports signed bytes
         msg = self.serv.recv(len(EIGHT_BIT_MSG))
         self.assertEqual(msg, EIGHT_BIT_MSG)
 
     def _testSendtoEightBitSafe(self):
+        self.cli.sendto(EIGHT_BIT_MSG, 0, (HOST, PORT))
+
+    def testSendtoEightBitSafeTimeoutMode(self):
+        # Need to test again in timeout mode, which follows
+        # a different code path
+        self.serv.settimeout(10)
+        msg = self.serv.recv(len(EIGHT_BIT_MSG))
+        self.assertEqual(msg, EIGHT_BIT_MSG)
+
+    def _testSendtoEightBitSafeTimeoutMode(self):
+        self.cli.settimeout(10)
         self.cli.sendto(EIGHT_BIT_MSG, 0, (HOST, PORT))
 
 class BasicSocketPairTest(SocketPairTest):
@@ -645,6 +678,7 @@ class BasicSocketPairTest(SocketPairTest):
         self.assertEqual(msg, MSG)
 
 class NonBlockingTCPServerTests(SocketTCPTest):
+
     def testSetBlocking(self):
         # Testing whether set blocking works
         self.serv.setblocking(0)
@@ -672,7 +706,6 @@ class NonBlockingTCPServerTests(SocketTCPTest):
             pass
         else:
             self.fail("Error trying to do non-blocking accept.")
-    
 
 class NonBlockingTCPTests(ThreadedTCPSocketTest):
 
@@ -1022,6 +1055,7 @@ class TCPTimeoutTest(SocketTCPTest):
             self.fail("accept() returned success when we did not expect it")
 
 class TCPClientTimeoutTest(unittest.TestCase):
+
     def testClientTimeout(self):
         cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         cli.settimeout(0.1)
@@ -1076,6 +1110,7 @@ class TestExceptions(unittest.TestCase):
         self.assert_(issubclass(socket.timeout, socket.error))
 
 class TestJythonExceptions(unittest.TestCase):
+
     def setUp(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
