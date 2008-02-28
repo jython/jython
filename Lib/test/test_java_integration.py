@@ -134,9 +134,9 @@ class SysIntegrationTest(unittest.TestCase):
         self.assertEquals('hello', f.read())
         f.close()
         sys.stdout = out
-		
+                
 class AutoSuperTest(unittest.TestCase):
-	
+        
     def test_auto_super(self):
         class R(Rectangle):
             def __init__(self):

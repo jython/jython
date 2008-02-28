@@ -6,15 +6,15 @@ Implement popen2 module functionality for Jython.
 Note that the popen* methods in this module follow the return value
 ordering of the Python popen2.popen* methods:
 
-	fromChild, toChild = popen2.popen2(...)
-	fromChild, toChild, errorFromChild = popen2.popen3(...)
-	fromChildInclError, toChild = popen2.popen4(...)
+        fromChild, toChild = popen2.popen2(...)
+        fromChild, toChild, errorFromChild = popen2.popen3(...)
+        fromChildInclError, toChild = popen2.popen4(...)
 
 The os.popen* methods are more natural as follows:
 
-	toChild, fromChild = os.popen2(...)
-	toChild, fromChild, errorFromChild = os.popen3(...)
-	toChild, fromChildInclError = os.popen4(...)
+        toChild, fromChild = os.popen2(...)
+        toChild, fromChild, errorFromChild = os.popen3(...)
+        toChild, fromChildInclError = os.popen4(...)
 
 The Popen3 and Popen4 classes allow users to poll() or wait() for
 child processes to terminate.

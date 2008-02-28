@@ -396,11 +396,11 @@ def main(tests=None, testdir=None, verbose=0, quiet=0, generate=0,
             print "that passes in verbose mode may fail without it."
     surprises = 0
     if skipped and not quiet:
-	print count(len(skipped), "test"), "skipped:"
-	surprises += countsurprises(skips, skipped, 'skip', 'ran', allran)
+        print count(len(skipped), "test"), "skipped:"
+        surprises += countsurprises(skips, skipped, 'skip', 'ran', allran)
     if bad:
         print count(len(bad), "test"), "failed:"
-	surprises += countsurprises(failures, bad, 'fail', 'passed', allran)
+        surprises += countsurprises(failures, bad, 'fail', 'passed', allran)
 
     if memo:
         savememo(memo,good,bad,skipped)
@@ -608,7 +608,7 @@ def countsurprises(expected, actual, action, antiaction, allran):
     """returns the number of items in actual that aren't in expected."""
     printlist(actual)
     if not expected.isvalid():
-	print "Ask someone to teach regrtest.py about which tests are"
+        print "Ask someone to teach regrtest.py about which tests are"
         print "expected to %s on %s." % (action, sys.platform)
         return 1#Surprising not to know what to expect....
     good_surprise = expected.getexpected() - set(actual)
@@ -911,29 +911,29 @@ _skips = {
         """,
     'freebsd4':
         """
-	test_al
-	test_cd
-	test_cl
-	test_curses
-	test_email_codecs
-	test_gdbm
-	test_gl
-	test_imgfile
-	test_linuxaudiodev
-	test_locale
-	test_minidom
-	test_nis
-	test_pyexpat
-	test_sax
-	test_socket_ssl
-	test_socketserver
-	test_sunaudiodev
-	test_unicode_file
-	test_winreg
-	test_winsound
-	""",
+        test_al
+        test_cd
+        test_cl
+        test_curses
+        test_email_codecs
+        test_gdbm
+        test_gl
+        test_imgfile
+        test_linuxaudiodev
+        test_locale
+        test_minidom
+        test_nis
+        test_pyexpat
+        test_sax
+        test_socket_ssl
+        test_socketserver
+        test_sunaudiodev
+        test_unicode_file
+        test_winreg
+        test_winsound
+        """,
     'java':
-	"""
+        """
         test_aepack
         test_al
         test_audioop
@@ -1011,7 +1011,7 @@ _skips = {
         test_weakref
         test_winreg
         test_winsound
-	"""
+        """
 }
 if test_support.is_jython:
     if test_support.underlying_system.startswith('win'):
@@ -1056,9 +1056,9 @@ _failures = {
 class _Expected:
     def __init__(self, expect_dict):
         self.valid = 0
-	platform = sys.platform
-	if platform[:4] == 'java':
-	    platform = 'java'
+        platform = sys.platform
+        if platform[:4] == 'java':
+            platform = 'java'
         if expect_dict.has_key(platform):
             s = expect_dict[platform]
             self.expected = set(s.split())

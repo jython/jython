@@ -160,7 +160,7 @@ def customize_compiler(compiler):
         if os.environ.has_key('LDFLAGS'):
             ldshared = ldshared + ' ' + os.environ['LDFLAGS']
         if basecflags:
-        	opt = basecflags + ' ' + opt
+                opt = basecflags + ' ' + opt
         if os.environ.has_key('CFLAGS'):
             opt = opt + ' ' + os.environ['CFLAGS']
             ldshared = ldshared + ' ' + os.environ['CFLAGS']

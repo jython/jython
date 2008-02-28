@@ -318,10 +318,10 @@ def test_expat_dtdhandler():
 ]>
 <doc></doc>'''))
     if len(handler._entities) != 1 or len(handler._entities[0]) != 4:
-	return 0
+        return 0
     name, pubId, sysId, ndata = handler._entities[0]
     if name != 'img' or not pubId is None or not sysId.endswith('expat.gif') or ndata != 'GIF':
-	return 0
+        return 0
     return handler._notations == [("GIF", "-//CompuServe//NOTATION Graphics Interchange Format 89a//EN", None)]
 
 # ===== EntityResolver support
@@ -450,8 +450,8 @@ class LocatorTest(XMLGenerator):
         self.location = None
 
     def setDocumentLocator(self, locator):
-	XMLGenerator.setDocumentLocator(self, locator)
-	self.location = Location(self._locator)
+        XMLGenerator.setDocumentLocator(self, locator)
+        self.location = Location(self._locator)
 
 def test_expat_locator_noinfo():
     result = StringIO()
@@ -477,7 +477,7 @@ def test_expat_locator_withinfo():
     #forward
     import os
     if os.name == 'java':
-	testfile = testfile.replace('\\', '/')
+        testfile = testfile.replace('\\', '/')
 
     return xmlgen.location.getSystemId().endswith(testfile) and \
            xmlgen.location.getPublicId() is None
@@ -715,8 +715,8 @@ items = locals().items()
 items.sort()
 for (name, value) in items:
     if name.startswith('test_expat') and java_14:
-	#skip expat tests on java14 since the crimson parser is so crappy
-	continue
+        #skip expat tests on java14 since the crimson parser is so crappy
+        continue
     if name[:5] == "test_":
         confirm(value(), name)
 

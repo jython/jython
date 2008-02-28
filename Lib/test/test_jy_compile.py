@@ -19,7 +19,7 @@ class CompileTests(unittest.TestCase):
             self.assertEquals(d,values)
         elif value is not None:
             self.assertEquals(eval(code,self.eval_d),value)
-	else:
+        else:
             self.assert_(code)
         
 
@@ -108,7 +108,7 @@ class CompileTests(unittest.TestCase):
         ai("if 1:\n pass\n if 1:\n  pass\n else:")
         ai("if 1:\n pass\n if 1:\n  pass\n else:\n")          
         
-	ai("def x():")
+        ai("def x():")
         ai("def x():\n")
         ai("def x():\n\n")
 

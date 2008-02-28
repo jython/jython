@@ -10,8 +10,8 @@ def powtest(type):
             assert type(i)**0 == 1
             assert type(i)**1 == type(i)
             if i > 0:
-            	assert type(0)**i == type(0)
-            	assert type(1)**i == type(1)
+                assert type(0)**i == type(0)
+                assert type(1)**i == type(1)
             
         print_test("cubes")
         for i in range(-100, 100):

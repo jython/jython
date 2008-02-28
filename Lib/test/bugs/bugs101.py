@@ -11,27 +11,27 @@ def test931():
     from java.lang import Thread
 
     class TestThread(Thread):
-	def run(self):
-	    for i in range(30):
-		exec("x=2+2")
+        def run(self):
+            for i in range(30):
+                exec("x=2+2")
 
     testers = []
     for i in range(10):
-	testers.append(TestThread())
+        testers.append(TestThread())
 
     for tester in testers:
-	tester.start()
+        tester.start()
 
 
     for tester in testers:
-	tester.join()
+        tester.join()
 
 code32 = """\
 def foo():
     try:
-	2+2
+        2+2
     finally:
-	return 4
+        return 4
 """
 
 def test32():
@@ -47,11 +47,11 @@ items.sort()
 errors = 0
 for name, value in items:
     if name[:4] == 'test':
-	print_test(value.__doc__+' #'+name[4:], 2)
-	try:
-	    value()
-	except:
-	    print 'Error!', sys.exc_type, sys.exc_value
-	    errors = errors+1
+        print_test(value.__doc__+' #'+name[4:], 2)
+        try:
+            value()
+        except:
+            print 'Error!', sys.exc_type, sys.exc_value
+            errors = errors+1
 
 print errors, 'errors'

@@ -16,15 +16,15 @@
 # matching performs on large strings.
 
 benchmarks = [
-    ('Python', 'Python'),		# Simple text literal
-    ('.*Python', 'Python'),		# Bad text literal
-    ('.*Python.*', 'Python'),		# Worse text literal
-    ('.*(Python)', 'Python'),		# Bad text literal with grouping
+    ('Python', 'Python'),               # Simple text literal
+    ('.*Python', 'Python'),             # Bad text literal
+    ('.*Python.*', 'Python'),           # Worse text literal
+    ('.*(Python)', 'Python'),           # Bad text literal with grouping
 
-    ('(Python|Perl|Tcl', 'Perl'),	# Alternation
-    ('(Python|Perl|Tcl)', 'Perl'),	# Grouped alternation
-    ('(Python)\\1', 'PythonPython'),	# Backreference
-    ('([0a-z][a-z]*,)+', 'a5,b7,c9,'),	# Disable the fastmap optimization
+    ('(Python|Perl|Tcl', 'Perl'),       # Alternation
+    ('(Python|Perl|Tcl)', 'Perl'),      # Grouped alternation
+    ('(Python)\\1', 'PythonPython'),    # Backreference
+    ('([0a-z][a-z]*,)+', 'a5,b7,c9,'),  # Disable the fastmap optimization
     ('([a-z][a-z0-9]*,)+', 'a5,b7,c9,') # A few sets
 ]
 
@@ -549,8 +549,8 @@ tests = [
 
     ("""(?x)w# comment 1
         x y
-	# comment 2
-	z""", 'wxyz', SUCCEED, 'found', 'wxyz'),
+        # comment 2
+        z""", 'wxyz', SUCCEED, 'found', 'wxyz'),
 
     # using the m embedded pattern modifier
 

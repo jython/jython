@@ -279,7 +279,7 @@ def test_main(verbose=None):
     # In the following test cases, class obj, which has function that changes
     # the data upon which sort is invoked, is passed for "key" argument.
     # It can not be checked if that function changes data as long as it is 
-    # invoked(e.g. __del__ in SortKiller). so these are currently commented out. 	
+    # invoked(e.g. __del__ in SortKiller). so these are currently commented out.        
     del TestDecorateSortUndecorate.test_key_with_mutating_del
     del TestDecorateSortUndecorate.test_key_with_mutating_del_and_exception
     #

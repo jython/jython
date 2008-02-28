@@ -62,7 +62,7 @@ import sys, os
 def makepath(*paths):
     dir = os.path.join(*paths)
     if dir == '__classpath__':
-	return dir
+        return dir
     return os.path.normcase(os.path.abspath(dir))
 
 L = sys.modules.values()

@@ -3,7 +3,7 @@ import unittest
 import test.test_support
 
 class BuiltinTest(unittest.TestCase):
-	
+        
     def test_in_sys_modules(self):
         self.assert_("__builtin__" in sys.modules,
             "__builtin__ not found in sys.modules")

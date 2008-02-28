@@ -28,12 +28,12 @@ from java.util import Vector
 vec = Vector()
 items = range(10)
 for i in items:
-	vec.addElement(i)
+        vec.addElement(i)
 
 expected = 0
 for i in vec:
-	assert i == expected, 'testing __iter__ on java.util.Vector'
-	expected = expected+1
+        assert i == expected, 'testing __iter__ on java.util.Vector'
+        expected = expected+1
 
 expected = 0
 for i in iter(vec):
@@ -76,11 +76,11 @@ assert d.width == 42 and d.height == 9, 'setting fields'
 
 #Make sure non-existent fields fail
 try:
-	print d.foo
+        print d.foo
 except AttributeError:
-	pass
+        pass
 else:
-	raise AssertionError, 'd.foo should throw type error'
+        raise AssertionError, 'd.foo should throw type error'
 
 print_test('get/set bean properties')
 
@@ -94,8 +94,8 @@ print_test('bean event properties')
 # Test bean event properties - single and multiple
 flag = 0
 def testAction(event):
-	global flag
-	flag = flag + 1
+        global flag
+        flag = flag + 1
 
 from java.awt.event import ActionEvent
 

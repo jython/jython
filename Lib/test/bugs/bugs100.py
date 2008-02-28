@@ -127,9 +127,9 @@ from java.lang import Thread
 
 class TestThread(Thread):
     def run(self):
-	for i in range(100):
-	    exec("x=2+2")
-	print '       finished'
+        for i in range(100):
+            exec("x=2+2")
+        print '       finished'
 
 testers = []
 for i in range(10):

@@ -20,19 +20,19 @@ class ThreadLocalTestCase(unittest.TestCase):
     def test_local(self):
         mydata = local()
         mydata.number = 42
-        self.assertEqual(mydata.number,42)	
+        self.assertEqual(mydata.number,42)      
         self.assertEqual(mydata.__dict__,{'number': 42})
         mydata.__dict__.setdefault('widgets', [])
         self.assertEqual(mydata.widgets,[])
         log=[]
-		
-        def f():     	     
+                
+        def f():             
             items = mydata.__dict__.items()     
-            items.sort()	     
+            items.sort()             
             log.append(items)
             mydata.number = 11     
             log.append(mydata.number)     
-		
+                
         thread = threading.Thread(target=f)
         thread.start()
         thread.join()
@@ -40,9 +40,9 @@ class ThreadLocalTestCase(unittest.TestCase):
         self.assertEqual(mydata.number,42)
 
     def test_subclass_local(self):
-        def f():     	     
+        def f():             
             items = mydata.__dict__.items()     
-            items.sort()	     
+            items.sort()             
             log.append(items)
             mydata.number = 11     
             log.append(mydata.number) 
@@ -60,7 +60,7 @@ class ThreadLocalTestCase(unittest.TestCase):
         
         class SubSubLocal(MyLocal):
             pass
-		
+                
         mydata = MyLocal(color='red')
         self.assertEqual(mydata.number,2)
         self.assertEqual(mydata.color,'red')
