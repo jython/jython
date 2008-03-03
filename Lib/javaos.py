@@ -386,6 +386,9 @@ def lstat(path):
     """
     f = File(sys.getPath(path))
     abs_parent = f.getAbsoluteFile().getParentFile()
+    if not abs_parent:
+      # root isn't a link
+      return stat(path)
     can_parent = abs_parent.getCanonicalFile()
 
     if can_parent.getAbsolutePath() == abs_parent.getAbsolutePath():
