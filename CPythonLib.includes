@@ -89,6 +89,7 @@ pdb.py
 pickle.py
 pickletools.py
 pipes.py
+pkgutil.py
 poplib.py
 posixfile.py
 pprint.py
