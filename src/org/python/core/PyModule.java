@@ -148,21 +148,7 @@ public class PyModule extends PyObject {
             }
         }
 
-        attr = super.__findattr__(name);
-        if (attr != null) {
-            return attr;
-        }
-
-        if (__dict__ == null) {
-            return null;
-        }
-
-        PyObject pyName = __dict__.__finditem__("__name__");
-        if (pyName == null) {
-            return null;
-        }
-
-        return impHook(pyName.__str__().toString() + '.' + name);
+        return super.__findattr__(name);
     }
 
     public void __setattr__(String name, PyObject value) {
@@ -220,20 +206,6 @@ public class PyModule extends PyObject {
     private void ensureDict() {
         if (__dict__ == null) {
             __dict__ = new PyStringMap();
-        }
-    }
-
-    private static PyObject impHook(String name) {
-        if (fromlist == null) {
-            fromlist = new PyTuple(Py.newString("__doc__"));
-        }
-        try {
-            return __builtin__.__import__(name, null, null, fromlist);
-        } catch (PyException pe) {
-            if (Py.matchException(pe, Py.ImportError)) {
-                return null;
-            }
-            throw pe;
         }
     }
 }

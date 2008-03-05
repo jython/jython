@@ -22,6 +22,9 @@ public class imp {
 
     public static final int APIVersion = 12;
 
+    /** A non-empty fromlist for __import__'ing sub-modules. */
+    private static final PyObject nonEmptyFromlist = new PyTuple(Py.newString("__doc__"));
+
     /** Synchronizes import operations */
     public static final ReentrantLock importLock = new ReentrantLock();
 
@@ -772,6 +775,10 @@ public class imp {
         for (int i = 0; i < names.length; i++) {
             PyObject submod = module.__findattr__(names[i]);
             if (submod == null) {
+                String submodName = mod + '.' + names[i];
+                submod = __builtin__.__import__(submodName, null, null, nonEmptyFromlist);
+            }
+            if (submod == null) {
                 if (module instanceof PyJavaPackage) {
                     if (JavaImportHelper.tryAddPackage(mod + "." + names[i], null)) {
                         submod = module.__findattr__(names[i]);
@@ -855,7 +862,16 @@ public class imp {
                 continue;
             } else {
                 try {
-                    locals.__setitem__(sname, module.__getattr__(sname));
+                    PyObject value = module.__findattr__(sname);
+                    if (value == null) {
+                        PyObject nameObj = module.__findattr__("__name__");
+                        if (nameObj != null) {
+                            String submodName = nameObj.__str__().toString() + '.' + sname;
+                            value = __builtin__.__import__(submodName, null, null,
+                                                           nonEmptyFromlist);
+                        }
+                    }
+                    locals.__setitem__(sname, value);
                 } catch (Exception exc) {
                     continue;
                 }
