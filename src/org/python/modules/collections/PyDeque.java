@@ -65,20 +65,7 @@ public class PyDeque extends PyObject {
         if (nargs == 0) {
             return;
         }
-        PyObject data = args[0];
-
-        if (data.__findattr__("__iter__") != null) {
-            deque_extend(data);
-        } else {
-            try {
-                deque_extend(new PySequenceIter(data));
-            } catch (PyException e) {
-                if(Py.matchException(e, Py.AttributeError)) { 
-                    throw Py.TypeError("'" + data.getType().fastGetName() + 
-                    "' object is not iterable");
-                }
-            }
-        }
+        deque_extend(args[0]);
     }
 
     /**

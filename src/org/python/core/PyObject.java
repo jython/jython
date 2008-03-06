@@ -461,7 +461,8 @@ public class PyObject implements Serializable {
      * @return the value corresponding to key or null if key is not found
      **/
     public PyObject __finditem__(PyObject key) {
-        throw Py.AttributeError("__getitem__");
+        throw Py.TypeError(String.format("'%.200s' object is unsubscriptable",
+                                         getType().fastGetName()));
     }
 
     /**
@@ -670,7 +671,8 @@ public class PyObject implements Serializable {
      * @since 2.2
      */
     public PyObject __iter__() {
-        throw Py.TypeError("iteration over non-sequence");
+        throw Py.TypeError(String.format("'%.200s' object is not iterable",
+                                         getType().fastGetName()));
     }
 
     /**
