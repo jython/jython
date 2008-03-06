@@ -201,6 +201,10 @@ class Unmarshaller:
         b = ord(read(1))
         c = ord(read(1))
         d = ord(read(1))
+        # convert unsigned d to signed to avoid d << 24 possibly
+        # overflowing into a long value
+        if d > 127:
+            d -= 256
         x = a | (b<<8) | (c<<16) | (d<<24)
         if x & 0x80000000 and x > 0:
             x = string.atoi(x - 0x100000000L)

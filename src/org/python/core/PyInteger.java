@@ -550,7 +550,11 @@ public class PyInteger extends PyObject {
         } else if (rightv < 0) {
             throw Py.ValueError("negative shift count");
         }
-        return Py.newInteger(getValue() << rightv);
+        int result = getValue() << rightv;
+        if (getValue() != result >> rightv) {
+            return __long__().__lshift__(right);
+        }
+        return Py.newInteger(result);
     }
     
     @ExposedMethod(type = MethodType.BINARY)
@@ -565,10 +569,14 @@ public class PyInteger extends PyObject {
 
         if (getValue() >= Integer.SIZE) {
             return left.__long__().__lshift__(this);
-        } else if(getValue() < 0) {
+        } else if (getValue() < 0) {
             throw Py.ValueError("negative shift count");
         }
-        return Py.newInteger(leftv << getValue());
+        int result = leftv << getValue();
+        if (leftv != result >> getValue()) {
+            return left.__long__().__lshift__(this);
+        }
+        return Py.newInteger(result);
     }
 
     public PyObject __rshift__(PyObject right) {
@@ -615,7 +623,7 @@ public class PyInteger extends PyObject {
         }
 
         if (getValue() >= Integer.SIZE) {
-            if (((PyInteger)left).getValue() < 0) {
+            if (leftv < 0) {
                 return Py.newInteger(-1);
             } else {
                 return Py.newInteger(0);
