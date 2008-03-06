@@ -218,10 +218,10 @@ assert 0 << 3 == 0
 assert 0 << 42 == 0
 assert 3 << 0 == 3
 assert 3 << 3 == 24
-assert 3 << 42 == 0
+assert 3 << 42 == 13194139533312L
 assert 42 << 0 == 42
 assert 42 << 3 == 336
-assert 42 << 42 == 0
+assert 42 << 42 == 184717953466368L
 assert 0L << 0L == 0L
 assert 0L << 3L == 0L
 assert 0L << 42L == 0L
