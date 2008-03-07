@@ -25,6 +25,10 @@ public class PyFrame extends PyObject
     // an interface to functions suitable for tracing, e.g. via sys.settrace()
     public TraceFunction tracefunc;
 
+    private static final String NAME_ERROR_MSG = "name '%.200s' is not defined";
+
+    private static final String GLOBAL_NAME_ERROR_MSG = "global name '%.200s' is not defined";
+
     private static final String UNBOUNDLOCAL_ERROR_MSG =
             "local variable '%.200s' referenced before assignment";
 
@@ -197,31 +201,48 @@ public class PyFrame extends PyObject
             if (ret != null)
                 return ret;
         }
-        return getlocal(f_code.co_varnames[index]);
-    }
 
-    public PyObject getlocal(String index) {
-        // System.err.println("getlocal: "+index);
-        if (f_locals == null)
+        String name = f_code.co_varnames[index];
+        if (f_locals == null) {
             getf_locals();
-        PyObject ret = f_locals.__finditem__(index);
-        if (ret != null)
+        }
+        PyObject ret = f_locals.__finditem__(name);
+        if (ret != null) {
             return ret;
+        }
 
-        throw Py.UnboundLocalError(String.format(UNBOUNDLOCAL_ERROR_MSG, index));
-        //return getglobal(index);
+        throw Py.UnboundLocalError(String.format(UNBOUNDLOCAL_ERROR_MSG, name));
     }
 
     public PyObject getname(String index) {
-        if (f_locals == null) getf_locals();
-        if (f_locals == f_globals) return getglobal(index);
-
-        PyObject ret = f_locals.__finditem__(index);
-        if (ret != null) return ret;
-        return getglobal(index);
+        PyObject ret;
+        if (f_locals == null) {
+            getf_locals();
+        }
+        if (f_locals == f_globals) {
+            ret = doGetglobal(index);
+        } else {
+            ret = f_locals.__finditem__(index);
+            if (ret != null) {
+                return ret;
+            }
+            ret = doGetglobal(index);
+        }
+        if (ret != null) {
+            return ret;
+        }
+        throw Py.NameError(String.format(NAME_ERROR_MSG, index));
     }
 
     public PyObject getglobal(String index) {
+        PyObject ret = doGetglobal(index);
+        if (ret != null) {
+            return ret;
+        }
+        throw Py.NameError(String.format(GLOBAL_NAME_ERROR_MSG, index));
+    }
+
+    private PyObject doGetglobal(String index) {
         PyObject ret = f_globals.__finditem__(index);
         if (ret != null) {
             return ret;
@@ -231,10 +252,7 @@ public class PyFrame extends PyObject
         if (f_builtins == null) {
             f_builtins = PySystemState.builtins;
         }
-        ret = f_builtins.__finditem__(index);
-        if (ret != null) return ret;
-
-        throw Py.NameError(index);
+        return f_builtins.__finditem__(index);
     }
 
     public void setlocal(int index, PyObject value) {
@@ -272,12 +290,19 @@ public class PyFrame extends PyObject
             f_locals.__delitem__(index);
         } catch (PyException e) {
             if (!Py.matchException(e, Py.KeyError)) throw e;
-            throw Py.UnboundLocalError(String.format(UNBOUNDLOCAL_ERROR_MSG, index));
+            throw Py.NameError(String.format(NAME_ERROR_MSG, index));
         }
     }
 
     public void delglobal(String index) {
-        f_globals.__delitem__(index);
+        try {
+            f_globals.__delitem__(index);
+        } catch (PyException e) {
+            if (!Py.matchException(e, Py.KeyError)) {
+                throw e;
+            }
+            throw Py.NameError(String.format(GLOBAL_NAME_ERROR_MSG, index));
+        }
     }
 
     // nested scopes helpers
