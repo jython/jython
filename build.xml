@@ -68,20 +68,7 @@ ht2html.dir=${basedir}/../externals/ht2html-2.0
 # - define the home of the corresponding CPython version
 python.home=c:/Programme/Python/Python23
 
-# - javax.servlet
-servlet.jar=c:/workspace/HEAD/CH.obj.commons.core/make_lib/j2ee.jar
-
-# - org.gnu.readline
-readline.jar=${basedir}/../externals/external-jars/readline.jar
-# - jline
-jline.jar=${basedir}/../externals/external-jars/jline-0.9.91.jar
-
-
 # - zxJDBC
-# (for mysql, see www.mysql.com/downloads/api-jdbc-stable.html)
-# (for postgres, see http://jdbc.postgresql.org/)
-mysql.jar=${basedir}/../externals/external-jars/mysql-connector-java-3.0.16-ga-bin.jar
-postgresql.jar=${basedir}/../externals/external-jars/pg74.215.jdbc2.jar
 oracle.jar=C:/workspace/HEAD/for_development/bisdevsrv28/jboss/server/infra/lib/ojdbc14.jar
 #informix.jar=${basedir}/../externals/external-jars/ifxjdbc.jar
 
@@ -153,25 +140,17 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
         <!-- classpaths -->
         <path id="main.classpath">
-            <pathelement path="${readline.jar}" />
-            <pathelement path="${jline.jar}" />
-            <pathelement path="${servlet.jar}" />
+            <pathelement path="extlibs/libreadline-java-0.8.jar" />
+            <pathelement path="extlibs/jline-0.9.94.jar" />
+            <pathelement path="extlibs/servlet-api-2.5.jar" />
             <pathelement path="${informix.jar}" />
             <pathelement path="${oracle.jar}" />
-            <pathelement path="${mysql.jar}" />
-            <pathelement path="${postgresql.jar}" />
+            <pathelement path="extlibs/mysql-connector-java-5.1.6.jar" />
+            <pathelement path="extlibs/postgresql-8.3-603.jdbc4.jar" />
         </path>
 
-        <available property="servlet.present" classname="javax.servlet.Servlet" classpath="${servlet.jar}" />
-        <available property="readline.present" classname="org.gnu.readline.Readline" classpath="${readline.jar}" />
-        <available property="jline.present" classname="jline.Terminal" classpath="${jline.jar}" />
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
-        <available property="mysql.present" classname="org.gjt.mm.mysql.Driver" classpath="${mysql.jar}" />
-        <available property="postgresql.present" classname="org.postgresql.Driver" classpath="${postgresql.jar}" />
         <available property="oracle.present" classname="oracle.jdbc.driver.OracleDriver" classpath="${oracle.jar}" />
-        <available property="jndi.present" classname="javax.naming.Context" />
-        <available property="javax.sql.present" classname="javax.sql.DataSource" />
-        <available property="jdbc30.present" classname="java.sql.ParameterMetaData" />
     </target>
 
     <target name="full-init" depends="common-init">
@@ -211,12 +190,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     	<!-- taskdef for svn ant task -->
     	<taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="svn.classpath" />
         <!-- Require all of the optional jars for a full build -->
-        <fail unless="readline.present" message="readline jar not present" />
-        <fail unless="jline.present" message="jline jar not present" />
-        <fail unless="servlet.present" message="servlet jar not present" />
         <fail unless="informix.present" message="informix jar not present" />
-        <fail unless="mysql.present" message="mysql jar not present" />
-        <fail unless="postgresql.present" message="postgres jar not present" />
         <fail unless="oracle.present" message="oracle jar not present" />
     </target>
 
@@ -254,16 +228,8 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <echo>Build environment for ${ant.project.name}</echo>
         <echo>(Note: if ${propertyname} is displayed, then the property is not set)</echo>
         <echo>--- optional libraries ---</echo>
-        <echo>servlet            = '${servlet.present}'</echo>
-        <echo>readline           = '${readline.present}'</echo>
-        <echo>jline              = '${jline.present}'</echo>
         <echo>oracle             = '${oracle.present}'</echo>
         <echo>informix           = '${informix.present}'</echo>
-        <echo>mysql              = '${mysql.present}'</echo>
-        <echo>postgresql         = '${postgresql.present}'</echo>
-        <echo>jndi               = '${jndi.present}'</echo>
-        <echo>jdbc               = '${javax.sql.present}'</echo>
-        <echo>jdbc3.0            = '${jdbc30.present}'</echo>
         <echo>--- properties ---</echo>
         <echo>work.dir           = '${work.dir}'</echo>
         <echo>jython.base.dir    = '${jython.base.dir}'</echo>
@@ -418,17 +384,8 @@ The readme text for the next release will be like:
                deprecation="${deprecation}"
 	       nowarn="${nowarn}">
             <exclude name="org/python/parser/python.java" />
-            <exclude name="**/PyServlet.java" unless="servlet.present" />
-            <exclude name="**/ReadlineConsole.java" unless="readline.present" />
-            <exclude name="**/JLineConsole.java" unless="jline.present" />
             <exclude name="**/handler/InformixDataHandler.java" unless="informix.present" />
-            <exclude name="**/handler/MySQLDataHandler.java" unless="mysql.present" />
             <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present" />
-            <exclude name="**/handler/PostgresqlDataHandler.java" unless="postgresql.present" />
-            <exclude name="**/connect/Lookup.java" unless="jndi.present" />
-            <exclude name="**/connect/Lookup.java" unless="javax.sql.present" />
-            <exclude name="**/connect/Connectx.java" unless="javax.sql.present" />
-            <exclude name="**/JDBC30DataHandler.java" unless="jdbc30.present" />
             <classpath refid="main.classpath" />
         </javac>
 
@@ -498,16 +455,8 @@ The readme text for the next release will be like:
               <section name="Build-Info">
                   <attribute name="version" value="${jython.version}" />
                   <attribute name="svn-build" value="${do.checkout}" />
-                  <attribute name="servlet" value="${servlet.present}" />
-                  <attribute name="readline" value="${readline.present}" />
-                  <attribute name="jline" value="${jline.present}" />
                   <attribute name="oracle" value="${oracle.present}" />
                   <attribute name="informix" value="${informix.present}" />
-                  <attribute name="mysql" value="${mysql.present}" />
-                  <attribute name="postgresql" value="${postgresql.present}" />
-                  <attribute name="jndi" value="${jndi.present}" />
-                  <attribute name="jdbc" value="${javax.sql.present}" />
-                  <attribute name="jdbc3_0" value="${jdbc30.present}" />
                   <attribute name="build-compiler" value="${build.compiler}" />
                   <attribute name="jdk-target-version" value="${jdk.target.version}" />
                   <attribute name="debug" value="${debug}" />
@@ -651,16 +600,8 @@ The readme text for the next release will be like:
                 <!-- info section. ATTN: no blanks, no '.' in the names -->
                 <section name="Build-Info">
                     <attribute name="svn-build" value="${do.checkout}" />
-                    <attribute name="servlet" value="${servlet.present}" />
-                    <attribute name="readline" value="${readline.present}" />
-                    <attribute name="jline" value="${jline.present}" />
                     <attribute name="oracle" value="${oracle.present}" />
                     <attribute name="informix" value="${informix.present}" />
-                    <attribute name="mysql" value="${mysql.present}" />
-                    <attribute name="postgresql" value="${postgresql.present}" />
-                    <attribute name="jndi" value="${jndi.present}" />
-                    <attribute name="jdbc" value="${javax.sql.present}" />
-                    <attribute name="jdbc3_0" value="${jdbc30.present}" />
                     <attribute name="build-compiler" value="${build.compiler}" />
                     <attribute name="jdk-target-version" value="${jdk.target.version}" />
                     <attribute name="debug" value="${debug}" />
