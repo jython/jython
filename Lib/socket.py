@@ -761,6 +761,7 @@ class _udpsocket(_nonblocking_api_mixin):
                 flags, addr = 0, p2
             if not self.sock_impl:
                 self.sock_impl = _datagram_socket_impl()
+                self._config()
             byte_array = java.lang.String(data).getBytes('iso-8859-1')
             result = self.sock_impl.sendto(byte_array, addr, flags)
             return result
@@ -773,8 +774,22 @@ class _udpsocket(_nonblocking_api_mixin):
         return self.sock_impl.send(byte_array, flags)
 
     def recvfrom(self, num_bytes, flags=None):
+        """
+        There is some disagreement as to what the behaviour should be if
+        a recvfrom operation is requested on an unbound socket.
+        See the following links for more information
+        http://bugs.jython.org/issue1005
+        http://bugs.sun.com/view_bug.do?bug_id=6621689
+        """
         try:
-            assert self.sock_impl
+            # This is the old 2.1 behaviour 
+            #assert self.sock_impl
+            # This is amak's preferred interpretation
+            #raise error(errno.ENOTCONN, "Recvfrom on unbound udp socket meaningless operation")
+            # And this is the option for cpython compatibility
+            if not self.sock_impl:
+                self.sock_impl = _datagram_socket_impl()
+                self._config()
             return self.sock_impl.recvfrom(num_bytes, flags)
         except java.lang.Exception, jlx:
             raise _map_exception(jlx)
