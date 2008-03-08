@@ -683,6 +683,18 @@ public class imp {
         if (top) {
             return topMod;
         }
+
+        if (fromlist != null && fromlist != Py.None) {
+            StringBuffer modNameBuffer = new StringBuffer(name);
+            for (PyObject submodName : fromlist.asIterable()) {
+                if (mod.__findattr__(submodName.toString()) != null
+                    || submodName.toString().equals("*")) {
+                    continue;
+                }
+                String fullName = modNameBuffer.toString() + "." + submodName.toString();
+                import_next(mod, modNameBuffer, submodName.toString(), fullName, null);
+            }
+        }
         return mod;
     }
 
@@ -759,53 +771,20 @@ public class imp {
      */
     public static PyObject[] importFromAs(String mod, String[] names,
             String[] asnames, PyFrame frame) {
-        // StringBuffer sb = new StringBuffer();
-        // for(int i=0; i<names.length; i++)
-        // sb.append(names[i] + " ");
-        // System.out.println("importFrom(" + mod + ", [" + sb + "]");
+        PyObject[] pyNames = new PyObject[names.length];
+        for (int i = 0; i < names.length; i++) {
+            pyNames[i] = Py.newString(names[i]);
+        }
 
-        PyObject[] pynames = new PyObject[names.length];
-        for (int i = 0; i < names.length; i++)
-            pynames[i] = Py.newString(names[i]);
-
-        PyObject module = __builtin__.__import__(mod, frame.f_globals, frame
-                .getf_locals(), new PyTuple(pynames));
+        PyObject module = __builtin__.__import__(mod, frame.f_globals, frame.getf_locals(),
+                                                 new PyTuple(pyNames));
         PyObject[] submods = new PyObject[names.length];
-        List wrongNames = new ArrayList(1);
         for (int i = 0; i < names.length; i++) {
             PyObject submod = module.__findattr__(names[i]);
             if (submod == null) {
-                String submodName = mod + '.' + names[i];
-                submod = __builtin__.__import__(submodName, null, null, nonEmptyFromlist);
+                throw Py.ImportError("cannot import name " + names[i]);
             }
-            if (submod == null) {
-                if (module instanceof PyJavaPackage) {
-                    if (JavaImportHelper.tryAddPackage(mod + "." + names[i], null)) {
-                        submod = module.__findattr__(names[i]);
-                    }
-                }
-            }
-            if (submod == null) {
-                wrongNames.add(names[i]);
-            } else {
-                submods[i] = submod;
-            }
-        }
-        int size = wrongNames.size();
-        if (size > 0) {
-            StringBuffer buf = new StringBuffer(20);
-            buf.append("cannot import name");
-            if (size > 1) {
-                buf.append("s");
-            }
-            Iterator wrongNamesIterator = wrongNames.iterator();
-            buf.append(" ");
-            buf.append(wrongNamesIterator.next());
-            while (wrongNamesIterator.hasNext()) {
-                buf.append(", ");
-                buf.append(wrongNamesIterator.next());
-            }
-            throw Py.ImportError(buf.toString());
+            submods[i] = submod;
         }
         return submods;
     }
