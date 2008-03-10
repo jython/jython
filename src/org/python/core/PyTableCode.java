@@ -18,7 +18,7 @@ public class PyTableCode extends PyCode
     public String co_filename;
     public int co_flags;
     public int co_nlocals;
-    public boolean args, keywords;
+    public boolean varargs, varkwargs;
     PyFunctionTable funcs;
     int func_id;
     public String co_code = ""; // only used by inspect
@@ -38,17 +38,17 @@ public class PyTableCode extends PyCode
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
                        int firstlineno,
-                       boolean args, boolean keywords,
+                       boolean varargs, boolean varkwargs,
                        PyFunctionTable funcs, int func_id)
     {
-        this(argcount, varnames, filename, name, firstlineno, args,
-             keywords, funcs, func_id, null, null, 0, 0);
+        this(argcount, varnames, filename, name, firstlineno, varargs,
+             varkwargs, funcs, func_id, null, null, 0, 0);
     }
 
     public PyTableCode(int argcount, String varnames[],
                        String filename, String name,
                        int firstlineno,
-                       boolean args, boolean keywords,
+                       boolean varargs, boolean varkwargs,
                        PyFunctionTable funcs, int func_id,
                        String[] cellvars, String[] freevars, int npurecell,
                        int moreflags) // may change
@@ -61,14 +61,14 @@ public class PyTableCode extends PyCode
         co_cellvars = cellvars;
         co_freevars = freevars;
         this.jy_npurecell = npurecell;
-        this.args = args;
+        this.varargs = varargs;
         co_name = name;
-        if (args) {
+        if (varargs) {
             co_argcount -= 1;
             co_flags |= CO_VARARGS;
         }
-        this.keywords = keywords;
-        if (keywords) {
+        this.varkwargs = varkwargs;
+        if (varkwargs) {
             co_argcount -= 1;
             co_flags |= CO_VARKEYWORDS;
         }
@@ -224,7 +224,7 @@ public class PyTableCode extends PyCode
     public PyObject call(PyObject globals, PyObject[] defaults,
                          PyObject closure)
     {
-        if (co_argcount != 0 || args || keywords)
+        if (co_argcount != 0 || varargs || varkwargs)
             return call(Py.EmptyObjects, Py.NoKeywords, globals, defaults,
                         closure);
         PyFrame frame = new PyFrame(this, globals);
@@ -237,7 +237,7 @@ public class PyTableCode extends PyCode
     public PyObject call(PyObject arg1, PyObject globals, PyObject[] defaults,
                          PyObject closure)
     {
-        if (co_argcount != 1 || args || keywords)
+        if (co_argcount != 1 || varargs || varkwargs)
             return call(new PyObject[] {arg1},
                         Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
@@ -251,7 +251,7 @@ public class PyTableCode extends PyCode
     public PyObject call(PyObject arg1, PyObject arg2, PyObject globals,
                          PyObject[] defaults, PyObject closure)
     {
-        if (co_argcount != 2 || args || keywords)
+        if (co_argcount != 2 || varargs || varkwargs)
             return call(new PyObject[] {arg1, arg2},
                         Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
@@ -267,7 +267,7 @@ public class PyTableCode extends PyCode
                          PyObject globals, PyObject[] defaults,
                          PyObject closure)
     {
-        if (co_argcount != 3 || args || keywords)
+        if (co_argcount != 3 || varargs || varkwargs)
             return call(new PyObject[] {arg1, arg2, arg3},
                         Py.NoKeywords, globals, defaults, closure);
         PyFrame frame = new PyFrame(this, globals);
@@ -280,116 +280,119 @@ public class PyTableCode extends PyCode
         return call(frame, closure);
     }
 
-    public PyObject call(PyObject self, PyObject call_args[],
-                         String call_keywords[], PyObject globals,
+    public PyObject call(PyObject self, PyObject args[],
+                         String keywords[], PyObject globals,
                          PyObject[] defaults, PyObject closure)
     {
-        PyObject[] os = new PyObject[call_args.length+1];
+        PyObject[] os = new PyObject[args.length+1];
         os[0] = self;
-        System.arraycopy(call_args, 0, os, 1, call_args.length);
-        return call(os, call_keywords, globals, defaults, closure);
+        System.arraycopy(args, 0, os, 1, args.length);
+        return call(os, keywords, globals, defaults, closure);
     }
 
-    private String prefix() {
-        return co_name.toString()+"() ";
-    }
+    public PyObject call(PyObject args[], String kws[], PyObject globals, PyObject[] defs,
+                          PyObject closure) {
+        PyFrame frame = new PyFrame(this, globals);
+        int argcount = args.length - kws.length;
+        PyObject[] fastlocals = frame.f_fastlocals;
+        
+        if (co_argcount > 0 || (varargs || varkwargs)) {
+            int i;
+            int n = argcount;
+            PyObject kwdict = null;
+            if (varkwargs) {
+                kwdict = new PyDictionary();
+                i = co_argcount;
+                if (varargs) {
+                    i++;
+                }
+                fastlocals[i] = kwdict;
+            }
+            if (argcount > co_argcount) {
+                if (!varargs) {
+                    String msg = String.format("%.200s() takes %s %d %sargument%s (%d given)",
+                                               co_name,
+                                               defs.length > 0 ? "at most" : "exactly",
+                                               co_argcount,
+                                               kws.length > 0 ? "non-keyword " : "",
+                                               co_argcount == 1 ? "" : "s",
+                                               argcount);
+                    throw Py.TypeError(msg);
+                }
+                n = co_argcount;
+            }
 
-    public PyObject call(PyObject call_args[], String call_keywords[],
-                         PyObject globals, PyObject[] defaults,
-                         PyObject closure)
-    {
-        //Needs try except finally blocks
-        PyFrame my_frame = new PyFrame(this, globals);
+            System.arraycopy(args, 0, fastlocals, 0, n);
 
-        PyObject actual_args[], extra_args[] = null;
-        PyDictionary extra_keywords = null;
-        int plain_args = call_args.length - call_keywords.length;
-        int i;
-
-        if (plain_args > co_argcount)
-            plain_args = co_argcount;
-
-        actual_args = my_frame.f_fastlocals;
-        if (plain_args > 0)
-            System.arraycopy(call_args, 0, actual_args, 0, plain_args);
-
-        if(call_keywords.length != 0 || call_args.length != co_argcount || keywords || args) {
-            if (keywords)
-                extra_keywords = new PyDictionary();
-
-            for (i=0; i<call_keywords.length; i++) {
-                int index=0;
-                while (index<co_argcount) {
-                    if (co_varnames[index].equals(call_keywords[i]))
+            if (varargs) {
+                PyObject[] u = new PyObject[argcount - n];
+                System.arraycopy(args, n, u, 0, argcount - n);
+                PyObject uTuple = new PyTuple(u);
+                fastlocals[co_argcount] = uTuple;
+            }
+            for (i = 0; i < kws.length; i++) {
+                String keyword = kws[i];
+                PyObject value = args[i + argcount];
+                int j;
+                // XXX: keywords aren't PyObjects, can't ensure strings
+                //if (keyword == null || keyword.getClass() != PyString.class) {
+                //    throw Py.TypeError(String.format("%.200s() keywords must be strings",
+                //                                     co_name));
+                //}
+                for (j = 0; j < co_argcount; j++) {
+                    if (co_varnames[j].equals(keyword)) {
                         break;
-                    index++;
-                }
-                if (index < co_argcount) {
-                    if (actual_args[index] != null) {
-                        throw Py.TypeError(prefix()+
-                                           "got multiple values for " +
-                                           "keyword argument '"+
-                                           call_keywords[i] + "'");
                     }
-                    actual_args[index] =
-                        call_args[i+(call_args.length-call_keywords.length)];
                 }
-                else {
-                    if (extra_keywords == null) {
-                        throw Py.TypeError(prefix()+
-                                           "got an unexpected keyword " +
-                                           "argument '"+ call_keywords[i] +
-                                           "'");
+                if (j >= co_argcount) {
+                    if (kwdict == null) {
+                        throw Py.TypeError(String.format("%.200s() got an unexpected keyword "
+                                                         + "argument '%.400s'",
+                                                         co_name, keyword));
                     }
-                    extra_keywords.__setitem__(
-                        call_keywords[i],
-                        call_args[i+(call_args.length-call_keywords.length)]);
+                    kwdict.__setitem__(keyword, value);
+                } else {
+                    if (fastlocals[j] != null) {
+                        throw Py.TypeError(String.format("%.200s() got multiple values for "
+                                                         + "keyword argument '%.400s'",
+                                                         co_name, keyword));
+                    }
+                    fastlocals[j] = value;
                 }
             }
-            if (call_args.length-call_keywords.length > co_argcount) {
-                if (!args)
-                    throw Py.TypeError(
-                        prefix()+
-                        "too many arguments; expected "+
-                        co_argcount+" got "+
-                        (call_args.length-call_keywords.length));
-                extra_args = new PyObject[call_args.length-
-                                         call_keywords.length-
-                                         co_argcount];
+            if (argcount < co_argcount) {
+                int m = co_argcount - defs.length;
+                for (i = argcount; i < m; i++) {
+                    if (fastlocals[i] == null) {
+                        String msg =
+                                String.format("%.200s() takes %s %d %sargument%s (%d given)",
+                                              co_name, (varargs || defs.length > 0) ?
+                                              "at least" : "exactly",
+                                              m, kws.length > 0 ? "non-keyword " : "",
+                                              m == 1 ? "" : "s", i);
+                        throw Py.TypeError(msg);
+                    }
+                }
+                if (n > m) {
+                    i = n - m;
+                } else {
+                    i = 0;
+                }
+                for (; i < defs.length; i++) {
+                    if (fastlocals[m + i] == null) {
+                        fastlocals[m + i] = defs[i];
+                    }
+                }
+            }
+        } else if (argcount > 0) {
+            throw Py.TypeError(String.format("%.200s() takes no arguments (%d given)",
+                                             co_name, argcount));
+        }
 
-                for (i=0; i<extra_args.length; i++) {
-                    extra_args[i] = call_args[i+co_argcount];
-                }
-            }
-            for (i=plain_args; i<co_argcount; i++) {
-                if (actual_args[i] == null) {
-                    if (co_argcount-i > defaults.length) {
-                        int min = co_argcount-defaults.length;
-                        throw Py.TypeError(
-                            prefix()+
-                            "takes at least " + min +
-                            (min == 1 ? " argument (" : " arguments (") +
-                            (call_args.length-call_keywords.length)+
-                            " given)");
-                    }
-                    actual_args[i] =
-                          defaults[defaults.length-(co_argcount-i)];
-                }
-            }
-            if (args) {
-                if (extra_args == null)
-                    actual_args[co_argcount] = Py.EmptyTuple;
-                else
-                    actual_args[co_argcount] = new PyTuple(extra_args);
-            }
-            if (extra_keywords != null) {
-                actual_args[nargs-1] = extra_keywords;
-            }
-        }
         if ((co_flags & CO_GENERATOR) != 0) {
-            return new PyGenerator(my_frame, closure);
+            return new PyGenerator(frame, closure);
         }
-        return call(my_frame, closure);
+        return call(frame, closure);
     }
 
     public String toString() {
