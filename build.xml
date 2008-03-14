@@ -124,10 +124,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
 
     <target name="developer-build" depends="prepare-output, jar, copy-lib" description="a local build for developers" />
 
-    <target name="full-build" depends="full-init, dump-env, install" description="a full build with svn checkout" />
+    <target name="full-build" depends="full-check, install" description="a full build with svn checkout" />
 
-    <!-- this target should only set properties common to both developer and full build --> 	
-    <target name="common-init">
+    <target name="init">
         <property file="${user.home}/ant.properties" />
         <property file="${basedir}/ant.properties" />
 
@@ -138,29 +137,64 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="debug" value="true" />
         <property name="nowarn" value="false" />
 
+        <!-- properties work.dir and jython.base.dir are also defined in full-preinit -->
+        <property name="work.dir" value="${basedir}" />
+        <property name="jython.base.dir" value="${work.dir}" />
+
+        <property name="source.dir" value="${jython.base.dir}/src" />
+        <property name="test.source.dir" value="${jython.base.dir}/tests/java" />
+        <property name="templates.dir" value="${source.dir}/templates" />
+        <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
+        <property name="bugtests.dir" value="${jython.base.dir}/bugtests" />
+        <property name="templates.lazy" value="true" />
+        <property name="extlibs.dir" value="${jython.base.dir}/extlibs" />
+        <property name="output.dir" value="${work.dir}/build" />
+        <property name="compile.dir" value="${output.dir}/classes" />
+        <property name="jarjar.dir" value="${output.dir}/jarjar" />
+        <property name="exposed.dir" value="${output.dir}/exposed" />
+        <property name="dist.dir" value="${work.dir}/dist" />
+        <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
+        <property name="parser.dir" value="${source.dir}/org/python/parser" />
+
         <!-- classpaths -->
         <path id="main.classpath">
-            <pathelement path="extlibs/libreadline-java-0.8.jar" />
-            <pathelement path="extlibs/jline-0.9.94.jar" />
-            <pathelement path="extlibs/servlet-api-2.5.jar" />
+            <pathelement path="${jarjar.dir}" />
+            <pathelement path="${extlibs.dir}/libreadline-java-0.8.jar" />
+            <pathelement path="${extlibs.dir}/jline-0.9.94.jar" />
+            <pathelement path="${extlibs.dir}/servlet-api-2.5.jar" />
             <pathelement path="${informix.jar}" />
             <pathelement path="${oracle.jar}" />
-            <pathelement path="extlibs/mysql-connector-java-5.1.6.jar" />
-            <pathelement path="extlibs/postgresql-8.3-603.jdbc4.jar" />
+            <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.6.jar" />
+            <pathelement path="${extlibs.dir}/postgresql-8.3-603.jdbc4.jar" />
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
         <available property="oracle.present" classname="oracle.jdbc.driver.OracleDriver" classpath="${oracle.jar}" />
+
+        <path id="test.classpath">
+            <path refid="main.classpath"/>
+            <pathelement path="${extlibs.dir}/asm-commons-3.1.jar" />
+            <pathelement path="${extlibs.dir}/junit-3.8.2.jar" />
+            <pathelement path="${exposed.dir}" />
+            <pathelement path="${compile.dir}" />
+        </path>
+        <uptodate property="jarjar.notneeded" targetfile="${output.dir}/jarjar.jar">
+            <srcfiles dir="extlibs" includes="*" />
+        </uptodate>
     </target>
 
-    <target name="full-init" depends="common-init">
+    <target name="full-preinit">
+        <property file="${user.home}/ant.properties" />
+        <property file="${basedir}/ant.properties" />
+
         <!-- use this property to distinguish a full-build from a developer-build -->
         <property name="full-build" value="true" />
 
         <!-- predefined main directory for checkout -->
         <property name="svn.main.dir" value="trunk" />
 
-    	<!-- properties work.dir and jython.base.dir are both defined in init and full-init, but with different settings -->
+        <!-- properties work.dir and jython.base.dir are also definied in init, 
+             so full-preinit must run first to work -->
         <property name="work.dir" value="${basedir}/../full_build/${svn.main.dir}" />
         <property name="svn.checkout.dir" value="${work.dir}/checkout" />
         <property name="jython.base.dir" value="${svn.checkout.dir}/jython" />
@@ -189,40 +223,12 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         </path>
     	<!-- taskdef for svn ant task -->
     	<taskdef name="svn" classname="org.tigris.subversion.svnant.SvnTask" classpathref="svn.classpath" />
+    </target>
+    <target name="full-check" depends="full-preinit, init, dump-env">
         <!-- Require all of the optional jars for a full build -->
         <fail unless="informix.present" message="informix jar not present" />
         <fail unless="oracle.present" message="oracle jar not present" />
     </target>
-
-    <target name="init" depends="common-init">
-    	<!-- properties work.dir and jython.base.dir are both defined in init and full-init, but with different settings -->
-        <property name="work.dir" value="${basedir}" />
-        <property name="jython.base.dir" value="${work.dir}" />
-        <property name="source.dir" value="${jython.base.dir}/src" />
-        <property name="test.source.dir" value="${jython.base.dir}/tests/java" />
-        <property name="templates.dir" value="${source.dir}/templates" />
-        <property name="python.lib" value="${jython.base.dir}/CPythonLib" />
-        <property name="bugtests.dir" value="${jython.base.dir}/bugtests" />
-        <property name="templates.lazy" value="true" />
-        <property name="output.dir" value="${work.dir}/build" />
-        <property name="compile.dir" value="${output.dir}/classes" />
-        <property name="jarjar.dir" value="${output.dir}/jarjar" />
-        <property name="exposed.dir" value="${output.dir}/exposed" />
-        <property name="dist.dir" value="${work.dir}/dist" />
-        <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
-        <property name="parser.dir" value="${source.dir}/org/python/parser" />
-        <path id="test.classpath">
-            <path refid="main.classpath"/>
-            <pathelement path="extlibs/asm-commons-3.1.jar" />
-            <pathelement path="extlibs/junit-3.8.2.jar" />
-            <pathelement path="${exposed.dir}" />
-            <pathelement path="${compile.dir}" />
-        </path>
-        <uptodate property="jarjar.notneeded" targetfile="${output.dir}/jarjar.jar">
-            <srcfiles dir="extlibs" includes="*" />
-        </uptodate>
-    </target>
-	
     <target name="dump-env" depends="init">
         <echo>.</echo>
         <echo>Build environment for ${ant.project.name}</echo>
@@ -291,6 +297,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <!-- create output directories -->
     <target name ="prepare-output" depends="init">
         <mkdir dir="${compile.dir}" />
+        <mkdir dir="${jarjar.dir}" />
         <mkdir dir="${exposed.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
@@ -441,7 +448,11 @@ The readme text for the next release will be like:
             <zipfileset src="extlibs/asm-util-3.1.jar"/>
             <rule pattern="org.objectweb.asm.**" result="org.python.objectweb.asm.@1"/>
         </jarjar>
-        <unjar src="${output.dir}/jarjar.jar" dest="${compile.dir}"/>
+        <unjar src="${output.dir}/jarjar.jar" dest="${jarjar.dir}">
+            <patternset>
+                <exclude name="META-INF/**"/>
+            </patternset>
+        </unjar>
     </target>
 
     <target name="jar" depends="compile,expose,jarjar">
