@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import java.util.concurrent.ConcurrentMap;
 import org.python.core.PyMapSet.PySetIter;
 import org.python.expose.ExposedClassMethod;
 import org.python.expose.ExposedMethod;
@@ -18,16 +19,17 @@ import org.python.expose.ExposedNew;
 import org.python.expose.ExposedType;
 import org.python.expose.MethodType;
 
+
 /**
  * A builtin python dictionary.
  */
 
 @ExposedType(name = "dict")
-public class PyDictionary extends PyObject implements Map {
+public class PyDictionary extends PyObject implements ConcurrentMap {
 
     public static final PyType TYPE = PyType.fromClass(PyDictionary.class);
     
-    protected final Map<PyObject, PyObject> table;
+    protected final ConcurrentMap<PyObject, PyObject> table;
 
     /**
      * Create an empty dictionary.
@@ -486,11 +488,12 @@ public class PyDictionary extends PyObject implements Map {
 
     @ExposedMethod(defaults = "Py.None")
     final PyObject dict_setdefault(PyObject key, PyObject failobj) {
-        PyObject o = __finditem__(key);
-        if (o == null) {
-            __setitem__(key, o = failobj);
+        PyObject oldValue = table.putIfAbsent(key, failobj);
+        if (oldValue == null) {
+            return failobj;
+        } else {
+            return oldValue;
         }
-        return o;
     }
     
     /**
@@ -723,8 +726,24 @@ public class PyDictionary extends PyObject implements Map {
     static final Object tojava(Object val) {
         return val == null ? null : ((PyObject)val).__tojava__(Object.class);
     }
-}
 
+    public Object putIfAbsent(Object key, Object value) {
+        return tojava(table.putIfAbsent(Py.java2py(key), Py.java2py(value)));
+    }
+
+    public boolean remove(Object key, Object value) {
+        return table.remove(Py.java2py(key), Py.java2py(value));
+    }
+
+    public boolean replace(Object key, Object oldValue, Object newValue) {
+        return table.replace(Py.java2py(key), Py.java2py(oldValue), Py.java2py(newValue));
+    }
+
+    public Object replace(Object key, Object value) {
+        return tojava(table.replace(Py.java2py(key), Py.java2py(value)));
+    }
+
+}
 /** Basic implementation of Entry that just holds onto a key and value and returns them. */
 class SimpleEntry<K, V> implements Entry<K, V> {
     
