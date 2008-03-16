@@ -1,8 +1,9 @@
 // Copyright (c) Corporation for National Research Initiatives
 package org.python.core;
 
-import java.util.Vector;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A python class.
@@ -80,7 +81,7 @@ public class PyClass extends PyObject {
         init(name, bases, dict);
     }
 
-    protected Class getProxyClass() {
+    protected Class<?> getProxyClass() {
         return proxyClass;
     }
 
@@ -94,25 +95,22 @@ public class PyClass extends PyObject {
         findModule(dict);
 
         if (proxyClass == null) {
-            Vector interfaces = new Vector();
-            Class baseClass = null;
+            List<Class<?>> interfaces = new ArrayList<Class<?>>();
+            Class<?> baseClass = null;
             for (int i = 0; i < bases.size(); i++) {
-                Class proxy = ((PyClass) bases.pyget(i)).getProxyClass();
+                Class<?> proxy = ((PyClass) bases.pyget(i)).getProxyClass();
                 if (proxy != null) {
                     if (proxy.isInterface()) {
-                        interfaces.addElement(proxy);
+                        interfaces.add(proxy);
                     } else {
                         if (baseClass != null) {
-                            throw Py.TypeError("no multiple inheritance "
-                                    + "for Java classes: " + proxy.getName()
-                                    + " and " + baseClass.getName());
+                            throw Py.TypeError("no multiple inheritance for Java classes: "
+                                    + proxy.getName() + " and " + baseClass.getName());
                         }
                         // xxx explicitly disable this for now, types will allow
                         // this
                         if (PyObject.class.isAssignableFrom(proxy)) {
-                            throw Py
-                                    .TypeError("subclassing PyObject subclasses"
-                                            + " not supported");
+                            throw Py.TypeError("subclassing PyObject subclasses not supported");
                         }
                         baseClass = proxy;
                     }

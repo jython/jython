@@ -12,11 +12,10 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
     public String pythonClass, pythonModule;
     public String[] properties;
     public String[] packages;
-    //Hashtable methods;
     PyObject methods;
     public boolean frozen, main;
 
-    public JavaMaker(Class superclass, Class[] interfaces,
+    public JavaMaker(Class<?> superclass, Class<?>[] interfaces,
                      String pythonClass, String pythonModule, String myClass,
                      PyObject methods)
     {
@@ -24,7 +23,7 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
              null, null, methods, false, false);
     }
 
-    public JavaMaker(Class superclass, Class[] interfaces,
+    public JavaMaker(Class<?> superclass, Class<?>[] interfaces,
                      String pythonClass, String pythonModule, String myClass,
                      String[] packages, String[] properties,
                      PyObject methods,
@@ -61,7 +60,7 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
         }
     }
 
-    public void addConstructor(String name, Class[] parameters, Class ret,
+    public void addConstructor(String name, Class<?>[] parameters, Class<?> ret,
                                String sig, int access)
         throws Exception
     {
@@ -71,9 +70,9 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
         code.aload(0);
         getArgs(code, parameters);
 
-        int initProxy = code.pool.Methodref(
-                 classfile.name, "__initProxy__",
-                 "([Ljava/lang/Object;)V");
+        int initProxy = code.pool.Methodref(classfile.name,
+                                            "__initProxy__",
+                                            "([Ljava/lang/Object;)V");
         code.invokevirtual(initProxy);
         code.return_();
     }
@@ -83,8 +82,7 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
             super.addProxy();
 
         // _initProxy method
-        Code code = classfile.addMethod("__initProxy__",
-                        "([Ljava/lang/Object;)V", Modifier.PUBLIC);
+        Code code = classfile.addMethod("__initProxy__", "([Ljava/lang/Object;)V", Modifier.PUBLIC);
 
         code.aload(0);
         code.ldc(pythonModule);
@@ -97,22 +95,14 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
 
         code.iconst(frozen ? 1 : 0);
 
-        int initProxy = code.pool.Methodref(
-            "org/python/core/Py", "initProxy",
-            "(" + $pyProxy + $str + $str + $objArr +
-                $strArr + $strArr + "Z)V");
+        int initProxy = code.pool.Methodref("org/python/core/Py", "initProxy", "(" + $pyProxy
+                + $str + $str + $objArr + $strArr + $strArr + "Z)V");
         code.invokestatic(initProxy);
         code.return_();
 
         if (main)
             addMain();
     }
-
-//     public void addMethods(Class c) throws Exception {
-//         if (methods != null) {
-//             super.addMethods(c);
-//         }
-//     }
 
     public void addMethod(Method method, int access) throws Exception {
         //System.out.println("add: "+method.getName()+", "+
@@ -128,27 +118,12 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
         }
     }
 
-/*
-    public void addSuperMethod(String methodName, String superName,
-                               String superclass, Class[] parameters,
-                               Class ret, String sig, int access)
-        throws Exception
-    {
-        if (!PyProxy.class.isAssignableFrom(this.superclass)) {
-            super.addSuperMethod(methodName,superName,superclass,parameters,
-                                 ret,sig,access);
-        }
-    }
-
-*/
-
     public void addMain() throws Exception {
-        Code code = classfile.addMethod("main", "(" + $str + ")V",
-                                        ClassFile.PUBLIC | ClassFile.STATIC);
+        Code code = classfile.addMethod("main", "(" + $str + ")V", ClassFile.PUBLIC
+                | ClassFile.STATIC);
 
         // Load the class of the Python module to run
-        int forname = code.pool.Methodref(
-               "java/lang/Class","forName", "(" + $str + ")" + $clss);
+        int forname = code.pool.Methodref("java/lang/Class", "forName", "(" + $str + ")" + $clss);
         code.ldc(pythonModule);
         code.invokestatic(forname);
 
@@ -157,10 +132,8 @@ public class JavaMaker extends ProxyMaker implements ClassConstants
         makeStrings(code, packages);
         makeStrings(code, properties);
         code.iconst(frozen ? 1 : 0);
-
-        int runMain = code.pool.Methodref(
-            "org/python/core/Py", "runMain",
-            "(" + $clss + $strArr + $strArr + $strArr + "Z)V");
+        int runMain = code.pool.Methodref("org/python/core/Py", "runMain", "(" + $clss + $strArr
+                + $strArr + $strArr + "Z)V");
         code.invokestatic(runMain);
         code.return_();
     }

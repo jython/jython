@@ -2,34 +2,32 @@
 
 package org.python.compiler;
 
-import java.util.Hashtable;
-import java.util.Enumeration;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.io.*;
+import java.util.HashSet;
 
 
 public class AdapterMaker extends ProxyMaker
 {
-    public AdapterMaker(Class interfac) {
+    public AdapterMaker(Class<?> interfac) {
         super(interfac.getName()+"$Adapter", interfac);
     }
 
     public void build() throws Exception {
-        names = new Hashtable();
+        names = new HashSet<String>();
 
-        //Class superclass = org.python.core.PyAdapter.class;
         int access = ClassFile.PUBLIC | ClassFile.SYNCHRONIZED;
         classfile = new ClassFile(myClass, "java/lang/Object", access);
 
         classfile.addInterface(mapClass(interfaces[0]));
 
-        addMethods(interfaces[0], new Hashtable());
+        addMethods(interfaces[0], new HashSet<String>());
         addConstructors(Object.class);
         doConstants();
     }
 
 
-    public static String makeAdapter(Class interfac, OutputStream ostream)
+    public static String makeAdapter(Class<?> interfac, OutputStream ostream)
         throws Exception
     {
         AdapterMaker pm = new AdapterMaker(interfac);
@@ -39,27 +37,23 @@ public class AdapterMaker extends ProxyMaker
     }
 
     public void doConstants() throws Exception {
-        for (Enumeration e=names.keys(); e.hasMoreElements();)  {
-            String name = (String)e.nextElement();
-            classfile.addField(name, "Lorg/python/core/PyObject;",
-                               ClassFile.PUBLIC);
+        for (String name : names) {
+            classfile.addField(name, "Lorg/python/core/PyObject;", ClassFile.PUBLIC);
         }
     }
 
     public void addMethod(Method method, int access) throws Exception {
-        Class[] parameters = method.getParameterTypes();
-        Class ret = method.getReturnType();
+        Class<?>[] parameters = method.getParameterTypes();
+        Class<?> ret = method.getReturnType();
         String sig = makeSignature(parameters, ret);
 
         String name = method.getName();
-        //System.out.println(name+": "+sig);
-        names.put(name, name);
+        names.add(name);
 
         Code code = classfile.addMethod(name, sig, ClassFile.PUBLIC);
 
         code.aload(0);
-        int pyfunc = code.pool.Fieldref(classfile.name, name,
-                                        "Lorg/python/core/PyObject;");
+        int pyfunc = code.pool.Fieldref(classfile.name, name, "Lorg/python/core/PyObject;");
         code.getfield(pyfunc);
         code.dup();
         Label returnNull = code.getLabel();

@@ -3,32 +3,33 @@
 package org.python.core;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.python.compiler.AdapterMaker;
 import org.python.compiler.JavaMaker;
 
 class MakeProxies {
-    private static Class makeClass(Class referent, Vector secondary,
-            String name, ByteArrayOutputStream bytes) {
-        Vector referents = null;
 
+    private static Class<?> makeClass(Class<?> referent,
+                                      List<Class<?>> secondary,
+                                      String name,
+                                      ByteArrayOutputStream bytes) {
+        List<Class<?>> referents = null;
         if (secondary != null) {
             if (referent != null) {
-                secondary.insertElementAt(referent, 0);
+                secondary.add(0, referent);
             }
             referents = secondary;
-        } else {
-            if (referent != null) {
-                referents = new Vector();
-                referents.addElement(referent);
-            }
+        } else if (referent != null) {
+            referents = new ArrayList<Class<?>>(1);
+            referents.add(referent);
         }
 
         return BytecodeLoader.makeClass(name, referents, bytes.toByteArray());
     }
 
-    public static Class makeAdapter(Class c) {
+    public static Class<?> makeAdapter(Class<?> c) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         String name;
         try {
@@ -39,22 +40,17 @@ class MakeProxies {
 
         Py.saveClassFile(name, bytes);
 
-        Class pc = makeClass(c, null, name, bytes);
-        return pc;
+        return makeClass(c, null, name, bytes);
     }
 
     private static final String proxyPrefix = "org.python.proxies.";
 
     private static int proxyNumber = 0;
 
-    public static synchronized Class makeProxy(Class superclass,
-            Vector vinterfaces, String className, String proxyName,
+    public static synchronized Class<?> makeProxy(Class<?> superclass,
+            List<Class<?>> vinterfaces, String className, String proxyName,
             PyObject dict) {
-        Class[] interfaces = new Class[vinterfaces.size()];
-
-        for (int i = 0; i < vinterfaces.size(); i++) {
-            interfaces[i] = (Class) vinterfaces.elementAt(i);
-        }
+        Class<?>[] interfaces = vinterfaces.toArray(new Class<?>[vinterfaces.size()]);
         String fullProxyName = proxyPrefix + proxyName + "$" + proxyNumber++;
         String pythonModuleName;
         PyObject mn = dict.__finditem__("__module__");
