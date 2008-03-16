@@ -402,6 +402,7 @@ elif jython:
     import java.io.FileDescriptor
     import java.io.FileOutputStream
     import java.io.IOException
+    import java.lang.IllegalArgumentException
     import java.lang.IllegalThreadStateException
     import java.lang.ProcessBuilder
     import java.lang.Thread
@@ -1153,7 +1154,11 @@ class Popen(object):
             if executable is not None:
                 args[0] = executable
 
-            builder = java.lang.ProcessBuilder(args)
+            try:
+                builder = java.lang.ProcessBuilder(args)
+            except java.lang.IllegalArgumentException, iae:
+                raise OSError(iae.getMessage() or iae)
+
             if env is not None:
                 builder_env = builder.environment()
                 builder_env.clear()
