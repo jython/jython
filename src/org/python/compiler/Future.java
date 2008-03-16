@@ -35,6 +35,9 @@ public class Future extends Object implements PythonGrammarTreeConstants {
                 generators = true;
                 continue;
             }
+            if (feature.equals("braces")) {
+                throw new ParseException("not a chance");
+            }
             throw new ParseException("future feature "+feature+
                                      " is not defined",cand);
         }
