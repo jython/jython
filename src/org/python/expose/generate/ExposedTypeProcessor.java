@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.python.expose.ExposedType;
 import org.python.objectweb.asm.AnnotationVisitor;
 import org.python.objectweb.asm.ClassAdapter;
 import org.python.objectweb.asm.ClassReader;
@@ -18,7 +19,6 @@ import org.python.objectweb.asm.MethodAdapter;
 import org.python.objectweb.asm.MethodVisitor;
 import org.python.objectweb.asm.Opcodes;
 import org.python.objectweb.asm.Type;
-import org.python.expose.ExposedType;
 
 /**
  * Processes the bytecode of a Java class that has the {@link ExposedType} annotation on it and
@@ -50,7 +50,7 @@ public class ExposedTypeProcessor implements Opcodes, PyTypes {
     public ExposedTypeProcessor(InputStream in) throws IOException {
         ClassReader cr = new ClassReader(in);
         cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
-        cr.accept(new TypeProcessor(cw), ClassWriter.COMPUTE_FRAMES);
+        cr.accept(new TypeProcessor(cw), 0);
     }
 
     /**
