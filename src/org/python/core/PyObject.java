@@ -145,9 +145,9 @@ public class PyObject implements Serializable {
 
         PyObject module = getType().getModule();
         if (module instanceof PyString && !module.toString().equals("__builtin__")) {
-            return String.format("<%s.%s object %s>", module.toString(), name, Py.idstr(this));
+            return String.format("<%s.%s object at %s>", module.toString(), name, Py.idstr(this));
         }
-        return String.format("<%s object %s>", name, Py.idstr(this));
+        return String.format("<%s object at %s>", name, Py.idstr(this));
     }
 
     /**
