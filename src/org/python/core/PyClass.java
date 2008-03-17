@@ -300,15 +300,6 @@ public class PyClass extends PyObject {
         }
         inst.__init__(args, keywords);
 
-        // xxx this cannot happen anymore
-        /*
-         * if (proxyClass != null &&
-         * PyObject.class.isAssignableFrom(proxyClass)) { // It would be better
-         * if we didn't have to create a PyInstance // in the first place.
-         * ((PyObject)inst.javaProxy).__class__ = this; return
-         * (PyObject)inst.javaProxy; }
-         */
-
         return inst;
     }
 

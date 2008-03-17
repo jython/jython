@@ -79,36 +79,12 @@ public class PyObject implements Serializable {
 
     /**
      * The standard constructor for a <code>PyObject</code>.  It will set
-     * the <code>__class__</code> field to correspond to the specific
+     * the <code>objtype</code> field to correspond to the specific
      * subclass of <code>PyObject</code> being instantiated.
      **/
     public PyObject() {
-        // xxx for now no such caching
-        // PyClass c = getPyClass();
-        // if (c == null)
-        //    c = PyJavaClass.lookup(getClass());
         objtype = PyType.fromClass(getClass());
     }
-
-    /* xxx will be replaced.
-     * This method is provided to efficiently initialize the __class__
-     * attribute.  If the following boilerplate is added to a subclass of
-     * PyObject, the instantiation time for the object will be greatly
-     * reduced.
-     *
-     * <blockquote><pre>
-     * // __class__ boilerplate -- see PyObject for details
-     * public static PyClass __class__;
-     * protected PyClass getPyClass() { return __class__; }
-     * </pre></blockquote>
-     *
-     * With PyIntegers this leads to a 50% faster instantiation time.
-     * This replaces the PyObject(PyClass c) constructor which is now
-     * deprecated.
-     *
-    protected PyClass getPyClass() {
-        return null;
-    } */
 
     /**
      * Dispatch __init__ behavior
@@ -766,16 +742,7 @@ public class PyObject implements Serializable {
      *
      * @see #__findattr__(PyString)
      **/
-    public PyObject __findattr__(String name) { // xxx accelerators/ expose
-        /*if (getType() == null)
-            return null;
-        if (name == "__class__")
-            return getType();*/
-        /*PyObject ret = getType().lookup(name, false);
-        if (ret != null)
-            return ret._doget(this);
-        return null;*/
-
+    public PyObject __findattr__(String name) {
         return object___findattr__(name);
     }
 

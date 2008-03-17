@@ -1280,7 +1280,6 @@ public final class Py
                                 "a separate value");
             } else {
                 type = type.fastGetClass();
-                //return new PyException(type.__class__, type);
             }
         }
 
@@ -1647,7 +1646,7 @@ public final class Py
         PyObject dict = code.call(Py.EmptyObjects, Py.NoKeywords,
                                   globals, Py.EmptyObjects,
                                   new PyTuple(closure_cells));
-        if (doc != null) {
+        if (doc != null && dict.__finditem__("__doc__") == null) {
             dict.__setitem__("__doc__", doc);
         }
         

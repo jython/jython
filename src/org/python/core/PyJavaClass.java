@@ -163,23 +163,6 @@ public class PyJavaClass extends PyClass
             setMethods(proxyClass, methods);
         } catch(SecurityException se) {}
     }
-    
-    private synchronized void init__class__(Class c) {
-        /* xxx disable opt, will need similar opt for types
-        if (!PyObject.class.isAssignableFrom(c))
-            return;
-        try {
-            Field field = c.getField("__class__");
-            if (Modifier.isStatic(field.getModifiers()) &&
-                field.getType().isAssignableFrom(PyJavaClass.class) &&
-                field.getDeclaringClass() == c)
-            {
-                field.set(null, this);
-            }
-        }
-        catch (NoSuchFieldException exc) {}
-        catch (IllegalAccessException exc1) {} */
-    }
 
     private synchronized void init__bases__(Class c) {
         if (__bases__ != null) return;
@@ -225,7 +208,6 @@ public class PyJavaClass extends PyClass
     
 
     private void init(Class c)  {
-        init__class__(c);
         proxyClass = c;
         __name__ = c.getName();
     }
@@ -880,14 +862,6 @@ public class PyJavaClass extends PyClass
 
         PyInstance inst = new PyJavaInstance(this);
         inst.__init__(args, keywords);
-
-        /*if (proxyClass != null &&
-                    PyObject.class.isAssignableFrom(proxyClass)) {
-            // It would be better if we didn't have to create a PyInstance
-            // in the first place.
-            ((PyObject)inst.javaProxy).__class__ = this;
-            return (PyObject)inst.javaProxy;
-        }*/
 
         return inst;
     }

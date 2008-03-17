@@ -66,23 +66,7 @@ public class BCP extends PyObject implements ClassDictInit {
         this.batchsize = batchsize;
         this.queuesize = 0;
     }
-
-    // __class__ boilerplate -- see PyObject for details
-
-    /**
-     * Field __class__
-     */
-    public static PyClass __class__;
-
-    /**
-     * Method getPyClass
-     *
-     * @return PyClass
-     */
-    protected PyClass getPyClass() {
-        return __class__;
-    }
-
+    
     /**
      * Field __methods__
      */

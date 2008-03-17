@@ -9,7 +9,6 @@
 package com.ziclix.python.sql;
 
 import org.python.core.Py;
-import org.python.core.PyClass;
 import org.python.core.PyException;
 import org.python.core.PyInteger;
 import org.python.core.PyList;
@@ -87,20 +86,6 @@ public class PyStatement extends PyObject {
      */
     public PyStatement(Statement statement, Procedure procedure) {
         this(statement, procedure, STATEMENT_CALLABLE);
-    }
-
-    /**
-     * Field __class__
-     */
-    public static PyClass __class__;
-
-    /**
-     * Method getPyClass
-     *
-     * @return PyClass
-     */
-    protected PyClass getPyClass() {
-        return __class__;
     }
 
     /**

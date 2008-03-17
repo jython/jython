@@ -898,28 +898,23 @@ public class PyType extends PyObject implements Serializable {
                 String fldname = field.getName();
                 int fldmods = field.getModifiers();
                 Class fldtype = field.getType();
-                if(Modifier.isStatic(fldmods)) {
-                    // ignore static PyClass __class__
-                    if(fldname.equals("__class__") && fldtype == PyClass.class) {
-                        continue;
-                    } else if(fldname.startsWith("__doc__")
-                            && fldname.length() > 7
+                if (Modifier.isStatic(fldmods)) {
+                    if (fldname.startsWith("__doc__") && fldname.length() > 7
                             && fldtype == PyString.class) {
                         String fname = fldname.substring(7).intern();
                         PyObject memb = dict.__finditem__(fname);
-                        if(memb != null && memb instanceof PyReflectedFunction) {
+                        if (memb != null && memb instanceof PyReflectedFunction) {
                             PyString doc = null;
                             try {
                                 doc = (PyString)field.get(null);
-                            } catch(IllegalAccessException e) {
+                            } catch (IllegalAccessException e) {
                                 throw error(e);
                             }
                             ((PyReflectedFunction)memb).__doc__ = doc;
                         }
                     }
                 }
-                dict.__setitem__(normalize_name(fldname),
-                                 new PyReflectedField(field));
+                dict.__setitem__(normalize_name(fldname), new PyReflectedField(field));
             }
         }
         for(Iterator iter = propnames.keySet().iterator(); iter.hasNext();) {

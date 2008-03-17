@@ -155,21 +155,6 @@ public class PyReflectedFunction extends PyObject
                         }
                     }
                 }
-                /* xxx this way it is slow!
-                Method super_method = null;
-                try {
-                    super_method = cself.getClass().getMethod(mname,m.getParameterTypes());
-                } catch(NoSuchMethodException e) { // ??? more stuff to ignore?
-                }
-                if (super_method != null) {
-                    m = super_method;
-                }*/
-                /* xxx original              
-                PyJavaClass jc = PyJavaClass.lookup(iself.__class__.proxyClass);
-                PyObject super__ = jc.__findattr__(mname.intern());
-                if (super__ != null) {
-                    return super__.__call__(self, args, keywords);
-                }*/
             }
         }
         try {

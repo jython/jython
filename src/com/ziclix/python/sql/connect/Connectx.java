@@ -18,7 +18,6 @@ import javax.sql.ConnectionPoolDataSource;
 import javax.sql.DataSource;
 
 import org.python.core.Py;
-import org.python.core.PyClass;
 import org.python.core.PyObject;
 import org.python.core.PyString;
 
@@ -197,21 +196,5 @@ public class Connectx extends PyObject {
         }
 
         return method;
-    }
-
-    // __class__ boilerplate -- see PyObject for details
-
-    /**
-     * Field __class__
-     */
-    public static PyClass __class__;
-
-    /**
-     * Method getPyClass
-     *
-     * @return PyClass
-     */
-    protected PyClass getPyClass() {
-        return __class__;
     }
 }
