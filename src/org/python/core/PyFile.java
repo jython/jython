@@ -543,7 +543,7 @@ public class PyFile extends PyObject {
         s.append(name.__repr__());
         s.append(", mode '");
         s.append(mode);
-        s.append("' ");
+        s.append("' at ");
         s.append(Py.idstr(this));
         s.append(">");
         return s.toString();
