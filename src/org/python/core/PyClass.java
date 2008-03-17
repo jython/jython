@@ -79,8 +79,6 @@ public class PyClass extends PyObject {
     }
 
     void init(String name, PyTuple bases, PyObject dict) {
-        // System.out.println("bases: "+bases+", "+name.string);
-        // System.out.println("init class: "+name);
         __name__ = name;
         __bases__ = bases;
         __dict__ = dict;
@@ -240,6 +238,9 @@ public class PyClass extends PyObject {
         }
         if (name == "__bases__") {
             return __bases__;
+        }
+        if (name == "__class__") {
+            return null;
         }
 
         PyObject[] result = lookupGivingClass(name, false);
