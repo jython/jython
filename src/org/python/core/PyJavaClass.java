@@ -44,7 +44,7 @@ public class PyJavaClass extends PyClass
     public synchronized static final PyJavaClass lookup(Class c) {
         if (tbl == null) {
             tbl = InternalTables.createInternalTables();
-            PyJavaClass jc = new PyJavaClass(true);
+            PyJavaClass jc = new PyJavaClass();
             jc.init(PyJavaClass.class);
             tbl.putCanonical(PyJavaClass.class,jc);
         }
@@ -67,8 +67,8 @@ public class PyJavaClass extends PyClass
         return ret;
     }
 
-    private PyJavaClass(boolean fakeArg) {
-        super(true);
+    private PyJavaClass() {
+        super();
     }
 
     protected PyJavaClass(Class c) {

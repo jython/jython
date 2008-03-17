@@ -37,15 +37,8 @@ public class PyClass extends PyObject {
     // xxx map 'super__*' names -> array of methods
     protected java.util.HashMap super__methods;
 
-    public static PyClass __class__;
-
-    PyClass(boolean fakeArg) { // xxx check
-        super();
-        proxyClass = null;
-    }
-
     protected PyClass() {
-        proxyClass = null;
+        super();
     }
 
     /**

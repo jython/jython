@@ -120,8 +120,6 @@ public class PyType extends PyObject implements Serializable {
 
     @ExposedGet(name = "__bases__")
     public PyObject getBases() {
-        if (bases == null)
-            return new PyTuple();
         return new PyTuple(bases);
     }
 
@@ -223,7 +221,7 @@ public class PyType extends PyObject implements Serializable {
 
     private String name;
     private PyType base;
-    private PyObject[] bases;
+    private PyObject[] bases = new PyObject[0];
     private PyObject dict;
     private PyObject[] mro = new PyObject[0];
     private long tp_flags;
