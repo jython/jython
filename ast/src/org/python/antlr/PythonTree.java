@@ -8,6 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import org.antlr.runtime.RecognitionException;
+import org.python.antlr.ast.VisitorIF;
 
 public class PythonTree extends CommonTree {
 
@@ -49,4 +50,12 @@ public class PythonTree extends CommonTree {
 		}
 		return buf.toString();
 	}
+    
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        throw new RuntimeException("Unexpected node: " + this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        throw new RuntimeException("Cannot traverse node: " + this);
+    }
 }

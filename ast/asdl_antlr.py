@@ -276,35 +276,35 @@ class JavaVisitor(EmitVisitor):
         #self.emit("", 0)
 
         # The accept() method
-        #self.emit("public Object accept(VisitorIF visitor) throws Exception {", depth)
-        #if clsname == ctorname:
-        #    self.emit('return visitor.visit%s(this);' % clsname, depth+1)
-        #else:
-        #    self.emit('traverse(visitor);' % clsname, depth+1)
-        #    self.emit('return null;' % clsname, depth+1)
-        #self.emit("}", depth)
-        #self.emit("", 0)
+        self.emit("public <R> R accept(VisitorIF<R> visitor) throws Exception {", depth)
+        if clsname == ctorname:
+            self.emit('return visitor.visit%s(this);' % clsname, depth+1)
+        else:
+            self.emit('traverse(visitor);' % clsname, depth+1)
+            self.emit('return null;' % clsname, depth+1)
+        self.emit("}", depth)
+        self.emit("", 0)
 
         # The visitChildren() method
-        #self.emit("public void traverse(VisitorIF visitor) throws Exception {", depth)
-        #for f in fields:
-        #    if self.bltinnames.has_key(str(f.type)):
-        #        continue
-        #    if f.typedef.simple:
-        #        continue
-        #    if f.seq:
-        #        self.emit('if (%s != null) {' % f.name, depth+1)
-        #        self.emit('for (int i = 0; i < %s.length; i++) {' % f.name,
-        #                depth+2)
-        #        self.emit('if (%s[i] != null)' % f.name, depth+3)
-        #        self.emit('%s[i].accept(visitor);' % f.name, depth+4)
-        #        self.emit('}', depth+2)
-        #        self.emit('}', depth+1)
-        #    else:
-        #        self.emit('if (%s != null)' % f.name, depth+1)
-        #        self.emit('%s.accept(visitor);' % f.name, depth+2)
-        #self.emit('}', depth)
-        #self.emit("", 0)
+        self.emit("public void traverse(VisitorIF visitor) throws Exception {", depth)
+        for f in fields:
+            if self.bltinnames.has_key(str(f.type)):
+                continue
+            if f.typedef.simple:
+                continue
+            if f.seq:
+                self.emit('if (%s != null) {' % f.name, depth+1)
+                self.emit('for (int i = 0; i < %s.length; i++) {' % f.name,
+                        depth+2)
+                self.emit('if (%s[i] != null)' % f.name, depth+3)
+                self.emit('%s[i].accept(visitor);' % f.name, depth+4)
+                self.emit('}', depth+2)
+                self.emit('}', depth+1)
+            else:
+                self.emit('if (%s != null)' % f.name, depth+1)
+                self.emit('%s.accept(visitor);' % f.name, depth+2)
+        self.emit('}', depth)
+        self.emit("", 0)
 
     def visitField(self, field, depth):
         self.emit("public %s;" % self.fieldDef(field), depth)
@@ -338,25 +338,25 @@ class VisitorVisitor(EmitVisitor):
         for dfn in mod.dfns:
             self.visit(dfn)
         self.open("VisitorIF", refersToPythonTree=0)
-        self.emit('public interface VisitorIF {', 0)
+        self.emit('public interface VisitorIF<R> {', 0)
         for ctor in self.ctors:
-            self.emit("public Object visit%s(%s node) throws Exception;" % 
+            self.emit("public R visit%s(%s node) throws Exception;" % 
                     (ctor, ctor), 1)
         self.emit('}', 0)
         self.close()
 
         self.open("VisitorBase")
-        self.emit('public abstract class VisitorBase implements VisitorIF {', 0)
+        self.emit('public abstract class VisitorBase<R> implements VisitorIF<R> {', 0)
         for ctor in self.ctors:
-            self.emit("public Object visit%s(%s node) throws Exception {" % 
+            self.emit("public R visit%s(%s node) throws Exception {" % 
                     (ctor, ctor), 1)
-            self.emit("Object ret = unhandled_node(node);", 2)
+            self.emit("R ret = unhandled_node(node);", 2)
             self.emit("traverse(node);", 2)
             self.emit("return ret;", 2)
             self.emit('}', 1)
             self.emit('', 0)
 
-        self.emit("abstract protected Object unhandled_node(PythonTree node) throws Exception;", 1)
+        self.emit("abstract protected R unhandled_node(PythonTree node) throws Exception;", 1)
         self.emit("abstract public void traverse(PythonTree node) throws Exception;", 1)
         self.emit('}', 0)
         self.close()
