@@ -92,29 +92,6 @@ class BeanTest(unittest.TestCase):
         m.fireComponentHidden(ComponentEvent(Container(), 0))
         self.assertEquals(2, len(called))
 
-class MethodVisibilityTest(unittest.TestCase):
-    def test_in_dict(self):
-        from java.awt import Container, MenuContainer, Component
-        for c in Container, MenuContainer, Component:
-            self.failUnless('remove' in c.__dict__,
-                    'remove expected in %s __dict__' % c)
-
-    def test_parent_cant_call_subclass(self):
-        '''
-        Makes sure that Base doesn't pick up the getVal method from Sub that
-        takes an int
-        '''
-        from org.python.tests import Base, Sub
-        b = Base()
-        s = Sub()
-        self.assertRaises(TypeError, b.getVal, 8)
-
-    def test_dir_on_java_class(self):
-        '''Checks that basic fields and methods are in the dir of a regular Java class'''
-        from org.python.core import Py
-        self.failUnless('None' in dir(Py))
-        self.failUnless('newString' in dir(Py))
-
 class ExtendJavaTest(unittest.TestCase):
     def test_override_tostring(self):
         from java.lang import Object, String
@@ -190,7 +167,7 @@ class VectorTest(unittest.TestCase):
         ht = Hashtable()
         fv = FooVector()
         ht.put("a", fv)
-        fv = ht.get("a")
+        self.failUnless(fv is ht.get("a"))
 
 class ReservedNamesTest(unittest.TestCase):
     "Access to java names which are al reserved words"
@@ -276,7 +253,6 @@ def test_main():
     test_support.run_unittest(AbstractOnSyspathTest,
                               InstantiationTest, 
                               BeanTest, 
-                              MethodVisibilityTest, 
                               ExtendJavaTest, 
                               SysIntegrationTest,
                               AutoSuperTest,

@@ -136,7 +136,7 @@ public class PyInteger extends PyObject {
         return getValue() != 0;
     }
 
-    public Object __tojava__(Class c) {
+    public Object __tojava__(Class<?> c) {
         if (c == Integer.TYPE || c == Number.class ||
             c == Object.class || c == Integer.class ||
             c == Serializable.class)

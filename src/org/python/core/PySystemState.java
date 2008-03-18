@@ -258,7 +258,6 @@ public class PySystemState extends PyObject
         this.recursionlimit = recursionlimit;
     }
 
-    // xxx fix and polish this
     public PySystemState() {
         initialize();
         modules = new PyStringMap();
@@ -269,7 +268,6 @@ public class PySystemState extends PyObject
         executable = defaultExecutable;
 
         meta_path = new PyList();
-        meta_path.append(new PrecompiledImporter());
         path_hooks = new PyList();
         path_hooks.append(new JavaImporter());
         path_hooks.append(zipimporter.TYPE);
@@ -372,6 +370,9 @@ public class PySystemState extends PyObject
             Py.writeError("systemState", "trying to reinitialize registry");
             return;
         }
+        if (preProperties == null) {
+            preProperties = getBaseProperties();
+        }
 
         registry = preProperties;
         prefix = exec_prefix = findRoot(preProperties, postProperties, jarFileName);
@@ -438,9 +439,7 @@ public class PySystemState extends PyObject
     }
 
     public static synchronized void initialize() {
-        if (initialized)
-            return;
-        initialize(getBaseProperties(), null, new String[] {""});
+        initialize(null, null, new String[] {""});
     }
 
     public static synchronized void initialize(Properties preProperties,
@@ -457,57 +456,41 @@ public class PySystemState extends PyObject
     {
         initialize(preProperties, postProperties, argv, classLoader, new ClassicPyObjectAdapter());
     }
-        public static synchronized void initialize(Properties preProperties,
-                                                   Properties postProperties,
-                                                   String[] argv,
-                                                   ClassLoader classLoader,
-                                                   ExtensiblePyObjectAdapter adapter)
-        {
 
-        //System.err.println("initializing system state");
-        //Thread.currentThread().dumpStack();
-
+    public static synchronized void initialize(Properties preProperties,
+                                               Properties postProperties,
+                                               String[] argv,
+                                               ClassLoader classLoader,
+                                               ExtensiblePyObjectAdapter adapter) {
         if (initialized) {
-            //if (postProperties != null) {
-            //    Py.writeError("systemState",
-            //                  "trying to reinitialize with new " +
-            //                  "properties");
-            //}
             return;
         }
         initialized = true;
-
         Py.setAdapter(adapter);
         boolean standalone = false;
         String jarFileName = getJarFileName();
         if (jarFileName != null) {
             standalone = isStandalone(jarFileName);
         }
-        
         // initialize the Jython registry
         initRegistry(preProperties, postProperties, standalone, jarFileName);
-
         // other initializations
         initBuiltins(registry);
         initStaticFields();
-
         // Initialize the path (and add system defaults)
         defaultPath = initPath(registry, standalone, jarFileName);
         defaultArgv = initArgv(argv);
         defaultExecutable = initExecutable(registry);
-
         // Set up the known Java packages
         initPackages(registry);
-
         // Finish up standard Python initialization...
         Py.defaultSystemState = new PySystemState();
         Py.setSystemState(Py.defaultSystemState);
-
         if (classLoader != null)
             Py.defaultSystemState.setClassLoader(classLoader);
         Py.initClassExceptions(PySystemState.builtins);
         // Make sure that Exception classes have been loaded
-        new PySyntaxError("", 1,1,"", "");
+        new PySyntaxError("", 1, 1, "", "");
     }
 
     private static void initStaticFields() {
@@ -564,10 +547,6 @@ public class PySystemState extends PyObject
     }
 
     private static void initCacheDirectory(Properties props) {
-        if (Py.frozen) {
-            cachedir = null;
-            return;
-        }
         String skip = props.getProperty(PYTHON_CACHEDIR_SKIP, "false");
         if (skip.equalsIgnoreCase("true")) {
             cachedir = null;
@@ -678,16 +657,12 @@ public class PySystemState extends PyObject
 
     private static PyList initPath(Properties props, boolean standalone, String jarFileName) {
         PyList path = new PyList();
-        if (!Py.frozen) {
-            addPaths(path, props.getProperty("python.prepath", ""));
-
-            if (prefix != null) {
-                String libpath = new File(prefix, "Lib").toString();
-                path.append(new PyString(libpath));
-            }
-
-            addPaths(path, props.getProperty("python.path", ""));
+        addPaths(path, props.getProperty("python.prepath", ""));
+        if (prefix != null) {
+            String libpath = new File(prefix, "Lib").toString();
+            path.append(new PyString(libpath));
         }
+        addPaths(path, props.getProperty("python.path", ""));
         if (standalone) {
             // standalone jython: add the /Lib directory inside JYTHON_JAR to the path
             addPaths(path, jarFileName + "/Lib");

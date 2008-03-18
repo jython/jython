@@ -188,7 +188,7 @@ public class PyObject implements Serializable {
      *
      * @param c the Class to convert this <code>PyObject</code> to.
      **/
-    public Object __tojava__(Class c) {
+    public Object __tojava__(Class<?> c) {
         if (c.isInstance(this))
             return this;
         return Py.NoConversion;

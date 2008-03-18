@@ -122,9 +122,9 @@ public class PyReflectedFunction extends PyObject
 
         ReflectedArgs[] argsl = argslist;
         int n = nargs;
-        for (int i=0; i<n; i++) {
+        for (int i = 0; i < n; i++) {
             ReflectedArgs rargs = argsl[i];
-            //System.err.println(rargs.toString());
+            // System.err.println(rargs.toString());
             if (rargs.matches(self, args, keywords, callData)) {
                 method = rargs.data;
                 break;

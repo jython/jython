@@ -59,8 +59,12 @@ class MakeProxies {
         } else {
             pythonModuleName = (String) mn.__tojava__(String.class);
         }
-        JavaMaker jm = new JavaMaker(superclass, interfaces, className,
-                pythonModuleName, fullProxyName, dict);
+        JavaMaker jm = new JavaMaker(superclass,
+                                     interfaces,
+                                     className,
+                                     pythonModuleName,
+                                     fullProxyName,
+                                     dict);
         try {
             jm.build();
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();

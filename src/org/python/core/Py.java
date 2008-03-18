@@ -24,13 +24,6 @@ import org.python.parser.ast.modType;
 
 public final class Py
 {
-    static boolean frozen;
-    static String frozenPackage=null;
-    private final static Object PRESENT=new Object();
-    static java.util.Hashtable frozenModules;
-
-    static boolean initialized;
-
     static class SingletonResolver implements Serializable {
         private String which;
         
@@ -482,41 +475,35 @@ public final class Py
         if (c == null) throw Py.TypeError("can't convert to: "+s);
         return tojava(o, c); // prev:Class.forName
     }
-
     /* Helper functions for PyProxy's */
 
-    /** @deprecated * */
-	public static PyObject jfindattr(PyProxy proxy, String name) {
-		PyInstance o = proxy._getPyInstance();
-		if (o == null) {
-			proxy.__initProxy__(new Object[0]);
-			o = proxy._getPyInstance();
-		}
-		PyObject ret = o.__jfindattr__(name);
-		if (ret == null)
-			return null;
+    /** @deprecated */
+    public static PyObject jfindattr(PyProxy proxy, String name) {
+        PyObject ret = getInstance(proxy, name);
+        if (ret == null)
+            return null;
+        Py.setSystemState(proxy._getPySystemState());
+        return ret;
+    }
 
-		// Set the current system state to match proxy -- usually
-		// this is a waste of time :-(
-		Py.setSystemState(proxy._getPySystemState());
-		return ret;
-	}
+    /** @deprecated */
+    public static PyObject jgetattr(PyProxy proxy, String name) {
+        PyObject ret = getInstance(proxy, name);
+        if (ret == null)
+            throw Py.AttributeError("abstract method '" + name + "' not implemented");
+        Py.setSystemState(proxy._getPySystemState());
+        return ret;
+    }
 
-	/** @deprecated * */
-	public static PyObject jgetattr(PyProxy proxy, String name) {
-		PyInstance o = proxy._getPyInstance();
-		if (o == null) {
-			proxy.__initProxy__(new Object[0]);
-			o = proxy._getPyInstance();
-		}
-		PyObject ret = o.__jfindattr__(name);
-		if (ret == null)
-			throw Py.AttributeError("abstract method \"" + name + "\" not implemented");
-		// Set the current system state to match proxy -- usually this is a
-		// waste of time :-(
-		Py.setSystemState(proxy._getPySystemState());
-		return ret;
-	}
+    private static PyObject getInstance(PyProxy proxy, String name) {
+        PyInstance o = proxy._getPyInstance();
+        if (o == null) {
+            proxy.__initProxy__(new Object[0]);
+            o = proxy._getPyInstance();
+        }
+        PyObject ret = o.__jfindattr__(name);
+        return ret;
+    }
 
     /* Convenience methods to create new constants without using "new" */
     private static PyInteger[] integerCache = null;
@@ -775,7 +762,6 @@ public final class Py
         }
     }
 
-
     public static Class findClassEx(String name, String reason) {
         try {
             ClassLoader classLoader = Py.getSystemState().getClassLoader();
@@ -814,95 +800,10 @@ public final class Py
         }
     }
 
-    private static void setArgv(String arg0, String[] args) {
-        PyObject argv[] = new PyObject[args.length+1];
-        argv[0] = new PyString(arg0);
-        for(int i=1; i<argv.length; i++)
-            argv[i] = new PyString(args[i-1]);
-        Py.getSystemState().argv = new PyList(argv);
-    }
-
-    private static boolean propertiesInitialized = false;
-    private static synchronized void initProperties(String[] args,
-                                                    String[] packages,
-                                                    String[] props,
-                                                    String frozenPackage,
-                                                    String[] modules,
-                                                    ClassLoader classLoader)
+    public static void initProxy(PyProxy proxy, String module, String pyclass, Object[] args)
     {
-        if (!propertiesInitialized) {
-            propertiesInitialized = true;
-
-            if (frozenPackage != null) {
-                Py.frozen = true;
-                if (frozenPackage.length() > 0)
-                    Py.frozenPackage = frozenPackage;
-            }
-
-            java.util.Properties sprops;
-            try {
-                sprops = new java.util.Properties(System.getProperties());
-            } catch (Throwable t) {
-                sprops = new java.util.Properties();
-            }
-
-            if (props != null) {
-                for (int i=0; i<props.length; i+=2) {
-                    sprops.put(props[i], props[i+1]);
-                }
-            }
-            //System.err.println("sprops: "+sprops);
-
-            if (args == null)
-                args = new String[0];
-            PySystemState.initialize(sprops, null, args, classLoader);
-        }
-
-        if (modules != null) {
-            if(frozenModules == null)
-              frozenModules = new java.util.Hashtable();
-
-            // System.err.println("modules: "); // ?? dbg
-            for (int i = 0; i < modules.length; i++) {
-                String modname = modules[i];
-                // System.err.print(modname + " "); // ?? dbg
-                frozenModules.put(modname,PRESENT);
-                // py pkgs are potentially java pkgs too.
-                if (modname.endsWith(".__init__")) {
-                    String jpkg = modname.substring(0,modname.length()-9);
-                    PySystemState.add_package(jpkg);
-                    // System.err.print(":j "); // ?? dbg
-                }
-            }
-            // System.out.println(); // ?? dbg
-        }
-
-        if (packages != null) {
-            for (int i=0; i<packages.length; i+=2) {
-                PySystemState.add_package(packages[i], packages[i+1]);
-            }
-        }
-    }
-
-    public static void initProxy(PyProxy proxy, String module, String pyclass,
-                                 Object[] args, String[] packages,
-                                 String[] props, boolean frozen)
-    {
-        initProxy(proxy, module, pyclass, args, packages, props, null, null);
-    }
-
-    public static void initProxy(PyProxy proxy, String module, String pyclass,
-                                 Object[] args, String[] packages,
-                                 String[] props,
-                                 String frozenPackage,
-                                 String[] modules)
-    {
-        initProperties(null, packages, props, frozenPackage, modules,
-                    proxy.getClass().getClassLoader());
-
         if (proxy._getPyInstance() != null)
             return;
-
         ThreadState ts = getThreadState();
         PyInstance instance = ts.getInitializingProxy();
         if (instance != null) {
@@ -949,35 +850,14 @@ public final class Py
         instance.__init__(pargs, Py.NoKeywords);
     }
 
-    public static void initRunnable(String module, PyObject dict) {
-        Class mainClass=null;
-        try {
-            // ??pending: should use Py.findClass?
-            mainClass = Class.forName(module);
-        } catch (ClassNotFoundException exc) {
-            System.err.println("Error running main.  Can't find: "+module);
-            System.exit(-1);
-        }
-        PyCode code=null;
-        try {
-            code = ((PyRunnable)mainClass.newInstance()).getMain();
-        } catch (Throwable t) {
-            System.err.println("Invalid class (runnable): "+module+"$py");
-            System.exit(-1);
-        }
-        Py.runCode(code, dict, dict);
-    }
-
     /**
      * Initializes a default PythonInterpreter and runs the code from
      * {@link PyRunnable#getMain} as __main__
      * 
      * Called by the code generated in {@link Module#addMain()}
      */
-    public static void runMain(PyRunnable main, String[] args) throws Exception
-    {
-        initProperties(args, null, null, null, null, main.getClass()
-                .getClassLoader());
+    public static void runMain(PyRunnable main, String[] args) throws Exception {
+        PySystemState.initialize(null, null, args, main.getClass().getClassLoader());
         try {
             imp.createFromCode("__main__", main.getMain());
         } catch (PyException e) {
@@ -988,37 +868,6 @@ public final class Py
         }
         Py.getSystemState().callExitFunc();
     }
-
-    public static void runMain(Class mainClass, String[] args,
-                               String[] packages,
-                               String[] props,
-                               String frozenPackage,
-                               String[] modules) throws Exception
-    {
-        //System.err.println("main: "+module);
-
-        initProperties(args, packages, props, frozenPackage, modules,
-                       mainClass.getClassLoader());
-
-        try {
-            PyCode code=null;
-            try {
-                code = ((PyRunnable)mainClass.newInstance()).getMain();
-            } catch (Throwable t) {
-                System.err.println("Invalid class: " + mainClass.getName() +
-                                   "$py");
-                System.exit(-1);
-            }
-            imp.createFromCode("__main__", code);
-        } catch (PyException e) {
-            Py.getSystemState().callExitFunc();
-            if (Py.matchException(e, Py.SystemExit))
-                return;
-            throw e;
-        }
-        Py.getSystemState().callExitFunc();
-    }
-
     //XXX: this needs review to make sure we are cutting out all of the Java
     //     exceptions.
     private static String getStackTrace(Throwable javaError) {
@@ -1393,23 +1242,6 @@ public final class Py
         getThreadState().frame = f;
     }
 
-    /* These are not used anymore.  Uncomment them if there is a future
-       clamor to make this functionality more easily usable
-       public static void pushFrame(PyFrame f) {
-       ThreadState ts = getThreadState();
-       f.f_back = ts.frame;
-       if (f.f_builtins == null) f.f_builtins = f.f_back.f_builtins;
-       ts.frame = f;
-       }
-
-       public static PyFrame popFrame() {
-       ThreadState ts = getThreadState();
-       PyFrame f = ts.frame.f_back;
-       ts.frame = f;
-       return f;
-       }
-    */
-
     /* A collection of functions for implementing the print statement */
 
     public static StdoutWrapper stderr;
@@ -1663,27 +1495,7 @@ public final class Py
         
         if (metaclass == null) {
             if (bases.length != 0) {
-                PyObject base = bases[0];
-                
-                if (base instanceof PyMetaClass) {
-                    // jython-only, experimental PyMetaClass hook
-                    // xxx keep?
-                    try {
-                        java.lang.reflect.Constructor ctor =
-                            base.getClass().getConstructor(pyClassCtrSignature);
-                        return (PyObject) ctor.newInstance(
-                            new Object[] {
-                                name,
-                                new PyTuple(bases),
-                                dict,
-                                proxyClass });
-                    } catch (Exception e) {
-                        throw Py.TypeError(
-                            "meta-class fails to supply proper "
-                                + "ctr: "
-                                + base.getType().fastGetName());
-                    }
-                }             
+                PyObject base = bases[0];       
                 metaclass = base.__findattr__("__class__");
                 if (metaclass == null) {
                     metaclass = base.getType();
@@ -1693,9 +1505,10 @@ public final class Py
                     metaclass = globals.__finditem__("__metaclass__");                     
             }
         }
-
-        if (metaclass == null || metaclass == CLASS_TYPE ||
-             (metaclass instanceof PyJavaClass && ((PyJavaClass)metaclass).proxyClass == Class.class) ) {
+        if (metaclass == null
+                || metaclass == CLASS_TYPE
+                || (metaclass instanceof PyJavaClass && 
+                        ((PyJavaClass)metaclass).proxyClass == Class.class)) {
             boolean more_general = false;
             for (int i = 0; i < bases.length; i++) {
                 if (!(bases[i] instanceof PyClass)) {

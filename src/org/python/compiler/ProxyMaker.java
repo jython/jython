@@ -15,7 +15,7 @@ import java.util.Set;
 
 import org.python.core.Py;
 
-public class ProxyMaker implements ClassConstants
+public class ProxyMaker implements ClassConstants 
 {
     public static final int tBoolean=0;
     public static final int tByte=1;
@@ -33,15 +33,15 @@ public class ProxyMaker implements ClassConstants
 
     public static Map<Class<?>, Integer> fillTypes() {
         Map<Class<?>, Integer> types = new HashMap<Class<?>, Integer>();
-        types.put(Boolean.TYPE, new Integer(tBoolean));
-        types.put(Byte.TYPE, new Integer(tByte));
-        types.put(Short.TYPE, new Integer(tShort));
-        types.put(Integer.TYPE, new Integer(tInteger));
-        types.put(Long.TYPE, new Integer(tLong));
-        types.put(Float.TYPE, new Integer(tFloat));
-        types.put(Double.TYPE, new Integer(tDouble));
-        types.put(Character.TYPE, new Integer(tCharacter));
-        types.put(Void.TYPE, new Integer(tVoid));
+        types.put(Boolean.TYPE, tBoolean);
+        types.put(Byte.TYPE, tByte);
+        types.put(Short.TYPE, tShort);
+        types.put(Integer.TYPE, tInteger);
+        types.put(Long.TYPE, tLong);
+        types.put(Float.TYPE, tFloat);
+        types.put(Double.TYPE, tDouble);
+        types.put(Character.TYPE, tCharacter);
+        types.put(Void.TYPE, tVoid);
         return types;
     }
 
@@ -60,7 +60,6 @@ public class ProxyMaker implements ClassConstants
     public String myClass;
     public boolean isAdapter=false;
 
-    // Ctor used by makeProxy and AdapterMaker.
     public ProxyMaker(String classname, Class<?> superclass) {
         this.myClass = "org.python.proxies."+classname;
         if (superclass.isInterface()) {
@@ -72,7 +71,6 @@ public class ProxyMaker implements ClassConstants
         }
     }
 
-    // Ctor used by javamaker.
     public ProxyMaker(String myClass, Class<?> superclass, Class<?>[] interfaces) {
         this.myClass = myClass;
         if (superclass == null)
@@ -389,9 +387,8 @@ public class ProxyMaker implements ClassConstants
             code.ldc(ret.getName());
             code.invokestatic(forname);
 
-            int tojava = code.pool.Methodref(
-                "org/python/core/Py", "tojava",
-                "(" + $pyObj + $clss + ")" + $obj);
+            int tojava = code.pool.Methodref("org/python/core/Py", "tojava", "(" + $pyObj
+                        + $clss + ")" + $obj);
             code.invokestatic(tojava);
             // I guess I need this checkcast to keep the verifier happy
             code.checkcast(code.pool.Class(mapClass(ret)));
