@@ -1106,6 +1106,9 @@ public class PyType extends PyObject implements Serializable {
     }
 
     final void type___setattr__(String name, PyObject value) {
+        if (builtin) {
+            throw Py.TypeError("can't set attributes of built-in type '" + this.name + "'");
+        }
         super.__setattr__(name, value);
         if (name == "__set__") {
             if (!has_set && lookup("__set__") != null) {
@@ -1137,6 +1140,9 @@ public class PyType extends PyObject implements Serializable {
     }
     
     final void type___delattr__(String name) {
+        if (builtin) {
+            throw Py.TypeError("can't delete attributes of built-in type '" + this.name + "'");
+        }
         super.__delattr__(name);
         if (name == "__set__") {
             if (has_set && lookup("__set__") == null) {
