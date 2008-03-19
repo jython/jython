@@ -658,7 +658,7 @@ public class PyType extends PyObject implements Serializable {
 
     @ExposedGet(name = "__name__")
     public String getName() {
-        if (underlying_class == null) {
+        if (!builtin) {
             return name;
         }
         int lastDot = name.lastIndexOf('.');
@@ -1215,7 +1215,7 @@ public class PyType extends PyObject implements Serializable {
 
     @ExposedGet(name = "__module__")
     public PyObject getModule() {
-        if (underlying_class == null) {
+        if (!builtin) {
             return dict.__finditem__("__module__");
         }
         int lastDot = name.lastIndexOf('.');
@@ -1231,7 +1231,7 @@ public class PyType extends PyObject implements Serializable {
 
     public String toString() {
         String kind;
-        if (underlying_class == null) {
+        if (!builtin) {
             kind = "class";
         } else {
             kind = "type";
