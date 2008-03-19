@@ -55,6 +55,7 @@ gettext.py
 glob.py
 gopherlib.py
 gzip.py
+heapq.py
 hmac.py
 htmlentitydefs.py
 htmllib.py

@@ -962,7 +962,6 @@ _skips = {
         test_getargs2
         test_gl
         test_grp
-        test_heapq
         test_hotshot
         test_imageop
         test_imgfile
