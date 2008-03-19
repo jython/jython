@@ -89,7 +89,15 @@ public class PyClass extends PyObject {
             List<Class<?>> interfaces = new ArrayList<Class<?>>();
             Class<?> baseClass = null;
             for (int i = 0; i < bases.size(); i++) {
-                Class<?> proxy = ((PyClass) bases.pyget(i)).getProxyClass();
+                Object base = bases.pyget(i);
+                if (base instanceof PyType) {
+                    // xxx this works in CPython, which checks for a callable here
+                    throw Py.TypeError("can't transmogrify old-style class into new-style "
+                            + "class inheriting from " + ((PyType)base).getName());
+                } else if (!(base instanceof PyClass)) {
+                    throw Py.TypeError("base must be a class");
+                }
+                Class<?> proxy = ((PyClass) base).getProxyClass();
                 if (proxy != null) {
                     if (proxy.isInterface()) {
                         interfaces.add(proxy);
@@ -97,11 +105,6 @@ public class PyClass extends PyObject {
                         if (baseClass != null) {
                             throw Py.TypeError("no multiple inheritance for Java classes: "
                                     + proxy.getName() + " and " + baseClass.getName());
-                        }
-                        // xxx explicitly disable this for now, types will allow
-                        // this
-                        if (PyObject.class.isAssignableFrom(proxy)) {
-                            throw Py.TypeError("subclassing PyObject subclasses not supported");
                         }
                         baseClass = proxy;
                     }

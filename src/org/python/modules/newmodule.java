@@ -10,6 +10,7 @@ import org.python.core.PyMethod;
 import org.python.core.PyModule;
 import org.python.core.PyObject;
 import org.python.core.PyTuple;
+import org.python.core.PyType;
 
 /**
  * The new module.
@@ -65,7 +66,12 @@ public class newmodule {
         return new PyModule(name, null);
     }
 
-    public static PyClass classobj(String name, PyTuple bases, PyObject dict) {
+    public static PyObject classobj(String name, PyTuple bases, PyObject dict) {
+        for (int i = 0; i < bases.size(); i++) {
+            if (bases.pyget(i) instanceof PyType) {
+                return bases.pyget(i).__call__(Py.java2py(name), bases, dict);
+            }
+        }
         return new PyClass(name, bases, dict);
     }
 }
