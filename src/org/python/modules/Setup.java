@@ -57,6 +57,7 @@ public class Setup
         "cmath",
         "itertools",
         "zipimport:org.python.modules.zipimport.zipimport",
-        "collections:org.python.modules.collections.Collections"
+        "collections:org.python.modules.collections.Collections",
+        "gc"
     };
 }
