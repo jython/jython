@@ -495,6 +495,17 @@ public class PyDictionary extends PyObject implements ConcurrentMap {
             return oldValue;
         }
     }
+
+    @ExposedMethod(defaults = "Py.None")
+    final PyObject dict_setifabsent(PyObject key, PyObject failobj) {
+        PyObject oldValue = table.putIfAbsent(key, failobj);
+        if (oldValue == null) {
+            return Py.None;
+        } else {
+            return oldValue;
+        }
+    }
+
     
     /**
      * Return a value based on key
