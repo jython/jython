@@ -103,9 +103,19 @@ public final class Py
     public static Object NoConversion;
 
     public static PyObject OSError;
-    public static PyObject NotImplementedError;
-    public static PyObject EnvironmentError;
+    public static PyException OSError(String message) {
+        return new PyException(Py.OSError, message);
+    }
 
+    public static PyObject NotImplementedError;
+    public static PyException NotImplementedError(String message) {
+        return new PyException(Py.NotImplementedError, message);
+    }
+
+    public static PyObject EnvironmentError;
+    public static PyException EnvironmentError(String message) {
+        return new PyException(Py.EnvironmentError, message);
+    }
 
     /* The standard Python exceptions */
     public static PyObject OverflowError;
