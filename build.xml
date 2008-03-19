@@ -152,6 +152,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
         <property name="compile.dir" value="${output.dir}/classes" />
         <property name="jarjar.dir" value="${output.dir}/jarjar" />
         <property name="exposed.dir" value="${output.dir}/exposed" />
+        <property name="gensrc.dir" value="${output.dir}/gensrc" />
         <property name="dist.dir" value="${work.dir}/dist" />
         <property name="apidoc.dir" value="${dist.dir}/Doc/javadoc" />
         <property name="parser.dir" value="${source.dir}/org/python/parser" />
@@ -166,6 +167,9 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
             <pathelement path="${oracle.jar}" />
             <pathelement path="${extlibs.dir}/mysql-connector-java-5.1.6.jar" />
             <pathelement path="${extlibs.dir}/postgresql-8.3-603.jdbc4.jar" />
+            <pathelement path="${extlibs.dir}/antlr-2.7.7.jar" />
+            <pathelement path="${extlibs.dir}/antlr-3.0.1.jar" />
+            <pathelement path="${extlibs.dir}/stringtemplate-3.1b1.jar" />
         </path>
 
         <available property="informix.present" classname="com.informix.jdbc.IfxDriver" classpath="${informix.jar}" />
@@ -298,6 +302,7 @@ svnant.jar.dir=${basedir}/../externals/svnant-jars
     <target name ="prepare-output" depends="init">
         <mkdir dir="${compile.dir}" />
         <mkdir dir="${jarjar.dir}" />
+        <mkdir dir="${gensrc.dir}/org/python/antlr" />
         <mkdir dir="${exposed.dir}" />
         <mkdir dir="${dist.dir}" />
     </target>
@@ -382,14 +387,38 @@ The readme text for the next release will be like:
 		  lazy="${templates.lazy}"/>
     </target>
 
-    <target name="compile" depends="init,jarjar">
-        <javac srcdir="${source.dir}/"
-               destdir="${compile.dir}"
+    <target name="antlr_gen" depends="init,prepare-output">
+        <java classname="org.antlr.Tool">
+            <arg value="-fo"/>
+            <arg path="build/gensrc/org/python/antlr"/>
+            <arg value="-lib"/>
+            <arg path="build/gensrc/org/python/antlr"/>
+            <arg file="grammar/Python.g"/>
+            <arg file="grammar/PythonWalker.g"/>
+            <classpath refid="main.classpath"/>
+        </java>
+        
+        <!-- copy the .tokens to /grammar, for usage in ANTLRWorks -->
+        <!--
+        <copy todir="grammar" preservelastmodified="true">
+            <fileset dir="build/gensrc/org/python/antlr">
+                <include name="Python.tokens" />
+            </fileset>
+        </copy>
+        -->
+
+    </target>
+ 
+    <target name="compile" depends="init,antlr_gen,jarjar">
+        <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"
                debug="${debug}"
                deprecation="${deprecation}"
-	       nowarn="${nowarn}">
+               nowarn="${nowarn}">
+            <src path="${source.dir}"/>
+            <src path="${gensrc.dir}"/>
+
             <exclude name="org/python/parser/python.java" />
             <exclude name="**/handler/InformixDataHandler.java" unless="informix.present" />
             <exclude name="**/handler/OracleDataHandler.java" unless="oracle.present" />
