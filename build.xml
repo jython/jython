@@ -409,7 +409,7 @@ The readme text for the next release will be like:
 
     </target>
  
-    <target name="compile" depends="init,antlr_gen,jarjar">
+    <target name="compile" depends="init,jarjar">
         <javac destdir="${compile.dir}"
                target="${jdk.target.version}"
                source="${jdk.source.version}"

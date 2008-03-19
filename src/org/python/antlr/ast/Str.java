@@ -24,4 +24,11 @@ public class Str extends exprType {
         return "Str";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitStr(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

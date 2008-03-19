@@ -31,4 +31,15 @@ public class BinOp extends exprType {
         return "BinOp";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitBinOp(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (left != null)
+            left.accept(visitor);
+        if (right != null)
+            right.accept(visitor);
+    }
+
 }

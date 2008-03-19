@@ -33,4 +33,17 @@ public class List extends exprType {
         return "List";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitList(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (elts != null) {
+            for (int i = 0; i < elts.length; i++) {
+                if (elts[i] != null)
+                    elts[i].accept(visitor);
+            }
+        }
+    }
+
 }

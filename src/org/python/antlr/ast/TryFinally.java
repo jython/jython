@@ -39,4 +39,23 @@ public class TryFinally extends stmtType {
         return "TryFinally";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitTryFinally(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+        if (finalbody != null) {
+            for (int i = 0; i < finalbody.length; i++) {
+                if (finalbody[i] != null)
+                    finalbody[i].accept(visitor);
+            }
+        }
+    }
+
 }

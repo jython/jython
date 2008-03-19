@@ -24,4 +24,11 @@ public class Global extends stmtType {
         return "Global";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitGlobal(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

@@ -32,4 +32,17 @@ public class IfExp extends exprType {
         return "IfExp";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitIfExp(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (test != null)
+            test.accept(visitor);
+        if (body != null)
+            body.accept(visitor);
+        if (orelse != null)
+            orelse.accept(visitor);
+    }
+
 }

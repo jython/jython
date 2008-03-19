@@ -39,4 +39,21 @@ public class With extends stmtType {
         return "With";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitWith(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (context_expr != null)
+            context_expr.accept(visitor);
+        if (optional_vars != null)
+            optional_vars.accept(visitor);
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+    }
+
 }

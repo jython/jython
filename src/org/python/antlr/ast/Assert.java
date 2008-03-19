@@ -27,4 +27,15 @@ public class Assert extends stmtType {
         return "Assert";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitAssert(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (test != null)
+            test.accept(visitor);
+        if (msg != null)
+            msg.accept(visitor);
+    }
+
 }

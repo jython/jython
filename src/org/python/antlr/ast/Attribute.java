@@ -32,4 +32,13 @@ public class Attribute extends exprType {
         return "Attribute";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitAttribute(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (value != null)
+            value.accept(visitor);
+    }
+
 }

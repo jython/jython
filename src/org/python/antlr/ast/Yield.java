@@ -24,4 +24,13 @@ public class Yield extends exprType {
         return "Yield";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitYield(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (value != null)
+            value.accept(visitor);
+    }
+
 }

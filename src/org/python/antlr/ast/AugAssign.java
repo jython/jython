@@ -32,4 +32,15 @@ public class AugAssign extends stmtType {
         return "AugAssign";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitAugAssign(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (target != null)
+            target.accept(visitor);
+        if (value != null)
+            value.accept(visitor);
+    }
+
 }

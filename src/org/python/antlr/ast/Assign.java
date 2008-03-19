@@ -33,4 +33,19 @@ public class Assign extends stmtType {
         return "Assign";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitAssign(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (targets != null) {
+            for (int i = 0; i < targets.length; i++) {
+                if (targets[i] != null)
+                    targets[i].accept(visitor);
+            }
+        }
+        if (value != null)
+            value.accept(visitor);
+    }
+
 }

@@ -37,4 +37,19 @@ public class Print extends stmtType {
         return "Print";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitPrint(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (dest != null)
+            dest.accept(visitor);
+        if (values != null) {
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] != null)
+                    values[i].accept(visitor);
+            }
+        }
+    }
+
 }

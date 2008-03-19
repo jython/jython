@@ -48,4 +48,27 @@ public class For extends stmtType {
         return "For";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitFor(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (target != null)
+            target.accept(visitor);
+        if (iter != null)
+            iter.accept(visitor);
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+        if (orelse != null) {
+            for (int i = 0; i < orelse.length; i++) {
+                if (orelse[i] != null)
+                    orelse[i].accept(visitor);
+            }
+        }
+    }
+
 }

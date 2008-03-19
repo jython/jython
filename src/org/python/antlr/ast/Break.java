@@ -21,4 +21,11 @@ public class Break extends stmtType {
         return "Break";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitBreak(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

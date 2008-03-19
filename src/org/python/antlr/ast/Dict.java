@@ -39,4 +39,23 @@ public class Dict extends exprType {
         return "Dict";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitDict(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (keys != null) {
+            for (int i = 0; i < keys.length; i++) {
+                if (keys[i] != null)
+                    keys[i].accept(visitor);
+            }
+        }
+        if (values != null) {
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] != null)
+                    values[i].accept(visitor);
+            }
+        }
+    }
+
 }

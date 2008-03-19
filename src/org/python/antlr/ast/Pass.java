@@ -21,4 +21,11 @@ public class Pass extends stmtType {
         return "Pass";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitPass(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

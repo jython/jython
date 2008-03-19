@@ -31,4 +31,17 @@ public class Raise extends stmtType {
         return "Raise";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitRaise(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (type != null)
+            type.accept(visitor);
+        if (inst != null)
+            inst.accept(visitor);
+        if (tback != null)
+            tback.accept(visitor);
+    }
+
 }

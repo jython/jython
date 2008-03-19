@@ -39,4 +39,19 @@ public class Compare extends exprType {
         return "Compare";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitCompare(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (left != null)
+            left.accept(visitor);
+        if (comparators != null) {
+            for (int i = 0; i < comparators.length; i++) {
+                if (comparators[i] != null)
+                    comparators[i].accept(visitor);
+            }
+        }
+    }
+
 }

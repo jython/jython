@@ -48,4 +48,24 @@ public class argumentsType extends PythonTree {
         return "arguments";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        traverse(visitor);
+        return null;
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                if (args[i] != null)
+                    args[i].accept(visitor);
+            }
+        }
+        if (defaults != null) {
+            for (int i = 0; i < defaults.length; i++) {
+                if (defaults[i] != null)
+                    defaults[i].accept(visitor);
+            }
+        }
+    }
+
 }

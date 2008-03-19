@@ -27,4 +27,12 @@ public class aliasType extends PythonTree {
         return "alias";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        traverse(visitor);
+        return null;
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

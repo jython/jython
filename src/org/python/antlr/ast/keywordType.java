@@ -27,4 +27,14 @@ public class keywordType extends PythonTree {
         return "keyword";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        traverse(visitor);
+        return null;
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (value != null)
+            value.accept(visitor);
+    }
+
 }

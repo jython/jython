@@ -48,4 +48,25 @@ public class FunctionDef extends stmtType {
         return "FunctionDef";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitFunctionDef(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (args != null)
+            args.accept(visitor);
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+        if (decorators != null) {
+            for (int i = 0; i < decorators.length; i++) {
+                if (decorators[i] != null)
+                    decorators[i].accept(visitor);
+            }
+        }
+    }
+
 }

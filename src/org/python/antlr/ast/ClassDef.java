@@ -44,4 +44,23 @@ public class ClassDef extends stmtType {
         return "ClassDef";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitClassDef(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (bases != null) {
+            for (int i = 0; i < bases.length; i++) {
+                if (bases[i] != null)
+                    bases[i].accept(visitor);
+            }
+        }
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+    }
+
 }

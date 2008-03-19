@@ -30,4 +30,17 @@ public class Module extends modType {
         return "Module";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitModule(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+    }
+
 }

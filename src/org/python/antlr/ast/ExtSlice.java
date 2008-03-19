@@ -30,4 +30,17 @@ public class ExtSlice extends sliceType {
         return "ExtSlice";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitExtSlice(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (dims != null) {
+            for (int i = 0; i < dims.length; i++) {
+                if (dims[i] != null)
+                    dims[i].accept(visitor);
+            }
+        }
+    }
+
 }

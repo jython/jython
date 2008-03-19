@@ -45,4 +45,22 @@ public class excepthandlerType extends PythonTree {
         return "excepthandler";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        traverse(visitor);
+        return null;
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (type != null)
+            type.accept(visitor);
+        if (name != null)
+            name.accept(visitor);
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+    }
+
 }

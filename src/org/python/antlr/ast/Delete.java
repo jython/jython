@@ -30,4 +30,17 @@ public class Delete extends stmtType {
         return "Delete";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitDelete(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (targets != null) {
+            for (int i = 0; i < targets.length; i++) {
+                if (targets[i] != null)
+                    targets[i].accept(visitor);
+            }
+        }
+    }
+
 }

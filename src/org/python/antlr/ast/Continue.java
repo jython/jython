@@ -21,4 +21,11 @@ public class Continue extends stmtType {
         return "Continue";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitContinue(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

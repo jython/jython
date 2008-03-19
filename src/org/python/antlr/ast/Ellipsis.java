@@ -21,4 +21,11 @@ public class Ellipsis extends sliceType {
         return "Ellipsis";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitEllipsis(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

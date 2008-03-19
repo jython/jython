@@ -32,4 +32,17 @@ public class Slice extends sliceType {
         return "Slice";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitSlice(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (lower != null)
+            lower.accept(visitor);
+        if (upper != null)
+            upper.accept(visitor);
+        if (step != null)
+            step.accept(visitor);
+    }
+
 }

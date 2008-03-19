@@ -38,4 +38,22 @@ public class comprehensionType extends PythonTree {
         return "comprehension";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        traverse(visitor);
+        return null;
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (target != null)
+            target.accept(visitor);
+        if (iter != null)
+            iter.accept(visitor);
+        if (ifs != null) {
+            for (int i = 0; i < ifs.length; i++) {
+                if (ifs[i] != null)
+                    ifs[i].accept(visitor);
+            }
+        }
+    }
+
 }

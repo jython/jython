@@ -24,4 +24,13 @@ public class Return extends stmtType {
         return "Return";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitReturn(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (value != null)
+            value.accept(visitor);
+    }
+
 }

@@ -51,4 +51,29 @@ public class TryExcept extends stmtType {
         return "TryExcept";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitTryExcept(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+        if (handlers != null) {
+            for (int i = 0; i < handlers.length; i++) {
+                if (handlers[i] != null)
+                    handlers[i].accept(visitor);
+            }
+        }
+        if (orelse != null) {
+            for (int i = 0; i < orelse.length; i++) {
+                if (orelse[i] != null)
+                    orelse[i].accept(visitor);
+            }
+        }
+    }
+
 }

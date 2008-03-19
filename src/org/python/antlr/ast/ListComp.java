@@ -34,4 +34,19 @@ public class ListComp extends exprType {
         return "ListComp";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitListComp(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (elt != null)
+            elt.accept(visitor);
+        if (generators != null) {
+            for (int i = 0; i < generators.length; i++) {
+                if (generators[i] != null)
+                    generators[i].accept(visitor);
+            }
+        }
+    }
+
 }

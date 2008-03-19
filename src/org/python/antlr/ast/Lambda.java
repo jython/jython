@@ -27,4 +27,15 @@ public class Lambda extends exprType {
         return "Lambda";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitLambda(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (args != null)
+            args.accept(visitor);
+        if (body != null)
+            body.accept(visitor);
+    }
+
 }

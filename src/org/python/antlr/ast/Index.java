@@ -24,4 +24,13 @@ public class Index extends sliceType {
         return "Index";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitIndex(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (value != null)
+            value.accept(visitor);
+    }
+
 }

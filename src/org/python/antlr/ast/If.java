@@ -44,4 +44,25 @@ public class If extends stmtType {
         return "If";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitIf(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (test != null)
+            test.accept(visitor);
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+        if (orelse != null) {
+            for (int i = 0; i < orelse.length; i++) {
+                if (orelse[i] != null)
+                    orelse[i].accept(visitor);
+            }
+        }
+    }
+
 }

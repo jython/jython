@@ -24,4 +24,11 @@ public class Num extends exprType {
         return "Num";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitNum(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

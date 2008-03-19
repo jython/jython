@@ -51,4 +51,29 @@ public class Call extends exprType {
         return "Call";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitCall(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (func != null)
+            func.accept(visitor);
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                if (args[i] != null)
+                    args[i].accept(visitor);
+            }
+        }
+        if (keywords != null) {
+            for (int i = 0; i < keywords.length; i++) {
+                if (keywords[i] != null)
+                    keywords[i].accept(visitor);
+            }
+        }
+        if (starargs != null)
+            starargs.accept(visitor);
+        if (kwargs != null)
+            kwargs.accept(visitor);
+    }
+
 }

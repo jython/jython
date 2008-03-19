@@ -24,4 +24,11 @@ public class Unicode extends exprType {
         return "Unicode";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitUnicode(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

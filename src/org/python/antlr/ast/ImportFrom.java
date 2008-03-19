@@ -39,4 +39,17 @@ public class ImportFrom extends stmtType {
         return "ImportFrom";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitImportFrom(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (names != null) {
+            for (int i = 0; i < names.length; i++) {
+                if (names[i] != null)
+                    names[i].accept(visitor);
+            }
+        }
+    }
+
 }

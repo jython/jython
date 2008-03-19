@@ -27,4 +27,13 @@ public class UnaryOp extends exprType {
         return "UnaryOp";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitUnaryOp(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (operand != null)
+            operand.accept(visitor);
+    }
+
 }

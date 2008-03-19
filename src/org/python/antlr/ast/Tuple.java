@@ -33,4 +33,17 @@ public class Tuple extends exprType {
         return "Tuple";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitTuple(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (elts != null) {
+            for (int i = 0; i < elts.length; i++) {
+                if (elts[i] != null)
+                    elts[i].accept(visitor);
+            }
+        }
+    }
+
 }

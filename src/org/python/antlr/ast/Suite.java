@@ -30,4 +30,17 @@ public class Suite extends modType {
         return "Suite";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitSuite(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (body != null) {
+            for (int i = 0; i < body.length; i++) {
+                if (body[i] != null)
+                    body[i].accept(visitor);
+            }
+        }
+    }
+
 }

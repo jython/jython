@@ -33,4 +33,17 @@ public class BoolOp extends exprType {
         return "BoolOp";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitBoolOp(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (values != null) {
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] != null)
+                    values[i].accept(visitor);
+            }
+        }
+    }
+
 }

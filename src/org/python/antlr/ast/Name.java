@@ -27,4 +27,11 @@ public class Name extends exprType {
         return "Name";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitName(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+    }
+
 }

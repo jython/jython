@@ -32,4 +32,15 @@ public class Subscript extends exprType {
         return "Subscript";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitSubscript(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (value != null)
+            value.accept(visitor);
+        if (slice != null)
+            slice.accept(visitor);
+    }
+
 }

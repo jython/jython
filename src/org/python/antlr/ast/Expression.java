@@ -24,4 +24,13 @@ public class Expression extends modType {
         return "Expression";
     }
 
+    public <R> R accept(VisitorIF<R> visitor) throws Exception {
+        return visitor.visitExpression(this);
+    }
+
+    public void traverse(VisitorIF visitor) throws Exception {
+        if (body != null)
+            body.accept(visitor);
+    }
+
 }
