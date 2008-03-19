@@ -22,7 +22,8 @@ import org.python.core.imp;
 public class jython
 {
     private static String usage =
-        "usage: jython [option] ... [-c cmd | -m mod | file | -] [arg] ...\n" +
+        // "usage: jython [option] ... [-c cmd | -m mod | file | -] [arg] ...\n" +
+        "usage: jython [option] ... [-c cmd | file | -] [arg] ...\n" +
         "Options and arguments:\n" + //(and corresponding environment variables):\n" +
         "-c cmd   : program passed in as string (terminates option list)\n" +
         //"-d       : debug output from parser (also PYTHONDEBUG=x)\n" +
