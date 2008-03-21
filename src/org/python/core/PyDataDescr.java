@@ -49,13 +49,6 @@ public abstract class PyDataDescr extends PyDescriptor {
         dtype = onType;
     }
 
-    /**
-     * @return - the name this descriptor is exposed as
-     */
-    public String getName() {
-        return name;
-    }
-
     @Override
     public PyObject __get__(PyObject obj, PyObject type) {
         return getset_descriptor___get__(obj, type);

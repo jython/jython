@@ -95,6 +95,7 @@ public final class Py
         BOOTSTRAP_TYPES.add(PyObject.class);
         BOOTSTRAP_TYPES.add(PyType.class);
         BOOTSTRAP_TYPES.add(PyBuiltinFunction.class);
+        BOOTSTRAP_TYPES.add(PyDescriptor.class);
         BOOTSTRAP_TYPES.add(PyDataDescr.class);
     }
 

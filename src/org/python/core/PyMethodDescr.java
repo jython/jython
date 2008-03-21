@@ -1,5 +1,9 @@
 package org.python.core;
 
+import org.python.expose.ExposedMethod;
+import org.python.expose.ExposedType;
+
+@ExposedType(name = "method_descriptor", base = PyObject.class)
 public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Info {
 
     protected int minargs, maxargs;
@@ -15,10 +19,6 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
         meth.setInfo(this);
     }
 
-    public String getName() {
-        return name;
-    }
-
     public int getMaxargs() {
         return maxargs;
     }
@@ -27,11 +27,18 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
         return minargs;
     }
 
+    @Override
     public String toString() {
         return "<method '" + name + "' of '" + dtype.fastGetName() + "' objects>";
     }
 
+    @Override
     public PyObject __call__(PyObject[] args, String[] kwargs) {
+        return method_descriptor___call__(args, kwargs);
+    }
+
+    @ExposedMethod
+    final PyObject method_descriptor___call__(PyObject[] args, String[] kwargs) {
         if(args.length == kwargs.length) {
             throw Py.TypeError(name + " requires at least one argument");
         }
@@ -45,7 +52,13 @@ public class PyMethodDescr extends PyDescriptor implements PyBuiltinFunction.Inf
         return PyBuiltinFunction.DefaultInfo.unexpectedCall(nargs, keywords, name, minargs, maxargs);
     }
 
+    @Override
     public PyObject __get__(PyObject obj, PyObject type) {
+        return method_descriptor___get__(obj, type);
+    }
+
+    @ExposedMethod
+    final PyObject method_descriptor___get__(PyObject obj, PyObject type) {
         if(obj != null) {
             checkCallerType(obj);
             return meth.bind(obj);
