@@ -164,15 +164,15 @@ public class PyMethod extends PyObject
     }
 
     public String toString() {
-        String classname = "?";
-        if (im_class != null)
-            classname = getClassName(im_class);
-        if (im_self == null)
-            // this is an unbound method
-            return "<unbound method " + classname + "." + getFuncName() + ">";
-        else
-            return "<method " + classname + "." +
-                getFuncName() + " of " + getClassName(im_self.fastGetClass()) +
-                " instance " + Py.idstr(im_self) + ">";
+        String className = "?";
+        if (im_class != null) {
+            className = getClassName(im_class);
+        }
+        if (im_self == null) {
+            return String.format("<unbound method %s.%s>", className, getFuncName());
+        } else {
+            return String.format("<bound method %s.%s of %s>", className, getFuncName(),
+                                 im_self.__str__());
+        }
     }
 }

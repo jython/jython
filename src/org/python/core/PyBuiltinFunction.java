@@ -113,12 +113,11 @@ public abstract class PyBuiltinFunction extends PyObject {
 
     public String toString() {
         PyObject self = getSelf();
-        if(self == null)
-            return "<built-in function " + info.getName() + ">";
-        else {
-            String typename = self.getType().fastGetName();
-            return "<built-in method " + info.getName() + " of " + typename
-                    + " object>";
+        if (self == null) {
+            return String.format("<built-in function %s>", info.getName());
+        } else {
+            return String.format("<built-in method %s of %s object at %s>", info.getName(),
+                                 self.getType().fastGetName(), Py.idstr(self));
         }
     }
 
